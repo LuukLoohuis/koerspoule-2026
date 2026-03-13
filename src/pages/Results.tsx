@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { mockStageResults, mockTeams } from "@/data/mockData";
 import { pointsTable } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal } from "lucide-react";
+import { Trophy, Medal, User } from "lucide-react";
 
 export default function Results() {
   const [selectedStage, setSelectedStage] = useState(0);
