@@ -10,6 +10,8 @@ export default function Results() {
   const sortedTeams = [...mockTeams].sort((a, b) => b.totalPoints - a.totalPoints);
   const myTeam = mockTeams[0]; // Current user's team
 
+  const myRiderNumbers = useMemo(() => new Set(Object.values(myTeam.picks).map(p => p.number)), []);
+
   const myStagePoints = useMemo(() => {
     const stage = mockStageResults[selectedStage];
     const riderNumbers = new Set(Object.values(myTeam.picks).map(p => p.number));
@@ -105,81 +107,88 @@ export default function Results() {
             ))}
           </div>
 
-          <div className="retro-border bg-card">
-            <div className="p-4 border-b-2 border-foreground bg-secondary/50">
-              <h2 className="font-display text-lg font-bold flex items-center gap-2">
-                <Medal className="h-5 w-5 text-accent" />
-                Etappe {mockStageResults[selectedStage].stage} — {mockStageResults[selectedStage].date}
-              </h2>
-              <span className="jersey-badge bg-accent text-accent-foreground mt-1">
-                {mockStageResults[selectedStage].type}
-              </span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Stage results */}
+            <div className="retro-border bg-card">
+              <div className="p-4 border-b-2 border-foreground bg-secondary/50">
+                <h2 className="font-display text-lg font-bold flex items-center gap-2">
+                  <Medal className="h-5 w-5 text-accent" />
+                  Etappe {mockStageResults[selectedStage].stage} — {mockStageResults[selectedStage].date}
+                </h2>
+                <span className="jersey-badge bg-accent text-accent-foreground mt-1">
+                  {mockStageResults[selectedStage].type}
+                </span>
+              </div>
+              <div className="divide-y divide-border">
+                {mockStageResults[selectedStage].top20.map((result) => {
+                  const isInMyTeam = myRiderNumbers.has(result.riderNumber);
+                  return (
+                    <div
+                      key={result.position}
+                      className={cn(
+                        "flex items-center justify-between px-4 py-2.5 text-sm",
+                        result.position <= 3 && "bg-primary/5",
+                        isInMyTeam && "ring-1 ring-inset ring-primary/30 bg-primary/5"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={cn(
+                          "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+                          result.position === 1 && "bg-primary text-primary-foreground",
+                          result.position === 2 && "bg-muted text-foreground",
+                          result.position === 3 && "bg-vintage-gold text-primary-foreground",
+                          result.position > 3 && "text-muted-foreground"
+                        )}>
+                          {result.position}
+                        </span>
+                        <span className="font-sans">
+                          <span className="text-xs text-muted-foreground mr-1">#{result.riderNumber}</span>
+                          <span className={cn("font-medium", isInMyTeam && "text-primary")}>{result.riderName}</span>
+                        </span>
+                      </div>
+                      <span className="font-bold text-accent">
+                        {pointsTable[result.position] || 0} pt
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="divide-y divide-border">
-              {mockStageResults[selectedStage].top20.map((result) => (
-                <div
-                  key={result.position}
-                  className={cn(
-                    "flex items-center justify-between px-4 py-2.5 text-sm",
-                    result.position <= 3 && "bg-primary/5"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={cn(
-                      "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-                      result.position === 1 && "bg-primary text-primary-foreground",
-                      result.position === 2 && "bg-muted text-foreground",
-                      result.position === 3 && "bg-vintage-gold text-primary-foreground",
-                      result.position > 3 && "text-muted-foreground"
-                    )}>
-                      {result.position}
-                    </span>
-                    <span className="font-sans">
-                      <span className="text-xs text-muted-foreground mr-1">#{result.riderNumber}</span>
-                      <span className="font-medium">{result.riderName}</span>
-                    </span>
-                  </div>
-                  <span className="font-bold text-accent">
-                    {pointsTable[result.position] || 0} pt
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* My team points this stage */}
-          {myStagePoints.scoringRiders.length > 0 && (
-            <div className="retro-border bg-card mt-4">
+
+            {/* My team points */}
+            <div className="retro-border bg-card h-fit">
               <div className="p-4 border-b-2 border-foreground bg-primary/10">
                 <h2 className="font-display text-lg font-bold flex items-center justify-between">
                   <span className="flex items-center gap-2">
                     <User className="h-5 w-5 text-primary" />
-                    Jouw team — Rit {mockStageResults[selectedStage].stage}
+                    Jouw team
                   </span>
                   <span className="font-display text-xl text-primary">
                     {myStagePoints.total} pt
                   </span>
                 </h2>
               </div>
-              <div className="divide-y divide-border">
-                {myStagePoints.scoringRiders.map((r) => (
-                  <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                    <div className="flex items-center gap-3">
-                      <span className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
-                        {r.position}
-                      </span>
-                      <span className="font-sans font-medium">{r.riderName}</span>
+              {myStagePoints.scoringRiders.length > 0 ? (
+                <div className="divide-y divide-border">
+                  {myStagePoints.scoringRiders.map((r) => (
+                    <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                      <div className="flex items-center gap-3">
+                        <span className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
+                          {r.position}
+                        </span>
+                        <span className="font-sans font-medium">{r.riderName}</span>
+                      </div>
+                      <span className="font-bold text-primary">{r.points} pt</span>
                     </div>
-                    <span className="font-bold text-primary">{r.points} pt</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 text-center text-muted-foreground">
+                  Geen van jouw renners scoorde punten in deze etappe.
+                </div>
+              )}
             </div>
-          )}
-          {myStagePoints.scoringRiders.length === 0 && (
-            <div className="retro-border bg-card mt-4 p-6 text-center text-muted-foreground">
-              Geen van jouw renners scoorde punten in deze etappe.
-            </div>
-          )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
