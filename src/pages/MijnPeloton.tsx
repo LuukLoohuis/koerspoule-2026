@@ -589,9 +589,67 @@ export default function MijnPeloton() {
             </div>
           </TabsContent>
 
-          {/* ── TAB: Klassementen ── */}
-          <TabsContent value="klassementen" className="mt-6">
-            <ClassificationTabs myRiderNumbers={myRiderNumbers} />
+          {/* ── TAB: Klassement (Poule stand) ── */}
+          <TabsContent value="klassement" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Poule standings */}
+              <div className="lg:col-span-2">
+                <Card className="retro-border">
+                  <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+                    <CardTitle className="font-display text-base flex items-center gap-2">
+                      <Trophy className="h-5 w-5 text-primary" />
+                      Poule Klassement
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0 divide-y divide-border">
+                    {[...mockTeams]
+                      .sort((a, b) => b.totalPoints - a.totalPoints)
+                      .map((team, idx) => {
+                        const isMe = team.id === myTeam.id;
+                        return (
+                          <div
+                            key={team.id}
+                            className={cn(
+                              "flex items-center justify-between px-4 py-3 text-sm",
+                              idx < 3 && "bg-primary/5",
+                              isMe && "ring-1 ring-inset ring-primary/30 bg-primary/10"
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={cn(
+                                "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+                                idx === 0 && "bg-primary text-primary-foreground",
+                                idx === 1 && "bg-muted text-foreground",
+                                idx === 2 && "bg-vintage-gold text-primary-foreground",
+                                idx > 2 && "text-muted-foreground"
+                              )}>
+                                {idx + 1}
+                              </span>
+                              <div>
+                                <span className={cn("font-sans font-bold", isMe && "text-primary")}>
+                                  {team.userName}
+                                  {isMe && <span className="ml-1 text-xs text-muted-foreground">(jij)</span>}
+                                </span>
+                                <p className="text-xs text-muted-foreground">
+                                  {Object.keys(team.picks).length} renners • {team.jokers.length} jokers
+                                </p>
+                              </div>
+                            </div>
+                            <span className="font-display font-bold text-lg text-accent">
+                              {team.totalPoints} pt
+                            </span>
+                          </div>
+                        );
+                      })}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Side panel: race classifications */}
+              <div className="space-y-4">
+                <ClassificationTabs myRiderNumbers={myRiderNumbers} />
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
