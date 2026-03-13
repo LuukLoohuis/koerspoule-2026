@@ -10,6 +10,8 @@ export default function Results() {
   const sortedTeams = [...mockTeams].sort((a, b) => b.totalPoints - a.totalPoints);
   const myTeam = mockTeams[0]; // Current user's team
 
+  const myRiderNumbers = useMemo(() => new Set(Object.values(myTeam.picks).map(p => p.number)), []);
+
   const myStagePoints = useMemo(() => {
     const stage = mockStageResults[selectedStage];
     const riderNumbers = new Set(Object.values(myTeam.picks).map(p => p.number));
