@@ -1,13 +1,24 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { mockStageResults, mockTeams } from "@/data/mockData";
 import { pointsTable } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal } from "lucide-react";
+import { Trophy, Medal, User } from "lucide-react";
 
 export default function Results() {
   const [selectedStage, setSelectedStage] = useState(0);
   const sortedTeams = [...mockTeams].sort((a, b) => b.totalPoints - a.totalPoints);
+  const myTeam = mockTeams[0]; // Current user's team
+
+  const myStagePoints = useMemo(() => {
+    const stage = mockStageResults[selectedStage];
+    const riderNumbers = new Set(Object.values(myTeam.picks).map(p => p.number));
+    const scoringRiders = stage.top20
+      .filter(r => riderNumbers.has(r.riderNumber))
+      .map(r => ({ ...r, points: pointsTable[r.position] || 0 }));
+    const total = scoringRiders.reduce((sum, r) => sum + r.points, 0);
+    return { scoringRiders, total };
+  }, [selectedStage]);
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
@@ -135,6 +146,40 @@ export default function Results() {
               ))}
             </div>
           </div>
+          {/* My team points this stage */}
+          {myStagePoints.scoringRiders.length > 0 && (
+            <div className="retro-border bg-card mt-4">
+              <div className="p-4 border-b-2 border-foreground bg-primary/10">
+                <h2 className="font-display text-lg font-bold flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-primary" />
+                    Jouw team — Rit {mockStageResults[selectedStage].stage}
+                  </span>
+                  <span className="font-display text-xl text-primary">
+                    {myStagePoints.total} pt
+                  </span>
+                </h2>
+              </div>
+              <div className="divide-y divide-border">
+                {myStagePoints.scoringRiders.map((r) => (
+                  <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
+                        {r.position}
+                      </span>
+                      <span className="font-sans font-medium">{r.riderName}</span>
+                    </div>
+                    <span className="font-bold text-primary">{r.points} pt</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {myStagePoints.scoringRiders.length === 0 && (
+            <div className="retro-border bg-card mt-4 p-6 text-center text-muted-foreground">
+              Geen van jouw renners scoorde punten in deze etappe.
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
