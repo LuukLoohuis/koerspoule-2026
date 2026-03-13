@@ -599,6 +599,87 @@ export default function MijnPeloton() {
   );
 }
 
+const CLASSIFICATION_TABS = [
+  { key: "gc", label: "🏆 Algemeen", jersey: "bg-jersey-pink", valueKey: "time" as const },
+  { key: "points", label: "🟣 Punten", jersey: "bg-jersey-purple", valueKey: "points" as const },
+  { key: "kom", label: "🔵 Berg", jersey: "bg-jersey-blue", valueKey: "points" as const },
+  { key: "youth", label: "⚪ Jongeren", jersey: "bg-jersey-white border", valueKey: "time" as const },
+] as const;
+
+function ClassificationTabs({ myRiderNumbers }: { myRiderNumbers: Set<number> }) {
+  const [activeClassification, setActiveClassification] = useState("gc");
+
+  const activeTab = CLASSIFICATION_TABS.find((t) => t.key === activeClassification) || CLASSIFICATION_TABS[0];
+  const data = mockClassifications[activeClassification as keyof typeof mockClassifications];
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {CLASSIFICATION_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveClassification(tab.key)}
+            className={cn(
+              "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all flex items-center gap-2",
+              activeClassification === tab.key
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border hover:border-muted-foreground"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <Card className="retro-border">
+        <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+          <CardTitle className="font-display text-base flex items-center gap-2">
+            <span className={cn("w-4 h-4 rounded-full", activeTab.jersey)} />
+            {activeTab.label} Klassement
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 divide-y divide-border">
+          {data.map((entry) => {
+            const isInMyTeam = myRiderNumbers.has(entry.riderNumber);
+            return (
+              <div
+                key={entry.position}
+                className={cn(
+                  "flex items-center justify-between px-4 py-2.5 text-sm",
+                  entry.position <= 3 && "bg-primary/5",
+                  isInMyTeam && "ring-1 ring-inset ring-primary/30 bg-primary/10"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <span className={cn(
+                    "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+                    entry.position === 1 && "bg-primary text-primary-foreground",
+                    entry.position === 2 && "bg-muted text-foreground",
+                    entry.position === 3 && "bg-vintage-gold text-primary-foreground",
+                    entry.position > 3 && "text-muted-foreground"
+                  )}>
+                    {entry.position}
+                  </span>
+                  <div>
+                    <span className={cn("font-sans font-medium", isInMyTeam && "text-primary")}>
+                      {entry.riderName}
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-1">#{entry.riderNumber}</span>
+                    <p className="text-xs text-muted-foreground truncate max-w-[200px]">{entry.team}</p>
+                  </div>
+                </div>
+                <span className="font-display font-bold text-accent">
+                  {activeTab.valueKey === "points" ? `${entry.points} pt` : entry.time}
+                </span>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <Card className="retro-border">
