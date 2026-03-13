@@ -7,7 +7,7 @@ import Layout from "@/components/Layout";
 import Index from "./pages/Index";
 import TeamBuilder from "./pages/TeamBuilder";
 import Results from "./pages/Results";
-import MyTeam from "./pages/MyTeam";
+import MijnPeloton from "./pages/MijnPeloton";
 import Rules from "./pages/Rules";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -25,7 +25,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/team-samenstellen" element={<TeamBuilder />} />
             <Route path="/uitslagen" element={<Results />} />
-            <Route path="/mijn-team" element={<MyTeam />} />
+            <Route path="/mijn-peloton" element={<MijnPeloton />} />
             <Route path="/regels" element={<Rules />} />
             <Route path="/login" element={<Login />} />
             <Route path="*" element={<NotFound />} />

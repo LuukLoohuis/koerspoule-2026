@@ -14,8 +14,8 @@
     --popover: 340 25% 98%;
     --popover-foreground: 240 10% 10%;
 
-    /* Giro Rosa */
-    --primary: 330 65% 55%;
+    /* Giro Rosa — lighter */
+    --primary: 330 60% 65%;
     --primary-foreground: 0 0% 100%;
 
     /* Light blush */
@@ -34,21 +34,21 @@
 
     --border: 330 15% 85%;
     --input: 330 15% 85%;
-    --ring: 330 65% 55%;
+    --ring: 330 60% 65%;
 
     --radius: 0.375rem;
 
     --sidebar-background: 240 10% 10%;
     --sidebar-foreground: 340 20% 96%;
-    --sidebar-primary: 330 65% 55%;
+    --sidebar-primary: 330 60% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 10% 16%;
     --sidebar-accent-foreground: 340 20% 96%;
     --sidebar-border: 240 8% 20%;
-    --sidebar-ring: 330 65% 55%;
+    --sidebar-ring: 330 60% 65%;
 
     /* Giro jersey tokens */
-    --jersey-pink: 330 65% 55%;
+    --jersey-pink: 330 60% 65%;
     --jersey-purple: 280 45% 40%;
     --jersey-blue: 210 60% 45%;
     --jersey-white: 0 0% 96%;
