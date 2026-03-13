@@ -146,6 +146,40 @@ export default function Results() {
               ))}
             </div>
           </div>
+          {/* My team points this stage */}
+          {myStagePoints.scoringRiders.length > 0 && (
+            <div className="retro-border bg-card mt-4">
+              <div className="p-4 border-b-2 border-foreground bg-primary/10">
+                <h2 className="font-display text-lg font-bold flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-primary" />
+                    Jouw team — Rit {mockStageResults[selectedStage].stage}
+                  </span>
+                  <span className="font-display text-xl text-primary">
+                    {myStagePoints.total} pt
+                  </span>
+                </h2>
+              </div>
+              <div className="divide-y divide-border">
+                {myStagePoints.scoringRiders.map((r) => (
+                  <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
+                        {r.position}
+                      </span>
+                      <span className="font-sans font-medium">{r.riderName}</span>
+                    </div>
+                    <span className="font-bold text-primary">{r.points} pt</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {myStagePoints.scoringRiders.length === 0 && (
+            <div className="retro-border bg-card mt-4 p-6 text-center text-muted-foreground">
+              Geen van jouw renners scoorde punten in deze etappe.
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
