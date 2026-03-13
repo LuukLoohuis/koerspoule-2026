@@ -21,6 +21,22 @@ export interface StageResult {
   top20: { position: number; riderName: string; riderNumber: number }[];
 }
 
+export interface ClassificationEntry {
+  position: number;
+  riderName: string;
+  riderNumber: number;
+  team: string;
+  time?: string;
+  points?: number;
+}
+
+export interface Classifications {
+  gc: ClassificationEntry[];
+  points: ClassificationEntry[];
+  kom: ClassificationEntry[];
+  youth: ClassificationEntry[];
+}
+
 /* ── Real Giro d'Italia 2025 Stage Results ── */
 export const mockStageResults: StageResult[] = [
   {
