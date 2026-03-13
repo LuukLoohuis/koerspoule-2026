@@ -267,11 +267,11 @@ export default function MijnPeloton() {
             <TabsTrigger value="uitslagen" className="flex-1 font-display">
               📋 Uitslagen
             </TabsTrigger>
+            <TabsTrigger value="klassement" className="flex-1 font-display">
+              🏅 Klassement
+            </TabsTrigger>
             <TabsTrigger value="subpoules" className="flex-1 font-display">
               👥 Subpoules
-            </TabsTrigger>
-            <TabsTrigger value="klassementen" className="flex-1 font-display">
-              🏅 Klassementen
             </TabsTrigger>
           </TabsList>
 
