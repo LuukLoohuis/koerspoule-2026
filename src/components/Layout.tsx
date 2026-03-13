@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
@@ -22,10 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
-              <span className="text-2xl">🚴‍♂️</span>
-              <span className="font-display text-xl font-bold tracking-tight">
-                Koers<span className="text-primary">poule</span>
-              </span>
+              <img src={koerspouleLogo} alt="Koerspoule logo" className="h-10" />
             </Link>
 
             {/* Desktop nav */}
