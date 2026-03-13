@@ -224,7 +224,7 @@ export default function MijnPeloton() {
                 <span>{game.emoji}</span>
                 <span>{game.name}</span>
                 {game.status === "actief" && (
-                  <span className="ml-1 w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="ml-1 w-2 h-2 rounded-full bg-primary animate-pulse" />
                 )}
               </TabsTrigger>
             ))}
