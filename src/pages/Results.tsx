@@ -8,6 +8,17 @@ import { Trophy, Medal, User } from "lucide-react";
 export default function Results() {
   const [selectedStage, setSelectedStage] = useState(0);
   const sortedTeams = [...mockTeams].sort((a, b) => b.totalPoints - a.totalPoints);
+  const myTeam = mockTeams[0]; // Current user's team
+
+  const myStagePoints = useMemo(() => {
+    const stage = mockStageResults[selectedStage];
+    const riderNumbers = new Set(Object.values(myTeam.picks).map(p => p.number));
+    const scoringRiders = stage.top20
+      .filter(r => riderNumbers.has(r.riderNumber))
+      .map(r => ({ ...r, points: pointsTable[r.position] || 0 }));
+    const total = scoringRiders.reduce((sum, r) => sum + r.points, 0);
+    return { scoringRiders, total };
+  }, [selectedStage]);
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
