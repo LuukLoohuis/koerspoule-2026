@@ -270,6 +270,9 @@ export default function MijnPeloton() {
             <TabsTrigger value="subpoules" className="flex-1 font-display">
               👥 Subpoules
             </TabsTrigger>
+            <TabsTrigger value="klassementen" className="flex-1 font-display">
+              🏅 Klassementen
+            </TabsTrigger>
           </TabsList>
 
           {/* ── TAB: Mijn Team ── */}
