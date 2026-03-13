@@ -588,6 +588,11 @@ export default function MijnPeloton() {
               </Card>
             </div>
           </TabsContent>
+
+          {/* ── TAB: Klassementen ── */}
+          <TabsContent value="klassementen" className="mt-6">
+            <ClassificationTabs myRiderNumbers={myRiderNumbers} />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
