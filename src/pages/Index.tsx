@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, Bike, BookOpen } from "lucide-react";
+import koerspouleLogo from "@/assets/koerspoule-logo.png";
 
 const features = [
   {
@@ -39,13 +40,14 @@ export default function Index() {
         }} />
         <div className="container mx-auto px-4 py-20 md:py-32 relative">
           <div className="max-w-3xl mx-auto text-center">
+            <img
+              src={koerspouleLogo}
+              alt="Koerspoule logo"
+              className="mx-auto w-64 md:w-96 mb-6 animate-fade-in drop-shadow-lg"
+            />
             <p className="font-serif italic text-muted-foreground mb-4 text-lg animate-fade-in">
               Giro d'Italia 2025
             </p>
-            <h1 className="font-display text-5xl md:text-7xl font-black tracking-tight mb-6 leading-[0.9] animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              Koers
-              <span className="block text-primary">poule</span>
-            </h1>
             <div className="vintage-divider max-w-xs mx-auto my-6" />
             <p className="text-lg md:text-xl text-muted-foreground font-serif max-w-xl mx-auto mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
               Stel je eigen wielerploeg samen voor de Giro, voorspel het podium en 
