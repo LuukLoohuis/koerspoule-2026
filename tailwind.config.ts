@@ -63,9 +63,9 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
         jersey: {
-          yellow: "hsl(var(--jersey-yellow))",
-          green: "hsl(var(--jersey-green))",
-          polka: "hsl(var(--jersey-polka))",
+          pink: "hsl(var(--jersey-pink))",
+          purple: "hsl(var(--jersey-purple))",
+          blue: "hsl(var(--jersey-blue))",
           white: "hsl(var(--jersey-white))",
         },
         vintage: {

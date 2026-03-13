@@ -40,16 +40,16 @@ export default function Index() {
         <div className="container mx-auto px-4 py-20 md:py-32 relative">
           <div className="max-w-3xl mx-auto text-center">
             <p className="font-serif italic text-muted-foreground mb-4 text-lg animate-fade-in">
-              Édition 2025
+              Giro d'Italia 2025
             </p>
             <h1 className="font-display text-5xl md:text-7xl font-black tracking-tight mb-6 leading-[0.9] animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              Het Ultieme
-              <span className="block text-accent">Wielerspel</span>
+              Koers
+              <span className="block text-primary">poule</span>
             </h1>
             <div className="vintage-divider max-w-xs mx-auto my-6" />
             <p className="text-lg md:text-xl text-muted-foreground font-serif max-w-xl mx-auto mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              Stel je eigen wielerploeg samen, voorspel het podium en 
-              strijd tegen je vrienden. Wie wordt de beste ploegleider?
+              Stel je eigen wielerploeg samen voor de Giro, voorspel het podium en 
+              strijd tegen je vrienden om de Maglia Rosa.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
               <Button asChild size="lg" className="retro-border-primary text-base font-bold">
@@ -108,7 +108,7 @@ export default function Index() {
                     <span className="font-bold text-muted-foreground w-6 text-right">
                       {pos}.
                     </span>
-                    <span className="font-bold text-accent">{pts}pt</span>
+                    <span className="font-bold text-primary">{pts}pt</span>
                   </div>
                 ))}
               </div>
@@ -126,7 +126,7 @@ export default function Index() {
           Klaar om te koersen?
         </h2>
         <p className="text-muted-foreground font-serif mb-6">
-          Inschrijving sluit op 5 juli om 12:00 uur.
+          Inschrijving sluit op 9 mei om 12:00 uur.
         </p>
         <Button asChild size="lg" className="retro-border-primary text-base font-bold">
           <Link to="/login">

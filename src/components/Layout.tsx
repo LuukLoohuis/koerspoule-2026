@@ -22,9 +22,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
-              <span className="text-2xl">🚴</span>
+              <span className="text-2xl">🚴‍♂️</span>
               <span className="font-display text-xl font-bold tracking-tight">
-                Wieler<span className="text-accent">spel</span>
+                Koers<span className="text-primary">poule</span>
               </span>
             </Link>
 
@@ -103,9 +103,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="vintage-divider mb-6" />
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p className="font-serif italic">
-              "La course en tête" — Het wielerspel waar jij de ploegleider bent.
+              "La Corsa Rosa" — Koerspoule, waar jij de ploegleider bent.
             </p>
-            <p className="font-sans">© 2025 Wielerspel</p>
+            <p className="font-sans">© 2025 Koerspoule</p>
           </div>
         </div>
       </footer>
