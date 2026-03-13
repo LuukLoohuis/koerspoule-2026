@@ -7,7 +7,7 @@ import Layout from "@/components/Layout";
 import Index from "./pages/Index";
 import TeamBuilder from "./pages/TeamBuilder";
 import Results from "./pages/Results";
-import MyTeam from "./pages/MyTeam";
+import MijnPeloton from "./pages/MijnPeloton";
 import Rules from "./pages/Rules";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
