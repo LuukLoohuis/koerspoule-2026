@@ -113,11 +113,16 @@ export default function Results() {
               <div className="p-4 border-b-2 border-foreground bg-secondary/50">
                 <h2 className="font-display text-lg font-bold flex items-center gap-2">
                   <Medal className="h-5 w-5 text-accent" />
-                  Etappe {mockStageResults[selectedStage].stage} — {mockStageResults[selectedStage].date}
+                  Rit {mockStageResults[selectedStage].stage} — {mockStageResults[selectedStage].route}
                 </h2>
-                <span className="jersey-badge bg-accent text-accent-foreground mt-1">
-                  {mockStageResults[selectedStage].type}
-                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="jersey-badge bg-accent text-accent-foreground">
+                    {mockStageResults[selectedStage].type}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {mockStageResults[selectedStage].distance} • {mockStageResults[selectedStage].date}
+                  </span>
+                </div>
               </div>
               <div className="divide-y divide-border">
                 {mockStageResults[selectedStage].top20.map((result) => {
