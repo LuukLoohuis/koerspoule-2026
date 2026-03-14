@@ -12,30 +12,30 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+  ChartTooltipContent } from
+"@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
 
 /* ── Mock data for games & enriched sub-pools ── */
 const myGames = [
-  { id: "tdf2024", name: "Tour de France 2024", status: "afgelopen" as const, emoji: "🇫🇷" },
-  { id: "giro2025", name: "Giro d'Italia 2025", status: "actief" as const, emoji: "🇮🇹" },
-];
+{ id: "tdf2024", name: "Tour de France 2024", status: "afgelopen" as const, emoji: "🇫🇷" },
+{ id: "giro2025", name: "Giro d'Italia 2025", status: "actief" as const, emoji: "🇮🇹" }];
+
 
 const enrichedSubPools = mockSubPools.map((pool) => ({
   ...pool,
-  standings: mockTeams
-    .filter((t) => pool.members.includes(t.userName))
-    .sort((a, b) => b.totalPoints - a.totalPoints),
+  standings: mockTeams.
+  filter((t) => pool.members.includes(t.userName)).
+  sort((a, b) => b.totalPoints - a.totalPoints),
   pointsHistory: Array.from({ length: 3 }, (_, i) => ({
     stage: `Rit ${i + 1}`,
     ...Object.fromEntries(
       pool.members.map((name) => [
-        name,
-        Math.round(40 + Math.random() * 60) * (i + 1),
-      ])
-    ),
-  })),
+      name,
+      Math.round(40 + Math.random() * 60) * (i + 1)]
+      )
+    )
+  }))
 }));
 
 const MEMBER_COLORS = ["hsl(330 60% 65%)", "hsl(220 55% 45%)", "hsl(38 70% 55%)", "hsl(160 50% 40%)"];
@@ -61,9 +61,9 @@ export default function MijnPeloton() {
     if (!activePool) return {};
     return Object.fromEntries(
       activePool.standings.map((t, i) => [
-        t.userName,
-        { label: t.userName, color: MEMBER_COLORS[i % MEMBER_COLORS.length] },
-      ])
+      t.userName,
+      { label: t.userName, color: MEMBER_COLORS[i % MEMBER_COLORS.length] }]
+      )
     );
   }, [activePool]);
 
@@ -74,15 +74,15 @@ export default function MijnPeloton() {
 
   const myStagePoints = useMemo(() => {
     const stage = mockStageResults[selectedStage];
-    const scoringRiders = stage.top20
-      .filter((r) => myRiderNumbers.has(r.riderNumber))
-      .map((r) => ({ ...r, points: pointsTable[r.position] || 0 }));
+    const scoringRiders = stage.top20.
+    filter((r) => myRiderNumbers.has(r.riderNumber)).
+    map((r) => ({ ...r, points: pointsTable[r.position] || 0 }));
     const total = scoringRiders.reduce((sum, r) => sum + r.points, 0);
     return { scoringRiders, total };
   }, [selectedStage, myRiderNumbers]);
 
   const getCategoryName = (catId: number) =>
-    riderCategories.find((c) => c.id === catId)?.name || `Cat ${catId}`;
+  riderCategories.find((c) => c.id === catId)?.name || `Cat ${catId}`;
 
   /* ── Sub-pool detail view ── */
   if (activePool) {
@@ -90,8 +90,8 @@ export default function MijnPeloton() {
       <div className="container mx-auto px-4 py-8 md:py-12">
         <button
           onClick={() => setSelectedPool(null)}
-          className="text-sm text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1"
-        >
+          className="text-sm text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1">
+          
           ← Terug naar overzicht
         </button>
 
@@ -107,8 +107,8 @@ export default function MijnPeloton() {
                   navigator.clipboard.writeText(activePool.code);
                   toast({ title: "Code gekopieerd!" });
                 }}
-                className="text-muted-foreground hover:text-foreground"
-              >
+                className="text-muted-foreground hover:text-foreground">
+                
                 <Copy className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -134,14 +134,14 @@ export default function MijnPeloton() {
                 <CardTitle className="font-display text-base">🏆 Stand</CardTitle>
               </CardHeader>
               <CardContent className="p-0 divide-y divide-border">
-                {activePool.standings.map((team, idx) => (
-                  <div
-                    key={team.id}
-                    className={cn(
-                      "flex items-center justify-between px-4 py-2.5 text-sm",
-                      team.id === myTeam.id && "bg-primary/10"
-                    )}
-                  >
+                {activePool.standings.map((team, idx) =>
+                <div
+                  key={team.id}
+                  className={cn(
+                    "flex items-center justify-between px-4 py-2.5 text-sm",
+                    team.id === myTeam.id && "bg-primary/10"
+                  )}>
+                  
                     <div className="flex items-center gap-2">
                       <span className="font-display font-bold w-6 text-center text-muted-foreground">
                         {idx + 1}
@@ -150,7 +150,7 @@ export default function MijnPeloton() {
                     </div>
                     <span className="font-display font-bold">{team.totalPoints} pt</span>
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
           </div>
@@ -168,16 +168,16 @@ export default function MijnPeloton() {
                     <XAxis dataKey="stage" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                     <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    {activePool.standings.map((team, i) => (
-                      <Line
-                        key={team.userName}
-                        type="monotone"
-                        dataKey={team.userName}
-                        stroke={MEMBER_COLORS[i % MEMBER_COLORS.length]}
-                        strokeWidth={2}
-                        dot={{ r: 3 }}
-                      />
-                    ))}
+                    {activePool.standings.map((team, i) =>
+                    <Line
+                      key={team.userName}
+                      type="monotone"
+                      dataKey={team.userName}
+                      stroke={MEMBER_COLORS[i % MEMBER_COLORS.length]}
+                      strokeWidth={2}
+                      dot={{ r: 3 }} />
+
+                    )}
                   </LineChart>
                 </ChartContainer>
               </CardContent>
@@ -203,15 +203,15 @@ export default function MijnPeloton() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {activePool.standings.map((team) => (
-                        <tr key={team.id} className={cn(team.id === myTeam.id && "bg-primary/10")}>
+                      {activePool.standings.map((team) =>
+                      <tr key={team.id} className={cn(team.id === myTeam.id && "bg-primary/10")}>
                           <td className="px-4 py-2.5 font-sans font-medium">{team.userName}</td>
                           <td className="text-center px-4 py-2.5 font-display font-bold">{team.totalPoints}</td>
                           <td className="text-center px-4 py-2.5">{Math.floor(Math.random() * 6) + 2}</td>
                           <td className="text-center px-4 py-2.5">Rit {Math.floor(Math.random() * 3) + 1}</td>
                           <td className="text-center px-4 py-2.5">{team.jokers.length}</td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -219,18 +219,18 @@ export default function MijnPeloton() {
             </Card>
           </div>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   /* ── Main overview ── */
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
       <div className="text-center mb-8">
-         <img src={koerspouleLogo} alt="Koerspoule logo" className="mx-auto h-28 mb-4" />
-         <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-           🚴 Mijn Peloton
-         </h1>
+         
+         <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Mijn Peloton
+
+        </h1>
         <p className="text-muted-foreground font-serif">
           Welkom terug, {myTeam.userName}! Beheer je koersen en subpoules.
         </p>
@@ -240,24 +240,24 @@ export default function MijnPeloton() {
       <div className="max-w-5xl mx-auto">
         {/* Game selector */}
         <div className="flex gap-2 mb-6 flex-wrap">
-          {myGames.map((game) => (
-            <button
-              key={game.id}
-              onClick={() => setSelectedGame(game.id)}
-              className={cn(
-                "px-4 py-2 rounded-md font-display font-bold text-sm border-2 transition-all flex items-center gap-2",
-                selectedGame === game.id
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border hover:border-muted-foreground"
-              )}
-            >
+          {myGames.map((game) =>
+          <button
+            key={game.id}
+            onClick={() => setSelectedGame(game.id)}
+            className={cn(
+              "px-4 py-2 rounded-md font-display font-bold text-sm border-2 transition-all flex items-center gap-2",
+              selectedGame === game.id ?
+              "border-primary bg-primary text-primary-foreground" :
+              "border-border hover:border-muted-foreground"
+            )}>
+            
               <span>{game.emoji}</span>
               {game.name}
-              {game.status === "actief" && (
-                <span className="w-2 h-2 rounded-full bg-primary-foreground animate-pulse" />
-              )}
+              {game.status === "actief" &&
+            <span className="w-2 h-2 rounded-full bg-primary-foreground animate-pulse" />
+            }
             </button>
-          ))}
+          )}
         </div>
 
         {/* Inner tabs: Team / Uitslagen / Subpoules */}
@@ -287,8 +287,8 @@ export default function MijnPeloton() {
                     <span className="font-display text-xl font-bold text-accent">{myTeam.totalPoints} pt</span>
                   </CardHeader>
                   <CardContent className="p-0 divide-y divide-border">
-                    {Object.entries(myTeam.picks).map(([catId, rider]) => (
-                      <div key={catId} className="flex items-center gap-3 px-4 py-2 text-sm">
+                    {Object.entries(myTeam.picks).map(([catId, rider]) =>
+                    <div key={catId} className="flex items-center gap-3 px-4 py-2 text-sm">
                         <div className="flex-1 min-w-0">
                           <span className="text-xs text-muted-foreground block truncate">
                             {getCategoryName(Number(catId))}
@@ -298,7 +298,7 @@ export default function MijnPeloton() {
                           </span>
                         </div>
                       </div>
-                    ))}
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -311,11 +311,11 @@ export default function MijnPeloton() {
                   </CardHeader>
                   <CardContent className="p-4">
                     <div className="flex flex-wrap gap-2">
-                      {myTeam.jokers.map((j) => (
-                        <span key={j.number} className="jersey-badge bg-primary text-primary-foreground">
+                      {myTeam.jokers.map((j) =>
+                      <span key={j.number} className="jersey-badge bg-primary text-primary-foreground">
                           {j.name} #{j.number}
                         </span>
-                      ))}
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -364,20 +364,20 @@ export default function MijnPeloton() {
           <TabsContent value="uitslagen" className="mt-6">
             {/* Stage selector */}
             <div className="flex gap-2 mb-4 flex-wrap">
-              {mockStageResults.map((stage, i) => (
-                <button
-                  key={stage.stage}
-                  onClick={() => setSelectedStage(i)}
-                  className={cn(
-                    "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all",
-                    selectedStage === i
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border hover:border-muted-foreground"
-                  )}
-                >
+              {mockStageResults.map((stage, i) =>
+              <button
+                key={stage.stage}
+                onClick={() => setSelectedStage(i)}
+                className={cn(
+                  "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all",
+                  selectedStage === i ?
+                  "border-primary bg-primary text-primary-foreground" :
+                  "border-border hover:border-muted-foreground"
+                )}>
+                
                   Rit {stage.stage}
                 </button>
-              ))}
+              )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -407,8 +407,8 @@ export default function MijnPeloton() {
                           "flex items-center justify-between px-4 py-2 text-sm",
                           result.position <= 3 && "bg-primary/5",
                           isInMyTeam && "ring-1 ring-inset ring-primary/30 bg-primary/10"
-                        )}
-                      >
+                        )}>
+                        
                         <div className="flex items-center gap-3">
                           <span className={cn(
                             "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
@@ -427,8 +427,8 @@ export default function MijnPeloton() {
                         <span className="font-bold text-accent text-xs">
                           {pointsTable[result.position] || 0} pt
                         </span>
-                      </div>
-                    );
+                      </div>);
+
                   })}
                 </CardContent>
               </Card>
@@ -447,10 +447,10 @@ export default function MijnPeloton() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  {myStagePoints.scoringRiders.length > 0 ? (
-                    <div className="divide-y divide-border">
-                      {myStagePoints.scoringRiders.map((r) => (
-                        <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                  {myStagePoints.scoringRiders.length > 0 ?
+                  <div className="divide-y divide-border">
+                      {myStagePoints.scoringRiders.map((r) =>
+                    <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
                           <div className="flex items-center gap-3">
                             <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
                               {r.position}
@@ -459,13 +459,13 @@ export default function MijnPeloton() {
                           </div>
                           <span className="font-bold text-primary">{r.points} pt</span>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-6 text-center text-muted-foreground font-sans text-sm">
+                    )}
+                    </div> :
+
+                  <div className="p-6 text-center text-muted-foreground font-sans text-sm">
                       Geen van jouw renners scoorde punten in deze rit.
                     </div>
-                  )}
+                  }
                 </CardContent>
 
                 {/* Cumulative per-stage summary */}
@@ -476,21 +476,21 @@ export default function MijnPeloton() {
                   <div className="flex gap-2 flex-wrap">
                     {mockStageResults.map((stage, i) => {
                       const stageRiderNums = myRiderNumbers;
-                      const stageTotal = stage.top20
-                        .filter((r) => stageRiderNums.has(r.riderNumber))
-                        .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
+                      const stageTotal = stage.top20.
+                      filter((r) => stageRiderNums.has(r.riderNumber)).
+                      reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
                       return (
                         <div
                           key={stage.stage}
                           className={cn(
                             "text-center p-2 rounded-md border min-w-[60px]",
                             i === selectedStage ? "border-primary bg-primary/10" : "border-border"
-                          )}
-                        >
+                          )}>
+                          
                           <p className="text-xs text-muted-foreground">Rit {stage.stage}</p>
                           <p className="font-display font-bold">{stageTotal}</p>
-                        </div>
-                      );
+                        </div>);
+
                     })}
                   </div>
                 </div>
@@ -510,57 +510,57 @@ export default function MijnPeloton() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowCreateForm(!showCreateForm)}
-                    className="h-7 gap-1 text-xs"
-                  >
+                    className="h-7 gap-1 text-xs">
+                    
                     <Plus className="h-3.5 w-3.5" />
                     Nieuw
                   </Button>
                 </CardHeader>
                 <CardContent className="p-4 space-y-3">
-                  {showCreateForm && (
-                    <div className="p-3 border border-border rounded-md bg-secondary/20 space-y-2">
+                  {showCreateForm &&
+                  <div className="p-3 border border-border rounded-md bg-secondary/20 space-y-2">
                       <Input
-                        value={newPoolName}
-                        onChange={(e) => setNewPoolName(e.target.value)}
-                        placeholder="Naam subpoule"
-                        className="text-sm"
-                      />
+                      value={newPoolName}
+                      onChange={(e) => setNewPoolName(e.target.value)}
+                      placeholder="Naam subpoule"
+                      className="text-sm" />
+                    
                       <Input
-                        value={newPoolCode}
-                        onChange={(e) => setNewPoolCode(e.target.value.toUpperCase())}
-                        placeholder="Kies een code (bijv. KOERS24)"
-                        className="text-sm font-mono uppercase"
-                      />
+                      value={newPoolCode}
+                      onChange={(e) => setNewPoolCode(e.target.value.toUpperCase())}
+                      placeholder="Kies een code (bijv. KOERS24)"
+                      className="text-sm font-mono uppercase" />
+                    
                       <Button
-                        size="sm"
-                        className="w-full"
-                        onClick={() => {
-                          if (newPoolName && newPoolCode) {
-                            toast({ title: "Subpoule aangemaakt!", description: `Code: ${newPoolCode}` });
-                            setNewPoolName("");
-                            setNewPoolCode("");
-                            setShowCreateForm(false);
-                          }
-                        }}
-                      >
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        if (newPoolName && newPoolCode) {
+                          toast({ title: "Subpoule aangemaakt!", description: `Code: ${newPoolCode}` });
+                          setNewPoolName("");
+                          setNewPoolCode("");
+                          setShowCreateForm(false);
+                        }
+                      }}>
+                      
                         Aanmaken
                       </Button>
                     </div>
-                  )}
+                  }
 
-                  {enrichedSubPools.map((pool) => (
-                    <button
-                      key={pool.id}
-                      onClick={() => setSelectedPool(pool.id)}
-                      className="w-full text-left p-3 bg-secondary/50 rounded-md hover:bg-secondary transition-colors flex items-center justify-between group"
-                    >
+                  {enrichedSubPools.map((pool) =>
+                  <button
+                    key={pool.id}
+                    onClick={() => setSelectedPool(pool.id)}
+                    className="w-full text-left p-3 bg-secondary/50 rounded-md hover:bg-secondary transition-colors flex items-center justify-between group">
+                    
                       <div>
                         <p className="font-sans font-bold text-sm">{pool.name}</p>
                         <p className="text-xs text-muted-foreground">{pool.members.length} deelnemers</p>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </button>
-                  ))}
+                  )}
 
                   {/* Join via code */}
                   <div className="pt-2 border-t border-border">
@@ -572,16 +572,16 @@ export default function MijnPeloton() {
                         value={joinCode}
                         onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                         placeholder="CODE"
-                        className="text-xs font-mono uppercase"
-                      />
+                        className="text-xs font-mono uppercase" />
+                      
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => {
                           toast({ title: "Aangevraagd!", description: `Code: ${joinCode}` });
                           setJoinCode("");
-                        }}
-                      >
+                        }}>
+                        
                         Join
                       </Button>
                     </div>
@@ -604,27 +604,27 @@ export default function MijnPeloton() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0 divide-y divide-border">
-                    {[...mockTeams]
-                      .sort((a, b) => b.totalPoints - a.totalPoints)
-                      .map((team, idx) => {
-                        const isMe = team.id === myTeam.id;
-                        return (
-                          <div
-                            key={team.id}
-                            className={cn(
-                              "flex items-center justify-between px-4 py-3 text-sm",
-                              idx < 3 && "bg-primary/5",
-                              isMe && "ring-1 ring-inset ring-primary/30 bg-primary/10"
-                            )}
-                          >
+                    {[...mockTeams].
+                    sort((a, b) => b.totalPoints - a.totalPoints).
+                    map((team, idx) => {
+                      const isMe = team.id === myTeam.id;
+                      return (
+                        <div
+                          key={team.id}
+                          className={cn(
+                            "flex items-center justify-between px-4 py-3 text-sm",
+                            idx < 3 && "bg-primary/5",
+                            isMe && "ring-1 ring-inset ring-primary/30 bg-primary/10"
+                          )}>
+                          
                             <div className="flex items-center gap-3">
                               <span className={cn(
-                                "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-                                idx === 0 && "bg-primary text-primary-foreground",
-                                idx === 1 && "bg-muted text-foreground",
-                                idx === 2 && "bg-vintage-gold text-primary-foreground",
-                                idx > 2 && "text-muted-foreground"
-                              )}>
+                              "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+                              idx === 0 && "bg-primary text-primary-foreground",
+                              idx === 1 && "bg-muted text-foreground",
+                              idx === 2 && "bg-vintage-gold text-primary-foreground",
+                              idx > 2 && "text-muted-foreground"
+                            )}>
                                 {idx + 1}
                               </span>
                               <div>
@@ -640,9 +640,9 @@ export default function MijnPeloton() {
                             <span className="font-display font-bold text-lg text-accent">
                               {team.totalPoints} pt
                             </span>
-                          </div>
-                        );
-                      })}
+                          </div>);
+
+                    })}
                   </CardContent>
                 </Card>
               </div>
@@ -655,18 +655,18 @@ export default function MijnPeloton() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
+    </div>);
+
 }
 
 const CLASSIFICATION_TABS = [
-  { key: "gc", label: "🏆 Algemeen", jersey: "bg-jersey-pink", valueKey: "time" as const },
-  { key: "points", label: "🟣 Punten", jersey: "bg-jersey-purple", valueKey: "points" as const },
-  { key: "kom", label: "🔵 Berg", jersey: "bg-jersey-blue", valueKey: "points" as const },
-  { key: "youth", label: "⚪ Jongeren", jersey: "bg-jersey-white border", valueKey: "time" as const },
-] as const;
+{ key: "gc", label: "🏆 Algemeen", jersey: "bg-jersey-pink", valueKey: "time" as const },
+{ key: "points", label: "🟣 Punten", jersey: "bg-jersey-purple", valueKey: "points" as const },
+{ key: "kom", label: "🔵 Berg", jersey: "bg-jersey-blue", valueKey: "points" as const },
+{ key: "youth", label: "⚪ Jongeren", jersey: "bg-jersey-white border", valueKey: "time" as const }] as
+const;
 
-function ClassificationTabs({ myRiderNumbers }: { myRiderNumbers: Set<number> }) {
+function ClassificationTabs({ myRiderNumbers }: {myRiderNumbers: Set<number>;}) {
   const [activeClassification, setActiveClassification] = useState("gc");
 
   const activeTab = CLASSIFICATION_TABS.find((t) => t.key === activeClassification) || CLASSIFICATION_TABS[0];
@@ -675,20 +675,20 @@ function ClassificationTabs({ myRiderNumbers }: { myRiderNumbers: Set<number> })
   return (
     <div>
       <div className="flex gap-2 mb-4 flex-wrap">
-        {CLASSIFICATION_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveClassification(tab.key)}
-            className={cn(
-              "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all flex items-center gap-2",
-              activeClassification === tab.key
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border hover:border-muted-foreground"
-            )}
-          >
+        {CLASSIFICATION_TABS.map((tab) =>
+        <button
+          key={tab.key}
+          onClick={() => setActiveClassification(tab.key)}
+          className={cn(
+            "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all flex items-center gap-2",
+            activeClassification === tab.key ?
+            "border-primary bg-primary text-primary-foreground" :
+            "border-border hover:border-muted-foreground"
+          )}>
+          
             {tab.label}
           </button>
-        ))}
+        )}
       </div>
 
       <Card className="retro-border">
@@ -708,8 +708,8 @@ function ClassificationTabs({ myRiderNumbers }: { myRiderNumbers: Set<number> })
                   "flex items-center justify-between px-4 py-2.5 text-sm",
                   entry.position <= 3 && "bg-primary/5",
                   isInMyTeam && "ring-1 ring-inset ring-primary/30 bg-primary/10"
-                )}
-              >
+                )}>
+                
                 <div className="flex items-center gap-3">
                   <span className={cn(
                     "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
@@ -731,16 +731,16 @@ function ClassificationTabs({ myRiderNumbers }: { myRiderNumbers: Set<number> })
                 <span className="font-display font-bold text-accent">
                   {activeTab.valueKey === "points" ? `${entry.points} pt` : entry.time}
                 </span>
-              </div>
-            );
+              </div>);
+
           })}
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>);
+
 }
 
-function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function StatCard({ icon, label, value }: {icon: React.ReactNode;label: string;value: string;}) {
   return (
     <Card className="retro-border">
       <CardContent className="p-4 flex items-center gap-3">
@@ -750,6 +750,6 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
           <p className="font-display font-bold text-lg">{value}</p>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>);
+
 }
