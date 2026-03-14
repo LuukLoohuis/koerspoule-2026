@@ -131,7 +131,7 @@ export default function MijnPeloton() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Stats cards */}
-          <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="lg:col-span-3 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
             <StatCard icon={<Trophy className="h-5 w-5 text-primary" />} label="Leider" value={activePool.standings[0]?.userName || "—"} />
             <StatCard icon={<TrendingUp className="h-5 w-5 text-primary" />} label="Hoogste score" value={`${activePool.standings[0]?.totalPoints || 0} pt`} />
             <StatCard icon={<Target className="h-5 w-5 text-primary" />} label="Gemiddelde" value={`${Math.round(activePool.standings.reduce((s, t) => s + t.totalPoints, 0) / (activePool.standings.length || 1))} pt`} />
