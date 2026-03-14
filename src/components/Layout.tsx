@@ -23,7 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
-              <img src={koerspouleLogo} alt="Koerspoule logo" className="h-14" />
+              <img src={koerspouleLogo} alt="Koerspoule logo" className="h-18" />
             </Link>
 
             {/* Desktop nav */}
