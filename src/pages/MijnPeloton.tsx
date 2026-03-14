@@ -826,6 +826,167 @@ export default function MijnPeloton() {
 
 }
 
+/* ── Wat Als? Tab Component ── */
+function WatAlsTab({
+  getRiderPoints,
+  myTeam,
+  getCategoryName,
+}: {
+  getRiderPoints: (riderNumber: number) => number;
+  myTeam: typeof mockTeams[0];
+  getCategoryName: (catId: number) => string;
+}) {
+  // Best possible team: for each category, pick the rider with the most points
+  const bestTeam = useMemo(() => {
+    return riderCategories.map((cat) => {
+      const best = cat.riders
+        .map((r) => ({ ...r, points: getRiderPoints(r.number) }))
+        .sort((a, b) => b.points - a.points)[0];
+      return { catId: cat.id, catName: cat.name, rider: best };
+    });
+  }, [getRiderPoints]);
+
+  const bestTotal = bestTeam.reduce((sum, r) => sum + (r.rider?.points || 0), 0);
+  const myTotal = Object.values(myTeam.picks).reduce((sum, r) => sum + getRiderPoints(r.number), 0);
+
+  // Monte Carlo: random team (pick random rider per category), run 1000 simulations
+  const monkeyStats = useMemo(() => {
+    const SIMS = 1000;
+    const totals: number[] = [];
+    for (let i = 0; i < SIMS; i++) {
+      let total = 0;
+      for (const cat of riderCategories) {
+        const randomRider = cat.riders[Math.floor(Math.random() * cat.riders.length)];
+        total += getRiderPoints(randomRider.number);
+      }
+      totals.push(total);
+    }
+    totals.sort((a, b) => a - b);
+    const avg = Math.round(totals.reduce((s, t) => s + t, 0) / SIMS);
+    const median = totals[Math.floor(SIMS / 2)];
+    const best = totals[SIMS - 1];
+    const worst = totals[0];
+    const betterThanYou = totals.filter((t) => t > myTotal).length;
+    const percentile = Math.round(((SIMS - betterThanYou) / SIMS) * 100);
+
+    // Generate one example random team for display
+    const exampleTeam = riderCategories.map((cat) => {
+      const randomRider = cat.riders[Math.floor(Math.random() * cat.riders.length)];
+      return { catId: cat.id, catName: cat.name, rider: { ...randomRider, points: getRiderPoints(randomRider.number) } };
+    });
+    const exampleTotal = exampleTeam.reduce((s, r) => s + r.rider.points, 0);
+
+    return { avg, median, best, worst, percentile, exampleTeam, exampleTotal };
+  }, [getRiderPoints, myTotal]);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Best possible team */}
+      <Card className="retro-border">
+        <CardHeader className="border-b-2 border-foreground bg-primary/10 py-3 px-4">
+          <CardTitle className="font-display text-base flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-primary" />
+            🏆 Het Droomteam
+          </CardTitle>
+          <p className="text-xs text-muted-foreground font-sans mt-1">
+            De best mogelijke selectie op basis van echte uitslagen
+          </p>
+        </CardHeader>
+        <CardContent className="p-0 divide-y divide-border">
+          {bestTeam
+            .sort((a, b) => (b.rider?.points || 0) - (a.rider?.points || 0))
+            .map(({ catId, catName, rider }) => (
+            <div key={catId} className="flex items-center justify-between px-4 py-2 text-sm">
+              <div className="min-w-0">
+                <span className="text-xs text-muted-foreground block">{catName}</span>
+                <span className="font-medium font-sans">
+                  {rider?.name || "—"} {rider && <span className="text-muted-foreground">#{rider.number}</span>}
+                </span>
+              </div>
+              <span className="font-display font-bold text-primary text-xs shrink-0">
+                {rider?.points || 0} pt
+              </span>
+            </div>
+          ))}
+        </CardContent>
+        <div className="border-t-2 border-foreground bg-secondary/30 p-4">
+          <div className="flex justify-between text-sm font-display font-bold">
+            <span>Droomteam totaal:</span>
+            <span className="text-primary">{bestTotal} pt</span>
+          </div>
+          <div className="flex justify-between text-sm font-display mt-1">
+            <span>Jouw totaal:</span>
+            <span className="text-accent">{myTotal} pt</span>
+          </div>
+          <div className="mt-2 text-xs text-muted-foreground font-sans">
+            Je hebt <span className="font-bold text-foreground">{Math.round((myTotal / bestTotal) * 100)}%</span> van het maximaal haalbare gescoord.
+          </div>
+        </div>
+      </Card>
+
+      {/* Monkey with darts */}
+      <Card className="retro-border">
+        <CardHeader className="border-b-2 border-foreground bg-accent/10 py-3 px-4">
+          <CardTitle className="font-display text-base flex items-center gap-2">
+            🐒 De Aap met Dartpijlen
+          </CardTitle>
+          <p className="text-xs text-muted-foreground font-sans mt-1">
+            1.000 willekeurige teams gesimuleerd — hoe goed ben jij eigenlijk?
+          </p>
+        </CardHeader>
+        <CardContent className="p-4 space-y-4">
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 bg-secondary/50 rounded-md text-center">
+              <p className="text-xs text-muted-foreground font-sans">Gemiddeld</p>
+              <p className="font-display font-bold text-lg">{monkeyStats.avg} pt</p>
+            </div>
+            <div className="p-3 bg-secondary/50 rounded-md text-center">
+              <p className="text-xs text-muted-foreground font-sans">Mediaan</p>
+              <p className="font-display font-bold text-lg">{monkeyStats.median} pt</p>
+            </div>
+            <div className="p-3 bg-secondary/50 rounded-md text-center">
+              <p className="text-xs text-muted-foreground font-sans">Beste aap</p>
+              <p className="font-display font-bold text-lg text-primary">{monkeyStats.best} pt</p>
+            </div>
+            <div className="p-3 bg-secondary/50 rounded-md text-center">
+              <p className="text-xs text-muted-foreground font-sans">Slechtste aap</p>
+              <p className="font-display font-bold text-lg text-destructive">{monkeyStats.worst} pt</p>
+            </div>
+          </div>
+
+          {/* Your percentile */}
+          <div className="p-4 bg-primary/10 rounded-md text-center">
+            <p className="text-sm text-muted-foreground font-sans mb-1">Jij scoort beter dan</p>
+            <p className="font-display font-bold text-3xl text-primary">{monkeyStats.percentile}%</p>
+            <p className="text-sm text-muted-foreground font-sans">van de willekeurige apen-teams</p>
+          </div>
+
+          {/* Example monkey team */}
+          <div>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 font-sans">
+              🎯 Voorbeeld apenteam ({monkeyStats.exampleTotal} pt)
+            </h3>
+            <div className="space-y-1 max-h-[300px] overflow-y-auto">
+              {monkeyStats.exampleTeam
+                .sort((a, b) => b.rider.points - a.rider.points)
+                .map(({ catId, catName, rider }) => (
+                <div key={catId} className="flex items-center justify-between text-xs px-2 py-1.5 bg-secondary/30 rounded">
+                  <div>
+                    <span className="text-muted-foreground">{catName}: </span>
+                    <span className="font-medium font-sans">{rider.name}</span>
+                  </div>
+                  <span className="font-display font-bold text-accent">{rider.points} pt</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 const CLASSIFICATION_TABS = [
 { key: "gc", label: "🏆 Algemeen", jersey: "bg-jersey-pink", valueKey: "time" as const },
 { key: "points", label: "🟣 Punten", jersey: "bg-jersey-purple", valueKey: "points" as const },
