@@ -43,7 +43,7 @@ export default function Index() {
             <img
               src={koerspouleLogo}
               alt="Koerspoule logo"
-              className="mx-auto w-64 md:w-96 mb-6 animate-fade-in drop-shadow-lg"
+              className="mx-auto w-80 md:w-[28rem] mb-6 animate-fade-in drop-shadow-lg"
             />
             <p className="font-serif italic text-muted-foreground mb-4 text-lg animate-fade-in">
               Giro d'Italia 2025
