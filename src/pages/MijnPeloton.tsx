@@ -363,17 +363,20 @@ export default function MijnPeloton() {
         {/* Inner tabs: Team / Uitslagen / Subpoules */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
           <TabsList className="w-full retro-border">
-            <TabsTrigger value="team" className="flex-1 font-display">
+            <TabsTrigger value="team" className="flex-1 font-display text-xs md:text-sm">
               🚴 Mijn Team
             </TabsTrigger>
-            <TabsTrigger value="uitslagen" className="flex-1 font-display">
+            <TabsTrigger value="uitslagen" className="flex-1 font-display text-xs md:text-sm">
               📋 Uitslagen
             </TabsTrigger>
-            <TabsTrigger value="klassement" className="flex-1 font-display">
+            <TabsTrigger value="klassement" className="flex-1 font-display text-xs md:text-sm">
               🏅 GC
             </TabsTrigger>
-            <TabsTrigger value="subpoules" className="flex-1 font-display">
+            <TabsTrigger value="subpoules" className="flex-1 font-display text-xs md:text-sm">
               👥 Subpoules
+            </TabsTrigger>
+            <TabsTrigger value="watals" className="flex-1 font-display text-xs md:text-sm">
+              🎲 Wat Als?
             </TabsTrigger>
           </TabsList>
 
