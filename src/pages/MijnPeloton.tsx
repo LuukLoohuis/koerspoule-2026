@@ -240,8 +240,15 @@ export default function MijnPeloton() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
-                        {Object.entries(myTeam.picks).map(([catId, rider]) => {
-                          const otherRider = subpoolCompareTeam.picks[Number(catId)];
+                        {Object.entries(myTeam.picks)
+                          .map(([catId, rider]) => ({
+                            catId,
+                            rider,
+                            myPts: getRiderPoints(rider.number),
+                            otherRider: subpoolCompareTeam.picks[Number(catId)],
+                          }))
+                          .sort((a, b) => b.myPts - a.myPts)
+                          .map(({ catId, rider, myPts, otherRider }) => {
                           const isSame = otherRider?.number === rider.number;
                           return (
                             <tr key={catId} className={cn(isSame && "bg-accent/10")}>
@@ -250,7 +257,7 @@ export default function MijnPeloton() {
                                 {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                               </td>
                               <td className="px-4 py-2 text-center font-display font-bold text-accent text-xs">
-                                {getRiderPoints(rider.number)} pt
+                                {myPts} pt
                               </td>
                               <td className="px-4 py-2 font-sans font-medium">
                                 {otherRider?.name || "—"}{" "}
