@@ -231,10 +231,12 @@ export default function MijnPeloton() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-border bg-secondary/30">
+                         <tr className="border-b border-border bg-secondary/30">
                           <th className="text-left px-4 py-2 font-display">Categorie</th>
                           <th className="text-left px-4 py-2 font-display">{myTeam.userName} (jij)</th>
+                          <th className="text-center px-4 py-2 font-display">Punten</th>
                           <th className="text-left px-4 py-2 font-display">{subpoolCompareTeam.userName}</th>
+                          <th className="text-center px-4 py-2 font-display">Punten</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
