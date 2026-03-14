@@ -14,7 +14,7 @@ import {
   ChartTooltip,
   ChartTooltipContent } from
 "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, ReferenceLine, Cell } from "recharts";
 
 /* ── Mock data for games & enriched sub-pools ── */
 const myGames = [
