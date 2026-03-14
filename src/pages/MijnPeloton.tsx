@@ -14,7 +14,7 @@ import {
   ChartTooltip,
   ChartTooltipContent } from
 "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, ReferenceLine, Cell } from "recharts";
 
 /* ── Mock data for games & enriched sub-pools ── */
 const myGames = [
@@ -876,7 +876,23 @@ function WatAlsTab({
     const worst = totals[0];
     const betterThanYou = totals.filter((t) => t > myTotal).length;
     const percentile = Math.round(((SIMS - betterThanYou) / SIMS) * 100);
-    return { avg, median, best, worst, percentile };
+
+    // Histogram bins
+    const BIN_COUNT = 20;
+    const range = best - worst || 1;
+    const binSize = Math.ceil(range / BIN_COUNT);
+    const bins: { label: string; count: number; min: number; max: number }[] = [];
+    for (let i = 0; i < BIN_COUNT; i++) {
+      const min = worst + i * binSize;
+      const max = min + binSize;
+      bins.push({ label: `${min}`, count: 0, min, max });
+    }
+    for (const t of totals) {
+      const idx = Math.min(Math.floor((t - worst) / binSize), BIN_COUNT - 1);
+      bins[idx].count++;
+    }
+
+    return { avg, median, best, worst, percentile, bins };
   }, [getRiderPoints, myTotal]);
 
   // Example monkey team (re-rolls on button click)
@@ -971,6 +987,39 @@ function WatAlsTab({
             <p className="text-sm text-muted-foreground font-sans mb-1">Jij scoort beter dan</p>
             <p className="font-display font-bold text-3xl text-primary">{monkeyStats.percentile}%</p>
             <p className="text-sm text-muted-foreground font-sans">van de willekeurige apen-teams</p>
+          </div>
+
+          {/* Histogram */}
+          <div>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-sans mb-2">
+              📊 Verdeling apenscores
+            </h3>
+            <ChartContainer config={{ count: { label: "Aantal teams", color: "hsl(var(--accent))" } }} className="h-[180px] w-full">
+              <BarChart data={monkeyStats.bins} margin={{ top: 8, right: 4, bottom: 0, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                <ChartTooltip
+                  content={<ChartTooltipContent hideIndicator />}
+                  labelFormatter={(_, payload) => {
+                    if (payload?.[0]?.payload) {
+                      const d = payload[0].payload;
+                      return `${d.min}–${d.max} pt`;
+                    }
+                    return "";
+                  }}
+                />
+                <ReferenceLine x={(() => {
+                  const idx = Math.min(Math.floor((myTotal - monkeyStats.worst) / ((monkeyStats.best - monkeyStats.worst || 1) / 20)), 19);
+                  return monkeyStats.bins[Math.max(0, idx)]?.label;
+                })()} stroke="hsl(var(--primary))" strokeWidth={2} strokeDasharray="4 4" label={{ value: "Jij", position: "top", fontSize: 11, fill: "hsl(var(--primary))" }} />
+                <Bar dataKey="count" radius={[2, 2, 0, 0]}>
+                  {monkeyStats.bins.map((bin, i) => (
+                    <Cell key={i} fill={myTotal >= bin.min && myTotal < bin.max ? "hsl(var(--primary))" : "hsl(var(--accent))"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ChartContainer>
           </div>
 
           {/* Example monkey team with re-roll */}
