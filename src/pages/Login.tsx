@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import koerspouleLogo from "@/assets/koerspoule-logo.png";
 
 export default function Login() {
   const { toast } = useToast();
