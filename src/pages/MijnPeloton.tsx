@@ -21,6 +21,12 @@ const myGames = [
 { id: "tdf2024", name: "Tour de France 2024", status: "afgelopen" as const, emoji: "🇫🇷" },
 { id: "giro2025", name: "Giro d'Italia 2025", status: "actief" as const, emoji: "🇮🇹" }];
 
+  const getRiderPoints = (riderNumber: number) => {
+    return mockStageResults.reduce((total, stage) => {
+      const result = stage.top20.find((r) => r.riderNumber === riderNumber);
+      return total + (result ? (pointsTable[result.position] || 0) : 0);
+    }, 0);
+  };
 
 const enrichedSubPools = mockSubPools.map((pool) => ({
   ...pool,
@@ -225,10 +231,12 @@ export default function MijnPeloton() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-border bg-secondary/30">
+                         <tr className="border-b border-border bg-secondary/30">
                           <th className="text-left px-4 py-2 font-display">Categorie</th>
                           <th className="text-left px-4 py-2 font-display">{myTeam.userName} (jij)</th>
+                          <th className="text-center px-4 py-2 font-display">Punten</th>
                           <th className="text-left px-4 py-2 font-display">{subpoolCompareTeam.userName}</th>
+                          <th className="text-center px-4 py-2 font-display">Punten</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
@@ -241,10 +249,16 @@ export default function MijnPeloton() {
                               <td className="px-4 py-2 font-sans font-medium">
                                 {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                               </td>
+                              <td className="px-4 py-2 text-center font-display font-bold text-accent text-xs">
+                                {getRiderPoints(rider.number)} pt
+                              </td>
                               <td className="px-4 py-2 font-sans font-medium">
                                 {otherRider?.name || "—"}{" "}
                                 {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
                                 {isSame && <span className="ml-1 text-xs text-accent">★</span>}
+                              </td>
+                              <td className="px-4 py-2 text-center font-display font-bold text-accent text-xs">
+                                {otherRider ? getRiderPoints(otherRider.number) : 0} pt
                               </td>
                             </tr>
                           );
@@ -405,7 +419,11 @@ export default function MijnPeloton() {
                             {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                           </span>
                         </div>
+                        <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
+                          {getRiderPoints(rider.number)} pt
+                        </span>
                         {compareTeam && (
+                          <>
                           <div className={cn(
                             "flex-1 min-w-0 text-right",
                             isSame ? "text-accent" : "text-muted-foreground"
@@ -416,6 +434,10 @@ export default function MijnPeloton() {
                               {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
                             </span>
                           </div>
+                          <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
+                            {otherRider ? getRiderPoints(otherRider.number) : 0} pt
+                          </span>
+                          </>
                         )}
                       </div>
                       );
