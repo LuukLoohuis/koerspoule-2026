@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import koerspouleLogo from "@/assets/koerspoule-logo.png";
 
 export default function Login() {
   const { toast } = useToast();
@@ -24,7 +25,7 @@ export default function Login() {
     <div className="container mx-auto px-4 py-12 md:py-20">
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
-          <span className="text-4xl mb-4 block">🚴</span>
+          <img src={koerspouleLogo} alt="Koerspoule logo" className="h-24 mx-auto mb-2" />
           <h1 className="font-display text-3xl font-bold mb-2">
             {isRegister ? "Doe mee!" : "Welkom terug"}
           </h1>
