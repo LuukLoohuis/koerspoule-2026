@@ -376,7 +376,7 @@ export default function MijnPeloton() {
               👥 Subpoules
             </TabsTrigger>
             <TabsTrigger value="watals" className="flex-1 font-display text-xs md:text-sm">
-              🎲 Wat Als?
+              ⛰️ Hors Catégorie
             </TabsTrigger>
           </TabsList>
 
