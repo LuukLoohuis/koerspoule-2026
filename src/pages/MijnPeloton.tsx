@@ -992,12 +992,12 @@ function WatAlsTab({
               {exampleMonkey.team
                 .sort((a, b) => b.rider.points - a.rider.points)
                 .map(({ catId, catName, rider }) => (
-                <div key={catId} className="flex items-center justify-between text-xs px-2 py-1.5 bg-secondary/30 rounded">
-                  <div>
-                    <span className="text-muted-foreground">{catName}: </span>
+                <div key={catId} className="flex items-center justify-between text-[11px] md:text-xs px-2 py-1.5 bg-secondary/30 rounded">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-muted-foreground block text-[10px] md:inline md:text-xs">{catName}: </span>
                     <span className="font-medium font-sans">{rider.name}</span>
                   </div>
-                  <span className="font-display font-bold text-accent">{rider.points} pt</span>
+                  <span className="font-display font-bold text-accent shrink-0 ml-2">{rider.points} pt</span>
                 </div>
               ))}
             </div>
