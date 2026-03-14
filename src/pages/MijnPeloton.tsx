@@ -1091,11 +1091,11 @@ function ClassificationTabs({ myRiderNumbers }: {myRiderNumbers: Set<number>;}) 
 function StatCard({ icon, label, value }: {icon: React.ReactNode;label: string;value: string;}) {
   return (
     <Card className="retro-border">
-      <CardContent className="p-4 flex items-center gap-3">
-        {icon}
-        <div>
-          <p className="text-xs text-muted-foreground font-sans">{label}</p>
-          <p className="font-display font-bold text-lg">{value}</p>
+      <CardContent className="p-2.5 md:p-4 flex items-center gap-2 md:gap-3">
+        <div className="shrink-0">{icon}</div>
+        <div className="min-w-0">
+          <p className="text-[10px] md:text-xs text-muted-foreground font-sans">{label}</p>
+          <p className="font-display font-bold text-sm md:text-lg truncate">{value}</p>
         </div>
       </CardContent>
     </Card>);
