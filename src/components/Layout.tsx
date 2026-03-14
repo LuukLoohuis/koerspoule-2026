@@ -23,7 +23,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
-              <img src={koerspouleLogo} alt="Koerspoule logo" className="h-24" />
+              <img src={koerspouleLogo} alt="Koerspoule logo" className="h-32" />
             </Link>
 
             {/* Desktop nav */}
@@ -36,7 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     "px-3 py-2 text-sm font-medium rounded-md transition-colors",
                     location.pathname === item.to
                       ? "bg-primary text-primary-foreground"
-                      : "hover:bg-secondary text-foreground"
+                      : "hover:bg-secondary text-foreground",
                   )}
                 >
                   {item.label}
@@ -54,10 +54,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Mobile hamburger */}
-            <button
-              className="md:hidden p-2"
-              onClick={() => setMobileOpen(!mobileOpen)}
-            >
+            <button className="md:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
@@ -74,7 +71,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     "block px-3 py-2 text-sm font-medium rounded-md transition-colors",
                     location.pathname === item.to
                       ? "bg-primary text-primary-foreground"
-                      : "hover:bg-secondary text-foreground"
+                      : "hover:bg-secondary text-foreground",
                   )}
                 >
                   {item.label}
@@ -100,9 +97,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4">
           <div className="vintage-divider mb-6" />
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <p className="font-serif italic">
-              "La Corsa Rosa" — Koerspoule, waar jij de ploegleider bent.
-            </p>
+            <p className="font-serif italic">"La Corsa Rosa" — Koerspoule, waar jij de ploegleider bent.</p>
             <p className="font-sans">© 2025 Koerspoule</p>
           </div>
         </div>
