@@ -989,6 +989,39 @@ function WatAlsTab({
             <p className="text-sm text-muted-foreground font-sans">van de willekeurige apen-teams</p>
           </div>
 
+          {/* Histogram */}
+          <div>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-sans mb-2">
+              📊 Verdeling apenscores
+            </h3>
+            <ChartContainer config={{ count: { label: "Aantal teams", color: "hsl(var(--accent))" } }} className="h-[180px] w-full">
+              <BarChart data={monkeyStats.bins} margin={{ top: 8, right: 4, bottom: 0, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                <ChartTooltip
+                  content={<ChartTooltipContent hideIndicator />}
+                  labelFormatter={(_, payload) => {
+                    if (payload?.[0]?.payload) {
+                      const d = payload[0].payload;
+                      return `${d.min}–${d.max} pt`;
+                    }
+                    return "";
+                  }}
+                />
+                <ReferenceLine x={(() => {
+                  const idx = Math.min(Math.floor((myTotal - monkeyStats.worst) / ((monkeyStats.best - monkeyStats.worst || 1) / 20)), 19);
+                  return monkeyStats.bins[Math.max(0, idx)]?.label;
+                })()} stroke="hsl(var(--primary))" strokeWidth={2} strokeDasharray="4 4" label={{ value: "Jij", position: "top", fontSize: 11, fill: "hsl(var(--primary))" }} />
+                <Bar dataKey="count" radius={[2, 2, 0, 0]}>
+                  {monkeyStats.bins.map((bin, i) => (
+                    <Cell key={i} fill={myTotal >= bin.min && myTotal < bin.max ? "hsl(var(--primary))" : "hsl(var(--accent))"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ChartContainer>
+          </div>
+
           {/* Example monkey team with re-roll */}
           <div>
             <div className="flex items-center justify-between mb-2">
