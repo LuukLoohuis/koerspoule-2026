@@ -891,7 +891,7 @@ function WatAlsTab({
   }, [getRiderPoints, monkeyRoll]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       {/* Best possible team */}
       <Card className="retro-border">
         <CardHeader className="border-b-2 border-foreground bg-primary/10 py-3 px-4">
