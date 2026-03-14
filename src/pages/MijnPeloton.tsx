@@ -51,6 +51,8 @@ export default function MijnPeloton() {
   const [joinCode, setJoinCode] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedStage, setSelectedStage] = useState(0);
+  const [comparePlayerName, setComparePlayerName] = useState("");
+  const [subpoolComparePlayer, setSubpoolComparePlayer] = useState("");
 
   const activePool = useMemo(
     () => enrichedSubPools.find((p) => p.id === selectedPool),
