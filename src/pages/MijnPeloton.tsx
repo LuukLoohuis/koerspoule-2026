@@ -131,7 +131,7 @@ export default function MijnPeloton() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Stats cards */}
-          <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="lg:col-span-3 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
             <StatCard icon={<Trophy className="h-5 w-5 text-primary" />} label="Leider" value={activePool.standings[0]?.userName || "—"} />
             <StatCard icon={<TrendingUp className="h-5 w-5 text-primary" />} label="Hoogste score" value={`${activePool.standings[0]?.totalPoints || 0} pt`} />
             <StatCard icon={<Target className="h-5 w-5 text-primary" />} label="Gemiddelde" value={`${Math.round(activePool.standings.reduce((s, t) => s + t.totalPoints, 0) / (activePool.standings.length || 1))} pt`} />
@@ -362,21 +362,21 @@ export default function MijnPeloton() {
 
         {/* Inner tabs: Team / Uitslagen / Subpoules */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
-          <TabsList className="w-full retro-border">
-            <TabsTrigger value="team" className="flex-1 font-display text-xs md:text-sm">
-              🚴 Mijn Team
+          <TabsList className="w-full retro-border flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="team" className="flex-1 font-display text-[10px] md:text-sm px-1.5 md:px-3 min-w-0">
+              🚴 <span className="hidden sm:inline">Mijn </span>Team
             </TabsTrigger>
-            <TabsTrigger value="uitslagen" className="flex-1 font-display text-xs md:text-sm">
-              📋 Uitslagen
+            <TabsTrigger value="uitslagen" className="flex-1 font-display text-[10px] md:text-sm px-1.5 md:px-3 min-w-0">
+              📋 <span className="hidden sm:inline">Uitslag</span><span className="sm:hidden">Rit</span>
             </TabsTrigger>
-            <TabsTrigger value="klassement" className="flex-1 font-display text-xs md:text-sm">
+            <TabsTrigger value="klassement" className="flex-1 font-display text-[10px] md:text-sm px-1.5 md:px-3 min-w-0">
               🏅 GC
             </TabsTrigger>
-            <TabsTrigger value="subpoules" className="flex-1 font-display text-xs md:text-sm">
-              👥 Subpoules
+            <TabsTrigger value="subpoules" className="flex-1 font-display text-[10px] md:text-sm px-1.5 md:px-3 min-w-0">
+              👥 <span className="hidden sm:inline">Sub</span>Poules
             </TabsTrigger>
-            <TabsTrigger value="watals" className="flex-1 font-display text-xs md:text-sm">
-              ⛰️ Hors Catégorie
+            <TabsTrigger value="watals" className="flex-1 font-display text-[10px] md:text-sm px-1.5 md:px-3 min-w-0">
+              ⛰️ <span className="hidden sm:inline">Hors Cat.</span><span className="sm:hidden">HC</span>
             </TabsTrigger>
           </TabsList>
 
@@ -390,21 +390,21 @@ export default function MijnPeloton() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <Card className="retro-border">
-                  <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4 flex flex-row items-center justify-between">
-                    <CardTitle className="font-display text-base">🚴 Mijn selectie</CardTitle>
-                    <span className="font-display text-xl font-bold text-accent">{myTeam.totalPoints} pt</span>
+                  <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4 flex flex-row items-center justify-between">
+                    <CardTitle className="font-display text-sm md:text-base">🚴 Mijn selectie</CardTitle>
+                    <span className="font-display text-lg md:text-xl font-bold text-accent">{myTeam.totalPoints} pt</span>
                   </CardHeader>
                   
                   {/* Compare input */}
-                  <div className="p-3 border-b border-border bg-secondary/20">
-                    <div className="flex items-center gap-2">
+                  <div className="p-2 md:p-3 border-b border-border bg-secondary/20">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <ArrowLeftRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="text-sm text-muted-foreground font-sans whitespace-nowrap">Vergelijk met:</span>
+                      <span className="text-xs md:text-sm text-muted-foreground font-sans whitespace-nowrap">Vergelijk:</span>
                       <Input
                         value={comparePlayerName}
                         onChange={(e) => setComparePlayerName(e.target.value)}
-                        placeholder="Typ spelersnaam..."
-                        className="h-8 text-sm max-w-[200px]"
+                        placeholder="Spelersnaam..."
+                        className="h-8 text-sm flex-1 min-w-[120px] max-w-[200px]"
                       />
                       {comparePlayerName && !compareTeam && (
                         <span className="text-xs text-destructive whitespace-nowrap">Niet gevonden</span>
@@ -427,34 +427,41 @@ export default function MijnPeloton() {
                       .map(({ catId, rider, points, otherRider }) => {
                       const isSame = otherRider?.number === rider.number;
                       return (
-                    <div key={catId} className="flex items-center gap-3 px-4 py-2 text-sm">
-                        <div className="flex-1 min-w-0">
-                          <span className="text-xs text-muted-foreground block truncate">
-                            {getCategoryName(Number(catId))}
-                          </span>
-                          <span className="font-medium font-sans">
-                            {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
-                          </span>
-                        </div>
-                        <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
-                          {points} pt
-                        </span>
-                        {compareTeam && (
-                          <>
-                          <div className={cn(
-                            "flex-1 min-w-0 text-right",
-                            isSame ? "text-accent" : "text-muted-foreground"
-                          )}>
-                            <span className="text-xs block truncate">{compareTeam.userName}</span>
-                            <span className="font-medium font-sans">
-                              {otherRider?.name || "—"}{" "}
-                              {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
+                    <div key={catId} className={cn(
+                      "px-3 md:px-4 py-2 text-sm",
+                      compareTeam ? "space-y-1" : "flex items-center gap-3"
+                    )}>
+                        {/* My rider */}
+                        <div className={cn("flex items-center gap-2", compareTeam ? "" : "flex-1 min-w-0")}>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[10px] md:text-xs text-muted-foreground block truncate">
+                              {getCategoryName(Number(catId))}
+                            </span>
+                            <span className="font-medium font-sans text-xs md:text-sm">
+                              {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                             </span>
                           </div>
                           <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
-                            {otherRider ? getRiderPoints(otherRider.number) : 0} pt
+                            {points} pt
                           </span>
-                          </>
+                        </div>
+                        {/* Comparison rider */}
+                        {compareTeam && (
+                          <div className={cn(
+                            "flex items-center gap-2 pl-4 border-l-2",
+                            isSame ? "border-accent" : "border-border"
+                          )}>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[10px] md:text-xs text-muted-foreground block truncate">{compareTeam.userName}</span>
+                              <span className="font-medium font-sans text-xs md:text-sm">
+                                {otherRider?.name || "—"}{" "}
+                                {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
+                              </span>
+                            </div>
+                            <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
+                              {otherRider ? getRiderPoints(otherRider.number) : 0} pt
+                            </span>
+                          </div>
                         )}
                       </div>
                       );
@@ -884,7 +891,7 @@ function WatAlsTab({
   }, [getRiderPoints, monkeyRoll]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       {/* Best possible team */}
       <Card className="retro-border">
         <CardHeader className="border-b-2 border-foreground bg-primary/10 py-3 px-4">
@@ -900,14 +907,14 @@ function WatAlsTab({
           {bestTeam
             .sort((a, b) => (b.rider?.points || 0) - (a.rider?.points || 0))
             .map(({ catId, catName, rider }) => (
-            <div key={catId} className="flex items-center justify-between px-4 py-2 text-sm">
-              <div className="min-w-0">
-                <span className="text-xs text-muted-foreground block">{catName}</span>
+            <div key={catId} className="flex items-center justify-between px-3 md:px-4 py-2 text-xs md:text-sm">
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] md:text-xs text-muted-foreground block">{catName}</span>
                 <span className="font-medium font-sans">
                   {rider?.name || "—"} {rider && <span className="text-muted-foreground">#{rider.number}</span>}
                 </span>
               </div>
-              <span className="font-display font-bold text-primary text-xs shrink-0">
+              <span className="font-display font-bold text-primary text-xs shrink-0 ml-2">
                 {rider?.points || 0} pt
               </span>
             </div>
@@ -940,22 +947,22 @@ function WatAlsTab({
         </CardHeader>
         <CardContent className="p-4 space-y-4">
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-xs text-muted-foreground font-sans">Gemiddeld</p>
-              <p className="font-display font-bold text-lg">{monkeyStats.avg} pt</p>
+          <div className="grid grid-cols-2 gap-2 md:gap-3">
+            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
+              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Gemiddeld</p>
+              <p className="font-display font-bold text-base md:text-lg">{monkeyStats.avg} pt</p>
             </div>
-            <div className="p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-xs text-muted-foreground font-sans">Mediaan</p>
-              <p className="font-display font-bold text-lg">{monkeyStats.median} pt</p>
+            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
+              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Mediaan</p>
+              <p className="font-display font-bold text-base md:text-lg">{monkeyStats.median} pt</p>
             </div>
-            <div className="p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-xs text-muted-foreground font-sans">Beste aap</p>
-              <p className="font-display font-bold text-lg text-primary">{monkeyStats.best} pt</p>
+            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
+              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Beste aap</p>
+              <p className="font-display font-bold text-base md:text-lg text-primary">{monkeyStats.best} pt</p>
             </div>
-            <div className="p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-xs text-muted-foreground font-sans">Slechtste aap</p>
-              <p className="font-display font-bold text-lg text-destructive">{monkeyStats.worst} pt</p>
+            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
+              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Slechtste aap</p>
+              <p className="font-display font-bold text-base md:text-lg text-destructive">{monkeyStats.worst} pt</p>
             </div>
           </div>
 
@@ -985,12 +992,12 @@ function WatAlsTab({
               {exampleMonkey.team
                 .sort((a, b) => b.rider.points - a.rider.points)
                 .map(({ catId, catName, rider }) => (
-                <div key={catId} className="flex items-center justify-between text-xs px-2 py-1.5 bg-secondary/30 rounded">
-                  <div>
-                    <span className="text-muted-foreground">{catName}: </span>
+                <div key={catId} className="flex items-center justify-between text-[11px] md:text-xs px-2 py-1.5 bg-secondary/30 rounded">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-muted-foreground block text-[10px] md:inline md:text-xs">{catName}: </span>
                     <span className="font-medium font-sans">{rider.name}</span>
                   </div>
-                  <span className="font-display font-bold text-accent">{rider.points} pt</span>
+                  <span className="font-display font-bold text-accent shrink-0 ml-2">{rider.points} pt</span>
                 </div>
               ))}
             </div>
@@ -1084,11 +1091,11 @@ function ClassificationTabs({ myRiderNumbers }: {myRiderNumbers: Set<number>;}) 
 function StatCard({ icon, label, value }: {icon: React.ReactNode;label: string;value: string;}) {
   return (
     <Card className="retro-border">
-      <CardContent className="p-4 flex items-center gap-3">
-        {icon}
-        <div>
-          <p className="text-xs text-muted-foreground font-sans">{label}</p>
-          <p className="font-display font-bold text-lg">{value}</p>
+      <CardContent className="p-2.5 md:p-4 flex items-center gap-2 md:gap-3">
+        <div className="shrink-0">{icon}</div>
+        <div className="min-w-0">
+          <p className="text-[10px] md:text-xs text-muted-foreground font-sans">{label}</p>
+          <p className="font-display font-bold text-sm md:text-lg truncate">{value}</p>
         </div>
       </CardContent>
     </Card>);
