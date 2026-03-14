@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby } from "lucide-react";
+import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChartContainer,
@@ -51,6 +51,8 @@ export default function MijnPeloton() {
   const [joinCode, setJoinCode] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedStage, setSelectedStage] = useState(0);
+  const [comparePlayerName, setComparePlayerName] = useState("");
+  const [subpoolComparePlayer, setSubpoolComparePlayer] = useState("");
 
   const activePool = useMemo(
     () => enrichedSubPools.find((p) => p.id === selectedPool),
@@ -86,6 +88,9 @@ export default function MijnPeloton() {
 
   /* ── Sub-pool detail view ── */
   if (activePool) {
+    const subpoolCompareTeam = mockTeams.find(
+      (t) => t.userName === subpoolComparePlayer && t.id !== myTeam.id
+    );
     return (
       <div className="container mx-auto px-4 py-8 md:py-12">
         <button
@@ -180,6 +185,80 @@ export default function MijnPeloton() {
                     )}
                   </LineChart>
                 </ChartContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Team comparison */}
+          <div className="lg:col-span-3">
+            <Card className="retro-border">
+              <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+                <CardTitle className="font-display text-base flex items-center gap-2">
+                  <ArrowLeftRight className="h-5 w-5 text-primary" />
+                  Vergelijk jouw team
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-sm text-muted-foreground font-sans">Vergelijk met:</span>
+                  <div className="flex gap-2 flex-wrap">
+                    {activePool.standings
+                      .filter((t) => t.id !== myTeam.id)
+                      .map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => setSubpoolComparePlayer(subpoolComparePlayer === t.userName ? "" : t.userName)}
+                          className={cn(
+                            "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all",
+                            subpoolComparePlayer === t.userName
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border hover:border-muted-foreground"
+                          )}
+                        >
+                          {t.userName}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+
+                {subpoolCompareTeam ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border bg-secondary/30">
+                          <th className="text-left px-4 py-2 font-display">Categorie</th>
+                          <th className="text-left px-4 py-2 font-display">{myTeam.userName} (jij)</th>
+                          <th className="text-left px-4 py-2 font-display">{subpoolCompareTeam.userName}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {Object.entries(myTeam.picks).map(([catId, rider]) => {
+                          const otherRider = subpoolCompareTeam.picks[Number(catId)];
+                          const isSame = otherRider?.number === rider.number;
+                          return (
+                            <tr key={catId} className={cn(isSame && "bg-accent/10")}>
+                              <td className="px-4 py-2 text-xs text-muted-foreground">{getCategoryName(Number(catId))}</td>
+                              <td className="px-4 py-2 font-sans font-medium">
+                                {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
+                              </td>
+                              <td className="px-4 py-2 font-sans font-medium">
+                                {otherRider?.name || "—"}{" "}
+                                {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
+                                {isSame && <span className="ml-1 text-xs text-accent">★</span>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    <div className="mt-3 flex justify-between px-4 py-2 bg-secondary/30 rounded-md text-sm font-display font-bold">
+                      <span>{myTeam.userName}: {myTeam.totalPoints} pt</span>
+                      <span>{subpoolCompareTeam.userName}: {subpoolCompareTeam.totalPoints} pt</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground font-sans">Kies een speler om teams te vergelijken.</p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -279,6 +358,11 @@ export default function MijnPeloton() {
 
           {/* ── TAB: Mijn Team ── */}
           <TabsContent value="team" className="mt-6">
+            {(() => {
+              const compareTeam = mockTeams.find(
+                (t) => t.userName.toLowerCase() === comparePlayerName.trim().toLowerCase() && t.id !== myTeam.id
+              );
+              return (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <Card className="retro-border">
@@ -286,8 +370,32 @@ export default function MijnPeloton() {
                     <CardTitle className="font-display text-base">🚴 Mijn selectie</CardTitle>
                     <span className="font-display text-xl font-bold text-accent">{myTeam.totalPoints} pt</span>
                   </CardHeader>
+                  
+                  {/* Compare input */}
+                  <div className="p-3 border-b border-border bg-secondary/20">
+                    <div className="flex items-center gap-2">
+                      <ArrowLeftRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm text-muted-foreground font-sans whitespace-nowrap">Vergelijk met:</span>
+                      <Input
+                        value={comparePlayerName}
+                        onChange={(e) => setComparePlayerName(e.target.value)}
+                        placeholder="Typ spelersnaam..."
+                        className="h-8 text-sm max-w-[200px]"
+                      />
+                      {comparePlayerName && !compareTeam && (
+                        <span className="text-xs text-destructive whitespace-nowrap">Niet gevonden</span>
+                      )}
+                      {compareTeam && (
+                        <span className="text-xs text-primary font-bold whitespace-nowrap">{compareTeam.totalPoints} pt</span>
+                      )}
+                    </div>
+                  </div>
+
                   <CardContent className="p-0 divide-y divide-border">
-                    {Object.entries(myTeam.picks).map(([catId, rider]) =>
+                    {Object.entries(myTeam.picks).map(([catId, rider]) => {
+                      const otherRider = compareTeam?.picks[Number(catId)];
+                      const isSame = otherRider?.number === rider.number;
+                      return (
                     <div key={catId} className="flex items-center gap-3 px-4 py-2 text-sm">
                         <div className="flex-1 min-w-0">
                           <span className="text-xs text-muted-foreground block truncate">
@@ -297,8 +405,21 @@ export default function MijnPeloton() {
                             {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                           </span>
                         </div>
+                        {compareTeam && (
+                          <div className={cn(
+                            "flex-1 min-w-0 text-right",
+                            isSame ? "text-accent" : "text-muted-foreground"
+                          )}>
+                            <span className="text-xs block truncate">{compareTeam.userName}</span>
+                            <span className="font-medium font-sans">
+                              {otherRider?.name || "—"}{" "}
+                              {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    )}
+                      );
+                    })}
                   </CardContent>
                 </Card>
               </div>
@@ -358,6 +479,8 @@ export default function MijnPeloton() {
                 </Card>
               </div>
             </div>
+              );
+            })()}
           </TabsContent>
 
           {/* ── TAB: Uitslagen ── */}
