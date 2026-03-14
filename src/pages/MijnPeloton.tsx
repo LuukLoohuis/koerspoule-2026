@@ -876,7 +876,23 @@ function WatAlsTab({
     const worst = totals[0];
     const betterThanYou = totals.filter((t) => t > myTotal).length;
     const percentile = Math.round(((SIMS - betterThanYou) / SIMS) * 100);
-    return { avg, median, best, worst, percentile };
+
+    // Histogram bins
+    const BIN_COUNT = 20;
+    const range = best - worst || 1;
+    const binSize = Math.ceil(range / BIN_COUNT);
+    const bins: { label: string; count: number; min: number; max: number }[] = [];
+    for (let i = 0; i < BIN_COUNT; i++) {
+      const min = worst + i * binSize;
+      const max = min + binSize;
+      bins.push({ label: `${min}`, count: 0, min, max });
+    }
+    for (const t of totals) {
+      const idx = Math.min(Math.floor((t - worst) / binSize), BIN_COUNT - 1);
+      bins[idx].count++;
+    }
+
+    return { avg, median, best, worst, percentile, bins };
   }, [getRiderPoints, myTotal]);
 
   // Example monkey team (re-rolls on button click)
