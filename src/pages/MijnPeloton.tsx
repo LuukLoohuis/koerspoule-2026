@@ -268,7 +268,7 @@ export default function MijnPeloton() {
               📋 Uitslagen
             </TabsTrigger>
             <TabsTrigger value="klassement" className="flex-1 font-display">
-              🏅 Klassement
+              🏅 GC
             </TabsTrigger>
             <TabsTrigger value="subpoules" className="flex-1 font-display">
               👥 Subpoules
