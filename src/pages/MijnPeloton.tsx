@@ -362,21 +362,21 @@ export default function MijnPeloton() {
 
         {/* Inner tabs: Team / Uitslagen / Subpoules */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
-          <TabsList className="w-full retro-border">
-            <TabsTrigger value="team" className="flex-1 font-display text-xs md:text-sm">
-              🚴 Mijn Team
+          <TabsList className="w-full retro-border flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="team" className="flex-1 font-display text-[10px] md:text-sm px-1.5 md:px-3 min-w-0">
+              🚴 <span className="hidden sm:inline">Mijn </span>Team
             </TabsTrigger>
-            <TabsTrigger value="uitslagen" className="flex-1 font-display text-xs md:text-sm">
-              📋 Uitslagen
+            <TabsTrigger value="uitslagen" className="flex-1 font-display text-[10px] md:text-sm px-1.5 md:px-3 min-w-0">
+              📋 <span className="hidden sm:inline">Uitslag</span><span className="sm:hidden">Rit</span>
             </TabsTrigger>
-            <TabsTrigger value="klassement" className="flex-1 font-display text-xs md:text-sm">
+            <TabsTrigger value="klassement" className="flex-1 font-display text-[10px] md:text-sm px-1.5 md:px-3 min-w-0">
               🏅 GC
             </TabsTrigger>
-            <TabsTrigger value="subpoules" className="flex-1 font-display text-xs md:text-sm">
-              👥 Subpoules
+            <TabsTrigger value="subpoules" className="flex-1 font-display text-[10px] md:text-sm px-1.5 md:px-3 min-w-0">
+              👥 <span className="hidden sm:inline">Sub</span>Poules
             </TabsTrigger>
-            <TabsTrigger value="watals" className="flex-1 font-display text-xs md:text-sm">
-              ⛰️ Hors Catégorie
+            <TabsTrigger value="watals" className="flex-1 font-display text-[10px] md:text-sm px-1.5 md:px-3 min-w-0">
+              ⛰️ <span className="hidden sm:inline">Hors Cat.</span><span className="sm:hidden">HC</span>
             </TabsTrigger>
           </TabsList>
 
