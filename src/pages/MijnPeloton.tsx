@@ -406,8 +406,15 @@ export default function MijnPeloton() {
                   </div>
 
                   <CardContent className="p-0 divide-y divide-border">
-                    {Object.entries(myTeam.picks).map(([catId, rider]) => {
-                      const otherRider = compareTeam?.picks[Number(catId)];
+                    {Object.entries(myTeam.picks)
+                      .map(([catId, rider]) => ({
+                        catId,
+                        rider,
+                        points: getRiderPoints(rider.number),
+                        otherRider: compareTeam?.picks[Number(catId)],
+                      }))
+                      .sort((a, b) => b.points - a.points)
+                      .map(({ catId, rider, points, otherRider }) => {
                       const isSame = otherRider?.number === rider.number;
                       return (
                     <div key={catId} className="flex items-center gap-3 px-4 py-2 text-sm">
@@ -420,7 +427,7 @@ export default function MijnPeloton() {
                           </span>
                         </div>
                         <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
-                          {getRiderPoints(rider.number)} pt
+                          {points} pt
                         </span>
                         {compareTeam && (
                           <>
