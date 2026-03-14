@@ -815,6 +815,11 @@ export default function MijnPeloton() {
               </div>
             </div>
           </TabsContent>
+          {/* ── TAB: Wat Als? ── */}
+          <TabsContent value="watals" className="mt-6">
+            <WatAlsTab getRiderPoints={getRiderPoints} myTeam={myTeam} getCategoryName={getCategoryName} />
+          </TabsContent>
+
         </Tabs>
       </div>
     </div>);
