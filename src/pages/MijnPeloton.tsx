@@ -249,10 +249,16 @@ export default function MijnPeloton() {
                               <td className="px-4 py-2 font-sans font-medium">
                                 {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                               </td>
+                              <td className="px-4 py-2 text-center font-display font-bold text-accent text-xs">
+                                {getRiderPoints(rider.number)} pt
+                              </td>
                               <td className="px-4 py-2 font-sans font-medium">
                                 {otherRider?.name || "—"}{" "}
                                 {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
                                 {isSame && <span className="ml-1 text-xs text-accent">★</span>}
+                              </td>
+                              <td className="px-4 py-2 text-center font-display font-bold text-accent text-xs">
+                                {otherRider ? getRiderPoints(otherRider.number) : 0} pt
                               </td>
                             </tr>
                           );
