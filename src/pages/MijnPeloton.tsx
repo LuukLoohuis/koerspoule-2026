@@ -227,9 +227,10 @@ export default function MijnPeloton() {
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
       <div className="text-center mb-8">
-        <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-          🚴 Mijn Peloton
-        </h1>
+         <img src={koerspouleLogo} alt="Koerspoule logo" className="mx-auto h-28 mb-4" />
+         <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
+           🚴 Mijn Peloton
+         </h1>
         <p className="text-muted-foreground font-serif">
           Welkom terug, {myTeam.userName}! Beheer je koersen en subpoules.
         </p>
