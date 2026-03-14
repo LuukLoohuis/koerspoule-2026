@@ -46,9 +46,9 @@ export default function Index() {
             <img
               src={koerspouleLogo}
               alt="Koerspoule logo"
-              className="mx-auto w-96 md:w-[36rem] mb-1 animate-fade-in drop-shadow-lg"
+              className="mx-auto w-96 md:w-[36rem] mb-0 animate-fade-in drop-shadow-lg"
             />
-            <p className="font-serif italic text-muted-foreground mb-2 text-lg animate-fade-in">Giro d'Italia 2025</p>
+            <p className="font-serif italic text-muted-foreground mb-1 text-lg animate-fade-in">Giro d'Italia 2025</p>
             <div className="vintage-divider max-w-xs mx-auto my-6" />
             <p
               className="text-lg md:text-xl text-muted-foreground font-serif max-w-xl mx-auto mb-8 animate-fade-in"
