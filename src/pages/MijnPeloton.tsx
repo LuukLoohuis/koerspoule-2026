@@ -189,6 +189,80 @@ export default function MijnPeloton() {
             </Card>
           </div>
 
+          {/* Team comparison */}
+          <div className="lg:col-span-3">
+            <Card className="retro-border">
+              <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+                <CardTitle className="font-display text-base flex items-center gap-2">
+                  <ArrowLeftRight className="h-5 w-5 text-primary" />
+                  Vergelijk jouw team
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-sm text-muted-foreground font-sans">Vergelijk met:</span>
+                  <div className="flex gap-2 flex-wrap">
+                    {activePool.standings
+                      .filter((t) => t.id !== myTeam.id)
+                      .map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => setSubpoolComparePlayer(subpoolComparePlayer === t.userName ? "" : t.userName)}
+                          className={cn(
+                            "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all",
+                            subpoolComparePlayer === t.userName
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border hover:border-muted-foreground"
+                          )}
+                        >
+                          {t.userName}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+
+                {subpoolCompareTeam ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border bg-secondary/30">
+                          <th className="text-left px-4 py-2 font-display">Categorie</th>
+                          <th className="text-left px-4 py-2 font-display">{myTeam.userName} (jij)</th>
+                          <th className="text-left px-4 py-2 font-display">{subpoolCompareTeam.userName}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {Object.entries(myTeam.picks).map(([catId, rider]) => {
+                          const otherRider = subpoolCompareTeam.picks[Number(catId)];
+                          const isSame = otherRider?.number === rider.number;
+                          return (
+                            <tr key={catId} className={cn(isSame && "bg-accent/10")}>
+                              <td className="px-4 py-2 text-xs text-muted-foreground">{getCategoryName(Number(catId))}</td>
+                              <td className="px-4 py-2 font-sans font-medium">
+                                {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
+                              </td>
+                              <td className="px-4 py-2 font-sans font-medium">
+                                {otherRider?.name || "—"}{" "}
+                                {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
+                                {isSame && <span className="ml-1 text-xs text-accent">★</span>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    <div className="mt-3 flex justify-between px-4 py-2 bg-secondary/30 rounded-md text-sm font-display font-bold">
+                      <span>{myTeam.userName}: {myTeam.totalPoints} pt</span>
+                      <span>{subpoolCompareTeam.userName}: {subpoolCompareTeam.totalPoints} pt</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground font-sans">Kies een speler om teams te vergelijken.</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Per-player breakdown */}
           <div className="lg:col-span-3">
             <Card className="retro-border">
