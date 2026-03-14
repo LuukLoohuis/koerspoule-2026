@@ -427,34 +427,41 @@ export default function MijnPeloton() {
                       .map(({ catId, rider, points, otherRider }) => {
                       const isSame = otherRider?.number === rider.number;
                       return (
-                    <div key={catId} className="flex items-center gap-3 px-4 py-2 text-sm">
-                        <div className="flex-1 min-w-0">
-                          <span className="text-xs text-muted-foreground block truncate">
-                            {getCategoryName(Number(catId))}
-                          </span>
-                          <span className="font-medium font-sans">
-                            {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
-                          </span>
-                        </div>
-                        <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
-                          {points} pt
-                        </span>
-                        {compareTeam && (
-                          <>
-                          <div className={cn(
-                            "flex-1 min-w-0 text-right",
-                            isSame ? "text-accent" : "text-muted-foreground"
-                          )}>
-                            <span className="text-xs block truncate">{compareTeam.userName}</span>
-                            <span className="font-medium font-sans">
-                              {otherRider?.name || "—"}{" "}
-                              {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
+                    <div key={catId} className={cn(
+                      "px-3 md:px-4 py-2 text-sm",
+                      compareTeam ? "space-y-1" : "flex items-center gap-3"
+                    )}>
+                        {/* My rider */}
+                        <div className={cn("flex items-center gap-2", compareTeam ? "" : "flex-1 min-w-0")}>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[10px] md:text-xs text-muted-foreground block truncate">
+                              {getCategoryName(Number(catId))}
+                            </span>
+                            <span className="font-medium font-sans text-xs md:text-sm">
+                              {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                             </span>
                           </div>
                           <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
-                            {otherRider ? getRiderPoints(otherRider.number) : 0} pt
+                            {points} pt
                           </span>
-                          </>
+                        </div>
+                        {/* Comparison rider */}
+                        {compareTeam && (
+                          <div className={cn(
+                            "flex items-center gap-2 pl-4 border-l-2",
+                            isSame ? "border-accent" : "border-border"
+                          )}>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[10px] md:text-xs text-muted-foreground block truncate">{compareTeam.userName}</span>
+                              <span className="font-medium font-sans text-xs md:text-sm">
+                                {otherRider?.name || "—"}{" "}
+                                {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
+                              </span>
+                            </div>
+                            <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
+                              {otherRider ? getRiderPoints(otherRider.number) : 0} pt
+                            </span>
+                          </div>
                         )}
                       </div>
                       );
