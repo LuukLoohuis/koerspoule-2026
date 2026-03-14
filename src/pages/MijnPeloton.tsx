@@ -978,7 +978,7 @@ function WatAlsTab({
                 className="h-7 gap-1.5 text-xs"
                 onClick={() => setMonkeyRoll((r) => r + 1)}
               >
-                🎲 Hergooi
+                🎯 Hergooi
               </Button>
             </div>
             <div className="space-y-1 max-h-[300px] overflow-y-auto">
