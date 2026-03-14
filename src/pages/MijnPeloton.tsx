@@ -21,6 +21,12 @@ const myGames = [
 { id: "tdf2024", name: "Tour de France 2024", status: "afgelopen" as const, emoji: "🇫🇷" },
 { id: "giro2025", name: "Giro d'Italia 2025", status: "actief" as const, emoji: "🇮🇹" }];
 
+  const getRiderPoints = (riderNumber: number) => {
+    return mockStageResults.reduce((total, stage) => {
+      const result = stage.top20.find((r) => r.riderNumber === riderNumber);
+      return total + (result ? (pointsTable[result.position] || 0) : 0);
+    }, 0);
+  };
 
 const enrichedSubPools = mockSubPools.map((pool) => ({
   ...pool,
