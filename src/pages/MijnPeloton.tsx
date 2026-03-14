@@ -402,6 +402,8 @@ export default function MijnPeloton() {
                 </Card>
               </div>
             </div>
+              );
+            })()}
           </TabsContent>
 
           {/* ── TAB: Uitslagen ── */}
