@@ -947,22 +947,22 @@ function WatAlsTab({
         </CardHeader>
         <CardContent className="p-4 space-y-4">
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-xs text-muted-foreground font-sans">Gemiddeld</p>
-              <p className="font-display font-bold text-lg">{monkeyStats.avg} pt</p>
+          <div className="grid grid-cols-2 gap-2 md:gap-3">
+            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
+              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Gemiddeld</p>
+              <p className="font-display font-bold text-base md:text-lg">{monkeyStats.avg} pt</p>
             </div>
-            <div className="p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-xs text-muted-foreground font-sans">Mediaan</p>
-              <p className="font-display font-bold text-lg">{monkeyStats.median} pt</p>
+            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
+              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Mediaan</p>
+              <p className="font-display font-bold text-base md:text-lg">{monkeyStats.median} pt</p>
             </div>
-            <div className="p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-xs text-muted-foreground font-sans">Beste aap</p>
-              <p className="font-display font-bold text-lg text-primary">{monkeyStats.best} pt</p>
+            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
+              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Beste aap</p>
+              <p className="font-display font-bold text-base md:text-lg text-primary">{monkeyStats.best} pt</p>
             </div>
-            <div className="p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-xs text-muted-foreground font-sans">Slechtste aap</p>
-              <p className="font-display font-bold text-lg text-destructive">{monkeyStats.worst} pt</p>
+            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
+              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Slechtste aap</p>
+              <p className="font-display font-bold text-base md:text-lg text-destructive">{monkeyStats.worst} pt</p>
             </div>
           </div>
 
