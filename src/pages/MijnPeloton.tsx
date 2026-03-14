@@ -281,6 +281,11 @@ export default function MijnPeloton() {
 
           {/* ── TAB: Mijn Team ── */}
           <TabsContent value="team" className="mt-6">
+            {(() => {
+              const compareTeam = mockTeams.find(
+                (t) => t.userName.toLowerCase() === comparePlayerName.trim().toLowerCase() && t.id !== myTeam.id
+              );
+              return (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <Card className="retro-border">
@@ -288,8 +293,32 @@ export default function MijnPeloton() {
                     <CardTitle className="font-display text-base">🚴 Mijn selectie</CardTitle>
                     <span className="font-display text-xl font-bold text-accent">{myTeam.totalPoints} pt</span>
                   </CardHeader>
+                  
+                  {/* Compare input */}
+                  <div className="p-3 border-b border-border bg-secondary/20">
+                    <div className="flex items-center gap-2">
+                      <ArrowLeftRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm text-muted-foreground font-sans whitespace-nowrap">Vergelijk met:</span>
+                      <Input
+                        value={comparePlayerName}
+                        onChange={(e) => setComparePlayerName(e.target.value)}
+                        placeholder="Typ spelersnaam..."
+                        className="h-8 text-sm max-w-[200px]"
+                      />
+                      {comparePlayerName && !compareTeam && (
+                        <span className="text-xs text-destructive whitespace-nowrap">Niet gevonden</span>
+                      )}
+                      {compareTeam && (
+                        <span className="text-xs text-primary font-bold whitespace-nowrap">{compareTeam.totalPoints} pt</span>
+                      )}
+                    </div>
+                  </div>
+
                   <CardContent className="p-0 divide-y divide-border">
-                    {Object.entries(myTeam.picks).map(([catId, rider]) =>
+                    {Object.entries(myTeam.picks).map(([catId, rider]) => {
+                      const otherRider = compareTeam?.picks[Number(catId)];
+                      const isSame = otherRider?.number === rider.number;
+                      return (
                     <div key={catId} className="flex items-center gap-3 px-4 py-2 text-sm">
                         <div className="flex-1 min-w-0">
                           <span className="text-xs text-muted-foreground block truncate">
@@ -299,8 +328,21 @@ export default function MijnPeloton() {
                             {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                           </span>
                         </div>
+                        {compareTeam && (
+                          <div className={cn(
+                            "flex-1 min-w-0 text-right",
+                            isSame ? "text-accent" : "text-muted-foreground"
+                          )}>
+                            <span className="text-xs block truncate">{compareTeam.userName}</span>
+                            <span className="font-medium font-sans">
+                              {otherRider?.name || "—"}{" "}
+                              {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    )}
+                      );
+                    })}
                   </CardContent>
                 </Card>
               </div>
