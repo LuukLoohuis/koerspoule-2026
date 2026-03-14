@@ -390,21 +390,21 @@ export default function MijnPeloton() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <Card className="retro-border">
-                  <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4 flex flex-row items-center justify-between">
-                    <CardTitle className="font-display text-base">🚴 Mijn selectie</CardTitle>
-                    <span className="font-display text-xl font-bold text-accent">{myTeam.totalPoints} pt</span>
+                  <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4 flex flex-row items-center justify-between">
+                    <CardTitle className="font-display text-sm md:text-base">🚴 Mijn selectie</CardTitle>
+                    <span className="font-display text-lg md:text-xl font-bold text-accent">{myTeam.totalPoints} pt</span>
                   </CardHeader>
                   
                   {/* Compare input */}
-                  <div className="p-3 border-b border-border bg-secondary/20">
-                    <div className="flex items-center gap-2">
+                  <div className="p-2 md:p-3 border-b border-border bg-secondary/20">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <ArrowLeftRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="text-sm text-muted-foreground font-sans whitespace-nowrap">Vergelijk met:</span>
+                      <span className="text-xs md:text-sm text-muted-foreground font-sans whitespace-nowrap">Vergelijk:</span>
                       <Input
                         value={comparePlayerName}
                         onChange={(e) => setComparePlayerName(e.target.value)}
-                        placeholder="Typ spelersnaam..."
-                        className="h-8 text-sm max-w-[200px]"
+                        placeholder="Spelersnaam..."
+                        className="h-8 text-sm flex-1 min-w-[120px] max-w-[200px]"
                       />
                       {comparePlayerName && !compareTeam && (
                         <span className="text-xs text-destructive whitespace-nowrap">Niet gevonden</span>
