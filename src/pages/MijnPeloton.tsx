@@ -411,7 +411,11 @@ export default function MijnPeloton() {
                             {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                           </span>
                         </div>
+                        <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
+                          {getRiderPoints(rider.number)} pt
+                        </span>
                         {compareTeam && (
+                          <>
                           <div className={cn(
                             "flex-1 min-w-0 text-right",
                             isSame ? "text-accent" : "text-muted-foreground"
@@ -422,6 +426,10 @@ export default function MijnPeloton() {
                               {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
                             </span>
                           </div>
+                          <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
+                            {otherRider ? getRiderPoints(otherRider.number) : 0} pt
+                          </span>
+                          </>
                         )}
                       </div>
                       );
