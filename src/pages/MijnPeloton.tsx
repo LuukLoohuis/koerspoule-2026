@@ -376,7 +376,7 @@ export default function MijnPeloton() {
               👥 Subpoules
             </TabsTrigger>
             <TabsTrigger value="watals" className="flex-1 font-display text-xs md:text-sm">
-              🎲 Wat Als?
+              ⛰️ Hors Catégorie
             </TabsTrigger>
           </TabsList>
 
@@ -826,7 +826,7 @@ export default function MijnPeloton() {
 
 }
 
-/* ── Wat Als? Tab Component ── */
+/* ── Hors Catégorie Tab Component ── */
 function WatAlsTab({
   getRiderPoints,
   myTeam,
@@ -836,7 +836,8 @@ function WatAlsTab({
   myTeam: typeof mockTeams[0];
   getCategoryName: (catId: number) => string;
 }) {
-  // Best possible team: for each category, pick the rider with the most points
+  const [monkeyRoll, setMonkeyRoll] = useState(0);
+
   const bestTeam = useMemo(() => {
     return riderCategories.map((cat) => {
       const best = cat.riders
@@ -849,7 +850,7 @@ function WatAlsTab({
   const bestTotal = bestTeam.reduce((sum, r) => sum + (r.rider?.points || 0), 0);
   const myTotal = Object.values(myTeam.picks).reduce((sum, r) => sum + getRiderPoints(r.number), 0);
 
-  // Monte Carlo: random team (pick random rider per category), run 1000 simulations
+  // Monte Carlo stats (stable)
   const monkeyStats = useMemo(() => {
     const SIMS = 1000;
     const totals: number[] = [];
@@ -868,16 +869,19 @@ function WatAlsTab({
     const worst = totals[0];
     const betterThanYou = totals.filter((t) => t > myTotal).length;
     const percentile = Math.round(((SIMS - betterThanYou) / SIMS) * 100);
+    return { avg, median, best, worst, percentile };
+  }, [getRiderPoints, myTotal]);
 
-    // Generate one example random team for display
-    const exampleTeam = riderCategories.map((cat) => {
+  // Example monkey team (re-rolls on button click)
+  const exampleMonkey = useMemo(() => {
+    const team = riderCategories.map((cat) => {
       const randomRider = cat.riders[Math.floor(Math.random() * cat.riders.length)];
       return { catId: cat.id, catName: cat.name, rider: { ...randomRider, points: getRiderPoints(randomRider.number) } };
     });
-    const exampleTotal = exampleTeam.reduce((s, r) => s + r.rider.points, 0);
-
-    return { avg, median, best, worst, percentile, exampleTeam, exampleTotal };
-  }, [getRiderPoints, myTotal]);
+    const total = team.reduce((s, r) => s + r.rider.points, 0);
+    return { team, total };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getRiderPoints, monkeyRoll]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -962,13 +966,23 @@ function WatAlsTab({
             <p className="text-sm text-muted-foreground font-sans">van de willekeurige apen-teams</p>
           </div>
 
-          {/* Example monkey team */}
+          {/* Example monkey team with re-roll */}
           <div>
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 font-sans">
-              🎯 Voorbeeld apenteam ({monkeyStats.exampleTotal} pt)
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-sans">
+                🎯 Voorbeeld apenteam ({exampleMonkey.total} pt)
+              </h3>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs"
+                onClick={() => setMonkeyRoll((r) => r + 1)}
+              >
+                🎲 Hergooi
+              </Button>
+            </div>
             <div className="space-y-1 max-h-[300px] overflow-y-auto">
-              {monkeyStats.exampleTeam
+              {exampleMonkey.team
                 .sort((a, b) => b.rider.points - a.rider.points)
                 .map(({ catId, catName, rider }) => (
                 <div key={catId} className="flex items-center justify-between text-xs px-2 py-1.5 bg-secondary/30 rounded">
@@ -986,7 +1000,6 @@ function WatAlsTab({
     </div>
   );
 }
-
 const CLASSIFICATION_TABS = [
 { key: "gc", label: "🏆 Algemeen", jersey: "bg-jersey-pink", valueKey: "time" as const },
 { key: "points", label: "🟣 Punten", jersey: "bg-jersey-purple", valueKey: "points" as const },
