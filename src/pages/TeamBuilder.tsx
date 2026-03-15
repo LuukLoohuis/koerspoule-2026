@@ -161,7 +161,7 @@ export default function TeamBuilder() {
         )}
 
         {/* Predictions */}
-        {isPredictions && (
+        {!isLocked && isPredictions && (
           <div className="retro-border bg-card p-6 animate-fade-in">
             <h2 className="font-display text-xl font-bold mb-1">🏆 Klassementsvoorspellingen</h2>
             <p className="text-sm text-muted-foreground mb-6 font-sans">
