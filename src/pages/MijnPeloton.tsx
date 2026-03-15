@@ -1152,19 +1152,32 @@ export default function MijnPeloton() {
                     </div>
                   }
 
-                  {enrichedSubPools.map((pool) =>
-                  <button
-                    key={pool.id}
-                    onClick={() => setSelectedPool(pool.id)}
-                    className="w-full text-left p-3 bg-secondary/50 rounded-md hover:bg-secondary transition-colors flex items-center justify-between group">
-                    
-                      <div>
-                        <p className="font-sans font-bold text-sm">{pool.name}</p>
-                        <p className="text-xs text-muted-foreground">{pool.members.length} deelnemers</p>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                    </button>
-                  )}
+                  {enrichedSubPools.map((pool) => {
+                    const myPos = pool.standings.findIndex((t) => t.id === myTeam.id) + 1;
+                    return (
+                    <button
+                      key={pool.id}
+                      onClick={() => setSelectedPool(pool.id)}
+                      className="w-full text-left p-3 bg-secondary/50 rounded-md hover:bg-secondary transition-colors flex items-center justify-between group">
+                      
+                        <div>
+                          <p className="font-sans font-bold text-sm">{pool.name}</p>
+                          <p className="text-xs text-muted-foreground">{pool.members.length} deelnemers</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {myPos > 0 && (
+                            <span className={cn(
+                              "text-xs font-display font-bold px-2 py-0.5 rounded-full",
+                              myPos === 1 ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
+                            )}>
+                              #{myPos}
+                            </span>
+                          )}
+                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                        </div>
+                      </button>
+                    );
+                  })}
 
                   {/* Join via code */}
                   <div className="pt-2 border-t border-border">
