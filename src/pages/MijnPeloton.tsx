@@ -59,6 +59,7 @@ export default function MijnPeloton() {
   const [selectedStage, setSelectedStage] = useState(0);
   const [comparePlayerName, setComparePlayerName] = useState("");
   const [subpoolComparePlayer, setSubpoolComparePlayer] = useState("");
+  const [compareView, setCompareView] = useState<"gc" | number>("gc");
 
   const activePool = useMemo(
     () => enrichedSubPools.find((p) => p.id === selectedPool),
@@ -387,11 +388,20 @@ export default function MijnPeloton() {
                 (t) => t.userName.toLowerCase() === comparePlayerName.trim().toLowerCase() && t.id !== myTeam.id
               );
 
+              // Points calculator: GC (all stages) or single stage
+              const getPointsForView = (riderNumber: number) => {
+                if (compareView === "gc") return getRiderPoints(riderNumber);
+                const stage = mockStageResults[compareView];
+                if (!stage) return 0;
+                const result = stage.top20.find((r) => r.riderNumber === riderNumber);
+                return result ? (pointsTable[result.position] || 0) : 0;
+              };
+
               const riderRows = Object.entries(myTeam.picks)
                 .map(([catId, rider]) => {
-                  const myPts = getRiderPoints(rider.number);
+                  const myPts = getPointsForView(rider.number);
                   const otherRider = compareTeam?.picks[Number(catId)];
-                  const otherPts = otherRider ? getRiderPoints(otherRider.number) : 0;
+                  const otherPts = otherRider ? getPointsForView(otherRider.number) : 0;
                   const isSame = otherRider?.number === rider.number;
                   return { catId, rider, myPts, otherRider, otherPts, isSame };
                 })
@@ -399,6 +409,19 @@ export default function MijnPeloton() {
 
               const myTotal = riderRows.reduce((s, r) => s + r.myPts, 0);
               const otherTotal = compareTeam ? riderRows.reduce((s, r) => s + r.otherPts, 0) : 0;
+
+              // Per-stage totals for the stage overview
+              const stageBreakdown = mockStageResults.map((stage, idx) => {
+                const myPts = Object.values(myTeam.picks).reduce((sum, rider) => {
+                  const r = stage.top20.find((s) => s.riderNumber === rider.number);
+                  return sum + (r ? (pointsTable[r.position] || 0) : 0);
+                }, 0);
+                const otherPts = compareTeam ? Object.values(compareTeam.picks).reduce((sum, rider) => {
+                  const r = stage.top20.find((s) => s.riderNumber === rider.number);
+                  return sum + (r ? (pointsTable[r.position] || 0) : 0);
+                }, 0) : 0;
+                return { stage: stage.stage, idx, myPts, otherPts, type: stage.type };
+              });
 
               return (
             <div className="space-y-6">
@@ -436,6 +459,9 @@ export default function MijnPeloton() {
                         <p className="text-xs text-muted-foreground font-sans mb-1">Jouw team</p>
                         <p className="font-display text-2xl md:text-3xl font-bold text-primary">{myTeam.userName}</p>
                         <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{myTotal} pt</p>
+                        {compareView !== "gc" && (
+                          <p className="text-[10px] text-muted-foreground font-sans mt-0.5">Rit {mockStageResults[compareView as number]?.stage}</p>
+                        )}
                         {myTotal > otherTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
                       </CardContent>
                     </Card>
@@ -444,15 +470,106 @@ export default function MijnPeloton() {
                         <p className="text-xs text-muted-foreground font-sans mb-1">Tegenstander</p>
                         <p className="font-display text-2xl md:text-3xl font-bold text-foreground">{compareTeam.userName}</p>
                         <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{otherTotal} pt</p>
+                        {compareView !== "gc" && (
+                          <p className="text-[10px] text-muted-foreground font-sans mt-0.5">Rit {mockStageResults[compareView as number]?.stage}</p>
+                        )}
                         {otherTotal > myTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
                       </CardContent>
                     </Card>
                   </div>
 
+                  {/* GC / Stage selector */}
+                  <Card className="retro-border">
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => setCompareView("gc")}
+                          className={cn(
+                            "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
+                            compareView === "gc"
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border hover:border-muted-foreground"
+                          )}
+                        >
+                          🏆 GC (totaal)
+                        </button>
+                        {mockStageResults.map((stage, i) => (
+                          <button
+                            key={stage.stage}
+                            onClick={() => setCompareView(i)}
+                            className={cn(
+                              "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
+                              compareView === i
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border hover:border-muted-foreground"
+                            )}
+                          >
+                            Rit {stage.stage}
+                          </button>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Stage-by-stage overview (only in GC view) */}
+                  {compareView === "gc" && (
+                    <Card className="retro-border overflow-hidden">
+                      <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4">
+                        <CardTitle className="font-display text-sm md:text-base">📊 Punten per etappe</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        {stageBreakdown.map(({ stage, idx, myPts, otherPts, type }, i) => {
+                          const diff = myPts - otherPts;
+                          const stageIcon = type === "mountain" ? "⛰️" : type === "itt" ? "⏱️" : type === "flat" ? "🏁" : "〰️";
+                          return (
+                            <button
+                              key={stage}
+                              onClick={() => setCompareView(idx)}
+                              className={cn(
+                                "w-full grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors",
+                                i % 2 === 0 ? "bg-background" : "bg-muted/20"
+                              )}
+                            >
+                              <div className="px-3 py-2.5 text-right">
+                                <span className={cn(
+                                  "font-display font-bold tabular-nums",
+                                  myPts > otherPts ? "text-primary" : myPts < otherPts ? "text-destructive" : "text-muted-foreground"
+                                )}>
+                                  {myPts} pt
+                                </span>
+                              </div>
+                              <div className="px-2 py-2 flex flex-col items-center min-w-[90px]">
+                                <span className="text-xs font-display font-bold">{stageIcon} Rit {stage}</span>
+                                {diff !== 0 && (
+                                  <span className={cn(
+                                    "text-[10px] font-display font-bold px-1.5 py-0.5 rounded-full mt-0.5",
+                                    diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                                  )}>
+                                    {diff > 0 ? `+${diff}` : diff}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="px-3 py-2.5 text-left">
+                                <span className={cn(
+                                  "font-display font-bold tabular-nums",
+                                  otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
+                                )}>
+                                  {otherPts} pt
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Rider-by-rider comparison */}
                   <Card className="retro-border overflow-hidden">
                     <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4">
-                      <CardTitle className="font-display text-sm md:text-base">Renner voor renner</CardTitle>
+                      <CardTitle className="font-display text-sm md:text-base">
+                        {compareView === "gc" ? "Renner voor renner (totaal)" : `Renner voor renner — Rit ${mockStageResults[compareView as number]?.stage}`}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                       {/* Table header */}
