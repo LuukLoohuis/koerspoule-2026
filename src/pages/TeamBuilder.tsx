@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
+import { useDeadline } from "@/hooks/useDeadline";
+import CountdownBanner from "@/components/CountdownBanner";
 export default function TeamBuilder() {
   const { toast } = useToast();
+  const { phase } = useDeadline();
+  const isLocked = phase !== "open";
   const [currentStep, setCurrentStep] = useState(0);
   const [picks, setPicks] = useState<Record<number, Rider>>({});
   const [joker1, setJoker1] = useState("");
@@ -61,7 +64,13 @@ export default function TeamBuilder() {
           </p>
         </div>
 
+        {/* Deadline banner */}
+        {isLocked && (
+          <CountdownBanner className="mb-8" />
+        )}
+
         {/* Progress bar */}
+        {!isLocked && (
         <div className="mb-8">
           <div className="h-2 bg-secondary rounded-full overflow-hidden retro-border">
             <div
@@ -73,9 +82,10 @@ export default function TeamBuilder() {
             Stap {currentStep + 1} van {totalSteps}
           </p>
         </div>
+        )}
 
         {/* Category selection */}
-        {isCategories && currentCategory && (
+        {!isLocked && isCategories && currentCategory && (
           <div className="retro-border bg-card p-6 animate-fade-in" key={currentCategory.id}>
             <div className="flex items-center gap-2 mb-1">
               <span className="jersey-badge bg-primary text-primary-foreground">
@@ -120,7 +130,7 @@ export default function TeamBuilder() {
         )}
 
         {/* Jokers */}
-        {isJokers && (
+        {!isLocked && isJokers && (
           <div className="retro-border bg-card p-6 animate-fade-in">
             <h2 className="font-display text-xl font-bold mb-1">🃏 Jokers</h2>
             <p className="text-sm text-muted-foreground mb-4 font-sans">
@@ -152,7 +162,7 @@ export default function TeamBuilder() {
         )}
 
         {/* Predictions */}
-        {isPredictions && (
+        {!isLocked && isPredictions && (
           <div className="retro-border bg-card p-6 animate-fade-in">
             <h2 className="font-display text-xl font-bold mb-1">🏆 Klassementsvoorspellingen</h2>
             <p className="text-sm text-muted-foreground mb-6 font-sans">
@@ -212,6 +222,7 @@ export default function TeamBuilder() {
         )}
 
         {/* Navigation */}
+        {!isLocked && (
         <div className="flex items-center justify-between mt-6">
           <Button
             variant="outline"
@@ -236,6 +247,7 @@ export default function TeamBuilder() {
             </Button>
           )}
         </div>
+        )}
 
         {/* Quick overview */}
         {completedPicks > 0 && (
