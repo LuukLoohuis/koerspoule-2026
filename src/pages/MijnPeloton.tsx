@@ -51,6 +51,7 @@ export default function MijnPeloton() {
   const myTeam = mockTeams[0];
   const [selectedGame, setSelectedGame] = useState(myGames[1].id);
   const [gameTab, setGameTab] = useState("team");
+  const [uitslagenView, setUitslagenView] = useState<"etappes" | "poule" | "giro">("etappes");
   const [selectedPool, setSelectedPool] = useState<string | null>(null);
   const [newPoolName, setNewPoolName] = useState("");
   const [newPoolCode, setNewPoolCode] = useState("");
