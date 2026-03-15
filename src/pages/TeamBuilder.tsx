@@ -129,7 +129,7 @@ export default function TeamBuilder() {
         )}
 
         {/* Jokers */}
-        {isJokers && (
+        {!isLocked && isJokers && (
           <div className="retro-border bg-card p-6 animate-fade-in">
             <h2 className="font-display text-xl font-bold mb-1">🃏 Jokers</h2>
             <p className="text-sm text-muted-foreground mb-4 font-sans">
