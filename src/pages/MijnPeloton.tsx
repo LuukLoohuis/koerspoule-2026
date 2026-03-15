@@ -211,7 +211,7 @@ export default function MijnPeloton() {
             </Card>
           </div>
 
-          {/* Team comparison */}
+          {/* Team comparison - same format as Mijn Team */}
           <div className="lg:col-span-3">
             <Card className="retro-border">
               <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
@@ -229,7 +229,10 @@ export default function MijnPeloton() {
                       .map((t) => (
                         <button
                           key={t.id}
-                          onClick={() => setSubpoolComparePlayer(subpoolComparePlayer === t.userName ? "" : t.userName)}
+                          onClick={() => {
+                            setSubpoolComparePlayer(subpoolComparePlayer === t.userName ? "" : t.userName);
+                            setSubpoolCompareView("gc");
+                          }}
                           className={cn(
                             "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all",
                             subpoolComparePlayer === t.userName
@@ -243,57 +246,254 @@ export default function MijnPeloton() {
                   </div>
                 </div>
 
-                {subpoolCompareTeam ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                         <tr className="border-b border-border bg-secondary/30">
-                          <th className="text-left px-4 py-2 font-display">Categorie</th>
-                          <th className="text-left px-4 py-2 font-display">{myTeam.userName} (jij)</th>
-                          <th className="text-center px-4 py-2 font-display">Punten</th>
-                          <th className="text-left px-4 py-2 font-display">{subpoolCompareTeam.userName}</th>
-                          <th className="text-center px-4 py-2 font-display">Punten</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {Object.entries(myTeam.picks)
-                          .map(([catId, rider]) => ({
-                            catId,
-                            rider,
-                            myPts: getRiderPoints(rider.number),
-                            otherRider: subpoolCompareTeam.picks[Number(catId)],
-                          }))
-                          .sort((a, b) => b.myPts - a.myPts)
-                          .map(({ catId, rider, myPts, otherRider }) => {
-                          const isSame = otherRider?.number === rider.number;
-                          return (
-                            <tr key={catId} className={cn(isSame && "bg-accent/10")}>
-                              <td className="px-4 py-2 text-xs text-muted-foreground">{getCategoryName(Number(catId))}</td>
-                              <td className="px-4 py-2 font-sans font-medium">
-                                {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
-                              </td>
-                              <td className="px-4 py-2 text-center font-display font-bold text-accent text-xs">
-                                {myPts} pt
-                              </td>
-                              <td className="px-4 py-2 font-sans font-medium">
-                                {otherRider?.name || "—"}{" "}
-                                {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
-                                {isSame && <span className="ml-1 text-xs text-accent">★</span>}
-                              </td>
-                              <td className="px-4 py-2 text-center font-display font-bold text-accent text-xs">
-                                {otherRider ? getRiderPoints(otherRider.number) : 0} pt
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                    <div className="mt-3 flex justify-between px-4 py-2 bg-secondary/30 rounded-md text-sm font-display font-bold">
-                      <span>{myTeam.userName}: {myTeam.totalPoints} pt</span>
-                      <span>{subpoolCompareTeam.userName}: {subpoolCompareTeam.totalPoints} pt</span>
+                {subpoolCompareTeam ? (() => {
+                  const getSubpoolPointsForView = (riderNumber: number) => {
+                    if (subpoolCompareView === "gc") return getRiderPoints(riderNumber);
+                    const stage = mockStageResults[subpoolCompareView];
+                    if (!stage) return 0;
+                    const result = stage.top20.find((r) => r.riderNumber === riderNumber);
+                    return result ? (pointsTable[result.position] || 0) : 0;
+                  };
+
+                  const riderRows = Object.entries(myTeam.picks)
+                    .map(([catId, rider]) => {
+                      const myPts = getSubpoolPointsForView(rider.number);
+                      const otherRider = subpoolCompareTeam.picks[Number(catId)];
+                      const otherPts = otherRider ? getSubpoolPointsForView(otherRider.number) : 0;
+                      const isSame = otherRider?.number === rider.number;
+                      return { catId, rider, myPts, otherRider, otherPts, isSame };
+                    })
+                    .sort((a, b) => b.myPts - a.myPts);
+
+                  const myTotal = riderRows.reduce((s, r) => s + r.myPts, 0);
+                  const otherTotal = riderRows.reduce((s, r) => s + r.otherPts, 0);
+
+                  const stageBreakdown = mockStageResults.map((stage, idx) => {
+                    const myPts = Object.values(myTeam.picks).reduce((sum, rider) => {
+                      const r = stage.top20.find((s) => s.riderNumber === rider.number);
+                      return sum + (r ? (pointsTable[r.position] || 0) : 0);
+                    }, 0);
+                    const otherPts = Object.values(subpoolCompareTeam.picks).reduce((sum, rider) => {
+                      const r = stage.top20.find((s) => s.riderNumber === rider.number);
+                      return sum + (r ? (pointsTable[r.position] || 0) : 0);
+                    }, 0);
+                    return { stage: stage.stage, idx, myPts, otherPts, type: stage.type };
+                  });
+
+                  return (
+                    <div className="space-y-4">
+                      {/* Score header */}
+                      <div className="grid grid-cols-2 gap-3 md:gap-4">
+                        <Card className={cn("retro-border", myTotal >= otherTotal && "ring-2 ring-primary")}>
+                          <CardContent className="p-4 text-center">
+                            <p className="text-xs text-muted-foreground font-sans mb-1">Jouw team</p>
+                            <p className="font-display text-2xl md:text-3xl font-bold text-primary">{myTeam.userName}</p>
+                            <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{myTotal} pt</p>
+                            {myTotal > otherTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
+                          </CardContent>
+                        </Card>
+                        <Card className={cn("retro-border", otherTotal > myTotal && "ring-2 ring-primary")}>
+                          <CardContent className="p-4 text-center">
+                            <p className="text-xs text-muted-foreground font-sans mb-1">Tegenstander</p>
+                            <p className="font-display text-2xl md:text-3xl font-bold text-foreground">{subpoolCompareTeam.userName}</p>
+                            <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{otherTotal} pt</p>
+                            {otherTotal > myTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* GC / Stage selector */}
+                      <Card className="retro-border">
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                              onClick={() => setSubpoolCompareView("gc")}
+                              className={cn(
+                                "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
+                                subpoolCompareView === "gc"
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-border hover:border-muted-foreground"
+                              )}
+                            >
+                              🏆 GC (totaal)
+                            </button>
+                            {mockStageResults.map((stage, i) => (
+                              <button
+                                key={stage.stage}
+                                onClick={() => setSubpoolCompareView(i)}
+                                className={cn(
+                                  "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
+                                  subpoolCompareView === i
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-border hover:border-muted-foreground"
+                                )}
+                              >
+                                R{stage.stage}
+                              </button>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Stage-by-stage overview (GC view only) */}
+                      {subpoolCompareView === "gc" && (
+                        <Card className="retro-border overflow-hidden">
+                          <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4">
+                            <CardTitle className="font-display text-sm md:text-base">📊 Punten per etappe</CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-0">
+                            {stageBreakdown.map(({ stage, idx, myPts, otherPts, type }, i) => {
+                              const diff = myPts - otherPts;
+                              const stageIcon = type === "mountain" ? "⛰️" : type === "itt" ? "⏱️" : type === "flat" ? "🏁" : "〰️";
+                              return (
+                                <button
+                                  key={stage}
+                                  onClick={() => setSubpoolCompareView(idx)}
+                                  className={cn(
+                                    "w-full grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors",
+                                    i % 2 === 0 ? "bg-background" : "bg-muted/20"
+                                  )}
+                                >
+                                  <div className="px-3 py-2.5 text-right">
+                                    <span className={cn(
+                                      "font-display font-bold tabular-nums",
+                                      myPts > otherPts ? "text-primary" : myPts < otherPts ? "text-destructive" : "text-muted-foreground"
+                                    )}>{myPts} pt</span>
+                                  </div>
+                                  <div className="px-2 py-2 flex flex-col items-center min-w-[90px]">
+                                    <span className="text-xs font-display font-bold">{stageIcon} Rit {stage}</span>
+                                    {diff !== 0 && (
+                                      <span className={cn(
+                                        "text-[10px] font-display font-bold px-1.5 py-0.5 rounded-full mt-0.5",
+                                        diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                                      )}>{diff > 0 ? `+${diff}` : diff}</span>
+                                    )}
+                                  </div>
+                                  <div className="px-3 py-2.5 text-left">
+                                    <span className={cn(
+                                      "font-display font-bold tabular-nums",
+                                      otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
+                                    )}>{otherPts} pt</span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Rider-by-rider comparison */}
+                      <Card className="retro-border overflow-hidden">
+                        <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4">
+                          <CardTitle className="font-display text-sm md:text-base">
+                            {subpoolCompareView === "gc" ? "Renner voor renner (totaal)" : `Renner voor renner — Rit ${mockStageResults[subpoolCompareView as number]?.stage}`}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          <div className="grid grid-cols-[1fr_auto_1fr] text-xs font-display border-b border-border bg-muted/30">
+                            <div className="px-3 py-2 text-left">{myTeam.userName}</div>
+                            <div className="px-2 py-2 text-center text-muted-foreground">Categorie</div>
+                            <div className="px-3 py-2 text-right">{subpoolCompareTeam.userName}</div>
+                          </div>
+
+                          {riderRows.map(({ catId, rider, myPts, otherRider, otherPts, isSame }, idx) => {
+                            const diff = myPts - otherPts;
+                            return (
+                              <div
+                                key={catId}
+                                className={cn(
+                                  "grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0",
+                                  idx % 2 === 0 ? "bg-background" : "bg-muted/20",
+                                  isSame && "bg-accent/10"
+                                )}
+                              >
+                                <div className="px-3 py-2.5 flex items-center gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                      {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
+                                    </span>
+                                  </div>
+                                  <span className={cn(
+                                    "font-display font-bold text-xs shrink-0 tabular-nums",
+                                    diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-muted-foreground"
+                                  )}>{myPts} pt</span>
+                                </div>
+                                <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
+                                  <span className="text-[10px] text-muted-foreground font-sans truncate max-w-full text-center">
+                                    {getCategoryName(Number(catId))}
+                                  </span>
+                                  {isSame ? (
+                                    <span className="jersey-badge bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5">🤝 Zelfde</span>
+                                  ) : diff !== 0 ? (
+                                    <span className={cn(
+                                      "text-[10px] font-display font-bold px-1.5 py-0.5 rounded-full",
+                                      diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                                    )}>{diff > 0 ? `+${diff}` : diff}</span>
+                                  ) : null}
+                                </div>
+                                <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
+                                  <span className={cn(
+                                    "font-display font-bold text-xs shrink-0 tabular-nums",
+                                    otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
+                                  )}>{otherPts} pt</span>
+                                  <div className="flex-1 min-w-0 text-right">
+                                    <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                      {otherRider?.name || "—"} {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {/* Totals row */}
+                          <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-secondary/50 border-t-2 border-foreground">
+                            <div className="px-3 py-3 text-right">
+                              <span className="font-display font-bold text-base md:text-lg text-accent">{myTotal} pt</span>
+                            </div>
+                            <div className="px-2 py-3 text-center">
+                              <span className={cn(
+                                "font-display font-bold text-sm px-2 py-1 rounded-md",
+                                myTotal > otherTotal ? "bg-primary/15 text-primary" : myTotal < otherTotal ? "bg-destructive/15 text-destructive" : "text-muted-foreground"
+                              )}>{myTotal - otherTotal > 0 ? `+${myTotal - otherTotal}` : myTotal - otherTotal}</span>
+                            </div>
+                            <div className="px-3 py-3 text-left">
+                              <span className="font-display font-bold text-base md:text-lg text-accent">{otherTotal} pt</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Jokers side by side */}
+                      <div className="grid grid-cols-2 gap-3 md:gap-4">
+                        <Card className="retro-border">
+                          <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3">
+                            <CardTitle className="font-display text-xs md:text-sm">🃏 Jokers — {myTeam.userName}</CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-3">
+                            <div className="flex flex-wrap gap-1.5">
+                              {myTeam.jokers.map((j) => (
+                                <span key={j.number} className="jersey-badge bg-primary text-primary-foreground text-xs">{j.name}</span>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card className="retro-border">
+                          <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3">
+                            <CardTitle className="font-display text-xs md:text-sm">🃏 Jokers — {subpoolCompareTeam.userName}</CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-3">
+                            <div className="flex flex-wrap gap-1.5">
+                              {subpoolCompareTeam.jokers.map((j) => (
+                                <span key={j.number} className="jersey-badge bg-foreground text-background text-xs">{j.name}</span>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
                     </div>
-                  </div>
-                ) : (
+                  );
+                })() : (
                   <p className="text-sm text-muted-foreground font-sans">Kies een speler om teams te vergelijken.</p>
                 )}
               </CardContent>
