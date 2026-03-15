@@ -386,144 +386,280 @@ export default function MijnPeloton() {
               const compareTeam = mockTeams.find(
                 (t) => t.userName.toLowerCase() === comparePlayerName.trim().toLowerCase() && t.id !== myTeam.id
               );
+
+              const riderRows = Object.entries(myTeam.picks)
+                .map(([catId, rider]) => {
+                  const myPts = getRiderPoints(rider.number);
+                  const otherRider = compareTeam?.picks[Number(catId)];
+                  const otherPts = otherRider ? getRiderPoints(otherRider.number) : 0;
+                  const isSame = otherRider?.number === rider.number;
+                  return { catId, rider, myPts, otherRider, otherPts, isSame };
+                })
+                .sort((a, b) => b.myPts - a.myPts);
+
+              const myTotal = riderRows.reduce((s, r) => s + r.myPts, 0);
+              const otherTotal = compareTeam ? riderRows.reduce((s, r) => s + r.otherPts, 0) : 0;
+
               return (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <Card className="retro-border">
-                  <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4 flex flex-row items-center justify-between">
-                    <CardTitle className="font-display text-sm md:text-base">🚴 Mijn selectie</CardTitle>
-                    <span className="font-display text-lg md:text-xl font-bold text-accent">{myTeam.totalPoints} pt</span>
-                  </CardHeader>
-                  
-                  {/* Compare input */}
-                  <div className="p-2 md:p-3 border-b border-border bg-secondary/20">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <ArrowLeftRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="text-xs md:text-sm text-muted-foreground font-sans whitespace-nowrap">Vergelijk:</span>
-                      <Input
-                        value={comparePlayerName}
-                        onChange={(e) => setComparePlayerName(e.target.value)}
-                        placeholder="Spelersnaam..."
-                        className="h-8 text-sm flex-1 min-w-[120px] max-w-[200px]"
-                      />
-                      {comparePlayerName && !compareTeam && (
-                        <span className="text-xs text-destructive whitespace-nowrap">Niet gevonden</span>
-                      )}
-                      {compareTeam && (
-                        <span className="text-xs text-primary font-bold whitespace-nowrap">{compareTeam.totalPoints} pt</span>
-                      )}
-                    </div>
+            <div className="space-y-6">
+              {/* Compare input bar */}
+              <Card className="retro-border">
+                <CardContent className="p-3 md:p-4">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <ArrowLeftRight className="h-5 w-5 text-primary shrink-0" />
+                    <span className="text-sm font-display font-bold whitespace-nowrap">Vergelijk teams</span>
+                    <Input
+                      value={comparePlayerName}
+                      onChange={(e) => setComparePlayerName(e.target.value)}
+                      placeholder="Typ een spelersnaam..."
+                      className="h-9 text-sm flex-1 min-w-[140px] max-w-[240px]"
+                    />
+                    {comparePlayerName && !compareTeam && (
+                      <span className="text-xs text-destructive font-sans">Niet gevonden</span>
+                    )}
+                    {compareTeam && (
+                      <Button variant="ghost" size="sm" onClick={() => setComparePlayerName("")} className="text-xs h-7">
+                        ✕ Wis
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {compareTeam ? (
+                /* ── Side-by-side comparison view ── */
+                <div className="space-y-4">
+                  {/* Score header */}
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
+                    <Card className={cn("retro-border", myTotal >= otherTotal && "ring-2 ring-primary")}>
+                      <CardContent className="p-4 text-center">
+                        <p className="text-xs text-muted-foreground font-sans mb-1">Jouw team</p>
+                        <p className="font-display text-2xl md:text-3xl font-bold text-primary">{myTeam.userName}</p>
+                        <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{myTotal} pt</p>
+                        {myTotal > otherTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
+                      </CardContent>
+                    </Card>
+                    <Card className={cn("retro-border", otherTotal > myTotal && "ring-2 ring-primary")}>
+                      <CardContent className="p-4 text-center">
+                        <p className="text-xs text-muted-foreground font-sans mb-1">Tegenstander</p>
+                        <p className="font-display text-2xl md:text-3xl font-bold text-foreground">{compareTeam.userName}</p>
+                        <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{otherTotal} pt</p>
+                        {otherTotal > myTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
+                      </CardContent>
+                    </Card>
                   </div>
 
-                  <CardContent className="p-0 divide-y divide-border">
-                    {Object.entries(myTeam.picks)
-                      .map(([catId, rider]) => ({
-                        catId,
-                        rider,
-                        points: getRiderPoints(rider.number),
-                        otherRider: compareTeam?.picks[Number(catId)],
-                      }))
-                      .sort((a, b) => b.points - a.points)
-                      .map(({ catId, rider, points, otherRider }) => {
-                      const isSame = otherRider?.number === rider.number;
-                      return (
-                    <div key={catId} className={cn(
-                      "px-3 md:px-4 py-2 text-sm",
-                      compareTeam ? "space-y-1" : "flex items-center gap-3"
-                    )}>
-                        {/* My rider */}
-                        <div className={cn("flex items-center gap-2", compareTeam ? "" : "flex-1 min-w-0")}>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-[10px] md:text-xs text-muted-foreground block truncate">
-                              {getCategoryName(Number(catId))}
-                            </span>
-                            <span className="font-medium font-sans text-xs md:text-sm">
-                              {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
-                            </span>
+                  {/* Rider-by-rider comparison */}
+                  <Card className="retro-border overflow-hidden">
+                    <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4">
+                      <CardTitle className="font-display text-sm md:text-base">Renner voor renner</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      {/* Table header */}
+                      <div className="grid grid-cols-[1fr_auto_1fr] text-xs font-display border-b border-border bg-muted/30">
+                        <div className="px-3 py-2 text-left">{myTeam.userName}</div>
+                        <div className="px-2 py-2 text-center text-muted-foreground">Categorie</div>
+                        <div className="px-3 py-2 text-right">{compareTeam.userName}</div>
+                      </div>
+
+                      {riderRows.map(({ catId, rider, myPts, otherRider, otherPts, isSame }, idx) => {
+                        const diff = myPts - otherPts;
+                        return (
+                          <div
+                            key={catId}
+                            className={cn(
+                              "grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0",
+                              idx % 2 === 0 ? "bg-background" : "bg-muted/20",
+                              isSame && "bg-accent/10"
+                            )}
+                          >
+                            {/* Left: my rider */}
+                            <div className="px-3 py-2.5 flex items-center gap-2">
+                              <div className="flex-1 min-w-0">
+                                <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                  {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
+                                </span>
+                              </div>
+                              <span className={cn(
+                                "font-display font-bold text-xs shrink-0 tabular-nums",
+                                diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-muted-foreground"
+                              )}>
+                                {myPts} pt
+                              </span>
+                            </div>
+
+                            {/* Center: category + diff indicator */}
+                            <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
+                              <span className="text-[10px] text-muted-foreground font-sans truncate max-w-full text-center">
+                                {getCategoryName(Number(catId))}
+                              </span>
+                              {isSame ? (
+                                <span className="jersey-badge bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5">
+                                  🤝 Zelfde
+                                </span>
+                              ) : diff !== 0 ? (
+                                <span className={cn(
+                                  "text-[10px] font-display font-bold px-1.5 py-0.5 rounded-full",
+                                  diff > 0
+                                    ? "bg-primary/15 text-primary"
+                                    : "bg-destructive/15 text-destructive"
+                                )}>
+                                  {diff > 0 ? `+${diff}` : diff}
+                                </span>
+                              ) : null}
+                            </div>
+
+                            {/* Right: other rider */}
+                            <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
+                              <span className={cn(
+                                "font-display font-bold text-xs shrink-0 tabular-nums",
+                                otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
+                              )}>
+                                {otherPts} pt
+                              </span>
+                              <div className="flex-1 min-w-0 text-right">
+                                <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                  {otherRider?.name || "—"}{" "}
+                                  {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
-                            {points} pt
+                        );
+                      })}
+
+                      {/* Totals row */}
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-secondary/50 border-t-2 border-foreground">
+                        <div className="px-3 py-3 text-right">
+                          <span className="font-display font-bold text-base md:text-lg text-accent">{myTotal} pt</span>
+                        </div>
+                        <div className="px-2 py-3 text-center">
+                          <span className={cn(
+                            "font-display font-bold text-sm px-2 py-1 rounded-md",
+                            myTotal > otherTotal
+                              ? "bg-primary/15 text-primary"
+                              : myTotal < otherTotal
+                              ? "bg-destructive/15 text-destructive"
+                              : "text-muted-foreground"
+                          )}>
+                            {myTotal - otherTotal > 0 ? `+${myTotal - otherTotal}` : myTotal - otherTotal}
                           </span>
                         </div>
-                        {/* Comparison rider */}
-                        {compareTeam && (
-                          <div className={cn(
-                            "flex items-center gap-2 pl-4 border-l-2",
-                            isSame ? "border-accent" : "border-border"
-                          )}>
+                        <div className="px-3 py-3 text-left">
+                          <span className="font-display font-bold text-base md:text-lg text-accent">{otherTotal} pt</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Jokers & predictions side by side */}
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
+                    <Card className="retro-border">
+                      <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3">
+                        <CardTitle className="font-display text-xs md:text-sm">🃏 Jokers — {myTeam.userName}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-3">
+                        <div className="flex flex-wrap gap-1.5">
+                          {myTeam.jokers.map((j) => (
+                            <span key={j.number} className="jersey-badge bg-primary text-primary-foreground text-xs">{j.name}</span>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="retro-border">
+                      <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3">
+                        <CardTitle className="font-display text-xs md:text-sm">🃏 Jokers — {compareTeam.userName}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-3">
+                        <div className="flex flex-wrap gap-1.5">
+                          {compareTeam.jokers.map((j) => (
+                            <span key={j.number} className="jersey-badge bg-foreground text-background text-xs">{j.name}</span>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              ) : (
+                /* ── Normal team view (no comparison) ── */
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2">
+                    <Card className="retro-border">
+                      <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4 flex flex-row items-center justify-between">
+                        <CardTitle className="font-display text-sm md:text-base">🚴 Mijn selectie</CardTitle>
+                        <span className="font-display text-lg md:text-xl font-bold text-accent">{myTeam.totalPoints} pt</span>
+                      </CardHeader>
+                      <CardContent className="p-0 divide-y divide-border">
+                        {riderRows.map(({ catId, rider, myPts }) => (
+                          <div key={catId} className="px-3 md:px-4 py-2 text-sm flex items-center gap-3">
                             <div className="flex-1 min-w-0">
-                              <span className="text-[10px] md:text-xs text-muted-foreground block truncate">{compareTeam.userName}</span>
+                              <span className="text-[10px] md:text-xs text-muted-foreground block truncate">
+                                {getCategoryName(Number(catId))}
+                              </span>
                               <span className="font-medium font-sans text-xs md:text-sm">
-                                {otherRider?.name || "—"}{" "}
-                                {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
+                                {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                               </span>
                             </div>
                             <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
-                              {otherRider ? getRiderPoints(otherRider.number) : 0} pt
+                              {myPts} pt
                             </span>
                           </div>
-                        )}
-                      </div>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
-              </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  </div>
 
-              <div className="space-y-6">
-                {/* Jokers */}
-                <Card className="retro-border">
-                  <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
-                    <CardTitle className="font-display text-base">🃏 Jokers</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="flex flex-wrap gap-2">
-                      {myTeam.jokers.map((j) =>
-                      <span key={j.number} className="jersey-badge bg-primary text-primary-foreground">
-                          {j.name} #{j.number}
-                        </span>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                  <div className="space-y-6">
+                    <Card className="retro-border">
+                      <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+                        <CardTitle className="font-display text-base">🃏 Jokers</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4">
+                        <div className="flex flex-wrap gap-2">
+                          {myTeam.jokers.map((j) => (
+                            <span key={j.number} className="jersey-badge bg-primary text-primary-foreground">{j.name} #{j.number}</span>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                {/* Predictions */}
-                <Card className="retro-border">
-                  <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
-                    <CardTitle className="font-display text-base">🏆 Voorspellingen</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 space-y-2 text-sm font-sans">
-                    <div>
-                      <span className="text-xs text-muted-foreground">Podium:</span>
-                      <p className="font-medium">{myTeam.predictions.gcPodium.join(", ")}</p>
-                    </div>
-                    <p><span className="w-2 h-2 rounded-full bg-jersey-purple inline-block mr-1" /> {myTeam.predictions.pointsJersey}</p>
-                    <p><span className="w-2 h-2 rounded-full bg-jersey-blue inline-block mr-1" /> {myTeam.predictions.mountainJersey}</p>
-                    <p><span className="w-2 h-2 rounded-full bg-jersey-white border inline-block mr-1" /> {myTeam.predictions.youthJersey}</p>
-                  </CardContent>
-                </Card>
+                    <Card className="retro-border">
+                      <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+                        <CardTitle className="font-display text-base">🏆 Voorspellingen</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 space-y-2 text-sm font-sans">
+                        <div>
+                          <span className="text-xs text-muted-foreground">Podium:</span>
+                          <p className="font-medium">{myTeam.predictions.gcPodium.join(", ")}</p>
+                        </div>
+                        <p><span className="w-2 h-2 rounded-full bg-jersey-purple inline-block mr-1" /> {myTeam.predictions.pointsJersey}</p>
+                        <p><span className="w-2 h-2 rounded-full bg-jersey-blue inline-block mr-1" /> {myTeam.predictions.mountainJersey}</p>
+                        <p><span className="w-2 h-2 rounded-full bg-jersey-white border inline-block mr-1" /> {myTeam.predictions.youthJersey}</p>
+                      </CardContent>
+                    </Card>
 
-                {/* Quick stats */}
-                <Card className="retro-border">
-                  <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
-                    <CardTitle className="font-display text-base">📊 Overzicht</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground font-sans">Totaal punten</span>
-                      <span className="font-display font-bold">{myTeam.totalPoints} pt</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground font-sans">Renners</span>
-                      <span className="font-sans font-medium">{Object.keys(myTeam.picks).length}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground font-sans">Jokers</span>
-                      <span className="font-sans font-medium">{myTeam.jokers.length}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                    <Card className="retro-border">
+                      <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+                        <CardTitle className="font-display text-base">📊 Overzicht</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground font-sans">Totaal punten</span>
+                          <span className="font-display font-bold">{myTeam.totalPoints} pt</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground font-sans">Renners</span>
+                          <span className="font-sans font-medium">{Object.keys(myTeam.picks).length}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground font-sans">Jokers</span>
+                          <span className="font-sans font-medium">{myTeam.jokers.length}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              )}
             </div>
               );
             })()}
