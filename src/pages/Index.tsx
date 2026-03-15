@@ -128,12 +128,12 @@ export default function Index() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA + Countdown */}
       <section className="container mx-auto px-4 py-16 text-center">
         <h2 className="font-display text-3xl font-bold mb-4">Klaar om te koersen?</h2>
-        <p className="text-muted-foreground font-serif mb-6">Inschrijving sluit op 9 mei om 12:00 uur.</p>
+        <CountdownBanner className="max-w-md mx-auto mb-6" />
         <Button asChild size="lg" className="retro-border-primary text-base font-bold">
-          <Link to="/login">Schrijf je in →</Link>
+          <Link to="/team-samenstellen">Schrijf je in →</Link>
         </Button>
       </section>
     </div>);
