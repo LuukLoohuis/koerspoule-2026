@@ -1865,7 +1865,7 @@ function WatAlsTab({
                 tick={{ fontSize: 11 }}
                 className="fill-muted-foreground"
                 reversed
-                domain={[1, rankingTeams.length]}
+                domain={[1, allPoolParticipants.length]}
                 allowDecimals={false}
                 label={{ value: "← Beter", angle: -90, position: "insideLeft", fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
               />
