@@ -459,6 +459,9 @@ export default function MijnPeloton() {
                         <p className="text-xs text-muted-foreground font-sans mb-1">Jouw team</p>
                         <p className="font-display text-2xl md:text-3xl font-bold text-primary">{myTeam.userName}</p>
                         <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{myTotal} pt</p>
+                        {compareView !== "gc" && (
+                          <p className="text-[10px] text-muted-foreground font-sans mt-0.5">Rit {mockStageResults[compareView as number]?.stage}</p>
+                        )}
                         {myTotal > otherTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
                       </CardContent>
                     </Card>
@@ -467,6 +470,9 @@ export default function MijnPeloton() {
                         <p className="text-xs text-muted-foreground font-sans mb-1">Tegenstander</p>
                         <p className="font-display text-2xl md:text-3xl font-bold text-foreground">{compareTeam.userName}</p>
                         <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{otherTotal} pt</p>
+                        {compareView !== "gc" && (
+                          <p className="text-[10px] text-muted-foreground font-sans mt-0.5">Rit {mockStageResults[compareView as number]?.stage}</p>
+                        )}
                         {otherTotal > myTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
                       </CardContent>
                     </Card>
