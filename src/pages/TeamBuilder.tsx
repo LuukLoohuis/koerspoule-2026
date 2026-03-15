@@ -63,7 +63,13 @@ export default function TeamBuilder() {
           </p>
         </div>
 
+        {/* Deadline banner */}
+        {isLocked && (
+          <CountdownBanner className="mb-8" />
+        )}
+
         {/* Progress bar */}
+        {!isLocked && (
         <div className="mb-8">
           <div className="h-2 bg-secondary rounded-full overflow-hidden retro-border">
             <div
@@ -75,6 +81,7 @@ export default function TeamBuilder() {
             Stap {currentStep + 1} van {totalSteps}
           </p>
         </div>
+        )}
 
         {/* Category selection */}
         {isCategories && currentCategory && (
