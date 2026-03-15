@@ -1571,16 +1571,15 @@ function WatAlsTab({
     })).sort((a, b) => b.points - a.points);
 
     const chosenJokerNumbers = new Set(myTeam.jokers.map((j) => j.number));
+    const availableAlternatives = jokerPool.filter((r) => !chosenJokerNumbers.has(r.number));
 
-    return myTeam.jokers.map((joker) => {
+    return myTeam.jokers.map((joker, index) => {
       const pts = getRiderPoints(joker.number);
-      // Best alternative = best from pool excluding all chosen jokers
-      const bestAlt = jokerPool.find((r) => !chosenJokerNumbers.has(r.number));
       return {
         name: joker.name,
         number: joker.number,
         points: pts,
-        bestAlternative: bestAlt || null,
+        bestAlternative: availableAlternatives[index] || null,
       };
     });
   }, [getRiderPoints, myTeam]);
