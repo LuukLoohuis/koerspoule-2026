@@ -5,14 +5,14 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 
 const navItems = [
-  { to: "/", label: "Home" },
-  { to: "/team-samenstellen", label: "Stel je team samen" },
-  { to: "/uitslagen", label: "Uitslagen" },
-  { to: "/mijn-peloton", label: "Mijn Peloton" },
-  { to: "/regels", label: "Spelregels" },
-];
+{ to: "/", label: "Home" },
+{ to: "/team-samenstellen", label: "Stel je team samen" },
+{ to: "/uitslagen", label: "Uitslagen" },
+{ to: "/mijn-peloton", label: "Mijn Peloton" },
+{ to: "/regels", label: "Spelregels" }];
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+
+export default function Layout({ children }: {children: React.ReactNode;}) {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -23,32 +23,32 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
-              <img src={koerspouleLogo} alt="Koerspoule logo" className="h-32" />
+              <img alt="Koerspoule logo" className="h-32" src="/lovable-uploads/449638d0-9263-472b-b9dc-1ca6517ee97f.png" />
             </Link>
 
             {/* Desktop nav */}
             <nav className="hidden md:flex items-center gap-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={cn(
-                    "px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                    location.pathname === item.to
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-secondary text-foreground",
-                  )}
-                >
+              {navItems.map((item) =>
+              <Link
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  "px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  location.pathname === item.to ?
+                  "bg-primary text-primary-foreground" :
+                  "hover:bg-secondary text-foreground"
+                )}>
+                
                   {item.label}
                 </Link>
-              ))}
+              )}
             </nav>
 
             <div className="hidden md:flex items-center gap-2">
               <Link
                 to="/login"
-                className="px-4 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors"
-              >
+                className="px-4 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors">
+                
                 Inloggen
               </Link>
             </div>
@@ -60,32 +60,32 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Mobile nav */}
-          {mobileOpen && (
-            <nav className="md:hidden pb-4 space-y-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    "block px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                    location.pathname === item.to
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-secondary text-foreground",
-                  )}
-                >
+          {mobileOpen &&
+          <nav className="md:hidden pb-4 space-y-1">
+              {navItems.map((item) =>
+            <Link
+              key={item.to}
+              to={item.to}
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                "block px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                location.pathname === item.to ?
+                "bg-primary text-primary-foreground" :
+                "hover:bg-secondary text-foreground"
+              )}>
+              
                   {item.label}
                 </Link>
-              ))}
+            )}
               <Link
-                to="/login"
-                onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors text-center mt-2"
-              >
+              to="/login"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors text-center mt-2">
+              
                 Inloggen
               </Link>
             </nav>
-          )}
+          }
         </div>
       </header>
 
@@ -102,6 +102,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>);
+
 }
