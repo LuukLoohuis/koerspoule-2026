@@ -1565,15 +1565,17 @@ function WatAlsTab({
       points: getRiderPoints(r.number),
     })).sort((a, b) => b.points - a.points);
 
-    const bestJokerAvailable = jokerPool[0];
+    const chosenJokerNumbers = new Set(myTeam.jokers.map((j) => j.number));
 
     return myTeam.jokers.map((joker) => {
       const pts = getRiderPoints(joker.number);
+      // Best alternative = best from pool excluding all chosen jokers
+      const bestAlt = jokerPool.find((r) => !chosenJokerNumbers.has(r.number));
       return {
         name: joker.name,
         number: joker.number,
         points: pts,
-        bestAlternative: bestJokerAvailable?.number !== joker.number ? bestJokerAvailable : jokerPool[1],
+        bestAlternative: bestAlt || null,
       };
     });
   }, [getRiderPoints, myTeam]);
