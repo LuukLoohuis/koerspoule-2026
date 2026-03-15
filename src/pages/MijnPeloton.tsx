@@ -906,6 +906,81 @@ function WatAlsTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getRiderPoints, monkeyRoll]);
 
+  // Category performance: your pick vs category avg vs best
+  const categoryPerformance = useMemo(() => {
+    return riderCategories.map((cat) => {
+      const riderScores = cat.riders.map((r) => ({ ...r, points: getRiderPoints(r.number) }));
+      const best = riderScores.sort((a, b) => b.points - a.points)[0];
+      const avg = Math.round(riderScores.reduce((s, r) => s + r.points, 0) / riderScores.length);
+      const myPick = myTeam.picks[cat.id];
+      const myPoints = myPick ? getRiderPoints(myPick.number) : 0;
+      const diff = myPoints - avg;
+      return { catId: cat.id, catName: cat.name, myPick, myPoints, avg, best, diff };
+    });
+  }, [getRiderPoints, myTeam]);
+
+  // Stage trend: cumulative score per stage for user, leader, and avg
+  const stageTrend = useMemo(() => {
+    const teams = mockTeams;
+    return mockStageResults.map((stage, i) => {
+      const teamStageScores = teams.map((team) => {
+        const teamRiders = new Set(Object.values(team.picks).map((p) => p.number));
+        let cumulative = 0;
+        for (let s = 0; s <= i; s++) {
+          cumulative += mockStageResults[s].top20
+            .filter((r) => teamRiders.has(r.riderNumber))
+            .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
+        }
+        return { name: team.userName, score: cumulative };
+      });
+      const myScore = teamStageScores.find((t) => t.name === myTeam.userName)?.score || 0;
+      const leaderScore = Math.max(...teamStageScores.map((t) => t.score));
+      const avgScore = Math.round(teamStageScores.reduce((s, t) => s + t.score, 0) / teamStageScores.length);
+      return { stage: `Rit ${stage.stage}`, Jij: myScore, Leider: leaderScore, Gemiddelde: avgScore };
+    });
+  }, [getRiderPoints, myTeam]);
+
+  // Ranking history: position per stage
+  const rankingHistory = useMemo(() => {
+    const teams = mockTeams;
+    return mockStageResults.map((stage, i) => {
+      const cumScores = teams.map((team) => {
+        const teamRiders = new Set(Object.values(team.picks).map((p) => p.number));
+        let cumulative = 0;
+        for (let s = 0; s <= i; s++) {
+          cumulative += mockStageResults[s].top20
+            .filter((r) => teamRiders.has(r.riderNumber))
+            .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
+        }
+        return { name: team.userName, score: cumulative };
+      }).sort((a, b) => b.score - a.score);
+      const myPos = cumScores.findIndex((t) => t.name === myTeam.userName) + 1;
+      return { stage: `Rit ${stage.stage}`, Positie: myPos };
+    });
+  }, [myTeam]);
+
+  // Joker impact
+  const jokerImpact = useMemo(() => {
+    return myTeam.jokers.map((joker) => {
+      const pts = getRiderPoints(joker.number);
+      const cat = riderCategories.find((c) =>
+        c.riders.some((r) => r.number === joker.number)
+      );
+      const catRiders = cat?.riders.map((r) => ({ ...r, points: getRiderPoints(r.number) })) || [];
+      const bestAlt = catRiders.filter((r) => r.number !== joker.number).sort((a, b) => b.points - a.points)[0];
+      return {
+        name: joker.name,
+        number: joker.number,
+        points: pts,
+        bonusPoints: pts, // joker doubles
+        catName: cat?.name || "—",
+        bestAlternative: bestAlt,
+      };
+    });
+  }, [getRiderPoints, myTeam]);
+
+  const totalJokerBonus = jokerImpact.reduce((s, j) => s + j.points, 0);
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       {/* Best possible team */}
@@ -962,7 +1037,6 @@ function WatAlsTab({
           </p>
         </CardHeader>
         <CardContent className="p-4 space-y-4">
-          {/* Stats */}
           <div className="grid grid-cols-2 gap-2 md:gap-3">
             <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
               <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Gemiddeld</p>
@@ -982,7 +1056,6 @@ function WatAlsTab({
             </div>
           </div>
 
-          {/* Your percentile */}
           <div className="p-4 bg-primary/10 rounded-md text-center">
             <p className="text-sm text-muted-foreground font-sans mb-1">Jij scoort beter dan</p>
             <p className="font-display font-bold text-3xl text-primary">{monkeyStats.percentile}%</p>
@@ -1022,7 +1095,7 @@ function WatAlsTab({
             </ChartContainer>
           </div>
 
-          {/* Example monkey team with re-roll */}
+          {/* Example monkey team */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-sans">
@@ -1050,6 +1123,180 @@ function WatAlsTab({
                 </div>
               ))}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Rendement per categorie */}
+      <Card className="retro-border">
+        <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+          <CardTitle className="font-display text-base flex items-center gap-2">
+            <Target className="h-5 w-5 text-primary" />
+            📊 Rendement per categorie
+          </CardTitle>
+          <p className="text-xs text-muted-foreground font-sans mt-1">
+            Hoe scoort jouw pick t.o.v. het categorie-gemiddelde en de beste keuze?
+          </p>
+        </CardHeader>
+        <CardContent className="p-0 divide-y divide-border">
+          {categoryPerformance
+            .sort((a, b) => b.diff - a.diff)
+            .map(({ catId, catName, myPick, myPoints, avg, best, diff }) => (
+            <div key={catId} className="px-3 md:px-4 py-2.5 text-xs md:text-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] md:text-xs text-muted-foreground">{catName}</span>
+                <span className={cn(
+                  "text-[10px] md:text-xs font-bold px-1.5 py-0.5 rounded",
+                  diff > 0 ? "bg-primary/10 text-primary" : diff < 0 ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground"
+                )}>
+                  {diff > 0 ? "+" : ""}{diff} pt
+                </span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium font-sans">{myPick?.name || "—"}</span>
+                  <span className="text-muted-foreground ml-1">{myPoints} pt</span>
+                </div>
+                <div className="text-[10px] md:text-xs text-muted-foreground text-right shrink-0">
+                  <span>Gem: {avg} pt</span>
+                  <span className="mx-1">•</span>
+                  <span>Best: {best?.name} ({best?.points} pt)</span>
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="mt-1.5 h-1.5 bg-secondary rounded-full overflow-hidden">
+                <div
+                  className={cn("h-full rounded-full", myPoints >= (best?.points || 0) ? "bg-primary" : "bg-accent")}
+                  style={{ width: `${Math.min(100, best?.points ? (myPoints / best.points) * 100 : 0)}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Joker Impact */}
+      <Card className="retro-border">
+        <CardHeader className="border-b-2 border-foreground bg-primary/10 py-3 px-4">
+          <CardTitle className="font-display text-base flex items-center gap-2">
+            🃏 Joker-impact
+          </CardTitle>
+          <p className="text-xs text-muted-foreground font-sans mt-1">
+            Hoeveel punten leveren jouw jokers op, en was een andere keuze beter geweest?
+          </p>
+        </CardHeader>
+        <CardContent className="p-4 space-y-4">
+          <div className="p-4 bg-primary/10 rounded-md text-center">
+            <p className="text-sm text-muted-foreground font-sans mb-1">Totale joker-punten</p>
+            <p className="font-display font-bold text-3xl text-primary">{totalJokerBonus} pt</p>
+            <p className="text-xs text-muted-foreground font-sans mt-1">
+              (deze punten tellen dubbel als jokerbonus)
+            </p>
+          </div>
+
+          {jokerImpact.map((joker) => (
+            <div key={joker.number} className="p-3 bg-secondary/30 rounded-md">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <span className="jersey-badge bg-primary text-primary-foreground mr-2">JOKER</span>
+                  <span className="font-sans font-bold text-sm">{joker.name} #{joker.number}</span>
+                </div>
+                <span className="font-display font-bold text-primary">{joker.points} pt</span>
+              </div>
+              <p className="text-[10px] md:text-xs text-muted-foreground">
+                Categorie: {joker.catName}
+              </p>
+              {joker.bestAlternative && (
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
+                  Beste alternatief: <span className="font-medium text-foreground">{joker.bestAlternative.name}</span> ({joker.bestAlternative.points} pt)
+                  {joker.bestAlternative.points > joker.points && (
+                    <span className="text-destructive font-bold ml-1">+{joker.bestAlternative.points - joker.points} gemist</span>
+                  )}
+                  {joker.bestAlternative.points <= joker.points && (
+                    <span className="text-primary font-bold ml-1">✓ Goede keuze!</span>
+                  )}
+                </p>
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Etappe-trendlijn */}
+      <Card className="retro-border">
+        <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+          <CardTitle className="font-display text-base flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            📈 Etappe-trendlijn
+          </CardTitle>
+          <p className="text-xs text-muted-foreground font-sans mt-1">
+            Jouw cumulatieve score per etappe vs. de poule-leider en het gemiddelde
+          </p>
+        </CardHeader>
+        <CardContent className="p-4">
+          <ChartContainer
+            config={{
+              Jij: { label: "Jij", color: "hsl(var(--primary))" },
+              Leider: { label: "Leider", color: "hsl(var(--accent))" },
+              Gemiddelde: { label: "Gemiddelde", color: "hsl(var(--muted-foreground))" },
+            }}
+            className="h-[220px] w-full"
+          >
+            <LineChart data={stageTrend}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <XAxis dataKey="stage" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+              <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Line type="monotone" dataKey="Jij" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="Leider" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="5 3" />
+              <Line type="monotone" dataKey="Gemiddelde" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} dot={{ r: 2 }} strokeDasharray="3 3" />
+            </LineChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* Rankingverloop */}
+      <Card className="retro-border">
+        <CardHeader className="border-b-2 border-foreground bg-accent/10 py-3 px-4">
+          <CardTitle className="font-display text-base flex items-center gap-2">
+            <Medal className="h-5 w-5 text-accent" />
+            🏅 Rankingverloop
+          </CardTitle>
+          <p className="text-xs text-muted-foreground font-sans mt-1">
+            Hoe is jouw positie in het klassement veranderd per etappe?
+          </p>
+        </CardHeader>
+        <CardContent className="p-4">
+          <ChartContainer
+            config={{ Positie: { label: "Positie", color: "hsl(var(--primary))" } }}
+            className="h-[220px] w-full"
+          >
+            <LineChart data={rankingHistory}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <XAxis dataKey="stage" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+              <YAxis
+                tick={{ fontSize: 11 }}
+                className="fill-muted-foreground"
+                reversed
+                domain={[1, mockTeams.length]}
+                allowDecimals={false}
+                label={{ value: "← Beter", angle: -90, position: "insideLeft", fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+              />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Line
+                type="monotone"
+                dataKey="Positie"
+                stroke="hsl(var(--primary))"
+                strokeWidth={2.5}
+                dot={{ r: 5, fill: "hsl(var(--primary))" }}
+              />
+            </LineChart>
+          </ChartContainer>
+          <div className="mt-3 text-center">
+            <span className="text-sm font-sans text-muted-foreground">
+              Huidige positie: <span className="font-display font-bold text-primary text-lg">#{rankingHistory[rankingHistory.length - 1]?.Positie}</span>
+              <span className="text-muted-foreground"> van {mockTeams.length}</span>
+            </span>
           </div>
         </CardContent>
       </Card>
