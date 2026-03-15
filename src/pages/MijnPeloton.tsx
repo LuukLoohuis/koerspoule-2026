@@ -1527,11 +1527,16 @@ function WatAlsTab({
     });
   }, [getRiderPoints, myTeam]);
 
-  // Ranking history: position per stage
+  // Ranking history: position per stage (within your subpoule)
+  const rankingTeams = useMemo(() => {
+    const mySubpool = mockSubPools.find((pool) => pool.members.includes(myTeam.userName));
+    const members = mySubpool?.members || mockTeams.map((t) => t.userName);
+    return mockTeams.filter((team) => members.includes(team.userName));
+  }, [myTeam.userName]);
+
   const rankingHistory = useMemo(() => {
-    const teams = mockTeams;
     return mockStageResults.map((stage, i) => {
-      const cumScores = teams.map((team) => {
+      const cumScores = rankingTeams.map((team) => {
         const teamRiders = new Set(Object.values(team.picks).map((p) => p.number));
         let cumulative = 0;
         for (let s = 0; s <= i; s++) {
@@ -1544,7 +1549,7 @@ function WatAlsTab({
       const myPos = cumScores.findIndex((t) => t.name === myTeam.userName) + 1;
       return { stage: `Rit ${stage.stage}`, Positie: myPos };
     });
-  }, [myTeam]);
+  }, [myTeam.userName, rankingTeams]);
 
   // Joker impact — jokers are free picks from outside the categories
   const jokerImpact = useMemo(() => {
@@ -1566,16 +1571,15 @@ function WatAlsTab({
     })).sort((a, b) => b.points - a.points);
 
     const chosenJokerNumbers = new Set(myTeam.jokers.map((j) => j.number));
+    const availableAlternatives = jokerPool.filter((r) => !chosenJokerNumbers.has(r.number));
 
-    return myTeam.jokers.map((joker) => {
+    return myTeam.jokers.map((joker, index) => {
       const pts = getRiderPoints(joker.number);
-      // Best alternative = best from pool excluding all chosen jokers
-      const bestAlt = jokerPool.find((r) => !chosenJokerNumbers.has(r.number));
       return {
         name: joker.name,
         number: joker.number,
         points: pts,
-        bestAlternative: bestAlt || null,
+        bestAlternative: availableAlternatives[index] || null,
       };
     });
   }, [getRiderPoints, myTeam]);
@@ -1873,7 +1877,7 @@ function WatAlsTab({
                 tick={{ fontSize: 11 }}
                 className="fill-muted-foreground"
                 reversed
-                domain={[1, mockTeams.length]}
+                domain={[1, rankingTeams.length]}
                 allowDecimals={false}
                 label={{ value: "← Beter", angle: -90, position: "insideLeft", fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
               />
@@ -1890,7 +1894,7 @@ function WatAlsTab({
           <div className="mt-3 text-center">
             <span className="text-sm font-sans text-muted-foreground">
               Huidige positie: <span className="font-display font-bold text-primary text-lg">#{rankingHistory[rankingHistory.length - 1]?.Positie}</span>
-              <span className="text-muted-foreground"> van {mockTeams.length}</span>
+              <span className="text-muted-foreground"> van {rankingTeams.length}</span>
             </span>
           </div>
         </CardContent>
