@@ -93,6 +93,17 @@ export default function MijnPeloton() {
     return { scoringRiders, total };
   }, [selectedStage, myRiderNumbers]);
 
+  // Compute stage pool standings for current stage
+  const stagePoolData = useMemo(() => {
+    const standings = getStagePoolStandings(selectedStage);
+    return getTruncatedStandings(standings, 10, myTeam.userName);
+  }, [selectedStage]);
+
+  // Overall pool standings (top10 + user)
+  const overallPoolData = useMemo(() => {
+    return getTruncatedStandings(allPoolParticipants, 10, myTeam.userName);
+  }, []);
+
   const getCategoryName = (catId: number) =>
   riderCategories.find((c) => c.id === catId)?.name || `Cat ${catId}`;
 
