@@ -1877,7 +1877,7 @@ function WatAlsTab({
                 tick={{ fontSize: 11 }}
                 className="fill-muted-foreground"
                 reversed
-                domain={[1, mockTeams.length]}
+                domain={[1, rankingTeams.length]}
                 allowDecimals={false}
                 label={{ value: "← Beter", angle: -90, position: "insideLeft", fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
               />
@@ -1894,7 +1894,7 @@ function WatAlsTab({
           <div className="mt-3 text-center">
             <span className="text-sm font-sans text-muted-foreground">
               Huidige positie: <span className="font-display font-bold text-primary text-lg">#{rankingHistory[rankingHistory.length - 1]?.Positie}</span>
-              <span className="text-muted-foreground"> van {mockTeams.length}</span>
+              <span className="text-muted-foreground"> van {rankingTeams.length}</span>
             </span>
           </div>
         </CardContent>
