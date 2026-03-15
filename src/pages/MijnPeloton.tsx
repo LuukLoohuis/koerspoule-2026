@@ -20,8 +20,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, ReferenceL
 
 /* ── Mock data for games & enriched sub-pools ── */
 const myGames = [
-{ id: "tdf2024", name: "Tour de France 2026", status: "afgelopen" as const, emoji: "🇫🇷" },
-{ id: "giro2025", name: "Giro d'Italia 2026", status: "actief" as const, emoji: "🇮🇹" }];
+{ id: "giro2026", name: "Giro d'Italia 2026", status: "actief" as const, emoji: "🇮🇹" },
+{ id: "tdf2026", name: "Tour de France 2026", status: "afgelopen" as const, emoji: "🇫🇷" },
+{ id: "vuelta2026", name: "Vuelta a España 2026", status: "afgelopen" as const, emoji: "🇪🇸" }];
 
   const getRiderPoints = (riderNumber: number) => {
     return mockStageResults.reduce((total, stage) => {
