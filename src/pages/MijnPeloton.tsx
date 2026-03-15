@@ -782,140 +782,239 @@ export default function MijnPeloton() {
 
           {/* ── TAB: Uitslagen ── */}
           <TabsContent value="uitslagen" className="mt-6">
-            {/* Stage selector */}
-            <div className="flex gap-2 mb-4 flex-wrap">
-              {mockStageResults.map((stage, i) =>
+            {/* Sub-navigation: Etappes / Poule Klassement / Giro Klassement */}
+            <div className="flex gap-2 mb-5 flex-wrap">
               <button
-                key={stage.stage}
-                onClick={() => setSelectedStage(i)}
+                onClick={() => setUitslagenView("etappes")}
                 className={cn(
-                  "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all",
-                  selectedStage === i ?
-                  "border-primary bg-primary text-primary-foreground" :
-                  "border-border hover:border-muted-foreground"
-                )}>
-                
-                  Rit {stage.stage}
-                </button>
-              )}
+                  "px-4 py-2 text-sm font-bold rounded-md border-2 transition-all flex items-center gap-2",
+                  uitslagenView === "etappes"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border hover:border-muted-foreground"
+                )}
+              >
+                📋 Etappes
+              </button>
+              <button
+                onClick={() => setUitslagenView("poule")}
+                className={cn(
+                  "px-4 py-2 text-sm font-bold rounded-md border-2 transition-all flex items-center gap-2",
+                  uitslagenView === "poule"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border hover:border-muted-foreground"
+                )}
+              >
+                🏅 Poule Klassement
+              </button>
+              <button
+                onClick={() => setUitslagenView("giro")}
+                className={cn(
+                  "px-4 py-2 text-sm font-bold rounded-md border-2 transition-all flex items-center gap-2",
+                  uitslagenView === "giro"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border hover:border-muted-foreground"
+                )}
+              >
+                🇮🇹 Giro Klassement
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Live stage results */}
+            {/* ── Etappes view ── */}
+            {uitslagenView === "etappes" && (
+              <>
+                {/* Stage selector */}
+                <div className="flex gap-2 mb-4 flex-wrap">
+                  {mockStageResults.map((stage, i) =>
+                    <button
+                      key={stage.stage}
+                      onClick={() => setSelectedStage(i)}
+                      className={cn(
+                        "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all",
+                        selectedStage === i
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border hover:border-muted-foreground"
+                      )}
+                    >
+                      Rit {stage.stage}
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Live stage results */}
+                  <Card className="retro-border">
+                    <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+                      <CardTitle className="font-display text-base flex items-center gap-2">
+                        <Medal className="h-5 w-5 text-accent" />
+                        Rit {mockStageResults[selectedStage].stage} — {mockStageResults[selectedStage].route}
+                      </CardTitle>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="jersey-badge bg-accent text-accent-foreground">
+                          {mockStageResults[selectedStage].type}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {mockStageResults[selectedStage].distance} • {mockStageResults[selectedStage].date}
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0 divide-y divide-border">
+                      {mockStageResults[selectedStage].top20.map((result) => {
+                        const isInMyTeam = myRiderNumbers.has(result.riderNumber);
+                        return (
+                          <div
+                            key={result.position}
+                            className={cn(
+                              "flex items-center justify-between px-4 py-2 text-sm",
+                              result.position <= 3 && "bg-primary/5",
+                              isInMyTeam && "ring-1 ring-inset ring-primary/30 bg-primary/10"
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={cn(
+                                "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+                                result.position === 1 && "bg-primary text-primary-foreground",
+                                result.position === 2 && "bg-muted text-foreground",
+                                result.position === 3 && "bg-vintage-gold text-primary-foreground",
+                                result.position > 3 && "text-muted-foreground"
+                              )}>
+                                {result.position}
+                              </span>
+                              <span className="font-sans">
+                                <span className="text-xs text-muted-foreground mr-1">#{result.riderNumber}</span>
+                                <span className={cn("font-medium", isInMyTeam && "text-primary")}>{result.riderName}</span>
+                              </span>
+                            </div>
+                            <span className="font-bold text-accent text-xs">
+                              {pointsTable[result.position] || 0} pt
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </CardContent>
+                  </Card>
+
+                  {/* My team points for this stage */}
+                  <Card className="retro-border h-fit">
+                    <CardHeader className="border-b-2 border-foreground bg-primary/10 py-3 px-4">
+                      <CardTitle className="font-display text-base flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <User className="h-5 w-5 text-primary" />
+                          Jouw punten deze rit
+                        </span>
+                        <span className="font-display text-xl text-primary">
+                          {myStagePoints.total} pt
+                        </span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      {myStagePoints.scoringRiders.length > 0 ? (
+                        <div className="divide-y divide-border">
+                          {myStagePoints.scoringRiders.map((r) =>
+                            <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                              <div className="flex items-center gap-3">
+                                <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
+                                  {r.position}
+                                </span>
+                                <span className="font-sans font-medium">{r.riderName}</span>
+                              </div>
+                              <span className="font-bold text-primary">{r.points} pt</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="p-6 text-center text-muted-foreground font-sans text-sm">
+                          Geen van jouw renners scoorde punten in deze rit.
+                        </div>
+                      )}
+                    </CardContent>
+
+                    {/* Cumulative per-stage summary */}
+                    <div className="border-t-2 border-foreground bg-secondary/30 p-4">
+                      <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                        Punten per rit
+                      </h3>
+                      <div className="flex gap-2 flex-wrap">
+                        {mockStageResults.map((stage, i) => {
+                          const stageTotal = stage.top20
+                            .filter((r) => myRiderNumbers.has(r.riderNumber))
+                            .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
+                          return (
+                            <div
+                              key={stage.stage}
+                              className={cn(
+                                "text-center p-2 rounded-md border min-w-[60px]",
+                                i === selectedStage ? "border-primary bg-primary/10" : "border-border"
+                              )}
+                            >
+                              <p className="text-xs text-muted-foreground">Rit {stage.stage}</p>
+                              <p className="font-display font-bold">{stageTotal}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </>
+            )}
+
+            {/* ── Poule Klassement view ── */}
+            {uitslagenView === "poule" && (
               <Card className="retro-border">
                 <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
                   <CardTitle className="font-display text-base flex items-center gap-2">
-                    <Medal className="h-5 w-5 text-accent" />
-                    Rit {mockStageResults[selectedStage].stage} — {mockStageResults[selectedStage].route}
+                    <Trophy className="h-5 w-5 text-primary" />
+                    Poule Klassement
                   </CardTitle>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="jersey-badge bg-accent text-accent-foreground">
-                      {mockStageResults[selectedStage].type}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {mockStageResults[selectedStage].distance} • {mockStageResults[selectedStage].date}
-                    </span>
-                  </div>
                 </CardHeader>
                 <CardContent className="p-0 divide-y divide-border">
-                  {mockStageResults[selectedStage].top20.map((result) => {
-                    const isInMyTeam = myRiderNumbers.has(result.riderNumber);
-                    return (
-                      <div
-                        key={result.position}
-                        className={cn(
-                          "flex items-center justify-between px-4 py-2 text-sm",
-                          result.position <= 3 && "bg-primary/5",
-                          isInMyTeam && "ring-1 ring-inset ring-primary/30 bg-primary/10"
-                        )}>
-                        
-                        <div className="flex items-center gap-3">
-                          <span className={cn(
-                            "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-                            result.position === 1 && "bg-primary text-primary-foreground",
-                            result.position === 2 && "bg-muted text-foreground",
-                            result.position === 3 && "bg-vintage-gold text-primary-foreground",
-                            result.position > 3 && "text-muted-foreground"
-                          )}>
-                            {result.position}
-                          </span>
-                          <span className="font-sans">
-                            <span className="text-xs text-muted-foreground mr-1">#{result.riderNumber}</span>
-                            <span className={cn("font-medium", isInMyTeam && "text-primary")}>{result.riderName}</span>
-                          </span>
-                        </div>
-                        <span className="font-bold text-accent text-xs">
-                          {pointsTable[result.position] || 0} pt
-                        </span>
-                      </div>);
-
-                  })}
-                </CardContent>
-              </Card>
-
-              {/* My team points for this stage */}
-              <Card className="retro-border h-fit">
-                <CardHeader className="border-b-2 border-foreground bg-primary/10 py-3 px-4">
-                  <CardTitle className="font-display text-base flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <User className="h-5 w-5 text-primary" />
-                      Jouw punten deze rit
-                    </span>
-                    <span className="font-display text-xl text-primary">
-                      {myStagePoints.total} pt
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {myStagePoints.scoringRiders.length > 0 ?
-                  <div className="divide-y divide-border">
-                      {myStagePoints.scoringRiders.map((r) =>
-                    <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                          <div className="flex items-center gap-3">
-                            <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
-                              {r.position}
-                            </span>
-                            <span className="font-sans font-medium">{r.riderName}</span>
-                          </div>
-                          <span className="font-bold text-primary">{r.points} pt</span>
-                        </div>
-                    )}
-                    </div> :
-
-                  <div className="p-6 text-center text-muted-foreground font-sans text-sm">
-                      Geen van jouw renners scoorde punten in deze rit.
-                    </div>
-                  }
-                </CardContent>
-
-                {/* Cumulative per-stage summary */}
-                <div className="border-t-2 border-foreground bg-secondary/30 p-4">
-                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                    Punten per rit
-                  </h3>
-                  <div className="flex gap-2 flex-wrap">
-                    {mockStageResults.map((stage, i) => {
-                      const stageRiderNums = myRiderNumbers;
-                      const stageTotal = stage.top20.
-                      filter((r) => stageRiderNums.has(r.riderNumber)).
-                      reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
+                  {[...mockTeams]
+                    .sort((a, b) => b.totalPoints - a.totalPoints)
+                    .map((team, idx) => {
+                      const isMe = team.id === myTeam.id;
                       return (
                         <div
-                          key={stage.stage}
+                          key={team.id}
                           className={cn(
-                            "text-center p-2 rounded-md border min-w-[60px]",
-                            i === selectedStage ? "border-primary bg-primary/10" : "border-border"
-                          )}>
-                          
-                          <p className="text-xs text-muted-foreground">Rit {stage.stage}</p>
-                          <p className="font-display font-bold">{stageTotal}</p>
-                        </div>);
-
+                            "flex items-center justify-between px-4 py-3 text-sm",
+                            idx < 3 && "bg-primary/5",
+                            isMe && "ring-1 ring-inset ring-primary/30 bg-primary/10"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={cn(
+                              "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+                              idx === 0 && "bg-primary text-primary-foreground",
+                              idx === 1 && "bg-muted text-foreground",
+                              idx === 2 && "bg-vintage-gold text-primary-foreground",
+                              idx > 2 && "text-muted-foreground"
+                            )}>
+                              {idx + 1}
+                            </span>
+                            <div>
+                              <span className={cn("font-sans font-bold", isMe && "text-primary")}>
+                                {team.userName}
+                                {isMe && <span className="ml-1 text-xs text-muted-foreground">(jij)</span>}
+                              </span>
+                              <p className="text-xs text-muted-foreground">
+                                {Object.keys(team.picks).length} renners • {team.jokers.length} jokers
+                              </p>
+                            </div>
+                          </div>
+                          <span className="font-display font-bold text-lg text-accent">
+                            {team.totalPoints} pt
+                          </span>
+                        </div>
+                      );
                     })}
-                  </div>
-                </div>
+                </CardContent>
               </Card>
-            </div>
+            )}
+
+            {/* ── Giro Klassement view ── */}
+            {uitslagenView === "giro" && (
+              <ClassificationTabs myRiderNumbers={myRiderNumbers} />
+            )}
           </TabsContent>
 
           {/* ── TAB: Subpoules ── */}
