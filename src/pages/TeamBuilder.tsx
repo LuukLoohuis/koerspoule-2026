@@ -84,7 +84,7 @@ export default function TeamBuilder() {
         )}
 
         {/* Category selection */}
-        {isCategories && currentCategory && (
+        {!isLocked && isCategories && currentCategory && (
           <div className="retro-border bg-card p-6 animate-fade-in" key={currentCategory.id}>
             <div className="flex items-center gap-2 mb-1">
               <span className="jersey-badge bg-primary text-primary-foreground">
