@@ -907,66 +907,128 @@ export default function MijnPeloton() {
                   </Card>
 
                   {/* My team points for this stage */}
-                  <Card className="retro-border h-fit">
-                    <CardHeader className="border-b-2 border-foreground bg-primary/10 py-3 px-4">
-                      <CardTitle className="font-display text-base flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          <User className="h-5 w-5 text-primary" />
-                          Jouw punten deze rit
-                        </span>
-                        <span className="font-display text-xl text-primary">
-                          {myStagePoints.total} pt
-                        </span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      {myStagePoints.scoringRiders.length > 0 ? (
-                        <div className="divide-y divide-border">
-                          {myStagePoints.scoringRiders.map((r) =>
-                            <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                              <div className="flex items-center gap-3">
-                                <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
-                                  {r.position}
-                                </span>
-                                <span className="font-sans font-medium">{r.riderName}</span>
+                  <div className="space-y-4">
+                    <Card className="retro-border">
+                      <CardHeader className="border-b-2 border-foreground bg-primary/10 py-3 px-4">
+                        <CardTitle className="font-display text-base flex items-center justify-between">
+                          <span className="flex items-center gap-2">
+                            <User className="h-5 w-5 text-primary" />
+                            Jouw punten deze rit
+                          </span>
+                          <span className="font-display text-xl text-primary">
+                            {myStagePoints.total} pt
+                          </span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        {myStagePoints.scoringRiders.length > 0 ? (
+                          <div className="divide-y divide-border">
+                            {myStagePoints.scoringRiders.map((r) =>
+                              <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                                <div className="flex items-center gap-3">
+                                  <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
+                                    {r.position}
+                                  </span>
+                                  <span className="font-sans font-medium">{r.riderName}</span>
+                                </div>
+                                <span className="font-bold text-primary">{r.points} pt</span>
                               </div>
-                              <span className="font-bold text-primary">{r.points} pt</span>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="p-6 text-center text-muted-foreground font-sans text-sm">
-                          Geen van jouw renners scoorde punten in deze rit.
-                        </div>
-                      )}
-                    </CardContent>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="p-6 text-center text-muted-foreground font-sans text-sm">
+                            Geen van jouw renners scoorde punten in deze rit.
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
 
-                    {/* Cumulative per-stage summary */}
-                    <div className="border-t-2 border-foreground bg-secondary/30 p-4">
-                      <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                        Punten per rit
-                      </h3>
-                      <div className="flex gap-2 flex-wrap">
-                        {mockStageResults.map((stage, i) => {
-                          const stageTotal = stage.top20
-                            .filter((r) => myRiderNumbers.has(r.riderNumber))
-                            .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
+                    {/* Stage pool ranking */}
+                    <Card className="retro-border">
+                      <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+                        <CardTitle className="font-display text-base flex items-center gap-2">
+                          <Trophy className="h-5 w-5 text-primary" />
+                          Daguitslag poule — Rit {mockStageResults[selectedStage].stage}
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground mt-1">{stagePoolData.totalParticipants} deelnemers</p>
+                      </CardHeader>
+                      <CardContent className="p-0 divide-y divide-border">
+                        {stagePoolData.top.map((p) => {
+                          const isMe = p.userName === myTeam.userName;
                           return (
-                            <div
-                              key={stage.stage}
-                              className={cn(
-                                "text-center p-2 rounded-md border min-w-[60px]",
-                                i === selectedStage ? "border-primary bg-primary/10" : "border-border"
-                              )}
-                            >
-                              <p className="text-xs text-muted-foreground">Rit {stage.stage}</p>
-                              <p className="font-display font-bold">{stageTotal}</p>
+                            <div key={p.rank} className={cn(
+                              "flex items-center justify-between px-4 py-2.5 text-sm",
+                              p.rank <= 3 && "bg-primary/5",
+                              isMe && "ring-1 ring-inset ring-primary/30 bg-primary/10"
+                            )}>
+                              <div className="flex items-center gap-3">
+                                <span className={cn(
+                                  "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+                                  p.rank === 1 && "bg-primary text-primary-foreground",
+                                  p.rank === 2 && "bg-muted text-foreground",
+                                  p.rank === 3 && "bg-vintage-gold text-primary-foreground",
+                                  p.rank > 3 && "text-muted-foreground"
+                                )}>
+                                  {p.rank}
+                                </span>
+                                <span className={cn("font-sans font-medium", isMe && "text-primary")}>
+                                  {p.userName}{isMe && " (jij)"}
+                                </span>
+                              </div>
+                              <span className="font-display font-bold text-accent">{p.stagePoints} pt</span>
                             </div>
                           );
                         })}
-                      </div>
-                    </div>
-                  </Card>
+                        {stagePoolData.showGap && (
+                          <>
+                            <div className="px-4 py-2 text-center text-muted-foreground text-xs">⋯</div>
+                            {stagePoolData.myEntry && (
+                              <div className="flex items-center justify-between px-4 py-2.5 text-sm ring-1 ring-inset ring-primary/30 bg-primary/10">
+                                <div className="flex items-center gap-3">
+                                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-muted-foreground">
+                                    {stagePoolData.myEntry.rank}
+                                  </span>
+                                  <span className="font-sans font-medium text-primary">
+                                    {stagePoolData.myEntry.userName} (jij)
+                                  </span>
+                                </div>
+                                <span className="font-display font-bold text-accent">{stagePoolData.myEntry.stagePoints} pt</span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Cumulative per-stage summary */}
+                    <Card className="retro-border">
+                      <CardContent className="p-4">
+                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                          Punten per rit
+                        </h3>
+                        <div className="flex gap-2 flex-wrap">
+                          {mockStageResults.map((stage, i) => {
+                            const stageTotal = stage.top20
+                              .filter((r) => myRiderNumbers.has(r.riderNumber))
+                              .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
+                            return (
+                              <button
+                                key={stage.stage}
+                                onClick={() => setSelectedStage(i)}
+                                className={cn(
+                                  "text-center p-2 rounded-md border min-w-[48px] transition-all",
+                                  i === selectedStage ? "border-primary bg-primary/10" : "border-border hover:border-muted-foreground"
+                                )}
+                              >
+                                <p className="text-[10px] text-muted-foreground">R{stage.stage}</p>
+                                <p className="font-display font-bold text-xs">{stageTotal}</p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
               </>
             )}
