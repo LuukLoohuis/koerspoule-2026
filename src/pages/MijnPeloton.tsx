@@ -1546,27 +1546,39 @@ function WatAlsTab({
     });
   }, [myTeam]);
 
-  // Joker impact
+  // Joker impact — jokers are free picks from outside the categories
   const jokerImpact = useMemo(() => {
+    // Collect all rider numbers that are in categories
+    const categoryRiderNumbers = new Set(riderCategories.flatMap((c) => c.riders.map((r) => r.number)));
+    
+    // All riders from stage results that are NOT in categories = joker pool
+    const jokerPoolMap = new Map<number, { name: string; number: number }>();
+    mockStageResults.forEach((stage) => {
+      stage.top20.forEach((r) => {
+        if (!categoryRiderNumbers.has(r.riderNumber)) {
+          jokerPoolMap.set(r.riderNumber, { name: r.riderName, number: r.riderNumber });
+        }
+      });
+    });
+    const jokerPool = [...jokerPoolMap.values()].map((r) => ({
+      ...r,
+      points: getRiderPoints(r.number),
+    })).sort((a, b) => b.points - a.points);
+
+    const bestJokerAvailable = jokerPool[0];
+
     return myTeam.jokers.map((joker) => {
       const pts = getRiderPoints(joker.number);
-      const cat = riderCategories.find((c) =>
-        c.riders.some((r) => r.number === joker.number)
-      );
-      const catRiders = cat?.riders.map((r) => ({ ...r, points: getRiderPoints(r.number) })) || [];
-      const bestAlt = catRiders.filter((r) => r.number !== joker.number).sort((a, b) => b.points - a.points)[0];
       return {
         name: joker.name,
         number: joker.number,
         points: pts,
-        bonusPoints: pts, // joker doubles
-        catName: cat?.name || "—",
-        bestAlternative: bestAlt,
+        bestAlternative: bestJokerAvailable?.number !== joker.number ? bestJokerAvailable : jokerPool[1],
       };
     });
   }, [getRiderPoints, myTeam]);
 
-  const totalJokerBonus = jokerImpact.reduce((s, j) => s + j.points, 0);
+  const totalJokerPoints = jokerImpact.reduce((s, j) => s + j.points, 0);
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
