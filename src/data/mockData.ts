@@ -37,85 +37,78 @@ export interface Classifications {
   youth: ClassificationEntry[];
 }
 
-/* ── Real Giro d'Italia 2025 Stage Results ── */
-export const mockStageResults: StageResult[] = [
-  {
-    stage: 1, type: "hilly", date: "9 mei", route: "Durrës → Tirana", distance: "160 km",
-    top20: [
-      { position: 1, riderName: "Pedersen", riderNumber: 116 },
-      { position: 2, riderName: "Van Aert", riderNumber: 181 },
-      { position: 3, riderName: "Aular", riderNumber: 122 },
-      { position: 4, riderName: "Busatto", riderNumber: 92 },
-      { position: 5, riderName: "Pidcock", riderNumber: 131 },
-      { position: 6, riderName: "Ulissi", riderNumber: 221 },
-      { position: 7, riderName: "Carapaz", riderNumber: 61 },
-      { position: 8, riderName: "Poole", riderNumber: 166 },
-      { position: 9, riderName: "Conci", riderNumber: 222 },
-      { position: 10, riderName: "Piganzoli", riderNumber: 171 },
-      { position: 11, riderName: "Ciccone", riderNumber: 111 },
-      { position: 12, riderName: "Tiberi", riderNumber: 31 },
-      { position: 13, riderName: "Double", riderNumber: 154 },
-      { position: 14, riderName: "Engelhardt", riderNumber: 155 },
-      { position: 15, riderName: "Roglič", riderNumber: 1 },
-      { position: 16, riderName: "Bardet", riderNumber: 161 },
-      { position: 17, riderName: "Hindley", riderNumber: 4 },
-      { position: 18, riderName: "Rubio", riderNumber: 127 },
-      { position: 19, riderName: "Caruso", riderNumber: 33 },
-      { position: 20, riderName: "Del Toro", riderNumber: 204 },
-    ],
-  },
-  {
-    stage: 2, type: "itt", date: "10 mei", route: "Tirana → Tirana", distance: "13.7 km",
-    top20: [
-      { position: 1, riderName: "Tarling", riderNumber: 87 },
-      { position: 2, riderName: "Roglič", riderNumber: 1 },
-      { position: 3, riderName: "Vine", riderNumber: 207 },
-      { position: 4, riderName: "Affini", riderNumber: 182 },
-      { position: 5, riderName: "Vacek", riderNumber: 117 },
-      { position: 6, riderName: "Hoole", riderNumber: 112 },
-      { position: 7, riderName: "Pedersen", riderNumber: 116 },
-      { position: 8, riderName: "McNulty", riderNumber: 206 },
-      { position: 9, riderName: "Hayter", riderNumber: 145 },
-      { position: 10, riderName: "Ayuso", riderNumber: 201 },
-      { position: 11, riderName: "Tratnik", riderNumber: 8 },
-      { position: 12, riderName: "Del Toro", riderNumber: 204 },
-      { position: 13, riderName: "Černý", riderNumber: 143 },
-      { position: 14, riderName: "Martínez", riderNumber: 5 },
-      { position: 15, riderName: "Arensman", riderNumber: 82 },
-      { position: 16, riderName: "Cattaneo", riderNumber: 142 },
-      { position: 17, riderName: "Poole", riderNumber: 166 },
-      { position: 18, riderName: "Tiberi", riderNumber: 31 },
-      { position: 19, riderName: "Storer", riderNumber: 191 },
-      { position: 20, riderName: "Gee-West", riderNumber: 101 },
-    ],
-  },
-  {
-    stage: 3, type: "hilly", date: "11 mei", route: "Vlorë → Vlorë", distance: "160 km",
-    top20: [
-      { position: 1, riderName: "Pedersen", riderNumber: 116 },
-      { position: 2, riderName: "Strong", riderNumber: 109 },
-      { position: 3, riderName: "Aular", riderNumber: 122 },
-      { position: 4, riderName: "Rivera", riderNumber: 86 },
-      { position: 5, riderName: "Zambanini", riderNumber: 38 },
-      { position: 6, riderName: "Oldani", riderNumber: 46 },
-      { position: 7, riderName: "Vendrame", riderNumber: 58 },
-      { position: 8, riderName: "Fiorelli", riderNumber: 211 },
-      { position: 9, riderName: "Scaroni", riderNumber: 228 },
-      { position: 10, riderName: "De Pretto", riderNumber: 153 },
-      { position: 11, riderName: "Garofoli", riderNumber: 144 },
-      { position: 12, riderName: "Ulissi", riderNumber: 221 },
-      { position: 13, riderName: "Poole", riderNumber: 166 },
-      { position: 14, riderName: "Cattaneo", riderNumber: 142 },
-      { position: 15, riderName: "Tjøtta", riderNumber: 28 },
-      { position: 16, riderName: "Germani", riderNumber: 75 },
-      { position: 17, riderName: "Brenner", riderNumber: 192 },
-      { position: 18, riderName: "Engelhardt", riderNumber: 155 },
-      { position: 19, riderName: "Lastra", riderNumber: 43 },
-      { position: 20, riderName: "Hermans", riderNumber: 12 },
-    ],
-  },
+/* ── Giro d'Italia 2026 – 21 fictional stages ── */
+
+// All riders that appear across teams + extras for filling top20
+const allRiders = [
+  { name: "Roglič", number: 1 }, { name: "Aleotti", number: 2 }, { name: "Hindley", number: 4 },
+  { name: "Martínez", number: 5 }, { name: "Pellizzari", number: 7 }, { name: "Groves", number: 11 },
+  { name: "Tiberi", number: 31 }, { name: "Caruso", number: 33 }, { name: "Carapaz", number: 61 },
+  { name: "Gaudu", number: 71 }, { name: "Bernal", number: 81 }, { name: "Arensman", number: 82 },
+  { name: "Tarling", number: 87 }, { name: "Busatto", number: 92 }, { name: "Ciccone", number: 111 },
+  { name: "Pedersen", number: 116 }, { name: "Vacek", number: 117 }, { name: "Quintana", number: 121 },
+  { name: "Aular", number: 122 }, { name: "Rubio", number: 127 }, { name: "Pidcock", number: 131 },
+  { name: "Hayter", number: 145 }, { name: "Bardet", number: 161 }, { name: "Poole", number: 166 },
+  { name: "Piganzoli", number: 171 }, { name: "Van Aert", number: 181 }, { name: "Kelderman", number: 183 },
+  { name: "S. Yates", number: 188 }, { name: "Storer", number: 191 }, { name: "Ayuso", number: 201 },
+  { name: "Del Toro", number: 204 }, { name: "Majka", number: 205 }, { name: "McNulty", number: 206 },
+  { name: "Vine", number: 207 }, { name: "A. Yates", number: 208 }, { name: "Ulissi", number: 221 },
+  { name: "Conci", number: 222 }, { name: "Scaroni", number: 228 }, { name: "Strong", number: 109 },
+  { name: "Rivera", number: 86 }, { name: "Zambanini", number: 38 }, { name: "Oldani", number: 46 },
+  { name: "Vendrame", number: 58 }, { name: "Fiorelli", number: 211 }, { name: "De Pretto", number: 153 },
+  { name: "Garofoli", number: 144 }, { name: "Engelhardt", number: 155 }, { name: "Double", number: 154 },
+  { name: "Tratnik", number: 8 }, { name: "Černý", number: 143 }, { name: "Cattaneo", number: 142 },
+  { name: "Brenner", number: 192 }, { name: "Tjøtta", number: 28 }, { name: "Germani", number: 75 },
+  { name: "Lastra", number: 43 }, { name: "Hermans", number: 12 }, { name: "Hoole", number: 112 },
+  { name: "Affini", number: 182 }, { name: "Gee-West", number: 101 },
 ];
 
+function seededRng(seed: number) {
+  let s = seed;
+  return () => { s = (s * 16807 + 0) % 2147483647; return s / 2147483647; };
+}
+
+function generateStageTop20(stageIndex: number): { position: number; riderName: string; riderNumber: number }[] {
+  const rng = seededRng(stageIndex * 137 + 42);
+  const shuffled = [...allRiders].sort(() => rng() - 0.5);
+  return shuffled.slice(0, 20).map((r, i) => ({ position: i + 1, riderName: r.name, riderNumber: r.number }));
+}
+
+const stageTypes: ("flat" | "mountain" | "hilly" | "itt")[] = [
+  "flat", "hilly", "mountain", "flat", "hilly", "mountain", "flat", "itt",
+  "mountain", "hilly", "flat", "mountain", "hilly", "flat", "mountain",
+  "hilly", "flat", "mountain", "hilly", "mountain", "itt",
+];
+
+const stageRoutes = [
+  "Torino → Novara", "Novara → Milano", "Milano → Bergamo", "Bergamo → Brescia",
+  "Brescia → Verona", "Verona → Trento", "Trento → Bolzano", "Bolzano → Bolzano (ITT)",
+  "Bolzano → Cortina d'Ampezzo", "Cortina → Belluno", "Belluno → Treviso", "Treviso → Trieste",
+  "Trieste → Udine", "Udine → Padova", "Padova → Asiago", "Asiago → Vicenza",
+  "Vicenza → Bologna", "Bologna → Firenze", "Firenze → Siena", "Siena → Roma",
+  "Roma → Roma (ITT)",
+];
+
+const stageDates = [
+  "9 mei", "10 mei", "11 mei", "13 mei", "14 mei", "15 mei", "16 mei",
+  "17 mei", "18 mei", "20 mei", "21 mei", "22 mei", "23 mei", "24 mei",
+  "25 mei", "27 mei", "28 mei", "29 mei", "30 mei", "31 mei", "1 jun",
+];
+
+const stageDistances = [
+  "175 km", "160 km", "195 km", "180 km", "170 km", "205 km", "155 km", "15.2 km",
+  "190 km", "165 km", "148 km", "210 km", "178 km", "152 km", "185 km",
+  "168 km", "145 km", "200 km", "175 km", "195 km", "17.4 km",
+];
+
+export const mockStageResults: StageResult[] = Array.from({ length: 21 }, (_, i) => ({
+  stage: i + 1,
+  type: stageTypes[i],
+  date: stageDates[i],
+  route: stageRoutes[i],
+  distance: stageDistances[i],
+  top20: generateStageTop20(i),
+}));
 /* ── Teams with real Giro 2025 riders ── */
 export const mockTeams: TeamEntry[] = [
   {

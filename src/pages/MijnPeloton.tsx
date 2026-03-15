@@ -52,7 +52,7 @@ const MEMBER_COLORS = ["hsl(330 60% 65%)", "hsl(220 55% 45%)", "hsl(38 70% 55%)"
 export default function MijnPeloton() {
   const { toast } = useToast();
   const myTeam = mockTeams[0];
-  const [selectedGame, setSelectedGame] = useState(myGames[1].id);
+  const [selectedGame, setSelectedGame] = useState(myGames[0].id);
   const [gameTab, setGameTab] = useState("team");
   const [uitslagenView, setUitslagenView] = useState<"etappes" | "poule" | "giro">("etappes");
   const [selectedPool, setSelectedPool] = useState<string | null>(null);
