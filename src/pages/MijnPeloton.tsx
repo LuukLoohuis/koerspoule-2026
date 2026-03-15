@@ -472,10 +472,98 @@ export default function MijnPeloton() {
                     </Card>
                   </div>
 
+                  {/* GC / Stage selector */}
+                  <Card className="retro-border">
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => setCompareView("gc")}
+                          className={cn(
+                            "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
+                            compareView === "gc"
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border hover:border-muted-foreground"
+                          )}
+                        >
+                          🏆 GC (totaal)
+                        </button>
+                        {mockStageResults.map((stage, i) => (
+                          <button
+                            key={stage.stage}
+                            onClick={() => setCompareView(i)}
+                            className={cn(
+                              "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
+                              compareView === i
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border hover:border-muted-foreground"
+                            )}
+                          >
+                            Rit {stage.stage}
+                          </button>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Stage-by-stage overview (only in GC view) */}
+                  {compareView === "gc" && (
+                    <Card className="retro-border overflow-hidden">
+                      <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4">
+                        <CardTitle className="font-display text-sm md:text-base">📊 Punten per etappe</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        {stageBreakdown.map(({ stage, idx, myPts, otherPts, type }, i) => {
+                          const diff = myPts - otherPts;
+                          const stageIcon = type === "mountain" ? "⛰️" : type === "itt" ? "⏱️" : type === "flat" ? "🏁" : "〰️";
+                          return (
+                            <button
+                              key={stage}
+                              onClick={() => setCompareView(idx)}
+                              className={cn(
+                                "w-full grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors",
+                                i % 2 === 0 ? "bg-background" : "bg-muted/20"
+                              )}
+                            >
+                              <div className="px-3 py-2.5 text-right">
+                                <span className={cn(
+                                  "font-display font-bold tabular-nums",
+                                  myPts > otherPts ? "text-primary" : myPts < otherPts ? "text-destructive" : "text-muted-foreground"
+                                )}>
+                                  {myPts} pt
+                                </span>
+                              </div>
+                              <div className="px-2 py-2 flex flex-col items-center min-w-[90px]">
+                                <span className="text-xs font-display font-bold">{stageIcon} Rit {stage}</span>
+                                {diff !== 0 && (
+                                  <span className={cn(
+                                    "text-[10px] font-display font-bold px-1.5 py-0.5 rounded-full mt-0.5",
+                                    diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                                  )}>
+                                    {diff > 0 ? `+${diff}` : diff}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="px-3 py-2.5 text-left">
+                                <span className={cn(
+                                  "font-display font-bold tabular-nums",
+                                  otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
+                                )}>
+                                  {otherPts} pt
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Rider-by-rider comparison */}
                   <Card className="retro-border overflow-hidden">
                     <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4">
-                      <CardTitle className="font-display text-sm md:text-base">Renner voor renner</CardTitle>
+                      <CardTitle className="font-display text-sm md:text-base">
+                        {compareView === "gc" ? "Renner voor renner (totaal)" : `Renner voor renner — Rit ${mockStageResults[compareView as number]?.stage}`}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                       {/* Table header */}
