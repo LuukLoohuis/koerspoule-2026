@@ -1527,15 +1527,22 @@ function WatAlsTab({
     });
   }, [getRiderPoints, myTeam]);
 
-  // Ranking history: position per stage (among all 1350 participants)
+  // Ranking history: cumulative classification position per stage (among all participants)
   const rankingHistory = useMemo(() => {
+    // Track cumulative points per participant across stages
+    const cumulativePoints = new Map<string, number>();
+    allPoolParticipants.forEach((p) => cumulativePoints.set(p.userName, 0));
+
     return mockStageResults.map((stage, i) => {
       const stageStandings = getStagePoolStandings(i);
-      // For cumulative ranking, use the overall pool
-      const myEntry = allPoolParticipants.find((p) => p.userName === myTeam.userName);
-      // Simulate position change per stage using stage standings rank as proxy
-      const myStageEntry = stageStandings.find((p) => p.userName === myTeam.userName);
-      return { stage: `Rit ${stage.stage}`, Positie: myStageEntry?.rank || myEntry?.rank || 120 };
+      // Add this stage's points to cumulative totals
+      stageStandings.forEach((p) => {
+        cumulativePoints.set(p.userName, (cumulativePoints.get(p.userName) || 0) + (p.stagePoints || 0));
+      });
+      // Sort all participants by cumulative points to get classification ranking
+      const sorted = [...cumulativePoints.entries()].sort((a, b) => b[1] - a[1]);
+      const myRank = sorted.findIndex(([name]) => name === myTeam.userName) + 1;
+      return { stage: `Rit ${stage.stage}`, Positie: myRank || 120 };
     });
   }, [myTeam.userName]);
 
