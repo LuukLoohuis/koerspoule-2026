@@ -221,6 +221,7 @@ export default function TeamBuilder() {
         )}
 
         {/* Navigation */}
+        {!isLocked && (
         <div className="flex items-center justify-between mt-6">
           <Button
             variant="outline"
@@ -245,6 +246,7 @@ export default function TeamBuilder() {
             </Button>
           )}
         </div>
+        )}
 
         {/* Quick overview */}
         {completedPicks > 0 && (
