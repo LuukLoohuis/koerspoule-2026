@@ -1882,7 +1882,7 @@ function WatAlsTab({
           <div className="mt-3 text-center">
             <span className="text-sm font-sans text-muted-foreground">
               Huidige positie: <span className="font-display font-bold text-primary text-lg">#{rankingHistory[rankingHistory.length - 1]?.Positie}</span>
-              <span className="text-muted-foreground"> van {rankingTeams.length}</span>
+              <span className="text-muted-foreground"> van {allPoolParticipants.length}</span>
             </span>
           </div>
         </CardContent>
