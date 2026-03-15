@@ -1,14 +1,14 @@
 import { useMemo, useState } from "react";
 import { mockStageResults, mockTeams } from "@/data/mockData";
+import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } from "@/data/poolStandings";
 import { pointsTable } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal, User } from "lucide-react";
+import { Trophy, Medal, User, Users, MoreHorizontal } from "lucide-react";
 
 export default function Results() {
   const [selectedStage, setSelectedStage] = useState(0);
-  const sortedTeams = [...mockTeams].sort((a, b) => b.totalPoints - a.totalPoints);
-  const myTeam = mockTeams[0]; // Current user's team
+  const myTeam = mockTeams[0];
 
   const myRiderNumbers = useMemo(() => new Set(Object.values(myTeam.picks).map(p => p.number)), []);
 
@@ -22,6 +22,17 @@ export default function Results() {
     return { scoringRiders, total };
   }, [selectedStage]);
 
+  // Pool standings for selected stage
+  const stagePoolData = useMemo(() => {
+    const standings = getStagePoolStandings(selectedStage);
+    return getTruncatedStandings(standings, 10, myTeam.userName);
+  }, [selectedStage]);
+
+  // Overall pool standings
+  const overallPoolData = useMemo(() => {
+    return getTruncatedStandings(allPoolParticipants, 10, myTeam.userName);
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
       <div className="text-center mb-8">
@@ -31,64 +42,17 @@ export default function Results() {
         <div className="vintage-divider max-w-xs mx-auto mt-4" />
       </div>
 
-      <Tabs defaultValue="klassement" className="max-w-4xl mx-auto">
+      <Tabs defaultValue="etappes" className="max-w-7xl mx-auto">
         <TabsList className="w-full retro-border">
-          <TabsTrigger value="klassement" className="flex-1 font-display">
-            🏆 Klassement
-          </TabsTrigger>
           <TabsTrigger value="etappes" className="flex-1 font-display">
             📋 Etappes
           </TabsTrigger>
+          <TabsTrigger value="klassement" className="flex-1 font-display">
+            🏆 Klassement
+          </TabsTrigger>
         </TabsList>
 
-        {/* Standings */}
-        <TabsContent value="klassement">
-          <div className="retro-border bg-card mt-4">
-            <div className="p-4 border-b-2 border-foreground bg-secondary/50">
-              <h2 className="font-display text-lg font-bold flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-primary" />
-                Algemeen Klassement
-              </h2>
-            </div>
-            <div className="divide-y divide-border">
-              {sortedTeams.map((team, index) => (
-                <div
-                  key={team.id}
-                  className={cn(
-                    "flex items-center justify-between p-4 transition-colors hover:bg-secondary/30",
-                    index === 0 && "bg-primary/5"
-                  )}
-                >
-                  <div className="flex items-center gap-4">
-                    <span className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                      index === 0 && "bg-primary text-primary-foreground",
-                      index === 1 && "bg-muted text-foreground",
-                      index === 2 && "bg-vintage-gold text-primary-foreground",
-                      index > 2 && "bg-secondary text-muted-foreground"
-                    )}>
-                      {index + 1}
-                    </span>
-                    <div>
-                      <p className="font-bold font-sans">{team.userName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {Object.keys(team.picks).length} renners
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-display text-xl font-bold">
-                      {team.totalPoints}
-                    </p>
-                    <p className="text-xs text-muted-foreground">punten</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Stage results */}
+        {/* ── ETAPPES TAB ── */}
         <TabsContent value="etappes">
           <div className="flex gap-2 mt-4 mb-4 flex-wrap">
             {mockStageResults.map((stage, i) => (
@@ -107,22 +71,17 @@ export default function Results() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Stage results */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Column 1: Stage results */}
             <div className="retro-border bg-card">
               <div className="p-4 border-b-2 border-foreground bg-secondary/50">
-                <h2 className="font-display text-lg font-bold flex items-center gap-2">
+                <h2 className="font-display text-base font-bold flex items-center gap-2">
                   <Medal className="h-5 w-5 text-accent" />
-                  Rit {mockStageResults[selectedStage].stage} — {mockStageResults[selectedStage].route}
+                  Rit {mockStageResults[selectedStage].stage}
                 </h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="jersey-badge bg-accent text-accent-foreground">
-                    {mockStageResults[selectedStage].type}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {mockStageResults[selectedStage].distance} • {mockStageResults[selectedStage].date}
-                  </span>
-                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {mockStageResults[selectedStage].route} • {mockStageResults[selectedStage].distance}
+                </p>
               </div>
               <div className="divide-y divide-border">
                 {mockStageResults[selectedStage].top20.map((result) => {
@@ -131,27 +90,18 @@ export default function Results() {
                     <div
                       key={result.position}
                       className={cn(
-                        "flex items-center justify-between px-4 py-2.5 text-sm",
+                        "flex items-center justify-between px-3 py-2 text-sm",
                         result.position <= 3 && "bg-primary/5",
                         isInMyTeam && "ring-1 ring-inset ring-primary/30 bg-primary/5"
                       )}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className={cn(
-                          "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-                          result.position === 1 && "bg-primary text-primary-foreground",
-                          result.position === 2 && "bg-muted text-foreground",
-                          result.position === 3 && "bg-vintage-gold text-primary-foreground",
-                          result.position > 3 && "text-muted-foreground"
-                        )}>
-                          {result.position}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <RankBadge rank={result.position} size="sm" />
                         <span className="font-sans">
-                          <span className="text-xs text-muted-foreground mr-1">#{result.riderNumber}</span>
-                          <span className={cn("font-medium", isInMyTeam && "text-primary")}>{result.riderName}</span>
+                          <span className={cn("font-medium text-sm", isInMyTeam && "text-primary")}>{result.riderName}</span>
                         </span>
                       </div>
-                      <span className="font-bold text-accent">
+                      <span className="font-bold text-accent text-xs">
                         {pointsTable[result.position] || 0} pt
                       </span>
                     </div>
@@ -160,10 +110,24 @@ export default function Results() {
               </div>
             </div>
 
-            {/* My team points */}
+            {/* Column 2: Pool standings for this stage */}
+            <div className="retro-border bg-card h-fit">
+              <div className="p-4 border-b-2 border-foreground bg-secondary/50">
+                <h2 className="font-display text-base font-bold flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Poule-uitslag Rit {mockStageResults[selectedStage].stage}
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {stagePoolData.totalParticipants} deelnemers
+                </p>
+              </div>
+              <PoolStandingsList data={stagePoolData} valueKey="stagePoints" unit="pt" myName={myTeam.userName} />
+            </div>
+
+            {/* Column 3: My team points */}
             <div className="retro-border bg-card h-fit">
               <div className="p-4 border-b-2 border-foreground bg-primary/10">
-                <h2 className="font-display text-lg font-bold flex items-center justify-between">
+                <h2 className="font-display text-base font-bold flex items-center justify-between">
                   <span className="flex items-center gap-2">
                     <User className="h-5 w-5 text-primary" />
                     Jouw team
@@ -176,26 +140,186 @@ export default function Results() {
               {myStagePoints.scoringRiders.length > 0 ? (
                 <div className="divide-y divide-border">
                   {myStagePoints.scoringRiders.map((r) => (
-                    <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                      <div className="flex items-center gap-3">
-                        <span className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
+                    <div key={r.riderNumber} className="flex items-center justify-between px-3 py-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
                           {r.position}
                         </span>
                         <span className="font-sans font-medium">{r.riderName}</span>
                       </div>
-                      <span className="font-bold text-primary">{r.points} pt</span>
+                      <span className="font-bold text-primary text-sm">{r.points} pt</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-6 text-center text-muted-foreground">
-                  Geen van jouw renners scoorde punten in deze etappe.
+                <div className="p-6 text-center text-muted-foreground text-sm">
+                  Geen van jouw renners scoorde punten in deze rit.
                 </div>
               )}
             </div>
           </div>
         </TabsContent>
+
+        {/* ── KLASSEMENT TAB ── */}
+        <TabsContent value="klassement">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+            {/* Left: Pool overall standings */}
+            <div className="retro-border bg-card">
+              <div className="p-4 border-b-2 border-foreground bg-secondary/50">
+                <h2 className="font-display text-lg font-bold flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  Algemeen Klassement
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {overallPoolData.totalParticipants} deelnemers
+                </p>
+              </div>
+              <PoolStandingsList data={overallPoolData} valueKey="totalPoints" unit="pt" myName={myTeam.userName} />
+            </div>
+
+            {/* Right: Your result summary */}
+            <div className="space-y-4">
+              <div className="retro-border bg-card">
+                <div className="p-4 border-b-2 border-foreground bg-primary/10">
+                  <h2 className="font-display text-lg font-bold flex items-center gap-2">
+                    <User className="h-5 w-5 text-primary" />
+                    Jouw klassement
+                  </h2>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center justify-center gap-8 mb-6">
+                    <div className="text-center">
+                      <div className="w-20 h-20 rounded-full bg-primary/10 border-4 border-primary flex items-center justify-center mb-2">
+                        <span className="font-display text-3xl font-bold text-primary">
+                          {overallPoolData.myEntry?.rank ?? overallPoolData.top.find(p => p.userName === myTeam.userName)?.rank ?? "–"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground font-medium">Positie</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-20 h-20 rounded-full bg-accent/10 border-4 border-accent flex items-center justify-center mb-2">
+                        <span className="font-display text-3xl font-bold text-accent">
+                          {myTeam.totalPoints}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground font-medium">Punten</p>
+                    </div>
+                  </div>
+
+                  {/* Per-stage breakdown */}
+                  <div className="space-y-2">
+                    <h3 className="font-display text-sm font-bold text-muted-foreground uppercase tracking-wider">Punten per etappe</h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {mockStageResults.map((stage, idx) => {
+                        const riderNums = new Set(Object.values(myTeam.picks).map(p => p.number));
+                        const pts = stage.top20
+                          .filter(r => riderNums.has(r.riderNumber))
+                          .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
+                        return (
+                          <div key={stage.stage} className="retro-border p-3 text-center bg-secondary/30">
+                            <p className="text-xs text-muted-foreground font-medium">Rit {stage.stage}</p>
+                            <p className="font-display text-lg font-bold text-primary">{pts}</p>
+                            <p className="text-xs text-muted-foreground">punten</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+/* ── Reusable components ── */
+
+function RankBadge({ rank, size = "md" }: { rank: number; size?: "sm" | "md" }) {
+  const sizeClasses = size === "sm" ? "w-6 h-6 text-xs" : "w-8 h-8 text-sm";
+  return (
+    <span className={cn(
+      sizeClasses, "rounded-full flex items-center justify-center font-bold",
+      rank === 1 && "bg-primary text-primary-foreground",
+      rank === 2 && "bg-muted text-foreground",
+      rank === 3 && "bg-vintage-gold text-primary-foreground",
+      rank > 3 && "text-muted-foreground"
+    )}>
+      {rank}
+    </span>
+  );
+}
+
+interface PoolStandingsData {
+  top: { rank: number; userName: string; stagePoints?: number; totalPoints: number }[];
+  myEntry: { rank: number; userName: string; stagePoints?: number; totalPoints: number } | null;
+  showGap: boolean;
+  totalParticipants: number;
+}
+
+function PoolStandingsList({
+  data,
+  valueKey,
+  unit,
+  myName,
+}: {
+  data: PoolStandingsData;
+  valueKey: "stagePoints" | "totalPoints";
+  unit: string;
+  myName: string;
+}) {
+  return (
+    <div className="divide-y divide-border">
+      {data.top.map((p) => (
+        <PoolRow key={p.rank} participant={p} valueKey={valueKey} unit={unit} isMe={p.userName === myName} />
+      ))}
+      {data.showGap && (
+        <>
+          <div className="flex items-center justify-center py-3 text-muted-foreground">
+            <MoreHorizontal className="h-5 w-5" />
+          </div>
+          {data.myEntry && (
+            <PoolRow participant={data.myEntry} valueKey={valueKey} unit={unit} isMe highlight />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function PoolRow({
+  participant,
+  valueKey,
+  unit,
+  isMe,
+  highlight,
+}: {
+  participant: { rank: number; userName: string; stagePoints?: number; totalPoints: number };
+  valueKey: "stagePoints" | "totalPoints";
+  unit: string;
+  isMe: boolean;
+  highlight?: boolean;
+}) {
+  const value = valueKey === "stagePoints" ? participant.stagePoints : participant.totalPoints;
+  return (
+    <div className={cn(
+      "flex items-center justify-between px-3 py-2.5 text-sm transition-colors",
+      isMe && "bg-primary/10 border-l-4 border-l-primary",
+      highlight && "bg-primary/10",
+      participant.rank <= 3 && !isMe && "bg-primary/5",
+    )}>
+      <div className="flex items-center gap-3">
+        <RankBadge rank={participant.rank} size="sm" />
+        <span className={cn("font-sans font-medium", isMe && "text-primary font-bold")}>
+          {participant.userName}
+          {isMe && <span className="ml-1.5 text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">JIJ</span>}
+        </span>
+      </div>
+      <span className={cn("font-bold text-sm", isMe ? "text-primary" : "text-accent")}>
+        {value ?? 0} {unit}
+      </span>
     </div>
   );
 }
