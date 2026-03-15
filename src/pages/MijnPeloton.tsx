@@ -35,7 +35,7 @@ const enrichedSubPools = mockSubPools.map((pool) => ({
   standings: mockTeams.
   filter((t) => pool.members.includes(t.userName)).
   sort((a, b) => b.totalPoints - a.totalPoints),
-  pointsHistory: Array.from({ length: 3 }, (_, i) => ({
+  pointsHistory: Array.from({ length: 21 }, (_, i) => ({
     stage: `Rit ${i + 1}`,
     ...Object.fromEntries(
       pool.members.map((name) => [
