@@ -11,6 +11,7 @@ export default function TeamBuilder() {
   const { toast } = useToast();
   const { phase } = useDeadline();
   const isLocked = phase !== "open";
+  const [currentStep, setCurrentStep] = useState(0);
   const [picks, setPicks] = useState<Record<number, Rider>>({});
   const [joker1, setJoker1] = useState("");
   const [joker1Nr, setJoker1Nr] = useState("");
