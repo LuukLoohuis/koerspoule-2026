@@ -388,11 +388,20 @@ export default function MijnPeloton() {
                 (t) => t.userName.toLowerCase() === comparePlayerName.trim().toLowerCase() && t.id !== myTeam.id
               );
 
+              // Points calculator: GC (all stages) or single stage
+              const getPointsForView = (riderNumber: number) => {
+                if (compareView === "gc") return getRiderPoints(riderNumber);
+                const stage = mockStageResults[compareView];
+                if (!stage) return 0;
+                const result = stage.top20.find((r) => r.riderNumber === riderNumber);
+                return result ? (pointsTable[result.position] || 0) : 0;
+              };
+
               const riderRows = Object.entries(myTeam.picks)
                 .map(([catId, rider]) => {
-                  const myPts = getRiderPoints(rider.number);
+                  const myPts = getPointsForView(rider.number);
                   const otherRider = compareTeam?.picks[Number(catId)];
-                  const otherPts = otherRider ? getRiderPoints(otherRider.number) : 0;
+                  const otherPts = otherRider ? getPointsForView(otherRider.number) : 0;
                   const isSame = otherRider?.number === rider.number;
                   return { catId, rider, myPts, otherRider, otherPts, isSame };
                 })
@@ -400,6 +409,19 @@ export default function MijnPeloton() {
 
               const myTotal = riderRows.reduce((s, r) => s + r.myPts, 0);
               const otherTotal = compareTeam ? riderRows.reduce((s, r) => s + r.otherPts, 0) : 0;
+
+              // Per-stage totals for the stage overview
+              const stageBreakdown = mockStageResults.map((stage, idx) => {
+                const myPts = Object.values(myTeam.picks).reduce((sum, rider) => {
+                  const r = stage.top20.find((s) => s.riderNumber === rider.number);
+                  return sum + (r ? (pointsTable[r.position] || 0) : 0);
+                }, 0);
+                const otherPts = compareTeam ? Object.values(compareTeam.picks).reduce((sum, rider) => {
+                  const r = stage.top20.find((s) => s.riderNumber === rider.number);
+                  return sum + (r ? (pointsTable[r.position] || 0) : 0);
+                }, 0) : 0;
+                return { stage: stage.stage, idx, myPts, otherPts, type: stage.type };
+              });
 
               return (
             <div className="space-y-6">
