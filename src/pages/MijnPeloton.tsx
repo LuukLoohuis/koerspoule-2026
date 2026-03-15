@@ -1527,11 +1527,16 @@ function WatAlsTab({
     });
   }, [getRiderPoints, myTeam]);
 
-  // Ranking history: position per stage
+  // Ranking history: position per stage (within your subpoule)
+  const rankingTeams = useMemo(() => {
+    const mySubpool = mockSubPools.find((pool) => pool.members.includes(myTeam.userName));
+    const members = mySubpool?.members || mockTeams.map((t) => t.userName);
+    return mockTeams.filter((team) => members.includes(team.userName));
+  }, [myTeam.userName]);
+
   const rankingHistory = useMemo(() => {
-    const teams = mockTeams;
     return mockStageResults.map((stage, i) => {
-      const cumScores = teams.map((team) => {
+      const cumScores = rankingTeams.map((team) => {
         const teamRiders = new Set(Object.values(team.picks).map((p) => p.number));
         let cumulative = 0;
         for (let s = 0; s <= i; s++) {
@@ -1544,7 +1549,7 @@ function WatAlsTab({
       const myPos = cumScores.findIndex((t) => t.name === myTeam.userName) + 1;
       return { stage: `Rit ${stage.stage}`, Positie: myPos };
     });
-  }, [myTeam]);
+  }, [myTeam.userName, rankingTeams]);
 
   // Joker impact — jokers are free picks from outside the categories
   const jokerImpact = useMemo(() => {
