@@ -1787,10 +1787,7 @@ function WatAlsTab({
         <CardContent className="p-4 space-y-4">
           <div className="p-4 bg-primary/10 rounded-md text-center">
             <p className="text-sm text-muted-foreground font-sans mb-1">Totale joker-punten</p>
-            <p className="font-display font-bold text-3xl text-primary">{totalJokerBonus} pt</p>
-            <p className="text-xs text-muted-foreground font-sans mt-1">
-              (deze punten tellen dubbel als jokerbonus)
-            </p>
+            <p className="font-display font-bold text-3xl text-primary">{totalJokerPoints} pt</p>
           </div>
 
           {jokerImpact.map((joker) => (
@@ -1802,12 +1799,9 @@ function WatAlsTab({
                 </div>
                 <span className="font-display font-bold text-primary">{joker.points} pt</span>
               </div>
-              <p className="text-[10px] md:text-xs text-muted-foreground">
-                Categorie: {joker.catName}
-              </p>
               {joker.bestAlternative && (
                 <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                  Beste alternatief: <span className="font-medium text-foreground">{joker.bestAlternative.name}</span> ({joker.bestAlternative.points} pt)
+                  Beste vrije keuze: <span className="font-medium text-foreground">{joker.bestAlternative.name}</span> ({joker.bestAlternative.points} pt)
                   {joker.bestAlternative.points > joker.points && (
                     <span className="text-destructive font-bold ml-1">+{joker.bestAlternative.points - joker.points} gemist</span>
                   )}
