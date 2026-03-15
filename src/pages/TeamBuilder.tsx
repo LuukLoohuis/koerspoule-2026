@@ -9,7 +9,8 @@ import { useDeadline } from "@/hooks/useDeadline";
 import CountdownBanner from "@/components/CountdownBanner";
 export default function TeamBuilder() {
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState(0);
+  const { phase } = useDeadline();
+  const isLocked = phase !== "open";
   const [picks, setPicks] = useState<Record<number, Rider>>({});
   const [joker1, setJoker1] = useState("");
   const [joker1Nr, setJoker1Nr] = useState("");
