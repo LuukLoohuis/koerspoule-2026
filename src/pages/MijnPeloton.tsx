@@ -1041,47 +1041,57 @@ export default function MijnPeloton() {
                     <Trophy className="h-5 w-5 text-primary" />
                     Poule Klassement
                   </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">{overallPoolData.totalParticipants} deelnemers</p>
                 </CardHeader>
                 <CardContent className="p-0 divide-y divide-border">
-                  {[...mockTeams]
-                    .sort((a, b) => b.totalPoints - a.totalPoints)
-                    .map((team, idx) => {
-                      const isMe = team.id === myTeam.id;
-                      return (
-                        <div
-                          key={team.id}
-                          className={cn(
-                            "flex items-center justify-between px-4 py-3 text-sm",
-                            idx < 3 && "bg-primary/5",
-                            isMe && "ring-1 ring-inset ring-primary/30 bg-primary/10"
-                          )}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className={cn(
-                              "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-                              idx === 0 && "bg-primary text-primary-foreground",
-                              idx === 1 && "bg-muted text-foreground",
-                              idx === 2 && "bg-vintage-gold text-primary-foreground",
-                              idx > 2 && "text-muted-foreground"
-                            )}>
-                              {idx + 1}
-                            </span>
-                            <div>
-                              <span className={cn("font-sans font-bold", isMe && "text-primary")}>
-                                {team.userName}
-                                {isMe && <span className="ml-1 text-xs text-muted-foreground">(jij)</span>}
-                              </span>
-                              <p className="text-xs text-muted-foreground">
-                                {Object.keys(team.picks).length} renners • {team.jokers.length} jokers
-                              </p>
-                            </div>
-                          </div>
-                          <span className="font-display font-bold text-lg text-accent">
-                            {team.totalPoints} pt
+                  {overallPoolData.top.map((p) => {
+                    const isMe = p.userName === myTeam.userName;
+                    return (
+                      <div key={p.rank} className={cn(
+                        "flex items-center justify-between px-4 py-3 text-sm",
+                        p.rank <= 3 && "bg-primary/5",
+                        isMe && "ring-1 ring-inset ring-primary/30 bg-primary/10"
+                      )}>
+                        <div className="flex items-center gap-3">
+                          <span className={cn(
+                            "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+                            p.rank === 1 && "bg-primary text-primary-foreground",
+                            p.rank === 2 && "bg-muted text-foreground",
+                            p.rank === 3 && "bg-vintage-gold text-primary-foreground",
+                            p.rank > 3 && "text-muted-foreground"
+                          )}>
+                            {p.rank}
+                          </span>
+                          <span className={cn("font-sans font-bold", isMe && "text-primary")}>
+                            {p.userName}{isMe && " (jij)"}
                           </span>
                         </div>
-                      );
-                    })}
+                        <span className="font-display font-bold text-lg text-accent">
+                          {p.totalPoints} pt
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {overallPoolData.showGap && (
+                    <>
+                      <div className="px-4 py-2 text-center text-muted-foreground text-xs">⋯</div>
+                      {overallPoolData.myEntry && (
+                        <div className="flex items-center justify-between px-4 py-3 text-sm ring-1 ring-inset ring-primary/30 bg-primary/10">
+                          <div className="flex items-center gap-3">
+                            <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-muted-foreground">
+                              {overallPoolData.myEntry.rank}
+                            </span>
+                            <span className="font-sans font-bold text-primary">
+                              {overallPoolData.myEntry.userName} (jij)
+                            </span>
+                          </div>
+                          <span className="font-display font-bold text-lg text-accent">
+                            {overallPoolData.myEntry.totalPoints} pt
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
