@@ -1527,29 +1527,17 @@ function WatAlsTab({
     });
   }, [getRiderPoints, myTeam]);
 
-  // Ranking history: position per stage (within your subpoule)
-  const rankingTeams = useMemo(() => {
-    const mySubpool = mockSubPools.find((pool) => pool.members.includes(myTeam.userName));
-    const members = mySubpool?.members || mockTeams.map((t) => t.userName);
-    return mockTeams.filter((team) => members.includes(team.userName));
-  }, [myTeam.userName]);
-
+  // Ranking history: position per stage (among all 1350 participants)
   const rankingHistory = useMemo(() => {
     return mockStageResults.map((stage, i) => {
-      const cumScores = rankingTeams.map((team) => {
-        const teamRiders = new Set(Object.values(team.picks).map((p) => p.number));
-        let cumulative = 0;
-        for (let s = 0; s <= i; s++) {
-          cumulative += mockStageResults[s].top20
-            .filter((r) => teamRiders.has(r.riderNumber))
-            .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
-        }
-        return { name: team.userName, score: cumulative };
-      }).sort((a, b) => b.score - a.score);
-      const myPos = cumScores.findIndex((t) => t.name === myTeam.userName) + 1;
-      return { stage: `Rit ${stage.stage}`, Positie: myPos };
+      const stageStandings = getStagePoolStandings(i);
+      // For cumulative ranking, use the overall pool
+      const myEntry = allPoolParticipants.find((p) => p.userName === myTeam.userName);
+      // Simulate position change per stage using stage standings rank as proxy
+      const myStageEntry = stageStandings.find((p) => p.userName === myTeam.userName);
+      return { stage: `Rit ${stage.stage}`, Positie: myStageEntry?.rank || myEntry?.rank || 120 };
     });
-  }, [myTeam.userName, rankingTeams]);
+  }, [myTeam.userName]);
 
   // Joker impact — jokers are free picks from outside the categories
   const jokerImpact = useMemo(() => {
