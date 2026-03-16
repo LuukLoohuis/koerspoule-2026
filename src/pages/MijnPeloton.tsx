@@ -860,7 +860,7 @@ export default function MijnPeloton() {
                         <tfoot>
                           <tr className="border-t-2 border-foreground">
                             <td className="text-left px-2 py-2 font-display font-bold text-xs sticky left-0 bg-background z-10">
-                              Échappée-score
+                              Panache Score
                             </td>
                             {avgUniqueness.map((a) => (
                               <td key={a.name} className="text-center px-1 py-2">
