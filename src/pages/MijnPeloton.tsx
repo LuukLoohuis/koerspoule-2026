@@ -485,7 +485,7 @@ export default function MijnPeloton() {
                                   )}>{j.pts} pt</span>
                                 </div>
                                 <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
-                                  <span className="text-[10px] text-muted-foreground font-sans">Joker {idx + 1}</span>
+                                  <span className="text-xs text-muted-foreground font-sans">Joker {idx + 1}</span>
                                   {otherJ && diff !== 0 && (
                                     <span className={cn(
                                       "text-sm font-display font-bold px-2 py-0.5 rounded-full",
