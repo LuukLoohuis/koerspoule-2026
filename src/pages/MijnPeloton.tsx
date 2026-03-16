@@ -32,21 +32,29 @@ const myGames = [
     }, 0);
   };
 
-const enrichedSubPools = mockSubPools.map((pool) => ({
-  ...pool,
-  standings: mockTeams.
-  filter((t) => pool.members.includes(t.userName)).
-  sort((a, b) => b.totalPoints - a.totalPoints),
-  pointsHistory: Array.from({ length: 21 }, (_, i) => ({
-    stage: `Rit ${i + 1}`,
-    ...Object.fromEntries(
-      pool.members.map((name) => [
-      name,
-      Math.round(40 + Math.random() * 60) * (i + 1)]
-      )
-    )
-  }))
-}));
+const allSubPools = [...mockSubPools, expandedSubPool];
+
+const enrichedSubPools = allSubPools.map((pool) => {
+  const isExpanded = pool.id === expandedSubPool.id;
+  const standings = isExpanded
+    ? [...subpoolTeams].sort((a, b) => b.totalPoints - a.totalPoints)
+    : mockTeams.filter((t) => pool.members.includes(t.userName)).sort((a, b) => b.totalPoints - a.totalPoints);
+
+  return {
+    ...pool,
+    standings,
+    isExpanded,
+    pointsHistory: Array.from({ length: 21 }, (_, i) => ({
+      stage: `Rit ${i + 1}`,
+      ...Object.fromEntries(
+        pool.members.map((name) => [
+          name,
+          Math.round(40 + Math.random() * 60) * (i + 1),
+        ])
+      ),
+    })),
+  };
+});
 
 const MEMBER_COLORS = ["hsl(330 60% 65%)", "hsl(220 55% 45%)", "hsl(38 70% 55%)", "hsl(160 50% 40%)"];
 
