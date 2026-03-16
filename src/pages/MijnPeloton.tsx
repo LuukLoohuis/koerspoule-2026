@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { mockTeams, mockSubPools, mockStageResults, mockClassifications } from "@/data/mockData";
-import { subpoolTeams, expandedSubPool, computeUniqueness } from "@/data/subpoolData";
+import { subpoolTeams, expandedSubPool, computeUniqueness, computePickCounts } from "@/data/subpoolData";
 import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } from "@/data/poolStandings";
 import { pointsTable, classificationPoints, riderCategories } from "@/data/riders";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
 import { useToast } from "@/hooks/use-toast";
@@ -741,16 +742,26 @@ export default function MijnPeloton() {
           {/* Échappée-index heatmap */}
           {activePool.isExpanded && (() => {
             const uniqueness = computeUniqueness(subpoolTeams);
+            const pickCounts = computePickCounts(subpoolTeams);
             const sortedTeams = activePool.standings;
             const categories = riderCategories;
+            const totalPlayers = subpoolTeams.length;
 
-            // Average uniqueness per player
             const avgUniqueness = sortedTeams.map((t) => {
               const playerMap = uniqueness.get(t.userName);
               if (!playerMap) return { name: t.userName, avg: 0 };
               const vals = Array.from(playerMap.values());
               return { name: t.userName, avg: vals.reduce((a, b) => a + b, 0) / vals.length };
             });
+
+            // Higher contrast color function
+            const getCellBg = (score: number) => {
+              if (score >= 0.9) return "hsl(var(--primary))";
+              if (score >= 0.7) return "hsl(var(--primary) / 0.75)";
+              if (score >= 0.5) return "hsl(var(--primary) / 0.5)";
+              if (score >= 0.3) return "hsl(var(--primary) / 0.25)";
+              return "hsl(var(--primary) / 0.08)";
+            };
 
             return (
               <div className="lg:col-span-3">
@@ -768,11 +779,11 @@ export default function MijnPeloton() {
                     <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground font-sans">
                       <span>Populair</span>
                       <div className="flex gap-0.5">
-                        {[0, 0.2, 0.4, 0.6, 0.8, 1].map((v) => (
+                        {[0, 0.15, 0.35, 0.6, 0.8, 1].map((v) => (
                           <div
                             key={v}
                             className="w-5 h-3 rounded-sm"
-                            style={{ backgroundColor: `hsl(var(--primary) / ${0.1 + v * 0.85})` }}
+                            style={{ backgroundColor: getCellBg(v) }}
                           />
                         ))}
                       </div>
@@ -809,29 +820,43 @@ export default function MijnPeloton() {
                                 const playerMap = uniqueness.get(t.userName);
                                 const score = playerMap?.get(cat.id) ?? 0;
                                 const pick = t.picks[cat.id];
+                                const catCounts = pickCounts.get(cat.id);
+                                const count = pick ? (catCounts?.get(pick.number) ?? 1) : 0;
+                                const othersCount = count - 1;
                                 return (
                                   <td key={t.id} className="px-0.5 py-0.5 text-center">
-                                    <div
-                                      className="rounded-sm px-1 py-1.5 flex items-center justify-center cursor-default transition-colors"
-                                      style={{ backgroundColor: `hsl(var(--primary) / ${0.08 + score * 0.85})` }}
-                                      title={`${pick?.name ?? "?"} — ${Math.round(score * 100)}% uniek`}
-                                    >
-                                      <span
-                                        className={cn(
-                                          "truncate block text-[9px] md:text-[10px] font-medium leading-tight",
-                                          score > 0.5 ? "text-primary-foreground" : "text-foreground"
-                                        )}
-                                      >
-                                        {pick?.name ?? "—"}
-                                      </span>
-                                    </div>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div
+                                          className="rounded-sm px-1 py-1.5 flex items-center justify-center cursor-default transition-colors"
+                                          style={{ backgroundColor: getCellBg(score) }}
+                                        >
+                                          <span
+                                            className={cn(
+                                              "truncate block text-[9px] md:text-[10px] font-medium leading-tight",
+                                              score >= 0.5 ? "text-primary-foreground" : "text-foreground"
+                                            )}
+                                          >
+                                            {pick?.name ?? "—"}
+                                          </span>
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="text-xs space-y-0.5 max-w-[180px]">
+                                        <p className="font-display font-bold">{pick?.name ?? "—"} <span className="text-muted-foreground font-sans">#{pick?.number}</span></p>
+                                        <p className="text-muted-foreground font-sans">
+                                          {othersCount === 0
+                                            ? "Unieke keuze! 🔥"
+                                            : `${othersCount} ander${othersCount > 1 ? "en" : ""} kozen ook deze renner`}
+                                        </p>
+                                        <p className="font-sans text-muted-foreground">{count}/{totalPlayers} spelers</p>
+                                      </TooltipContent>
+                                    </Tooltip>
                                   </td>
                                 );
                               })}
                             </tr>
                           ))}
                         </tbody>
-                        {/* Average uniqueness row */}
                         <tfoot>
                           <tr className="border-t-2 border-foreground">
                             <td className="text-left px-2 py-2 font-display font-bold text-xs sticky left-0 bg-background z-10">

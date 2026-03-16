@@ -96,7 +96,6 @@ export function computeUniqueness(teams: SubpoolTeam[]): Map<string, Map<number,
   const catIds = riderCategories.map((c) => c.id);
 
   for (const catId of catIds) {
-    // Count how many times each rider was picked in this category
     const pickCounts = new Map<number, number>();
     for (const team of teams) {
       const riderNum = team.picks[catId]?.number;
@@ -105,9 +104,6 @@ export function computeUniqueness(teams: SubpoolTeam[]): Map<string, Map<number,
       }
     }
 
-    // Assign uniqueness: 1 - (count-1)/(total-1)
-    // If only 1 person picked it: uniqueness = 1
-    // If everyone picked it: uniqueness = 0
     for (const team of teams) {
       if (!result.has(team.userName)) result.set(team.userName, new Map());
       const riderNum = team.picks[catId]?.number;
@@ -115,6 +111,28 @@ export function computeUniqueness(teams: SubpoolTeam[]): Map<string, Map<number,
       const uniqueness = 1 - (count - 1) / (teams.length - 1);
       result.get(team.userName)!.set(catId, uniqueness);
     }
+  }
+
+  return result;
+}
+
+/**
+ * Compute how many times each rider was picked per category.
+ * Returns: categoryId -> riderNumber -> count
+ */
+export function computePickCounts(teams: SubpoolTeam[]): Map<number, Map<number, number>> {
+  const result = new Map<number, Map<number, number>>();
+  const catIds = riderCategories.map((c) => c.id);
+
+  for (const catId of catIds) {
+    const counts = new Map<number, number>();
+    for (const team of teams) {
+      const riderNum = team.picks[catId]?.number;
+      if (riderNum !== undefined) {
+        counts.set(riderNum, (counts.get(riderNum) || 0) + 1);
+      }
+    }
+    result.set(catId, counts);
   }
 
   return result;
