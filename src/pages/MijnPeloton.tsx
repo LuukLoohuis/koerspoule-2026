@@ -405,7 +405,7 @@ export default function MijnPeloton() {
                               >
                                 <div className="px-3 py-2.5 flex items-center gap-2">
                                   <div className="flex-1 min-w-0">
-                                    <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                    <span className="font-sans font-medium text-sm block truncate">
                                       {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                                     </span>
                                   </div>
