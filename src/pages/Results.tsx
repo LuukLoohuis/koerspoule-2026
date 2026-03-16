@@ -266,7 +266,7 @@ export default function Results() {
 
                       const rows = [
                         ...myTeam.predictions.gcPodium.map((name, i) => ({
-                          label: i === 0 ? "🥇 1e AK" : i === 1 ? "🥈 2e AK" : "🥉 3e AK",
+                          label: i === 0 ? "🥇 1e GC" : i === 1 ? "🥈 2e GC" : "🥉 3e GC",
                           pick: name,
                           actual: gcTop3[i],
                           pts: calcGcPts(name, i),
