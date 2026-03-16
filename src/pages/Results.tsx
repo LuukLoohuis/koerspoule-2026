@@ -304,7 +304,6 @@ export default function Results() {
                 </div>
               </div>
             </div>
-            </div>
           </div>
         </TabsContent>
       </Tabs>
