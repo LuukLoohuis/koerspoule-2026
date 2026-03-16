@@ -209,9 +209,32 @@ export default function MijnPeloton() {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                     <XAxis dataKey="stage" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                     <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    {activePool.standings.map((team, i) =>
-                    <Line
+                    <ChartTooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null;
+                        const sorted = [...payload]
+                          .filter((p) => p.value != null)
+                          .sort((a, b) => (b.value as number) - (a.value as number));
+                        return (
+                          <div className="rounded-md border border-border bg-background p-2.5 shadow-lg text-xs min-w-[140px]">
+                            <p className="font-display font-bold mb-1.5 text-sm">{label}</p>
+                            {sorted.map((entry, idx) => (
+                              <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-display font-bold text-muted-foreground w-4 text-right">{idx + 1}.</span>
+                                  <span
+                                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                                    style={{ backgroundColor: entry.color }}
+                                  />
+                                  <span className="font-sans font-medium">{entry.dataKey}</span>
+                                </div>
+                                <span className="font-display font-bold tabular-nums">{entry.value} pt</span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }}
+                    />
                       key={team.userName}
                       type="monotone"
                       dataKey={team.userName}
