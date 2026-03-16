@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { mockStageResults, mockTeams } from "@/data/mockData";
+import { mockStageResults, mockTeams, mockClassifications } from "@/data/mockData";
 import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } from "@/data/poolStandings";
-import { pointsTable } from "@/data/riders";
+import { pointsTable, classificationPoints } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Medal, User, Users, MoreHorizontal } from "lucide-react";
@@ -247,6 +247,59 @@ export default function Results() {
                         );
                       })}
                     </div>
+                  </div>
+
+                  {/* Classification predictions */}
+                  <div className="space-y-2 mt-4">
+                    <h3 className="font-display text-sm font-bold text-muted-foreground uppercase tracking-wider">🏆 Klassementsvoorspellingen</h3>
+                    {(() => {
+                      const gcTop3 = mockClassifications.gc.slice(0, 3).map((r) => r.riderName);
+                      const actualPoints = mockClassifications.points[0]?.riderName || "";
+                      const actualMountain = mockClassifications.kom[0]?.riderName || "";
+                      const actualYouth = mockClassifications.youth[0]?.riderName || "";
+
+                      const calcGcPts = (pick: string, pos: number) => {
+                        if (gcTop3[pos] === pick) return classificationPoints.correctPositionCorrectRider;
+                        if (gcTop3.includes(pick)) return classificationPoints.correctRiderWrongPosition;
+                        return 0;
+                      };
+
+                      const rows = [
+                        ...myTeam.predictions.gcPodium.map((name, i) => ({
+                          label: i === 0 ? "🥇 1e AK" : i === 1 ? "🥈 2e AK" : "🥉 3e AK",
+                          pick: name,
+                          actual: gcTop3[i],
+                          pts: calcGcPts(name, i),
+                        })),
+                        { label: "🟢 Punten", pick: myTeam.predictions.pointsJersey, actual: actualPoints, pts: myTeam.predictions.pointsJersey === actualPoints ? classificationPoints.correctJerseyWinner : 0 },
+                        { label: "🔴 Berg", pick: myTeam.predictions.mountainJersey, actual: actualMountain, pts: myTeam.predictions.mountainJersey === actualMountain ? classificationPoints.correctJerseyWinner : 0 },
+                        { label: "⚪ Jongeren", pick: myTeam.predictions.youthJersey, actual: actualYouth, pts: myTeam.predictions.youthJersey === actualYouth ? classificationPoints.correctJerseyWinner : 0 },
+                      ];
+
+                      const totalPredPts = rows.reduce((s, r) => s + r.pts, 0);
+
+                      return (
+                        <div className="retro-border bg-background overflow-hidden">
+                          {rows.map((row, idx) => (
+                            <div key={row.label} className={cn(
+                              "flex items-center justify-between px-3 py-2 text-sm border-b border-border last:border-b-0",
+                              idx % 2 === 0 ? "bg-background" : "bg-muted/20"
+                            )}>
+                              <span className="text-xs text-muted-foreground font-sans w-24">{row.label}</span>
+                              <span className="font-sans font-medium flex-1 truncate">{row.pick}</span>
+                              <span className={cn(
+                                "font-display font-bold text-sm tabular-nums",
+                                row.pts > 0 ? "text-primary" : "text-muted-foreground"
+                              )}>{row.pts} pt</span>
+                            </div>
+                          ))}
+                          <div className="flex items-center justify-between px-3 py-2.5 bg-secondary/50 border-t-2 border-foreground">
+                            <span className="font-display font-bold text-sm">Totaal voorspellingen</span>
+                            <span className="font-display font-bold text-base text-accent">{totalPredPts} pt</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
