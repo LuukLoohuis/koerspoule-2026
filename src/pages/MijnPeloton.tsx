@@ -57,7 +57,11 @@ const enrichedSubPools = allSubPools.map((pool) => {
   };
 });
 
-const MEMBER_COLORS = ["hsl(330 60% 65%)", "hsl(220 55% 45%)", "hsl(38 70% 55%)", "hsl(160 50% 40%)"];
+const MEMBER_COLORS = [
+  "hsl(330 60% 65%)", "hsl(220 55% 45%)", "hsl(38 70% 55%)", "hsl(160 50% 40%)",
+  "hsl(280 50% 55%)", "hsl(15 75% 55%)", "hsl(190 60% 45%)", "hsl(95 45% 45%)",
+  "hsl(350 70% 50%)", "hsl(55 65% 50%)",
+];
 
 export default function MijnPeloton() {
   const { toast } = useToast();
@@ -205,7 +209,32 @@ export default function MijnPeloton() {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                     <XAxis dataKey="stage" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                     <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartTooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null;
+                        const sorted = [...payload]
+                          .filter((p) => p.value != null)
+                          .sort((a, b) => (b.value as number) - (a.value as number));
+                        return (
+                          <div className="rounded-md border border-border bg-background p-2.5 shadow-lg text-xs min-w-[140px]">
+                            <p className="font-display font-bold mb-1.5 text-sm">{label}</p>
+                            {sorted.map((entry, idx) => (
+                              <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-display font-bold text-muted-foreground w-4 text-right">{idx + 1}.</span>
+                                  <span
+                                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                                    style={{ backgroundColor: entry.color }}
+                                  />
+                                  <span className="font-sans font-medium">{entry.dataKey}</span>
+                                </div>
+                                <span className="font-display font-bold tabular-nums">{entry.value} pt</span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }}
+                    />
                     {activePool.standings.map((team, i) =>
                     <Line
                       key={team.userName}
@@ -756,11 +785,11 @@ export default function MijnPeloton() {
 
             // Higher contrast color function
             const getCellBg = (score: number) => {
-              if (score >= 0.9) return "hsl(var(--primary))";
-              if (score >= 0.7) return "hsl(var(--primary) / 0.75)";
-              if (score >= 0.5) return "hsl(var(--primary) / 0.5)";
-              if (score >= 0.3) return "hsl(var(--primary) / 0.25)";
-              return "hsl(var(--primary) / 0.08)";
+              if (score >= 0.9) return "hsl(150 70% 30%)";       // dark green — unique
+              if (score >= 0.7) return "hsl(150 55% 42%)";       // medium green
+              if (score >= 0.5) return "hsl(45 70% 55%)";        // amber — middle
+              if (score >= 0.3) return "hsl(15 70% 65%)";        // orange — common
+              return "hsl(0 65% 75%)";                           // light red — very common
             };
 
             return (
@@ -833,8 +862,8 @@ export default function MijnPeloton() {
                                         >
                                           <span
                                             className={cn(
-                                              "truncate block text-[9px] md:text-[10px] font-medium leading-tight",
-                                              score >= 0.5 ? "text-primary-foreground" : "text-foreground"
+                                              "truncate block text-[9px] md:text-[10px] font-bold leading-tight",
+                                              score >= 0.7 ? "text-white" : "text-foreground"
                                             )}
                                           >
                                             {pick?.name ?? "—"}
