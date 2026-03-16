@@ -235,6 +235,8 @@ export default function MijnPeloton() {
                         );
                       }}
                     />
+                    {activePool.standings.map((team, i) =>
+                    <Line
                       key={team.userName}
                       type="monotone"
                       dataKey={team.userName}
