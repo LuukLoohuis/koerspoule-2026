@@ -1043,22 +1043,15 @@ export default function MijnPeloton() {
             {uitslagenView === "etappes" && (
               <>
                 {/* Stage selector */}
-                <div className="flex gap-2 mb-4 flex-wrap">
-                  {mockStageResults.map((stage, i) =>
-                    <button
-                      key={stage.stage}
-                      onClick={() => setSelectedStage(i)}
-                      className={cn(
-                        "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all",
-                        selectedStage === i
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border hover:border-muted-foreground"
-                      )}
-                    >
-                      Rit {stage.stage}
-                    </button>
+                <StageRoadbook
+                  selectedStage={selectedStage}
+                  onSelectStage={setSelectedStage}
+                  stagePoints={mockStageResults.map(stage =>
+                    stage.top20
+                      .filter(r => myRiderNumbers.has(r.riderNumber))
+                      .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0)
                   )}
-                </div>
+                />
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Live stage results */}
