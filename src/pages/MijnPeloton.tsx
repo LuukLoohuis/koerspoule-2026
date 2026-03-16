@@ -501,7 +501,7 @@ export default function MijnPeloton() {
                                         otherJ.pts > j.pts ? "text-primary" : otherJ.pts < j.pts ? "text-destructive" : "text-muted-foreground"
                                       )}>{otherJ.pts} pt</span>
                                       <div className="flex-1 min-w-0 text-right">
-                                        <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                        <span className="font-sans font-medium text-sm block truncate">
                                           {otherJ.name} <span className="text-muted-foreground">#{otherJ.number}</span>
                                         </span>
                                       </div>
