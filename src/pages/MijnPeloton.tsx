@@ -768,7 +768,7 @@ export default function MijnPeloton() {
                 <Card className="retro-border">
                   <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
                     <CardTitle className="font-display text-base flex items-center gap-2">
-                      🚴‍♂️💨 De Échappée
+                      🎯 Panache Score
                     </CardTitle>
                     <p className="text-xs text-muted-foreground font-sans mt-1">
                       Hoe uniek zijn jouw keuzes? Donkerder = jij bent de enige met die renner. Lichter = populaire keuze.
