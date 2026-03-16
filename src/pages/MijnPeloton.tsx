@@ -837,8 +837,8 @@ export default function MijnPeloton() {
                                         >
                                           <span
                                             className={cn(
-                                              "truncate block text-[9px] md:text-[10px] font-medium leading-tight",
-                                              score >= 0.5 ? "text-primary-foreground" : "text-foreground"
+                                              "truncate block text-[9px] md:text-[10px] font-bold leading-tight",
+                                              score >= 0.7 ? "text-white" : "text-foreground"
                                             )}
                                           >
                                             {pick?.name ?? "—"}
