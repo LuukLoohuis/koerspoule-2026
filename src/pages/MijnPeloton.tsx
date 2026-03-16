@@ -959,7 +959,7 @@ export default function MijnPeloton() {
                       <CardContent className="p-4 space-y-2 text-sm font-sans">
                         <div>
                           <span className="text-xs text-muted-foreground">Podium:</span>
-                          <p className="font-medium">{myTeam.predictions.gcPodium.map((r, i) => { const medal = ['🥇', '🥈', '🥉'][i]; return <span key={i}>{medal} {r}{i < myTeam.predictions.gcPodium.length - 1 && <br />}</span>; })}</p>
+                          <p className="font-medium flex flex-col">{myTeam.predictions.gcPodium.map((r, i) => <span key={i}>{['🥇', '🥈', '🥉'][i]} {r}</span>)}</p>
                         </div>
                         <p>🟣 {myTeam.predictions.pointsJersey}</p>
                         <p>🔵 {myTeam.predictions.mountainJersey}</p>
