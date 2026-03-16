@@ -5,7 +5,7 @@ import { pointsTable } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Medal, User, Users, MoreHorizontal } from "lucide-react";
-import StageRoadbook from "@/components/StageRoadbook";
+import StageRoadbook, { stageTypeConfig } from "@/components/StageRoadbook";
 
 export default function Results() {
   const [selectedStage, setSelectedStage] = useState(0);

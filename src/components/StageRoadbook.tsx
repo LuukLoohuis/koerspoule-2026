@@ -3,7 +3,7 @@ import { mockStageResults } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Mountain, TrendingUp, Timer, Route } from "lucide-react";
 
-const stageTypeConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
+export const stageTypeConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
   flat: { icon: <Route className="h-3.5 w-3.5" />, label: "Vlak", color: "bg-emerald-500" },
   hilly: { icon: <TrendingUp className="h-3.5 w-3.5" />, label: "Heuvel", color: "bg-amber-500" },
   mountain: { icon: <Mountain className="h-3.5 w-3.5" />, label: "Berg", color: "bg-red-500" },
