@@ -281,6 +281,18 @@ export default function MijnPeloton() {
                     return { stage: stage.stage, idx, myPts, otherPts, type: stage.type };
                   });
 
+                  // Joker points
+                  const myJokerRows = myTeam.jokers.map((j) => ({
+                    ...j,
+                    pts: getSubpoolPointsForView(j.number),
+                  }));
+                  const otherJokerRows = subpoolCompareTeam.jokers.map((j) => ({
+                    ...j,
+                    pts: getSubpoolPointsForView(j.number),
+                  }));
+                  const myJokerTotal = myJokerRows.reduce((s, j) => s + j.pts, 0);
+                  const otherJokerTotal = otherJokerRows.reduce((s, j) => s + j.pts, 0);
+
                   return (
                     <div className="space-y-4">
                       {/* Score header */}
@@ -313,65 +325,71 @@ export default function MijnPeloton() {
                         compact
                       />
 
-                      {/* Stage-by-stage overview (GC view only) */}
-                      {subpoolCompareView === "gc" && (
-                        <Card className="retro-border overflow-hidden">
-                          <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4">
-                            <CardTitle className="font-display text-sm md:text-base">📊 Punten per etappe</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-0">
-                            {stageBreakdown.map(({ stage, idx, myPts, otherPts, type }, i) => {
-                              const diff = myPts - otherPts;
-                              const stageIcon = type === "mountain" ? "⛰️" : type === "itt" ? "⏱️" : type === "flat" ? "🏁" : "〰️";
-                              return (
-                                <button
-                                  key={stage}
-                                  onClick={() => setSubpoolCompareView(idx)}
-                                  className={cn(
-                                    "w-full grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors",
-                                    i % 2 === 0 ? "bg-background" : "bg-muted/20"
-                                  )}
-                                >
-                                  <div className="px-3 py-2.5 text-right">
-                                    <span className={cn(
-                                      "font-display font-bold tabular-nums",
-                                      myPts > otherPts ? "text-primary" : myPts < otherPts ? "text-destructive" : "text-muted-foreground"
-                                    )}>{myPts} pt</span>
-                                  </div>
-                                  <div className="px-2 py-2 flex flex-col items-center min-w-[90px]">
-                                    <span className="text-xs font-display font-bold">{stageIcon} Rit {stage}</span>
-                                    {diff !== 0 && (
-                                      <span className={cn(
-                                        "text-[10px] font-display font-bold px-1.5 py-0.5 rounded-full mt-0.5",
-                                        diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
-                                      )}>{diff > 0 ? `+${diff}` : diff}</span>
-                                    )}
-                                  </div>
-                                  <div className="px-3 py-2.5 text-left">
-                                    <span className={cn(
-                                      "font-display font-bold tabular-nums",
-                                      otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
-                                    )}>{otherPts} pt</span>
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {/* Rider-by-rider comparison */}
+                      {/* Combined comparison card */}
                       <Card className="retro-border overflow-hidden">
                         <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4">
                           <CardTitle className="font-display text-sm md:text-base">
-                            {subpoolCompareView === "gc" ? "Renner voor renner (totaal)" : `Renner voor renner — Rit ${mockStageResults[subpoolCompareView as number]?.stage}`}
+                            {subpoolCompareView === "gc" ? "🚴 Vergelijking — Algemeen Klassement" : `🚴 Vergelijking — Rit ${mockStageResults[subpoolCompareView as number]?.stage}`}
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
+                          {/* Column headers */}
                           <div className="grid grid-cols-[1fr_auto_1fr] text-xs font-display border-b border-border bg-muted/30">
                             <div className="px-3 py-2 text-left">{myTeam.userName}</div>
                             <div className="px-2 py-2 text-center text-muted-foreground">Categorie</div>
                             <div className="px-3 py-2 text-right">{subpoolCompareTeam.userName}</div>
+                          </div>
+
+                          {/* Stage-by-stage rows (GC only) */}
+                          {subpoolCompareView === "gc" && (
+                            <>
+                              <div className="px-3 py-2 bg-secondary/40 border-b border-border">
+                                <span className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider">📊 Punten per etappe</span>
+                              </div>
+                              {stageBreakdown.map(({ stage, idx, myPts, otherPts, type }, i) => {
+                                const diff = myPts - otherPts;
+                                const stageIcon = type === "mountain" ? "⛰️" : type === "itt" ? "⏱️" : type === "flat" ? "🏁" : "〰️";
+                                return (
+                                  <button
+                                    key={stage}
+                                    onClick={() => setSubpoolCompareView(idx)}
+                                    className={cn(
+                                      "w-full grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors",
+                                      i % 2 === 0 ? "bg-background" : "bg-muted/20"
+                                    )}
+                                  >
+                                    <div className="px-3 py-2.5 text-right">
+                                      <span className={cn(
+                                        "font-display font-bold tabular-nums",
+                                        myPts > otherPts ? "text-primary" : myPts < otherPts ? "text-destructive" : "text-muted-foreground"
+                                      )}>{myPts} pt</span>
+                                    </div>
+                                    <div className="px-2 py-2 flex flex-col items-center min-w-[90px]">
+                                      <span className="text-xs font-display font-bold">{stageIcon} Rit {stage}</span>
+                                      {diff !== 0 && (
+                                        <span className={cn(
+                                          "text-xs font-display font-bold px-2 py-0.5 rounded-full mt-0.5",
+                                          diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                                        )}>{diff > 0 ? `+${diff}` : diff}</span>
+                                      )}
+                                    </div>
+                                    <div className="px-3 py-2.5 text-left">
+                                      <span className={cn(
+                                        "font-display font-bold tabular-nums",
+                                        otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
+                                      )}>{otherPts} pt</span>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </>
+                          )}
+
+                          {/* Rider-by-rider section */}
+                          <div className="px-3 py-2 bg-secondary/40 border-b border-border border-t-2 border-t-foreground">
+                            <span className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider">
+                              🚴 Renner voor renner {subpoolCompareView !== "gc" && `— Rit ${mockStageResults[subpoolCompareView as number]?.stage}`}
+                            </span>
                           </div>
 
                           {riderRows.map(({ catId, rider, myPts, otherRider, otherPts, isSame }, idx) => {
@@ -392,7 +410,7 @@ export default function MijnPeloton() {
                                     </span>
                                   </div>
                                   <span className={cn(
-                                    "font-display font-bold text-xs shrink-0 tabular-nums",
+                                    "font-display font-bold text-sm shrink-0 tabular-nums",
                                     diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-muted-foreground"
                                   )}>{myPts} pt</span>
                                 </div>
@@ -404,14 +422,14 @@ export default function MijnPeloton() {
                                     <span className="jersey-badge bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5">🤝 Zelfde</span>
                                   ) : diff !== 0 ? (
                                     <span className={cn(
-                                      "text-[10px] font-display font-bold px-1.5 py-0.5 rounded-full",
+                                      "text-sm font-display font-bold px-2 py-0.5 rounded-full",
                                       diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
                                     )}>{diff > 0 ? `+${diff}` : diff}</span>
                                   ) : null}
                                 </div>
                                 <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
                                   <span className={cn(
-                                    "font-display font-bold text-xs shrink-0 tabular-nums",
+                                    "font-display font-bold text-sm shrink-0 tabular-nums",
                                     otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
                                   )}>{otherPts} pt</span>
                                   <div className="flex-1 min-w-0 text-right">
@@ -424,14 +442,14 @@ export default function MijnPeloton() {
                             );
                           })}
 
-                          {/* Totals row */}
+                          {/* Rider totals */}
                           <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-secondary/50 border-t-2 border-foreground">
                             <div className="px-3 py-3 text-right">
                               <span className="font-display font-bold text-base md:text-lg text-accent">{myTotal} pt</span>
                             </div>
                             <div className="px-2 py-3 text-center">
                               <span className={cn(
-                                "font-display font-bold text-sm px-2 py-1 rounded-md",
+                                "font-display font-bold text-base px-2 py-1 rounded-md",
                                 myTotal > otherTotal ? "bg-primary/15 text-primary" : myTotal < otherTotal ? "bg-destructive/15 text-destructive" : "text-muted-foreground"
                               )}>{myTotal - otherTotal > 0 ? `+${myTotal - otherTotal}` : myTotal - otherTotal}</span>
                             </div>
@@ -439,36 +457,103 @@ export default function MijnPeloton() {
                               <span className="font-display font-bold text-base md:text-lg text-accent">{otherTotal} pt</span>
                             </div>
                           </div>
+
+                          {/* Jokers section */}
+                          <div className="px-3 py-2 bg-secondary/40 border-b border-border border-t-2 border-t-foreground">
+                            <span className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider">🃏 Jokers</span>
+                          </div>
+                          {myJokerRows.map((j, idx) => {
+                            const otherJ = otherJokerRows[idx];
+                            const diff = otherJ ? j.pts - otherJ.pts : 0;
+                            return (
+                              <div
+                                key={j.number}
+                                className={cn(
+                                  "grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border",
+                                  idx % 2 === 0 ? "bg-background" : "bg-muted/20"
+                                )}
+                              >
+                                <div className="px-3 py-2.5 flex items-center gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                      {j.name} <span className="text-muted-foreground">#{j.number}</span>
+                                    </span>
+                                  </div>
+                                  <span className={cn(
+                                    "font-display font-bold text-sm shrink-0 tabular-nums",
+                                    diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-muted-foreground"
+                                  )}>{j.pts} pt</span>
+                                </div>
+                                <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
+                                  <span className="text-[10px] text-muted-foreground font-sans">Joker {idx + 1}</span>
+                                  {otherJ && diff !== 0 && (
+                                    <span className={cn(
+                                      "text-sm font-display font-bold px-2 py-0.5 rounded-full",
+                                      diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                                    )}>{diff > 0 ? `+${diff}` : diff}</span>
+                                  )}
+                                </div>
+                                <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
+                                  {otherJ ? (
+                                    <>
+                                      <span className={cn(
+                                        "font-display font-bold text-sm shrink-0 tabular-nums",
+                                        otherJ.pts > j.pts ? "text-primary" : otherJ.pts < j.pts ? "text-destructive" : "text-muted-foreground"
+                                      )}>{otherJ.pts} pt</span>
+                                      <div className="flex-1 min-w-0 text-right">
+                                        <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                          {otherJ.name} <span className="text-muted-foreground">#{otherJ.number}</span>
+                                        </span>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <span className="text-muted-foreground">—</span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {/* Show extra jokers from opponent if they have more */}
+                          {otherJokerRows.slice(myJokerRows.length).map((j, idx) => (
+                            <div
+                              key={j.number}
+                              className={cn(
+                                "grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border",
+                                (myJokerRows.length + idx) % 2 === 0 ? "bg-background" : "bg-muted/20"
+                              )}
+                            >
+                              <div className="px-3 py-2.5 text-muted-foreground">—</div>
+                              <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
+                                <span className="text-[10px] text-muted-foreground font-sans">Joker {myJokerRows.length + idx + 1}</span>
+                              </div>
+                              <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
+                                <span className="font-display font-bold text-sm shrink-0 tabular-nums text-primary">{j.pts} pt</span>
+                                <div className="flex-1 min-w-0 text-right">
+                                  <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                    {j.name} <span className="text-muted-foreground">#{j.number}</span>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+
+                          {/* Joker totals */}
+                          <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-secondary/50 border-t-2 border-foreground">
+                            <div className="px-3 py-3 text-right">
+                              <span className="font-display font-bold text-base md:text-lg text-accent">{myJokerTotal} pt</span>
+                            </div>
+                            <div className="px-2 py-3 text-center">
+                              <span className={cn(
+                                "font-display font-bold text-base px-2 py-1 rounded-md",
+                                myJokerTotal > otherJokerTotal ? "bg-primary/15 text-primary" : myJokerTotal < otherJokerTotal ? "bg-destructive/15 text-destructive" : "text-muted-foreground"
+                              )}>{myJokerTotal - otherJokerTotal > 0 ? `+${myJokerTotal - otherJokerTotal}` : myJokerTotal - otherJokerTotal}</span>
+                            </div>
+                            <div className="px-3 py-3 text-left">
+                              <span className="font-display font-bold text-base md:text-lg text-accent">{otherJokerTotal} pt</span>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
-
-                      {/* Jokers side by side */}
-                      <div className="grid grid-cols-2 gap-3 md:gap-4">
-                        <Card className="retro-border">
-                          <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3">
-                            <CardTitle className="font-display text-xs md:text-sm">🃏 Jokers — {myTeam.userName}</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-3">
-                            <div className="flex flex-wrap gap-1.5">
-                              {myTeam.jokers.map((j) => (
-                                <span key={j.number} className="jersey-badge bg-primary text-primary-foreground text-xs">{j.name}</span>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                        <Card className="retro-border">
-                          <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3">
-                            <CardTitle className="font-display text-xs md:text-sm">🃏 Jokers — {subpoolCompareTeam.userName}</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-3">
-                            <div className="flex flex-wrap gap-1.5">
-                              {subpoolCompareTeam.jokers.map((j) => (
-                                <span key={j.number} className="jersey-badge bg-foreground text-background text-xs">{j.name}</span>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
                     </div>
                   );
                 })() : (
