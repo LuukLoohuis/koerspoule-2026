@@ -433,7 +433,7 @@ export default function MijnPeloton() {
                                     otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
                                   )}>{otherPts} pt</span>
                                   <div className="flex-1 min-w-0 text-right">
-                                    <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                    <span className="font-sans font-medium text-sm block truncate">
                                       {otherRider?.name || "—"} {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
                                     </span>
                                   </div>
