@@ -63,85 +63,12 @@ export default function Results() {
 
         {/* ── ETAPPES TAB ── */}
         <TabsContent value="etappes">
-          {/* Stage Roadbook */}
           <div className="mt-4 mb-6">
-            <div className="retro-border bg-card overflow-hidden">
-              <div className="p-3 border-b-2 border-foreground bg-secondary/50 flex items-center justify-between">
-                <h2 className="font-display text-sm font-bold uppercase tracking-wider">Routekaart</h2>
-                <div className="flex gap-3 text-xs">
-                  {Object.entries(stageTypeConfig).map(([key, cfg]) => (
-                    <span key={key} className="flex items-center gap-1 text-muted-foreground">
-                      <span className={cn("w-2 h-2 rounded-full", cfg.color)} />
-                      {cfg.label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="p-3 overflow-x-auto">
-                <div className="flex items-end gap-1 min-w-max">
-                  {mockStageResults.map((stage, i) => {
-                    const cfg = stageTypeConfig[stage.type] || stageTypeConfig.flat;
-                    const pts = stagePoints[i];
-                    const maxPts = Math.max(...stagePoints, 1);
-                    const barHeight = Math.max(8, (pts / maxPts) * 56);
-                    const isSelected = selectedStage === i;
-
-                    return (
-                      <button
-                        key={stage.stage}
-                        onClick={() => setSelectedStage(i)}
-                        className={cn(
-                          "group flex flex-col items-center gap-1 px-1 py-1.5 rounded-md transition-all relative min-w-[3rem]",
-                          isSelected
-                            ? "bg-primary/10 ring-2 ring-primary"
-                            : "hover:bg-secondary/50"
-                        )}
-                        title={`${stage.route} • ${stage.distance}`}
-                      >
-                        {/* Points value */}
-                        <span className={cn(
-                          "text-[10px] font-bold tabular-nums",
-                          isSelected ? "text-primary" : "text-muted-foreground",
-                          pts > 0 ? "opacity-100" : "opacity-40"
-                        )}>
-                          {pts > 0 ? pts : "–"}
-                        </span>
-
-                        {/* Bar */}
-                        <div className="w-6 flex items-end justify-center" style={{ height: 56 }}>
-                          <div
-                            className={cn(
-                              "w-full rounded-t transition-all",
-                              isSelected ? cfg.color : "bg-muted",
-                              isSelected && "shadow-sm"
-                            )}
-                            style={{ height: barHeight }}
-                          />
-                        </div>
-
-                        {/* Stage type icon */}
-                        <div className={cn(
-                          "w-6 h-6 rounded-full flex items-center justify-center transition-all",
-                          isSelected
-                            ? cn(cfg.color, "text-white shadow-md")
-                            : "bg-secondary text-muted-foreground group-hover:bg-muted"
-                        )}>
-                          {cfg.icon}
-                        </div>
-
-                        {/* Stage number */}
-                        <span className={cn(
-                          "text-[10px] font-display font-bold",
-                          isSelected ? "text-primary" : "text-muted-foreground"
-                        )}>
-                          {stage.stage}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+            <StageRoadbook
+              selectedStage={selectedStage}
+              onSelectStage={setSelectedStage}
+              stagePoints={stagePoints}
+            />
           </div>
 
           {/* Selected stage info strip */}
