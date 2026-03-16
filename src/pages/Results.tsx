@@ -4,14 +4,8 @@ import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } fro
 import { pointsTable } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal, User, Users, MoreHorizontal, Mountain, TrendingUp, Timer, Route } from "lucide-react";
-
-const stageTypeConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
-  flat: { icon: <Route className="h-3.5 w-3.5" />, label: "Vlak", color: "bg-emerald-500" },
-  hilly: { icon: <TrendingUp className="h-3.5 w-3.5" />, label: "Heuvel", color: "bg-amber-500" },
-  mountain: { icon: <Mountain className="h-3.5 w-3.5" />, label: "Berg", color: "bg-red-500" },
-  itt: { icon: <Timer className="h-3.5 w-3.5" />, label: "Tijdrit", color: "bg-blue-500" },
-};
+import { Trophy, Medal, User, Users, MoreHorizontal } from "lucide-react";
+import StageRoadbook from "@/components/StageRoadbook";
 
 export default function Results() {
   const [selectedStage, setSelectedStage] = useState(0);
