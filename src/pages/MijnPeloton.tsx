@@ -26,20 +26,20 @@ const myGames = [
 { id: "tdf2026", name: "Tour de France 2026", status: "afgelopen" as const, emoji: "🇫🇷", colors: ["#002395", "#ffffff", "#ED2939"] },
 { id: "vuelta2026", name: "Vuelta a España 2026", status: "afgelopen" as const, emoji: "🇪🇸", colors: ["#AA151B", "#F1BF00", "#AA151B"] }];
 
-  const getRiderPoints = (riderNumber: number) => {
-    return mockStageResults.reduce((total, stage) => {
-      const result = stage.top20.find((r) => r.riderNumber === riderNumber);
-      return total + (result ? (pointsTable[result.position] || 0) : 0);
-    }, 0);
-  };
+const getRiderPoints = (riderNumber: number) => {
+  return mockStageResults.reduce((total, stage) => {
+    const result = stage.top20.find((r) => r.riderNumber === riderNumber);
+    return total + (result ? pointsTable[result.position] || 0 : 0);
+  }, 0);
+};
 
 const allSubPools = [...mockSubPools, expandedSubPool];
 
 const enrichedSubPools = allSubPools.map((pool) => {
   const isExpanded = pool.id === expandedSubPool.id;
-  const standings = isExpanded
-    ? [...subpoolTeams].sort((a, b) => b.totalPoints - a.totalPoints)
-    : mockTeams.filter((t) => pool.members.includes(t.userName)).sort((a, b) => b.totalPoints - a.totalPoints);
+  const standings = isExpanded ?
+  [...subpoolTeams].sort((a, b) => b.totalPoints - a.totalPoints) :
+  mockTeams.filter((t) => pool.members.includes(t.userName)).sort((a, b) => b.totalPoints - a.totalPoints);
 
   return {
     ...pool,
@@ -49,19 +49,19 @@ const enrichedSubPools = allSubPools.map((pool) => {
       stage: `Rit ${i + 1}`,
       ...Object.fromEntries(
         pool.members.map((name) => [
-          name,
-          Math.round(40 + Math.random() * 60) * (i + 1),
-        ])
-      ),
-    })),
+        name,
+        Math.round(40 + Math.random() * 60) * (i + 1)]
+        )
+      )
+    }))
   };
 });
 
 const MEMBER_COLORS = [
-  "hsl(330 60% 65%)", "hsl(220 55% 45%)", "hsl(38 70% 55%)", "hsl(160 50% 40%)",
-  "hsl(280 50% 55%)", "hsl(15 75% 55%)", "hsl(190 60% 45%)", "hsl(95 45% 45%)",
-  "hsl(350 70% 50%)", "hsl(55 65% 50%)",
-];
+"hsl(330 60% 65%)", "hsl(220 55% 45%)", "hsl(38 70% 55%)", "hsl(160 50% 40%)",
+"hsl(280 50% 55%)", "hsl(15 75% 55%)", "hsl(190 60% 45%)", "hsl(95 45% 45%)",
+"hsl(350 70% 50%)", "hsl(55 65% 50%)"];
+
 
 export default function MijnPeloton() {
   const { toast } = useToast();
@@ -125,9 +125,9 @@ export default function MijnPeloton() {
 
   /* ── Sub-pool detail view ── */
   if (activePool) {
-    const subpoolCompareTeam = activePool.isExpanded
-      ? subpoolTeams.find((t) => t.userName === subpoolComparePlayer && t.userName !== myTeam.userName)
-      : mockTeams.find((t) => t.userName === subpoolComparePlayer && t.id !== myTeam.id);
+    const subpoolCompareTeam = activePool.isExpanded ?
+    subpoolTeams.find((t) => t.userName === subpoolComparePlayer && t.userName !== myTeam.userName) :
+    mockTeams.find((t) => t.userName === subpoolComparePlayer && t.id !== myTeam.id);
     return (
       <div className="container mx-auto px-4 py-8 md:py-12">
         <button
@@ -212,29 +212,29 @@ export default function MijnPeloton() {
                     <ChartTooltip
                       content={({ active, payload, label }) => {
                         if (!active || !payload?.length) return null;
-                        const sorted = [...payload]
-                          .filter((p) => p.value != null)
-                          .sort((a, b) => (b.value as number) - (a.value as number));
+                        const sorted = [...payload].
+                        filter((p) => p.value != null).
+                        sort((a, b) => (b.value as number) - (a.value as number));
                         return (
                           <div className="rounded-md border border-border bg-background p-2.5 shadow-lg text-xs min-w-[140px]">
                             <p className="font-display font-bold mb-1.5 text-sm">{label}</p>
-                            {sorted.map((entry, idx) => (
-                              <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
+                            {sorted.map((entry, idx) =>
+                            <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
                                 <div className="flex items-center gap-1.5">
                                   <span className="font-display font-bold text-muted-foreground w-4 text-right">{idx + 1}.</span>
                                   <span
-                                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                                    style={{ backgroundColor: entry.color }}
-                                  />
+                                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                                  style={{ backgroundColor: entry.color }} />
+                                
                                   <span className="font-sans font-medium">{entry.dataKey}</span>
                                 </div>
                                 <span className="font-display font-bold tabular-nums">{entry.value} pt</span>
                               </div>
-                            ))}
-                          </div>
-                        );
-                      }}
-                    />
+                            )}
+                          </div>);
+
+                      }} />
+                    
                     {activePool.standings.map((team, i) =>
                     <Line
                       key={team.userName}
@@ -264,25 +264,25 @@ export default function MijnPeloton() {
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-sm text-muted-foreground font-sans">Vergelijk met:</span>
                   <div className="flex gap-2 flex-wrap">
-                    {activePool.standings
-                      .filter((t) => t.id !== myTeam.id)
-                      .map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => {
-                            setSubpoolComparePlayer(subpoolComparePlayer === t.userName ? "" : t.userName);
-                            setSubpoolCompareView("gc");
-                          }}
-                          className={cn(
-                            "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all",
-                            subpoolComparePlayer === t.userName
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border hover:border-muted-foreground"
-                          )}
-                        >
+                    {activePool.standings.
+                    filter((t) => t.id !== myTeam.id).
+                    map((t) =>
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        setSubpoolComparePlayer(subpoolComparePlayer === t.userName ? "" : t.userName);
+                        setSubpoolCompareView("gc");
+                      }}
+                      className={cn(
+                        "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all",
+                        subpoolComparePlayer === t.userName ?
+                        "border-primary bg-primary text-primary-foreground" :
+                        "border-border hover:border-muted-foreground"
+                      )}>
+                      
                           {t.userName}
                         </button>
-                      ))}
+                    )}
                   </div>
                 </div>
 
@@ -292,18 +292,18 @@ export default function MijnPeloton() {
                     const stage = mockStageResults[subpoolCompareView];
                     if (!stage) return 0;
                     const result = stage.top20.find((r) => r.riderNumber === riderNumber);
-                    return result ? (pointsTable[result.position] || 0) : 0;
+                    return result ? pointsTable[result.position] || 0 : 0;
                   };
 
-                  const riderRows = Object.entries(myTeam.picks)
-                    .map(([catId, rider]) => {
-                      const myPts = getSubpoolPointsForView(rider.number);
-                      const otherRider = subpoolCompareTeam.picks[Number(catId)];
-                      const otherPts = otherRider ? getSubpoolPointsForView(otherRider.number) : 0;
-                      const isSame = otherRider?.number === rider.number;
-                      return { catId, rider, myPts, otherRider, otherPts, isSame };
-                    })
-                    .sort((a, b) => b.myPts - a.myPts);
+                  const riderRows = Object.entries(myTeam.picks).
+                  map(([catId, rider]) => {
+                    const myPts = getSubpoolPointsForView(rider.number);
+                    const otherRider = subpoolCompareTeam.picks[Number(catId)];
+                    const otherPts = otherRider ? getSubpoolPointsForView(otherRider.number) : 0;
+                    const isSame = otherRider?.number === rider.number;
+                    return { catId, rider, myPts, otherRider, otherPts, isSame };
+                  }).
+                  sort((a, b) => b.myPts - a.myPts);
 
                   const myTotal = riderRows.reduce((s, r) => s + r.myPts, 0);
                   const otherTotal = riderRows.reduce((s, r) => s + r.otherPts, 0);
@@ -311,11 +311,11 @@ export default function MijnPeloton() {
                   const stageBreakdown = mockStageResults.map((stage, idx) => {
                     const myPts = Object.values(myTeam.picks).reduce((sum, rider) => {
                       const r = stage.top20.find((s) => s.riderNumber === rider.number);
-                      return sum + (r ? (pointsTable[r.position] || 0) : 0);
+                      return sum + (r ? pointsTable[r.position] || 0 : 0);
                     }, 0);
                     const otherPts = Object.values(subpoolCompareTeam.picks).reduce((sum, rider) => {
                       const r = stage.top20.find((s) => s.riderNumber === rider.number);
-                      return sum + (r ? (pointsTable[r.position] || 0) : 0);
+                      return sum + (r ? pointsTable[r.position] || 0 : 0);
                     }, 0);
                     return { stage: stage.stage, idx, myPts, otherPts, type: stage.type };
                   });
@@ -323,11 +323,11 @@ export default function MijnPeloton() {
                   // Joker points
                   const myJokerRows = myTeam.jokers.map((j) => ({
                     ...j,
-                    pts: getSubpoolPointsForView(j.number),
+                    pts: getSubpoolPointsForView(j.number)
                   }));
                   const otherJokerRows = subpoolCompareTeam.jokers.map((j) => ({
                     ...j,
-                    pts: getSubpoolPointsForView(j.number),
+                    pts: getSubpoolPointsForView(j.number)
                   }));
                   const myJokerTotal = myJokerRows.reduce((s, j) => s + j.pts, 0);
                   const otherJokerTotal = otherJokerRows.reduce((s, j) => s + j.pts, 0);
@@ -361,8 +361,8 @@ export default function MijnPeloton() {
                         showGcButton
                         gcSelected={subpoolCompareView === "gc"}
                         onSelectGc={() => setSubpoolCompareView("gc")}
-                        compact
-                      />
+                        compact />
+                      
 
                       {/* Combined comparison card */}
                       <Card className="retro-border overflow-hidden">
@@ -380,49 +380,49 @@ export default function MijnPeloton() {
                           </div>
 
                           {/* Stage-by-stage rows (GC only) */}
-                          {subpoolCompareView === "gc" && (
-                            <>
+                          {subpoolCompareView === "gc" &&
+                          <>
                               <div className="px-3 py-2 bg-secondary/40 border-b border-border">
                                 <span className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider">📊 Punten per etappe</span>
                               </div>
                               {stageBreakdown.map(({ stage, idx, myPts, otherPts, type }, i) => {
-                                const diff = myPts - otherPts;
-                                const stageIcon = type === "mountain" ? "⛰️" : type === "itt" ? "⏱️" : type === "flat" ? "🏁" : "〰️";
-                                return (
-                                  <button
-                                    key={stage}
-                                    onClick={() => setSubpoolCompareView(idx)}
-                                    className={cn(
-                                      "w-full grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors",
-                                      i % 2 === 0 ? "bg-background" : "bg-muted/20"
-                                    )}
-                                  >
+                              const diff = myPts - otherPts;
+                              const stageIcon = type === "mountain" ? "⛰️" : type === "itt" ? "⏱️" : type === "flat" ? "🏁" : "〰️";
+                              return (
+                                <button
+                                  key={stage}
+                                  onClick={() => setSubpoolCompareView(idx)}
+                                  className={cn(
+                                    "w-full grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors",
+                                    i % 2 === 0 ? "bg-background" : "bg-muted/20"
+                                  )}>
+                                  
                                     <div className="px-3 py-2.5 text-right">
-                                      <span className={cn(
-                                        "font-display font-bold tabular-nums",
-                                        myPts > otherPts ? "text-primary" : myPts < otherPts ? "text-destructive" : "text-muted-foreground"
-                                      )}>{myPts} pt</span>
+                                      <span className={cn("font-display font-bold tabular-nums text-base",
+
+                                    myPts > otherPts ? "text-primary" : myPts < otherPts ? "text-destructive" : "text-muted-foreground"
+                                    )}>{myPts} pt</span>
                                     </div>
                                     <div className="px-2 py-2 flex flex-col items-center min-w-[90px]">
-                                      <span className="text-xs font-display font-bold">{stageIcon} Rit {stage}</span>
-                                      {diff !== 0 && (
-                                        <span className={cn(
-                                          "text-xs font-display font-bold px-2 py-0.5 rounded-full mt-0.5",
-                                          diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
-                                        )}>{diff > 0 ? `+${diff}` : diff}</span>
-                                      )}
+                                      <span className="font-display font-bold text-base">{stageIcon} Rit {stage}</span>
+                                      {diff !== 0 &&
+                                    <span className={cn("font-display font-bold px-2 py-0.5 rounded-full mt-0.5 text-base",
+
+                                    diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                                    )}>{diff > 0 ? `+${diff}` : diff}</span>
+                                    }
                                     </div>
                                     <div className="px-3 py-2.5 text-left">
-                                      <span className={cn(
-                                        "font-display font-bold tabular-nums",
-                                        otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
-                                      )}>{otherPts} pt</span>
+                                      <span className={cn("font-display font-bold tabular-nums text-base",
+
+                                    otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
+                                    )}>{otherPts} pt</span>
                                     </div>
-                                  </button>
-                                );
-                              })}
+                                  </button>);
+
+                            })}
                             </>
-                          )}
+                          }
 
                           {/* Rider-by-rider section */}
                           <div className="px-3 py-2 bg-secondary/40 border-b border-border border-t-2 border-t-foreground">
@@ -440,36 +440,36 @@ export default function MijnPeloton() {
                                   "grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0",
                                   idx % 2 === 0 ? "bg-background" : "bg-muted/20",
                                   isSame && "bg-accent/10"
-                                )}
-                              >
+                                )}>
+                                
                                 <div className="px-3 py-2.5 flex items-center gap-2">
                                   <div className="flex-1 min-w-0">
                                     <span className="font-sans font-medium text-sm block truncate">
                                       {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                                     </span>
                                   </div>
-                                  <span className={cn(
-                                    "font-display font-bold text-sm shrink-0 tabular-nums",
-                                    diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-muted-foreground"
+                                  <span className={cn("font-display font-bold shrink-0 tabular-nums text-base",
+
+                                  diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-muted-foreground"
                                   )}>{myPts} pt</span>
                                 </div>
                                 <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
-                                  <span className="text-xs text-muted-foreground font-sans truncate max-w-full text-center">
+                                  <span className="text-muted-foreground font-sans truncate max-w-full text-center text-sm">
                                     {getCategoryName(Number(catId))}
                                   </span>
-                                  {isSame ? (
-                                    <span className="jersey-badge bg-accent text-accent-foreground text-xs px-1.5 py-0.5">🤝 Zelfde</span>
-                                  ) : diff !== 0 ? (
-                                    <span className={cn(
-                                      "text-sm font-display font-bold px-2 py-0.5 rounded-full",
-                                      diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
-                                    )}>{diff > 0 ? `+${diff}` : diff}</span>
-                                  ) : null}
+                                  {isSame ?
+                                  <span className="jersey-badge bg-accent text-accent-foreground text-xs px-1.5 py-0.5">🤝 Zelfde</span> :
+                                  diff !== 0 ?
+                                  <span className={cn("font-display font-bold px-2 py-0.5 rounded-full text-base",
+
+                                  diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                                  )}>{diff > 0 ? `+${diff}` : diff}</span> :
+                                  null}
                                 </div>
                                 <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
-                                  <span className={cn(
-                                    "font-display font-bold text-sm shrink-0 tabular-nums",
-                                    otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
+                                  <span className={cn("font-display font-bold shrink-0 tabular-nums text-base",
+
+                                  otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
                                   )}>{otherPts} pt</span>
                                   <div className="flex-1 min-w-0 text-right">
                                     <span className="font-sans font-medium text-sm block truncate">
@@ -477,8 +477,8 @@ export default function MijnPeloton() {
                                     </span>
                                   </div>
                                 </div>
-                              </div>
-                            );
+                              </div>);
+
                           })}
 
                           {/* Rider totals */}
@@ -510,8 +510,8 @@ export default function MijnPeloton() {
                                 className={cn(
                                   "grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border",
                                   idx % 2 === 0 ? "bg-background" : "bg-muted/20"
-                                )}
-                              >
+                                )}>
+                                
                                 <div className="px-3 py-2.5 flex items-center gap-2">
                                   <div className="flex-1 min-w-0">
                                     <span className="font-sans font-medium text-sm block truncate">
@@ -525,42 +525,42 @@ export default function MijnPeloton() {
                                 </div>
                                 <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
                                   <span className="text-xs text-muted-foreground font-sans">Joker {idx + 1}</span>
-                                  {otherJ && diff !== 0 && (
-                                    <span className={cn(
-                                      "text-sm font-display font-bold px-2 py-0.5 rounded-full",
-                                      diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
-                                    )}>{diff > 0 ? `+${diff}` : diff}</span>
-                                  )}
+                                  {otherJ && diff !== 0 &&
+                                  <span className={cn(
+                                    "text-sm font-display font-bold px-2 py-0.5 rounded-full",
+                                    diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                                  )}>{diff > 0 ? `+${diff}` : diff}</span>
+                                  }
                                 </div>
                                 <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
-                                  {otherJ ? (
-                                    <>
+                                  {otherJ ?
+                                  <>
                                       <span className={cn(
-                                        "font-display font-bold text-sm shrink-0 tabular-nums",
-                                        otherJ.pts > j.pts ? "text-primary" : otherJ.pts < j.pts ? "text-destructive" : "text-muted-foreground"
-                                      )}>{otherJ.pts} pt</span>
+                                      "font-display font-bold text-sm shrink-0 tabular-nums",
+                                      otherJ.pts > j.pts ? "text-primary" : otherJ.pts < j.pts ? "text-destructive" : "text-muted-foreground"
+                                    )}>{otherJ.pts} pt</span>
                                       <div className="flex-1 min-w-0 text-right">
                                         <span className="font-sans font-medium text-sm block truncate">
                                           {otherJ.name} <span className="text-muted-foreground">#{otherJ.number}</span>
                                         </span>
                                       </div>
-                                    </>
-                                  ) : (
-                                    <span className="text-muted-foreground">—</span>
-                                  )}
+                                    </> :
+
+                                  <span className="text-muted-foreground">—</span>
+                                  }
                                 </div>
-                              </div>
-                            );
+                              </div>);
+
                           })}
                           {/* Show extra jokers from opponent if they have more */}
-                          {otherJokerRows.slice(myJokerRows.length).map((j, idx) => (
-                            <div
-                              key={j.number}
-                              className={cn(
-                                "grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border",
-                                (myJokerRows.length + idx) % 2 === 0 ? "bg-background" : "bg-muted/20"
-                              )}
-                            >
+                          {otherJokerRows.slice(myJokerRows.length).map((j, idx) =>
+                          <div
+                            key={j.number}
+                            className={cn(
+                              "grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border",
+                              (myJokerRows.length + idx) % 2 === 0 ? "bg-background" : "bg-muted/20"
+                            )}>
+                            
                               <div className="px-3 py-2.5 text-muted-foreground">—</div>
                               <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
                                 <span className="text-xs text-muted-foreground font-sans">Joker {myJokerRows.length + idx + 1}</span>
@@ -574,7 +574,7 @@ export default function MijnPeloton() {
                                 </div>
                               </div>
                             </div>
-                          ))}
+                          )}
 
                           {/* Joker totals */}
                           <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-secondary/50 border-t-2 border-foreground">
@@ -614,40 +614,40 @@ export default function MijnPeloton() {
                             };
 
                             const predictionRows = [
-                              ...myTeam.predictions.gcPodium.map((name, i) => {
-                                const myPts = calcGcPts(name, i);
-                                const otherName = subpoolCompareTeam.predictions.gcPodium[i] || "";
-                                const otherPts = calcGcPts(otherName, i);
-                                return {
-                                  label: i === 0 ? "🥇 1e AK" : i === 1 ? "🥈 2e AK" : "🥉 3e AK",
-                                  myPick: name,
-                                  otherPick: otherName || "—",
-                                  myPts,
-                                  otherPts,
-                                };
-                              }),
-                              {
-                                label: "🟢 Puntentrui",
-                                myPick: myTeam.predictions.pointsJersey,
-                                otherPick: subpoolCompareTeam.predictions.pointsJersey,
-                                myPts: calcJerseyPts(myTeam.predictions.pointsJersey, actualPointsJersey),
-                                otherPts: calcJerseyPts(subpoolCompareTeam.predictions.pointsJersey, actualPointsJersey),
-                              },
-                              {
-                                label: "🔴 Bergtrui",
-                                myPick: myTeam.predictions.mountainJersey,
-                                otherPick: subpoolCompareTeam.predictions.mountainJersey,
-                                myPts: calcJerseyPts(myTeam.predictions.mountainJersey, actualMountainJersey),
-                                otherPts: calcJerseyPts(subpoolCompareTeam.predictions.mountainJersey, actualMountainJersey),
-                              },
-                              {
-                                label: "⚪ Jongerentrui",
-                                myPick: myTeam.predictions.youthJersey,
-                                otherPick: subpoolCompareTeam.predictions.youthJersey,
-                                myPts: calcJerseyPts(myTeam.predictions.youthJersey, actualYouthJersey),
-                                otherPts: calcJerseyPts(subpoolCompareTeam.predictions.youthJersey, actualYouthJersey),
-                              },
-                            ];
+                            ...myTeam.predictions.gcPodium.map((name, i) => {
+                              const myPts = calcGcPts(name, i);
+                              const otherName = subpoolCompareTeam.predictions.gcPodium[i] || "";
+                              const otherPts = calcGcPts(otherName, i);
+                              return {
+                                label: i === 0 ? "🥇 1e AK" : i === 1 ? "🥈 2e AK" : "🥉 3e AK",
+                                myPick: name,
+                                otherPick: otherName || "—",
+                                myPts,
+                                otherPts
+                              };
+                            }),
+                            {
+                              label: "🟢 Puntentrui",
+                              myPick: myTeam.predictions.pointsJersey,
+                              otherPick: subpoolCompareTeam.predictions.pointsJersey,
+                              myPts: calcJerseyPts(myTeam.predictions.pointsJersey, actualPointsJersey),
+                              otherPts: calcJerseyPts(subpoolCompareTeam.predictions.pointsJersey, actualPointsJersey)
+                            },
+                            {
+                              label: "🔴 Bergtrui",
+                              myPick: myTeam.predictions.mountainJersey,
+                              otherPick: subpoolCompareTeam.predictions.mountainJersey,
+                              myPts: calcJerseyPts(myTeam.predictions.mountainJersey, actualMountainJersey),
+                              otherPts: calcJerseyPts(subpoolCompareTeam.predictions.mountainJersey, actualMountainJersey)
+                            },
+                            {
+                              label: "⚪ Jongerentrui",
+                              myPick: myTeam.predictions.youthJersey,
+                              otherPick: subpoolCompareTeam.predictions.youthJersey,
+                              myPts: calcJerseyPts(myTeam.predictions.youthJersey, actualYouthJersey),
+                              otherPts: calcJerseyPts(subpoolCompareTeam.predictions.youthJersey, actualYouthJersey)
+                            }];
+
 
                             const myPredTotal = predictionRows.reduce((s, r) => s + r.myPts, 0);
                             const otherPredTotal = predictionRows.reduce((s, r) => s + r.otherPts, 0);
@@ -664,8 +664,8 @@ export default function MijnPeloton() {
                                         "grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border",
                                         idx % 2 === 0 ? "bg-background" : "bg-muted/20",
                                         isSame && "bg-accent/10"
-                                      )}
-                                    >
+                                      )}>
+                                      
                                       <div className="px-3 py-2.5 flex items-center gap-2">
                                         <div className="flex-1 min-w-0">
                                           <span className="font-sans font-medium text-sm block truncate">
@@ -681,14 +681,14 @@ export default function MijnPeloton() {
                                         <span className="text-xs text-muted-foreground font-sans text-center">
                                           {row.label}
                                         </span>
-                                        {isSame ? (
-                                          <span className="jersey-badge bg-accent text-accent-foreground text-xs px-1.5 py-0.5">🤝 Zelfde</span>
-                                        ) : diff !== 0 ? (
-                                          <span className={cn(
-                                            "text-sm font-display font-bold px-2 py-0.5 rounded-full",
-                                            diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
-                                          )}>{diff > 0 ? `+${diff}` : diff}</span>
-                                        ) : null}
+                                        {isSame ?
+                                        <span className="jersey-badge bg-accent text-accent-foreground text-xs px-1.5 py-0.5">🤝 Zelfde</span> :
+                                        diff !== 0 ?
+                                        <span className={cn(
+                                          "text-sm font-display font-bold px-2 py-0.5 rounded-full",
+                                          diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                                        )}>{diff > 0 ? `+${diff}` : diff}</span> :
+                                        null}
                                       </div>
                                       <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
                                         <span className={cn(
@@ -701,8 +701,8 @@ export default function MijnPeloton() {
                                           </span>
                                         </div>
                                       </div>
-                                    </div>
-                                  );
+                                    </div>);
+
                                 })}
                                 {/* Prediction totals */}
                                 <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-secondary/50 border-t-2 border-foreground">
@@ -719,16 +719,16 @@ export default function MijnPeloton() {
                                     <span className="font-display font-bold text-base md:text-lg text-accent">{otherPredTotal} pt</span>
                                   </div>
                                 </div>
-                              </>
-                            );
+                              </>);
+
                           })()}
                         </CardContent>
                       </Card>
-                    </div>
-                  );
-                })() : (
-                  <p className="text-sm text-muted-foreground font-sans">Kies een speler om teams te vergelijken.</p>
-                )}
+                    </div>);
+
+                })() :
+                <p className="text-sm text-muted-foreground font-sans">Kies een speler om teams te vergelijken.</p>
+                }
               </CardContent>
             </Card>
           </div>
@@ -785,11 +785,11 @@ export default function MijnPeloton() {
 
             // Higher contrast color function
             const getCellBg = (score: number) => {
-              if (score >= 0.9) return "hsl(150 70% 30%)";       // dark green — unique
-              if (score >= 0.7) return "hsl(150 55% 42%)";       // medium green
-              if (score >= 0.5) return "hsl(45 70% 55%)";        // amber — middle
-              if (score >= 0.3) return "hsl(15 70% 65%)";        // orange — common
-              return "hsl(0 65% 75%)";                           // light red — very common
+              if (score >= 0.9) return "hsl(150 70% 30%)"; // dark green — unique
+              if (score >= 0.7) return "hsl(150 55% 42%)"; // medium green
+              if (score >= 0.5) return "hsl(45 70% 55%)"; // amber — middle
+              if (score >= 0.3) return "hsl(15 70% 65%)"; // orange — common
+              return "hsl(0 65% 75%)"; // light red — very common
             };
 
             return (
@@ -808,13 +808,13 @@ export default function MijnPeloton() {
                     <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground font-sans">
                       <span>Populair</span>
                       <div className="flex gap-0.5">
-                        {[0, 0.15, 0.35, 0.6, 0.8, 1].map((v) => (
-                          <div
-                            key={v}
-                            className="w-5 h-3 rounded-sm"
-                            style={{ backgroundColor: getCellBg(v) }}
-                          />
-                        ))}
+                        {[0, 0.15, 0.35, 0.6, 0.8, 1].map((v) =>
+                        <div
+                          key={v}
+                          className="w-5 h-3 rounded-sm"
+                          style={{ backgroundColor: getCellBg(v) }} />
+
+                        )}
                       </div>
                       <span>Uniek</span>
                     </div>
@@ -826,46 +826,46 @@ export default function MijnPeloton() {
                             <th className="text-left px-2 py-1.5 font-display text-muted-foreground sticky left-0 bg-background z-10 min-w-[120px]">
                               Categorie
                             </th>
-                            {sortedTeams.map((t) => (
-                              <th
-                                key={t.id}
-                                className={cn(
-                                  "px-1 py-1.5 font-display text-center min-w-[60px] max-w-[80px]",
-                                  t.userName === myTeam.userName && "text-primary"
-                                )}
-                              >
+                            {sortedTeams.map((t) =>
+                            <th
+                              key={t.id}
+                              className={cn(
+                                "px-1 py-1.5 font-display text-center min-w-[60px] max-w-[80px]",
+                                t.userName === myTeam.userName && "text-primary"
+                              )}>
+                              
                                 <span className="block truncate">{t.userName}</span>
                               </th>
-                            ))}
+                            )}
                           </tr>
                         </thead>
                         <tbody>
-                          {categories.map((cat) => (
-                            <tr key={cat.id} className="border-t border-border/50">
+                          {categories.map((cat) =>
+                          <tr key={cat.id} className="border-t border-border/50">
                               <td className="text-left px-2 py-1 font-sans text-muted-foreground sticky left-0 bg-background z-10 truncate max-w-[120px]" title={cat.name}>
                                 {cat.name}
                               </td>
                               {sortedTeams.map((t) => {
-                                const playerMap = uniqueness.get(t.userName);
-                                const score = playerMap?.get(cat.id) ?? 0;
-                                const pick = t.picks[cat.id];
-                                const catCounts = pickCounts.get(cat.id);
-                                const count = pick ? (catCounts?.get(pick.number) ?? 1) : 0;
-                                const othersCount = count - 1;
-                                return (
-                                  <td key={t.id} className="px-0.5 py-0.5 text-center">
+                              const playerMap = uniqueness.get(t.userName);
+                              const score = playerMap?.get(cat.id) ?? 0;
+                              const pick = t.picks[cat.id];
+                              const catCounts = pickCounts.get(cat.id);
+                              const count = pick ? catCounts?.get(pick.number) ?? 1 : 0;
+                              const othersCount = count - 1;
+                              return (
+                                <td key={t.id} className="px-0.5 py-0.5 text-center">
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <div
-                                          className="rounded-sm px-1 py-1.5 flex items-center justify-center cursor-default transition-colors"
-                                          style={{ backgroundColor: getCellBg(score) }}
-                                        >
+                                        className="rounded-sm px-1 py-1.5 flex items-center justify-center cursor-default transition-colors"
+                                        style={{ backgroundColor: getCellBg(score) }}>
+                                        
                                           <span
-                                            className={cn(
-                                              "truncate block text-[9px] md:text-[10px] font-bold leading-tight",
-                                              score >= 0.7 ? "text-white" : "text-foreground"
-                                            )}
-                                          >
+                                          className={cn(
+                                            "truncate block text-[9px] md:text-[10px] font-bold leading-tight",
+                                            score >= 0.7 ? "text-white" : "text-foreground"
+                                          )}>
+                                          
                                             {pick?.name ?? "—"}
                                           </span>
                                         </div>
@@ -873,42 +873,42 @@ export default function MijnPeloton() {
                                       <TooltipContent side="top" className="text-xs space-y-0.5 max-w-[180px]">
                                         <p className="font-display font-bold">{pick?.name ?? "—"} <span className="text-muted-foreground font-sans">#{pick?.number}</span></p>
                                         <p className="text-muted-foreground font-sans">
-                                          {othersCount === 0
-                                            ? "Unieke keuze! 🔥"
-                                            : `${othersCount} ander${othersCount > 1 ? "en" : ""} kozen ook deze renner`}
+                                          {othersCount === 0 ?
+                                        "Unieke keuze! 🔥" :
+                                        `${othersCount} ander${othersCount > 1 ? "en" : ""} kozen ook deze renner`}
                                         </p>
                                         <p className="font-sans text-muted-foreground">{count}/{totalPlayers} spelers</p>
                                       </TooltipContent>
                                     </Tooltip>
-                                  </td>
-                                );
-                              })}
+                                  </td>);
+
+                            })}
                             </tr>
-                          ))}
+                          )}
                         </tbody>
                         <tfoot>
                           <tr className="border-t-2 border-foreground">
                             <td className="text-left px-2 py-2 font-display font-bold text-xs sticky left-0 bg-background z-10">
                               Panache Score
                             </td>
-                            {avgUniqueness.map((a) => (
-                              <td key={a.name} className="text-center px-1 py-2">
+                            {avgUniqueness.map((a) =>
+                            <td key={a.name} className="text-center px-1 py-2">
                                 <span className={cn(
-                                  "font-display font-bold text-xs",
-                                  a.avg > 0.6 ? "text-primary" : a.avg > 0.4 ? "text-accent" : "text-muted-foreground"
-                                )}>
+                                "font-display font-bold text-xs",
+                                a.avg > 0.6 ? "text-primary" : a.avg > 0.4 ? "text-accent" : "text-muted-foreground"
+                              )}>
                                   {Math.round(a.avg * 100)}%
                                 </span>
                               </td>
-                            ))}
+                            )}
                           </tr>
                         </tfoot>
                       </table>
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            );
+              </div>);
+
           })()}
         </div>
       </div>);
@@ -987,18 +987,18 @@ export default function MijnPeloton() {
                 const stage = mockStageResults[compareView];
                 if (!stage) return 0;
                 const result = stage.top20.find((r) => r.riderNumber === riderNumber);
-                return result ? (pointsTable[result.position] || 0) : 0;
+                return result ? pointsTable[result.position] || 0 : 0;
               };
 
-              const riderRows = Object.entries(myTeam.picks)
-                .map(([catId, rider]) => {
-                  const myPts = getPointsForView(rider.number);
-                  const otherRider = compareTeam?.picks[Number(catId)];
-                  const otherPts = otherRider ? getPointsForView(otherRider.number) : 0;
-                  const isSame = otherRider?.number === rider.number;
-                  return { catId, rider, myPts, otherRider, otherPts, isSame };
-                })
-                .sort((a, b) => b.myPts - a.myPts);
+              const riderRows = Object.entries(myTeam.picks).
+              map(([catId, rider]) => {
+                const myPts = getPointsForView(rider.number);
+                const otherRider = compareTeam?.picks[Number(catId)];
+                const otherPts = otherRider ? getPointsForView(otherRider.number) : 0;
+                const isSame = otherRider?.number === rider.number;
+                return { catId, rider, myPts, otherRider, otherPts, isSame };
+              }).
+              sort((a, b) => b.myPts - a.myPts);
 
               const myTotal = riderRows.reduce((s, r) => s + r.myPts, 0);
               const otherTotal = compareTeam ? riderRows.reduce((s, r) => s + r.otherPts, 0) : 0;
@@ -1007,17 +1007,17 @@ export default function MijnPeloton() {
               const stageBreakdown = mockStageResults.map((stage, idx) => {
                 const myPts = Object.values(myTeam.picks).reduce((sum, rider) => {
                   const r = stage.top20.find((s) => s.riderNumber === rider.number);
-                  return sum + (r ? (pointsTable[r.position] || 0) : 0);
+                  return sum + (r ? pointsTable[r.position] || 0 : 0);
                 }, 0);
                 const otherPts = compareTeam ? Object.values(compareTeam.picks).reduce((sum, rider) => {
                   const r = stage.top20.find((s) => s.riderNumber === rider.number);
-                  return sum + (r ? (pointsTable[r.position] || 0) : 0);
+                  return sum + (r ? pointsTable[r.position] || 0 : 0);
                 }, 0) : 0;
                 return { stage: stage.stage, idx, myPts, otherPts, type: stage.type };
               });
 
               return (
-            <div className="space-y-6">
+                <div className="space-y-6">
               {/* Compare input bar */}
               <Card className="retro-border">
                 <CardContent className="p-3 md:p-4">
@@ -1025,26 +1025,26 @@ export default function MijnPeloton() {
                     <ArrowLeftRight className="h-5 w-5 text-primary shrink-0" />
                     <span className="text-sm font-display font-bold whitespace-nowrap">Vergelijk teams</span>
                     <Input
-                      value={comparePlayerName}
-                      onChange={(e) => setComparePlayerName(e.target.value)}
-                      placeholder="Typ een spelersnaam..."
-                      className="h-9 text-sm flex-1 min-w-[140px] max-w-[240px]"
-                    />
-                    {comparePlayerName && !compareTeam && (
-                      <span className="text-xs text-destructive font-sans">Niet gevonden</span>
-                    )}
-                    {compareTeam && (
-                      <Button variant="ghost" size="sm" onClick={() => setComparePlayerName("")} className="text-xs h-7">
+                          value={comparePlayerName}
+                          onChange={(e) => setComparePlayerName(e.target.value)}
+                          placeholder="Typ een spelersnaam..."
+                          className="h-9 text-sm flex-1 min-w-[140px] max-w-[240px]" />
+                        
+                    {comparePlayerName && !compareTeam &&
+                        <span className="text-xs text-destructive font-sans">Niet gevonden</span>
+                        }
+                    {compareTeam &&
+                        <Button variant="ghost" size="sm" onClick={() => setComparePlayerName("")} className="text-xs h-7">
                         ✕ Wis
                       </Button>
-                    )}
+                        }
                   </div>
                 </CardContent>
               </Card>
 
               {compareTeam ? (
-                /* ── Side-by-side comparison view ── */
-                <div className="space-y-4">
+                  /* ── Side-by-side comparison view ── */
+                  <div className="space-y-4">
                   {/* Score header */}
                   <div className="grid grid-cols-2 gap-3 md:gap-4">
                     <Card className={cn("retro-border", myTotal >= otherTotal && "ring-2 ring-primary")}>
@@ -1052,9 +1052,9 @@ export default function MijnPeloton() {
                         <p className="text-xs text-muted-foreground font-sans mb-1">Jouw team</p>
                         <p className="font-display text-2xl md:text-3xl font-bold text-primary">{myTeam.userName}</p>
                         <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{myTotal} pt</p>
-                        {compareView !== "gc" && (
+                        {compareView !== "gc" &&
                           <p className="text-[10px] text-muted-foreground font-sans mt-0.5">Rit {mockStageResults[compareView as number]?.stage}</p>
-                        )}
+                          }
                         {myTotal > otherTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
                       </CardContent>
                     </Card>
@@ -1063,9 +1063,9 @@ export default function MijnPeloton() {
                         <p className="text-xs text-muted-foreground font-sans mb-1">Tegenstander</p>
                         <p className="font-display text-2xl md:text-3xl font-bold text-foreground">{compareTeam.userName}</p>
                         <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{otherTotal} pt</p>
-                        {compareView !== "gc" && (
+                        {compareView !== "gc" &&
                           <p className="text-[10px] text-muted-foreground font-sans mt-0.5">Rit {mockStageResults[compareView as number]?.stage}</p>
-                        )}
+                          }
                         {otherTotal > myTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
                       </CardContent>
                     </Card>
@@ -1073,16 +1073,16 @@ export default function MijnPeloton() {
 
                   {/* GC / Stage selector */}
                   <StageRoadbook
-                    selectedStage={typeof compareView === "number" ? compareView : 0}
-                    onSelectStage={(i) => setCompareView(i)}
-                    showGcButton
-                    gcSelected={compareView === "gc"}
-                    onSelectGc={() => setCompareView("gc")}
-                    compact
-                  />
+                      selectedStage={typeof compareView === "number" ? compareView : 0}
+                      onSelectStage={(i) => setCompareView(i)}
+                      showGcButton
+                      gcSelected={compareView === "gc"}
+                      onSelectGc={() => setCompareView("gc")}
+                      compact />
+                    
 
                   {/* Stage-by-stage overview (only in GC view) */}
-                  {compareView === "gc" && (
+                  {compareView === "gc" &&
                     <Card className="retro-border overflow-hidden">
                       <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4">
                         <CardTitle className="font-display text-sm md:text-base">📊 Punten per etappe</CardTitle>
@@ -1098,8 +1098,8 @@ export default function MijnPeloton() {
                               className={cn(
                                 "w-full grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors",
                                 i % 2 === 0 ? "bg-background" : "bg-muted/20"
-                              )}
-                            >
+                              )}>
+                              
                               <div className="px-3 py-2.5 text-right">
                                 <span className={cn(
                                   "font-display font-bold tabular-nums",
@@ -1110,14 +1110,14 @@ export default function MijnPeloton() {
                               </div>
                               <div className="px-2 py-2 flex flex-col items-center min-w-[90px]">
                                 <span className="text-xs font-display font-bold">{stageIcon} Rit {stage}</span>
-                                {diff !== 0 && (
-                                  <span className={cn(
-                                    "text-[10px] font-display font-bold px-1.5 py-0.5 rounded-full mt-0.5",
-                                    diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
-                                  )}>
+                                {diff !== 0 &&
+                                <span className={cn(
+                                  "text-[10px] font-display font-bold px-1.5 py-0.5 rounded-full mt-0.5",
+                                  diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                                )}>
                                     {diff > 0 ? `+${diff}` : diff}
                                   </span>
-                                )}
+                                }
                               </div>
                               <div className="px-3 py-2.5 text-left">
                                 <span className={cn(
@@ -1127,12 +1127,12 @@ export default function MijnPeloton() {
                                   {otherPts} pt
                                 </span>
                               </div>
-                            </button>
-                          );
+                            </button>);
+
                         })}
                       </CardContent>
                     </Card>
-                  )}
+                    }
 
                   {/* Rider-by-rider comparison */}
                   <Card className="retro-border overflow-hidden">
@@ -1150,16 +1150,16 @@ export default function MijnPeloton() {
                       </div>
 
                       {riderRows.map(({ catId, rider, myPts, otherRider, otherPts, isSame }, idx) => {
-                        const diff = myPts - otherPts;
-                        return (
-                          <div
-                            key={catId}
-                            className={cn(
-                              "grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0",
-                              idx % 2 === 0 ? "bg-background" : "bg-muted/20",
-                              isSame && "bg-accent/10"
-                            )}
-                          >
+                          const diff = myPts - otherPts;
+                          return (
+                            <div
+                              key={catId}
+                              className={cn(
+                                "grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border last:border-b-0",
+                                idx % 2 === 0 ? "bg-background" : "bg-muted/20",
+                                isSame && "bg-accent/10"
+                              )}>
+                              
                             {/* Left: my rider */}
                             <div className="px-3 py-2.5 flex items-center gap-2">
                               <div className="flex-1 min-w-0">
@@ -1168,9 +1168,9 @@ export default function MijnPeloton() {
                                 </span>
                               </div>
                               <span className={cn(
-                                "font-display font-bold text-xs shrink-0 tabular-nums",
-                                diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-muted-foreground"
-                              )}>
+                                  "font-display font-bold text-xs shrink-0 tabular-nums",
+                                  diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-muted-foreground"
+                                )}>
                                 {myPts} pt
                               </span>
                             </div>
@@ -1180,28 +1180,28 @@ export default function MijnPeloton() {
                               <span className="text-[10px] text-muted-foreground font-sans truncate max-w-full text-center">
                                 {getCategoryName(Number(catId))}
                               </span>
-                              {isSame ? (
+                              {isSame ?
                                 <span className="jersey-badge bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5">
                                   🤝 Zelfde
-                                </span>
-                              ) : diff !== 0 ? (
+                                </span> :
+                                diff !== 0 ?
                                 <span className={cn(
                                   "text-[10px] font-display font-bold px-1.5 py-0.5 rounded-full",
-                                  diff > 0
-                                    ? "bg-primary/15 text-primary"
-                                    : "bg-destructive/15 text-destructive"
+                                  diff > 0 ?
+                                  "bg-primary/15 text-primary" :
+                                  "bg-destructive/15 text-destructive"
                                 )}>
                                   {diff > 0 ? `+${diff}` : diff}
-                                </span>
-                              ) : null}
+                                </span> :
+                                null}
                             </div>
 
                             {/* Right: other rider */}
                             <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
                               <span className={cn(
-                                "font-display font-bold text-xs shrink-0 tabular-nums",
-                                otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
-                              )}>
+                                  "font-display font-bold text-xs shrink-0 tabular-nums",
+                                  otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
+                                )}>
                                 {otherPts} pt
                               </span>
                               <div className="flex-1 min-w-0 text-right">
@@ -1211,9 +1211,9 @@ export default function MijnPeloton() {
                                 </span>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          </div>);
+
+                        })}
 
                       {/* Totals row */}
                       <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-secondary/50 border-t-2 border-foreground">
@@ -1222,13 +1222,13 @@ export default function MijnPeloton() {
                         </div>
                         <div className="px-2 py-3 text-center">
                           <span className={cn(
-                            "font-display font-bold text-sm px-2 py-1 rounded-md",
-                            myTotal > otherTotal
-                              ? "bg-primary/15 text-primary"
-                              : myTotal < otherTotal
-                              ? "bg-destructive/15 text-destructive"
-                              : "text-muted-foreground"
-                          )}>
+                              "font-display font-bold text-sm px-2 py-1 rounded-md",
+                              myTotal > otherTotal ?
+                              "bg-primary/15 text-primary" :
+                              myTotal < otherTotal ?
+                              "bg-destructive/15 text-destructive" :
+                              "text-muted-foreground"
+                            )}>
                             {myTotal - otherTotal > 0 ? `+${myTotal - otherTotal}` : myTotal - otherTotal}
                           </span>
                         </div>
@@ -1247,9 +1247,9 @@ export default function MijnPeloton() {
                       </CardHeader>
                       <CardContent className="p-3">
                         <div className="flex flex-wrap gap-1.5">
-                          {myTeam.jokers.map((j) => (
+                          {myTeam.jokers.map((j) =>
                             <span key={j.number} className="jersey-badge bg-primary text-primary-foreground text-xs">{j.name}</span>
-                          ))}
+                            )}
                         </div>
                       </CardContent>
                     </Card>
@@ -1259,17 +1259,17 @@ export default function MijnPeloton() {
                       </CardHeader>
                       <CardContent className="p-3">
                         <div className="flex flex-wrap gap-1.5">
-                          {compareTeam.jokers.map((j) => (
+                          {compareTeam.jokers.map((j) =>
                             <span key={j.number} className="jersey-badge bg-foreground text-background text-xs">{j.name}</span>
-                          ))}
+                            )}
                         </div>
                       </CardContent>
                     </Card>
                   </div>
-                </div>
-              ) : (
-                /* ── Normal team view (no comparison) ── */
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                </div>) : (
+
+                  /* ── Normal team view (no comparison) ── */
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2">
                     <Card className="retro-border">
                       <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4 flex flex-row items-center justify-between">
@@ -1277,7 +1277,7 @@ export default function MijnPeloton() {
                         <span className="font-display text-lg md:text-xl font-bold text-accent">{myTeam.totalPoints} pt</span>
                       </CardHeader>
                       <CardContent className="p-0 divide-y divide-border">
-                        {riderRows.map(({ catId, rider, myPts }) => (
+                        {riderRows.map(({ catId, rider, myPts }) =>
                           <div key={catId} className="px-3 md:px-4 py-2 text-sm flex items-center gap-3">
                             <div className="flex-1 min-w-0">
                               <span className="text-[10px] md:text-xs text-muted-foreground block truncate">
@@ -1291,7 +1291,7 @@ export default function MijnPeloton() {
                               {myPts} pt
                             </span>
                           </div>
-                        ))}
+                          )}
                       </CardContent>
                     </Card>
                   </div>
@@ -1303,9 +1303,9 @@ export default function MijnPeloton() {
                       </CardHeader>
                       <CardContent className="p-4">
                         <div className="flex flex-wrap gap-2">
-                          {myTeam.jokers.map((j) => (
+                          {myTeam.jokers.map((j) =>
                             <span key={j.number} className="jersey-badge bg-primary text-primary-foreground">{j.name} #{j.number}</span>
-                          ))}
+                            )}
                         </div>
                       </CardContent>
                     </Card>
@@ -1345,10 +1345,10 @@ export default function MijnPeloton() {
                       </CardContent>
                     </Card>
                   </div>
-                </div>
-              )}
-            </div>
-              );
+                </div>)
+                  }
+            </div>);
+
             })()}
           </TabsContent>
 
@@ -1360,50 +1360,50 @@ export default function MijnPeloton() {
                 onClick={() => setUitslagenView("etappes")}
                 className={cn(
                   "px-4 py-2 text-sm font-bold rounded-md border-2 transition-all flex items-center gap-2",
-                  uitslagenView === "etappes"
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:border-muted-foreground"
-                )}
-              >
+                  uitslagenView === "etappes" ?
+                  "border-primary bg-primary text-primary-foreground" :
+                  "border-border hover:border-muted-foreground"
+                )}>
+                
                 📋 Etappes
               </button>
               <button
                 onClick={() => setUitslagenView("poule")}
                 className={cn(
                   "px-4 py-2 text-sm font-bold rounded-md border-2 transition-all flex items-center gap-2",
-                  uitslagenView === "poule"
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:border-muted-foreground"
-                )}
-              >
+                  uitslagenView === "poule" ?
+                  "border-primary bg-primary text-primary-foreground" :
+                  "border-border hover:border-muted-foreground"
+                )}>
+                
                 🏅 Poule Klassement
               </button>
               <button
                 onClick={() => setUitslagenView("giro")}
                 className={cn(
                   "px-4 py-2 text-sm font-bold rounded-md border-2 transition-all flex items-center gap-2",
-                  uitslagenView === "giro"
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:border-muted-foreground"
-                )}
-              >
+                  uitslagenView === "giro" ?
+                  "border-primary bg-primary text-primary-foreground" :
+                  "border-border hover:border-muted-foreground"
+                )}>
+                
                 🇮🇹 Giro Klassement
               </button>
             </div>
 
             {/* ── Etappes view ── */}
-            {uitslagenView === "etappes" && (
-              <>
+            {uitslagenView === "etappes" &&
+            <>
                 {/* Stage selector */}
                 <StageRoadbook
-                  selectedStage={selectedStage}
-                  onSelectStage={setSelectedStage}
-                  stagePoints={mockStageResults.map(stage =>
-                    stage.top20
-                      .filter(r => myRiderNumbers.has(r.riderNumber))
-                      .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0)
-                  )}
-                />
+                selectedStage={selectedStage}
+                onSelectStage={setSelectedStage}
+                stagePoints={mockStageResults.map((stage) =>
+                stage.top20.
+                filter((r) => myRiderNumbers.has(r.riderNumber)).
+                reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0)
+                )} />
+              
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Live stage results */}
@@ -1424,24 +1424,24 @@ export default function MijnPeloton() {
                     </CardHeader>
                     <CardContent className="p-0 divide-y divide-border">
                       {mockStageResults[selectedStage].top20.map((result) => {
-                        const isInMyTeam = myRiderNumbers.has(result.riderNumber);
-                        return (
-                          <div
-                            key={result.position}
-                            className={cn(
-                              "flex items-center justify-between px-4 py-2 text-sm",
-                              result.position <= 3 && "bg-primary/5",
-                              isInMyTeam && "ring-1 ring-inset ring-primary/30 bg-primary/10"
-                            )}
-                          >
+                      const isInMyTeam = myRiderNumbers.has(result.riderNumber);
+                      return (
+                        <div
+                          key={result.position}
+                          className={cn(
+                            "flex items-center justify-between px-4 py-2 text-sm",
+                            result.position <= 3 && "bg-primary/5",
+                            isInMyTeam && "ring-1 ring-inset ring-primary/30 bg-primary/10"
+                          )}>
+                          
                             <div className="flex items-center gap-3">
                               <span className={cn(
-                                "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-                                result.position === 1 && "bg-primary text-primary-foreground",
-                                result.position === 2 && "bg-muted text-foreground",
-                                result.position === 3 && "bg-vintage-gold text-primary-foreground",
-                                result.position > 3 && "text-muted-foreground"
-                              )}>
+                              "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+                              result.position === 1 && "bg-primary text-primary-foreground",
+                              result.position === 2 && "bg-muted text-foreground",
+                              result.position === 3 && "bg-vintage-gold text-primary-foreground",
+                              result.position > 3 && "text-muted-foreground"
+                            )}>
                                 {result.position}
                               </span>
                               <span className="font-sans">
@@ -1452,9 +1452,9 @@ export default function MijnPeloton() {
                             <span className="font-bold text-accent text-xs">
                               {pointsTable[result.position] || 0} pt
                             </span>
-                          </div>
-                        );
-                      })}
+                          </div>);
+
+                    })}
                     </CardContent>
                   </Card>
 
@@ -1473,10 +1473,10 @@ export default function MijnPeloton() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="p-0">
-                        {myStagePoints.scoringRiders.length > 0 ? (
-                          <div className="divide-y divide-border">
+                        {myStagePoints.scoringRiders.length > 0 ?
+                      <div className="divide-y divide-border">
                             {myStagePoints.scoringRiders.map((r) =>
-                              <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                        <div key={r.riderNumber} className="flex items-center justify-between px-4 py-2.5 text-sm">
                                 <div className="flex items-center gap-3">
                                   <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
                                     {r.position}
@@ -1485,13 +1485,13 @@ export default function MijnPeloton() {
                                 </div>
                                 <span className="font-bold text-primary">{r.points} pt</span>
                               </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="p-6 text-center text-muted-foreground font-sans text-sm">
+                        )}
+                          </div> :
+
+                      <div className="p-6 text-center text-muted-foreground font-sans text-sm">
                             Geen van jouw renners scoorde punten in deze rit.
                           </div>
-                        )}
+                      }
                       </CardContent>
                     </Card>
 
@@ -1506,21 +1506,21 @@ export default function MijnPeloton() {
                       </CardHeader>
                       <CardContent className="p-0 divide-y divide-border">
                         {stagePoolData.top.map((p) => {
-                          const isMe = p.userName === myTeam.userName;
-                          return (
-                            <div key={p.rank} className={cn(
-                              "flex items-center justify-between px-4 py-2.5 text-sm",
-                              p.rank <= 3 && "bg-primary/5",
-                              isMe && "ring-1 ring-inset ring-primary/30 bg-primary/10"
-                            )}>
+                        const isMe = p.userName === myTeam.userName;
+                        return (
+                          <div key={p.rank} className={cn(
+                            "flex items-center justify-between px-4 py-2.5 text-sm",
+                            p.rank <= 3 && "bg-primary/5",
+                            isMe && "ring-1 ring-inset ring-primary/30 bg-primary/10"
+                          )}>
                               <div className="flex items-center gap-3">
                                 <span className={cn(
-                                  "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-                                  p.rank === 1 && "bg-primary text-primary-foreground",
-                                  p.rank === 2 && "bg-muted text-foreground",
-                                  p.rank === 3 && "bg-vintage-gold text-primary-foreground",
-                                  p.rank > 3 && "text-muted-foreground"
-                                )}>
+                                "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+                                p.rank === 1 && "bg-primary text-primary-foreground",
+                                p.rank === 2 && "bg-muted text-foreground",
+                                p.rank === 3 && "bg-vintage-gold text-primary-foreground",
+                                p.rank > 3 && "text-muted-foreground"
+                              )}>
                                   {p.rank}
                                 </span>
                                 <span className={cn("font-sans font-medium", isMe && "text-primary")}>
@@ -1528,14 +1528,14 @@ export default function MijnPeloton() {
                                 </span>
                               </div>
                               <span className="font-display font-bold text-accent">{p.stagePoints} pt</span>
-                            </div>
-                          );
-                        })}
-                        {stagePoolData.showGap && (
-                          <>
+                            </div>);
+
+                      })}
+                        {stagePoolData.showGap &&
+                      <>
                             <div className="px-4 py-2 text-center text-muted-foreground text-xs">⋯</div>
-                            {stagePoolData.myEntry && (
-                              <div className="flex items-center justify-between px-4 py-2.5 text-sm ring-1 ring-inset ring-primary/30 bg-primary/10">
+                            {stagePoolData.myEntry &&
+                        <div className="flex items-center justify-between px-4 py-2.5 text-sm ring-1 ring-inset ring-primary/30 bg-primary/10">
                                 <div className="flex items-center gap-3">
                                   <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-muted-foreground">
                                     {stagePoolData.myEntry.rank}
@@ -1546,9 +1546,9 @@ export default function MijnPeloton() {
                                 </div>
                                 <span className="font-display font-bold text-accent">{stagePoolData.myEntry.stagePoints} pt</span>
                               </div>
-                            )}
+                        }
                           </>
-                        )}
+                      }
                       </CardContent>
                     </Card>
 
@@ -1560,34 +1560,34 @@ export default function MijnPeloton() {
                         </h3>
                         <div className="flex gap-2 flex-wrap">
                           {mockStageResults.map((stage, i) => {
-                            const stageTotal = stage.top20
-                              .filter((r) => myRiderNumbers.has(r.riderNumber))
-                              .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
-                            return (
-                              <button
-                                key={stage.stage}
-                                onClick={() => setSelectedStage(i)}
-                                className={cn(
-                                  "text-center p-2 rounded-md border min-w-[48px] transition-all",
-                                  i === selectedStage ? "border-primary bg-primary/10" : "border-border hover:border-muted-foreground"
-                                )}
-                              >
+                          const stageTotal = stage.top20.
+                          filter((r) => myRiderNumbers.has(r.riderNumber)).
+                          reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
+                          return (
+                            <button
+                              key={stage.stage}
+                              onClick={() => setSelectedStage(i)}
+                              className={cn(
+                                "text-center p-2 rounded-md border min-w-[48px] transition-all",
+                                i === selectedStage ? "border-primary bg-primary/10" : "border-border hover:border-muted-foreground"
+                              )}>
+                              
                                 <p className="text-[10px] text-muted-foreground">R{stage.stage}</p>
                                 <p className="font-display font-bold text-xs">{stageTotal}</p>
-                              </button>
-                            );
-                          })}
+                              </button>);
+
+                        })}
                         </div>
                       </CardContent>
                     </Card>
                   </div>
                 </div>
               </>
-            )}
+            }
 
             {/* ── Poule Klassement view ── */}
-            {uitslagenView === "poule" && (
-              <Card className="retro-border">
+            {uitslagenView === "poule" &&
+            <Card className="retro-border">
                 <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
                   <CardTitle className="font-display text-base flex items-center gap-2">
                     <Trophy className="h-5 w-5 text-primary" />
@@ -1597,21 +1597,21 @@ export default function MijnPeloton() {
                 </CardHeader>
                 <CardContent className="p-0 divide-y divide-border">
                   {overallPoolData.top.map((p) => {
-                    const isMe = p.userName === myTeam.userName;
-                    return (
-                      <div key={p.rank} className={cn(
-                        "flex items-center justify-between px-4 py-3 text-sm",
-                        p.rank <= 3 && "bg-primary/5",
-                        isMe && "ring-1 ring-inset ring-primary/30 bg-primary/10"
-                      )}>
+                  const isMe = p.userName === myTeam.userName;
+                  return (
+                    <div key={p.rank} className={cn(
+                      "flex items-center justify-between px-4 py-3 text-sm",
+                      p.rank <= 3 && "bg-primary/5",
+                      isMe && "ring-1 ring-inset ring-primary/30 bg-primary/10"
+                    )}>
                         <div className="flex items-center gap-3">
                           <span className={cn(
-                            "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-                            p.rank === 1 && "bg-primary text-primary-foreground",
-                            p.rank === 2 && "bg-muted text-foreground",
-                            p.rank === 3 && "bg-vintage-gold text-primary-foreground",
-                            p.rank > 3 && "text-muted-foreground"
-                          )}>
+                          "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+                          p.rank === 1 && "bg-primary text-primary-foreground",
+                          p.rank === 2 && "bg-muted text-foreground",
+                          p.rank === 3 && "bg-vintage-gold text-primary-foreground",
+                          p.rank > 3 && "text-muted-foreground"
+                        )}>
                             {p.rank}
                           </span>
                           <span className={cn("font-sans font-bold", isMe && "text-primary")}>
@@ -1621,14 +1621,14 @@ export default function MijnPeloton() {
                         <span className="font-display font-bold text-lg text-accent">
                           {p.totalPoints} pt
                         </span>
-                      </div>
-                    );
-                  })}
-                  {overallPoolData.showGap && (
-                    <>
+                      </div>);
+
+                })}
+                  {overallPoolData.showGap &&
+                <>
                       <div className="px-4 py-2 text-center text-muted-foreground text-xs">⋯</div>
-                      {overallPoolData.myEntry && (
-                        <div className="flex items-center justify-between px-4 py-3 text-sm ring-1 ring-inset ring-primary/30 bg-primary/10">
+                      {overallPoolData.myEntry &&
+                  <div className="flex items-center justify-between px-4 py-3 text-sm ring-1 ring-inset ring-primary/30 bg-primary/10">
                           <div className="flex items-center gap-3">
                             <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-muted-foreground">
                               {overallPoolData.myEntry.rank}
@@ -1641,17 +1641,17 @@ export default function MijnPeloton() {
                             {overallPoolData.myEntry.totalPoints} pt
                           </span>
                         </div>
-                      )}
+                  }
                     </>
-                  )}
+                }
                 </CardContent>
               </Card>
-            )}
+            }
 
             {/* ── Giro Klassement view ── */}
-            {uitslagenView === "giro" && (
-              <ClassificationTabs myRiderNumbers={myRiderNumbers} />
-            )}
+            {uitslagenView === "giro" &&
+            <ClassificationTabs myRiderNumbers={myRiderNumbers} />
+            }
           </TabsContent>
 
           {/* ── TAB: Subpoules ── */}
@@ -1707,28 +1707,28 @@ export default function MijnPeloton() {
                   {enrichedSubPools.map((pool) => {
                     const myPos = pool.standings.findIndex((t) => t.id === myTeam.id) + 1;
                     return (
-                    <button
-                      key={pool.id}
-                      onClick={() => setSelectedPool(pool.id)}
-                      className="w-full text-left p-3 bg-secondary/50 rounded-md hover:bg-secondary transition-colors flex items-center justify-between group">
+                      <button
+                        key={pool.id}
+                        onClick={() => setSelectedPool(pool.id)}
+                        className="w-full text-left p-3 bg-secondary/50 rounded-md hover:bg-secondary transition-colors flex items-center justify-between group">
                       
                         <div>
                           <p className="font-sans font-bold text-sm">{pool.name}</p>
                           <p className="text-xs text-muted-foreground">{pool.members.length} deelnemers</p>
                         </div>
                         <div className="flex items-center gap-3">
-                          {myPos > 0 && (
-                            <span className={cn(
-                              "text-xs font-display font-bold px-2 py-0.5 rounded-full",
-                              myPos === 1 ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
-                            )}>
+                          {myPos > 0 &&
+                          <span className={cn(
+                            "text-xs font-display font-bold px-2 py-0.5 rounded-full",
+                            myPos === 1 ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
+                          )}>
                               #{myPos}
                             </span>
-                          )}
+                          }
                           <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                         </div>
-                      </button>
-                    );
+                      </button>);
+
                   })}
 
                   {/* Join via code */}
@@ -1775,19 +1775,19 @@ export default function MijnPeloton() {
 function WatAlsTab({
   getRiderPoints,
   myTeam,
-  getCategoryName,
-}: {
-  getRiderPoints: (riderNumber: number) => number;
-  myTeam: typeof mockTeams[0];
-  getCategoryName: (catId: number) => string;
-}) {
+  getCategoryName
+
+
+
+
+}: {getRiderPoints: (riderNumber: number) => number;myTeam: typeof mockTeams[0];getCategoryName: (catId: number) => string;}) {
   const [monkeyRoll, setMonkeyRoll] = useState(0);
 
   const bestTeam = useMemo(() => {
     return riderCategories.map((cat) => {
-      const best = cat.riders
-        .map((r) => ({ ...r, points: getRiderPoints(r.number) }))
-        .sort((a, b) => b.points - a.points)[0];
+      const best = cat.riders.
+      map((r) => ({ ...r, points: getRiderPoints(r.number) })).
+      sort((a, b) => b.points - a.points)[0];
       return { catId: cat.id, catName: cat.name, rider: best };
     });
   }, [getRiderPoints]);
@@ -1813,13 +1813,13 @@ function WatAlsTab({
     const best = totals[SIMS - 1];
     const worst = totals[0];
     const betterThanYou = totals.filter((t) => t > myTotal).length;
-    const percentile = Math.round(((SIMS - betterThanYou) / SIMS) * 100);
+    const percentile = Math.round((SIMS - betterThanYou) / SIMS * 100);
 
     // Histogram bins
     const BIN_COUNT = 20;
     const range = best - worst || 1;
     const binSize = Math.ceil(range / BIN_COUNT);
-    const bins: { label: string; count: number; min: number; max: number }[] = [];
+    const bins: {label: string;count: number;min: number;max: number;}[] = [];
     for (let i = 0; i < BIN_COUNT; i++) {
       const min = worst + i * binSize;
       const max = min + binSize;
@@ -1865,9 +1865,9 @@ function WatAlsTab({
         const teamRiders = new Set(Object.values(team.picks).map((p) => p.number));
         let cumulative = 0;
         for (let s = 0; s <= i; s++) {
-          cumulative += mockStageResults[s].top20
-            .filter((r) => teamRiders.has(r.riderNumber))
-            .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
+          cumulative += mockStageResults[s].top20.
+          filter((r) => teamRiders.has(r.riderNumber)).
+          reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
         }
         return { name: team.userName, score: cumulative };
       });
@@ -1901,9 +1901,9 @@ function WatAlsTab({
   const jokerImpact = useMemo(() => {
     // Collect all rider numbers that are in categories
     const categoryRiderNumbers = new Set(riderCategories.flatMap((c) => c.riders.map((r) => r.number)));
-    
+
     // All riders from stage results that are NOT in categories = joker pool
-    const jokerPoolMap = new Map<number, { name: string; number: number }>();
+    const jokerPoolMap = new Map<number, {name: string;number: number;}>();
     mockStageResults.forEach((stage) => {
       stage.top20.forEach((r) => {
         if (!categoryRiderNumbers.has(r.riderNumber)) {
@@ -1913,7 +1913,7 @@ function WatAlsTab({
     });
     const jokerPool = [...jokerPoolMap.values()].map((r) => ({
       ...r,
-      points: getRiderPoints(r.number),
+      points: getRiderPoints(r.number)
     })).sort((a, b) => b.points - a.points);
 
     const chosenJokerNumbers = new Set(myTeam.jokers.map((j) => j.number));
@@ -1925,7 +1925,7 @@ function WatAlsTab({
         name: joker.name,
         number: joker.number,
         points: pts,
-        bestAlternative: availableAlternatives[index] || null,
+        bestAlternative: availableAlternatives[index] || null
       };
     });
   }, [getRiderPoints, myTeam]);
@@ -1946,10 +1946,10 @@ function WatAlsTab({
           </p>
         </CardHeader>
         <CardContent className="p-0 divide-y divide-border">
-          {bestTeam
-            .sort((a, b) => (b.rider?.points || 0) - (a.rider?.points || 0))
-            .map(({ catId, catName, rider }) => (
-            <div key={catId} className="flex items-center justify-between px-3 md:px-4 py-2 text-xs md:text-sm">
+          {bestTeam.
+          sort((a, b) => (b.rider?.points || 0) - (a.rider?.points || 0)).
+          map(({ catId, catName, rider }) =>
+          <div key={catId} className="flex items-center justify-between px-3 md:px-4 py-2 text-xs md:text-sm">
               <div className="min-w-0 flex-1">
                 <span className="text-[10px] md:text-xs text-muted-foreground block">{catName}</span>
                 <span className="font-medium font-sans">
@@ -1960,7 +1960,7 @@ function WatAlsTab({
                 {rider?.points || 0} pt
               </span>
             </div>
-          ))}
+          )}
         </CardContent>
         <div className="border-t-2 border-foreground bg-secondary/30 p-4">
           <div className="flex justify-between text-sm font-display font-bold">
@@ -1972,7 +1972,7 @@ function WatAlsTab({
             <span className="text-accent">{myTotal} pt</span>
           </div>
           <div className="mt-2 text-xs text-muted-foreground font-sans">
-            Je hebt <span className="font-bold text-foreground">{Math.round((myTotal / bestTotal) * 100)}%</span> van het maximaal haalbare gescoord.
+            Je hebt <span className="font-bold text-foreground">{Math.round(myTotal / bestTotal * 100)}%</span> van het maximaal haalbare gescoord.
           </div>
         </div>
       </Card>
@@ -2031,16 +2031,16 @@ function WatAlsTab({
                       return `${d.min}–${d.max} pt`;
                     }
                     return "";
-                  }}
-                />
+                  }} />
+                
                 <ReferenceLine x={(() => {
                   const idx = Math.min(Math.floor((myTotal - monkeyStats.worst) / ((monkeyStats.best - monkeyStats.worst || 1) / 20)), 19);
                   return monkeyStats.bins[Math.max(0, idx)]?.label;
                 })()} stroke="hsl(var(--primary))" strokeWidth={2} strokeDasharray="4 4" label={{ value: "Jij", position: "top", fontSize: 11, fill: "hsl(var(--primary))" }} />
                 <Bar dataKey="count" radius={[2, 2, 0, 0]}>
-                  {monkeyStats.bins.map((bin, i) => (
-                    <Cell key={i} fill={myTotal >= bin.min && myTotal < bin.max ? "hsl(var(--primary))" : "hsl(var(--accent))"} />
-                  ))}
+                  {monkeyStats.bins.map((bin, i) =>
+                  <Cell key={i} fill={myTotal >= bin.min && myTotal < bin.max ? "hsl(var(--primary))" : "hsl(var(--accent))"} />
+                  )}
                 </Bar>
               </BarChart>
             </ChartContainer>
@@ -2056,23 +2056,23 @@ function WatAlsTab({
                 variant="outline"
                 size="sm"
                 className="h-7 gap-1.5 text-xs"
-                onClick={() => setMonkeyRoll((r) => r + 1)}
-              >
+                onClick={() => setMonkeyRoll((r) => r + 1)}>
+                
                 🎯 Hergooi
               </Button>
             </div>
             <div className="space-y-1 max-h-[300px] overflow-y-auto">
-              {exampleMonkey.team
-                .sort((a, b) => b.rider.points - a.rider.points)
-                .map(({ catId, catName, rider }) => (
-                <div key={catId} className="flex items-center justify-between text-[11px] md:text-xs px-2 py-1.5 bg-secondary/30 rounded">
+              {exampleMonkey.team.
+              sort((a, b) => b.rider.points - a.rider.points).
+              map(({ catId, catName, rider }) =>
+              <div key={catId} className="flex items-center justify-between text-[11px] md:text-xs px-2 py-1.5 bg-secondary/30 rounded">
                   <div className="min-w-0 flex-1">
                     <span className="text-muted-foreground block text-[10px] md:inline md:text-xs">{catName}: </span>
                     <span className="font-medium font-sans">{rider.name}</span>
                   </div>
                   <span className="font-display font-bold text-accent shrink-0 ml-2">{rider.points} pt</span>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </CardContent>
@@ -2090,16 +2090,16 @@ function WatAlsTab({
           </p>
         </CardHeader>
         <CardContent className="p-0 divide-y divide-border">
-          {categoryPerformance
-            .sort((a, b) => b.diff - a.diff)
-            .map(({ catId, catName, myPick, myPoints, avg, best, diff }) => (
-            <div key={catId} className="px-3 md:px-4 py-2.5 text-xs md:text-sm">
+          {categoryPerformance.
+          sort((a, b) => b.diff - a.diff).
+          map(({ catId, catName, myPick, myPoints, avg, best, diff }) =>
+          <div key={catId} className="px-3 md:px-4 py-2.5 text-xs md:text-sm">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[10px] md:text-xs text-muted-foreground">{catName}</span>
                 <span className={cn(
-                  "text-[10px] md:text-xs font-bold px-1.5 py-0.5 rounded",
-                  diff > 0 ? "bg-primary/10 text-primary" : diff < 0 ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground"
-                )}>
+                "text-[10px] md:text-xs font-bold px-1.5 py-0.5 rounded",
+                diff > 0 ? "bg-primary/10 text-primary" : diff < 0 ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground"
+              )}>
                   {diff > 0 ? "+" : ""}{diff} pt
                 </span>
               </div>
@@ -2117,12 +2117,12 @@ function WatAlsTab({
               {/* Progress bar */}
               <div className="mt-1.5 h-1.5 bg-secondary rounded-full overflow-hidden">
                 <div
-                  className={cn("h-full rounded-full", myPoints >= (best?.points || 0) ? "bg-primary" : "bg-accent")}
-                  style={{ width: `${Math.min(100, best?.points ? (myPoints / best.points) * 100 : 0)}%` }}
-                />
+                className={cn("h-full rounded-full", myPoints >= (best?.points || 0) ? "bg-primary" : "bg-accent")}
+                style={{ width: `${Math.min(100, best?.points ? myPoints / best.points * 100 : 0)}%` }} />
+              
               </div>
             </div>
-          ))}
+          )}
         </CardContent>
       </Card>
 
@@ -2142,8 +2142,8 @@ function WatAlsTab({
             <p className="font-display font-bold text-3xl text-primary">{totalJokerPoints} pt</p>
           </div>
 
-          {jokerImpact.map((joker) => (
-            <div key={joker.number} className="p-3 bg-secondary/30 rounded-md">
+          {jokerImpact.map((joker) =>
+          <div key={joker.number} className="p-3 bg-secondary/30 rounded-md">
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <span className="jersey-badge bg-primary text-primary-foreground mr-2">JOKER</span>
@@ -2151,19 +2151,19 @@ function WatAlsTab({
                 </div>
                 <span className="font-display font-bold text-primary">{joker.points} pt</span>
               </div>
-              {joker.bestAlternative && (
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
+              {joker.bestAlternative &&
+            <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                   Beste vrije keuze: <span className="font-medium text-foreground">{joker.bestAlternative.name}</span> ({joker.bestAlternative.points} pt)
-                  {joker.bestAlternative.points > joker.points && (
-                    <span className="text-destructive font-bold ml-1">+{joker.bestAlternative.points - joker.points} gemist</span>
-                  )}
-                  {joker.bestAlternative.points <= joker.points && (
-                    <span className="text-primary font-bold ml-1">✓ Goede keuze!</span>
-                  )}
+                  {joker.bestAlternative.points > joker.points &&
+              <span className="text-destructive font-bold ml-1">+{joker.bestAlternative.points - joker.points} gemist</span>
+              }
+                  {joker.bestAlternative.points <= joker.points &&
+              <span className="text-primary font-bold ml-1">✓ Goede keuze!</span>
+              }
                 </p>
-              )}
+            }
             </div>
-          ))}
+          )}
         </CardContent>
       </Card>
 
@@ -2183,10 +2183,10 @@ function WatAlsTab({
             config={{
               Jij: { label: "Jij", color: "hsl(var(--primary))" },
               Leider: { label: "Leider", color: "hsl(var(--accent))" },
-              Gemiddelde: { label: "Gemiddelde", color: "hsl(var(--muted-foreground))" },
+              Gemiddelde: { label: "Gemiddelde", color: "hsl(var(--muted-foreground))" }
             }}
-            className="h-[220px] w-full"
-          >
+            className="h-[220px] w-full">
+            
             <LineChart data={stageTrend}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="stage" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
@@ -2214,8 +2214,8 @@ function WatAlsTab({
         <CardContent className="p-4">
           <ChartContainer
             config={{ Positie: { label: "Positie", color: "hsl(var(--primary))" } }}
-            className="h-[220px] w-full"
-          >
+            className="h-[220px] w-full">
+            
             <LineChart data={rankingHistory}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="stage" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
@@ -2225,16 +2225,16 @@ function WatAlsTab({
                 reversed
                 domain={[1, allPoolParticipants.length]}
                 allowDecimals={false}
-                label={{ value: "← Beter", angle: -90, position: "insideLeft", fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              />
+                label={{ value: "← Beter", angle: -90, position: "insideLeft", fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+              
               <ChartTooltip content={<ChartTooltipContent />} />
               <Line
                 type="monotone"
                 dataKey="Positie"
                 stroke="hsl(var(--primary))"
                 strokeWidth={2.5}
-                dot={{ r: 5, fill: "hsl(var(--primary))" }}
-              />
+                dot={{ r: 5, fill: "hsl(var(--primary))" }} />
+              
             </LineChart>
           </ChartContainer>
           <div className="mt-3 text-center">
@@ -2245,8 +2245,8 @@ function WatAlsTab({
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>);
+
 }
 const CLASSIFICATION_TABS = [
 { key: "gc", label: "🏆 Algemeen", jersey: "bg-jersey-pink", valueKey: "time" as const },
