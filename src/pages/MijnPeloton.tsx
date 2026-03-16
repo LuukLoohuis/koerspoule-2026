@@ -674,37 +674,14 @@ export default function MijnPeloton() {
                   </div>
 
                   {/* GC / Stage selector */}
-                  <Card className="retro-border">
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                          onClick={() => setCompareView("gc")}
-                          className={cn(
-                            "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
-                            compareView === "gc"
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border hover:border-muted-foreground"
-                          )}
-                        >
-                          🏆 GC (totaal)
-                        </button>
-                        {mockStageResults.map((stage, i) => (
-                          <button
-                            key={stage.stage}
-                            onClick={() => setCompareView(i)}
-                            className={cn(
-                              "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
-                              compareView === i
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : "border-border hover:border-muted-foreground"
-                            )}
-                          >
-                            Rit {stage.stage}
-                          </button>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <StageRoadbook
+                    selectedStage={typeof compareView === "number" ? compareView : 0}
+                    onSelectStage={(i) => setCompareView(i)}
+                    showGcButton
+                    gcSelected={compareView === "gc"}
+                    onSelectGc={() => setCompareView("gc")}
+                    compact
+                  />
 
                   {/* Stage-by-stage overview (only in GC view) */}
                   {compareView === "gc" && (
