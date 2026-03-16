@@ -552,6 +552,110 @@ export default function MijnPeloton() {
                               <span className="font-display font-bold text-base md:text-lg text-accent">{otherJokerTotal} pt</span>
                             </div>
                           </div>
+
+                          {/* Predictions section */}
+                          <div className="px-3 py-2 bg-secondary/40 border-b border-border border-t-2 border-t-foreground">
+                            <span className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider">🏆 Voorspellingen</span>
+                          </div>
+                          {(() => {
+                            // Check predictions against actual classifications
+                            const gcTop3 = mockClassifications.gc.slice(0, 3).map((r) => r.riderName);
+                            const actualPointsJersey = mockClassifications.points[0]?.riderName || "";
+                            const actualMountainJersey = mockClassifications.kom[0]?.riderName || "";
+                            const actualYouthJersey = mockClassifications.youth[0]?.riderName || "";
+
+                            const predictionRows = [
+                              ...myTeam.predictions.gcPodium.map((name, i) => ({
+                                label: i === 0 ? "🥇 1e AK" : i === 1 ? "🥈 2e AK" : "🥉 3e AK",
+                                myPick: name,
+                                otherPick: subpoolCompareTeam.predictions.gcPodium[i] || "—",
+                                myCorrect: gcTop3[i] === name,
+                                otherCorrect: gcTop3[i] === subpoolCompareTeam.predictions.gcPodium[i],
+                              })),
+                              {
+                                label: "🟢 Puntentrui",
+                                myPick: myTeam.predictions.pointsJersey,
+                                otherPick: subpoolCompareTeam.predictions.pointsJersey,
+                                myCorrect: myTeam.predictions.pointsJersey === actualPointsJersey,
+                                otherCorrect: subpoolCompareTeam.predictions.pointsJersey === actualPointsJersey,
+                              },
+                              {
+                                label: "🔴 Bergtrui",
+                                myPick: myTeam.predictions.mountainJersey,
+                                otherPick: subpoolCompareTeam.predictions.mountainJersey,
+                                myCorrect: myTeam.predictions.mountainJersey === actualMountainJersey,
+                                otherCorrect: subpoolCompareTeam.predictions.mountainJersey === actualMountainJersey,
+                              },
+                              {
+                                label: "⚪ Jongerentrui",
+                                myPick: myTeam.predictions.youthJersey,
+                                otherPick: subpoolCompareTeam.predictions.youthJersey,
+                                myCorrect: myTeam.predictions.youthJersey === actualYouthJersey,
+                                otherCorrect: subpoolCompareTeam.predictions.youthJersey === actualYouthJersey,
+                              },
+                            ];
+
+                            const myPredScore = predictionRows.filter((r) => r.myCorrect).length;
+                            const otherPredScore = predictionRows.filter((r) => r.otherCorrect).length;
+
+                            return (
+                              <>
+                                {predictionRows.map((row, idx) => {
+                                  const isSame = row.myPick === row.otherPick;
+                                  return (
+                                    <div
+                                      key={row.label}
+                                      className={cn(
+                                        "grid grid-cols-[1fr_auto_1fr] items-center text-sm border-b border-border",
+                                        idx % 2 === 0 ? "bg-background" : "bg-muted/20",
+                                        isSame && "bg-accent/10"
+                                      )}
+                                    >
+                                      <div className="px-3 py-2.5 flex items-center gap-2">
+                                        <div className="flex-1 min-w-0">
+                                          <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                            {row.myPick}
+                                          </span>
+                                        </div>
+                                        {row.myCorrect && <span className="text-sm">✅</span>}
+                                      </div>
+                                      <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[100px]">
+                                        <span className="text-[10px] text-muted-foreground font-sans text-center">
+                                          {row.label}
+                                        </span>
+                                        {isSame && (
+                                          <span className="jersey-badge bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5">🤝 Zelfde</span>
+                                        )}
+                                      </div>
+                                      <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
+                                        {row.otherCorrect && <span className="text-sm">✅</span>}
+                                        <div className="flex-1 min-w-0 text-right">
+                                          <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                            {row.otherPick}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {/* Prediction totals */}
+                                <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-secondary/50 border-t-2 border-foreground">
+                                  <div className="px-3 py-3 text-right">
+                                    <span className="font-display font-bold text-base md:text-lg text-accent">{myPredScore}/6 goed</span>
+                                  </div>
+                                  <div className="px-2 py-3 text-center">
+                                    <span className={cn(
+                                      "font-display font-bold text-base px-2 py-1 rounded-md",
+                                      myPredScore > otherPredScore ? "bg-primary/15 text-primary" : myPredScore < otherPredScore ? "bg-destructive/15 text-destructive" : "text-muted-foreground"
+                                    )}>{myPredScore - otherPredScore > 0 ? `+${myPredScore - otherPredScore}` : myPredScore - otherPredScore}</span>
+                                  </div>
+                                  <div className="px-3 py-3 text-left">
+                                    <span className="font-display font-bold text-base md:text-lg text-accent">{otherPredScore}/6 goed</span>
+                                  </div>
+                                </div>
+                              </>
+                            );
+                          })()}
                         </CardContent>
                       </Card>
                     </div>
