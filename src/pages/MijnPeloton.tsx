@@ -19,9 +19,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, ReferenceL
 
 /* ── Mock data for games & enriched sub-pools ── */
 const myGames = [
-{ id: "giro2026", name: "Giro d'Italia 2026", status: "actief" as const, emoji: "🇮🇹" },
-{ id: "tdf2026", name: "Tour de France 2026", status: "afgelopen" as const, emoji: "🇫🇷" },
-{ id: "vuelta2026", name: "Vuelta a España 2026", status: "afgelopen" as const, emoji: "🇪🇸" }];
+{ id: "giro2026", name: "Giro d'Italia 2026", status: "actief" as const, emoji: "🇮🇹", colors: ["#009246", "#ffffff", "#CE2B37"] },
+{ id: "tdf2026", name: "Tour de France 2026", status: "afgelopen" as const, emoji: "🇫🇷", colors: ["#002395", "#ffffff", "#ED2939"] },
+{ id: "vuelta2026", name: "Vuelta a España 2026", status: "afgelopen" as const, emoji: "🇪🇸", colors: ["#AA151B", "#F1BF00", "#AA151B"] }];
 
   const getRiderPoints = (riderNumber: number) => {
     return mockStageResults.reduce((total, stage) => {
@@ -563,9 +563,14 @@ export default function MijnPeloton() {
             className={cn(
               "px-4 py-2 rounded-md font-display font-bold text-sm border-2 transition-all flex items-center gap-2",
               selectedGame === game.id ?
-              "border-primary bg-primary text-primary-foreground" :
+              "text-primary-foreground" :
               "border-border hover:border-muted-foreground"
-            )}>
+            )}
+            style={selectedGame === game.id ? {
+              background: `linear-gradient(135deg, ${game.colors[0]}, ${game.colors[1]}, ${game.colors[2]})`,
+              borderColor: game.colors[0],
+              color: game.id === "vuelta2026" ? "#fff" : undefined
+            } : undefined}>
             
               <span>{game.emoji}</span>
               {game.name}
