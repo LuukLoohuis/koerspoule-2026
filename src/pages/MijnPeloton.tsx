@@ -405,7 +405,7 @@ export default function MijnPeloton() {
                               >
                                 <div className="px-3 py-2.5 flex items-center gap-2">
                                   <div className="flex-1 min-w-0">
-                                    <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                    <span className="font-sans font-medium text-sm block truncate">
                                       {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                                     </span>
                                   </div>
@@ -415,11 +415,11 @@ export default function MijnPeloton() {
                                   )}>{myPts} pt</span>
                                 </div>
                                 <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
-                                  <span className="text-[10px] text-muted-foreground font-sans truncate max-w-full text-center">
+                                  <span className="text-xs text-muted-foreground font-sans truncate max-w-full text-center">
                                     {getCategoryName(Number(catId))}
                                   </span>
                                   {isSame ? (
-                                    <span className="jersey-badge bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5">🤝 Zelfde</span>
+                                    <span className="jersey-badge bg-accent text-accent-foreground text-xs px-1.5 py-0.5">🤝 Zelfde</span>
                                   ) : diff !== 0 ? (
                                     <span className={cn(
                                       "text-sm font-display font-bold px-2 py-0.5 rounded-full",
@@ -433,7 +433,7 @@ export default function MijnPeloton() {
                                     otherPts > myPts ? "text-primary" : otherPts < myPts ? "text-destructive" : "text-muted-foreground"
                                   )}>{otherPts} pt</span>
                                   <div className="flex-1 min-w-0 text-right">
-                                    <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                    <span className="font-sans font-medium text-sm block truncate">
                                       {otherRider?.name || "—"} {otherRider && <span className="text-muted-foreground">#{otherRider.number}</span>}
                                     </span>
                                   </div>
@@ -475,7 +475,7 @@ export default function MijnPeloton() {
                               >
                                 <div className="px-3 py-2.5 flex items-center gap-2">
                                   <div className="flex-1 min-w-0">
-                                    <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                    <span className="font-sans font-medium text-sm block truncate">
                                       {j.name} <span className="text-muted-foreground">#{j.number}</span>
                                     </span>
                                   </div>
@@ -485,7 +485,7 @@ export default function MijnPeloton() {
                                   )}>{j.pts} pt</span>
                                 </div>
                                 <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
-                                  <span className="text-[10px] text-muted-foreground font-sans">Joker {idx + 1}</span>
+                                  <span className="text-xs text-muted-foreground font-sans">Joker {idx + 1}</span>
                                   {otherJ && diff !== 0 && (
                                     <span className={cn(
                                       "text-sm font-display font-bold px-2 py-0.5 rounded-full",
@@ -501,7 +501,7 @@ export default function MijnPeloton() {
                                         otherJ.pts > j.pts ? "text-primary" : otherJ.pts < j.pts ? "text-destructive" : "text-muted-foreground"
                                       )}>{otherJ.pts} pt</span>
                                       <div className="flex-1 min-w-0 text-right">
-                                        <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                        <span className="font-sans font-medium text-sm block truncate">
                                           {otherJ.name} <span className="text-muted-foreground">#{otherJ.number}</span>
                                         </span>
                                       </div>
@@ -524,7 +524,7 @@ export default function MijnPeloton() {
                             >
                               <div className="px-3 py-2.5 text-muted-foreground">—</div>
                               <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
-                                <span className="text-[10px] text-muted-foreground font-sans">Joker {myJokerRows.length + idx + 1}</span>
+                                <span className="text-xs text-muted-foreground font-sans">Joker {myJokerRows.length + idx + 1}</span>
                               </div>
                               <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
                                 <span className="font-display font-bold text-sm shrink-0 tabular-nums text-primary">{j.pts} pt</span>
@@ -613,24 +613,24 @@ export default function MijnPeloton() {
                                     >
                                       <div className="px-3 py-2.5 flex items-center gap-2">
                                         <div className="flex-1 min-w-0">
-                                          <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                          <span className="font-sans font-medium text-sm block truncate">
                                             {row.myPick}
                                           </span>
                                         </div>
                                         {row.myCorrect && <span className="text-sm">✅</span>}
                                       </div>
                                       <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[100px]">
-                                        <span className="text-[10px] text-muted-foreground font-sans text-center">
+                                        <span className="text-xs text-muted-foreground font-sans text-center">
                                           {row.label}
                                         </span>
                                         {isSame && (
-                                          <span className="jersey-badge bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5">🤝 Zelfde</span>
+                                          <span className="jersey-badge bg-accent text-accent-foreground text-xs px-1.5 py-0.5">🤝 Zelfde</span>
                                         )}
                                       </div>
                                       <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
                                         {row.otherCorrect && <span className="text-sm">✅</span>}
                                         <div className="flex-1 min-w-0 text-right">
-                                          <span className="font-sans font-medium text-xs md:text-sm block truncate">
+                                          <span className="font-sans font-medium text-sm block truncate">
                                             {row.otherPick}
                                           </span>
                                         </div>
