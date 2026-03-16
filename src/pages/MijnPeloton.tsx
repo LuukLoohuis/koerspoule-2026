@@ -304,37 +304,14 @@ export default function MijnPeloton() {
                       </div>
 
                       {/* GC / Stage selector */}
-                      <Card className="retro-border">
-                        <CardContent className="p-3">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <button
-                              onClick={() => setSubpoolCompareView("gc")}
-                              className={cn(
-                                "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
-                                subpoolCompareView === "gc"
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-border hover:border-muted-foreground"
-                              )}
-                            >
-                              🏆 GC (totaal)
-                            </button>
-                            {mockStageResults.map((stage, i) => (
-                              <button
-                                key={stage.stage}
-                                onClick={() => setSubpoolCompareView(i)}
-                                className={cn(
-                                  "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
-                                  subpoolCompareView === i
-                                    ? "border-primary bg-primary text-primary-foreground"
-                                    : "border-border hover:border-muted-foreground"
-                                )}
-                              >
-                                R{stage.stage}
-                              </button>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <StageRoadbook
+                        selectedStage={typeof subpoolCompareView === "number" ? subpoolCompareView : 0}
+                        onSelectStage={(i) => setSubpoolCompareView(i)}
+                        showGcButton
+                        gcSelected={subpoolCompareView === "gc"}
+                        onSelectGc={() => setSubpoolCompareView("gc")}
+                        compact
+                      />
 
                       {/* Stage-by-stage overview (GC view only) */}
                       {subpoolCompareView === "gc" && (
