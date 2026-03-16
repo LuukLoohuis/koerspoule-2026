@@ -624,7 +624,7 @@ export default function MijnPeloton() {
                                           {row.label}
                                         </span>
                                         {isSame && (
-                                          <span className="jersey-badge bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5">🤝 Zelfde</span>
+                                          <span className="jersey-badge bg-accent text-accent-foreground text-xs px-1.5 py-0.5">🤝 Zelfde</span>
                                         )}
                                       </div>
                                       <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
