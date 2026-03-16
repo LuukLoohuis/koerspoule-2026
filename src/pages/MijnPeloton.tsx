@@ -739,7 +739,7 @@ export default function MijnPeloton() {
             </Card>
           </div>
 
-          {/* Échappée-index heatmap */}
+          {/* Panache Score heatmap */}
           {activePool.isExpanded && (() => {
             const uniqueness = computeUniqueness(subpoolTeams);
             const pickCounts = computePickCounts(subpoolTeams);
