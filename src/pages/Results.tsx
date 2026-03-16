@@ -4,7 +4,14 @@ import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } fro
 import { pointsTable } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal, User, Users, MoreHorizontal } from "lucide-react";
+import { Trophy, Medal, User, Users, MoreHorizontal, Mountain, TrendingUp, Timer, Route } from "lucide-react";
+
+const stageTypeConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
+  flat: { icon: <Route className="h-3.5 w-3.5" />, label: "Vlak", color: "bg-emerald-500" },
+  hilly: { icon: <TrendingUp className="h-3.5 w-3.5" />, label: "Heuvel", color: "bg-amber-500" },
+  mountain: { icon: <Mountain className="h-3.5 w-3.5" />, label: "Berg", color: "bg-red-500" },
+  itt: { icon: <Timer className="h-3.5 w-3.5" />, label: "Tijdrit", color: "bg-blue-500" },
+};
 
 export default function Results() {
   const [selectedStage, setSelectedStage] = useState(0);
@@ -22,15 +29,23 @@ export default function Results() {
     return { scoringRiders, total };
   }, [selectedStage]);
 
-  // Pool standings for selected stage
   const stagePoolData = useMemo(() => {
     const standings = getStagePoolStandings(selectedStage);
     return getTruncatedStandings(standings, 10, myTeam.userName);
   }, [selectedStage]);
 
-  // Overall pool standings
   const overallPoolData = useMemo(() => {
     return getTruncatedStandings(allPoolParticipants, 10, myTeam.userName);
+  }, []);
+
+  // Per-stage points for the roadbook
+  const stagePoints = useMemo(() => {
+    const riderNums = new Set(Object.values(myTeam.picks).map(p => p.number));
+    return mockStageResults.map(stage =>
+      stage.top20
+        .filter(r => riderNums.has(r.riderNumber))
+        .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0)
+    );
   }, []);
 
   return (
@@ -54,21 +69,105 @@ export default function Results() {
 
         {/* ── ETAPPES TAB ── */}
         <TabsContent value="etappes">
-          <div className="flex gap-2 mt-4 mb-4 flex-wrap">
-            {mockStageResults.map((stage, i) => (
-              <button
-                key={stage.stage}
-                onClick={() => setSelectedStage(i)}
-                className={cn(
-                  "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all",
-                  selectedStage === i
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:border-muted-foreground"
-                )}
-              >
-                Rit {stage.stage}
-              </button>
-            ))}
+          {/* Stage Roadbook */}
+          <div className="mt-4 mb-6">
+            <div className="retro-border bg-card overflow-hidden">
+              <div className="p-3 border-b-2 border-foreground bg-secondary/50 flex items-center justify-between">
+                <h2 className="font-display text-sm font-bold uppercase tracking-wider">Routekaart</h2>
+                <div className="flex gap-3 text-xs">
+                  {Object.entries(stageTypeConfig).map(([key, cfg]) => (
+                    <span key={key} className="flex items-center gap-1 text-muted-foreground">
+                      <span className={cn("w-2 h-2 rounded-full", cfg.color)} />
+                      {cfg.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="p-3 overflow-x-auto">
+                <div className="flex items-end gap-1 min-w-max">
+                  {mockStageResults.map((stage, i) => {
+                    const cfg = stageTypeConfig[stage.type] || stageTypeConfig.flat;
+                    const pts = stagePoints[i];
+                    const maxPts = Math.max(...stagePoints, 1);
+                    const barHeight = Math.max(8, (pts / maxPts) * 56);
+                    const isSelected = selectedStage === i;
+
+                    return (
+                      <button
+                        key={stage.stage}
+                        onClick={() => setSelectedStage(i)}
+                        className={cn(
+                          "group flex flex-col items-center gap-1 px-1 py-1.5 rounded-md transition-all relative min-w-[3rem]",
+                          isSelected
+                            ? "bg-primary/10 ring-2 ring-primary"
+                            : "hover:bg-secondary/50"
+                        )}
+                        title={`${stage.route} • ${stage.distance}`}
+                      >
+                        {/* Points value */}
+                        <span className={cn(
+                          "text-[10px] font-bold tabular-nums",
+                          isSelected ? "text-primary" : "text-muted-foreground",
+                          pts > 0 ? "opacity-100" : "opacity-40"
+                        )}>
+                          {pts > 0 ? pts : "–"}
+                        </span>
+
+                        {/* Bar */}
+                        <div className="w-6 flex items-end justify-center" style={{ height: 56 }}>
+                          <div
+                            className={cn(
+                              "w-full rounded-t transition-all",
+                              isSelected ? cfg.color : "bg-muted",
+                              isSelected && "shadow-sm"
+                            )}
+                            style={{ height: barHeight }}
+                          />
+                        </div>
+
+                        {/* Stage type icon */}
+                        <div className={cn(
+                          "w-6 h-6 rounded-full flex items-center justify-center transition-all",
+                          isSelected
+                            ? cn(cfg.color, "text-white shadow-md")
+                            : "bg-secondary text-muted-foreground group-hover:bg-muted"
+                        )}>
+                          {cfg.icon}
+                        </div>
+
+                        {/* Stage number */}
+                        <span className={cn(
+                          "text-[10px] font-display font-bold",
+                          isSelected ? "text-primary" : "text-muted-foreground"
+                        )}>
+                          {stage.stage}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Selected stage info strip */}
+          <div className="mb-4 retro-border bg-secondary/30 p-3 flex flex-wrap items-center gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-7 h-7 rounded-full flex items-center justify-center text-white",
+                stageTypeConfig[mockStageResults[selectedStage].type]?.color || "bg-muted"
+              )}>
+                {stageTypeConfig[mockStageResults[selectedStage].type]?.icon}
+              </div>
+              <div>
+                <span className="font-display font-bold">Rit {mockStageResults[selectedStage].stage}</span>
+                <span className="text-muted-foreground ml-2 text-xs">
+                  {stageTypeConfig[mockStageResults[selectedStage].type]?.label}
+                </span>
+              </div>
+            </div>
+            <span className="text-muted-foreground font-sans">{mockStageResults[selectedStage].route}</span>
+            <span className="text-xs text-muted-foreground ml-auto">{mockStageResults[selectedStage].distance}</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -206,20 +305,23 @@ export default function Results() {
                     </div>
                   </div>
 
-                  {/* Per-stage breakdown */}
+                  {/* Per-stage breakdown as mini chart */}
                   <div className="space-y-2">
                     <h3 className="font-display text-sm font-bold text-muted-foreground uppercase tracking-wider">Punten per etappe</h3>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="flex items-end gap-1 h-24 px-1">
                       {mockStageResults.map((stage, idx) => {
-                        const riderNums = new Set(Object.values(myTeam.picks).map(p => p.number));
-                        const pts = stage.top20
-                          .filter(r => riderNums.has(r.riderNumber))
-                          .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
+                        const pts = stagePoints[idx];
+                        const maxPts = Math.max(...stagePoints, 1);
+                        const barH = Math.max(4, (pts / maxPts) * 80);
+                        const cfg = stageTypeConfig[stage.type] || stageTypeConfig.flat;
                         return (
-                          <div key={stage.stage} className="retro-border p-3 text-center bg-secondary/30">
-                            <p className="text-xs text-muted-foreground font-medium">Rit {stage.stage}</p>
-                            <p className="font-display text-lg font-bold text-primary">{pts}</p>
-                            <p className="text-xs text-muted-foreground">punten</p>
+                          <div key={stage.stage} className="flex-1 flex flex-col items-center gap-0.5">
+                            <span className="text-[9px] font-bold text-muted-foreground tabular-nums">{pts > 0 ? pts : ""}</span>
+                            <div
+                              className={cn("w-full rounded-t", cfg.color, "opacity-80")}
+                              style={{ height: barH }}
+                            />
+                            <span className="text-[9px] text-muted-foreground">{stage.stage}</span>
                           </div>
                         );
                       })}
