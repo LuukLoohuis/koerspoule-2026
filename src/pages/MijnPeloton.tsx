@@ -678,7 +678,7 @@ export default function MijnPeloton() {
                                         )}>{row.myPts} pt</span>
                                       </div>
                                       <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[100px]">
-                                        <span className="text-xs text-muted-foreground font-sans text-center">
+                                        <span className="text-muted-foreground font-sans text-center text-sm">
                                           {row.label}
                                         </span>
                                         {isSame ?
