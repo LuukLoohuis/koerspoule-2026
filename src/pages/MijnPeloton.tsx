@@ -760,11 +760,11 @@ export default function MijnPeloton() {
 
             // Higher contrast color function
             const getCellBg = (score: number) => {
-              if (score >= 0.9) return "hsl(var(--primary))";
-              if (score >= 0.7) return "hsl(var(--primary) / 0.75)";
-              if (score >= 0.5) return "hsl(var(--primary) / 0.5)";
-              if (score >= 0.3) return "hsl(var(--primary) / 0.25)";
-              return "hsl(var(--primary) / 0.08)";
+              if (score >= 0.9) return "hsl(150 70% 30%)";       // dark green — unique
+              if (score >= 0.7) return "hsl(150 55% 42%)";       // medium green
+              if (score >= 0.5) return "hsl(45 70% 55%)";        // amber — middle
+              if (score >= 0.3) return "hsl(15 70% 65%)";        // orange — common
+              return "hsl(0 65% 75%)";                           // light red — very common
             };
 
             return (
