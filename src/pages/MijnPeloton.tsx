@@ -419,7 +419,7 @@ export default function MijnPeloton() {
                                     {getCategoryName(Number(catId))}
                                   </span>
                                   {isSame ? (
-                                    <span className="jersey-badge bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5">🤝 Zelfde</span>
+                                    <span className="jersey-badge bg-accent text-accent-foreground text-xs px-1.5 py-0.5">🤝 Zelfde</span>
                                   ) : diff !== 0 ? (
                                     <span className={cn(
                                       "text-sm font-display font-bold px-2 py-0.5 rounded-full",
