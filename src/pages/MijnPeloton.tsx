@@ -739,7 +739,7 @@ export default function MijnPeloton() {
             </Card>
           </div>
 
-          {/* Échappée-index heatmap */}
+          {/* Panache Score heatmap */}
           {activePool.isExpanded && (() => {
             const uniqueness = computeUniqueness(subpoolTeams);
             const pickCounts = computePickCounts(subpoolTeams);
@@ -768,7 +768,7 @@ export default function MijnPeloton() {
                 <Card className="retro-border">
                   <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
                     <CardTitle className="font-display text-base flex items-center gap-2">
-                      🚴‍♂️💨 De Échappée
+                      🎯 Panache Score
                     </CardTitle>
                     <p className="text-xs text-muted-foreground font-sans mt-1">
                       Hoe uniek zijn jouw keuzes? Donkerder = jij bent de enige met die renner. Lichter = populaire keuze.
@@ -860,7 +860,7 @@ export default function MijnPeloton() {
                         <tfoot>
                           <tr className="border-t-2 border-foreground">
                             <td className="text-left px-2 py-2 font-display font-bold text-xs sticky left-0 bg-background z-10">
-                              Échappée-score
+                              Panache Score
                             </td>
                             {avgUniqueness.map((a) => (
                               <td key={a.name} className="text-center px-1 py-2">
