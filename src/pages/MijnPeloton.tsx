@@ -856,6 +856,7 @@ export default function MijnPeloton() {
               </div>
             );
           })()}
+        </div>
       </div>);
 
   }
