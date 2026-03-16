@@ -119,7 +119,7 @@ export default function StageRoadbook({
         <h2 className="font-display text-sm font-bold uppercase tracking-wider">Routekaart</h2>
         <div className="flex gap-3 text-xs">
           {Object.entries(stageTypeConfig).map(([key, cfg]) =>
-          <span key={key} className="flex items-center gap-1 text-muted-foreground">
+          <span key={key} className="flex items-center gap-1 text-muted-foreground text-sm">
               <span className={cn("w-2 h-2 rounded-full", cfg.color)} />
               {cfg.label}
             </span>
@@ -165,10 +165,10 @@ export default function StageRoadbook({
                 
                 {barHeight != null &&
                 <>
-                    <span className={cn(
-                    "text-[10px] font-bold tabular-nums",
-                    isSelected ? "text-primary" : "text-muted-foreground",
-                    (pts ?? 0) > 0 ? "opacity-100" : "opacity-40"
+                    <span className={cn("font-bold tabular-nums text-sm",
+
+                  isSelected ? "text-primary" : "text-muted-foreground",
+                  (pts ?? 0) > 0 ? "opacity-100" : "opacity-40"
                   )}>
                       {(pts ?? 0) > 0 ? pts : "–"}
                     </span>
@@ -186,9 +186,9 @@ export default function StageRoadbook({
                 )}>
                   {cfg.icon}
                 </div>
-                <span className={cn(
-                  "text-[10px] font-display font-bold",
-                  isSelected ? "text-primary" : "text-muted-foreground"
+                <span className={cn("font-display font-bold text-sm",
+
+                isSelected ? "text-primary" : "text-muted-foreground"
                 )}>
                   {stage.stage}
                 </span>
