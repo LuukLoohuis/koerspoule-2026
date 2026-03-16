@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { mockTeams, mockSubPools, mockStageResults, mockClassifications } from "@/data/mockData";
+import { subpoolTeams, expandedSubPool, computeUniqueness } from "@/data/subpoolData";
 import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } from "@/data/poolStandings";
 import { pointsTable, classificationPoints, riderCategories } from "@/data/riders";
 import { cn } from "@/lib/utils";
@@ -31,21 +32,29 @@ const myGames = [
     }, 0);
   };
 
-const enrichedSubPools = mockSubPools.map((pool) => ({
-  ...pool,
-  standings: mockTeams.
-  filter((t) => pool.members.includes(t.userName)).
-  sort((a, b) => b.totalPoints - a.totalPoints),
-  pointsHistory: Array.from({ length: 21 }, (_, i) => ({
-    stage: `Rit ${i + 1}`,
-    ...Object.fromEntries(
-      pool.members.map((name) => [
-      name,
-      Math.round(40 + Math.random() * 60) * (i + 1)]
-      )
-    )
-  }))
-}));
+const allSubPools = [...mockSubPools, expandedSubPool];
+
+const enrichedSubPools = allSubPools.map((pool) => {
+  const isExpanded = pool.id === expandedSubPool.id;
+  const standings = isExpanded
+    ? [...subpoolTeams].sort((a, b) => b.totalPoints - a.totalPoints)
+    : mockTeams.filter((t) => pool.members.includes(t.userName)).sort((a, b) => b.totalPoints - a.totalPoints);
+
+  return {
+    ...pool,
+    standings,
+    isExpanded,
+    pointsHistory: Array.from({ length: 21 }, (_, i) => ({
+      stage: `Rit ${i + 1}`,
+      ...Object.fromEntries(
+        pool.members.map((name) => [
+          name,
+          Math.round(40 + Math.random() * 60) * (i + 1),
+        ])
+      ),
+    })),
+  };
+});
 
 const MEMBER_COLORS = ["hsl(330 60% 65%)", "hsl(220 55% 45%)", "hsl(38 70% 55%)", "hsl(160 50% 40%)"];
 
@@ -111,9 +120,9 @@ export default function MijnPeloton() {
 
   /* ── Sub-pool detail view ── */
   if (activePool) {
-    const subpoolCompareTeam = mockTeams.find(
-      (t) => t.userName === subpoolComparePlayer && t.id !== myTeam.id
-    );
+    const subpoolCompareTeam = activePool.isExpanded
+      ? subpoolTeams.find((t) => t.userName === subpoolComparePlayer && t.userName !== myTeam.userName)
+      : mockTeams.find((t) => t.userName === subpoolComparePlayer && t.id !== myTeam.id);
     return (
       <div className="container mx-auto px-4 py-8 md:py-12">
         <button
@@ -152,7 +161,7 @@ export default function MijnPeloton() {
             <StatCard icon={<Trophy className="h-5 w-5 text-primary" />} label="Leider" value={activePool.standings[0]?.userName || "—"} />
             <StatCard icon={<TrendingUp className="h-5 w-5 text-primary" />} label="Hoogste score" value={`${activePool.standings[0]?.totalPoints || 0} pt`} />
             <StatCard icon={<Target className="h-5 w-5 text-primary" />} label="Gemiddelde" value={`${Math.round(activePool.standings.reduce((s, t) => s + t.totalPoints, 0) / (activePool.standings.length || 1))} pt`} />
-            <StatCard icon={<Award className="h-5 w-5 text-primary" />} label="Jouw positie" value={`#${activePool.standings.findIndex((t) => t.id === myTeam.id) + 1}`} />
+            <StatCard icon={<Award className="h-5 w-5 text-primary" />} label="Jouw positie" value={`#${activePool.standings.findIndex((t) => t.userName === myTeam.userName) + 1}`} />
           </div>
 
           {/* Standings */}
@@ -167,7 +176,7 @@ export default function MijnPeloton() {
                   key={team.id}
                   className={cn(
                     "flex items-center justify-between px-4 py-2.5 text-sm",
-                    team.id === myTeam.id && "bg-primary/10"
+                    team.userName === myTeam.userName && "bg-primary/10"
                   )}>
                   
                     <div className="flex items-center gap-2">
@@ -728,6 +737,125 @@ export default function MijnPeloton() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Échappée-index heatmap */}
+          {activePool.isExpanded && (() => {
+            const uniqueness = computeUniqueness(subpoolTeams);
+            const sortedTeams = activePool.standings;
+            const categories = riderCategories;
+
+            // Average uniqueness per player
+            const avgUniqueness = sortedTeams.map((t) => {
+              const playerMap = uniqueness.get(t.userName);
+              if (!playerMap) return { name: t.userName, avg: 0 };
+              const vals = Array.from(playerMap.values());
+              return { name: t.userName, avg: vals.reduce((a, b) => a + b, 0) / vals.length };
+            });
+
+            return (
+              <div className="lg:col-span-3">
+                <Card className="retro-border">
+                  <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+                    <CardTitle className="font-display text-base flex items-center gap-2">
+                      🚴‍♂️💨 De Échappée
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground font-sans mt-1">
+                      Hoe uniek zijn jouw keuzes? Donkerder = jij bent de enige met die renner. Lichter = populaire keuze.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    {/* Legend */}
+                    <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground font-sans">
+                      <span>Populair</span>
+                      <div className="flex gap-0.5">
+                        {[0, 0.2, 0.4, 0.6, 0.8, 1].map((v) => (
+                          <div
+                            key={v}
+                            className="w-5 h-3 rounded-sm"
+                            style={{ backgroundColor: `hsl(var(--primary) / ${0.1 + v * 0.85})` }}
+                          />
+                        ))}
+                      </div>
+                      <span>Uniek</span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs border-collapse">
+                        <thead>
+                          <tr>
+                            <th className="text-left px-2 py-1.5 font-display text-muted-foreground sticky left-0 bg-background z-10 min-w-[120px]">
+                              Categorie
+                            </th>
+                            {sortedTeams.map((t) => (
+                              <th
+                                key={t.id}
+                                className={cn(
+                                  "px-1 py-1.5 font-display text-center min-w-[60px] max-w-[80px]",
+                                  t.userName === myTeam.userName && "text-primary"
+                                )}
+                              >
+                                <span className="block truncate">{t.userName}</span>
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {categories.map((cat) => (
+                            <tr key={cat.id} className="border-t border-border/50">
+                              <td className="text-left px-2 py-1 font-sans text-muted-foreground sticky left-0 bg-background z-10 truncate max-w-[120px]" title={cat.name}>
+                                {cat.name}
+                              </td>
+                              {sortedTeams.map((t) => {
+                                const playerMap = uniqueness.get(t.userName);
+                                const score = playerMap?.get(cat.id) ?? 0;
+                                const pick = t.picks[cat.id];
+                                return (
+                                  <td key={t.id} className="px-0.5 py-0.5 text-center">
+                                    <div
+                                      className="rounded-sm px-1 py-1.5 flex items-center justify-center cursor-default transition-colors"
+                                      style={{ backgroundColor: `hsl(var(--primary) / ${0.08 + score * 0.85})` }}
+                                      title={`${pick?.name ?? "?"} — ${Math.round(score * 100)}% uniek`}
+                                    >
+                                      <span
+                                        className={cn(
+                                          "truncate block text-[9px] md:text-[10px] font-medium leading-tight",
+                                          score > 0.5 ? "text-primary-foreground" : "text-foreground"
+                                        )}
+                                      >
+                                        {pick?.name ?? "—"}
+                                      </span>
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                        {/* Average uniqueness row */}
+                        <tfoot>
+                          <tr className="border-t-2 border-foreground">
+                            <td className="text-left px-2 py-2 font-display font-bold text-xs sticky left-0 bg-background z-10">
+                              Échappée-score
+                            </td>
+                            {avgUniqueness.map((a) => (
+                              <td key={a.name} className="text-center px-1 py-2">
+                                <span className={cn(
+                                  "font-display font-bold text-xs",
+                                  a.avg > 0.6 ? "text-primary" : a.avg > 0.4 ? "text-accent" : "text-muted-foreground"
+                                )}>
+                                  {Math.round(a.avg * 100)}%
+                                </span>
+                              </td>
+                            ))}
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
         </div>
       </div>);
 
