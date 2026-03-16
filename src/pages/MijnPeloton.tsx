@@ -415,7 +415,7 @@ export default function MijnPeloton() {
                                   )}>{myPts} pt</span>
                                 </div>
                                 <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
-                                  <span className="text-[10px] text-muted-foreground font-sans truncate max-w-full text-center">
+                                  <span className="text-xs text-muted-foreground font-sans truncate max-w-full text-center">
                                     {getCategoryName(Number(catId))}
                                   </span>
                                   {isSame ? (
