@@ -959,11 +959,11 @@ export default function MijnPeloton() {
                       <CardContent className="p-4 space-y-2 text-sm font-sans">
                         <div>
                           <span className="text-xs text-muted-foreground">Podium:</span>
-                          <p className="font-medium">{myTeam.predictions.gcPodium.map((r, i) => <span key={i}>{r}{i < myTeam.predictions.gcPodium.length - 1 && <br />}</span>)}</p>
+                          <p className="font-medium">{myTeam.predictions.gcPodium.map((r, i) => { const medal = ['🥇', '🥈', '🥉'][i]; return <span key={i}>{medal} {r}{i < myTeam.predictions.gcPodium.length - 1 && <br />}</span>; })}</p>
                         </div>
-                        <p><span className="w-2 h-2 rounded-full bg-jersey-purple inline-block mr-1" /> {myTeam.predictions.pointsJersey}</p>
-                        <p><span className="w-2 h-2 rounded-full bg-jersey-blue inline-block mr-1" /> {myTeam.predictions.mountainJersey}</p>
-                        <p><span className="w-2 h-2 rounded-full bg-jersey-white border inline-block mr-1" /> {myTeam.predictions.youthJersey}</p>
+                        <p>🟣 {myTeam.predictions.pointsJersey}</p>
+                        <p>🔵 {myTeam.predictions.mountainJersey}</p>
+                        <p>⚪ {myTeam.predictions.youthJersey}</p>
                       </CardContent>
                     </Card>
 
