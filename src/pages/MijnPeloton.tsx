@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { mockTeams, mockSubPools, mockStageResults, mockClassifications } from "@/data/mockData";
 import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } from "@/data/poolStandings";
-import { pointsTable, riderCategories } from "@/data/riders";
+import { pointsTable, classificationPoints, riderCategories } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -564,44 +564,60 @@ export default function MijnPeloton() {
                             const actualMountainJersey = mockClassifications.kom[0]?.riderName || "";
                             const actualYouthJersey = mockClassifications.youth[0]?.riderName || "";
 
+                            const calcGcPts = (pick: string, position: number) => {
+                              if (gcTop3[position] === pick) return classificationPoints.correctPositionCorrectRider;
+                              if (gcTop3.includes(pick)) return classificationPoints.correctRiderWrongPosition;
+                              return 0;
+                            };
+
+                            const calcJerseyPts = (pick: string, actual: string) => {
+                              return pick === actual ? classificationPoints.correctJerseyWinner : 0;
+                            };
+
                             const predictionRows = [
-                              ...myTeam.predictions.gcPodium.map((name, i) => ({
-                                label: i === 0 ? "🥇 1e AK" : i === 1 ? "🥈 2e AK" : "🥉 3e AK",
-                                myPick: name,
-                                otherPick: subpoolCompareTeam.predictions.gcPodium[i] || "—",
-                                myCorrect: gcTop3[i] === name,
-                                otherCorrect: gcTop3[i] === subpoolCompareTeam.predictions.gcPodium[i],
-                              })),
+                              ...myTeam.predictions.gcPodium.map((name, i) => {
+                                const myPts = calcGcPts(name, i);
+                                const otherName = subpoolCompareTeam.predictions.gcPodium[i] || "";
+                                const otherPts = calcGcPts(otherName, i);
+                                return {
+                                  label: i === 0 ? "🥇 1e AK" : i === 1 ? "🥈 2e AK" : "🥉 3e AK",
+                                  myPick: name,
+                                  otherPick: otherName || "—",
+                                  myPts,
+                                  otherPts,
+                                };
+                              }),
                               {
                                 label: "🟢 Puntentrui",
                                 myPick: myTeam.predictions.pointsJersey,
                                 otherPick: subpoolCompareTeam.predictions.pointsJersey,
-                                myCorrect: myTeam.predictions.pointsJersey === actualPointsJersey,
-                                otherCorrect: subpoolCompareTeam.predictions.pointsJersey === actualPointsJersey,
+                                myPts: calcJerseyPts(myTeam.predictions.pointsJersey, actualPointsJersey),
+                                otherPts: calcJerseyPts(subpoolCompareTeam.predictions.pointsJersey, actualPointsJersey),
                               },
                               {
                                 label: "🔴 Bergtrui",
                                 myPick: myTeam.predictions.mountainJersey,
                                 otherPick: subpoolCompareTeam.predictions.mountainJersey,
-                                myCorrect: myTeam.predictions.mountainJersey === actualMountainJersey,
-                                otherCorrect: subpoolCompareTeam.predictions.mountainJersey === actualMountainJersey,
+                                myPts: calcJerseyPts(myTeam.predictions.mountainJersey, actualMountainJersey),
+                                otherPts: calcJerseyPts(subpoolCompareTeam.predictions.mountainJersey, actualMountainJersey),
                               },
                               {
                                 label: "⚪ Jongerentrui",
                                 myPick: myTeam.predictions.youthJersey,
                                 otherPick: subpoolCompareTeam.predictions.youthJersey,
-                                myCorrect: myTeam.predictions.youthJersey === actualYouthJersey,
-                                otherCorrect: subpoolCompareTeam.predictions.youthJersey === actualYouthJersey,
+                                myPts: calcJerseyPts(myTeam.predictions.youthJersey, actualYouthJersey),
+                                otherPts: calcJerseyPts(subpoolCompareTeam.predictions.youthJersey, actualYouthJersey),
                               },
                             ];
 
-                            const myPredScore = predictionRows.filter((r) => r.myCorrect).length;
-                            const otherPredScore = predictionRows.filter((r) => r.otherCorrect).length;
+                            const myPredTotal = predictionRows.reduce((s, r) => s + r.myPts, 0);
+                            const otherPredTotal = predictionRows.reduce((s, r) => s + r.otherPts, 0);
 
                             return (
                               <>
                                 {predictionRows.map((row, idx) => {
                                   const isSame = row.myPick === row.otherPick;
+                                  const diff = row.myPts - row.otherPts;
                                   return (
                                     <div
                                       key={row.label}
@@ -617,18 +633,29 @@ export default function MijnPeloton() {
                                             {row.myPick}
                                           </span>
                                         </div>
-                                        {row.myCorrect && <span className="text-sm">✅</span>}
+                                        <span className={cn(
+                                          "font-display font-bold text-sm shrink-0 tabular-nums",
+                                          diff > 0 ? "text-primary" : diff < 0 ? "text-destructive" : "text-muted-foreground"
+                                        )}>{row.myPts} pt</span>
                                       </div>
                                       <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[100px]">
                                         <span className="text-xs text-muted-foreground font-sans text-center">
                                           {row.label}
                                         </span>
-                                        {isSame && (
+                                        {isSame ? (
                                           <span className="jersey-badge bg-accent text-accent-foreground text-xs px-1.5 py-0.5">🤝 Zelfde</span>
-                                        )}
+                                        ) : diff !== 0 ? (
+                                          <span className={cn(
+                                            "text-sm font-display font-bold px-2 py-0.5 rounded-full",
+                                            diff > 0 ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                                          )}>{diff > 0 ? `+${diff}` : diff}</span>
+                                        ) : null}
                                       </div>
                                       <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
-                                        {row.otherCorrect && <span className="text-sm">✅</span>}
+                                        <span className={cn(
+                                          "font-display font-bold text-sm shrink-0 tabular-nums",
+                                          row.otherPts > row.myPts ? "text-primary" : row.otherPts < row.myPts ? "text-destructive" : "text-muted-foreground"
+                                        )}>{row.otherPts} pt</span>
                                         <div className="flex-1 min-w-0 text-right">
                                           <span className="font-sans font-medium text-sm block truncate">
                                             {row.otherPick}
@@ -641,16 +668,16 @@ export default function MijnPeloton() {
                                 {/* Prediction totals */}
                                 <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-secondary/50 border-t-2 border-foreground">
                                   <div className="px-3 py-3 text-right">
-                                    <span className="font-display font-bold text-base md:text-lg text-accent">{myPredScore}/6 goed</span>
+                                    <span className="font-display font-bold text-base md:text-lg text-accent">{myPredTotal} pt</span>
                                   </div>
                                   <div className="px-2 py-3 text-center">
                                     <span className={cn(
                                       "font-display font-bold text-base px-2 py-1 rounded-md",
-                                      myPredScore > otherPredScore ? "bg-primary/15 text-primary" : myPredScore < otherPredScore ? "bg-destructive/15 text-destructive" : "text-muted-foreground"
-                                    )}>{myPredScore - otherPredScore > 0 ? `+${myPredScore - otherPredScore}` : myPredScore - otherPredScore}</span>
+                                      myPredTotal > otherPredTotal ? "bg-primary/15 text-primary" : myPredTotal < otherPredTotal ? "bg-destructive/15 text-destructive" : "text-muted-foreground"
+                                    )}>{myPredTotal - otherPredTotal > 0 ? `+${myPredTotal - otherPredTotal}` : myPredTotal - otherPredTotal}</span>
                                   </div>
                                   <div className="px-3 py-3 text-left">
-                                    <span className="font-display font-bold text-base md:text-lg text-accent">{otherPredScore}/6 goed</span>
+                                    <span className="font-display font-bold text-base md:text-lg text-accent">{otherPredTotal} pt</span>
                                   </div>
                                 </div>
                               </>
