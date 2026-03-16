@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight } from "lucide-react";
+import StageRoadbook from "@/components/StageRoadbook";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChartContainer,
@@ -303,37 +304,14 @@ export default function MijnPeloton() {
                       </div>
 
                       {/* GC / Stage selector */}
-                      <Card className="retro-border">
-                        <CardContent className="p-3">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <button
-                              onClick={() => setSubpoolCompareView("gc")}
-                              className={cn(
-                                "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
-                                subpoolCompareView === "gc"
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-border hover:border-muted-foreground"
-                              )}
-                            >
-                              🏆 GC (totaal)
-                            </button>
-                            {mockStageResults.map((stage, i) => (
-                              <button
-                                key={stage.stage}
-                                onClick={() => setSubpoolCompareView(i)}
-                                className={cn(
-                                  "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
-                                  subpoolCompareView === i
-                                    ? "border-primary bg-primary text-primary-foreground"
-                                    : "border-border hover:border-muted-foreground"
-                                )}
-                              >
-                                R{stage.stage}
-                              </button>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <StageRoadbook
+                        selectedStage={typeof subpoolCompareView === "number" ? subpoolCompareView : 0}
+                        onSelectStage={(i) => setSubpoolCompareView(i)}
+                        showGcButton
+                        gcSelected={subpoolCompareView === "gc"}
+                        onSelectGc={() => setSubpoolCompareView("gc")}
+                        compact
+                      />
 
                       {/* Stage-by-stage overview (GC view only) */}
                       {subpoolCompareView === "gc" && (
@@ -696,37 +674,14 @@ export default function MijnPeloton() {
                   </div>
 
                   {/* GC / Stage selector */}
-                  <Card className="retro-border">
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                          onClick={() => setCompareView("gc")}
-                          className={cn(
-                            "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
-                            compareView === "gc"
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border hover:border-muted-foreground"
-                          )}
-                        >
-                          🏆 GC (totaal)
-                        </button>
-                        {mockStageResults.map((stage, i) => (
-                          <button
-                            key={stage.stage}
-                            onClick={() => setCompareView(i)}
-                            className={cn(
-                              "px-3 py-1.5 text-xs md:text-sm font-bold rounded-md border-2 transition-all",
-                              compareView === i
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : "border-border hover:border-muted-foreground"
-                            )}
-                          >
-                            Rit {stage.stage}
-                          </button>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <StageRoadbook
+                    selectedStage={typeof compareView === "number" ? compareView : 0}
+                    onSelectStage={(i) => setCompareView(i)}
+                    showGcButton
+                    gcSelected={compareView === "gc"}
+                    onSelectGc={() => setCompareView("gc")}
+                    compact
+                  />
 
                   {/* Stage-by-stage overview (only in GC view) */}
                   {compareView === "gc" && (
@@ -1042,22 +997,15 @@ export default function MijnPeloton() {
             {uitslagenView === "etappes" && (
               <>
                 {/* Stage selector */}
-                <div className="flex gap-2 mb-4 flex-wrap">
-                  {mockStageResults.map((stage, i) =>
-                    <button
-                      key={stage.stage}
-                      onClick={() => setSelectedStage(i)}
-                      className={cn(
-                        "px-3 py-1.5 text-sm font-bold rounded-md border-2 transition-all",
-                        selectedStage === i
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border hover:border-muted-foreground"
-                      )}
-                    >
-                      Rit {stage.stage}
-                    </button>
+                <StageRoadbook
+                  selectedStage={selectedStage}
+                  onSelectStage={setSelectedStage}
+                  stagePoints={mockStageResults.map(stage =>
+                    stage.top20
+                      .filter(r => myRiderNumbers.has(r.riderNumber))
+                      .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0)
                   )}
-                </div>
+                />
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Live stage results */}
