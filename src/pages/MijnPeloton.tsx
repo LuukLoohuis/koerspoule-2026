@@ -524,7 +524,7 @@ export default function MijnPeloton() {
                             >
                               <div className="px-3 py-2.5 text-muted-foreground">—</div>
                               <div className="px-1 md:px-2 py-2 flex flex-col items-center gap-0.5 min-w-[70px] md:min-w-[90px]">
-                                <span className="text-[10px] text-muted-foreground font-sans">Joker {myJokerRows.length + idx + 1}</span>
+                                <span className="text-xs text-muted-foreground font-sans">Joker {myJokerRows.length + idx + 1}</span>
                               </div>
                               <div className="px-3 py-2.5 flex items-center gap-2 justify-end">
                                 <span className="font-display font-bold text-sm shrink-0 tabular-nums text-primary">{j.pts} pt</span>
