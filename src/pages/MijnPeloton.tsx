@@ -120,9 +120,9 @@ export default function MijnPeloton() {
 
   /* ── Sub-pool detail view ── */
   if (activePool) {
-    const subpoolCompareTeam = mockTeams.find(
-      (t) => t.userName === subpoolComparePlayer && t.id !== myTeam.id
-    );
+    const subpoolCompareTeam = activePool.isExpanded
+      ? subpoolTeams.find((t) => t.userName === subpoolComparePlayer && t.userName !== myTeam.userName)
+      : mockTeams.find((t) => t.userName === subpoolComparePlayer && t.id !== myTeam.id);
     return (
       <div className="container mx-auto px-4 py-8 md:py-12">
         <button
