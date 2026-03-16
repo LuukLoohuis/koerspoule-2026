@@ -737,7 +737,125 @@ export default function MijnPeloton() {
               </CardContent>
             </Card>
           </div>
-        </div>
+
+          {/* Échappée-index heatmap */}
+          {activePool.isExpanded && (() => {
+            const uniqueness = computeUniqueness(subpoolTeams);
+            const sortedTeams = activePool.standings;
+            const categories = riderCategories;
+
+            // Average uniqueness per player
+            const avgUniqueness = sortedTeams.map((t) => {
+              const playerMap = uniqueness.get(t.userName);
+              if (!playerMap) return { name: t.userName, avg: 0 };
+              const vals = Array.from(playerMap.values());
+              return { name: t.userName, avg: vals.reduce((a, b) => a + b, 0) / vals.length };
+            });
+
+            return (
+              <div className="lg:col-span-3">
+                <Card className="retro-border">
+                  <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+                    <CardTitle className="font-display text-base flex items-center gap-2">
+                      🚴‍♂️💨 De Échappée
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground font-sans mt-1">
+                      Hoe uniek zijn jouw keuzes? Donkerder = jij bent de enige met die renner. Lichter = populaire keuze.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    {/* Legend */}
+                    <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground font-sans">
+                      <span>Populair</span>
+                      <div className="flex gap-0.5">
+                        {[0, 0.2, 0.4, 0.6, 0.8, 1].map((v) => (
+                          <div
+                            key={v}
+                            className="w-5 h-3 rounded-sm"
+                            style={{ backgroundColor: `hsl(var(--primary) / ${0.1 + v * 0.85})` }}
+                          />
+                        ))}
+                      </div>
+                      <span>Uniek</span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs border-collapse">
+                        <thead>
+                          <tr>
+                            <th className="text-left px-2 py-1.5 font-display text-muted-foreground sticky left-0 bg-background z-10 min-w-[120px]">
+                              Categorie
+                            </th>
+                            {sortedTeams.map((t) => (
+                              <th
+                                key={t.id}
+                                className={cn(
+                                  "px-1 py-1.5 font-display text-center min-w-[60px] max-w-[80px]",
+                                  t.userName === myTeam.userName && "text-primary"
+                                )}
+                              >
+                                <span className="block truncate">{t.userName}</span>
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {categories.map((cat) => (
+                            <tr key={cat.id} className="border-t border-border/50">
+                              <td className="text-left px-2 py-1 font-sans text-muted-foreground sticky left-0 bg-background z-10 truncate max-w-[120px]" title={cat.name}>
+                                {cat.name}
+                              </td>
+                              {sortedTeams.map((t) => {
+                                const playerMap = uniqueness.get(t.userName);
+                                const score = playerMap?.get(cat.id) ?? 0;
+                                const pick = t.picks[cat.id];
+                                return (
+                                  <td key={t.id} className="px-0.5 py-0.5 text-center">
+                                    <div
+                                      className="rounded-sm px-1 py-1.5 flex items-center justify-center cursor-default transition-colors"
+                                      style={{ backgroundColor: `hsl(var(--primary) / ${0.08 + score * 0.85})` }}
+                                      title={`${pick?.name ?? "?"} — ${Math.round(score * 100)}% uniek`}
+                                    >
+                                      <span
+                                        className={cn(
+                                          "truncate block text-[9px] md:text-[10px] font-medium leading-tight",
+                                          score > 0.5 ? "text-primary-foreground" : "text-foreground"
+                                        )}
+                                      >
+                                        {pick?.name ?? "—"}
+                                      </span>
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                        {/* Average uniqueness row */}
+                        <tfoot>
+                          <tr className="border-t-2 border-foreground">
+                            <td className="text-left px-2 py-2 font-display font-bold text-xs sticky left-0 bg-background z-10">
+                              Échappée-score
+                            </td>
+                            {avgUniqueness.map((a) => (
+                              <td key={a.name} className="text-center px-1 py-2">
+                                <span className={cn(
+                                  "font-display font-bold text-xs",
+                                  a.avg > 0.6 ? "text-primary" : a.avg > 0.4 ? "text-accent" : "text-muted-foreground"
+                                )}>
+                                  {Math.round(a.avg * 100)}%
+                                </span>
+                              </td>
+                            ))}
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
       </div>);
 
   }
