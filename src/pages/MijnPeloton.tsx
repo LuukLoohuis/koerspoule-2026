@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { mockTeams, mockSubPools, mockStageResults, mockClassifications } from "@/data/mockData";
 import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } from "@/data/poolStandings";
-import { pointsTable, riderCategories } from "@/data/riders";
+import { pointsTable, classificationPoints, riderCategories } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
