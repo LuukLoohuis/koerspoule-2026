@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { mockStageResults, mockTeams } from "@/data/mockData";
+import { mockStageResults, mockTeams, mockClassifications } from "@/data/mockData";
 import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } from "@/data/poolStandings";
-import { pointsTable } from "@/data/riders";
+import { pointsTable, classificationPoints } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Medal, User, Users, MoreHorizontal } from "lucide-react";
