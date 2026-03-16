@@ -619,7 +619,7 @@ export default function MijnPeloton() {
                               const otherName = subpoolCompareTeam.predictions.gcPodium[i] || "";
                               const otherPts = calcGcPts(otherName, i);
                               return {
-                                label: i === 0 ? "🥇 1e AK" : i === 1 ? "🥈 2e AK" : "🥉 3e AK",
+                                label: i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉",
                                 myPick: name,
                                 otherPick: otherName || "—",
                                 myPts,
