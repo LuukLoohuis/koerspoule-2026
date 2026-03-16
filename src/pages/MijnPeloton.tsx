@@ -57,7 +57,11 @@ const enrichedSubPools = allSubPools.map((pool) => {
   };
 });
 
-const MEMBER_COLORS = ["hsl(330 60% 65%)", "hsl(220 55% 45%)", "hsl(38 70% 55%)", "hsl(160 50% 40%)"];
+const MEMBER_COLORS = [
+  "hsl(330 60% 65%)", "hsl(220 55% 45%)", "hsl(38 70% 55%)", "hsl(160 50% 40%)",
+  "hsl(280 50% 55%)", "hsl(15 75% 55%)", "hsl(190 60% 45%)", "hsl(95 45% 45%)",
+  "hsl(350 70% 50%)", "hsl(55 65% 50%)",
+];
 
 export default function MijnPeloton() {
   const { toast } = useToast();
