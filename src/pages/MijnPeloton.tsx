@@ -176,7 +176,7 @@ export default function MijnPeloton() {
                   key={team.id}
                   className={cn(
                     "flex items-center justify-between px-4 py-2.5 text-sm",
-                    team.id === myTeam.id && "bg-primary/10"
+                    team.userName === myTeam.userName && "bg-primary/10"
                   )}>
                   
                     <div className="flex items-center gap-2">
