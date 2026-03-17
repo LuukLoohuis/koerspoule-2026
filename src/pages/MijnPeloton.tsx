@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight } from "lucide-react";
+import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight, MoreHorizontal } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
 import PelotonChat from "@/components/PelotonChat";
 import { useToast } from "@/hooks/use-toast";
@@ -177,23 +177,53 @@ export default function MijnPeloton() {
                 <CardTitle className="font-display text-base">🏆 Stand</CardTitle>
               </CardHeader>
               <CardContent className="p-0 divide-y divide-border">
-                {activePool.standings.map((team, idx) =>
-                <div
-                  key={team.id}
-                  className={cn(
-                    "flex items-center justify-between px-4 py-2.5 text-sm",
-                    team.userName === myTeam.userName && "bg-primary/10"
-                  )}>
-                  
-                    <div className="flex items-center gap-2">
-                      <span className="font-display font-bold w-6 text-center text-muted-foreground">
-                        {idx + 1}
-                      </span>
-                      <span className="font-sans font-medium">{team.userName}</span>
-                    </div>
-                    <span className="font-display font-bold">{team.totalPoints} pt</span>
-                  </div>
-                )}
+                {(() => {
+                  const all = activePool.standings;
+                  const myIdx = all.findIndex(t => t.userName === myTeam.userName);
+                  const topN = 3;
+
+                  if (all.length <= topN + 7) {
+                    // Small pool: show all
+                    return all.map((team, idx) => (
+                      <StandingRow key={team.id} team={team} rank={idx + 1} isMe={team.userName === myTeam.userName} />
+                    ));
+                  }
+
+                  // Top 3
+                  const rows: React.ReactNode[] = all.slice(0, topN).map((team, idx) => (
+                    <StandingRow key={team.id} team={team} rank={idx + 1} isMe={team.userName === myTeam.userName} />
+                  ));
+
+                  // If user is not in top 3, show gap + 3 above + user + 3 below
+                  if (myIdx >= topN) {
+                    const aboveStart = Math.max(topN, myIdx - 3);
+                    const belowEnd = Math.min(all.length, myIdx + 4);
+
+                    if (aboveStart > topN) {
+                      rows.push(
+                        <div key="gap-top" className="flex items-center justify-center py-2 text-muted-foreground">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </div>
+                      );
+                    }
+
+                    for (let i = aboveStart; i < belowEnd; i++) {
+                      rows.push(
+                        <StandingRow key={all[i].id} team={all[i]} rank={i + 1} isMe={all[i].userName === myTeam.userName} />
+                      );
+                    }
+
+                    if (belowEnd < all.length) {
+                      rows.push(
+                        <div key="gap-bottom" className="flex items-center justify-center py-2 text-muted-foreground">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </div>
+                      );
+                    }
+                  }
+
+                  return rows;
+                })()}
               </CardContent>
             </Card>
           </div>
@@ -219,27 +249,50 @@ export default function MijnPeloton() {
                     <ChartTooltip
                       content={({ active, payload, label }) => {
                         if (!active || !payload?.length) return null;
-                        const sorted = [...payload].
-                        filter((p) => p.value != null).
-                        sort((a, b) => (b.value as number) - (a.value as number));
-                        return (
-                          <div className="rounded-md border border-border bg-background p-2.5 shadow-lg text-xs min-w-[140px]">
-                            <p className="font-display font-bold mb-1.5 text-sm">Rit {label}</p>
-                            {sorted.map((entry, idx) =>
-                            <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="font-display font-bold text-muted-foreground w-4 text-right">{idx + 1}.</span>
-                                  <span
-                                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                                  style={{ backgroundColor: entry.color }} />
-                                
-                                  <span className="font-sans font-medium">{entry.dataKey}</span>
-                                </div>
-                                <span className="font-display font-bold tabular-nums">{entry.value} pt</span>
-                              </div>
-                            )}
-                          </div>);
+                        const stageIdx = parseInt(label as string) - 1;
+                        const history = activePool.pointsHistory;
 
+                        // Current stage ranking
+                        const sorted = [...payload]
+                          .filter((p) => p.value != null)
+                          .sort((a, b) => (b.value as number) - (a.value as number));
+
+                        // Previous stage ranking for position change
+                        let prevRanking: string[] = [];
+                        if (stageIdx > 0 && history[stageIdx - 1]) {
+                          const prevData = history[stageIdx - 1];
+                          const members = activePool.standings.map(s => s.userName);
+                          prevRanking = [...members].sort(
+                            (a, b) => ((prevData[b] as number) || 0) - ((prevData[a] as number) || 0)
+                          );
+                        }
+
+                        return (
+                          <div className="rounded-md border border-border bg-background p-2.5 shadow-lg text-xs min-w-[160px]">
+                            <p className="font-display font-bold mb-1.5 text-sm">Rit {label}</p>
+                            {sorted.map((entry, idx) => {
+                              let arrow: React.ReactNode = null;
+                              if (prevRanking.length > 0) {
+                                const prevPos = prevRanking.indexOf(entry.dataKey as string);
+                                const diff = prevPos - idx; // positive = climbed
+                                if (diff > 0) arrow = <span className="text-green-600 dark:text-green-400 ml-1">▲{diff}</span>;
+                                else if (diff < 0) arrow = <span className="text-red-600 dark:text-red-400 ml-1">▼{Math.abs(diff)}</span>;
+                              }
+                              return (
+                                <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-display font-bold text-muted-foreground w-4 text-right">{idx + 1}.</span>
+                                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
+                                    <span className="font-sans font-medium">{entry.dataKey}</span>
+                                  </div>
+                                  <span className="font-display font-bold tabular-nums">
+                                    {entry.value} pt{arrow}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
                       }} />
                     
                     {activePool.standings.map((team, i) =>
@@ -2524,6 +2577,29 @@ function PalmaresTab({
           ))}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function StandingRow({ team, rank, isMe }: { team: { id: string; userName: string; totalPoints: number }; rank: number; isMe: boolean }) {
+  return (
+    <div className={cn(
+      "flex items-center justify-between px-4 py-2.5 text-sm",
+      isMe && "bg-primary/10 border-l-4 border-l-primary"
+    )}>
+      <div className="flex items-center gap-2">
+        <span className={cn(
+          "font-display font-bold w-6 text-center",
+          rank <= 3 ? "text-primary" : "text-muted-foreground"
+        )}>
+          {rank}
+        </span>
+        <span className={cn("font-sans font-medium", isMe && "text-primary font-bold")}>
+          {team.userName}
+          {isMe && <span className="ml-1.5 text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">JIJ</span>}
+        </span>
+      </div>
+      <span className={cn("font-display font-bold", isMe ? "text-primary" : "text-accent")}>{team.totalPoints} pt</span>
     </div>
   );
 }
