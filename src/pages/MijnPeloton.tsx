@@ -47,7 +47,7 @@ const enrichedSubPools = allSubPools.map((pool) => {
     standings,
     isExpanded,
     pointsHistory: Array.from({ length: 21 }, (_, i) => ({
-      stage: `Rit ${i + 1}`,
+      stage: `${i + 1}`,
       ...Object.fromEntries(
         pool.members.map((name) => [
         name,
