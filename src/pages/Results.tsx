@@ -136,7 +136,7 @@ export default function Results() {
               <div className="p-4 border-b-2 border-foreground bg-secondary/50">
                 <h2 className="font-display text-base font-bold flex items-center gap-2">
                   <Users className="h-5 w-5 text-primary" />
-                  Hoofdklassement-uitslag Rit {mockStageResults[selectedStage].stage}
+                  Algemeen klassement-uitslag Rit {mockStageResults[selectedStage].stage}
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {stagePoolData.totalParticipants} deelnemers
