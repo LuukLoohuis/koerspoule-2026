@@ -42,12 +42,12 @@ export default function Index() {
           )`
           }} />
         
-        <div className="container mx-auto px-4 py-2 md:py-4 relative">
+        <div className="container mx-auto px-4 py-0 md:py-0 relative">
           <div className="max-w-3xl mx-auto text-center">
             <img
               src={koerspouleLogo}
               alt="Koerspoule logo"
-              className="mx-auto w-96 md:w-[36rem] -mb-24 animate-fade-in drop-shadow-lg" />
+              className="mx-auto w-96 md:w-[36rem] -mb-28 animate-fade-in drop-shadow-lg" />
             
             <p className="font-serif italic text-muted-foreground mb-0 animate-fade-in text-3xl">Giro d'Italia 2026</p>
             <div className="vintage-divider max-w-xs mx-auto my-6" />
