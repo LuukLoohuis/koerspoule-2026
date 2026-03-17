@@ -2580,3 +2580,26 @@ function PalmaresTab({
     </div>
   );
 }
+
+function StandingRow({ team, rank, isMe }: { team: { id: string; userName: string; totalPoints: number }; rank: number; isMe: boolean }) {
+  return (
+    <div className={cn(
+      "flex items-center justify-between px-4 py-2.5 text-sm",
+      isMe && "bg-primary/10 border-l-4 border-l-primary"
+    )}>
+      <div className="flex items-center gap-2">
+        <span className={cn(
+          "font-display font-bold w-6 text-center",
+          rank <= 3 ? "text-primary" : "text-muted-foreground"
+        )}>
+          {rank}
+        </span>
+        <span className={cn("font-sans font-medium", isMe && "text-primary font-bold")}>
+          {team.userName}
+          {isMe && <span className="ml-1.5 text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">JIJ</span>}
+        </span>
+      </div>
+      <span className={cn("font-display font-bold", isMe ? "text-primary" : "text-accent")}>{team.totalPoints} pt</span>
+    </div>
+  );
+}
