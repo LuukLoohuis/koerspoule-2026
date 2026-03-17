@@ -1794,7 +1794,17 @@ export default function MijnPeloton() {
             </div>
           </TabsContent>
 
-
+                  // Joker points
+                  const myJokerRows = myTeam.jokers.map((j) => ({
+                    ...j,
+                    pts: getSubpoolPointsForView(j.number)
+                  }));
+                  const otherJokerRows = subpoolCompareTeam.jokers.map((j) => ({
+                    ...j,
+                    pts: getSubpoolPointsForView(j.number)
+                  }));
+                  const myJokerTotal = myJokerRows.reduce((s, j) => s + j.pts, 0);
+                  const otherJokerTotal = otherJokerRows.reduce((s, j) => s + j.pts, 0);
 
           {/* ── TAB: Palmares ── */}
           <TabsContent value="palmares" className="mt-6">
