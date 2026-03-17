@@ -4,8 +4,9 @@ import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } fro
 import { pointsTable, classificationPoints } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal, User, Users, MoreHorizontal } from "lucide-react";
+import { Trophy, Medal, User, Users } from "lucide-react";
 import StageRoadbook, { stageTypeConfig } from "@/components/StageRoadbook";
+import PoolStandingsList, { RankBadge } from "@/components/PoolStandingsList";
 
 export default function Results() {
   const [selectedStage, setSelectedStage] = useState(0);
@@ -141,7 +142,7 @@ export default function Results() {
                   {stagePoolData.totalParticipants} deelnemers
                 </p>
               </div>
-              <PoolStandingsList data={stagePoolData} valueKey="stagePoints" unit="pt" myName={myTeam.userName} />
+              <PoolStandingsList data={stagePoolData} allParticipants={getStagePoolStandings(selectedStage)} valueKey="stagePoints" unit="pt" myName={myTeam.userName} />
             </div>
 
             {/* Column 3: My team points */}
@@ -194,7 +195,7 @@ export default function Results() {
                   {overallPoolData.totalParticipants} deelnemers
                 </p>
               </div>
-              <PoolStandingsList data={overallPoolData} valueKey="totalPoints" unit="pt" myName={myTeam.userName} />
+              <PoolStandingsList data={overallPoolData} allParticipants={allPoolParticipants} valueKey="totalPoints" unit="pt" myName={myTeam.userName} />
             </div>
 
             {/* Right: Your result summary */}
@@ -229,6 +230,14 @@ export default function Results() {
                   {/* Per-stage breakdown as mini chart */}
                   <div className="space-y-2">
                     <h3 className="font-display text-sm font-bold text-muted-foreground uppercase tracking-wider">Punten per etappe</h3>
+                    <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground mb-1">
+                      {Object.entries(stageTypeConfig).map(([key, cfg]) => (
+                        <div key={key} className="flex items-center gap-1">
+                          <span className={cn("w-3 h-3 rounded-full inline-block", cfg.color)} />
+                          <span>{cfg.label}</span>
+                        </div>
+                      ))}
+                    </div>
                     <div className="flex items-end gap-1 h-24 px-1">
                       {mockStageResults.map((stage, idx) => {
                         const pts = stagePoints[idx];
@@ -311,91 +320,3 @@ export default function Results() {
   );
 }
 
-/* ── Reusable components ── */
-
-function RankBadge({ rank, size = "md" }: { rank: number; size?: "sm" | "md" }) {
-  const sizeClasses = size === "sm" ? "w-6 h-6 text-xs" : "w-8 h-8 text-sm";
-  return (
-    <span className={cn(
-      sizeClasses, "rounded-full flex items-center justify-center font-bold",
-      rank === 1 && "bg-primary text-primary-foreground",
-      rank === 2 && "bg-muted text-foreground",
-      rank === 3 && "bg-vintage-gold text-primary-foreground",
-      rank > 3 && "text-muted-foreground"
-    )}>
-      {rank}
-    </span>
-  );
-}
-
-interface PoolStandingsData {
-  top: { rank: number; userName: string; stagePoints?: number; totalPoints: number }[];
-  myEntry: { rank: number; userName: string; stagePoints?: number; totalPoints: number } | null;
-  showGap: boolean;
-  totalParticipants: number;
-}
-
-function PoolStandingsList({
-  data,
-  valueKey,
-  unit,
-  myName,
-}: {
-  data: PoolStandingsData;
-  valueKey: "stagePoints" | "totalPoints";
-  unit: string;
-  myName: string;
-}) {
-  return (
-    <div className="divide-y divide-border">
-      {data.top.map((p) => (
-        <PoolRow key={p.rank} participant={p} valueKey={valueKey} unit={unit} isMe={p.userName === myName} />
-      ))}
-      {data.showGap && (
-        <>
-          <div className="flex items-center justify-center py-3 text-muted-foreground">
-            <MoreHorizontal className="h-5 w-5" />
-          </div>
-          {data.myEntry && (
-            <PoolRow participant={data.myEntry} valueKey={valueKey} unit={unit} isMe highlight />
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-function PoolRow({
-  participant,
-  valueKey,
-  unit,
-  isMe,
-  highlight,
-}: {
-  participant: { rank: number; userName: string; stagePoints?: number; totalPoints: number };
-  valueKey: "stagePoints" | "totalPoints";
-  unit: string;
-  isMe: boolean;
-  highlight?: boolean;
-}) {
-  const value = valueKey === "stagePoints" ? participant.stagePoints : participant.totalPoints;
-  return (
-    <div className={cn(
-      "flex items-center justify-between px-3 py-2.5 text-sm transition-colors",
-      isMe && "bg-primary/10 border-l-4 border-l-primary",
-      highlight && "bg-primary/10",
-      participant.rank <= 3 && !isMe && "bg-primary/5",
-    )}>
-      <div className="flex items-center gap-3">
-        <RankBadge rank={participant.rank} size="sm" />
-        <span className={cn("font-sans font-medium", isMe && "text-primary font-bold")}>
-          {participant.userName}
-          {isMe && <span className="ml-1.5 text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">JIJ</span>}
-        </span>
-      </div>
-      <span className={cn("font-bold text-sm", isMe ? "text-primary" : "text-accent")}>
-        {value ?? 0} {unit}
-      </span>
-    </div>
-  );
-}
