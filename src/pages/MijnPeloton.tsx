@@ -2603,12 +2603,13 @@ function PalmaresTab({
     return { ...game, myRank, totalParticipants, stageWins, stagePodiums };
   });
 
-  const subpoolResults = pools.map((pool) => {
+  const subpoolResults = pools.map((pool, idx) => {
     const myIdx = pool.standings.findIndex((t) => t.userName === myTeam.userName);
     const rank = myIdx + 1;
     const stageWins = rank === 1 ? 5 : rank <= 3 ? 3 : 1;
     const stagePodiums = rank === 1 ? 10 : rank <= 3 ? 7 : 4;
-    return { name: pool.name, rank, total: pool.standings.length, isWinner: myIdx === 0, stageWins, stagePodiums };
+    const raceRef = games[idx % games.length];
+    return { name: pool.name, rank, total: pool.standings.length, isWinner: myIdx === 0, stageWins, stagePodiums, raceEmoji: raceRef.emoji, raceName: raceRef.name };
   });
 
   // Aggregates
@@ -2701,7 +2702,10 @@ function PalmaresTab({
               <div key={pool.name} className={cn("flex items-center justify-between px-4 py-3", pool.isWinner && "bg-primary/5")}>
                 <div className="flex items-center gap-3">
                   <span className="text-lg">{pool.rank === 1 ? "🥇" : pool.rank === 2 ? "🥈" : pool.rank === 3 ? "🥉" : `#${pool.rank}`}</span>
-                  <p className="font-display font-bold text-sm">{pool.name}</p>
+                  <div>
+                    <p className="font-display font-bold text-sm">{pool.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-sans">{pool.raceEmoji} {pool.raceName}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 text-center">
                   <div><p className="font-display font-bold text-sm">{pool.stageWins}</p><p className="text-[10px] text-muted-foreground">zeges</p></div>
