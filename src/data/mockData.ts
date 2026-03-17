@@ -109,7 +109,7 @@ export const mockStageResults: StageResult[] = Array.from({ length: 21 }, (_, i)
   distance: stageDistances[i],
   top20: generateStageTop20(i),
 }));
-/* ── Teams with real Giro 2025 riders ── */
+/* ── Teams with real Giro 2026 riders ── */
 export const mockTeams: TeamEntry[] = [
   {
     id: "1",
