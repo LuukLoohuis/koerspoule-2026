@@ -120,15 +120,14 @@ interface PelotonChatProps {
 export default function PelotonChat({ subpoolName, members }: PelotonChatProps) {
   const [filter, setFilter] = useState<"all" | number>("all");
   const [newMessage, setNewMessage] = useState("");
-  const [localMessages, setLocalMessages] = useState<ChatMessage[]>(allMessages);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  // Sync filter to selected stage from parent
-  useEffect(() => {
-    if (selectedStage !== undefined) {
-      setFilter(selectedStage + 1);
+  const [localMessages, setLocalMessages] = useState<ChatMessage[]>(() => {
+    // Filter messages to only include members of this subpool
+    if (members?.length) {
+      return allMessages.filter((m) => members.includes(m.userName));
     }
-  }, [selectedStage]);
+    return allMessages;
+  });
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const filteredMessages = useMemo(() => {
     if (filter === "all") return localMessages;
