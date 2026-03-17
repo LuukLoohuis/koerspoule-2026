@@ -113,10 +113,11 @@ const allMessages = generateMockMessages();
 /* ── Component ── */
 
 interface PelotonChatProps {
-  selectedStage?: number; // 0-indexed
+  subpoolName?: string;
+  members?: string[];
 }
 
-export default function PelotonChat({ selectedStage }: PelotonChatProps) {
+export default function PelotonChat({ subpoolName, members }: PelotonChatProps) {
   const [filter, setFilter] = useState<"all" | number>("all");
   const [newMessage, setNewMessage] = useState("");
   const [localMessages, setLocalMessages] = useState<ChatMessage[]>(allMessages);
