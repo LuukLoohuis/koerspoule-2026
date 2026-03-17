@@ -98,6 +98,12 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
           <div className="vintage-divider mb-6" />
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p className="font-serif italic">"La Corsa Rosa" — Koerspoule, waar jij de ploegleider bent.</p>
+            <p className="font-sans">
+              Materiaalpech? Mail naar{" "}
+              <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors">
+                koerspoule@gmail.com
+              </a>
+            </p>
             <p className="font-sans">© 2025 Koerspoule</p>
           </div>
         </div>
