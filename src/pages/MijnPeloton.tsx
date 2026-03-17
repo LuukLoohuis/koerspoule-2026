@@ -330,33 +330,49 @@ export default function MijnPeloton() {
                   </LineChart>
                 </ChartContainer>
 
-                {/* Dagstijgers & dagdalers */}
+                {/* Dagstijgers & dagdalers (positie-gebaseerd) */}
                 {(() => {
                   const history = activePool.pointsHistory;
                   if (history.length < 2) return null;
-                  const last = history[history.length - 1];
-                  const prev = history[history.length - 2];
                   const members = activePool.standings.map(s => s.userName);
+
+                  // Compute rank per stage based on cumulative points (higher points = lower rank number)
+                  const getRanks = (stageData: Record<string, unknown>) => {
+                    const sorted = [...members]
+                      .map(name => ({ name, pts: (stageData[name] as number) || 0 }))
+                      .sort((a, b) => b.pts - a.pts);
+                    const ranks = new Map<string, number>();
+                    sorted.forEach((entry, i) => ranks.set(entry.name, i + 1));
+                    return ranks;
+                  };
+
+                  const lastRanks = getRanks(history[history.length - 1]);
+                  const prevRanks = getRanks(history[history.length - 2]);
+
+                  // Positive positionDelta = climbed (e.g. rank 5 -> rank 3 = +2)
                   const deltas = members.map(name => ({
                     name,
-                    delta: ((last[name] as number) || 0) - ((prev[name] as number) || 0),
-                  })).sort((a, b) => b.delta - a.delta);
+                    positionDelta: (prevRanks.get(name) || 0) - (lastRanks.get(name) || 0),
+                  })).sort((a, b) => b.positionDelta - a.positionDelta);
+
                   const topRiser = deltas[0];
                   const topFaller = deltas[deltas.length - 1];
                   return (
                     <div className="flex gap-4 mt-3 text-xs">
-                      {topRiser && topRiser.delta > 0 && (
+                      {topRiser && topRiser.positionDelta > 0 && (
                         <div className="flex items-center gap-1.5 bg-green-500/10 text-green-700 dark:text-green-400 px-2.5 py-1.5 rounded-md font-medium">
                           <span className="text-sm">▲</span>
-                          <span className="font-sans">{topRiser.name}</span>
-                          <span className="font-display font-bold">+{topRiser.delta} pt</span>
+                          <span className="text-muted-foreground">Grootste stijger:</span>
+                          <span className="font-sans font-bold">{topRiser.name}</span>
+                          <span className="font-display font-bold">+{topRiser.positionDelta} {topRiser.positionDelta === 1 ? 'plek' : 'plekken'}</span>
                         </div>
                       )}
-                      {topFaller && topFaller.delta < 0 && (
+                      {topFaller && topFaller.positionDelta < 0 && (
                         <div className="flex items-center gap-1.5 bg-red-500/10 text-red-700 dark:text-red-400 px-2.5 py-1.5 rounded-md font-medium">
                           <span className="text-sm">▼</span>
-                          <span className="font-sans">{topFaller.name}</span>
-                          <span className="font-display font-bold">{topFaller.delta} pt</span>
+                          <span className="text-muted-foreground">Grootste daler:</span>
+                          <span className="font-sans font-bold">{topFaller.name}</span>
+                          <span className="font-display font-bold">{topFaller.positionDelta} {topFaller.positionDelta === -1 ? 'plek' : 'plekken'}</span>
                         </div>
                       )}
                     </div>
