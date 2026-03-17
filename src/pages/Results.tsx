@@ -142,7 +142,7 @@ export default function Results() {
                   {stagePoolData.totalParticipants} deelnemers
                 </p>
               </div>
-              <PoolStandingsList data={stagePoolData} valueKey="stagePoints" unit="pt" myName={myTeam.userName} />
+              <PoolStandingsList data={stagePoolData} allParticipants={getStagePoolStandings(selectedStage)} valueKey="stagePoints" unit="pt" myName={myTeam.userName} />
             </div>
 
             {/* Column 3: My team points */}
