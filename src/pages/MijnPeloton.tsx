@@ -47,7 +47,7 @@ const enrichedSubPools = allSubPools.map((pool) => {
     standings,
     isExpanded,
     pointsHistory: Array.from({ length: 21 }, (_, i) => ({
-      stage: `Rit ${i + 1}`,
+      stage: `${i + 1}`,
       ...Object.fromEntries(
         pool.members.map((name) => [
         name,
@@ -206,9 +206,15 @@ export default function MijnPeloton() {
               </CardHeader>
               <CardContent className="p-4">
                 <ChartContainer config={chartConfig} className="h-[280px] w-full">
-                  <LineChart data={activePool.pointsHistory}>
+                  <LineChart data={activePool.pointsHistory} margin={{ left: -10, right: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="stage" tick={{ fontSize: 11 }} className="fill-muted-foreground" interval={0} />
+                    <XAxis
+                      dataKey="stage"
+                      tick={{ fontSize: 10 }}
+                      className="fill-muted-foreground"
+                      interval={0}
+                      label={{ value: "Rit", position: "insideBottomRight", offset: -4, fontSize: 10, className: "fill-muted-foreground" }}
+                    />
                     <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                     <ChartTooltip
                       content={({ active, payload, label }) => {
@@ -218,7 +224,7 @@ export default function MijnPeloton() {
                         sort((a, b) => (b.value as number) - (a.value as number));
                         return (
                           <div className="rounded-md border border-border bg-background p-2.5 shadow-lg text-xs min-w-[140px]">
-                            <p className="font-display font-bold mb-1.5 text-sm">{label}</p>
+                            <p className="font-display font-bold mb-1.5 text-sm">Rit {label}</p>
                             {sorted.map((entry, idx) =>
                             <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
                                 <div className="flex items-center gap-1.5">
@@ -248,6 +254,39 @@ export default function MijnPeloton() {
                     )}
                   </LineChart>
                 </ChartContainer>
+
+                {/* Dagstijgers & dagdalers */}
+                {(() => {
+                  const history = activePool.pointsHistory;
+                  if (history.length < 2) return null;
+                  const last = history[history.length - 1];
+                  const prev = history[history.length - 2];
+                  const members = activePool.standings.map(s => s.userName);
+                  const deltas = members.map(name => ({
+                    name,
+                    delta: ((last[name] as number) || 0) - ((prev[name] as number) || 0),
+                  })).sort((a, b) => b.delta - a.delta);
+                  const topRiser = deltas[0];
+                  const topFaller = deltas[deltas.length - 1];
+                  return (
+                    <div className="flex gap-4 mt-3 text-xs">
+                      {topRiser && topRiser.delta > 0 && (
+                        <div className="flex items-center gap-1.5 bg-green-500/10 text-green-700 dark:text-green-400 px-2.5 py-1.5 rounded-md font-medium">
+                          <span className="text-sm">▲</span>
+                          <span className="font-sans">{topRiser.name}</span>
+                          <span className="font-display font-bold">+{topRiser.delta} pt</span>
+                        </div>
+                      )}
+                      {topFaller && topFaller.delta < 0 && (
+                        <div className="flex items-center gap-1.5 bg-red-500/10 text-red-700 dark:text-red-400 px-2.5 py-1.5 rounded-md font-medium">
+                          <span className="text-sm">▼</span>
+                          <span className="font-sans">{topFaller.name}</span>
+                          <span className="font-display font-bold">{topFaller.delta} pt</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           </div>
