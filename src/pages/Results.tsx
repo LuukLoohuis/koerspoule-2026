@@ -195,7 +195,7 @@ export default function Results() {
                   {overallPoolData.totalParticipants} deelnemers
                 </p>
               </div>
-              <PoolStandingsList data={overallPoolData} valueKey="totalPoints" unit="pt" myName={myTeam.userName} />
+              <PoolStandingsList data={overallPoolData} allParticipants={allPoolParticipants} valueKey="totalPoints" unit="pt" myName={myTeam.userName} />
             </div>
 
             {/* Right: Your result summary */}
