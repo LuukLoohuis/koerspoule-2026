@@ -104,7 +104,7 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
                 koerspoule@gmail.com
               </a>
             </p>
-            <p className="font-sans">© 2025 Koerspoule</p>
+            <p className="font-sans"><p className="font-sans">© 2026 Koerspoule</p></p>
           </div>
         </div>
       </footer>

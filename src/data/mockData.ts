@@ -232,7 +232,7 @@ export const mockSubPools = [
   { id: "2", name: "Kantoor Peloton", members: ["Jan-Willem", "Pieter"], code: "KANTOOR" },
 ];
 
-/* ── Real Giro d'Italia 2025 Classifications (after stage 21) ── */
+/* ── Real Giro d'Italia 2026 Classifications (after stage 21) ── */
 export const mockClassifications: Classifications = {
   gc: [
     { position: 1, riderName: "Pedersen", riderNumber: 116, team: "Lidl - Trek", time: "7:46:11" },
