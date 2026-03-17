@@ -219,27 +219,50 @@ export default function MijnPeloton() {
                     <ChartTooltip
                       content={({ active, payload, label }) => {
                         if (!active || !payload?.length) return null;
-                        const sorted = [...payload].
-                        filter((p) => p.value != null).
-                        sort((a, b) => (b.value as number) - (a.value as number));
-                        return (
-                          <div className="rounded-md border border-border bg-background p-2.5 shadow-lg text-xs min-w-[140px]">
-                            <p className="font-display font-bold mb-1.5 text-sm">Rit {label}</p>
-                            {sorted.map((entry, idx) =>
-                            <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="font-display font-bold text-muted-foreground w-4 text-right">{idx + 1}.</span>
-                                  <span
-                                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                                  style={{ backgroundColor: entry.color }} />
-                                
-                                  <span className="font-sans font-medium">{entry.dataKey}</span>
-                                </div>
-                                <span className="font-display font-bold tabular-nums">{entry.value} pt</span>
-                              </div>
-                            )}
-                          </div>);
+                        const stageIdx = parseInt(label as string) - 1;
+                        const history = activePool.pointsHistory;
 
+                        // Current stage ranking
+                        const sorted = [...payload]
+                          .filter((p) => p.value != null)
+                          .sort((a, b) => (b.value as number) - (a.value as number));
+
+                        // Previous stage ranking for position change
+                        let prevRanking: string[] = [];
+                        if (stageIdx > 0 && history[stageIdx - 1]) {
+                          const prevData = history[stageIdx - 1];
+                          const members = activePool.standings.map(s => s.userName);
+                          prevRanking = [...members].sort(
+                            (a, b) => ((prevData[b] as number) || 0) - ((prevData[a] as number) || 0)
+                          );
+                        }
+
+                        return (
+                          <div className="rounded-md border border-border bg-background p-2.5 shadow-lg text-xs min-w-[160px]">
+                            <p className="font-display font-bold mb-1.5 text-sm">Rit {label}</p>
+                            {sorted.map((entry, idx) => {
+                              let arrow: React.ReactNode = null;
+                              if (prevRanking.length > 0) {
+                                const prevPos = prevRanking.indexOf(entry.dataKey as string);
+                                const diff = prevPos - idx; // positive = climbed
+                                if (diff > 0) arrow = <span className="text-green-600 dark:text-green-400 ml-1">▲{diff}</span>;
+                                else if (diff < 0) arrow = <span className="text-red-600 dark:text-red-400 ml-1">▼{Math.abs(diff)}</span>;
+                              }
+                              return (
+                                <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-display font-bold text-muted-foreground w-4 text-right">{idx + 1}.</span>
+                                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
+                                    <span className="font-sans font-medium">{entry.dataKey}</span>
+                                  </div>
+                                  <span className="font-display font-bold tabular-nums">
+                                    {entry.value} pt{arrow}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
                       }} />
                     
                     {activePool.standings.map((team, i) =>
