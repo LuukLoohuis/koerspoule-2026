@@ -1763,6 +1763,11 @@ export default function MijnPeloton() {
             </div>
           </TabsContent>
 
+          {/* ── TAB: Palmares ── */}
+          <TabsContent value="palmares" className="mt-6">
+            <PalmaresTab myTeam={myTeam} enrichedSubPools={enrichedSubPools} myGames={myGames} />
+          </TabsContent>
+
           {/* ── TAB: Wat Als? ── */}
           <TabsContent value="watals" className="mt-6">
             <WatAlsTab getRiderPoints={getRiderPoints} myTeam={myTeam} getCategoryName={getCategoryName} />
