@@ -109,7 +109,7 @@ export const mockStageResults: StageResult[] = Array.from({ length: 21 }, (_, i)
   distance: stageDistances[i],
   top20: generateStageTop20(i),
 }));
-/* ── Teams with real Giro 2025 riders ── */
+/* ── Teams with real Giro 2026 riders ── */
 export const mockTeams: TeamEntry[] = [
   {
     id: "1",
@@ -232,7 +232,7 @@ export const mockSubPools = [
   { id: "2", name: "Kantoor Peloton", members: ["Jan-Willem", "Pieter"], code: "KANTOOR" },
 ];
 
-/* ── Real Giro d'Italia 2025 Classifications (after stage 21) ── */
+/* ── Real Giro d'Italia 2026 Classifications (after stage 21) ── */
 export const mockClassifications: Classifications = {
   gc: [
     { position: 1, riderName: "Pedersen", riderNumber: 116, team: "Lidl - Trek", time: "7:46:11" },
