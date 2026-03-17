@@ -2401,7 +2401,7 @@ function PalmaresTab({
         <StatCard icon={<Trophy className="h-5 w-5 text-primary" />} label="Overwinningen" value={`${totalTrophies}`} />
         <StatCard icon={<Medal className="h-5 w-5 text-primary" />} label="Podiumplaatsen" value={`${totalPodiums}`} />
         <StatCard icon={<TrendingUp className="h-5 w-5 text-primary" />} label="Beste eindstand" value={`#${bestOverallRank}`} />
-        <StatCard icon={<Award className="h-5 w-5 text-primary" />} label="Koersen gereden" value={`${myGames.length}`} />
+        <StatCard icon={<Award className="h-5 w-5 text-primary" />} label="Koersen gereden" value={`${games.length}`} />
       </div>
 
       {/* Overall race results */}
