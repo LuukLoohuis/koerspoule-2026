@@ -2603,12 +2603,13 @@ function PalmaresTab({
     return { ...game, myRank, totalParticipants, stageWins, stagePodiums };
   });
 
-  const subpoolResults = pools.map((pool) => {
+  const subpoolResults = pools.map((pool, idx) => {
     const myIdx = pool.standings.findIndex((t) => t.userName === myTeam.userName);
     const rank = myIdx + 1;
     const stageWins = rank === 1 ? 5 : rank <= 3 ? 3 : 1;
     const stagePodiums = rank === 1 ? 10 : rank <= 3 ? 7 : 4;
-    return { name: pool.name, rank, total: pool.standings.length, isWinner: myIdx === 0, stageWins, stagePodiums };
+    const raceRef = games[idx % games.length];
+    return { name: pool.name, rank, total: pool.standings.length, isWinner: myIdx === 0, stageWins, stagePodiums, raceEmoji: raceRef.emoji, raceName: raceRef.name };
   });
 
   // Aggregates
