@@ -774,7 +774,7 @@ export default function MijnPeloton() {
                         <th className="text-center px-4 py-2 font-display">Punten</th>
                         <th className="text-center px-4 py-2 font-display">Renners in Top 10</th>
                         <th className="text-center px-4 py-2 font-display">Beste etappe</th>
-                        <th className="text-center px-4 py-2 font-display">Jokers</th>
+                        
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
