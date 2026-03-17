@@ -1764,10 +1764,7 @@ export default function MijnPeloton() {
             </div>
           </TabsContent>
 
-          {/* ── TAB: Koerscafé (Chat) ── */}
-          <TabsContent value="chat" className="mt-6">
-            <PelotonChat selectedStage={selectedStage} />
-          </TabsContent>
+
 
           {/* ── TAB: Palmares ── */}
           <TabsContent value="palmares" className="mt-6">
