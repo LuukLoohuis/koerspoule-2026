@@ -228,9 +228,9 @@ export default function Results() {
                   </div>
 
                   {/* Per-stage breakdown as mini chart */}
-                  <div className="space-y-2">
-                    <h3 className="font-display text-sm font-bold text-muted-foreground uppercase tracking-wider">Punten per etappe</h3>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground mb-3">
+                  <div>
+                    <h3 className="font-display text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Punten per etappe</h3>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
                       {Object.entries(stageTypeConfig).map(([key, cfg]) => (
                         <div key={key} className="flex items-center gap-1">
                           <span className={cn("w-3 h-3 rounded-full inline-block shrink-0", cfg.color)} />
@@ -238,7 +238,7 @@ export default function Results() {
                         </div>
                       ))}
                     </div>
-                    <div className="flex items-end gap-1 h-24 px-1">
+                    <div className="flex items-end gap-1 h-24 px-1 mt-4">
                       {mockStageResults.map((stage, idx) => {
                         const pts = stagePoints[idx];
                         const maxPts = Math.max(...stagePoints, 1);
