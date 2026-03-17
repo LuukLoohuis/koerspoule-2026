@@ -1509,7 +1509,8 @@ export default function MijnPeloton() {
                     </Card>
                   </div>
 
-
+                  <div className="space-y-6">
+                    <Card className="retro-border">
                       <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
                         <CardTitle className="font-display text-base">🃏 Jokers</CardTitle>
                       </CardHeader>
