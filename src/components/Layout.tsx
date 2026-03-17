@@ -97,7 +97,7 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
         <div className="container mx-auto px-4">
           <div className="vintage-divider mb-6" />
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <p className="font-serif italic">"La Corsa Rosa" — Koerspoule, waar jij de ploegleider bent.</p>
+            <p className="font-serif italic"><p className="font-serif italic">"La Corsa Rosa" — Koerspoule, uit liefde voor de koers.</p></p>
             <p className="font-sans">
               Materiaalpech? Mail naar{" "}
               <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors">
