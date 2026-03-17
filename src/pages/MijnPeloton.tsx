@@ -2362,7 +2362,7 @@ function PalmaresTab({
   myGames: { id: string; name: string; status: "actief" | "afgelopen"; emoji: string; colors: string[] }[];
 }) {
   // Mock palmares data per race
-  const palmaresData = myGames.map((game) => {
+  const palmaresData = games.map((game) => {
     const isActive = game.status === "actief";
     const myRank = game.id === "giro2026" ? 120 : game.id === "tdf2026" ? 87 : 203;
     const totalParticipants = game.id === "giro2026" ? 1350 : game.id === "tdf2026" ? 1120 : 980;
