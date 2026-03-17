@@ -307,16 +307,21 @@ export default function MijnPeloton() {
                         );
                       }} />
                     
-                    {activePool.standings.map((team, i) =>
-                    <Line
-                      key={team.userName}
-                      type="monotone"
-                      dataKey={team.userName}
-                      stroke={MEMBER_COLORS[i % MEMBER_COLORS.length]}
-                      strokeWidth={2}
-                      dot={{ r: 3 }} />
-
-                    )}
+                    {activePool.standings
+                      .filter(team => chartVisibleMembers.has(team.userName))
+                      .map((team) => {
+                        const colorIdx = activePool.standings.findIndex(t => t.userName === team.userName);
+                        return (
+                          <Line
+                            key={team.userName}
+                            type="monotone"
+                            dataKey={team.userName}
+                            stroke={MEMBER_COLORS[colorIdx % MEMBER_COLORS.length]}
+                            strokeWidth={team.userName === myTeam.userName ? 3 : 2}
+                            dot={{ r: 3 }}
+                          />
+                        );
+                      })}
                   </LineChart>
                 </ChartContainer>
 
