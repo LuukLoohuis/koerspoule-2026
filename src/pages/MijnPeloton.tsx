@@ -2378,7 +2378,7 @@ function PalmaresTab({
   });
 
   // Subpool results
-  const subpoolResults = enrichedSubPools.map((pool) => {
+  const subpoolResults = pools.map((pool) => {
     const myIdx = pool.standings.findIndex((t) => t.userName === myTeam.userName);
     return {
       name: pool.name,
