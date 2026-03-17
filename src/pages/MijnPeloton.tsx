@@ -87,6 +87,11 @@ export default function MijnPeloton() {
     [selectedPool]
   );
 
+  // Reset chart selection when switching pools
+  useEffect(() => {
+    setChartVisibleMembers(new Set([myTeam.userName]));
+  }, [selectedPool]);
+
   const chartConfig = useMemo(() => {
     if (!activePool) return {};
     return Object.fromEntries(
