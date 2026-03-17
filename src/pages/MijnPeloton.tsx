@@ -2357,7 +2357,7 @@ function PalmaresTab({
   enrichedSubPools: pools,
   myGames: games,
 }: {
-  myTeam: TeamEntry;
+  myTeam: { userName: string; totalPoints: number; id: string };
   enrichedSubPools: { name: string; standings: { userName: string; totalPoints: number; id: string }[] }[];
   myGames: { id: string; name: string; status: "actief" | "afgelopen"; emoji: string; colors: string[] }[];
 }) {
