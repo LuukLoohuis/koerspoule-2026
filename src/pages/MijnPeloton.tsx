@@ -784,7 +784,7 @@ export default function MijnPeloton() {
                           <td className="text-center px-4 py-2.5 font-display font-bold">{team.totalPoints}</td>
                           <td className="text-center px-4 py-2.5">{Math.floor(Math.random() * 6) + 2}</td>
                           <td className="text-center px-4 py-2.5">Rit {Math.floor(Math.random() * 3) + 1}</td>
-                          <td className="text-center px-4 py-2.5">{team.jokers.length}</td>
+                          
                         </tr>
                       )}
                     </tbody>
