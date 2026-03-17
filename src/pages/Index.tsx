@@ -42,7 +42,7 @@ export default function Index() {
           )`
           }} />
         
-        <div className="container mx-auto px-4 py-20 md:py-32 relative">
+        <div className="container mx-auto px-4 py-10 md:py-16 relative">
           <div className="max-w-3xl mx-auto text-center">
             <img
               src={koerspouleLogo}
