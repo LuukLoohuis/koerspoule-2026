@@ -78,10 +78,20 @@ export const subpoolTeams: SubpoolTeam[] = names.map((name, pIdx) => {
     ["Vingegaard", "Roglič", "Pogačar"],
     ["Pogačar", "Vingegaard", "Roglič"],
     ["Evenepoel", "Pogačar", "Vingegaard"],
+    ["Pogačar", "Vingegaard", "Evenepoel"],
+    ["Vingegaard", "Evenepoel", "Pogačar"],
+    ["Roglič", "Evenepoel", "Vingegaard"],
+    ["Pogačar", "Roglič", "Vingegaard"],
+    ["Evenepoel", "Pogačar", "Roglič"],
+    ["Vingegaard", "Pogačar", "Evenepoel"],
+    ["Pogačar", "Evenepoel", "Vingegaard"],
+    ["Roglič", "Vingegaard", "Pogačar"],
+    ["Pogačar", "Roglič", "Evenepoel"],
+    ["Evenepoel", "Vingegaard", "Roglič"],
   ];
-  const pointsOptions = ["Girmay", "Milan", "Philipsen", "Merlier", "Groves", "Girmay", "Milan", "Philipsen", "Girmay", "Milan"];
-  const komOptions = ["Pogačar", "Vingegaard", "Pogačar", "Evenepoel", "Pogačar", "Roglič", "Pogačar", "Vingegaard", "Pogačar", "Evenepoel"];
-  const youthOptions = ["Pogačar", "Pogačar", "Evenepoel", "Pogačar", "Pogačar", "Pogačar", "Evenepoel", "Pogačar", "Pogačar", "Pogačar"];
+  const pointsOptions = ["Girmay", "Milan", "Philipsen", "Merlier", "Groves", "Girmay", "Milan", "Philipsen", "Girmay", "Milan", "Groves", "Girmay", "Merlier", "Milan", "Philipsen", "Girmay", "Milan", "Groves", "Philipsen", "Girmay"];
+  const komOptions = ["Pogačar", "Vingegaard", "Pogačar", "Evenepoel", "Pogačar", "Roglič", "Pogačar", "Vingegaard", "Pogačar", "Evenepoel", "Vingegaard", "Pogačar", "Roglič", "Pogačar", "Evenepoel", "Pogačar", "Vingegaard", "Roglič", "Pogačar", "Evenepoel"];
+  const youthOptions = ["Pogačar", "Pogačar", "Evenepoel", "Pogačar", "Pogačar", "Pogačar", "Evenepoel", "Pogačar", "Pogačar", "Pogačar", "Evenepoel", "Pogačar", "Pogačar", "Evenepoel", "Pogačar", "Pogačar", "Evenepoel", "Pogačar", "Pogačar", "Evenepoel"];
 
   return {
     id: `sp-${pIdx + 1}`,
