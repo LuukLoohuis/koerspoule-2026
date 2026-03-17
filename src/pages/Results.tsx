@@ -4,8 +4,9 @@ import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } fro
 import { pointsTable, classificationPoints } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal, User, Users, MoreHorizontal } from "lucide-react";
+import { Trophy, Medal, User, Users } from "lucide-react";
 import StageRoadbook, { stageTypeConfig } from "@/components/StageRoadbook";
+import PoolStandingsList, { RankBadge } from "@/components/PoolStandingsList";
 
 export default function Results() {
   const [selectedStage, setSelectedStage] = useState(0);
