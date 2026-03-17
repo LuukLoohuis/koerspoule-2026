@@ -1429,8 +1429,87 @@ export default function MijnPeloton() {
                     </Card>
                   </div>
 
-                  <div className="space-y-6">
-                    <Card className="retro-border">
+                  {/* ── Jouw Koerspositie ── */}
+                  <div className="lg:col-span-3">
+                    <Card className="retro-border overflow-hidden">
+                      <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+                        <CardTitle className="font-display text-base flex items-center gap-2">
+                          <Mountain className="h-5 w-5 text-primary" />
+                          Jouw koerspositie
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {/* Algemeen klassement (main pool) */}
+                          {(() => {
+                            const myRank = allPoolParticipants.findIndex(p => p.userName === myTeam.userName) + 1;
+                            const total = allPoolParticipants.length;
+                            const pct = Math.round((1 - myRank / total) * 100);
+                            const isTopTen = myRank <= 10;
+                            const isTopFifty = myRank <= 50;
+                            const label = isTopTen ? "In de kopgroep! 🔥" : isTopFifty ? "In het peloton 🚴" : pct >= 50 ? "Mee in de waaier 💨" : "Achter de volgwagen 🚗";
+                            return (
+                              <div className={cn(
+                                "rounded-lg border-2 p-4 space-y-2 transition-all",
+                                isTopTen ? "border-primary bg-primary/5" : "border-border bg-muted/20"
+                              )}>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider">🏔️ Algemeen Klassement</span>
+                                  <Trophy className="h-4 w-4 text-primary" />
+                                </div>
+                                <div className="flex items-baseline gap-2">
+                                  <span className="font-display text-3xl font-bold text-accent">#{myRank}</span>
+                                  <span className="text-xs text-muted-foreground font-sans">/ {total}</span>
+                                </div>
+                                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                                  <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
+                                </div>
+                                <p className="text-xs font-sans font-medium">{label}</p>
+                                <p className="text-[10px] text-muted-foreground font-sans">Top {100 - pct}% van het peloton</p>
+                              </div>
+                            );
+                          })()}
+
+                          {/* Subpoule standings */}
+                          {enrichedSubPools.map((pool) => {
+                            const myIdx = pool.standings.findIndex(t => t.id === myTeam.id);
+                            const myRank = myIdx + 1;
+                            const total = pool.standings.length;
+                            const isLeader = myRank === 1;
+                            const isPodium = myRank <= 3;
+                            const label = isLeader ? "Maglia Rosa! 🎀" : isPodium ? "Op het podium 🏅" : myRank <= Math.ceil(total / 2) ? "In de aanval 💪" : "Wachten op de sprint 🎯";
+                            const medalEmoji = myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : myRank === 3 ? "🥉" : "";
+                            return (
+                              <button
+                                key={pool.id}
+                                onClick={() => { setGameTab("subpoules"); setSelectedPool(pool.id); }}
+                                className={cn(
+                                  "rounded-lg border-2 p-4 space-y-2 text-left transition-all hover:shadow-md group",
+                                  isLeader ? "border-primary bg-primary/5" : "border-border bg-muted/20 hover:border-muted-foreground"
+                                )}>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider truncate">
+                                    🚴 {pool.name}
+                                  </span>
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+                                </div>
+                                <div className="flex items-baseline gap-2">
+                                  <span className="font-display text-3xl font-bold text-accent">{medalEmoji} #{myRank}</span>
+                                  <span className="text-xs text-muted-foreground font-sans">/ {total}</span>
+                                </div>
+                                <p className="text-xs font-sans font-medium">{label}</p>
+                                <p className="text-[10px] text-muted-foreground font-sans">
+                                  {myRank > 1 ? `${pool.standings[0].userName} leidt met ${pool.standings[0].totalPoints} pt` : `Je leidt met ${myTeam.totalPoints} pt`}
+                                </p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+
                       <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
                         <CardTitle className="font-display text-base">🃏 Jokers</CardTitle>
                       </CardHeader>
