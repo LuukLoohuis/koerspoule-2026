@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
+import PelotonChat from "@/components/PelotonChat";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChartContainer,
@@ -959,7 +960,7 @@ export default function MijnPeloton() {
 
         {/* Inner tabs: Team / Uitslagen / Subpoules */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
-          <TabsList className="w-full retro-border h-auto p-1 grid grid-cols-2 md:grid-cols-5 gap-1">
+          <TabsList className="w-full retro-border h-auto p-1 grid grid-cols-3 md:grid-cols-6 gap-1">
             <TabsTrigger value="team" className="font-display text-xs md:text-sm px-2 md:px-3">
               🚴‍♂️🚴 Mijn Team
             </TabsTrigger>
@@ -968,6 +969,9 @@ export default function MijnPeloton() {
             </TabsTrigger>
             <TabsTrigger value="subpoules" className="font-display text-xs md:text-sm px-2 md:px-3">
               👥 Subpoules
+            </TabsTrigger>
+            <TabsTrigger value="chat" className="font-display text-xs md:text-sm px-2 md:px-3">
+              💬 Koerscafé
             </TabsTrigger>
             <TabsTrigger value="palmares" className="font-display text-xs md:text-sm px-2 md:px-3">
               🏅 Palmares
@@ -1761,6 +1765,11 @@ export default function MijnPeloton() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* ── TAB: Koerscafé (Chat) ── */}
+          <TabsContent value="chat" className="mt-6">
+            <PelotonChat selectedStage={selectedStage} />
           </TabsContent>
 
           {/* ── TAB: Palmares ── */}
