@@ -2702,7 +2702,10 @@ function PalmaresTab({
               <div key={pool.name} className={cn("flex items-center justify-between px-4 py-3", pool.isWinner && "bg-primary/5")}>
                 <div className="flex items-center gap-3">
                   <span className="text-lg">{pool.rank === 1 ? "🥇" : pool.rank === 2 ? "🥈" : pool.rank === 3 ? "🥉" : `#${pool.rank}`}</span>
-                  <p className="font-display font-bold text-sm">{pool.name}</p>
+                  <div>
+                    <p className="font-display font-bold text-sm">{pool.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-sans">{pool.raceEmoji} {pool.raceName}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 text-center">
                   <div><p className="font-display font-bold text-sm">{pool.stageWins}</p><p className="text-[10px] text-muted-foreground">zeges</p></div>
