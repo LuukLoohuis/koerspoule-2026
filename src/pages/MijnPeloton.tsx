@@ -73,7 +73,8 @@ export default function MijnPeloton() {
   const [selectedPool, setSelectedPool] = useState<string | null>(null);
   const [newPoolName, setNewPoolName] = useState("");
   const [newPoolCode, setNewPoolCode] = useState("");
-  const [joinCode, setJoinCode] = useState("");
+   const [joinCode, setJoinCode] = useState("");
+   const [joinName, setJoinName] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedStage, setSelectedStage] = useState(0);
   const [comparePlayerName, setComparePlayerName] = useState("");
