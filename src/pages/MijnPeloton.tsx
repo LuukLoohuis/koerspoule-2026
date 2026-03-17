@@ -2601,18 +2601,27 @@ function PalmaresTab({
     const totalParticipants = game.id === "giro2026" ? 1350 : game.id === "tdf2026" ? 1120 : 980;
     const myPoints = game.id === "giro2026" ? myTeam.totalPoints : game.id === "tdf2026" ? 387 : 245;
 
+    // Mock stage wins & podiums in the overall pool per race
+    const stageWins = game.id === "tdf2026" ? 2 : game.id === "giro2026" ? 1 : 0;
+    const stagePodiums = game.id === "tdf2026" ? 5 : game.id === "giro2026" ? 3 : 1;
+
     return {
       ...game,
       isActive,
       myRank,
       totalParticipants,
       myPoints,
+      stageWins,
+      stagePodiums,
     };
   });
 
   // Subpool results
   const subpoolResults = pools.map((pool) => {
     const myIdx = pool.standings.findIndex((t) => t.userName === myTeam.userName);
+    // Mock stage wins & podiums in subpoules
+    const stageWins = myIdx === 0 ? 5 : myIdx <= 2 ? 3 : 1;
+    const stagePodiums = myIdx === 0 ? 10 : myIdx <= 2 ? 7 : 4;
     return {
       name: pool.name,
       rank: myIdx + 1,
@@ -2620,21 +2629,35 @@ function PalmaresTab({
       points: pool.standings[myIdx]?.totalPoints ?? 0,
       winner: pool.standings[0]?.userName ?? "—",
       isWinner: myIdx === 0,
+      stageWins,
+      stagePodiums,
     };
   });
 
-  const totalTrophies = subpoolResults.filter((s) => s.isWinner).length;
-  const totalPodiums = subpoolResults.filter((s) => s.rank <= 3).length;
+  // Totals
+  const totalOverallWins = palmaresData.filter(p => p.myRank === 1).length;
+  const totalOverallPodiums = palmaresData.filter(p => p.myRank <= 3).length;
+  const totalStageWins = palmaresData.reduce((s, p) => s + p.stageWins, 0);
+  const totalStagePodiums = palmaresData.reduce((s, p) => s + p.stagePodiums, 0);
+  const subpoolWins = subpoolResults.filter((s) => s.isWinner).length;
+  const subpoolPodiums = subpoolResults.filter((s) => s.rank <= 3).length;
+  const subpoolStageWins = subpoolResults.reduce((s, p) => s + p.stageWins, 0);
   const bestOverallRank = Math.min(...palmaresData.map((p) => p.myRank));
 
   return (
     <div className="space-y-6">
       {/* Summary stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={<Trophy className="h-5 w-5 text-primary" />} label="Overwinningen" value={`${totalTrophies}`} />
-        <StatCard icon={<Medal className="h-5 w-5 text-primary" />} label="Podiumplaatsen" value={`${totalPodiums}`} />
+        <StatCard icon={<Trophy className="h-5 w-5 text-primary" />} label="Etappezeges (AK)" value={`${totalStageWins}`} />
+        <StatCard icon={<Medal className="h-5 w-5 text-primary" />} label="Etappepodia (AK)" value={`${totalStagePodiums}`} />
         <StatCard icon={<TrendingUp className="h-5 w-5 text-primary" />} label="Beste eindstand" value={`#${bestOverallRank}`} />
         <StatCard icon={<Award className="h-5 w-5 text-primary" />} label="Koersen gereden" value={`${games.length}`} />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard icon={<Trophy className="h-5 w-5 text-primary" />} label="Subpoule-zeges" value={`${subpoolWins}`} />
+        <StatCard icon={<Medal className="h-5 w-5 text-primary" />} label="Subpoule-podia" value={`${subpoolPodiums}`} />
+        <StatCard icon={<Zap className="h-5 w-5 text-primary" />} label="Etappezeges (sub)" value={`${subpoolStageWins}`} />
+        <StatCard icon={<Target className="h-5 w-5 text-primary" />} label="Overwinningen totaal" value={`${totalOverallWins + subpoolWins}`} />
       </div>
 
       {/* Overall race results */}
@@ -2660,12 +2683,22 @@ function PalmaresTab({
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="font-display font-bold text-lg">
-                  #{race.myRank}
-                  <span className="text-xs text-muted-foreground font-sans ml-1">/ {race.totalParticipants}</span>
-                </p>
-                <p className="text-xs text-muted-foreground font-sans">{race.myPoints} pt</p>
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <p className="font-display font-bold text-sm text-primary">{race.stageWins}</p>
+                  <p className="text-[10px] text-muted-foreground font-sans">Zeges</p>
+                </div>
+                <div className="text-center">
+                  <p className="font-display font-bold text-sm">{race.stagePodiums}</p>
+                  <p className="text-[10px] text-muted-foreground font-sans">Podia</p>
+                </div>
+                <div className="text-right min-w-[70px]">
+                  <p className="font-display font-bold text-lg">
+                    #{race.myRank}
+                    <span className="text-xs text-muted-foreground font-sans ml-1">/ {race.totalParticipants}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground font-sans">{race.myPoints} pt</p>
+                </div>
               </div>
             </div>
           ))}
@@ -2697,14 +2730,24 @@ function PalmaresTab({
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className={cn(
-                  "font-display font-bold text-lg",
-                  pool.rank <= 3 && "text-primary"
-                )}>
-                  #{pool.rank}
-                </p>
-                <p className="text-xs text-muted-foreground font-sans">{pool.points} pt</p>
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <p className="font-display font-bold text-sm text-primary">{pool.stageWins}</p>
+                  <p className="text-[10px] text-muted-foreground font-sans">Zeges</p>
+                </div>
+                <div className="text-center">
+                  <p className="font-display font-bold text-sm">{pool.stagePodiums}</p>
+                  <p className="text-[10px] text-muted-foreground font-sans">Podia</p>
+                </div>
+                <div className="text-right min-w-[60px]">
+                  <p className={cn(
+                    "font-display font-bold text-lg",
+                    pool.rank <= 3 && "text-primary"
+                  )}>
+                    #{pool.rank}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-sans">{pool.points} pt</p>
+                </div>
               </div>
             </div>
           ))}
