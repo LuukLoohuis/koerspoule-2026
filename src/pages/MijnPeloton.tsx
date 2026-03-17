@@ -451,17 +451,6 @@ export default function MijnPeloton() {
                     return { stage: stage.stage, idx, myPts, otherPts, type: stage.type };
                   });
 
-                  // Joker points
-                  const myJokerRows = myTeam.jokers.map((j) => ({
-                    ...j,
-                    pts: getSubpoolPointsForView(j.number)
-                  }));
-                  const otherJokerRows = subpoolCompareTeam.jokers.map((j) => ({
-                    ...j,
-                    pts: getSubpoolPointsForView(j.number)
-                  }));
-                  const myJokerTotal = myJokerRows.reduce((s, j) => s + j.pts, 0);
-                  const otherJokerTotal = otherJokerRows.reduce((s, j) => s + j.pts, 0);
 
                   return (
                     <div className="space-y-4">
