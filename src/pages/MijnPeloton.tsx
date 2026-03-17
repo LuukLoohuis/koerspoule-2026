@@ -911,6 +911,11 @@ export default function MijnPeloton() {
               </div>);
 
           })()}
+
+          {/* Koerscafé – subpoule chat */}
+          <div className="lg:col-span-3">
+            <PelotonChat subpoolName={activePool.name} members={activePool.members} />
+          </div>
         </div>
       </div>);
 
