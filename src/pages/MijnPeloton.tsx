@@ -959,7 +959,7 @@ export default function MijnPeloton() {
 
         {/* Inner tabs: Team / Uitslagen / Subpoules */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
-          <TabsList className="w-full retro-border h-auto p-1 grid grid-cols-2 md:grid-cols-4 gap-1">
+          <TabsList className="w-full retro-border h-auto p-1 grid grid-cols-2 md:grid-cols-5 gap-1">
             <TabsTrigger value="team" className="font-display text-xs md:text-sm px-2 md:px-3">
               🚴‍♂️🚴 Mijn Team
             </TabsTrigger>
@@ -968,6 +968,9 @@ export default function MijnPeloton() {
             </TabsTrigger>
             <TabsTrigger value="subpoules" className="font-display text-xs md:text-sm px-2 md:px-3">
               👥 Subpoules
+            </TabsTrigger>
+            <TabsTrigger value="palmares" className="font-display text-xs md:text-sm px-2 md:px-3">
+              🏅 Palmares
             </TabsTrigger>
             <TabsTrigger value="watals" className="font-display text-xs md:text-sm px-2 md:px-3">
               ⛰️ Hors Cat.
@@ -1760,6 +1763,11 @@ export default function MijnPeloton() {
             </div>
           </TabsContent>
 
+          {/* ── TAB: Palmares ── */}
+          <TabsContent value="palmares" className="mt-6">
+            <PalmaresTab myTeam={myTeam} enrichedSubPools={enrichedSubPools} myGames={myGames} />
+          </TabsContent>
+
           {/* ── TAB: Wat Als? ── */}
           <TabsContent value="watals" className="mt-6">
             <WatAlsTab getRiderPoints={getRiderPoints} myTeam={myTeam} getCategoryName={getCategoryName} />
@@ -2341,4 +2349,134 @@ function StatCard({ icon, label, value }: {icon: React.ReactNode;label: string;v
       </CardContent>
     </Card>);
 
+}
+
+/* ── Palmares Tab Component ── */
+function PalmaresTab({
+  myTeam,
+  enrichedSubPools: pools,
+  myGames: games,
+}: {
+  myTeam: { userName: string; totalPoints: number; id: string };
+  enrichedSubPools: { name: string; standings: { userName: string; totalPoints: number; id: string }[] }[];
+  myGames: { id: string; name: string; status: "actief" | "afgelopen"; emoji: string; colors: string[] }[];
+}) {
+  // Mock palmares data per race
+  const palmaresData = games.map((game) => {
+    const isActive = game.status === "actief";
+    const myRank = game.id === "giro2026" ? 120 : game.id === "tdf2026" ? 87 : 203;
+    const totalParticipants = game.id === "giro2026" ? 1350 : game.id === "tdf2026" ? 1120 : 980;
+    const myPoints = game.id === "giro2026" ? myTeam.totalPoints : game.id === "tdf2026" ? 387 : 245;
+
+    return {
+      ...game,
+      isActive,
+      myRank,
+      totalParticipants,
+      myPoints,
+    };
+  });
+
+  // Subpool results
+  const subpoolResults = pools.map((pool) => {
+    const myIdx = pool.standings.findIndex((t) => t.userName === myTeam.userName);
+    return {
+      name: pool.name,
+      rank: myIdx + 1,
+      total: pool.standings.length,
+      points: pool.standings[myIdx]?.totalPoints ?? 0,
+      winner: pool.standings[0]?.userName ?? "—",
+      isWinner: myIdx === 0,
+    };
+  });
+
+  const totalTrophies = subpoolResults.filter((s) => s.isWinner).length;
+  const totalPodiums = subpoolResults.filter((s) => s.rank <= 3).length;
+  const bestOverallRank = Math.min(...palmaresData.map((p) => p.myRank));
+
+  return (
+    <div className="space-y-6">
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard icon={<Trophy className="h-5 w-5 text-primary" />} label="Overwinningen" value={`${totalTrophies}`} />
+        <StatCard icon={<Medal className="h-5 w-5 text-primary" />} label="Podiumplaatsen" value={`${totalPodiums}`} />
+        <StatCard icon={<TrendingUp className="h-5 w-5 text-primary" />} label="Beste eindstand" value={`#${bestOverallRank}`} />
+        <StatCard icon={<Award className="h-5 w-5 text-primary" />} label="Koersen gereden" value={`${games.length}`} />
+      </div>
+
+      {/* Overall race results */}
+      <Card className="retro-border">
+        <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+          <CardTitle className="font-display text-base">🏆 Eindstanden Grote Rondes</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 divide-y divide-border">
+          {palmaresData.map((race) => (
+            <div
+              key={race.id}
+              className={cn(
+                "flex items-center justify-between px-4 py-4",
+                race.isActive && "bg-primary/5"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{race.emoji}</span>
+                <div>
+                  <p className="font-display font-bold text-sm">{race.name}</p>
+                  <p className="text-xs text-muted-foreground font-sans">
+                    {race.isActive ? "🟢 Lopend" : "Afgelopen"}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-display font-bold text-lg">
+                  #{race.myRank}
+                  <span className="text-xs text-muted-foreground font-sans ml-1">/ {race.totalParticipants}</span>
+                </p>
+                <p className="text-xs text-muted-foreground font-sans">{race.myPoints} pt</p>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Subpool results */}
+      <Card className="retro-border">
+        <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+          <CardTitle className="font-display text-base">👥 Eindstanden Subpoules</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 divide-y divide-border">
+          {subpoolResults.map((pool) => (
+            <div
+              key={pool.name}
+              className={cn(
+                "flex items-center justify-between px-4 py-3",
+                pool.isWinner && "bg-primary/10"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-lg">
+                  {pool.rank === 1 ? "🥇" : pool.rank === 2 ? "🥈" : pool.rank === 3 ? "🥉" : `#${pool.rank}`}
+                </span>
+                <div>
+                  <p className="font-display font-bold text-sm">{pool.name}</p>
+                  <p className="text-xs text-muted-foreground font-sans">
+                    {pool.total} deelnemers • Winnaar: {pool.winner}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className={cn(
+                  "font-display font-bold text-lg",
+                  pool.rank <= 3 && "text-primary"
+                )}>
+                  #{pool.rank}
+                </p>
+                <p className="text-xs text-muted-foreground font-sans">{pool.points} pt</p>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
