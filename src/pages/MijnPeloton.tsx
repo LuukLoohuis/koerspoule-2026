@@ -2354,12 +2354,12 @@ function StatCard({ icon, label, value }: {icon: React.ReactNode;label: string;v
 /* ── Palmares Tab Component ── */
 function PalmaresTab({
   myTeam,
-  enrichedSubPools,
-  myGames,
+  enrichedSubPools: pools,
+  myGames: games,
 }: {
-  myTeam: typeof mockTeams[0];
-  enrichedSubPools: typeof enrichedSubPools;
-  myGames: typeof myGames;
+  myTeam: TeamEntry;
+  enrichedSubPools: { name: string; standings: { userName: string; totalPoints: number; id: string }[] }[];
+  myGames: { id: string; name: string; status: "actief" | "afgelopen"; emoji: string; colors: string[] }[];
 }) {
   // Mock palmares data per race
   const palmaresData = myGames.map((game) => {
