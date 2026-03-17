@@ -177,54 +177,65 @@ export default function MijnPeloton() {
               <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
                 <CardTitle className="font-display text-base">🏆 Stand</CardTitle>
               </CardHeader>
-              <CardContent className="p-0 divide-y divide-border">
-                {(() => {
-                  const all = activePool.standings;
-                  const myIdx = all.findIndex(t => t.userName === myTeam.userName);
-                  const topN = 3;
-
-                  if (all.length <= topN + 7) {
-                    // Small pool: show all
-                    return all.map((team, idx) => (
-                      <StandingRow key={team.id} team={team} rank={idx + 1} isMe={team.userName === myTeam.userName} />
-                    ));
-                  }
-
-                  // Top 3
-                  const rows: React.ReactNode[] = all.slice(0, topN).map((team, idx) => (
-                    <StandingRow key={team.id} team={team} rank={idx + 1} isMe={team.userName === myTeam.userName} />
-                  ));
-
-                  // If user is not in top 3, show gap + 3 above + user + 3 below
-                  if (myIdx >= topN) {
-                    const aboveStart = Math.max(topN, myIdx - 3);
-                    const belowEnd = Math.min(all.length, myIdx + 4);
-
-                    if (aboveStart > topN) {
-                      rows.push(
-                        <div key="gap-top" className="flex items-center justify-center py-2 text-muted-foreground">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </div>
-                      );
-                    }
-
-                    for (let i = aboveStart; i < belowEnd; i++) {
-                      rows.push(
-                        <StandingRow key={all[i].id} team={all[i]} rank={i + 1} isMe={all[i].userName === myTeam.userName} />
-                      );
-                    }
-
-                    if (belowEnd < all.length) {
-                      rows.push(
-                        <div key="gap-bottom" className="flex items-center justify-center py-2 text-muted-foreground">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </div>
-                      );
-                    }
-                  }
-
-                  return rows;
-                })()}
+              <CardContent className="p-0 divide-y divide-border max-h-[400px] overflow-y-auto">
+                {activePool.standings.map((team, idx) => {
+                  const isMe = team.userName === myTeam.userName;
+                  const isVisible = chartVisibleMembers.has(team.userName);
+                  const colorIdx = activePool.standings.findIndex(t => t.userName === team.userName);
+                  const color = MEMBER_COLORS[colorIdx % MEMBER_COLORS.length];
+                  return (
+                    <div
+                      key={team.id || team.userName}
+                      className={cn(
+                        "flex items-center justify-between px-3 py-2 text-sm",
+                        isMe && "bg-primary/10 border-l-4 border-l-primary",
+                        idx < 3 && !isMe && "bg-primary/5",
+                      )}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={cn(
+                          "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                          idx === 0 && "bg-primary text-primary-foreground",
+                          idx === 1 && "bg-muted text-foreground",
+                          idx === 2 && "bg-vintage-gold text-primary-foreground",
+                          idx > 2 && "text-muted-foreground",
+                        )}>
+                          {idx + 1}
+                        </span>
+                        <span className={cn("font-sans font-medium truncate", isMe && "text-primary font-bold")}>
+                          {team.userName}
+                          {isMe && <span className="ml-1 text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">JIJ</span>}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={cn("font-bold text-xs tabular-nums", isMe ? "text-primary" : "text-accent")}>
+                          {team.totalPoints} pt
+                        </span>
+                        <button
+                          onClick={() => {
+                            setChartVisibleMembers(prev => {
+                              const next = new Set(prev);
+                              if (next.has(team.userName)) {
+                                next.delete(team.userName);
+                              } else {
+                                next.add(team.userName);
+                              }
+                              return next;
+                            });
+                          }}
+                          className={cn(
+                            "w-5 h-5 rounded-full border-2 transition-all shrink-0",
+                            isVisible
+                              ? "border-transparent shadow-sm"
+                              : "border-muted-foreground/30 bg-transparent"
+                          )}
+                          style={isVisible ? { backgroundColor: color } : {}}
+                          title={isVisible ? `${team.userName} verbergen in grafiek` : `${team.userName} tonen in grafiek`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
           </div>
