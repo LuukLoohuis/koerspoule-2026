@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
+import PelotonChat from "@/components/PelotonChat";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChartContainer,
