@@ -1914,7 +1914,12 @@ export default function MijnPeloton() {
                       className="w-full"
                       onClick={() => {
                         if (newPoolName && newPoolCode) {
-                          toast({ title: "Subpoule aangemaakt!", description: `Code: ${newPoolCode}` });
+                          const nameExists = enrichedSubPools.some(p => p.name.toLowerCase() === newPoolName.trim().toLowerCase());
+                          if (nameExists) {
+                            toast({ title: "Naam al in gebruik", description: `Er bestaat al een subpoule met de naam "${newPoolName}".`, variant: "destructive" });
+                            return;
+                          }
+                          toast({ title: "Subpoule aangemaakt!", description: `${newPoolName} — Code: ${newPoolCode}` });
                           setNewPoolName("");
                           setNewPoolCode("");
                           setShowCreateForm(false);
