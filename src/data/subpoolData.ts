@@ -112,7 +112,7 @@ export const expandedSubPool = {
   id: "3",
   name: "Het Grote Peloton",
   members: names,
-  code: "PELOTON10",
+  code: "PELOTON20",
 };
 
 /**
