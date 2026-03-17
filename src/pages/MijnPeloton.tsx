@@ -208,7 +208,7 @@ export default function MijnPeloton() {
                 <ChartContainer config={chartConfig} className="h-[280px] w-full">
                   <LineChart data={activePool.pointsHistory}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="stage" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                    <XAxis dataKey="stage" tick={{ fontSize: 11 }} className="fill-muted-foreground" interval={0} />
                     <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                     <ChartTooltip
                       content={({ active, payload, label }) => {
