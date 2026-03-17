@@ -177,23 +177,53 @@ export default function MijnPeloton() {
                 <CardTitle className="font-display text-base">🏆 Stand</CardTitle>
               </CardHeader>
               <CardContent className="p-0 divide-y divide-border">
-                {activePool.standings.map((team, idx) =>
-                <div
-                  key={team.id}
-                  className={cn(
-                    "flex items-center justify-between px-4 py-2.5 text-sm",
-                    team.userName === myTeam.userName && "bg-primary/10"
-                  )}>
-                  
-                    <div className="flex items-center gap-2">
-                      <span className="font-display font-bold w-6 text-center text-muted-foreground">
-                        {idx + 1}
-                      </span>
-                      <span className="font-sans font-medium">{team.userName}</span>
-                    </div>
-                    <span className="font-display font-bold">{team.totalPoints} pt</span>
-                  </div>
-                )}
+                {(() => {
+                  const all = activePool.standings;
+                  const myIdx = all.findIndex(t => t.userName === myTeam.userName);
+                  const topN = 3;
+
+                  if (all.length <= topN + 7) {
+                    // Small pool: show all
+                    return all.map((team, idx) => (
+                      <StandingRow key={team.id} team={team} rank={idx + 1} isMe={team.userName === myTeam.userName} />
+                    ));
+                  }
+
+                  // Top 3
+                  const rows: React.ReactNode[] = all.slice(0, topN).map((team, idx) => (
+                    <StandingRow key={team.id} team={team} rank={idx + 1} isMe={team.userName === myTeam.userName} />
+                  ));
+
+                  // If user is not in top 3, show gap + 3 above + user + 3 below
+                  if (myIdx >= topN) {
+                    const aboveStart = Math.max(topN, myIdx - 3);
+                    const belowEnd = Math.min(all.length, myIdx + 4);
+
+                    if (aboveStart > topN) {
+                      rows.push(
+                        <div key="gap-top" className="flex items-center justify-center py-2 text-muted-foreground">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </div>
+                      );
+                    }
+
+                    for (let i = aboveStart; i < belowEnd; i++) {
+                      rows.push(
+                        <StandingRow key={all[i].id} team={all[i]} rank={i + 1} isMe={all[i].userName === myTeam.userName} />
+                      );
+                    }
+
+                    if (belowEnd < all.length) {
+                      rows.push(
+                        <div key="gap-bottom" className="flex items-center justify-center py-2 text-muted-foreground">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </div>
+                      );
+                    }
+                  }
+
+                  return rows;
+                })()}
               </CardContent>
             </Card>
           </div>
