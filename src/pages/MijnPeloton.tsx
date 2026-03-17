@@ -2596,163 +2596,123 @@ function PalmaresTab({
 }) {
   // Mock palmares data per race
   const palmaresData = games.map((game) => {
-    const isActive = game.status === "actief";
     const myRank = game.id === "giro2026" ? 120 : game.id === "tdf2026" ? 87 : 203;
     const totalParticipants = game.id === "giro2026" ? 1350 : game.id === "tdf2026" ? 1120 : 980;
-    const myPoints = game.id === "giro2026" ? myTeam.totalPoints : game.id === "tdf2026" ? 387 : 245;
-
-    // Mock stage wins & podiums in the overall pool per race
     const stageWins = game.id === "tdf2026" ? 2 : game.id === "giro2026" ? 1 : 0;
     const stagePodiums = game.id === "tdf2026" ? 5 : game.id === "giro2026" ? 3 : 1;
-
-    return {
-      ...game,
-      isActive,
-      myRank,
-      totalParticipants,
-      myPoints,
-      stageWins,
-      stagePodiums,
-    };
+    return { ...game, myRank, totalParticipants, stageWins, stagePodiums };
   });
 
-  // Subpool results
   const subpoolResults = pools.map((pool) => {
     const myIdx = pool.standings.findIndex((t) => t.userName === myTeam.userName);
-    // Mock stage wins & podiums in subpoules
-    const stageWins = myIdx === 0 ? 5 : myIdx <= 2 ? 3 : 1;
-    const stagePodiums = myIdx === 0 ? 10 : myIdx <= 2 ? 7 : 4;
-    return {
-      name: pool.name,
-      rank: myIdx + 1,
-      total: pool.standings.length,
-      points: pool.standings[myIdx]?.totalPoints ?? 0,
-      winner: pool.standings[0]?.userName ?? "—",
-      isWinner: myIdx === 0,
-      stageWins,
-      stagePodiums,
-    };
+    const rank = myIdx + 1;
+    const stageWins = rank === 1 ? 5 : rank <= 3 ? 3 : 1;
+    const stagePodiums = rank === 1 ? 10 : rank <= 3 ? 7 : 4;
+    return { name: pool.name, rank, total: pool.standings.length, isWinner: myIdx === 0, stageWins, stagePodiums };
   });
 
-  // Totals
-  const totalOverallWins = palmaresData.filter(p => p.myRank === 1).length;
-  const totalOverallPodiums = palmaresData.filter(p => p.myRank <= 3).length;
-  const totalStageWins = palmaresData.reduce((s, p) => s + p.stageWins, 0);
-  const totalStagePodiums = palmaresData.reduce((s, p) => s + p.stagePodiums, 0);
-  const subpoolWins = subpoolResults.filter((s) => s.isWinner).length;
-  const subpoolPodiums = subpoolResults.filter((s) => s.rank <= 3).length;
-  const subpoolStageWins = subpoolResults.reduce((s, p) => s + p.stageWins, 0);
-  const bestOverallRank = Math.min(...palmaresData.map((p) => p.myRank));
+  // Aggregates
+  const akClassWins = palmaresData.filter(p => p.myRank === 1).length;
+  const akClassPodiums = palmaresData.filter(p => p.myRank <= 3).length;
+  const akStageWins = palmaresData.reduce((s, p) => s + p.stageWins, 0);
+  const akBestRank = Math.min(...palmaresData.map(p => p.myRank));
+
+  const subClassWins = subpoolResults.filter(s => s.isWinner).length;
+  const subClassPodiums = subpoolResults.filter(s => s.rank <= 3).length;
+  const subStageWins = subpoolResults.reduce((s, p) => s + p.stageWins, 0);
+  const subBestRank = subpoolResults.length > 0 ? Math.min(...subpoolResults.map(s => s.rank)) : 0;
+
+  const PalmaresBlock = ({ title, emoji, classWins, classPodiums, stageWins, bestRank, details }: {
+    title: string; emoji: string;
+    classWins: number; classPodiums: number; stageWins: number; bestRank: number;
+    details: React.ReactNode;
+  }) => (
+    <Card className="retro-border">
+      <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+        <CardTitle className="font-display text-base">{emoji} {title}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-4 space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="text-center p-3 rounded-lg bg-muted/30 border border-border">
+            <p className="font-display text-2xl font-bold text-primary">{classWins}</p>
+            <p className="text-[11px] text-muted-foreground font-sans mt-1">Klassements&shy;overwinningen</p>
+          </div>
+          <div className="text-center p-3 rounded-lg bg-muted/30 border border-border">
+            <p className="font-display text-2xl font-bold text-accent">{classPodiums}</p>
+            <p className="text-[11px] text-muted-foreground font-sans mt-1">Klassements&shy;podia</p>
+          </div>
+          <div className="text-center p-3 rounded-lg bg-muted/30 border border-border">
+            <p className="font-display text-2xl font-bold text-foreground">{stageWins}</p>
+            <p className="text-[11px] text-muted-foreground font-sans mt-1">Etappe&shy;overwinningen</p>
+          </div>
+          <div className="text-center p-3 rounded-lg bg-muted/30 border border-border">
+            <p className="font-display text-2xl font-bold text-muted-foreground">#{bestRank}</p>
+            <p className="text-[11px] text-muted-foreground font-sans mt-1">Beste eindstand</p>
+          </div>
+        </div>
+        {details}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6">
-      {/* Summary stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={<Trophy className="h-5 w-5 text-primary" />} label="Etappezeges (AK)" value={`${totalStageWins}`} />
-        <StatCard icon={<Medal className="h-5 w-5 text-primary" />} label="Etappepodia (AK)" value={`${totalStagePodiums}`} />
-        <StatCard icon={<TrendingUp className="h-5 w-5 text-primary" />} label="Beste eindstand" value={`#${bestOverallRank}`} />
-        <StatCard icon={<Award className="h-5 w-5 text-primary" />} label="Koersen gereden" value={`${games.length}`} />
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={<Trophy className="h-5 w-5 text-primary" />} label="Subpoule-zeges" value={`${subpoolWins}`} />
-        <StatCard icon={<Medal className="h-5 w-5 text-primary" />} label="Subpoule-podia" value={`${subpoolPodiums}`} />
-        <StatCard icon={<Zap className="h-5 w-5 text-primary" />} label="Etappezeges (sub)" value={`${subpoolStageWins}`} />
-        <StatCard icon={<Target className="h-5 w-5 text-primary" />} label="Overwinningen totaal" value={`${totalOverallWins + subpoolWins}`} />
-      </div>
-
-      {/* Overall race results */}
-      <Card className="retro-border">
-        <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
-          <CardTitle className="font-display text-base">🏆 Eindstanden Grote Rondes</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0 divide-y divide-border">
-          {palmaresData.map((race) => (
-            <div
-              key={race.id}
-              className={cn(
-                "flex items-center justify-between px-4 py-4",
-                race.isActive && "bg-primary/5"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{race.emoji}</span>
-                <div>
-                  <p className="font-display font-bold text-sm">{race.name}</p>
-                  <p className="text-xs text-muted-foreground font-sans">
-                    {race.isActive ? "🟢 Lopend" : "Afgelopen"}
-                  </p>
+      {/* Algemeen Klassement Palmares */}
+      <PalmaresBlock
+        title="Algemeen Klassement"
+        emoji="🏔️"
+        classWins={akClassWins}
+        classPodiums={akClassPodiums}
+        stageWins={akStageWins}
+        bestRank={akBestRank}
+        details={
+          <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
+            {palmaresData.map((race) => (
+              <div key={race.id} className={cn("flex items-center justify-between px-4 py-3", race.status === "actief" && "bg-primary/5")}>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{race.emoji}</span>
+                  <div>
+                    <p className="font-display font-bold text-sm">{race.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-sans">{race.status === "actief" ? "🟢 Lopend" : "Afgelopen"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-center">
+                  <div><p className="font-display font-bold text-sm">{race.stageWins}</p><p className="text-[10px] text-muted-foreground">zeges</p></div>
+                  <div><p className="font-display font-bold text-sm">{race.stagePodiums}</p><p className="text-[10px] text-muted-foreground">podia</p></div>
+                  <div className="min-w-[50px] text-right"><p className="font-display font-bold">#{race.myRank}</p><p className="text-[10px] text-muted-foreground">/ {race.totalParticipants}</p></div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <p className="font-display font-bold text-sm text-primary">{race.stageWins}</p>
-                  <p className="text-[10px] text-muted-foreground font-sans">Zeges</p>
-                </div>
-                <div className="text-center">
-                  <p className="font-display font-bold text-sm">{race.stagePodiums}</p>
-                  <p className="text-[10px] text-muted-foreground font-sans">Podia</p>
-                </div>
-                <div className="text-right min-w-[70px]">
-                  <p className="font-display font-bold text-lg">
-                    #{race.myRank}
-                    <span className="text-xs text-muted-foreground font-sans ml-1">/ {race.totalParticipants}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground font-sans">{race.myPoints} pt</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
+        }
+      />
 
-      {/* Subpool results */}
-      <Card className="retro-border">
-        <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
-          <CardTitle className="font-display text-base">👥 Eindstanden Subpoules</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0 divide-y divide-border">
-          {subpoolResults.map((pool) => (
-            <div
-              key={pool.name}
-              className={cn(
-                "flex items-center justify-between px-4 py-3",
-                pool.isWinner && "bg-primary/10"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-lg">
-                  {pool.rank === 1 ? "🥇" : pool.rank === 2 ? "🥈" : pool.rank === 3 ? "🥉" : `#${pool.rank}`}
-                </span>
-                <div>
+      {/* Subpoules Palmares */}
+      <PalmaresBlock
+        title="Subpoules"
+        emoji="👥"
+        classWins={subClassWins}
+        classPodiums={subClassPodiums}
+        stageWins={subStageWins}
+        bestRank={subBestRank}
+        details={
+          <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
+            {subpoolResults.map((pool) => (
+              <div key={pool.name} className={cn("flex items-center justify-between px-4 py-3", pool.isWinner && "bg-primary/5")}>
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">{pool.rank === 1 ? "🥇" : pool.rank === 2 ? "🥈" : pool.rank === 3 ? "🥉" : `#${pool.rank}`}</span>
                   <p className="font-display font-bold text-sm">{pool.name}</p>
-                  <p className="text-xs text-muted-foreground font-sans">
-                    {pool.total} deelnemers • Winnaar: {pool.winner}
-                  </p>
+                </div>
+                <div className="flex items-center gap-3 text-center">
+                  <div><p className="font-display font-bold text-sm">{pool.stageWins}</p><p className="text-[10px] text-muted-foreground">zeges</p></div>
+                  <div><p className="font-display font-bold text-sm">{pool.stagePodiums}</p><p className="text-[10px] text-muted-foreground">podia</p></div>
+                  <div className="min-w-[50px] text-right"><p className={cn("font-display font-bold", pool.rank <= 3 && "text-primary")}>#{pool.rank}</p><p className="text-[10px] text-muted-foreground">/ {pool.total}</p></div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <p className="font-display font-bold text-sm text-primary">{pool.stageWins}</p>
-                  <p className="text-[10px] text-muted-foreground font-sans">Zeges</p>
-                </div>
-                <div className="text-center">
-                  <p className="font-display font-bold text-sm">{pool.stagePodiums}</p>
-                  <p className="text-[10px] text-muted-foreground font-sans">Podia</p>
-                </div>
-                <div className="text-right min-w-[60px]">
-                  <p className={cn(
-                    "font-display font-bold text-lg",
-                    pool.rank <= 3 && "text-primary"
-                  )}>
-                    #{pool.rank}
-                  </p>
-                  <p className="text-xs text-muted-foreground font-sans">{pool.points} pt</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
+        }
+      />
     </div>
   );
 }
