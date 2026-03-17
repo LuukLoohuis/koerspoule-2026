@@ -73,7 +73,8 @@ export default function MijnPeloton() {
   const [selectedPool, setSelectedPool] = useState<string | null>(null);
   const [newPoolName, setNewPoolName] = useState("");
   const [newPoolCode, setNewPoolCode] = useState("");
-  const [joinCode, setJoinCode] = useState("");
+   const [joinCode, setJoinCode] = useState("");
+   const [joinName, setJoinName] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedStage, setSelectedStage] = useState(0);
   const [comparePlayerName, setComparePlayerName] = useState("");
@@ -1913,7 +1914,12 @@ export default function MijnPeloton() {
                       className="w-full"
                       onClick={() => {
                         if (newPoolName && newPoolCode) {
-                          toast({ title: "Subpoule aangemaakt!", description: `Code: ${newPoolCode}` });
+                          const nameExists = enrichedSubPools.some(p => p.name.toLowerCase() === newPoolName.trim().toLowerCase());
+                          if (nameExists) {
+                            toast({ title: "Naam al in gebruik", description: `Er bestaat al een subpoule met de naam "${newPoolName}".`, variant: "destructive" });
+                            return;
+                          }
+                          toast({ title: "Subpoule aangemaakt!", description: `${newPoolName} — Code: ${newPoolCode}` });
                           setNewPoolName("");
                           setNewPoolCode("");
                           setShowCreateForm(false);
@@ -1953,29 +1959,37 @@ export default function MijnPeloton() {
                   })}
 
                   {/* Join via code */}
-                  <div className="pt-2 border-t border-border">
-                    <p className="text-xs text-muted-foreground mb-2 font-sans">
-                      Voer een code in om lid te worden:
-                    </p>
-                    <div className="flex gap-2">
-                      <Input
-                        value={joinCode}
-                        onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                        placeholder="CODE"
-                        className="text-xs font-mono uppercase" />
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          toast({ title: "Aangevraagd!", description: `Code: ${joinCode}` });
-                          setJoinCode("");
-                        }}>
-                        
-                        Join
-                      </Button>
-                    </div>
-                  </div>
+                   <div className="pt-2 border-t border-border">
+                     <p className="text-xs text-muted-foreground mb-2 font-sans">
+                       Voer de naam en code in om lid te worden:
+                     </p>
+                     <div className="flex gap-2 flex-wrap">
+                       <Input
+                         value={joinName}
+                         onChange={(e) => setJoinName(e.target.value)}
+                         placeholder="Naam subpoule"
+                         className="text-xs flex-1 min-w-[120px]" />
+                       <Input
+                         value={joinCode}
+                         onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                         placeholder="CODE"
+                         className="text-xs font-mono uppercase w-[100px]" />
+                       <Button
+                         variant="outline"
+                         size="sm"
+                         onClick={() => {
+                           if (!joinName.trim() || !joinCode.trim()) {
+                             toast({ title: "Vul beide velden in", description: "Zowel de naam als de code zijn nodig om toe te treden.", variant: "destructive" });
+                             return;
+                           }
+                           toast({ title: "Aangevraagd!", description: `${joinName} — Code: ${joinCode}` });
+                           setJoinName("");
+                           setJoinCode("");
+                         }}>
+                         Join
+                       </Button>
+                     </div>
+                   </div>
                 </CardContent>
               </Card>
             </div>
