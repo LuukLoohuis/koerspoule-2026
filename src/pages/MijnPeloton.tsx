@@ -2705,7 +2705,7 @@ function PalmaresTab({
                   <span className="text-lg">{pool.rank === 1 ? "🥇" : pool.rank === 2 ? "🥈" : pool.rank === 3 ? "🥉" : `#${pool.rank}`}</span>
                   <div>
                     <p className="font-display font-bold text-sm">{pool.name}</p>
-                    <p className="text-[10px] text-muted-foreground font-sans">{pool.raceEmoji} {pool.raceName}</p>
+                    <p className="text-[10px] text-muted-foreground font-sans inline-flex items-center gap-1"><FlagIcon country={pool.raceCountry} className="w-3.5 h-2.5" /> {pool.raceName}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 text-center">
