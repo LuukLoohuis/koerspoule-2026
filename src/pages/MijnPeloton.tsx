@@ -1537,7 +1537,7 @@ export default function MijnPeloton() {
                       </CardHeader>
                       <CardContent className="p-4 space-y-2 text-sm font-sans">
                         <div>
-                          <span className="text-muted-foreground text-sm font-bold">Podium:</span>
+                          <span className="text-muted-foreground text-sm font-bold">Podium</span>
                           <p className="font-medium flex flex-col">{myTeam.predictions.gcPodium.map((r, i) => <span key={i}>{['🥇', '🥈', '🥉'][i]} {r}</span>)}</p>
                         </div>
                         <p>🟣 {myTeam.predictions.pointsJersey}</p>
