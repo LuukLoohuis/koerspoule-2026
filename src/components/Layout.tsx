@@ -113,6 +113,7 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
           </div>
         </div>
       </footer>
+      <CookieBanner />
     </div>);
 
 }
