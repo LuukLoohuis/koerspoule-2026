@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight, MoreHorizontal } from "lucide-react";
+import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight, MoreHorizontal, Check, X } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
 import PelotonChat from "@/components/PelotonChat";
 import { useToast } from "@/hooks/use-toast";
@@ -1537,49 +1537,83 @@ export default function MijnPeloton() {
                         <CardTitle className="font-display text-base">🏆 Voorspellingen</CardTitle>
                       </CardHeader>
                       <CardContent className="p-4 space-y-4">
-                        {/* Podium */}
-                        <div>
-                          <span className="text-[10px] font-display font-bold text-muted-foreground uppercase tracking-wider">Podium</span>
-                          <div className="flex items-end justify-center gap-2 mt-3 mb-1">
-                            {/* 2nd place */}
-                            <div className="flex flex-col items-center">
-                              <span className="text-xs font-sans font-bold mb-1">{myTeam.predictions.gcPodium[1]}</span>
-                              <div className="w-16 bg-muted rounded-t-md flex items-end justify-center" style={{ height: '48px' }}>
-                                <span className="text-lg mb-1">🥈</span>
+                        {/* Podium with correctness check */}
+                        {(() => {
+                          const gcTop3 = mockClassifications.gc.slice(0, 3).map((r) => r.riderName);
+                          const podiumItems = [
+                            { pos: 1, rider: myTeam.predictions.gcPodium[0], emoji: "🥇", height: 64, order: 2 },
+                            { pos: 2, rider: myTeam.predictions.gcPodium[1], emoji: "🥈", height: 48, order: 1 },
+                            { pos: 3, rider: myTeam.predictions.gcPodium[2], emoji: "🥉", height: 36, order: 3 },
+                          ];
+                          return (
+                            <div>
+                              <span className="text-[10px] font-display font-bold text-muted-foreground uppercase tracking-wider">Podium</span>
+                              <div className="flex items-end justify-center gap-2 mt-3 mb-1">
+                                {[podiumItems[1], podiumItems[0], podiumItems[2]].map((item) => {
+                                  const isCorrectPos = gcTop3[item.pos - 1] === item.rider;
+                                  const isOnPodium = !isCorrectPos && gcTop3.includes(item.rider);
+                                  return (
+                                    <div key={item.pos} className="flex flex-col items-center">
+                                      <div className="flex items-center gap-1 mb-1">
+                                        <span className="text-xs font-sans font-bold text-foreground">{item.rider}</span>
+                                        {isCorrectPos ? (
+                                          <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                                        ) : isOnPodium ? (
+                                          <span className="text-[9px] text-amber-600 dark:text-amber-400 font-bold">~</span>
+                                        ) : (
+                                          <X className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                                        )}
+                                      </div>
+                                      <div className={cn(
+                                        "w-16 rounded-t-md flex items-end justify-center",
+                                        item.pos === 1 ? "bg-primary/20 border-2 border-primary" : "bg-muted"
+                                      )} style={{ height: `${item.height}px` }}>
+                                        <span className="text-lg mb-1">{item.emoji}</span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
+                              <div className="w-full h-1 bg-foreground/20 rounded-full" />
                             </div>
-                            {/* 1st place */}
-                            <div className="flex flex-col items-center">
-                              <span className="text-xs font-sans font-bold mb-1">{myTeam.predictions.gcPodium[0]}</span>
-                              <div className="w-16 bg-primary/20 border-2 border-primary rounded-t-md flex items-end justify-center" style={{ height: '64px' }}>
-                                <span className="text-lg mb-1">🥇</span>
-                              </div>
-                            </div>
-                            {/* 3rd place */}
-                            <div className="flex flex-col items-center">
-                              <span className="text-xs font-sans font-bold mb-1">{myTeam.predictions.gcPodium[2]}</span>
-                              <div className="w-16 bg-muted rounded-t-md flex items-end justify-center" style={{ height: '36px' }}>
-                                <span className="text-lg mb-1">🥉</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="w-full h-1 bg-foreground/20 rounded-full" />
-                        </div>
+                          );
+                        })()}
 
-                        {/* Truien */}
-                        <div className="grid grid-cols-3 gap-2">
-                          {[
-                            { label: "Puntentrui", emoji: "🟢", color: "bg-green-500/15 border-green-500/30", rider: myTeam.predictions.pointsJersey },
-                            { label: "Bergtrui", emoji: "🔴", color: "bg-red-500/15 border-red-500/30", rider: myTeam.predictions.mountainJersey },
-                            { label: "Jongerentrui", emoji: "⚪", color: "bg-secondary border-border", rider: myTeam.predictions.youthJersey },
-                          ].map((trui) => (
-                            <div key={trui.label} className={cn("rounded-lg border p-2.5 text-center", trui.color)}>
-                              <span className="text-lg block">{trui.emoji}</span>
-                              <span className="text-[10px] text-muted-foreground font-display uppercase tracking-wider block mt-0.5">{trui.label}</span>
-                              <span className="text-xs font-sans font-bold block mt-1">{trui.rider}</span>
+                        {/* Truien with correctness check */}
+                        {(() => {
+                          const actualPoints = mockClassifications.points[0]?.riderName || "";
+                          const actualMountain = mockClassifications.kom[0]?.riderName || "";
+                          const actualYouth = mockClassifications.youth[0]?.riderName || "";
+                          const truien = [
+                            { label: "Puntentrui", emoji: "🟢", color: "bg-green-600/20 border-green-600/40", rider: myTeam.predictions.pointsJersey, actual: actualPoints },
+                            { label: "Bergtrui", emoji: "🔴", color: "bg-red-600/20 border-red-600/40", rider: myTeam.predictions.mountainJersey, actual: actualMountain },
+                            { label: "Jongerentrui", emoji: "⚪", color: "bg-muted border-border", rider: myTeam.predictions.youthJersey, actual: actualYouth },
+                          ];
+                          return (
+                            <div className="grid grid-cols-3 gap-2">
+                              {truien.map((trui) => {
+                                const isCorrect = trui.rider === trui.actual;
+                                return (
+                                  <div key={trui.label} className={cn("rounded-lg border p-2.5 text-center relative", trui.color)}>
+                                    <div className="absolute top-1.5 right-1.5">
+                                      {isCorrect ? (
+                                        <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                      ) : (
+                                        <X className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                      )}
+                                    </div>
+                                    <span className="text-lg block">{trui.emoji}</span>
+                                    <span className="text-[10px] text-foreground/70 font-display uppercase tracking-wider block mt-0.5 font-bold">{trui.label}</span>
+                                    <span className="text-xs font-sans font-bold block mt-1 text-foreground">{trui.rider}</span>
+                                    {!isCorrect && (
+                                      <span className="text-[9px] text-muted-foreground font-sans block mt-0.5">Was: {trui.actual}</span>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
-                          ))}
-                        </div>
+                          );
+                        })()}
                       </CardContent>
                     </Card>
 
