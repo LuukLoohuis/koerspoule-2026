@@ -1536,14 +1536,50 @@ export default function MijnPeloton() {
                       <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
                         <CardTitle className="font-display text-base">🏆 Voorspellingen</CardTitle>
                       </CardHeader>
-                      <CardContent className="p-4 space-y-2 text-sm font-sans">
+                      <CardContent className="p-4 space-y-4">
+                        {/* Podium */}
                         <div>
-                          <span className="text-muted-foreground text-sm font-bold">Podium</span>
-                          <p className="font-medium flex flex-col">{myTeam.predictions.gcPodium.map((r, i) => <span key={i}>{['🥇', '🥈', '🥉'][i]} {r}</span>)}</p>
+                          <span className="text-[10px] font-display font-bold text-muted-foreground uppercase tracking-wider">Podium</span>
+                          <div className="flex items-end justify-center gap-2 mt-3 mb-1">
+                            {/* 2nd place */}
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs font-sans font-bold mb-1">{myTeam.predictions.gcPodium[1]}</span>
+                              <div className="w-16 bg-muted rounded-t-md flex items-end justify-center" style={{ height: '48px' }}>
+                                <span className="text-lg mb-1">🥈</span>
+                              </div>
+                            </div>
+                            {/* 1st place */}
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs font-sans font-bold mb-1">{myTeam.predictions.gcPodium[0]}</span>
+                              <div className="w-16 bg-primary/20 border-2 border-primary rounded-t-md flex items-end justify-center" style={{ height: '64px' }}>
+                                <span className="text-lg mb-1">🥇</span>
+                              </div>
+                            </div>
+                            {/* 3rd place */}
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs font-sans font-bold mb-1">{myTeam.predictions.gcPodium[2]}</span>
+                              <div className="w-16 bg-muted rounded-t-md flex items-end justify-center" style={{ height: '36px' }}>
+                                <span className="text-lg mb-1">🥉</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="w-full h-1 bg-foreground/20 rounded-full" />
                         </div>
-                        <p>🟣 {myTeam.predictions.pointsJersey}</p>
-                        <p>🔵 {myTeam.predictions.mountainJersey}</p>
-                        <p>⚪ {myTeam.predictions.youthJersey}</p>
+
+                        {/* Truien */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { label: "Puntentrui", emoji: "🟢", color: "bg-green-500/15 border-green-500/30", rider: myTeam.predictions.pointsJersey },
+                            { label: "Bergtrui", emoji: "🔴", color: "bg-red-500/15 border-red-500/30", rider: myTeam.predictions.mountainJersey },
+                            { label: "Jongerentrui", emoji: "⚪", color: "bg-secondary border-border", rider: myTeam.predictions.youthJersey },
+                          ].map((trui) => (
+                            <div key={trui.label} className={cn("rounded-lg border p-2.5 text-center", trui.color)}>
+                              <span className="text-lg block">{trui.emoji}</span>
+                              <span className="text-[10px] text-muted-foreground font-display uppercase tracking-wider block mt-0.5">{trui.label}</span>
+                              <span className="text-xs font-sans font-bold block mt-1">{trui.rider}</span>
+                            </div>
+                          ))}
+                        </div>
                       </CardContent>
                     </Card>
 
