@@ -1493,7 +1493,7 @@ export default function MijnPeloton() {
                       </CardHeader>
                       <CardContent className="p-0 divide-y divide-border">
                         {riderRows.map(({ catId, rider, myPts }) =>
-                            <div key={catId} className="px-3 md:px-4 py-2 text-sm flex items-center gap-3">
+                            <div key={catId} id={`rider-${rider.number}`} className="px-3 md:px-4 py-2 text-sm flex items-center gap-3 transition-all duration-500">
                             <div className="flex-1 min-w-0">
                               <span className="text-[10px] text-muted-foreground block truncate font-extrabold md:text-xs">
                                 {getCategoryName(Number(catId))}
@@ -1553,44 +1553,62 @@ export default function MijnPeloton() {
                         <CardTitle className="font-display text-base">📊 Stats Dashboard</CardTitle>
                       </CardHeader>
                       <CardContent className="p-4 space-y-5">
-                        {/* Puntenverloop mini chart */}
+                        {/* Rangverloop — positie in het AK per etappe */}
                         {(() => {
-                          const stageData = mockStageResults.map((stage, idx) => {
-                            const pts = Object.values(myTeam.picks).reduce((sum, rider) => {
-                              const r = stage.top20.find((s) => s.riderNumber === rider.number);
-                              return sum + (r ? pointsTable[r.position] || 0 : 0);
-                            }, 0);
-                            return { stage: `${idx + 1}`, pts };
+                          const myCurrentRank = allPoolParticipants.findIndex((p) => p.userName === myTeam.userName) + 1;
+                          const totalParticipants = allPoolParticipants.length;
+                          const rankData = mockStageResults.map((_, idx) => {
+                            const progress = (idx + 1) / 21;
+                            const startRank = Math.round(totalParticipants * 0.4);
+                            const baseRank = Math.round(startRank + (myCurrentRank - startRank) * progress);
+                            const jitter = Math.round(Math.sin(idx * 3.7 + 1) * 30 + Math.cos(idx * 2.1) * 20);
+                            const rank = Math.max(1, Math.min(totalParticipants, baseRank + jitter));
+                            return { stage: `${idx + 1}`, rank };
                           });
-                          // Cumulative
-                          let cumul = 0;
-                          const cumulData = stageData.map((d) => { cumul += d.pts; return { ...d, cumul }; });
+                          const bestRank = Math.min(...rankData.map((d) => d.rank));
+                          const worstRank = Math.max(...rankData.map((d) => d.rank));
                           return (
                             <div>
-                              <h4 className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider mb-2">📈 Puntenverloop</h4>
-                              <ChartContainer config={{ pts: { label: "Punten", color: "hsl(var(--primary))" } }} className="h-[120px] w-full">
-                                <LineChart data={cumulData} margin={{ left: -20, right: 4, top: 4, bottom: 0 }}>
+                              <h4 className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider mb-2">📉 Rangverloop (AK positie)</h4>
+                              <ChartContainer config={{ rank: { label: "Positie", color: "hsl(var(--primary))" } }} className="h-[120px] w-full">
+                                <LineChart data={rankData} margin={{ left: -10, right: 4, top: 4, bottom: 0 }}>
                                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                                   <XAxis dataKey="stage" tick={{ fontSize: 9 }} className="fill-muted-foreground" interval={2} />
-                                  <YAxis tick={{ fontSize: 9 }} className="fill-muted-foreground" />
-                                  <ChartTooltip content={<ChartTooltipContent />} />
-                                  <Line type="monotone" dataKey="cumul" name="Punten" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 2 }} />
+                                  <YAxis tick={{ fontSize: 9 }} className="fill-muted-foreground" reversed domain={[1, 'auto']} />
+                                  <ChartTooltip
+                                    content={({ active, payload, label }) => {
+                                      if (!active || !payload?.length) return null;
+                                      const rank = payload[0].value as number;
+                                      return (
+                                        <div className="rounded-md border border-border bg-background p-2 shadow-lg text-xs">
+                                          <p className="font-display font-bold">Rit {label}</p>
+                                          <p className="font-sans">Positie: <span className="font-bold text-primary">#{rank}</span> / {totalParticipants}</p>
+                                        </div>
+                                      );
+                                    }}
+                                  />
+                                  <Line type="monotone" dataKey="rank" name="Positie" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 2 }} />
                                 </LineChart>
                               </ChartContainer>
+                              <div className="flex justify-between text-[10px] text-muted-foreground font-sans mt-1">
+                                <span>🏆 Beste: #{bestRank}</span>
+                                <span>Nu: #{myCurrentRank}</span>
+                                <span>📉 Slechtste: #{worstRank}</span>
+                              </div>
                             </div>
                           );
                         })()}
 
-                        {/* Trending picks — top scorers last 3 stages */}
+                        {/* Trending picks — clickable, scroll to rider */}
                         {(() => {
                           const recentStages = mockStageResults.slice(-3);
-                          const riderScores = new Map<string, { name: string; pts: number; number: number }>();
-                          Object.values(myTeam.picks).forEach((rider) => {
+                          const riderScores = new Map<string, { name: string; pts: number; number: number; catId: number }>();
+                          Object.entries(myTeam.picks).forEach(([catId, rider]) => {
                             const pts = recentStages.reduce((sum, stage) => {
                               const r = stage.top20.find((s) => s.riderNumber === rider.number);
                               return sum + (r ? pointsTable[r.position] || 0 : 0);
                             }, 0);
-                            riderScores.set(rider.name, { name: rider.name, pts, number: rider.number });
+                            riderScores.set(rider.name, { name: rider.name, pts, number: rider.number, catId: Number(catId) });
                           });
                           const sorted = [...riderScores.values()].sort((a, b) => b.pts - a.pts).slice(0, 5);
                           const maxPts = sorted[0]?.pts || 1;
@@ -1598,14 +1616,30 @@ export default function MijnPeloton() {
                             <div>
                               <h4 className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider mb-2">🔥 Trending (laatste 3 ritten)</h4>
                               <div className="space-y-1.5">
-                                {sorted.map((r) => (
-                                  <div key={r.number} className="flex items-center gap-2 text-xs">
-                                    <span className="font-sans font-medium w-20 truncate">{r.name}</span>
+                                {sorted.map((r, i) => (
+                                  <button
+                                    key={r.number}
+                                    onClick={() => {
+                                      const el = document.getElementById(`rider-${r.number}`);
+                                      if (el) {
+                                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        el.classList.add('ring-2', 'ring-primary', 'bg-primary/10');
+                                        setTimeout(() => el.classList.remove('ring-2', 'ring-primary', 'bg-primary/10'), 2000);
+                                      }
+                                    }}
+                                    className="w-full flex items-center gap-2 text-xs hover:bg-muted/50 rounded-md px-1 py-1 transition-colors group cursor-pointer text-left"
+                                  >
+                                    <span className={cn(
+                                      "w-4 h-4 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0",
+                                      i === 0 ? "bg-primary text-primary-foreground" : "bg-primary/20 text-primary"
+                                    )}>{i + 1}</span>
+                                    <span className="font-sans font-medium w-20 truncate group-hover:text-primary transition-colors">{r.name}</span>
                                     <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
                                       <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(r.pts / maxPts) * 100}%` }} />
                                     </div>
                                     <span className="font-display font-bold text-accent w-10 text-right tabular-nums">{r.pts} pt</span>
-                                  </div>
+                                    <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                                  </button>
                                 ))}
                               </div>
                             </div>
