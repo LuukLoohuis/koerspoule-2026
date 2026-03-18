@@ -11,6 +11,7 @@ import MijnPeloton from "./pages/MijnPeloton";
 import Rules from "./pages/Rules";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import Legal from "./pages/Legal";
 
 const queryClient = new QueryClient();
 
