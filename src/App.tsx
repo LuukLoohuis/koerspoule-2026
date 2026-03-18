@@ -29,6 +29,7 @@ const App = () => (
             <Route path="/mijn-peloton" element={<MijnPeloton />} />
             <Route path="/regels" element={<Rules />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/juridisch" element={<Legal />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
