@@ -50,6 +50,8 @@ export default function Rules() {
               <p className="text-muted-foreground">
                 Kies uit {riderCategories.length} categorieën telkens 1 renner. 
                 Voeg 2 jokers toe (vrije keuze buiten de categorieën).
+                <br />
+                Jokers moeten unieke renners zijn en mogen niet voorkomen in de categorieën of gekozen categorie-renners.
               </p>
             </div>
             <div className="p-4 bg-secondary/50 rounded-md">
