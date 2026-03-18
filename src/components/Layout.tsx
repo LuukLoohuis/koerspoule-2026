@@ -104,7 +104,11 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
                 koerspoule@gmail.com
               </a>
             </p>
-            <p className="font-sans"><p className="font-sans">© 2026 Koerspoule</p></p>
+            <div className="flex items-center gap-3 font-sans">
+              <Link to="/juridisch" className="underline hover:text-foreground transition-colors">Juridisch</Link>
+              <span>·</span>
+              <span>© 2026 Koerspoule</span>
+            </div>
           </div>
         </div>
       </footer>
