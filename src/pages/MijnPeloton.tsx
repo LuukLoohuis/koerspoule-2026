@@ -1493,7 +1493,7 @@ export default function MijnPeloton() {
                       </CardHeader>
                       <CardContent className="p-0 divide-y divide-border">
                         {riderRows.map(({ catId, rider, myPts }) =>
-                            <div key={catId} className="px-3 md:px-4 py-2 text-sm flex items-center gap-3">
+                            <div key={catId} id={`rider-${rider.number}`} className="px-3 md:px-4 py-2 text-sm flex items-center gap-3 transition-all duration-500">
                             <div className="flex-1 min-w-0">
                               <span className="text-[10px] text-muted-foreground block truncate font-extrabold md:text-xs">
                                 {getCategoryName(Number(catId))}
