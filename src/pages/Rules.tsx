@@ -19,21 +19,21 @@ export default function Rules() {
           <h2 className="font-display text-2xl font-bold mb-4">📜 Het Reglement</h2>
           <ol className="space-y-3 font-sans text-sm">
             {[
-              "De jury, bestaande uit J.W.M. Broos, heeft gelijk.",
-              "Zo niet, dan toch.",
-              "€5 inleg, winner takes all.",
-              "De inschrijving dient binnen te zijn om 12:00 uur op 5 juli.",
-              "Vul je team in via de Team Samenstellen pagina.",
-              "Beter geen scriptjes.",
-              "Als iemand uit de Tour stapt, pech voor jou :(",
-            ].map((rule, i) => (
-              <li key={i} className="flex gap-3">
+            "De jury, bestaande uit J.W.M. Broos, heeft gelijk.",
+            "Zo niet, dan toch.",
+            "€5 inleg, winner takes all.",
+            "De inschrijving dient binnen te zijn om 12:00 uur op 5 juli.",
+            "Vul je team in via de Team Samenstellen pagina.",
+            "Beter geen scriptjes.",
+            "Als iemand uit de Tour stapt, pech voor jou :("].
+            map((rule, i) =>
+            <li key={i} className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
                   {i + 1}
                 </span>
                 <span>{rule}</span>
               </li>
-            ))}
+            )}
           </ol>
         </section>
 
@@ -54,8 +54,8 @@ export default function Rules() {
             </div>
             <div className="p-4 bg-secondary/50 rounded-md">
               <h3 className="font-bold mb-1">Stap 3 — Voorspel de klassementen</h3>
-              <p className="text-muted-foreground">
-                Voorspel het podium van het eindklassement + winnaar puntentrui, bergtrui en jongerentrui.
+              <p className="text-muted-foreground">Voorspel het podium van het eindklassement + winnaar puntentrui, bergtrui en jongerentrui.
+Jokers moeten unieke renners zijn en mogen niet voorkomen in de categorieën of gekozen categorie-renners.
               </p>
             </div>
             <div className="p-4 bg-secondary/50 rounded-md">
@@ -74,12 +74,12 @@ export default function Rules() {
           <h3 className="font-display text-lg font-bold mb-3">Per etappe</h3>
           <div className="retro-border bg-background p-4 mb-6">
             <div className="grid grid-cols-4 md:grid-cols-5 gap-2 text-sm font-sans">
-              {Object.entries(pointsTable).map(([pos, pts]) => (
-                <div key={pos} className="flex items-center gap-1.5">
+              {Object.entries(pointsTable).map(([pos, pts]) =>
+              <div key={pos} className="flex items-center gap-1.5">
                   <span className="text-muted-foreground font-mono text-xs w-5 text-right">{pos}.</span>
                   <span className="font-bold text-accent">{pts}</span>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
@@ -107,8 +107,8 @@ export default function Rules() {
             Kies 1 renner per categorie + 2 vrije jokers.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {riderCategories.map((cat) => (
-              <div key={cat.id} className="p-3 bg-secondary/30 rounded-md">
+            {riderCategories.map((cat) =>
+            <div key={cat.id} className="p-3 bg-secondary/30 rounded-md">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="jersey-badge bg-primary text-primary-foreground text-xs">
                     #{cat.id}
@@ -119,10 +119,10 @@ export default function Rules() {
                   {cat.riders.map((r) => r.name).join(" • ")}
                 </p>
               </div>
-            ))}
+            )}
           </div>
         </section>
       </div>
-    </div>
-  );
+    </div>);
+
 }
