@@ -1547,23 +1547,99 @@ export default function MijnPeloton() {
                       </CardContent>
                     </Card>
 
+                    {/* ── Stats Dashboard ── */}
                     <Card className="retro-border">
                       <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
-                        <CardTitle className="font-display text-base">📊 Overzicht</CardTitle>
+                        <CardTitle className="font-display text-base">📊 Stats Dashboard</CardTitle>
                       </CardHeader>
-                      <CardContent className="p-4 space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground font-sans">Totaal punten</span>
-                          <span className="font-display font-bold">{myTeam.totalPoints} pt</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground font-sans">Renners</span>
-                          <span className="font-sans font-medium">{Object.keys(myTeam.picks).length}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground font-sans">Jokers</span>
-                          <span className="font-sans font-medium">{myTeam.jokers.length}</span>
-                        </div>
+                      <CardContent className="p-4 space-y-5">
+                        {/* Puntenverloop mini chart */}
+                        {(() => {
+                          const stageData = mockStageResults.map((stage, idx) => {
+                            const pts = Object.values(myTeam.picks).reduce((sum, rider) => {
+                              const r = stage.top20.find((s) => s.riderNumber === rider.number);
+                              return sum + (r ? pointsTable[r.position] || 0 : 0);
+                            }, 0);
+                            return { stage: `${idx + 1}`, pts };
+                          });
+                          // Cumulative
+                          let cumul = 0;
+                          const cumulData = stageData.map((d) => { cumul += d.pts; return { ...d, cumul }; });
+                          return (
+                            <div>
+                              <h4 className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider mb-2">📈 Puntenverloop</h4>
+                              <ChartContainer config={{ pts: { label: "Punten", color: "hsl(var(--primary))" } }} className="h-[120px] w-full">
+                                <LineChart data={cumulData} margin={{ left: -20, right: 4, top: 4, bottom: 0 }}>
+                                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                                  <XAxis dataKey="stage" tick={{ fontSize: 9 }} className="fill-muted-foreground" interval={2} />
+                                  <YAxis tick={{ fontSize: 9 }} className="fill-muted-foreground" />
+                                  <ChartTooltip content={<ChartTooltipContent />} />
+                                  <Line type="monotone" dataKey="cumul" name="Punten" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 2 }} />
+                                </LineChart>
+                              </ChartContainer>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Trending picks — top scorers last 3 stages */}
+                        {(() => {
+                          const recentStages = mockStageResults.slice(-3);
+                          const riderScores = new Map<string, { name: string; pts: number; number: number }>();
+                          Object.values(myTeam.picks).forEach((rider) => {
+                            const pts = recentStages.reduce((sum, stage) => {
+                              const r = stage.top20.find((s) => s.riderNumber === rider.number);
+                              return sum + (r ? pointsTable[r.position] || 0 : 0);
+                            }, 0);
+                            riderScores.set(rider.name, { name: rider.name, pts, number: rider.number });
+                          });
+                          const sorted = [...riderScores.values()].sort((a, b) => b.pts - a.pts).slice(0, 5);
+                          const maxPts = sorted[0]?.pts || 1;
+                          return (
+                            <div>
+                              <h4 className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider mb-2">🔥 Trending (laatste 3 ritten)</h4>
+                              <div className="space-y-1.5">
+                                {sorted.map((r) => (
+                                  <div key={r.number} className="flex items-center gap-2 text-xs">
+                                    <span className="font-sans font-medium w-20 truncate">{r.name}</span>
+                                    <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+                                      <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(r.pts / maxPts) * 100}%` }} />
+                                    </div>
+                                    <span className="font-display font-bold text-accent w-10 text-right tabular-nums">{r.pts} pt</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Populairste renners across all teams */}
+                        {(() => {
+                          const pickCount = new Map<string, { name: string; count: number }>();
+                          mockTeams.forEach((team) => {
+                            Object.values(team.picks).forEach((rider) => {
+                              const existing = pickCount.get(rider.name);
+                              if (existing) existing.count++;
+                              else pickCount.set(rider.name, { name: rider.name, count: 1 });
+                            });
+                          });
+                          const sorted = [...pickCount.values()].sort((a, b) => b.count - a.count).slice(0, 5);
+                          return (
+                            <div>
+                              <h4 className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider mb-2">👥 Populairste renners</h4>
+                              <div className="space-y-1">
+                                {sorted.map((r, i) => (
+                                  <div key={r.name} className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-2">
+                                      <span className="w-4 h-4 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px]">{i + 1}</span>
+                                      <span className="font-sans font-medium">{r.name}</span>
+                                    </div>
+                                    <span className="text-muted-foreground font-sans">{r.count}/{mockTeams.length} teams</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </CardContent>
                     </Card>
                   </div>
