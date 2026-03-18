@@ -3,6 +3,7 @@ import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import CookieBanner from "@/components/CookieBanner";
 
 const navItems = [
 { to: "/", label: "Home" },
@@ -112,6 +113,7 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
           </div>
         </div>
       </footer>
+      <CookieBanner />
     </div>);
 
 }
