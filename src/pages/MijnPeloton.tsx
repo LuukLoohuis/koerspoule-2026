@@ -1610,7 +1610,7 @@ export default function MijnPeloton() {
                   "border-border hover:border-muted-foreground"
                 )}>
                 
-                🇮🇹 Giro Klassement
+                <FlagIcon country="IT" /> Giro Klassement
               </button>
             </div>
 
