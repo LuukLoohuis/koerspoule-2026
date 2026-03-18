@@ -2594,7 +2594,7 @@ function PalmaresTab({
 
 
 
-}: {myTeam: {userName: string;totalPoints: number;id: string;};enrichedSubPools: {name: string;standings: {userName: string;totalPoints: number;id: string;}[];}[];myGames: {id: string;name: string;status: "actief" | "afgelopen";emoji: string;colors: string[];}[];}) {
+}: {myTeam: {userName: string;totalPoints: number;id: string;};enrichedSubPools: {name: string;standings: {userName: string;totalPoints: number;id: string;}[];}[];myGames: {id: string;name: string;status: "actief" | "afgelopen";country: "IT" | "FR" | "ES";colors: string[];}[];}) {
   // Mock palmares data per race
   const palmaresData = games.map((game) => {
     const myRank = game.id === "giro2026" ? 120 : game.id === "tdf2026" ? 87 : 203;
