@@ -2610,7 +2610,7 @@ function PalmaresTab({
     const stageWins = rank === 1 ? 5 : rank <= 3 ? 3 : 1;
     const stagePodiums = rank === 1 ? 10 : rank <= 3 ? 7 : 4;
     const raceRef = games[idx % games.length];
-    return { name: pool.name, rank, total: pool.standings.length, isWinner: myIdx === 0, stageWins, stagePodiums, raceEmoji: raceRef.emoji, raceName: raceRef.name };
+    return { name: pool.name, rank, total: pool.standings.length, isWinner: myIdx === 0, stageWins, stagePodiums, raceCountry: raceRef.country, raceName: raceRef.name };
   });
 
   // Aggregates
