@@ -24,9 +24,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, ReferenceL
 
 /* ── Mock data for games & enriched sub-pools ── */
 const myGames = [
-{ id: "giro2026", name: "Giro d'Italia 2026", status: "actief" as const, emoji: "🇮🇹", colors: ["#009246", "#ffffff", "#CE2B37"] },
-{ id: "tdf2026", name: "Tour de France 2026", status: "afgelopen" as const, emoji: "🇫🇷", colors: ["#002395", "#ffffff", "#ED2939"] },
-{ id: "vuelta2026", name: "Vuelta a España 2026", status: "afgelopen" as const, emoji: "🇪🇸", colors: ["#AA151B", "#F1BF00", "#AA151B"] }];
+{ id: "giro2026", name: "Giro d'Italia 2026", status: "actief" as const, country: "IT" as const, colors: ["#009246", "#ffffff", "#CE2B37"] },
+{ id: "tdf2026", name: "Tour de France 2026", status: "afgelopen" as const, country: "FR" as const, colors: ["#002395", "#ffffff", "#ED2939"] },
+{ id: "vuelta2026", name: "Vuelta a España 2026", status: "afgelopen" as const, country: "ES" as const, colors: ["#AA151B", "#F1BF00", "#AA151B"] }];
 
 const getRiderPoints = (riderNumber: number) => {
   return mockStageResults.reduce((total, stage) => {
