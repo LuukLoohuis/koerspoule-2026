@@ -2672,7 +2672,7 @@ function PalmaresTab({
             {palmaresData.map((race) =>
           <div key={race.id} className={cn("flex items-center justify-between px-4 py-3", race.status === "actief" && "bg-primary/5")}>
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{race.emoji}</span>
+                  <FlagIcon country={race.country} className="w-6 h-5" />
                   <div>
                     <p className="font-display font-bold text-sm">{race.name}</p>
                     <p className="text-[10px] text-muted-foreground font-sans">{race.status === "actief" ? "🟢 Lopend" : "Afgelopen"}</p>
