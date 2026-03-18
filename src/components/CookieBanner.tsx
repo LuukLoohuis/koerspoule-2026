@@ -23,7 +23,7 @@ export default function CookieBanner() {
       <div className="container mx-auto max-w-2xl bg-card border-2 border-foreground rounded-lg p-5 shadow-lg">
         <h3 className="font-serif text-lg font-bold mb-1">Koers Cookies 🍪</h3>
         <p className="text-sm text-muted-foreground mb-1">
-          Wij gebruiken koerskoekjes 🍪
+          Wij gebruiken Koers Cookies 🍪
         </p>
         <p className="text-sm text-muted-foreground mb-4">
           Deze website maakt uitsluitend gebruik van <strong>functionele cookies</strong>. 
