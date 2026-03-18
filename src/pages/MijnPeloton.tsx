@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import FlagIcon from "@/components/FlagIcon";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { mockTeams, mockSubPools, mockStageResults, mockClassifications } from "@/data/mockData";
 import { subpoolTeams, expandedSubPool, computeUniqueness, computePickCounts } from "@/data/subpoolData";
@@ -23,9 +24,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, ReferenceL
 
 /* ── Mock data for games & enriched sub-pools ── */
 const myGames = [
-{ id: "giro2026", name: "Giro d'Italia 2026", status: "actief" as const, emoji: "🇮🇹", colors: ["#009246", "#ffffff", "#CE2B37"] },
-{ id: "tdf2026", name: "Tour de France 2026", status: "afgelopen" as const, emoji: "🇫🇷", colors: ["#002395", "#ffffff", "#ED2939"] },
-{ id: "vuelta2026", name: "Vuelta a España 2026", status: "afgelopen" as const, emoji: "🇪🇸", colors: ["#AA151B", "#F1BF00", "#AA151B"] }];
+{ id: "giro2026", name: "Giro d'Italia 2026", status: "actief" as const, country: "IT" as const, colors: ["#009246", "#ffffff", "#CE2B37"] },
+{ id: "tdf2026", name: "Tour de France 2026", status: "afgelopen" as const, country: "FR" as const, colors: ["#002395", "#ffffff", "#ED2939"] },
+{ id: "vuelta2026", name: "Vuelta a España 2026", status: "afgelopen" as const, country: "ES" as const, colors: ["#AA151B", "#F1BF00", "#AA151B"] }];
 
 const getRiderPoints = (riderNumber: number) => {
   return mockStageResults.reduce((total, stage) => {
@@ -1079,7 +1080,7 @@ export default function MijnPeloton() {
               color: game.id === "vuelta2026" ? "#fff" : undefined
             } : undefined}>
             
-              <span>{game.emoji}</span>
+              <FlagIcon country={game.country} />
               {game.name}
               {game.status === "actief" &&
             <span className="w-2 h-2 rounded-full bg-primary-foreground animate-pulse" />
@@ -1609,7 +1610,7 @@ export default function MijnPeloton() {
                   "border-border hover:border-muted-foreground"
                 )}>
                 
-                🇮🇹 Giro Klassement
+                <FlagIcon country="IT" /> Giro Klassement
               </button>
             </div>
 
@@ -2593,7 +2594,7 @@ function PalmaresTab({
 
 
 
-}: {myTeam: {userName: string;totalPoints: number;id: string;};enrichedSubPools: {name: string;standings: {userName: string;totalPoints: number;id: string;}[];}[];myGames: {id: string;name: string;status: "actief" | "afgelopen";emoji: string;colors: string[];}[];}) {
+}: {myTeam: {userName: string;totalPoints: number;id: string;};enrichedSubPools: {name: string;standings: {userName: string;totalPoints: number;id: string;}[];}[];myGames: {id: string;name: string;status: "actief" | "afgelopen";country: "IT" | "FR" | "ES";colors: string[];}[];}) {
   // Mock palmares data per race
   const palmaresData = games.map((game) => {
     const myRank = game.id === "giro2026" ? 120 : game.id === "tdf2026" ? 87 : 203;
@@ -2609,7 +2610,7 @@ function PalmaresTab({
     const stageWins = rank === 1 ? 5 : rank <= 3 ? 3 : 1;
     const stagePodiums = rank === 1 ? 10 : rank <= 3 ? 7 : 4;
     const raceRef = games[idx % games.length];
-    return { name: pool.name, rank, total: pool.standings.length, isWinner: myIdx === 0, stageWins, stagePodiums, raceEmoji: raceRef.emoji, raceName: raceRef.name };
+    return { name: pool.name, rank, total: pool.standings.length, isWinner: myIdx === 0, stageWins, stagePodiums, raceCountry: raceRef.country, raceName: raceRef.name };
   });
 
   // Aggregates
@@ -2671,7 +2672,7 @@ function PalmaresTab({
             {palmaresData.map((race) =>
           <div key={race.id} className={cn("flex items-center justify-between px-4 py-3", race.status === "actief" && "bg-primary/5")}>
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{race.emoji}</span>
+                  <FlagIcon country={race.country} className="w-6 h-5" />
                   <div>
                     <p className="font-display font-bold text-sm">{race.name}</p>
                     <p className="text-[10px] text-muted-foreground font-sans">{race.status === "actief" ? "🟢 Lopend" : "Afgelopen"}</p>
@@ -2704,7 +2705,7 @@ function PalmaresTab({
                   <span className="text-lg">{pool.rank === 1 ? "🥇" : pool.rank === 2 ? "🥈" : pool.rank === 3 ? "🥉" : `#${pool.rank}`}</span>
                   <div>
                     <p className="font-display font-bold text-sm">{pool.name}</p>
-                    <p className="text-[10px] text-muted-foreground font-sans">{pool.raceEmoji} {pool.raceName}</p>
+                    <p className="text-[10px] text-muted-foreground font-sans inline-flex items-center gap-1"><FlagIcon country={pool.raceCountry} className="w-3.5 h-2.5" /> {pool.raceName}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 text-center">
