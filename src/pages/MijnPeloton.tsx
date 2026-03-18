@@ -1080,7 +1080,7 @@ export default function MijnPeloton() {
               color: game.id === "vuelta2026" ? "#fff" : undefined
             } : undefined}>
             
-              <span>{game.emoji}</span>
+              <FlagIcon country={game.country} />
               {game.name}
               {game.status === "actief" &&
             <span className="w-2 h-2 rounded-full bg-primary-foreground animate-pulse" />
