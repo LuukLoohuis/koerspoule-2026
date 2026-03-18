@@ -1639,7 +1639,7 @@ export default function MijnPeloton() {
                           const worstRank = Math.max(...rankData.map((d) => d.rank));
                           return (
                             <div>
-                              <h4 className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider mb-2">📉 Rangverloop (AK positie)</h4>
+                              <h4 className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider mb-2">📉 Rangverloop (GC positie)</h4>
                               <ChartContainer config={{ rank: { label: "Positie", color: "hsl(var(--primary))" } }} className="h-[120px] w-full">
                                 <LineChart data={rankData} margin={{ left: -10, right: 4, top: 4, bottom: 0 }}>
                                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
