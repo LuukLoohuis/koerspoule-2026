@@ -106,7 +106,7 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
               </a>
             </p>
             <div className="flex items-center gap-3 font-sans">
-              <Link to="/juridisch" className="underline hover:text-foreground transition-colors">Juridisch</Link>
+              <Link to="/juridisch" className="underline hover:text-foreground transition-colors">Koersregels</Link>
               <span>·</span>
               <span>© 2026 Koerspoule</span>
             </div>
