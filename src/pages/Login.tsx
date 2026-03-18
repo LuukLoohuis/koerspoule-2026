@@ -165,7 +165,7 @@ export default function Login() {
                   transition={{ duration: 0.25 }}
                 >
                   <Label htmlFor="name" className="font-serif">
-                    Naam
+                    Ploegnaam
                   </Label>
                   <Input
                     id="name"
