@@ -1501,7 +1501,7 @@ export default function MijnPeloton() {
                                 {rider.name} <span className="text-muted-foreground">#{rider.number}</span>
                               </span>
                             </div>
-                            <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
+                            <span className="font-display font-bold text-accent w-14 text-right shrink-0 text-base">
                               {myPts} pt
                             </span>
                           </div>
