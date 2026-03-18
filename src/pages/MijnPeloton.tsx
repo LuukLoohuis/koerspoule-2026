@@ -73,8 +73,8 @@ export default function MijnPeloton() {
   const [selectedPool, setSelectedPool] = useState<string | null>(null);
   const [newPoolName, setNewPoolName] = useState("");
   const [newPoolCode, setNewPoolCode] = useState("");
-   const [joinCode, setJoinCode] = useState("");
-   const [joinName, setJoinName] = useState("");
+  const [joinCode, setJoinCode] = useState("");
+  const [joinName, setJoinName] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedStage, setSelectedStage] = useState(0);
   const [comparePlayerName, setComparePlayerName] = useState("");
@@ -187,7 +187,7 @@ export default function MijnPeloton() {
                 {activePool.standings.map((team, idx) => {
                   const isMe = team.userName === myTeam.userName;
                   const isVisible = chartVisibleMembers.has(team.userName);
-                  const colorIdx = activePool.standings.findIndex(t => t.userName === team.userName);
+                  const colorIdx = activePool.standings.findIndex((t) => t.userName === team.userName);
                   const color = MEMBER_COLORS[colorIdx % MEMBER_COLORS.length];
                   return (
                     <div
@@ -195,16 +195,16 @@ export default function MijnPeloton() {
                       className={cn(
                         "flex items-center justify-between px-3 py-2 text-sm",
                         isMe && "bg-primary/10 border-l-4 border-l-primary",
-                        idx < 3 && !isMe && "bg-primary/5",
-                      )}
-                    >
+                        idx < 3 && !isMe && "bg-primary/5"
+                      )}>
+                      
                       <div className="flex items-center gap-2 min-w-0">
                         <span className={cn(
                           "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
                           idx === 0 && "bg-primary text-primary-foreground",
                           idx === 1 && "bg-muted text-foreground",
                           idx === 2 && "bg-vintage-gold text-primary-foreground",
-                          idx > 2 && "text-muted-foreground",
+                          idx > 2 && "text-muted-foreground"
                         )}>
                           {idx + 1}
                         </span>
@@ -219,7 +219,7 @@ export default function MijnPeloton() {
                         </span>
                         <button
                           onClick={() => {
-                            setChartVisibleMembers(prev => {
+                            setChartVisibleMembers((prev) => {
                               const next = new Set(prev);
                               if (next.has(team.userName)) {
                                 next.delete(team.userName);
@@ -231,16 +231,16 @@ export default function MijnPeloton() {
                           }}
                           className={cn(
                             "w-5 h-5 rounded-full border-2 transition-all shrink-0",
-                            isVisible
-                              ? "border-transparent shadow-sm"
-                              : "border-muted-foreground/30 bg-transparent"
+                            isVisible ?
+                            "border-transparent shadow-sm" :
+                            "border-muted-foreground/30 bg-transparent"
                           )}
                           style={isVisible ? { backgroundColor: color } : {}}
-                          title={isVisible ? `${team.userName} verbergen in grafiek` : `${team.userName} tonen in grafiek`}
-                        />
+                          title={isVisible ? `${team.userName} verbergen in grafiek` : `${team.userName} tonen in grafiek`} />
+                        
                       </div>
-                    </div>
-                  );
+                    </div>);
+
                 })}
               </CardContent>
             </Card>
@@ -261,8 +261,8 @@ export default function MijnPeloton() {
                       tick={{ fontSize: 10 }}
                       className="fill-muted-foreground"
                       interval={0}
-                      label={{ value: "Rit", position: "insideBottomRight", offset: -4, fontSize: 10, className: "fill-muted-foreground" }}
-                    />
+                      label={{ value: "Rit", position: "insideBottomRight", offset: -4, fontSize: 10, className: "fill-muted-foreground" }} />
+                    
                     <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                     <ChartTooltip
                       content={({ active, payload, label }) => {
@@ -271,17 +271,17 @@ export default function MijnPeloton() {
                         const history = activePool.pointsHistory;
 
                         // Current stage ranking
-                        const sorted = [...payload]
-                          .filter((p) => p.value != null)
-                          .sort((a, b) => (b.value as number) - (a.value as number));
+                        const sorted = [...payload].
+                        filter((p) => p.value != null).
+                        sort((a, b) => (b.value as number) - (a.value as number));
 
                         // Previous stage ranking for position change
                         let prevRanking: string[] = [];
                         if (stageIdx > 0 && history[stageIdx - 1]) {
                           const prevData = history[stageIdx - 1];
-                          const members = activePool.standings.map(s => s.userName);
+                          const members = activePool.standings.map((s) => s.userName);
                           prevRanking = [...members].sort(
-                            (a, b) => ((prevData[b] as number) || 0) - ((prevData[a] as number) || 0)
+                            (a, b) => (prevData[b] as number || 0) - (prevData[a] as number || 0)
                           );
                         }
 
@@ -293,8 +293,8 @@ export default function MijnPeloton() {
                               if (prevRanking.length > 0) {
                                 const prevPos = prevRanking.indexOf(entry.dataKey as string);
                                 const diff = prevPos - idx; // positive = climbed
-                                if (diff > 0) arrow = <span className="text-green-600 dark:text-green-400 ml-1">▲{diff}</span>;
-                                else if (diff < 0) arrow = <span className="text-red-600 dark:text-red-400 ml-1">▼{Math.abs(diff)}</span>;
+                                if (diff > 0) arrow = <span className="text-green-600 dark:text-green-400 ml-1">▲{diff}</span>;else
+                                if (diff < 0) arrow = <span className="text-red-600 dark:text-red-400 ml-1">▼{Math.abs(diff)}</span>;
                               }
                               return (
                                 <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
@@ -306,28 +306,28 @@ export default function MijnPeloton() {
                                   <span className="font-display font-bold tabular-nums">
                                     {entry.value} pt{arrow}
                                   </span>
-                                </div>
-                              );
+                                </div>);
+
                             })}
-                          </div>
-                        );
+                          </div>);
+
                       }} />
                     
-                    {activePool.standings
-                      .filter(team => chartVisibleMembers.has(team.userName))
-                      .map((team) => {
-                        const colorIdx = activePool.standings.findIndex(t => t.userName === team.userName);
-                        return (
-                          <Line
-                            key={team.userName}
-                            type="monotone"
-                            dataKey={team.userName}
-                            stroke={MEMBER_COLORS[colorIdx % MEMBER_COLORS.length]}
-                            strokeWidth={team.userName === myTeam.userName ? 3 : 2}
-                            dot={{ r: 3 }}
-                          />
-                        );
-                      })}
+                    {activePool.standings.
+                    filter((team) => chartVisibleMembers.has(team.userName)).
+                    map((team) => {
+                      const colorIdx = activePool.standings.findIndex((t) => t.userName === team.userName);
+                      return (
+                        <Line
+                          key={team.userName}
+                          type="monotone"
+                          dataKey={team.userName}
+                          stroke={MEMBER_COLORS[colorIdx % MEMBER_COLORS.length]}
+                          strokeWidth={team.userName === myTeam.userName ? 3 : 2}
+                          dot={{ r: 3 }} />);
+
+
+                    })}
                   </LineChart>
                 </ChartContainer>
 
@@ -335,13 +335,13 @@ export default function MijnPeloton() {
                 {(() => {
                   const history = activePool.pointsHistory;
                   if (history.length < 2) return null;
-                  const members = activePool.standings.map(s => s.userName);
+                  const members = activePool.standings.map((s) => s.userName);
 
                   // Compute rank per stage based on cumulative points (higher points = lower rank number)
                   const getRanks = (stageData: Record<string, unknown>) => {
-                    const sorted = [...members]
-                      .map(name => ({ name, pts: (stageData[name] as number) || 0 }))
-                      .sort((a, b) => b.pts - a.pts);
+                    const sorted = [...members].
+                    map((name) => ({ name, pts: stageData[name] as number || 0 })).
+                    sort((a, b) => b.pts - a.pts);
                     const ranks = new Map<string, number>();
                     sorted.forEach((entry, i) => ranks.set(entry.name, i + 1));
                     return ranks;
@@ -351,33 +351,33 @@ export default function MijnPeloton() {
                   const prevRanks = getRanks(history[history.length - 2]);
 
                   // Positive positionDelta = climbed (e.g. rank 5 -> rank 3 = +2)
-                  const deltas = members.map(name => ({
+                  const deltas = members.map((name) => ({
                     name,
-                    positionDelta: (prevRanks.get(name) || 0) - (lastRanks.get(name) || 0),
+                    positionDelta: (prevRanks.get(name) || 0) - (lastRanks.get(name) || 0)
                   })).sort((a, b) => b.positionDelta - a.positionDelta);
 
                   const topRiser = deltas[0];
                   const topFaller = deltas[deltas.length - 1];
                   return (
                     <div className="flex gap-4 mt-3 text-xs">
-                      {topRiser && topRiser.positionDelta > 0 && (
-                        <div className="flex items-center gap-1.5 bg-green-500/10 text-green-700 dark:text-green-400 px-2.5 py-1.5 rounded-md font-medium">
+                      {topRiser && topRiser.positionDelta > 0 &&
+                      <div className="flex items-center gap-1.5 bg-green-500/10 text-green-700 dark:text-green-400 px-2.5 py-1.5 rounded-md font-medium">
                           <span className="text-sm">▲</span>
                           <span className="text-muted-foreground">Grootste stijger:</span>
                           <span className="font-sans font-bold">{topRiser.name}</span>
                           <span className="font-display font-bold">+{topRiser.positionDelta} {topRiser.positionDelta === 1 ? 'plek' : 'plekken'}</span>
                         </div>
-                      )}
-                      {topFaller && topFaller.positionDelta < 0 && (
-                        <div className="flex items-center gap-1.5 bg-red-500/10 text-red-700 dark:text-red-400 px-2.5 py-1.5 rounded-md font-medium">
+                      }
+                      {topFaller && topFaller.positionDelta < 0 &&
+                      <div className="flex items-center gap-1.5 bg-red-500/10 text-red-700 dark:text-red-400 px-2.5 py-1.5 rounded-md font-medium">
                           <span className="text-sm">▼</span>
                           <span className="text-muted-foreground">Grootste daler:</span>
                           <span className="font-sans font-bold">{topFaller.name}</span>
                           <span className="font-display font-bold">{topFaller.positionDelta} {topFaller.positionDelta === -1 ? 'plek' : 'plekken'}</span>
                         </div>
-                      )}
-                    </div>
-                  );
+                      }
+                    </div>);
+
                 })()}
               </CardContent>
             </Card>
@@ -1416,17 +1416,17 @@ export default function MijnPeloton() {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {/* Algemeen klassement (main pool) */}
                         {(() => {
-                          const myRank = allPoolParticipants.findIndex(p => p.userName === myTeam.userName) + 1;
-                          const total = allPoolParticipants.length;
-                          const pct = Math.round((1 - myRank / total) * 100);
-                          const isTopTen = myRank <= 10;
-                          const isTopFifty = myRank <= 50;
-                          const label = isTopTen ? "In de kopgroep! 🔥" : isTopFifty ? "In het peloton 🚴" : pct >= 50 ? "Mee in de waaier 💨" : "Achter de volgwagen 🚗";
-                          return (
-                            <div className={cn(
-                              "rounded-lg border-2 p-4 space-y-2 transition-all",
-                              isTopTen ? "border-primary bg-primary/5" : "border-border bg-muted/20"
-                            )}>
+                            const myRank = allPoolParticipants.findIndex((p) => p.userName === myTeam.userName) + 1;
+                            const total = allPoolParticipants.length;
+                            const pct = Math.round((1 - myRank / total) * 100);
+                            const isTopTen = myRank <= 10;
+                            const isTopFifty = myRank <= 50;
+                            const label = isTopTen ? "In de kopgroep! 🔥" : isTopFifty ? "In het peloton 🚴" : pct >= 50 ? "Mee in de waaier 💨" : "Achter de volgwagen 🚗";
+                            return (
+                              <div className={cn(
+                                "rounded-lg border-2 p-4 space-y-2 transition-all",
+                                isTopTen ? "border-primary bg-primary/5" : "border-border bg-muted/20"
+                              )}>
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider">🏔️ Algemeen Klassement</span>
                                 <Trophy className="h-4 w-4 text-primary" />
@@ -1440,27 +1440,27 @@ export default function MijnPeloton() {
                               </div>
                               <p className="text-xs font-sans font-medium">{label}</p>
                               <p className="text-[10px] text-muted-foreground font-sans">Top {100 - pct}% van het peloton</p>
-                            </div>
-                          );
-                        })()}
+                            </div>);
+
+                          })()}
 
                         {/* Subpoule standings */}
                         {enrichedSubPools.map((pool) => {
-                          const myIdx = pool.standings.findIndex(t => t.id === myTeam.id);
-                          const myRank = myIdx + 1;
-                          const total = pool.standings.length;
-                          const isLeader = myRank === 1;
-                          const isPodium = myRank <= 3;
-                          const label = isLeader ? "Maglia Rosa! 🎀" : isPodium ? "Op het podium 🏅" : myRank <= Math.ceil(total / 2) ? "In de aanval 💪" : "Wachten op de sprint 🎯";
-                          const medalEmoji = myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : myRank === 3 ? "🥉" : "";
-                          return (
-                            <button
-                              key={pool.id}
-                              onClick={() => { setGameTab("subpoules"); setSelectedPool(pool.id); }}
-                              className={cn(
-                                "rounded-lg border-2 p-4 space-y-2 text-left transition-all hover:shadow-md group",
-                                isLeader ? "border-primary bg-primary/5" : "border-border bg-muted/20 hover:border-muted-foreground"
-                              )}>
+                            const myIdx = pool.standings.findIndex((t) => t.id === myTeam.id);
+                            const myRank = myIdx + 1;
+                            const total = pool.standings.length;
+                            const isLeader = myRank === 1;
+                            const isPodium = myRank <= 3;
+                            const label = isLeader ? "Maglia Rosa! 🎀" : isPodium ? "Op het podium 🏅" : myRank <= Math.ceil(total / 2) ? "In de aanval 💪" : "Wachten op de sprint 🎯";
+                            const medalEmoji = myRank === 1 ? "🥇" : myRank === 2 ? "🥈" : myRank === 3 ? "🥉" : "";
+                            return (
+                              <button
+                                key={pool.id}
+                                onClick={() => {setGameTab("subpoules");setSelectedPool(pool.id);}}
+                                className={cn(
+                                  "rounded-lg border-2 p-4 space-y-2 text-left transition-all hover:shadow-md group",
+                                  isLeader ? "border-primary bg-primary/5" : "border-border bg-muted/20 hover:border-muted-foreground"
+                                )}>
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider truncate">
                                   🚴 {pool.name}
@@ -1475,9 +1475,9 @@ export default function MijnPeloton() {
                               <p className="text-[10px] text-muted-foreground font-sans">
                                 {myRank > 1 ? `${pool.standings[0].userName} leidt met ${pool.standings[0].totalPoints} pt` : `Je leidt met ${myTeam.totalPoints} pt`}
                               </p>
-                            </button>
-                          );
-                        })}
+                            </button>);
+
+                          })}
                       </div>
                     </CardContent>
                   </Card>
@@ -1492,7 +1492,7 @@ export default function MijnPeloton() {
                       </CardHeader>
                       <CardContent className="p-0 divide-y divide-border">
                         {riderRows.map(({ catId, rider, myPts }) =>
-                          <div key={catId} className="px-3 md:px-4 py-2 text-sm flex items-center gap-3">
+                            <div key={catId} className="px-3 md:px-4 py-2 text-sm flex items-center gap-3">
                             <div className="flex-1 min-w-0">
                               <span className="text-[10px] md:text-xs text-muted-foreground block truncate">
                                 {getCategoryName(Number(catId))}
@@ -1505,15 +1505,15 @@ export default function MijnPeloton() {
                               {myPts} pt
                             </span>
                           </div>
-                        )}
+                            )}
                         {/* Jokers integrated in the list */}
                         <div className="px-3 md:px-4 py-1.5 bg-secondary/40">
                           <span className="text-[10px] font-display font-bold text-muted-foreground uppercase tracking-wider">🃏 Jokers</span>
                         </div>
                         {myTeam.jokers.map((j) => {
-                          const jPts = getRiderPoints(j.number);
-                          return (
-                            <div key={j.number} className="px-3 md:px-4 py-2 text-sm flex items-center gap-3">
+                              const jPts = getRiderPoints(j.number);
+                              return (
+                                <div key={j.number} className="px-3 md:px-4 py-2 text-sm flex items-center gap-3">
                               <div className="flex-1 min-w-0">
                                 <span className="text-[10px] md:text-xs text-primary block truncate">Joker</span>
                                 <span className="font-medium font-sans text-xs md:text-sm">
@@ -1523,9 +1523,9 @@ export default function MijnPeloton() {
                               <span className="font-display font-bold text-accent text-xs w-14 text-right shrink-0">
                                 {jPts} pt
                               </span>
-                            </div>
-                          );
-                        })}
+                            </div>);
+
+                            })}
                       </CardContent>
                     </Card>
                   </div>
@@ -1537,7 +1537,7 @@ export default function MijnPeloton() {
                       </CardHeader>
                       <CardContent className="p-4 space-y-2 text-sm font-sans">
                         <div>
-                          <span className="text-xs text-muted-foreground">Podium:</span>
+                          <span className="text-muted-foreground text-sm font-bold">Podium:</span>
                           <p className="font-medium flex flex-col">{myTeam.predictions.gcPodium.map((r, i) => <span key={i}>{['🥇', '🥈', '🥉'][i]} {r}</span>)}</p>
                         </div>
                         <p>🟣 {myTeam.predictions.pointsJersey}</p>
@@ -1914,7 +1914,7 @@ export default function MijnPeloton() {
                       className="w-full"
                       onClick={() => {
                         if (newPoolName && newPoolCode) {
-                          const nameExists = enrichedSubPools.some(p => p.name.toLowerCase() === newPoolName.trim().toLowerCase());
+                          const nameExists = enrichedSubPools.some((p) => p.name.toLowerCase() === newPoolName.trim().toLowerCase());
                           if (nameExists) {
                             toast({ title: "Naam al in gebruik", description: `Er bestaat al een subpoule met de naam "${newPoolName}".`, variant: "destructive" });
                             return;
@@ -1965,27 +1965,27 @@ export default function MijnPeloton() {
                      </p>
                      <div className="flex gap-2 flex-wrap">
                        <Input
-                         value={joinName}
-                         onChange={(e) => setJoinName(e.target.value)}
-                         placeholder="Naam subpoule"
-                         className="text-xs flex-1 min-w-[120px]" />
+                        value={joinName}
+                        onChange={(e) => setJoinName(e.target.value)}
+                        placeholder="Naam subpoule"
+                        className="text-xs flex-1 min-w-[120px]" />
                        <Input
-                         value={joinCode}
-                         onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                         placeholder="CODE"
-                         className="text-xs font-mono uppercase w-[100px]" />
+                        value={joinCode}
+                        onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                        placeholder="CODE"
+                        className="text-xs font-mono uppercase w-[100px]" />
                        <Button
-                         variant="outline"
-                         size="sm"
-                         onClick={() => {
-                           if (!joinName.trim() || !joinCode.trim()) {
-                             toast({ title: "Vul beide velden in", description: "Zowel de naam als de code zijn nodig om toe te treden.", variant: "destructive" });
-                             return;
-                           }
-                           toast({ title: "Aangevraagd!", description: `${joinName} — Code: ${joinCode}` });
-                           setJoinName("");
-                           setJoinCode("");
-                         }}>
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (!joinName.trim() || !joinCode.trim()) {
+                            toast({ title: "Vul beide velden in", description: "Zowel de naam als de code zijn nodig om toe te treden.", variant: "destructive" });
+                            return;
+                          }
+                          toast({ title: "Aangevraagd!", description: `${joinName} — Code: ${joinCode}` });
+                          setJoinName("");
+                          setJoinCode("");
+                        }}>
                          Join
                        </Button>
                      </div>
@@ -2588,12 +2588,12 @@ function StatCard({ icon, label, value }: {icon: React.ReactNode;label: string;v
 function PalmaresTab({
   myTeam,
   enrichedSubPools: pools,
-  myGames: games,
-}: {
-  myTeam: { userName: string; totalPoints: number; id: string };
-  enrichedSubPools: { name: string; standings: { userName: string; totalPoints: number; id: string }[] }[];
-  myGames: { id: string; name: string; status: "actief" | "afgelopen"; emoji: string; colors: string[] }[];
-}) {
+  myGames: games
+
+
+
+
+}: {myTeam: {userName: string;totalPoints: number;id: string;};enrichedSubPools: {name: string;standings: {userName: string;totalPoints: number;id: string;}[];}[];myGames: {id: string;name: string;status: "actief" | "afgelopen";emoji: string;colors: string[];}[];}) {
   // Mock palmares data per race
   const palmaresData = games.map((game) => {
     const myRank = game.id === "giro2026" ? 120 : game.id === "tdf2026" ? 87 : 203;
@@ -2613,22 +2613,22 @@ function PalmaresTab({
   });
 
   // Aggregates
-  const akClassWins = palmaresData.filter(p => p.myRank === 1).length;
-  const akClassPodiums = palmaresData.filter(p => p.myRank <= 3).length;
+  const akClassWins = palmaresData.filter((p) => p.myRank === 1).length;
+  const akClassPodiums = palmaresData.filter((p) => p.myRank <= 3).length;
   const akStageWins = palmaresData.reduce((s, p) => s + p.stageWins, 0);
-  const akBestRank = Math.min(...palmaresData.map(p => p.myRank));
+  const akBestRank = Math.min(...palmaresData.map((p) => p.myRank));
 
-  const subClassWins = subpoolResults.filter(s => s.isWinner).length;
-  const subClassPodiums = subpoolResults.filter(s => s.rank <= 3).length;
+  const subClassWins = subpoolResults.filter((s) => s.isWinner).length;
+  const subClassPodiums = subpoolResults.filter((s) => s.rank <= 3).length;
   const subStageWins = subpoolResults.reduce((s, p) => s + p.stageWins, 0);
-  const subBestRank = subpoolResults.length > 0 ? Math.min(...subpoolResults.map(s => s.rank)) : 0;
+  const subBestRank = subpoolResults.length > 0 ? Math.min(...subpoolResults.map((s) => s.rank)) : 0;
 
-  const PalmaresBlock = ({ title, emoji, classWins, classPodiums, stageWins, bestRank, details }: {
-    title: string; emoji: string;
-    classWins: number; classPodiums: number; stageWins: number; bestRank: number;
-    details: React.ReactNode;
-  }) => (
-    <Card className="retro-border">
+  const PalmaresBlock = ({ title, emoji, classWins, classPodiums, stageWins, bestRank, details
+
+
+
+  }: {title: string;emoji: string;classWins: number;classPodiums: number;stageWins: number;bestRank: number;details: React.ReactNode;}) =>
+  <Card className="retro-border">
       <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
         <CardTitle className="font-display text-base">{emoji} {title}</CardTitle>
       </CardHeader>
@@ -2653,8 +2653,8 @@ function PalmaresTab({
         </div>
         {details}
       </CardContent>
-    </Card>
-  );
+    </Card>;
+
 
   return (
     <div className="space-y-6">
@@ -2667,9 +2667,9 @@ function PalmaresTab({
         stageWins={akStageWins}
         bestRank={akBestRank}
         details={
-          <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
-            {palmaresData.map((race) => (
-              <div key={race.id} className={cn("flex items-center justify-between px-4 py-3", race.status === "actief" && "bg-primary/5")}>
+        <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
+            {palmaresData.map((race) =>
+          <div key={race.id} className={cn("flex items-center justify-between px-4 py-3", race.status === "actief" && "bg-primary/5")}>
                 <div className="flex items-center gap-3">
                   <span className="text-xl">{race.emoji}</span>
                   <div>
@@ -2683,10 +2683,10 @@ function PalmaresTab({
                   <div className="min-w-[50px] text-right"><p className="font-display font-bold">#{race.myRank}</p><p className="text-[10px] text-muted-foreground">/ {race.totalParticipants}</p></div>
                 </div>
               </div>
-            ))}
+          )}
           </div>
-        }
-      />
+        } />
+      
 
       {/* Subpoules Palmares */}
       <PalmaresBlock
@@ -2697,9 +2697,9 @@ function PalmaresTab({
         stageWins={subStageWins}
         bestRank={subBestRank}
         details={
-          <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
-            {subpoolResults.map((pool) => (
-              <div key={pool.name} className={cn("flex items-center justify-between px-4 py-3", pool.isWinner && "bg-primary/5")}>
+        <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
+            {subpoolResults.map((pool) =>
+          <div key={pool.name} className={cn("flex items-center justify-between px-4 py-3", pool.isWinner && "bg-primary/5")}>
                 <div className="flex items-center gap-3">
                   <span className="text-lg">{pool.rank === 1 ? "🥇" : pool.rank === 2 ? "🥈" : pool.rank === 3 ? "🥉" : `#${pool.rank}`}</span>
                   <div>
@@ -2713,15 +2713,15 @@ function PalmaresTab({
                   <div className="min-w-[50px] text-right"><p className={cn("font-display font-bold", pool.rank <= 3 && "text-primary")}>#{pool.rank}</p><p className="text-[10px] text-muted-foreground">/ {pool.total}</p></div>
                 </div>
               </div>
-            ))}
+          )}
           </div>
-        }
-      />
-    </div>
-  );
+        } />
+      
+    </div>);
+
 }
 
-function StandingRow({ team, rank, isMe }: { team: { id: string; userName: string; totalPoints: number }; rank: number; isMe: boolean }) {
+function StandingRow({ team, rank, isMe }: {team: {id: string;userName: string;totalPoints: number;};rank: number;isMe: boolean;}) {
   return (
     <div className={cn(
       "flex items-center justify-between px-4 py-2.5 text-sm",
@@ -2740,6 +2740,6 @@ function StandingRow({ team, rank, isMe }: { team: { id: string; userName: strin
         </span>
       </div>
       <span className={cn("font-display font-bold", isMe ? "text-primary" : "text-accent")}>{team.totalPoints} pt</span>
-    </div>
-  );
+    </div>);
+
 }
