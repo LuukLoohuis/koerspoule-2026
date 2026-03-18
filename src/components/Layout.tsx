@@ -10,7 +10,7 @@ const navItems = [
 { to: "/team-samenstellen", label: "Stel je team samen" },
 { to: "/uitslagen", label: "Uitslagen" },
 { to: "/mijn-peloton", label: "Mijn Peloton" },
-{ to: "/regels", label: "Spelregels" }];
+{ to: "/regels", label: "Koersreglement" }];
 
 
 export default function Layout({ children }: {children: React.ReactNode;}) {
