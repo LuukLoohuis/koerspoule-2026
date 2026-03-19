@@ -1620,7 +1620,7 @@ export default function MijnPeloton() {
                     {/* ── Stats Dashboard ── */}
                     <Card className="retro-border">
                       <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
-                        <CardTitle className="font-display text-base">📊 Stats Dashboard</CardTitle>
+                        <CardTitle className="font-display text-base">📊 Koersanalyse</CardTitle>
                       </CardHeader>
                       <CardContent className="p-4 space-y-5">
                         {/* Rangverloop — positie in het AK per etappe */}
