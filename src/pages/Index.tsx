@@ -31,7 +31,7 @@ export default function Index() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden border-b-2 border-foreground">
+      <section className="relative overflow-hidden gradient-border-bottom">
         <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
@@ -50,18 +50,21 @@ export default function Index() {
               className="mx-auto w-96 md:w-[36rem] -mb-28 animate-fade-in drop-shadow-lg" />
             
             <p className="font-serif italic text-muted-foreground mb-0 animate-fade-in text-3xl">Giro d'Italia 2026</p>
-            <div className="vintage-divider max-w-xs mx-auto my-6" />
+
+            {/* Ornamental divider */}
+            <div className="vintage-ornament max-w-sm mx-auto my-6 animate-fade-in">
+              <span className="vintage-ornament-symbol">❧</span>
+            </div>
+
             <p
               className="text-lg md:text-xl text-muted-foreground font-serif max-w-xl mx-auto mb-8 animate-fade-in"
               style={{ animationDelay: "0.2s" }}>
-              
               Stel je eigen wielerploeg samen voor de Giro, voorspel het podium en strijd tegen je vrienden om de Maglia
               Rosa.
             </p>
             <div
               className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in"
               style={{ animationDelay: "0.3s" }}>
-              
               <Button asChild size="lg" className="retro-border-primary text-base font-bold">
                 <Link to="/team-samenstellen">🚴 Stel je ploeg samen</Link>
               </Button>
@@ -74,16 +77,17 @@ export default function Index() {
       </section>
 
       {/* Features */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-        <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-4">Hoe werkt het?</h2>
-        <div className="vintage-divider max-w-xs mx-auto mb-12" />
+      <section className="container mx-auto px-4 py-16 md:py-24 vintage-texture">
+        <h2 className="vintage-heading text-3xl md:text-4xl font-bold text-center mb-4">Hoe werkt het?</h2>
+        <div className="vintage-ornament max-w-xs mx-auto mb-12">
+          <span className="vintage-ornament-symbol">✦</span>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((f, i) =>
           <div
             key={f.title}
-            className="retro-border bg-card p-6 animate-fade-in"
+            className="ornate-frame retro-border bg-card p-6 animate-fade-in"
             style={{ animationDelay: `${0.1 * i}s` }}>
-            
               <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mb-4">
                 <f.icon className="h-6 w-6 text-primary-foreground" />
               </div>
@@ -95,12 +99,14 @@ export default function Index() {
       </section>
 
       {/* Scoring preview */}
-      <section className="border-t-2 border-foreground bg-card">
+      <section className="gradient-border-top bg-card">
         <div className="container mx-auto px-4 py-16 md:py-24">
           <div className="max-w-2xl mx-auto text-center">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Punten per etappe</h2>
-            <div className="vintage-divider max-w-xs mx-auto mb-8" />
-            <div className="retro-border bg-background p-6 inline-block">
+            <h2 className="vintage-heading text-3xl md:text-4xl font-bold mb-4">Punten per etappe</h2>
+            <div className="vintage-ornament max-w-xs mx-auto mb-8">
+              <span className="vintage-ornament-symbol">⚜</span>
+            </div>
+            <div className="ornate-frame retro-border bg-background p-6 inline-block">
               <div className="grid grid-cols-5 gap-x-6 gap-y-2 text-sm font-sans">
                 {[
                 [1, 50],
@@ -130,7 +136,10 @@ export default function Index() {
 
       {/* CTA + Countdown */}
       <section className="container mx-auto px-4 py-16 text-center">
-        <h2 className="font-display text-3xl font-bold mb-4">Klaar om te koersen?</h2>
+        <div className="vintage-ornament max-w-xs mx-auto mb-6">
+          <span className="vintage-ornament-symbol">❧</span>
+        </div>
+        <h2 className="vintage-heading text-3xl font-bold mb-4">Klaar om te koersen?</h2>
         <CountdownBanner className="max-w-md mx-auto mb-6" />
         <Button asChild size="lg" className="retro-border-primary text-base font-bold">
           <Link to="/team-samenstellen">Schrijf je in →</Link>

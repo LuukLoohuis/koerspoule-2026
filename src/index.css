@@ -127,10 +127,97 @@
       90deg,
       transparent,
       hsl(var(--primary)),
-      hsl(var(--accent)),
+      hsl(var(--vintage-gold)),
       hsl(var(--primary)),
       transparent
     );
+  }
+
+  /* Ornamental vintage divider with decorative flourish */
+  .vintage-ornament {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+  }
+  .vintage-ornament::before,
+  .vintage-ornament::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--vintage-gold)),
+      hsl(var(--primary)),
+      hsl(var(--vintage-gold)),
+      transparent
+    );
+  }
+  .vintage-ornament-symbol {
+    color: hsl(var(--vintage-gold));
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  /* Decorative corner ornaments for cards/sections */
+  .ornate-frame {
+    position: relative;
+    border: 1px solid hsl(var(--border));
+  }
+  .ornate-frame::before,
+  .ornate-frame::after {
+    content: '✦';
+    position: absolute;
+    color: hsl(var(--vintage-gold));
+    font-size: 0.625rem;
+    line-height: 1;
+    opacity: 0.7;
+  }
+  .ornate-frame::before {
+    top: -5px;
+    left: -5px;
+  }
+  .ornate-frame::after {
+    bottom: -5px;
+    right: -5px;
+  }
+
+  /* Gradient section border — top or bottom */
+  .gradient-border-top {
+    border-top: 3px solid transparent;
+    border-image: linear-gradient(
+      90deg,
+      hsl(var(--vintage-gold) / 0),
+      hsl(var(--primary)),
+      hsl(var(--vintage-gold)),
+      hsl(var(--primary)),
+      hsl(var(--vintage-gold) / 0)
+    ) 1;
+  }
+  .gradient-border-bottom {
+    border-bottom: 3px solid transparent;
+    border-image: linear-gradient(
+      90deg,
+      hsl(var(--vintage-gold) / 0),
+      hsl(var(--primary)),
+      hsl(var(--vintage-gold)),
+      hsl(var(--primary)),
+      hsl(var(--vintage-gold) / 0)
+    ) 1;
+  }
+
+  /* Retro section heading with small caps & tracking */
+  .vintage-heading {
+    font-family: 'Playfair Display', serif;
+    font-variant: small-caps;
+    letter-spacing: 0.15em;
+    color: hsl(var(--foreground));
+  }
+
+  /* Subtle vintage texture overlay */
+  .vintage-texture {
+    background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.03' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
   }
 
   .jersey-badge {

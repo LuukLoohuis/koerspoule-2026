@@ -94,11 +94,13 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
       <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t-2 border-foreground bg-card py-8">
+      <footer className="gradient-border-top bg-card py-8">
         <div className="container mx-auto px-4">
-          <div className="vintage-divider mb-6" />
+          <div className="vintage-ornament max-w-md mx-auto mb-6">
+            <span className="vintage-ornament-symbol">⚜</span>
+          </div>
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <p className="font-serif italic"><p className="font-serif italic">"La Corsa Rosa" — Koerspoule, uit liefde voor de koers.</p></p>
+            <p className="font-serif italic">"La Corsa Rosa" — Koerspoule, uit liefde voor de koers.</p>
             <p className="font-sans">
               Materiaalpech? Mail naar{" "}
               <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors">
