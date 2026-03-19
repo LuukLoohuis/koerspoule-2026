@@ -905,10 +905,14 @@ export default function MijnPeloton() {
 
             const avgUniqueness = sortedTeams.map((t) => {
               const playerMap = uniqueness.get(t.userName);
-              if (!playerMap) return { name: t.userName, avg: 0 };
+              if (!playerMap) return { name: t.userName, avg: 0, uniqueCount: 0 };
               const vals = Array.from(playerMap.values());
-              return { name: t.userName, avg: vals.reduce((a, b) => a + b, 0) / vals.length };
+              const uniqueCount = vals.filter(v => v >= 0.95).length;
+              return { name: t.userName, avg: vals.reduce((a, b) => a + b, 0) / vals.length, uniqueCount };
             });
+
+            // Find most tactical player
+            const mostTactical = [...avgUniqueness].sort((a, b) => b.uniqueCount - a.uniqueCount)[0];
 
             // Higher contrast color function
             const getCellBg = (score: number) => {
@@ -918,6 +922,8 @@ export default function MijnPeloton() {
               if (score >= 0.3) return "hsl(15 70% 65%)"; // orange — common
               return "hsl(0 65% 75%)"; // light red — very common
             };
+
+            const isMe = (name: string) => name === myTeam.userName;
 
             return (
               <div className="lg:col-span-3">
@@ -931,6 +937,21 @@ export default function MijnPeloton() {
                     </p>
                   </CardHeader>
                   <CardContent className="p-4">
+                    {/* Most tactical player callout */}
+                    {mostTactical && mostTactical.uniqueCount > 0 && (
+                      <div className={cn(
+                        "flex items-center gap-2 mb-4 px-3 py-2 rounded-md border text-sm font-sans",
+                        isMe(mostTactical.name)
+                          ? "bg-primary/10 border-primary/30 text-primary"
+                          : "bg-accent/10 border-accent/30 text-accent-foreground"
+                      )}>
+                        <span className="text-lg">🧠</span>
+                        <span>
+                          <strong>Meest tactische speler:</strong> {mostTactical.name}{isMe(mostTactical.name) ? " (jij!)" : ""} — {mostTactical.uniqueCount} unieke pick{mostTactical.uniqueCount > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Legend */}
                     <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground font-sans">
                       <span>Populair</span>
@@ -940,10 +961,13 @@ export default function MijnPeloton() {
                           key={v}
                           className="w-5 h-3 rounded-sm"
                           style={{ backgroundColor: getCellBg(v) }} />
-
                         )}
                       </div>
                       <span>Uniek</span>
+                      <span className="ml-4 flex items-center gap-1">
+                        <span className="w-3 h-3 rounded-sm border-2 border-primary bg-primary/10 inline-block" />
+                        Jouw team
+                      </span>
                     </div>
 
                     <div className="overflow-x-auto">
@@ -958,10 +982,12 @@ export default function MijnPeloton() {
                               key={t.id}
                               className={cn(
                                 "px-1 py-1.5 font-display text-center min-w-[60px] max-w-[80px]",
-                                t.userName === myTeam.userName && "text-primary"
+                                isMe(t.userName)
+                                  ? "text-primary bg-primary/5 border-x-2 border-t-2 border-primary/40"
+                                  : ""
                               )}>
-                              
-                                <span className="block truncate">{t.userName}</span>
+                                <span className={cn("block truncate", isMe(t.userName) && "font-bold")}>{t.userName}</span>
+                                {isMe(t.userName) && <span className="text-[8px] text-primary/70 block">👈 jij</span>}
                               </th>
                             )}
                           </tr>
@@ -979,20 +1005,25 @@ export default function MijnPeloton() {
                               const catCounts = pickCounts.get(cat.id);
                               const count = pick ? catCounts?.get(pick.number) ?? 1 : 0;
                               const othersCount = count - 1;
+                              const isMeCol = isMe(t.userName);
                               return (
-                                <td key={t.id} className="px-0.5 py-0.5 text-center">
+                                <td key={t.id} className={cn(
+                                  "px-0.5 py-0.5 text-center",
+                                  isMeCol && "border-x-2 border-primary/40 bg-primary/5"
+                                )}>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <div
-                                        className="rounded-sm px-1 py-1.5 flex items-center justify-center cursor-default transition-colors"
+                                        className={cn(
+                                          "rounded-sm px-1 py-1.5 flex items-center justify-center cursor-default transition-colors",
+                                          isMeCol && score >= 0.9 && "ring-2 ring-primary ring-offset-1"
+                                        )}
                                         style={{ backgroundColor: getCellBg(score) }}>
-                                        
                                           <span
                                           className={cn(
                                             "truncate block text-[9px] md:text-[10px] font-bold leading-tight",
                                             score >= 0.7 ? "text-white" : "text-foreground"
                                           )}>
-                                          
                                             {pick?.name ?? "—"}
                                           </span>
                                         </div>
@@ -1008,7 +1039,6 @@ export default function MijnPeloton() {
                                       </TooltipContent>
                                     </Tooltip>
                                   </td>);
-
                             })}
                             </tr>
                           )}
@@ -1019,12 +1049,18 @@ export default function MijnPeloton() {
                               Panache Score
                             </td>
                             {avgUniqueness.map((a) =>
-                            <td key={a.name} className="text-center px-1 py-2">
+                            <td key={a.name} className={cn(
+                              "text-center px-1 py-2",
+                              isMe(a.name) && "border-x-2 border-b-2 border-primary/40 bg-primary/5"
+                            )}>
                                 <span className={cn(
                                 "font-display font-bold text-xs",
-                                a.avg > 0.6 ? "text-primary" : a.avg > 0.4 ? "text-accent" : "text-muted-foreground"
+                                isMe(a.name) ? "text-primary" : a.avg > 0.6 ? "text-primary" : a.avg > 0.4 ? "text-accent" : "text-muted-foreground"
                               )}>
                                   {Math.round(a.avg * 100)}%
+                                </span>
+                                <span className="block text-[8px] text-muted-foreground mt-0.5">
+                                  {a.uniqueCount} uniek
                                 </span>
                               </td>
                             )}
@@ -1035,7 +1071,6 @@ export default function MijnPeloton() {
                   </CardContent>
                 </Card>
               </div>);
-
           })()}
 
           {/* Koerscafé – subpoule chat */}
