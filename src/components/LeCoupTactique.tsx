@@ -255,7 +255,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
               className="text-xs h-7 rounded-full"
               onClick={() => { setShowOnlyUnique(prev => !prev); setShowOnlyDifferences(false); }}
             >
-              Uniek
+              🔥 Échappée
             </Button>
             <Button
               variant={showOnlyDifferences ? "default" : "outline"}
@@ -263,7 +263,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
               className="text-xs h-7 rounded-full"
               onClick={() => { setShowOnlyDifferences(prev => !prev); setShowOnlyUnique(false); }}
             >
-              Verschillen
+              🚴 Demarrages
             </Button>
             <div className="flex gap-0.5 border border-border rounded-full p-0.5">
               <Button
@@ -272,7 +272,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                 className="text-xs h-6 rounded-full"
                 onClick={() => setSortMode("standing")}
               >
-                Stand
+                🏁 Klassement
               </Button>
               <Button
                 variant={sortMode === "panache" ? "default" : "ghost"}
@@ -280,7 +280,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                 className="text-xs h-6 rounded-full"
                 onClick={() => setSortMode("panache")}
               >
-                Panache
+                🦚 Panache
               </Button>
             </div>
           </div>
