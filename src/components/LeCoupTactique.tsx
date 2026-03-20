@@ -255,7 +255,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
               className="text-xs h-7 rounded-full"
               onClick={() => { setShowOnlyUnique(prev => !prev); setShowOnlyDifferences(false); }}
             >
-              🔥 Échappée
+              🔥 Solo's
             </Button>
             <Button
               variant={showOnlyDifferences ? "default" : "outline"}
