@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import LeCoupTactique from "@/components/LeCoupTactique";
 import FlagIcon from "@/components/FlagIcon";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { mockTeams, mockSubPools, mockStageResults, mockClassifications } from "@/data/mockData";
