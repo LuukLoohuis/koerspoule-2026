@@ -167,54 +167,45 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
     <section className="lg:col-span-3">
       <Card className="retro-border overflow-hidden">
         {/* Header */}
-        <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-4 px-4 md:px-6">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-            <div>
-              <div className="mb-1.5 inline-flex items-center rounded-full bg-muted px-3 py-1 text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
-                Subpoule analyse
-              </div>
-              <CardTitle className="font-display text-xl md:text-2xl">
-                Le Coup Tactique 🎯
-              </CardTitle>
-              <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground font-sans">
-                Elke categorie heeft een eigen kleur. Hoe donkerder de cel, hoe unieker de pick.
-                Lichte cellen = populaire keuzes. Donkere cellen = tactische uitschieters.
-              </p>
-              <p className="text-[10px] text-muted-foreground font-sans mt-1 italic">
-                Intensiteit: <code className="bg-muted px-1 rounded font-mono">count / spelers</code> — werkt voor elke poule-grootte.
-              </p>
-            </div>
+        <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-5 px-4 md:px-6">
+          <div>
+            <CardTitle className="font-display text-xl md:text-2xl">
+              Le Coup Tactique 🎯
+            </CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Uniek vs populair per categorie
+            </p>
           </div>
 
           {/* Summary cards */}
-          <div className="mt-4 grid gap-2.5 grid-cols-2 xl:grid-cols-4">
+          <div className="mt-4 grid gap-2 grid-cols-2 xl:grid-cols-4">
             <StatCard
-              label="Meest tactische speler"
+              label="Tactischst"
               value={mostTactical?.name ?? "—"}
-              sub={`${mostTactical?.uniqueCount ?? 0} unieke picks`}
+              sub={`${mostTactical?.uniqueCount ?? 0} uniek`}
             />
             <StatCard
-              label="Jouw team"
+              label="Jij"
               value={myUserName}
-              sub={`${currentStats?.uniqueCount ?? 0} unieke picks`}
+              sub={`${currentStats?.uniqueCount ?? 0} uniek`}
               highlight
             />
             <StatCard
-              label="Gemiddelde overlap"
+              label="Overlap"
               value={`${averageOverlap}×`}
-              sub="gemiddeld aantal gelijke keuzes"
+              sub="gemiddeld"
             />
             <StatCard
-              label="Subpoule scan"
-              value={showOnlyUnique ? "Uniek filter" : showOnlyDifferences ? "Verschillen" : "Volledig"}
-              sub="wissel met de toggles hieronder"
+              label="Weergave"
+              value={showOnlyUnique ? "Uniek" : showOnlyDifferences ? "Verschillen" : "Volledig"}
+              sub="via toggles"
             />
           </div>
 
           {/* Player toggles */}
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Spelers</span>
+              <span className="text-[10px] font-medium tracking-wide text-muted-foreground">Vergelijk</span>
               <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 rounded-full" onClick={showAll}>Alles</Button>
               <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 rounded-full" onClick={showOnlyMe}>Alleen ik</Button>
               <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 rounded-full" onClick={resetSelection}>Reset</Button>
@@ -233,8 +224,8 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                       active
                         ? isCurrent
                           ? "border-primary bg-primary/10 text-primary"
-                          : "border-foreground/30 bg-foreground/5 text-foreground"
-                        : "border-border bg-muted/30 text-muted-foreground opacity-50"
+                          : "border-foreground/20 bg-foreground/5 text-foreground"
+                        : "border-border bg-muted/30 text-muted-foreground opacity-40"
                     )}
                   >
                     {team.userName}
@@ -245,29 +236,29 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
             </div>
           </div>
 
-          {/* Controls row */}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
+          {/* Controls */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <Button
               variant={showOnlyUnique ? "default" : "outline"}
               size="sm"
-              className="text-xs h-8 rounded-full"
+              className="text-xs h-7 rounded-full"
               onClick={() => { setShowOnlyUnique(prev => !prev); setShowOnlyDifferences(false); }}
             >
-              🔥 Alleen unieke picks
+              Uniek
             </Button>
             <Button
               variant={showOnlyDifferences ? "default" : "outline"}
               size="sm"
-              className="text-xs h-8 rounded-full"
+              className="text-xs h-7 rounded-full"
               onClick={() => { setShowOnlyDifferences(prev => !prev); setShowOnlyUnique(false); }}
             >
-              🔀 Alleen verschillen
+              Verschillen
             </Button>
-            <div className="flex gap-1 border border-border rounded-full p-0.5">
+            <div className="flex gap-0.5 border border-border rounded-full p-0.5">
               <Button
                 variant={sortMode === "standing" ? "default" : "ghost"}
                 size="sm"
-                className="text-xs h-7 rounded-full"
+                className="text-xs h-6 rounded-full"
                 onClick={() => setSortMode("standing")}
               >
                 Stand
@@ -275,22 +266,22 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
               <Button
                 variant={sortMode === "panache" ? "default" : "ghost"}
                 size="sm"
-                className="text-xs h-7 rounded-full"
+                className="text-xs h-6 rounded-full"
                 onClick={() => setSortMode("panache")}
               >
-                Panache ↓
+                Panache
               </Button>
             </div>
           </div>
 
           {/* Legend */}
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
-              <span className="h-3 w-6 rounded-sm" style={{ background: "linear-gradient(to right, hsl(0 80% 40%), hsl(0 45% 75%), hsl(0 30% 90%))" }} />
+          <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1">
+              <span className="h-2.5 w-5 rounded-sm" style={{ background: "linear-gradient(to right, hsl(0 80% 40%), hsl(0 30% 90%))" }} />
               <span>Donker = uniek · Licht = populair</span>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary">
-              <span className="h-3 w-3 rounded-sm border-2 border-primary bg-card inline-block" />
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 font-medium text-primary">
+              <span className="h-2.5 w-2.5 rounded-sm border-2 border-primary bg-card inline-block" />
               Jouw team
             </div>
           </div>
