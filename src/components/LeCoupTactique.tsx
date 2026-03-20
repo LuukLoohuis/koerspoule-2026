@@ -208,7 +208,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
             />
             <StatCard
               label="Weergave"
-              value={showOnlyUnique ? "Échappée" : showOnlyDifferences ? "Demarrages" : "Peloton"}
+              value={showOnlyUnique ? "Échappée" : showOnlyDifferences ? "Verschillen" : "Peloton"}
               sub="via toggles"
             />
           </div>
