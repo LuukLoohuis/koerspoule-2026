@@ -191,7 +191,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
           {/* Summary cards */}
           <div className="mt-4 grid gap-2 grid-cols-2 xl:grid-cols-4">
             <StatCard
-              label="Tactischst"
+              label="Koers Tacticus"
               value={mostTactical?.name ?? "—"}
               sub={`${mostTactical?.uniqueCount ?? 0} uniek`}
             />
