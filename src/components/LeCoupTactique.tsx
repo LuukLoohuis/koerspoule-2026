@@ -88,6 +88,17 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
   const categories = riderCategories;
   const totalPlayers = standings.length;
 
+  // Compute joker pick counts across all teams
+  const jokerCounts = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const team of standings) {
+      for (const joker of team.jokers) {
+        counts.set(joker.number, (counts.get(joker.number) || 0) + 1);
+      }
+    }
+    return counts;
+  }, [standings]);
+
   const { uniqueness, pickCounts, playerStats, mostTactical, averageOverlap } = useMemo(() => {
     const uniqueness = computeUniqueness(standings);
     const pickCounts = computePickCounts(standings);
