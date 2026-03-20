@@ -83,6 +83,7 @@ export default function MijnPeloton() {
   const [compareView, setCompareView] = useState<"gc" | number>("gc");
   const [subpoolCompareView, setSubpoolCompareView] = useState<"gc" | number>("gc");
   const [chartVisibleMembers, setChartVisibleMembers] = useState<Set<string>>(new Set([myTeam.userName]));
+  const [heatmapSort, setHeatmapSort] = useState<"standing" | "panache">("standing");
 
   const activePool = useMemo(
     () => enrichedSubPools.find((p) => p.id === selectedPool),
@@ -899,11 +900,10 @@ export default function MijnPeloton() {
           {activePool.isExpanded && (() => {
             const uniqueness = computeUniqueness(subpoolTeams);
             const pickCounts = computePickCounts(subpoolTeams);
-            const sortedTeams = activePool.standings;
             const categories = riderCategories;
             const totalPlayers = subpoolTeams.length;
 
-            const avgUniqueness = sortedTeams.map((t) => {
+            const avgUniqueness = activePool.standings.map((t) => {
               const playerMap = uniqueness.get(t.userName);
               if (!playerMap) return { name: t.userName, avg: 0, uniqueCount: 0 };
               const vals = Array.from(playerMap.values());
@@ -911,17 +911,27 @@ export default function MijnPeloton() {
               return { name: t.userName, avg: vals.reduce((a, b) => a + b, 0) / vals.length, uniqueCount };
             });
 
+            const sortedTeams = heatmapSort === "panache"
+              ? [...activePool.standings].sort((a, b) => {
+                  const aAvg = avgUniqueness.find(u => u.name === a.userName)?.avg ?? 0;
+                  const bAvg = avgUniqueness.find(u => u.name === b.userName)?.avg ?? 0;
+                  return bAvg - aAvg;
+                })
+              : activePool.standings;
+
             // Find most tactical player
             const mostTactical = [...avgUniqueness].sort((a, b) => b.uniqueCount - a.uniqueCount)[0];
 
-            // Higher contrast color function
+            // Giro-themed color function: deep purple (populair) → gold (uniek)
             const getCellBg = (score: number) => {
-              if (score >= 0.9) return "hsl(150 70% 30%)"; // dark green — unique
-              if (score >= 0.7) return "hsl(150 55% 42%)"; // medium green
-              if (score >= 0.5) return "hsl(45 70% 55%)"; // amber — middle
-              if (score >= 0.3) return "hsl(15 70% 65%)"; // orange — common
-              return "hsl(0 65% 75%)"; // light red — very common
+              if (score >= 0.9) return "hsl(38 85% 50%)";   // bright gold — unique
+              if (score >= 0.7) return "hsl(42 70% 58%)";   // warm gold
+              if (score >= 0.5) return "hsl(30 40% 60%)";   // muted bronze
+              if (score >= 0.3) return "hsl(280 30% 50%)";  // medium purple
+              return "hsl(280 45% 35%)";                     // deep purple — common
             };
+
+            const getCellText = (score: number) => score >= 0.5 ? "text-foreground" : "text-white";
 
             const isMe = (name: string) => name === myTeam.userName;
 
@@ -929,12 +939,35 @@ export default function MijnPeloton() {
               <div className="lg:col-span-3">
                 <Card className="retro-border">
                   <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
-                    <CardTitle className="font-display text-base flex items-center gap-2">
-                      🎯 Panache Score
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground font-sans mt-1">
-                      Hoe uniek zijn jouw keuzes? Donkerder = jij bent de enige met die renner. Lichter = populaire keuze.
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="font-display text-base flex items-center gap-2">
+                          🎯 Panache Score
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground font-sans mt-1">
+                          Hoe uniek zijn jouw keuzes? Goud = jij bent de enige. Paars = populaire keuze.
+                        </p>
+                        <p className="text-[10px] text-muted-foreground font-sans mt-0.5 italic">
+                          Berekening: per categorie <code className="bg-muted px-1 rounded">1 − (mede-kiezers / spelers−1)</code>, gemiddeld over alle categorieën.
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant={heatmapSort === "standing" ? "default" : "outline"}
+                          size="sm"
+                          className="text-xs h-7"
+                          onClick={() => setHeatmapSort("standing")}>
+                          Stand
+                        </Button>
+                        <Button
+                          variant={heatmapSort === "panache" ? "default" : "outline"}
+                          size="sm"
+                          className="text-xs h-7"
+                          onClick={() => setHeatmapSort("panache")}>
+                          Panache ↓
+                        </Button>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent className="p-4">
                     {/* Most tactical player callout */}
@@ -1022,7 +1055,7 @@ export default function MijnPeloton() {
                                           <span
                                           className={cn(
                                             "truncate block text-[9px] md:text-[10px] font-bold leading-tight",
-                                            score >= 0.7 ? "text-white" : "text-foreground"
+                                            getCellText(score)
                                           )}>
                                             {pick?.name ?? "—"}
                                           </span>
@@ -1048,7 +1081,9 @@ export default function MijnPeloton() {
                             <td className="text-left px-2 py-2 font-display font-bold text-xs sticky left-0 bg-background z-10">
                               Panache Score
                             </td>
-                            {avgUniqueness.map((a) =>
+                            {sortedTeams.map((t) => {
+                            const a = avgUniqueness.find(u => u.name === t.userName)!;
+                            return (
                             <td key={a.name} className={cn(
                               "text-center px-1 py-2",
                               isMe(a.name) && "border-x-2 border-b-2 border-primary/40 bg-primary/5"
@@ -1062,8 +1097,8 @@ export default function MijnPeloton() {
                                 <span className="block text-[8px] text-muted-foreground mt-0.5">
                                   {a.uniqueCount} uniek
                                 </span>
-                              </td>
-                            )}
+                              </td>);
+                            })}
                           </tr>
                         </tfoot>
                       </table>
