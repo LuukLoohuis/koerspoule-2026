@@ -88,6 +88,17 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
   const categories = riderCategories;
   const totalPlayers = standings.length;
 
+  // Compute joker pick counts across all teams
+  const jokerCounts = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const team of standings) {
+      for (const joker of team.jokers) {
+        counts.set(joker.number, (counts.get(joker.number) || 0) + 1);
+      }
+    }
+    return counts;
+  }, [standings]);
+
   const { uniqueness, pickCounts, playerStats, mostTactical, averageOverlap } = useMemo(() => {
     const uniqueness = computeUniqueness(standings);
     const pickCounts = computePickCounts(standings);
@@ -404,6 +415,81 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                             {count === 1
                               ? "Unieke keuze! 🔥"
                               : `${count - 1} ander${count - 1 > 1 ? "en" : ""} kozen ook deze renner`}
+                          </p>
+                          <p className="font-sans text-muted-foreground">{count}/{totalPlayers} spelers ({Math.round(ratio * 100)}%)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+
+              {/* Jokers rows */}
+              {[0, 1].map((jokerIdx) => (
+                <React.Fragment key={`joker-${jokerIdx}`}>
+                  <div className="sticky left-0 z-10 flex items-center rounded-xl border border-primary/30 bg-primary/5 px-3 py-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm">🃏</span>
+                      <span className="truncate text-xs font-semibold text-primary font-sans">
+                        Joker {jokerIdx + 1}
+                      </span>
+                    </div>
+                  </div>
+
+                  {visibleTeams.map((team) => {
+                    const joker = team.jokers[jokerIdx];
+                    const count = joker ? jokerCounts.get(joker.number) ?? 1 : 0;
+                    const ratio = count / totalPlayers;
+                    const shade = getCategoryShade(categories.length + jokerIdx, ratio);
+                    const isCurrent = isMe(team.userName);
+                    const isUnique = count === 1;
+                    const label = getHeatLabel(ratio);
+
+                    const shouldHide = (showOnlyUnique && !isUnique) || (showOnlyDifferences && false);
+
+                    return (
+                      <Tooltip key={`${team.id}-joker-${jokerIdx}`}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={cn(
+                              "relative min-h-[60px] rounded-xl border px-2.5 py-2.5 transition-all cursor-default",
+                              shade.text,
+                              isCurrent && "ring-2 ring-primary/50 ring-offset-1",
+                              shouldHide && "opacity-10 saturate-0",
+                              isUnique && "shadow-[0_0_0_1px_rgba(220,38,38,0.2),0_4px_12px_rgba(220,38,38,0.12)]",
+                            )}
+                            style={{
+                              backgroundColor: shade.bg,
+                              borderColor: isUnique ? "hsl(0 70% 45%)" : "transparent",
+                            }}
+                          >
+                            <div className="flex items-start justify-between gap-1">
+                              <div className="min-w-0">
+                                <div className="truncate text-[13px] font-bold leading-tight">
+                                  {joker?.name ?? "—"}
+                                </div>
+                                <div className="mt-0.5 text-[10px] font-medium opacity-75">
+                                  {label}
+                                </div>
+                              </div>
+                              <span
+                                className={cn("shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold", shade.badgeText)}
+                                style={{ backgroundColor: shade.badgeBg }}
+                              >
+                                {count}×
+                              </span>
+                            </div>
+                            {isUnique && (
+                              <div className="absolute right-1.5 top-1.5 text-xs">🔥</div>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs space-y-0.5 max-w-[200px]">
+                          <p className="font-display font-bold">{joker?.name ?? "—"} <span className="text-muted-foreground font-sans">#{joker?.number}</span></p>
+                          <p className="text-muted-foreground font-sans">
+                            {count === 1
+                              ? "Unieke joker! 🔥"
+                              : `${count - 1} ander${count - 1 > 1 ? "en" : ""} kozen ook deze joker`}
                           </p>
                           <p className="font-sans text-muted-foreground">{count}/{totalPlayers} spelers ({Math.round(ratio * 100)}%)</p>
                         </TooltipContent>
