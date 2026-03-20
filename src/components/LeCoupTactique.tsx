@@ -208,8 +208,8 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
             />
             <StatCard
               label="Weergave"
-              value={showOnlyUnique ? "Échappée" : showOnlyDifferences ? "Verschillen" : "Peloton"}
-              sub="via toggles"
+              value={showOnlyUnique ? "Solo's" : showOnlyDifferences ? "Verschillen" : "Peloton"}
+              sub="Koersmodus"
             />
           </div>
 
@@ -255,7 +255,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
               className="text-xs h-7 rounded-full"
               onClick={() => { setShowOnlyUnique(prev => !prev); setShowOnlyDifferences(false); }}
             >
-              🔥 Échappée
+              🔥 Solo's
             </Button>
             <Button
               variant={showOnlyDifferences ? "default" : "outline"}
