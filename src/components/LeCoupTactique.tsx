@@ -18,17 +18,41 @@ const CATEGORY_HUES = [
 ];
 
 function getCategoryShade(catIndex: number, ratio: number) {
-  // ratio = count / totalPlayers — high = popular (light), low = rare (dark)
+  // ratio = count / totalPlayers — high = popular (near white), low = rare (very dark)
   const hue = CATEGORY_HUES[catIndex % CATEGORY_HUES.length];
-  // Light (popular): high lightness, low saturation → Dark (unique): low lightness, high saturation
-  const saturation = 30 + (1 - ratio) * 50; // 30–80%
-  const lightness = 90 - (1 - ratio) * 50;  // 40–90%
+
+  // 5 distinct steps with extreme contrast range
+  let saturation: number;
+  let lightness: number;
+
+  if (ratio <= 1 / 20) {
+    // Uniek — very dark, fully saturated
+    saturation = 85;
+    lightness = 30;
+  } else if (ratio <= 0.15) {
+    // Zeldzaam — dark
+    saturation = 70;
+    lightness = 42;
+  } else if (ratio <= 0.3) {
+    // Gemiddeld — medium
+    saturation = 50;
+    lightness = 60;
+  } else if (ratio <= 0.5) {
+    // Populair — light
+    saturation = 30;
+    lightness = 82;
+  } else {
+    // Heel populair — near white/pastel
+    saturation = 15;
+    lightness = 94;
+  }
+
   const textLight = lightness < 55;
   return {
     bg: `hsl(${hue} ${saturation}% ${lightness}%)`,
     text: textLight ? "text-white" : "text-foreground",
-    badgeBg: `hsl(${hue} ${saturation + 5}% ${Math.max(lightness - 10, 25)}%)`,
-    badgeText: lightness - 10 < 55 ? "text-white" : "text-foreground",
+    badgeBg: `hsl(${hue} ${Math.min(saturation + 10, 90)}% ${Math.max(lightness - 12, 22)}%)`,
+    badgeText: lightness - 12 < 55 ? "text-white" : "text-foreground",
   };
 }
 
