@@ -1564,13 +1564,14 @@ export default function MijnPeloton() {
                         })()}
                       </CardContent>
                     </Card>
-                  </div>
+                   </div>
                 </div>
-                </div>)
-                  }
-            </div>);
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground font-sans">Kies een speler om teams te vergelijken.</p>
+            );
+          })()}
 
-            })()}
           </TabsContent>
 
           {/* ── TAB: Uitslagen ── */}
