@@ -366,9 +366,9 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                     const isUnique = count === 1;
                     const label = getHeatLabel(ratio);
 
-                    // "Alleen verschillen" filter: hide if this pick matches the most common
+                    // "Demarrages" filter: hide if this pick matches the most common — but never hide my own team
                     const isDifference = pick ? pick.number !== mostCommonPick.get(cat.id) : false;
-                    const shouldHideDiff = showOnlyDifferences && !isDifference;
+                    const shouldHideDiff = showOnlyDifferences && !isDifference && !isCurrent;
                     const shouldHideUnique = showOnlyUnique && !isUnique;
                     const shouldHide = shouldHideDiff || shouldHideUnique;
 
