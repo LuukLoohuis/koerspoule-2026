@@ -208,7 +208,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
             />
             <StatCard
               label="Weergave"
-              value={showOnlyUnique ? "Échappée" : showOnlyDifferences ? "Demarrages" : "Peloton"}
+              value={showOnlyUnique ? "Échappée" : showOnlyDifferences ? "Verschillen" : "Peloton"}
               sub="via toggles"
             />
           </div>
@@ -263,7 +263,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
               className="text-xs h-7 rounded-full"
               onClick={() => { setShowOnlyDifferences(prev => !prev); setShowOnlyUnique(false); }}
             >
-              🚴 Demarrages
+              🚴 Verschillen
             </Button>
             <div className="flex gap-0.5 border border-border rounded-full p-0.5">
               <Button
@@ -366,7 +366,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                     const isUnique = count === 1;
                     const label = getHeatLabel(ratio);
 
-                    // "Demarrages" filter: hide if this pick matches the most common — but never hide my own team
+                    // "Verschillen" filter: hide if this pick matches the most common — but never hide my own team
                     const isDifference = pick ? pick.number !== mostCommonPick.get(cat.id) : false;
                     const shouldHideDiff = showOnlyDifferences && !isDifference && !isCurrent;
                     const shouldHideUnique = showOnlyUnique && !isUnique;
