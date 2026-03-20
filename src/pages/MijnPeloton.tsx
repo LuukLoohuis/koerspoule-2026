@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from "react";
-import LeCoupTactique from "@/components/LeCoupTactique";
 import FlagIcon from "@/components/FlagIcon";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { mockTeams, mockSubPools, mockStageResults, mockClassifications } from "@/data/mockData";
@@ -84,7 +83,6 @@ export default function MijnPeloton() {
   const [compareView, setCompareView] = useState<"gc" | number>("gc");
   const [subpoolCompareView, setSubpoolCompareView] = useState<"gc" | number>("gc");
   const [chartVisibleMembers, setChartVisibleMembers] = useState<Set<string>>(new Set([myTeam.userName]));
-  const [heatmapSort, setHeatmapSort] = useState<"standing" | "panache">("standing");
 
   const activePool = useMemo(
     () => enrichedSubPools.find((p) => p.id === selectedPool),
@@ -898,12 +896,182 @@ export default function MijnPeloton() {
           </div>
 
           {/* Panache Score heatmap */}
-          {activePool.isExpanded && (
-            <LeCoupTactique
-              standings={[...subpoolTeams].sort((a, b) => b.totalPoints - a.totalPoints)}
-              myUserName={myTeam.userName}
-            />
-          )}
+          {activePool.isExpanded && (() => {
+            const uniqueness = computeUniqueness(subpoolTeams);
+            const pickCounts = computePickCounts(subpoolTeams);
+            const sortedTeams = activePool.standings;
+            const categories = riderCategories;
+            const totalPlayers = subpoolTeams.length;
+
+            const avgUniqueness = sortedTeams.map((t) => {
+              const playerMap = uniqueness.get(t.userName);
+              if (!playerMap) return { name: t.userName, avg: 0, uniqueCount: 0 };
+              const vals = Array.from(playerMap.values());
+              const uniqueCount = vals.filter(v => v >= 0.95).length;
+              return { name: t.userName, avg: vals.reduce((a, b) => a + b, 0) / vals.length, uniqueCount };
+            });
+
+            // Find most tactical player
+            const mostTactical = [...avgUniqueness].sort((a, b) => b.uniqueCount - a.uniqueCount)[0];
+
+            // Higher contrast color function
+            const getCellBg = (score: number) => {
+              if (score >= 0.9) return "hsl(150 70% 30%)"; // dark green — unique
+              if (score >= 0.7) return "hsl(150 55% 42%)"; // medium green
+              if (score >= 0.5) return "hsl(45 70% 55%)"; // amber — middle
+              if (score >= 0.3) return "hsl(15 70% 65%)"; // orange — common
+              return "hsl(0 65% 75%)"; // light red — very common
+            };
+
+            const isMe = (name: string) => name === myTeam.userName;
+
+            return (
+              <div className="lg:col-span-3">
+                <Card className="retro-border">
+                  <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
+                    <CardTitle className="font-display text-base flex items-center gap-2">
+                      🎯 Panache Score
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground font-sans mt-1">
+                      Hoe uniek zijn jouw keuzes? Donkerder = jij bent de enige met die renner. Lichter = populaire keuze.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    {/* Most tactical player callout */}
+                    {mostTactical && mostTactical.uniqueCount > 0 && (
+                      <div className={cn(
+                        "flex items-center gap-2 mb-4 px-3 py-2 rounded-md border text-sm font-sans",
+                        isMe(mostTactical.name)
+                          ? "bg-primary/10 border-primary/30 text-primary"
+                          : "bg-accent/10 border-accent/30 text-accent-foreground"
+                      )}>
+                        <span className="text-lg">🧠</span>
+                        <span>
+                          <strong>Meest tactische speler:</strong> {mostTactical.name}{isMe(mostTactical.name) ? " (jij!)" : ""} — {mostTactical.uniqueCount} unieke pick{mostTactical.uniqueCount > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Legend */}
+                    <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground font-sans">
+                      <span>Populair</span>
+                      <div className="flex gap-0.5">
+                        {[0, 0.15, 0.35, 0.6, 0.8, 1].map((v) =>
+                        <div
+                          key={v}
+                          className="w-5 h-3 rounded-sm"
+                          style={{ backgroundColor: getCellBg(v) }} />
+                        )}
+                      </div>
+                      <span>Uniek</span>
+                      <span className="ml-4 flex items-center gap-1">
+                        <span className="w-3 h-3 rounded-sm border-2 border-primary bg-primary/10 inline-block" />
+                        Jouw team
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs border-collapse">
+                        <thead>
+                          <tr>
+                            <th className="text-left px-2 py-1.5 font-display text-muted-foreground sticky left-0 bg-background z-10 min-w-[120px]">
+                              Categorie
+                            </th>
+                            {sortedTeams.map((t) =>
+                            <th
+                              key={t.id}
+                              className={cn(
+                                "px-1 py-1.5 font-display text-center min-w-[60px] max-w-[80px]",
+                                isMe(t.userName)
+                                  ? "text-primary bg-primary/5 border-x-2 border-t-2 border-primary/40"
+                                  : ""
+                              )}>
+                                <span className={cn("block truncate", isMe(t.userName) && "font-bold")}>{t.userName}</span>
+                                {isMe(t.userName) && <span className="text-[8px] text-primary/70 block">👈 jij</span>}
+                              </th>
+                            )}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {categories.map((cat) =>
+                          <tr key={cat.id} className="border-t border-border/50">
+                              <td className="text-left px-2 py-1 font-sans text-muted-foreground sticky left-0 bg-background z-10 truncate max-w-[120px]" title={cat.name}>
+                                {cat.name}
+                              </td>
+                              {sortedTeams.map((t) => {
+                              const playerMap = uniqueness.get(t.userName);
+                              const score = playerMap?.get(cat.id) ?? 0;
+                              const pick = t.picks[cat.id];
+                              const catCounts = pickCounts.get(cat.id);
+                              const count = pick ? catCounts?.get(pick.number) ?? 1 : 0;
+                              const othersCount = count - 1;
+                              const isMeCol = isMe(t.userName);
+                              return (
+                                <td key={t.id} className={cn(
+                                  "px-0.5 py-0.5 text-center",
+                                  isMeCol && "border-x-2 border-primary/40 bg-primary/5"
+                                )}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div
+                                        className={cn(
+                                          "rounded-sm px-1 py-1.5 flex items-center justify-center cursor-default transition-colors",
+                                          isMeCol && score >= 0.9 && "ring-2 ring-primary ring-offset-1"
+                                        )}
+                                        style={{ backgroundColor: getCellBg(score) }}>
+                                          <span
+                                          className={cn(
+                                            "truncate block text-[9px] md:text-[10px] font-bold leading-tight",
+                                            score >= 0.7 ? "text-white" : "text-foreground"
+                                          )}>
+                                            {pick?.name ?? "—"}
+                                          </span>
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="text-xs space-y-0.5 max-w-[180px]">
+                                        <p className="font-display font-bold">{pick?.name ?? "—"} <span className="text-muted-foreground font-sans">#{pick?.number}</span></p>
+                                        <p className="text-muted-foreground font-sans">
+                                          {othersCount === 0 ?
+                                        "Unieke keuze! 🔥" :
+                                        `${othersCount} ander${othersCount > 1 ? "en" : ""} kozen ook deze renner`}
+                                        </p>
+                                        <p className="font-sans text-muted-foreground">{count}/{totalPlayers} spelers</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </td>);
+                            })}
+                            </tr>
+                          )}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t-2 border-foreground">
+                            <td className="text-left px-2 py-2 font-display font-bold text-xs sticky left-0 bg-background z-10">
+                              Panache Score
+                            </td>
+                            {avgUniqueness.map((a) =>
+                            <td key={a.name} className={cn(
+                              "text-center px-1 py-2",
+                              isMe(a.name) && "border-x-2 border-b-2 border-primary/40 bg-primary/5"
+                            )}>
+                                <span className={cn(
+                                "font-display font-bold text-xs",
+                                isMe(a.name) ? "text-primary" : a.avg > 0.6 ? "text-primary" : a.avg > 0.4 ? "text-accent" : "text-muted-foreground"
+                              )}>
+                                  {Math.round(a.avg * 100)}%
+                                </span>
+                                <span className="block text-[8px] text-muted-foreground mt-0.5">
+                                  {a.uniqueCount} uniek
+                                </span>
+                              </td>
+                            )}
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>);
+          })()}
 
           {/* Koerscafé – subpoule chat */}
           <div className="lg:col-span-3">
@@ -915,126 +1083,175 @@ export default function MijnPeloton() {
   }
 
   /* ── Main overview ── */
-  const activeGame = myGames.find((g) => g.id === selectedGame)!;
-
-  // Compare team logic for Mijn Team tab
-  const compareTeam = mockTeams.find((t) => t.userName === comparePlayerName && t.id !== myTeam.id);
-
-  // Stage breakdown for comparison
-  const stageBreakdown = useMemo(() => {
-    return mockStageResults.map((stage, idx) => {
-      const myPts = stage.top20
-        .filter((r) => myRiderNumbers.has(r.riderNumber))
-        .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
-      const otherPts = compareTeam
-        ? stage.top20
-            .filter((r) => {
-              const otherNumbers = new Set(Object.values(compareTeam.picks).map((p) => p.number));
-              return otherNumbers.has(r.riderNumber);
-            })
-            .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0)
-        : 0;
-      return { stage: stage.stage, idx, myPts, otherPts, type: stage.type };
-    });
-  }, [compareTeam, myRiderNumbers]);
-
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
-      {/* Game selector header */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        {myGames.map((game) => (
+      <div className="text-center mb-8">
+         
+         <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Mijn Peloton
+
+        </h1>
+        <p className="text-muted-foreground font-serif">
+          Welkom terug, {myTeam.userName}! Beheer je koersen en subpoules.
+        </p>
+        <div className="vintage-divider max-w-xs mx-auto mt-4" />
+      </div>
+
+      <div className="max-w-5xl mx-auto">
+        {/* Game selector */}
+        <div className="flex gap-2 mb-6 flex-wrap">
+          {myGames.map((game) =>
           <button
             key={game.id}
             onClick={() => setSelectedGame(game.id)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-md border-2 text-sm font-bold transition-all",
-              selectedGame === game.id
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border hover:border-muted-foreground"
+              "px-4 py-2 rounded-md font-display font-bold text-sm border-2 transition-all flex items-center gap-2",
+              selectedGame === game.id ?
+              "text-primary-foreground" :
+              "border-border hover:border-muted-foreground"
             )}
-          >
-            <FlagIcon country={game.country} className="w-5 h-3.5" />
-            {game.name}
-          </button>
-        ))}
-      </div>
+            style={selectedGame === game.id ? {
+              background: `linear-gradient(135deg, ${game.colors[0]}, ${game.colors[1]}, ${game.colors[2]})`,
+              borderColor: game.colors[0],
+              color: game.id === "vuelta2026" ? "#fff" : undefined
+            } : undefined}>
+            
+              <FlagIcon country={game.country} />
+              {game.name}
+              {game.status === "actief" &&
+            <span className="w-2 h-2 rounded-full bg-primary-foreground animate-pulse" />
+            }
+            </button>
+          )}
+        </div>
 
-      <Tabs value={gameTab} onValueChange={setGameTab}>
-        <TabsList className="grid w-full grid-cols-5 mb-2">
-          <TabsTrigger value="team" className="font-display text-xs md:text-sm">🚴 Mijn Team</TabsTrigger>
-          <TabsTrigger value="uitslagen" className="font-display text-xs md:text-sm">📊 Uitslagen</TabsTrigger>
-          <TabsTrigger value="subpoules" className="font-display text-xs md:text-sm">👥 Subpoules</TabsTrigger>
-          <TabsTrigger value="palmares" className="font-display text-xs md:text-sm">🏆 Palmares</TabsTrigger>
-          <TabsTrigger value="watals" className="font-display text-xs md:text-sm">🔮 Wat Als?</TabsTrigger>
-        </TabsList>
+        {/* Inner tabs: Team / Uitslagen / Subpoules */}
+        <Tabs value={gameTab} onValueChange={setGameTab}>
+          <TabsList className="w-full retro-border h-auto p-1 grid grid-cols-2 md:grid-cols-5 gap-1">
+            <TabsTrigger value="team" className="font-display text-xs md:text-sm px-2 md:px-3">
+              🚴‍♂️🚴 Mijn Team
+            </TabsTrigger>
+            <TabsTrigger value="uitslagen" className="font-display text-xs md:text-sm px-2 md:px-3">
+              📋 Uitslagen
+            </TabsTrigger>
+            <TabsTrigger value="subpoules" className="font-display text-xs md:text-sm px-2 md:px-3">
+              👥 Subpoules
+            </TabsTrigger>
+            <TabsTrigger value="palmares" className="font-display text-xs md:text-sm px-2 md:px-3">
+              🏅 Palmares
+            </TabsTrigger>
+            <TabsTrigger value="watals" className="font-display text-xs md:text-sm px-2 md:px-3">
+              ⛰️ Hors Cat.
+            </TabsTrigger>
+          </TabsList>
 
-        {/* ── TAB: Mijn Team ── */}
-        <TabsContent value="team" className="mt-6">
-          {(() => {
-            const riderRows = riderCategories.map((cat) => {
-              const myPick = myTeam.picks[cat.id];
-              const myPts = compareView === "gc"
-                ? getRiderPoints(myPick.number)
-                : (() => {
-                    const stage = mockStageResults[compareView as number];
-                    const result = stage?.top20.find((r) => r.riderNumber === myPick.number);
-                    return result ? pointsTable[result.position] || 0 : 0;
-                  })();
+          {/* ── TAB: Mijn Team ── */}
+          <TabsContent value="team" className="mt-6">
+            {(() => {
+              const compareTeam = mockTeams.find(
+                (t) => t.userName.toLowerCase() === comparePlayerName.trim().toLowerCase() && t.id !== myTeam.id
+              );
 
-              const otherPick = compareTeam?.picks[cat.id];
-              const otherPts = otherPick
-                ? compareView === "gc"
-                  ? getRiderPoints(otherPick.number)
-                  : (() => {
-                      const stage = mockStageResults[compareView as number];
-                      const result = stage?.top20.find((r) => r.riderNumber === otherPick.number);
-                      return result ? pointsTable[result.position] || 0 : 0;
-                    })()
-                : 0;
-
-              return {
-                catId: cat.id,
-                rider: myPick,
-                myPts,
-                otherRider: otherPick || null,
-                otherPts,
-                isSame: otherPick ? myPick.number === otherPick.number : false,
+              // Points calculator: GC (all stages) or single stage
+              const getPointsForView = (riderNumber: number) => {
+                if (compareView === "gc") return getRiderPoints(riderNumber);
+                const stage = mockStageResults[compareView];
+                if (!stage) return 0;
+                const result = stage.top20.find((r) => r.riderNumber === riderNumber);
+                return result ? pointsTable[result.position] || 0 : 0;
               };
-            });
 
-            const myTotal = riderRows.reduce((s, r) => s + r.myPts, 0);
-            const otherTotal = riderRows.reduce((s, r) => s + r.otherPts, 0);
+              const riderRows = Object.entries(myTeam.picks).
+              map(([catId, rider]) => {
+                const myPts = getPointsForView(rider.number);
+                const otherRider = compareTeam?.picks[Number(catId)];
+                const otherPts = otherRider ? getPointsForView(otherRider.number) : 0;
+                const isSame = otherRider?.number === rider.number;
+                return { catId, rider, myPts, otherRider, otherPts, isSame };
+              }).
+              sort((a, b) => b.myPts - a.myPts);
 
-            return compareTeam ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-display text-lg font-bold">
-                    {myTeam.userName} vs {compareTeam.userName}
-                  </h2>
-                  <div className="flex gap-1">
-                    <Button
-                      variant={compareView === "gc" ? "default" : "outline"}
-                      size="sm"
-                      className="text-xs h-7"
-                      onClick={() => setCompareView("gc")}
-                    >
-                      GC
-                    </Button>
-                    {mockStageResults.map((stage, idx) => (
-                      <Button
-                        key={stage.stage}
-                        variant={compareView === idx ? "default" : "outline"}
-                        size="sm"
-                        className="text-xs h-7"
-                        onClick={() => setCompareView(idx)}
-                      >
-                        Rit {stage.stage}
+              const myTotal = riderRows.reduce((s, r) => s + r.myPts, 0);
+              const otherTotal = compareTeam ? riderRows.reduce((s, r) => s + r.otherPts, 0) : 0;
+
+              // Per-stage totals for the stage overview
+              const stageBreakdown = mockStageResults.map((stage, idx) => {
+                const myPts = Object.values(myTeam.picks).reduce((sum, rider) => {
+                  const r = stage.top20.find((s) => s.riderNumber === rider.number);
+                  return sum + (r ? pointsTable[r.position] || 0 : 0);
+                }, 0);
+                const otherPts = compareTeam ? Object.values(compareTeam.picks).reduce((sum, rider) => {
+                  const r = stage.top20.find((s) => s.riderNumber === rider.number);
+                  return sum + (r ? pointsTable[r.position] || 0 : 0);
+                }, 0) : 0;
+                return { stage: stage.stage, idx, myPts, otherPts, type: stage.type };
+              });
+
+              return (
+                <div className="space-y-6">
+              {/* Compare input bar */}
+              <Card className="retro-border">
+                <CardContent className="p-3 md:p-4">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <ArrowLeftRight className="h-5 w-5 text-primary shrink-0" />
+                    <span className="text-sm font-display font-bold whitespace-nowrap">Vergelijk teams</span>
+                    <Input
+                          value={comparePlayerName}
+                          onChange={(e) => setComparePlayerName(e.target.value)}
+                          placeholder="Typ een spelersnaam..."
+                          className="h-9 text-sm flex-1 min-w-[140px] max-w-[240px]" />
+                        
+                    {comparePlayerName && !compareTeam &&
+                        <span className="text-xs text-destructive font-sans">Niet gevonden</span>
+                        }
+                    {compareTeam &&
+                        <Button variant="ghost" size="sm" onClick={() => setComparePlayerName("")} className="text-xs h-7">
+                        ✕ Wis
                       </Button>
-                    ))}
+                        }
                   </div>
-                </div>
+                </CardContent>
+              </Card>
 
+              {compareTeam ? (
+                  /* ── Side-by-side comparison view ── */
+                  <div className="space-y-4">
+                  {/* Score header */}
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
+                    <Card className={cn("retro-border", myTotal >= otherTotal && "ring-2 ring-primary")}>
+                      <CardContent className="p-4 text-center">
+                        <p className="text-xs text-muted-foreground font-sans mb-1">Jouw team</p>
+                        <p className="font-display text-2xl md:text-3xl font-bold text-primary">{myTeam.userName}</p>
+                        <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{myTotal} pt</p>
+                        {compareView !== "gc" &&
+                          <p className="text-[10px] text-muted-foreground font-sans mt-0.5">Rit {mockStageResults[compareView as number]?.stage}</p>
+                          }
+                        {myTotal > otherTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
+                      </CardContent>
+                    </Card>
+                    <Card className={cn("retro-border", otherTotal > myTotal && "ring-2 ring-primary")}>
+                      <CardContent className="p-4 text-center">
+                        <p className="text-xs text-muted-foreground font-sans mb-1">Tegenstander</p>
+                        <p className="font-display text-2xl md:text-3xl font-bold text-foreground">{compareTeam.userName}</p>
+                        <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{otherTotal} pt</p>
+                        {compareView !== "gc" &&
+                          <p className="text-[10px] text-muted-foreground font-sans mt-0.5">Rit {mockStageResults[compareView as number]?.stage}</p>
+                          }
+                        {otherTotal > myTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
+                      </CardContent>
+                    </Card>
+                  </div>
 
+                  {/* GC / Stage selector */}
+                  <StageRoadbook
+                      selectedStage={typeof compareView === "number" ? compareView : 0}
+                      onSelectStage={(i) => setCompareView(i)}
+                      showGcButton
+                      gcSelected={compareView === "gc"}
+                      onSelectGc={() => setCompareView("gc")}
+                      compact />
+                    
+
+                  {/* Stage-by-stage overview (only in GC view) */}
                   {compareView === "gc" &&
                     <Card className="retro-border overflow-hidden">
                       <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4">
@@ -1566,15 +1783,11 @@ export default function MijnPeloton() {
                     </Card>
                   </div>
                 </div>
-                </div>
-                </div>
-                </div>
-                </div>
-            ) : (
-              <p className="text-sm text-muted-foreground font-sans">Kies een speler om teams te vergelijken.</p>
-            )
-          })()}
+                </div>)
+                  }
+            </div>);
 
+            })()}
           </TabsContent>
 
           {/* ── TAB: Uitslagen ── */}
