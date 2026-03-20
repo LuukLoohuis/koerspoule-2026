@@ -1565,6 +1565,8 @@ export default function MijnPeloton() {
                       </CardContent>
                     </Card>
                   </div>
+                  </div>
+                </div>
                 </div>
                 </div>
                 </div>
