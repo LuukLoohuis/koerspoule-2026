@@ -1568,8 +1568,6 @@ export default function MijnPeloton() {
                 </div>
                 </div>
                 </div>
-                </div>
-                </div>
             ) : (
               <p className="text-sm text-muted-foreground font-sans">Kies een speler om teams te vergelijken.</p>
             )
