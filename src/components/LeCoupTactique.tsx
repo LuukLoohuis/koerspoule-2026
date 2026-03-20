@@ -11,38 +11,33 @@ interface LeCoupTactiqueProps {
   myUserName: string;
 }
 
-function getHeatStyle(count: number, totalPlayers: number) {
-  const ratio = count / totalPlayers;
-  if (count === 1) return {
-    cell: "bg-red-600 text-white",
-    badge: "bg-red-700 text-white",
-    label: "Uniek",
-    ring: "ring-red-500/30",
-  };
-  if (ratio <= 0.2) return {
-    cell: "bg-orange-500 text-white",
-    badge: "bg-orange-600 text-white",
-    label: "Zeldzaam",
-    ring: "",
-  };
-  if (ratio <= 0.35) return {
-    cell: "bg-yellow-400 text-foreground",
-    badge: "bg-yellow-500 text-foreground",
-    label: "Gemiddeld",
-    ring: "",
-  };
-  if (ratio <= 0.5) return {
-    cell: "bg-yellow-200 text-foreground",
-    badge: "bg-yellow-300 text-foreground",
-    label: "Populair",
-    ring: "",
-  };
+// 21 distinct hue values spread across the spectrum for each category row
+const CATEGORY_HUES = [
+  0, 220, 140, 30, 280, 180, 350, 90, 200, 50,
+  310, 160, 15, 250, 120, 45, 330, 170, 75, 240, 100,
+];
+
+function getCategoryShade(catIndex: number, ratio: number) {
+  // ratio = count / totalPlayers — high = popular (light), low = rare (dark)
+  const hue = CATEGORY_HUES[catIndex % CATEGORY_HUES.length];
+  // Light (popular): high lightness, low saturation → Dark (unique): low lightness, high saturation
+  const saturation = 30 + (1 - ratio) * 50; // 30–80%
+  const lightness = 90 - (1 - ratio) * 50;  // 40–90%
+  const textLight = lightness < 55;
   return {
-    cell: "bg-muted text-muted-foreground",
-    badge: "bg-muted text-muted-foreground",
-    label: "Heel populair",
-    ring: "",
+    bg: `hsl(${hue} ${saturation}% ${lightness}%)`,
+    text: textLight ? "text-white" : "text-foreground",
+    badgeBg: `hsl(${hue} ${saturation + 5}% ${Math.max(lightness - 10, 25)}%)`,
+    badgeText: lightness - 10 < 55 ? "text-white" : "text-foreground",
   };
+}
+
+function getHeatLabel(ratio: number) {
+  if (ratio <= 1 / 20) return "Uniek";
+  if (ratio <= 0.15) return "Zeldzaam";
+  if (ratio <= 0.3) return "Gemiddeld";
+  if (ratio <= 0.5) return "Populair";
+  return "Heel populair";
 }
 
 function StatCard({ label, value, sub, highlight = false }: {
@@ -60,18 +55,10 @@ function StatCard({ label, value, sub, highlight = false }: {
   );
 }
 
-function LegendChip({ label, className }: { label: string; className: string }) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground">
-      <span className={cn("h-3 w-3 rounded-full", className)} />
-      <span>{label}</span>
-    </div>
-  );
-}
-
 export default function LeCoupTactique({ standings, myUserName }: LeCoupTactiqueProps) {
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [visiblePlayers, setVisiblePlayers] = useState<Set<string>>(() => new Set(standings.map(t => t.id)));
   const [showOnlyUnique, setShowOnlyUnique] = useState(false);
+  const [showOnlyDifferences, setShowOnlyDifferences] = useState(false);
   const [sortMode, setSortMode] = useState<"standing" | "panache">("standing");
 
   const categories = riderCategories;
@@ -83,15 +70,14 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
 
     const playerStats = standings.map((t) => {
       const playerMap = uniqueness.get(t.userName);
-      if (!playerMap) return { name: t.userName, avg: 0, uniqueCount: 0 };
+      if (!playerMap) return { name: t.userName, id: t.id, avg: 0, uniqueCount: 0 };
       const vals = Array.from(playerMap.values());
       const uniqueCount = vals.filter(v => v >= 0.95).length;
-      return { name: t.userName, avg: vals.reduce((a, b) => a + b, 0) / vals.length, uniqueCount };
+      return { name: t.userName, id: t.id, avg: vals.reduce((a, b) => a + b, 0) / vals.length, uniqueCount };
     });
 
     const mostTactical = [...playerStats].sort((a, b) => b.uniqueCount - a.uniqueCount)[0];
 
-    // Average overlap: for each pick, how many others share it
     let totalShared = 0;
     let totalCells = 0;
     for (const team of standings) {
@@ -120,8 +106,38 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
     return standings;
   }, [standings, sortMode, playerStats]);
 
+  // For "alleen verschillen": find the most common pick per category
+  const mostCommonPick = useMemo(() => {
+    const result = new Map<number, number>();
+    for (const cat of categories) {
+      const catCounts = pickCounts.get(cat.id);
+      if (!catCounts) continue;
+      let maxCount = 0;
+      let maxRider = 0;
+      catCounts.forEach((count, riderNum) => {
+        if (count > maxCount) { maxCount = count; maxRider = riderNum; }
+      });
+      result.set(cat.id, maxRider);
+    }
+    return result;
+  }, [pickCounts]);
+
+  const visibleTeams = sortedTeams.filter(t => visiblePlayers.has(t.id));
   const currentStats = playerStats.find(p => p.name === myUserName);
   const isMe = (name: string) => name === myUserName;
+  const myId = standings.find(t => t.userName === myUserName)?.id;
+
+  const togglePlayer = (id: string) => {
+    setVisiblePlayers(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const showAll = () => setVisiblePlayers(new Set(standings.map(t => t.id)));
+  const showOnlyMe = () => setVisiblePlayers(new Set(myId ? [myId] : []));
+  const resetSelection = () => showAll();
 
   return (
     <section className="lg:col-span-3">
@@ -137,54 +153,16 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                 Le Coup Tactique 🎯
               </CardTitle>
               <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground font-sans">
-                Zie in één oogopslag welke keuzes veilig zijn en welke spelers echt
-                afwijken van het peloton. Hoe warmer de cel, hoe unieker de pick.
+                Elke categorie heeft een eigen kleur. Hoe donkerder de cel, hoe unieker de pick.
+                Lichte cellen = populaire keuzes. Donkere cellen = tactische uitschieters.
               </p>
               <p className="text-[10px] text-muted-foreground font-sans mt-1 italic">
-                Berekening: per categorie <code className="bg-muted px-1 rounded font-mono">1 − (mede-kiezers / spelers−1)</code>, gemiddeld over alle categorieën.
+                Intensiteit: <code className="bg-muted px-1 rounded font-mono">count / spelers</code> — werkt voor elke poule-grootte.
               </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant={showOnlyUnique ? "default" : "outline"}
-                size="sm"
-                className="text-xs h-8 rounded-full"
-                onClick={() => setShowOnlyUnique(prev => !prev)}
-              >
-                🔥 Alleen unieke picks
-              </Button>
-              <div className="flex gap-1 border border-border rounded-full p-0.5">
-                <Button
-                  variant={sortMode === "standing" ? "default" : "ghost"}
-                  size="sm"
-                  className="text-xs h-7 rounded-full"
-                  onClick={() => setSortMode("standing")}
-                >
-                  Stand
-                </Button>
-                <Button
-                  variant={sortMode === "panache" ? "default" : "ghost"}
-                  size="sm"
-                  className="text-xs h-7 rounded-full"
-                  onClick={() => setSortMode("panache")}
-                >
-                  Panache ↓
-                </Button>
-              </div>
-              {selectedPlayerId && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs h-8 rounded-full"
-                  onClick={() => setSelectedPlayerId(null)}
-                >
-                  Reset selectie
-                </Button>
-              )}
             </div>
           </div>
 
-          {/* Stat cards */}
+          {/* Summary cards */}
           <div className="mt-4 grid gap-2.5 grid-cols-2 xl:grid-cols-4">
             <StatCard
               label="Meest tactische speler"
@@ -204,19 +182,90 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
             />
             <StatCard
               label="Subpoule scan"
-              value={showOnlyUnique ? "Uniek filter aan" : "Volledig overzicht"}
-              sub="wissel tussen alle en uitschieters"
+              value={showOnlyUnique ? "Uniek filter" : showOnlyDifferences ? "Verschillen" : "Volledig"}
+              sub="wissel met de toggles hieronder"
             />
+          </div>
+
+          {/* Player toggles */}
+          <div className="mt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Spelers</span>
+              <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 rounded-full" onClick={showAll}>Alles</Button>
+              <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 rounded-full" onClick={showOnlyMe}>Alleen ik</Button>
+              <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 rounded-full" onClick={resetSelection}>Reset</Button>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {sortedTeams.map((team) => {
+                const active = visiblePlayers.has(team.id);
+                const isCurrent = isMe(team.userName);
+                return (
+                  <button
+                    key={team.id}
+                    type="button"
+                    onClick={() => togglePlayer(team.id)}
+                    className={cn(
+                      "rounded-full border px-3 py-1 text-[11px] font-medium transition-all",
+                      active
+                        ? isCurrent
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-foreground/30 bg-foreground/5 text-foreground"
+                        : "border-border bg-muted/30 text-muted-foreground opacity-50"
+                    )}
+                  >
+                    {team.userName}
+                    {isCurrent && " 👈"}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Controls row */}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button
+              variant={showOnlyUnique ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-8 rounded-full"
+              onClick={() => { setShowOnlyUnique(prev => !prev); setShowOnlyDifferences(false); }}
+            >
+              🔥 Alleen unieke picks
+            </Button>
+            <Button
+              variant={showOnlyDifferences ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-8 rounded-full"
+              onClick={() => { setShowOnlyDifferences(prev => !prev); setShowOnlyUnique(false); }}
+            >
+              🔀 Alleen verschillen
+            </Button>
+            <div className="flex gap-1 border border-border rounded-full p-0.5">
+              <Button
+                variant={sortMode === "standing" ? "default" : "ghost"}
+                size="sm"
+                className="text-xs h-7 rounded-full"
+                onClick={() => setSortMode("standing")}
+              >
+                Stand
+              </Button>
+              <Button
+                variant={sortMode === "panache" ? "default" : "ghost"}
+                size="sm"
+                className="text-xs h-7 rounded-full"
+                onClick={() => setSortMode("panache")}
+              >
+                Panache ↓
+              </Button>
+            </div>
           </div>
 
           {/* Legend */}
           <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <LegendChip label="Uniek (1×)" className="bg-red-600" />
-            <LegendChip label="Zeldzaam (2–3×)" className="bg-orange-500" />
-            <LegendChip label="Gemiddeld (4–5×)" className="bg-yellow-400" />
-            <LegendChip label="Populair (6–7×)" className="bg-yellow-200" />
-            <LegendChip label="Heel populair (8+×)" className="bg-muted" />
-            <div className="ml-0 sm:ml-2 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
+              <span className="h-3 w-6 rounded-sm" style={{ background: "linear-gradient(to right, hsl(0 80% 40%), hsl(0 45% 75%), hsl(0 30% 90%))" }} />
+              <span>Donker = uniek · Licht = populair</span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary">
               <span className="h-3 w-3 rounded-sm border-2 border-primary bg-card inline-block" />
               Jouw team
             </div>
@@ -227,30 +276,26 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <div
-              className="grid min-w-[1200px] gap-1.5 p-4"
+              className="grid min-w-[900px] gap-1.5 p-4"
               style={{
-                gridTemplateColumns: `200px repeat(${sortedTeams.length}, minmax(110px, 1fr))`,
+                gridTemplateColumns: `180px repeat(${visibleTeams.length}, minmax(100px, 1fr))`,
               }}
             >
               {/* Empty corner */}
               <div className="sticky left-0 z-30 bg-background" />
 
               {/* Player column headers */}
-              {sortedTeams.map((team) => {
+              {visibleTeams.map((team) => {
                 const isCurrent = isMe(team.userName);
-                const isSelected = selectedPlayerId === team.id;
                 const stats = playerStats.find(p => p.name === team.userName);
                 return (
-                  <button
+                  <div
                     key={team.id}
-                    type="button"
-                    onClick={() => setSelectedPlayerId(prev => prev === team.id ? null : team.id)}
                     className={cn(
-                      "sticky top-0 z-20 rounded-xl border px-3 py-3 text-left transition-all",
+                      "sticky top-0 z-20 rounded-xl border px-3 py-3 text-left",
                       isCurrent
-                        ? "border-primary/40 bg-primary/5 shadow-sm"
-                        : "border-border bg-card hover:bg-secondary/50",
-                      isSelected && "ring-2 ring-foreground ring-offset-2"
+                        ? "border-primary/40 bg-primary/5 shadow-sm ring-2 ring-primary/30"
+                        : "border-border bg-card"
                     )}
                   >
                     <div className="truncate text-sm font-bold font-display text-foreground">
@@ -260,49 +305,62 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                       {stats?.uniqueCount ?? 0} unieke picks
                     </div>
                     {isCurrent && (
-                      <div className="mt-1.5 inline-flex rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                      <div className="mt-1 inline-flex rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
                         👈 jij
                       </div>
                     )}
-                  </button>
+                  </div>
                 );
               })}
 
               {/* Category rows */}
-              {categories.map((cat) => (
+              {categories.map((cat, catIndex) => (
                 <React.Fragment key={cat.id}>
                   {/* Category label */}
                   <div className="sticky left-0 z-10 flex items-center rounded-xl border border-border bg-secondary/50 px-3 py-3">
-                    <span className="truncate text-xs font-semibold text-muted-foreground font-sans">
-                      {cat.name}
-                    </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="h-3 w-3 rounded-full shrink-0"
+                        style={{ background: `hsl(${CATEGORY_HUES[catIndex % CATEGORY_HUES.length]} 60% 55%)` }}
+                      />
+                      <span className="truncate text-xs font-semibold text-muted-foreground font-sans">
+                        {cat.name}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Pick cells */}
-                  {sortedTeams.map((team) => {
-                    const playerMap = uniqueness.get(team.userName);
-                    const score = playerMap?.get(cat.id) ?? 0;
+                  {visibleTeams.map((team) => {
                     const pick = team.picks[cat.id];
                     const catCounts = pickCounts.get(cat.id);
                     const count = pick ? catCounts?.get(pick.number) ?? 1 : 0;
-                    const style = getHeatStyle(count, totalPlayers);
+                    const ratio = count / totalPlayers;
+                    const shade = getCategoryShade(catIndex, ratio);
                     const isCurrent = isMe(team.userName);
-                    const isSelected = selectedPlayerId === null || selectedPlayerId === team.id;
                     const isUnique = count === 1;
-                    const shouldHide = showOnlyUnique && !isUnique;
+                    const label = getHeatLabel(ratio);
+
+                    // "Alleen verschillen" filter: hide if this pick matches the most common
+                    const isDifference = pick ? pick.number !== mostCommonPick.get(cat.id) : false;
+                    const shouldHideDiff = showOnlyDifferences && !isDifference;
+                    const shouldHideUnique = showOnlyUnique && !isUnique;
+                    const shouldHide = shouldHideDiff || shouldHideUnique;
 
                     return (
                       <Tooltip key={`${team.id}-${cat.id}`}>
                         <TooltipTrigger asChild>
                           <div
                             className={cn(
-                              "relative min-h-[62px] rounded-xl border px-2.5 py-2.5 transition-all cursor-default",
-                              style.cell,
+                              "relative min-h-[60px] rounded-xl border px-2.5 py-2.5 transition-all cursor-default",
+                              shade.text,
                               isCurrent && "ring-2 ring-primary/50 ring-offset-1",
-                              selectedPlayerId && !isSelected && "opacity-20",
                               shouldHide && "opacity-10 saturate-0",
-                              isUnique && "shadow-[0_0_0_1px_rgba(220,38,38,0.15),0_6px_16px_rgba(220,38,38,0.14)]",
+                              isUnique && "shadow-[0_0_0_1px_rgba(220,38,38,0.2),0_4px_12px_rgba(220,38,38,0.12)]",
                             )}
+                            style={{
+                              backgroundColor: shade.bg,
+                              borderColor: isUnique ? "hsl(0 70% 45%)" : "transparent",
+                            }}
                           >
                             <div className="flex items-start justify-between gap-1">
                               <div className="min-w-0">
@@ -310,13 +368,13 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                                   {pick?.name ?? "—"}
                                 </div>
                                 <div className="mt-0.5 text-[10px] font-medium opacity-75">
-                                  {style.label}
+                                  {label}
                                 </div>
                               </div>
-                              <span className={cn(
-                                "shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold",
-                                style.badge
-                              )}>
+                              <span
+                                className={cn("shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold", shade.badgeText)}
+                                style={{ backgroundColor: shade.badgeBg }}
+                              >
                                 {count}×
                               </span>
                             </div>
@@ -332,7 +390,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                               ? "Unieke keuze! 🔥"
                               : `${count - 1} ander${count - 1 > 1 ? "en" : ""} kozen ook deze renner`}
                           </p>
-                          <p className="font-sans text-muted-foreground">{count}/{totalPlayers} spelers</p>
+                          <p className="font-sans text-muted-foreground">{count}/{totalPlayers} spelers ({Math.round(ratio * 100)}%)</p>
                         </TooltipContent>
                       </Tooltip>
                     );
@@ -342,48 +400,60 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
             </div>
           </div>
 
-          {/* Risk vs safety footer */}
+          {/* Panache score footer */}
           <div className="border-t-2 border-foreground px-4 md:px-6 py-5">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans">
-              Risico vs zekerheid
+              Panache Score — Risico vs zekerheid
             </h3>
-            <div className="mt-3 grid gap-2.5 grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-              {sortedTeams.map((team) => {
-                const stats = playerStats.find(p => p.name === team.userName);
-                const uniqueCount = stats?.uniqueCount ?? 0;
-                const safeCount = categories.length - uniqueCount;
-                const isCurrent = isMe(team.userName);
-                return (
-                  <div
-                    key={team.id}
-                    className={cn(
-                      "rounded-xl border p-3",
-                      isCurrent
-                        ? "border-primary/40 bg-primary/5"
-                        : "border-border bg-secondary/30"
-                    )}
-                  >
-                    <div className="mb-2 flex items-center justify-between">
-                      <div className={cn("text-xs font-bold font-display truncate", isCurrent && "text-primary")}>
-                        {team.userName}
+            <p className="text-[10px] text-muted-foreground mt-1 mb-3 italic font-sans">
+              Panache = gemiddelde uniekheid over alle categorieën. <code className="bg-muted px-1 rounded font-mono">1 − (mede-kiezers / spelers−1)</code>
+            </p>
+            <div className="grid gap-2.5 grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+              {[...playerStats]
+                .sort((a, b) => b.avg - a.avg)
+                .map((stats, rank) => {
+                  const team = standings.find(t => t.userName === stats.name);
+                  const isCurrent = isMe(stats.name);
+                  const panachePercent = Math.round(stats.avg * 100);
+                  const uniqueCount = stats.uniqueCount;
+                  const safeCount = categories.length - uniqueCount;
+                  return (
+                    <div
+                      key={stats.id}
+                      className={cn(
+                        "rounded-xl border p-3",
+                        isCurrent
+                          ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
+                          : "border-border bg-secondary/30"
+                      )}
+                    >
+                      <div className="mb-1.5 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-muted-foreground">#{rank + 1}</span>
+                          <span className={cn("text-xs font-bold font-display truncate", isCurrent && "text-primary")}>
+                            {stats.name}
+                          </span>
+                        </div>
+                        <div className="text-xs font-bold font-mono text-foreground">
+                          {panachePercent}%
+                        </div>
                       </div>
-                      <div className="text-[10px] text-muted-foreground">
-                        {uniqueCount}/{categories.length}
+                      <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${panachePercent}%`,
+                            background: `hsl(${panachePercent > 50 ? 0 : 40} ${50 + panachePercent * 0.3}% ${60 - panachePercent * 0.2}%)`,
+                          }}
+                        />
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+                        <span>🔥 {uniqueCount} uniek</span>
+                        <span>🧱 {safeCount} veilig</span>
                       </div>
                     </div>
-                    <div className="h-2.5 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-red-500 transition-all"
-                        style={{ width: `${(uniqueCount / categories.length) * 100}%` }}
-                      />
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span>🔥 {uniqueCount}</span>
-                      <span>🧱 {safeCount}</span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           </div>
         </CardContent>
