@@ -209,7 +209,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
             <StatCard
               label="Weergave"
               value={showOnlyUnique ? "Échappée" : showOnlyDifferences ? "Verschillen" : "Peloton"}
-              sub="via toggles"
+              sub="Koersmodus"
             />
           </div>
 
