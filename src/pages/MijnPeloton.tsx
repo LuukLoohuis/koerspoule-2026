@@ -83,6 +83,7 @@ export default function MijnPeloton() {
   const [compareView, setCompareView] = useState<"gc" | number>("gc");
   const [subpoolCompareView, setSubpoolCompareView] = useState<"gc" | number>("gc");
   const [chartVisibleMembers, setChartVisibleMembers] = useState<Set<string>>(new Set([myTeam.userName]));
+  const [heatmapSort, setHeatmapSort] = useState<"standing" | "panache">("standing");
 
   const activePool = useMemo(
     () => enrichedSubPools.find((p) => p.id === selectedPool),
