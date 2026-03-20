@@ -905,8 +905,136 @@ export default function MijnPeloton() {
             />
           )}
 
+          {/* Koerscafé – subpoule chat */}
+          <div className="lg:col-span-3">
+            <PelotonChat subpoolName={activePool.name} members={activePool.members} />
+          </div>
+        </div>
+      </div>);
 
-                  {/* Stage-by-stage overview (only in GC view) */}
+  }
+
+  /* ── Main overview ── */
+  const activeGame = myGames.find((g) => g.id === selectedGame)!;
+
+  // Compare team logic for Mijn Team tab
+  const compareTeam = mockTeams.find((t) => t.userName === comparePlayerName && t.id !== myTeam.id);
+
+  // Stage breakdown for comparison
+  const stageBreakdown = useMemo(() => {
+    return mockStageResults.map((stage, idx) => {
+      const myPts = stage.top20
+        .filter((r) => myRiderNumbers.has(r.riderNumber))
+        .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0);
+      const otherPts = compareTeam
+        ? stage.top20
+            .filter((r) => {
+              const otherNumbers = new Set(Object.values(compareTeam.picks).map((p) => p.number));
+              return otherNumbers.has(r.riderNumber);
+            })
+            .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0)
+        : 0;
+      return { stage: stage.stage, idx, myPts, otherPts, type: stage.type };
+    });
+  }, [compareTeam, myRiderNumbers]);
+
+  return (
+    <div className="container mx-auto px-4 py-8 md:py-12">
+      {/* Game selector header */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        {myGames.map((game) => (
+          <button
+            key={game.id}
+            onClick={() => setSelectedGame(game.id)}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-md border-2 text-sm font-bold transition-all",
+              selectedGame === game.id
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border hover:border-muted-foreground"
+            )}
+          >
+            <FlagIcon country={game.country} className="w-5 h-3.5" />
+            {game.name}
+          </button>
+        ))}
+      </div>
+
+      <Tabs value={gameTab} onValueChange={setGameTab}>
+        <TabsList className="grid w-full grid-cols-5 mb-2">
+          <TabsTrigger value="team" className="font-display text-xs md:text-sm">🚴 Mijn Team</TabsTrigger>
+          <TabsTrigger value="uitslagen" className="font-display text-xs md:text-sm">📊 Uitslagen</TabsTrigger>
+          <TabsTrigger value="subpoules" className="font-display text-xs md:text-sm">👥 Subpoules</TabsTrigger>
+          <TabsTrigger value="palmares" className="font-display text-xs md:text-sm">🏆 Palmares</TabsTrigger>
+          <TabsTrigger value="watals" className="font-display text-xs md:text-sm">🔮 Wat Als?</TabsTrigger>
+        </TabsList>
+
+        {/* ── TAB: Mijn Team ── */}
+        <TabsContent value="team" className="mt-6">
+          {(() => {
+            const riderRows = riderCategories.map((cat) => {
+              const myPick = myTeam.picks[cat.id];
+              const myPts = compareView === "gc"
+                ? getRiderPoints(myPick.number)
+                : (() => {
+                    const stage = mockStageResults[compareView as number];
+                    const result = stage?.top20.find((r) => r.riderNumber === myPick.number);
+                    return result ? pointsTable[result.position] || 0 : 0;
+                  })();
+
+              const otherPick = compareTeam?.picks[cat.id];
+              const otherPts = otherPick
+                ? compareView === "gc"
+                  ? getRiderPoints(otherPick.number)
+                  : (() => {
+                      const stage = mockStageResults[compareView as number];
+                      const result = stage?.top20.find((r) => r.riderNumber === otherPick.number);
+                      return result ? pointsTable[result.position] || 0 : 0;
+                    })()
+                : 0;
+
+              return {
+                catId: cat.id,
+                rider: myPick,
+                myPts,
+                otherRider: otherPick || null,
+                otherPts,
+                isSame: otherPick ? myPick.number === otherPick.number : false,
+              };
+            });
+
+            const myTotal = riderRows.reduce((s, r) => s + r.myPts, 0);
+            const otherTotal = riderRows.reduce((s, r) => s + r.otherPts, 0);
+
+            return compareTeam ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display text-lg font-bold">
+                    {myTeam.userName} vs {compareTeam.userName}
+                  </h2>
+                  <div className="flex gap-1">
+                    <Button
+                      variant={compareView === "gc" ? "default" : "outline"}
+                      size="sm"
+                      className="text-xs h-7"
+                      onClick={() => setCompareView("gc")}
+                    >
+                      GC
+                    </Button>
+                    {mockStageResults.map((stage, idx) => (
+                      <Button
+                        key={stage.stage}
+                        variant={compareView === idx ? "default" : "outline"}
+                        size="sm"
+                        className="text-xs h-7"
+                        onClick={() => setCompareView(idx)}
+                      >
+                        Rit {stage.stage}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+
                   {compareView === "gc" &&
                     <Card className="retro-border overflow-hidden">
                       <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2 px-3 md:py-3 md:px-4">
