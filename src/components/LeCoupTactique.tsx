@@ -263,7 +263,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
               className="text-xs h-7 rounded-full"
               onClick={() => { setShowOnlyDifferences(prev => !prev); setShowOnlyUnique(false); }}
             >
-              🚴 Demarrages
+              🚴 Verschillen
             </Button>
             <div className="flex gap-0.5 border border-border rounded-full p-0.5">
               <Button
