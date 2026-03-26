@@ -11,16 +11,24 @@ export type AuthState = {
   role: AppRole;
 };
 
-async function ensureProfile(user: User) {
-  if (!supabase) return;
-  await supabase.from("profiles").upsert(
-    {
-      id: user.id,
-      display_name: user.user_metadata?.display_name ?? user.email ?? "Gebruiker",
-      is_admin: false,
-    },
-    { onConflict: "id" }
-  );
+function raceFallback<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise<T>((resolve) => {
+    const timer = setTimeout(() => resolve(fallback), ms);
+    promise
+      .then((v) => { clearTimeout(timer); resolve(v); })
+      .catch(() => { clearTimeout(timer); resolve(fallback); });
+  });
+}
+
+async function fetchRole(userId: string): Promise<AppRole> {
+  if (!supabase) return "user";
+  const { data } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", userId)
+    .maybeSingle();
+  if (!data) return "user";
+  return (data as { is_admin?: boolean }).is_admin ? "admin" : "user";
 }
 
 export function useAuth() {
@@ -37,43 +45,50 @@ export function useAuth() {
       return;
     }
 
-    const resolveRole = async (user: User | null): Promise<AppRole> => {
-      if (!user) return "user";
-      await ensureProfile(user);
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-      const p = (profile ?? {}) as { role?: string; is_admin?: boolean };
-      return p.role === "admin" || Boolean(p.is_admin) ? "admin" : "user";
-    };
+    let mounted = true;
 
     const load = async () => {
       try {
         const { data } = await supabase.auth.getSession();
         const session = data.session;
         const user = session?.user ?? null;
-        const role = await resolveRole(user);
-        setState({ user, session, loading: false, role });
+
+        if (mounted) {
+          setState({ user, session, loading: false, role: "user" });
+        }
+
+        if (user && mounted) {
+          const role = await raceFallback(fetchRole(user.id), 4000, "user" as AppRole);
+          if (mounted) setState((prev) => ({ ...prev, role }));
+        }
       } catch {
-        setState({ user: null, session: null, loading: false, role: "user" });
+        if (mounted) {
+          setState({ user: null, session: null, loading: false, role: "user" });
+        }
       }
     };
 
     load();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
         const user = session?.user ?? null;
-        const role = await resolveRole(user);
-        setState({ user, session, loading: false, role });
-      } catch {
-        setState({ user: null, session: null, loading: false, role: "user" });
-      }
-    });
 
-    return () => subscription.subscription.unsubscribe();
+        if (mounted) {
+          setState({ user, session, loading: false, role: "user" });
+        }
+
+        if (user && mounted) {
+          const role = await raceFallback(fetchRole(user.id), 4000, "user" as AppRole);
+          if (mounted) setState((prev) => ({ ...prev, role }));
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription.subscription.unsubscribe();
+    };
   }, []);
 
   return state;

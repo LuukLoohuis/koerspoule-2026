@@ -7,79 +7,45 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { Trophy, Mountain, Medal, Shirt, Star, Bike } from "lucide-react";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
-import { supabase, supabaseConfig } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
-function withTimeout<T>(promise: Promise<T>, ms = 12000): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const id = setTimeout(() => {
-      const timeoutError = new Error("Timeout tijdens inloggen.");
-      (timeoutError as Error & { code?: string }).code = "TIMEOUT";
-      reject(timeoutError);
+      reject(new Error(`TIMEOUT: server reageert niet binnen ${Math.round(ms / 1000)}s`));
     }, ms);
     promise
-      .then((value) => {
-        clearTimeout(id);
-        resolve(value);
-      })
-      .catch((error) => {
-        clearTimeout(id);
-        reject(error);
-      });
+      .then((v) => { clearTimeout(id); resolve(v); })
+      .catch((e) => { clearTimeout(id); reject(e); });
   });
 }
 
-async function checkSupabaseReachable() {
-  if (!supabaseConfig.url) {
-    throw new Error("Supabase URL ontbreekt.");
-  }
-  if (supabaseConfig.looksPlaceholder || !supabaseConfig.hasAnonKey) {
-    throw new Error(
-      "Supabase configuratie lijkt ongeldig. Controleer VITE_SUPABASE_URL en VITE_SUPABASE_ANON_KEY in Vercel."
-    );
-  }
+function formatError(error: unknown): string {
+  if (!(error instanceof Error)) return "Onbekende fout.";
+  const msg = error.message;
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 6000);
-  try {
-    const response = await fetch(`${supabaseConfig.url}/auth/v1/health`, {
-      signal: controller.signal,
-      headers: {
-        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-      },
-    });
-    if (!response.ok) {
-      throw new Error(`Supabase auth endpoint gaf ${response.status}.`);
-    }
-  } catch {
-    throw new Error(
-      "Geen verbinding met Supabase auth. Controleer project URL, anon key en Vercel env vars."
-    );
-  } finally {
-    clearTimeout(timeout);
-  }
-}
+  if (msg.startsWith("TIMEOUT"))
+    return "Server reageert niet. Ga naar supabase.com/dashboard en controleer of je project actief is (niet gepauzeerd).";
 
-function formatAuthError(error: unknown): string {
-  if (!(error instanceof Error)) return "Authenticatie mislukt.";
-  const e = error as Error & { code?: string; status?: number; message?: string };
+  if (msg.toLowerCase().includes("email rate limit"))
+    return "Te veel e-mails verstuurd. Wacht een paar minuten en probeer opnieuw.";
 
-  if (e.code === "TIMEOUT") {
-    return "Timeout tijdens inloggen. Controleer Vercel env vars en Supabase connectie.";
-  }
+  if (msg.toLowerCase().includes("invalid login credentials"))
+    return "Onjuist e-mailadres of wachtwoord.";
 
-  if (typeof e.status === "number") {
-    return `Auth fout (${e.status}): ${e.message ?? "Onbekende fout"}`;
-  }
+  if (msg.toLowerCase().includes("email not confirmed"))
+    return "E-mail nog niet bevestigd. Check je inbox (en spam) voor de bevestigingsmail.";
 
-  if (e.message?.toLowerCase().includes("email rate limit exceeded")) {
-    return "Te veel email-acties. Probeer later opnieuw of log in met bestaand account.";
-  }
+  if (msg.toLowerCase().includes("user already registered"))
+    return "Er bestaat al een account met dit e-mailadres. Probeer in te loggen.";
 
-  if (e.message?.toLowerCase().includes("invalid login credentials")) {
-    return "Ongeldige inloggegevens. Controleer email en wachtwoord.";
-  }
+  if (msg.toLowerCase().includes("signup is disabled"))
+    return "Registratie is uitgeschakeld in Supabase. Schakel het in via Authentication → Settings.";
 
-  return e.message || "Authenticatie mislukt.";
+  if (msg.toLowerCase().includes("password") && msg.toLowerCase().includes("characters"))
+    return "Wachtwoord moet minimaal 6 tekens zijn.";
+
+  return msg;
 }
 
 const floatingBadges = [
@@ -99,85 +65,95 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!supabase) {
       toast({
-        title: "Supabase ontbreekt",
+        title: "Supabase niet geconfigureerd",
         description:
-          "Stel VITE_SUPABASE_URL en VITE_SUPABASE_ANON_KEY in om in te loggen.",
+          "Stel VITE_SUPABASE_URL en VITE_SUPABASE_ANON_KEY in als environment variables.",
         variant: "destructive",
       });
       return;
     }
 
     setIsSubmitting(true);
-    try {
-      await checkSupabaseReachable();
+    setStatusMsg(isRegister ? "Account aanmaken..." : "Inloggen...");
 
+    try {
       if (isRegister) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
+        const { data, error } = await withTimeout(
+          supabase.auth.signUp({ email, password }),
+          15000
+        );
         if (error) throw error;
 
         if (data.user) {
-          await supabase.from("profiles").upsert(
-            {
-              id: data.user.id,
-              display_name: name.trim() || null,
-              is_admin: false,
-            },
-            { onConflict: "id" }
-          );
+          supabase
+            .from("profiles")
+            .upsert(
+              { id: data.user.id, display_name: name.trim() || email, is_admin: false },
+              { onConflict: "id" }
+            )
+            .then(() => {})
+            .catch(() => {});
         }
 
         toast({
           title: "Account aangemaakt! 🎉",
           description:
-            "Controleer je mail voor bevestiging. Daarna kun je inloggen.",
+            data.session
+              ? "Je bent ingelogd."
+              : "Controleer je inbox voor de bevestigingsmail.",
         });
+
+        if (data.session) {
+          navigate("/", { replace: true });
+        }
       } else {
-        const { error } = await withTimeout(
-          supabase.auth.signInWithPassword({
-            email,
-            password,
-          })
-        , 20000);
+        const { data, error } = await withTimeout(
+          supabase.auth.signInWithPassword({ email, password }),
+          15000
+        );
         if (error) throw error;
+
+        if (!data.session) {
+          toast({
+            title: "E-mail nog niet bevestigd",
+            description: "Controleer je inbox (en spam) voor de bevestigingslink.",
+            variant: "destructive",
+          });
+          return;
+        }
 
         toast({
           title: "Ingelogd! 🚴",
           description: "Welkom terug bij Koerspoule.",
         });
-        // Keep login flow fast and predictable; role-based routing happens after auth state resolves.
         navigate("/", { replace: true });
       }
     } catch (error) {
-      const message = formatAuthError(error);
-      const raw = error instanceof Error ? (error as Error & { status?: number; code?: string }) : null;
       toast({
         title: "Actie mislukt",
-        description: raw?.status || raw?.code ? `${message} [status=${raw?.status ?? "-"}, code=${raw?.code ?? "-"}]` : message,
+        description: formatError(error),
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
+      setStatusMsg("");
     }
   };
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-8 relative overflow-hidden">
-      {/* Decorative vintage border lines */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-8 left-8 right-8 bottom-8 border-2 border-primary/10 rounded-lg" />
         <div className="absolute top-10 left-10 right-10 bottom-10 border border-primary/5 rounded-lg" />
       </div>
 
-      {/* Floating Giro badges */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {floatingBadges.map((badge, i) => {
           const Icon = badge.icon;
@@ -210,7 +186,6 @@ export default function Login() {
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        {/* Header with vintage poster feel */}
         <motion.div
           className="text-center mb-6"
           initial={{ opacity: 0, y: -20 }}
@@ -223,7 +198,6 @@ export default function Login() {
             className="h-28 mx-auto mb-2 drop-shadow-lg"
           />
 
-          {/* Vintage ornamental divider */}
           <div className="flex items-center justify-center gap-3 mb-3">
             <div className="h-px w-12 bg-gradient-to-r from-transparent to-primary/40" />
             <Star size={12} className="text-primary/50" />
@@ -250,14 +224,12 @@ export default function Login() {
           </AnimatePresence>
         </motion.div>
 
-        {/* Card with retro styling */}
         <motion.div
           className="retro-border bg-card p-6 relative"
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          {/* Corner trophies */}
           <div className="absolute -top-3 -left-3 bg-primary text-primary-foreground rounded-full p-1.5 shadow-md">
             <Trophy size={14} />
           </div>
@@ -265,7 +237,6 @@ export default function Login() {
             <Medal size={14} />
           </div>
 
-          {/* Giro badge strip */}
           <div className="flex justify-center gap-2 mb-5">
             {[
               { emoji: "🩷", label: "Rosa" },
@@ -340,6 +311,7 @@ export default function Login() {
                   placeholder="••••••••"
                   className="mt-1"
                   required
+                  minLength={6}
                 />
               </div>
 
@@ -350,7 +322,7 @@ export default function Login() {
                   className="w-full retro-border-primary font-bold text-base h-11 tracking-wide"
                 >
                   {isSubmitting
-                    ? "Bezig..."
+                    ? statusMsg || "Bezig..."
                     : isRegister
                       ? "🚴 Account aanmaken"
                       : "🏁 Inloggen"}
@@ -372,7 +344,6 @@ export default function Login() {
           </p>
         </motion.div>
 
-        {/* Footer link */}
         <motion.p
           className="text-center text-xs text-muted-foreground mt-4 font-sans"
           initial={{ opacity: 0 }}
