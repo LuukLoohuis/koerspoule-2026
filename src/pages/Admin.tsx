@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import {
   extractPdfText,
   parseProCyclingStatsStartlist,
@@ -34,6 +35,23 @@ type RiderRef = {
   name: string;
   start_number: number;
 };
+
+function withTimeout<T>(promise: Promise<T>, ms: number, actionLabel: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`${actionLabel} timeout. Controleer of Supabase project actief is.`));
+    }, ms);
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
+}
 
 function parseCsv(text: string): ResultRow[] {
   const parsed = Papa.parse<Record<string, string>>(text, {
@@ -79,6 +97,7 @@ function parseCsv(text: string): ResultRow[] {
 
 export default function Admin() {
   const { user, role, loading } = useAuth();
+  const { toast } = useToast();
 
   const [games, setGames] = useState<Array<{ id: string; name: string; year: number; status: string }>>([]);
   const [categories, setCategories] = useState<Array<{ id: string; name: string; short_name: string | null; game_id: string; sort_order: number }>>([]);
@@ -102,6 +121,7 @@ export default function Admin() {
   const [newGameName, setNewGameName] = useState("");
   const [newGameYear, setNewGameYear] = useState(String(new Date().getFullYear()));
   const [newGameStatus, setNewGameStatus] = useState("draft");
+  const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryShort, setNewCategoryShort] = useState("");
   const [newCategorySort, setNewCategorySort] = useState("1");
@@ -117,6 +137,7 @@ export default function Admin() {
 
   const appendLog = (message: string) => {
     setLogs((prev) => [message, ...prev].slice(0, 20));
+    setStatusMessage(message);
   };
 
   useEffect(() => {
@@ -251,15 +272,71 @@ export default function Admin() {
   };
 
   const createGame = async () => {
-    const { error } = await supabase.from("games").insert({
-      name: newGameName,
-      year: Number(newGameYear),
-      status: newGameStatus,
-    });
-    if (error) return appendLog(`Game fout: ${error.message}`);
-    appendLog("Game aangemaakt.");
-    const { data } = await supabase.from("games").select("id, name, year, status").order("year", { ascending: false });
-    if (data) setGames(data);
+    if (isCreatingGame) return;
+
+    const name = newGameName.trim();
+    const year = Number(newGameYear);
+
+    if (!name) {
+      const message = "Vul eerst een game naam in.";
+      appendLog(message);
+      toast({ title: "Game niet aangemaakt", description: message, variant: "destructive" });
+      return;
+    }
+    if (!Number.isFinite(year) || year < 1900 || year > 2100) {
+      const message = "Vul een geldig jaar in (bijv. 2026).";
+      appendLog(message);
+      toast({ title: "Game niet aangemaakt", description: message, variant: "destructive" });
+      return;
+    }
+
+    setIsCreatingGame(true);
+    try {
+      const { data: inserted, error } = await withTimeout(
+        supabase
+          .from("games")
+          .insert({
+            name,
+            year,
+            status: newGameStatus,
+          })
+          .select("id, name, year, status")
+          .single(),
+        12000,
+        "Game aanmaken"
+      );
+
+      if (error) {
+        const message =
+          error.message.includes("duplicate key")
+            ? `Game bestaat al: ${year} - ${name}`
+            : `Game fout: ${error.message}`;
+        appendLog(message);
+        toast({ title: "Game niet aangemaakt", description: message, variant: "destructive" });
+        return;
+      }
+
+      if (inserted) {
+        setGames((prev) => [inserted, ...prev].sort((a, b) => b.year - a.year));
+        setActiveGameId(inserted.id);
+      } else {
+        const { data } = await supabase
+          .from("games")
+          .select("id, name, year, status")
+          .order("year", { ascending: false });
+        if (data) setGames(data);
+      }
+
+      appendLog("Game aangemaakt.");
+      setNewGameName("");
+      toast({ title: "Game aangemaakt", description: `${year} - ${name}` });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Onbekende fout bij game aanmaken.";
+      appendLog(message);
+      toast({ title: "Game niet aangemaakt", description: message, variant: "destructive" });
+    } finally {
+      setIsCreatingGame(false);
+    }
   };
 
   const createCategory = async () => {
@@ -517,6 +594,9 @@ export default function Admin() {
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-4">
       <h1 className="text-3xl font-display font-bold">Admin Dashboard</h1>
+      {statusMessage && (
+        <p className="text-sm text-muted-foreground">{statusMessage}</p>
+      )}
 
       <Tabs defaultValue="games" className="space-y-4">
         <TabsList className="w-full flex-wrap h-auto">
@@ -542,7 +622,9 @@ export default function Admin() {
                     {["draft", "open", "locked", "live", "finished"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Button onClick={createGame}>Aanmaken</Button>
+                <Button onClick={createGame} disabled={isCreatingGame}>
+                  {isCreatingGame ? "Aanmaken..." : "Aanmaken"}
+                </Button>
               </div>
               <div className="space-y-1 text-sm">
                 {games.map((g) => <div key={g.id}>{g.year} - {g.name} ({g.status})</div>)}
