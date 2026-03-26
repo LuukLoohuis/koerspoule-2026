@@ -7,11 +7,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { Trophy, Mountain, Medal, Shirt, Star, Bike } from "lucide-react";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseConfig } from "@/lib/supabase";
 
 function withTimeout<T>(promise: Promise<T>, ms = 12000): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const id = setTimeout(() => reject(new Error("Timeout tijdens inloggen.")), ms);
+    const id = setTimeout(() => {
+      const timeoutError = new Error("Timeout tijdens inloggen.");
+      (timeoutError as Error & { code?: string }).code = "TIMEOUT";
+      reject(timeoutError);
+    }, ms);
     promise
       .then((value) => {
         clearTimeout(id);
@@ -22,6 +26,60 @@ function withTimeout<T>(promise: Promise<T>, ms = 12000): Promise<T> {
         reject(error);
       });
   });
+}
+
+async function checkSupabaseReachable() {
+  if (!supabaseConfig.url) {
+    throw new Error("Supabase URL ontbreekt.");
+  }
+  if (supabaseConfig.looksPlaceholder || !supabaseConfig.hasAnonKey) {
+    throw new Error(
+      "Supabase configuratie lijkt ongeldig. Controleer VITE_SUPABASE_URL en VITE_SUPABASE_ANON_KEY in Vercel."
+    );
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6000);
+  try {
+    const response = await fetch(`${supabaseConfig.url}/auth/v1/health`, {
+      signal: controller.signal,
+      headers: {
+        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Supabase auth endpoint gaf ${response.status}.`);
+    }
+  } catch {
+    throw new Error(
+      "Geen verbinding met Supabase auth. Controleer project URL, anon key en Vercel env vars."
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function formatAuthError(error: unknown): string {
+  if (!(error instanceof Error)) return "Authenticatie mislukt.";
+  const e = error as Error & { code?: string; status?: number; message?: string };
+
+  if (e.code === "TIMEOUT") {
+    return "Timeout tijdens inloggen. Controleer Vercel env vars en Supabase connectie.";
+  }
+
+  if (typeof e.status === "number") {
+    return `Auth fout (${e.status}): ${e.message ?? "Onbekende fout"}`;
+  }
+
+  if (e.message?.toLowerCase().includes("email rate limit exceeded")) {
+    return "Te veel email-acties. Probeer later opnieuw of log in met bestaand account.";
+  }
+
+  if (e.message?.toLowerCase().includes("invalid login credentials")) {
+    return "Ongeldige inloggegevens. Controleer email en wachtwoord.";
+  }
+
+  return e.message || "Authenticatie mislukt.";
 }
 
 const floatingBadges = [
@@ -57,6 +115,8 @@ export default function Login() {
 
     setIsSubmitting(true);
     try {
+      await checkSupabaseReachable();
+
       if (isRegister) {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -86,7 +146,7 @@ export default function Login() {
             email,
             password,
           })
-        );
+        , 20000);
         if (error) throw error;
 
         toast({
@@ -97,11 +157,11 @@ export default function Login() {
         navigate("/", { replace: true });
       }
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Authenticatie mislukt.";
+      const message = formatAuthError(error);
+      const raw = error instanceof Error ? (error as Error & { status?: number; code?: string }) : null;
       toast({
         title: "Actie mislukt",
-        description: message,
+        description: raw?.status || raw?.code ? `${message} [status=${raw?.status ?? "-"}, code=${raw?.code ?? "-"}]` : message,
         variant: "destructive",
       });
     } finally {
