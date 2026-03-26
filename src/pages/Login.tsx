@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Trophy, Mountain, Medal, Shirt, Star, Bike } from "lucide-react";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
+import { supabase } from "@/lib/supabase";
 
 const floatingBadges = [
   { icon: Trophy, label: "Maglia Rosa", color: "text-primary", delay: 0 },
@@ -18,18 +19,90 @@ const floatingBadges = [
 ];
 
 export default function Login() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: isRegister ? "Account aangemaakt! 🎉" : "Ingelogd! 🚴",
-      description: "Dit is een demo — login werkt nog niet echt.",
-    });
+
+    if (!supabase) {
+      toast({
+        title: "Supabase ontbreekt",
+        description:
+          "Stel VITE_SUPABASE_URL en VITE_SUPABASE_ANON_KEY in om in te loggen.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      if (isRegister) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) throw error;
+
+        if (data.user) {
+          await supabase.from("profiles").upsert(
+            {
+              id: data.user.id,
+              display_name: name.trim() || null,
+              is_admin: false,
+            },
+            { onConflict: "id" }
+          );
+        }
+
+        toast({
+          title: "Account aangemaakt! 🎉",
+          description:
+            "Controleer je mail voor bevestiging. Daarna kun je inloggen.",
+        });
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+
+        const userId = data.user?.id;
+        let isAdmin = false;
+
+        if (userId) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("is_admin")
+            .eq("id", userId)
+            .maybeSingle();
+          isAdmin = Boolean(profile?.is_admin);
+        }
+
+        toast({
+          title: "Ingelogd! 🚴",
+          description: isAdmin
+            ? "Welkom terug, admin."
+            : "Welkom terug bij Koerspoule.",
+        });
+        navigate(isAdmin ? "/admin" : "/", { replace: true });
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Authenticatie mislukt.";
+      toast({
+        title: "Actie mislukt",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -209,9 +282,14 @@ export default function Login() {
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
                   type="submit"
+                  disabled={isSubmitting}
                   className="w-full retro-border-primary font-bold text-base h-11 tracking-wide"
                 >
-                  {isRegister ? "🚴 Account aanmaken" : "🏁 Inloggen"}
+                  {isSubmitting
+                    ? "Bezig..."
+                    : isRegister
+                      ? "🚴 Account aanmaken"
+                      : "🏁 Inloggen"}
                 </Button>
               </motion.div>
             </motion.form>

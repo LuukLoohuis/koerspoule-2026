@@ -1,9 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import CookieBanner from "@/components/CookieBanner";
+import { supabase } from "@/lib/supabase";
 
 const navItems = [
 { to: "/", label: "Home" },
@@ -16,6 +17,29 @@ const navItems = [
 export default function Layout({ children }: {children: React.ReactNode;}) {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    supabase.auth.getUser().then(({ data }) => {
+      setIsLoggedIn(Boolean(data.user));
+    });
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(Boolean(session?.user));
+    });
+
+    return () => {
+      subscription.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setMobileOpen(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -46,12 +70,21 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
             </nav>
 
             <div className="hidden md:flex items-center gap-2">
-              <Link
-                to="/login"
-                className="px-4 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors">
-                
-                Inloggen
-              </Link>
+              {isLoggedIn ? (
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors"
+                >
+                  Uitloggen
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors"
+                >
+                  Inloggen
+                </Link>
+              )}
             </div>
 
             {/* Mobile hamburger */}
@@ -78,13 +111,22 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
                   {item.label}
                 </Link>
             )}
-              <Link
-              to="/login"
-              onClick={() => setMobileOpen(false)}
-              className="block px-3 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors text-center mt-2">
-              
-                Inloggen
-              </Link>
+              {isLoggedIn ? (
+                <button
+                  onClick={handleLogout}
+                  className="block w-full px-3 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors text-center mt-2"
+                >
+                  Uitloggen
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="block px-3 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors text-center mt-2"
+                >
+                  Inloggen
+                </Link>
+              )}
             </nav>
           }
         </div>
@@ -109,6 +151,8 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
             </p>
             <div className="flex items-center gap-3 font-sans">
               <Link to="/juridisch" className="underline hover:text-foreground transition-colors">Koersregels</Link>
+              <span>·</span>
+              <Link to="/admin" className="underline hover:text-foreground transition-colors">Admin</Link>
               <span>·</span>
               <span>© 2026 Koerspoule</span>
             </div>

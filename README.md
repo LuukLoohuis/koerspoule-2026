@@ -71,3 +71,13 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Supabase setup (required for auth/admin)
+
+1. Copy `.env.example` to `.env.local` and fill in your Supabase values.
+2. In Vercel, add the same env vars:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+3. Run the SQL in `supabase-schema.sql` in the Supabase SQL editor.
+4. Mark your admin user:
+   - `update public.profiles set is_admin = true where id = '<your-auth-user-id>';`

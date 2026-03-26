@@ -12,6 +12,7 @@ import Rules from "./pages/Rules";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Legal from "./pages/Legal";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/regels" element={<Rules />} />
             <Route path="/login" element={<Login />} />
             <Route path="/juridisch" element={<Legal />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
