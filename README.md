@@ -94,3 +94,4 @@ Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/c
 - Start list seed layer:
   - SQL seed: `supabase/seed_tdf2025.sql`
   - JSON source: `supabase/seeds/tdf2025_startlist.json`
+  - Admin UI can now import a ProCyclingStats-style start list PDF directly.

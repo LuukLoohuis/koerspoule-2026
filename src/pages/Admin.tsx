@@ -9,6 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  extractPdfText,
+  parseProCyclingStatsStartlist,
+  type ParsedStartlistTeam,
+} from "@/lib/startlistImport";
 
 type Stage = {
   id: string;
@@ -101,6 +106,9 @@ export default function Admin() {
   const [newCategoryShort, setNewCategoryShort] = useState("");
   const [newCategorySort, setNewCategorySort] = useState("1");
   const [newTeamName, setNewTeamName] = useState("");
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<ParsedStartlistTeam[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
   const [newRiderName, setNewRiderName] = useState("");
   const [newRiderStart, setNewRiderStart] = useState("");
   const [newRiderTeamId, setNewRiderTeamId] = useState("");
@@ -278,6 +286,80 @@ export default function Admin() {
     appendLog("Team aangemaakt.");
     setNewTeamName("");
     await refreshMasterData();
+  };
+
+  const loadImportPreview = async () => {
+    if (!importFile) {
+      appendLog("Kies eerst een PDF bestand.");
+      return;
+    }
+    try {
+      const text = await extractPdfText(importFile);
+      const parsed = parseProCyclingStatsStartlist(text);
+      setImportPreview(parsed);
+      appendLog(`Import-preview geladen: ${parsed.length} teams`);
+    } catch (error) {
+      appendLog(
+        `Preview fout: ${error instanceof Error ? error.message : "Onbekende fout"}`
+      );
+    }
+  };
+
+  const importStartlistToSupabase = async () => {
+    if (!supabase || !activeGameId) return;
+    if (!importPreview.length) {
+      appendLog("Geen import-preview om te verwerken.");
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      if (importFile) {
+        try {
+          // Keep original source file as audit artifact.
+          await supabase.storage
+            .from("startlists")
+            .upload(`${activeGameId}/${Date.now()}-${importFile.name}`, importFile, {
+              upsert: false,
+            });
+        } catch {
+          appendLog("Kon PDF niet opslaan in storage-bucket 'startlists' (import gaat wel door).");
+        }
+      }
+
+      for (const team of importPreview) {
+        const { data: upsertTeam, error: teamError } = await supabase
+          .from("teams")
+          .upsert(
+            { game_id: activeGameId, name: team.name },
+            { onConflict: "game_id,name" }
+          )
+          .select("id")
+          .single();
+        if (teamError) throw teamError;
+
+        for (const rider of team.riders) {
+          const { error: riderError } = await supabase.from("riders").upsert(
+            {
+              team_id: upsertTeam.id,
+              name: rider.name,
+              start_number: rider.start_number,
+            },
+            { onConflict: "team_id,start_number" }
+          );
+          if (riderError) throw riderError;
+        }
+      }
+
+      appendLog("Startlijst import succesvol verwerkt.");
+      await refreshMasterData();
+    } catch (error) {
+      appendLog(
+        `Import fout: ${error instanceof Error ? error.message : "Onbekende fout"}`
+      );
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const createRider = async () => {
@@ -532,6 +614,28 @@ export default function Admin() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <Input placeholder="Teamnaam" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} />
                 <Button onClick={createTeam}>Team aanmaken</Button>
+              </div>
+              <div className="border rounded-md p-3 space-y-2">
+                <p className="text-sm font-medium">Upload PCS startlijst (PDF)</p>
+                <Input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
+                />
+                <div className="flex gap-2">
+                  <Button variant="secondary" onClick={loadImportPreview}>
+                    Preview laden
+                  </Button>
+                  <Button onClick={importStartlistToSupabase} disabled={isImporting}>
+                    {isImporting ? "Importeren..." : "Importeer naar Supabase"}
+                  </Button>
+                </div>
+                {importPreview.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Preview: {importPreview.length} teams,{" "}
+                    {importPreview.reduce((sum, t) => sum + t.riders.length, 0)} renners
+                  </p>
+                )}
               </div>
               <div className="max-h-72 overflow-auto space-y-2">
                 {teams.map((t) => (
