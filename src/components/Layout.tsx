@@ -1,10 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import CookieBanner from "@/components/CookieBanner";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
 { to: "/", label: "Home" },
@@ -17,23 +18,8 @@ const navItems = [
 export default function Layout({ children }: {children: React.ReactNode;}) {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    if (!supabase) return;
-
-    supabase.auth.getUser().then(({ data }) => {
-      setIsLoggedIn(Boolean(data.user));
-    });
-
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsLoggedIn(Boolean(session?.user));
-    });
-
-    return () => {
-      subscription.subscription.unsubscribe();
-    };
-  }, []);
+  const { user, role } = useAuth();
+  const isLoggedIn = Boolean(user);
 
   const handleLogout = async () => {
     if (!supabase) return;
@@ -152,8 +138,12 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
             <div className="flex items-center gap-3 font-sans">
               <Link to="/juridisch" className="underline hover:text-foreground transition-colors">Koersregels</Link>
               <span>·</span>
-              <Link to="/admin" className="underline hover:text-foreground transition-colors">Admin</Link>
-              <span>·</span>
+              {role === "admin" && (
+                <>
+                  <Link to="/admin" className="underline hover:text-foreground transition-colors">Admin</Link>
+                  <span>·</span>
+                </>
+              )}
               <span>© 2026 Koerspoule</span>
             </div>
           </div>

@@ -1,17 +1,20 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
 import Papa from "papaparse";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
 
 type Stage = {
   id: string;
   stage_number: number;
   name: string;
+  status?: string;
 };
 
 type ResultRow = {
@@ -70,11 +73,14 @@ function parseCsv(text: string): ResultRow[] {
 }
 
 export default function Admin() {
-  const navigate = useNavigate();
-  const [authChecked, setAuthChecked] = useState(false);
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const { user, role, loading } = useAuth();
 
+  const [games, setGames] = useState<Array<{ id: string; name: string; year: number; status: string }>>([]);
+  const [categories, setCategories] = useState<Array<{ id: string; name: string; short_name: string | null; game_id: string; sort_order: number }>>([]);
+  const [teams, setTeams] = useState<Array<{ id: string; name: string; short_name: string | null }>>([]);
+  const [ridersList, setRidersList] = useState<Array<{ id: string; name: string; start_number: number | null; team_id: string | null }>>([]);
   const [stages, setStages] = useState<Stage[]>([]);
+  const [activeGameId, setActiveGameId] = useState("");
   const [selectedStageId, setSelectedStageId] = useState("");
   const [riderRefs, setRiderRefs] = useState<RiderRef[]>([]);
   const [knownRiders, setKnownRiders] = useState<Set<string>>(new Set());
@@ -88,71 +94,64 @@ export default function Admin() {
   const [overwriteExisting, setOverwriteExisting] = useState(true);
   const [logs, setLogs] = useState<string[]>([]);
   const [statusMessage, setStatusMessage] = useState("");
+  const [newGameName, setNewGameName] = useState("");
+  const [newGameYear, setNewGameYear] = useState(String(new Date().getFullYear()));
+  const [newGameStatus, setNewGameStatus] = useState("draft");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryShort, setNewCategoryShort] = useState("");
+  const [newCategorySort, setNewCategorySort] = useState("1");
+  const [newTeamName, setNewTeamName] = useState("");
+  const [newRiderName, setNewRiderName] = useState("");
+  const [newRiderStart, setNewRiderStart] = useState("");
+  const [newRiderTeamId, setNewRiderTeamId] = useState("");
+  const [newStageNumber, setNewStageNumber] = useState("");
+  const [newStageName, setNewStageName] = useState("");
 
   const appendLog = (message: string) => {
     setLogs((prev) => [message, ...prev].slice(0, 20));
   };
 
   useEffect(() => {
-    let mounted = true;
-
     async function bootstrap() {
-      if (!supabase) {
-        setStatusMessage(
-          "Supabase is niet geconfigureerd. Voeg VITE_SUPABASE_URL en VITE_SUPABASE_ANON_KEY toe."
-        );
-        setAuthChecked(true);
-        return;
+      if (!supabase || !user || role !== "admin") return;
+
+      const { data: gameData } = await supabase
+        .from("games")
+        .select("id, name, year, status")
+        .order("year", { ascending: false });
+      if (gameData?.length) {
+        setGames(gameData);
+        setActiveGameId(gameData[0].id);
       }
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: teamData } = await supabase
+        .from("teams")
+        .select("id, name, short_name")
+        .order("name");
+      if (teamData) setTeams(teamData);
 
-      if (!mounted) return;
-
-      if (!user) {
-        navigate("/login", { replace: true });
-        return;
-      }
-
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        appendLog(`Kon adminprofiel niet laden: ${profileError.message}`);
-        navigate("/", { replace: true });
-        return;
-      }
-
-      if (!profile?.is_admin) {
-        navigate("/", { replace: true });
-        return;
-      }
-
-      setIsAuthorized(true);
-      setAuthChecked(true);
+      const { data: riderData } = await supabase
+        .from("riders")
+        .select("id, name, start_number, team_id")
+        .order("name");
+      if (riderData) setRidersList(riderData);
 
       const { data: stageData, error: stageError } = await supabase
         .from("stages")
-        .select("id, stage_number, name")
+        .select("id, stage_number, name, status")
         .order("stage_number", { ascending: true });
-
       if (stageError) {
         appendLog(`Kon etappes niet ophalen: ${stageError.message}`);
       } else if (stageData) {
         setStages(stageData as Stage[]);
       }
 
-      const { data: riderData } = await supabase.from("riders").select("name");
+      const { data: riderNamesData } = await supabase.from("riders").select("name");
       const { data: riderNumbers } = await supabase
         .from("riders")
         .select("name, start_number");
 
-      if (riderData || riderNumbers) {
+      if (riderNamesData || riderNumbers) {
         const refs = (riderNumbers ?? [])
           .filter((r) => Number.isFinite(Number(r.start_number)))
           .map((r) => ({
@@ -162,7 +161,7 @@ export default function Admin() {
         setRiderRefs(refs);
         setKnownRiders(
           new Set(
-            (riderData ?? [])
+            (riderNamesData ?? [])
               .map((r) => String(r.name ?? "").trim().toLowerCase())
               .filter(Boolean)
           )
@@ -172,12 +171,21 @@ export default function Admin() {
         );
       }
     }
-
     bootstrap();
-    return () => {
-      mounted = false;
-    };
-  }, [navigate]);
+  }, [user, role]);
+
+  useEffect(() => {
+    async function loadCategories() {
+      if (!supabase || !activeGameId) return;
+      const { data } = await supabase
+        .from("categories")
+        .select("id, name, short_name, game_id, sort_order")
+        .eq("game_id", activeGameId)
+        .order("sort_order");
+      if (data) setCategories(data);
+    }
+    loadCategories();
+  }, [activeGameId]);
 
   const previewRows = useMemo(
     () =>
@@ -202,7 +210,7 @@ export default function Admin() {
     [rows, knownRiders, ridersByStart]
   );
 
-  if (!authChecked && supabase) {
+  if (loading) {
     return <div className="max-w-4xl mx-auto p-4">Laden...</div>;
   }
 
@@ -221,9 +229,84 @@ export default function Admin() {
     );
   }
 
-  if (!isAuthorized) {
-    return <Navigate to="/" replace />;
+  if (!user || role !== "admin") {
+    return <div className="max-w-4xl mx-auto p-4">Geen toegang.</div>;
   }
+
+  const refreshMasterData = async () => {
+    const { data: teamData } = await supabase.from("teams").select("id, name, short_name").order("name");
+    if (teamData) setTeams(teamData);
+    const { data: riderData } = await supabase.from("riders").select("id, name, start_number, team_id").order("name");
+    if (riderData) setRidersList(riderData);
+    const { data: stageData } = await supabase.from("stages").select("id, stage_number, name, status").order("stage_number");
+    if (stageData) setStages(stageData as Stage[]);
+  };
+
+  const createGame = async () => {
+    const { error } = await supabase.from("games").insert({
+      name: newGameName,
+      year: Number(newGameYear),
+      status: newGameStatus,
+    });
+    if (error) return appendLog(`Game fout: ${error.message}`);
+    appendLog("Game aangemaakt.");
+    const { data } = await supabase.from("games").select("id, name, year, status").order("year", { ascending: false });
+    if (data) setGames(data);
+  };
+
+  const createCategory = async () => {
+    if (!activeGameId) return;
+    const { error } = await supabase.from("categories").insert({
+      game_id: activeGameId,
+      name: newCategoryName,
+      short_name: newCategoryShort || null,
+      sort_order: Number(newCategorySort),
+    });
+    if (error) return appendLog(`Categorie fout: ${error.message}`);
+    appendLog("Categorie aangemaakt.");
+    const { data } = await supabase
+      .from("categories")
+      .select("id, name, short_name, game_id, sort_order")
+      .eq("game_id", activeGameId)
+      .order("sort_order");
+    if (data) setCategories(data);
+  };
+
+  const createTeam = async () => {
+    const { error } = await supabase.from("teams").insert({ game_id: activeGameId || null, name: newTeamName });
+    if (error) return appendLog(`Team fout: ${error.message}`);
+    appendLog("Team aangemaakt.");
+    setNewTeamName("");
+    await refreshMasterData();
+  };
+
+  const createRider = async () => {
+    const { error } = await supabase.from("riders").insert({
+      name: newRiderName,
+      start_number: newRiderStart ? Number(newRiderStart) : null,
+      team_id: newRiderTeamId || null,
+    });
+    if (error) return appendLog(`Renner fout: ${error.message}`);
+    appendLog("Renner aangemaakt.");
+    setNewRiderName("");
+    setNewRiderStart("");
+    setNewRiderTeamId("");
+    await refreshMasterData();
+  };
+
+  const createStage = async () => {
+    const { error } = await supabase.from("stages").insert({
+      game_id: activeGameId || null,
+      stage_number: Number(newStageNumber),
+      name: newStageName,
+      status: "draft",
+    });
+    if (error) return appendLog(`Etappe fout: ${error.message}`);
+    appendLog("Etappe aangemaakt.");
+    setNewStageNumber("");
+    setNewStageName("");
+    await refreshMasterData();
+  };
 
   const handleCsvUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -353,29 +436,157 @@ export default function Admin() {
     <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-4">
       <h1 className="text-3xl font-display font-bold">Admin Dashboard</h1>
 
-      <Card className="rounded-xl shadow-sm">
-        <CardHeader>
-          <CardTitle>Stage Selection</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Label htmlFor="stage-select">Selecteer etappe</Label>
-          <select
-            id="stage-select"
-            className="mt-2 w-full border rounded-md p-2 bg-background"
-            value={selectedStageId}
-            onChange={(e) => setSelectedStageId(e.target.value)}
-          >
-            <option value="">Kies een etappe...</option>
-            {stages.map((stage) => (
-              <option key={stage.id} value={stage.id}>
-                Etappe {stage.stage_number} - {stage.name}
-              </option>
-            ))}
-          </select>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="games" className="space-y-4">
+        <TabsList className="w-full flex-wrap h-auto">
+          <TabsTrigger value="games">Games</TabsTrigger>
+          <TabsTrigger value="categories">Categorieen</TabsTrigger>
+          <TabsTrigger value="riders">Renners</TabsTrigger>
+          <TabsTrigger value="startlist">Startlijst</TabsTrigger>
+          <TabsTrigger value="stages">Etappes</TabsTrigger>
+          <TabsTrigger value="results">Uitslagen</TabsTrigger>
+          <TabsTrigger value="logs">Logs</TabsTrigger>
+        </TabsList>
 
-      <Card className="rounded-xl shadow-sm">
+        <TabsContent value="games">
+          <Card className="rounded-xl shadow-sm">
+            <CardHeader><CardTitle>Games</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <Input placeholder="Naam" value={newGameName} onChange={(e) => setNewGameName(e.target.value)} />
+                <Input placeholder="Jaar" value={newGameYear} onChange={(e) => setNewGameYear(e.target.value)} />
+                <Select value={newGameStatus} onValueChange={setNewGameStatus}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["draft", "open", "locked", "live", "finished"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button onClick={createGame}>Aanmaken</Button>
+              </div>
+              <div className="space-y-1 text-sm">
+                {games.map((g) => <div key={g.id}>{g.year} - {g.name} ({g.status})</div>)}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="categories">
+          <Card className="rounded-xl shadow-sm">
+            <CardHeader><CardTitle>Categorieen</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <Select value={activeGameId} onValueChange={setActiveGameId}>
+                <SelectTrigger><SelectValue placeholder="Selecteer game" /></SelectTrigger>
+                <SelectContent>{games.map((g) => <SelectItem key={g.id} value={g.id}>{g.year} - {g.name}</SelectItem>)}</SelectContent>
+              </Select>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <Input placeholder="Naam" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} />
+                <Input placeholder="Short name" value={newCategoryShort} onChange={(e) => setNewCategoryShort(e.target.value)} />
+                <Input placeholder="Sort order" value={newCategorySort} onChange={(e) => setNewCategorySort(e.target.value)} />
+                <Button onClick={createCategory}>Opslaan</Button>
+              </div>
+              <div className="space-y-1 text-sm">
+                {categories.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between">
+                    <span>{c.sort_order}. {c.name} ({c.short_name ?? "-"})</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const { error } = await supabase.from("categories").delete().eq("id", c.id);
+                        if (error) return appendLog(`Delete categorie fout: ${error.message}`);
+                        setCategories((prev) => prev.filter((x) => x.id !== c.id));
+                      }}
+                    >
+                      Verwijder
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="riders">
+          <Card className="rounded-xl shadow-sm">
+            <CardHeader><CardTitle>Renners</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <Input placeholder="Naam" value={newRiderName} onChange={(e) => setNewRiderName(e.target.value)} />
+                <Input placeholder="Startnummer" value={newRiderStart} onChange={(e) => setNewRiderStart(e.target.value)} />
+                <Select value={newRiderTeamId} onValueChange={setNewRiderTeamId}>
+                  <SelectTrigger><SelectValue placeholder="Team" /></SelectTrigger>
+                  <SelectContent>{teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                </Select>
+                <Button onClick={createRider}>Aanmaken</Button>
+              </div>
+              <div className="max-h-72 overflow-auto space-y-1 text-sm">
+                {ridersList.map((r) => <div key={r.id}>#{r.start_number ?? "-"} {r.name}</div>)}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="startlist">
+          <Card className="rounded-xl shadow-sm">
+            <CardHeader><CardTitle>Startlijst beheer</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <Input placeholder="Teamnaam" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} />
+                <Button onClick={createTeam}>Team aanmaken</Button>
+              </div>
+              <div className="max-h-72 overflow-auto space-y-2">
+                {teams.map((t) => (
+                  <div key={t.id} className="border rounded-md p-2">
+                    <p className="font-medium">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {ridersList.filter((r) => r.team_id === t.id).length} renners
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="stages">
+          <Card className="rounded-xl shadow-sm">
+            <CardHeader><CardTitle>Etappes</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <Input placeholder="Stage number" value={newStageNumber} onChange={(e) => setNewStageNumber(e.target.value)} />
+                <Input placeholder="Naam" value={newStageName} onChange={(e) => setNewStageName(e.target.value)} />
+                <Button onClick={createStage}>Aanmaken</Button>
+              </div>
+              <div className="space-y-1 text-sm">
+                {stages.map((s) => <div key={s.id}>{s.stage_number}. {s.name} ({s.status ?? "draft"})</div>)}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="results" className="space-y-4">
+          <Card className="rounded-xl shadow-sm">
+            <CardHeader>
+              <CardTitle>Stage Selection</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Label htmlFor="stage-select">Selecteer etappe</Label>
+              <select
+                id="stage-select"
+                className="mt-2 w-full border rounded-md p-2 bg-background"
+                value={selectedStageId}
+                onChange={(e) => setSelectedStageId(e.target.value)}
+              >
+                <option value="">Kies een etappe...</option>
+                {stages.map((stage) => (
+                  <option key={stage.id} value={stage.id}>
+                    Etappe {stage.stage_number} - {stage.name}
+                  </option>
+                ))}
+              </select>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-xl shadow-sm">
         <CardHeader>
           <CardTitle>Upload Results</CardTitle>
         </CardHeader>
@@ -423,7 +634,7 @@ export default function Admin() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-xl shadow-sm">
+          <Card className="rounded-xl shadow-sm">
         <CardHeader>
           <CardTitle>Preview</CardTitle>
         </CardHeader>
@@ -463,7 +674,7 @@ export default function Admin() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-xl shadow-sm">
+          <Card className="rounded-xl shadow-sm">
         <CardHeader>
           <CardTitle>Actions</CardTitle>
         </CardHeader>
@@ -490,7 +701,10 @@ export default function Admin() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-xl shadow-sm">
+        </TabsContent>
+
+        <TabsContent value="logs">
+          <Card className="rounded-xl shadow-sm">
         <CardHeader>
           <CardTitle>Status / Logs</CardTitle>
         </CardHeader>
@@ -507,6 +721,8 @@ export default function Admin() {
           />
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

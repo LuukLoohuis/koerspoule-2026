@@ -54,6 +54,7 @@ export default function Login() {
             {
               id: data.user.id,
               display_name: name.trim() || null,
+              role: "user",
               is_admin: false,
             },
             { onConflict: "id" }
@@ -78,10 +79,10 @@ export default function Login() {
         if (userId) {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("is_admin")
+            .select("role, is_admin")
             .eq("id", userId)
             .maybeSingle();
-          isAdmin = Boolean(profile?.is_admin);
+          isAdmin = profile?.role === "admin" || Boolean(profile?.is_admin);
         }
 
         toast({

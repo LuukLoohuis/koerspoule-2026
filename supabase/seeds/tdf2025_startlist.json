@@ -1,0 +1,29 @@
+{
+  "race": "Tour de France",
+  "year": 2025,
+  "teams": [
+    {
+      "name": "UAE Team Emirates - XRG",
+      "short_name": "UAE",
+      "riders": [
+        { "name": "Tadej Pogacar", "start_number": 1 },
+        { "name": "Joao Almeida", "start_number": 2 }
+      ]
+    },
+    {
+      "name": "Team Visma | Lease a Bike",
+      "short_name": "TVL",
+      "riders": [
+        { "name": "Jonas Vingegaard", "start_number": 11 },
+        { "name": "Wout van Aert", "start_number": 17 }
+      ]
+    },
+    {
+      "name": "Soudal Quick-Step",
+      "short_name": "SOQ",
+      "riders": [
+        { "name": "Remco Evenepoel", "start_number": 21 }
+      ]
+    }
+  ]
+}

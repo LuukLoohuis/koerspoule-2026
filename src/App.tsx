@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Legal from "./pages/Legal";
 import Admin from "./pages/Admin";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -25,13 +26,27 @@ const App = () => (
         <Layout>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/team-samenstellen" element={<TeamBuilder />} />
+            <Route
+              path="/team-samenstellen"
+              element={
+                <ProtectedRoute>
+                  <TeamBuilder />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/uitslagen" element={<Results />} />
             <Route path="/mijn-peloton" element={<MijnPeloton />} />
             <Route path="/regels" element={<Rules />} />
             <Route path="/login" element={<Login />} />
             <Route path="/juridisch" element={<Legal />} />
-            <Route path="/admin" element={<Admin />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>

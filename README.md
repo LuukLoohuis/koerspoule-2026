@@ -81,3 +81,16 @@ Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/c
 3. Run the SQL in `supabase-schema.sql` in the Supabase SQL editor.
 4. Mark your admin user:
    - `update public.profiles set is_admin = true where id = '<your-auth-user-id>';`
+
+## Backend schema and seeds
+
+- Full schema + RLS + RPC functions: `supabase-schema.sql`
+  - Includes core entities: profiles, games, categories, teams, riders, entries, picks, jokers, subpoules, stages, stage_results, score tables.
+  - Includes RPC functions:
+    - `save_entry_pick`
+    - `save_entry_jokers`
+    - `submit_entry`
+    - `calculate_stage_scores`
+- Start list seed layer:
+  - SQL seed: `supabase/seed_tdf2025.sql`
+  - JSON source: `supabase/seeds/tdf2025_startlist.json`
