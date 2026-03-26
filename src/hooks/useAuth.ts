@@ -17,7 +17,6 @@ async function ensureProfile(user: User) {
     {
       id: user.id,
       display_name: user.user_metadata?.display_name ?? user.email ?? "Gebruiker",
-      role: "user",
       is_admin: false,
     },
     { onConflict: "id" }
@@ -38,40 +37,40 @@ export function useAuth() {
       return;
     }
 
+    const resolveRole = async (user: User | null): Promise<AppRole> => {
+      if (!user) return "user";
+      await ensureProfile(user);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+      const p = (profile ?? {}) as { role?: string; is_admin?: boolean };
+      return p.role === "admin" || Boolean(p.is_admin) ? "admin" : "user";
+    };
+
     const load = async () => {
-      const { data } = await supabase.auth.getSession();
-      const session = data.session;
-      const user = session?.user ?? null;
-      let role: AppRole = "user";
-
-      if (user) {
-        await ensureProfile(user);
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role, is_admin")
-          .eq("id", user.id)
-          .maybeSingle();
-        role = profile?.role === "admin" || profile?.is_admin ? "admin" : "user";
+      try {
+        const { data } = await supabase.auth.getSession();
+        const session = data.session;
+        const user = session?.user ?? null;
+        const role = await resolveRole(user);
+        setState({ user, session, loading: false, role });
+      } catch {
+        setState({ user: null, session: null, loading: false, role: "user" });
       }
-
-      setState({ user, session, loading: false, role });
     };
 
     load();
 
     const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const user = session?.user ?? null;
-      let role: AppRole = "user";
-      if (user) {
-        await ensureProfile(user);
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role, is_admin")
-          .eq("id", user.id)
-          .maybeSingle();
-        role = profile?.role === "admin" || profile?.is_admin ? "admin" : "user";
+      try {
+        const user = session?.user ?? null;
+        const role = await resolveRole(user);
+        setState({ user, session, loading: false, role });
+      } catch {
+        setState({ user: null, session: null, loading: false, role: "user" });
       }
-      setState({ user, session, loading: false, role });
     });
 
     return () => subscription.subscription.unsubscribe();
