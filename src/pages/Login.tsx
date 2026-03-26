@@ -9,6 +9,21 @@ import { Trophy, Mountain, Medal, Shirt, Star, Bike } from "lucide-react";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { supabase } from "@/lib/supabase";
 
+function withTimeout<T>(promise: Promise<T>, ms = 12000): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const id = setTimeout(() => reject(new Error("Timeout tijdens inloggen.")), ms);
+    promise
+      .then((value) => {
+        clearTimeout(id);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(id);
+        reject(error);
+      });
+  });
+}
+
 const floatingBadges = [
   { icon: Trophy, label: "Maglia Rosa", color: "text-primary", delay: 0 },
   { icon: Mountain, label: "Bergtrui", color: "text-blue-500", delay: 0.2 },
@@ -66,32 +81,20 @@ export default function Login() {
             "Controleer je mail voor bevestiging. Daarna kun je inloggen.",
         });
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { error } = await withTimeout(
+          supabase.auth.signInWithPassword({
+            email,
+            password,
+          })
+        );
         if (error) throw error;
-
-        const userId = data.user?.id;
-        let isAdmin = false;
-
-        if (userId) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", userId)
-            .maybeSingle();
-          const p = (profile ?? {}) as { role?: string; is_admin?: boolean };
-          isAdmin = p.role === "admin" || Boolean(p.is_admin);
-        }
 
         toast({
           title: "Ingelogd! 🚴",
-          description: isAdmin
-            ? "Welkom terug, admin."
-            : "Welkom terug bij Koerspoule.",
+          description: "Welkom terug bij Koerspoule.",
         });
-        navigate(isAdmin ? "/admin" : "/", { replace: true });
+        // Keep login flow fast and predictable; role-based routing happens after auth state resolves.
+        navigate("/", { replace: true });
       }
     } catch (error) {
       const message =
