@@ -15,10 +15,16 @@ type Stage = {
 };
 
 type ResultRow = {
+  start_number?: number | null;
   rider_name: string;
   finish_position: number;
   gc_position?: number | null;
   issue?: string;
+};
+
+type RiderRef = {
+  name: string;
+  start_number: number;
 };
 
 function parseCsv(text: string): ResultRow[] {
@@ -37,22 +43,26 @@ function parseCsv(text: string): ResultRow[] {
   }
 
   const firstRow = parsed.data[0] ?? {};
-  if (!("rider_name" in firstRow) || !("finish_position" in firstRow)) {
-    throw new Error("CSV mist verplichte kolommen: rider_name, finish_position");
+  if (!("finish_position" in firstRow)) {
+    throw new Error("CSV mist verplichte kolom: finish_position");
   }
 
   return parsed.data.map((row) => {
     const riderName = String(row.rider_name ?? "").trim();
+    const startNumberRaw =
+      row.start_number ?? row.rider_number ?? row.startnummer ?? "";
+    const startNumber = Number(String(startNumberRaw).trim());
     const finish = Number(row.finish_position);
     const gcRaw = String(row.gc_position ?? "").trim();
     const gc = gcRaw ? Number(gcRaw) : null;
 
     return {
+      start_number: Number.isFinite(startNumber) ? startNumber : null,
       rider_name: riderName,
       finish_position: finish,
       gc_position: Number.isFinite(gc as number) ? gc : null,
       issue:
-        !riderName || !Number.isFinite(finish)
+        !Number.isFinite(finish) || (!riderName && !Number.isFinite(startNumber))
           ? "Ontbrekende of ongeldige data"
           : undefined,
     };
@@ -66,8 +76,11 @@ export default function Admin() {
 
   const [stages, setStages] = useState<Stage[]>([]);
   const [selectedStageId, setSelectedStageId] = useState("");
+  const [riderRefs, setRiderRefs] = useState<RiderRef[]>([]);
   const [knownRiders, setKnownRiders] = useState<Set<string>>(new Set());
+  const [ridersByStart, setRidersByStart] = useState<Map<number, string>>(new Map());
   const [rows, setRows] = useState<ResultRow[]>([]);
+  const [manualStartNumber, setManualStartNumber] = useState("");
   const [manualRider, setManualRider] = useState("");
   const [manualPosition, setManualPosition] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -135,13 +148,27 @@ export default function Admin() {
       }
 
       const { data: riderData } = await supabase.from("riders").select("name");
-      if (riderData) {
+      const { data: riderNumbers } = await supabase
+        .from("riders")
+        .select("name, start_number");
+
+      if (riderData || riderNumbers) {
+        const refs = (riderNumbers ?? [])
+          .filter((r) => Number.isFinite(Number(r.start_number)))
+          .map((r) => ({
+            name: String(r.name ?? "").trim(),
+            start_number: Number(r.start_number),
+          }));
+        setRiderRefs(refs);
         setKnownRiders(
           new Set(
-            riderData
+            (riderData ?? [])
               .map((r) => String(r.name ?? "").trim().toLowerCase())
               .filter(Boolean)
           )
+        );
+        setRidersByStart(
+          new Map(refs.map((r) => [r.start_number, r.name]))
         );
       }
     }
@@ -155,17 +182,24 @@ export default function Admin() {
   const previewRows = useMemo(
     () =>
       rows.map((row) => {
-        const matchKey = row.rider_name.trim().toLowerCase();
+        const mappedNameFromNumber =
+          row.start_number && ridersByStart.has(row.start_number)
+            ? ridersByStart.get(row.start_number) ?? ""
+            : "";
+        const normalizedName = row.rider_name || mappedNameFromNumber;
+        const matchKey = normalizedName.trim().toLowerCase();
         const isMatched = matchKey ? knownRiders.has(matchKey) : false;
         return {
           ...row,
+          rider_name: normalizedName,
           isMatched,
           issue:
             row.issue ??
+            (!row.start_number ? "Startnummer ontbreekt" : undefined) ??
             (!isMatched && knownRiders.size > 0 ? "Onbekende renner" : undefined),
         };
       }),
-    [rows, knownRiders]
+    [rows, knownRiders, ridersByStart]
   );
 
   if (!authChecked && supabase) {
@@ -203,7 +237,7 @@ export default function Admin() {
     try {
       const text = await file.text();
       const parsedRows = parseCsv(text);
-      setRows(parsedRows);
+      setRows(parsedRows.slice(0, 20));
       setStatusMessage(`CSV ingelezen: ${parsedRows.length} regels`);
       appendLog(`CSV verwerkt (${parsedRows.length} regels).`);
     } catch (error) {
@@ -215,16 +249,24 @@ export default function Admin() {
   };
 
   const addManualRow = () => {
+    const startNumber = Number(manualStartNumber);
     const finish = Number(manualPosition);
-    if (!manualRider.trim() || !Number.isFinite(finish)) {
-      setStatusMessage("Vul een renner en geldige finish positie in.");
+    if (!Number.isFinite(startNumber) || !Number.isFinite(finish)) {
+      setStatusMessage("Vul startnummer en geldige finish positie in.");
       return;
     }
 
+    const riderNameFromList = ridersByStart.get(startNumber) ?? manualRider.trim();
     setRows((prev) => [
       ...prev,
-      { rider_name: manualRider.trim(), finish_position: finish, gc_position: null },
+      {
+        start_number: startNumber,
+        rider_name: riderNameFromList,
+        finish_position: finish,
+        gc_position: null,
+      },
     ]);
+    setManualStartNumber("");
     setManualRider("");
     setManualPosition("");
     setStatusMessage("Handmatige regel toegevoegd.");
@@ -237,6 +279,10 @@ export default function Admin() {
     }
     if (previewRows.length === 0) {
       setStatusMessage("Geen resultaten om op te slaan.");
+      return;
+    }
+    if (previewRows.length !== 20) {
+      setStatusMessage("Voor doorrekening zijn exact 20 renners nodig.");
       return;
     }
     if (previewRows.some((row) => row.issue)) {
@@ -257,6 +303,7 @@ export default function Admin() {
 
       const payload = previewRows.map((row) => ({
         stage_id: selectedStageId,
+        start_number: row.start_number ?? null,
         rider_name: row.rider_name,
         finish_position: row.finish_position,
         gc_position: row.gc_position ?? null,
@@ -336,11 +383,21 @@ export default function Admin() {
           <div className="space-y-2">
             <Label htmlFor="csv-upload">CSV upload</Label>
             <Input id="csv-upload" type="file" accept=".csv" onChange={handleCsvUpload} />
+            <p className="text-xs text-muted-foreground">
+              Verwachte kolommen: <code>start_number</code> (of <code>rider_number</code>), <code>finish_position</code>, optioneel <code>rider_name</code>, <code>gc_position</code>.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
             <Input
-              placeholder="rider_name"
+              placeholder="start_number"
+              value={manualStartNumber}
+              onChange={(e) => setManualStartNumber(e.target.value)}
+              type="number"
+              min={1}
+            />
+            <Input
+              placeholder="rider_name (optioneel)"
               value={manualRider}
               onChange={(e) => setManualRider(e.target.value)}
             />
@@ -374,6 +431,7 @@ export default function Admin() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
+                <th className="text-left py-2">start_number</th>
                 <th className="text-left py-2">rider_name</th>
                 <th className="text-left py-2">finish_position</th>
                 <th className="text-left py-2">status</th>
@@ -382,7 +440,7 @@ export default function Admin() {
             <tbody>
               {previewRows.length === 0 && (
                 <tr>
-                  <td className="py-2 text-muted-foreground" colSpan={3}>
+                  <td className="py-2 text-muted-foreground" colSpan={4}>
                     Nog geen resultaten geladen.
                   </td>
                 </tr>
@@ -392,6 +450,7 @@ export default function Admin() {
                   key={`${row.rider_name}-${index}`}
                   className={row.issue ? "bg-destructive/10" : ""}
                 >
+                  <td className="py-2">{row.start_number ?? "-"}</td>
                   <td className="py-2">{row.rider_name}</td>
                   <td className="py-2">{row.finish_position}</td>
                   <td className="py-2 text-muted-foreground">
@@ -436,7 +495,10 @@ export default function Admin() {
           <CardTitle>Status / Logs</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <p className="text-sm text-muted-foreground">{statusMessage || "Geen meldingen."}</p>
+          <p className="text-sm text-muted-foreground">
+            {statusMessage || "Geen meldingen."}{" "}
+            {previewRows.length > 0 ? `(${previewRows.length}/20 ingevuld)` : ""}
+          </p>
           <Textarea
             readOnly
             value={logs.join("\n")}
