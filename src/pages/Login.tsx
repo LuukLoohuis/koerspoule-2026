@@ -98,8 +98,7 @@ export default function Login() {
               { id: data.user.id, display_name: name.trim() || email, is_admin: false },
               { onConflict: "id" }
             )
-            .then(() => {})
-            .catch(() => {});
+            .then(() => {});
         }
 
         toast({

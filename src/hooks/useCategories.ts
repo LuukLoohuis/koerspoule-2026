@@ -32,7 +32,7 @@ export function useCategories(gameId?: string) {
         .eq("game_id", gameId)
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return (data as CategoryWithRiders[]) ?? [];
+      return (data as unknown as CategoryWithRiders[]) ?? [];
     },
   });
 }
