@@ -292,7 +292,7 @@ export default function Admin() {
 
     setIsCreatingGame(true);
     try {
-      const { data: inserted, error } = await withTimeout(
+      const result = await withTimeout(
         supabase
           .from("games")
           .insert({
@@ -301,10 +301,11 @@ export default function Admin() {
             status: newGameStatus,
           })
           .select("id, name, year, status")
-          .single(),
+          .single() as unknown as Promise<{ data: any; error: any }>,
         12000,
         "Game aanmaken"
       );
+      const { data: inserted, error } = result;
 
       if (error) {
         const message =
