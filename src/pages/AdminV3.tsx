@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,7 +10,7 @@ import { LayoutDashboard, Trophy, Tag, Users, ListChecks, Calendar, Calculator, 
 
 import GamesTab, { type Game } from "@/components/admin/GamesTab";
 import CategoriesTab, { type Category } from "@/components/admin/CategoriesTab";
-import StartlistTab, { type Rider } from "@/components/admin/StartlistTab";
+import StartlistTab, { type Rider, type Team } from "@/components/admin/StartlistTab";
 import StagesTab, { type Stage } from "@/components/admin/StagesTab";
 import ResultsTab from "@/components/admin/ResultsTab";
 import CalculationTab from "@/components/admin/CalculationTab";
@@ -23,6 +22,7 @@ export default function AdminV3() {
   const [games, setGames] = useState<Game[]>([]);
   const [activeGameId, setActiveGameId] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [riders, setRiders] = useState<Rider[]>([]);
   const [stages, setStages] = useState<Stage[]>([]);
 
@@ -32,9 +32,10 @@ export default function AdminV3() {
     if (!supabase) return;
     const { data, error } = await supabase
       .from("games")
-      .select("id, name, game_type, year, status, start_date, end_date")
+      .select("id, name, game_type, year, status, starts_at, slug")
       .order("year", { ascending: false, nullsFirst: false });
     if (error) {
+      console.error("Games load error:", error);
       toast.error(`Games laden mislukt: ${error.message}`);
       return;
     }
@@ -46,22 +47,49 @@ export default function AdminV3() {
 
   async function loadGameScoped(gameId: string) {
     if (!supabase || !gameId) return;
-    const [c, gr, s] = await Promise.all([
-      supabase.from("categories").select("id, game_id, name, order_index, max_picks").eq("game_id", gameId).order("order_index"),
+    const [c, t, r, s] = await Promise.all([
       supabase
-        .from("game_riders")
-        .select("id, game_id, rider_id, category_id, riders(id, name, team)")
-        .eq("game_id", gameId),
-      supabase.from("stages").select("id, game_id, stage_number, date").eq("game_id", gameId).order("stage_number"),
+        .from("categories")
+        .select("id, game_id, name, short_name, sort_order, max_picks")
+        .eq("game_id", gameId)
+        .order("sort_order"),
+      supabase
+        .from("teams")
+        .select("id, name, short_name, game_id")
+        .or(`game_id.eq.${gameId},game_id.is.null`)
+        .order("name"),
+      supabase
+        .from("riders")
+        .select("id, name, start_number, team_id, teams(name)")
+        .eq("game_id", gameId)
+        .order("start_number", { nullsFirst: false }),
+      supabase
+        .from("stages")
+        .select("id, game_id, stage_number, name, date, status")
+        .eq("game_id", gameId)
+        .order("stage_number"),
     ]);
+
+    if (c.error) console.error("Categories load:", c.error);
+    if (t.error) console.error("Teams load:", t.error);
+    if (r.error) console.error("Riders load:", r.error);
+    if (s.error) console.error("Stages load:", s.error);
+
     setCategories((c.data ?? []) as Category[]);
+    setTeams((t.data ?? []) as Team[]);
     setRiders(
-      (gr.data ?? []).map((row: { rider_id: string; category_id: string | null; riders: { name: string; team: string | null } | null }) => ({
-        id: row.rider_id,
-        name: row.riders?.name ?? "(onbekend)",
-        team: row.riders?.team ?? null,
-        category_id: row.category_id,
-        game_rider_id: (row as { id: string }).id,
+      ((r.data ?? []) as Array<{
+        id: string;
+        name: string;
+        start_number: number | null;
+        team_id: string | null;
+        teams: { name: string } | null;
+      }>).map((row) => ({
+        id: row.id,
+        name: row.name,
+        start_number: row.start_number,
+        team_id: row.team_id,
+        team_name: row.teams?.name ?? null,
       }))
     );
     setStages((s.data ?? []) as Stage[]);
@@ -81,7 +109,7 @@ export default function AdminV3() {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card><CardHeader><CardTitle>Admin</CardTitle></CardHeader>
-          <CardContent>Supabase configuratie ontbreekt. Vul VITE_SUPABASE_URL en VITE_SUPABASE_ANON_KEY in.</CardContent>
+          <CardContent>Supabase configuratie ontbreekt.</CardContent>
         </Card>
       </div>
     );
@@ -115,9 +143,7 @@ export default function AdminV3() {
             <SelectTrigger data-testid="active-game-selector"><SelectValue placeholder="Kies een game" /></SelectTrigger>
             <SelectContent>
               {games.map((g) => (
-                <SelectItem key={g.id} value={g.id}>
-                  {gameLabel(g)}
-                </SelectItem>
+                <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -149,7 +175,7 @@ export default function AdminV3() {
         </TabsContent>
 
         <TabsContent value="startlist">
-          <StartlistTab activeGameId={activeGameId} categories={categories} riders={riders} reload={() => loadGameScoped(activeGameId)} />
+          <StartlistTab activeGameId={activeGameId} riders={riders} teams={teams} reload={() => loadGameScoped(activeGameId)} />
         </TabsContent>
 
         <TabsContent value="stages">
@@ -170,10 +196,4 @@ export default function AdminV3() {
       </Tabs>
     </div>
   );
-}
-
-export function gameLabel(g: Game): string {
-  const typeMap: Record<string, string> = { giro: "Giro d'Italia", tdf: "Tour de France", vuelta: "Vuelta a España" };
-  if (g.game_type && g.year) return `${typeMap[g.game_type] ?? g.game_type} ${g.year}`;
-  return g.name;
 }

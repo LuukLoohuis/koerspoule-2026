@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
 import Index from "./pages/Index";
 import TeamBuilder from "./pages/TeamBuilder";
@@ -23,33 +24,35 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route
-              path="/team-samenstellen"
-              element={
-                <ProtectedRoute>
-                  <TeamBuilder />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/uitslagen" element={<Results />} />
-            <Route path="/mijn-peloton" element={<MijnPeloton />} />
-            <Route path="/regels" element={<Rules />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/juridisch" element={<Legal />} />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute requireAdmin>
-                  <AdminV3 />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+        <AuthProvider>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route
+                path="/team-samenstellen"
+                element={
+                  <ProtectedRoute>
+                    <TeamBuilder />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/uitslagen" element={<Results />} />
+              <Route path="/mijn-peloton" element={<MijnPeloton />} />
+              <Route path="/regels" element={<Rules />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/juridisch" element={<Legal />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminV3 />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Layout>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

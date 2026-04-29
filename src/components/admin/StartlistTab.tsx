@@ -9,100 +9,85 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Trash2, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { extractPdfText, parseProCyclingStatsStartlist, type ParsedStartlistTeam } from "@/lib/startlistImport";
-import type { Category } from "./CategoriesTab";
 
 export type Rider = {
   id: string;
   name: string;
-  team: string | null;
-  category_id: string | null;
-  game_rider_id: string;
+  start_number: number | null;
+  team_id: string | null;
+  team_name?: string | null;
+};
+
+export type Team = {
+  id: string;
+  name: string;
+  short_name: string | null;
+  game_id: string | null;
 };
 
 export default function StartlistTab({
   activeGameId,
-  categories,
   riders,
+  teams,
   reload,
 }: {
   activeGameId: string;
-  categories: Category[];
   riders: Rider[];
+  teams: Team[];
   reload: () => Promise<void> | void;
 }) {
-  const [allRiders, setAllRiders] = useState<Array<{ id: string; name: string; team: string | null }>>([]);
   const [search, setSearch] = useState("");
-  const [selectedRider, setSelectedRider] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
   const [riderName, setRiderName] = useState("");
-  const [riderTeam, setRiderTeam] = useState("");
+  const [riderTeamId, setRiderTeamId] = useState("");
+  const [riderStartNumber, setRiderStartNumber] = useState("");
+  const [newTeamName, setNewTeamName] = useState("");
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<ParsedStartlistTeam[]>([]);
   const [importing, setImporting] = useState(false);
 
-  async function loadAllRiders() {
-    if (!supabase) return;
-    const { data } = await supabase.from("riders").select("id, name, team").order("name");
-    setAllRiders((data ?? []) as Array<{ id: string; name: string; team: string | null }>);
-  }
-
-  useEffect(() => { loadAllRiders(); }, []);
-
-  async function createRider() {
-    if (!supabase || !riderName.trim()) return;
-    const { data, error } = await supabase
-      .from("riders")
-      .insert({ name: riderName.trim(), team: riderTeam.trim() || null })
-      .select("id, name, team")
-      .single();
-    if (error) {
-      toast.error(`Aanmaken mislukt: ${error.message}`);
-      return;
-    }
-    toast.success("Renner aangemaakt");
-    setRiderName("");
-    setRiderTeam("");
-    setAllRiders((prev) => [...prev, data as { id: string; name: string; team: string | null }].sort((a, b) => a.name.localeCompare(b.name)));
-  }
-
-  async function addToStartlist() {
-    if (!supabase || !selectedRider) return;
-    const { error } = await supabase.from("game_riders").insert({
+  async function createTeam() {
+    if (!supabase || !newTeamName.trim()) return;
+    const { error } = await supabase.from("teams").insert({
       game_id: activeGameId,
-      rider_id: selectedRider,
-      category_id: selectedCategory || null,
+      name: newTeamName.trim(),
     });
     if (error) {
-      toast.error(`Toevoegen mislukt: ${error.message}`);
+      toast.error(`Team aanmaken mislukt: ${error.message}`);
       return;
     }
-    toast.success("Toegevoegd aan startlijst");
-    setSelectedRider("");
-    setSelectedCategory("");
+    toast.success("Team aangemaakt");
+    setNewTeamName("");
     await reload();
   }
 
-  async function removeFromStartlist(gameRiderId: string) {
+  async function createRider() {
+    if (!supabase || !riderName.trim()) return;
+    const { error } = await supabase.from("riders").insert({
+      game_id: activeGameId,
+      name: riderName.trim(),
+      start_number: riderStartNumber ? Number(riderStartNumber) : null,
+      team_id: riderTeamId || null,
+    });
+    if (error) {
+      toast.error(`Renner aanmaken mislukt: ${error.message}`);
+      return;
+    }
+    toast.success("Renner toegevoegd aan startlijst");
+    setRiderName("");
+    setRiderStartNumber("");
+    setRiderTeamId("");
+    await reload();
+  }
+
+  async function deleteRider(id: string) {
     if (!supabase) return;
-    const { error } = await supabase.from("game_riders").delete().eq("id", gameRiderId);
+    if (!confirm("Renner uit startlijst verwijderen?")) return;
+    const { error } = await supabase.from("riders").delete().eq("id", id);
     if (error) {
       toast.error(`Verwijderen mislukt: ${error.message}`);
       return;
     }
     toast.success("Verwijderd");
-    await reload();
-  }
-
-  async function changeCategory(gameRiderId: string, categoryId: string) {
-    if (!supabase) return;
-    const { error } = await supabase
-      .from("game_riders")
-      .update({ category_id: categoryId || null })
-      .eq("id", gameRiderId);
-    if (error) {
-      toast.error(`Categorie wijzigen mislukt: ${error.message}`);
-      return;
-    }
     await reload();
   }
 
@@ -127,39 +112,45 @@ export default function StartlistTab({
     try {
       let added = 0;
       for (const team of importPreview) {
-        for (const r of team.riders) {
-          // Upsert renner (zoek op name+team)
-          const { data: existing } = await supabase
-            .from("riders")
+        // Upsert team voor deze game (onConflict op game_id+name)
+        const { data: existingTeam } = await supabase
+          .from("teams")
+          .select("id")
+          .eq("game_id", activeGameId)
+          .eq("name", team.name)
+          .maybeSingle();
+
+        let teamId = existingTeam?.id;
+        if (!teamId) {
+          const { data: ins, error: terr } = await supabase
+            .from("teams")
+            .insert({ game_id: activeGameId, name: team.name })
             .select("id")
-            .eq("name", r.name)
-            .eq("team", team.name)
-            .maybeSingle();
+            .single();
+          if (terr) throw terr;
+          teamId = ins!.id;
+        }
 
-          let riderId = existing?.id;
-          if (!riderId) {
-            const { data: inserted, error: insErr } = await supabase
-              .from("riders")
-              .insert({ name: r.name, team: team.name })
-              .select("id")
-              .single();
-            if (insErr) throw insErr;
-            riderId = inserted!.id;
-          }
-
-          // Voeg toe aan game_riders (uniek op game+rider)
-          await supabase
-            .from("game_riders")
-            .upsert({ game_id: activeGameId, rider_id: riderId }, { onConflict: "game_id,rider_id" });
+        for (const r of team.riders) {
+          // Upsert rider per (game_id, start_number)
+          await supabase.from("riders").upsert(
+            {
+              game_id: activeGameId,
+              team_id: teamId,
+              name: r.name,
+              start_number: r.start_number,
+            },
+            { onConflict: "game_id,start_number" }
+          );
           added += 1;
         }
       }
-      toast.success(`${added} renners geïmporteerd in de startlijst`);
+      toast.success(`${added} renners geïmporteerd`);
       await reload();
-      await loadAllRiders();
       setImportPreview([]);
       setImportFile(null);
     } catch (e) {
+      console.error("Import error:", e);
       toast.error(`Import mislukt: ${(e as Error).message}`);
     } finally {
       setImporting(false);
@@ -167,7 +158,7 @@ export default function StartlistTab({
   }
 
   const filteredRiders = riders.filter((r) =>
-    !search.trim() || r.name.toLowerCase().includes(search.toLowerCase()) || (r.team ?? "").toLowerCase().includes(search.toLowerCase())
+    !search.trim() || r.name.toLowerCase().includes(search.toLowerCase()) || (r.team_name ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -178,7 +169,7 @@ export default function StartlistTab({
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Upload een ProCyclingStats startlijst PDF. Renners worden automatisch aangemaakt en toegevoegd aan de startlijst van deze game.
+            Upload een ProCyclingStats startlijst PDF. Teams en renners worden automatisch aangemaakt en gekoppeld aan deze game.
           </p>
           <div className="flex flex-col md:flex-row gap-2">
             <Input data-testid="pdf-file-input" type="file" accept=".pdf" onChange={(e) => setImportFile(e.target.files?.[0] ?? null)} />
@@ -200,89 +191,70 @@ export default function StartlistTab({
       </Card>
 
       <Card>
+        <CardHeader><CardTitle className="font-display">Teams in deze game ({teams.length})</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex gap-2">
+            <Input data-testid="new-team-input" placeholder="Teamnaam (bv. UAE Team Emirates)" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} />
+            <Button data-testid="create-team-btn" onClick={createTeam}>Team aanmaken</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle className="font-display">Handmatig renner toevoegen</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-4">
+        <CardContent className="grid gap-3 md:grid-cols-5">
           <div className="md:col-span-2">
             <Label>Naam</Label>
             <Input data-testid="manual-rider-name" value={riderName} onChange={(e) => setRiderName(e.target.value)} />
           </div>
           <div>
-            <Label>Team</Label>
-            <Input data-testid="manual-rider-team" value={riderTeam} onChange={(e) => setRiderTeam(e.target.value)} />
-          </div>
-          <div className="flex items-end">
-            <Button data-testid="manual-rider-create" onClick={createRider}>Aanmaken</Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle className="font-display">Toevoegen aan startlijst</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-4">
-          <div className="md:col-span-2">
-            <Label>Renner</Label>
-            <Select value={selectedRider} onValueChange={setSelectedRider}>
-              <SelectTrigger data-testid="select-rider"><SelectValue placeholder="Kies renner" /></SelectTrigger>
-              <SelectContent>
-                {allRiders.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>{r.name}{r.team ? ` (${r.team})` : ""}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Startnummer</Label>
+            <Input data-testid="manual-rider-number" type="number" value={riderStartNumber} onChange={(e) => setRiderStartNumber(e.target.value)} />
           </div>
           <div>
-            <Label>Categorie</Label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger data-testid="select-rider-category"><SelectValue placeholder="(geen)" /></SelectTrigger>
+            <Label>Team</Label>
+            <Select value={riderTeamId} onValueChange={setRiderTeamId}>
+              <SelectTrigger data-testid="manual-rider-team"><SelectValue placeholder="(geen)" /></SelectTrigger>
               <SelectContent>
-                {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                {teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-end">
-            <Button data-testid="add-to-startlist-btn" onClick={addToStartlist} disabled={!selectedRider}>Toevoegen</Button>
+            <Button data-testid="manual-rider-create" onClick={createRider}>Toevoegen</Button>
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="font-display">Startlijst ({riders.length})</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="font-display">Startlijst ({riders.length})</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           <Input data-testid="search-startlist" placeholder="Zoek renner of team..." value={search} onChange={(e) => setSearch(e.target.value)} />
           <div className="max-h-[480px] overflow-auto border rounded-md">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-20">#</TableHead>
                   <TableHead>Renner</TableHead>
                   <TableHead>Team</TableHead>
-                  <TableHead className="w-56">Categorie</TableHead>
                   <TableHead className="w-16"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredRiders.map((r) => (
-                  <TableRow key={r.game_rider_id}>
+                  <TableRow key={r.id}>
+                    <TableCell className="font-mono text-xs">{r.start_number ?? "—"}</TableCell>
                     <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{r.team ?? "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{r.team_name ?? "—"}</TableCell>
                     <TableCell>
-                      <Select value={r.category_id ?? ""} onValueChange={(v) => changeCategory(r.game_rider_id, v)}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="(geen)" /></SelectTrigger>
-                        <SelectContent>
-                          {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => removeFromStartlist(r.game_rider_id)}>
+                      <Button variant="ghost" size="sm" onClick={() => deleteRider(r.id)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
                 {filteredRiders.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Geen renners in de startlijst.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Geen renners.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>

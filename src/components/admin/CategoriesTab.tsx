@@ -12,7 +12,8 @@ export type Category = {
   id: string;
   game_id: string;
   name: string;
-  order_index: number;
+  short_name: string | null;
+  sort_order: number;
   max_picks: number;
 };
 
@@ -26,8 +27,9 @@ export default function CategoriesTab({
   reload: () => Promise<void> | void;
 }) {
   const [name, setName] = useState("");
+  const [shortName, setShortName] = useState("");
   const [maxPicks, setMaxPicks] = useState(1);
-  const [orderIndex, setOrderIndex] = useState(categories.length + 1);
+  const [sortOrder, setSortOrder] = useState(categories.length + 1);
 
   async function createCategory() {
     if (!supabase || !activeGameId) return;
@@ -38,16 +40,19 @@ export default function CategoriesTab({
     const { error } = await supabase.from("categories").insert({
       game_id: activeGameId,
       name: name.trim(),
-      order_index: orderIndex,
+      short_name: shortName.trim() || null,
+      sort_order: sortOrder,
       max_picks: maxPicks,
     });
     if (error) {
+      console.error("Category create error:", error);
       toast.error(`Aanmaken mislukt: ${error.message}`);
       return;
     }
     toast.success("Categorie aangemaakt");
     setName("");
-    setOrderIndex((v) => v + 1);
+    setShortName("");
+    setSortOrder((v) => v + 1);
     await reload();
   }
 
@@ -64,7 +69,7 @@ export default function CategoriesTab({
 
   async function deleteCategory(id: string) {
     if (!supabase) return;
-    if (!confirm("Categorie verwijderen? Picks/startlijst-koppelingen worden ontkoppeld.")) return;
+    if (!confirm("Categorie verwijderen?")) return;
     const { error } = await supabase.from("categories").delete().eq("id", id);
     if (error) {
       toast.error(`Verwijderen mislukt: ${error.message}`);
@@ -81,18 +86,22 @@ export default function CategoriesTab({
         <CardContent className="grid gap-4 md:grid-cols-5">
           <div className="md:col-span-2">
             <Label>Naam</Label>
-            <Input data-testid="category-name-input" placeholder="Bv. Sprinters, Klassementsmannen, Outsiders" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input data-testid="category-name-input" placeholder="Bv. Sprinters, Klassementsmannen" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div>
+            <Label>Korte naam</Label>
+            <Input data-testid="category-short-input" placeholder="Spr" value={shortName} onChange={(e) => setShortName(e.target.value)} />
           </div>
           <div>
             <Label>Volgorde</Label>
-            <Input data-testid="category-order-input" type="number" min={1} value={orderIndex} onChange={(e) => setOrderIndex(Number(e.target.value))} />
+            <Input data-testid="category-order-input" type="number" min={1} value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} />
           </div>
           <div>
-            <Label>Max keuzes per speler</Label>
+            <Label>Max keuzes</Label>
             <Input data-testid="category-max-picks-input" type="number" min={1} max={20} value={maxPicks} onChange={(e) => setMaxPicks(Number(e.target.value))} />
           </div>
-          <div className="flex items-end">
-            <Button data-testid="create-category-btn" onClick={createCategory} className="w-full">Aanmaken</Button>
+          <div className="md:col-span-5 flex justify-end">
+            <Button data-testid="create-category-btn" onClick={createCategory}>Aanmaken</Button>
           </div>
         </CardContent>
       </Card>
@@ -105,6 +114,7 @@ export default function CategoriesTab({
               <TableRow>
                 <TableHead className="w-16">#</TableHead>
                 <TableHead>Naam</TableHead>
+                <TableHead>Kort</TableHead>
                 <TableHead className="w-40">Max keuzes</TableHead>
                 <TableHead className="w-20"></TableHead>
               </TableRow>
@@ -112,8 +122,9 @@ export default function CategoriesTab({
             <TableBody>
               {categories.map((c) => (
                 <TableRow key={c.id} data-testid={`category-row-${c.id}`}>
-                  <TableCell>{c.order_index}</TableCell>
+                  <TableCell>{c.sort_order}</TableCell>
                   <TableCell className="font-medium">{c.name}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{c.short_name ?? "—"}</TableCell>
                   <TableCell>
                     <Input type="number" min={1} max={20} defaultValue={c.max_picks} className="h-8 w-20" onBlur={(e) => {
                       const v = Number(e.target.value);
@@ -128,7 +139,7 @@ export default function CategoriesTab({
                 </TableRow>
               ))}
               {categories.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Geen categorieën. Maak ze hierboven aan.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Geen categorieën.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

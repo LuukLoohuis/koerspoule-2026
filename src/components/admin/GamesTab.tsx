@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 export type Game = {
@@ -15,8 +14,8 @@ export type Game = {
   game_type: "giro" | "tdf" | "vuelta" | null;
   year: number | null;
   status: "draft" | "open" | "locked" | "live" | "finished";
-  start_date: string | null;
-  end_date: string | null;
+  starts_at: string | null;
+  slug: string | null;
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -43,9 +42,8 @@ export default function GamesTab({
   reload: () => Promise<void> | void;
 }) {
   const [type, setType] = useState<"giro" | "tdf" | "vuelta">("tdf");
-  const [year, setYear] = useState<string>(String(new Date().getFullYear() + 1));
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [year, setYear] = useState<string>(String(new Date().getFullYear()));
+  const [startsAt, setStartsAt] = useState("");
   const [creating, setCreating] = useState(false);
 
   async function createGame() {
@@ -59,21 +57,22 @@ export default function GamesTab({
     setCreating(true);
     try {
       const name = `${TYPE_LABELS[type]} ${yr}`;
-      const { error } = await supabase.from("games").insert({
+      const payload: Record<string, unknown> = {
         name,
         game_type: type,
         year: yr,
         status: "draft",
-        start_date: startDate || null,
-        end_date: endDate || null,
-      });
+      };
+      if (startsAt) payload.starts_at = startsAt;
+
+      const { error } = await supabase.from("games").insert(payload);
       if (error) throw error;
       toast.success(`${name} aangemaakt`);
-      setStartDate("");
-      setEndDate("");
+      setStartsAt("");
       await reload();
     } catch (e) {
       const msg = (e as Error).message;
+      console.error("Game create error:", e);
       toast.error(msg.includes("duplicate") ? "Deze game bestaat al" : `Aanmaken mislukt: ${msg}`);
     } finally {
       setCreating(false);
@@ -97,7 +96,7 @@ export default function GamesTab({
         <CardHeader>
           <CardTitle className="font-display">Nieuwe game aanmaken</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-5">
+        <CardContent className="grid gap-4 md:grid-cols-4">
           <div>
             <Label>Type koers</Label>
             <Select value={type} onValueChange={(v) => setType(v as typeof type)}>
@@ -114,12 +113,8 @@ export default function GamesTab({
             <Input data-testid="game-year-input" type="number" value={year} onChange={(e) => setYear(e.target.value)} />
           </div>
           <div>
-            <Label>Startdatum</Label>
-            <Input data-testid="game-start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          </div>
-          <div>
-            <Label>Einddatum</Label>
-            <Input data-testid="game-end-date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <Label>Startdatum (optioneel)</Label>
+            <Input data-testid="game-starts-at" type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} />
           </div>
           <div className="flex items-end">
             <Button data-testid="create-game-btn" onClick={createGame} disabled={creating} className="w-full">
@@ -141,7 +136,7 @@ export default function GamesTab({
                 <TableHead>Jaar</TableHead>
                 <TableHead>Naam</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Periode</TableHead>
+                <TableHead>Start</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -162,7 +157,7 @@ export default function GamesTab({
                     </Select>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {g.start_date ?? "—"} → {g.end_date ?? "—"}
+                    {g.starts_at ? new Date(g.starts_at).toLocaleString("nl-NL") : "—"}
                   </TableCell>
                   <TableCell>
                     <Button size="sm" variant="outline" onClick={() => setActiveGameId(g.id)} data-testid={`select-game-${g.id}`}>

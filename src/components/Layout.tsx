@@ -58,6 +58,7 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
             <div className="hidden md:flex items-center gap-2">
               {isLoggedIn ? (
                 <button
+                  data-testid="logout-btn-desktop"
                   onClick={handleLogout}
                   className="px-4 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors"
                 >
@@ -65,6 +66,7 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
                 </button>
               ) : (
                 <Link
+                  data-testid="login-link-desktop"
                   to="/login"
                   className="px-4 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors"
                 >
