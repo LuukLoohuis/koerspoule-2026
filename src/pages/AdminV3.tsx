@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LayoutDashboard, Trophy, Tag, Users, ListChecks, Calendar, Calculator, Shield } from "lucide-react";
+import { LayoutDashboard, Trophy, Tag, Users, ListChecks, Calendar, Calculator, Shield, Inbox } from "lucide-react";
 
 import GamesTab, { type Game } from "@/components/admin/GamesTab";
 import CategoriesTab, { type Category } from "@/components/admin/CategoriesTab";
@@ -15,6 +15,7 @@ import StagesTab, { type Stage } from "@/components/admin/StagesTab";
 import ResultsTab from "@/components/admin/ResultsTab";
 import CalculationTab from "@/components/admin/CalculationTab";
 import UsersTab from "@/components/admin/UsersTab";
+import EntriesTab from "@/components/admin/EntriesTab";
 import DashboardTab from "@/components/admin/DashboardTab";
 
 export default function AdminV3() {
@@ -159,6 +160,7 @@ export default function AdminV3() {
           <TabsTrigger value="stages" disabled={!activeGameId} data-testid="tab-stages"><Calendar className="w-4 h-4 mr-2" />Etappes</TabsTrigger>
           <TabsTrigger value="results" disabled={!activeGameId} data-testid="tab-results"><ListChecks className="w-4 h-4 mr-2" />Uitslagen</TabsTrigger>
           <TabsTrigger value="calc" disabled={!activeGameId} data-testid="tab-calc"><Calculator className="w-4 h-4 mr-2" />Berekening</TabsTrigger>
+          <TabsTrigger value="entries" disabled={!activeGameId} data-testid="tab-entries"><Inbox className="w-4 h-4 mr-2" />Inzendingen</TabsTrigger>
           <TabsTrigger value="users" data-testid="tab-users"><Shield className="w-4 h-4 mr-2" />Gebruikers</TabsTrigger>
         </TabsList>
 
@@ -188,6 +190,10 @@ export default function AdminV3() {
 
         <TabsContent value="calc">
           <CalculationTab activeGameId={activeGameId} stages={stages} />
+        </TabsContent>
+
+        <TabsContent value="entries">
+          <EntriesTab activeGameId={activeGameId} />
         </TabsContent>
 
         <TabsContent value="users">

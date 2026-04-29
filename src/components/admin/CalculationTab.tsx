@@ -40,12 +40,17 @@ export default function CalculationTab({
     }
     setBusy(true);
     try {
-      // Probeer beide naamgevingen die in het bestaande schema voorkomen
+      // V4 score engine (gebruikt entry_picks + entry_jokers + stage_results multi-position)
       await callRpc(
-        ["calculate_stage_points_v3", "calculate_stage_scores", "calculate_stage_points"],
+        ["calculate_stage_points_v4", "calculate_stage_points_v3", "calculate_stage_scores"],
         { p_stage_id: stageId, stage_id: stageId }
       );
-      toast.success("Etappe herberekend");
+      // Ook totalstand bijwerken
+      await callRpc(
+        ["update_total_points_v4", "update_total_ranking"],
+        { p_game_id: activeGameId }
+      );
+      toast.success("Etappe herberekend en totaalstand bijgewerkt");
     } catch (e) {
       console.error("Recalc error:", e);
       toast.error(`Herberekenen mislukt: ${(e as Error).message}`);
@@ -60,7 +65,7 @@ export default function CalculationTab({
     setBusy(true);
     try {
       await callRpc(
-        ["full_recalculation_v3", "full_recalculation"],
+        ["full_recalculation_v4", "full_recalculation_v3", "full_recalculation"],
         { p_game_id: activeGameId }
       );
       toast.success("Volledige herberekening voltooid");
