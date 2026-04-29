@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Local env files (NEVER commit Supabase keys)
+.env
+.env.local
+.env.development
+.env.production
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -22,3 +28,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build artifacts / lockfile alternates we don't use
+bun.lock
+bun.lockb
+package-lock.json

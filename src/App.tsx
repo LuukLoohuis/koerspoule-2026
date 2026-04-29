@@ -12,8 +12,7 @@ import Rules from "./pages/Rules";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Legal from "./pages/Legal";
-import Admin from "./pages/Admin";
-import AdminV2 from "./pages/AdminV2";
+import AdminV3 from "./pages/AdminV3";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -44,15 +43,7 @@ const App = () => (
               path="/admin"
               element={
                 <ProtectedRoute requireAdmin>
-                  <Admin />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/v2"
-              element={
-                <ProtectedRoute requireAdmin>
-                  <AdminV2 />
+                  <AdminV3 />
                 </ProtectedRoute>
               }
             />
