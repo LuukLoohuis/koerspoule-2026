@@ -19,7 +19,9 @@ export type Database = {
           created_at: string
           game_id: string
           id: string
+          max_picks: number
           name: string
+          order_index: number | null
           short_name: string | null
           sort_order: number
         }
@@ -27,7 +29,9 @@ export type Database = {
           created_at?: string
           game_id: string
           id?: string
+          max_picks?: number
           name: string
+          order_index?: number | null
           short_name?: string | null
           sort_order?: number
         }
@@ -35,7 +39,9 @@ export type Database = {
           created_at?: string
           game_id?: string
           id?: string
+          max_picks?: number
           name?: string
+          order_index?: number | null
           short_name?: string | null
           sort_order?: number
         }
@@ -234,24 +240,34 @@ export type Database = {
       }
       game_riders: {
         Row: {
+          category_id: string | null
           created_at: string
           game_id: string
           id: string
           rider_id: string
         }
         Insert: {
+          category_id?: string | null
           created_at?: string
           game_id: string
           id?: string
           rider_id: string
         }
         Update: {
+          category_id?: string | null
           created_at?: string
           game_id?: string
           id?: string
           rider_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "game_riders_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "game_riders_game_id_fkey"
             columns: ["game_id"]
@@ -372,28 +388,41 @@ export type Database = {
         Row: {
           country_code: string | null
           created_at: string
+          game_id: string | null
           id: string
           name: string
           start_number: number | null
+          team: string | null
           team_id: string | null
         }
         Insert: {
           country_code?: string | null
           created_at?: string
+          game_id?: string | null
           id?: string
           name: string
           start_number?: number | null
+          team?: string | null
           team_id?: string | null
         }
         Update: {
           country_code?: string | null
           created_at?: string
+          game_id?: string | null
           id?: string
           name?: string
           start_number?: number | null
+          team?: string | null
           team_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "riders_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "riders_team_id_fkey"
             columns: ["team_id"]
