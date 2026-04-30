@@ -66,7 +66,7 @@ export default function ResultsTab({
     }
 
     const next = Array.from({ length: 20 }, (_, i) => ({ position: i + 1, rider_id: "" }));
-    for (const r of (data ?? []) as Array<Record<string, unknown>>) {
+    for (const r of (data ?? []) as unknown as Array<Record<string, unknown>>) {
       const pos = Number(r[col]);
       if (pos >= 1 && pos <= 20) next[pos - 1] = { position: pos, rider_id: String(r.rider_id) };
     }
