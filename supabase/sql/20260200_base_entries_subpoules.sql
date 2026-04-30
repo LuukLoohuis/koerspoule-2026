@@ -10,6 +10,7 @@ create table if not exists public.entries (
   game_id uuid not null references public.games(id) on delete cascade,
   team_name text,
   status text not null default 'draft' check (status in ('draft','submitted')),
+  submitted_at timestamptz,
   total_points int not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -20,6 +21,7 @@ create index if not exists entries_user_idx on public.entries(user_id);
 
 -- Backfill voor bestaande installaties
 alter table public.entries add column if not exists team_name text;
+alter table public.entries add column if not exists submitted_at timestamptz;
 
 -- PROFILES (voor display_name + admin flag)
 create table if not exists public.profiles (
