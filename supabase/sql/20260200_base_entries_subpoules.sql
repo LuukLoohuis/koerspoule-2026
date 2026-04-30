@@ -8,6 +8,7 @@ create table if not exists public.entries (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   game_id uuid not null references public.games(id) on delete cascade,
+  team_name text,
   status text not null default 'draft' check (status in ('draft','submitted')),
   total_points int not null default 0,
   created_at timestamptz not null default now(),
@@ -16,6 +17,45 @@ create table if not exists public.entries (
 );
 create index if not exists entries_game_idx on public.entries(game_id);
 create index if not exists entries_user_idx on public.entries(user_id);
+
+-- Backfill voor bestaande installaties
+alter table public.entries add column if not exists team_name text;
+
+-- PROFILES (voor display_name + admin flag)
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  display_name text,
+  is_admin boolean not null default false,
+  created_at timestamptz not null default now()
+);
+alter table public.profiles add column if not exists display_name text;
+alter table public.profiles add column if not exists is_admin boolean not null default false;
+
+alter table public.profiles enable row level security;
+
+drop policy if exists "profiles_select_all" on public.profiles;
+create policy "profiles_select_all" on public.profiles
+  for select using (true);
+
+drop policy if exists "profiles_update_self" on public.profiles;
+create policy "profiles_update_self" on public.profiles
+  for update using (auth.uid() = id) with check (auth.uid() = id);
+
+-- Auto-create profile bij signup
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, display_name)
+  values (new.id, coalesce(new.raw_user_meta_data->>'display_name', new.email))
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
 
 -- ENTRY PICKS
 create table if not exists public.entry_picks (
