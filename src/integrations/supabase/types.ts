@@ -289,6 +289,7 @@ export type Database = {
           created_at: string
           deadline: string | null
           end_date: string | null
+          game_type: string | null
           id: string
           name: string
           start_date: string | null
@@ -299,6 +300,7 @@ export type Database = {
           created_at?: string
           deadline?: string | null
           end_date?: string | null
+          game_type?: string | null
           id?: string
           name: string
           start_date?: string | null
@@ -309,6 +311,7 @@ export type Database = {
           created_at?: string
           deadline?: string | null
           end_date?: string | null
+          game_type?: string | null
           id?: string
           name?: string
           start_date?: string | null
