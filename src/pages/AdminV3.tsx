@@ -79,18 +79,18 @@ export default function AdminV3() {
     setCategories((c.data ?? []) as Category[]);
     setTeams((t.data ?? []) as Team[]);
     setRiders(
-      ((r.data ?? []) as Array<{
+      ((r.data ?? []) as unknown as Array<{
         id: string;
         name: string;
         start_number: number | null;
         team_id: string | null;
-        teams: { name: string } | null;
+        teams: { name: string } | { name: string }[] | null;
       }>).map((row) => ({
         id: row.id,
         name: row.name,
         start_number: row.start_number,
         team_id: row.team_id,
-        team_name: row.teams?.name ?? null,
+        team_name: Array.isArray(row.teams) ? row.teams[0]?.name ?? null : row.teams?.name ?? null,
       }))
     );
     setStages((s.data ?? []) as Stage[]);
