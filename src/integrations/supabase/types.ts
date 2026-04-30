@@ -292,7 +292,9 @@ export type Database = {
           game_type: string | null
           id: string
           name: string
+          slug: string | null
           start_date: string | null
+          starts_at: string | null
           status: string
           year: number
         }
@@ -303,7 +305,9 @@ export type Database = {
           game_type?: string | null
           id?: string
           name: string
+          slug?: string | null
           start_date?: string | null
+          starts_at?: string | null
           status?: string
           year: number
         }
@@ -314,7 +318,9 @@ export type Database = {
           game_type?: string | null
           id?: string
           name?: string
+          slug?: string | null
           start_date?: string | null
+          starts_at?: string | null
           status?: string
           year?: number
         }
@@ -484,38 +490,57 @@ export type Database = {
       stage_results: {
         Row: {
           created_at: string
+          did_finish: boolean | null
           finish_position: number | null
+          game_id: string | null
           gc_position: number | null
           id: string
           mountain_position: number | null
           points_position: number | null
           rider_id: string
+          rider_name: string | null
           stage_id: string
+          start_number: number | null
           youth_position: number | null
         }
         Insert: {
           created_at?: string
+          did_finish?: boolean | null
           finish_position?: number | null
+          game_id?: string | null
           gc_position?: number | null
           id?: string
           mountain_position?: number | null
           points_position?: number | null
           rider_id: string
+          rider_name?: string | null
           stage_id: string
+          start_number?: number | null
           youth_position?: number | null
         }
         Update: {
           created_at?: string
+          did_finish?: boolean | null
           finish_position?: number | null
+          game_id?: string | null
           gc_position?: number | null
           id?: string
           mountain_position?: number | null
           points_position?: number | null
           rider_id?: string
+          rider_name?: string | null
           stage_id?: string
+          start_number?: number | null
           youth_position?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stage_results_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stage_results_rider_id_fkey"
             columns: ["rider_id"]
