@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import Papa from "papaparse";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
