@@ -8,10 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Save, RotateCcw } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Save, RotateCcw, Download, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Stage } from "./StagesTab";
 import type { Rider } from "./StartlistTab";
+
+type GameType = "giro" | "tdf" | "vuelta" | null;
 
 type Classification = "stage" | "gc" | "kom" | "points" | "youth";
 
@@ -31,10 +34,12 @@ export default function ResultsTab({
   activeGameId,
   stages,
   riders,
+  gameType,
 }: {
   activeGameId: string;
   stages: Stage[];
   riders: Rider[];
+  gameType?: GameType;
 }) {
   const [selectedStage, setSelectedStage] = useState("");
   const [classification, setClassification] = useState<Classification>("stage");
@@ -42,6 +47,16 @@ export default function ResultsTab({
     Array.from({ length: 20 }, (_, i) => ({ position: i + 1, rider_id: "" }))
   );
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importPreview, setImportPreview] = useState<null | {
+    source_url: string;
+    matched: Record<Classification, Array<{ position: number; rider_id: string; rider_name: string; start_number: number }>>;
+    unmatched: Record<Classification, Array<{ position: number; bib: number | null; name: string }>>;
+  }>(null);
+  const [savingImport, setSavingImport] = useState(false);
+
+  const selectedStageObj = useMemo(() => stages.find((s) => s.id === selectedStage), [stages, selectedStage]);
+  const canImport = gameType === "tdf" || gameType === "vuelta";
 
   const riderById = useMemo(() => {
     const m = new Map<string, Rider>();
