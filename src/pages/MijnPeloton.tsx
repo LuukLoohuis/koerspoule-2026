@@ -18,6 +18,7 @@ import PelotonChat from "@/components/PelotonChat";
 import SubpouleManager from "@/components/SubpouleManager";
 import MyTeamPanel from "@/components/MyTeamPanel";
 import MyResultsPanel from "@/components/MyResultsPanel";
+import PalmaresPanel from "@/components/PalmaresPanel";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChartContainer,
