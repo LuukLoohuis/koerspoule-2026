@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 export type Game = {
   id: string;
@@ -89,6 +90,67 @@ export default function GamesTab({
     }
     toast.success("Status bijgewerkt");
     await reload();
+  }
+
+  async function deleteGame(g: Game) {
+    if (!supabase) return;
+    if (!confirm(`Weet je zeker dat je "${g.name}" volledig wilt verwijderen?\n\nAlle inzendingen, picks, jokers, uitslagen, etappes, categorieën, puntenregels, renners en subpoules van deze game worden gewist. Dit kan niet ongedaan worden gemaakt.`)) return;
+
+    try {
+      // 1. Look up entries to be able to delete entry-scoped rows
+      const { data: entries } = await supabase.from("entries").select("id").eq("game_id", g.id);
+      const entryIds = (entries ?? []).map((e: { id: string }) => e.id);
+
+      // 2. Look up subpoules to delete their members first
+      const { data: subps } = await supabase.from("subpoules").select("id").eq("game_id", g.id);
+      const subpouleIds = (subps ?? []).map((s: { id: string }) => s.id);
+
+      // 3. Look up stages for stage-scoped deletes
+      const { data: stages } = await supabase.from("stages").select("id").eq("game_id", g.id);
+      const stageIds = (stages ?? []).map((s: { id: string }) => s.id);
+
+      // 4. Look up categories for category_riders cleanup
+      const { data: cats } = await supabase.from("categories").select("id").eq("game_id", g.id);
+      const categoryIds = (cats ?? []).map((c: { id: string }) => c.id);
+
+      // Delete in dependency order
+      if (entryIds.length) {
+        await supabase.from("entry_picks").delete().in("entry_id", entryIds);
+        await supabase.from("entry_jokers").delete().in("entry_id", entryIds);
+        await supabase.from("total_points").delete().in("entry_id", entryIds);
+      }
+      if (stageIds.length) {
+        await supabase.from("stage_points").delete().in("stage_id", stageIds);
+        await supabase.from("stage_results").delete().in("stage_id", stageIds);
+      }
+      if (categoryIds.length) {
+        await supabase.from("category_riders").delete().in("category_id", categoryIds);
+      }
+      if (subpouleIds.length) {
+        await supabase.from("subpoule_members").delete().in("subpoule_id", subpouleIds);
+      }
+
+      // Game-scoped tables
+      await supabase.from("entries").delete().eq("game_id", g.id);
+      await supabase.from("stages").delete().eq("game_id", g.id);
+      await supabase.from("categories").delete().eq("game_id", g.id);
+      await supabase.from("game_riders").delete().eq("game_id", g.id);
+      await supabase.from("riders").delete().eq("game_id", g.id);
+      await supabase.from("teams").delete().eq("game_id", g.id);
+      await supabase.from("points_schema").delete().eq("game_id", g.id);
+      await supabase.from("startlists").delete().eq("game_id", g.id);
+      await supabase.from("subpoules").delete().eq("game_id", g.id);
+
+      // Finally the game itself
+      const { error: delErr } = await supabase.from("games").delete().eq("id", g.id);
+      if (delErr) throw delErr;
+
+      toast.success(`${g.name} verwijderd`);
+      await reload();
+    } catch (e) {
+      console.error("Game delete error:", e);
+      toast.error(`Verwijderen mislukt: ${(e as Error).message}`);
+    }
   }
 
   return (
