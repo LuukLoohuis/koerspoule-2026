@@ -8,10 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Save, RotateCcw } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Save, RotateCcw, Download, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Stage } from "./StagesTab";
 import type { Rider } from "./StartlistTab";
+
+type GameType = "giro" | "tdf" | "vuelta" | null;
 
 type Classification = "stage" | "gc" | "kom" | "points" | "youth";
 
@@ -31,10 +34,12 @@ export default function ResultsTab({
   activeGameId,
   stages,
   riders,
+  gameType,
 }: {
   activeGameId: string;
   stages: Stage[];
   riders: Rider[];
+  gameType?: GameType;
 }) {
   const [selectedStage, setSelectedStage] = useState("");
   const [classification, setClassification] = useState<Classification>("stage");
@@ -42,6 +47,16 @@ export default function ResultsTab({
     Array.from({ length: 20 }, (_, i) => ({ position: i + 1, rider_id: "" }))
   );
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importPreview, setImportPreview] = useState<null | {
+    source_url: string;
+    matched: Record<Classification, Array<{ position: number; rider_id: string; rider_name: string; start_number: number }>>;
+    unmatched: Record<Classification, Array<{ position: number; bib: number | null; name: string }>>;
+  }>(null);
+  const [savingImport, setSavingImport] = useState(false);
+
+  const selectedStageObj = useMemo(() => stages.find((s) => s.id === selectedStage), [stages, selectedStage]);
+  const canImport = gameType === "tdf" || gameType === "vuelta";
 
   const riderById = useMemo(() => {
     const m = new Map<string, Rider>();
@@ -170,6 +185,101 @@ export default function ResultsTab({
     await loadExisting();
   }
 
+  async function startImport() {
+    if (!supabase || !selectedStage || !selectedStageObj) {
+      toast.error("Selecteer eerst een etappe");
+      return;
+    }
+    if (!canImport) {
+      toast.error("Importeren is alleen beschikbaar voor Tour de France en Vuelta");
+      return;
+    }
+    setImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("import-stage-results", {
+        body: {
+          race_type: gameType,
+          stage_number: selectedStageObj.stage_number,
+          game_id: activeGameId,
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Onbekende fout");
+      setImportPreview({
+        source_url: data.source_url,
+        matched: data.matched,
+        unmatched: data.unmatched,
+      });
+    } catch (e) {
+      console.error("Import error:", e);
+      toast.error(`Importeren mislukt: ${(e as Error).message}`);
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function applyImport() {
+    if (!supabase || !selectedStage || !importPreview) return;
+    setSavingImport(true);
+    try {
+      const classifs: Classification[] = ["stage", "gc", "kom", "points", "youth"];
+      // Map import key (mountain) → our key (kom)
+      const importKeyMap: Record<Classification, string> = {
+        stage: "stage", gc: "gc", kom: "mountain", points: "points", youth: "youth",
+      };
+      let totalSaved = 0;
+      for (const c of classifs) {
+        const list = importPreview.matched[importKeyMap[c] as keyof typeof importPreview.matched];
+        if (!list || list.length === 0) continue;
+        const col = CLASSIFICATION_LABELS[c].column;
+        // 1. Clear column for this stage
+        const { error: clearErr } = await supabase
+          .from("stage_results")
+          .update({ [col]: null })
+          .eq("stage_id", selectedStage)
+          .not(col, "is", null);
+        if (clearErr) throw clearErr;
+        // 2. Upsert per rider
+        for (const r of list) {
+          const { data: existing } = await supabase
+            .from("stage_results")
+            .select("id")
+            .eq("stage_id", selectedStage)
+            .eq("rider_id", r.rider_id)
+            .maybeSingle();
+          if (existing) {
+            const { error: uerr } = await supabase
+              .from("stage_results")
+              .update({ [col]: r.position })
+              .eq("id", existing.id);
+            if (uerr) throw uerr;
+          } else {
+            const payload: Record<string, unknown> = {
+              stage_id: selectedStage,
+              rider_id: r.rider_id,
+              game_id: activeGameId,
+              start_number: r.start_number,
+              rider_name: r.rider_name,
+              [col]: r.position,
+            };
+            if (c === "stage") payload.did_finish = true;
+            const { error: ierr } = await supabase.from("stage_results").insert(payload);
+            if (ierr) throw ierr;
+          }
+          totalSaved++;
+        }
+      }
+      toast.success(`${totalSaved} resultaten geïmporteerd uit ${importPreview.source_url}`);
+      setImportPreview(null);
+      await loadExisting();
+    } catch (e) {
+      console.error("Apply import error:", e);
+      toast.error(`Opslaan mislukt: ${(e as Error).message}`);
+    } finally {
+      setSavingImport(false);
+    }
+  }
+
   const filledCount = rows.filter((r) => r.rider_id).length;
 
   return (
@@ -204,6 +314,31 @@ export default function ResultsTab({
           </div>
         </CardContent>
       </Card>
+
+      {selectedStage && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="font-display text-lg flex items-center gap-2">
+                  <Download className="w-5 h-5" /> Importeer uitslag van internet
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {canImport
+                    ? `Haalt etappe + GC + Punten + Bergen + Jongeren in één keer op van ${gameType === "tdf" ? "letour.fr" : "lavuelta.es"}. Matcht op rugnummer.`
+                    : gameType === "giro"
+                      ? "Giro is niet automatisch importeerbaar (giroditalia.it laadt data via JavaScript). Vul handmatig in."
+                      : "Selecteer eerst een race."}
+                </p>
+              </div>
+              <Button onClick={startImport} disabled={!canImport || importing} data-testid="import-btn">
+                <Download className="w-4 h-4 mr-2" />
+                {importing ? "Ophalen..." : `Importeer etappe ${selectedStageObj?.stage_number ?? ""}`}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {selectedStage && (
         <Card>
@@ -270,6 +405,74 @@ export default function ResultsTab({
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={!!importPreview} onOpenChange={(open) => !open && setImportPreview(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Download className="w-5 h-5" /> Import voorbeeld
+            </DialogTitle>
+            <DialogDescription>
+              Bron: <a href={importPreview?.source_url} target="_blank" rel="noreferrer" className="underline">{importPreview?.source_url}</a>
+              <br />Controleer de gevonden resultaten en bevestig om op te slaan. Bestaande klassementen voor deze etappe worden overschreven.
+            </DialogDescription>
+          </DialogHeader>
+
+          {importPreview && (
+            <div className="space-y-4">
+              {(["stage", "gc", "points", "mountain", "youth"] as const).map((c) => {
+                const labelKey = c === "mountain" ? "kom" : c;
+                const label = CLASSIFICATION_LABELS[labelKey as Classification];
+                const matched = importPreview.matched[c] ?? [];
+                const unmatched = importPreview.unmatched[c] ?? [];
+                return (
+                  <div key={c} className="border rounded-md p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <span className="text-xl">{label.emoji}</span> {label.name}
+                      </h4>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-green-600" />
+                          {matched.length} gematcht
+                        </Badge>
+                        {unmatched.length > 0 && (
+                          <Badge variant="destructive" className="gap-1">
+                            <AlertTriangle className="w-3 h-3" />
+                            {unmatched.length} niet gevonden
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    {matched.length > 0 && (
+                      <div className="text-xs text-muted-foreground grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-1">
+                        {matched.slice(0, 8).map((r) => (
+                          <span key={r.position}>{r.position}. #{r.start_number} {r.rider_name}</span>
+                        ))}
+                        {matched.length > 8 && <span className="italic">+{matched.length - 8} meer…</span>}
+                      </div>
+                    )}
+                    {unmatched.length > 0 && (
+                      <div className="mt-2 text-xs text-destructive">
+                        <strong>Niet gematcht:</strong>{" "}
+                        {unmatched.map((r) => `${r.position}. ${r.bib != null ? `#${r.bib} ` : ""}${r.name}`).join(" · ")}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportPreview(null)}>Annuleren</Button>
+            <Button onClick={applyImport} disabled={savingImport} data-testid="apply-import-btn">
+              <Save className="w-4 h-4 mr-2" />
+              {savingImport ? "Opslaan..." : "Bevestig en sla op"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
