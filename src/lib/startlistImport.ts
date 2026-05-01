@@ -132,26 +132,38 @@ export function parseProCyclingStatsStartlist(rawText: string): ParsedStartlistT
   for (let g = 0; g < groups.length; g += 1) {
     const group = groups[g];
     const firstHit = group[0];
-    const segment = text.slice(cursor, firstHit.index);
+    const segment = text.slice(cursor, firstHit.index).trim();
 
-    // Strip trailing " DS: ... " from previous team if present.
-    const cleaned = segment.replace(/\s*DS:\s+[^]*$/i, " ").trim();
-
-    // Team header: leading "<digits> " then the team name (rest of the segment).
-    // Sometimes a leading bullet/number is missing → accept any trailing text.
-    const headerMatch = cleaned.match(/(?:^|\s)(\d{1,2})\s+(.+)$/);
-    let teamName = headerMatch ? headerMatch[2] : cleaned;
-
-    teamName = teamName
-      .replace(/\s+/g, " ")
-      // Fix "Red Bull - BORA - hansgrohe" (already fine after whitespace collapse).
-      .trim();
-
-    // Skip junk team names (page header, dates, km etc.)
-    if (!teamName || /procyclingstats|starting|^\d+\s*km/i.test(teamName)) {
-      // Try fallback: use last 2-6 words.
-      const fallback = cleaned.split(" ").slice(-6).join(" ").trim();
-      teamName = fallback || `Team ${g + 1}`;
+    // The segment looks like:
+    //   "<DS: NAME1,NAME2 NAME3>?  <team_index> <Team Name>"
+    // For the very first team there is no DS prefix.
+    // The team header is `<1-2 digit number> <Title-cased team name>`.
+    // We find the LAST occurrence of that pattern in the segment, which
+    // safely skips the DS list (DS names are ALL CAPS surnames).
+    let teamName = "";
+    const headerRe = /(?:^|\s)(\d{1,2})\s+([A-Z][A-Za-z0-9].*?)$/;
+    // The team name itself may contain digits/punctuation; take everything from
+    // the team-index marker to the end of the segment.
+    // Walk through all "<digit> <Capital>" boundaries and pick the last one
+    // whose following word is Title-case (first letter upper, rest has lower).
+    const boundaryRe = /(?:^|\s)(\d{1,2})\s+([A-Z][A-Za-z][^\s])/g;
+    let bm: RegExpExecArray | null;
+    let lastIdx = -1;
+    while ((bm = boundaryRe.exec(segment)) !== null) {
+      // Reject if the captured word is fully UPPERCASE (likely a DS surname like "MARCATO").
+      const word = segment.slice(bm.index + bm[0].length - 1).split(/\s/)[0];
+      const fullWord = bm[2].slice(0, 2) + word; // approximate
+      if (fullWord === fullWord.toUpperCase()) continue;
+      lastIdx = bm.index + (bm[0].startsWith(" ") ? 1 : 0);
+    }
+    if (lastIdx >= 0) {
+      const tail = segment.slice(lastIdx);
+      const m2 = tail.match(/^(\d{1,2})\s+(.+)$/);
+      if (m2) teamName = m2[2].replace(/\s+/g, " ").trim();
+    }
+    if (!teamName) {
+      // Fallback: last 2-6 words of segment.
+      teamName = segment.split(" ").slice(-6).join(" ").trim() || `Team ${g + 1}`;
     }
 
     teams.push({
