@@ -68,6 +68,9 @@ export default function TeamBuilder() {
   const [mountainJersey, setMountainJersey] = useState("");
   const [youthJersey, setYouthJersey] = useState("");
 
+  const isSubmitted = entry?.status === "submitted";
+  const isLocked = isSubmitted || (game?.status && ["locked", "live", "finished"].includes(game.status));
+
   // Hydrate predictions from DB once loaded
   const hydratedRef = useRef(false);
   useEffect(() => {
@@ -85,13 +88,12 @@ export default function TeamBuilder() {
     setPointsJersey(pts);
     setMountainJersey(kom);
     setYouthJersey(youth);
-    // Hydrate jokers too
     if (jokerIds[0]) setJokerDraft1(jokerIds[0]);
     if (jokerIds[1]) setJokerDraft2(jokerIds[1]);
     hydratedRef.current = true;
   }, [entry, predictions, jokerIds]);
 
-  // Auto-save predictions when they change (debounced)
+  // Auto-save predictions (debounced) when user changes them
   useEffect(() => {
     if (!entry || !hydratedRef.current || isSubmitted) return;
     const timer = setTimeout(() => {
@@ -107,9 +109,6 @@ export default function TeamBuilder() {
   }, [gcPodium, pointsJersey, mountainJersey, youthJersey]);
 
   const selectedPickRiderIds = useMemo(() => new Set(Array.from(picksByCategory.values())), [picksByCategory]);
-
-  const isSubmitted = entry?.status === "submitted";
-  const isLocked = isSubmitted || (game?.status && ["locked", "live", "finished"].includes(game.status));
 
   const handlePickSelect = async (categoryId: string, riderId: string) => {
     if (!entry) return;
