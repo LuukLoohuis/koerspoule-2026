@@ -1,8 +1,12 @@
 // @ts-nocheck
 // Edge function: import-stage-results
 // Scrapes letour.fr / lavuelta.es for stage + classifications and returns parsed positions per rider (matched on start_number)
-import { corsHeaders } from "@supabase/supabase-js/cors";
 import { createClient } from "npm:@supabase/supabase-js@2.95.0";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 type RaceType = "tdf" | "vuelta";
 type Classification = "stage" | "gc" | "points" | "mountain" | "youth";
