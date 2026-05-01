@@ -48,7 +48,7 @@ export function useEntry(gameId?: string) {
         data = created;
       }
 
-      return data as Entry;
+      return data as unknown as Entry;
     },
   });
 
