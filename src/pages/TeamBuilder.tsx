@@ -25,21 +25,39 @@ export default function TeamBuilder() {
     startlistTeamFilter === "all" ? "" : startlistTeamFilter
   );
 
-  const allRiders = useMemo(() => {
-    const list: Array<{ id: string; name: string; start_number: number | null }> = [];
+  // Renners die in een categorie zitten — niet beschikbaar als joker
+  const categoryRiderIds = useMemo(() => {
+    const set = new Set<string>();
     for (const category of categories) {
       for (const relation of category.category_riders ?? []) {
-        if (relation.riders && !list.find((r) => r.id === relation.riders?.id)) {
-          list.push(relation.riders);
-        }
+        if (relation.riders) set.add(relation.riders.id);
       }
     }
-    return list.sort((a, b) => a.name.localeCompare(b.name));
+    return set;
   }, [categories]);
 
+  // Volledige startlijst (los van filters in de Startlijst-tab)
+  const { data: fullStartlist = [] } = useStartlist(game?.id, "", "");
+
+  const allStartlistRiders = useMemo(() => {
+    const list: Array<{ id: string; name: string; start_number: number | null; teamName: string }> = [];
+    for (const team of fullStartlist) {
+      for (const rider of team.riders) {
+        list.push({ ...rider, teamName: team.name });
+      }
+    }
+    return list.sort((a, b) => (a.start_number ?? 9999) - (b.start_number ?? 9999));
+  }, [fullStartlist]);
+
+  // Jokerpool: alle renners die NIET in een categorie zitten
+  const jokerPool = useMemo(
+    () => allStartlistRiders.filter((r) => !categoryRiderIds.has(r.id)),
+    [allStartlistRiders, categoryRiderIds]
+  );
+
   const allTeams = useMemo(
-    () => startlist.map((t) => ({ id: t.id, name: t.name })),
-    [startlist]
+    () => fullStartlist.map((t) => ({ id: t.id, name: t.name })),
+    [fullStartlist]
   );
 
   const [jokerDraft1, setJokerDraft1] = useState("");
@@ -48,6 +66,7 @@ export default function TeamBuilder() {
   const [pointsJersey, setPointsJersey] = useState("");
   const [mountainJersey, setMountainJersey] = useState("");
   const [youthJersey, setYouthJersey] = useState("");
+
 
   const selectedPickRiderIds = useMemo(() => new Set(Array.from(picksByCategory.values())), [picksByCategory]);
 
