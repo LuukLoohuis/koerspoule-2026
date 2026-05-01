@@ -1,11 +1,12 @@
 import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, TrendingUp, Crown } from "lucide-react";
+import { Trophy, TrendingUp, Crown, Swords } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntries, useStages, useStagePoints } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
+import TeamComparison from "@/components/TeamComparison";
 import {
   LineChart,
   Line,
@@ -69,6 +70,9 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
     setHighlightId(me?.user_id ?? memberRows[0]?.user_id ?? null);
   }, [memberRows, user?.id, highlightId]);
 
+  // Compare opponent
+  const [compareId, setCompareId] = useState<string | null>(null);
+  const compareMember = memberRows.find((m) => m.user_id === compareId);
   // Build cumulative line graph data: x = stage_number, one series per member
   const chartData = useMemo(() => {
     const sortedStages = [...stages].sort((a, b) => a.stage_number - b.stage_number);
@@ -124,18 +128,21 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
             {memberRows.map((m, idx) => {
               const isMe = m.user_id === user?.id;
               const isHighlighted = m.user_id === highlightId;
+              const isComparing = m.user_id === compareId;
               const colorIdx = memberRows.findIndex((r) => r.user_id === m.user_id) % LINE_COLORS.length;
               return (
-                <button
+                <div
                   key={m.user_id}
-                  onClick={() => setHighlightId(m.user_id)}
                   className={cn(
-                    "w-full p-3 flex items-center justify-between gap-3 text-left transition-colors",
-                    "hover:bg-secondary/40",
-                    isHighlighted && "bg-primary/10"
+                    "p-3 flex items-center justify-between gap-3 transition-colors",
+                    isHighlighted && "bg-primary/10",
+                    isComparing && "bg-accent/10"
                   )}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    onClick={() => setHighlightId(m.user_id)}
+                    className="flex items-center gap-3 min-w-0 flex-1 text-left hover:opacity-80"
+                  >
                     <span className="font-display text-lg font-bold w-6 text-center text-muted-foreground">
                       {idx + 1}
                     </span>
@@ -158,17 +165,39 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                         <div className="text-xs text-muted-foreground truncate">{m.team_name}</div>
                       )}
                     </div>
+                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="font-display font-bold text-lg tabular-nums">
+                      {m.total_points}
+                      <span className="text-xs font-normal text-muted-foreground ml-1">pt</span>
+                    </div>
+                    {!isMe && m.entry_id && (
+                      <button
+                        onClick={() => setCompareId(isComparing ? null : m.user_id)}
+                        className={cn(
+                          "p-1.5 rounded border border-border hover:bg-accent/20 transition-colors",
+                          isComparing && "bg-accent/30 border-accent"
+                        )}
+                        title={isComparing ? "Vergelijking sluiten" : "Vergelijk met jouw team"}
+                      >
+                        <Swords className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
-                  <div className="font-display font-bold text-lg tabular-nums">
-                    {m.total_points}
-                    <span className="text-xs font-normal text-muted-foreground ml-1">pt</span>
-                  </div>
-                </button>
+                </div>
               );
             })}
           </div>
         </CardContent>
       </Card>
+
+      {/* Head-to-head comparison */}
+      {compareMember && (
+        <TeamComparison
+          opponentUserId={compareMember.user_id}
+          opponentName={compareMember.display_name}
+        />
+      )}
 
       {/* Per-stage cumulative line chart */}
       <Card className="retro-border">

@@ -18,6 +18,7 @@ import PelotonChat from "@/components/PelotonChat";
 import SubpouleManager from "@/components/SubpouleManager";
 import MyTeamPanel from "@/components/MyTeamPanel";
 import MyResultsPanel from "@/components/MyResultsPanel";
+import PalmaresPanel from "@/components/PalmaresPanel";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChartContainer,
@@ -960,7 +961,7 @@ export default function MijnPeloton() {
 
         {/* Inner tabs: Team / Uitslagen / Subpoules */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
-          <TabsList className="w-full retro-border h-auto p-1 grid grid-cols-2 md:grid-cols-5 gap-1">
+          <TabsList className="w-full retro-border h-auto p-1 grid grid-cols-2 md:grid-cols-4 gap-1">
             <TabsTrigger value="team" className="font-display text-xs md:text-sm px-2 md:px-3">
               🚴‍♂️🚴 Mijn Team
             </TabsTrigger>
@@ -972,9 +973,6 @@ export default function MijnPeloton() {
             </TabsTrigger>
             <TabsTrigger value="palmares" className="font-display text-xs md:text-sm px-2 md:px-3">
               🏅 Palmares
-            </TabsTrigger>
-            <TabsTrigger value="watals" className="font-display text-xs md:text-sm px-2 md:px-3">
-              ⛰️ Hors Cat.
             </TabsTrigger>
           </TabsList>
 
@@ -998,12 +996,7 @@ export default function MijnPeloton() {
 
           {/* ── TAB: Palmares ── */}
           <TabsContent value="palmares" className="mt-6">
-            <PalmaresTab myTeam={myTeam} enrichedSubPools={enrichedSubPools} myGames={myGames} />
-          </TabsContent>
-
-          {/* ── TAB: Wat Als? ── */}
-          <TabsContent value="watals" className="mt-6">
-            <WatAlsTab getRiderPoints={getRiderPoints} myTeam={myTeam} getCategoryName={getCategoryName} />
+            <PalmaresPanel />
           </TabsContent>
 
         </Tabs>
