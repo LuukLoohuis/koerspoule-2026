@@ -13,6 +13,7 @@ import { Save, RotateCcw, Download, AlertTriangle, CheckCircle2 } from "lucide-r
 import { toast } from "sonner";
 import type { Stage } from "./StagesTab";
 import type { Rider } from "./StartlistTab";
+import RiderSearchSelect, { type RiderOption } from "@/components/RiderSearchSelect";
 
 type GameType = "giro" | "tdf" | "vuelta" | null;
 
