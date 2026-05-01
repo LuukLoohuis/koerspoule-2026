@@ -82,7 +82,7 @@ export function parseProCyclingStatsStartlist(rawText: string): ParsedStartlistT
 
   // Find all rider entries. A rider number is 1-3 digits followed by a dot.
   // Capture: start_number, name (up to next rider number, or " DS:", or end).
-  const riderRe = /(\d{1,3})\.\s+([A-ZÀ-ÖØ-Þ][^.]*?)(?=\s+\d{1,3}\.\s+[A-ZÀ-ÖØ-Þ]|\s+DS:|\s+\d{1,2}\s+[A-ZÀ-ÖØ-Þ][^.]*?\s+\d{1,3}\.|$)/g;
+  const riderRe = /(\d{1,3})\.\s+([A-ZÀ-ÖØ-Þ][^.]*?)(?=\s+\d{1,3}\.\s+[A-ZÀ-ÖØ-Þ]|\s+DS:|$)/g;
 
   type RiderHit = { num: number; name: string; index: number };
   const hits: RiderHit[] = [];
