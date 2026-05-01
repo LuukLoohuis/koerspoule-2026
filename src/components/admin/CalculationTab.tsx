@@ -67,10 +67,11 @@ export default function CalculationTab({
     if (!confirm("Volledige herberekening uitvoeren? Dit kan even duren.")) return;
     setBusy(true);
     try {
-      await callRpc(
-        ["full_recalculation_v4", "full_recalculation_v3", "full_recalculation"],
-        { p_game_id: activeGameId }
-      );
+      await callRpc([
+        { name: "full_recalculation_v4", args: { p_game_id: activeGameId } },
+        { name: "full_recalculation_v3", args: { p_game_id: activeGameId } },
+        { name: "full_recalculation", args: { p_game_id: activeGameId } },
+      ]);
       toast.success("Volledige herberekening voltooid");
     } catch (e) {
       console.error("Full recalc error:", e);
