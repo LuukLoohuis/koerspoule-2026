@@ -110,42 +110,34 @@ export default function StartlistTab({
     if (!supabase || !activeGameId || !importPreview.length) return;
     setImporting(true);
     try {
-      let added = 0;
-      for (const team of importPreview) {
-        // Upsert team voor deze game (onConflict op game_id+name)
-        const { data: existingTeam } = await supabase
-          .from("teams")
-          .select("id")
-          .eq("game_id", activeGameId)
-          .eq("name", team.name)
-          .maybeSingle();
+      // 1) Upsert all teams in one batch
+      const teamRows = importPreview.map((t) => ({ game_id: activeGameId, name: t.name }));
+      const { data: upsertedTeams, error: teamErr } = await supabase
+        .from("teams")
+        .upsert(teamRows, { onConflict: "game_id,name" })
+        .select("id, name");
+      if (teamErr) throw teamErr;
 
-        let teamId = existingTeam?.id;
-        if (!teamId) {
-          const { data: ins, error: terr } = await supabase
-            .from("teams")
-            .insert({ game_id: activeGameId, name: team.name })
-            .select("id")
-            .single();
-          if (terr) throw terr;
-          teamId = ins!.id;
-        }
+      const teamIdByName = new Map<string, string>(
+        (upsertedTeams ?? []).map((t) => [t.name, t.id])
+      );
 
-        for (const r of team.riders) {
-          // Upsert rider per (game_id, start_number)
-          await supabase.from("riders").upsert(
-            {
-              game_id: activeGameId,
-              team_id: teamId,
-              name: r.name,
-              start_number: r.start_number,
-            },
-            { onConflict: "game_id,start_number" }
-          );
-          added += 1;
-        }
-      }
-      toast.success(`${added} renners geïmporteerd`);
+      // 2) Upsert all riders in one batch
+      const riderRows = importPreview.flatMap((t) =>
+        t.riders.map((r) => ({
+          game_id: activeGameId,
+          team_id: teamIdByName.get(t.name) ?? null,
+          name: r.name,
+          start_number: r.start_number,
+        }))
+      );
+
+      const { error: ridErr } = await supabase
+        .from("riders")
+        .upsert(riderRows, { onConflict: "game_id,start_number" });
+      if (ridErr) throw ridErr;
+
+      toast.success(`${riderRows.length} renners geïmporteerd in ${importPreview.length} teams`);
       await reload();
       setImportPreview([]);
       setImportFile(null);
