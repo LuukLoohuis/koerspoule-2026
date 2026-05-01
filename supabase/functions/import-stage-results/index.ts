@@ -4,7 +4,7 @@
 import { corsHeaders } from "@supabase/supabase-js/cors";
 import { createClient } from "npm:@supabase/supabase-js@2.95.0";
 
-type RaceType = "tour" | "vuelta";
+type RaceType = "tdf" | "vuelta";
 type Classification = "stage" | "gc" | "points" | "mountain" | "youth";
 
 // ASO ranking codes used by both letour.fr and lavuelta.es
@@ -22,7 +22,7 @@ const TYPE_MAP: Record<Classification, string> = {
 };
 
 const BASE_URL: Record<RaceType, string> = {
-  tour: "https://www.letour.fr",
+  tdf: "https://www.letour.fr",
   vuelta: "https://www.lavuelta.es",
 };
 
@@ -111,8 +111,8 @@ Deno.serve(async (req) => {
     const stageNumber = Number(body.stage_number);
     const gameId = body.game_id as string;
 
-    if (!["tour", "vuelta"].includes(raceType)) {
-      return new Response(JSON.stringify({ error: `Race type '${raceType}' niet ondersteund (alleen tour/vuelta)` }), {
+    if (!["tdf", "vuelta"].includes(raceType)) {
+      return new Response(JSON.stringify({ error: `Race type '${raceType}' niet ondersteund (alleen tdf/vuelta automatisch — Giro is alleen handmatig)` }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
