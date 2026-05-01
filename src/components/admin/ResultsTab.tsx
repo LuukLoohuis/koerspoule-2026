@@ -316,6 +316,31 @@ export default function ResultsTab({
       </Card>
 
       {selectedStage && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="font-display text-lg flex items-center gap-2">
+                  <Download className="w-5 h-5" /> Importeer uitslag van internet
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {canImport
+                    ? `Haalt etappe + GC + Punten + Bergen + Jongeren in één keer op van ${gameType === "tdf" ? "letour.fr" : "lavuelta.es"}. Matcht op rugnummer.`
+                    : gameType === "giro"
+                      ? "Giro is niet automatisch importeerbaar (giroditalia.it laadt data via JavaScript). Vul handmatig in."
+                      : "Selecteer eerst een race."}
+                </p>
+              </div>
+              <Button onClick={startImport} disabled={!canImport || importing} data-testid="import-btn">
+                <Download className="w-4 h-4 mr-2" />
+                {importing ? "Ophalen..." : `Importeer etappe ${selectedStageObj?.stage_number ?? ""}`}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between flex-wrap gap-2">
