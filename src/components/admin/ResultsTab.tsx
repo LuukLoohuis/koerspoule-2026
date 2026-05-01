@@ -13,6 +13,7 @@ import { Save, RotateCcw, Download, AlertTriangle, CheckCircle2 } from "lucide-r
 import { toast } from "sonner";
 import type { Stage } from "./StagesTab";
 import type { Rider } from "./StartlistTab";
+import RiderSearchSelect, { type RiderOption } from "@/components/RiderSearchSelect";
 
 type GameType = "giro" | "tdf" | "vuelta" | null;
 
@@ -63,6 +64,17 @@ export default function ResultsTab({
     for (const r of riders) m.set(r.id, r);
     return m;
   }, [riders]);
+
+  const riderOptions = useMemo<RiderOption[]>(
+    () =>
+      riders.map((r) => ({
+        id: r.id,
+        name: r.name,
+        start_number: r.start_number ?? null,
+        teamName: r.team_name ?? undefined,
+      })),
+    [riders]
+  );
 
   async function loadExisting() {
     if (!supabase || !selectedStage) {
@@ -367,23 +379,20 @@ export default function ResultsTab({
                 <TableBody>
                   {rows.map((row) => {
                     const r = row.rider_id ? riderById.get(row.rider_id) : null;
+                    const excludeIds = rows
+                      .filter((x) => x.position !== row.position && x.rider_id)
+                      .map((x) => x.rider_id);
                     return (
                       <TableRow key={row.position}>
                         <TableCell className="font-bold">{row.position}</TableCell>
-                        <TableCell>
-                          <Select
+                        <TableCell data-testid={`result-pos-${row.position}`}>
+                          <RiderSearchSelect
+                            riders={riderOptions}
                             value={row.rider_id}
-                            onValueChange={(v) => setRiderAtPosition(row.position, v)}
-                          >
-                            <SelectTrigger data-testid={`result-pos-${row.position}`} className="h-8"><SelectValue placeholder="(leeg)" /></SelectTrigger>
-                            <SelectContent className="max-h-80">
-                              {riders.map((rider) => (
-                                <SelectItem key={rider.id} value={rider.id}>
-                                  {rider.start_number ? `#${rider.start_number} ` : ""}{rider.name}{rider.team_name ? ` — ${rider.team_name}` : ""}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            onChange={(v) => setRiderAtPosition(row.position, v)}
+                            excludeIds={excludeIds}
+                            placeholder="Zoek renner op naam, rugnummer of ploeg..."
+                          />
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground text-right">{r?.team_name ?? "—"}</TableCell>
                       </TableRow>
