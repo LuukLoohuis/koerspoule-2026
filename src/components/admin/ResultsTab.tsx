@@ -405,6 +405,74 @@ export default function ResultsTab({
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={!!importPreview} onOpenChange={(open) => !open && setImportPreview(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Download className="w-5 h-5" /> Import voorbeeld
+            </DialogTitle>
+            <DialogDescription>
+              Bron: <a href={importPreview?.source_url} target="_blank" rel="noreferrer" className="underline">{importPreview?.source_url}</a>
+              <br />Controleer de gevonden resultaten en bevestig om op te slaan. Bestaande klassementen voor deze etappe worden overschreven.
+            </DialogDescription>
+          </DialogHeader>
+
+          {importPreview && (
+            <div className="space-y-4">
+              {(["stage", "gc", "points", "mountain", "youth"] as const).map((c) => {
+                const labelKey = c === "mountain" ? "kom" : c;
+                const label = CLASSIFICATION_LABELS[labelKey as Classification];
+                const matched = importPreview.matched[c] ?? [];
+                const unmatched = importPreview.unmatched[c] ?? [];
+                return (
+                  <div key={c} className="border rounded-md p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <span className="text-xl">{label.emoji}</span> {label.name}
+                      </h4>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-green-600" />
+                          {matched.length} gematcht
+                        </Badge>
+                        {unmatched.length > 0 && (
+                          <Badge variant="destructive" className="gap-1">
+                            <AlertTriangle className="w-3 h-3" />
+                            {unmatched.length} niet gevonden
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    {matched.length > 0 && (
+                      <div className="text-xs text-muted-foreground grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-1">
+                        {matched.slice(0, 8).map((r) => (
+                          <span key={r.position}>{r.position}. #{r.start_number} {r.rider_name}</span>
+                        ))}
+                        {matched.length > 8 && <span className="italic">+{matched.length - 8} meer…</span>}
+                      </div>
+                    )}
+                    {unmatched.length > 0 && (
+                      <div className="mt-2 text-xs text-destructive">
+                        <strong>Niet gematcht:</strong>{" "}
+                        {unmatched.map((r) => `${r.position}. ${r.bib != null ? `#${r.bib} ` : ""}${r.name}`).join(" · ")}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportPreview(null)}>Annuleren</Button>
+            <Button onClick={applyImport} disabled={savingImport} data-testid="apply-import-btn">
+              <Save className="w-4 h-4 mr-2" />
+              {savingImport ? "Opslaan..." : "Bevestig en sla op"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
