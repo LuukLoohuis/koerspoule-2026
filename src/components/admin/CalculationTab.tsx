@@ -19,15 +19,18 @@ export default function CalculationTab({
   const [busy, setBusy] = useState(false);
   const [stageId, setStageId] = useState("");
 
-  async function callRpc(fnNames: string[], args: Record<string, unknown>): Promise<void> {
+  // Try multiple RPC variants. Each variant has its own arg shape so we don't
+  // pass unknown parameters (which makes Postgres report "function not found").
+  async function callRpc(variants: Array<{ name: string; args: Record<string, unknown> }>): Promise<void> {
     if (!supabase) throw new Error("Supabase niet beschikbaar");
     let lastErr: Error | null = null;
-    for (const fn of fnNames) {
-      const { error } = await supabase.rpc(fn, args);
+    for (const v of variants) {
+      const { error } = await supabase.rpc(v.name, v.args);
       if (!error) return;
-      lastErr = new Error(`${fn}: ${error.message}`);
-      // Probeer volgende RPC alleen als deze 'function not found' geeft
-      if (!error.message.toLowerCase().includes("could not find") && !error.message.toLowerCase().includes("does not exist")) {
+      lastErr = new Error(`${v.name}: ${error.message}`);
+      const msg = error.message.toLowerCase();
+      // Only fall through to next variant if the function signature isn't found
+      if (!msg.includes("could not find") && !msg.includes("does not exist") && !msg.includes("schema cache")) {
         throw lastErr;
       }
     }
@@ -41,16 +44,15 @@ export default function CalculationTab({
     }
     setBusy(true);
     try {
-      // V4 score engine (gebruikt entry_picks + entry_jokers + stage_results multi-position)
-      await callRpc(
-        ["calculate_stage_points_v4", "calculate_stage_points_v3", "calculate_stage_scores"],
-        { p_stage_id: stageId, stage_id: stageId }
-      );
-      // Ook totalstand bijwerken
-      await callRpc(
-        ["update_total_points_v4", "update_total_ranking"],
-        { p_game_id: activeGameId }
-      );
+      await callRpc([
+        { name: "calculate_stage_points_v4", args: { p_stage_id: stageId } },
+        { name: "calculate_stage_points_v3", args: { p_stage_id: stageId } },
+        { name: "calculate_stage_scores", args: { p_stage_id: stageId } },
+      ]);
+      await callRpc([
+        { name: "update_total_points_v4", args: { p_game_id: activeGameId } },
+        { name: "update_total_ranking", args: { p_game_id: activeGameId } },
+      ]);
       toast.success("Etappe herberekend en totaalstand bijgewerkt");
     } catch (e) {
       console.error("Recalc error:", e);
