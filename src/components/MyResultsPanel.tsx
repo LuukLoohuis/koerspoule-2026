@@ -33,7 +33,11 @@ export default function MyResultsPanel() {
     selectedStageId ?? finishedStages[finishedStages.length - 1]?.id ?? stages[0]?.id ?? null;
 
   const { data: stageResults = [] } = useStageResults(activeStageId ?? undefined);
-  const { data: stagePoints = [] } = useStagePoints(activeStageId ?? undefined);
+  const { data: allStagePoints = [] } = useStagePoints(game?.id);
+  const stagePoints = useMemo(
+    () => allStagePoints.filter((sp) => sp.stage_id === activeStageId),
+    [allStagePoints, activeStageId]
+  );
 
   const sortedEntries = useMemo(
     () => [...entries].sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0)),
