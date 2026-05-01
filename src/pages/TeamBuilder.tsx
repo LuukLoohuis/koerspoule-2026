@@ -212,7 +212,7 @@ export default function TeamBuilder() {
               <div className="retro-border bg-card p-6">
                 <h2 className="font-display text-xl font-bold mb-1">🃏 Jokers</h2>
                 <p className="text-sm text-muted-foreground mb-4 font-sans">
-                  Kies exact 2 jokers. Geen overlap met je categorie-picks.
+                  Kies exact 2 jokers uit de overige renners (niet in een categorie). {jokerPool.length} renners beschikbaar.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <Select value={jokerDraft1} onValueChange={setJokerDraft1} disabled={Boolean(isLocked)}>
@@ -220,9 +220,9 @@ export default function TeamBuilder() {
                       <SelectValue placeholder="Joker 1" />
                     </SelectTrigger>
                     <SelectContent>
-                      {allRiders.map((r) => (
+                      {jokerPool.filter((r) => r.id !== jokerDraft2).map((r) => (
                         <SelectItem key={r.id} value={r.id}>
-                          {r.name} #{r.start_number ?? "-"}
+                          #{r.start_number ?? "-"} — {r.name} ({r.teamName})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -232,9 +232,9 @@ export default function TeamBuilder() {
                       <SelectValue placeholder="Joker 2" />
                     </SelectTrigger>
                     <SelectContent>
-                      {allRiders.map((r) => (
+                      {jokerPool.filter((r) => r.id !== jokerDraft1).map((r) => (
                         <SelectItem key={r.id} value={r.id}>
-                          {r.name} #{r.start_number ?? "-"}
+                          #{r.start_number ?? "-"} — {r.name} ({r.teamName})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -255,48 +255,70 @@ export default function TeamBuilder() {
               <div className="retro-border bg-card p-6">
                 <h2 className="font-display text-xl font-bold mb-1">🏆 Klassementsvoorspellingen</h2>
                 <p className="text-sm text-muted-foreground mb-6 font-sans">
-                  Deze velden blijven beschikbaar in de UI; scoring wordt server-side verwerkt.
+                  Voorspel de eindklassementen — kies renners uit de startlijst.
                 </p>
                 <div className="space-y-6">
                   <div>
                     <h3 className="font-display font-bold mb-2">Eindklassement podium</h3>
                     <div className="space-y-2">
-                      {["🥇 1e plaats", "🥈 2e plaats", "🥉 3e plaats"].map((label, i) => (
-                        <div key={i}>
-                          <label className="text-xs font-medium text-muted-foreground">{label}</label>
-                          <Input
-                            value={gcPodium[i]}
-                            disabled={Boolean(isLocked)}
-                            onChange={(e) => {
-                              const newPodium = [...gcPodium];
-                              newPodium[i] = e.target.value;
-                              setGcPodium(newPodium);
-                            }}
-                            placeholder="Naam renner"
-                          />
-                        </div>
-                      ))}
+                      {(["🥇 1e plaats", "🥈 2e plaats", "🥉 3e plaats"] as const).map((label, i) => {
+                        const otherPodium = gcPodium.filter((_, j) => j !== i);
+                        const options = allStartlistRiders.filter((r) => !otherPodium.includes(r.id));
+                        return (
+                          <div key={i}>
+                            <label className="text-xs font-medium text-muted-foreground">{label}</label>
+                            <Select
+                              value={gcPodium[i]}
+                              disabled={Boolean(isLocked)}
+                              onValueChange={(v) => {
+                                const next = [...gcPodium];
+                                next[i] = v;
+                                setGcPodium(next);
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Kies renner" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {options.map((r) => (
+                                  <SelectItem key={r.id} value={r.id}>
+                                    #{r.start_number ?? "-"} — {r.name} ({r.teamName})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                   <div className="vintage-divider" />
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">Puntentrui</label>
-                      <Input value={pointsJersey} onChange={(e) => setPointsJersey(e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">Bergtrui</label>
-                      <Input value={mountainJersey} onChange={(e) => setMountainJersey(e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">Jongerentrui</label>
-                      <Input value={youthJersey} onChange={(e) => setYouthJersey(e.target.value)} />
-                    </div>
+                    {[
+                      { label: "Puntentrui", value: pointsJersey, setter: setPointsJersey },
+                      { label: "Bergtrui", value: mountainJersey, setter: setMountainJersey },
+                      { label: "Jongerentrui", value: youthJersey, setter: setYouthJersey },
+                    ].map(({ label, value, setter }) => (
+                      <div key={label}>
+                        <label className="text-xs font-medium text-muted-foreground">{label}</label>
+                        <Select value={value} onValueChange={setter} disabled={Boolean(isLocked)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Kies renner" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {allStartlistRiders.map((r) => (
+                              <SelectItem key={r.id} value={r.id}>
+                                #{r.start_number ?? "-"} — {r.name} ({r.teamName})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end">
                 <Button
                   onClick={handleSubmit}
                   disabled={Boolean(isLocked || submitEntry.isPending)}
