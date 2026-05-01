@@ -137,34 +137,22 @@ export function parseProCyclingStatsStartlist(rawText: string): ParsedStartlistT
     // The segment looks like:
     //   "<DS: NAME1,NAME2 NAME3>?  <team_index> <Team Name>"
     // For the very first team there is no DS prefix.
-    // The team header is `<1-2 digit number> <Title-cased team name>`.
-    // We find the LAST occurrence of that pattern in the segment, which
-    // safely skips the DS list (DS names are ALL CAPS surnames).
+    // We find the LAST `<1-2 digit number> <rest>` occurrence in the segment;
+    // that is the team header (DS-name list contains no standalone digits).
     let teamName = "";
-    const headerRe = /(?:^|\s)(\d{1,2})\s+([A-Z][A-Za-z0-9].*?)$/;
-    // The team name itself may contain digits/punctuation; take everything from
-    // the team-index marker to the end of the segment.
-    // Walk through all "<digit> <Capital>" boundaries and pick the last one
-    // whose following word is Title-case (first letter upper, rest has lower).
-    const boundaryRe = /(?:^|\s)(\d{1,2})\s+([A-Z][A-Za-z][^\s])/g;
-    let bm: RegExpExecArray | null;
-    let lastIdx = -1;
-    while ((bm = boundaryRe.exec(segment)) !== null) {
-      // Reject if the captured word is fully UPPERCASE (likely a DS surname like "MARCATO").
-      const word = segment.slice(bm.index + bm[0].length - 1).split(/\s/)[0];
-      const fullWord = bm[2].slice(0, 2) + word; // approximate
-      if (fullWord === fullWord.toUpperCase()) continue;
-      lastIdx = bm.index + (bm[0].startsWith(" ") ? 1 : 0);
-    }
-    if (lastIdx >= 0) {
-      const tail = segment.slice(lastIdx);
-      const m2 = tail.match(/^(\d{1,2})\s+(.+)$/);
-      if (m2) teamName = m2[2].replace(/\s+/g, " ").trim();
+    const allHeaders = [...segment.matchAll(/(?:^|\s)(\d{1,2})\s+(\S[^]*?)$/g)];
+    if (allHeaders.length > 0) {
+      const last = allHeaders[allHeaders.length - 1];
+      teamName = last[2].replace(/\s+/g, " ").trim();
     }
     if (!teamName) {
-      // Fallback: last 2-6 words of segment.
       teamName = segment.split(" ").slice(-6).join(" ").trim() || `Team ${g + 1}`;
     }
+    // Strip page-header noise if leaked in (only for first team).
+    teamName = teamName
+      .replace(/^.*?starting\s*/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
 
     teams.push({
       name: teamName,
