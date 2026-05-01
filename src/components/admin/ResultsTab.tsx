@@ -65,6 +65,17 @@ export default function ResultsTab({
     return m;
   }, [riders]);
 
+  const riderOptions = useMemo<RiderOption[]>(
+    () =>
+      riders.map((r) => ({
+        id: r.id,
+        name: r.name,
+        start_number: r.start_number ?? null,
+        teamName: r.team_name ?? undefined,
+      })),
+    [riders]
+  );
+
   async function loadExisting() {
     if (!supabase || !selectedStage) {
       setRows(Array.from({ length: 20 }, (_, i) => ({ position: i + 1, rider_id: "" })));
