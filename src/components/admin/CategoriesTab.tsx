@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ChevronDown, ChevronRight, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 export type Category = {
@@ -15,6 +16,19 @@ export type Category = {
   short_name: string | null;
   sort_order: number;
   max_picks: number;
+};
+
+type Rider = {
+  id: string;
+  name: string;
+  start_number: number | null;
+  team: string | null;
+  team_id: string | null;
+};
+
+type CategoryRider = {
+  rider_id: string;
+  rider: Rider;
 };
 
 export default function CategoriesTab({
@@ -31,6 +45,65 @@ export default function CategoriesTab({
   const [maxPicks, setMaxPicks] = useState(1);
   const [sortOrder, setSortOrder] = useState(categories.length + 1);
 
+  const [allRiders, setAllRiders] = useState<Rider[]>([]);
+  const [teamsById, setTeamsById] = useState<Record<string, string>>({});
+  const [ridersByCategory, setRidersByCategory] = useState<Record<string, Rider[]>>({});
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!supabase || !activeGameId) return;
+    void loadRiders();
+    void loadCategoryRiders();
+  }, [activeGameId, categories.map((c) => c.id).join(",")]);
+
+  async function loadRiders() {
+    if (!supabase) return;
+    const { data: teams } = await supabase
+      .from("teams")
+      .select("id,name")
+      .eq("game_id", activeGameId);
+    const map: Record<string, string> = {};
+    (teams ?? []).forEach((t: any) => { map[t.id] = t.name; });
+    setTeamsById(map);
+
+    const { data, error } = await supabase
+      .from("riders")
+      .select("id,name,start_number,team,team_id")
+      .eq("game_id", activeGameId)
+      .order("start_number", { ascending: true });
+    if (error) {
+      toast.error(`Renners laden mislukt: ${error.message}`);
+      return;
+    }
+    setAllRiders((data ?? []) as Rider[]);
+  }
+
+  async function loadCategoryRiders() {
+    if (!supabase || categories.length === 0) {
+      setRidersByCategory({});
+      return;
+    }
+    const ids = categories.map((c) => c.id);
+    const { data, error } = await supabase
+      .from("category_riders")
+      .select("category_id, rider:riders(id,name,start_number,team,team_id)")
+      .in("category_id", ids);
+    if (error) {
+      toast.error(`Categorie-renners laden mislukt: ${error.message}`);
+      return;
+    }
+    const grouped: Record<string, Rider[]> = {};
+    (data ?? []).forEach((row: any) => {
+      if (!row.rider) return;
+      if (!grouped[row.category_id]) grouped[row.category_id] = [];
+      grouped[row.category_id].push(row.rider as Rider);
+    });
+    Object.keys(grouped).forEach((k) => {
+      grouped[k].sort((a, b) => (a.start_number ?? 9999) - (b.start_number ?? 9999));
+    });
+    setRidersByCategory(grouped);
+  }
+
   async function createCategory() {
     if (!supabase || !activeGameId) return;
     if (!name.trim()) {
@@ -45,7 +118,6 @@ export default function CategoriesTab({
       max_picks: maxPicks,
     });
     if (error) {
-      console.error("Category create error:", error);
       toast.error(`Aanmaken mislukt: ${error.message}`);
       return;
     }
@@ -69,7 +141,8 @@ export default function CategoriesTab({
 
   async function deleteCategory(id: string) {
     if (!supabase) return;
-    if (!confirm("Categorie verwijderen?")) return;
+    if (!confirm("Categorie verwijderen? Renner-koppelingen verdwijnen ook.")) return;
+    await supabase.from("category_riders").delete().eq("category_id", id);
     const { error } = await supabase.from("categories").delete().eq("id", id);
     if (error) {
       toast.error(`Verwijderen mislukt: ${error.message}`);
@@ -79,6 +152,47 @@ export default function CategoriesTab({
     await reload();
   }
 
+  async function addRiderToCategory(categoryId: string, rider: Rider) {
+    if (!supabase) return;
+    const { error } = await supabase
+      .from("category_riders")
+      .insert({ category_id: categoryId, rider_id: rider.id });
+    if (error) {
+      if (error.code === "23505") {
+        toast.error("Renner zit al in deze categorie");
+      } else {
+        toast.error(`Toevoegen mislukt: ${error.message}`);
+      }
+      return;
+    }
+    setRidersByCategory((prev) => {
+      const list = prev[categoryId] ? [...prev[categoryId]] : [];
+      list.push(rider);
+      list.sort((a, b) => (a.start_number ?? 9999) - (b.start_number ?? 9999));
+      return { ...prev, [categoryId]: list };
+    });
+    toast.success(`${rider.name} toegevoegd`);
+  }
+
+  async function removeRiderFromCategory(categoryId: string, riderId: string) {
+    if (!supabase) return;
+    const { error } = await supabase
+      .from("category_riders")
+      .delete()
+      .eq("category_id", categoryId)
+      .eq("rider_id", riderId);
+    if (error) {
+      toast.error(`Verwijderen mislukt: ${error.message}`);
+      return;
+    }
+    setRidersByCategory((prev) => ({
+      ...prev,
+      [categoryId]: (prev[categoryId] ?? []).filter((r) => r.id !== riderId),
+    }));
+  }
+
+  const teamLabel = (r: Rider) => r.team || (r.team_id ? teamsById[r.team_id] : "") || "";
+
   return (
     <div className="space-y-6">
       <Card>
@@ -86,11 +200,11 @@ export default function CategoriesTab({
         <CardContent className="grid gap-4 md:grid-cols-5">
           <div className="md:col-span-2">
             <Label>Naam</Label>
-            <Input data-testid="category-name-input" placeholder="Bv. Sprinters, Klassementsmannen" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input data-testid="category-name-input" placeholder="Bv. GC Aliens" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div>
             <Label>Korte naam</Label>
-            <Input data-testid="category-short-input" placeholder="Spr" value={shortName} onChange={(e) => setShortName(e.target.value)} />
+            <Input data-testid="category-short-input" placeholder="GC" value={shortName} onChange={(e) => setShortName(e.target.value)} />
           </div>
           <div>
             <Label>Volgorde</Label>
@@ -107,44 +221,188 @@ export default function CategoriesTab({
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="font-display">Categorieën van deze game ({categories.length})</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="font-display">
+            Categorieën ({categories.length}) — {allRiders.length} renners in startlijst
+          </CardTitle>
+        </CardHeader>
         <CardContent>
+          {allRiders.length === 0 && (
+            <div className="mb-4 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+              Nog geen renners in startlijst. Importeer eerst de startlijst in de tab "Startlijst".
+            </div>
+          )}
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-16">#</TableHead>
+                <TableHead className="w-10"></TableHead>
+                <TableHead className="w-12">#</TableHead>
                 <TableHead>Naam</TableHead>
-                <TableHead>Kort</TableHead>
-                <TableHead className="w-40">Max keuzes</TableHead>
-                <TableHead className="w-20"></TableHead>
+                <TableHead className="w-24">Renners</TableHead>
+                <TableHead className="w-32">Max keuzes</TableHead>
+                <TableHead className="w-16"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((c) => (
-                <TableRow key={c.id} data-testid={`category-row-${c.id}`}>
-                  <TableCell>{c.sort_order}</TableCell>
-                  <TableCell className="font-medium">{c.name}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{c.short_name ?? "—"}</TableCell>
-                  <TableCell>
-                    <Input type="number" min={1} max={20} defaultValue={c.max_picks} className="h-8 w-20" onBlur={(e) => {
-                      const v = Number(e.target.value);
-                      if (v !== c.max_picks && v >= 1) updateMaxPicks(c.id, v);
-                    }} data-testid={`max-picks-${c.id}`} />
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => deleteCategory(c.id)} data-testid={`delete-category-${c.id}`}>
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {categories.map((c) => {
+                const isOpen = !!expanded[c.id];
+                const riders = ridersByCategory[c.id] ?? [];
+                return (
+                  <CategoryRow
+                    key={c.id}
+                    c={c}
+                    isOpen={isOpen}
+                    onToggle={() => setExpanded((p) => ({ ...p, [c.id]: !p[c.id] }))}
+                    riders={riders}
+                    allRiders={allRiders}
+                    teamLabel={teamLabel}
+                    onAdd={(r) => addRiderToCategory(c.id, r)}
+                    onRemove={(rid) => removeRiderFromCategory(c.id, rid)}
+                    onMaxPicks={(v) => updateMaxPicks(c.id, v)}
+                    onDelete={() => deleteCategory(c.id)}
+                  />
+                );
+              })}
               {categories.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Geen categorieën.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Geen categorieën.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function CategoryRow({
+  c, isOpen, onToggle, riders, allRiders, teamLabel, onAdd, onRemove, onMaxPicks, onDelete,
+}: {
+  c: Category;
+  isOpen: boolean;
+  onToggle: () => void;
+  riders: Rider[];
+  allRiders: Rider[];
+  teamLabel: (r: Rider) => string;
+  onAdd: (r: Rider) => void;
+  onRemove: (riderId: string) => void;
+  onMaxPicks: (v: number) => void;
+  onDelete: () => void;
+}) {
+  const [search, setSearch] = useState("");
+
+  const usedIds = useMemo(() => new Set(riders.map((r) => r.id)), [riders]);
+  const results = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    return allRiders
+      .filter((r) => !usedIds.has(r.id))
+      .filter((r) =>
+        r.name.toLowerCase().includes(q) ||
+        String(r.start_number ?? "").includes(q)
+      )
+      .slice(0, 8);
+  }, [search, allRiders, usedIds]);
+
+  return (
+    <>
+      <TableRow data-testid={`category-row-${c.id}`}>
+        <TableCell>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onToggle}>
+            {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </Button>
+        </TableCell>
+        <TableCell>{c.sort_order}</TableCell>
+        <TableCell className="font-medium">
+          {c.name}
+          {c.short_name && <span className="ml-2 text-xs text-muted-foreground">({c.short_name})</span>}
+        </TableCell>
+        <TableCell>
+          <Badge variant="secondary">{riders.length}</Badge>
+        </TableCell>
+        <TableCell>
+          <Input
+            type="number" min={1} max={20} defaultValue={c.max_picks} className="h-8 w-20"
+            onBlur={(e) => {
+              const v = Number(e.target.value);
+              if (v !== c.max_picks && v >= 1) onMaxPicks(v);
+            }}
+            data-testid={`max-picks-${c.id}`}
+          />
+        </TableCell>
+        <TableCell>
+          <Button variant="ghost" size="sm" onClick={onDelete} data-testid={`delete-category-${c.id}`}>
+            <Trash2 className="w-4 h-4 text-destructive" />
+          </Button>
+        </TableCell>
+      </TableRow>
+      {isOpen && (
+        <TableRow>
+          <TableCell colSpan={6} className="bg-muted/30">
+            <div className="space-y-3 p-2">
+              {riders.length === 0 && (
+                <div className="text-xs text-muted-foreground italic">Nog geen renners in deze categorie.</div>
+              )}
+              {riders.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {riders.map((r) => (
+                    <div key={r.id} className="flex items-center gap-2 rounded-md border bg-background px-2 py-1 text-sm">
+                      <span className="text-xs text-muted-foreground tabular-nums w-6 text-right">
+                        {r.start_number ?? "—"}
+                      </span>
+                      <span className="font-medium">{r.name}</span>
+                      <span className="text-xs text-muted-foreground">{teamLabel(r)}</span>
+                      <button
+                        type="button"
+                        onClick={() => onRemove(r.id)}
+                        className="ml-1 text-muted-foreground hover:text-destructive"
+                        aria-label="Verwijder renner"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="relative max-w-md">
+                <Input
+                  placeholder="Zoek renner op naam of startnummer..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  data-testid={`rider-search-${c.id}`}
+                />
+                {results.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md">
+                    {results.map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => {
+                          onAdd(r);
+                          setSearch("");
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
+                      >
+                        <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
+                          #{r.start_number ?? "—"}
+                        </span>
+                        <span className="font-medium">{r.name}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">{teamLabel(r)}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {search.trim() && results.length === 0 && (
+                  <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
+                    Geen renners gevonden.
+                  </div>
+                )}
+              </div>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }

@@ -1,0 +1,1 @@
+create unique index if not exists category_riders_unique on public.category_riders(category_id, rider_id);
