@@ -110,7 +110,8 @@ export function parseProCyclingStatsStartlist(rawText: string): ParsedStartlistT
       continue;
     }
     const prev = current[current.length - 1];
-    const sameTeam = h.num > prev.num && h.num - prev.num <= 10;
+    // Same team = strictly consecutive numbers (1,2,3...; 11,12,13...; 101,102,103...).
+    const sameTeam = h.num === prev.num + 1;
     if (sameTeam) {
       current.push(h);
     } else {
