@@ -91,6 +91,33 @@ export type Database = {
           },
         ]
       }
+      chat_messages: {
+        Row: {
+          body: string
+          created_at: string
+          game_id: string
+          id: string
+          subpoule_id: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          game_id: string
+          id?: string
+          subpoule_id?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          game_id?: string
+          id?: string
+          subpoule_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       entries: {
         Row: {
           created_at: string
@@ -565,6 +592,7 @@ export type Database = {
           id: string
           name: string | null
           stage_number: number
+          stage_type: Database["public"]["Enums"]["stage_type_enum"]
           status: string | null
         }
         Insert: {
@@ -574,6 +602,7 @@ export type Database = {
           id?: string
           name?: string | null
           stage_number: number
+          stage_type?: Database["public"]["Enums"]["stage_type_enum"]
           status?: string | null
         }
         Update: {
@@ -583,6 +612,7 @@ export type Database = {
           id?: string
           name?: string | null
           stage_number?: number
+          stage_type?: Database["public"]["Enums"]["stage_type_enum"]
           status?: string | null
         }
         Relationships: [
@@ -882,6 +912,12 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "admin"
+      stage_type_enum:
+        | "vlak"
+        | "heuvelachtig"
+        | "tijdrit"
+        | "bergop"
+        | "ploegentijdrit"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1010,6 +1046,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "admin"],
+      stage_type_enum: [
+        "vlak",
+        "heuvelachtig",
+        "tijdrit",
+        "bergop",
+        "ploegentijdrit",
+      ],
     },
   },
 } as const
