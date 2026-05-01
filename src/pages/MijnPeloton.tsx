@@ -904,9 +904,9 @@ export default function MijnPeloton() {
             />
           )}
 
-          {/* Koerscafé – subpoule chat */}
+          {/* Koerscafé – subpoule chat (echte subpoule-koppeling volgt in Mijn Peloton refactor) */}
           <div className="lg:col-span-3">
-            <PelotonChat subpoolName={activePool.name} members={activePool.members} />
+            <PelotonChat subpoolName={activePool.name} subpoolId={(activePool as { id?: string }).id} />
           </div>
         </div>
       </div>);

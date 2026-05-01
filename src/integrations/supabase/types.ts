@@ -265,6 +265,33 @@ export type Database = {
           },
         ]
       }
+      entry_predictions: {
+        Row: {
+          classification: string
+          created_at: string
+          entry_id: string
+          id: string
+          position: number
+          rider_id: string
+        }
+        Insert: {
+          classification: string
+          created_at?: string
+          entry_id: string
+          id?: string
+          position: number
+          rider_id: string
+        }
+        Update: {
+          classification?: string
+          created_at?: string
+          entry_id?: string
+          id?: string
+          position?: number
+          rider_id?: string
+        }
+        Relationships: []
+      }
       game_riders: {
         Row: {
           category_id: string | null
@@ -901,6 +928,10 @@ export type Database = {
       }
       save_entry_pick: {
         Args: { p_category_id: string; p_entry_id: string; p_rider_id: string }
+        Returns: undefined
+      }
+      save_entry_predictions: {
+        Args: { p_entry_id: string; p_predictions: Json }
         Returns: undefined
       }
       seed_default_points_schema: {

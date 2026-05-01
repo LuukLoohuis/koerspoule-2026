@@ -1,322 +1,229 @@
-import { useState, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { mockStageResults } from "@/data/mockData";
 import { Send, MessageCircle } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
+import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useToast } from "@/hooks/use-toast";
 
-/* ── Mock chat data ── */
-
-interface ChatMessage {
+type ChatRow = {
   id: string;
-  userName: string;
-  text: string;
-  timestamp: string;
-  stageContext?: number; // stage number
-  reactions: Record<string, string[]>; // emoji -> userNames
-}
-
-const EMOJI_OPTIONS = ["🔥", "😂", "💪", "😢", "🤯", "👏", "🚴", "🏔️"];
-
-const MY_NAME = "Jan-Willem";
-
-function seededRng(seed: number) {
-  let s = seed;
-  return () => { s = (s * 16807 + 0) % 2147483647; return s / 2147483647; };
-}
-
-function generateMockMessages(): ChatMessage[] {
-  const rng = seededRng(424242);
-  const names = ["Pieter", "Sophie", "Kees", "Femke", "Bas", "Lotte", "Thijs", "Sanne", MY_NAME];
-
-  const stageComments: Record<string, string[]> = {
-    flat: [
-      "Wat een sprint! 🚀", "Groves was echt kansloos vandaag", "Typische massasprint, niets aan",
-      "Mijn sprinter stond er weer niet bij 😤", "Eindelijk punten voor mijn team!",
-      "Die lead-out was perfect", "Kooij is een beest", "Boring etappe tot die laatste 500m",
-    ],
-    mountain: [
-      "Wat een bergetappe!! 🏔️", "Roglič is niet te stoppen", "Mijn hele team zakt door het ijs",
-      "Pellizzari klimt als een geit", "Die afdaling was angstaanjagend", "Eindelijk punten bergop!",
-      "Tiberi viel helaas terug...", "Ayuso reed een slimme koers vandaag",
-    ],
-    hilly: [
-      "Heuvelachtig maar mooie koers", "Die aanval op 30km was briljant", "Weer niks voor mijn sprinters",
-      "Puncheurs-dag, lekker voor mijn team!", "Aular is een machine op deze heuvels",
-      "Mooie solo van Pidcock", "Iemand anders ook 0 punten vandaag? 😅",
-    ],
-    itt: [
-      "Tarling is een tijdritmonster ⏱️", "Roglič pakt weer roze!", "Mijn tijdrijders leveren eindelijk",
-      "ITT = saai maar punten zijn punten", "Wat een verschil met de bergritten",
-    ],
-  };
-
-  const generalComments = [
-    "Iemand al punten geteld? Ik sta er slecht voor 😬",
-    "Die joker-keuze gaat me nog opbreken...",
-    "Wie heeft Pedersen eigenlijk NIET in zijn team?",
-    "Morgen wordt de echte schifting 🔥",
-    "Top 100 in de grote poule, wie nog meer?",
-    "Mijn voorspellingen kloppen voor geen meter",
-    "Halverwege en nog steeds hoop! 💪",
-    `${MY_NAME}, jouw team is echt sterk dit jaar`,
-    "Nog 5 etappes, alles kan nog!",
-    "Die bergtrui-voorspelling was een schot in de roos",
-  ];
-
-  const messages: ChatMessage[] = [];
-  let id = 0;
-
-  // Generate ~3-5 messages per stage + some general
-  for (let stageIdx = 0; stageIdx < 21; stageIdx++) {
-    const stage = mockStageResults[stageIdx];
-    const typeComments = stageComments[stage.type] || stageComments.flat;
-    const msgCount = 2 + Math.floor(rng() * 4);
-
-    for (let m = 0; m < msgCount; m++) {
-      const name = names[Math.floor(rng() * names.length)];
-      const isGeneral = rng() > 0.7;
-      const text = isGeneral
-        ? generalComments[Math.floor(rng() * generalComments.length)]
-        : typeComments[Math.floor(rng() * typeComments.length)];
-
-      const hour = 16 + Math.floor(rng() * 6);
-      const minute = Math.floor(rng() * 60);
-
-      // Random reactions
-      const reactions: Record<string, string[]> = {};
-      const reactionCount = Math.floor(rng() * 4);
-      for (let r = 0; r < reactionCount; r++) {
-        const emoji = EMOJI_OPTIONS[Math.floor(rng() * EMOJI_OPTIONS.length)];
-        const reactor = names[Math.floor(rng() * names.length)];
-        if (!reactions[emoji]) reactions[emoji] = [];
-        if (!reactions[emoji].includes(reactor)) reactions[emoji].push(reactor);
-      }
-
-      messages.push({
-        id: `msg-${id++}`,
-        userName: name,
-        text,
-        timestamp: `${stage.date} ${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
-        stageContext: stageIdx + 1,
-        reactions,
-      });
-    }
-  }
-
-  return messages;
-}
-
-const allMessages = generateMockMessages();
-
-/* ── Component ── */
+  subpoule_id: string | null;
+  game_id: string;
+  user_id: string;
+  body: string;
+  created_at: string;
+  display_name?: string | null;
+};
 
 interface PelotonChatProps {
   subpoolName?: string;
-  members?: string[];
+  subpoolId?: string; // real subpoule UUID
 }
 
-export default function PelotonChat({ subpoolName, members }: PelotonChatProps) {
-  const [filter, setFilter] = useState<"all" | number>("all");
+export default function PelotonChat({ subpoolName, subpoolId }: PelotonChatProps) {
+  const { user } = useAuth();
+  const { data: game } = useCurrentGame();
+  const { toast } = useToast();
+  const [messages, setMessages] = useState<ChatRow[]>([]);
+  const [profileNames, setProfileNames] = useState<Record<string, string>>({});
   const [newMessage, setNewMessage] = useState("");
-  const [localMessages, setLocalMessages] = useState<ChatMessage[]>(() => {
-    // Filter messages to only include members of this subpool
-    if (members?.length) {
-      return allMessages.filter((m) => members.includes(m.userName));
-    }
-    return allMessages;
-  });
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const filteredMessages = useMemo(() => {
-    if (filter === "all") return localMessages;
-    return localMessages.filter((m) => m.stageContext === filter);
-  }, [filter, localMessages]);
-
-  const handleSend = () => {
-    if (!newMessage.trim()) return;
-    const now = new Date();
-    const msg: ChatMessage = {
-      id: `msg-local-${Date.now()}`,
-      userName: MY_NAME,
-      text: newMessage.trim(),
-      timestamp: `Vandaag ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`,
-      stageContext: filter === "all" ? undefined : filter,
-      reactions: {},
-    };
-    setLocalMessages((prev) => [...prev, msg]);
-    setNewMessage("");
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-  };
-
-  const toggleReaction = (msgId: string, emoji: string) => {
-    setLocalMessages((prev) =>
-      prev.map((m) => {
-        if (m.id !== msgId) return m;
-        const reactions = { ...m.reactions };
-        const users = reactions[emoji] ? [...reactions[emoji]] : [];
-        const myIdx = users.indexOf(MY_NAME);
-        if (myIdx >= 0) {
-          users.splice(myIdx, 1);
-          if (users.length === 0) delete reactions[emoji]; else reactions[emoji] = users;
+  // Initial load
+  useEffect(() => {
+    if (!supabase || !game?.id || !subpoolId) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("chat_messages")
+        .select("id, subpoule_id, game_id, user_id, body, created_at")
+        .eq("game_id", game.id)
+        .eq("subpoule_id", subpoolId)
+        .order("created_at", { ascending: true })
+        .limit(500);
+      if (!cancelled) {
+        if (error) {
+          toast({ title: "Chat laden mislukt", description: error.message, variant: "destructive" });
         } else {
-          reactions[emoji] = [...users, MY_NAME];
+          setMessages((data ?? []) as ChatRow[]);
         }
-        return { ...m, reactions };
-      })
-    );
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [game?.id, subpoolId, toast]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!supabase || !game?.id || !subpoolId) return;
+    const channel = supabase
+      .channel(`chat:${subpoolId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "chat_messages", filter: `subpoule_id=eq.${subpoolId}` },
+        (payload) => {
+          const row = payload.new as ChatRow;
+          setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "chat_messages", filter: `subpoule_id=eq.${subpoolId}` },
+        (payload) => {
+          const row = payload.old as { id: string };
+          setMessages((prev) => prev.filter((m) => m.id !== row.id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [game?.id, subpoolId]);
+
+  // Hydrate display names
+  useEffect(() => {
+    if (!supabase) return;
+    const missing = Array.from(new Set(messages.map((m) => m.user_id))).filter((id) => !profileNames[id]);
+    if (missing.length === 0) return;
+    (async () => {
+      const { data } = await supabase.from("profiles").select("id, display_name").in("id", missing);
+      if (data) {
+        setProfileNames((prev) => {
+          const next = { ...prev };
+          for (const p of data) next[p.id] = p.display_name ?? "Onbekend";
+          return next;
+        });
+      }
+    })();
+  }, [messages, profileNames]);
+
+  // Auto-scroll on new message
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
+
+  const handleSend = async () => {
+    if (!newMessage.trim() || !supabase || !user || !game?.id || !subpoolId) return;
+    setSending(true);
+    const body = newMessage.trim();
+    const { error } = await supabase.from("chat_messages").insert({
+      subpoule_id: subpoolId,
+      game_id: game.id,
+      user_id: user.id,
+      body,
+    });
+    setSending(false);
+    if (error) {
+      toast({ title: "Versturen mislukt", description: error.message, variant: "destructive" });
+      return;
+    }
+    setNewMessage("");
   };
 
-  // Group messages by stage
-  const stageNumbers = [...new Set(localMessages.map((m) => m.stageContext).filter(Boolean))] as number[];
-  stageNumbers.sort((a, b) => a - b);
+  const formatTime = (iso: string) => {
+    const d = new Date(iso);
+    const today = new Date();
+    const same = d.toDateString() === today.toDateString();
+    const hh = d.getHours().toString().padStart(2, "0");
+    const mm = d.getMinutes().toString().padStart(2, "0");
+    if (same) return `Vandaag ${hh}:${mm}`;
+    return `${d.getDate()}/${d.getMonth() + 1} ${hh}:${mm}`;
+  };
+
+  const myId = user?.id;
+
+  if (!subpoolId) {
+    return (
+      <Card className="retro-border">
+        <CardContent className="p-6 text-sm text-muted-foreground">
+          Selecteer een subpoule om de chat te openen.
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {/* Stage filter pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        <button
-          onClick={() => setFilter("all")}
-          className={cn(
-            "shrink-0 px-3 py-1.5 text-xs font-display font-bold rounded-md border-2 transition-all",
-            filter === "all"
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-border hover:border-muted-foreground"
-          )}
-        >
-          Alles
-        </button>
-        {stageNumbers.map((sn) => {
-          const stage = mockStageResults[sn - 1];
-          return (
-            <button
-              key={sn}
-              onClick={() => setFilter(sn)}
-              className={cn(
-                "shrink-0 px-3 py-1.5 text-xs font-display font-bold rounded-md border-2 transition-all",
-                filter === sn
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border hover:border-muted-foreground"
-              )}
-            >
-              Rit {sn}
-              {stage && (
-                <span className="ml-1 opacity-70">
-                  {stage.type === "mountain" ? "🏔️" : stage.type === "itt" ? "⏱️" : stage.type === "hilly" ? "⛰️" : "🏁"}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Messages */}
       <Card className="retro-border">
         <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
           <CardTitle className="font-display text-base flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-primary" />
-            Peloton Chat
-            {filter !== "all" && (
-              <span className="text-xs font-sans font-normal text-muted-foreground ml-2">
-                Rit {filter} • {mockStageResults[(filter as number) - 1]?.route}
-              </span>
-            )}
+            Koerscafé{subpoolName ? ` — ${subpoolName}` : ""}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="max-h-[420px] overflow-y-auto divide-y divide-border">
-            {filteredMessages.length === 0 ? (
+            {loading ? (
+              <div className="p-8 text-center text-muted-foreground text-sm">Berichten laden…</div>
+            ) : messages.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground text-sm">
                 Nog geen berichten. Start de conversatie! 💬
               </div>
             ) : (
-              filteredMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={cn(
-                    "px-4 py-3 hover:bg-secondary/30 transition-colors",
-                    msg.userName === MY_NAME && "bg-primary/5"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    {/* Avatar */}
-                    <div
-                      className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-display font-bold shrink-0",
-                        msg.userName === MY_NAME
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground"
-                      )}
-                    >
-                      {msg.userName.charAt(0)}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-display font-bold text-sm">
-                          {msg.userName}
-                          {msg.userName === MY_NAME && (
-                            <span className="text-xs font-sans text-muted-foreground ml-1">(jij)</span>
-                          )}
-                        </span>
-                        <span className="text-xs text-muted-foreground font-sans">{msg.timestamp}</span>
-                        {msg.stageContext && filter === "all" && (
-                          <button
-                            onClick={() => setFilter(msg.stageContext!)}
-                            className="text-xs text-primary/70 hover:text-primary font-sans"
-                          >
-                            Rit {msg.stageContext}
-                          </button>
+              messages.map((msg) => {
+                const name = profileNames[msg.user_id] ?? "…";
+                const isMe = msg.user_id === myId;
+                return (
+                  <div
+                    key={msg.id}
+                    className={cn(
+                      "px-4 py-3 hover:bg-secondary/30 transition-colors",
+                      isMe && "bg-primary/5"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-xs font-display font-bold shrink-0",
+                          isMe ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
                         )}
+                      >
+                        {(name || "?").charAt(0).toUpperCase()}
                       </div>
-                      <p className="text-sm font-sans mt-0.5 text-foreground/90">{msg.text}</p>
 
-                      {/* Reactions */}
-                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                        {Object.entries(msg.reactions).map(([emoji, users]) => (
-                          <button
-                            key={emoji}
-                            onClick={() => toggleReaction(msg.id, emoji)}
-                            className={cn(
-                              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all",
-                              users.includes(MY_NAME)
-                                ? "border-primary bg-primary/10 text-primary"
-                                : "border-border hover:border-muted-foreground text-muted-foreground"
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-display font-bold text-sm">
+                            {name}
+                            {isMe && (
+                              <span className="text-xs font-sans text-muted-foreground ml-1">(jij)</span>
                             )}
-                            title={users.join(", ")}
-                          >
-                            <span>{emoji}</span>
-                            <span className="font-display font-bold">{users.length}</span>
-                          </button>
-                        ))}
-
-                        {/* Add reaction button */}
-                        <ReactionPicker
-                          onSelect={(emoji) => toggleReaction(msg.id, emoji)}
-                          existingEmojis={Object.keys(msg.reactions)}
-                        />
+                          </span>
+                          <span className="text-xs text-muted-foreground font-sans">{formatTime(msg.created_at)}</span>
+                        </div>
+                        <p className="text-sm font-sans mt-0.5 text-foreground/90 whitespace-pre-wrap break-words">{msg.body}</p>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
           <div className="border-t-2 border-foreground p-3 flex gap-2">
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder={filter === "all" ? "Schrijf een bericht..." : `Reactie op Rit ${filter}...`}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              placeholder="Schrijf een bericht..."
               className="flex-1 font-sans text-sm"
+              disabled={!user || sending}
             />
             <Button
               onClick={handleSend}
-              disabled={!newMessage.trim()}
+              disabled={!newMessage.trim() || sending || !user}
               size="sm"
               className="shrink-0"
             >
@@ -325,48 +232,6 @@ export default function PelotonChat({ subpoolName, members }: PelotonChatProps) 
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-/* ── Emoji picker inline ── */
-function ReactionPicker({
-  onSelect,
-  existingEmojis,
-}: {
-  onSelect: (emoji: string) => void;
-  existingEmojis: string[];
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-dashed border-border hover:border-muted-foreground text-muted-foreground text-xs transition-all"
-        title="Reageer"
-      >
-        +
-      </button>
-      {open && (
-        <div className="absolute bottom-full left-0 mb-1 bg-background border-2 border-foreground rounded-lg shadow-lg p-1.5 flex gap-1 z-50 animate-scale-in">
-          {EMOJI_OPTIONS.map((emoji) => (
-            <button
-              key={emoji}
-              onClick={() => {
-                onSelect(emoji);
-                setOpen(false);
-              }}
-              className={cn(
-                "w-8 h-8 flex items-center justify-center rounded hover:bg-secondary transition-colors text-base",
-                existingEmojis.includes(emoji) && "bg-primary/10"
-              )}
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
