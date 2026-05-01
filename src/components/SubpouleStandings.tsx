@@ -70,6 +70,9 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
     setHighlightId(me?.user_id ?? memberRows[0]?.user_id ?? null);
   }, [memberRows, user?.id, highlightId]);
 
+  // Compare opponent
+  const [compareId, setCompareId] = useState<string | null>(null);
+  const compareMember = memberRows.find((m) => m.user_id === compareId);
   // Build cumulative line graph data: x = stage_number, one series per member
   const chartData = useMemo(() => {
     const sortedStages = [...stages].sort((a, b) => a.stage_number - b.stage_number);
