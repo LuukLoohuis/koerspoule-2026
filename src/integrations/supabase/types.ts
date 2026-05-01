@@ -290,7 +290,22 @@ export type Database = {
           position?: number
           rider_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "entry_predictions_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "admin_entries_overview"
+            referencedColumns: ["entry_id"]
+          },
+          {
+            foreignKeyName: "entry_predictions_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       game_riders: {
         Row: {
