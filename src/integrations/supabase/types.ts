@@ -913,6 +913,11 @@ export type Database = {
         Args: { p_stage_id: string }
         Returns: undefined
       }
+      create_subpoule: {
+        Args: { p_code: string; p_game_id: string; p_name: string }
+        Returns: string
+      }
+      delete_subpoule: { Args: { p_subpoule_id: string }; Returns: undefined }
       full_recalculation: { Args: { p_game_id: string }; Returns: undefined }
       has_role: {
         Args: {
@@ -922,6 +927,12 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      join_subpoule: { Args: { p_code: string }; Returns: string }
+      leave_subpoule: { Args: { p_subpoule_id: string }; Returns: undefined }
+      remove_subpoule_member: {
+        Args: { p_subpoule_id: string; p_user_id: string }
+        Returns: undefined
+      }
       save_entry_jokers: {
         Args: { p_entry_id: string; p_rider_ids: string[] }
         Returns: undefined
