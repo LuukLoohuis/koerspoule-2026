@@ -185,6 +185,101 @@ export default function ResultsTab({
     await loadExisting();
   }
 
+  async function startImport() {
+    if (!supabase || !selectedStage || !selectedStageObj) {
+      toast.error("Selecteer eerst een etappe");
+      return;
+    }
+    if (!canImport) {
+      toast.error("Importeren is alleen beschikbaar voor Tour de France en Vuelta");
+      return;
+    }
+    setImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("import-stage-results", {
+        body: {
+          race_type: gameType,
+          stage_number: selectedStageObj.stage_number,
+          game_id: activeGameId,
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Onbekende fout");
+      setImportPreview({
+        source_url: data.source_url,
+        matched: data.matched,
+        unmatched: data.unmatched,
+      });
+    } catch (e) {
+      console.error("Import error:", e);
+      toast.error(`Importeren mislukt: ${(e as Error).message}`);
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function applyImport() {
+    if (!supabase || !selectedStage || !importPreview) return;
+    setSavingImport(true);
+    try {
+      const classifs: Classification[] = ["stage", "gc", "kom", "points", "youth"];
+      // Map import key (mountain) → our key (kom)
+      const importKeyMap: Record<Classification, string> = {
+        stage: "stage", gc: "gc", kom: "mountain", points: "points", youth: "youth",
+      };
+      let totalSaved = 0;
+      for (const c of classifs) {
+        const list = importPreview.matched[importKeyMap[c] as keyof typeof importPreview.matched];
+        if (!list || list.length === 0) continue;
+        const col = CLASSIFICATION_LABELS[c].column;
+        // 1. Clear column for this stage
+        const { error: clearErr } = await supabase
+          .from("stage_results")
+          .update({ [col]: null })
+          .eq("stage_id", selectedStage)
+          .not(col, "is", null);
+        if (clearErr) throw clearErr;
+        // 2. Upsert per rider
+        for (const r of list) {
+          const { data: existing } = await supabase
+            .from("stage_results")
+            .select("id")
+            .eq("stage_id", selectedStage)
+            .eq("rider_id", r.rider_id)
+            .maybeSingle();
+          if (existing) {
+            const { error: uerr } = await supabase
+              .from("stage_results")
+              .update({ [col]: r.position })
+              .eq("id", existing.id);
+            if (uerr) throw uerr;
+          } else {
+            const payload: Record<string, unknown> = {
+              stage_id: selectedStage,
+              rider_id: r.rider_id,
+              game_id: activeGameId,
+              start_number: r.start_number,
+              rider_name: r.rider_name,
+              [col]: r.position,
+            };
+            if (c === "stage") payload.did_finish = true;
+            const { error: ierr } = await supabase.from("stage_results").insert(payload);
+            if (ierr) throw ierr;
+          }
+          totalSaved++;
+        }
+      }
+      toast.success(`${totalSaved} resultaten geïmporteerd uit ${importPreview.source_url}`);
+      setImportPreview(null);
+      await loadExisting();
+    } catch (e) {
+      console.error("Apply import error:", e);
+      toast.error(`Opslaan mislukt: ${(e as Error).message}`);
+    } finally {
+      setSavingImport(false);
+    }
+  }
+
   const filledCount = rows.filter((r) => r.rider_id).length;
 
   return (
