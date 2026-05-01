@@ -148,9 +148,10 @@ export function parseProCyclingStatsStartlist(rawText: string): ParsedStartlistT
     if (!teamName) {
       teamName = segment.split(" ").slice(-6).join(" ").trim() || `Team ${g + 1}`;
     }
-    // Strip page-header noise if leaked in (only for first team).
+    // Strip page-header noise (e.g. "160 starting 1 UAE...") that may leak into the first team.
     teamName = teamName
       .replace(/^.*?starting\s*/i, "")
+      .replace(/^\d{1,3}\s+/, "")
       .replace(/\s+/g, " ")
       .trim();
 
