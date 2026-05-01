@@ -111,17 +111,27 @@ export function useEntries(gameId?: string) {
       if (!supabase || !gameId) return [];
       const { data, error } = await supabase
         .from("entries")
-        .select("id, user_id, team_name, total_points, profiles:user_id(display_name)")
+        .select("id, user_id, team_name, total_points")
         .eq("game_id", gameId)
         .eq("status", "submitted")
         .order("total_points", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r: { id: string; user_id: string; team_name: string | null; total_points: number; profiles: { display_name: string | null } | { display_name: string | null }[] | null }) => ({
+      const rows = (data ?? []) as Array<{ id: string; user_id: string; team_name: string | null; total_points: number }>;
+      const userIds = Array.from(new Set(rows.map((r) => r.user_id)));
+      let profileMap = new Map<string, string | null>();
+      if (userIds.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, display_name")
+          .in("id", userIds);
+        profileMap = new Map((profs ?? []).map((p: { id: string; display_name: string | null }) => [p.id, p.display_name]));
+      }
+      return rows.map((r) => ({
         id: r.id,
         user_id: r.user_id,
         team_name: r.team_name,
         total_points: r.total_points ?? 0,
-        display_name: Array.isArray(r.profiles) ? r.profiles[0]?.display_name ?? null : r.profiles?.display_name ?? null,
+        display_name: profileMap.get(r.user_id) ?? null,
       }));
     },
   });
