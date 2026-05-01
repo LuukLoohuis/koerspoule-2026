@@ -13,15 +13,26 @@ export function useCurrentGame() {
     queryKey: ["current-game"],
     queryFn: async (): Promise<Game | null> => {
       if (!supabase) return null;
-      const { data, error } = await supabase
+      // Prefer an actively running game
+      const { data: live, error: liveErr } = await supabase
         .from("games")
         .select("id, name, year, status")
         .in("status", ["open", "locked", "live"])
         .order("year", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (error) throw error;
-      return (data as Game | null) ?? null;
+      if (liveErr) throw liveErr;
+      if (live) return live as Game;
+
+      // Fallback: most recent game of any status (so the app shows real data even pre-launch)
+      const { data: any, error: anyErr } = await supabase
+        .from("games")
+        .select("id, name, year, status")
+        .order("year", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (anyErr) throw anyErr;
+      return (any as Game | null) ?? null;
     },
   });
 }
