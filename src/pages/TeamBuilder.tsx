@@ -215,30 +215,22 @@ export default function TeamBuilder() {
                   Kies exact 2 jokers uit de overige renners (niet in een categorie). {jokerPool.length} renners beschikbaar.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <Select value={jokerDraft1} onValueChange={setJokerDraft1} disabled={Boolean(isLocked)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Joker 1" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {jokerPool.filter((r) => r.id !== jokerDraft2).map((r) => (
-                        <SelectItem key={r.id} value={r.id}>
-                          #{r.start_number ?? "-"} — {r.name} ({r.teamName})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={jokerDraft2} onValueChange={setJokerDraft2} disabled={Boolean(isLocked)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Joker 2" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {jokerPool.filter((r) => r.id !== jokerDraft1).map((r) => (
-                        <SelectItem key={r.id} value={r.id}>
-                          #{r.start_number ?? "-"} — {r.name} ({r.teamName})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <RiderSearchSelect
+                    riders={jokerPool}
+                    value={jokerDraft1}
+                    onChange={setJokerDraft1}
+                    excludeIds={jokerDraft2 ? [jokerDraft2] : []}
+                    placeholder="Joker 1 — zoek renner..."
+                    disabled={Boolean(isLocked)}
+                  />
+                  <RiderSearchSelect
+                    riders={jokerPool}
+                    value={jokerDraft2}
+                    onChange={setJokerDraft2}
+                    excludeIds={jokerDraft1 ? [jokerDraft1] : []}
+                    placeholder="Joker 2 — zoek renner..."
+                    disabled={Boolean(isLocked)}
+                  />
                   <Button
                     onClick={handleSaveJokers}
                     disabled={Boolean(isLocked || saveJoker.isPending)}
@@ -255,38 +247,29 @@ export default function TeamBuilder() {
               <div className="retro-border bg-card p-6">
                 <h2 className="font-display text-xl font-bold mb-1">🏆 Klassementsvoorspellingen</h2>
                 <p className="text-sm text-muted-foreground mb-6 font-sans">
-                  Voorspel de eindklassementen — kies renners uit de startlijst.
+                  Voorspel de eindklassementen — zoek renners uit de startlijst.
                 </p>
                 <div className="space-y-6">
                   <div>
                     <h3 className="font-display font-bold mb-2">Eindklassement podium</h3>
                     <div className="space-y-2">
                       {(["🥇 1e plaats", "🥈 2e plaats", "🥉 3e plaats"] as const).map((label, i) => {
-                        const otherPodium = gcPodium.filter((_, j) => j !== i);
-                        const options = allStartlistRiders.filter((r) => !otherPodium.includes(r.id));
+                        const otherPodium = gcPodium.filter((_, j) => j !== i && Boolean(_));
                         return (
                           <div key={i}>
                             <label className="text-xs font-medium text-muted-foreground">{label}</label>
-                            <Select
+                            <RiderSearchSelect
+                              riders={allStartlistRiders}
                               value={gcPodium[i]}
-                              disabled={Boolean(isLocked)}
-                              onValueChange={(v) => {
+                              onChange={(v) => {
                                 const next = [...gcPodium];
                                 next[i] = v;
                                 setGcPodium(next);
                               }}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Kies renner" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {options.map((r) => (
-                                  <SelectItem key={r.id} value={r.id}>
-                                    #{r.start_number ?? "-"} — {r.name} ({r.teamName})
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              excludeIds={otherPodium}
+                              placeholder="Zoek renner..."
+                              disabled={Boolean(isLocked)}
+                            />
                           </div>
                         );
                       })}
@@ -301,23 +284,19 @@ export default function TeamBuilder() {
                     ].map(({ label, value, setter }) => (
                       <div key={label}>
                         <label className="text-xs font-medium text-muted-foreground">{label}</label>
-                        <Select value={value} onValueChange={setter} disabled={Boolean(isLocked)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Kies renner" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {allStartlistRiders.map((r) => (
-                              <SelectItem key={r.id} value={r.id}>
-                                #{r.start_number ?? "-"} — {r.name} ({r.teamName})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <RiderSearchSelect
+                          riders={allStartlistRiders}
+                          value={value}
+                          onChange={setter}
+                          placeholder="Zoek renner..."
+                          disabled={Boolean(isLocked)}
+                        />
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
+
 
               <div className="flex justify-end">
                 <Button
