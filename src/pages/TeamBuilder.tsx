@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,7 +16,7 @@ export default function TeamBuilder() {
   const { toast } = useToast();
   const { data: game, isLoading: gameLoading } = useCurrentGame();
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(game?.id);
-  const { entry, isLoading: entryLoading, picksByCategory, jokerIds, savePick, saveJoker, submitEntry } = useEntry(game?.id);
+  const { entry, isLoading: entryLoading, picksByCategory, jokerIds, predictions, savePick, saveJoker, savePredictions, submitEntry } = useEntry(game?.id);
 
   const [startlistSearch, setStartlistSearch] = useState("");
   const [startlistTeamFilter, setStartlistTeamFilter] = useState("all");
@@ -63,11 +63,48 @@ export default function TeamBuilder() {
 
   const [jokerDraft1, setJokerDraft1] = useState("");
   const [jokerDraft2, setJokerDraft2] = useState("");
-  const [gcPodium, setGcPodium] = useState(["", "", ""]);
+  const [gcPodium, setGcPodium] = useState<string[]>(["", "", ""]);
   const [pointsJersey, setPointsJersey] = useState("");
   const [mountainJersey, setMountainJersey] = useState("");
   const [youthJersey, setYouthJersey] = useState("");
 
+  // Hydrate predictions from DB once loaded
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (hydratedRef.current || !entry) return;
+    if (!predictions) return;
+    const podium = ["", "", ""];
+    let pts = "", kom = "", youth = "";
+    for (const p of predictions) {
+      if (p.classification === "gc" && p.position >= 1 && p.position <= 3) podium[p.position - 1] = p.rider_id;
+      if (p.classification === "points" && p.position === 1) pts = p.rider_id;
+      if (p.classification === "kom" && p.position === 1) kom = p.rider_id;
+      if (p.classification === "youth" && p.position === 1) youth = p.rider_id;
+    }
+    setGcPodium(podium);
+    setPointsJersey(pts);
+    setMountainJersey(kom);
+    setYouthJersey(youth);
+    // Hydrate jokers too
+    if (jokerIds[0]) setJokerDraft1(jokerIds[0]);
+    if (jokerIds[1]) setJokerDraft2(jokerIds[1]);
+    hydratedRef.current = true;
+  }, [entry, predictions, jokerIds]);
+
+  // Auto-save predictions when they change (debounced)
+  useEffect(() => {
+    if (!entry || !hydratedRef.current || isSubmitted) return;
+    const timer = setTimeout(() => {
+      const list: Array<{ classification: "gc" | "points" | "kom" | "youth"; position: number; rider_id: string }> = [];
+      gcPodium.forEach((rid, i) => { if (rid) list.push({ classification: "gc", position: i + 1, rider_id: rid }); });
+      if (pointsJersey) list.push({ classification: "points", position: 1, rider_id: pointsJersey });
+      if (mountainJersey) list.push({ classification: "kom", position: 1, rider_id: mountainJersey });
+      if (youthJersey) list.push({ classification: "youth", position: 1, rider_id: youthJersey });
+      savePredictions.mutate({ entryId: entry.id, predictions: list });
+    }, 700);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gcPodium, pointsJersey, mountainJersey, youthJersey]);
 
   const selectedPickRiderIds = useMemo(() => new Set(Array.from(picksByCategory.values())), [picksByCategory]);
 
