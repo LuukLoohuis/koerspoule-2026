@@ -18,11 +18,11 @@ export default function TeamBuilder() {
   const { entry, isLoading: entryLoading, picksByCategory, jokerIds, savePick, saveJoker, submitEntry } = useEntry(game?.id);
 
   const [startlistSearch, setStartlistSearch] = useState("");
-  const [startlistTeamFilter, setStartlistTeamFilter] = useState("");
+  const [startlistTeamFilter, setStartlistTeamFilter] = useState("all");
   const { data: startlist = [], isLoading: startlistLoading } = useStartlist(
     game?.id,
     startlistSearch,
-    startlistTeamFilter
+    startlistTeamFilter === "all" ? "" : startlistTeamFilter
   );
 
   const allRiders = useMemo(() => {
@@ -301,7 +301,7 @@ export default function TeamBuilder() {
                       <SelectValue placeholder="Filter op team" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Alle teams</SelectItem>
+                      <SelectItem value="all">Alle teams</SelectItem>
                       {allTeams.map((team) => (
                         <SelectItem key={team.id} value={team.id}>
                           {team.name}
