@@ -223,9 +223,14 @@ export default function GamesTab({
                     {g.starts_at ? new Date(g.starts_at).toLocaleString("nl-NL") : "—"}
                   </TableCell>
                   <TableCell>
-                    <Button size="sm" variant="outline" onClick={() => setActiveGameId(g.id)} data-testid={`select-game-${g.id}`}>
-                      Selecteer
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setActiveGameId(g.id)} data-testid={`select-game-${g.id}`}>
+                        Selecteer
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => deleteGame(g)} data-testid={`delete-game-${g.id}`} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
