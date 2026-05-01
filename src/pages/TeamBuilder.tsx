@@ -319,6 +319,7 @@ export default function TeamBuilder() {
                 </div>
               </div>
 
+              <div className="flex justify-end">
                 <Button
                   onClick={handleSubmit}
                   disabled={Boolean(isLocked || submitEntry.isPending)}
@@ -327,6 +328,7 @@ export default function TeamBuilder() {
                   ✅ Team definitief indienen
                 </Button>
               </div>
+
             </TabsContent>
 
             <TabsContent value="startlist" className="space-y-4">
