@@ -191,6 +191,14 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
         </CardContent>
       </Card>
 
+      {/* Head-to-head comparison */}
+      {compareMember && (
+        <TeamComparison
+          opponentUserId={compareMember.user_id}
+          opponentName={compareMember.display_name}
+        />
+      )}
+
       {/* Per-stage cumulative line chart */}
       <Card className="retro-border">
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
