@@ -1,318 +1,409 @@
-import { useMemo, useState } from "react";
-import { mockStageResults, mockTeams, mockClassifications } from "@/data/mockData";
-import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } from "@/data/poolStandings";
-import { pointsTable, classificationPoints } from "@/data/riders";
+import { useEffect, useMemo, useState } from "react";
+import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useStages, useStageResults, useStagePoints, useEntries } from "@/hooks/useResults";
+import { usePointsSchema } from "@/hooks/usePointsSchema";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal, User, Users } from "lucide-react";
-import StageRoadbook, { stageTypeConfig } from "@/components/StageRoadbook";
-import PoolStandingsList, { RankBadge } from "@/components/PoolStandingsList";
+import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin } from "lucide-react";
+
+const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
+  vlak: { label: "Vlak", color: "bg-emerald-500", icon: <Activity className="w-4 h-4" /> },
+  heuvelachtig: { label: "Heuvelachtig", color: "bg-amber-500", icon: <Mountain className="w-4 h-4" /> },
+  bergop: { label: "Bergop", color: "bg-rose-600", icon: <Mountain className="w-4 h-4" /> },
+  tijdrit: { label: "Tijdrit", color: "bg-sky-500", icon: <Clock className="w-4 h-4" /> },
+  ploegentijdrit: { label: "Ploegentijdrit", color: "bg-violet-500", icon: <Clock className="w-4 h-4" /> },
+};
+
+function rankBadge(rank: number) {
+  const cls =
+    rank === 1
+      ? "bg-yellow-500 text-yellow-950"
+      : rank === 2
+      ? "bg-zinc-300 text-zinc-900"
+      : rank === 3
+      ? "bg-orange-400 text-orange-950"
+      : "bg-secondary text-muted-foreground";
+  return (
+    <span className={cn("inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold tabular-nums", cls)}>
+      {rank}
+    </span>
+  );
+}
+
+/** Latest stage that has any results yet (so we don't open on an empty stage) */
+function pickInitialStage<T extends { id: string; status: string | null }>(stages: T[], pointsByStage: Map<string, number>) {
+  // Prefer last stage with results
+  for (let i = stages.length - 1; i >= 0; i--) {
+    if ((pointsByStage.get(stages[i].id) ?? 0) > 0) return i;
+  }
+  // Otherwise first stage
+  return 0;
+}
 
 export default function Results() {
-  const [selectedStage, setSelectedStage] = useState(0);
-  const myTeam = mockTeams[0];
+  const { user } = useAuth();
+  const { data: game } = useCurrentGame();
+  const gameId = game?.id;
 
-  const myRiderNumbers = useMemo(() => new Set(Object.values(myTeam.picks).map(p => p.number)), []);
+  const { data: stages = [], isLoading: stagesLoading } = useStages(gameId);
+  const { data: stagePoints = [] } = useStagePoints(gameId);
+  const { data: entries = [] } = useEntries(gameId);
+  const { data: schema = [] } = usePointsSchema(gameId);
 
+  const stagePointsByStage = useMemo(() => {
+    const m = new Map<string, number>();
+    stagePoints.forEach((sp) => m.set(sp.stage_id, (m.get(sp.stage_id) ?? 0) + sp.points));
+    return m;
+  }, [stagePoints]);
+
+  const [selectedStageIdx, setSelectedStageIdx] = useState<number>(0);
+
+  useEffect(() => {
+    if (stages.length > 0) {
+      setSelectedStageIdx(pickInitialStage(stages, stagePointsByStage));
+    }
+  }, [stages.length, stagePointsByStage.size]);
+
+  const selectedStage = stages[selectedStageIdx];
+  const { data: results = [], isLoading: resultsLoading } = useStageResults(selectedStage?.id);
+
+  // My entry in this game
+  const myEntry = useMemo(
+    () => entries.find((e) => e.user_id === user?.id),
+    [entries, user?.id]
+  );
+
+  // My team's points for the selected stage
   const myStagePoints = useMemo(() => {
-    const stage = mockStageResults[selectedStage];
-    const riderNumbers = new Set(Object.values(myTeam.picks).map(p => p.number));
-    const scoringRiders = stage.top20
-      .filter(r => riderNumbers.has(r.riderNumber))
-      .map(r => ({ ...r, points: pointsTable[r.position] || 0 }));
-    const total = scoringRiders.reduce((sum, r) => sum + r.points, 0);
-    return { scoringRiders, total };
-  }, [selectedStage]);
+    if (!myEntry || !selectedStage) return 0;
+    return stagePoints
+      .filter((sp) => sp.entry_id === myEntry.id && sp.stage_id === selectedStage.id)
+      .reduce((s, r) => s + r.points, 0);
+  }, [myEntry, selectedStage, stagePoints]);
 
-  const stagePoolData = useMemo(() => {
-    const standings = getStagePoolStandings(selectedStage);
-    return getTruncatedStandings(standings, 10, myTeam.userName);
-  }, [selectedStage]);
+  // Points per stage for "my points per etappe" bar chart
+  const myPointsPerStage = useMemo(() => {
+    if (!myEntry) return new Map<string, number>();
+    const m = new Map<string, number>();
+    stagePoints
+      .filter((sp) => sp.entry_id === myEntry.id)
+      .forEach((sp) => m.set(sp.stage_id, (m.get(sp.stage_id) ?? 0) + sp.points));
+    return m;
+  }, [myEntry, stagePoints]);
 
-  const overallPoolData = useMemo(() => {
-    return getTruncatedStandings(allPoolParticipants, 10, myTeam.userName);
-  }, []);
+  // Stage standings: total per entry for selected stage
+  const stageStandings = useMemo(() => {
+    if (!selectedStage) return [];
+    const map = new Map<string, number>();
+    stagePoints
+      .filter((sp) => sp.stage_id === selectedStage.id)
+      .forEach((sp) => map.set(sp.entry_id, (map.get(sp.entry_id) ?? 0) + sp.points));
+    return entries
+      .map((e) => ({ ...e, stagePts: map.get(e.id) ?? 0 }))
+      .sort((a, b) => b.stagePts - a.stagePts)
+      .map((row, i) => ({ ...row, rank: i + 1 }));
+  }, [entries, stagePoints, selectedStage]);
 
-  // Per-stage points for the roadbook
-  const stagePoints = useMemo(() => {
-    const riderNums = new Set(Object.values(myTeam.picks).map(p => p.number));
-    return mockStageResults.map(stage =>
-      stage.top20
-        .filter(r => riderNums.has(r.riderNumber))
-        .reduce((sum, r) => sum + (pointsTable[r.position] || 0), 0)
+  // Overall standings
+  const overallStandings = useMemo(
+    () => entries.map((e, i) => ({ ...e, rank: i + 1 })),
+    [entries]
+  );
+
+  // Stage points lookup for schema
+  const stagePtsTable = useMemo(() => {
+    const m = new Map<number, number>();
+    schema.filter((s) => s.classification === "stage").forEach((s) => m.set(s.position, s.points));
+    return m;
+  }, [schema]);
+
+  // Riders in my team scoring this stage
+  const myEntryRiders = useMyEntryRiders(myEntry?.id, gameId);
+  const myStageScorers = useMemo(() => {
+    if (!myEntryRiders) return [];
+    const myIds = new Set(myEntryRiders.map((r) => r.id));
+    return results
+      .filter((r) => r.finish_position != null && myIds.has(r.rider_id))
+      .map((r) => ({
+        rider_id: r.rider_id,
+        name: r.riders?.name ?? r.rider_name ?? "—",
+        position: r.finish_position!,
+        is_joker: myEntryRiders.find((mr) => mr.id === r.rider_id)?.is_joker ?? false,
+      }))
+      .sort((a, b) => a.position - b.position);
+  }, [myEntryRiders, results]);
+
+  // Render
+
+  if (!game && !stagesLoading) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <p className="text-muted-foreground italic">Er is nog geen actieve koers ingesteld.</p>
+      </div>
     );
-  }, []);
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
       <div className="text-center mb-8">
-        <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-          Uitslagen & Klassement
-        </h1>
+        <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Uitslagen & Klassement</h1>
+        {game && (
+          <p className="text-xs text-muted-foreground uppercase tracking-wider font-sans">
+            {game.name}
+          </p>
+        )}
         <div className="vintage-divider max-w-xs mx-auto mt-4" />
       </div>
 
       <Tabs defaultValue="klassement" className="max-w-7xl mx-auto">
         <TabsList className="w-full retro-border">
-          <TabsTrigger value="klassement" className="flex-1 font-display">
-            🏆 Klassement
-          </TabsTrigger>
-          <TabsTrigger value="etappes" className="flex-1 font-display">
-            📋 Etappes
-          </TabsTrigger>
+          <TabsTrigger value="klassement" className="flex-1 font-display">🏆 Klassement</TabsTrigger>
+          <TabsTrigger value="etappes" className="flex-1 font-display">📋 Etappes</TabsTrigger>
         </TabsList>
 
         {/* ── ETAPPES TAB ── */}
         <TabsContent value="etappes">
-          <div className="mt-4 mb-6">
-            <StageRoadbook
-              selectedStage={selectedStage}
-              onSelectStage={setSelectedStage}
-              stagePoints={stagePoints}
-            />
-          </div>
+          {stagesLoading ? (
+            <p className="text-center text-muted-foreground py-12">Etappes laden...</p>
+          ) : stages.length === 0 ? (
+            <EmptyState message="Nog geen etappes aangemaakt voor deze koers." />
+          ) : (
+            <>
+              {/* Stage roadbook strip */}
+              <div className="mt-4 mb-6 retro-border bg-card p-3 overflow-x-auto">
+                <div className="flex gap-1 min-w-max">
+                  {stages.map((s, idx) => {
+                    const pts = myPointsPerStage.get(s.id) ?? 0;
+                    const meta = STAGE_TYPE_META[s.stage_type ?? "vlak"];
+                    const active = idx === selectedStageIdx;
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => setSelectedStageIdx(idx)}
+                        className={cn(
+                          "flex flex-col items-center gap-1 px-2 py-1.5 rounded transition min-w-[44px]",
+                          active ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                        )}
+                      >
+                        <span className="text-[10px] font-bold tabular-nums">{s.stage_number}</span>
+                        <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-white", meta?.color ?? "bg-muted")}>
+                          {meta?.icon}
+                        </div>
+                        <span className="text-[9px] tabular-nums opacity-70">{pts || ""}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {/* Selected stage info strip */}
-          <div className="mb-4 retro-border bg-secondary/30 p-3 flex flex-wrap items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className={cn(
-                "w-7 h-7 rounded-full flex items-center justify-center text-white",
-                stageTypeConfig[mockStageResults[selectedStage].type]?.color || "bg-muted"
-              )}>
-                {stageTypeConfig[mockStageResults[selectedStage].type]?.icon}
-              </div>
-              <div>
-                <span className="font-display font-bold">Rit {mockStageResults[selectedStage].stage}</span>
-                <span className="text-muted-foreground ml-2 text-xs">
-                  {stageTypeConfig[mockStageResults[selectedStage].type]?.label}
-                </span>
-              </div>
-            </div>
-            <span className="text-muted-foreground font-sans">{mockStageResults[selectedStage].route}</span>
-            <span className="text-xs text-muted-foreground ml-auto">{mockStageResults[selectedStage].distance}</span>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Column 1: Stage results */}
-            <div className="retro-border bg-card">
-              <div className="p-4 border-b-2 border-foreground bg-secondary/50">
-                <h2 className="font-display text-base font-bold flex items-center gap-2">
-                  <Medal className="h-5 w-5 text-accent" />
-                  Rit {mockStageResults[selectedStage].stage}
-                </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {mockStageResults[selectedStage].route} • {mockStageResults[selectedStage].distance}
-                </p>
-              </div>
-              <div className="divide-y divide-border">
-                {mockStageResults[selectedStage].top20.map((result) => {
-                  const isInMyTeam = myRiderNumbers.has(result.riderNumber);
-                  return (
-                    <div
-                      key={result.position}
-                      className={cn(
-                        "flex items-center justify-between px-3 py-2 text-sm",
-                        result.position <= 3 && "bg-primary/5",
-                        isInMyTeam && "ring-1 ring-inset ring-primary/30 bg-primary/5"
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <RankBadge rank={result.position} size="sm" />
-                        <span className="font-sans">
-                          <span className={cn("font-medium text-sm", isInMyTeam && "text-primary")}>{result.riderName}</span>
-                        </span>
-                      </div>
-                      <span className="font-bold text-accent text-xs">
-                        {pointsTable[result.position] || 0} pt
+              {/* Selected stage info */}
+              {selectedStage && (
+                <div className="mb-4 retro-border bg-secondary/30 p-3 flex flex-wrap items-center gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center text-white",
+                      STAGE_TYPE_META[selectedStage.stage_type ?? "vlak"]?.color
+                    )}>
+                      {STAGE_TYPE_META[selectedStage.stage_type ?? "vlak"]?.icon}
+                    </div>
+                    <div>
+                      <span className="font-display font-bold">Rit {selectedStage.stage_number}</span>
+                      <span className="text-muted-foreground ml-2 text-xs">
+                        {STAGE_TYPE_META[selectedStage.stage_type ?? "vlak"]?.label}
                       </span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Column 2: Pool standings for this stage */}
-            <div className="retro-border bg-card h-fit">
-              <div className="p-4 border-b-2 border-foreground bg-secondary/50">
-                <h2 className="font-display text-base font-bold flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  Algemeen klassement-uitslag Rit {mockStageResults[selectedStage].stage}
-                </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {stagePoolData.totalParticipants} deelnemers
-                </p>
-              </div>
-              <PoolStandingsList data={stagePoolData} allParticipants={getStagePoolStandings(selectedStage)} valueKey="stagePoints" unit="pt" myName={myTeam.userName} />
-            </div>
-
-            {/* Column 3: My team points */}
-            <div className="retro-border bg-card h-fit">
-              <div className="p-4 border-b-2 border-foreground bg-primary/10">
-                <h2 className="font-display text-base font-bold flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" />
-                    Jouw team
-                  </span>
-                  <span className="font-display text-xl text-primary">
-                    {myStagePoints.total} pt
-                  </span>
-                </h2>
-              </div>
-              {myStagePoints.scoringRiders.length > 0 ? (
-                <div className="divide-y divide-border">
-                  {myStagePoints.scoringRiders.map((r) => (
-                    <div key={r.riderNumber} className="flex items-center justify-between px-3 py-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
-                          {r.position}
-                        </span>
-                        <span className="font-sans font-medium">{r.riderName}</span>
-                      </div>
-                      <span className="font-bold text-primary text-sm">{r.points} pt</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-6 text-center text-muted-foreground text-sm">
-                  Geen van jouw renners scoorde punten in deze rit.
+                  </div>
+                  {selectedStage.name && (
+                    <span className="text-muted-foreground font-sans flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5" />{selectedStage.name}
+                    </span>
+                  )}
+                  {selectedStage.date && (
+                    <span className="text-xs text-muted-foreground ml-auto">{selectedStage.date}</span>
+                  )}
                 </div>
               )}
-            </div>
-          </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Column 1: Stage results (top 20 finish) */}
+                <div className="retro-border bg-card">
+                  <div className="p-4 border-b-2 border-foreground bg-secondary/50">
+                    <h2 className="font-display text-base font-bold flex items-center gap-2">
+                      <Medal className="h-5 w-5 text-accent" />
+                      Etappe-uitslag
+                    </h2>
+                  </div>
+                  {resultsLoading ? (
+                    <div className="p-6 text-sm text-muted-foreground italic text-center">Laden...</div>
+                  ) : results.filter((r) => r.finish_position != null).length === 0 ? (
+                    <div className="p-6 text-sm text-muted-foreground italic text-center">
+                      Nog geen uitslag voor deze rit.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border">
+                      {results
+                        .filter((r) => r.finish_position != null)
+                        .sort((a, b) => (a.finish_position ?? 999) - (b.finish_position ?? 999))
+                        .slice(0, 20)
+                        .map((r) => {
+                          const inMyTeam = myEntryRiders?.some((mr) => mr.id === r.rider_id);
+                          const pts = stagePtsTable.get(r.finish_position!) ?? 0;
+                          return (
+                            <div
+                              key={r.id}
+                              className={cn(
+                                "flex items-center justify-between px-3 py-2 text-sm",
+                                inMyTeam && "ring-1 ring-inset ring-primary/30 bg-primary/5"
+                              )}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                {rankBadge(r.finish_position!)}
+                                <span className={cn("font-sans font-medium text-sm truncate", inMyTeam && "text-primary")}>
+                                  {r.riders?.name ?? r.rider_name ?? "—"}
+                                </span>
+                              </div>
+                              <span className="font-bold text-accent text-xs whitespace-nowrap">{pts} pt</span>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Column 2: Pool standings for stage */}
+                <div className="retro-border bg-card h-fit">
+                  <div className="p-4 border-b-2 border-foreground bg-secondary/50">
+                    <h2 className="font-display text-base font-bold flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      Tussenstand rit
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {entries.length} {entries.length === 1 ? "deelnemer" : "deelnemers"}
+                    </p>
+                  </div>
+                  {stageStandings.length === 0 ? (
+                    <div className="p-6 text-sm text-muted-foreground italic text-center">
+                      Nog geen deelnemers met punten.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border">
+                      {stageStandings.slice(0, 10).map((s) => {
+                        const isMe = s.user_id === user?.id;
+                        return (
+                          <div
+                            key={s.id}
+                            className={cn(
+                              "flex items-center justify-between px-3 py-2 text-sm",
+                              isMe && "bg-primary/10"
+                            )}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              {rankBadge(s.rank)}
+                              <span className={cn("font-sans truncate", isMe && "font-bold text-primary")}>
+                                {s.team_name ?? s.display_name ?? "—"}
+                              </span>
+                            </div>
+                            <span className="font-bold text-xs">{s.stagePts} pt</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Column 3: My team this stage */}
+                <div className="retro-border bg-card h-fit">
+                  <div className="p-4 border-b-2 border-foreground bg-primary/10">
+                    <h2 className="font-display text-base font-bold flex items-center justify-between">
+                      <span className="flex items-center gap-2"><User className="h-5 w-5 text-primary" />Jouw team</span>
+                      <span className="font-display text-xl text-primary">{myStagePoints} pt</span>
+                    </h2>
+                  </div>
+                  {!myEntry ? (
+                    <div className="p-6 text-center text-muted-foreground text-sm">
+                      Je hebt nog geen team ingestuurd voor deze koers.
+                    </div>
+                  ) : myStageScorers.length === 0 ? (
+                    <div className="p-6 text-center text-muted-foreground text-sm">
+                      Geen van jouw renners scoorde punten in deze rit.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border">
+                      {myStageScorers.map((r) => {
+                        const basePts = stagePtsTable.get(r.position) ?? 0;
+                        const finalPts = r.is_joker ? basePts * 2 : basePts;
+                        return (
+                          <div key={r.rider_id} className="flex items-center justify-between px-3 py-2 text-sm">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground tabular-nums">
+                                {r.position}
+                              </span>
+                              <span className="font-sans font-medium truncate">{r.name}</span>
+                              {r.is_joker && (
+                                <span className="text-[9px] uppercase font-bold text-accent">2× joker</span>
+                              )}
+                            </div>
+                            <span className="font-bold text-primary text-sm">{finalPts} pt</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </TabsContent>
 
         {/* ── KLASSEMENT TAB ── */}
         <TabsContent value="klassement">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
-            {/* Left: Pool overall standings */}
+            {/* Pool overall standings */}
             <div className="retro-border bg-card">
               <div className="p-4 border-b-2 border-foreground bg-secondary/50">
                 <h2 className="font-display text-lg font-bold flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-primary" />
-                  Algemeen Klassement
+                  Algemeen klassement (poule)
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {overallPoolData.totalParticipants} deelnemers
+                  {overallStandings.length} {overallStandings.length === 1 ? "deelnemer" : "deelnemers"}
                 </p>
               </div>
-              <PoolStandingsList data={overallPoolData} allParticipants={allPoolParticipants} valueKey="totalPoints" unit="pt" myName={myTeam.userName} />
+              {overallStandings.length === 0 ? (
+                <div className="p-6 text-sm text-muted-foreground italic text-center">
+                  Nog geen ingestuurde teams.
+                </div>
+              ) : (
+                <div className="divide-y divide-border max-h-[600px] overflow-y-auto">
+                  {overallStandings.map((s) => {
+                    const isMe = s.user_id === user?.id;
+                    return (
+                      <div
+                        key={s.id}
+                        className={cn(
+                          "flex items-center justify-between px-3 py-2 text-sm",
+                          isMe && "bg-primary/10"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {rankBadge(s.rank)}
+                          <span className={cn("font-sans truncate", isMe && "font-bold text-primary")}>
+                            {s.team_name ?? s.display_name ?? "—"}
+                          </span>
+                        </div>
+                        <span className="font-bold text-sm tabular-nums">{s.total_points} pt</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            {/* Right: Your result summary */}
-            <div className="space-y-4">
-              <div className="retro-border bg-card">
-                <div className="p-4 border-b-2 border-foreground bg-primary/10">
-                  <h2 className="font-display text-lg font-bold flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" />
-                    Jouw klassement
-                  </h2>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center justify-center gap-8 mb-6">
-                    <div className="text-center">
-                      <div className="w-20 h-20 rounded-full bg-primary/10 border-4 border-primary flex items-center justify-center mb-2">
-                        <span className="font-display text-3xl font-bold text-primary">
-                          {overallPoolData.myEntry?.rank ?? overallPoolData.top.find(p => p.userName === myTeam.userName)?.rank ?? "–"}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground font-medium">Positie</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-20 h-20 rounded-full bg-accent/10 border-4 border-accent flex items-center justify-center mb-2">
-                        <span className="font-display text-3xl font-bold text-accent">
-                          {myTeam.totalPoints}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground font-medium">Punten</p>
-                    </div>
-                  </div>
-
-                  {/* Per-stage breakdown as mini chart */}
-                  <div>
-                    <h3 className="font-display text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Punten per etappe</h3>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
-                      {Object.entries(stageTypeConfig).map(([key, cfg]) => (
-                        <div key={key} className="flex items-center gap-1">
-                          <span className={cn("w-3 h-3 rounded-full inline-block shrink-0", cfg.color)} />
-                          <span>{cfg.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex items-end gap-1 h-24 px-1 mt-4">
-                      {mockStageResults.map((stage, idx) => {
-                        const pts = stagePoints[idx];
-                        const maxPts = Math.max(...stagePoints, 1);
-                        const barH = Math.max(4, (pts / maxPts) * 80);
-                        const cfg = stageTypeConfig[stage.type] || stageTypeConfig.flat;
-                        return (
-                          <div key={stage.stage} className="flex-1 flex flex-col items-center gap-0.5">
-                            <span className="text-[9px] font-bold text-muted-foreground tabular-nums">{pts > 0 ? pts : ""}</span>
-                            <div
-                              className={cn("w-full rounded-t", cfg.color, "opacity-80")}
-                              style={{ height: barH }}
-                            />
-                            <span className="text-[9px] text-muted-foreground">{stage.stage}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Classification predictions */}
-                  <div className="space-y-2 mt-4">
-                    <h3 className="font-display text-sm font-bold text-muted-foreground uppercase tracking-wider">🏆 Klassementsvoorspellingen</h3>
-                    {(() => {
-                      const gcTop3 = mockClassifications.gc.slice(0, 3).map((r) => r.riderName);
-                      const actualPoints = mockClassifications.points[0]?.riderName || "";
-                      const actualMountain = mockClassifications.kom[0]?.riderName || "";
-                      const actualYouth = mockClassifications.youth[0]?.riderName || "";
-
-                      const calcGcPts = (pick: string, pos: number) => {
-                        if (gcTop3[pos] === pick) return classificationPoints.correctPositionCorrectRider;
-                        if (gcTop3.includes(pick)) return classificationPoints.correctRiderWrongPosition;
-                        return 0;
-                      };
-
-                      const rows = [
-                        ...myTeam.predictions.gcPodium.map((name, i) => ({
-                          label: i === 0 ? "🥇 1e GC" : i === 1 ? "🥈 2e GC" : "🥉 3e GC",
-                          pick: name,
-                          actual: gcTop3[i],
-                          pts: calcGcPts(name, i),
-                        })),
-                        { label: "🟢 Punten", pick: myTeam.predictions.pointsJersey, actual: actualPoints, pts: myTeam.predictions.pointsJersey === actualPoints ? classificationPoints.correctJerseyWinner : 0 },
-                        { label: "🔴 Berg", pick: myTeam.predictions.mountainJersey, actual: actualMountain, pts: myTeam.predictions.mountainJersey === actualMountain ? classificationPoints.correctJerseyWinner : 0 },
-                        { label: "⚪ Jongeren", pick: myTeam.predictions.youthJersey, actual: actualYouth, pts: myTeam.predictions.youthJersey === actualYouth ? classificationPoints.correctJerseyWinner : 0 },
-                      ];
-
-                      const totalPredPts = rows.reduce((s, r) => s + r.pts, 0);
-
-                      return (
-                        <div className="retro-border bg-background overflow-hidden">
-                          {rows.map((row, idx) => (
-                            <div key={row.label} className={cn(
-                              "flex items-center justify-between px-3 py-2 text-sm border-b border-border last:border-b-0",
-                              idx % 2 === 0 ? "bg-background" : "bg-muted/20"
-                            )}>
-                              <span className="text-xs text-muted-foreground font-sans w-24">{row.label}</span>
-                              <span className="font-sans font-medium flex-1 truncate">{row.pick}</span>
-                              <span className={cn(
-                                "font-display font-bold text-sm tabular-nums",
-                                row.pts > 0 ? "text-primary" : "text-muted-foreground"
-                              )}>{row.pts} pt</span>
-                            </div>
-                          ))}
-                          <div className="flex items-center justify-between px-3 py-2.5 bg-secondary/50 border-t-2 border-foreground">
-                            <span className="font-display font-bold text-sm">Totaal voorspellingen</span>
-                            <span className="font-display font-bold text-base text-accent">{totalPredPts} pt</span>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Race classifications (4 jerseys) */}
+            <RaceClassifications stageId={selectedStage?.id} />
           </div>
         </TabsContent>
       </Tabs>
@@ -320,3 +411,110 @@ export default function Results() {
   );
 }
 
+/* ── Helper components / hooks ── */
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="text-center py-16 px-6">
+      <p className="text-muted-foreground italic">{message}</p>
+    </div>
+  );
+}
+
+/** Get rider IDs in user's entry, marked with joker flag */
+function useMyEntryRiders(entryId?: string, gameId?: string) {
+  return useQuery({
+    queryKey: ["my-entry-riders", entryId],
+    enabled: Boolean(entryId && gameId && supabase),
+    queryFn: async () => {
+      if (!supabase || !entryId) return [];
+      const [picksRes, jokersRes] = await Promise.all([
+        supabase.from("entry_picks").select("rider_id").eq("entry_id", entryId),
+        supabase.from("entry_jokers").select("rider_id").eq("entry_id", entryId),
+      ]);
+      const jokerIds = new Set((jokersRes.data ?? []).map((j: { rider_id: string }) => j.rider_id));
+      const pickIds = (picksRes.data ?? []).map((p: { rider_id: string }) => p.rider_id);
+      const allIds = Array.from(new Set([...pickIds, ...jokerIds]));
+      return allIds.map((id) => ({ id, is_joker: jokerIds.has(id) }));
+    },
+  }).data;
+}
+
+function RaceClassifications({ stageId }: { stageId: string | undefined }) {
+  const { data: results = [], isLoading } = useStageResults(stageId);
+
+  const buildList = (key: "gc_position" | "points_position" | "mountain_position" | "youth_position") =>
+    results
+      .filter((r) => r[key] != null)
+      .sort((a, b) => (a[key] ?? 999) - (b[key] ?? 999))
+      .slice(0, 20);
+
+  const tabs = [
+    { id: "gc", label: "Algemeen", icon: "🟡", rows: buildList("gc_position") },
+    { id: "points", label: "Punten", icon: "🟢", rows: buildList("points_position") },
+    { id: "kom", label: "Berg", icon: "🔴", rows: buildList("mountain_position") },
+    { id: "youth", label: "Jongeren", icon: "⚪", rows: buildList("youth_position") },
+  ];
+
+  return (
+    <div className="retro-border bg-card">
+      <div className="p-4 border-b-2 border-foreground bg-secondary/50">
+        <h2 className="font-display text-lg font-bold flex items-center gap-2">
+          <Medal className="h-5 w-5 text-accent" />
+          Klassementen koers
+        </h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Stand na laatst geüploade rit
+        </p>
+      </div>
+
+      {!stageId ? (
+        <div className="p-6 text-sm text-muted-foreground italic text-center">
+          Selecteer een rit om de klassementen te zien.
+        </div>
+      ) : isLoading ? (
+        <div className="p-6 text-sm text-muted-foreground italic text-center">Laden...</div>
+      ) : (
+        <Tabs defaultValue="gc">
+          <TabsList className="w-full grid grid-cols-4 rounded-none">
+            {tabs.map((t) => (
+              <TabsTrigger key={t.id} value={t.id} className="text-xs">
+                <span className="mr-1">{t.icon}</span>{t.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {tabs.map((t) => (
+            <TabsContent key={t.id} value={t.id} className="mt-0">
+              {t.rows.length === 0 ? (
+                <div className="p-6 text-sm text-muted-foreground italic text-center">
+                  Nog geen {t.label.toLowerCase()}klassement ingevuld voor deze rit.
+                </div>
+              ) : (
+                <div className="divide-y divide-border max-h-[500px] overflow-y-auto">
+                  {t.rows.map((r) => {
+                    const pos =
+                      t.id === "gc" ? r.gc_position
+                      : t.id === "points" ? r.points_position
+                      : t.id === "kom" ? r.mountain_position
+                      : r.youth_position;
+                    return (
+                      <div key={r.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {rankBadge(pos!)}
+                          <span className="font-sans truncate">{r.riders?.name ?? r.rider_name ?? "—"}</span>
+                          {r.riders?.teams?.name && (
+                            <span className="text-xs text-muted-foreground truncate hidden md:inline">· {r.riders.teams.name}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
+    </div>
+  );
+}
