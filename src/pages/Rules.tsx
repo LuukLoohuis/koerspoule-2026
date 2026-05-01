@@ -1,6 +1,37 @@
-import { pointsTable, classificationPoints, riderCategories } from "@/data/riders";
+import { useMemo } from "react";
+import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useCategories } from "@/hooks/useCategories";
+import { usePointsSchema } from "@/hooks/usePointsSchema";
 
 export default function Rules() {
+  const { data: game, isLoading: gameLoading } = useCurrentGame();
+  const { data: categories = [], isLoading: catsLoading } = useCategories(game?.id);
+  const { data: schema = [], isLoading: schemaLoading } = usePointsSchema(game?.id);
+
+  const stagePoints = useMemo(
+    () => schema.filter((s) => s.classification === "stage").sort((a, b) => a.position - b.position),
+    [schema]
+  );
+
+  const jerseyPoints = useMemo(() => {
+    const top = (cls: string) =>
+      schema
+        .filter((s) => s.classification === cls)
+        .sort((a, b) => a.position - b.position)
+        .slice(0, 1)[0]?.points ?? 0;
+    return {
+      gcWinner: top("gc"),
+      pointsJersey: top("points"),
+      komJersey: top("kom"),
+      youthJersey: top("youth"),
+    };
+  }, [schema]);
+
+  const sortedCategories = useMemo(
+    () => [...categories].sort((a, b) => a.sort_order - b.sort_order),
+    [categories]
+  );
+
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
       <div className="max-w-3xl mx-auto">
@@ -11,6 +42,11 @@ export default function Rules() {
           <p className="text-muted-foreground font-serif italic">
             "De jury, bestaande uit J.W.M. Broos, heeft gelijk. Zo niet, dan toch."
           </p>
+          {game && (
+            <p className="text-xs text-muted-foreground mt-2 font-sans uppercase tracking-wider">
+              Actieve koers: <span className="font-bold">{game.name}</span>
+            </p>
+          )}
           <div className="vintage-divider max-w-xs mx-auto mt-4" />
         </div>
 
@@ -22,10 +58,10 @@ export default function Rules() {
               "De jury, bestaande uit J.W.M. Broos, heeft gelijk.",
               "Zo niet, dan toch.",
               "€5 inleg, winner takes all.",
-              "De inschrijving dient binnen te zijn om 12:00 uur op 5 juli.",
+              "De inschrijving dient binnen te zijn vóór de start van de eerste etappe.",
               "Vul je team in via de Team Samenstellen pagina.",
               "Beter geen scriptjes.",
-              "Als iemand uit de Tour stapt, pech voor jou :(",
+              "Als iemand uit de koers stapt, pech voor jou :(",
             ].map((rule, i) => (
               <li key={i} className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
@@ -43,15 +79,16 @@ export default function Rules() {
           <div className="space-y-4 font-sans text-sm">
             <div className="p-4 bg-secondary/50 rounded-md">
               <h3 className="font-bold mb-1">Stap 1 — Maak een account aan</h3>
-              <p className="text-muted-foreground">Registreer je met een e-mailadres en kies een gebruikersnaam.</p>
+              <p className="text-muted-foreground">Registreer je met een e-mailadres en kies een ploegnaam.</p>
             </div>
             <div className="p-4 bg-secondary/50 rounded-md">
               <h3 className="font-bold mb-1">Stap 2 — Stel je ploeg samen</h3>
               <p className="text-muted-foreground">
-                Kies uit {riderCategories.length} categorieën telkens 1 renner. 
-                Voeg 2 jokers toe (vrije keuze buiten de categorieën).
-                <br />
-                Jokers moeten unieke renners zijn en mogen niet voorkomen in de categorieën of gekozen categorie-renners.
+                {catsLoading || gameLoading
+                  ? "Categorieën worden geladen..."
+                  : sortedCategories.length > 0
+                  ? <>Kies uit <span className="font-bold">{sortedCategories.length}</span> categorieën telkens 1 renner. Voeg 2 jokers toe (vrije keuze buiten de categorieën). Jokers moeten unieke renners zijn en mogen niet voorkomen in de gekozen categorie-renners.</>
+                  : "Categorieën worden binnenkort beschikbaar gesteld door de admin."}
               </p>
             </div>
             <div className="p-4 bg-secondary/50 rounded-md">
@@ -74,32 +111,51 @@ export default function Rules() {
           <h2 className="font-display text-2xl font-bold mb-4">📊 Puntentelling</h2>
 
           <h3 className="font-display text-lg font-bold mb-3">Per etappe</h3>
-          <div className="retro-border bg-background p-4 mb-6">
-            <div className="grid grid-cols-4 md:grid-cols-5 gap-2 text-sm font-sans">
-              {Object.entries(pointsTable).map(([pos, pts]) => (
-                <div key={pos} className="flex items-center gap-1.5">
-                  <span className="text-muted-foreground font-mono text-xs w-5 text-right">{pos}.</span>
-                  <span className="font-bold text-accent">{pts}</span>
-                </div>
-              ))}
+          {schemaLoading ? (
+            <p className="text-sm text-muted-foreground italic mb-6">Puntenschema laden...</p>
+          ) : stagePoints.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic mb-6">
+              Nog geen puntenschema ingesteld door de admin.
+            </p>
+          ) : (
+            <div className="retro-border bg-background p-4 mb-6">
+              <div className="grid grid-cols-4 md:grid-cols-5 gap-2 text-sm font-sans">
+                {stagePoints.map((row) => (
+                  <div key={row.position} className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground font-mono text-xs w-5 text-right">{row.position}.</span>
+                    <span className="font-bold text-accent">{row.points}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          <h3 className="font-display text-lg font-bold mb-3">Klassementsvoorspellingen</h3>
-          <div className="space-y-2 font-sans text-sm">
-            <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-              <span>Goede plek + goede renner</span>
-              <span className="font-bold text-accent">{classificationPoints.correctPositionCorrectRider} pt</span>
+          <h3 className="font-display text-lg font-bold mb-3">Eindklassementen (winnaar)</h3>
+          {schemaLoading ? (
+            <p className="text-sm text-muted-foreground italic">Laden...</p>
+          ) : (
+            <div className="space-y-2 font-sans text-sm">
+              <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+                <span>Winnaar algemeen klassement</span>
+                <span className="font-bold text-accent">{jerseyPoints.gcWinner} pt</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+                <span>Winnaar puntentrui</span>
+                <span className="font-bold text-accent">{jerseyPoints.pointsJersey} pt</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+                <span>Winnaar bergtrui</span>
+                <span className="font-bold text-accent">{jerseyPoints.komJersey} pt</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+                <span>Winnaar jongerentrui</span>
+                <span className="font-bold text-accent">{jerseyPoints.youthJersey} pt</span>
+              </div>
+              <p className="text-xs text-muted-foreground italic mt-2">
+                Joker = punten van die renner tellen dubbel in elke etappe.
+              </p>
             </div>
-            <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-              <span>Goede renner, verkeerde plek</span>
-              <span className="font-bold text-accent">{classificationPoints.correctRiderWrongPosition} pt</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-              <span>Juiste winnaar trui (bolletjes/groen/wit)</span>
-              <span className="font-bold text-accent">{classificationPoints.correctJerseyWinner} pt</span>
-            </div>
-          </div>
+          )}
         </section>
 
         {/* Categories overview */}
@@ -108,21 +164,40 @@ export default function Rules() {
           <p className="text-sm text-muted-foreground mb-4 font-sans">
             Kies 1 renner per categorie + 2 vrije jokers.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {riderCategories.map((cat) => (
-              <div key={cat.id} className="p-3 bg-secondary/30 rounded-md">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="jersey-badge bg-primary text-primary-foreground text-xs">
-                    #{cat.id}
-                  </span>
-                  <span className="font-bold text-sm font-sans">{cat.name}</span>
+
+          {catsLoading || gameLoading ? (
+            <p className="text-sm text-muted-foreground italic">Categorieën laden...</p>
+          ) : sortedCategories.length === 0 ? (
+            <div className="p-6 text-center bg-secondary/30 rounded-md">
+              <p className="text-sm text-muted-foreground">
+                Nog geen categorieën ingesteld voor deze koers.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 italic">
+                De admin stelt deze in voor de start van de koers.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {sortedCategories.map((cat, idx) => (
+                <div key={cat.id} className="p-3 bg-secondary/30 rounded-md">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="jersey-badge bg-primary text-primary-foreground text-xs">
+                      #{idx + 1}
+                    </span>
+                    <span className="font-bold text-sm font-sans">{cat.name}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {cat.category_riders.length === 0
+                      ? <em>Nog geen renners toegewezen</em>
+                      : cat.category_riders
+                          .map((cr) => cr.riders?.name)
+                          .filter(Boolean)
+                          .join(" • ")}
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {cat.riders.map((r) => r.name).join(" • ")}
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </div>
