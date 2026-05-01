@@ -10,6 +10,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useEntry } from "@/hooks/useEntry";
 import { useStartlist } from "@/hooks/useStartlist";
 import { cn } from "@/lib/utils";
+import RiderSearchSelect from "@/components/RiderSearchSelect";
 
 export default function TeamBuilder() {
   const { toast } = useToast();
