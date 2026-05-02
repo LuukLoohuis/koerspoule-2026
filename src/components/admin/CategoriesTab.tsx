@@ -327,6 +327,7 @@ export default function CategoriesTab({
 
 function CategoryRow({
   c, isOpen, onToggle, riders, allRiders, teamLabel, onAdd, onRemove, onMaxPicks, onDelete,
+  isDragging, isDragOver, onDragStart, onDragOver, onDragEnd, onDrop,
 }: {
   c: Category;
   isOpen: boolean;
@@ -338,6 +339,12 @@ function CategoryRow({
   onRemove: (riderId: string) => void;
   onMaxPicks: (v: number) => void;
   onDelete: () => void;
+  isDragging?: boolean;
+  isDragOver?: boolean;
+  onDragStart?: (e: React.DragEvent<HTMLTableRowElement>) => void;
+  onDragOver?: (e: React.DragEvent<HTMLTableRowElement>) => void;
+  onDragEnd?: (e: React.DragEvent<HTMLTableRowElement>) => void;
+  onDrop?: (e: React.DragEvent<HTMLTableRowElement>) => void;
 }) {
   const [search, setSearch] = useState("");
 
@@ -356,7 +363,21 @@ function CategoryRow({
 
   return (
     <>
-      <TableRow data-testid={`category-row-${c.id}`}>
+      <TableRow
+        data-testid={`category-row-${c.id}`}
+        draggable
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
+        onDrop={onDrop}
+        className={cn(
+          isDragging && "opacity-50",
+          isDragOver && "outline outline-2 outline-primary"
+        )}
+      >
+        <TableCell className="cursor-grab active:cursor-grabbing text-muted-foreground">
+          <GripVertical className="h-4 w-4" />
+        </TableCell>
         <TableCell>
           <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onToggle}>
             {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
