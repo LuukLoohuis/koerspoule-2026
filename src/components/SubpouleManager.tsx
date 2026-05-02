@@ -26,7 +26,7 @@ export default function SubpouleManager() {
   const [joinCode, setJoinCode] = useState("");
 
   const active = useMemo(
-    () => subpoules.find((s) => s.id === activeId) ?? subpoules[0] ?? null,
+    () => (activeId ? subpoules.find((s) => s.id === activeId) ?? null : null),
     [subpoules, activeId]
   );
   const { data: members = [] } = useSubpouleMembers(active?.id);
