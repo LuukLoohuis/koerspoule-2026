@@ -11,7 +11,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
 import PelotonChat from "@/components/PelotonChat";
 import SubpouleStandings from "@/components/SubpouleStandings";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus } from "lucide-react";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function SubpouleManager() {
@@ -26,7 +26,7 @@ export default function SubpouleManager() {
   const [joinCode, setJoinCode] = useState("");
 
   const active = useMemo(
-    () => subpoules.find((s) => s.id === activeId) ?? subpoules[0] ?? null,
+    () => (activeId ? subpoules.find((s) => s.id === activeId) ?? null : null),
     [subpoules, activeId]
   );
   const { data: members = [] } = useSubpouleMembers(active?.id);
@@ -98,9 +98,99 @@ export default function SubpouleManager() {
     return <div className="retro-border bg-card p-6 text-muted-foreground">Geen actieve koers gevonden.</div>;
   }
 
+  // Drilldown view: when a subpoule is selected, show only its detail tab
+  if (active && activeId) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setActiveId(null)} className="gap-2">
+            <ArrowLeft className="h-4 w-4" /> Terug naar subpoules
+          </Button>
+          <div className="flex items-center gap-2">
+            {active.is_owner ? (
+              <Button
+                variant="ghost" size="sm"
+                onClick={() => handleDelete(active.id)}
+                className="text-destructive hover:text-destructive gap-1"
+              >
+                <Trash2 className="h-4 w-4" /> Verwijderen
+              </Button>
+            ) : (
+              <Button
+                variant="ghost" size="sm"
+                onClick={() => handleLeave(active.id)}
+                className="gap-1"
+              >
+                <LogOut className="h-4 w-4" /> Verlaten
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <Card className="retro-border">
+          <CardHeader className="border-b-2 border-foreground bg-secondary/30">
+            <CardTitle className="font-display flex items-center justify-between gap-2 flex-wrap">
+              <span className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                {active.name}
+                {active.is_owner && (
+                  <Badge variant="secondary" className="text-xs gap-1">
+                    <Crown className="h-3 w-3" /> Eigenaar
+                  </Badge>
+                )}
+              </span>
+              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
+                Code: {active.code}
+                <button
+                  onClick={() => copyCode(active.code)}
+                  className="hover:text-foreground"
+                  title="Kopieer code"
+                >
+                  <Copy className="h-3 w-3" />
+                </button>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {members.map((m) => (
+                <div key={m.user_id} className="p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{m.display_name}</span>
+                    {m.user_id === active.owner_user_id && (
+                      <Badge variant="secondary" className="text-xs gap-1">
+                        <Crown className="h-3 w-3" /> Eigenaar
+                      </Badge>
+                    )}
+                    {m.user_id === user.id && (
+                      <Badge variant="outline" className="text-xs">jij</Badge>
+                    )}
+                  </div>
+                  {active.is_owner && m.user_id !== active.owner_user_id && (
+                    <Button
+                      variant="ghost" size="sm"
+                      onClick={() => handleRemoveMember(active.id, m.user_id, m.display_name)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <UserMinus className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <SubpouleStandings subpouleId={active.id} subpouleName={active.name} />
+
+        <PelotonChat subpoolName={active.name} subpoolId={active.id} />
+      </div>
+    );
+  }
+
+  // Overview: list + create/join
   return (
     <div className="space-y-6">
-      {/* Subpoule lijst */}
       <Card className="retro-border">
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
           <CardTitle className="font-display flex items-center gap-2">
@@ -116,65 +206,34 @@ export default function SubpouleManager() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {subpoules.map((sp) => {
-                const isActive = active?.id === sp.id;
-                return (
-                  <div
-                    key={sp.id}
-                    className={cn(
-                      "p-4 flex items-center justify-between gap-3 cursor-pointer hover:bg-secondary/30 transition-colors",
-                      isActive && "bg-primary/5"
-                    )}
-                    onClick={() => setActiveId(sp.id)}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-display font-bold">{sp.name}</span>
-                        {sp.is_owner && (
-                          <Badge variant="secondary" className="text-xs gap-1">
-                            <Crown className="h-3 w-3" /> Eigenaar
-                          </Badge>
-                        )}
-                        <Badge variant="outline" className="text-xs">{sp.member_count} leden</Badge>
-                      </div>
-                      <div className="text-xs text-muted-foreground font-mono mt-0.5 flex items-center gap-2">
-                        Code: {sp.code}
-                        <button
-                          onClick={(e) => { e.stopPropagation(); copyCode(sp.code); }}
-                          className="hover:text-foreground"
-                          title="Kopieer code"
-                        >
-                          <Copy className="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      {sp.is_owner ? (
-                        <Button
-                          variant="ghost" size="sm"
-                          onClick={(e) => { e.stopPropagation(); handleDelete(sp.id); }}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost" size="sm"
-                          onClick={(e) => { e.stopPropagation(); handleLeave(sp.id); }}
-                        >
-                          <LogOut className="h-4 w-4" />
-                        </Button>
+              {subpoules.map((sp) => (
+                <button
+                  key={sp.id}
+                  className="w-full p-4 flex items-center justify-between gap-3 hover:bg-secondary/30 transition-colors text-left"
+                  onClick={() => setActiveId(sp.id)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-display font-bold">{sp.name}</span>
+                      {sp.is_owner && (
+                        <Badge variant="secondary" className="text-xs gap-1">
+                          <Crown className="h-3 w-3" /> Eigenaar
+                        </Badge>
                       )}
+                      <Badge variant="outline" className="text-xs">{sp.member_count} leden</Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                      Code: {sp.code}
                     </div>
                   </div>
-                );
-              })}
+                  <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+                </button>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Aanmaken / Joinen */}
       <Card className="retro-border">
         <CardContent className="p-4">
           <Tabs defaultValue="create">
@@ -207,52 +266,6 @@ export default function SubpouleManager() {
           </Tabs>
         </CardContent>
       </Card>
-
-      {/* Active subpoule details */}
-      {active && (
-        <>
-          <Card className="retro-border">
-            <CardHeader className="border-b-2 border-foreground bg-secondary/30">
-              <CardTitle className="font-display flex items-center justify-between">
-                <span>Leden — {active.name}</span>
-                <Badge variant="outline">{members.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {members.map((m) => (
-                  <div key={m.user_id} className="p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{m.display_name}</span>
-                      {m.user_id === active.owner_user_id && (
-                        <Badge variant="secondary" className="text-xs gap-1">
-                          <Crown className="h-3 w-3" /> Eigenaar
-                        </Badge>
-                      )}
-                      {m.user_id === user.id && (
-                        <Badge variant="outline" className="text-xs">jij</Badge>
-                      )}
-                    </div>
-                    {active.is_owner && m.user_id !== active.owner_user_id && (
-                      <Button
-                        variant="ghost" size="sm"
-                        onClick={() => handleRemoveMember(active.id, m.user_id, m.display_name)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <UserMinus className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <SubpouleStandings subpouleId={active.id} subpouleName={active.name} />
-
-          <PelotonChat subpoolName={active.name} subpoolId={active.id} />
-        </>
-      )}
     </div>
   );
 }

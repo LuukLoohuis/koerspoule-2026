@@ -1,7 +1,8 @@
 import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, TrendingUp, Crown, Swords } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trophy, TrendingUp, Crown, Swords, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntries, useStages, useStagePoints } from "@/hooks/useResults";
@@ -73,6 +74,22 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
   // Compare opponent
   const [compareId, setCompareId] = useState<string | null>(null);
   const compareMember = memberRows.find((m) => m.user_id === compareId);
+
+  // Visibility per member (default: all visible)
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const toggleVisible = (uid: string) => {
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid);
+      else next.add(uid);
+      return next;
+    });
+  };
+  const allHidden = memberRows.length > 0 && memberRows.every((m) => hiddenIds.has(m.user_id));
+  const toggleAll = () => {
+    if (allHidden) setHiddenIds(new Set());
+    else setHiddenIds(new Set(memberRows.map((m) => m.user_id)));
+  };
   // Build cumulative line graph data: x = stage_number, one series per member
   const chartData = useMemo(() => {
     const sortedStages = [...stages].sort((a, b) => a.stage_number - b.stage_number);
@@ -171,6 +188,18 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                       {m.total_points}
                       <span className="text-xs font-normal text-muted-foreground ml-1">pt</span>
                     </div>
+                    <button
+                      onClick={() => toggleVisible(m.user_id)}
+                      className={cn(
+                        "p-1.5 rounded border border-border hover:bg-secondary transition-colors",
+                        hiddenIds.has(m.user_id) ? "opacity-50" : "bg-secondary/40"
+                      )}
+                      title={hiddenIds.has(m.user_id) ? "Toon in grafiek" : "Verberg uit grafiek"}
+                    >
+                      {hiddenIds.has(m.user_id)
+                        ? <EyeOff className="h-3.5 w-3.5" />
+                        : <Eye className="h-3.5 w-3.5" />}
+                    </button>
                     {!isMe && m.entry_id && (
                       <button
                         onClick={() => setCompareId(isComparing ? null : m.user_id)}
@@ -202,13 +231,48 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
       {/* Per-stage cumulative line chart */}
       <Card className="retro-border">
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
-          <CardTitle className="font-display flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Verloop per etappe
-          </CardTitle>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <CardTitle className="font-display flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Verloop per etappe
+            </CardTitle>
+            <button
+              onClick={toggleAll}
+              className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors"
+            >
+              {allHidden ? "Toon alles" : "Verberg alles"}
+            </button>
+          </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Klik op een lid in de ranglijst om die lijn te markeren.
+            Gebruik <Eye className="inline h-3 w-3" /> bij een lid om die lijn te tonen of verbergen. Klik op een naam om te markeren.
           </p>
+          {/* Quick toggles */}
+          <div className="flex flex-wrap gap-2 pt-2">
+            {memberRows.map((m, idx) => {
+              const color = LINE_COLORS[idx % LINE_COLORS.length];
+              const visible = !hiddenIds.has(m.user_id);
+              return (
+                <label
+                  key={m.user_id}
+                  className={cn(
+                    "flex items-center gap-1.5 text-xs px-2 py-1 rounded border cursor-pointer transition-colors",
+                    visible ? "border-border bg-background" : "border-border/50 bg-muted/30 opacity-60"
+                  )}
+                >
+                  <Checkbox
+                    checked={visible}
+                    onCheckedChange={() => toggleVisible(m.user_id)}
+                    className="h-3.5 w-3.5"
+                  />
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="truncate max-w-[120px]">{m.display_name}</span>
+                </label>
+              );
+            })}
+          </div>
         </CardHeader>
         <CardContent className="p-4">
           {chartData.length === 0 ? (
@@ -249,6 +313,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                     wrapperStyle={{ fontSize: "11px" }}
                   />
                   {memberRows.map((m, idx) => {
+                    if (hiddenIds.has(m.user_id)) return null;
                     const color = LINE_COLORS[idx % LINE_COLORS.length];
                     const isHighlighted = m.user_id === highlightId;
                     return (
