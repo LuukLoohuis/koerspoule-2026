@@ -244,6 +244,41 @@ export type Database = {
           },
         ]
       }
+      entry_prediction_points: {
+        Row: {
+          classification: string
+          entry_id: string
+          id: string
+          points: number
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          classification: string
+          entry_id: string
+          id?: string
+          points?: number
+          position: number
+          updated_at?: string
+        }
+        Update: {
+          classification?: string
+          entry_id?: string
+          id?: string
+          points?: number
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entry_prediction_points_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entry_predictions: {
         Row: {
           classification: string
@@ -862,6 +897,10 @@ export type Database = {
       }
       assign_admin_role: {
         Args: { p_make_admin: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      calculate_prediction_points: {
+        Args: { p_game_id: string }
         Returns: undefined
       }
       calculate_stage_scores: {
