@@ -11,7 +11,9 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
 import PelotonChat from "@/components/PelotonChat";
 import SubpouleStandings from "@/components/SubpouleStandings";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight } from "lucide-react";
+import SubpouleBenchmark from "@/components/SubpouleBenchmark";
+import SubpouleHeatmap from "@/components/SubpouleHeatmap";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Swords, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function SubpouleManager() {
@@ -181,9 +183,35 @@ export default function SubpouleManager() {
           </CardContent>
         </Card>
 
-        <SubpouleStandings subpouleId={active.id} subpouleName={active.name} />
+        <Tabs defaultValue="chart" className="w-full">
+          <TabsList className="w-full grid grid-cols-4">
+            <TabsTrigger value="chat" className="gap-1.5 text-xs sm:text-sm">
+              <MessageCircle className="h-4 w-4" /> <span className="hidden sm:inline">Chat</span>
+            </TabsTrigger>
+            <TabsTrigger value="chart" className="gap-1.5 text-xs sm:text-sm">
+              <TrendingUp className="h-4 w-4" /> <span className="hidden sm:inline">Grafiek</span>
+            </TabsTrigger>
+            <TabsTrigger value="benchmark" className="gap-1.5 text-xs sm:text-sm">
+              <Swords className="h-4 w-4" /> <span className="hidden sm:inline">Benchmark</span>
+            </TabsTrigger>
+            <TabsTrigger value="heatmap" className="gap-1.5 text-xs sm:text-sm">
+              <Flame className="h-4 w-4" /> <span className="hidden sm:inline">Heatmap</span>
+            </TabsTrigger>
+          </TabsList>
 
-        <PelotonChat subpoolName={active.name} subpoolId={active.id} />
+          <TabsContent value="chat" className="pt-4">
+            <PelotonChat subpoolName={active.name} subpoolId={active.id} />
+          </TabsContent>
+          <TabsContent value="chart" className="pt-4">
+            <SubpouleStandings subpouleId={active.id} subpouleName={active.name} />
+          </TabsContent>
+          <TabsContent value="benchmark" className="pt-4">
+            <SubpouleBenchmark subpouleId={active.id} />
+          </TabsContent>
+          <TabsContent value="heatmap" className="pt-4">
+            <SubpouleHeatmap subpouleId={active.id} />
+          </TabsContent>
+        </Tabs>
       </div>
     );
   }
