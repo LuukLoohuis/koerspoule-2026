@@ -161,6 +161,21 @@ export default function CalculationTab({
 
       <Card>
         <CardHeader>
+          <CardTitle className="font-display flex items-center gap-2"><Sparkles className="w-5 h-5" />Voorspellingen herberekenen</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Bereken de podium-bonus (50 / 25, max 150) en truienpunten (25 per juiste winnaar)
+            op basis van de laatst beschikbare uitslag.
+          </p>
+          <Button data-testid="recalc-predictions-btn" onClick={calcPredictions} disabled={busy} variant="outline">
+            {busy ? "Bezig..." : "Herbereken voorspellingen"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle className="font-display flex items-center gap-2 text-destructive">Volledige herberekening</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
