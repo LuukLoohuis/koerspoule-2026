@@ -235,6 +235,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
         <TeamComparison
           opponentUserId={compareMember.user_id}
           opponentName={compareMember.display_name}
+          subpouleId={subpouleId}
         />
       )}
 
