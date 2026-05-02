@@ -231,13 +231,48 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
       {/* Per-stage cumulative line chart */}
       <Card className="retro-border">
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
-          <CardTitle className="font-display flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Verloop per etappe
-          </CardTitle>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <CardTitle className="font-display flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Verloop per etappe
+            </CardTitle>
+            <button
+              onClick={toggleAll}
+              className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors"
+            >
+              {allHidden ? "Toon alles" : "Verberg alles"}
+            </button>
+          </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Klik op een lid in de ranglijst om die lijn te markeren.
+            Gebruik <Eye className="inline h-3 w-3" /> bij een lid om die lijn te tonen of verbergen. Klik op een naam om te markeren.
           </p>
+          {/* Quick toggles */}
+          <div className="flex flex-wrap gap-2 pt-2">
+            {memberRows.map((m, idx) => {
+              const color = LINE_COLORS[idx % LINE_COLORS.length];
+              const visible = !hiddenIds.has(m.user_id);
+              return (
+                <label
+                  key={m.user_id}
+                  className={cn(
+                    "flex items-center gap-1.5 text-xs px-2 py-1 rounded border cursor-pointer transition-colors",
+                    visible ? "border-border bg-background" : "border-border/50 bg-muted/30 opacity-60"
+                  )}
+                >
+                  <Checkbox
+                    checked={visible}
+                    onCheckedChange={() => toggleVisible(m.user_id)}
+                    className="h-3.5 w-3.5"
+                  />
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="truncate max-w-[120px]">{m.display_name}</span>
+                </label>
+              );
+            })}
+          </div>
         </CardHeader>
         <CardContent className="p-4">
           {chartData.length === 0 ? (
