@@ -139,10 +139,13 @@ export function useEntry(gameId?: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
   });
 
+  // Map<categoryId, riderId[]> — ondersteunt meerdere picks per categorie
   const picksByCategory = useMemo(() => {
-    const m = new Map<string, string>();
+    const m = new Map<string, string[]>();
     for (const pick of entryQuery.data?.entry_picks ?? []) {
-      m.set(pick.category_id, pick.rider_id);
+      const arr = m.get(pick.category_id) ?? [];
+      arr.push(pick.rider_id);
+      m.set(pick.category_id, arr);
     }
     return m;
   }, [entryQuery.data?.entry_picks]);
@@ -165,6 +168,7 @@ export function useEntry(gameId?: string) {
     jokerIds,
     predictions,
     savePick,
+    togglePick,
     saveJoker,
     savePredictions,
     saveTeamName,
