@@ -63,33 +63,30 @@ export default function PelotonChat({ subpoolName, subpoolId }: PelotonChatProps
     return () => { cancelled = true; };
   }, [game?.id, subpoolId, toast]);
 
-  // Realtime subscription
+  // Lightweight polling instead of realtime — fetch only newer messages every 60s
   useEffect(() => {
     if (!supabase || !game?.id || !subpoolId) return;
-    const channel = supabase
-      .channel(`chat:${subpoolId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "chat_messages", filter: `subpoule_id=eq.${subpoolId}` },
-        (payload) => {
-          const row = payload.new as ChatRow;
-          setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "chat_messages", filter: `subpoule_id=eq.${subpoolId}` },
-        (payload) => {
-          const row = payload.old as { id: string };
-          setMessages((prev) => prev.filter((m) => m.id !== row.id));
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [game?.id, subpoolId]);
+    const interval = setInterval(async () => {
+      const lastTs = messages.length > 0 ? messages[messages.length - 1].created_at : null;
+      let q = supabase
+        .from("chat_messages")
+        .select("id, subpoule_id, game_id, user_id, body, created_at")
+        .eq("game_id", game.id)
+        .eq("subpoule_id", subpoolId)
+        .order("created_at", { ascending: true })
+        .limit(100);
+      if (lastTs) q = q.gt("created_at", lastTs);
+      const { data } = await q;
+      if (data && data.length > 0) {
+        setMessages((prev) => {
+          const seen = new Set(prev.map((m) => m.id));
+          const fresh = (data as ChatRow[]).filter((m) => !seen.has(m.id));
+          return fresh.length > 0 ? [...prev, ...fresh] : prev;
+        });
+      }
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [game?.id, subpoolId, messages]);
 
   // Hydrate display names
   useEffect(() => {
@@ -129,6 +126,15 @@ export default function PelotonChat({ subpoolName, subpoolId }: PelotonChatProps
       return;
     }
     setNewMessage("");
+    // Optimistic refresh: refetch immediately so the user sees their own message
+    const { data } = await supabase
+      .from("chat_messages")
+      .select("id, subpoule_id, game_id, user_id, body, created_at")
+      .eq("game_id", game.id)
+      .eq("subpoule_id", subpoolId)
+      .order("created_at", { ascending: true })
+      .limit(500);
+    if (data) setMessages(data as ChatRow[]);
   };
 
   const formatTime = (iso: string) => {
