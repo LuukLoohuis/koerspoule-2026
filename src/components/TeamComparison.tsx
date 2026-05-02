@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
+import { useSubpouleEntries } from "@/hooks/useSubpouleEntries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, ArrowUp, ArrowDown, Minus, Crown } from "lucide-react";
@@ -12,6 +13,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   opponentUserId: string;
   opponentName: string;
+  subpouleId?: string;
 };
 
 type EntrySnap = {
@@ -141,12 +143,32 @@ function useEntryRiderPoints(entryId: string | undefined) {
   });
 }
 
-export default function TeamComparison({ opponentUserId, opponentName }: Props) {
+export default function TeamComparison({ opponentUserId, opponentName, subpouleId }: Props) {
   const { user } = useAuth();
   const { data: game } = useCurrentGame();
   const { data: categories = [] } = useCategories(game?.id);
 
-  const { data, isLoading } = useTwoEntries(game?.id, user?.id, opponentUserId);
+  const { data: directData, isLoading: directLoading } = useTwoEntries(game?.id, subpouleId ? undefined : user?.id, opponentUserId);
+  const { data: subpouleData, isLoading: subpouleLoading } = useSubpouleEntries(subpouleId, game?.id);
+
+  const subpouleCompareData = useMemo(() => {
+    if (!subpouleData || !user?.id) return null;
+    const toSnap = (uid: string): EntrySnap | null => {
+      const row = subpouleData.entries.find((entry) => entry.user_id === uid);
+      if (!row?.entry_id) return null;
+      return {
+        entry_id: row.entry_id,
+        user_id: row.user_id,
+        total_points: row.total_points,
+        picks: row.picks,
+        jokers: row.jokers,
+      };
+    };
+    return { a: toSnap(user.id), b: toSnap(opponentUserId), ridersById: subpouleData.ridersById };
+  }, [subpouleData, user?.id, opponentUserId]);
+
+  const data = subpouleId ? subpouleCompareData : directData;
+  const isLoading = subpouleId ? subpouleLoading : directLoading;
   const { data: myPts } = useEntryRiderPoints(data?.a?.entry_id);
   const { data: oppPts } = useEntryRiderPoints(data?.b?.entry_id);
 
