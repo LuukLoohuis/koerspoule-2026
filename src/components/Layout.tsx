@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Coffee } from "lucide-react";
 import CookieBanner from "@/components/CookieBanner";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,9 +33,22 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
       <header className="border-b-2 border-foreground bg-card">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <img alt="Koerspoule logo" className="h-32" src="/lovable-uploads/449638d0-9263-472b-b9dc-1ca6517ee97f.png" />
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link to="/" className="flex items-center gap-2">
+                <img alt="Koerspoule logo" className="h-32" src="/lovable-uploads/449638d0-9263-472b-b9dc-1ca6517ee97f.png" />
+              </Link>
+              <a
+                href="https://www.buymeacoffee.com/luukloohuis"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Steun de kopgroep"
+                aria-label="Steun de kopgroep via Buy Me a Coffee"
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-primary/40 bg-primary/5 text-primary text-xs font-serif italic hover:bg-primary/10 hover:border-primary transition-colors"
+              >
+                <Coffee className="h-3.5 w-3.5" />
+                <span>Steun de kopgroep</span>
+              </a>
+            </div>
 
             {/* Desktop nav */}
             <nav className="hidden md:flex items-center gap-1">
