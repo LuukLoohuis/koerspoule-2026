@@ -66,6 +66,20 @@ export function useEntry(gameId?: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
   });
 
+  // Toggle: gebruikt voor categorieën met max_picks > 1 (en werkt ook voor max_picks=1)
+  const togglePick = useMutation({
+    mutationFn: async ({ entryId, categoryId, riderId }: { entryId: string; categoryId: string; riderId: string }) => {
+      if (!supabase) throw new Error("Supabase niet geconfigureerd");
+      const { error } = await supabase.rpc("toggle_entry_pick", {
+        p_entry_id: entryId,
+        p_category_id: categoryId,
+        p_rider_id: riderId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
+  });
+
   const saveJoker = useMutation({
     mutationFn: async ({ entryId, riderIds }: { entryId: string; riderIds: string[] }) => {
       if (!supabase) throw new Error("Supabase niet geconfigureerd");
@@ -125,10 +139,13 @@ export function useEntry(gameId?: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
   });
 
+  // Map<categoryId, riderId[]> — ondersteunt meerdere picks per categorie
   const picksByCategory = useMemo(() => {
-    const m = new Map<string, string>();
+    const m = new Map<string, string[]>();
     for (const pick of entryQuery.data?.entry_picks ?? []) {
-      m.set(pick.category_id, pick.rider_id);
+      const arr = m.get(pick.category_id) ?? [];
+      arr.push(pick.rider_id);
+      m.set(pick.category_id, arr);
     }
     return m;
   }, [entryQuery.data?.entry_picks]);
@@ -151,6 +168,7 @@ export function useEntry(gameId?: string) {
     jokerIds,
     predictions,
     savePick,
+    togglePick,
     saveJoker,
     savePredictions,
     saveTeamName,

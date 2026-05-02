@@ -136,7 +136,7 @@ export default function CategoriesTab({
       toast.error(`Update mislukt: ${error.message}`);
       return;
     }
-    toast.success("Max keuzes aangepast");
+    toast.success("Aantal keuzes aangepast");
     await reload();
   }
 
@@ -243,7 +243,7 @@ export default function CategoriesTab({
             <Input data-testid="category-order-input" type="number" min={1} value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} />
           </div>
           <div>
-            <Label>Max keuzes</Label>
+            <Label>Aantal keuzes</Label>
             <Input data-testid="category-max-picks-input" type="number" min={1} max={20} value={maxPicks} onChange={(e) => setMaxPicks(Number(e.target.value))} />
           </div>
           <div className="md:col-span-5 flex justify-end">
@@ -273,7 +273,7 @@ export default function CategoriesTab({
                 <TableHead className="w-12">#</TableHead>
                 <TableHead>Naam</TableHead>
                 <TableHead className="w-24">Renners</TableHead>
-                <TableHead className="w-32">Max keuzes</TableHead>
+                <TableHead className="w-32">Aantal keuzes</TableHead>
                 <TableHead className="w-16"></TableHead>
               </TableRow>
             </TableHeader>
