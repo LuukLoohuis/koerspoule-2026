@@ -187,23 +187,29 @@ export default function MyTeamPanel() {
         <CardContent className="p-0">
           <div className="divide-y divide-border">
             {categories.map((cat) => {
-              const riderId = picksByCategory.get(cat.id);
-              const rider = riderId ? ridersById[riderId] : null;
-              const isJoker = riderId ? jokerIds.includes(riderId) : false;
+              const riderIds = picksByCategory.get(cat.id) ?? [];
+              const pickedRiders = riderIds.map((rid) => ridersById[rid]).filter(Boolean);
               return (
-                <div key={cat.id} className="p-3 flex items-center justify-between gap-3">
+                <div key={cat.id} className="p-3 flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground font-sans">{cat.short_name ?? cat.name}</p>
-                    {rider ? (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-display font-bold">{rider.name}</span>
-                        {rider.start_number && (
-                          <span className="text-xs font-mono text-muted-foreground">#{rider.start_number}</span>
-                        )}
-                        {rider.team && (
-                          <span className="text-xs text-muted-foreground">{rider.team}</span>
-                        )}
-                        {isJoker && <Badge variant="secondary" className="text-xs">Joker ×2</Badge>}
+                    <p className="text-xs text-muted-foreground font-sans mb-1">{cat.short_name ?? cat.name}</p>
+                    {pickedRiders.length > 0 ? (
+                      <div className="space-y-1">
+                        {pickedRiders.map((rider) => {
+                          const isJoker = jokerIds.includes(rider.id);
+                          return (
+                            <div key={rider.id} className="flex items-center gap-2 flex-wrap">
+                              <span className="font-display font-bold">{rider.name}</span>
+                              {rider.start_number && (
+                                <span className="text-xs font-mono text-muted-foreground">#{rider.start_number}</span>
+                              )}
+                              {rider.team && (
+                                <span className="text-xs text-muted-foreground">{rider.team}</span>
+                              )}
+                              {isJoker && <Badge variant="secondary" className="text-xs">Joker ×2</Badge>}
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
                       <span className="text-sm text-muted-foreground italic">Niet gekozen</span>
@@ -214,7 +220,11 @@ export default function MyTeamPanel() {
             })}
 
             {/* Jokers die nog niet in een categorie zitten */}
-            {jokerIds.filter((jid) => !Array.from(picksByCategory.values()).includes(jid)).map((jid) => {
+            {(() => {
+              const allPickIds = new Set<string>();
+              for (const arr of picksByCategory.values()) for (const id of arr) allPickIds.add(id);
+              return jokerIds.filter((jid) => !allPickIds.has(jid));
+            })().map((jid) => {
               const rider = ridersById[jid];
               return (
                 <div key={`joker-${jid}`} className="p-3 flex items-center justify-between gap-3 bg-primary/5">
