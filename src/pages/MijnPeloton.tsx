@@ -75,7 +75,13 @@ const MEMBER_COLORS = [
 
 export default function MijnPeloton() {
   const { toast } = useToast();
+  const { data: profile } = useProfile();
+  const { data: currentGame } = useCurrentGame();
+  const { entry, teamName, saveTeamName } = useEntry(currentGame?.id);
   const myTeam = mockTeams[0];
+  const displayName = (teamName?.trim() || profile?.display_name?.trim() || myTeam.userName);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
   const [selectedGame, setSelectedGame] = useState(myGames[0].id);
   const [gameTab, setGameTab] = useState("team");
   const [uitslagenView, setUitslagenView] = useState<"etappes" | "poule" | "giro">("etappes");
