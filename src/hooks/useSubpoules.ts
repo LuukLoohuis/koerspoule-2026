@@ -118,13 +118,25 @@ export function useSubpouleMembers(subpouleId?: string) {
       if (!supabase || !subpouleId) return [];
       const { data, error } = await supabase
         .from("subpoule_members")
-        .select("user_id, joined_at, profiles:user_id(display_name)")
+        .select("user_id, joined_at")
         .eq("subpoule_id", subpouleId);
       if (error) throw error;
-      return (data ?? []).map((m) => ({
+      const rows = (data ?? []) as Array<{ user_id: string; joined_at: string }>;
+      if (rows.length === 0) return [];
+
+      const userIds = rows.map((r) => r.user_id);
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", userIds);
+      const nameById = new Map<string, string>();
+      for (const p of (profs ?? []) as Array<{ id: string; display_name: string | null }>) {
+        nameById.set(p.id, p.display_name ?? "Onbekend");
+      }
+      return rows.map((m) => ({
         user_id: m.user_id,
         joined_at: m.joined_at,
-        display_name: (m.profiles as { display_name?: string } | null)?.display_name ?? "Onbekend",
+        display_name: nameById.get(m.user_id) ?? "Onbekend",
       }));
     },
   });
