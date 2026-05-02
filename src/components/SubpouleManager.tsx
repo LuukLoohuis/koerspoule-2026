@@ -11,7 +11,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
 import PelotonChat from "@/components/PelotonChat";
 import SubpouleStandings from "@/components/SubpouleStandings";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus } from "lucide-react";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function SubpouleManager() {
