@@ -123,6 +123,13 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
     });
   }, [stages, stagePoints, memberRows]);
 
+  if (membersLoading) {
+    return (
+      <Card className="retro-border">
+        <CardContent className="p-6 text-sm text-muted-foreground">Klassement laden…</CardContent>
+      </Card>
+    );
+  }
   if (memberRows.length === 0) {
     return (
       <Card className="retro-border">
