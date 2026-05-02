@@ -6,7 +6,7 @@ export const supabase = cloudClient;
 export const hasSupabaseConfig = true;
 
 export const supabaseConfig = {
-  url: import.meta.env.VITE_SUPABASE_URL ?? "",
+  url: import.meta.env.VITE_SUPABASE_URL ?? "https://ivbmlledoamqtzqpcvzl.supabase.co",
   hasAnonKey: true,
   looksPlaceholder: false,
 };
