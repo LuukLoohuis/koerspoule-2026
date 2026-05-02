@@ -1,7 +1,8 @@
 import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, TrendingUp, Crown, Swords } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trophy, TrendingUp, Crown, Swords, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntries, useStages, useStagePoints } from "@/hooks/useResults";
