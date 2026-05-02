@@ -410,7 +410,7 @@ function CategoryRow({
       </TableRow>
       {isOpen && (
         <TableRow>
-          <TableCell colSpan={6} className="bg-muted/30">
+          <TableCell colSpan={7} className="bg-muted/30">
             <div className="space-y-3 p-2">
               {riders.length === 0 && (
                 <div className="text-xs text-muted-foreground italic">Nog geen renners in deze categorie.</div>
