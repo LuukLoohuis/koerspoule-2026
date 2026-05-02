@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
@@ -9,7 +11,7 @@ import { useStages, useEntries } from "@/hooks/useResults";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { Trophy, Sparkles, Users, Target } from "lucide-react";
+import { Trophy, Sparkles, Users, Target, Pencil } from "lucide-react";
 
 type StagePoint = { stage_id: string; entry_id: string; points: number };
 
@@ -108,9 +110,34 @@ export default function MyTeamPanel() {
   }
 
   const isSubmitted = entry.status === "submitted";
+  const gameLocked = Boolean(game?.status && ["closed", "locked", "live", "finished"].includes(game.status as string));
 
   return (
     <div className="space-y-6">
+      {/* Wijzig-CTA — alleen tonen als koers nog niet op slot staat */}
+      {!gameLocked && (
+        <div
+          className={cn(
+            "retro-border p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3",
+            isSubmitted ? "bg-emerald-500/10 border-emerald-500/40" : "bg-amber-500/10 border-amber-500/40"
+          )}
+        >
+          <div className="text-sm">
+            {isSubmitted ? (
+              <>✅ <strong>Team ingediend.</strong> Wil je je selectie nog aanpassen? Dat kan tot de admin de koers op deadline zet.</>
+            ) : (
+              <>⚠️ <strong>Team nog niet ingediend.</strong> Vergeet niet je inzending te bevestigen.</>
+            )}
+          </div>
+          <Button asChild size="sm" variant={isSubmitted ? "outline" : "default"}>
+            <Link to="/team">
+              <Pencil className="h-4 w-4 mr-2" />
+              {isSubmitted ? "Wijzigen" : "Naar teambuilder"}
+            </Link>
+          </Button>
+        </div>
+      )}
+
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="retro-border">

@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2, X, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export type Category = {
   id: string;
@@ -191,6 +192,37 @@ export default function CategoriesTab({
     }));
   }
 
+  // Drag-and-drop herordenen van categorieën (HTML5 native)
+  const orderedCategories = useMemo(
+    () => [...categories].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    [categories]
+  );
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  async function reorderCategories(sourceId: string, targetId: string) {
+    if (!supabase || sourceId === targetId) return;
+    const list = [...orderedCategories];
+    const fromIdx = list.findIndex((c) => c.id === sourceId);
+    const toIdx = list.findIndex((c) => c.id === targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const [moved] = list.splice(fromIdx, 1);
+    list.splice(toIdx, 0, moved);
+
+    // Schrijf nieuwe sort_order (1..n) per categorie. Parallelle updates.
+    const updates = list.map((c, idx) =>
+      supabase!.from("categories").update({ sort_order: idx + 1 }).eq("id", c.id)
+    );
+    const results = await Promise.all(updates);
+    const firstErr = results.find((r) => r.error);
+    if (firstErr?.error) {
+      toast.error(`Volgorde opslaan mislukt: ${firstErr.error.message}`);
+      return;
+    }
+    toast.success("Volgorde aangepast");
+    await reload();
+  }
+
   const teamLabel = (r: Rider) => r.team || (r.team_id ? teamsById[r.team_id] : "") || "";
 
   return (
@@ -232,9 +264,11 @@ export default function CategoriesTab({
               Nog geen renners in startlijst. Importeer eerst de startlijst in de tab "Startlijst".
             </div>
           )}
+          <p className="mb-2 text-xs text-muted-foreground">Sleep aan het <GripVertical className="inline h-3 w-3" />-handvat om de volgorde te wijzigen.</p>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8"></TableHead>
                 <TableHead className="w-10"></TableHead>
                 <TableHead className="w-12">#</TableHead>
                 <TableHead>Naam</TableHead>
@@ -244,7 +278,7 @@ export default function CategoriesTab({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((c) => {
+              {orderedCategories.map((c) => {
                 const isOpen = !!expanded[c.id];
                 const riders = ridersByCategory[c.id] ?? [];
                 return (
@@ -260,11 +294,29 @@ export default function CategoriesTab({
                     onRemove={(rid) => removeRiderFromCategory(c.id, rid)}
                     onMaxPicks={(v) => updateMaxPicks(c.id, v)}
                     onDelete={() => deleteCategory(c.id)}
+                    isDragging={dragId === c.id}
+                    isDragOver={dragOverId === c.id && dragId !== c.id}
+                    onDragStart={() => setDragId(c.id)}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (dragOverId !== c.id) setDragOverId(c.id);
+                    }}
+                    onDragEnd={() => {
+                      setDragId(null);
+                      setDragOverId(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const src = dragId;
+                      setDragId(null);
+                      setDragOverId(null);
+                      if (src) void reorderCategories(src, c.id);
+                    }}
                   />
                 );
               })}
               {categories.length === 0 && (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Geen categorieën.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Geen categorieën.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -276,6 +328,7 @@ export default function CategoriesTab({
 
 function CategoryRow({
   c, isOpen, onToggle, riders, allRiders, teamLabel, onAdd, onRemove, onMaxPicks, onDelete,
+  isDragging, isDragOver, onDragStart, onDragOver, onDragEnd, onDrop,
 }: {
   c: Category;
   isOpen: boolean;
@@ -287,6 +340,12 @@ function CategoryRow({
   onRemove: (riderId: string) => void;
   onMaxPicks: (v: number) => void;
   onDelete: () => void;
+  isDragging?: boolean;
+  isDragOver?: boolean;
+  onDragStart?: (e: React.DragEvent<HTMLTableRowElement>) => void;
+  onDragOver?: (e: React.DragEvent<HTMLTableRowElement>) => void;
+  onDragEnd?: (e: React.DragEvent<HTMLTableRowElement>) => void;
+  onDrop?: (e: React.DragEvent<HTMLTableRowElement>) => void;
 }) {
   const [search, setSearch] = useState("");
 
@@ -305,7 +364,21 @@ function CategoryRow({
 
   return (
     <>
-      <TableRow data-testid={`category-row-${c.id}`}>
+      <TableRow
+        data-testid={`category-row-${c.id}`}
+        draggable
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
+        onDrop={onDrop}
+        className={cn(
+          isDragging && "opacity-50",
+          isDragOver && "outline outline-2 outline-primary"
+        )}
+      >
+        <TableCell className="cursor-grab active:cursor-grabbing text-muted-foreground">
+          <GripVertical className="h-4 w-4" />
+        </TableCell>
         <TableCell>
           <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onToggle}>
             {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -337,7 +410,7 @@ function CategoryRow({
       </TableRow>
       {isOpen && (
         <TableRow>
-          <TableCell colSpan={6} className="bg-muted/30">
+          <TableCell colSpan={7} className="bg-muted/30">
             <div className="space-y-3 p-2">
               {riders.length === 0 && (
                 <div className="text-xs text-muted-foreground italic">Nog geen renners in deze categorie.</div>
