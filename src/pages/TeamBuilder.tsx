@@ -16,7 +16,7 @@ export default function TeamBuilder() {
   const { toast } = useToast();
   const { data: game, isLoading: gameLoading } = useCurrentGame();
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(game?.id);
-  const { entry, isLoading: entryLoading, picksByCategory, jokerIds, predictions, savePick, saveJoker, savePredictions, submitEntry } = useEntry(game?.id);
+  const { entry, isLoading: entryLoading, picksByCategory, jokerIds, predictions, savePick, saveJoker, savePredictions, submitEntry, revertEntry } = useEntry(game?.id);
 
   const [startlistSearch, setStartlistSearch] = useState("");
   const [startlistTeamFilter, setStartlistTeamFilter] = useState("all");
