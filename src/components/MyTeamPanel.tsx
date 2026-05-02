@@ -110,9 +110,34 @@ export default function MyTeamPanel() {
   }
 
   const isSubmitted = entry.status === "submitted";
+  const gameLocked = Boolean(game?.status && ["closed", "locked", "live", "finished"].includes(game.status as string));
 
   return (
     <div className="space-y-6">
+      {/* Wijzig-CTA — alleen tonen als koers nog niet op slot staat */}
+      {!gameLocked && (
+        <div
+          className={cn(
+            "retro-border p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3",
+            isSubmitted ? "bg-emerald-500/10 border-emerald-500/40" : "bg-amber-500/10 border-amber-500/40"
+          )}
+        >
+          <div className="text-sm">
+            {isSubmitted ? (
+              <>✅ <strong>Team ingediend.</strong> Wil je je selectie nog aanpassen? Dat kan tot de admin de koers op deadline zet.</>
+            ) : (
+              <>⚠️ <strong>Team nog niet ingediend.</strong> Vergeet niet je inzending te bevestigen.</>
+            )}
+          </div>
+          <Button asChild size="sm" variant={isSubmitted ? "outline" : "default"}>
+            <Link to="/team">
+              <Pencil className="h-4 w-4 mr-2" />
+              {isSubmitted ? "Wijzigen" : "Naar teambuilder"}
+            </Link>
+          </Button>
+        </div>
+      )}
+
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="retro-border">
