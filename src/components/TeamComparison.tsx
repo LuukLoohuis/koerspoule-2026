@@ -20,7 +20,7 @@ type EntrySnap = {
   entry_id: string;
   user_id: string;
   total_points: number;
-  picks: Map<string, string>; // category_id → rider_id
+  picks: Map<string, string[]>; // category_id → rider_ids
   jokers: Set<string>;
 };
 
@@ -40,9 +40,10 @@ function useTwoEntries(gameId: string | undefined, userIdA: string | undefined, 
       const buildSnap = (uid: string): EntrySnap | null => {
         const r = (rows ?? []).find((x) => x.user_id === uid);
         if (!r) return null;
-        const picks = new Map<string, string>();
+        const picks = new Map<string, string[]>();
         for (const p of (r.entry_picks ?? []) as Array<{ category_id: string; rider_id: string }>) {
-          picks.set(p.category_id, p.rider_id);
+          const existing = picks.get(p.category_id) ?? [];
+          picks.set(p.category_id, [...existing, p.rider_id]);
         }
         const jokers = new Set<string>(((r.entry_jokers ?? []) as Array<{ rider_id: string }>).map((j) => j.rider_id));
         return { entry_id: r.id, user_id: r.user_id, total_points: r.total_points ?? 0, picks, jokers };
@@ -55,7 +56,9 @@ function useTwoEntries(gameId: string | undefined, userIdA: string | undefined, 
       const ids = new Set<string>();
       for (const snap of [a, b]) {
         if (!snap) continue;
-        for (const id of snap.picks.values()) ids.add(id);
+        for (const pickIds of snap.picks.values()) {
+          for (const id of pickIds) ids.add(id);
+        }
         for (const id of snap.jokers) ids.add(id);
       }
       let ridersById = new Map<string, { name: string; team: string | null }>();
