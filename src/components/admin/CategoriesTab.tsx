@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2, X, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 
 export type Category = {
