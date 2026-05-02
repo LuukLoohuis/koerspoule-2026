@@ -160,13 +160,6 @@ export type Database = {
             referencedRelation: "games"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "entries_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_user_overview"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       entry_jokers: {
@@ -431,15 +424,7 @@ export type Database = {
           role?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "admin_user_overview"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       riders: {
         Row: {
@@ -698,13 +683,6 @@ export type Database = {
             referencedRelation: "subpoules"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "subpoule_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_user_overview"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       subpoules: {
@@ -739,13 +717,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "games"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subpoules_owner_user_id_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_user_overview"
-            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -829,15 +800,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_user_overview"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -884,6 +847,16 @@ export type Database = {
           submitted_at: string
           team_name: string
           total_points: number
+          user_id: string
+        }[]
+      }
+      admin_user_overview: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          is_admin: boolean
+          teams_count: number
           user_id: string
         }[]
       }
