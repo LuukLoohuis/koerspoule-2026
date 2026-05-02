@@ -188,7 +188,15 @@ export default function TeamBuilder() {
     }
   };
 
-  const completedPicks = picksByCategory.size;
+  const totalRequired = useMemo(
+    () => categories.reduce((sum, c) => sum + (c.max_picks ?? 1), 0),
+    [categories]
+  );
+  const completedPicks = useMemo(() => {
+    let n = 0;
+    for (const arr of picksByCategory.values()) n += arr.length;
+    return n;
+  }, [picksByCategory]);
   const gameReady = !gameLoading && !categoriesLoading && !entryLoading;
 
   return (
@@ -200,7 +208,7 @@ export default function TeamBuilder() {
             Stel je ploeg samen
           </h1>
           <p className="text-muted-foreground font-serif">
-            Kies 1 renner per categorie • {completedPicks}/{categories.length} gekozen
+            Kies je renners per categorie • {completedPicks}/{totalRequired} gekozen
           </p>
         </div>
 
