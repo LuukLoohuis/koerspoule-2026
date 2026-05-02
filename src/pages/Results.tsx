@@ -366,7 +366,7 @@ export default function Results() {
               <div className="p-4 border-b-2 border-foreground bg-secondary/50">
                 <h2 className="font-display text-lg font-bold flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-primary" />
-                  Algemeen klassement (poule)
+                  Algemeen klassement alle deelnemers
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {overallStandings.length} {overallStandings.length === 1 ? "deelnemer" : "deelnemers"}
