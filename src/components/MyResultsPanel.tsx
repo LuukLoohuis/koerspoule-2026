@@ -91,22 +91,29 @@ export default function MyResultsPanel() {
         <>
           {/* Stage selector */}
           <Card className="retro-border">
-            <CardContent className="p-3">
-              <div className="flex gap-1.5 overflow-x-auto pb-1">
+            <CardContent className="p-3 overflow-x-auto">
+              <div className="flex gap-1 min-w-max">
                 {stages.map((s) => {
                   const isActive = s.id === activeStageId;
+                  const meta = STAGE_TYPE_META[s.stage_type ?? "vlak"];
+                  const pts = stagePointsByEntry[myEntryId ?? ""] && s.id === activeStageId
+                    ? stagePointsByEntry[myEntryId ?? ""]
+                    : 0;
                   return (
                     <button
                       key={s.id}
                       onClick={() => setSelectedStageId(s.id)}
                       className={cn(
-                        "shrink-0 px-3 py-2 text-xs font-display font-bold rounded-md border-2 transition-all min-w-[60px]",
-                        isActive ? "border-primary bg-primary text-primary-foreground" : "border-border hover:border-muted-foreground",
+                        "flex flex-col items-center gap-1 px-2 py-1.5 rounded transition min-w-[44px]",
+                        isActive ? "bg-primary text-primary-foreground" : "hover:bg-secondary",
                         s.status === "draft" && "opacity-60"
                       )}
                     >
-                      <div>R{s.stage_number}</div>
-                      <div className="text-base mt-0.5">{STAGE_ICON[s.stage_type] ?? "🚴"}</div>
+                      <span className="text-[10px] font-bold tabular-nums">{s.stage_number}</span>
+                      <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-white", meta?.color ?? "bg-muted")}>
+                        {meta?.icon}
+                      </div>
+                      <span className="text-[9px] tabular-nums opacity-70">{pts || ""}</span>
                     </button>
                   );
                 })}
