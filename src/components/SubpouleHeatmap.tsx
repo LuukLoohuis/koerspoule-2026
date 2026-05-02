@@ -23,10 +23,12 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
     // category_id → rider_id → count
     const counts = new Map<string, Map<string, number>>();
     for (const e of data.entries) {
-      for (const [catId, riderId] of e.picks) {
+      for (const [catId, riderIds] of e.picks) {
         if (!counts.has(catId)) counts.set(catId, new Map());
         const cm = counts.get(catId)!;
-        cm.set(riderId, (cm.get(riderId) ?? 0) + 1);
+        for (const riderId of riderIds) {
+          cm.set(riderId, (cm.get(riderId) ?? 0) + 1);
+        }
       }
     }
     return { counts, totalPlayers };
