@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight, Plus, Trash2, X, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export type Category = {
   id: string;
