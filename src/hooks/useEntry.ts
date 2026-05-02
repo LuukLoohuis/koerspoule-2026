@@ -155,5 +155,6 @@ export function useEntry(gameId?: string) {
     savePredictions,
     saveTeamName,
     submitEntry,
+    revertEntry,
   };
 }
