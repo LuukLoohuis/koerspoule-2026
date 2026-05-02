@@ -361,13 +361,29 @@ export default function TeamBuilder() {
               </div>
 
 
-              <div className="flex justify-end">
+              {!gameLocked && !isSubmitted && (
+                <div className="retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
+                  ⚠️ <strong>Let op:</strong> je team is nog <strong>niet ingediend</strong>. Druk op <em>"Team definitief indienen"</em> om je inzending te bevestigen.
+                  Als de admin de koers op <strong>deadline</strong> of <strong>live</strong> zet zonder dat je hebt ingediend, telt je huidige selectie automatisch als jouw team.
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-2 justify-end items-stretch sm:items-center">
+                {!gameLocked && isSubmitted && (
+                  <Button
+                    variant="outline"
+                    onClick={handleRevert}
+                    disabled={revertEntry.isPending}
+                  >
+                    ✏️ Wijzigen
+                  </Button>
+                )}
                 <Button
                   onClick={handleSubmit}
-                  disabled={Boolean(isLocked || submitEntry.isPending)}
+                  disabled={Boolean(isLocked || isSubmitted || submitEntry.isPending)}
                   className="retro-border-primary font-bold"
                 >
-                  ✅ Team definitief indienen
+                  {isSubmitted ? "✅ Reeds ingediend" : "✅ Team definitief indienen"}
                 </Button>
               </div>
 
