@@ -11,37 +11,51 @@ export type ParsedStartlistTeam = {
   }>;
 };
 
+/**
+ * Extract text per line. PDF.js gives us positioned text items — we group
+ * them by their `y` coordinate to reconstruct logical lines.
+ */
 export async function extractPdfText(file: File): Promise<string> {
   const data = await file.arrayBuffer();
   const loadingTask = pdfjsLib.getDocument({ data });
   const pdf = await loadingTask.promise;
 
-  const chunks: string[] = [];
+  const allLines: string[] = [];
   for (let i = 1; i <= pdf.numPages; i += 1) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item) => ("str" in item ? item.str : ""))
-      .join("\n");
-    chunks.push(pageText);
+
+    // Group items by y-coordinate (rounded) to reconstruct lines
+    const lineMap = new Map<number, Array<{ x: number; str: string }>>();
+    for (const item of content.items as any[]) {
+      if (!("str" in item) || !item.str.trim()) continue;
+      const y = Math.round(item.transform[5]);
+      const x = item.transform[4];
+      if (!lineMap.has(y)) lineMap.set(y, []);
+      lineMap.get(y)!.push({ x, str: item.str });
+    }
+
+    // Sort lines top-to-bottom (PDF y increases upward)
+    const ys = [...lineMap.keys()].sort((a, b) => b - a);
+    for (const y of ys) {
+      const parts = lineMap.get(y)!.sort((a, b) => a.x - b.x);
+      const line = parts.map((p) => p.str).join(" ").replace(/\s+/g, " ").trim();
+      if (line) allLines.push(line);
+    }
   }
 
-  return chunks.join("\n");
+  return allLines.join("\n");
 }
 
 /**
- * Convert "LAST FIRST MIDDLE" → "First Middle Last".
- * Detects which tokens are uppercase (last name parts) vs Title Case (first/middle).
+ * Convert "LASTNAME First Middle" → "First Middle Lastname".
  */
 function normalizeRiderName(raw: string): string {
   const cleaned = raw.replace(/\s+/g, " ").trim();
   const tokens = cleaned.split(" ");
   if (tokens.length < 2) return cleaned;
 
-  // PCS format: LASTNAME(S) in UPPER, then First Middle in Title Case.
-  // A token counts as "last name" if it's all uppercase letters (allow ' - and accented).
-  const isUpper = (t: string) =>
-    t === t.toUpperCase() && /[A-ZÀ-ÖØ-Þ]/.test(t);
+  const isUpper = (t: string) => t === t.toUpperCase() && /[A-ZÀ-ÖØ-Þ]/.test(t);
 
   let splitAt = 0;
   for (let i = 0; i < tokens.length; i += 1) {
@@ -52,7 +66,6 @@ function normalizeRiderName(raw: string): string {
 
   const last = tokens.slice(0, splitAt).join(" ");
   const first = tokens.slice(splitAt).join(" ");
-  // Title-case the last name
   const titleLast = last
     .split(" ")
     .map((p) => p.charAt(0) + p.slice(1).toLowerCase())
@@ -61,109 +74,64 @@ function normalizeRiderName(raw: string): string {
 }
 
 /**
- * Robust parser for ProCyclingStats startlist PDFs.
+ * Robust line-based parser for ProCyclingStats startlist PDFs.
  *
- * The PDF text is extracted as many small fragments (often each token on its
- * own line, with stray spaces). We therefore:
- *   1. Join all whitespace into single spaces (one big string).
- *   2. Use regex to find every rider entry: `NN. NAME` until the next entry,
- *      team header, or `DS:` block.
- *   3. Group riders into teams by their start-number prefix (1-9, 11-19, ...).
- *      Team name = text between previous block end and the first rider of
- *      that team's number range.
+ * Expected structure (per line):
+ *   "<team_index> <Team Name>"        e.g. "1 Lotto Intermarché"
+ *   "<start_number>. <RIDER NAME>"    e.g. "81. DE LIE Arnaud"
+ *   "0. NAME"                         (captain marker — skip)
+ *   "DS: ..."                         (director sportif line — skip)
+ *
+ * Page header lines like "Giro d'Italia | 2026" or "184 starting" are ignored.
  */
 export function parseProCyclingStatsStartlist(rawText: string): ParsedStartlistTeam[] {
-  // Collapse all whitespace to single spaces. Keeps everything on one line.
-  const text = rawText.replace(/\s+/g, " ").trim();
+  const lines = rawText
+    .split(/\r?\n/)
+    .map((l) => l.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
 
-  // Strip the DS: ... lines (they end before the next "<digit><digit>?<space><Capital>" team header
-  // or before the next rider number). Easiest: remove "DS: ... " up to next " <num>." or " <num> <Capital>".
-  // We'll process by splitting on rider-number pattern instead.
+  const teams: ParsedStartlistTeam[] = [];
+  let current: ParsedStartlistTeam | null = null;
 
-  // Find all rider entries. A rider number is 1-3 digits followed by a dot.
-  // Capture: start_number, name (up to next rider number, or " DS:", or end).
-  const riderRe = /(\d{1,3})\.\s+([A-ZÀ-ÖØ-Þ][^.]*?)(?=\s+\d{1,3}\.\s+[A-ZÀ-ÖØ-Þ]|\s+DS:|$)/g;
+  // Patterns
+  const riderRe = /^(\d{1,3})\.\s+([A-ZÀ-ÖØ-Þ][^\d].*)$/;
+  // Team header: starts with a small index (1-30) followed by a name that
+  // contains at least one letter and is NOT immediately a rider line.
+  const teamHeaderRe = /^(\d{1,2})\s+([A-Za-zÀ-ÿ].+)$/;
 
-  type RiderHit = { num: number; name: string; index: number };
-  const hits: RiderHit[] = [];
-  let m: RegExpExecArray | null;
-  while ((m = riderRe.exec(text)) !== null) {
-    const num = Number(m[1]);
-    if (!Number.isFinite(num) || num < 1 || num > 999) continue;
-    const name = normalizeRiderName(m[2]);
-    if (!name) continue;
-    hits.push({ num, name, index: m.index });
-  }
+  const ignoreRe = /^(DS:|procyclingstats|giro|tour|vuelta|\d{1,4}\s+starting|\d{2}\/\d{2}\/\d{4}|\d+\s*km)/i;
 
-  if (hits.length === 0) return [];
+  for (const line of lines) {
+    if (ignoreRe.test(line)) continue;
 
-  // Group riders by team based on their start number's "tens/hundreds prefix".
-  // PCS uses team_index * 10 + position (1..8), e.g. team 1 -> 1..8, team 2 -> 11..18,
-  // team 10 -> 91..98 (some races use 100s for team 11+ -> 101..108).
-  // Simpler: group consecutive riders whose numbers are within +/- 10 of the previous one
-  // and increasing. A new team starts when number jumps backwards or by > 10.
-  const groups: RiderHit[][] = [];
-  let current: RiderHit[] = [];
-  for (const h of hits) {
-    if (current.length === 0) {
-      current.push(h);
+    const riderMatch = line.match(riderRe);
+    if (riderMatch) {
+      const num = Number(riderMatch[1]);
+      // Skip "0." marker lines (PCS uses these for the team captain banner)
+      if (num === 0) continue;
+      if (!current) continue; // rider before any team header — skip
+      const name = normalizeRiderName(riderMatch[2]);
+      if (!name) continue;
+      current.riders.push({ name, start_number: num });
       continue;
     }
-    const prev = current[current.length - 1];
-    // Same team = strictly consecutive numbers (1,2,3...; 11,12,13...; 101,102,103...).
-    const sameTeam = h.num === prev.num + 1;
-    if (sameTeam) {
-      current.push(h);
-    } else {
-      groups.push(current);
-      current = [h];
+
+    const teamMatch = line.match(teamHeaderRe);
+    if (teamMatch) {
+      const idx = Number(teamMatch[1]);
+      // Heuristic: a "team header" index is typically 1..30 (max ~25 teams).
+      // Avoids treating a stray number-prefixed line as a team.
+      if (idx < 1 || idx > 30) continue;
+      const name = teamMatch[2].trim();
+      // Push previous team
+      if (current && current.riders.length > 0) teams.push(current);
+      current = { name, riders: [] };
+      continue;
     }
-  }
-  if (current.length) groups.push(current);
-
-  // For each group, find the team name: it's the text immediately BEFORE the
-  // first rider hit, after the previous group's last "DS:" or after the start.
-  // We look backwards from `firstHit.index` for the team-header pattern:
-  //   "<team_index> <Team Name>"
-  // where <team_index> is 1-2 digits and Team Name continues until just before
-  // the rider number. Use the substring from the end of previous block.
-  const teams: ParsedStartlistTeam[] = [];
-  let cursor = 0;
-  for (let g = 0; g < groups.length; g += 1) {
-    const group = groups[g];
-    const firstHit = group[0];
-    const segment = text.slice(cursor, firstHit.index).trim();
-
-    // The segment looks like:
-    //   "<DS: NAME1,NAME2 NAME3>?  <team_index> <Team Name>"
-    // For the very first team there is no DS prefix.
-    // We find the LAST `<1-2 digit number> <rest>` occurrence in the segment;
-    // that is the team header (DS-name list contains no standalone digits).
-    let teamName = "";
-    const allHeaders = [...segment.matchAll(/(?:^|\s)(\d{1,2})\s+(\S[^]*?)$/g)];
-    if (allHeaders.length > 0) {
-      const last = allHeaders[allHeaders.length - 1];
-      teamName = last[2].replace(/\s+/g, " ").trim();
-    }
-    if (!teamName) {
-      teamName = segment.split(" ").slice(-6).join(" ").trim() || `Team ${g + 1}`;
-    }
-    // Strip page-header noise (e.g. "160 starting 1 UAE...") that may leak into the first team.
-    teamName = teamName
-      .replace(/^.*?starting\s*/i, "")
-      .replace(/^\d{1,3}\s+/, "")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    teams.push({
-      name: teamName,
-      riders: group.map((r) => ({ name: r.name, start_number: r.num })),
-    });
-
-    // Advance cursor to just past the last rider hit of this group.
-    const lastHit = group[group.length - 1];
-    cursor = lastHit.index + lastHit.name.length + String(lastHit.num).length + 2;
+    // Other lines (e.g. blank, headers) — ignore
   }
 
-  return teams.filter((t) => t.riders.length > 0);
+  if (current && current.riders.length > 0) teams.push(current);
+
+  return teams;
 }
