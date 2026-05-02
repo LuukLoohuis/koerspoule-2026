@@ -215,9 +215,18 @@ export default function TeamBuilder() {
             </TabsList>
 
             <TabsContent value="builder" className="space-y-4">
-              {isLocked && (
+              {gameLocked && (
                 <div className="retro-border bg-secondary/50 p-3 text-sm">
-                  Team staat op slot ({entry?.status === "submitted" ? "ingediend" : game.status}).
+                  🔒 De koers staat op <strong>{game.status}</strong> — wijzigen niet meer mogelijk.
+                  {!isSubmitted && " Je huidige selectie telt als jouw inzending."}
+                </div>
+              )}
+              {!gameLocked && isSubmitted && (
+                <div className="retro-border bg-emerald-500/10 border-emerald-500/40 p-3 text-sm flex items-center justify-between gap-3">
+                  <span>✅ <strong>Team ingediend.</strong> Wil je nog iets aanpassen? Klik op "Wijzigen" — vergeet daarna opnieuw in te dienen.</span>
+                  <Button size="sm" variant="outline" onClick={handleRevert} disabled={revertEntry.isPending}>
+                    ✏️ Wijzigen
+                  </Button>
                 </div>
               )}
 
