@@ -6,10 +6,15 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
 import { useStages, useStageResults, useStagePoints, useEntries } from "@/hooks/useResults";
 import { cn } from "@/lib/utils";
-import { Trophy, ListOrdered, Mountain } from "lucide-react";
+import { Trophy, ListOrdered, Mountain, Activity, Clock } from "lucide-react";
 
-const STAGE_ICON: Record<string, string> = {
-  vlak: "🏁", heuvelachtig: "⛰️", bergachtig: "🏔️", tijdrit: "⏱️", ploegentijdrit: "⏱️👥",
+const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
+  vlak: { label: "Vlak", color: "bg-emerald-500", icon: <Activity className="w-4 h-4" /> },
+  heuvelachtig: { label: "Heuvelachtig", color: "bg-amber-500", icon: <Mountain className="w-4 h-4" /> },
+  bergop: { label: "Bergop", color: "bg-rose-600", icon: <Mountain className="w-4 h-4" /> },
+  bergachtig: { label: "Bergachtig", color: "bg-rose-600", icon: <Mountain className="w-4 h-4" /> },
+  tijdrit: { label: "Tijdrit", color: "bg-sky-500", icon: <Clock className="w-4 h-4" /> },
+  ploegentijdrit: { label: "Ploegentijdrit", color: "bg-violet-500", icon: <Clock className="w-4 h-4" /> },
 };
 
 type View = "etappes" | "poule" | "gc";
