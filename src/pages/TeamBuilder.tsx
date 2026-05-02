@@ -111,13 +111,16 @@ export default function TeamBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gcPodium, pointsJersey, mountainJersey, youthJersey]);
 
-  const selectedPickRiderIds = useMemo(() => new Set(Array.from(picksByCategory.values())), [picksByCategory]);
+  const selectedPickRiderIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const arr of picksByCategory.values()) for (const id of arr) s.add(id);
+    return s;
+  }, [picksByCategory]);
 
-  const handlePickSelect = async (categoryId: string, riderId: string) => {
+  const handlePickToggle = async (categoryId: string, riderId: string) => {
     if (!entry) return;
     try {
-      await savePick.mutateAsync({ entryId: entry.id, categoryId, riderId });
-      toast({ title: "Keuze opgeslagen" });
+      await togglePick.mutateAsync({ entryId: entry.id, categoryId, riderId });
     } catch (error) {
       toast({
         title: "Opslaan mislukt",
