@@ -42,10 +42,13 @@ const LINE_COLORS = [
 export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
   const { user } = useAuth();
   const { data: game } = useCurrentGame();
-  const { data: members = [] } = useSubpouleMembers(subpouleId);
+  const { data: members = [], isLoading: membersLoading, error: membersError } = useSubpouleMembers(subpouleId);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stages = [] } = useStages(game?.id);
   const { data: stagePoints = [] } = useStagePoints(game?.id);
+
+  // eslint-disable-next-line no-console
+  console.log("[SubpouleStandings]", { subpouleId, membersLoading, membersCount: members.length, membersError });
 
   // Members → entries
   const memberRows = useMemo(() => {
