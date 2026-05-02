@@ -7,7 +7,7 @@ export type SubpouleEntry = {
   entry_id: string | null;
   team_name: string | null;
   total_points: number;
-  picks: Map<string, string>; // category_id → rider_id
+  picks: Map<string, string[]>; // category_id → rider_ids
   jokers: Set<string>;
 };
 
@@ -50,9 +50,12 @@ export function useSubpouleEntries(subpouleId?: string, gameId?: string) {
       if (rows.length === 0) return { entries: [], ridersById: new Map() };
 
       const entries: SubpouleEntry[] = rows.map((r) => {
-        const picks = new Map<string, string>();
+        const picks = new Map<string, string[]>();
         const jokers = new Set<string>();
-        for (const p of r.picks ?? []) picks.set(p.category_id, p.rider_id);
+        for (const p of r.picks ?? []) {
+          const existing = picks.get(p.category_id) ?? [];
+          picks.set(p.category_id, [...existing, p.rider_id]);
+        }
         for (const j of r.jokers ?? []) jokers.add(j.rider_id);
         return {
           user_id: r.user_id,
