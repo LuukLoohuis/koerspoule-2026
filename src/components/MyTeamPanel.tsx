@@ -67,7 +67,7 @@ export default function MyTeamPanel() {
 
   const allRiderIds = useMemo(() => {
     const set = new Set<string>();
-    for (const id of picksByCategory.values()) set.add(id);
+    for (const arr of picksByCategory.values()) for (const id of arr) set.add(id);
     for (const id of jokerIds) set.add(id);
     for (const p of predictions) set.add(p.rider_id);
     return Array.from(set);
