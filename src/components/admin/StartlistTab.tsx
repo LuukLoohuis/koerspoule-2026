@@ -222,11 +222,12 @@ export default function StartlistTab({
         <CardHeader><CardTitle className="font-display">Startlijst ({riders.length})</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           <Input data-testid="search-startlist" placeholder="Zoek renner of team..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <p className="text-xs text-muted-foreground">Klik op een cel om naam, startnummer of team van een renner te wijzigen.</p>
           <div className="max-h-[480px] overflow-auto border rounded-md">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-20">#</TableHead>
+                  <TableHead className="w-24">#</TableHead>
                   <TableHead>Renner</TableHead>
                   <TableHead>Team</TableHead>
                   <TableHead className="w-16"></TableHead>
@@ -234,16 +235,13 @@ export default function StartlistTab({
               </TableHeader>
               <TableBody>
                 {filteredRiders.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-mono text-xs">{r.start_number ?? "—"}</TableCell>
-                    <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{r.team_name ?? "—"}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => deleteRider(r.id)}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  <RiderRow
+                    key={r.id}
+                    rider={r}
+                    teams={teams}
+                    onSaved={reload}
+                    onDelete={() => deleteRider(r.id)}
+                  />
                 ))}
                 {filteredRiders.length === 0 && (
                   <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Geen renners.</TableCell></TableRow>
@@ -254,5 +252,120 @@ export default function StartlistTab({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function RiderRow({
+  rider,
+  teams,
+  onSaved,
+  onDelete,
+}: {
+  rider: Rider;
+  teams: Team[];
+  onSaved: () => Promise<void> | void;
+  onDelete: () => void;
+}) {
+  const [editingField, setEditingField] = useState<"name" | "number" | null>(null);
+  const [draftName, setDraftName] = useState(rider.name);
+  const [draftNumber, setDraftNumber] = useState(String(rider.start_number ?? ""));
+  const [savingTeam, setSavingTeam] = useState(false);
+
+  async function saveField(patch: Partial<{ name: string; start_number: number | null; team_id: string | null }>) {
+    if (!supabase) return;
+    const { error } = await supabase.from("riders").update(patch).eq("id", rider.id);
+    if (error) {
+      toast.error(`Opslaan mislukt: ${error.message}`);
+      return false;
+    }
+    toast.success("Opgeslagen");
+    await onSaved();
+    return true;
+  }
+
+  return (
+    <TableRow>
+      <TableCell className="font-mono text-xs">
+        {editingField === "number" ? (
+          <Input
+            autoFocus
+            type="number"
+            value={draftNumber}
+            onChange={(e) => setDraftNumber(e.target.value)}
+            onBlur={async () => {
+              const num = draftNumber.trim() ? Number(draftNumber) : null;
+              if (num !== rider.start_number) {
+                const ok = await saveField({ start_number: num });
+                if (!ok) setDraftNumber(String(rider.start_number ?? ""));
+              }
+              setEditingField(null);
+            }}
+            onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()}
+            className="h-8 w-20"
+          />
+        ) : (
+          <button
+            className="hover:bg-secondary rounded px-1 py-0.5 w-full text-left"
+            onClick={() => setEditingField("number")}
+          >
+            {rider.start_number ?? "—"}
+          </button>
+        )}
+      </TableCell>
+      <TableCell className="font-medium">
+        {editingField === "name" ? (
+          <Input
+            autoFocus
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            onBlur={async () => {
+              const trimmed = draftName.trim();
+              if (trimmed && trimmed !== rider.name) {
+                const ok = await saveField({ name: trimmed });
+                if (!ok) setDraftName(rider.name);
+              } else {
+                setDraftName(rider.name);
+              }
+              setEditingField(null);
+            }}
+            onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()}
+            className="h-8"
+          />
+        ) : (
+          <button
+            className="hover:bg-secondary rounded px-1 py-0.5 w-full text-left"
+            onClick={() => setEditingField("name")}
+          >
+            {rider.name}
+          </button>
+        )}
+      </TableCell>
+      <TableCell className="text-sm text-muted-foreground">
+        <Select
+          value={rider.team_id ?? "none"}
+          onValueChange={async (val) => {
+            setSavingTeam(true);
+            await saveField({ team_id: val === "none" ? null : val });
+            setSavingTeam(false);
+          }}
+          disabled={savingTeam}
+        >
+          <SelectTrigger className="h-8 w-full max-w-[260px]">
+            <SelectValue placeholder="(geen)" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">(geen)</SelectItem>
+            {teams.map((t) => (
+              <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell>
+        <Button variant="ghost" size="sm" onClick={onDelete}>
+          <Trash2 className="w-4 h-4 text-destructive" />
+        </Button>
+      </TableCell>
+    </TableRow>
   );
 }
