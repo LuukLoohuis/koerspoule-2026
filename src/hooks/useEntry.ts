@@ -99,6 +99,19 @@ export function useEntry(gameId?: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
   });
 
+  const saveTeamName = useMutation({
+    mutationFn: async ({ entryId, teamName }: { entryId: string; teamName: string }) => {
+      if (!supabase) throw new Error("Supabase niet geconfigureerd");
+      const trimmed = teamName.trim();
+      const { error } = await supabase
+        .from("entries")
+        .update({ team_name: trimmed.length ? trimmed : null })
+        .eq("id", entryId);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
+  });
+
   const picksByCategory = useMemo(() => {
     const m = new Map<string, string>();
     for (const pick of entryQuery.data?.entry_picks ?? []) {
@@ -120,12 +133,14 @@ export function useEntry(gameId?: string) {
   return {
     ...entryQuery,
     entry: entryQuery.data,
+    teamName: entryQuery.data?.team_name ?? null,
     picksByCategory,
     jokerIds,
     predictions,
     savePick,
     saveJoker,
     savePredictions,
+    saveTeamName,
     submitEntry,
   };
 }
