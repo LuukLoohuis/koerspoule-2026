@@ -109,29 +109,17 @@ export function useEntries(gameId?: string) {
     enabled: Boolean(gameId),
     queryFn: async (): Promise<EntryStanding[]> => {
       if (!supabase || !gameId) return [];
-      const { data, error } = await supabase
-        .from("entries")
-        .select("id, user_id, team_name, total_points")
-        .eq("game_id", gameId)
-        .eq("status", "submitted")
-        .order("total_points", { ascending: false });
+      const { data, error } = await (supabase as any).rpc("game_entries_standings", {
+        p_game_id: gameId,
+      });
       if (error) throw error;
-      const rows = (data ?? []) as Array<{ id: string; user_id: string; team_name: string | null; total_points: number }>;
-      const userIds = Array.from(new Set(rows.map((r) => r.user_id)));
-      let profileMap = new Map<string, string | null>();
-      if (userIds.length > 0) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("id, display_name")
-          .in("id", userIds);
-        profileMap = new Map((profs ?? []).map((p: { id: string; display_name: string | null }) => [p.id, p.display_name]));
-      }
+      const rows = (data ?? []) as Array<{ id: string; user_id: string; team_name: string | null; total_points: number; display_name: string | null }>;
       return rows.map((r) => ({
         id: r.id,
         user_id: r.user_id,
         team_name: r.team_name,
         total_points: r.total_points ?? 0,
-        display_name: profileMap.get(r.user_id) ?? null,
+        display_name: r.display_name ?? null,
       }));
     },
   });
