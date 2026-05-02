@@ -71,7 +71,9 @@ export function useSubpouleEntries(subpouleId?: string, gameId?: string) {
       // 3. Rider names (1 query)
       const riderIds = new Set<string>();
       for (const e of entries) {
-        for (const id of e.picks.values()) riderIds.add(id);
+        for (const ids of e.picks.values()) {
+          for (const id of ids) riderIds.add(id);
+        }
         for (const id of e.jokers) riderIds.add(id);
       }
       const ridersById = new Map<string, { name: string; team: string | null }>();
