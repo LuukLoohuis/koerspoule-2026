@@ -313,6 +313,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                     wrapperStyle={{ fontSize: "11px" }}
                   />
                   {memberRows.map((m, idx) => {
+                    if (hiddenIds.has(m.user_id)) return null;
                     const color = LINE_COLORS[idx % LINE_COLORS.length];
                     const isHighlighted = m.user_id === highlightId;
                     return (
