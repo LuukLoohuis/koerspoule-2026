@@ -191,6 +191,37 @@ export default function CategoriesTab({
     }));
   }
 
+  // Drag-and-drop herordenen van categorieën (HTML5 native)
+  const orderedCategories = useMemo(
+    () => [...categories].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    [categories]
+  );
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  async function reorderCategories(sourceId: string, targetId: string) {
+    if (!supabase || sourceId === targetId) return;
+    const list = [...orderedCategories];
+    const fromIdx = list.findIndex((c) => c.id === sourceId);
+    const toIdx = list.findIndex((c) => c.id === targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const [moved] = list.splice(fromIdx, 1);
+    list.splice(toIdx, 0, moved);
+
+    // Schrijf nieuwe sort_order (1..n) per categorie. Parallelle updates.
+    const updates = list.map((c, idx) =>
+      supabase!.from("categories").update({ sort_order: idx + 1 }).eq("id", c.id)
+    );
+    const results = await Promise.all(updates);
+    const firstErr = results.find((r) => r.error);
+    if (firstErr?.error) {
+      toast.error(`Volgorde opslaan mislukt: ${firstErr.error.message}`);
+      return;
+    }
+    toast.success("Volgorde aangepast");
+    await reload();
+  }
+
   const teamLabel = (r: Rider) => r.team || (r.team_id ? teamsById[r.team_id] : "") || "";
 
   return (
