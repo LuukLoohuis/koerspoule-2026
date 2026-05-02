@@ -243,28 +243,44 @@ export default function TeamBuilder() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {categories.map((category) => {
-                  const selectedRiderId = picksByCategory.get(category.id);
+                  const selected = picksByCategory.get(category.id) ?? [];
+                  const max = category.max_picks ?? 1;
+                  const reached = selected.length >= max;
                   return (
                     <div key={category.id} className="retro-border bg-card p-4">
-                      <h2 className="font-display text-lg font-bold">
-                        {category.short_name ?? category.name}
-                      </h2>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h2 className="font-display text-lg font-bold">
+                          {category.short_name ?? category.name}
+                        </h2>
+                        <span
+                          className={cn(
+                            "text-xs font-mono px-2 py-0.5 rounded-full border",
+                            selected.length === max
+                              ? "border-primary text-primary bg-primary/10"
+                              : "border-border text-muted-foreground"
+                          )}
+                          title="Aantal keuzes"
+                        >
+                          {selected.length}/{max} keuzes
+                        </span>
+                      </div>
                       <p className="text-xs text-muted-foreground mb-3">{category.name}</p>
                       <div className="space-y-2">
                         {category.category_riders.map((row) => {
                           if (!row.riders) return null;
-                          const isSelected = selectedRiderId === row.riders.id;
+                          const isSelected = selected.includes(row.riders.id);
+                          const disabled = Boolean(isLocked) || (!isSelected && reached && max > 1);
                           return (
                             <button
                               key={row.rider_id}
-                              disabled={Boolean(isLocked)}
-                              onClick={() => handlePickSelect(category.id, row.riders!.id)}
+                              disabled={disabled}
+                              onClick={() => handlePickToggle(category.id, row.riders!.id)}
                               className={cn(
                                 "w-full flex items-center justify-between p-3 rounded-md border-2 transition-all text-left",
                                 isSelected
                                   ? "border-primary bg-primary/10 shadow-sm"
                                   : "border-border hover:border-muted-foreground hover:bg-secondary",
-                                isLocked && "opacity-60 cursor-not-allowed"
+                                disabled && "opacity-60 cursor-not-allowed"
                               )}
                             >
                               <div className="flex items-center gap-3">
