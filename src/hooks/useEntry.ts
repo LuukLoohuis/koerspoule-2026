@@ -99,6 +99,19 @@ export function useEntry(gameId?: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
   });
 
+  // Zet entry terug naar draft zodat de deelnemer mag wijzigen
+  const revertEntry = useMutation({
+    mutationFn: async ({ entryId }: { entryId: string }) => {
+      if (!supabase) throw new Error("Supabase niet geconfigureerd");
+      const { error } = await supabase
+        .from("entries")
+        .update({ status: "draft", submitted_at: null })
+        .eq("id", entryId);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
+  });
+
   const saveTeamName = useMutation({
     mutationFn: async ({ entryId, teamName }: { entryId: string; teamName: string }) => {
       if (!supabase) throw new Error("Supabase niet geconfigureerd");
@@ -142,5 +155,6 @@ export function useEntry(gameId?: string) {
     savePredictions,
     saveTeamName,
     submitEntry,
+    revertEntry,
   };
 }

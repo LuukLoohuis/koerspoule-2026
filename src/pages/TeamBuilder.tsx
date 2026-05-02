@@ -16,7 +16,7 @@ export default function TeamBuilder() {
   const { toast } = useToast();
   const { data: game, isLoading: gameLoading } = useCurrentGame();
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(game?.id);
-  const { entry, isLoading: entryLoading, picksByCategory, jokerIds, predictions, savePick, saveJoker, savePredictions, submitEntry } = useEntry(game?.id);
+  const { entry, isLoading: entryLoading, picksByCategory, jokerIds, predictions, savePick, saveJoker, savePredictions, submitEntry, revertEntry } = useEntry(game?.id);
 
   const [startlistSearch, setStartlistSearch] = useState("");
   const [startlistTeamFilter, setStartlistTeamFilter] = useState("all");
@@ -69,7 +69,10 @@ export default function TeamBuilder() {
   const [youthJersey, setYouthJersey] = useState("");
 
   const isSubmitted = entry?.status === "submitted";
-  const isLocked = isSubmitted || (game?.status && ["locked", "live", "finished"].includes(game.status));
+  // Hard lock: alleen wanneer admin de game op deadline/live/finished zet.
+  // 'submitted' lockt het team NIET — de deelnemer kan altijd wijzigen tot de deadline.
+  const gameLocked = Boolean(game?.status && ["closed", "locked", "live", "finished"].includes(game.status));
+  const isLocked = gameLocked;
 
   // Hydrate predictions from DB once loaded
   const hydratedRef = useRef(false);
@@ -168,6 +171,20 @@ export default function TeamBuilder() {
     }
   };
 
+  const handleRevert = async () => {
+    if (!entry) return;
+    try {
+      await revertEntry.mutateAsync({ entryId: entry.id });
+      toast({ title: "Team weer bewerkbaar — vergeet niet opnieuw in te dienen" });
+    } catch (error) {
+      toast({
+        title: "Wijzigen mislukt",
+        description: error instanceof Error ? error.message : "Onbekende fout",
+        variant: "destructive",
+      });
+    }
+  };
+
   const completedPicks = picksByCategory.size;
   const gameReady = !gameLoading && !categoriesLoading && !entryLoading;
 
@@ -198,9 +215,18 @@ export default function TeamBuilder() {
             </TabsList>
 
             <TabsContent value="builder" className="space-y-4">
-              {isLocked && (
+              {gameLocked && (
                 <div className="retro-border bg-secondary/50 p-3 text-sm">
-                  Team staat op slot ({entry?.status === "submitted" ? "ingediend" : game.status}).
+                  🔒 De koers staat op <strong>{game.status}</strong> — wijzigen niet meer mogelijk.
+                  {!isSubmitted && " Je huidige selectie telt als jouw inzending."}
+                </div>
+              )}
+              {!gameLocked && isSubmitted && (
+                <div className="retro-border bg-emerald-500/10 border-emerald-500/40 p-3 text-sm flex items-center justify-between gap-3">
+                  <span>✅ <strong>Team ingediend.</strong> Wil je nog iets aanpassen? Klik op "Wijzigen" — vergeet daarna opnieuw in te dienen.</span>
+                  <Button size="sm" variant="outline" onClick={handleRevert} disabled={revertEntry.isPending}>
+                    ✏️ Wijzigen
+                  </Button>
                 </div>
               )}
 
@@ -335,13 +361,29 @@ export default function TeamBuilder() {
               </div>
 
 
-              <div className="flex justify-end">
+              {!gameLocked && !isSubmitted && (
+                <div className="retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
+                  ⚠️ <strong>Let op:</strong> je team is nog <strong>niet ingediend</strong>. Druk op <em>"Team definitief indienen"</em> om je inzending te bevestigen.
+                  Als de admin de koers op <strong>deadline</strong> of <strong>live</strong> zet zonder dat je hebt ingediend, telt je huidige selectie automatisch als jouw team.
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-2 justify-end items-stretch sm:items-center">
+                {!gameLocked && isSubmitted && (
+                  <Button
+                    variant="outline"
+                    onClick={handleRevert}
+                    disabled={revertEntry.isPending}
+                  >
+                    ✏️ Wijzigen
+                  </Button>
+                )}
                 <Button
                   onClick={handleSubmit}
-                  disabled={Boolean(isLocked || submitEntry.isPending)}
+                  disabled={Boolean(isLocked || isSubmitted || submitEntry.isPending)}
                   className="retro-border-primary font-bold"
                 >
-                  ✅ Team definitief indienen
+                  {isSubmitted ? "✅ Reeds ingediend" : "✅ Team definitief indienen"}
                 </Button>
               </div>
 
