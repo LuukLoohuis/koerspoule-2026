@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight, MoreHorizontal, Check, X } from "lucide-react";
+import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight, MoreHorizontal, Check, X, Pencil } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
 import PelotonChat from "@/components/PelotonChat";
 import SubpouleManager from "@/components/SubpouleManager";
@@ -20,6 +20,9 @@ import MyTeamPanel from "@/components/MyTeamPanel";
 import MyResultsPanel from "@/components/MyResultsPanel";
 import PalmaresPanel from "@/components/PalmaresPanel";
 import { useToast } from "@/hooks/use-toast";
+import { useProfile } from "@/hooks/useProfile";
+import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useEntry } from "@/hooks/useEntry";
 import {
   ChartContainer,
   ChartTooltip,
@@ -72,7 +75,13 @@ const MEMBER_COLORS = [
 
 export default function MijnPeloton() {
   const { toast } = useToast();
+  const { data: profile } = useProfile();
+  const { data: currentGame } = useCurrentGame();
+  const { entry, teamName, saveTeamName } = useEntry(currentGame?.id);
   const myTeam = mockTeams[0];
+  const displayName = (teamName?.trim() || profile?.display_name?.trim() || myTeam.userName);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
   const [selectedGame, setSelectedGame] = useState(myGames[0].id);
   const [gameTab, setGameTab] = useState("team");
   const [uitslagenView, setUitslagenView] = useState<"etappes" | "poule" | "giro">("etappes");
@@ -926,8 +935,61 @@ export default function MijnPeloton() {
 
         </h1>
         <p className="text-muted-foreground font-serif">
-          Welkom terug, {myTeam.userName}! Beheer je koersen en subpoules.
+          Welkom terug, {displayName}! Beheer je koersen en subpoules.
         </p>
+        <div className="mt-3 flex items-center justify-center gap-2 text-sm">
+          <span className="font-serif text-muted-foreground">Jouw ploegnaam:</span>
+          {editingName ? (
+            <>
+              <Input
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                placeholder="bv. Team Bidon"
+                className="h-8 w-48"
+                maxLength={40}
+                autoFocus
+              />
+              <Button
+                size="sm"
+                variant="default"
+                disabled={!entry?.id || saveTeamName.isPending}
+                onClick={async () => {
+                  if (!entry?.id) return;
+                  try {
+                    await saveTeamName.mutateAsync({ entryId: entry.id, teamName: nameDraft });
+                    toast({ title: "Ploegnaam opgeslagen" });
+                    setEditingName(false);
+                  } catch (e) {
+                    toast({ title: "Opslaan mislukt", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+                  }
+                }}
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setEditingName(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <span className="font-display font-bold text-foreground">
+                {teamName?.trim() || <span className="italic text-muted-foreground">nog niet ingesteld</span>}
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2"
+                disabled={!entry?.id}
+                onClick={() => {
+                  setNameDraft(teamName ?? "");
+                  setEditingName(true);
+                }}
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+            </>
+          )}
+        </div>
         <div className="vintage-divider max-w-xs mx-auto mt-4" />
       </div>
 
