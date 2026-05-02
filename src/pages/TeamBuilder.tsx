@@ -171,6 +171,20 @@ export default function TeamBuilder() {
     }
   };
 
+  const handleRevert = async () => {
+    if (!entry) return;
+    try {
+      await revertEntry.mutateAsync({ entryId: entry.id });
+      toast({ title: "Team weer bewerkbaar — vergeet niet opnieuw in te dienen" });
+    } catch (error) {
+      toast({
+        title: "Wijzigen mislukt",
+        description: error instanceof Error ? error.message : "Onbekende fout",
+        variant: "destructive",
+      });
+    }
+  };
+
   const completedPicks = picksByCategory.size;
   const gameReady = !gameLoading && !categoriesLoading && !entryLoading;
 
