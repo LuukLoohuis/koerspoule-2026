@@ -49,6 +49,10 @@ export default function CalculationTab({
         { name: "calculate_stage_points_v3", args: { p_stage_id: stageId } },
         { name: "calculate_stage_scores", args: { p_stage_id: stageId } },
       ]);
+      // Voorspellingen meenemen (podium GC + truien) voor het totaal
+      await callRpc([
+        { name: "calculate_prediction_points", args: { p_game_id: activeGameId } },
+      ]).catch(() => undefined);
       await callRpc([
         { name: "update_total_points_v4", args: { p_game_id: activeGameId } },
         { name: "update_total_ranking", args: { p_game_id: activeGameId } },
@@ -57,6 +61,25 @@ export default function CalculationTab({
     } catch (e) {
       console.error("Recalc error:", e);
       toast.error(`Herberekenen mislukt: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function calcPredictions() {
+    if (!supabase || !activeGameId) return;
+    setBusy(true);
+    try {
+      await callRpc([
+        { name: "calculate_prediction_points", args: { p_game_id: activeGameId } },
+      ]);
+      await callRpc([
+        { name: "update_total_ranking", args: { p_game_id: activeGameId } },
+      ]);
+      toast.success("Voorspellingen herberekend en totaalstand bijgewerkt");
+    } catch (e) {
+      console.error("Predictions recalc error:", e);
+      toast.error((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -105,11 +128,11 @@ export default function CalculationTab({
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Stelt de standaard puntentabel in voor alle 5 klassementen (top 20):
-            Etappe 50→1, klassementen (GC/KOM/Points/Youth) 25→1.
+            Stelt de standaard etappepuntentabel in (top 20: 50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1).
+            Truien en GC-podium leveren punten via voorspellingen, niet via dit schema.
           </p>
           <Button data-testid="seed-defaults-btn" onClick={seedDefaults} disabled={busy} variant="outline">
-            Laad standaard puntentabellen
+            Laad standaard puntentabel
           </Button>
         </CardContent>
       </Card>
