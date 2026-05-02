@@ -74,6 +74,22 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
   // Compare opponent
   const [compareId, setCompareId] = useState<string | null>(null);
   const compareMember = memberRows.find((m) => m.user_id === compareId);
+
+  // Visibility per member (default: all visible)
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const toggleVisible = (uid: string) => {
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid);
+      else next.add(uid);
+      return next;
+    });
+  };
+  const allHidden = memberRows.length > 0 && memberRows.every((m) => hiddenIds.has(m.user_id));
+  const toggleAll = () => {
+    if (allHidden) setHiddenIds(new Set());
+    else setHiddenIds(new Set(memberRows.map((m) => m.user_id)));
+  };
   // Build cumulative line graph data: x = stage_number, one series per member
   const chartData = useMemo(() => {
     const sortedStages = [...stages].sort((a, b) => a.stage_number - b.stage_number);
