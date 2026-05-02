@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
@@ -9,7 +11,7 @@ import { useStages, useEntries } from "@/hooks/useResults";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { Trophy, Sparkles, Users, Target } from "lucide-react";
+import { Trophy, Sparkles, Users, Target, Pencil } from "lucide-react";
 
 type StagePoint = { stage_id: string; entry_id: string; points: number };
 
