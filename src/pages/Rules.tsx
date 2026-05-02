@@ -13,19 +13,8 @@ export default function Rules() {
     [schema]
   );
 
-  const jerseyPoints = useMemo(() => {
-    const top = (cls: string) =>
-      schema
-        .filter((s) => s.classification === cls)
-        .sort((a, b) => a.position - b.position)
-        .slice(0, 1)[0]?.points ?? 0;
-    return {
-      gcWinner: top("gc"),
-      pointsJersey: top("points"),
-      komJersey: top("kom"),
-      youthJersey: top("youth"),
-    };
-  }, [schema]);
+  // (jerseyPoints schema is niet meer relevant — truien lopen via voorspellingen, niet via points_schema.)
+
 
   const sortedCategories = useMemo(
     () => [...categories].sort((a, b) => a.sort_order - b.sort_order),
