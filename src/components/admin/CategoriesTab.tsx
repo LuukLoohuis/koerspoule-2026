@@ -263,9 +263,11 @@ export default function CategoriesTab({
               Nog geen renners in startlijst. Importeer eerst de startlijst in de tab "Startlijst".
             </div>
           )}
+          <p className="mb-2 text-xs text-muted-foreground">Sleep aan het <GripVertical className="inline h-3 w-3" />-handvat om de volgorde te wijzigen.</p>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8"></TableHead>
                 <TableHead className="w-10"></TableHead>
                 <TableHead className="w-12">#</TableHead>
                 <TableHead>Naam</TableHead>
@@ -275,7 +277,7 @@ export default function CategoriesTab({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((c) => {
+              {orderedCategories.map((c) => {
                 const isOpen = !!expanded[c.id];
                 const riders = ridersByCategory[c.id] ?? [];
                 return (
@@ -291,11 +293,29 @@ export default function CategoriesTab({
                     onRemove={(rid) => removeRiderFromCategory(c.id, rid)}
                     onMaxPicks={(v) => updateMaxPicks(c.id, v)}
                     onDelete={() => deleteCategory(c.id)}
+                    isDragging={dragId === c.id}
+                    isDragOver={dragOverId === c.id && dragId !== c.id}
+                    onDragStart={() => setDragId(c.id)}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (dragOverId !== c.id) setDragOverId(c.id);
+                    }}
+                    onDragEnd={() => {
+                      setDragId(null);
+                      setDragOverId(null);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const src = dragId;
+                      setDragId(null);
+                      setDragOverId(null);
+                      if (src) void reorderCategories(src, c.id);
+                    }}
                   />
                 );
               })}
               {categories.length === 0 && (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Geen categorieën.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Geen categorieën.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
