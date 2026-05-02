@@ -233,15 +233,12 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
         {/* Category rows */}
         <div className="divide-y divide-border">
           {sortedCategories.map((cat) => {
-            const myRiderId = me.picks.get(cat.id);
-            const oppRiderId = opp.picks.get(cat.id);
-            const same = myRiderId && oppRiderId && myRiderId === oppRiderId;
-            const myRider = myRiderId ? ridersById.get(myRiderId) : null;
-            const oppRider = oppRiderId ? ridersById.get(oppRiderId) : null;
-            const myPoints = myRiderId ? myPts?.get(myRiderId) ?? 0 : 0;
-            const oppPoints = oppRiderId ? oppPts?.get(oppRiderId) ?? 0 : 0;
-            const isMyJoker = myRiderId ? me.jokers.has(myRiderId) : false;
-            const isOppJoker = oppRiderId ? opp.jokers.has(oppRiderId) : false;
+            const myRiderIds = me.picks.get(cat.id) ?? [];
+            const oppRiderIds = opp.picks.get(cat.id) ?? [];
+            const shared = myRiderIds.filter((id) => oppRiderIds.includes(id));
+            const same = shared.length > 0;
+            const myPoints = myRiderIds.reduce((sum, id) => sum + (myPts?.get(id) ?? 0), 0);
+            const oppPoints = oppRiderIds.reduce((sum, id) => sum + (oppPts?.get(id) ?? 0), 0);
             const localDiff = myPoints - oppPoints;
 
             return (
@@ -259,13 +256,17 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                 <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
                   {/* My pick */}
                   <div className={cn("text-right", same && "text-primary")}>
-                    <p className="text-sm font-medium truncate flex items-center justify-end gap-1">
-                      {isMyJoker && <Crown className="h-3 w-3 text-primary shrink-0" />}
-                      <span className="truncate">{myRider?.name ?? "—"}</span>
-                    </p>
-                    {myRider?.team && (
-                      <p className="text-[10px] text-muted-foreground truncate">{myRider.team}</p>
-                    )}
+                    {myRiderIds.length === 0 ? (
+                      <p className="text-sm font-medium text-muted-foreground">—</p>
+                    ) : myRiderIds.map((id) => {
+                      const rider = ridersById.get(id);
+                      return (
+                        <p key={id} className="text-sm font-medium truncate flex items-center justify-end gap-1">
+                          {me.jokers.has(id) && <Crown className="h-3 w-3 text-primary shrink-0" />}
+                          <span className="truncate">{rider?.name ?? "—"}</span>
+                        </p>
+                      );
+                    })}
                     <p className="text-xs font-display font-bold tabular-nums">{myPoints} pt</p>
                   </div>
 
@@ -292,13 +293,17 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
 
                   {/* Opponent pick */}
                   <div className={cn(same && "text-primary")}>
-                    <p className="text-sm font-medium truncate flex items-center gap-1">
-                      {isOppJoker && <Crown className="h-3 w-3 text-primary shrink-0" />}
-                      <span className="truncate">{oppRider?.name ?? "—"}</span>
-                    </p>
-                    {oppRider?.team && (
-                      <p className="text-[10px] text-muted-foreground truncate">{oppRider.team}</p>
-                    )}
+                    {oppRiderIds.length === 0 ? (
+                      <p className="text-sm font-medium text-muted-foreground">—</p>
+                    ) : oppRiderIds.map((id) => {
+                      const rider = ridersById.get(id);
+                      return (
+                        <p key={id} className="text-sm font-medium truncate flex items-center gap-1">
+                          {opp.jokers.has(id) && <Crown className="h-3 w-3 text-primary shrink-0" />}
+                          <span className="truncate">{rider?.name ?? "—"}</span>
+                        </p>
+                      );
+                    })}
                     <p className="text-xs font-display font-bold tabular-nums">{oppPoints} pt</p>
                   </div>
                 </div>
