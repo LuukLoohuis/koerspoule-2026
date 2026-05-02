@@ -23,7 +23,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
-import { Pencil } from "lucide-react";
 import {
   ChartContainer,
   ChartTooltip,
