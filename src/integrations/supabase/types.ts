@@ -193,13 +193,6 @@ export type Database = {
             foreignKeyName: "entry_jokers_entry_id_fkey"
             columns: ["entry_id"]
             isOneToOne: false
-            referencedRelation: "admin_entries_overview"
-            referencedColumns: ["entry_id"]
-          },
-          {
-            foreignKeyName: "entry_jokers_entry_id_fkey"
-            columns: ["entry_id"]
-            isOneToOne: false
             referencedRelation: "entries"
             referencedColumns: ["id"]
           },
@@ -246,13 +239,6 @@ export type Database = {
             foreignKeyName: "entry_picks_entry_id_fkey"
             columns: ["entry_id"]
             isOneToOne: false
-            referencedRelation: "admin_entries_overview"
-            referencedColumns: ["entry_id"]
-          },
-          {
-            foreignKeyName: "entry_picks_entry_id_fkey"
-            columns: ["entry_id"]
-            isOneToOne: false
             referencedRelation: "entries"
             referencedColumns: ["id"]
           },
@@ -291,13 +277,6 @@ export type Database = {
           rider_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "entry_predictions_entry_id_fkey"
-            columns: ["entry_id"]
-            isOneToOne: false
-            referencedRelation: "admin_entries_overview"
-            referencedColumns: ["entry_id"]
-          },
           {
             foreignKeyName: "entry_predictions_entry_id_fkey"
             columns: ["entry_id"]
@@ -533,13 +512,6 @@ export type Database = {
           stage_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "stage_points_entry_id_fkey"
-            columns: ["entry_id"]
-            isOneToOne: false
-            referencedRelation: "admin_entries_overview"
-            referencedColumns: ["entry_id"]
-          },
           {
             foreignKeyName: "stage_points_entry_id_fkey"
             columns: ["entry_id"]
@@ -833,13 +805,6 @@ export type Database = {
             foreignKeyName: "total_points_entry_id_fkey"
             columns: ["entry_id"]
             isOneToOne: true
-            referencedRelation: "admin_entries_overview"
-            referencedColumns: ["entry_id"]
-          },
-          {
-            foreignKeyName: "total_points_entry_id_fkey"
-            columns: ["entry_id"]
-            isOneToOne: true
             referencedRelation: "entries"
             referencedColumns: ["id"]
           },
@@ -891,22 +856,7 @@ export type Database = {
           total_points: number | null
           user_id: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "entries_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "entries_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_user_overview"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       admin_user_overview: {
         Row: {
@@ -920,6 +870,23 @@ export type Database = {
       }
     }
     Functions: {
+      admin_entries_overview: {
+        Args: never
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          entry_id: string
+          entry_status: string
+          game_id: string
+          jokers_count: number
+          picks_count: number
+          submitted_at: string
+          team_name: string
+          total_points: number
+          user_id: string
+        }[]
+      }
       assign_admin_role: {
         Args: { p_make_admin: boolean; p_user_id: string }
         Returns: undefined
