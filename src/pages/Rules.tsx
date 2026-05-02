@@ -13,19 +13,8 @@ export default function Rules() {
     [schema]
   );
 
-  const jerseyPoints = useMemo(() => {
-    const top = (cls: string) =>
-      schema
-        .filter((s) => s.classification === cls)
-        .sort((a, b) => a.position - b.position)
-        .slice(0, 1)[0]?.points ?? 0;
-    return {
-      gcWinner: top("gc"),
-      pointsJersey: top("points"),
-      komJersey: top("kom"),
-      youthJersey: top("youth"),
-    };
-  }, [schema]);
+  // (jerseyPoints schema is niet meer relevant — truien lopen via voorspellingen, niet via points_schema.)
+
 
   const sortedCategories = useMemo(
     () => [...categories].sort((a, b) => a.sort_order - b.sort_order),
@@ -110,7 +99,11 @@ export default function Rules() {
         <section className="retro-border bg-card p-6 mb-6">
           <h2 className="font-display text-2xl font-bold mb-4">📊 Puntentelling</h2>
 
-          <h3 className="font-display text-lg font-bold mb-3">Per etappe</h3>
+          <h3 className="font-display text-lg font-bold mb-3">Per etappe (top 20)</h3>
+          <p className="text-sm text-muted-foreground mb-3 font-sans">
+            Alleen renners die in jouw selectie zitten en bij de finish in de top 20 eindigen
+            leveren punten op. Renners die niet finishen (DNS / DNF) krijgen 0 punten.
+          </p>
           {schemaLoading ? (
             <p className="text-sm text-muted-foreground italic mb-6">Puntenschema laden...</p>
           ) : stagePoints.length === 0 ? (
@@ -130,32 +123,55 @@ export default function Rules() {
             </div>
           )}
 
-          <h3 className="font-display text-lg font-bold mb-3">Eindklassementen (winnaar)</h3>
-          {schemaLoading ? (
-            <p className="text-sm text-muted-foreground italic">Laden...</p>
-          ) : (
-            <div className="space-y-2 font-sans text-sm">
-              <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-                <span>Winnaar algemeen klassement</span>
-                <span className="font-bold text-accent">{jerseyPoints.gcWinner} pt</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-                <span>Winnaar puntentrui</span>
-                <span className="font-bold text-accent">{jerseyPoints.pointsJersey} pt</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-                <span>Winnaar bergtrui</span>
-                <span className="font-bold text-accent">{jerseyPoints.komJersey} pt</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-                <span>Winnaar jongerentrui</span>
-                <span className="font-bold text-accent">{jerseyPoints.youthJersey} pt</span>
-              </div>
-              <p className="text-xs text-muted-foreground italic mt-2">
-                Joker = punten van die renner tellen dubbel in elke etappe.
-              </p>
+          <h3 className="font-display text-lg font-bold mb-3">Podium algemeen klassement</h3>
+          <div className="space-y-2 font-sans text-sm mb-6">
+            <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+              <span>Juiste renner op de juiste plek (1, 2 of 3)</span>
+              <span className="font-bold text-accent">50 pt</span>
             </div>
-          )}
+            <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+              <span>Juiste renner in top 3, maar verkeerde plek</span>
+              <span className="font-bold text-accent">25 pt</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+              <span>Renner niet in top 3</span>
+              <span className="font-bold text-muted-foreground">0 pt</span>
+            </div>
+            <p className="text-xs text-muted-foreground italic">
+              Elke positie wordt apart beoordeeld. Een renner kan maximaal één keer punten opleveren.
+              Maximaal 150 punten in totaal voor het GC-podium.
+            </p>
+          </div>
+
+          <h3 className="font-display text-lg font-bold mb-3">Truien (groen, berg, wit)</h3>
+          <div className="space-y-2 font-sans text-sm mb-6">
+            <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+              <span>Juiste winnaar puntentrui (groen)</span>
+              <span className="font-bold text-accent">25 pt</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+              <span>Juiste winnaar bergtrui</span>
+              <span className="font-bold text-accent">25 pt</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+              <span>Juiste winnaar jongerentrui (wit)</span>
+              <span className="font-bold text-accent">25 pt</span>
+            </div>
+          </div>
+
+          <h3 className="font-display text-lg font-bold mb-3">Joker</h3>
+          <p className="text-sm text-muted-foreground mb-6 font-sans">
+            Kies twee jokers uit je selectie. De etappepunten van een joker tellen
+            <span className="font-bold text-accent"> dubbel</span> in elke etappe.
+          </p>
+
+          <h3 className="font-display text-lg font-bold mb-3">Totaalklassement</h3>
+          <p className="text-sm text-muted-foreground font-sans">
+            Het totaal van een speler is de som van alle etappepunten plus de behaalde
+            voorspellingspunten (podium + truien). Het klassement wordt automatisch
+            bijgewerkt na elke verwerkte etappe. De stand na de laatste etappe is de
+            definitieve eindstand.
+          </p>
         </section>
 
         {/* Categories overview */}
