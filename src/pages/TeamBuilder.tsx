@@ -69,7 +69,10 @@ export default function TeamBuilder() {
   const [youthJersey, setYouthJersey] = useState("");
 
   const isSubmitted = entry?.status === "submitted";
-  const isLocked = isSubmitted || (game?.status && ["locked", "live", "finished"].includes(game.status));
+  // Hard lock: alleen wanneer admin de game op deadline/live/finished zet.
+  // 'submitted' lockt het team NIET — de deelnemer kan altijd wijzigen tot de deadline.
+  const gameLocked = Boolean(game?.status && ["closed", "locked", "live", "finished"].includes(game.status));
+  const isLocked = gameLocked;
 
   // Hydrate predictions from DB once loaded
   const hydratedRef = useRef(false);
