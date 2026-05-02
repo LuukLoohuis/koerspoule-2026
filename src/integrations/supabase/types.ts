@@ -921,6 +921,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_subpoule_member: {
+        Args: { _subpoule_id: string; _user_id: string }
+        Returns: boolean
+      }
       join_subpoule: { Args: { p_code: string }; Returns: string }
       leave_subpoule: { Args: { p_subpoule_id: string }; Returns: undefined }
       remove_subpoule_member: {
