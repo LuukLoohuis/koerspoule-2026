@@ -71,7 +71,7 @@ export default function MyResultsPanel() {
       <div className="flex gap-2 flex-wrap">
         {([
           { id: "etappes", label: "📋 Etappes", icon: ListOrdered },
-          { id: "poule", label: "🏅 Poule Klassement", icon: Trophy },
+          { id: "poule", label: "🏅 Deelnemers", icon: Trophy },
           { id: "gc", label: "🌟 Race Klassement", icon: Mountain },
         ] as const).map((v) => (
           <button
@@ -125,7 +125,7 @@ export default function MyResultsPanel() {
           {/* Pool ranking for this stage */}
           <Card className="retro-border">
             <CardHeader className="border-b-2 border-foreground bg-secondary/30 py-3">
-              <CardTitle className="font-display text-base">Poule-rangschikking — deze etappe</CardTitle>
+              <CardTitle className="font-display text-base">Rangschikking alle deelnemers — deze etappe</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
@@ -184,7 +184,7 @@ export default function MyResultsPanel() {
         <Card className="retro-border">
           <CardHeader className="border-b-2 border-foreground bg-secondary/30">
             <CardTitle className="font-display flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-primary" /> Algemeen poule-klassement
+              <Trophy className="h-5 w-5 text-primary" /> Algemeen klassement alle deelnemers
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">

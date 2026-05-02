@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
+import { useSubpouleEntries } from "@/hooks/useSubpouleEntries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, ArrowUp, ArrowDown, Minus, Crown } from "lucide-react";
@@ -12,13 +13,14 @@ import { cn } from "@/lib/utils";
 type Props = {
   opponentUserId: string;
   opponentName: string;
+  subpouleId?: string;
 };
 
 type EntrySnap = {
   entry_id: string;
   user_id: string;
   total_points: number;
-  picks: Map<string, string>; // category_id → rider_id
+  picks: Map<string, string[]>; // category_id → rider_ids
   jokers: Set<string>;
 };
 
@@ -38,9 +40,10 @@ function useTwoEntries(gameId: string | undefined, userIdA: string | undefined, 
       const buildSnap = (uid: string): EntrySnap | null => {
         const r = (rows ?? []).find((x) => x.user_id === uid);
         if (!r) return null;
-        const picks = new Map<string, string>();
+        const picks = new Map<string, string[]>();
         for (const p of (r.entry_picks ?? []) as Array<{ category_id: string; rider_id: string }>) {
-          picks.set(p.category_id, p.rider_id);
+          const existing = picks.get(p.category_id) ?? [];
+          picks.set(p.category_id, [...existing, p.rider_id]);
         }
         const jokers = new Set<string>(((r.entry_jokers ?? []) as Array<{ rider_id: string }>).map((j) => j.rider_id));
         return { entry_id: r.id, user_id: r.user_id, total_points: r.total_points ?? 0, picks, jokers };
@@ -53,7 +56,9 @@ function useTwoEntries(gameId: string | undefined, userIdA: string | undefined, 
       const ids = new Set<string>();
       for (const snap of [a, b]) {
         if (!snap) continue;
-        for (const id of snap.picks.values()) ids.add(id);
+        for (const pickIds of snap.picks.values()) {
+          for (const id of pickIds) ids.add(id);
+        }
         for (const id of snap.jokers) ids.add(id);
       }
       let ridersById = new Map<string, { name: string; team: string | null }>();
@@ -141,12 +146,32 @@ function useEntryRiderPoints(entryId: string | undefined) {
   });
 }
 
-export default function TeamComparison({ opponentUserId, opponentName }: Props) {
+export default function TeamComparison({ opponentUserId, opponentName, subpouleId }: Props) {
   const { user } = useAuth();
   const { data: game } = useCurrentGame();
   const { data: categories = [] } = useCategories(game?.id);
 
-  const { data, isLoading } = useTwoEntries(game?.id, user?.id, opponentUserId);
+  const { data: directData, isLoading: directLoading } = useTwoEntries(game?.id, subpouleId ? undefined : user?.id, opponentUserId);
+  const { data: subpouleData, isLoading: subpouleLoading } = useSubpouleEntries(subpouleId, game?.id);
+
+  const subpouleCompareData = useMemo(() => {
+    if (!subpouleData || !user?.id) return null;
+    const toSnap = (uid: string): EntrySnap | null => {
+      const row = subpouleData.entries.find((entry) => entry.user_id === uid);
+      if (!row?.entry_id) return null;
+      return {
+        entry_id: row.entry_id,
+        user_id: row.user_id,
+        total_points: row.total_points,
+        picks: row.picks,
+        jokers: row.jokers,
+      };
+    };
+    return { a: toSnap(user.id), b: toSnap(opponentUserId), ridersById: subpouleData.ridersById };
+  }, [subpouleData, user?.id, opponentUserId]);
+
+  const data = subpouleId ? subpouleCompareData : directData;
+  const isLoading = subpouleId ? subpouleLoading : directLoading;
   const { data: myPts } = useEntryRiderPoints(data?.a?.entry_id);
   const { data: oppPts } = useEntryRiderPoints(data?.b?.entry_id);
 
@@ -208,15 +233,12 @@ export default function TeamComparison({ opponentUserId, opponentName }: Props) 
         {/* Category rows */}
         <div className="divide-y divide-border">
           {sortedCategories.map((cat) => {
-            const myRiderId = me.picks.get(cat.id);
-            const oppRiderId = opp.picks.get(cat.id);
-            const same = myRiderId && oppRiderId && myRiderId === oppRiderId;
-            const myRider = myRiderId ? ridersById.get(myRiderId) : null;
-            const oppRider = oppRiderId ? ridersById.get(oppRiderId) : null;
-            const myPoints = myRiderId ? myPts?.get(myRiderId) ?? 0 : 0;
-            const oppPoints = oppRiderId ? oppPts?.get(oppRiderId) ?? 0 : 0;
-            const isMyJoker = myRiderId ? me.jokers.has(myRiderId) : false;
-            const isOppJoker = oppRiderId ? opp.jokers.has(oppRiderId) : false;
+            const myRiderIds = me.picks.get(cat.id) ?? [];
+            const oppRiderIds = opp.picks.get(cat.id) ?? [];
+            const shared = myRiderIds.filter((id) => oppRiderIds.includes(id));
+            const same = shared.length > 0;
+            const myPoints = myRiderIds.reduce((sum, id) => sum + (myPts?.get(id) ?? 0), 0);
+            const oppPoints = oppRiderIds.reduce((sum, id) => sum + (oppPts?.get(id) ?? 0), 0);
             const localDiff = myPoints - oppPoints;
 
             return (
@@ -234,13 +256,17 @@ export default function TeamComparison({ opponentUserId, opponentName }: Props) 
                 <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
                   {/* My pick */}
                   <div className={cn("text-right", same && "text-primary")}>
-                    <p className="text-sm font-medium truncate flex items-center justify-end gap-1">
-                      {isMyJoker && <Crown className="h-3 w-3 text-primary shrink-0" />}
-                      <span className="truncate">{myRider?.name ?? "—"}</span>
-                    </p>
-                    {myRider?.team && (
-                      <p className="text-[10px] text-muted-foreground truncate">{myRider.team}</p>
-                    )}
+                    {myRiderIds.length === 0 ? (
+                      <p className="text-sm font-medium text-muted-foreground">—</p>
+                    ) : myRiderIds.map((id) => {
+                      const rider = ridersById.get(id);
+                      return (
+                        <p key={id} className="text-sm font-medium truncate flex items-center justify-end gap-1">
+                          {me.jokers.has(id) && <Crown className="h-3 w-3 text-primary shrink-0" />}
+                          <span className="truncate">{rider?.name ?? "—"}</span>
+                        </p>
+                      );
+                    })}
                     <p className="text-xs font-display font-bold tabular-nums">{myPoints} pt</p>
                   </div>
 
@@ -267,13 +293,17 @@ export default function TeamComparison({ opponentUserId, opponentName }: Props) 
 
                   {/* Opponent pick */}
                   <div className={cn(same && "text-primary")}>
-                    <p className="text-sm font-medium truncate flex items-center gap-1">
-                      {isOppJoker && <Crown className="h-3 w-3 text-primary shrink-0" />}
-                      <span className="truncate">{oppRider?.name ?? "—"}</span>
-                    </p>
-                    {oppRider?.team && (
-                      <p className="text-[10px] text-muted-foreground truncate">{oppRider.team}</p>
-                    )}
+                    {oppRiderIds.length === 0 ? (
+                      <p className="text-sm font-medium text-muted-foreground">—</p>
+                    ) : oppRiderIds.map((id) => {
+                      const rider = ridersById.get(id);
+                      return (
+                        <p key={id} className="text-sm font-medium truncate flex items-center gap-1">
+                          {opp.jokers.has(id) && <Crown className="h-3 w-3 text-primary shrink-0" />}
+                          <span className="truncate">{rider?.name ?? "—"}</span>
+                        </p>
+                      );
+                    })}
                     <p className="text-xs font-display font-bold tabular-nums">{oppPoints} pt</p>
                   </div>
                 </div>

@@ -47,8 +47,8 @@ export default function SubpouleBenchmark({ subpouleId }: Props) {
   // Set-intersection (light)
   const overlap = useMemo(() => {
     if (!me || !opponent) return null;
-    const mine = new Set(me.picks.values());
-    const theirs = new Set(opponent.picks.values());
+    const mine = new Set(Array.from(me.picks.values()).flat());
+    const theirs = new Set(Array.from(opponent.picks.values()).flat());
     const sharedPicks: string[] = [];
     for (const id of mine) if (theirs.has(id)) sharedPicks.push(id);
     const sharedJokers: string[] = [];
@@ -159,13 +159,9 @@ export default function SubpouleBenchmark({ subpouleId }: Props) {
 
             <div className="divide-y divide-border">
               {sortedCats.map((cat) => {
-                const myId = me.picks.get(cat.id);
-                const oppId = opponent.picks.get(cat.id);
-                const same = myId && oppId && myId === oppId;
-                const myRider = myId ? ridersById.get(myId) : null;
-                const oppRider = oppId ? ridersById.get(oppId) : null;
-                const myJoker = myId ? me.jokers.has(myId) : false;
-                const oppJoker = oppId ? opponent.jokers.has(oppId) : false;
+                const myIds = me.picks.get(cat.id) ?? [];
+                const oppIds = opponent.picks.get(cat.id) ?? [];
+                const same = myIds.some((id) => oppIds.includes(id));
 
                 return (
                   <div key={cat.id} className="px-3 py-2">
@@ -181,12 +177,14 @@ export default function SubpouleBenchmark({ subpouleId }: Props) {
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div className={cn("flex items-center gap-1 truncate", same && "text-primary font-medium")}>
-                        {myJoker && <Crown className="h-3 w-3 text-primary shrink-0" />}
-                        <span className="truncate">{myRider?.name ?? "—"}</span>
+                        <span className="truncate">
+                          {myIds.length === 0 ? "—" : myIds.map((id) => ridersById.get(id)?.name ?? "—").join(", ")}
+                        </span>
                       </div>
                       <div className={cn("flex items-center gap-1 truncate", same && "text-primary font-medium")}>
-                        {oppJoker && <Crown className="h-3 w-3 text-primary shrink-0" />}
-                        <span className="truncate">{oppRider?.name ?? "—"}</span>
+                        <span className="truncate">
+                          {oppIds.length === 0 ? "—" : oppIds.map((id) => ridersById.get(id)?.name ?? "—").join(", ")}
+                        </span>
                       </div>
                     </div>
                   </div>

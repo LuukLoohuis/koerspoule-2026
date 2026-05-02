@@ -7,13 +7,23 @@ export type SubpouleEntry = {
   entry_id: string | null;
   team_name: string | null;
   total_points: number;
-  picks: Map<string, string>; // category_id → rider_id
+  picks: Map<string, string[]>; // category_id → rider_ids
   jokers: Set<string>;
 };
 
 export type SubpouleEntriesData = {
   entries: SubpouleEntry[];
   ridersById: Map<string, { name: string; team: string | null }>;
+};
+
+type SubpouleEntryDetailRow = {
+  user_id: string;
+  display_name: string | null;
+  entry_id: string | null;
+  team_name: string | null;
+  total_points: number | null;
+  picks: Array<{ category_id: string; rider_id: string }> | null;
+  jokers: Array<{ rider_id: string }> | null;
 };
 
 /**
@@ -30,49 +40,29 @@ export function useSubpouleEntries(subpouleId?: string, gameId?: string) {
         return { entries: [], ridersById: new Map() };
       }
 
-      // 1. Members + profile names
-      const { data: members, error: mErr } = await supabase
-        .from("subpoule_members")
-        .select("user_id, profiles:user_id(display_name)")
-        .eq("subpoule_id", subpouleId);
-      if (mErr) throw mErr;
+      const { data: rowsData, error } = await (supabase as any).rpc("subpoule_entries_detail", {
+        p_subpoule_id: subpouleId,
+        p_game_id: gameId,
+      });
+      if (error) throw error;
 
-      const userIds = (members ?? []).map((m) => m.user_id);
-      if (userIds.length === 0) return { entries: [], ridersById: new Map() };
+      const rows = (rowsData ?? []) as SubpouleEntryDetailRow[];
+      if (rows.length === 0) return { entries: [], ridersById: new Map() };
 
-      // 2. Entries + nested picks + jokers (1 query)
-      const { data: entryRows, error: eErr } = await supabase
-        .from("entries")
-        .select("id, user_id, team_name, total_points, entry_picks(category_id, rider_id), entry_jokers(rider_id)")
-        .eq("game_id", gameId)
-        .in("user_id", userIds);
-      if (eErr) throw eErr;
-
-      type Row = {
-        id: string;
-        user_id: string;
-        team_name: string | null;
-        total_points: number;
-        entry_picks: Array<{ category_id: string; rider_id: string }> | null;
-        entry_jokers: Array<{ rider_id: string }> | null;
-      };
-      const rows = (entryRows ?? []) as Row[];
-
-      const entries: SubpouleEntry[] = (members ?? []).map((m) => {
-        const r = rows.find((x) => x.user_id === m.user_id);
-        const picks = new Map<string, string>();
+      const entries: SubpouleEntry[] = rows.map((r) => {
+        const picks = new Map<string, string[]>();
         const jokers = new Set<string>();
-        if (r) {
-          for (const p of r.entry_picks ?? []) picks.set(p.category_id, p.rider_id);
-          for (const j of r.entry_jokers ?? []) jokers.add(j.rider_id);
+        for (const p of r.picks ?? []) {
+          const existing = picks.get(p.category_id) ?? [];
+          picks.set(p.category_id, [...existing, p.rider_id]);
         }
-        const profile = (m as { profiles?: { display_name?: string | null } | null }).profiles;
+        for (const j of r.jokers ?? []) jokers.add(j.rider_id);
         return {
-          user_id: m.user_id,
-          display_name: profile?.display_name ?? "Onbekend",
-          entry_id: r?.id ?? null,
-          team_name: r?.team_name ?? null,
-          total_points: r?.total_points ?? 0,
+          user_id: r.user_id,
+          display_name: r.display_name ?? "Onbekend",
+          entry_id: r.entry_id,
+          team_name: r.team_name,
+          total_points: r.total_points ?? 0,
           picks,
           jokers,
         };
@@ -81,7 +71,9 @@ export function useSubpouleEntries(subpouleId?: string, gameId?: string) {
       // 3. Rider names (1 query)
       const riderIds = new Set<string>();
       for (const e of entries) {
-        for (const id of e.picks.values()) riderIds.add(id);
+        for (const ids of e.picks.values()) {
+          for (const id of ids) riderIds.add(id);
+        }
         for (const id of e.jokers) riderIds.add(id);
       }
       const ridersById = new Map<string, { name: string; team: string | null }>();

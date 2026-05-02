@@ -913,6 +913,16 @@ export type Database = {
       }
       delete_subpoule: { Args: { p_subpoule_id: string }; Returns: undefined }
       full_recalculation: { Args: { p_game_id: string }; Returns: undefined }
+      game_entries_standings: {
+        Args: { p_game_id: string }
+        Returns: {
+          display_name: string
+          id: string
+          team_name: string
+          total_points: number
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -948,6 +958,18 @@ export type Database = {
         Returns: undefined
       }
       submit_entry: { Args: { p_entry_id: string }; Returns: undefined }
+      subpoule_entries_detail: {
+        Args: { p_game_id: string; p_subpoule_id: string }
+        Returns: {
+          display_name: string
+          entry_id: string
+          jokers: Json
+          picks: Json
+          team_name: string
+          total_points: number
+          user_id: string
+        }[]
+      }
       toggle_entry_pick: {
         Args: { p_category_id: string; p_entry_id: string; p_rider_id: string }
         Returns: undefined
