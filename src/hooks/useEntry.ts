@@ -14,6 +14,7 @@ type Entry = {
   user_id: string;
   game_id: string;
   status: "draft" | "submitted";
+  team_name: string | null;
   entry_picks: Array<{ category_id: string; rider_id: string }>;
   entry_jokers: Array<{ rider_id: string }>;
   entry_predictions: Prediction[];
@@ -23,7 +24,7 @@ export function useEntry(gameId?: string) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const SELECT = "id, user_id, game_id, status, entry_picks(category_id, rider_id), entry_jokers(rider_id), entry_predictions(classification, position, rider_id)";
+  const SELECT = "id, user_id, game_id, status, team_name, entry_picks(category_id, rider_id), entry_jokers(rider_id), entry_predictions(classification, position, rider_id)";
 
   const entryQuery = useQuery({
     queryKey: ["entry", gameId, user?.id],
