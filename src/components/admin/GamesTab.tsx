@@ -18,7 +18,17 @@ export type Game = {
   status: "draft" | "open" | "locked" | "live" | "finished";
   starts_at: string | null;
   slug: string | null;
+  registration_opens_at?: string | null;
+  registration_closes_at?: string | null;
 };
+
+// Convert ISO timestamp ↔ datetime-local input string (in user's local TZ)
+function toLocalInput(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 const TYPE_LABELS: Record<string, string> = {
   giro: "Giro d'Italia",
