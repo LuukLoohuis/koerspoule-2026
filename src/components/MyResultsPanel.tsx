@@ -17,7 +17,7 @@ const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.
   ploegentijdrit: { label: "Ploegentijdrit", color: "bg-violet-500", icon: <Clock className="w-4 h-4" /> },
 };
 
-type View = "etappes" | "poule" | "gc";
+type View = "etappes" | "poule";
 
 export default function MyResultsPanel() {
   const { user } = useAuth();
