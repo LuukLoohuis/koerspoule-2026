@@ -129,6 +129,23 @@ export default function CategoriesTab({
     await reload();
   }
 
+  async function updateCategoryField(id: string, field: "name" | "short_name", value: string) {
+    if (!supabase) return;
+    const payload: Record<string, string | null> = {};
+    payload[field] = field === "short_name" ? (value.trim() || null) : value.trim();
+    if (field === "name" && !payload.name) {
+      toast.error("Naam mag niet leeg zijn");
+      return;
+    }
+    const { error } = await supabase.from("categories").update(payload).eq("id", id);
+    if (error) {
+      toast.error(`Update mislukt: ${error.message}`);
+      return;
+    }
+    toast.success("Categorie bijgewerkt");
+    await reload();
+  }
+
   async function updateMaxPicks(id: string, value: number) {
     if (!supabase) return;
     const { error } = await supabase.from("categories").update({ max_picks: value }).eq("id", id);
