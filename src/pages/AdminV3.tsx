@@ -185,7 +185,7 @@ export default function AdminV3() {
         </TabsContent>
 
         <TabsContent value="results">
-          <ResultsTab activeGameId={activeGameId} stages={stages} riders={riders} gameType={activeGame?.game_type ?? null} />
+          <ResultsTab activeGameId={activeGameId} stages={stages} riders={riders} gameType={activeGame?.game_type ?? null} gameYear={activeGame?.year ?? null} />
         </TabsContent>
 
         <TabsContent value="calc">
