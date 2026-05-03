@@ -122,9 +122,35 @@ export default function ResetPassword() {
         </p>
 
         {!hasRecoverySession ? (
-          <p className="text-sm text-muted-foreground text-center">
-            Open deze pagina via de resetlink uit je e-mail. Geen geldige sessie gevonden.
-          </p>
+          <div className="space-y-4">
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive text-center">
+              {linkError ?? "Open deze pagina via de resetlink uit je e-mail. Geen geldige sessie gevonden."}
+            </div>
+            <form onSubmit={handleResend} className="space-y-3">
+              <div>
+                <Label htmlFor="resend-email" className="font-serif">E-mailadres</Label>
+                <Input
+                  id="resend-email"
+                  type="email"
+                  value={resendEmail}
+                  onChange={(e) => setResendEmail(e.target.value)}
+                  placeholder="jouw@email.nl"
+                  className="mt-1"
+                  required
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={isResending}
+                className="w-full retro-border-primary font-bold text-base h-11 tracking-wide"
+              >
+                {isResending ? "Versturen..." : "📬 Stuur nieuwe resetlink"}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Open de nieuwe link binnen 1 uur en gebruik dezelfde browser.
+              </p>
+            </form>
+          </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
