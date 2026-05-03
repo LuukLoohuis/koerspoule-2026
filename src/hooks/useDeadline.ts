@@ -1,28 +1,46 @@
 import { useState, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { useCurrentGame } from "@/hooks/useCurrentGame";
 
-// Hardcoded deadlines for Giro d'Italia 2026
-const REGISTRATION_OPEN = new Date("2026-05-04T00:00:00+02:00");  // maandag 4 mei
-const REGISTRATION_CLOSE = new Date("2026-05-08T11:00:00+02:00"); // vrijdag 8 mei 11:00
+// Fallback (Giro 2026) if admin hasn't set deadlines yet
+const FALLBACK_OPEN = new Date("2026-05-04T00:00:00+02:00");
+const FALLBACK_CLOSE = new Date("2026-05-08T11:00:00+02:00");
 
 export type DeadlinePhase = "before_open" | "open" | "closed";
 
 export interface DeadlineState {
   phase: DeadlinePhase;
-  /** Countdown target: openDate when before_open, closeDate when open, null when closed */
   countdownTarget: Date | null;
-  /** Remaining time broken down */
   days: number;
   hours: number;
   minutes: number;
   seconds: number;
-  /** Formatted label */
   label: string;
   openDate: Date;
   closeDate: Date;
 }
 
+function useGameDeadlines() {
+  const { data: game } = useCurrentGame();
+  return useQuery({
+    queryKey: ["game-deadlines", game?.id],
+    enabled: !!game?.id && !!supabase,
+    queryFn: async () => {
+      const { data, error } = await supabase!
+        .from("games")
+        .select("registration_opens_at, registration_closes_at")
+        .eq("id", game!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { registration_opens_at: string | null; registration_closes_at: string | null } | null;
+    },
+  });
+}
+
 export function useDeadline(): DeadlineState {
   const [now, setNow] = useState(() => new Date());
+  const { data: deadlines } = useGameDeadlines();
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -30,17 +48,24 @@ export function useDeadline(): DeadlineState {
   }, []);
 
   return useMemo(() => {
+    const openDate = deadlines?.registration_opens_at
+      ? new Date(deadlines.registration_opens_at)
+      : FALLBACK_OPEN;
+    const closeDate = deadlines?.registration_closes_at
+      ? new Date(deadlines.registration_closes_at)
+      : FALLBACK_CLOSE;
+
     let phase: DeadlinePhase;
     let countdownTarget: Date | null = null;
     let label = "";
 
-    if (now < REGISTRATION_OPEN) {
+    if (now < openDate) {
       phase = "before_open";
-      countdownTarget = REGISTRATION_OPEN;
+      countdownTarget = openDate;
       label = "Inschrijving opent over";
-    } else if (now < REGISTRATION_CLOSE) {
+    } else if (now < closeDate) {
       phase = "open";
-      countdownTarget = REGISTRATION_CLOSE;
+      countdownTarget = closeDate;
       label = "Inschrijving sluit over";
     } else {
       phase = "closed";
@@ -56,16 +81,6 @@ export function useDeadline(): DeadlineState {
     diff -= minutes * 60000;
     const seconds = Math.floor(diff / 1000);
 
-    return {
-      phase,
-      countdownTarget,
-      days,
-      hours,
-      minutes,
-      seconds,
-      label,
-      openDate: REGISTRATION_OPEN,
-      closeDate: REGISTRATION_CLOSE,
-    };
-  }, [now]);
+    return { phase, countdownTarget, days, hours, minutes, seconds, label, openDate, closeDate };
+  }, [now, deadlines]);
 }
