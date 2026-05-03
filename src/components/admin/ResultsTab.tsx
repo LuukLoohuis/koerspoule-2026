@@ -415,11 +415,10 @@ export default function ResultsTab({
             <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-primary/20">
               <div>
                 <h3 className="font-display text-lg flex items-center gap-2">
-                  ⚡ Cyclingflash import
+                  ⚡ Auto-import (ProCyclingStats)
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Gratis scrape van cyclingflash.com — werkt voor Giro, Tour & Vuelta. Matcht renners op naam.
-                </p>
+                  Gratis scrape van procyclingstats.com — werkt voor Giro, Tour & Vuelta. Matcht renners op rugnummer (met naam-fallback).</p>
               </div>
               <Button
                 variant="secondary"
