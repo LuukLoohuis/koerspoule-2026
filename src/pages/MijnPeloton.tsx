@@ -22,7 +22,9 @@ import PalmaresPanel from "@/components/PalmaresPanel";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useAllGames, gameTheme } from "@/hooks/useAllGames";
 import { useEntry } from "@/hooks/useEntry";
+import { Lock } from "lucide-react";
 import {
   ChartContainer,
   ChartTooltip,
