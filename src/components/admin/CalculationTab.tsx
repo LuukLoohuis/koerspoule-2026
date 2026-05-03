@@ -21,6 +21,66 @@ export default function CalculationTab({
 }) {
   const [busy, setBusy] = useState(false);
   const [stageId, setStageId] = useState("");
+  const [schemaPoints, setSchemaPoints] = useState<number[]>(DEFAULT_STAGE_POINTS);
+  const [loadingSchema, setLoadingSchema] = useState(false);
+
+  async function loadSchema() {
+    if (!supabase || !activeGameId) return;
+    setLoadingSchema(true);
+    const { data, error } = await supabase
+      .from("points_schema")
+      .select("position, points")
+      .eq("game_id", activeGameId)
+      .eq("classification", "stage")
+      .order("position", { ascending: true });
+    setLoadingSchema(false);
+    if (error) {
+      toast.error(`Puntenschema laden mislukt: ${error.message}`);
+      return;
+    }
+    const arr = [...DEFAULT_STAGE_POINTS];
+    (data ?? []).forEach((row: any) => {
+      if (row.position >= 1 && row.position <= 20) arr[row.position - 1] = row.points;
+    });
+    setSchemaPoints(arr);
+  }
+
+  useEffect(() => {
+    loadSchema();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGameId]);
+
+  async function saveSchema(values: number[]) {
+    if (!supabase || !activeGameId) return;
+    setBusy(true);
+    try {
+      const { error: delErr } = await supabase
+        .from("points_schema")
+        .delete()
+        .eq("game_id", activeGameId)
+        .eq("classification", "stage");
+      if (delErr) throw delErr;
+      const rows = values.map((points, i) => ({
+        game_id: activeGameId,
+        classification: "stage",
+        position: i + 1,
+        points,
+      }));
+      const { error: insErr } = await supabase.from("points_schema").insert(rows);
+      if (insErr) throw insErr;
+      setSchemaPoints(values);
+      toast.success("Puntenschema opgeslagen");
+    } catch (e) {
+      toast.error(`Opslaan mislukt: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function resetToDefault() {
+    if (!confirm("Standaard puntentabel terugzetten? (50, 40, 32, ... , 1)")) return;
+    saveSchema([...DEFAULT_STAGE_POINTS]);
+  }
 
   // Try multiple RPC variants. Each variant has its own arg shape so we don't
   // pass unknown parameters (which makes Postgres report "function not found").
