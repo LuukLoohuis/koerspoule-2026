@@ -84,6 +84,7 @@ export function useSubpouleEntries(subpouleId?: string, gameId?: string) {
           for (const id of ids) riderIds.add(id);
         }
         for (const id of e.jokers) riderIds.add(id);
+        for (const p of e.predictions) riderIds.add(p.rider_id);
       }
       const ridersById = new Map<string, { name: string; team: string | null }>();
       if (riderIds.size > 0) {
