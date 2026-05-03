@@ -9,14 +9,16 @@ import { useEntries, useStages, useStagePoints } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import TeamComparison from "@/components/TeamComparison";
 import {
-  LineChart,
+  ComposedChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
+  ReferenceLine,
+  LabelList,
 } from "recharts";
 import { cn } from "@/lib/utils";
 
@@ -291,42 +293,66 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
               Nog geen etappes beschikbaar.
             </div>
           ) : (
-            <div className="h-80 w-full">
+            <div className="h-96 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <ComposedChart data={chartData} margin={{ top: 24, right: 32, left: 0, bottom: 8 }}>
+                  <defs>
+                    {memberRows.map((m, idx) => {
+                      const color = LINE_COLORS[idx % LINE_COLORS.length];
+                      return (
+                        <linearGradient key={m.user_id} id={`grad-${m.user_id}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={color} stopOpacity={0.4} />
+                          <stop offset="100%" stopColor={color} stopOpacity={0} />
+                        </linearGradient>
+                      );
+                    })}
+                  </defs>
+                  <CartesianGrid strokeDasharray="2 4" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis
                     dataKey="stage"
                     tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    axisLine={{ stroke: "hsl(var(--border))" }}
+                    tickLine={false}
                     interval="preserveStartEnd"
+                    padding={{ left: 8, right: 8 }}
                   />
                   <YAxis
                     tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                     width={40}
+                    axisLine={false}
+                    tickLine={false}
                   />
                   <Tooltip
+                    cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1, strokeDasharray: "3 3" }}
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
-                      border: "2px solid hsl(var(--foreground))",
-                      borderRadius: "0.375rem",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "0.5rem",
                       fontSize: "12px",
+                      boxShadow: "0 8px 24px -8px hsl(var(--foreground) / 0.25)",
+                      padding: "8px 12px",
                     }}
+                    labelStyle={{ fontFamily: "Playfair Display, serif", fontWeight: 600, marginBottom: 4 }}
                     formatter={(value: number, name: string) => {
                       const m = memberRows.find((r) => r.user_id === name);
                       return [`${value} pt`, m?.display_name ?? name];
                     }}
+                    itemSorter={(item: any) => -(item.value as number)}
                   />
-                  <Legend
-                    formatter={(value: string) => {
-                      const m = memberRows.find((r) => r.user_id === value);
-                      return m?.display_name ?? value;
-                    }}
-                    wrapperStyle={{ fontSize: "11px" }}
-                  />
+                  {highlightId && !hiddenIds.has(highlightId) && (
+                    <Area
+                      type="monotone"
+                      dataKey={highlightId}
+                      stroke="none"
+                      fill={`url(#grad-${highlightId})`}
+                      isAnimationActive={false}
+                    />
+                  )}
                   {memberRows.map((m, idx) => {
                     if (hiddenIds.has(m.user_id)) return null;
                     const color = LINE_COLORS[idx % LINE_COLORS.length];
                     const isHighlighted = m.user_id === highlightId;
+                    const dim = highlightId && !isHighlighted;
                     return (
                       <Line
                         key={m.user_id}
@@ -334,14 +360,33 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                         dataKey={m.user_id}
                         name={m.user_id}
                         stroke={color}
-                        strokeWidth={isHighlighted ? 3 : 1.5}
-                        strokeOpacity={highlightId && !isHighlighted ? 0.35 : 1}
+                        strokeWidth={isHighlighted ? 3 : 1.75}
+                        strokeOpacity={dim ? 0.28 : 1}
                         dot={false}
-                        activeDot={{ r: 5 }}
-                      />
+                        activeDot={{ r: isHighlighted ? 6 : 4, strokeWidth: 2, stroke: "hsl(var(--background))" }}
+                        animationDuration={600}
+                      >
+                        {isHighlighted && (
+                          <LabelList
+                            dataKey={m.user_id}
+                            content={(props: any) => {
+                              const { x, y, value, index } = props;
+                              if (index !== chartData.length - 1) return null;
+                              return (
+                                <g>
+                                  <rect x={x - 24} y={y - 22} rx={4} ry={4} width={48} height={18} fill={color} />
+                                  <text x={x} y={y - 9} fill="hsl(var(--primary-foreground))" fontSize={11} fontWeight={700} textAnchor="middle">
+                                    {value} pt
+                                  </text>
+                                </g>
+                              );
+                            }}
+                          />
+                        )}
+                      </Line>
                     );
                   })}
-                </LineChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           )}
