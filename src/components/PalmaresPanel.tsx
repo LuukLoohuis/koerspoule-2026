@@ -6,8 +6,9 @@ import { usePalmares, type PalmaresGame, type PalmaresSubpoule } from "@/hooks/u
 import { cn } from "@/lib/utils";
 
 function gameTypeToCountry(type: string | null): "IT" | "FR" | "ES" {
-  if (type === "tour") return "FR";
-  if (type === "vuelta") return "ES";
+  const k = (type ?? "").toLowerCase();
+  if (k === "tour" || k === "tdf") return "FR";
+  if (k === "vuelta" || k === "vta") return "ES";
   return "IT"; // giro default
 }
 
