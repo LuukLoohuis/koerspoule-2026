@@ -39,14 +39,32 @@ export default function SubpouleManager({ gameId, gameName }: Props = {}) {
   const { data: members = [] } = useSubpouleMembers(active?.id);
 
   const handleCreate = async () => {
-    if (!effectiveGameId) return;
+    if (!effectiveGameId) {
+      toast({ title: "Geen koers geselecteerd", description: "Kies eerst een koers in Mijn Peloton.", variant: "destructive" });
+      return;
+    }
+    if (createName.trim().length < 2) {
+      toast({ title: "Naam te kort", description: "Minimaal 2 tekens.", variant: "destructive" });
+      return;
+    }
+    if (createCode.trim().length < 4) {
+      toast({ title: "Code te kort", description: "Minimaal 4 tekens.", variant: "destructive" });
+      return;
+    }
     try {
-      const id = await create.mutateAsync({ name: createName, code: createCode });
+      const id = await create.mutateAsync({ name: createName.trim(), code: createCode.trim() });
       toast({ title: "Subpoule aangemaakt", description: createName });
       setCreateName(""); setCreateCode("");
       setActiveId(id);
-    } catch (e) {
-      toast({ title: "Aanmaken mislukt", description: e instanceof Error ? e.message : "", variant: "destructive" });
+    } catch (e: any) {
+      console.error("[SubpouleManager] create failed", e);
+      const msg =
+        e?.message ||
+        e?.error_description ||
+        e?.details ||
+        e?.hint ||
+        "Onbekende fout. Probeer een andere naam of code.";
+      toast({ title: "Aanmaken mislukt", description: msg, variant: "destructive" });
     }
   };
 
