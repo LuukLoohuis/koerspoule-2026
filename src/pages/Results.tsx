@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin } from "lucide-react";
+import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin, ArrowUp, ArrowDown, Minus } from "lucide-react";
 
 const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
   vlak: { label: "Vlak", color: "bg-emerald-500", icon: <Activity className="w-4 h-4" /> },
@@ -107,11 +107,43 @@ export default function Results() {
       .map((row, i) => ({ ...row, rank: i + 1 }));
   }, [entries, stagePoints, selectedStage]);
 
-  // Overall standings
-  const overallStandings = useMemo(
-    () => entries.map((e, i) => ({ ...e, rank: i + 1 })),
-    [entries]
-  );
+  // Overall standings up to selected klassement stage (cumulative)
+  const [klassementStageIdx, setKlassementStageIdx] = useState<number>(0);
+  useEffect(() => {
+    if (stages.length > 0) {
+      setKlassementStageIdx(pickInitialStage(stages, stagePointsByStage));
+    }
+  }, [stages.length, stagePointsByStage.size]);
+
+  const klassementStage = stages[klassementStageIdx];
+
+  const cumulativeUpTo = (upToIdx: number) => {
+    if (upToIdx < 0) return new Map<string, number>();
+    const allowed = new Set(stages.slice(0, upToIdx + 1).map((s) => s.id));
+    const m = new Map<string, number>();
+    stagePoints
+      .filter((sp) => allowed.has(sp.stage_id))
+      .forEach((sp) => m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points));
+    return m;
+  };
+
+  const overallStandings = useMemo(() => {
+    const cur = cumulativeUpTo(klassementStageIdx);
+    const prev = cumulativeUpTo(klassementStageIdx - 1);
+    const prevSorted = [...entries]
+      .map((e) => ({ id: e.id, pts: prev.get(e.id) ?? 0 }))
+      .sort((a, b) => b.pts - a.pts);
+    const prevRank = new Map<string, number>();
+    prevSorted.forEach((r, i) => prevRank.set(r.id, i + 1));
+
+    return [...entries]
+      .map((e) => ({ ...e, cumPts: cur.get(e.id) ?? 0 }))
+      .sort((a, b) => b.cumPts - a.cumPts)
+      .map((row, i) => {
+        const prevR = prevRank.get(row.id) ?? i + 1;
+        return { ...row, rank: i + 1, delta: prevR - (i + 1) };
+      });
+  }, [entries, stagePoints, stages, klassementStageIdx]);
 
   // Stage points lookup for schema
   const stagePtsTable = useMemo(() => {
@@ -360,7 +392,42 @@ export default function Results() {
 
         {/* ── KLASSEMENT TAB ── */}
         <TabsContent value="klassement">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+          {/* Stage selector for klassement */}
+          {stages.length > 0 && (
+            <div className="mt-4 mb-4 retro-border bg-card p-3 overflow-x-auto">
+              <div className="flex gap-1 min-w-max">
+                {stages.map((s, idx) => {
+                  const meta = STAGE_TYPE_META[s.stage_type ?? "vlak"];
+                  const active = idx === klassementStageIdx;
+                  const hasPts = (stagePointsByStage.get(s.id) ?? 0) > 0;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => setKlassementStageIdx(idx)}
+                      className={cn(
+                        "flex flex-col items-center gap-1 px-2 py-1.5 rounded transition min-w-[44px]",
+                        active ? "bg-primary text-primary-foreground" : "hover:bg-secondary",
+                        !hasPts && "opacity-60"
+                      )}
+                    >
+                      <span className="text-[10px] font-bold tabular-nums">{s.stage_number}</span>
+                      <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-white", meta?.color ?? "bg-muted")}>
+                        {meta?.icon}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {klassementStage && (
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Tussenstand t/m rit {klassementStage.stage_number}
+                  {klassementStage.name && ` — ${klassementStage.name}`}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Pool overall standings */}
             <div className="retro-border bg-card">
               <div className="p-4 border-b-2 border-foreground bg-secondary/50">
@@ -384,7 +451,7 @@ export default function Results() {
                       <div
                         key={s.id}
                         className={cn(
-                          "flex items-center justify-between px-3 py-2 text-sm",
+                          "flex items-center justify-between px-3 py-2 text-sm transition-all duration-300",
                           isMe && "bg-primary/10"
                         )}
                       >
@@ -393,8 +460,17 @@ export default function Results() {
                           <span className={cn("font-sans truncate", isMe && "font-bold text-primary")}>
                             {s.team_name ?? s.display_name ?? "—"}
                           </span>
+                          {klassementStageIdx > 0 && (
+                            <span className={cn(
+                              "inline-flex items-center text-[10px] font-bold tabular-nums",
+                              s.delta > 0 ? "text-emerald-600" : s.delta < 0 ? "text-rose-600" : "text-muted-foreground"
+                            )}>
+                              {s.delta > 0 ? <ArrowUp className="w-3 h-3" /> : s.delta < 0 ? <ArrowDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                              {s.delta !== 0 && Math.abs(s.delta)}
+                            </span>
+                          )}
                         </div>
-                        <span className="font-bold text-sm tabular-nums">{s.total_points} pt</span>
+                        <span className="font-bold text-sm tabular-nums">{s.cumPts} pt</span>
                       </div>
                     );
                   })}
@@ -403,7 +479,7 @@ export default function Results() {
             </div>
 
             {/* Race classifications (4 jerseys) */}
-            <RaceClassifications stageId={selectedStage?.id} />
+            <RaceClassifications stageId={klassementStage?.id} />
           </div>
         </TabsContent>
       </Tabs>
