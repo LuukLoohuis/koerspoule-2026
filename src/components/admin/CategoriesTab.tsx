@@ -407,8 +407,27 @@ function CategoryRow({
         </TableCell>
         <TableCell>{c.sort_order}</TableCell>
         <TableCell className="font-medium">
-          {c.name}
-          {c.short_name && <span className="ml-2 text-xs text-muted-foreground">({c.short_name})</span>}
+          <div className="flex items-center gap-2">
+            <Input
+              defaultValue={c.name}
+              className="h-8 w-48"
+              data-testid={`category-name-${c.id}`}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v && v !== c.name) onRename("name", v);
+              }}
+            />
+            <Input
+              defaultValue={c.short_name ?? ""}
+              placeholder="kort"
+              className="h-8 w-20"
+              data-testid={`category-short-${c.id}`}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v !== (c.short_name ?? "")) onRename("short_name", v);
+              }}
+            />
+          </div>
         </TableCell>
         <TableCell>
           <Badge variant="secondary">{riders.length}</Badge>
