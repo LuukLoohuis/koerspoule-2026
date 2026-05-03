@@ -72,7 +72,6 @@ export default function MyResultsPanel() {
         {([
           { id: "etappes", label: "📋 Etappes", icon: ListOrdered },
           { id: "poule", label: "🏅 Deelnemers", icon: Trophy },
-          { id: "gc", label: "🌟 Race Klassement", icon: Mountain },
         ] as const).map((v) => (
           <button
             key={v.id}
