@@ -429,7 +429,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                       <Line
                         key={m.user_id}
                         type="monotone"
-                        dataKey={`rank_${m.user_id}`}
+                        dataKey={`pts_${m.user_id}`}
                         name={m.user_id}
                         stroke={color}
                         strokeWidth={isHighlighted ? 3.5 : 2}
@@ -446,7 +446,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
             </div>
           )}
           <p className="text-[10px] text-muted-foreground mt-2 text-center italic">
-            1 = leider · hoger getal = lagere positie
+            Cumulatieve punten per etappe · hoger = beter
           </p>
         </CardContent>
       </Card>
