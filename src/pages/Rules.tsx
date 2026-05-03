@@ -46,10 +46,8 @@ export default function Rules() {
             {[
               "De jury, bestaande uit J.W.M. Broos, heeft gelijk.",
               "Zo niet, dan toch.",
-              "€5 inleg, winner takes all.",
               "De inschrijving dient binnen te zijn vóór de start van de eerste etappe.",
               "Vul je team in via de Team Samenstellen pagina.",
-              "Beter geen scriptjes.",
               "Als iemand uit de koers stapt, pech voor jou :(",
             ].map((rule, i) => (
               <li key={i} className="flex gap-3">
