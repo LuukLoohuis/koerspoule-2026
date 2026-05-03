@@ -544,9 +544,32 @@ export default function ResultsTab({
                       </div>
                     )}
                     {unmatched.length > 0 && (
-                      <div className="mt-2 text-xs text-destructive">
-                        <strong>Niet gematcht:</strong>{" "}
-                        {unmatched.map((r) => `${r.position}. ${r.bib != null ? `#${r.bib} ` : ""}${r.name}`).join(" · ")}
+                      <div className="mt-3 space-y-2">
+                        <div className="text-xs font-medium text-destructive flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" /> Niet automatisch gematcht — kies handmatig:
+                        </div>
+                        {unmatched.map((u) => {
+                          const key = `${c}-${u.position}`;
+                          const matchedIds = matched.map((m) => m.rider_id);
+                          const otherManual = Object.entries(manualPicks)
+                            .filter(([k, v]) => k !== key && k.startsWith(`${c}-`) && v)
+                            .map(([, v]) => v);
+                          return (
+                            <div key={key} className="grid grid-cols-[60px_1fr] items-center gap-2 text-xs">
+                              <div className="font-bold">
+                                {u.position}.{u.bib != null ? ` #${u.bib}` : ""}
+                                <div className="text-muted-foreground font-normal truncate">{u.name}</div>
+                              </div>
+                              <RiderSearchSelect
+                                riders={riderOptions}
+                                value={manualPicks[key] ?? ""}
+                                onChange={(v) => setManualPicks((p) => ({ ...p, [key]: v }))}
+                                excludeIds={[...matchedIds, ...otherManual]}
+                                placeholder={`Zoek "${u.name}"...`}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
