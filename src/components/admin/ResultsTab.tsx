@@ -373,7 +373,7 @@ export default function ResultsTab({
 
       {selectedStage && (
         <Card className="border-primary/40 bg-primary/5">
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <h3 className="font-display text-lg flex items-center gap-2">
@@ -381,15 +381,35 @@ export default function ResultsTab({
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {canImport
-                    ? `Haalt etappe + GC + Punten + Bergen + Jongeren in één keer op van ${gameType === "tdf" ? "letour.fr" : "lavuelta.es"}. Matcht op rugnummer.`
+                    ? `Officiële bron: ${gameType === "tdf" ? "letour.fr" : "lavuelta.es"} — etappe + GC + Punten + Bergen + Jongeren, matcht op rugnummer.`
                     : gameType === "giro"
-                      ? "Giro is niet automatisch importeerbaar (giroditalia.it laadt data via JavaScript). Vul handmatig in."
+                      ? "Officiële Giro-site werkt niet automatisch — gebruik Cyclingflash hieronder of vul handmatig in."
                       : "Selecteer eerst een race."}
                 </p>
               </div>
               <Button onClick={startImport} disabled={!canImport || importing} data-testid="import-btn">
                 <Download className="w-4 h-4 mr-2" />
-                {importing ? "Ophalen..." : `Importeer etappe ${selectedStageObj?.stage_number ?? ""}`}
+                {importing ? "Ophalen..." : `Officiële site (etappe ${selectedStageObj?.stage_number ?? ""})`}
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-primary/20">
+              <div>
+                <h3 className="font-display text-lg flex items-center gap-2">
+                  ⚡ Cyclingflash import
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Gratis scrape van cyclingflash.com — werkt voor Giro, Tour & Vuelta. Matcht renners op naam.
+                </p>
+              </div>
+              <Button
+                variant="secondary"
+                onClick={startImportCF}
+                disabled={!canImportCF || importingCF}
+                data-testid="import-cf-btn"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {importingCF ? "Ophalen..." : `Cyclingflash (etappe ${selectedStageObj?.stage_number ?? ""})`}
               </Button>
             </div>
           </CardContent>
