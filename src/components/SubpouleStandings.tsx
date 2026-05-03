@@ -332,16 +332,13 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                     padding={{ left: 8, right: 8 }}
                   />
                   <YAxis
-                    reversed
-                    domain={[1, Math.max(memberRows.length, 1)]}
                     allowDecimals={false}
-                    ticks={Array.from({ length: memberRows.length }, (_, i) => i + 1)}
                     tick={{ fontSize: isMobile ? 9 : 11, fill: "hsl(var(--muted-foreground))" }}
-                    width={32}
+                    width={40}
                     axisLine={false}
                     tickLine={false}
                     label={{
-                      value: "Positie",
+                      value: "Punten",
                       angle: -90,
                       position: "insideLeft",
                       offset: 12,
