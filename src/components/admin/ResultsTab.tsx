@@ -36,11 +36,13 @@ export default function ResultsTab({
   stages,
   riders,
   gameType,
+  gameYear,
 }: {
   activeGameId: string;
   stages: Stage[];
   riders: Rider[];
   gameType?: GameType;
+  gameYear?: number | null;
 }) {
   const [selectedStage, setSelectedStage] = useState("");
   const [classification, setClassification] = useState<Classification>("stage");
@@ -49,6 +51,7 @@ export default function ResultsTab({
   );
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [importingCF, setImportingCF] = useState(false);
   const [importPreview, setImportPreview] = useState<null | {
     source_url: string;
     matched: Record<Classification, Array<{ position: number; rider_id: string; rider_name: string; start_number: number }>>;
@@ -58,6 +61,7 @@ export default function ResultsTab({
 
   const selectedStageObj = useMemo(() => stages.find((s) => s.id === selectedStage), [stages, selectedStage]);
   const canImport = gameType === "tdf" || gameType === "vuelta";
+  const canImportCF = !!gameType && !!gameYear;
 
   const riderById = useMemo(() => {
     const m = new Map<string, Rider>();
@@ -230,6 +234,46 @@ export default function ResultsTab({
     }
   }
 
+  async function startImportCF() {
+    if (!supabase || !selectedStage || !selectedStageObj) {
+      toast.error("Selecteer eerst een etappe");
+      return;
+    }
+    if (!canImportCF) {
+      toast.error("Race-type of jaar ontbreekt");
+      return;
+    }
+    setImportingCF(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("import-cyclingflash", {
+        body: {
+          race_type: gameType,
+          stage_number: selectedStageObj.stage_number,
+          game_id: activeGameId,
+          year: gameYear,
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Onbekende fout");
+      const normUnmatched: Record<string, Array<{ position: number; bib: number | null; name: string }>> = {};
+      for (const k of Object.keys(data.unmatched ?? {})) {
+        normUnmatched[k] = (data.unmatched[k] as Array<{ position: number; name: string }>).map((u) => ({
+          position: u.position, bib: null, name: u.name,
+        }));
+      }
+      setImportPreview({
+        source_url: data.source_url,
+        matched: data.matched,
+        unmatched: normUnmatched as typeof data.unmatched,
+      });
+    } catch (e) {
+      console.error("Cyclingflash import error:", e);
+      toast.error(`Importeren mislukt: ${(e as Error).message}`);
+    } finally {
+      setImportingCF(false);
+    }
+  }
+
   async function applyImport() {
     if (!supabase || !selectedStage || !importPreview) return;
     setSavingImport(true);
@@ -329,7 +373,7 @@ export default function ResultsTab({
 
       {selectedStage && (
         <Card className="border-primary/40 bg-primary/5">
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <h3 className="font-display text-lg flex items-center gap-2">
@@ -337,15 +381,35 @@ export default function ResultsTab({
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {canImport
-                    ? `Haalt etappe + GC + Punten + Bergen + Jongeren in één keer op van ${gameType === "tdf" ? "letour.fr" : "lavuelta.es"}. Matcht op rugnummer.`
+                    ? `Officiële bron: ${gameType === "tdf" ? "letour.fr" : "lavuelta.es"} — etappe + GC + Punten + Bergen + Jongeren, matcht op rugnummer.`
                     : gameType === "giro"
-                      ? "Giro is niet automatisch importeerbaar (giroditalia.it laadt data via JavaScript). Vul handmatig in."
+                      ? "Officiële Giro-site werkt niet automatisch — gebruik Cyclingflash hieronder of vul handmatig in."
                       : "Selecteer eerst een race."}
                 </p>
               </div>
               <Button onClick={startImport} disabled={!canImport || importing} data-testid="import-btn">
                 <Download className="w-4 h-4 mr-2" />
-                {importing ? "Ophalen..." : `Importeer etappe ${selectedStageObj?.stage_number ?? ""}`}
+                {importing ? "Ophalen..." : `Officiële site (etappe ${selectedStageObj?.stage_number ?? ""})`}
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-primary/20">
+              <div>
+                <h3 className="font-display text-lg flex items-center gap-2">
+                  ⚡ Cyclingflash import
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Gratis scrape van cyclingflash.com — werkt voor Giro, Tour & Vuelta. Matcht renners op naam.
+                </p>
+              </div>
+              <Button
+                variant="secondary"
+                onClick={startImportCF}
+                disabled={!canImportCF || importingCF}
+                data-testid="import-cf-btn"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {importingCF ? "Ophalen..." : `Cyclingflash (etappe ${selectedStageObj?.stage_number ?? ""})`}
               </Button>
             </div>
           </CardContent>
