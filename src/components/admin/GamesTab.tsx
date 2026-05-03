@@ -118,6 +118,7 @@ export default function GamesTab({
     await reload();
   }
 
+  async function deleteGame(g: Game) {
     if (!supabase) return;
     if (!confirm(`Weet je zeker dat je "${g.name}" volledig wilt verwijderen?\n\nAlle inzendingen, picks, jokers, uitslagen, etappes, categorieën, puntenregels, renners en subpoules van deze game worden gewist. Dit kan niet ongedaan worden gemaakt.`)) return;
 
