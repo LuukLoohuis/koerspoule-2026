@@ -20,7 +20,18 @@ export function useAllGames() {
         .order("year", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as GameRow[];
+      const rows = (data ?? []) as GameRow[];
+      const typeOrder = (t: string | null | undefined) => {
+        const k = (t ?? "").toLowerCase();
+        if (k === "giro") return 0;
+        if (k === "tour" || k === "tdf") return 1;
+        if (k === "vuelta" || k === "vta") return 2;
+        return 3;
+      };
+      return [...rows].sort((a, b) => {
+        if (b.year !== a.year) return b.year - a.year;
+        return typeOrder(a.game_type) - typeOrder(b.game_type);
+      });
     },
   });
 }
@@ -31,8 +42,10 @@ export function gameTheme(type: string | null | undefined): {
 } {
   switch ((type ?? "").toLowerCase()) {
     case "tour":
+    case "tdf":
       return { country: "FR", colors: ["#002395", "#ffffff", "#ED2939"] };
     case "vuelta":
+    case "vta":
       return { country: "ES", colors: ["#AA151B", "#F1BF00", "#AA151B"] };
     case "giro":
     default:
