@@ -26,18 +26,12 @@ type Props = {
   subpouleName: string;
 };
 
-// Stable color palette for member lines (HSL via design tokens where possible)
+// Bold contrasting palette for max distinguishability
 const LINE_COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--accent))",
-  "hsl(0 70% 50%)",
-  "hsl(140 60% 40%)",
-  "hsl(45 90% 45%)",
-  "hsl(200 70% 45%)",
-  "hsl(280 55% 50%)",
-  "hsl(20 80% 50%)",
-  "hsl(170 55% 40%)",
-  "hsl(310 60% 50%)",
+  "#E6194B", "#3CB44B", "#4363D8", "#F58231",
+  "#911EB4", "#42D4F4", "#F032E6", "#9A6324",
+  "#469990", "#800000", "#808000", "#000075",
+  "#FF6F00", "#00BFA5", "#C71585", "#1E88E5",
 ];
 
 export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
