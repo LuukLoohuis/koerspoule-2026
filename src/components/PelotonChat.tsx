@@ -221,10 +221,11 @@ export default function PelotonChat({ subpoolName, subpoolId }: PelotonChatProps
           <div className="border-t-2 border-foreground p-3 flex gap-2">
             <Input
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={(e) => setNewMessage(e.target.value.slice(0, 2000))}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder="Schrijf een bericht..."
               className="flex-1 font-sans text-sm"
+              maxLength={2000}
               disabled={!user || sending}
             />
             <Button
