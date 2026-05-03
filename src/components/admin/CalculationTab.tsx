@@ -1,13 +1,16 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Calculator, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Calculator, Sparkles, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
 import type { Stage } from "./StagesTab";
+
+const DEFAULT_STAGE_POINTS = [50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
 export default function CalculationTab({
   activeGameId,
@@ -18,6 +21,66 @@ export default function CalculationTab({
 }) {
   const [busy, setBusy] = useState(false);
   const [stageId, setStageId] = useState("");
+  const [schemaPoints, setSchemaPoints] = useState<number[]>(DEFAULT_STAGE_POINTS);
+  const [loadingSchema, setLoadingSchema] = useState(false);
+
+  async function loadSchema() {
+    if (!supabase || !activeGameId) return;
+    setLoadingSchema(true);
+    const { data, error } = await supabase
+      .from("points_schema")
+      .select("position, points")
+      .eq("game_id", activeGameId)
+      .eq("classification", "stage")
+      .order("position", { ascending: true });
+    setLoadingSchema(false);
+    if (error) {
+      toast.error(`Puntenschema laden mislukt: ${error.message}`);
+      return;
+    }
+    const arr = [...DEFAULT_STAGE_POINTS];
+    (data ?? []).forEach((row: any) => {
+      if (row.position >= 1 && row.position <= 20) arr[row.position - 1] = row.points;
+    });
+    setSchemaPoints(arr);
+  }
+
+  useEffect(() => {
+    loadSchema();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGameId]);
+
+  async function saveSchema(values: number[]) {
+    if (!supabase || !activeGameId) return;
+    setBusy(true);
+    try {
+      const { error: delErr } = await supabase
+        .from("points_schema")
+        .delete()
+        .eq("game_id", activeGameId)
+        .eq("classification", "stage");
+      if (delErr) throw delErr;
+      const rows = values.map((points, i) => ({
+        game_id: activeGameId,
+        classification: "stage",
+        position: i + 1,
+        points,
+      }));
+      const { error: insErr } = await supabase.from("points_schema").insert(rows);
+      if (insErr) throw insErr;
+      setSchemaPoints(values);
+      toast.success("Puntenschema opgeslagen");
+    } catch (e) {
+      toast.error(`Opslaan mislukt: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function resetToDefault() {
+    if (!confirm("Standaard puntentabel terugzetten? (50, 40, 32, ... , 1)")) return;
+    saveSchema([...DEFAULT_STAGE_POINTS]);
+  }
 
   // Try multiple RPC variants. Each variant has its own arg shape so we don't
   // pass unknown parameters (which makes Postgres report "function not found").
@@ -124,18 +187,52 @@ export default function CalculationTab({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-display flex items-center gap-2"><Sparkles className="w-5 h-5" />Puntentabellen</CardTitle>
+          <CardTitle className="font-display flex items-center gap-2"><Sparkles className="w-5 h-5" />Puntentabel etappes (top 20)</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Stelt de standaard etappepuntentabel in (top 20: 50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1).
-            Truien en GC-podium leveren punten via voorspellingen, niet via dit schema.
+            Standaard: <span className="font-mono">50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1</span>.
+            Pas hieronder per positie aan indien gewenst. Truien en GC-podium lopen via voorspellingen, niet via dit schema.
           </p>
-          <Button data-testid="seed-defaults-btn" onClick={seedDefaults} disabled={busy} variant="outline">
-            Laad standaard puntentabel
-          </Button>
+          {loadingSchema ? (
+            <p className="text-sm text-muted-foreground italic">Schema laden...</p>
+          ) : (
+            <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-10 gap-2">
+              {schemaPoints.map((pts, i) => (
+                <div key={i} className="flex flex-col gap-1">
+                  <Label className="text-xs text-muted-foreground">Pos. {i + 1}</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={pts}
+                    onChange={(e) => {
+                      const next = [...schemaPoints];
+                      next[i] = Number(e.target.value) || 0;
+                      setSchemaPoints(next);
+                    }}
+                    className="h-9 text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => saveSchema(schemaPoints)} disabled={busy || loadingSchema}>
+              <Save className="w-4 h-4 mr-1" />Opslaan
+            </Button>
+            <Button onClick={resetToDefault} disabled={busy} variant="outline">
+              <RotateCcw className="w-4 h-4 mr-1" />Terug naar standaard
+            </Button>
+            <Button onClick={loadSchema} disabled={busy || loadingSchema} variant="ghost">
+              Herlaad
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground italic">
+            Tip: na opslaan een etappe herberekenen om de stand bij te werken.
+          </p>
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader>
