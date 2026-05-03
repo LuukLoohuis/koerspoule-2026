@@ -226,6 +226,8 @@ export default function GamesTab({
                 <TableHead>Naam</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Start</TableHead>
+                <TableHead>Inschrijving opent</TableHead>
+                <TableHead>Inschrijving sluit</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
