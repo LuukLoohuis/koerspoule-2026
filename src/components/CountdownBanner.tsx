@@ -67,7 +67,7 @@ export default function CountdownBanner({ className }: { className?: string }) {
           <TimeUnit value={seconds} label="sec" />
         </div>
         <p className="text-xs text-muted-foreground mt-3 font-sans">
-          Vrijdag 8 mei 11:00 — daarna kun je je selectie niet meer wijzigen.
+          Deadline: {fmt(closeDate)} — daarna kun je je selectie niet meer wijzigen.
         </p>
       </div>
     );
