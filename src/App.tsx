@@ -11,6 +11,7 @@ import Results from "./pages/Results";
 import MijnPeloton from "./pages/MijnPeloton";
 import Rules from "./pages/Rules";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Legal from "./pages/Legal";
 import AdminV3 from "./pages/AdminV3";
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/mijn-peloton" element={<MijnPeloton />} />
               <Route path="/regels" element={<Rules />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/juridisch" element={<Legal />} />
               <Route
                 path="/admin"
