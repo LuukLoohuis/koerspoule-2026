@@ -129,6 +129,25 @@ export default function CategoriesTab({
     await reload();
   }
 
+  async function updateCategoryField(id: string, field: "name" | "short_name", value: string) {
+    if (!supabase) return;
+    const trimmed = value.trim();
+    if (field === "name" && !trimmed) {
+      toast.error("Naam mag niet leeg zijn");
+      return;
+    }
+    const payload = field === "name"
+      ? { name: trimmed }
+      : { short_name: trimmed || null };
+    const { error } = await supabase.from("categories").update(payload).eq("id", id);
+    if (error) {
+      toast.error(`Update mislukt: ${error.message}`);
+      return;
+    }
+    toast.success("Categorie bijgewerkt");
+    await reload();
+  }
+
   async function updateMaxPicks(id: string, value: number) {
     if (!supabase) return;
     const { error } = await supabase.from("categories").update({ max_picks: value }).eq("id", id);
@@ -293,6 +312,7 @@ export default function CategoriesTab({
                     onAdd={(r) => addRiderToCategory(c.id, r)}
                     onRemove={(rid) => removeRiderFromCategory(c.id, rid)}
                     onMaxPicks={(v) => updateMaxPicks(c.id, v)}
+                    onRename={(field, v) => updateCategoryField(c.id, field, v)}
                     onDelete={() => deleteCategory(c.id)}
                     isDragging={dragId === c.id}
                     isDragOver={dragOverId === c.id && dragId !== c.id}
@@ -327,7 +347,7 @@ export default function CategoriesTab({
 }
 
 function CategoryRow({
-  c, isOpen, onToggle, riders, allRiders, teamLabel, onAdd, onRemove, onMaxPicks, onDelete,
+  c, isOpen, onToggle, riders, allRiders, teamLabel, onAdd, onRemove, onMaxPicks, onRename, onDelete,
   isDragging, isDragOver, onDragStart, onDragOver, onDragEnd, onDrop,
 }: {
   c: Category;
@@ -339,6 +359,7 @@ function CategoryRow({
   onAdd: (r: Rider) => void;
   onRemove: (riderId: string) => void;
   onMaxPicks: (v: number) => void;
+  onRename: (field: "name" | "short_name", value: string) => void;
   onDelete: () => void;
   isDragging?: boolean;
   isDragOver?: boolean;
@@ -386,8 +407,27 @@ function CategoryRow({
         </TableCell>
         <TableCell>{c.sort_order}</TableCell>
         <TableCell className="font-medium">
-          {c.name}
-          {c.short_name && <span className="ml-2 text-xs text-muted-foreground">({c.short_name})</span>}
+          <div className="flex items-center gap-2">
+            <Input
+              defaultValue={c.name}
+              className="h-8 w-48"
+              data-testid={`category-name-${c.id}`}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v && v !== c.name) onRename("name", v);
+              }}
+            />
+            <Input
+              defaultValue={c.short_name ?? ""}
+              placeholder="kort"
+              className="h-8 w-20"
+              data-testid={`category-short-${c.id}`}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v !== (c.short_name ?? "")) onRename("short_name", v);
+              }}
+            />
+          </div>
         </TableCell>
         <TableCell>
           <Badge variant="secondary">{riders.length}</Badge>
