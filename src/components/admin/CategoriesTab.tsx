@@ -312,6 +312,7 @@ export default function CategoriesTab({
                     onAdd={(r) => addRiderToCategory(c.id, r)}
                     onRemove={(rid) => removeRiderFromCategory(c.id, rid)}
                     onMaxPicks={(v) => updateMaxPicks(c.id, v)}
+                    onRename={(field, v) => updateCategoryField(c.id, field, v)}
                     onDelete={() => deleteCategory(c.id)}
                     isDragging={dragId === c.id}
                     isDragOver={dragOverId === c.id && dragId !== c.id}
