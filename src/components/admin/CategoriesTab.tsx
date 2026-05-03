@@ -359,6 +359,7 @@ function CategoryRow({
   onAdd: (r: Rider) => void;
   onRemove: (riderId: string) => void;
   onMaxPicks: (v: number) => void;
+  onRename: (field: "name" | "short_name", value: string) => void;
   onDelete: () => void;
   isDragging?: boolean;
   isDragOver?: boolean;
