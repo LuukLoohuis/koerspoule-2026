@@ -89,35 +89,64 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
     if (allHidden) setHiddenIds(new Set());
     else setHiddenIds(new Set(memberRows.map((m) => m.user_id)));
   };
-  // Build cumulative line graph data: x = stage_number, one series per member
+  // Build per-stage ranking data: x = stage, value per member = rank (1=best)
   const chartData = useMemo(() => {
     const sortedStages = [...stages].sort((a, b) => a.stage_number - b.stage_number);
     if (sortedStages.length === 0) return [];
 
-    // entry_id → { stage_id → points }
     const ptsByEntryStage = new Map<string, Map<string, number>>();
     for (const sp of stagePoints) {
       if (!ptsByEntryStage.has(sp.entry_id)) ptsByEntryStage.set(sp.entry_id, new Map());
       ptsByEntryStage.get(sp.entry_id)!.set(sp.stage_id, sp.points);
     }
 
-    const cumulative = new Map<string, number>(); // user_id → running total
+    const cumulative = new Map<string, number>();
 
     return sortedStages.map((stage) => {
       const row: Record<string, number | string> = {
         stage: `E${stage.stage_number}`,
         stageNumber: stage.stage_number,
+        stageName: stage.name ?? "",
       };
+      const deltas = new Map<string, number>();
       for (const m of memberRows) {
         const prev = cumulative.get(m.user_id) ?? 0;
         const got = m.entry_id ? ptsByEntryStage.get(m.entry_id)?.get(stage.id) ?? 0 : 0;
         const next = prev + got;
         cumulative.set(m.user_id, next);
-        row[m.user_id] = next;
+        deltas.set(m.user_id, got);
+        row[`pts_${m.user_id}`] = next;
+        row[`delta_${m.user_id}`] = got;
       }
+      // Rank by cumulative pts desc; ties share rank
+      const sorted = [...memberRows]
+        .map((m) => ({ id: m.user_id, pts: cumulative.get(m.user_id) ?? 0 }))
+        .sort((a, b) => b.pts - a.pts);
+      let lastPts = -Infinity;
+      let lastRank = 0;
+      sorted.forEach((s, i) => {
+        const rank = s.pts === lastPts ? lastRank : i + 1;
+        lastPts = s.pts;
+        lastRank = rank;
+        row[`rank_${s.id}`] = rank;
+      });
       return row;
     });
   }, [stages, stagePoints, memberRows]);
+
+  // Determine current/latest stage = highest stage_number with any points
+  const currentStageLabel = useMemo(() => {
+    if (chartData.length === 0) return null;
+    const stagesWithPts = new Set<number>();
+    const stageById = new Map(stages.map((s) => [s.id, s.stage_number]));
+    for (const sp of stagePoints) {
+      const n = stageById.get(sp.stage_id);
+      if (n !== undefined && (sp.points ?? 0) !== 0) stagesWithPts.add(n);
+    }
+    if (stagesWithPts.size === 0) return null;
+    const latest = Math.max(...stagesWithPts);
+    return `E${latest}`;
+  }, [chartData, stages, stagePoints]);
 
   if (membersLoading) {
     return (
