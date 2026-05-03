@@ -81,9 +81,16 @@ export default function Login() {
     }
     setIsSendingReset(true);
     try {
+      // Always send users to the live site for password reset, so the link
+      // never goes through lovable.dev's auth-bridge (which requires login there).
+      const host = window.location.hostname;
+      const resetOrigin =
+        host === "localhost" || host.endsWith("lovableproject.com") || host.endsWith("lovable.app")
+          ? "https://koerspoule.nl"
+          : window.location.origin;
       const { error } = await withTimeout(
         supabase.auth.resetPasswordForEmail(target, {
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: `${resetOrigin}/reset-password`,
         }),
         15000,
       );
