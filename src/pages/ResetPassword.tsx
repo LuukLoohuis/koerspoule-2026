@@ -15,14 +15,32 @@ export default function ResetPassword() {
   const [confirm, setConfirm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasRecoverySession, setHasRecoverySession] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [resendEmail, setResendEmail] = useState("");
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     if (!supabase) return;
-    // Supabase parses the recovery token from the URL hash automatically
-    // and emits a PASSWORD_RECOVERY event. We also check for an existing session.
+
+    // Parse error from URL hash (e.g. #error=access_denied&error_code=otp_expired&...)
+    const hash = window.location.hash.startsWith("#")
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+    const params = new URLSearchParams(hash);
+    const errCode = params.get("error_code");
+    const errDesc = params.get("error_description");
+    if (errCode || errDesc) {
+      if (errCode === "otp_expired") {
+        setLinkError("De resetlink is verlopen. Vraag hieronder een nieuwe aan.");
+      } else {
+        setLinkError(decodeURIComponent((errDesc || errCode || "Ongeldige link").replace(/\+/g, " ")));
+      }
+    }
+
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY" || session) {
         setHasRecoverySession(true);
+        setLinkError(null);
       }
     });
     supabase.auth.getSession().then(({ data }) => {
@@ -30,6 +48,35 @@ export default function ResetPassword() {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  const handleResend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+    const target = resendEmail.trim();
+    if (!target) {
+      toast({ title: "Vul je e-mailadres in", variant: "destructive" });
+      return;
+    }
+    setIsResending(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(target, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast({
+        title: "Nieuwe resetlink verstuurd 📬",
+        description: `Check de inbox van ${target}. De link is 1 uur geldig.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Versturen mislukt",
+        description: err instanceof Error ? err.message : "Onbekende fout",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,9 +122,35 @@ export default function ResetPassword() {
         </p>
 
         {!hasRecoverySession ? (
-          <p className="text-sm text-muted-foreground text-center">
-            Open deze pagina via de resetlink uit je e-mail. Geen geldige sessie gevonden.
-          </p>
+          <div className="space-y-4">
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive text-center">
+              {linkError ?? "Open deze pagina via de resetlink uit je e-mail. Geen geldige sessie gevonden."}
+            </div>
+            <form onSubmit={handleResend} className="space-y-3">
+              <div>
+                <Label htmlFor="resend-email" className="font-serif">E-mailadres</Label>
+                <Input
+                  id="resend-email"
+                  type="email"
+                  value={resendEmail}
+                  onChange={(e) => setResendEmail(e.target.value)}
+                  placeholder="jouw@email.nl"
+                  className="mt-1"
+                  required
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={isResending}
+                className="w-full retro-border-primary font-bold text-base h-11 tracking-wide"
+              >
+                {isResending ? "Versturen..." : "📬 Stuur nieuwe resetlink"}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Open de nieuwe link binnen 1 uur en gebruik dezelfde browser.
+              </p>
+            </form>
+          </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
