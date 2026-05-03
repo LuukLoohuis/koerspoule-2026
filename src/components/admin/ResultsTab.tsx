@@ -54,9 +54,11 @@ export default function ResultsTab({
   const [importingCF, setImportingCF] = useState(false);
   const [importPreview, setImportPreview] = useState<null | {
     source_url: string;
-    matched: Record<Classification, Array<{ position: number; rider_id: string; rider_name: string; start_number: number }>>;
-    unmatched: Record<Classification, Array<{ position: number; bib: number | null; name: string }>>;
+    matched: Record<string, Array<{ position: number; rider_id: string; rider_name: string; start_number: number | null }>>;
+    unmatched: Record<string, Array<{ position: number; bib: number | null; name: string }>>;
   }>(null);
+  // Manual overrides for unmatched rows: key = `${importKey}-${position}` -> rider_id
+  const [manualPicks, setManualPicks] = useState<Record<string, string>>({});
   const [savingImport, setSavingImport] = useState(false);
 
   const selectedStageObj = useMemo(() => stages.find((s) => s.id === selectedStage), [stages, selectedStage]);
