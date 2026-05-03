@@ -66,6 +66,42 @@ export default function Login() {
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
+  const [isSendingReset, setIsSendingReset] = useState(false);
+
+  const handleForgotPassword = async () => {
+    if (!supabase) return;
+    const target = email.trim();
+    if (!target) {
+      toast({
+        title: "Vul je e-mailadres in",
+        description: "Type bovenin het e-mailadres waarvoor je een resetlink wilt ontvangen.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsSendingReset(true);
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.resetPasswordForEmail(target, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        }),
+        15000,
+      );
+      if (error) throw error;
+      toast({
+        title: "Resetlink verstuurd 📬",
+        description: `Check de inbox van ${target} (ook spam) voor de link om je wachtwoord opnieuw in te stellen.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Versturen mislukt",
+        description: formatError(error),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -329,6 +365,19 @@ export default function Login() {
               </motion.div>
             </motion.form>
           </AnimatePresence>
+
+          {!isRegister && (
+            <div className="text-center mt-3">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={isSendingReset}
+                className="text-xs text-muted-foreground hover:text-accent hover:underline transition-colors font-sans disabled:opacity-50"
+              >
+                {isSendingReset ? "Resetlink versturen..." : "Wachtwoord vergeten? →"}
+              </button>
+            </div>
+          )}
 
           <div className="vintage-divider my-5" />
 
