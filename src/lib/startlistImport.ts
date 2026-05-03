@@ -12,8 +12,9 @@ export type ParsedStartlistTeam = {
 };
 
 /**
- * Extract text from PDF.js positional items. PCS startlists often use multiple
- * columns, so each page is reconstructed as columns read top-to-bottom.
+ * Extract text from PDF.js source-order items. PCS startlist PDFs already store
+ * teams top-to-bottom in logical order; rebuilding from visual columns can merge
+ * neighbouring teams/riders when long names overlap column boundaries.
  */
 export async function extractPdfText(file: File): Promise<string> {
   const data = await file.arrayBuffer();
@@ -25,64 +26,29 @@ export async function extractPdfText(file: File): Promise<string> {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
 
-    const lineMap = new Map<number, Array<{ x: number; width: number; str: string }>>();
+    const pieces: string[] = [];
     for (const item of content.items as any[]) {
       if (!("str" in item) || !item.str.trim()) continue;
-      const y = Math.round(item.transform[5] / 3) * 3;
-      const x = item.transform[4];
-      const width = typeof item.width === "number" ? item.width : 0;
-      if (!lineMap.has(y)) lineMap.set(y, []);
-      lineMap.get(y)!.push({ x, width, str: item.str });
+      pieces.push(item.str.replace(/\s+/g, " ").trim());
     }
 
-    const segments: Array<{ x: number; y: number; text: string }> = [];
-    const ys = [...lineMap.keys()].sort((a, b) => b - a);
-    for (const y of ys) {
-      const parts = lineMap.get(y)!.sort((a, b) => a.x - b.x);
-      let current: { x: number; endX: number; parts: string[] } | null = null;
+    for (let j = 0; j < pieces.length; j += 1) {
+      const piece = pieces[j];
+      const next = pieces[j + 1];
 
-      for (const part of parts) {
-        const gap = current ? part.x - current.endX : 0;
-        if (!current || gap > 26) {
-          if (current) {
-            const text = current.parts.join(" ").replace(/\s+/g, " ").trim();
-            if (text) segments.push({ x: current.x, y, text });
-          }
-          current = { x: part.x, endX: part.x + part.width, parts: [part.str] };
-        } else {
-          current.parts.push(part.str);
-          current.endX = Math.max(current.endX, part.x + part.width);
-        }
+      if (/^\d{1,3}\.$/.test(piece) && next && /[A-Za-zÀ-ÿ]/.test(next)) {
+        allLines.push(`${piece} ${next}`.trim());
+        j += 1;
+        continue;
       }
 
-      if (current) {
-        const text = current.parts.join(" ").replace(/\s+/g, " ").trim();
-        if (text) segments.push({ x: current.x, y, text });
+      if (/^\d{1,2}$/.test(piece) && next && /^[A-Za-zÀ-ÿ]/.test(next)) {
+        allLines.push(`${piece} ${next}`.trim());
+        j += 1;
+        continue;
       }
-    }
 
-    const columnAnchors = [...segments]
-      .filter((s) => /^(\d{1,2}\s+[A-Za-zÀ-ÿ]|\d{1,3}\.\s+)/.test(s.text))
-      .map((s) => s.x)
-      .sort((a, b) => a - b)
-      .reduce<number[]>((anchors, x) => {
-        const last = anchors[anchors.length - 1];
-        if (last === undefined || Math.abs(x - last) > 55) anchors.push(x);
-        return anchors;
-      }, []);
-
-    if (columnAnchors.length <= 1) {
-      allLines.push(...segments.sort((a, b) => b.y - a.y || a.x - b.x).map((s) => s.text));
-      continue;
-    }
-
-    for (const anchor of columnAnchors) {
-      allLines.push(
-        ...segments
-          .filter((s) => Math.abs(s.x - anchor) <= 55)
-          .sort((a, b) => b.y - a.y || a.x - b.x)
-          .map((s) => s.text)
-      );
+      if (piece !== "|") allLines.push(piece);
     }
   }
 
