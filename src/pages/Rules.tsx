@@ -231,10 +231,14 @@ export default function Rules() {
           <div className="vintage-divider max-w-xs mx-auto my-5" />
           <div className="flex justify-center">
             <a
-              href="mailto:koerspoule@gmail.com?subject=Steun%20de%20kopgroep"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-md bg-primary text-primary-foreground font-display font-bold uppercase tracking-wider text-sm shadow-md hover:opacity-90 transition"
+              href="https://www.buymeacoffee.com/luukloohuis"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-md font-bold text-white shadow-md hover:opacity-90 transition"
+              style={{ backgroundColor: "#e6007e", fontFamily: "Arial, sans-serif", border: "1px solid #ffffff" }}
             >
-              💛 Steun de kopgroep
+              <span>🚴</span>
+              <span>Steun de kopgroep</span>
             </a>
           </div>
         </section>
