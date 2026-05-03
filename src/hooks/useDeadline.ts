@@ -22,19 +22,37 @@ export interface DeadlineState {
 }
 
 function useGameDeadlines() {
-  const { data: game } = useCurrentGame();
   return useQuery({
-    queryKey: ["game-deadlines", game?.id],
-    enabled: !!game?.id && !!supabase,
+    queryKey: ["game-deadlines-any"],
+    enabled: !!supabase,
     queryFn: async () => {
+      // Pak de game waarvan de inschrijvingsperiode het meest relevant is:
+      // 1) lopend (open <= nu < close), 2) eerstvolgende open in de toekomst,
+      // 3) meest recent gesloten window.
       const { data, error } = await supabase!
         .from("games")
-        .select("registration_opens_at, registration_closes_at")
-        .eq("id", game!.id)
-        .maybeSingle();
+        .select("id, registration_opens_at, registration_closes_at")
+        .not("registration_opens_at", "is", null)
+        .not("registration_closes_at", "is", null);
       if (error) throw error;
-      return data as { registration_opens_at: string | null; registration_closes_at: string | null } | null;
+
+      const now = Date.now();
+      const rows = (data ?? []).map((g) => ({
+        ...g,
+        open: new Date(g.registration_opens_at as string).getTime(),
+        close: new Date(g.registration_closes_at as string).getTime(),
+      }));
+
+      const ongoing = rows.find((r) => r.open <= now && now < r.close);
+      if (ongoing) return ongoing;
+      const upcoming = rows
+        .filter((r) => r.open > now)
+        .sort((a, b) => a.open - b.open)[0];
+      if (upcoming) return upcoming;
+      const past = rows.sort((a, b) => b.close - a.close)[0];
+      return past ?? null;
     },
+    refetchInterval: 30000,
   });
 }
 
