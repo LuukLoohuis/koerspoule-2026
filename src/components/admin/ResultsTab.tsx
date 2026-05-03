@@ -231,6 +231,7 @@ export default function ResultsTab({
       toast.error(`Importeren mislukt: ${(e as Error).message}`);
     } finally {
       setImporting(false);
+    }
   }
 
   async function startImportCF() {
@@ -254,8 +255,6 @@ export default function ResultsTab({
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Onbekende fout");
-      // Map import keys: backend already returns {stage,gc,points,mountain,youth}
-      // Normalize unmatched to {position, bib:null, name}
       const normUnmatched: Record<string, Array<{ position: number; bib: number | null; name: string }>> = {};
       for (const k of Object.keys(data.unmatched ?? {})) {
         normUnmatched[k] = (data.unmatched[k] as Array<{ position: number; name: string }>).map((u) => ({
@@ -273,7 +272,6 @@ export default function ResultsTab({
     } finally {
       setImportingCF(false);
     }
-  }
   }
 
   async function applyImport() {
