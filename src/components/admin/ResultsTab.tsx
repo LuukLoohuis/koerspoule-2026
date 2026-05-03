@@ -282,18 +282,40 @@ export default function ResultsTab({
       };
       let totalSaved = 0;
       for (const c of classifs) {
-        const list = importPreview.matched[importKeyMap[c] as keyof typeof importPreview.matched];
-        if (!list || list.length === 0) continue;
+        const importKey = importKeyMap[c];
+        const matchedList = importPreview.matched[importKey] ?? [];
+        const unmatchedList = importPreview.unmatched[importKey] ?? [];
+        // Merge in manual picks for unmatched rows
+        const merged: Array<{ position: number; rider_id: string; rider_name: string; start_number: number | null }> = [...matchedList];
+        for (const u of unmatchedList) {
+          const pick = manualPicks[`${importKey}-${u.position}`];
+          if (pick) {
+            const r = riderById.get(pick);
+            merged.push({
+              position: u.position,
+              rider_id: pick,
+              rider_name: r?.name ?? u.name,
+              start_number: r?.start_number ?? null,
+            });
+          }
+        }
+        if (merged.length === 0) continue;
+        // Dedupe (keep first per rider, first per position)
+        const seenRider = new Set<string>();
+        const seenPos = new Set<number>();
+        const final = merged.filter((r) => {
+          if (seenRider.has(r.rider_id) || seenPos.has(r.position)) return false;
+          seenRider.add(r.rider_id); seenPos.add(r.position); return true;
+        });
+
         const col = CLASSIFICATION_LABELS[c].column;
-        // 1. Clear column for this stage
         const { error: clearErr } = await supabase
           .from("stage_results")
           .update({ [col]: null })
           .eq("stage_id", selectedStage)
           .not(col, "is", null);
         if (clearErr) throw clearErr;
-        // 2. Upsert per rider
-        for (const r of list) {
+        for (const r of final) {
           const { data: existing } = await supabase
             .from("stage_results")
             .select("id")
@@ -311,10 +333,10 @@ export default function ResultsTab({
               stage_id: selectedStage,
               rider_id: r.rider_id,
               game_id: activeGameId,
-              start_number: r.start_number,
               rider_name: r.rider_name,
               [col]: r.position,
             };
+            if (r.start_number != null) payload.start_number = r.start_number;
             if (c === "stage") payload.did_finish = true;
             const { error: ierr } = await supabase.from("stage_results").insert(payload);
             if (ierr) throw ierr;
