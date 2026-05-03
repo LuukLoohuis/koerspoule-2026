@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+type Props = { gameId?: string; gameName?: string };
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,11 +17,15 @@ import SubpouleHeatmap from "@/components/SubpouleHeatmap";
 import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Swords, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function SubpouleManager() {
+export default function SubpouleManager({ gameId, gameName }: Props = {}) {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { data: game } = useCurrentGame();
-  const { subpoules, isLoading, create, join, leave, remove, removeMember } = useSubpoules(game?.id);
+  const { data: currentGame } = useCurrentGame();
+  const effectiveGameId = gameId ?? currentGame?.id;
+  const game = gameId
+    ? { id: gameId, name: gameName ?? "" }
+    : currentGame;
+  const { subpoules, isLoading, create, join, leave, remove, removeMember } = useSubpoules(effectiveGameId);
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [createName, setCreateName] = useState("");
@@ -34,7 +39,7 @@ export default function SubpouleManager() {
   const { data: members = [] } = useSubpouleMembers(active?.id);
 
   const handleCreate = async () => {
-    if (!game?.id) return;
+    if (!effectiveGameId) return;
     try {
       const id = await create.mutateAsync({ name: createName, code: createCode });
       toast({ title: "Subpoule aangemaakt", description: createName });
