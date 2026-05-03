@@ -213,6 +213,31 @@ export default function Rules() {
             </div>
           )}
         </section>
+
+        {/* Tot slot */}
+        <section className="retro-border bg-card p-6 mt-6">
+          <h2 className="font-display text-2xl font-bold mb-4">🏁 Tot slot</h2>
+          <div className="space-y-3 font-sans text-sm text-muted-foreground">
+            <p>
+              Deze koerspoule is met zorg en enthousiasme ontwikkeld, zonder winstoogmerk.
+              Het doel is simpel: samen meer plezier beleven aan het volgen van de koers 🚴
+            </p>
+            <p>
+              Wil je ons helpen om deze koerspoule te blijven verbeteren en draaiende te
+              houden? Dat kan via de knop <span className="font-bold text-foreground">"Steun de kopgroep"</span>.
+              Alle steun wordt enorm gewaardeerd!
+            </p>
+          </div>
+          <div className="vintage-divider max-w-xs mx-auto my-5" />
+          <div className="flex justify-center">
+            <a
+              href="mailto:koerspoule@gmail.com?subject=Steun%20de%20kopgroep"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-md bg-primary text-primary-foreground font-display font-bold uppercase tracking-wider text-sm shadow-md hover:opacity-90 transition"
+            >
+              💛 Steun de kopgroep
+            </a>
+          </div>
+        </section>
       </div>
     </div>
   );
