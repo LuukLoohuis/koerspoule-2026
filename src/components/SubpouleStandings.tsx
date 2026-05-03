@@ -9,14 +9,16 @@ import { useEntries, useStages, useStagePoints } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import TeamComparison from "@/components/TeamComparison";
 import {
-  LineChart,
+  ComposedChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
+  ReferenceLine,
+  LabelList,
 } from "recharts";
 import { cn } from "@/lib/utils";
 
