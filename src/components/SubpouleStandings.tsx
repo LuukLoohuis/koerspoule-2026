@@ -332,16 +332,13 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                     padding={{ left: 8, right: 8 }}
                   />
                   <YAxis
-                    reversed
-                    domain={[1, Math.max(memberRows.length, 1)]}
                     allowDecimals={false}
-                    ticks={Array.from({ length: memberRows.length }, (_, i) => i + 1)}
                     tick={{ fontSize: isMobile ? 9 : 11, fill: "hsl(var(--muted-foreground))" }}
-                    width={32}
+                    width={40}
                     axisLine={false}
                     tickLine={false}
                     label={{
-                      value: "Positie",
+                      value: "Punten",
                       angle: -90,
                       position: "insideLeft",
                       offset: 12,
@@ -432,7 +429,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                       <Line
                         key={m.user_id}
                         type="monotone"
-                        dataKey={`rank_${m.user_id}`}
+                        dataKey={`pts_${m.user_id}`}
                         name={m.user_id}
                         stroke={color}
                         strokeWidth={isHighlighted ? 3.5 : 2}
@@ -449,7 +446,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
             </div>
           )}
           <p className="text-[10px] text-muted-foreground mt-2 text-center italic">
-            1 = leider · hoger getal = lagere positie
+            Cumulatieve punten per etappe · hoger = beter
           </p>
         </CardContent>
       </Card>
