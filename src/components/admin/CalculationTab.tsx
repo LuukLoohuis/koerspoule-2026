@@ -187,18 +187,52 @@ export default function CalculationTab({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-display flex items-center gap-2"><Sparkles className="w-5 h-5" />Puntentabellen</CardTitle>
+          <CardTitle className="font-display flex items-center gap-2"><Sparkles className="w-5 h-5" />Puntentabel etappes (top 20)</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Stelt de standaard etappepuntentabel in (top 20: 50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1).
-            Truien en GC-podium leveren punten via voorspellingen, niet via dit schema.
+            Standaard: <span className="font-mono">50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1</span>.
+            Pas hieronder per positie aan indien gewenst. Truien en GC-podium lopen via voorspellingen, niet via dit schema.
           </p>
-          <Button data-testid="seed-defaults-btn" onClick={seedDefaults} disabled={busy} variant="outline">
-            Laad standaard puntentabel
-          </Button>
+          {loadingSchema ? (
+            <p className="text-sm text-muted-foreground italic">Schema laden...</p>
+          ) : (
+            <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-10 gap-2">
+              {schemaPoints.map((pts, i) => (
+                <div key={i} className="flex flex-col gap-1">
+                  <Label className="text-xs text-muted-foreground">Pos. {i + 1}</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={pts}
+                    onChange={(e) => {
+                      const next = [...schemaPoints];
+                      next[i] = Number(e.target.value) || 0;
+                      setSchemaPoints(next);
+                    }}
+                    className="h-9 text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => saveSchema(schemaPoints)} disabled={busy || loadingSchema}>
+              <Save className="w-4 h-4 mr-1" />Opslaan
+            </Button>
+            <Button onClick={resetToDefault} disabled={busy} variant="outline">
+              <RotateCcw className="w-4 h-4 mr-1" />Terug naar standaard
+            </Button>
+            <Button onClick={loadSchema} disabled={busy || loadingSchema} variant="ghost">
+              Herlaad
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground italic">
+            Tip: na opslaan een etappe herberekenen om de stand bij te werken.
+          </p>
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader>
