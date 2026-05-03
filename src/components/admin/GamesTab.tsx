@@ -102,7 +102,22 @@ export default function GamesTab({
     await reload();
   }
 
-  async function deleteGame(g: Game) {
+  async function setRegistrationWindow(
+    id: string,
+    field: "registration_opens_at" | "registration_closes_at",
+    value: string,
+  ) {
+    if (!supabase) return;
+    const iso = value ? new Date(value).toISOString() : null;
+    const { error } = await supabase.from("games").update({ [field]: iso }).eq("id", id);
+    if (error) {
+      toast.error(`Bijwerken mislukt: ${error.message}`);
+      return;
+    }
+    toast.success("Inschrijvingstijd bijgewerkt");
+    await reload();
+  }
+
     if (!supabase) return;
     if (!confirm(`Weet je zeker dat je "${g.name}" volledig wilt verwijderen?\n\nAlle inzendingen, picks, jokers, uitslagen, etappes, categorieën, puntenregels, renners en subpoules van deze game worden gewist. Dit kan niet ongedaan worden gemaakt.`)) return;
 
