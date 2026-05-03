@@ -334,15 +334,22 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                   <YAxis
                     allowDecimals={false}
                     tick={{ fontSize: isMobile ? 9 : 11, fill: "hsl(var(--muted-foreground))" }}
-                    width={40}
+                    width={44}
                     axisLine={false}
                     tickLine={false}
+                    domain={[0, (dataMax: number) => {
+                      const max = Math.max(10, Math.ceil(dataMax || 0));
+                      // round up to a "nice" step
+                      const step = max <= 50 ? 10 : max <= 100 ? 20 : max <= 500 ? 50 : max <= 1000 ? 100 : 200;
+                      return Math.ceil(max / step) * step;
+                    }]}
+                    tickCount={isMobile ? 5 : 7}
                     label={{
-                      value: "Punten",
+                      value: "Punten (hoger = beter)",
                       angle: -90,
                       position: "insideLeft",
                       offset: 12,
-                      style: { fontSize: 10, fill: "hsl(var(--muted-foreground))" },
+                      style: { fontSize: 10, fill: "hsl(var(--muted-foreground))", textAnchor: "middle" },
                     }}
                   />
                   {/* Stage markers */}
