@@ -73,6 +73,7 @@ export function useSubpouleEntries(subpouleId?: string, gameId?: string) {
           total_points: r.total_points ?? 0,
           picks,
           jokers,
+          predictions: (r.predictions ?? []) as PredictionEntry[],
         };
       });
 
