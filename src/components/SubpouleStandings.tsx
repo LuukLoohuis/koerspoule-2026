@@ -34,7 +34,7 @@ const LINE_COLORS = [
   "#FF6F00", "#00BFA5", "#C71585", "#1E88E5",
 ];
 
-export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
+const isMobile = useIsMobile();
   const { user } = useAuth();
   const { data: game } = useCurrentGame();
   const { data: members = [], isLoading: membersLoading, error: membersError } = useSubpouleMembers(subpouleId);
