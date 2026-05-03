@@ -2,12 +2,31 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Swords, Crown, Star } from "lucide-react";
+import { Search, Swords, Crown, Star, Trophy } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useSubpouleEntries } from "@/hooks/useSubpouleEntries";
+import { useSubpouleEntries, type PredictionEntry } from "@/hooks/useSubpouleEntries";
 import { useCategories } from "@/hooks/useCategories";
 import { cn } from "@/lib/utils";
+
+const CLASSIFICATION_LABELS: Record<string, string> = {
+  gc: "Eindpodium",
+  points: "Puntentrui",
+  kom: "Bergtrui",
+  youth: "Jongerentrui",
+};
+const CLASSIFICATION_ORDER = ["gc", "points", "kom", "youth"] as const;
+
+function predictionsByClass(list: PredictionEntry[]) {
+  const map = new Map<string, PredictionEntry[]>();
+  for (const p of list) {
+    const arr = map.get(p.classification) ?? [];
+    arr.push(p);
+    map.set(p.classification, arr);
+  }
+  for (const arr of map.values()) arr.sort((a, b) => a.position - b.position);
+  return map;
+}
 
 type Props = { subpouleId: string };
 
