@@ -16,7 +16,16 @@ function TimeUnit({ value, label }: { value: number; label: string }) {
 }
 
 export default function CountdownBanner({ className }: { className?: string }) {
-  const { phase, days, hours, minutes, seconds, label } = useDeadline();
+  const { phase, days, hours, minutes, seconds, label, closeDate, openDate } = useDeadline();
+
+  const fmt = (d: Date) =>
+    d.toLocaleString("nl-NL", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
   if (phase === "before_open") {
     return (
@@ -35,7 +44,7 @@ export default function CountdownBanner({ className }: { className?: string }) {
           <TimeUnit value={seconds} label="sec" />
         </div>
         <p className="text-xs text-muted-foreground mt-3 font-sans">
-          De inschrijving opent zodra de startlijst bekend is.
+          De inschrijving opent op {fmt(openDate)}.
         </p>
       </div>
     );
@@ -58,7 +67,7 @@ export default function CountdownBanner({ className }: { className?: string }) {
           <TimeUnit value={seconds} label="sec" />
         </div>
         <p className="text-xs text-muted-foreground mt-3 font-sans">
-          Vrijdag 8 mei 11:00 — daarna kun je je selectie niet meer wijzigen.
+          Deadline: {fmt(closeDate)} — daarna kun je je selectie niet meer wijzigen.
         </p>
       </div>
     );
