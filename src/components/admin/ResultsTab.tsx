@@ -231,7 +231,49 @@ export default function ResultsTab({
       toast.error(`Importeren mislukt: ${(e as Error).message}`);
     } finally {
       setImporting(false);
+  }
+
+  async function startImportCF() {
+    if (!supabase || !selectedStage || !selectedStageObj) {
+      toast.error("Selecteer eerst een etappe");
+      return;
     }
+    if (!canImportCF) {
+      toast.error("Race-type of jaar ontbreekt");
+      return;
+    }
+    setImportingCF(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("import-cyclingflash", {
+        body: {
+          race_type: gameType,
+          stage_number: selectedStageObj.stage_number,
+          game_id: activeGameId,
+          year: gameYear,
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Onbekende fout");
+      // Map import keys: backend already returns {stage,gc,points,mountain,youth}
+      // Normalize unmatched to {position, bib:null, name}
+      const normUnmatched: Record<string, Array<{ position: number; bib: number | null; name: string }>> = {};
+      for (const k of Object.keys(data.unmatched ?? {})) {
+        normUnmatched[k] = (data.unmatched[k] as Array<{ position: number; name: string }>).map((u) => ({
+          position: u.position, bib: null, name: u.name,
+        }));
+      }
+      setImportPreview({
+        source_url: data.source_url,
+        matched: data.matched,
+        unmatched: normUnmatched as typeof data.unmatched,
+      });
+    } catch (e) {
+      console.error("Cyclingflash import error:", e);
+      toast.error(`Importeren mislukt: ${(e as Error).message}`);
+    } finally {
+      setImportingCF(false);
+    }
+  }
   }
 
   async function applyImport() {
