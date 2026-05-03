@@ -17,7 +17,7 @@ const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.
   ploegentijdrit: { label: "Ploegentijdrit", color: "bg-violet-500", icon: <Clock className="w-4 h-4" /> },
 };
 
-type View = "etappes" | "poule" | "gc";
+type View = "etappes" | "poule";
 
 export default function MyResultsPanel() {
   const { user } = useAuth();
@@ -72,7 +72,6 @@ export default function MyResultsPanel() {
         {([
           { id: "etappes", label: "📋 Etappes", icon: ListOrdered },
           { id: "poule", label: "🏅 Deelnemers", icon: Trophy },
-          { id: "gc", label: "🌟 Race Klassement", icon: Mountain },
         ] as const).map((v) => (
           <button
             key={v.id}
@@ -211,38 +210,6 @@ export default function MyResultsPanel() {
         </Card>
       )}
 
-      {view === "gc" && (
-        <Card className="retro-border">
-          <CardHeader className="border-b-2 border-foreground bg-secondary/30">
-            <CardTitle className="font-display flex items-center gap-2">
-              <Mountain className="h-5 w-5 text-primary" /> Algemeen klassement (laatste etappe)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border max-h-[600px] overflow-y-auto">
-              {stageResults.length === 0 ? (
-                <div className="p-6 text-sm text-muted-foreground text-center">Geen GC-data beschikbaar.</div>
-              ) : (
-                [...stageResults]
-                  .filter((r) => r.gc_position != null)
-                  .sort((a, b) => (a.gc_position ?? 999) - (b.gc_position ?? 999))
-                  .slice(0, 50)
-                  .map((r) => (
-                    <div key={r.id} className="p-3 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="font-mono text-xs text-muted-foreground w-8 shrink-0 tabular-nums">#{r.gc_position}</span>
-                        <span className="font-medium truncate">{r.rider_name ?? r.riders?.name ?? "Renner"}</span>
-                        {r.riders?.teams?.name && (
-                          <span className="text-xs text-muted-foreground truncate">{r.riders.teams.name}</span>
-                        )}
-                      </div>
-                    </div>
-                  ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

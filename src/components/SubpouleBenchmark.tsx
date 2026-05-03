@@ -2,12 +2,31 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Swords, Crown, Star } from "lucide-react";
+import { Search, Swords, Crown, Star, Trophy } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useSubpouleEntries } from "@/hooks/useSubpouleEntries";
+import { useSubpouleEntries, type PredictionEntry } from "@/hooks/useSubpouleEntries";
 import { useCategories } from "@/hooks/useCategories";
 import { cn } from "@/lib/utils";
+
+const CLASSIFICATION_LABELS: Record<string, string> = {
+  gc: "Eindpodium",
+  points: "Puntentrui",
+  kom: "Bergtrui",
+  youth: "Jongerentrui",
+};
+const CLASSIFICATION_ORDER = ["gc", "points", "kom", "youth"] as const;
+
+function predictionsByClass(list: PredictionEntry[]) {
+  const map = new Map<string, PredictionEntry[]>();
+  for (const p of list) {
+    const arr = map.get(p.classification) ?? [];
+    arr.push(p);
+    map.set(p.classification, arr);
+  }
+  for (const arr of map.values()) arr.sort((a, b) => a.position - b.position);
+  return map;
+}
 
 type Props = { subpouleId: string };
 
@@ -157,6 +176,14 @@ export default function SubpouleBenchmark({ subpouleId }: Props) {
               </div>
             </div>
 
+            {/* Header row */}
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-2 px-3 py-2 border-b border-border bg-muted/20 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <span>Jij</span>
+              <span className="text-center">Categorie</span>
+              <span className="text-right">{opponent.display_name}</span>
+            </div>
+
+            {/* Categories */}
             <div className="divide-y divide-border">
               {sortedCats.map((cat) => {
                 const myIds = me.picks.get(cat.id) ?? [];
@@ -164,38 +191,125 @@ export default function SubpouleBenchmark({ subpouleId }: Props) {
                 const same = myIds.some((id) => oppIds.includes(id));
 
                 return (
-                  <div key={cat.id} className="px-3 py-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <div key={cat.id} className="grid grid-cols-[1fr_auto_1fr] gap-2 px-3 py-2 text-sm items-center">
+                    <div className={cn("truncate", same && "text-primary font-medium")}>
+                      {myIds.length === 0 ? "—" : myIds.map((id) => ridersById.get(id)?.name ?? "—").join(", ")}
+                    </div>
+                    <div className="flex flex-col items-center gap-0.5 min-w-[80px]">
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground text-center">
                         {cat.short_name || cat.name}
                       </span>
                       {same && (
-                        <Badge variant="outline" className="text-[10px] gap-1 h-4 px-1.5">
-                          <Star className="h-2.5 w-2.5" /> zelfde
-                        </Badge>
+                        <Star className="h-3 w-3 text-primary fill-primary" />
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className={cn("flex items-center gap-1 truncate", same && "text-primary font-medium")}>
-                        <span className="truncate">
-                          {myIds.length === 0 ? "—" : myIds.map((id) => ridersById.get(id)?.name ?? "—").join(", ")}
-                        </span>
-                      </div>
-                      <div className={cn("flex items-center gap-1 truncate", same && "text-primary font-medium")}>
-                        <span className="truncate">
-                          {oppIds.length === 0 ? "—" : oppIds.map((id) => ridersById.get(id)?.name ?? "—").join(", ")}
-                        </span>
-                      </div>
+                    <div className={cn("truncate text-right", same && "text-primary font-medium")}>
+                      {oppIds.length === 0 ? "—" : oppIds.map((id) => ridersById.get(id)?.name ?? "—").join(", ")}
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {overlap.sharedJokers.length > 0 && (
-              <div className="px-3 py-2 text-xs text-muted-foreground bg-muted/20 border-t border-border">
-                <Crown className="h-3 w-3 inline mr-1 text-primary" />
-                {overlap.sharedJokers.length} gedeelde joker{overlap.sharedJokers.length > 1 ? "s" : ""}
+            {/* Jokers */}
+            <div className="border-t-2 border-foreground bg-muted/10">
+              <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
+                <Crown className="h-4 w-4 text-primary" />
+                <span className="font-display text-sm font-bold">Jokers</span>
+                {overlap.sharedJokers.length > 0 && (
+                  <Badge variant="outline" className="text-[10px] ml-auto">
+                    {overlap.sharedJokers.length} gedeeld
+                  </Badge>
+                )}
+              </div>
+              <div className="grid grid-cols-[1fr_auto_1fr] gap-2 px-3 py-2 text-sm items-center">
+                <div className="space-y-1">
+                  {Array.from(me.jokers).length === 0 ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : (
+                    Array.from(me.jokers).map((id) => {
+                      const shared = opponent.jokers.has(id);
+                      return (
+                        <div key={id} className={cn("truncate", shared && "text-primary font-medium")}>
+                          {ridersById.get(id)?.name ?? "—"}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground min-w-[80px] text-center">Joker</span>
+                <div className="space-y-1 text-right">
+                  {Array.from(opponent.jokers).length === 0 ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : (
+                    Array.from(opponent.jokers).map((id) => {
+                      const shared = me.jokers.has(id);
+                      return (
+                        <div key={id} className={cn("truncate", shared && "text-primary font-medium")}>
+                          {ridersById.get(id)?.name ?? "—"}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Predictions */}
+            {(me.predictions.length > 0 || opponent.predictions.length > 0) && (
+              <div className="border-t-2 border-foreground bg-muted/10">
+                <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
+                  <Trophy className="h-4 w-4 text-primary" />
+                  <span className="font-display text-sm font-bold">Voorspellingen</span>
+                </div>
+                {(() => {
+                  const myMap = predictionsByClass(me.predictions);
+                  const oppMap = predictionsByClass(opponent.predictions);
+                  return (
+                    <div className="divide-y divide-border">
+                      {CLASSIFICATION_ORDER.map((cls) => {
+                        const myList = myMap.get(cls) ?? [];
+                        const oppList = oppMap.get(cls) ?? [];
+                        if (myList.length === 0 && oppList.length === 0) return null;
+                        return (
+                          <div key={cls} className="grid grid-cols-[1fr_auto_1fr] gap-2 px-3 py-2 text-sm items-center">
+                            <div className="space-y-0.5">
+                              {myList.length === 0 ? (
+                                <span className="text-muted-foreground">—</span>
+                              ) : (
+                                myList.map((p) => {
+                                  const shared = oppList.some((o) => o.position === p.position && o.rider_id === p.rider_id);
+                                  return (
+                                    <div key={`${cls}-me-${p.position}`} className={cn("truncate", shared && "text-primary font-medium")}>
+                                      {cls === "gc" ? `${p.position}. ` : ""}{ridersById.get(p.rider_id)?.name ?? "—"}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground min-w-[80px] text-center">
+                              {CLASSIFICATION_LABELS[cls]}
+                            </span>
+                            <div className="space-y-0.5 text-right">
+                              {oppList.length === 0 ? (
+                                <span className="text-muted-foreground">—</span>
+                              ) : (
+                                oppList.map((p) => {
+                                  const shared = myList.some((m2) => m2.position === p.position && m2.rider_id === p.rider_id);
+                                  return (
+                                    <div key={`${cls}-opp-${p.position}`} className={cn("truncate", shared && "text-primary font-medium")}>
+                                      {cls === "gc" ? `${p.position}. ` : ""}{ridersById.get(p.rider_id)?.name ?? "—"}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </CardContent>

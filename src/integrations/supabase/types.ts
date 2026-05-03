@@ -965,6 +965,7 @@ export type Database = {
           entry_id: string
           jokers: Json
           picks: Json
+          predictions: Json
           team_name: string
           total_points: number
           user_id: string

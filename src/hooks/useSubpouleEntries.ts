@@ -1,6 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
+export type PredictionEntry = {
+  classification: string; // 'gc' | 'points' | 'kom' | 'youth'
+  position: number;
+  rider_id: string;
+};
+
 export type SubpouleEntry = {
   user_id: string;
   display_name: string;
@@ -9,6 +15,7 @@ export type SubpouleEntry = {
   total_points: number;
   picks: Map<string, string[]>; // category_id → rider_ids
   jokers: Set<string>;
+  predictions: PredictionEntry[];
 };
 
 export type SubpouleEntriesData = {
@@ -24,6 +31,7 @@ type SubpouleEntryDetailRow = {
   total_points: number | null;
   picks: Array<{ category_id: string; rider_id: string }> | null;
   jokers: Array<{ rider_id: string }> | null;
+  predictions: Array<{ classification: string; position: number; rider_id: string }> | null;
 };
 
 /**
@@ -65,6 +73,7 @@ export function useSubpouleEntries(subpouleId?: string, gameId?: string) {
           total_points: r.total_points ?? 0,
           picks,
           jokers,
+          predictions: (r.predictions ?? []) as PredictionEntry[],
         };
       });
 
@@ -75,6 +84,7 @@ export function useSubpouleEntries(subpouleId?: string, gameId?: string) {
           for (const id of ids) riderIds.add(id);
         }
         for (const id of e.jokers) riderIds.add(id);
+        for (const p of e.predictions) riderIds.add(p.rider_id);
       }
       const ridersById = new Map<string, { name: string; team: string | null }>();
       if (riderIds.size > 0) {
