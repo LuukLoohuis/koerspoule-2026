@@ -368,6 +368,8 @@ export type Database = {
           game_type: string | null
           id: string
           name: string
+          registration_closes_at: string | null
+          registration_opens_at: string | null
           slug: string | null
           start_date: string | null
           starts_at: string | null
@@ -381,6 +383,8 @@ export type Database = {
           game_type?: string | null
           id?: string
           name: string
+          registration_closes_at?: string | null
+          registration_opens_at?: string | null
           slug?: string | null
           start_date?: string | null
           starts_at?: string | null
@@ -394,6 +398,8 @@ export type Database = {
           game_type?: string | null
           id?: string
           name?: string
+          registration_closes_at?: string | null
+          registration_opens_at?: string | null
           slug?: string | null
           start_date?: string | null
           starts_at?: string | null
