@@ -33,7 +33,7 @@ export default function AdminV3() {
     if (!supabase) return;
     const { data, error } = await supabase
       .from("games")
-      .select("id, name, game_type, year, status, starts_at, slug")
+      .select("id, name, game_type, year, status, starts_at, slug, registration_opens_at, registration_closes_at")
       .order("year", { ascending: false, nullsFirst: false });
     if (error) {
       console.error("Games load error:", error);

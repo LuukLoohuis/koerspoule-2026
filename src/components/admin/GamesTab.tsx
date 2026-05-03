@@ -18,7 +18,17 @@ export type Game = {
   status: "draft" | "open" | "locked" | "live" | "finished";
   starts_at: string | null;
   slug: string | null;
+  registration_opens_at?: string | null;
+  registration_closes_at?: string | null;
 };
+
+// Convert ISO timestamp ↔ datetime-local input string (in user's local TZ)
+function toLocalInput(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 const TYPE_LABELS: Record<string, string> = {
   giro: "Giro d'Italia",
@@ -89,6 +99,22 @@ export default function GamesTab({
       return;
     }
     toast.success("Status bijgewerkt");
+    await reload();
+  }
+
+  async function setRegistrationWindow(
+    id: string,
+    field: "registration_opens_at" | "registration_closes_at",
+    value: string,
+  ) {
+    if (!supabase) return;
+    const iso = value ? new Date(value).toISOString() : null;
+    const { error } = await supabase.from("games").update({ [field]: iso }).eq("id", id);
+    if (error) {
+      toast.error(`Bijwerken mislukt: ${error.message}`);
+      return;
+    }
+    toast.success("Inschrijvingstijd bijgewerkt");
     await reload();
   }
 
@@ -200,6 +226,8 @@ export default function GamesTab({
                 <TableHead>Naam</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Start</TableHead>
+                <TableHead>Inschrijving opent</TableHead>
+                <TableHead>Inschrijving sluit</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -221,6 +249,32 @@ export default function GamesTab({
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {g.starts_at ? new Date(g.starts_at).toLocaleString("nl-NL") : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="datetime-local"
+                      className="h-8 text-xs w-48"
+                      defaultValue={toLocalInput(g.registration_opens_at)}
+                      onBlur={(e) => {
+                        const v = e.target.value;
+                        if (v !== toLocalInput(g.registration_opens_at)) {
+                          setRegistrationWindow(g.id, "registration_opens_at", v);
+                        }
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="datetime-local"
+                      className="h-8 text-xs w-48"
+                      defaultValue={toLocalInput(g.registration_closes_at)}
+                      onBlur={(e) => {
+                        const v = e.target.value;
+                        if (v !== toLocalInput(g.registration_closes_at)) {
+                          setRegistrationWindow(g.id, "registration_closes_at", v);
+                        }
+                      }}
+                    />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-2">
