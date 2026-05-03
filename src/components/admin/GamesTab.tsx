@@ -251,6 +251,32 @@ export default function GamesTab({
                     {g.starts_at ? new Date(g.starts_at).toLocaleString("nl-NL") : "—"}
                   </TableCell>
                   <TableCell>
+                    <Input
+                      type="datetime-local"
+                      className="h-8 text-xs w-48"
+                      defaultValue={toLocalInput(g.registration_opens_at)}
+                      onBlur={(e) => {
+                        const v = e.target.value;
+                        if (v !== toLocalInput(g.registration_opens_at)) {
+                          setRegistrationWindow(g.id, "registration_opens_at", v);
+                        }
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="datetime-local"
+                      className="h-8 text-xs w-48"
+                      defaultValue={toLocalInput(g.registration_closes_at)}
+                      onBlur={(e) => {
+                        const v = e.target.value;
+                        if (v !== toLocalInput(g.registration_closes_at)) {
+                          setRegistrationWindow(g.id, "registration_closes_at", v);
+                        }
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center justify-end gap-2">
                       <Button size="sm" variant="outline" onClick={() => setActiveGameId(g.id)} data-testid={`select-game-${g.id}`}>
                         Selecteer
