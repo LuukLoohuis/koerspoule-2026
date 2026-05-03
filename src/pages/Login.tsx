@@ -366,6 +366,19 @@ export default function Login() {
             </motion.form>
           </AnimatePresence>
 
+          {!isRegister && (
+            <div className="text-center mt-3">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={isSendingReset}
+                className="text-xs text-muted-foreground hover:text-accent hover:underline transition-colors font-sans disabled:opacity-50"
+              >
+                {isSendingReset ? "Resetlink versturen..." : "Wachtwoord vergeten? →"}
+              </button>
+            </div>
+          )}
+
           <div className="vintage-divider my-5" />
 
           <p className="text-center text-sm text-muted-foreground font-sans">
