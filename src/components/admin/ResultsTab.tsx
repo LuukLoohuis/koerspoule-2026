@@ -257,16 +257,11 @@ export default function ResultsTab({
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Onbekende fout");
-      const normUnmatched: Record<string, Array<{ position: number; bib: number | null; name: string }>> = {};
-      for (const k of Object.keys(data.unmatched ?? {})) {
-        normUnmatched[k] = (data.unmatched[k] as Array<{ position: number; name: string }>).map((u) => ({
-          position: u.position, bib: null, name: u.name,
-        }));
-      }
+      setManualPicks({});
       setImportPreview({
         source_url: data.source_url,
         matched: data.matched,
-        unmatched: normUnmatched as typeof data.unmatched,
+        unmatched: data.unmatched,
       });
     } catch (e) {
       console.error("Cyclingflash import error:", e);
