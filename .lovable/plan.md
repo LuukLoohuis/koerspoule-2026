@@ -1,47 +1,63 @@
-## Probleem
+## Doel
 
-`https://koerspoule.nl` en `https://www.koerspoule.nl` tonen een leeg scherm. DNS, SSL en hosting zijn in orde (HTTP 200, `index.html` wordt geleverd, het Lovable‑badge laadt). De React‑app crasht direct bij het opstarten met:
+De huidige "Verloop per etappe"-grafiek in `src/components/SubpouleStandings.tsx` toont cumulatieve **punten**. We bouwen hem om naar een echte **klassement-progressie**: één lijn per deelnemer, etappes op de X-as, **positie** op de Y-as (1 bovenaan, omgekeerd), met bolle markers per etappe en een rijke tooltip.
 
+## Wijzigingen in `SubpouleStandings.tsx`
+
+### 1. Data: cumulatief → rang per etappe
+Naast de bestaande cumulatieve som per gebruiker berekenen we per etappe de **ranking binnen de subpoule**:
+- Loop door etappes (gesorteerd op `stage_number`).
+- Houd per `user_id` cumulatieve punten bij.
+- Sorteer leden op cumulatief punten (desc) en geef ze rang 1..N (gelijke punten = gelijke rang).
+- Sla per stage-row op: `rank_<user_id>`, `pts_<user_id>`, `delta_<user_id>` (punten in die etappe).
+
+### 2. Y-as = positie (omgekeerd)
+- `<YAxis reversed domain={[1, memberRows.length]} allowDecimals={false} ticks={[1,2,3,...,N]} />`
+- Label: "Positie". Tick "1" krijgt subtiele goud-accent via `tickFormatter`.
+
+### 3. X-as = etappes met markers
+- Tick per etappe `E1..EN`, `interval={0}` op desktop, `interval="preserveStartEnd"` + kleinere font op mobile (via `useIsMobile`).
+- Voeg per etappe een `<ReferenceLine x="E{n}" />` met dunne stippellijn voor visuele stage-markers.
+- Markeer **laatste/huidige etappe** met een dikkere `ReferenceLine` in primary kleur + label "Nu".
+
+### 4. Bold, contrasterende palette
+Vervang `LINE_COLORS` door een 12-kleuren bold palette (Tableau-achtig), bv.:
 ```
-Uncaught Error: supabaseUrl is required.
-   at createClient (...)
+#E6194B, #3CB44B, #4363D8, #F58231, #911EB4, #42D4F4,
+#F032E6, #BFEF45, #FABED4, #469990, #9A6324, #800000
 ```
+Gebruikt voor zowel legenda-bullets, member-list-bullets als chart-lijnen (consistente mapping per `user_id` index).
 
-In `src/integrations/supabase/client.ts` worden `VITE_SUPABASE_URL` en `VITE_SUPABASE_PUBLISHABLE_KEY` rechtstreeks aan `createClient` doorgegeven. In de huidige **gepubliceerde** bundel zijn deze leeg, waardoor de hele module faalt vóórdat `createRoot()` wordt aangeroepen — vandaar volledig wit scherm, geen routing, geen netwerk‑calls.
+### 5. Lijnen + dots
+- `<Line type="monotone" strokeWidth={isHighlighted ? 3.5 : 2} dot={{ r: 3 }} activeDot={{ r: 6 }} />`
+- Niet-gehighlighte lijnen blijven volledig zichtbaar (opacity 0.85 ipv huidige 0.28) zodat alle deelnemers zichtbaar blijven; gehighlighte lijn krijgt extra dikte + dropshadow filter.
+- Verwijder gradient `Area` (was puntgebaseerd, niet zinvol bij rank).
 
-In de preview werk je als ingelogde Lovable‑gebruiker via de auth‑bridge, dus daar valt het ook op (preview is leeg/niet doorgaand) maar minder duidelijk.
+### 6. Rijke tooltip
+Custom `content`-renderer voor `<Tooltip>`:
+- Header: "Etappe N" (volledig: "Etappe 5 — {stage.name}" als beschikbaar, anders alleen nummer).
+- Per zichtbare deelnemer een rij gesorteerd op rang:
+  - kleur-bullet • naam • `#rang` • `{cum} pt` • `(+{delta})` in die etappe
+- Highlight de actieve user-rij vet.
 
-## Oplossing in twee stappen
+### 7. Highlight huidige etappe
+- Bepaal laatste etappe met `stage_points` (max stage_number waarvoor er punten zijn). Markeer met dikkere primary `ReferenceLine` + tekstlabel "Laatste".
 
-### 1. Robuuste Supabase‑client (codefix)
+### 8. Mobile-friendly
+Met `useIsMobile()`:
+- Hoogte: `h-72` mobile, `h-96` desktop.
+- X-as font 9px mobile / 11px desktop, `interval="preserveStartEnd"`.
+- Alleen tick-labels voor elke 2e etappe op mobile als N > 10.
+- Toggle-pillen blijven scrollbaar (`overflow-x-auto` toevoegen).
+- Tooltip wrapper max-width `260px`, kleinere font op mobile.
 
-Voorkom dat één ontbrekende env‑variabele de hele app down brengt.
+### 9. Kleine UX-verbeteringen
+- Onder de grafiek een korte legenda-uitleg: "1 = leider, hoger getal = lagere positie."
+- Kleurbullets in de standings-tabel (boven) blijven gesynchroniseerd met de chartkleuren.
+- "Toon alles / Verberg alles"-knop blijft.
 
-- `src/integrations/supabase/client.ts`
-  - Hardcode fallback naar de bekende projectwaarden (publieke anon key + URL van dit project) zoals Lovable Cloud normaal doet:
-    - `SUPABASE_URL` = `https://ivbmlledoamqtzqpcvzl.supabase.co`
-    - `SUPABASE_PUBLISHABLE_KEY` = de bestaande anon key uit het project
-  - Logica: `import.meta.env.VITE_SUPABASE_URL ?? "<fallback>"` zodat preview én publish altijd werken.
-- `src/lib/supabase.ts`
-  - Zelfde fallback toepassen (deze gebruikt nu `?? ""`, wat ook tot een crash leidt).
-- `src/pages/Login.tsx` (regel 77)
-  - De waarschuwing over ontbrekende env‑vars laten staan, maar niet meer als blokkerende error gebruiken.
+## Bestanden
+- `src/components/SubpouleStandings.tsx` — alle bovenstaande wijzigingen (palette, data-transform, chart-config, tooltip, mobile).
 
-Resultaat: zelfs als de publish‑pipeline ooit weer geen env‑vars meegeeft, blijft de site werken (anon key is publiek en mag in de codebase staan).
-
-### 2. Opnieuw publiceren
-
-Frontend‑changes vereisen handmatig op **Publish → Update** klikken. Na de codefix moet jij dat eenmalig doen, daarna verschijnt de site weer normaal op `koerspoule.nl`, `www.koerspoule.nl` en `koerspoule.lovable.app`.
-
-## Verificatie
-
-Na publish controleer ik via de browser tool:
-- `https://koerspoule.nl` rendert het normale Koerspoule‑scherm (geen wit vlak).
-- Geen `supabaseUrl is required` meer in de console.
-- Login‑pagina toont en Supabase‑calls slagen.
-
-## Wat ik niet ga doen
-
-- Geen DNS‑ of domeinwijzigingen — die zijn correct.
-- Geen wijziging aan `src/integrations/supabase/types.ts` of de `.env` (auto‑gegenereerd).
-- Geen aanpassing aan publish‑visibility (staat al op public).
+## Niet gewijzigd
+- Standings-tabel logica, `TeamComparison`, hooks, DB. Alleen visualisatie.

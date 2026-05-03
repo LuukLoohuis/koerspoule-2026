@@ -9,18 +9,17 @@ import { useEntries, useStages, useStagePoints } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import TeamComparison from "@/components/TeamComparison";
 import {
-  ComposedChart,
+  LineChart,
   Line,
-  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  LabelList,
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type Props = {
   subpouleId: string;
