@@ -84,7 +84,16 @@ export default function MijnPeloton() {
   const displayName = (teamName?.trim() || profile?.display_name?.trim() || myTeam.userName);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
-  const [selectedGame, setSelectedGame] = useState(myGames[0].id);
+  const { data: allGames = [] } = useAllGames();
+  const [selectedGame, setSelectedGame] = useState<string | null>(null);
+  useEffect(() => {
+    if (!selectedGame && allGames.length > 0) {
+      const preferred = allGames.find((g) => ["open", "live", "locked"].includes(g.status)) ?? allGames[0];
+      setSelectedGame(preferred.id);
+    }
+  }, [allGames, selectedGame]);
+  const selectedGameObj = allGames.find((g) => g.id === selectedGame) ?? null;
+  const isDraft = selectedGameObj?.status === "draft";
   const [gameTab, setGameTab] = useState("team");
   const [uitslagenView, setUitslagenView] = useState<"etappes" | "poule" | "giro">("etappes");
   const [selectedPool, setSelectedPool] = useState<string | null>(null);
