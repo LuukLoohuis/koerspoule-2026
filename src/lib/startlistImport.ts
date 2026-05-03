@@ -12,9 +12,14 @@ export type ParsedStartlistTeam = {
 };
 
 /**
- * Extract text from PDF.js source-order items. PCS startlist PDFs already store
- * teams top-to-bottom in logical order; rebuilding from visual columns can merge
- * neighbouring teams/riders when long names overlap column boundaries.
+ * Extract text from a PCS startlist PDF.
+ *
+ * PCS startlists are laid out in 3–4 visual columns. Reading items in PDF
+ * source order interleaves teams and produces phantom teams (e.g. 43 instead
+ * of 23). We use each item's (x, y) position to:
+ *   1) cluster items into vertical columns by x coordinate
+ *   2) sort each column top-to-bottom (PDF y is bottom-up)
+ *   3) group items on the same baseline into one logical line
  */
 export async function extractPdfText(file: File): Promise<string> {
   const data = await file.arrayBuffer();
@@ -22,37 +27,92 @@ export async function extractPdfText(file: File): Promise<string> {
   const pdf = await loadingTask.promise;
 
   const allLines: string[] = [];
+
   for (let i = 1; i <= pdf.numPages; i += 1) {
     const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 1 });
+    const pageWidth = viewport.width;
     const content = await page.getTextContent();
 
-    const pieces: string[] = [];
-    for (const item of content.items as any[]) {
-      if (!("str" in item) || !item.str.trim()) continue;
-      pieces.push(item.str.replace(/\s+/g, " ").trim());
+    type Item = { x: number; y: number; str: string };
+    const items: Item[] = [];
+    for (const it of content.items as any[]) {
+      if (!("str" in it)) continue;
+      const str = String(it.str).replace(/\s+/g, " ").trim();
+      if (!str) continue;
+      const tr = it.transform as number[];
+      items.push({ x: tr[4], y: tr[5], str });
     }
+    if (items.length === 0) continue;
 
-    for (let j = 0; j < pieces.length; j += 1) {
-      const piece = pieces[j];
-      const next = pieces[j + 1];
-
-      if (/^\d{1,3}\.$/.test(piece) && next && /[A-Za-zÀ-ÿ]/.test(next)) {
-        allLines.push(`${piece} ${next}`.trim());
-        j += 1;
-        continue;
+    // 1) cluster x positions into columns
+    const xs = [...items.map((it) => it.x)].sort((a, b) => a - b);
+    const colStarts: number[] = [];
+    const COL_GAP = Math.max(40, pageWidth / 12);
+    for (const x of xs) {
+      if (colStarts.length === 0 || x - colStarts[colStarts.length - 1] > COL_GAP) {
+        colStarts.push(x);
       }
-
-      if (/^\d{1,2}$/.test(piece) && next && /^[A-Za-zÀ-ÿ]/.test(next)) {
-        allLines.push(`${piece} ${next}`.trim());
-        j += 1;
-        continue;
+    }
+    const colOf = (x: number) => {
+      let best = 0;
+      let bestDist = Infinity;
+      for (let c = 0; c < colStarts.length; c += 1) {
+        const d = Math.abs(x - colStarts[c]);
+        if (d < bestDist) { bestDist = d; best = c; }
       }
+      return best;
+    };
 
-      if (piece !== "|") allLines.push(piece);
+    // 2) bucket items per column, sort top-to-bottom
+    const columns: Item[][] = colStarts.map(() => []);
+    for (const it of items) columns[colOf(it.x)].push(it);
+    for (const col of columns) col.sort((a, b) => b.y - a.y || a.x - b.x);
+
+    // 3) within a column, group items on the same baseline into one line
+    const Y_TOL = 3;
+    for (const col of columns) {
+      let buffer: Item[] = [];
+      let currentY: number | null = null;
+      const flush = () => {
+        if (buffer.length === 0) return;
+        const text = buffer
+          .sort((a, b) => a.x - b.x)
+          .map((b) => b.str)
+          .join(" ")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (text) allLines.push(text);
+        buffer = [];
+      };
+      for (const it of col) {
+        if (currentY === null || Math.abs(it.y - currentY) <= Y_TOL) {
+          buffer.push(it);
+          currentY = currentY ?? it.y;
+        } else {
+          flush();
+          buffer.push(it);
+          currentY = it.y;
+        }
+      }
+      flush();
     }
   }
 
-  return allLines.join("\n");
+  // Re-stitch "81." + "DE LIE Arnaud" if the bib ended up on its own line
+  const stitched: string[] = [];
+  for (let i = 0; i < allLines.length; i += 1) {
+    const cur = allLines[i];
+    const nxt = allLines[i + 1];
+    if (/^\d{1,3}\.$/.test(cur) && nxt && /^[A-ZÀ-ÖØ-Þ]/.test(nxt)) {
+      stitched.push(`${cur} ${nxt}`);
+      i += 1;
+    } else {
+      stitched.push(cur);
+    }
+  }
+
+  return stitched.join("\n");
 }
 
 /**
