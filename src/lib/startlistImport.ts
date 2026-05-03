@@ -66,9 +66,15 @@ function normalizeRiderName(raw: string): string {
 
   const last = tokens.slice(0, splitAt).join(" ");
   const first = tokens.slice(splitAt).join(" ");
+  const titleCase = (part: string) =>
+    part
+      .toLowerCase()
+      .split(/([-'])/)
+      .map((segment) => (segment === "-" || segment === "'" || !segment ? segment : segment.charAt(0).toUpperCase() + segment.slice(1)))
+      .join("");
   const titleLast = last
     .split(" ")
-    .map((p) => p.charAt(0) + p.slice(1).toLowerCase())
+    .map(titleCase)
     .join(" ");
   return `${first} ${titleLast}`.trim();
 }
@@ -92,22 +98,49 @@ export function parseProCyclingStatsStartlist(rawText: string): ParsedStartlistT
 
   const teams: ParsedStartlistTeam[] = [];
   let current: ParsedStartlistTeam | null = null;
+  let pendingTeamIndex: number | null = null;
 
-  // Patterns
   const riderRe = /^(\d{1,3})\.\s+([A-ZÀ-ÖØ-Þ][^\d].*)$/;
-  // Team header: starts with a small index (1-30) followed by a name that
-  // contains at least one letter and is NOT immediately a rider line.
   const teamHeaderRe = /^(\d{1,2})\s+([A-Za-zÀ-ÿ].+)$/;
+  const standaloneTeamIndexRe = /^(\d{1,2})$/;
 
   const ignoreRe = /^(DS:|procyclingstats|giro|tour|vuelta|\d{1,4}\s+starting|\d{2}\/\d{2}\/\d{4}|\d+\s*km)/i;
 
-  for (const line of lines) {
+  const finishCurrent = () => {
+    if (current && current.riders.length > 0) teams.push(current);
+  };
+
+  const startTeam = (name: string) => {
+    finishCurrent();
+    current = { name: name.trim(), riders: [] };
+    pendingTeamIndex = null;
+  };
+
+  const isTeamHeader = (line: string) => {
+    const match = line.match(teamHeaderRe);
+    if (!match) return false;
+    const idx = Number(match[1]);
+    return idx >= 1 && idx <= 30;
+  };
+
+  const isFollowedByRiderBeforeNextTeam = (fromIndex: number) => {
+    for (let j = fromIndex + 1; j < lines.length; j += 1) {
+      const next = lines[j];
+      if (ignoreRe.test(next)) continue;
+      if (riderRe.test(next)) return true;
+      if (isTeamHeader(next) || standaloneTeamIndexRe.test(next)) return false;
+      if (/,/.test(next)) return false;
+    }
+    return false;
+  };
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
     if (ignoreRe.test(line)) continue;
 
     const riderMatch = line.match(riderRe);
     if (riderMatch) {
       const num = Number(riderMatch[1]);
-      // Skip "0." marker lines (PCS uses these for the team captain banner)
       if (num === 0) continue;
       if (!current) continue; // rider before any team header — skip
       const name = normalizeRiderName(riderMatch[2]);
@@ -116,22 +149,42 @@ export function parseProCyclingStatsStartlist(rawText: string): ParsedStartlistT
       continue;
     }
 
+    const standaloneTeamIndex = line.match(standaloneTeamIndexRe);
+    if (standaloneTeamIndex) {
+      const idx = Number(standaloneTeamIndex[1]);
+      if (idx >= 1 && idx <= 30) {
+        pendingTeamIndex = idx;
+        continue;
+      }
+    }
+
     const teamMatch = line.match(teamHeaderRe);
     if (teamMatch) {
       const idx = Number(teamMatch[1]);
-      // Heuristic: a "team header" index is typically 1..30 (max ~25 teams).
-      // Avoids treating a stray number-prefixed line as a team.
       if (idx < 1 || idx > 30) continue;
       const name = teamMatch[2].trim();
-      // Push previous team
-      if (current && current.riders.length > 0) teams.push(current);
-      current = { name, riders: [] };
+      startTeam(name);
       continue;
     }
-    // Other lines (e.g. blank, headers) — ignore
+
+    if (pendingTeamIndex !== null) {
+      startTeam(line);
+      continue;
+    }
+
+    // Some PCS PDFs split long team names over multiple visual columns, e.g.
+    // "8" on one line and "Netcompany INEOS Cycling / Team" much later.
+    if (current && current.riders.length === 0 && /[A-Za-zÀ-ÿ]/.test(line) && !/,/.test(line)) {
+      current.name = `${current.name} ${line}`.replace(/\s+/g, " ").trim();
+      continue;
+    }
+
+    if (/[A-Za-zÀ-ÿ]/.test(line) && !/,/.test(line) && isFollowedByRiderBeforeNextTeam(i)) {
+      startTeam(line);
+    }
   }
 
-  if (current && current.riders.length > 0) teams.push(current);
+  finishCurrent();
 
   return teams;
 }
