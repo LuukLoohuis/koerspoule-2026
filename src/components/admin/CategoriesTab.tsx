@@ -131,12 +131,14 @@ export default function CategoriesTab({
 
   async function updateCategoryField(id: string, field: "name" | "short_name", value: string) {
     if (!supabase) return;
-    const payload: Record<string, string | null> = {};
-    payload[field] = field === "short_name" ? (value.trim() || null) : value.trim();
-    if (field === "name" && !payload.name) {
+    const trimmed = value.trim();
+    if (field === "name" && !trimmed) {
       toast.error("Naam mag niet leeg zijn");
       return;
     }
+    const payload = field === "name"
+      ? { name: trimmed }
+      : { short_name: trimmed || null };
     const { error } = await supabase.from("categories").update(payload).eq("id", id);
     if (error) {
       toast.error(`Update mislukt: ${error.message}`);
