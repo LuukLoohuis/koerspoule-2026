@@ -9,39 +9,33 @@ import { useEntries, useStages, useStagePoints } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import TeamComparison from "@/components/TeamComparison";
 import {
-  ComposedChart,
+  LineChart,
   Line,
-  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  LabelList,
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type Props = {
   subpouleId: string;
   subpouleName: string;
 };
 
-// Stable color palette for member lines (HSL via design tokens where possible)
+// Bold contrasting palette for max distinguishability
 const LINE_COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--accent))",
-  "hsl(0 70% 50%)",
-  "hsl(140 60% 40%)",
-  "hsl(45 90% 45%)",
-  "hsl(200 70% 45%)",
-  "hsl(280 55% 50%)",
-  "hsl(20 80% 50%)",
-  "hsl(170 55% 40%)",
-  "hsl(310 60% 50%)",
+  "#E6194B", "#3CB44B", "#4363D8", "#F58231",
+  "#911EB4", "#42D4F4", "#F032E6", "#9A6324",
+  "#469990", "#800000", "#808000", "#000075",
+  "#FF6F00", "#00BFA5", "#C71585", "#1E88E5",
 ];
 
 export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
+  const isMobile = useIsMobile();
   const { user } = useAuth();
   const { data: game } = useCurrentGame();
   const { data: members = [], isLoading: membersLoading, error: membersError } = useSubpouleMembers(subpouleId);
@@ -95,35 +89,64 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
     if (allHidden) setHiddenIds(new Set());
     else setHiddenIds(new Set(memberRows.map((m) => m.user_id)));
   };
-  // Build cumulative line graph data: x = stage_number, one series per member
+  // Build per-stage ranking data: x = stage, value per member = rank (1=best)
   const chartData = useMemo(() => {
     const sortedStages = [...stages].sort((a, b) => a.stage_number - b.stage_number);
     if (sortedStages.length === 0) return [];
 
-    // entry_id → { stage_id → points }
     const ptsByEntryStage = new Map<string, Map<string, number>>();
     for (const sp of stagePoints) {
       if (!ptsByEntryStage.has(sp.entry_id)) ptsByEntryStage.set(sp.entry_id, new Map());
       ptsByEntryStage.get(sp.entry_id)!.set(sp.stage_id, sp.points);
     }
 
-    const cumulative = new Map<string, number>(); // user_id → running total
+    const cumulative = new Map<string, number>();
 
     return sortedStages.map((stage) => {
       const row: Record<string, number | string> = {
         stage: `E${stage.stage_number}`,
         stageNumber: stage.stage_number,
+        stageName: stage.name ?? "",
       };
+      const deltas = new Map<string, number>();
       for (const m of memberRows) {
         const prev = cumulative.get(m.user_id) ?? 0;
         const got = m.entry_id ? ptsByEntryStage.get(m.entry_id)?.get(stage.id) ?? 0 : 0;
         const next = prev + got;
         cumulative.set(m.user_id, next);
-        row[m.user_id] = next;
+        deltas.set(m.user_id, got);
+        row[`pts_${m.user_id}`] = next;
+        row[`delta_${m.user_id}`] = got;
       }
+      // Rank by cumulative pts desc; ties share rank
+      const sorted = [...memberRows]
+        .map((m) => ({ id: m.user_id, pts: cumulative.get(m.user_id) ?? 0 }))
+        .sort((a, b) => b.pts - a.pts);
+      let lastPts = -Infinity;
+      let lastRank = 0;
+      sorted.forEach((s, i) => {
+        const rank = s.pts === lastPts ? lastRank : i + 1;
+        lastPts = s.pts;
+        lastRank = rank;
+        row[`rank_${s.id}`] = rank;
+      });
       return row;
     });
   }, [stages, stagePoints, memberRows]);
+
+  // Determine current/latest stage = highest stage_number with any points
+  const currentStageLabel = useMemo(() => {
+    if (chartData.length === 0) return null;
+    const stagesWithPts = new Set<number>();
+    const stageById = new Map(stages.map((s) => [s.id, s.stage_number]));
+    for (const sp of stagePoints) {
+      const n = stageById.get(sp.stage_id);
+      if (n !== undefined && (sp.points ?? 0) !== 0) stagesWithPts.add(n);
+    }
+    if (stagesWithPts.size === 0) return null;
+    const latest = Math.max(...stagesWithPts);
+    return `E${latest}`;
+  }, [chartData, stages, stagePoints]);
 
   if (membersLoading) {
     return (
@@ -293,103 +316,141 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
               Nog geen etappes beschikbaar.
             </div>
           ) : (
-            <div className="h-96 w-full">
+            <div className={cn("w-full", isMobile ? "h-72" : "h-96")}>
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={chartData} margin={{ top: 24, right: 32, left: 0, bottom: 8 }}>
-                  <defs>
-                    {memberRows.map((m, idx) => {
-                      const color = LINE_COLORS[idx % LINE_COLORS.length];
-                      return (
-                        <linearGradient key={m.user_id} id={`grad-${m.user_id}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={color} stopOpacity={0.4} />
-                          <stop offset="100%" stopColor={color} stopOpacity={0} />
-                        </linearGradient>
-                      );
-                    })}
-                  </defs>
-                  <CartesianGrid strokeDasharray="2 4" stroke="hsl(var(--border))" vertical={false} />
+                <LineChart
+                  data={chartData}
+                  margin={{ top: 24, right: isMobile ? 12 : 32, left: 0, bottom: 8 }}
+                >
+                  <CartesianGrid strokeDasharray="2 4" stroke="hsl(var(--border))" />
                   <XAxis
                     dataKey="stage"
-                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    tick={{ fontSize: isMobile ? 9 : 11, fill: "hsl(var(--muted-foreground))" }}
                     axisLine={{ stroke: "hsl(var(--border))" }}
                     tickLine={false}
-                    interval="preserveStartEnd"
+                    interval={isMobile && chartData.length > 10 ? 1 : 0}
                     padding={{ left: 8, right: 8 }}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                    width={40}
+                    reversed
+                    domain={[1, Math.max(memberRows.length, 1)]}
+                    allowDecimals={false}
+                    ticks={Array.from({ length: memberRows.length }, (_, i) => i + 1)}
+                    tick={{ fontSize: isMobile ? 9 : 11, fill: "hsl(var(--muted-foreground))" }}
+                    width={32}
                     axisLine={false}
                     tickLine={false}
-                  />
-                  <Tooltip
-                    cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1, strokeDasharray: "3 3" }}
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "0.5rem",
-                      fontSize: "12px",
-                      boxShadow: "0 8px 24px -8px hsl(var(--foreground) / 0.25)",
-                      padding: "8px 12px",
+                    label={{
+                      value: "Positie",
+                      angle: -90,
+                      position: "insideLeft",
+                      offset: 12,
+                      style: { fontSize: 10, fill: "hsl(var(--muted-foreground))" },
                     }}
-                    labelStyle={{ fontFamily: "Playfair Display, serif", fontWeight: 600, marginBottom: 4 }}
-                    formatter={(value: number, name: string) => {
-                      const m = memberRows.find((r) => r.user_id === name);
-                      return [`${value} pt`, m?.display_name ?? name];
-                    }}
-                    itemSorter={(item: any) => -(item.value as number)}
                   />
-                  {highlightId && !hiddenIds.has(highlightId) && (
-                    <Area
-                      type="monotone"
-                      dataKey={highlightId}
-                      stroke="none"
-                      fill={`url(#grad-${highlightId})`}
-                      isAnimationActive={false}
+                  {/* Stage markers */}
+                  {chartData.map((row) => (
+                    <ReferenceLine
+                      key={`mark-${row.stage}`}
+                      x={row.stage as string}
+                      stroke="hsl(var(--border))"
+                      strokeDasharray="1 4"
+                      ifOverflow="extendDomain"
+                    />
+                  ))}
+                  {/* Highlight current stage */}
+                  {currentStageLabel && (
+                    <ReferenceLine
+                      x={currentStageLabel}
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      label={{
+                        value: "Laatste",
+                        position: "top",
+                        fill: "hsl(var(--primary))",
+                        fontSize: 10,
+                        fontWeight: 700,
+                      }}
                     />
                   )}
+                  <Tooltip
+                    cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1, strokeDasharray: "3 3" }}
+                    content={(props: any) => {
+                      const { active, payload, label } = props;
+                      if (!active || !payload?.length) return null;
+                      const row = payload[0].payload as Record<string, any>;
+                      const visibleMembers = memberRows.filter((m) => !hiddenIds.has(m.user_id));
+                      const sorted = [...visibleMembers].sort(
+                        (a, b) => (row[`rank_${a.user_id}`] ?? 999) - (row[`rank_${b.user_id}`] ?? 999)
+                      );
+                      const stageName = row.stageName as string;
+                      return (
+                        <div
+                          className="rounded-md border border-border bg-card shadow-xl text-xs"
+                          style={{ padding: "8px 10px", maxWidth: 260 }}
+                        >
+                          <div className="font-display font-semibold mb-1.5">
+                            Etappe {String(label).replace("E", "")}
+                            {stageName ? ` — ${stageName}` : ""}
+                          </div>
+                          <div className="space-y-0.5">
+                            {sorted.map((m) => {
+                              const idx = memberRows.findIndex((r) => r.user_id === m.user_id);
+                              const color = LINE_COLORS[idx % LINE_COLORS.length];
+                              const rank = row[`rank_${m.user_id}`];
+                              const pts = row[`pts_${m.user_id}`] ?? 0;
+                              const delta = row[`delta_${m.user_id}`] ?? 0;
+                              const isMe = m.user_id === user?.id;
+                              return (
+                                <div
+                                  key={m.user_id}
+                                  className={cn("flex items-center gap-2", isMe && "font-bold")}
+                                >
+                                  <span
+                                    className="h-2.5 w-2.5 rounded-full shrink-0"
+                                    style={{ backgroundColor: color }}
+                                  />
+                                  <span className="w-6 tabular-nums text-muted-foreground">#{rank}</span>
+                                  <span className="truncate flex-1">{m.display_name}</span>
+                                  <span className="tabular-nums">{pts}pt</span>
+                                  {delta > 0 && (
+                                    <span className="tabular-nums text-primary">+{delta}</span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
                   {memberRows.map((m, idx) => {
                     if (hiddenIds.has(m.user_id)) return null;
                     const color = LINE_COLORS[idx % LINE_COLORS.length];
                     const isHighlighted = m.user_id === highlightId;
-                    const dim = highlightId && !isHighlighted;
                     return (
                       <Line
                         key={m.user_id}
                         type="monotone"
-                        dataKey={m.user_id}
+                        dataKey={`rank_${m.user_id}`}
                         name={m.user_id}
                         stroke={color}
-                        strokeWidth={isHighlighted ? 3 : 1.75}
-                        strokeOpacity={dim ? 0.28 : 1}
-                        dot={false}
-                        activeDot={{ r: isHighlighted ? 6 : 4, strokeWidth: 2, stroke: "hsl(var(--background))" }}
-                        animationDuration={600}
-                      >
-                        {isHighlighted && (
-                          <LabelList
-                            dataKey={m.user_id}
-                            content={(props: any) => {
-                              const { x, y, value, index } = props;
-                              if (index !== chartData.length - 1) return null;
-                              return (
-                                <g>
-                                  <rect x={x - 24} y={y - 22} rx={4} ry={4} width={48} height={18} fill={color} />
-                                  <text x={x} y={y - 9} fill="hsl(var(--primary-foreground))" fontSize={11} fontWeight={700} textAnchor="middle">
-                                    {value} pt
-                                  </text>
-                                </g>
-                              );
-                            }}
-                          />
-                        )}
-                      </Line>
+                        strokeWidth={isHighlighted ? 3.5 : 2}
+                        strokeOpacity={isHighlighted ? 1 : 0.85}
+                        dot={{ r: isMobile ? 2 : 3, fill: color, strokeWidth: 0 }}
+                        activeDot={{ r: isHighlighted ? 7 : 5, strokeWidth: 2, stroke: "hsl(var(--background))" }}
+                        animationDuration={500}
+                        connectNulls
+                      />
                     );
                   })}
-                </ComposedChart>
+                </LineChart>
               </ResponsiveContainer>
             </div>
           )}
+          <p className="text-[10px] text-muted-foreground mt-2 text-center italic">
+            1 = leider · hoger getal = lagere positie
+          </p>
         </CardContent>
       </Card>
     </div>
