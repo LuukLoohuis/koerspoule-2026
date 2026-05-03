@@ -1,13 +1,16 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Calculator, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Calculator, Sparkles, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
 import type { Stage } from "./StagesTab";
+
+const DEFAULT_STAGE_POINTS = [50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
 export default function CalculationTab({
   activeGameId,
