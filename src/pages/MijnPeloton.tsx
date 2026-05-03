@@ -1007,30 +1007,48 @@ export default function MijnPeloton() {
       <div className="max-w-5xl mx-auto">
         {/* Game selector */}
         <div className="flex gap-2 mb-6 flex-wrap">
-          {myGames.map((game) =>
-          <button
-            key={game.id}
-            onClick={() => setSelectedGame(game.id)}
-            className={cn(
-              "px-4 py-2 rounded-md font-display font-bold text-sm border-2 transition-all flex items-center gap-2",
-              selectedGame === game.id ?
-              "text-primary-foreground" :
-              "border-border hover:border-muted-foreground"
-            )}
-            style={selectedGame === game.id ? {
-              background: `linear-gradient(135deg, ${game.colors[0]}, ${game.colors[1]}, ${game.colors[2]})`,
-              borderColor: game.colors[0],
-              color: game.id === "vuelta2026" ? "#fff" : undefined
-            } : undefined}>
-            
-              <FlagIcon country={game.country} />
-              {game.name}
-              {game.status === "actief" &&
-            <span className="w-2 h-2 rounded-full bg-primary-foreground animate-pulse" />
-            }
-            </button>
-          )}
+          {allGames.map((game) => {
+            const theme = gameTheme(game.game_type);
+            const isActive = selectedGame === game.id;
+            const isLive = ["open", "live", "locked"].includes(game.status);
+            const isDraftBtn = game.status === "draft";
+            return (
+              <button
+                key={game.id}
+                onClick={() => setSelectedGame(game.id)}
+                className={cn(
+                  "px-4 py-2 rounded-md font-display font-bold text-sm border-2 transition-all flex items-center gap-2",
+                  isActive ? "text-primary-foreground" : "border-border hover:border-muted-foreground",
+                  isDraftBtn && !isActive && "opacity-70"
+                )}
+                style={isActive ? {
+                  background: `linear-gradient(135deg, ${theme.colors[0]}, ${theme.colors[1]}, ${theme.colors[2]})`,
+                  borderColor: theme.colors[0],
+                  color: theme.country === "ES" ? "#fff" : undefined,
+                } : undefined}
+              >
+                <FlagIcon country={theme.country} />
+                {game.name}
+                {isLive && <span className="w-2 h-2 rounded-full bg-primary-foreground animate-pulse" />}
+                {isDraftBtn && <Lock className="w-3 h-3 opacity-70" />}
+              </button>
+            );
+          })}
         </div>
+
+        {isDraft && (
+          <div className="retro-border bg-card p-4 md:p-5 mb-6 text-center">
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Lock className="h-4 w-4" />
+              <span className="font-display font-bold text-sm md:text-base">
+                Inschrijving voorlopig gesloten
+              </span>
+            </div>
+            <p className="text-xs md:text-sm text-muted-foreground mt-1 font-sans">
+              Opent zodra de officiële startlijst beschikbaar is.
+            </p>
+          </div>
+        )}
 
         {/* Inner tabs: Team / Uitslagen / Subpoules */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
