@@ -44,7 +44,7 @@ export default function CountdownBanner({ className }: { className?: string }) {
           <TimeUnit value={seconds} label="sec" />
         </div>
         <p className="text-xs text-muted-foreground mt-3 font-sans">
-          De inschrijving opent zodra de startlijst bekend is.
+          De inschrijving opent op {fmt(openDate)}.
         </p>
       </div>
     );
