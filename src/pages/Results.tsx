@@ -107,11 +107,43 @@ export default function Results() {
       .map((row, i) => ({ ...row, rank: i + 1 }));
   }, [entries, stagePoints, selectedStage]);
 
-  // Overall standings
-  const overallStandings = useMemo(
-    () => entries.map((e, i) => ({ ...e, rank: i + 1 })),
-    [entries]
-  );
+  // Overall standings up to selected klassement stage (cumulative)
+  const [klassementStageIdx, setKlassementStageIdx] = useState<number>(0);
+  useEffect(() => {
+    if (stages.length > 0) {
+      setKlassementStageIdx(pickInitialStage(stages, stagePointsByStage));
+    }
+  }, [stages.length, stagePointsByStage.size]);
+
+  const klassementStage = stages[klassementStageIdx];
+
+  const cumulativeUpTo = (upToIdx: number) => {
+    if (upToIdx < 0) return new Map<string, number>();
+    const allowed = new Set(stages.slice(0, upToIdx + 1).map((s) => s.id));
+    const m = new Map<string, number>();
+    stagePoints
+      .filter((sp) => allowed.has(sp.stage_id))
+      .forEach((sp) => m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points));
+    return m;
+  };
+
+  const overallStandings = useMemo(() => {
+    const cur = cumulativeUpTo(klassementStageIdx);
+    const prev = cumulativeUpTo(klassementStageIdx - 1);
+    const prevSorted = [...entries]
+      .map((e) => ({ id: e.id, pts: prev.get(e.id) ?? 0 }))
+      .sort((a, b) => b.pts - a.pts);
+    const prevRank = new Map<string, number>();
+    prevSorted.forEach((r, i) => prevRank.set(r.id, i + 1));
+
+    return [...entries]
+      .map((e) => ({ ...e, cumPts: cur.get(e.id) ?? 0 }))
+      .sort((a, b) => b.cumPts - a.cumPts)
+      .map((row, i) => {
+        const prevR = prevRank.get(row.id) ?? i + 1;
+        return { ...row, rank: i + 1, delta: prevR - (i + 1) };
+      });
+  }, [entries, stagePoints, stages, klassementStageIdx]);
 
   // Stage points lookup for schema
   const stagePtsTable = useMemo(() => {
