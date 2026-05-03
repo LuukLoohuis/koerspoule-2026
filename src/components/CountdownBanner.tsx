@@ -16,7 +16,16 @@ function TimeUnit({ value, label }: { value: number; label: string }) {
 }
 
 export default function CountdownBanner({ className }: { className?: string }) {
-  const { phase, days, hours, minutes, seconds, label } = useDeadline();
+  const { phase, days, hours, minutes, seconds, label, closeDate, openDate } = useDeadline();
+
+  const fmt = (d: Date) =>
+    d.toLocaleString("nl-NL", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
   if (phase === "before_open") {
     return (
