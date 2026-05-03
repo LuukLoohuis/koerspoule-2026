@@ -1,6 +1,8 @@
 // @ts-nocheck
 // Edge function: import-cyclingflash
-// Scrapes cyclingflash.com (OIC/GC/PNT/KOM/YOU) for a given race+stage and matches riders by name.
+// Despite the name, this scrapes ProCyclingStats (much more reliable than cyclingflash.com,
+// which is Cloudflare-protected). Returns matched + unmatched riders per classification.
+// Matching: bib number first (most reliable), then normalized-name fallback.
 import { createClient } from "npm:@supabase/supabase-js@2.95.0";
 
 const corsHeaders = {
@@ -11,56 +13,131 @@ const corsHeaders = {
 type RaceType = "giro" | "tdf" | "vuelta";
 type Classification = "stage" | "gc" | "points" | "mountain" | "youth";
 
-const SLUG_MAP: Record<RaceType, (year: number) => string> = {
-  giro: (y) => `giro-ditalia-${y}`,
-  tdf: (y) => `tour-de-france-${y}`,
-  vuelta: (y) => `vuelta-a-espana-${y}`,
+const RACE_SLUG: Record<RaceType, string> = {
+  giro: "giro-d-italia",
+  tdf: "tour-de-france",
+  vuelta: "vuelta-a-espana",
 };
 
-const TYPE_MAP: Record<Classification, string> = {
-  stage: "OIC",
-  gc: "GC",
-  points: "PNT",
-  mountain: "KOM",
-  youth: "YOU",
+// PCS URL suffix per classification
+const URL_SUFFIX: Record<Classification, string> = {
+  stage: "",
+  gc: "-gc",
+  points: "-points",
+  mountain: "-kom",
+  youth: "-youth",
 };
 
-const UA = "Mozilla/5.0 (compatible; KoerspouleBot/1.0)";
+const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 function normalizeName(s: string): string {
-  return s
+  return (s || "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ø/g, "o").replace(/æ/g, "ae").replace(/ß/g, "ss")
     .replace(/[^a-z]/g, "");
 }
 
-function parseRows(html: string): Array<{ position: number; name: string; country: string | null; team: string | null }> {
-  // Each <tr> contains: rank cell, name link with <span>name</span>, optional team link with <span>team</span>
-  const trRe = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
-  const out: Array<{ position: number; name: string; country: string | null; team: string | null }> = [];
-  let m: RegExpExecArray | null;
-  while ((m = trRe.exec(html)) !== null) {
-    const tr = m[1];
-    const rankM = tr.match(/<td[^>]*text-center[^>]*>(\d+)<\/td>/);
-    if (!rankM) continue;
-    const nameM = tr.match(/profile\/[^"]+"[^>]*>\s*<span[^>]*>(?:<img[^>]*alt="([A-Z]+) flag[^>]*>)?[\s\S]*?<\/span>\s*<span>([^<]+)<\/span>/);
-    if (!nameM) continue;
-    const teamM = tr.match(/\/team\/[^"]+"[^>]*>[\s\S]*?<span>([^<]+)<\/span>\s*<\/a>\s*<\/td>/);
-    out.push({
-      position: parseInt(rankM[1], 10),
-      name: nameM[2].trim(),
-      country: nameM[1] ?? null,
-      team: teamM ? teamM[1].trim() : null,
-    });
-  }
-  return out;
+function nameKeys(s: string): string[] {
+  // Generate matching keys: full normalized, sorted-tokens, last+first variants
+  const norm = normalizeName(s);
+  const tokens = (s || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z\s\-]/g, " ")
+    .split(/\s+/)
+    .map((t) => t.replace(/-/g, ""))
+    .filter(Boolean);
+  const sorted = [...tokens].sort().join("");
+  return Array.from(new Set([norm, sorted].filter(Boolean)));
 }
 
-async function fetchHtml(url: string): Promise<string> {
-  const resp = await fetch(url, { headers: { "User-Agent": UA, Accept: "text/html" } });
-  if (!resp.ok) throw new Error(`Fetch failed ${resp.status} for ${url}`);
-  return await resp.text();
+async function fetchHtml(url: string): Promise<string | null> {
+  try {
+    const resp = await fetch(url, {
+      headers: {
+        "User-Agent": UA,
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+    });
+    if (!resp.ok) {
+      console.error(`fetch ${url} -> ${resp.status}`);
+      return null;
+    }
+    return await resp.text();
+  } catch (e) {
+    console.error(`fetch error ${url}:`, (e as Error).message);
+    return null;
+  }
+}
+
+type RawRow = { position: number; bib: number | null; name: string };
+
+function parseResultsTable(html: string | null): RawRow[] {
+  if (!html) return [];
+  try {
+    // Find the "currently selected" tab block
+    const curM = html.match(/<li class="cur"\s+data-id="(\d+)"/);
+    let block = "";
+    if (curM) {
+      const did = curM[1];
+      const start = html.indexOf(`<div class="resTab " data-id="${did}">`);
+      if (start >= 0) {
+        const next = html.indexOf('<div class="resTab ', start + 10);
+        block = html.slice(start, next > 0 ? next : start + 300000);
+      }
+    }
+    if (!block) {
+      // Fallback: take the entire resultsCont area
+      const i = html.indexOf('id="resultsCont"');
+      if (i >= 0) block = html.slice(i, i + 300000);
+    }
+    if (!block) return [];
+
+    const tblM = block.match(/<table[^>]*class="results[^"]*"[^>]*>([\s\S]*?)<\/table>/);
+    if (!tblM) return [];
+    const tbl = tblM[1];
+
+    const headers = Array.from(tbl.matchAll(/data-code="([^"]+)"/g)).map((m) => m[1]);
+    const bibIdx = headers.indexOf("bib");
+    const nameIdx = headers.indexOf("ridername");
+    if (nameIdx < 0) return [];
+
+    const rows: RawRow[] = [];
+    const trRe = /<tr>([\s\S]*?)<\/tr>/g;
+    let rm: RegExpExecArray | null;
+    let pos = 0;
+    while ((rm = trRe.exec(tbl)) !== null) {
+      const tds = Array.from(rm[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)).map((m) => m[1]);
+      if (tds.length === 0) continue;
+      const rnkRaw = tds[0].replace(/<[^>]+>/g, " ").trim();
+      const rnk = parseInt(rnkRaw, 10);
+      if (!Number.isFinite(rnk)) continue;
+      pos = rnk;
+      let bib: number | null = null;
+      if (bibIdx >= 0 && tds[bibIdx] !== undefined) {
+        const b = parseInt(tds[bibIdx].replace(/<[^>]+>/g, " ").trim(), 10);
+        bib = Number.isFinite(b) ? b : null;
+      }
+      const nameCell = tds[nameIdx] ?? "";
+      const aM = nameCell.match(/<a [^>]*href="rider\/([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
+      let name = "";
+      if (aM) {
+        name = aM[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      } else {
+        name = nameCell.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      }
+      if (!name) continue;
+      rows.push({ position: pos, bib, name });
+      if (rows.length >= 30) break;
+    }
+    return rows;
+  } catch (e) {
+    console.error("parseResultsTable error:", (e as Error).message);
+    return [];
+  }
 }
 
 Deno.serve(async (req) => {
@@ -115,58 +192,71 @@ Deno.serve(async (req) => {
       });
     }
 
-    const slug = SLUG_MAP[raceType](year);
-    const baseStageUrl = `https://cyclingflash.com/race/${slug}/result/stage-${stageNumber}`;
-    const sourceUrl = `${baseStageUrl}/OIC`;
+    const slug = RACE_SLUG[raceType];
+    const baseUrl = `https://www.procyclingstats.com/race/${slug}/${year}/stage-${stageNumber}`;
+    const sourceUrl = baseUrl;
 
     const classifications: Classification[] = ["stage", "gc", "points", "mountain", "youth"];
-    const results: Record<Classification, Array<{ position: number; name: string; country: string | null; team: string | null }>> = {
+    const raw: Record<Classification, RawRow[]> = {
       stage: [], gc: [], points: [], mountain: [], youth: [],
     };
 
     for (const c of classifications) {
-      try {
-        const url = `${baseStageUrl}/${TYPE_MAP[c]}`;
-        const html = await fetchHtml(url);
-        results[c] = parseRows(html);
-      } catch (e) {
-        console.error(`Failed to fetch ${c}:`, (e as Error).message);
-      }
+      const url = `${baseUrl}${URL_SUFFIX[c]}`;
+      const html = await fetchHtml(url);
+      const rows = parseResultsTable(html);
+      raw[c] = rows;
+      console.log(`PCS ${c} (${url}): ${rows.length} rows`);
     }
 
-    if (results.stage.length === 0) {
-      return new Response(JSON.stringify({ error: `Geen uitslag gevonden op ${sourceUrl} — etappe nog niet verreden?` }), {
+    if (raw.stage.length === 0 && raw.gc.length === 0) {
+      return new Response(JSON.stringify({
+        error: `Geen uitslag gevonden op ${sourceUrl} — etappe nog niet verreden of bron onbereikbaar?`,
+      }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Match riders by normalized name
+    // Build matching indexes
     const { data: ridersData, error: ridersErr } = await supabase
       .from("riders")
       .select("id, start_number, name")
       .eq("game_id", gameId);
     if (ridersErr) throw ridersErr;
 
-    const nameToRider = new Map<string, { id: string; name: string; start_number: number | null }>();
+    const byBib = new Map<number, { id: string; name: string; start_number: number | null }>();
+    const byName = new Map<string, { id: string; name: string; start_number: number | null }>();
     for (const r of ridersData ?? []) {
-      nameToRider.set(normalizeName(r.name), { id: r.id, name: r.name, start_number: r.start_number });
+      if (r.start_number != null) byBib.set(Number(r.start_number), { id: r.id, name: r.name, start_number: r.start_number });
+      for (const k of nameKeys(r.name)) {
+        if (!byName.has(k)) byName.set(k, { id: r.id, name: r.name, start_number: r.start_number });
+      }
     }
 
     const matched: Record<Classification, Array<{ position: number; rider_id: string; rider_name: string; start_number: number | null }>> = {
       stage: [], gc: [], points: [], mountain: [], youth: [],
     };
-    const unmatched: Record<Classification, Array<{ position: number; name: string; team: string | null }>> = {
+    const unmatched: Record<Classification, Array<{ position: number; bib: number | null; name: string }>> = {
       stage: [], gc: [], points: [], mountain: [], youth: [],
     };
 
     for (const c of classifications) {
-      for (const row of results[c]) {
-        if (row.position > 20) continue;
-        const r = nameToRider.get(normalizeName(row.name));
+      const seen = new Set<string>();
+      for (const row of raw[c]) {
+        if (row.position < 1 || row.position > 20) continue;
+        let r = row.bib != null ? byBib.get(row.bib) : undefined;
         if (!r) {
-          unmatched[c].push({ position: row.position, name: row.name, team: row.team });
+          for (const k of nameKeys(row.name)) {
+            const cand = byName.get(k);
+            if (cand) { r = cand; break; }
+          }
+        }
+        if (!r) {
+          unmatched[c].push({ position: row.position, bib: row.bib, name: row.name });
           continue;
         }
+        if (seen.has(r.id)) continue; // dedupe
+        seen.add(r.id);
         matched[c].push({
           position: row.position,
           rider_id: r.id,
@@ -181,13 +271,17 @@ Deno.serve(async (req) => {
       source_url: sourceUrl,
       matched,
       unmatched,
-      counts: Object.fromEntries(classifications.map((c) => [c, { matched: matched[c].length, unmatched: unmatched[c].length }])),
+      counts: Object.fromEntries(classifications.map((c) => [c, {
+        matched: matched[c].length,
+        unmatched: unmatched[c].length,
+        total: raw[c].length,
+      }])),
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (e) {
-    console.error("Cyclingflash import error:", e);
+    console.error("Import error:", e);
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

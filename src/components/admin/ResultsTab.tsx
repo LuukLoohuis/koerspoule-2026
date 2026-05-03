@@ -54,9 +54,11 @@ export default function ResultsTab({
   const [importingCF, setImportingCF] = useState(false);
   const [importPreview, setImportPreview] = useState<null | {
     source_url: string;
-    matched: Record<Classification, Array<{ position: number; rider_id: string; rider_name: string; start_number: number }>>;
-    unmatched: Record<Classification, Array<{ position: number; bib: number | null; name: string }>>;
+    matched: Record<string, Array<{ position: number; rider_id: string; rider_name: string; start_number: number | null }>>;
+    unmatched: Record<string, Array<{ position: number; bib: number | null; name: string }>>;
   }>(null);
+  // Manual overrides for unmatched rows: key = `${importKey}-${position}` -> rider_id
+  const [manualPicks, setManualPicks] = useState<Record<string, string>>({});
   const [savingImport, setSavingImport] = useState(false);
 
   const selectedStageObj = useMemo(() => stages.find((s) => s.id === selectedStage), [stages, selectedStage]);
@@ -255,16 +257,11 @@ export default function ResultsTab({
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Onbekende fout");
-      const normUnmatched: Record<string, Array<{ position: number; bib: number | null; name: string }>> = {};
-      for (const k of Object.keys(data.unmatched ?? {})) {
-        normUnmatched[k] = (data.unmatched[k] as Array<{ position: number; name: string }>).map((u) => ({
-          position: u.position, bib: null, name: u.name,
-        }));
-      }
+      setManualPicks({});
       setImportPreview({
         source_url: data.source_url,
         matched: data.matched,
-        unmatched: normUnmatched as typeof data.unmatched,
+        unmatched: data.unmatched,
       });
     } catch (e) {
       console.error("Cyclingflash import error:", e);
@@ -285,18 +282,40 @@ export default function ResultsTab({
       };
       let totalSaved = 0;
       for (const c of classifs) {
-        const list = importPreview.matched[importKeyMap[c] as keyof typeof importPreview.matched];
-        if (!list || list.length === 0) continue;
+        const importKey = importKeyMap[c];
+        const matchedList = importPreview.matched[importKey] ?? [];
+        const unmatchedList = importPreview.unmatched[importKey] ?? [];
+        // Merge in manual picks for unmatched rows
+        const merged: Array<{ position: number; rider_id: string; rider_name: string; start_number: number | null }> = [...matchedList];
+        for (const u of unmatchedList) {
+          const pick = manualPicks[`${importKey}-${u.position}`];
+          if (pick) {
+            const r = riderById.get(pick);
+            merged.push({
+              position: u.position,
+              rider_id: pick,
+              rider_name: r?.name ?? u.name,
+              start_number: r?.start_number ?? null,
+            });
+          }
+        }
+        if (merged.length === 0) continue;
+        // Dedupe (keep first per rider, first per position)
+        const seenRider = new Set<string>();
+        const seenPos = new Set<number>();
+        const final = merged.filter((r) => {
+          if (seenRider.has(r.rider_id) || seenPos.has(r.position)) return false;
+          seenRider.add(r.rider_id); seenPos.add(r.position); return true;
+        });
+
         const col = CLASSIFICATION_LABELS[c].column;
-        // 1. Clear column for this stage
         const { error: clearErr } = await supabase
           .from("stage_results")
           .update({ [col]: null })
           .eq("stage_id", selectedStage)
           .not(col, "is", null);
         if (clearErr) throw clearErr;
-        // 2. Upsert per rider
-        for (const r of list) {
+        for (const r of final) {
           const { data: existing } = await supabase
             .from("stage_results")
             .select("id")
@@ -314,10 +333,10 @@ export default function ResultsTab({
               stage_id: selectedStage,
               rider_id: r.rider_id,
               game_id: activeGameId,
-              start_number: r.start_number,
               rider_name: r.rider_name,
               [col]: r.position,
             };
+            if (r.start_number != null) payload.start_number = r.start_number;
             if (c === "stage") payload.did_finish = true;
             const { error: ierr } = await supabase.from("stage_results").insert(payload);
             if (ierr) throw ierr;
@@ -396,11 +415,10 @@ export default function ResultsTab({
             <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-primary/20">
               <div>
                 <h3 className="font-display text-lg flex items-center gap-2">
-                  ⚡ Cyclingflash import
+                  ⚡ Auto-import (ProCyclingStats)
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Gratis scrape van cyclingflash.com — werkt voor Giro, Tour & Vuelta. Matcht renners op naam.
-                </p>
+                  Gratis scrape van procyclingstats.com — werkt voor Giro, Tour & Vuelta. Matcht renners op rugnummer (met naam-fallback).</p>
               </div>
               <Button
                 variant="secondary"
@@ -409,7 +427,7 @@ export default function ResultsTab({
                 data-testid="import-cf-btn"
               >
                 <Download className="w-4 h-4 mr-2" />
-                {importingCF ? "Ophalen..." : `Cyclingflash (etappe ${selectedStageObj?.stage_number ?? ""})`}
+                {importingCF ? "Ophalen..." : `Auto-import (etappe ${selectedStageObj?.stage_number ?? ""})`}
               </Button>
             </div>
           </CardContent>
@@ -526,9 +544,32 @@ export default function ResultsTab({
                       </div>
                     )}
                     {unmatched.length > 0 && (
-                      <div className="mt-2 text-xs text-destructive">
-                        <strong>Niet gematcht:</strong>{" "}
-                        {unmatched.map((r) => `${r.position}. ${r.bib != null ? `#${r.bib} ` : ""}${r.name}`).join(" · ")}
+                      <div className="mt-3 space-y-2">
+                        <div className="text-xs font-medium text-destructive flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" /> Niet automatisch gematcht — kies handmatig:
+                        </div>
+                        {unmatched.map((u) => {
+                          const key = `${c}-${u.position}`;
+                          const matchedIds = matched.map((m) => m.rider_id);
+                          const otherManual = Object.entries(manualPicks)
+                            .filter(([k, v]) => k !== key && k.startsWith(`${c}-`) && v)
+                            .map(([, v]) => v);
+                          return (
+                            <div key={key} className="grid grid-cols-[60px_1fr] items-center gap-2 text-xs">
+                              <div className="font-bold">
+                                {u.position}.{u.bib != null ? ` #${u.bib}` : ""}
+                                <div className="text-muted-foreground font-normal truncate">{u.name}</div>
+                              </div>
+                              <RiderSearchSelect
+                                riders={riderOptions}
+                                value={manualPicks[key] ?? ""}
+                                onChange={(v) => setManualPicks((p) => ({ ...p, [key]: v }))}
+                                excludeIds={[...matchedIds, ...otherManual]}
+                                placeholder={`Zoek "${u.name}"...`}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
