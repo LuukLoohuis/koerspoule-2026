@@ -347,7 +347,7 @@ export default function CategoriesTab({
 }
 
 function CategoryRow({
-  c, isOpen, onToggle, riders, allRiders, teamLabel, onAdd, onRemove, onMaxPicks, onDelete,
+  c, isOpen, onToggle, riders, allRiders, teamLabel, onAdd, onRemove, onMaxPicks, onRename, onDelete,
   isDragging, isDragOver, onDragStart, onDragOver, onDragEnd, onDrop,
 }: {
   c: Category;
