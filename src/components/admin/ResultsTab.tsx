@@ -36,11 +36,13 @@ export default function ResultsTab({
   stages,
   riders,
   gameType,
+  gameYear,
 }: {
   activeGameId: string;
   stages: Stage[];
   riders: Rider[];
   gameType?: GameType;
+  gameYear?: number | null;
 }) {
   const [selectedStage, setSelectedStage] = useState("");
   const [classification, setClassification] = useState<Classification>("stage");
@@ -49,6 +51,7 @@ export default function ResultsTab({
   );
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [importingCF, setImportingCF] = useState(false);
   const [importPreview, setImportPreview] = useState<null | {
     source_url: string;
     matched: Record<Classification, Array<{ position: number; rider_id: string; rider_name: string; start_number: number }>>;
@@ -58,6 +61,7 @@ export default function ResultsTab({
 
   const selectedStageObj = useMemo(() => stages.find((s) => s.id === selectedStage), [stages, selectedStage]);
   const canImport = gameType === "tdf" || gameType === "vuelta";
+  const canImportCF = !!gameType && !!gameYear;
 
   const riderById = useMemo(() => {
     const m = new Map<string, Rider>();
