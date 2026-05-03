@@ -278,8 +278,12 @@ export default function MyTeamPanel() {
         </CardContent>
       </Card>
 
-      {/* Voorspellingen */}
-      {predictions.length > 0 && (
+      {/* Voorspellingen — pas zichtbaar na de laatste etappe (eindklassementen) */}
+      {(() => {
+        const lastStage = stages.length > 0 ? stages.reduce((a, b) => (a.stage_number > b.stage_number ? a : b)) : null;
+        const finalDone = lastStage?.status === "finished";
+        return finalDone && predictions.length > 0;
+      })() && (
         <Card className="retro-border">
           <CardHeader className="border-b-2 border-foreground bg-secondary/30">
             <CardTitle className="font-display">🎯 Mijn voorspellingen</CardTitle>
