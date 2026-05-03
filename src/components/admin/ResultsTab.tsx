@@ -427,7 +427,7 @@ export default function ResultsTab({
                 data-testid="import-cf-btn"
               >
                 <Download className="w-4 h-4 mr-2" />
-                {importingCF ? "Ophalen..." : `Cyclingflash (etappe ${selectedStageObj?.stage_number ?? ""})`}
+                {importingCF ? "Ophalen..." : `Auto-import (etappe ${selectedStageObj?.stage_number ?? ""})`}
               </Button>
             </div>
           </CardContent>
