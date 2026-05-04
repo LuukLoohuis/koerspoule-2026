@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check } from "lucide-react";
+import { Check, Lock, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
@@ -11,6 +11,18 @@ import { useEntry } from "@/hooks/useEntry";
 import { useStartlist } from "@/hooks/useStartlist";
 import { cn } from "@/lib/utils";
 import RiderSearchSelect from "@/components/RiderSearchSelect";
+
+// Pick a thematic icon for each category based on its name/short_name
+function getCategoryIcon(name: string): string {
+  const n = name.toLowerCase();
+  if (/(klim|berg|grimp|mountain)/.test(n)) return "🏔️";
+  if (/(sprint|spurt)/.test(n)) return "⚡";
+  if (/(punch|aanval|attack|baroud)/.test(n)) return "🎯";
+  if (/(tijd|chrono|time)/.test(n)) return "🏁";
+  if (/(kop|leider|leader|gc|algemeen)/.test(n)) return "⭐";
+  if (/(klassiek|classic|cobble|kassei)/.test(n)) return "🪨";
+  return "🚴";
+}
 
 export default function TeamBuilder() {
   const { toast } = useToast();
@@ -26,7 +38,6 @@ export default function TeamBuilder() {
     startlistTeamFilter === "all" ? "" : startlistTeamFilter
   );
 
-  // Renners die in een categorie zitten — niet beschikbaar als joker
   const categoryRiderIds = useMemo(() => {
     const set = new Set<string>();
     for (const category of categories) {
@@ -37,7 +48,6 @@ export default function TeamBuilder() {
     return set;
   }, [categories]);
 
-  // Volledige startlijst (los van filters in de Startlijst-tab)
   const { data: fullStartlist = [] } = useStartlist(game?.id, "", "");
 
   const allStartlistRiders = useMemo(() => {
@@ -50,7 +60,6 @@ export default function TeamBuilder() {
     return list.sort((a, b) => (a.start_number ?? 9999) - (b.start_number ?? 9999));
   }, [fullStartlist]);
 
-  // Jokerpool: alle renners die NIET in een categorie zitten
   const jokerPool = useMemo(
     () => allStartlistRiders.filter((r) => !categoryRiderIds.has(r.id)),
     [allStartlistRiders, categoryRiderIds]
@@ -69,12 +78,9 @@ export default function TeamBuilder() {
   const [youthJersey, setYouthJersey] = useState("");
 
   const isSubmitted = entry?.status === "submitted";
-  // Hard lock: alleen wanneer admin de game op deadline/live/finished zet.
-  // 'submitted' lockt het team NIET — de deelnemer kan altijd wijzigen tot de deadline.
   const gameLocked = Boolean(game?.status && ["closed", "locked", "live", "finished"].includes(game.status));
   const isLocked = gameLocked;
 
-  // Hydrate predictions from DB once loaded
   const hydratedRef = useRef(false);
   useEffect(() => {
     if (hydratedRef.current || !entry) return;
@@ -96,7 +102,6 @@ export default function TeamBuilder() {
     hydratedRef.current = true;
   }, [entry, predictions, jokerIds]);
 
-  // Auto-save predictions (debounced) when user changes them
   useEffect(() => {
     if (!entry || !hydratedRef.current || isSubmitted) return;
     const timer = setTimeout(() => {
@@ -199,22 +204,40 @@ export default function TeamBuilder() {
   }, [picksByCategory]);
   const gameReady = !gameLoading && !categoriesLoading && !entryLoading;
 
+  const progressPct = totalRequired > 0 ? Math.round((completedPicks / totalRequired) * 100) : 0;
+  const teamComplete = completedPicks === totalRequired && jokerIds.length === 2;
+
+  // Lookup map for rider name preview (jokers/podium)
+  const riderById = useMemo(() => {
+    const m = new Map<string, { name: string; start_number: number | null }>();
+    for (const r of allStartlistRiders) m.set(r.id, { name: r.name, start_number: r.start_number });
+    return m;
+  }, [allStartlistRiders]);
+
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12">
+    <div className="container mx-auto px-4 py-8 md:py-12 pb-32 md:pb-12">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
+        {/* Vintage Hero */}
+        <div className="text-center mb-6">
+          <div className="vintage-ornament mb-3">
+            <span className="vintage-ornament-symbol">✦</span>
+            <span className="text-xs tracking-[0.3em] uppercase text-muted-foreground font-serif">
+              {game?.name ?? "Koerspoule"} {game?.year ? `· ${game.year}` : ""}
+            </span>
+            <span className="vintage-ornament-symbol">✦</span>
+          </div>
+          <h1 className="vintage-heading text-3xl md:text-5xl font-bold mb-2">
             Stel je ploeg samen
           </h1>
-          <p className="text-muted-foreground font-serif">
-            Kies je renners per categorie • {completedPicks}/{totalRequired} gekozen
+          <p className="text-muted-foreground font-serif italic">
+            Kies wijs — één keer per Grand Tour
           </p>
+          <div className="vintage-divider mt-4 max-w-md mx-auto" />
         </div>
 
-        {!gameReady && <div className="retro-border bg-card p-6">Laden...</div>}
+        {!gameReady && <div className="ornate-frame retro-border bg-card p-6 text-center">Laden...</div>}
         {gameReady && !game && (
-          <div className="retro-border bg-card p-6 text-muted-foreground">
+          <div className="ornate-frame retro-border bg-card p-6 text-center text-muted-foreground">
             Geen actieve game gevonden.
           </div>
         )}
@@ -225,7 +248,57 @@ export default function TeamBuilder() {
               <TabsTrigger value="startlist" className="flex-1">Startlijst</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="builder" className="space-y-4">
+            <TabsContent value="builder" className="space-y-5">
+              {/* Sticky progress bar */}
+              <div className="sticky top-2 z-30">
+                <div className="ornate-frame retro-border bg-card/95 backdrop-blur p-3 md:p-4">
+                  <div className="flex flex-wrap items-center gap-3 md:gap-4">
+                    <div className="flex-1 min-w-[180px]">
+                      <div className="flex items-baseline justify-between mb-1">
+                        <span className="text-xs uppercase tracking-wider text-muted-foreground font-serif">
+                          Renners
+                        </span>
+                        <span className="text-sm font-mono font-bold">
+                          {completedPicks}<span className="text-muted-foreground">/{totalRequired}</span>
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
+                          style={{ width: `${progressPct}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-base">🃏</span>
+                      <span className="font-mono font-bold">
+                        {jokerIds.length}<span className="text-muted-foreground">/2</span>
+                      </span>
+                      <span className="text-xs text-muted-foreground hidden md:inline">jokers</span>
+                    </div>
+                    <div>
+                      {gameLocked ? (
+                        <span className="jersey-badge bg-muted text-muted-foreground border border-border">
+                          <Lock className="h-3 w-3" /> Vergrendeld
+                        </span>
+                      ) : isSubmitted ? (
+                        <span className="jersey-badge bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40">
+                          <Check className="h-3 w-3" /> Ingediend
+                        </span>
+                      ) : teamComplete ? (
+                        <span className="jersey-badge bg-[hsl(var(--vintage-gold))/0.15] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold))/0.5]">
+                          <Sparkles className="h-3 w-3" /> Klaar om in te dienen
+                        </span>
+                      ) : (
+                        <span className="jersey-badge bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/40">
+                          ✏️ Concept
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {gameLocked && (
                 <div className="retro-border bg-secondary/50 p-3 text-sm">
                   🔒 De koers staat op <strong>{game.status}</strong> — wijzigen niet meer mogelijk.
@@ -241,31 +314,60 @@ export default function TeamBuilder() {
                 </div>
               )}
 
+              {/* Categories */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {categories.map((category) => {
+                {categories.map((category, idx) => {
                   const selected = picksByCategory.get(category.id) ?? [];
                   const max = category.max_picks ?? 1;
                   const reached = selected.length >= max;
+                  const complete = selected.length === max;
+                  const icon = getCategoryIcon(`${category.name} ${category.short_name ?? ""}`);
                   return (
-                    <div key={category.id} className="retro-border bg-card p-4">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <h2 className="font-display text-lg font-bold">
-                          {category.short_name ?? category.name}
-                        </h2>
-                        <span
-                          className={cn(
-                            "text-xs font-mono px-2 py-0.5 rounded-full border",
-                            selected.length === max
-                              ? "border-primary text-primary bg-primary/10"
-                              : "border-border text-muted-foreground"
-                          )}
-                          title="Aantal keuzes"
-                        >
-                          {selected.length}/{max} keuzes
+                    <div
+                      key={category.id}
+                      className={cn(
+                        "ornate-frame retro-border bg-card p-4 transition-all relative overflow-hidden",
+                        complete && "ring-2 ring-emerald-500/40 shadow-[0_0_25px_-8px_hsl(var(--primary)/0.4)]"
+                      )}
+                    >
+                      {/* Top gradient strip */}
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary opacity-70" />
+                      {complete && (
+                        <span className="absolute top-2 right-2 jersey-badge bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/50">
+                          <Check className="h-3 w-3" /> Compleet
                         </span>
+                      )}
+
+                      <div className="flex items-center gap-3 mb-1 mt-1">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-primary/10 text-xl">
+                          {icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                              Cat. {idx + 1}
+                            </span>
+                            <span
+                              className={cn(
+                                "text-[10px] font-mono px-2 py-0.5 rounded-full border",
+                                complete
+                                  ? "border-emerald-500/50 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10"
+                                  : "border-border text-muted-foreground"
+                              )}
+                            >
+                              {selected.length}/{max}
+                            </span>
+                          </div>
+                          <h2 className="font-display text-lg font-bold leading-tight truncate">
+                            {category.short_name ?? category.name}
+                          </h2>
+                          {category.short_name && (
+                            <p className="text-xs text-muted-foreground truncate">{category.name}</p>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground mb-3">{category.name}</p>
-                      <div className="space-y-2">
+
+                      <div className="space-y-2 mt-3">
                         {category.category_riders.map((row) => {
                           if (!row.riders) return null;
                           const isSelected = selected.includes(row.riders.id);
@@ -276,20 +378,27 @@ export default function TeamBuilder() {
                               disabled={disabled}
                               onClick={() => handlePickToggle(category.id, row.riders!.id)}
                               className={cn(
-                                "w-full flex items-center justify-between p-3 rounded-md border-2 transition-all text-left",
+                                "group w-full flex items-center justify-between p-2.5 rounded-md border-2 transition-all text-left relative overflow-hidden",
                                 isSelected
-                                  ? "border-primary bg-primary/10 shadow-sm"
-                                  : "border-border hover:border-muted-foreground hover:bg-secondary",
-                                disabled && "opacity-60 cursor-not-allowed"
+                                  ? "border-primary bg-primary/10 shadow-[inset_3px_0_0_hsl(var(--primary))]"
+                                  : "border-border hover:border-primary/50 hover:bg-secondary hover:-translate-y-px",
+                                disabled && "opacity-50 cursor-not-allowed hover:translate-y-0"
                               )}
                             >
-                              <div className="flex items-center gap-3">
-                                <span className="text-xs font-mono text-muted-foreground w-8">
-                                  #{row.riders.start_number ?? "-"}
+                              <div className="flex items-center gap-3 min-w-0">
+                                <span
+                                  className={cn(
+                                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-mono font-bold border-2 transition-colors",
+                                    isSelected
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border bg-secondary text-muted-foreground group-hover:border-primary/40"
+                                  )}
+                                >
+                                  {row.riders.start_number ?? "—"}
                                 </span>
-                                <span className="font-medium font-sans">{row.riders.name}</span>
+                                <span className="font-medium font-sans truncate">{row.riders.name}</span>
                               </div>
-                              {isSelected && <Check className="h-5 w-5 text-primary" />}
+                              {isSelected && <Check className="h-5 w-5 text-primary shrink-0" />}
                             </button>
                           );
                         })}
@@ -299,81 +408,154 @@ export default function TeamBuilder() {
                 })}
               </div>
 
-              <div className="retro-border bg-card p-6">
-                <h2 className="font-display text-xl font-bold mb-1">🃏 Jokers</h2>
-                <p className="text-sm text-muted-foreground mb-4 font-sans">
-                  Kies exact 2 jokers uit de overige renners (niet in een categorie). {jokerPool.length} renners beschikbaar.
+              {/* Jokers */}
+              <div className="ornate-frame retro-border p-6 relative overflow-hidden bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[hsl(var(--vintage-gold))] via-primary to-[hsl(var(--vintage-gold))]" />
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="text-2xl">🃏</span>
+                  <h2 className="font-display text-xl font-bold">Jokers — Wildcards</h2>
+                </div>
+                <p className="text-sm opacity-80 mb-5 font-serif italic">
+                  Twee outsiders uit de overige renners. Niet uit een categorie. {jokerPool.length} beschikbaar.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <RiderSearchSelect
-                    riders={jokerPool}
-                    value={jokerDraft1}
-                    onChange={setJokerDraft1}
-                    excludeIds={jokerDraft2 ? [jokerDraft2] : []}
-                    placeholder="Joker 1 — zoek renner..."
-                    disabled={Boolean(isLocked)}
-                  />
-                  <RiderSearchSelect
-                    riders={jokerPool}
-                    value={jokerDraft2}
-                    onChange={setJokerDraft2}
-                    excludeIds={jokerDraft1 ? [jokerDraft1] : []}
-                    placeholder="Joker 2 — zoek renner..."
-                    disabled={Boolean(isLocked)}
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                  {[
+                    { draft: jokerDraft1, set: setJokerDraft1, exclude: jokerDraft2, label: "Joker 1" },
+                    { draft: jokerDraft2, set: setJokerDraft2, exclude: jokerDraft1, label: "Joker 2" },
+                  ].map((slot, i) => {
+                    const picked = slot.draft ? riderById.get(slot.draft) : null;
+                    return (
+                      <div
+                        key={i}
+                        className={cn(
+                          "rounded-lg border-2 p-3 transition-all",
+                          picked
+                            ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.1]"
+                            : "border-dashed border-white/30 bg-white/5"
+                        )}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-mono uppercase tracking-widest opacity-70">
+                            {slot.label}
+                          </span>
+                          {picked && (
+                            <span className="text-[10px] font-mono opacity-70">
+                              #{picked.start_number ?? "—"}
+                            </span>
+                          )}
+                        </div>
+                        {picked ? (
+                          <div className="font-display text-lg font-bold mb-2">{picked.name}</div>
+                        ) : (
+                          <div className="font-display text-base italic opacity-50 mb-2">Geen keuze</div>
+                        )}
+                        <RiderSearchSelect
+                          riders={jokerPool}
+                          value={slot.draft}
+                          onChange={slot.set}
+                          excludeIds={slot.exclude ? [slot.exclude] : []}
+                          placeholder="Zoek renner..."
+                          disabled={Boolean(isLocked)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="text-xs opacity-70">
+                    Opgeslagen jokers: <strong>{jokerIds.length}/2</strong>
+                  </div>
                   <Button
                     onClick={handleSaveJokers}
                     disabled={Boolean(isLocked || saveJoker.isPending)}
-                    variant="secondary"
+                    className="bg-[hsl(var(--vintage-gold))] hover:bg-[hsl(var(--vintage-gold))/0.9] text-black font-bold"
                   >
                     Jokers opslaan
                   </Button>
                 </div>
-                <div className="mt-3 text-xs text-muted-foreground">
-                  Huidige jokers: {jokerIds.length ? jokerIds.length : 0}/2
-                </div>
               </div>
 
-              <div className="retro-border bg-card p-6">
-                <h2 className="font-display text-xl font-bold mb-1">🏆 Klassementsvoorspellingen</h2>
-                <p className="text-sm text-muted-foreground mb-6 font-sans">
-                  Voorspel de eindklassementen — zoek renners uit de startlijst.
+              {/* Predictions */}
+              <div className="ornate-frame retro-border bg-card p-6 relative">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary opacity-70" />
+                <h2 className="font-display text-xl font-bold mb-1 mt-1">🏆 Klassementsvoorspellingen</h2>
+                <p className="text-sm text-muted-foreground mb-6 font-serif italic">
+                  Voorspel de eindstand — auto-opslaan tijdens typen.
                 </p>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="font-display font-bold mb-2">Eindklassement podium</h3>
-                    <div className="space-y-2">
-                      {(["🥇 1e plaats", "🥈 2e plaats", "🥉 3e plaats"] as const).map((label, i) => {
-                        const otherPodium = gcPodium.filter((_, j) => j !== i && Boolean(_));
-                        return (
-                          <div key={i}>
-                            <label className="text-xs font-medium text-muted-foreground">{label}</label>
-                            <RiderSearchSelect
-                              riders={allStartlistRiders}
-                              value={gcPodium[i]}
-                              onChange={(v) => {
-                                const next = [...gcPodium];
-                                next[i] = v;
-                                setGcPodium(next);
-                              }}
-                              excludeIds={otherPodium}
-                              placeholder="Zoek renner..."
-                              disabled={Boolean(isLocked)}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div className="vintage-divider" />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                {/* Visual podium */}
+                <div className="mb-6">
+                  <h3 className="font-display font-bold mb-3 text-center">Eindklassement podium</h3>
+                  <div className="grid grid-cols-3 gap-2 md:gap-4 items-end">
                     {[
-                      { label: "Puntentrui", value: pointsJersey, setter: setPointsJersey },
-                      { label: "Bergtrui", value: mountainJersey, setter: setMountainJersey },
-                      { label: "Jongerentrui", value: youthJersey, setter: setYouthJersey },
-                    ].map(({ label, value, setter }) => (
-                      <div key={label}>
-                        <label className="text-xs font-medium text-muted-foreground">{label}</label>
+                      { idx: 1, label: "🥈", height: "h-16", order: "order-1" },
+                      { idx: 0, label: "🥇", height: "h-24", order: "order-2" },
+                      { idx: 2, label: "🥉", height: "h-12", order: "order-3" },
+                    ].map(({ idx, label, height, order }) => {
+                      const otherPodium = gcPodium.filter((_, j) => j !== idx && Boolean(_));
+                      const picked = gcPodium[idx] ? riderById.get(gcPodium[idx]) : null;
+                      return (
+                        <div key={idx} className={cn("flex flex-col items-center", order)}>
+                          <div className="text-3xl md:text-4xl mb-2">{label}</div>
+                          <div
+                            className={cn(
+                              "w-full rounded-t-lg border-2 border-b-0 flex items-center justify-center text-center px-2 py-3 mb-2",
+                              height,
+                              idx === 0
+                                ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.15]"
+                                : "border-primary/50 bg-primary/10"
+                            )}
+                          >
+                            {picked ? (
+                              <span className="font-display font-bold text-sm md:text-base leading-tight">
+                                {picked.name}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground italic">leeg</span>
+                            )}
+                          </div>
+                          <RiderSearchSelect
+                            riders={allStartlistRiders}
+                            value={gcPodium[idx]}
+                            onChange={(v) => {
+                              const next = [...gcPodium];
+                              next[idx] = v;
+                              setGcPodium(next);
+                            }}
+                            excludeIds={otherPodium}
+                            placeholder="Zoek..."
+                            disabled={Boolean(isLocked)}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="vintage-divider my-6" />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { label: "Puntentrui", emoji: "🟣", color: "border-[hsl(var(--jersey-purple))]", value: pointsJersey, setter: setPointsJersey },
+                    { label: "Bergtrui", emoji: "🔵", color: "border-[hsl(var(--jersey-blue))]", value: mountainJersey, setter: setMountainJersey },
+                    { label: "Jongerentrui", emoji: "⚪", color: "border-foreground/30", value: youthJersey, setter: setYouthJersey },
+                  ].map(({ label, emoji, color, value, setter }) => {
+                    const picked = value ? riderById.get(value) : null;
+                    return (
+                      <div key={label} className={cn("rounded-lg border-2 p-3 bg-secondary/30", color)}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span>{emoji}</span>
+                          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+                            {label}
+                          </span>
+                        </div>
+                        {picked ? (
+                          <div className="font-display font-bold mb-2 truncate">{picked.name}</div>
+                        ) : (
+                          <div className="font-display italic text-muted-foreground mb-2">leeg</div>
+                        )}
                         <RiderSearchSelect
                           riders={allStartlistRiders}
                           value={value}
@@ -382,11 +564,10 @@ export default function TeamBuilder() {
                           disabled={Boolean(isLocked)}
                         />
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
-
 
               {!gameLocked && !isSubmitted && (
                 <div className="retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
@@ -395,25 +576,24 @@ export default function TeamBuilder() {
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-2 justify-end items-stretch sm:items-center">
+              {/* Desktop action row */}
+              <div className="hidden md:flex flex-col sm:flex-row gap-2 justify-end items-stretch sm:items-center">
                 {!gameLocked && isSubmitted && (
-                  <Button
-                    variant="outline"
-                    onClick={handleRevert}
-                    disabled={revertEntry.isPending}
-                  >
+                  <Button variant="outline" onClick={handleRevert} disabled={revertEntry.isPending}>
                     ✏️ Wijzigen
                   </Button>
                 )}
                 <Button
                   onClick={handleSubmit}
                   disabled={Boolean(isLocked || isSubmitted || submitEntry.isPending)}
-                  className="retro-border-primary font-bold"
+                  className={cn(
+                    "retro-border-primary font-bold",
+                    teamComplete && !isSubmitted && !isLocked && "animate-pulse"
+                  )}
                 >
                   {isSubmitted ? "✅ Reeds ingediend" : "✅ Team definitief indienen"}
                 </Button>
               </div>
-
             </TabsContent>
 
             <TabsContent value="startlist" className="space-y-4">
@@ -443,13 +623,16 @@ export default function TeamBuilder() {
               {startlistLoading && <div className="retro-border bg-card p-4">Startlijst laden...</div>}
               {!startlistLoading &&
                 startlist.map((team) => (
-                  <div key={team.id} className="retro-border bg-card p-4">
-                    <h3 className="font-display text-lg font-bold mb-2">{team.name}</h3>
+                  <div key={team.id} className="ornate-frame retro-border bg-card p-4 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 bottom-0 w-1 bg-gradient-to-b from-primary to-[hsl(var(--vintage-gold))]" />
+                    <h3 className="font-display text-lg font-bold mb-2 pl-2">{team.name}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                       {team.riders.map((rider) => (
-                        <div key={rider.id} className="border rounded-md p-2 bg-secondary/20">
-                          <span className="font-mono text-xs text-muted-foreground">#{rider.start_number ?? "-"}</span>{" "}
-                          <span className="font-medium">{rider.name}</span>
+                        <div key={rider.id} className="border rounded-md p-2 bg-secondary/20 flex items-center gap-2">
+                          <span className="inline-flex h-6 min-w-[1.75rem] px-1.5 items-center justify-center rounded-full bg-primary/15 border border-primary/30 font-mono text-xs">
+                            {rider.start_number ?? "—"}
+                          </span>
+                          <span className="font-medium truncate">{rider.name}</span>
                         </div>
                       ))}
                     </div>
@@ -459,6 +642,27 @@ export default function TeamBuilder() {
           </Tabs>
         )}
       </div>
+
+      {/* Mobile sticky action bar */}
+      {gameReady && game && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t-2 border-foreground p-3 flex gap-2">
+          {!gameLocked && isSubmitted && (
+            <Button variant="outline" onClick={handleRevert} disabled={revertEntry.isPending} className="flex-1">
+              ✏️ Wijzigen
+            </Button>
+          )}
+          <Button
+            onClick={handleSubmit}
+            disabled={Boolean(isLocked || isSubmitted || submitEntry.isPending)}
+            className={cn(
+              "flex-1 retro-border-primary font-bold",
+              teamComplete && !isSubmitted && !isLocked && "animate-pulse"
+            )}
+          >
+            {isSubmitted ? "✅ Ingediend" : "✅ Definitief indienen"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
