@@ -15,6 +15,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Legal from "./pages/Legal";
 import AdminV3 from "./pages/AdminV3";
+import GiroPoule2026 from "./pages/GiroPoule2026";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
