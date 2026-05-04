@@ -116,11 +116,23 @@ export default function TeamBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gcPodium, pointsJersey, mountainJersey, youthJersey]);
 
+  const validPicksByCategory = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const category of categories) {
+      const allowed = new Set(category.category_riders.map((row) => row.rider_id));
+      const valid = (picksByCategory.get(category.id) ?? []).filter((riderId, index, arr) =>
+        allowed.has(riderId) && arr.indexOf(riderId) === index
+      );
+      map.set(category.id, valid.slice(0, category.max_picks ?? 1));
+    }
+    return map;
+  }, [categories, picksByCategory]);
+
   const selectedPickRiderIds = useMemo(() => {
     const s = new Set<string>();
-    for (const arr of picksByCategory.values()) for (const id of arr) s.add(id);
+    for (const arr of validPicksByCategory.values()) for (const id of arr) s.add(id);
     return s;
-  }, [picksByCategory]);
+  }, [validPicksByCategory]);
 
   const handlePickToggle = async (categoryId: string, riderId: string) => {
     if (!entry) return;
@@ -199,9 +211,9 @@ export default function TeamBuilder() {
   );
   const completedPicks = useMemo(() => {
     let n = 0;
-    for (const arr of picksByCategory.values()) n += arr.length;
+    for (const arr of validPicksByCategory.values()) n += arr.length;
     return n;
-  }, [picksByCategory]);
+  }, [validPicksByCategory]);
   const gameReady = !gameLoading && !categoriesLoading && !entryLoading;
 
   const progressPct = totalRequired > 0 ? Math.round((completedPicks / totalRequired) * 100) : 0;
@@ -332,7 +344,7 @@ export default function TeamBuilder() {
               {/* Categories */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {categories.map((category, idx) => {
-                  const selected = picksByCategory.get(category.id) ?? [];
+                  const selected = validPicksByCategory.get(category.id) ?? [];
                   const max = category.max_picks ?? 1;
                   const reached = selected.length >= max;
                   const complete = selected.length === max;
