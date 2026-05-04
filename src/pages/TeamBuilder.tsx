@@ -306,7 +306,7 @@ export default function TeamBuilder() {
                         </span>
                       ) : (
                         <span className="jersey-badge bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/40">
-                          ✏️ Concept
+                          🚴‍♂️ Peloton incompleet
                         </span>
                       )}
                     </div>
