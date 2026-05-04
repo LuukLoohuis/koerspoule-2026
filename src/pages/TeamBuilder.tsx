@@ -584,9 +584,26 @@ export default function TeamBuilder() {
                 </div>
               </div>
 
-              {!gameLocked && !isSubmitted && (
+              {!gameLocked && !teamComplete && (
+                <div className="ornate-frame retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">🚴‍♂️💨</span>
+                    <strong className="font-display text-base">Je peloton is nog niet voltallig</strong>
+                  </div>
+                  <p className="text-muted-foreground mb-2 font-serif italic">
+                    Een paar renners hangen nog achter de bezemwagen — vul de gaten op vóór de flamme rouge:
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {missing.map((m) => (
+                      <li key={m}>{m}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {!gameLocked && !isSubmitted && teamComplete && (
                 <div className="retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
-                  ⚠️ <strong>Let op:</strong> je team is nog <strong>niet ingediend</strong>. Druk op <em>"Team definitief indienen"</em> om je inzending te bevestigen.
+                  ⚠️ <strong>Let op:</strong> je ploeg is compleet maar nog <strong>niet ingediend</strong>. Druk op <em>"Team definitief indienen"</em> om je inzending te bevestigen.
                   Als de admin de koers op <strong>deadline</strong> of <strong>live</strong> zet zonder dat je hebt ingediend, telt je huidige selectie automatisch als jouw team.
                 </div>
               )}
