@@ -205,7 +205,22 @@ export default function TeamBuilder() {
   const gameReady = !gameLoading && !categoriesLoading && !entryLoading;
 
   const progressPct = totalRequired > 0 ? Math.round((completedPicks / totalRequired) * 100) : 0;
-  const teamComplete = completedPicks === totalRequired && jokerIds.length === 2;
+  const podiumFilled = gcPodium.filter(Boolean).length;
+  const jerseysFilled = [pointsJersey, mountainJersey, youthJersey].filter(Boolean).length;
+  const missing: string[] = [];
+  if (completedPicks < totalRequired) {
+    missing.push(`Nog ${totalRequired - completedPicks} renner${totalRequired - completedPicks === 1 ? "" : "s"} kiezen in je categorieën`);
+  }
+  if (jokerIds.length < 2) {
+    missing.push(`Nog ${2 - jokerIds.length} joker${2 - jokerIds.length === 1 ? "" : "s"} aanduiden`);
+  }
+  if (podiumFilled < 3) {
+    missing.push(`Eindpodium voorspellen (${podiumFilled}/3)`);
+  }
+  if (jerseysFilled < 3) {
+    missing.push(`Truitjes voorspellen — punten, berg & jongeren (${jerseysFilled}/3)`);
+  }
+  const teamComplete = missing.length === 0;
 
   // Lookup map for rider name preview (jokers/podium)
   const riderById = useMemo(() => {
