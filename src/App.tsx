@@ -15,6 +15,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Legal from "./pages/Legal";
 import AdminV3 from "./pages/AdminV3";
+import GiroPoule2026 from "./pages/GiroPoule2026";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/juridisch" element={<Legal />} />
+              <Route path="/giro-italia-poule-2026" element={<GiroPoule2026 />} />
               <Route
                 path="/admin"
                 element={
