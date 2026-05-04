@@ -10,24 +10,18 @@ export default function Rules() {
 
   const stagePoints = useMemo(
     () => schema.filter((s) => s.classification === "stage").sort((a, b) => a.position - b.position),
-    [schema]
+    [schema],
   );
 
   // (jerseyPoints schema is niet meer relevant — truien lopen via voorspellingen, niet via points_schema.)
 
-
-  const sortedCategories = useMemo(
-    () => [...categories].sort((a, b) => a.sort_order - b.sort_order),
-    [categories]
-  );
+  const sortedCategories = useMemo(() => [...categories].sort((a, b) => a.sort_order - b.sort_order), [categories]);
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-            Speluitleg & Reglement
-          </h1>
+          <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Speluitleg & Reglement</h1>
           <p className="text-muted-foreground font-serif italic">
             "De jury, bestaande uit J.W.M. Broos, heeft gelijk. Zo niet, dan toch."
           </p>
@@ -47,7 +41,7 @@ export default function Rules() {
               "De jury, bestaande uit J.W.M. Broos, heeft gelijk.",
               "Zo niet, dan toch.",
               "De inschrijving dient binnen te zijn vóór de start van de eerste etappe.",
-              "Vul je team in via de Team Samenstellen pagina.",
+              "Stel je droomploeg samen in de Team Samenstellen-pagina en zet je beste renners aan de start.",
               "Als iemand uit de koers stapt, pech voor jou :(",
             ].map((rule, i) => (
               <li key={i} className="flex gap-3">
@@ -71,11 +65,17 @@ export default function Rules() {
             <div className="p-4 bg-secondary/50 rounded-md">
               <h3 className="font-bold mb-1">Stap 2 — Stel je ploeg samen</h3>
               <p className="text-muted-foreground">
-                {catsLoading || gameLoading
-                  ? "Categorieën worden geladen..."
-                  : sortedCategories.length > 0
-                  ? <>Kies uit <span className="font-bold">{sortedCategories.length}</span> categorieën telkens 1 renner. Voeg 2 jokers toe (vrije keuze buiten de categorieën). Jokers moeten unieke renners zijn en mogen niet voorkomen in de gekozen categorie-renners.</>
-                  : "Categorieën worden binnenkort beschikbaar gesteld door de admin."}
+                {catsLoading || gameLoading ? (
+                  "Categorieën worden geladen..."
+                ) : sortedCategories.length > 0 ? (
+                  <>
+                    Kies uit <span className="font-bold">{sortedCategories.length}</span> categorieën telkens 1 renner.
+                    Voeg 2 jokers toe (vrije keuze buiten de categorieën). Jokers moeten unieke renners zijn en mogen
+                    niet voorkomen in de gekozen categorie-renners.
+                  </>
+                ) : (
+                  "Categorieën worden binnenkort beschikbaar gesteld door de admin."
+                )}
               </p>
             </div>
             <div className="p-4 bg-secondary/50 rounded-md">
@@ -99,15 +99,13 @@ export default function Rules() {
 
           <h3 className="font-display text-lg font-bold mb-3">Per etappe (top 20)</h3>
           <p className="text-sm text-muted-foreground mb-3 font-sans">
-            Alleen renners die in jouw selectie zitten en bij de finish in de top 20 eindigen
-            leveren punten op. Renners die niet finishen (DNS / DNF) krijgen 0 punten.
+            Alleen renners die in jouw selectie zitten en bij de finish in de top 20 eindigen leveren punten op. Renners
+            die niet finishen (DNS / DNF) krijgen 0 punten.
           </p>
           {schemaLoading ? (
             <p className="text-sm text-muted-foreground italic mb-6">Puntenschema laden...</p>
           ) : stagePoints.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic mb-6">
-              Nog geen puntenschema ingesteld door de admin.
-            </p>
+            <p className="text-sm text-muted-foreground italic mb-6">Nog geen puntenschema ingesteld door de admin.</p>
           ) : (
             <div className="retro-border bg-background p-4 mb-6">
               <div className="grid grid-cols-4 md:grid-cols-5 gap-2 text-sm font-sans">
@@ -136,8 +134,8 @@ export default function Rules() {
               <span className="font-bold text-muted-foreground">0 pt</span>
             </div>
             <p className="text-xs text-muted-foreground italic">
-              Elke positie wordt apart beoordeeld. Een renner kan maximaal één keer punten opleveren.
-              Maximaal 150 punten in totaal voor het GC-podium.
+              Elke positie wordt apart beoordeeld. Een renner kan maximaal één keer punten opleveren. Maximaal 150
+              punten in totaal voor het GC-podium.
             </p>
           </div>
 
@@ -165,27 +163,22 @@ export default function Rules() {
 
           <h3 className="font-display text-lg font-bold mb-3">Totaalklassement</h3>
           <p className="text-sm text-muted-foreground font-sans">
-            Het totaal van een speler is de som van alle etappepunten plus de behaalde
-            voorspellingspunten (podium + truien). Het klassement wordt automatisch
-            bijgewerkt na elke verwerkte etappe. De stand na de laatste etappe is de
-            definitieve eindstand.
+            Het totaal van een speler is de som van alle etappepunten plus de behaalde voorspellingspunten (podium +
+            truien). Het klassement wordt automatisch bijgewerkt na elke verwerkte etappe. De stand na de laatste etappe
+            is de definitieve eindstand.
           </p>
         </section>
 
         {/* Categories overview */}
         <section className="retro-border bg-card p-6">
           <h2 className="font-display text-2xl font-bold mb-4">📋 Categorieën</h2>
-          <p className="text-sm text-muted-foreground mb-4 font-sans">
-            Kies 1 renner per categorie + 2 vrije jokers.
-          </p>
+          <p className="text-sm text-muted-foreground mb-4 font-sans">Kies 1 renner per categorie + 2 vrije jokers.</p>
 
           {catsLoading || gameLoading ? (
             <p className="text-sm text-muted-foreground italic">Categorieën laden...</p>
           ) : sortedCategories.length === 0 ? (
             <div className="p-6 text-center bg-secondary/30 rounded-md">
-              <p className="text-sm text-muted-foreground">
-                Nog geen categorieën ingesteld voor deze koers.
-              </p>
+              <p className="text-sm text-muted-foreground">Nog geen categorieën ingesteld voor deze koers.</p>
               <p className="text-xs text-muted-foreground mt-1 italic">
                 De admin stelt deze in voor de start van de koers.
               </p>
@@ -195,18 +188,18 @@ export default function Rules() {
               {sortedCategories.map((cat, idx) => (
                 <div key={cat.id} className="p-3 bg-secondary/30 rounded-md">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="jersey-badge bg-primary text-primary-foreground text-xs">
-                      #{idx + 1}
-                    </span>
+                    <span className="jersey-badge bg-primary text-primary-foreground text-xs">#{idx + 1}</span>
                     <span className="font-bold text-sm font-sans">{cat.name}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {cat.category_riders.length === 0
-                      ? <em>Nog geen renners toegewezen</em>
-                      : cat.category_riders
-                          .map((cr) => cr.riders?.name)
-                          .filter(Boolean)
-                          .join(" • ")}
+                    {cat.category_riders.length === 0 ? (
+                      <em>Nog geen renners toegewezen</em>
+                    ) : (
+                      cat.category_riders
+                        .map((cr) => cr.riders?.name)
+                        .filter(Boolean)
+                        .join(" • ")
+                    )}
                   </p>
                 </div>
               ))}
@@ -219,13 +212,13 @@ export default function Rules() {
           <h2 className="font-display text-2xl font-bold mb-4">🏁 Tot slot</h2>
           <div className="space-y-3 font-sans text-sm text-muted-foreground">
             <p>
-              Deze koerspoule is met zorg en enthousiasme ontwikkeld, zonder winstoogmerk.
-              Het doel is simpel: samen meer plezier beleven aan het volgen van de koers 🚴
+              Deze koerspoule is met zorg en enthousiasme ontwikkeld, zonder winstoogmerk. Het doel is simpel: samen
+              meer plezier beleven aan het volgen van de koers 🚴
             </p>
             <p>
-              Wil je ons helpen om deze koerspoule te blijven verbeteren en draaiende te
-              houden? Dat kan via de knop <span className="font-bold text-foreground">"Steun de kopgroep"</span>.
-              Alle steun wordt enorm gewaardeerd!
+              Wil je ons helpen om deze koerspoule te blijven verbeteren en draaiende te houden? Dat kan via de knop{" "}
+              <span className="font-bold text-foreground">"Steun de kopgroep"</span>. Alle steun wordt enorm
+              gewaardeerd!
             </p>
           </div>
           <div className="vintage-divider max-w-xs mx-auto my-5" />
