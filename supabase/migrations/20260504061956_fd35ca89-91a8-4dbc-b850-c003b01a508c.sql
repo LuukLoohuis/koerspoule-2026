@@ -1,0 +1,2 @@
+DELETE FROM public.user_roles WHERE role='admin' AND user_id IN (SELECT id FROM auth.users WHERE email <> 'koerspoule@gmail.com');
+UPDATE public.profiles SET is_admin=false WHERE id IN (SELECT id FROM auth.users WHERE email <> 'koerspoule@gmail.com');
