@@ -212,7 +212,7 @@ export default function Rules() {
           <h2 className="font-display text-2xl font-bold mb-4">🏁 Tot slot</h2>
           <div className="space-y-3 font-sans text-sm text-muted-foreground">
             <p>
-              Deze koerspoule is met zorg en enthousiasme ontwikkeld, zonder winstoogmerk. Het doel is simpel: samen
+              Deze koerspoule is met zorg en enthousiasme ontwikkeld. Het doel is simpel: samen
               meer plezier beleven aan het volgen van de koers 🚴
             </p>
             <p>
