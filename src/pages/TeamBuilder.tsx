@@ -666,6 +666,8 @@ export default function TeamBuilder() {
                   {isSubmitted ? "✅ Reeds ingediend" : "✅ Team definitief indienen"}
                 </Button>
               </div>
+              </>
+              )}
             </TabsContent>
 
             <TabsContent value="startlist" className="space-y-4">
