@@ -97,6 +97,7 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
                   <TableHead className="text-center">Jokers</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Punten</TableHead>
+                  <TableHead className="w-20"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -115,11 +116,16 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
                       )}
                     </TableCell>
                     <TableCell className="text-right tabular-nums font-bold">{e.total_points}</TableCell>
+                    <TableCell>
+                      <Button size="sm" variant="outline" onClick={() => setEditingEntryId(e.entry_id)} data-testid={`edit-entry-${e.entry_id}`}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-6">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
                       {entries.length === 0 ? "Nog geen inzendingen voor deze game." : "Geen resultaten voor zoekopdracht."}
                     </TableCell>
                   </TableRow>
