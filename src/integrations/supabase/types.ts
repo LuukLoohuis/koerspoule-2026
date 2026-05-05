@@ -495,6 +495,30 @@ export type Database = {
         }
         Relationships: []
       }
+      notify_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string | null
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          source?: string | null
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string | null
+          unsubscribed_at?: string | null
+        }
+        Relationships: []
+      }
       points_schema: {
         Row: {
           classification: string
@@ -1007,6 +1031,16 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_list_notify_subscribers: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          source: string
+          unsubscribed_at: string
+        }[]
+      }
       admin_update_entry_status: {
         Args: { p_entry_id: string; p_status: string }
         Returns: undefined
@@ -1121,6 +1155,10 @@ export type Database = {
           total_points: number
           user_id: string
         }[]
+      }
+      subscribe_notify: {
+        Args: { p_email: string; p_source?: string }
+        Returns: undefined
       }
       toggle_entry_pick: {
         Args: { p_category_id: string; p_entry_id: string; p_rider_id: string }
