@@ -297,6 +297,21 @@ export default function TeamBuilder() {
             </TabsList>
 
             <TabsContent value="builder" className="space-y-5">
+              {!builderVisible ? (
+                <div className="ornate-frame retro-border bg-card p-8 text-center space-y-4">
+                  <div className="text-4xl">🚧</div>
+                  <h2 className="font-display text-2xl font-bold">De ploegleiderstent is nog gesloten</h2>
+                  <p className="text-muted-foreground font-serif italic max-w-md mx-auto">
+                    De inschrijving opent zodra de wedstrijdleiding het startschot geeft. Houd het peloton in de gaten — zodra de koers op <strong>open</strong> of <strong>live</strong> staat, kun je hier je ploeg samenstellen.
+                  </p>
+                  {game?.status && (
+                    <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+                      Huidige koersstatus: {game.status}
+                    </p>
+                  )}
+                </div>
+              ) : (
+              <>
               {/* Sticky progress bar */}
               <div className="sticky top-2 z-30">
                 <div className="ornate-frame retro-border bg-card/95 backdrop-blur p-3 md:p-4">
