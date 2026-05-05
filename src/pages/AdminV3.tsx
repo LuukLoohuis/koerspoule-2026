@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LayoutDashboard, Trophy, Tag, Users, ListChecks, Calendar, Calculator, Shield, Inbox } from "lucide-react";
+import { LayoutDashboard, Trophy, Tag, Users, ListChecks, Calendar, Calculator, Shield, Inbox, Mail } from "lucide-react";
+import NotifyTab from "@/components/admin/NotifyTab";
 
 import GamesTab, { type Game } from "@/components/admin/GamesTab";
 import CategoriesTab, { type Category } from "@/components/admin/CategoriesTab";
@@ -161,6 +162,7 @@ export default function AdminV3() {
           <TabsTrigger value="results" disabled={!activeGameId} data-testid="tab-results"><ListChecks className="w-4 h-4 mr-2" />Uitslagen</TabsTrigger>
           <TabsTrigger value="calc" disabled={!activeGameId} data-testid="tab-calc"><Calculator className="w-4 h-4 mr-2" />Berekening</TabsTrigger>
           <TabsTrigger value="entries" disabled={!activeGameId} data-testid="tab-entries"><Inbox className="w-4 h-4 mr-2" />Inzendingen</TabsTrigger>
+          <TabsTrigger value="notify" data-testid="tab-notify"><Mail className="w-4 h-4 mr-2" />Notify</TabsTrigger>
           <TabsTrigger value="users" data-testid="tab-users"><Shield className="w-4 h-4 mr-2" />Gebruikers</TabsTrigger>
         </TabsList>
 
@@ -194,6 +196,10 @@ export default function AdminV3() {
 
         <TabsContent value="entries">
           <EntriesTab activeGameId={activeGameId} />
+        </TabsContent>
+
+        <TabsContent value="notify">
+          <NotifyTab />
         </TabsContent>
 
         <TabsContent value="users">
