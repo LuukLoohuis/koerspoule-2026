@@ -28,6 +28,7 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
 
   async function load() {
     if (!supabase || !activeGameId) return;
