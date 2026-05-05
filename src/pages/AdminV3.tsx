@@ -198,6 +198,10 @@ export default function AdminV3() {
           <EntriesTab activeGameId={activeGameId} />
         </TabsContent>
 
+        <TabsContent value="notify">
+          <NotifyTab />
+        </TabsContent>
+
         <TabsContent value="users">
           <UsersTab />
         </TabsContent>
