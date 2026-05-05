@@ -90,7 +90,7 @@ export default function RiderSearchSelect({
         disabled={disabled}
       />
       {open && results.length > 0 && (
-        <div className="absolute z-30 mt-1 left-0 w-[max(100%,18rem)] sm:w-[max(100%,22rem)] rounded-md border bg-popover shadow-md max-h-72 overflow-y-auto">
+        <div className="absolute z-50 mt-1 left-0 w-[max(100%,18rem)] sm:w-[max(100%,22rem)] rounded-md border bg-popover shadow-md max-h-72 overflow-y-auto">
           {results.map((r) => (
             <button
               key={r.id}
@@ -115,7 +115,7 @@ export default function RiderSearchSelect({
         </div>
       )}
       {open && search.trim() && results.length === 0 && (
-        <div className="absolute z-30 mt-1 left-0 w-[max(100%,18rem)] rounded-md border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
+        <div className="absolute z-50 mt-1 left-0 w-[max(100%,18rem)] rounded-md border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
           Geen renners gevonden.
         </div>
       )}
