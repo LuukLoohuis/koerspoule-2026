@@ -706,7 +706,7 @@ export default function TeamBuilder() {
                           <span className="inline-flex h-6 min-w-[1.75rem] px-1.5 items-center justify-center rounded-full bg-primary/15 border border-primary/30 font-mono text-xs">
                             {rider.start_number ?? "—"}
                           </span>
-                          <span className="font-medium truncate">{rider.name}</span>
+                          <span className="font-medium truncate text-slate-800">{rider.name}</span>
                         </div>
                       ))}
                     </div>
