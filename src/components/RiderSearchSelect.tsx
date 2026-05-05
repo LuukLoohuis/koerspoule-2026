@@ -44,15 +44,13 @@ export default function RiderSearchSelect({
   const results = useMemo(() => {
     const q = search.trim().toLowerCase();
     const base = riders.filter((r) => r.id !== value && !excludeSet.has(r.id));
-    if (!q) return base.slice(0, 8);
-    return base
-      .filter(
-        (r) =>
-          r.name.toLowerCase().includes(q) ||
-          String(r.start_number ?? "").includes(q) ||
-          (r.teamName ?? "").toLowerCase().includes(q)
-      )
-      .slice(0, 8);
+    if (!q) return base;
+    return base.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        String(r.start_number ?? "").includes(q) ||
+        (r.teamName ?? "").toLowerCase().includes(q)
+    );
   }, [search, riders, value, excludeSet]);
 
   if (selected) {
