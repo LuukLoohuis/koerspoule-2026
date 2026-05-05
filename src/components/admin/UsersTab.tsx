@@ -101,6 +101,7 @@ export default function UsersTab() {
                         {u.is_admin ? <Badge>Admin</Badge> : <Badge variant="outline">User</Badge>}
                       </TableCell>
                       <TableCell>
+                        <div className="flex gap-2">
                         {u.is_admin ? (
                           <Button size="sm" variant="outline" onClick={() => toggleAdmin(u.user_id, false)} data-testid={`revoke-admin-${u.user_id}`}>
                             <ShieldOff className="w-4 h-4 mr-1" />Intrekken
@@ -110,6 +111,26 @@ export default function UsersTab() {
                             <Shield className="w-4 h-4 mr-1" />Maak admin
                           </Button>
                         )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="destructive" data-testid={`delete-user-${u.user_id}`}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Deelnemer verwijderen?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Dit verwijdert <strong>{u.email}</strong> definitief, inclusief alle inzendingen, voorspellingen, subpoules en chatberichten. Deze actie kan niet ongedaan gemaakt worden.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteUser(u.user_id, u.email)}>Definitief verwijderen</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
