@@ -472,7 +472,7 @@ export default function TeamBuilder() {
               </div>
 
               {/* Jokers */}
-              <div className="ornate-frame retro-border p-6 relative overflow-hidden bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
+              <div className="ornate-frame retro-border p-6 relative bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[hsl(var(--vintage-gold))] via-primary to-[hsl(var(--vintage-gold))]" />
                 <div className="flex items-center gap-3 mb-1">
                   <span className="text-2xl">🃏</span>
