@@ -6,8 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LayoutDashboard, Trophy, Tag, Users, ListChecks, Calendar, Calculator, Shield, Inbox, Mail } from "lucide-react";
+import { LayoutDashboard, Trophy, Tag, Users, ListChecks, Calendar, Calculator, Shield, Inbox, Mail, ShieldCheck } from "lucide-react";
 import NotifyTab from "@/components/admin/NotifyTab";
+import ApprovalsTab from "@/components/admin/ApprovalsTab";
 
 import GamesTab, { type Game } from "@/components/admin/GamesTab";
 import CategoriesTab, { type Category } from "@/components/admin/CategoriesTab";
@@ -160,6 +161,7 @@ export default function AdminV3() {
           <TabsTrigger value="startlist" disabled={!activeGameId} data-testid="tab-startlist"><Users className="w-4 h-4 mr-2" />Startlijst</TabsTrigger>
           <TabsTrigger value="stages" disabled={!activeGameId} data-testid="tab-stages"><Calendar className="w-4 h-4 mr-2" />Etappes</TabsTrigger>
           <TabsTrigger value="results" disabled={!activeGameId} data-testid="tab-results"><ListChecks className="w-4 h-4 mr-2" />Uitslagen</TabsTrigger>
+          <TabsTrigger value="approvals" disabled={!activeGameId} data-testid="tab-approvals"><ShieldCheck className="w-4 h-4 mr-2" />Fiatteren</TabsTrigger>
           <TabsTrigger value="calc" disabled={!activeGameId} data-testid="tab-calc"><Calculator className="w-4 h-4 mr-2" />Berekening</TabsTrigger>
           <TabsTrigger value="entries" disabled={!activeGameId} data-testid="tab-entries"><Inbox className="w-4 h-4 mr-2" />Inzendingen</TabsTrigger>
           <TabsTrigger value="notify" data-testid="tab-notify"><Mail className="w-4 h-4 mr-2" />Notify</TabsTrigger>
@@ -188,6 +190,10 @@ export default function AdminV3() {
 
         <TabsContent value="results">
           <ResultsTab activeGameId={activeGameId} stages={stages} riders={riders} gameType={activeGame?.game_type ?? null} gameYear={activeGame?.year ?? null} />
+        </TabsContent>
+
+        <TabsContent value="approvals">
+          <ApprovalsTab activeGameId={activeGameId} />
         </TabsContent>
 
         <TabsContent value="calc">

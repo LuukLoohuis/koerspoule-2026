@@ -578,6 +578,36 @@ export type Database = {
         }
         Relationships: []
       }
+      results_approval_log: {
+        Row: {
+          action: string
+          actor_display_name: string | null
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          stage_id: string
+        }
+        Insert: {
+          action: string
+          actor_display_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          stage_id: string
+        }
+        Update: {
+          action?: string
+          actor_display_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          stage_id?: string
+        }
+        Relationships: []
+      }
       riders: {
         Row: {
           country_code: string | null
@@ -737,34 +767,46 @@ export type Database = {
       }
       stages: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           date: string | null
           game_id: string
           id: string
           name: string | null
+          results_status: string
           stage_number: number
           stage_type: Database["public"]["Enums"]["stage_type_enum"]
           status: string | null
+          submitted_for_approval_at: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           date?: string | null
           game_id: string
           id?: string
           name?: string | null
+          results_status?: string
           stage_number: number
           stage_type?: Database["public"]["Enums"]["stage_type_enum"]
           status?: string | null
+          submitted_for_approval_at?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           date?: string | null
           game_id?: string
           id?: string
           name?: string | null
+          results_status?: string
           stage_number?: number
           stage_type?: Database["public"]["Enums"]["stage_type_enum"]
           status?: string | null
+          submitted_for_approval_at?: string | null
         }
         Relationships: [
           {
@@ -1041,6 +1083,20 @@ export type Database = {
           unsubscribed_at: string
         }[]
       }
+      admin_pending_approvals: {
+        Args: { p_game_id: string }
+        Returns: {
+          approved_at: string
+          approved_by: string
+          approved_by_name: string
+          results_status: string
+          stage_date: string
+          stage_id: string
+          stage_name: string
+          stage_number: number
+          submitted_for_approval_at: string
+        }[]
+      }
       admin_update_entry_status: {
         Args: { p_entry_id: string; p_status: string }
         Returns: undefined
@@ -1054,6 +1110,10 @@ export type Database = {
           teams_count: number
           user_id: string
         }[]
+      }
+      approve_stage_results: {
+        Args: { p_stage_id: string }
+        Returns: undefined
       }
       assign_admin_role: {
         Args: { p_make_admin: boolean; p_user_id: string }
@@ -1126,6 +1186,14 @@ export type Database = {
         Args: { p_subpoule_id: string; p_user_id: string }
         Returns: undefined
       }
+      revert_stage_to_draft: {
+        Args: { p_stage_id: string }
+        Returns: undefined
+      }
+      revoke_stage_approval: {
+        Args: { p_stage_id: string }
+        Returns: undefined
+      }
       save_entry_jokers: {
         Args: { p_entry_id: string; p_rider_ids: string[] }
         Returns: undefined
@@ -1143,6 +1211,10 @@ export type Database = {
         Returns: undefined
       }
       submit_entry: { Args: { p_entry_id: string }; Returns: undefined }
+      submit_stage_for_approval: {
+        Args: { p_stage_id: string }
+        Returns: undefined
+      }
       subpoule_entries_detail: {
         Args: { p_game_id: string; p_subpoule_id: string }
         Returns: {
