@@ -135,6 +135,13 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
           </div>
         </CardContent>
       </Card>
+      <EntryEditorDialog
+        entryId={editingEntryId}
+        gameId={activeGameId}
+        open={!!editingEntryId}
+        onOpenChange={(o) => !o && setEditingEntryId(null)}
+        onSaved={load}
+      />
     </div>
   );
 }
