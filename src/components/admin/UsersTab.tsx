@@ -54,6 +54,19 @@ export default function UsersTab() {
     await load();
   }
 
+  async function deleteUser(userId: string, email: string) {
+    if (!supabase) return;
+    const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+      body: { user_id: userId },
+    });
+    if (error || (data as any)?.error) {
+      toast.error(`Verwijderen mislukt: ${error?.message ?? (data as any)?.error}`);
+      return;
+    }
+    toast.success(`${email} is verwijderd`);
+    await load();
+  }
+
   const filtered = users.filter((u) => !search.trim() || u.email.toLowerCase().includes(search.toLowerCase()));
 
   return (
