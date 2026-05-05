@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import type { Stage } from "./StagesTab";
 import type { Rider } from "./StartlistTab";
 import RiderSearchSelect, { type RiderOption } from "@/components/RiderSearchSelect";
+import StageApprovalCard from "./StageApprovalCard";
 
 type GameType = "giro" | "tdf" | "vuelta" | null;
 
@@ -389,6 +390,10 @@ export default function ResultsTab({
           </div>
         </CardContent>
       </Card>
+
+      {selectedStage && (
+        <StageApprovalCard stageId={selectedStage} onChanged={loadExisting} />
+      )}
 
       {selectedStage && (
         <Card className="border-primary/40 bg-primary/5">
