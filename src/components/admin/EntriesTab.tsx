@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Pencil } from "lucide-react";
+import EntryEditorDialog from "./EntryEditorDialog";
 
 type Entry = {
   entry_id: string;
