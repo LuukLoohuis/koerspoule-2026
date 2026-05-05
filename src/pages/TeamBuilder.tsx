@@ -254,7 +254,7 @@ export default function TeamBuilder() {
             <span className="vintage-ornament-symbol">✦</span>
           </div>
           <h1 className="vintage-heading text-3xl md:text-5xl font-bold mb-2">
-            Stel je ploeg samen
+            De Ploegleiderstent
           </h1>
           <p className="text-muted-foreground font-serif italic">
             Kies wijs — één keer per Grand Tour
