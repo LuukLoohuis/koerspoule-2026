@@ -507,17 +507,9 @@ export default function TeamBuilder() {
                   })}
                 </div>
 
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="text-xs opacity-70">
-                    Opgeslagen jokers: <strong>{jokerIds.length}/2</strong>
-                  </div>
-                  <Button
-                    onClick={handleSaveJokers}
-                    disabled={Boolean(isLocked || saveJoker.isPending)}
-                    className="bg-[hsl(var(--vintage-gold))] hover:bg-[hsl(var(--vintage-gold))/0.9] text-black font-bold"
-                  >
-                    Jokers opslaan
-                  </Button>
+                <div className="flex items-center justify-between flex-wrap gap-2 text-xs opacity-70">
+                  <span>Opgeslagen jokers: <strong>{jokerIds.length}/2</strong></span>
+                  <span className="italic font-serif">Auto-opslaan tijdens kiezen</span>
                 </div>
               </div>
 
