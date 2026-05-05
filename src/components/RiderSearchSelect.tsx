@@ -90,7 +90,7 @@ export default function RiderSearchSelect({
         disabled={disabled}
       />
       {open && results.length > 0 && (
-        <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover shadow-md max-h-64 overflow-y-auto">
+        <div className="absolute z-30 mt-1 left-0 w-[max(100%,18rem)] sm:w-[max(100%,22rem)] rounded-md border bg-popover shadow-md max-h-72 overflow-y-auto">
           {results.map((r) => (
             <button
               key={r.id}
@@ -106,16 +106,16 @@ export default function RiderSearchSelect({
               <span className="text-[11px] text-muted-foreground tabular-nums w-7 text-right shrink-0">
                 #{r.start_number ?? "—"}
               </span>
-              <span className="font-medium truncate">{r.name}</span>
+              <span className="font-medium truncate flex-1 min-w-0">{r.name}</span>
               {r.teamName && (
-                <span className="ml-auto text-[10px] text-muted-foreground truncate max-w-[40%]">{r.teamName}</span>
+                <span className="text-[10px] text-muted-foreground truncate max-w-[45%] shrink-0">{r.teamName}</span>
               )}
             </button>
           ))}
         </div>
       )}
       {open && search.trim() && results.length === 0 && (
-        <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
+        <div className="absolute z-30 mt-1 left-0 w-[max(100%,18rem)] rounded-md border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
           Geen renners gevonden.
         </div>
       )}
