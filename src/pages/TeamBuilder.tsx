@@ -9,6 +9,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
 import { useEntry } from "@/hooks/useEntry";
 import { useStartlist } from "@/hooks/useStartlist";
+import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
 import RiderSearchSelect from "@/components/RiderSearchSelect";
 
@@ -27,6 +28,8 @@ function getCategoryIcon(name: string): string {
 export default function TeamBuilder() {
   const { toast } = useToast();
   const { data: game, isLoading: gameLoading } = useCurrentGame();
+  const { data: profile } = useProfile();
+  const isAdmin = Boolean(profile?.is_admin);
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(game?.id);
   const { entry, isLoading: entryLoading, picksByCategory, jokerIds, predictions, togglePick, saveJoker, savePredictions, submitEntry, revertEntry } = useEntry(game?.id);
 
@@ -80,6 +83,7 @@ export default function TeamBuilder() {
   const isSubmitted = entry?.status === "submitted";
   const gameLocked = Boolean(game?.status && ["closed", "locked", "live", "finished"].includes(game.status));
   const isLocked = gameLocked;
+  const builderVisible = isAdmin || (game?.status ? ["open", "live"].includes(game.status) : false);
 
   const hydratedRef = useRef(false);
   useEffect(() => {
@@ -293,6 +297,21 @@ export default function TeamBuilder() {
             </TabsList>
 
             <TabsContent value="builder" className="space-y-5">
+              {!builderVisible ? (
+                <div className="ornate-frame retro-border bg-card p-8 text-center space-y-4">
+                  <div className="text-4xl">🚧</div>
+                  <h2 className="font-display text-2xl font-bold">De ploegleiderstent is nog gesloten</h2>
+                  <p className="text-muted-foreground font-serif italic max-w-md mx-auto">
+                    De inschrijving opent zodra de wedstrijdleiding het startschot geeft. Houd het peloton in de gaten — zodra de koers op <strong>open</strong> of <strong>live</strong> staat, kun je hier je ploeg samenstellen.
+                  </p>
+                  {game?.status && (
+                    <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+                      Huidige koersstatus: {game.status}
+                    </p>
+                  )}
+                </div>
+              ) : (
+              <>
               {/* Sticky progress bar */}
               <div className="sticky top-2 z-30">
                 <div className="ornate-frame retro-border bg-card/95 backdrop-blur p-3 md:p-4">
@@ -647,6 +666,8 @@ export default function TeamBuilder() {
                   {isSubmitted ? "✅ Reeds ingediend" : "✅ Team definitief indienen"}
                 </Button>
               </div>
+              </>
+              )}
             </TabsContent>
 
             <TabsContent value="startlist" className="space-y-4">
