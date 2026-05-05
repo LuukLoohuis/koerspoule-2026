@@ -102,13 +102,13 @@ export default function RiderSearchSelect({
               }}
               className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-accent"
             >
-              <Plus className="h-3 w-3 text-muted-foreground shrink-0" />
-              <span className="text-[11px] text-muted-foreground tabular-nums w-7 text-right shrink-0">
+              <Plus className="h-3 w-3 text-foreground shrink-0" />
+              <span className="text-[11px] text-foreground tabular-nums w-7 text-right shrink-0">
                 #{r.start_number ?? "—"}
               </span>
-              <span className="font-medium truncate flex-1 min-w-0">{r.name}</span>
+              <span className="font-medium text-foreground truncate flex-1 min-w-0">{r.name}</span>
               {r.teamName && (
-                <span className="text-[10px] text-muted-foreground truncate max-w-[45%] shrink-0">{r.teamName}</span>
+                <span className="text-[10px] text-foreground truncate max-w-[45%] shrink-0">{r.teamName}</span>
               )}
             </button>
           ))}
