@@ -116,6 +116,23 @@ export default function TeamBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gcPodium, pointsJersey, mountainJersey, youthJersey]);
 
+  // Auto-save jokers
+  useEffect(() => {
+    if (!entry || !hydratedRef.current || isSubmitted) return;
+    if (!jokerDraft1 || !jokerDraft2) return;
+    if (jokerDraft1 === jokerDraft2) return;
+    if (selectedPickRiderIds.has(jokerDraft1) || selectedPickRiderIds.has(jokerDraft2)) return;
+    // Skip if already saved identically
+    const current = [...jokerIds].sort().join(",");
+    const next = [jokerDraft1, jokerDraft2].sort().join(",");
+    if (current === next) return;
+    const timer = setTimeout(() => {
+      saveJoker.mutate({ entryId: entry.id, riderIds: [jokerDraft1, jokerDraft2] });
+    }, 700);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jokerDraft1, jokerDraft2]);
+
   const validPicksByCategory = useMemo(() => {
     const map = new Map<string, string[]>();
     for (const category of categories) {
