@@ -78,7 +78,7 @@ export default function RiderSearchSelect({
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className={open ? "relative z-40" : "relative"}>
       <Input
         placeholder={placeholder}
         value={search}
