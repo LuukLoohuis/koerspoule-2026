@@ -137,7 +137,7 @@ export default function MyResultsPanel() {
                       <div key={e.id} className={cn("p-3 flex items-center justify-between gap-3", isMe && "bg-primary/10")}>
                         <div className="flex items-center gap-3 min-w-0">
                           <span className="font-mono text-xs text-muted-foreground w-8 shrink-0 tabular-nums">#{i + 1}</span>
-                          <span className="font-medium truncate">{e.team_name ?? "Ploeg"}</span>
+                          <span className="font-medium truncate text-slate-800">{e.team_name ?? "Ploeg"}</span>
                           {isMe && <Badge variant="outline" className="text-xs">jij</Badge>}
                         </div>
                         <span className="font-display text-base font-bold tabular-nums">{e.points} pt</span>
@@ -165,7 +165,7 @@ export default function MyResultsPanel() {
                       <div key={r.id} className="p-3 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
                           <span className="font-mono text-xs text-muted-foreground w-8 shrink-0 tabular-nums">#{r.finish_position}</span>
-                          <span className="font-medium truncate">{r.rider_name ?? r.riders?.name ?? "Renner"}</span>
+                          <span className="font-medium truncate text-slate-800">{r.rider_name ?? r.riders?.name ?? "Renner"}</span>
                           {r.riders?.teams?.name && (
                             <span className="text-xs text-muted-foreground truncate">{r.riders.teams.name}</span>
                           )}
@@ -197,7 +197,7 @@ export default function MyResultsPanel() {
                     <div key={e.id} className={cn("p-3 flex items-center justify-between gap-3", isMe && "bg-primary/10")}>
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="font-mono text-xs text-muted-foreground w-8 shrink-0 tabular-nums">#{i + 1}</span>
-                        <span className="font-medium truncate">{e.team_name ?? "Ploeg"}</span>
+                        <span className="font-medium truncate text-slate-800">{e.team_name ?? "Ploeg"}</span>
                         {isMe && <Badge variant="outline" className="text-xs">jij</Badge>}
                       </div>
                       <span className="font-display text-lg font-bold tabular-nums">{e.total_points ?? 0}</span>
