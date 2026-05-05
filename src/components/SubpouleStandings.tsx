@@ -204,7 +204,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                     />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium truncate">{m.display_name}</span>
+                        <span className="font-medium truncate text-slate-800">{m.display_name}</span>
                         {idx === 0 && <Crown className="h-3 w-3 text-primary" />}
                         {isMe && (
                           <Badge variant="outline" className="text-xs">jij</Badge>

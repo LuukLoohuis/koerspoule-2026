@@ -133,7 +133,7 @@ export default function SubpouleBenchmark({ subpouleId }: Props) {
                   )}
                 >
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{e.display_name}</div>
+                    <div className="font-medium truncate text-slate-800">{e.display_name}</div>
                     {e.team_name && (
                       <div className="text-xs text-muted-foreground truncate">{e.team_name}</div>
                     )}

@@ -59,7 +59,7 @@ export default function RiderSearchSelect({
         <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
           #{selected.start_number ?? "—"}
         </span>
-        <span className="font-medium truncate">{selected.name}</span>
+        <span className="font-medium truncate text-slate-800">{selected.name}</span>
         {selected.teamName && (
           <span className="text-xs text-muted-foreground truncate">{selected.teamName}</span>
         )}

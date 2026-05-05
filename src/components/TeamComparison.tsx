@@ -261,7 +261,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                     ) : myRiderIds.map((id) => {
                       const rider = ridersById.get(id);
                       return (
-                        <p key={id} className="text-sm font-medium truncate flex items-center justify-end gap-1">
+                        <p key={id} className="text-sm font-medium truncate flex items-center justify-end gap-1 text-slate-800">
                           {me.jokers.has(id) && <Crown className="h-3 w-3 text-primary shrink-0" />}
                           <span className="truncate">{rider?.name ?? "—"}</span>
                         </p>
@@ -298,7 +298,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                     ) : oppRiderIds.map((id) => {
                       const rider = ridersById.get(id);
                       return (
-                        <p key={id} className="text-sm font-medium truncate flex items-center gap-1">
+                        <p key={id} className="text-sm font-medium truncate flex items-center gap-1 text-slate-800">
                           {opp.jokers.has(id) && <Crown className="h-3 w-3 text-primary shrink-0" />}
                           <span className="truncate">{rider?.name ?? "—"}</span>
                         </p>
