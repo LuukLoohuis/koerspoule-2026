@@ -44,15 +44,13 @@ export default function RiderSearchSelect({
   const results = useMemo(() => {
     const q = search.trim().toLowerCase();
     const base = riders.filter((r) => r.id !== value && !excludeSet.has(r.id));
-    if (!q) return base.slice(0, 8);
-    return base
-      .filter(
-        (r) =>
-          r.name.toLowerCase().includes(q) ||
-          String(r.start_number ?? "").includes(q) ||
-          (r.teamName ?? "").toLowerCase().includes(q)
-      )
-      .slice(0, 8);
+    if (!q) return base;
+    return base.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        String(r.start_number ?? "").includes(q) ||
+        (r.teamName ?? "").toLowerCase().includes(q)
+    );
   }, [search, riders, value, excludeSet]);
 
   if (selected) {
@@ -92,7 +90,7 @@ export default function RiderSearchSelect({
         disabled={disabled}
       />
       {open && results.length > 0 && (
-        <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover shadow-md max-h-72 overflow-y-auto">
+        <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover shadow-md max-h-64 overflow-y-auto">
           {results.map((r) => (
             <button
               key={r.id}
@@ -102,15 +100,15 @@ export default function RiderSearchSelect({
                 setSearch("");
                 setOpen(false);
               }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
+              className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-accent"
             >
-              <Plus className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
+              <Plus className="h-3 w-3 text-muted-foreground shrink-0" />
+              <span className="text-[11px] text-muted-foreground tabular-nums w-7 text-right shrink-0">
                 #{r.start_number ?? "—"}
               </span>
-              <span className="font-medium">{r.name}</span>
+              <span className="font-medium truncate">{r.name}</span>
               {r.teamName && (
-                <span className="ml-auto text-xs text-muted-foreground">{r.teamName}</span>
+                <span className="ml-auto text-[10px] text-muted-foreground truncate max-w-[40%]">{r.teamName}</span>
               )}
             </button>
           ))}

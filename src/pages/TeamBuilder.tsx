@@ -116,6 +116,23 @@ export default function TeamBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gcPodium, pointsJersey, mountainJersey, youthJersey]);
 
+  // Auto-save jokers
+  useEffect(() => {
+    if (!entry || !hydratedRef.current || isSubmitted) return;
+    if (!jokerDraft1 || !jokerDraft2) return;
+    if (jokerDraft1 === jokerDraft2) return;
+    if (selectedPickRiderIds.has(jokerDraft1) || selectedPickRiderIds.has(jokerDraft2)) return;
+    // Skip if already saved identically
+    const current = [...jokerIds].sort().join(",");
+    const next = [jokerDraft1, jokerDraft2].sort().join(",");
+    if (current === next) return;
+    const timer = setTimeout(() => {
+      saveJoker.mutate({ entryId: entry.id, riderIds: [jokerDraft1, jokerDraft2] });
+    }, 700);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jokerDraft1, jokerDraft2]);
+
   const validPicksByCategory = useMemo(() => {
     const map = new Map<string, string[]>();
     for (const category of categories) {
@@ -254,7 +271,7 @@ export default function TeamBuilder() {
             <span className="vintage-ornament-symbol">✦</span>
           </div>
           <h1 className="vintage-heading text-3xl md:text-5xl font-bold mb-2">
-            Stel je ploeg samen
+            De Ploegleiderstent
           </h1>
           <p className="text-muted-foreground font-serif italic">
             Kies wijs — één keer per Grand Tour
@@ -271,7 +288,7 @@ export default function TeamBuilder() {
         {gameReady && game && (
           <Tabs defaultValue="builder" className="space-y-4">
             <TabsList className="w-full">
-              <TabsTrigger value="builder" className="flex-1">Team samenstellen</TabsTrigger>
+              <TabsTrigger value="builder" className="flex-1">Ploegleiderstent</TabsTrigger>
               <TabsTrigger value="startlist" className="flex-1">Startlijst</TabsTrigger>
             </TabsList>
 
@@ -490,17 +507,9 @@ export default function TeamBuilder() {
                   })}
                 </div>
 
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="text-xs opacity-70">
-                    Opgeslagen jokers: <strong>{jokerIds.length}/2</strong>
-                  </div>
-                  <Button
-                    onClick={handleSaveJokers}
-                    disabled={Boolean(isLocked || saveJoker.isPending)}
-                    className="bg-[hsl(var(--vintage-gold))] hover:bg-[hsl(var(--vintage-gold))/0.9] text-black font-bold"
-                  >
-                    Jokers opslaan
-                  </Button>
+                <div className="flex items-center justify-between flex-wrap gap-2 text-xs opacity-70">
+                  <span>Opgeslagen jokers: <strong>{jokerIds.length}/2</strong></span>
+                  <span className="italic font-serif">Auto-opslaan tijdens kiezen</span>
                 </div>
               </div>
 
