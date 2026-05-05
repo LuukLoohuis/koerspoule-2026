@@ -1,51 +1,78 @@
-## Admin uitbreidingen + mailkosten Giro-notificatie
+# Goedkeuringsworkflow uitslagen
 
-### 1. Deelnemers verwijderen (UsersTab)
+Een uitslag wordt eerst als **concept** opgeslagen, daarna door de admin **gefiatteerd** voordat deelnemers hem zien. Statussen worden duidelijk getoond, en wie/wanneer er goedgekeurd is wordt gelogd.
 
-Voeg een "Verwijderen" knop toe per gebruiker in `src/components/admin/UsersTab.tsx` met bevestigings-dialoog (AlertDialog). Verwijdert het account én alle gekoppelde data.
+## Workflow in één blik
 
-**Backend:**
-- Nieuwe RPC `admin_delete_user(p_user_id uuid)` met `SECURITY DEFINER`:
-  - Check `is_admin()`
-  - Voorkom dat admin zichzelf verwijdert
-  - Verwijder cascadegewijs: `entry_picks`, `entry_jokers`, `entry_predictions`, `entry_prediction_points`, `stage_points`, `total_points`, `entries`, `chat_messages`, `subpoule_members`, `subpoules` (eigen), `user_roles`, `profiles`, en tenslotte `auth.users` (via `auth.admin` API in een Edge Function — RPC kan auth.users niet rechtstreeks deleten)
-- Omdat `auth.users` een service-role-actie vereist, maken we een Edge Function `admin-delete-user` die met de service role key de auth-user verwijdert na de RPC-cleanup.
+```
+[Admin vult uitslag in / importeert]
+            │
+            ▼
+   stages.results_status = 'draft'      (alleen admin ziet)
+            │  klik "Klaar voor controle"
+            ▼
+   stages.results_status = 'pending'    (admin-only banner: "wacht op fiat")
+            │  klik "Fiatteren"
+            ▼
+   stages.results_status = 'approved'   (zichtbaar voor alle deelnemers)
+   approved_by, approved_at gezet
+   stage_points + totaalstand herberekend
+```
 
-### 2. Inzending bekijken & wijzigen (EntriesTab)
+## Statuslabels (overal hetzelfde)
+- **Concept** (grijs) — wordt nog ingevuld
+- **In afwachting van goedkeuring** (oranje) — admin moet fiatteren
+- **Goedgekeurd** (groen, met datum + naam admin) — live voor deelnemers
 
-In `src/components/admin/EntriesTab.tsx` per rij een "Bekijken/Wijzigen" knop die een Dialog opent met:
-- **Categorie-picks** (per categorie: huidige renner + dropdown om te wijzigen via `toggle_entry_pick` RPC — admin mag al wijzigen volgens bestaande RPC's check)
-- **Jokers** (2 velden, opslaan via `save_entry_jokers`)
-- **GC voorspellingen** (3 podium + 3 truien, opslaan via `save_entry_predictions`)
-- **Status** wijzigen (draft ↔ submitted) via directe update op `entries`
-- **Verwijder inzending** knop (alleen entry, niet de user) via `DELETE FROM entries`
+## Wat wijzigt er — kort overzicht
 
-Bestaande RPC's bevatten al `is_admin()` overrides, dus admin kan ook na deadline/locked status wijzigen. Geen nieuwe RPC's nodig voor het wijzigen — alleen voor entry-delete één RPC `admin_delete_entry(p_entry_id)` voor cascade cleanup.
+### 1. Database (migratie)
+- Op `public.stages`:
+  - `results_status text not null default 'draft'` — `draft | pending | approved`
+  - `approved_by uuid` (verwijst naar `auth.users.id`, geen FK)
+  - `approved_at timestamptz`
+  - `submitted_for_approval_at timestamptz`
+- Nieuwe tabel `public.results_approval_log` — audit-trail (stage_id, action, actor, at, note).
+- RLS aanpassen op **`stage_results`** en **`stage_points`**: niet-admins zien alleen rijen waar de bijbehorende stage `results_status = 'approved'` heeft. Admins zien alles. Hierdoor blijft een concept-uitslag voor deelnemers onzichtbaar zonder dat we de frontend overal hoeven te filteren.
+- RPC's:
+  - `submit_stage_for_approval(p_stage_id)` — admin-only, zet status op `pending`, log entry.
+  - `approve_stage_results(p_stage_id)` — admin-only, zet `approved`, vult `approved_by/at`, draait `calculate_stage_scores` + `calculate_prediction_points` + `update_total_ranking`, log entry.
+  - `revoke_stage_approval(p_stage_id)` — terug naar `pending` (voor correcties), log entry.
+- `total_points` mag pas (her)berekend worden over goedgekeurde etappes — `calculate_stage_scores`/`update_total_ranking` filteren op `results_status = 'approved'`.
 
-### 3. Mailkosten Giro-notificatie
+### 2. Admin — Uitslagen-tab (`src/components/admin/ResultsTab.tsx`)
+- Bovenaan per geselecteerde etappe een statusbadge + actieknoppen die meebewegen met de status:
+  - **Concept**: knop "Klaar voor controle" (zet → pending).
+  - **In afwachting**: knop "Fiatteren ✅" (met confirm-dialog) en "Terug naar concept".
+  - **Goedgekeurd**: toont "Goedgekeurd door {naam} op {datum}" en knop "Goedkeuring intrekken" voor correcties.
+- Opslaan/import blijft mogelijk in `draft` en `pending`; in `approved` waarschuwen ("Trek eerst goedkeuring in om te wijzigen").
+- Na succesvol fiatteren: toast + automatische herberekening (RPC doet dat al server-side).
 
-Lovable Emails draait op een usage-based model via je Cloud-balance, niet via credits. Concrete kosten:
+### 3. Admin — nieuw overzicht "Te fiatteren"
+- Nieuwe tab in `AdminV3.tsx` (`Te fiatteren`, icoon `BadgeCheck`) of compacte sectie boven `DashboardTab`:
+  - Lijst alle etappes van de actieve game met `results_status = 'pending'`, met deeplink naar de Uitslagen-tab voor die etappe.
+  - Telt zichtbaar in een kleine badge op het tab-icoon (bv. `Te fiatteren (2)`).
+- Klikbaar naar Uitslagen-tab met die etappe vooraf geselecteerd.
 
-- Verzenden gaat via Lovable's e-mailinfrastructuur (al opgezet op `notify.koerspoule.nl`).
-- Standaard krijg je **$1 gratis AI-balance + $25 gratis Cloud-balance per maand**.
-- Ruwe richtprijs voor transactionele e-mail providers via Cloud: doorgaans **~$0,40 – $1,00 per 1.000 verzonden mails**. Voor jullie volume (paar honderd accounts × 1 mail = enkele honderden e-mails per race) blijft dit ruim binnen de **gratis $25 Cloud-balance** — feitelijk **€0**.
-- Plan-mode-credits (1 per bericht aan mij) staan los van mailkosten. Het bouwen van de admin-trigger + opt-in flow kost build-credits afhankelijk van de scope, maar het versturen zélf kost in jullie schaal niets.
+### 4. Notificatie naar admins
+- Edge function `notify-results-pending` (verstuurt mail naar alle admin-users via Resend, hergebruikt bestaande `process-email-queue` infra).
+- Triggert vanuit `submit_stage_for_approval` RPC via `enqueue_email`.
+- Onderwerp: "Uitslag etappe X wacht op fiat".
 
-> Exacte per-mail-prijs is niet vast gepubliceerd; check **Settings → Cloud & AI balance** voor het werkelijke verbruik na de eerste verzending.
+### 5. Frontend deelnemerszijde
+- Door de RLS-aanpassing zien deelnemers automatisch geen punten/uitslag van niet-goedgekeurde etappes.
+- In `Results.tsx` / `MyResultsPanel.tsx` / `SubpouleStandings.tsx`: voor etappes met `results_status != 'approved'` tonen we een nette placeholder ("In afwachting van fiat — uitslag volgt zodra de jury akkoord is.") in plaats van lege rijen.
+- Stages-lijst toont al een statusbadge per etappe (alleen 'approved' krijgt punten-link).
 
-### Technische details
+## Aandachtspunten
+- Bestaande etappes met al gevulde uitslagen worden in de migratie initieel op `approved` gezet (anders verdwijnen ze plots voor spelers). `approved_at = now()`, `approved_by = NULL` met note "auto-migrated".
+- `full_recalculation` blijft werken maar slaat niet-goedgekeurde etappes over.
+- Audit-log is alleen leesbaar voor admins (`is_admin()` RLS).
 
-**Files:**
-- `src/components/admin/UsersTab.tsx` — Verwijder-knop + AlertDialog
-- `src/components/admin/EntriesTab.tsx` — Bekijken/Wijzigen Dialog + verwijder-knop
-- Nieuwe `src/components/admin/EntryEditorDialog.tsx` — herbruikbaar dialoog
-- Nieuwe edge function `supabase/functions/admin-delete-user/index.ts` (service role om auth.users te deleten)
-- DB-migratie: `admin_delete_user_data(p_user_id)` (cleanup public schema) + `admin_delete_entry(p_entry_id)`
-
-**Flow user-delete:**
-1. Frontend → invoke `admin-delete-user` edge function met `user_id`
-2. Edge function checkt admin, roept `admin_delete_user_data` RPC aan, daarna `supabase.auth.admin.deleteUser()`
-
-### Vraag
-
-Wil je dat ik dit zo bouw? Eventueel: moet de admin ook entries van **andere games** kunnen wijzigen, of alleen de actieve game (huidige weergave)?
+## Te wijzigen / toe te voegen bestanden
+- `supabase/migrations/<nieuw>.sql` — kolommen, log-tabel, RLS, RPC's, calc-aanpassingen.
+- `src/components/admin/ResultsTab.tsx` — statusbadge + workflow-knoppen.
+- `src/components/admin/PendingApprovalsTab.tsx` (nieuw) + tab in `src/pages/AdminV3.tsx`.
+- `src/components/admin/CalculationTab.tsx` — kleine info dat herberekening alleen approved meeneemt.
+- `src/pages/Results.tsx`, `src/components/MyResultsPanel.tsx`, `src/components/SubpouleStandings.tsx` — placeholder voor pending/concept etappes.
+- `supabase/functions/notify-results-pending/index.ts` (nieuw) + `supabase/config.toml`.
