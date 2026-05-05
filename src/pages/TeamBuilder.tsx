@@ -83,6 +83,7 @@ export default function TeamBuilder() {
   const isSubmitted = entry?.status === "submitted";
   const gameLocked = Boolean(game?.status && ["closed", "locked", "live", "finished"].includes(game.status));
   const isLocked = gameLocked;
+  const builderVisible = isAdmin || (game?.status ? ["open", "live"].includes(game.status) : false);
 
   const hydratedRef = useRef(false);
   useEffect(() => {
