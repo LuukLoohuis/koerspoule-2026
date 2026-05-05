@@ -271,7 +271,7 @@ export default function TeamBuilder() {
         {gameReady && game && (
           <Tabs defaultValue="builder" className="space-y-4">
             <TabsList className="w-full">
-              <TabsTrigger value="builder" className="flex-1">Team samenstellen</TabsTrigger>
+              <TabsTrigger value="builder" className="flex-1">Ploegleiderstent</TabsTrigger>
               <TabsTrigger value="startlist" className="flex-1">Startlijst</TabsTrigger>
             </TabsList>
 
