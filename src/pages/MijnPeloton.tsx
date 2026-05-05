@@ -234,7 +234,7 @@ export default function MijnPeloton() {
                         )}>
                           {idx + 1}
                         </span>
-                        <span className={cn("font-sans font-medium truncate", isMe && "text-primary font-bold")}>
+                        <span className={cn("font-sans font-medium truncate text-slate-800", isMe && "text-primary font-bold")}>
                           {team.userName}
                           {isMe && <span className="ml-1 text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">JIJ</span>}
                         </span>
