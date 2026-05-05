@@ -293,7 +293,7 @@ export default function Results() {
                             >
                               <div className="flex items-center gap-2 min-w-0">
                                 {rankBadge(r.finish_position!)}
-                                <span className={cn("font-sans font-medium text-sm truncate", inMyTeam && "text-primary")}>
+                                <span className={cn("font-sans font-medium text-sm truncate text-slate-800", inMyTeam && "text-primary")}>
                                   {r.riders?.name ?? r.rider_name ?? "—"}
                                 </span>
                               </div>
