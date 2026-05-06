@@ -12,16 +12,23 @@ import { useStartlist } from "@/hooks/useStartlist";
 import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
 import RiderSearchSelect from "@/components/RiderSearchSelect";
+import FlagIcon from "@/components/FlagIcon";
+import type { ReactNode } from "react";
 
 // Pick a thematic icon for each category based on its name/short_name
-function getCategoryIcon(name: string): string {
+function getCategoryIcon(name: string): ReactNode {
   const n = name.toLowerCase();
+  if (/(gc\s*alien|alien)/.test(n)) return "👽";
+  if (/(baby\s*giro|baby)/.test(n)) return "👶";
+  if (/\boud\b|veteraan|oldie/.test(n)) return "👴";
+  if (/\bnl\b|nederland|dutch/.test(n)) return <FlagIcon country="NL" className="w-6 h-5" />;
+  if (/belg|belgië|belgie|belgium/.test(n)) return <FlagIcon country="BE" className="w-6 h-5" />;
   if (/(klim|berg|grimp|mountain)/.test(n)) return "🏔️";
   if (/(sprint|spurt)/.test(n)) return "⚡";
   if (/(punch|aanval|attack|baroud)/.test(n)) return "🎯";
   if (/(tijd|chrono|time)/.test(n)) return "🏁";
-  if (/(kop|leider|leader|gc|algemeen)/.test(n)) return "⭐";
   if (/(klassiek|classic|cobble|kassei)/.test(n)) return "🪨";
+  if (/(kop|leider|leader|gc|algemeen)/.test(n)) return "⭐";
   return "🚴";
 }
 
@@ -300,15 +307,9 @@ export default function TeamBuilder() {
               {!builderVisible ? (
                 <div className="ornate-frame retro-border bg-card p-8 text-center space-y-4">
                   <div className="text-4xl">🚧</div>
-                  <h2 className="font-display text-2xl font-bold">De Ploegleiderswagen is nog gesloten</h2>
                   <p className="text-muted-foreground font-serif italic max-w-md mx-auto">
-                    De inschrijving opent zodra de wedstrijdleiding het startschot geeft. Houd het peloton in de gaten — zodra de koers op <strong>open</strong> of <strong>live</strong> staat, kun je hier je ploeg samenstellen.
+                    Inschrijving voorlopig gesloten. Opent zodra de officiële startlijst beschikbaar is.
                   </p>
-                  {game?.status && (
-                    <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
-                      Huidige koersstatus: {game.status}
-                    </p>
-                  )}
                 </div>
               ) : (
               <>

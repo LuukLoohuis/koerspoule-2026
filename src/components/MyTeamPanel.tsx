@@ -12,6 +12,8 @@ import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Trophy, Sparkles, Users, Target, Pencil } from "lucide-react";
+import FlagIcon from "@/components/FlagIcon";
+import type { ReactNode } from "react";
 
 type StagePoint = { stage_id: string; entry_id: string; points: number };
 
@@ -56,14 +58,19 @@ const STAGE_TYPE_ICON: Record<string, string> = {
   ploegentijdrit: "⏱️👥",
 };
 
-function getCategoryIcon(name: string): string {
+function getCategoryIcon(name: string): ReactNode {
   const n = name.toLowerCase();
+  if (/(gc\s*alien|alien)/.test(n)) return "👽";
+  if (/(baby\s*giro|baby)/.test(n)) return "👶";
+  if (/\boud\b|veteraan|oldie/.test(n)) return "👴";
+  if (/\bnl\b|nederland|dutch/.test(n)) return <FlagIcon country="NL" className="w-5 h-4" />;
+  if (/belg|belgië|belgie|belgium/.test(n)) return <FlagIcon country="BE" className="w-5 h-4" />;
   if (/(klim|berg|grimp|mountain)/.test(n)) return "🏔️";
   if (/(sprint|spurt)/.test(n)) return "⚡";
   if (/(punch|aanval|attack|baroud)/.test(n)) return "🎯";
   if (/(tijd|chrono|time)/.test(n)) return "🏁";
-  if (/(kop|leider|leader|gc|algemeen)/.test(n)) return "⭐";
   if (/(klassiek|classic|cobble|kassei)/.test(n)) return "🪨";
+  if (/(kop|leider|leader|gc|algemeen)/.test(n)) return "⭐";
   return "🚴";
 }
 
