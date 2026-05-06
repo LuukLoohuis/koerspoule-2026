@@ -477,7 +477,7 @@ export default function TeamBuilder() {
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[hsl(var(--vintage-gold))] via-primary to-[hsl(var(--vintage-gold))]" />
                 <div className="flex items-center gap-3 mb-1">
                   <span className="text-2xl">🃏</span>
-                  <h2 className="font-display text-xl font-bold">Jokers — Wildcards</h2>
+                  <h2 className="font-display text-xl font-bold">Jokers</h2>
                 </div>
                 <p className="text-sm opacity-80 mb-5 font-serif italic">
                   Twee outsiders uit de overige renners. Niet uit een categorie. {jokerPool.length} beschikbaar.

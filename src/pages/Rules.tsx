@@ -172,7 +172,7 @@ export default function Rules() {
         {/* Categories overview */}
         <section className="retro-border bg-card p-6">
           <h2 className="font-display text-2xl font-bold mb-4">📋 Categorieën</h2>
-          <p className="text-sm text-muted-foreground mb-4 font-sans">Kies 1 renner per categorie + 2 vrije jokers.</p>
+          <p className="text-sm text-muted-foreground mb-4 font-sans">Kies 1 renner per categorie + 2 vrije Jokers.</p>
 
           {catsLoading || gameLoading ? (
             <p className="text-sm text-muted-foreground italic">Categorieën laden...</p>
