@@ -277,7 +277,7 @@ export default function TeamBuilder() {
           <div className="vintage-ornament mb-3">
             <span className="vintage-ornament-symbol">✦</span>
             <span className="text-xs tracking-[0.3em] uppercase text-muted-foreground font-serif">
-              {game?.name ?? "Koerspoule"} {game?.year ? `· ${game.year}` : ""}
+              {game?.name ?? "Koerspoule"}
             </span>
             <span className="vintage-ornament-symbol">✦</span>
           </div>

@@ -168,7 +168,7 @@ export default function MyTeamPanel() {
         <div className="vintage-ornament mb-2">
           <span className="vintage-ornament-symbol">✦</span>
           <span className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground font-serif">
-            {game.name} {game.year ? `· ${game.year}` : ""}
+            {game.name}
           </span>
           <span className="vintage-ornament-symbol">✦</span>
         </div>
