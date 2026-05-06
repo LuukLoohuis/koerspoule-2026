@@ -379,7 +379,7 @@ export default function Results() {
                               </span>
                               <span className="font-sans font-medium truncate">{r.name}</span>
                               {r.is_joker && (
-                                <span className="text-[9px] uppercase font-bold text-accent">2× joker</span>
+                                <span className="text-[9px] uppercase font-bold text-accent">Joker</span>
                               )}
                             </div>
                             <span className="font-bold text-primary text-sm">{finalPts} pt</span>
