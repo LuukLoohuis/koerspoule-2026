@@ -12,6 +12,8 @@ import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Trophy, Sparkles, Users, Target, Pencil } from "lucide-react";
+import FlagIcon from "@/components/FlagIcon";
+import type { ReactNode } from "react";
 
 type StagePoint = { stage_id: string; entry_id: string; points: number };
 
