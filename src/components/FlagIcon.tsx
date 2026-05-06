@@ -21,10 +21,24 @@ const flags: Record<string, React.ReactNode> = {
       <rect y="120" width="640" height="240" fill="#F1BF00" />
     </svg>
   ),
+  NL: (
+    <svg viewBox="0 0 640 480" className="w-full h-full">
+      <rect width="640" height="160" fill="#AE1C28" />
+      <rect y="160" width="640" height="160" fill="#fff" />
+      <rect y="320" width="640" height="160" fill="#21468B" />
+    </svg>
+  ),
+  BE: (
+    <svg viewBox="0 0 640 480" className="w-full h-full">
+      <rect width="213.3" height="480" fill="#000" />
+      <rect x="213.3" width="213.4" height="480" fill="#FAE042" />
+      <rect x="426.7" width="213.3" height="480" fill="#ED2939" />
+    </svg>
+  ),
 };
 
 type FlagIconProps = {
-  country: "IT" | "FR" | "ES";
+  country: "IT" | "FR" | "ES" | "NL" | "BE";
   className?: string;
 };
 
