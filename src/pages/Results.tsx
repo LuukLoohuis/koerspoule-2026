@@ -187,6 +187,9 @@ export default function Results() {
             {game.name}
           </p>
         )}
+        <div className="mt-3 flex justify-center">
+          <ResultsUpdatedBadge gameId={gameId} />
+        </div>
         <div className="vintage-divider max-w-xs mx-auto mt-4" />
       </div>
 
