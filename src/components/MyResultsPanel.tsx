@@ -7,6 +7,7 @@ import { useEntry } from "@/hooks/useEntry";
 import { useStages, useStageResults, useStagePoints, useEntries } from "@/hooks/useResults";
 import { cn } from "@/lib/utils";
 import { Trophy, ListOrdered, Mountain, Activity, Clock } from "lucide-react";
+import ResultsUpdatedBadge from "@/components/ResultsUpdatedBadge";
 
 const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
   vlak: { label: "Vlak", color: "bg-emerald-500", icon: <Activity className="w-4 h-4" /> },
