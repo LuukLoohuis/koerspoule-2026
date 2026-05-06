@@ -307,15 +307,9 @@ export default function TeamBuilder() {
               {!builderVisible ? (
                 <div className="ornate-frame retro-border bg-card p-8 text-center space-y-4">
                   <div className="text-4xl">🚧</div>
-                  <h2 className="font-display text-2xl font-bold">De Ploegleiderswagen is nog gesloten</h2>
                   <p className="text-muted-foreground font-serif italic max-w-md mx-auto">
-                    De inschrijving opent zodra de wedstrijdleiding het startschot geeft. Houd het peloton in de gaten — zodra de koers op <strong>open</strong> of <strong>live</strong> staat, kun je hier je ploeg samenstellen.
+                    Inschrijving voorlopig gesloten. Opent zodra de officiële startlijst beschikbaar is.
                   </p>
-                  {game?.status && (
-                    <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
-                      Huidige koersstatus: {game.status}
-                    </p>
-                  )}
                 </div>
               ) : (
               <>
