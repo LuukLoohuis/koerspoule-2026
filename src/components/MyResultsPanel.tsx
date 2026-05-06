@@ -68,6 +68,7 @@ export default function MyResultsPanel() {
 
   return (
     <div className="space-y-5">
+      <ResultsUpdatedBadge gameId={game.id} />
       {/* Sub-nav */}
       <div className="flex gap-2 flex-wrap">
         {([
