@@ -1,78 +1,42 @@
-# Goedkeuringsworkflow uitslagen
+## Doel
 
-Een uitslag wordt eerst als **concept** opgeslagen, daarna door de admin **gefiatteerd** voordat deelnemers hem zien. Statussen worden duidelijk getoond, en wie/wanneer er goedgekeurd is wordt gelogd.
+Deelnemers laten zien tot welke etappe de uitslagen actueel zijn, en de fiatteer-flow positioneren als een controlestap nadat de berekening al heeft plaatsgevonden.
 
-## Workflow in één blik
+## 1. "Bijgewerkt t/m" indicator voor deelnemers
 
-```
-[Admin vult uitslag in / importeert]
-            │
-            ▼
-   stages.results_status = 'draft'      (alleen admin ziet)
-            │  klik "Klaar voor controle"
-            ▼
-   stages.results_status = 'pending'    (admin-only banner: "wacht op fiat")
-            │  klik "Fiatteren"
-            ▼
-   stages.results_status = 'approved'   (zichtbaar voor alle deelnemers)
-   approved_by, approved_at gezet
-   stage_points + totaalstand herberekend
-```
+Op twee plekken een duidelijke statusbalk tonen die zegt tot wanneer de uitslag is bijgewerkt, gebaseerd op de laatst gefiatteerde etappe (`stages.results_status = 'approved'`, hoogste `stage_number`).
 
-## Statuslabels (overal hetzelfde)
-- **Concept** (grijs) — wordt nog ingevuld
-- **In afwachting van goedkeuring** (oranje) — admin moet fiatteren
-- **Goedgekeurd** (groen, met datum + naam admin) — live voor deelnemers
+**Locatie A — `src/pages/Results.tsx`**
+Boven de tabs (Klassement / Etappes), naast de titel "Uitslagen & Klassement":
+- Vintage badge/strip met tekst:
+  `Bijgewerkt t/m etappe {n} — {stage_name} ({datum gefiatteerd})`
+- Als nog niets is gefiatteerd: `Nog geen uitslagen bijgewerkt.`
 
-## Wat wijzigt er — kort overzicht
+**Locatie B — `src/components/MyResultsPanel.tsx`** (Mijn Peloton → Uitslagen)
+Bovenaan de panel, boven de sub-nav (Etappes / Deelnemers):
+- Zelfde compacte indicator in retro-border stijl.
 
-### 1. Database (migratie)
-- Op `public.stages`:
-  - `results_status text not null default 'draft'` — `draft | pending | approved`
-  - `approved_by uuid` (verwijst naar `auth.users.id`, geen FK)
-  - `approved_at timestamptz`
-  - `submitted_for_approval_at timestamptz`
-- Nieuwe tabel `public.results_approval_log` — audit-trail (stage_id, action, actor, at, note).
-- RLS aanpassen op **`stage_results`** en **`stage_points`**: niet-admins zien alleen rijen waar de bijbehorende stage `results_status = 'approved'` heeft. Admins zien alles. Hierdoor blijft een concept-uitslag voor deelnemers onzichtbaar zonder dat we de frontend overal hoeven te filteren.
-- RPC's:
-  - `submit_stage_for_approval(p_stage_id)` — admin-only, zet status op `pending`, log entry.
-  - `approve_stage_results(p_stage_id)` — admin-only, zet `approved`, vult `approved_by/at`, draait `calculate_stage_scores` + `calculate_prediction_points` + `update_total_ranking`, log entry.
-  - `revoke_stage_approval(p_stage_id)` — terug naar `pending` (voor correcties), log entry.
-- `total_points` mag pas (her)berekend worden over goedgekeurde etappes — `calculate_stage_scores`/`update_total_ranking` filteren op `results_status = 'approved'`.
+**Data**
+Nieuwe lichte hook `useLastApprovedStage(gameId)` in `src/hooks/useResults.ts` die de hoogste `approved` stage teruggeeft (`id, stage_number, name, approved_at`). Direct via `supabase.from('stages').select(...).eq('results_status','approved').order('stage_number', desc).limit(1)`.
 
-### 2. Admin — Uitslagen-tab (`src/components/admin/ResultsTab.tsx`)
-- Bovenaan per geselecteerde etappe een statusbadge + actieknoppen die meebewegen met de status:
-  - **Concept**: knop "Klaar voor controle" (zet → pending).
-  - **In afwachting**: knop "Fiatteren ✅" (met confirm-dialog) en "Terug naar concept".
-  - **Goedgekeurd**: toont "Goedgekeurd door {naam} op {datum}" en knop "Goedkeuring intrekken" voor correcties.
-- Opslaan/import blijft mogelijk in `draft` en `pending`; in `approved` waarschuwen ("Trek eerst goedkeuring in om te wijzigen").
-- Na succesvol fiatteren: toast + automatische herberekening (RPC doet dat al server-side).
+## 2. Fiattering herpositioneren als controle-stap
 
-### 3. Admin — nieuw overzicht "Te fiatteren"
-- Nieuwe tab in `AdminV3.tsx` (`Te fiatteren`, icoon `BadgeCheck`) of compacte sectie boven `DashboardTab`:
-  - Lijst alle etappes van de actieve game met `results_status = 'pending'`, met deeplink naar de Uitslagen-tab voor die etappe.
-  - Telt zichtbaar in een kleine badge op het tab-icoon (bv. `Te fiatteren (2)`).
-- Klikbaar naar Uitslagen-tab met die etappe vooraf geselecteerd.
+In `src/components/admin/ApprovalsTab.tsx` de tekstuele framing aanpassen zodat duidelijk is dat de berekening al gebeurd is en fiatteren puur een controle/publicatie-actie is voor de admin:
 
-### 4. Notificatie naar admins
-- Edge function `notify-results-pending` (verstuurt mail naar alle admin-users via Resend, hergebruikt bestaande `process-email-queue` infra).
-- Triggert vanuit `submit_stage_for_approval` RPC via `enqueue_email`.
-- Onderwerp: "Uitslag etappe X wacht op fiat".
+- Card-titel "Te fiatteren" → blijft, maar subtekst toevoegen:
+  *"De punten zijn al berekend. Fiatteren maakt de uitslag zichtbaar voor deelnemers."*
+- Confirm-dialog `approve()`: tekst wijzigen naar
+  *"Uitslag publiceren naar deelnemers? De punten zijn al berekend."*
+- Knop "Fiatteren" → behouden, maar tooltip/subtekst "controleren & publiceren".
+- Een extra "Bekijk uitslag" link (route naar `Results`-pagina filtert op deze stage) is *niet* nodig nu — admin kan via de Uitslagen-tab de stage al openen. Alleen de framing-tekst aanpassen.
 
-### 5. Frontend deelnemerszijde
-- Door de RLS-aanpassing zien deelnemers automatisch geen punten/uitslag van niet-goedgekeurde etappes.
-- In `Results.tsx` / `MyResultsPanel.tsx` / `SubpouleStandings.tsx`: voor etappes met `results_status != 'approved'` tonen we een nette placeholder ("In afwachting van fiat — uitslag volgt zodra de jury akkoord is.") in plaats van lege rijen.
-- Stages-lijst toont al een statusbadge per etappe (alleen 'approved' krijgt punten-link).
+Geen wijzigingen aan de RPC's (`approve_stage_results`, `calculate_stage_scores`) — de huidige flow doet al precies dit (berekening per stage, totaalranking refresh bij approve). Punten worden alleen zichtbaar voor deelnemers door de RLS-policy op `stage_points`/`stage_results` (`results_status = 'approved'`), wat overeenkomt met het gewenste gedrag.
 
-## Aandachtspunten
-- Bestaande etappes met al gevulde uitslagen worden in de migratie initieel op `approved` gezet (anders verdwijnen ze plots voor spelers). `approved_at = now()`, `approved_by = NULL` met note "auto-migrated".
-- `full_recalculation` blijft werken maar slaat niet-goedgekeurde etappes over.
-- Audit-log is alleen leesbaar voor admins (`is_admin()` RLS).
+## Bestanden
 
-## Te wijzigen / toe te voegen bestanden
-- `supabase/migrations/<nieuw>.sql` — kolommen, log-tabel, RLS, RPC's, calc-aanpassingen.
-- `src/components/admin/ResultsTab.tsx` — statusbadge + workflow-knoppen.
-- `src/components/admin/PendingApprovalsTab.tsx` (nieuw) + tab in `src/pages/AdminV3.tsx`.
-- `src/components/admin/CalculationTab.tsx` — kleine info dat herberekening alleen approved meeneemt.
-- `src/pages/Results.tsx`, `src/components/MyResultsPanel.tsx`, `src/components/SubpouleStandings.tsx` — placeholder voor pending/concept etappes.
-- `supabase/functions/notify-results-pending/index.ts` (nieuw) + `supabase/config.toml`.
+- `src/hooks/useResults.ts` — nieuwe hook `useLastApprovedStage`
+- `src/pages/Results.tsx` — indicator boven tabs
+- `src/components/MyResultsPanel.tsx` — indicator boven sub-nav
+- `src/components/admin/ApprovalsTab.tsx` — framing-tekst aanpassen
+
+Geen DB-migratie nodig.
