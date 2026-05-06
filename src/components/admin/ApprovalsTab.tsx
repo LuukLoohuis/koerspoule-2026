@@ -41,7 +41,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   }, [activeGameId]);
 
   async function approve(stageId: string) {
-    if (!confirm("Uitslag fiatteren? Punten worden herberekend en zichtbaar.")) return;
+    if (!confirm("Uitslag publiceren naar deelnemers? De punten zijn al berekend; fiatteren is je controle vóór publicatie.")) return;
     setBusyId(stageId);
     const { error } = await supabase.rpc("approve_stage_results", { p_stage_id: stageId });
     setBusyId(null);
