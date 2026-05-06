@@ -41,7 +41,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   }, [activeGameId]);
 
   async function approve(stageId: string) {
-    if (!confirm("Uitslag fiatteren? Punten worden herberekend en zichtbaar.")) return;
+    if (!confirm("Uitslag publiceren naar deelnemers? De punten zijn al berekend; fiatteren is je controle vóór publicatie.")) return;
     setBusyId(stageId);
     const { error } = await supabase.rpc("approve_stage_results", { p_stage_id: stageId });
     setBusyId(null);
@@ -80,6 +80,9 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
               <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />Herlaad
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            De punten zijn al berekend in de Uitslagen-tab. Fiatteren is je laatste controle en maakt de uitslag zichtbaar voor de deelnemers.
+          </p>
         </CardHeader>
         <CardContent className="space-y-2">
           {pending.length === 0 ? (

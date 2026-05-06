@@ -11,6 +11,33 @@ export type StageRow = {
   stage_type: "vlak" | "heuvelachtig" | "tijdrit" | "bergop" | "ploegentijdrit" | null;
 };
 
+export type LastApprovedStage = {
+  id: string;
+  stage_number: number;
+  name: string | null;
+  approved_at: string | null;
+};
+
+export function useLastApprovedStage(gameId?: string) {
+  return useQuery({
+    queryKey: ["last-approved-stage", gameId],
+    enabled: Boolean(gameId),
+    queryFn: async (): Promise<LastApprovedStage | null> => {
+      if (!supabase || !gameId) return null;
+      const { data, error } = await supabase
+        .from("stages")
+        .select("id, stage_number, name, approved_at")
+        .eq("game_id", gameId)
+        .eq("results_status", "approved")
+        .order("stage_number", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as LastApprovedStage | null;
+    },
+  });
+}
+
 export function useStages(gameId?: string) {
   return useQuery({
     queryKey: ["stages", gameId],
