@@ -338,7 +338,7 @@ export default function TeamBuilder() {
                       <span className="font-mono font-bold">
                         {jokerIds.length}<span className="text-muted-foreground">/2</span>
                       </span>
-                      <span className="text-xs text-muted-foreground hidden md:inline">jokers</span>
+                      <span className="text-xs text-muted-foreground hidden md:inline">Jokers</span>
                     </div>
                     <div>
                       {gameLocked ? (
