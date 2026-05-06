@@ -80,6 +80,9 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
               <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />Herlaad
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            De punten zijn al berekend in de Uitslagen-tab. Fiatteren is je laatste controle en maakt de uitslag zichtbaar voor de deelnemers.
+          </p>
         </CardHeader>
         <CardContent className="space-y-2">
           {pending.length === 0 ? (
