@@ -70,7 +70,7 @@ export default function Rules() {
                 ) : sortedCategories.length > 0 ? (
                   <>
                     Kies uit <span className="font-bold">{sortedCategories.length}</span> categorieën telkens 1 renner.
-                    Voeg 2 jokers toe (vrije keuze buiten de categorieën). Jokers moeten unieke renners zijn en mogen
+                    Voeg 2 Jokers toe (vrije keuze buiten de categorieën). Jokers moeten unieke renners zijn en mogen
                     niet voorkomen in de gekozen categorie-renners.
                   </>
                 ) : (
@@ -155,9 +155,9 @@ export default function Rules() {
             </div>
           </div>
 
-          <h3 className="font-display text-lg font-bold mb-3">Joker</h3>
+          <h3 className="font-display text-lg font-bold mb-3">Jokers</h3>
           <p className="text-sm text-muted-foreground mb-6 font-sans">
-            Kies twee jokers uit je selectie. De etappepunten van een joker tellen
+            Kies twee Jokers uit je selectie. De etappepunten van een Joker tellen
             <span className="font-bold text-accent"> dubbel</span> in elke etappe.
           </p>
 
@@ -172,7 +172,7 @@ export default function Rules() {
         {/* Categories overview */}
         <section className="retro-border bg-card p-6">
           <h2 className="font-display text-2xl font-bold mb-4">📋 Categorieën</h2>
-          <p className="text-sm text-muted-foreground mb-4 font-sans">Kies 1 renner per categorie + 2 vrije jokers.</p>
+          <p className="text-sm text-muted-foreground mb-4 font-sans">Kies 1 renner per categorie + 2 vrije Jokers.</p>
 
           {catsLoading || gameLoading ? (
             <p className="text-sm text-muted-foreground italic">Categorieën laden...</p>

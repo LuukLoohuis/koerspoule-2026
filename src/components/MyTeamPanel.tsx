@@ -285,7 +285,7 @@ export default function MyTeamPanel() {
                               )}
                             </div>
                             {isJoker && (
-                              <Badge variant="secondary" className="text-[10px] shrink-0">🃏 ×2</Badge>
+                              <Badge variant="secondary" className="text-[10px] shrink-0">🃏</Badge>
                             )}
                           </div>
                         );
@@ -309,7 +309,7 @@ export default function MyTeamPanel() {
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">🃏</span>
                     <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                      Wildcards · dubbele punten
+                      Jokers
                     </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -326,7 +326,7 @@ export default function MyTeamPanel() {
                               <div className="text-[11px] text-muted-foreground truncate">{rider.team}</div>
                             )}
                           </div>
-                          <Badge variant="secondary" className="text-[10px] shrink-0">×2</Badge>
+                          <Badge variant="secondary" className="text-[10px] shrink-0"></Badge>
                         </div>
                       );
                     })}
