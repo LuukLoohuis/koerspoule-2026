@@ -231,17 +231,19 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             <SubpouleStandings subpouleId={active.id} subpouleName={active.name} />
           </TabsContent>
           <TabsContent value="benchmark" className="pt-4">
-            {benchmarkUnlocked ? (
-              <SubpouleBenchmark subpouleId={active.id} />
-            ) : (
-              <Card className="retro-border">
-                <CardContent className="p-6 text-sm text-muted-foreground text-center space-y-2">
-                  <Swords className="h-8 w-8 text-muted-foreground/50 mx-auto" />
-                  <p className="font-display font-bold text-foreground">Benchmark nog vergrendeld</p>
-                  <p>De teamvergelijking gaat open zodra de admin de inschrijving sluit en de koers live zet.</p>
-                </CardContent>
-              </Card>
-            )}
+            <div key={benchmarkUnlocked ? "unlocked" : "locked"}>
+              {benchmarkUnlocked ? (
+                <SubpouleBenchmark subpouleId={active.id} />
+              ) : (
+                <Card className="retro-border">
+                  <CardContent className="p-6 text-sm text-muted-foreground text-center space-y-2">
+                    <Swords className="h-8 w-8 text-muted-foreground/50 mx-auto" />
+                    <p className="font-display font-bold text-foreground">Benchmark nog vergrendeld</p>
+                    <p>De teamvergelijking gaat open zodra de admin de inschrijving sluit en de koers live zet.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
           <TabsContent value="heatmap" className="pt-4">
             <SubpouleHeatmap subpouleId={active.id} />
