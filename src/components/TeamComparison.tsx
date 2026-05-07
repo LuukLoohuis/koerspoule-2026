@@ -4,10 +4,10 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
-import { useSubpouleEntries } from "@/hooks/useSubpouleEntries";
+import { useSubpouleEntries, type PredictionEntry } from "@/hooks/useSubpouleEntries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, ArrowUp, ArrowDown, Minus, Crown } from "lucide-react";
+import { Star, ArrowUp, ArrowDown, Minus, Crown, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -20,9 +20,29 @@ type EntrySnap = {
   entry_id: string;
   user_id: string;
   total_points: number;
-  picks: Map<string, string[]>; // category_id → rider_ids
+  picks: Map<string, string[]>;
   jokers: Set<string>;
+  predictions: PredictionEntry[];
 };
+
+const CLASSIFICATION_LABELS: Record<string, string> = {
+  gc: "Eindpodium",
+  points: "Puntentrui",
+  kom: "Bergtrui",
+  youth: "Jongerentrui",
+};
+const CLASSIFICATION_ORDER = ["gc", "points", "kom", "youth"] as const;
+
+function predictionsByClass(list: PredictionEntry[]) {
+  const map = new Map<string, PredictionEntry[]>();
+  for (const p of list) {
+    const arr = map.get(p.classification) ?? [];
+    arr.push(p);
+    map.set(p.classification, arr);
+  }
+  for (const arr of map.values()) arr.sort((a, b) => a.position - b.position);
+  return map;
+}
 
 function useTwoEntries(gameId: string | undefined, userIdA: string | undefined, userIdB: string) {
   return useQuery({
@@ -33,7 +53,7 @@ function useTwoEntries(gameId: string | undefined, userIdA: string | undefined, 
 
       const { data: rows } = await supabase
         .from("entries")
-        .select("id, user_id, total_points, entry_picks(category_id, rider_id), entry_jokers(rider_id)")
+        .select("id, user_id, total_points, entry_picks(category_id, rider_id), entry_jokers(rider_id), entry_predictions(classification, position, rider_id)")
         .eq("game_id", gameId)
         .in("user_id", [userIdA, userIdB]);
 
@@ -46,20 +66,19 @@ function useTwoEntries(gameId: string | undefined, userIdA: string | undefined, 
           picks.set(p.category_id, [...existing, p.rider_id]);
         }
         const jokers = new Set<string>(((r.entry_jokers ?? []) as Array<{ rider_id: string }>).map((j) => j.rider_id));
-        return { entry_id: r.id, user_id: r.user_id, total_points: r.total_points ?? 0, picks, jokers };
+        const predictions = ((r.entry_predictions ?? []) as PredictionEntry[]);
+        return { entry_id: r.id, user_id: r.user_id, total_points: r.total_points ?? 0, picks, jokers, predictions };
       };
 
       const a = buildSnap(userIdA);
       const b = buildSnap(userIdB);
 
-      // collect all rider ids
       const ids = new Set<string>();
       for (const snap of [a, b]) {
         if (!snap) continue;
-        for (const pickIds of snap.picks.values()) {
-          for (const id of pickIds) ids.add(id);
-        }
+        for (const pickIds of snap.picks.values()) for (const id of pickIds) ids.add(id);
         for (const id of snap.jokers) ids.add(id);
+        for (const p of snap.predictions) ids.add(p.rider_id);
       }
       let ridersById = new Map<string, { name: string; team: string | null }>();
       if (ids.size > 0) {
@@ -80,15 +99,11 @@ function useTwoEntries(gameId: string | undefined, userIdA: string | undefined, 
 }
 
 function useEntryRiderPoints(entryId: string | undefined) {
-  // Aggregate stage points per rider for an entry isn't stored directly; we compute via stage_results × picks
-  // Simpler: use stage_points (entry-level) is not per-rider. Per-rider points only via stage_results join.
-  // For comparison we use entry totals + per-pick rider totals via stage_results join.
   return useQuery({
     queryKey: ["entry-rider-points", entryId],
     enabled: Boolean(supabase && entryId),
     queryFn: async (): Promise<Map<string, number>> => {
       if (!supabase || !entryId) return new Map();
-      // Get picks for entry
       const { data: picks } = await supabase
         .from("entry_picks")
         .select("rider_id, entries!inner(game_id)")
@@ -104,7 +119,6 @@ function useEntryRiderPoints(entryId: string | undefined) {
       const riderIds = Array.from(new Set([...rows.map((r) => r.rider_id), ...((jokers ?? []) as Array<{ rider_id: string }>).map((j) => j.rider_id)]));
       const jokerSet = new Set(((jokers ?? []) as Array<{ rider_id: string }>).map((j) => j.rider_id));
 
-      // Get stage results for those riders in this game's stages
       const { data: stages } = await supabase.from("stages").select("id").eq("game_id", gameId);
       const stageIds = (stages ?? []).map((s) => s.id);
       if (stageIds.length === 0) return new Map();
@@ -115,7 +129,6 @@ function useEntryRiderPoints(entryId: string | undefined) {
         .in("rider_id", riderIds)
         .in("stage_id", stageIds);
 
-      // Get points schema
       const { data: schema } = await supabase.from("points_schema").select("classification, position, points").eq("game_id", gameId);
       const schemaMap = new Map<string, number>();
       for (const s of (schema ?? []) as Array<{ classification: string; position: number; points: number }>) {
@@ -165,6 +178,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
         total_points: row.total_points,
         picks: row.picks,
         jokers: row.jokers,
+        predictions: row.predictions,
       };
     };
     return { a: toSnap(user.id), b: toSnap(opponentUserId), ridersById: subpouleData.ridersById };
@@ -205,6 +219,15 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
   const myTotal = me.total_points;
   const oppTotal = opp.total_points;
   const diff = myTotal - oppTotal;
+
+  const myJokerIds = Array.from(me.jokers);
+  const oppJokerIds = Array.from(opp.jokers);
+  const myJokerPoints = myJokerIds.reduce((sum, id) => sum + (myPts?.get(id) ?? 0), 0);
+  const oppJokerPoints = oppJokerIds.reduce((sum, id) => sum + (oppPts?.get(id) ?? 0), 0);
+
+  const myPredMap = predictionsByClass(me.predictions);
+  const oppPredMap = predictionsByClass(opp.predictions);
+  const hasPredictions = me.predictions.length > 0 || opp.predictions.length > 0;
 
   return (
     <Card className="retro-border">
@@ -254,7 +277,6 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                   )}
                 </div>
                 <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-                  {/* My pick */}
                   <div className={cn("text-right", same && "text-primary")}>
                     {myRiderIds.length === 0 ? (
                       <p className="text-sm font-medium text-muted-foreground">—</p>
@@ -270,7 +292,6 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                     <p className="text-xs font-display font-bold tabular-nums">{myPoints} pt</p>
                   </div>
 
-                  {/* Diff indicator */}
                   <div className="text-xs flex flex-col items-center justify-center min-w-[36px]">
                     {localDiff > 0 ? (
                       <ArrowUp className="h-3 w-3 text-primary" />
@@ -291,7 +312,6 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                     </span>
                   </div>
 
-                  {/* Opponent pick */}
                   <div className={cn(same && "text-primary")}>
                     {oppRiderIds.length === 0 ? (
                       <p className="text-sm font-medium text-muted-foreground">—</p>
@@ -311,6 +331,99 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
             );
           })}
         </div>
+
+        {/* Jokers section */}
+        <div className="border-t-2 border-foreground bg-muted/10">
+          <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
+            <Crown className="h-4 w-4 text-primary" />
+            <span className="font-display text-sm font-bold">Jokers (×2 punten)</span>
+          </div>
+          <div className="grid grid-cols-[1fr_auto_1fr] gap-2 px-3 py-2.5 items-center">
+            <div className="text-right space-y-0.5">
+              {myJokerIds.length === 0 ? (
+                <p className="text-sm text-muted-foreground">—</p>
+              ) : (
+                myJokerIds.map((id) => {
+                  const shared = opp.jokers.has(id);
+                  return (
+                    <p key={id} className={cn("text-sm font-medium truncate text-slate-800", shared && "text-primary")}>
+                      {ridersById.get(id)?.name ?? "—"}
+                    </p>
+                  );
+                })
+              )}
+              <p className="text-xs font-display font-bold tabular-nums">{myJokerPoints} pt</p>
+            </div>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground min-w-[36px] text-center">Joker</span>
+            <div className="space-y-0.5">
+              {oppJokerIds.length === 0 ? (
+                <p className="text-sm text-muted-foreground">—</p>
+              ) : (
+                oppJokerIds.map((id) => {
+                  const shared = me.jokers.has(id);
+                  return (
+                    <p key={id} className={cn("text-sm font-medium truncate text-slate-800", shared && "text-primary")}>
+                      {ridersById.get(id)?.name ?? "—"}
+                    </p>
+                  );
+                })
+              )}
+              <p className="text-xs font-display font-bold tabular-nums">{oppJokerPoints} pt</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Predictions section: GC podium + jersey winners */}
+        {hasPredictions && (
+          <div className="border-t-2 border-foreground bg-muted/10">
+            <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
+              <Trophy className="h-4 w-4 text-primary" />
+              <span className="font-display text-sm font-bold">Truien & eindklassementen</span>
+            </div>
+            <div className="divide-y divide-border">
+              {CLASSIFICATION_ORDER.map((cls) => {
+                const myList = myPredMap.get(cls) ?? [];
+                const oppList = oppPredMap.get(cls) ?? [];
+                if (myList.length === 0 && oppList.length === 0) return null;
+                return (
+                  <div key={cls} className="grid grid-cols-[1fr_auto_1fr] gap-2 px-3 py-2 text-sm items-center">
+                    <div className="text-right space-y-0.5">
+                      {myList.length === 0 ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : (
+                        myList.map((p) => {
+                          const shared = oppList.some((o) => o.position === p.position && o.rider_id === p.rider_id);
+                          return (
+                            <div key={`${cls}-me-${p.position}`} className={cn("truncate text-slate-800", shared && "text-primary font-medium")}>
+                              {cls === "gc" ? `${p.position}. ` : ""}{ridersById.get(p.rider_id)?.name ?? "—"}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground min-w-[80px] text-center">
+                      {CLASSIFICATION_LABELS[cls]}
+                    </span>
+                    <div className="space-y-0.5">
+                      {oppList.length === 0 ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : (
+                        oppList.map((p) => {
+                          const shared = myList.some((m2) => m2.position === p.position && m2.rider_id === p.rider_id);
+                          return (
+                            <div key={`${cls}-opp-${p.position}`} className={cn("truncate text-slate-800", shared && "text-primary font-medium")}>
+                              {cls === "gc" ? `${p.position}. ` : ""}{ridersById.get(p.rider_id)?.name ?? "—"}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="px-3 py-2 text-[10px] text-muted-foreground text-center bg-muted/20 border-t border-border">
           <Crown className="h-2.5 w-2.5 inline mr-1" /> = joker (×2 punten)
