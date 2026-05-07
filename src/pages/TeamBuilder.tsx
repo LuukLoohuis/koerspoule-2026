@@ -61,7 +61,7 @@ export default function TeamBuilder() {
   const { data: fullStartlist = [] } = useStartlist(game?.id, "", "");
 
   const allStartlistRiders = useMemo(() => {
-    const list: Array<{ id: string; name: string; start_number: number | null; teamName: string }> = [];
+    const list: Array<{ id: string; name: string; start_number: number | null; teamName: string; is_youth_eligible: boolean }> = [];
     for (const team of fullStartlist) {
       for (const rider of team.riders) {
         list.push({ ...rider, teamName: team.name });
@@ -69,6 +69,11 @@ export default function TeamBuilder() {
     }
     return list.sort((a, b) => (a.start_number ?? 9999) - (b.start_number ?? 9999));
   }, [fullStartlist]);
+
+  const youthEligibleRiders = useMemo(
+    () => allStartlistRiders.filter((r) => r.is_youth_eligible),
+    [allStartlistRiders]
+  );
 
   const jokerPool = useMemo(
     () => allStartlistRiders.filter((r) => !categoryRiderIds.has(r.id)),
