@@ -245,27 +245,30 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
           {approved.length === 0 ? (
             <p className="text-muted-foreground italic">Nog niets gefiatteerd.</p>
           ) : approved.slice(0, 30).map((r) => (
-            <div key={r.stage_id} className="flex items-center gap-2 flex-wrap">
-              <StatusBadge s={r.results_status} />
-              <span>Etappe {r.stage_number}</span>
-              {r.approved_at && (
-                <span className="text-xs text-muted-foreground">
-                  · {new Date(r.approved_at).toLocaleDateString("nl-NL")}
-                  {r.approved_by_name ? ` · ${r.approved_by_name}` : ""}
-                </span>
-              )}
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={async () => {
-                  if (!confirm("Goedkeuring intrekken?")) return;
-                  const { error } = await supabase.rpc("revoke_stage_approval", { p_stage_id: r.stage_id });
-                  if (error) toast.error(error.message);
-                  else { toast.success("Ingetrokken"); load(); }
-                }}
-              >
-                <Undo2 className="w-3 h-3 mr-1" />Intrekken
-              </Button>
+            <div key={r.stage_id} className="border-b last:border-0 pb-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <StatusBadge s={r.results_status} />
+                <span>Etappe {r.stage_number}</span>
+                {r.approved_at && (
+                  <span className="text-xs text-muted-foreground">
+                    · {new Date(r.approved_at).toLocaleDateString("nl-NL")}
+                    {r.approved_by_name ? ` · ${r.approved_by_name}` : ""}
+                  </span>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={async () => {
+                    if (!confirm("Goedkeuring intrekken?")) return;
+                    const { error } = await supabase.rpc("revoke_stage_approval", { p_stage_id: r.stage_id });
+                    if (error) toast.error(error.message);
+                    else { toast.success("Ingetrokken"); load(); }
+                  }}
+                >
+                  <Undo2 className="w-3 h-3 mr-1" />Intrekken
+                </Button>
+              </div>
+              <StageBreakdown stageId={r.stage_id} />
             </div>
           ))}
         </CardContent>
