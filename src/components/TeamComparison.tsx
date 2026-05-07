@@ -336,7 +336,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
         <div className="border-t-2 border-foreground bg-muted/10">
           <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
             <Crown className="h-4 w-4 text-primary" />
-            <span className="font-display text-sm font-bold">Jokers (×2 punten)</span>
+            <span className="font-display text-sm font-bold">Jokers</span>
           </div>
           <div className="grid grid-cols-[1fr_auto_1fr] gap-2 px-3 py-2.5 items-center">
             <div className="text-right space-y-0.5">
@@ -426,7 +426,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
         )}
 
         <div className="px-3 py-2 text-[10px] text-muted-foreground text-center bg-muted/20 border-t border-border">
-          <Crown className="h-2.5 w-2.5 inline mr-1" /> = joker (×2 punten)
+          <br />
         </div>
       </CardContent>
     </Card>
