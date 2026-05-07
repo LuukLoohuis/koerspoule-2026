@@ -1,42 +1,81 @@
 ## Doel
 
-Deelnemers laten zien tot welke etappe de uitslagen actueel zijn, en de fiatteer-flow positioneren als een controlestap nadat de berekening al heeft plaatsgevonden.
+Adminproces rond uitslagen → berekening → fiattering logischer maken, met betere zichtbaarheid, een verwijder-optie per etappe, en transparante puntenopbouw per deelnemer in het fiatteer-scherm.
 
-## 1. "Bijgewerkt t/m" indicator voor deelnemers
+## 1. Tab-volgorde & hernoeming (`src/pages/AdminV3.tsx`)
 
-Op twee plekken een duidelijke statusbalk tonen die zegt tot wanneer de uitslag is bijgewerkt, gebaseerd op de laatst gefiatteerde etappe (`stages.results_status = 'approved'`, hoogste `stage_number`).
+Huidige volgorde: Uitslagen → Fiatteren → Berekening (Calc).
+Nieuwe volgorde: **Uitslagen → Berekening → Fiatteren**.
 
-**Locatie A — `src/pages/Results.tsx`**
-Boven de tabs (Klassement / Etappes), naast de titel "Uitslagen & Klassement":
-- Vintage badge/strip met tekst:
-  `Bijgewerkt t/m etappe {n} — {stage_name} ({datum gefiatteerd})`
-- Als nog niets is gefiatteerd: `Nog geen uitslagen bijgewerkt.`
+- Hernoem `tab-calc` label van "Herberekenen" → "**Berekening**" (icon blijft `Calculator`).
+- Verplaats `<TabsTrigger value="calc">` vóór `<TabsTrigger value="approvals">`, en idem voor `<TabsContent>`.
 
-**Locatie B — `src/components/MyResultsPanel.tsx`** (Mijn Peloton → Uitslagen)
-Bovenaan de panel, boven de sub-nav (Etappes / Deelnemers):
-- Zelfde compacte indicator in retro-border stijl.
+## 2. Berekening-tab uitbreiden (`src/components/admin/CalculationTab.tsx`)
 
-**Data**
-Nieuwe lichte hook `useLastApprovedStage(gameId)` in `src/hooks/useResults.ts` die de hoogste `approved` stage teruggeeft (`id, stage_number, name, approved_at`). Direct via `supabase.from('stages').select(...).eq('results_status','approved').order('stage_number', desc).limit(1)`.
+Nu: enkel een knop "Volledige herberekening". Wordt:
 
-## 2. Fiattering herpositioneren als controle-stap
+**Per-etappe overzicht** met kolommen:
+- Etappe (nummer + naam)
+- **Uitslag**: `—` / `Geüpload (n renners)` (uit `stage_results` count)
+- **Status**: `draft` / `pending` / `approved` (uit `stages.results_status`)
+- **Berekening**: `Niet berekend` / `Berekend (n entries, totaal X pt)` (uit `stage_points` count + sum)
+- **Laatste berekening**: timestamp van max(`stage_points.created_at`) per stage
+- **Acties**:
+  - `Bereken etappe` (call `calculate_stage_scores` RPC) — disabled als geen `stage_results`
+  - `Wis uitslag` (rood, opent confirm; zie §3)
 
-In `src/components/admin/ApprovalsTab.tsx` de tekstuele framing aanpassen zodat duidelijk is dat de berekening al gebeurd is en fiatteren puur een controle/publicatie-actie is voor de admin:
+Plus bovenaan: behoud "Volledige herberekening" knop.
+Foutmelding/lege state: als geen `stage_results` → tooltip "Upload eerst een uitslag".
 
-- Card-titel "Te fiatteren" → blijft, maar subtekst toevoegen:
-  *"De punten zijn al berekend. Fiatteren maakt de uitslag zichtbaar voor deelnemers."*
-- Confirm-dialog `approve()`: tekst wijzigen naar
-  *"Uitslag publiceren naar deelnemers? De punten zijn al berekend."*
-- Knop "Fiatteren" → behouden, maar tooltip/subtekst "controleren & publiceren".
-- Een extra "Bekijk uitslag" link (route naar `Results`-pagina filtert op deze stage) is *niet* nodig nu — admin kan via de Uitslagen-tab de stage al openen. Alleen de framing-tekst aanpassen.
+Nieuwe hook/query: één `useQuery` die per stage joint: results_count, points_count, points_sum, last_calc_at.
 
-Geen wijzigingen aan de RPC's (`approve_stage_results`, `calculate_stage_scores`) — de huidige flow doet al precies dit (berekening per stage, totaalranking refresh bij approve). Punten worden alleen zichtbaar voor deelnemers door de RLS-policy op `stage_points`/`stage_results` (`results_status = 'approved'`), wat overeenkomt met het gewenste gedrag.
+## 3. Uitslag wissen per etappe
+
+**Nieuwe RPC** `delete_stage_results(p_stage_id uuid)`:
+- Admin-only check.
+- `DELETE FROM stage_results WHERE stage_id = p_stage_id`
+- `DELETE FROM stage_points WHERE stage_id = p_stage_id`
+- Zet `stages.results_status = 'draft'`, clear `submitted_for_approval_at`, `approved_by`, `approved_at`.
+- Re-run `update_total_ranking(game_id)` zodat totalen kloppen.
+- Log entry in `results_approval_log` met action `'results_deleted'`.
+
+In `CalculationTab`: confirm-dialog "Weet je zeker dat je de uitslag van etappe {n} wilt wissen? Punten worden herberekend. Andere etappes blijven ongewijzigd."
+
+## 4. Inzicht in puntenopbouw bij fiatteren (`src/components/admin/ApprovalsTab.tsx` + `StageApprovalCard.tsx`)
+
+Per stage in pending/approved status: expandable detail per deelnemer.
+
+**Nieuwe RPC** `admin_stage_points_breakdown(p_stage_id uuid)` returns table:
+```
+entry_id, team_name, display_name, total_stage_points,
+breakdown jsonb -- [{rider_id, rider_name, finish_pos, base_pts, is_joker, multiplier, total}]
+```
+SECURITY DEFINER, admin-only. Logica spiegelt `calculate_stage_scores`:
+- Voor elke entry_pick + jokers (zoals nu): join op stage_results.finish_position + points_schema (classification='stage') om base_pts te bepalen, multiplier 2 als joker, anders 1.
+
+In UI: per stage-kaart een collapsible "Toon puntenberekening (n deelnemers)" → tabel of accordion per deelnemer met expandable detail (lazy-loaded: query alleen draaien als card opent). Kolommen: renner | finish | basis | joker ×2 | totaal. Footer: som = stage-totaal.
+
+## 5. UX framing
+
+Berekening-tab krijgt korte header-uitleg:
+> "Stap 2 — Punten worden hier per etappe berekend. Controleer in 'Fiatteren' en publiceer dan naar deelnemers."
+
+Fiatteren-tab krijgt:
+> "Stap 3 — Controleer de berekende punten en publiceer."
+
+## Technisch advies
+
+- **Performance**: alle queries zijn al indexed op `stage_id`/`entry_id`. Breakdown-RPC draait alleen bij openen van detail (lazy). Geen merkbare impact.
+- **Geen AI/credits** nodig — puur DB.
+- **Geen pre-cache** nodig: `stage_points` is al de cache; breakdown is een read-only join die <100ms duurt voor ~150 entries × 12 renners.
+- **Schaalbaarheid**: alle logica blijft server-side in SECURITY DEFINER RPC's, single source of truth gelijk aan `calculate_stage_scores`. Frontend toont enkel.
+- **Debugging-bonus**: breakdown maakt verschillen tussen "verwacht" en "berekend" direct zichtbaar.
 
 ## Bestanden
 
-- `src/hooks/useResults.ts` — nieuwe hook `useLastApprovedStage`
-- `src/pages/Results.tsx` — indicator boven tabs
-- `src/components/MyResultsPanel.tsx` — indicator boven sub-nav
-- `src/components/admin/ApprovalsTab.tsx` — framing-tekst aanpassen
+- `src/pages/AdminV3.tsx` — tab-volgorde + label
+- `src/components/admin/CalculationTab.tsx` — volledige rewrite (per-stage tabel + acties)
+- `src/components/admin/ApprovalsTab.tsx` / `StageApprovalCard.tsx` — collapsible breakdown sectie
+- **Migratie**: 2 nieuwe RPC's (`delete_stage_results`, `admin_stage_points_breakdown`)
 
-Geen DB-migratie nodig.
+Geen schema-wijzigingen aan tabellen.
