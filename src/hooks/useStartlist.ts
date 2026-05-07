@@ -9,6 +9,7 @@ export type StartlistTeam = {
     id: string;
     name: string;
     start_number: number | null;
+    is_youth_eligible: boolean;
   }>;
 };
 
@@ -36,7 +37,7 @@ export function useStartlist(gameId?: string, search?: string, teamId?: string) 
       const teamIds = teams.map((t) => t.id);
       let riderQuery = supabase
         .from("riders")
-        .select("id, name, start_number, team_id")
+        .select("id, name, start_number, team_id, is_youth_eligible")
         .in("team_id", teamIds)
         .order("start_number", { ascending: true });
 
@@ -58,6 +59,7 @@ export function useStartlist(gameId?: string, search?: string, teamId?: string) 
               id: r.id,
               name: r.name,
               start_number: r.start_number,
+              is_youth_eligible: Boolean((r as { is_youth_eligible?: boolean }).is_youth_eligible),
             })),
         }))
         .filter((t) => t.riders.length > 0 || !search?.trim());

@@ -1,0 +1,1 @@
+ALTER TABLE public.riders ADD COLUMN IF NOT EXISTS is_youth_eligible boolean NOT NULL DEFAULT false;

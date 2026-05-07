@@ -614,6 +614,7 @@ export type Database = {
           created_at: string
           game_id: string | null
           id: string
+          is_youth_eligible: boolean
           name: string
           start_number: number | null
           team: string | null
@@ -624,6 +625,7 @@ export type Database = {
           created_at?: string
           game_id?: string | null
           id?: string
+          is_youth_eligible?: boolean
           name: string
           start_number?: number | null
           team?: string | null
@@ -634,6 +636,7 @@ export type Database = {
           created_at?: string
           game_id?: string | null
           id?: string
+          is_youth_eligible?: boolean
           name?: string
           start_number?: number | null
           team?: string | null

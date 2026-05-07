@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trash2, Upload, FileText } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { extractPdfText, parseProCyclingStatsStartlist, type ParsedStartlistTeam } from "@/lib/startlistImport";
 
@@ -16,6 +17,7 @@ export type Rider = {
   start_number: number | null;
   team_id: string | null;
   team_name?: string | null;
+  is_youth_eligible?: boolean;
 };
 
 export type Team = {
@@ -230,6 +232,7 @@ export default function StartlistTab({
                   <TableHead className="w-24">#</TableHead>
                   <TableHead>Renner</TableHead>
                   <TableHead>Team</TableHead>
+                  <TableHead className="w-32 text-center" title="Doet mee voor jongerenklassement">Jongeren</TableHead>
                   <TableHead className="w-16"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -244,7 +247,7 @@ export default function StartlistTab({
                   />
                 ))}
                 {filteredRiders.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Geen renners.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Geen renners.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -271,7 +274,7 @@ function RiderRow({
   const [draftNumber, setDraftNumber] = useState(String(rider.start_number ?? ""));
   const [savingTeam, setSavingTeam] = useState(false);
 
-  async function saveField(patch: Partial<{ name: string; start_number: number | null; team_id: string | null }>) {
+  async function saveField(patch: Partial<{ name: string; start_number: number | null; team_id: string | null; is_youth_eligible: boolean }>) {
     if (!supabase) return;
     const { error } = await supabase.from("riders").update(patch).eq("id", rider.id);
     if (error) {
@@ -360,6 +363,17 @@ function RiderRow({
             ))}
           </SelectContent>
         </Select>
+      </TableCell>
+      <TableCell className="text-center">
+        <div className="flex items-center justify-center gap-2">
+          <Checkbox
+            checked={Boolean(rider.is_youth_eligible)}
+            onCheckedChange={async (val) => {
+              await saveField({ is_youth_eligible: Boolean(val) });
+            }}
+            aria-label="Doet mee voor jongerenklassement"
+          />
+        </div>
       </TableCell>
       <TableCell>
         <Button variant="ghost" size="sm" onClick={onDelete}>
