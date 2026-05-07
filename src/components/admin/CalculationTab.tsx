@@ -1,12 +1,13 @@
 // @ts-nocheck
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Calculator, Sparkles, RotateCcw, Save } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Calculator, Sparkles, RotateCcw, Save, Trash2, RefreshCw, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import type { Stage } from "./StagesTab";
 
@@ -23,6 +24,97 @@ export default function CalculationTab({
   const [stageId, setStageId] = useState("");
   const [schemaPoints, setSchemaPoints] = useState<number[]>(DEFAULT_STAGE_POINTS);
   const [loadingSchema, setLoadingSchema] = useState(false);
+
+  type StageOverview = {
+    stage_id: string;
+    stage_number: number;
+    stage_name: string | null;
+    results_status: "draft" | "pending" | "approved";
+    results_count: number;
+    points_count: number;
+    points_sum: number;
+    last_calc_at: string | null;
+  };
+  const [overview, setOverview] = useState<StageOverview[]>([]);
+  const [loadingOverview, setLoadingOverview] = useState(false);
+  const [stageBusy, setStageBusy] = useState<string | null>(null);
+
+  const loadOverview = useCallback(async () => {
+    if (!supabase || !activeGameId) return;
+    setLoadingOverview(true);
+    try {
+      const stageIds = stages.map((s) => s.id);
+      if (stageIds.length === 0) { setOverview([]); return; }
+      const [resultsRes, pointsRes, stagesRes] = await Promise.all([
+        supabase.from("stage_results").select("stage_id").in("stage_id", stageIds),
+        supabase.from("stage_points").select("stage_id, points, created_at").in("stage_id", stageIds),
+        supabase.from("stages").select("id, results_status").in("id", stageIds),
+      ]);
+      const rCount = new Map<string, number>();
+      (resultsRes.data ?? []).forEach((r: any) => rCount.set(r.stage_id, (rCount.get(r.stage_id) ?? 0) + 1));
+      const pAgg = new Map<string, { count: number; sum: number; last: string | null }>();
+      (pointsRes.data ?? []).forEach((p: any) => {
+        const cur = pAgg.get(p.stage_id) ?? { count: 0, sum: 0, last: null };
+        cur.count += 1;
+        cur.sum += Number(p.points ?? 0);
+        if (!cur.last || (p.created_at && p.created_at > cur.last)) cur.last = p.created_at;
+        pAgg.set(p.stage_id, cur);
+      });
+      const statusMap = new Map<string, string>();
+      (stagesRes.data ?? []).forEach((s: any) => statusMap.set(s.id, s.results_status ?? "draft"));
+      setOverview(
+        stages.map((s) => {
+          const p = pAgg.get(s.id) ?? { count: 0, sum: 0, last: null };
+          return {
+            stage_id: s.id,
+            stage_number: s.stage_number,
+            stage_name: s.name,
+            results_status: (statusMap.get(s.id) ?? "draft") as StageOverview["results_status"],
+            results_count: rCount.get(s.id) ?? 0,
+            points_count: p.count,
+            points_sum: p.sum,
+            last_calc_at: p.last,
+          };
+        })
+      );
+    } finally {
+      setLoadingOverview(false);
+    }
+  }, [activeGameId, stages]);
+
+  useEffect(() => { loadOverview(); }, [loadOverview]);
+
+  async function calcOne(sid: string) {
+    if (!supabase) return;
+    setStageBusy(sid);
+    try {
+      const { error } = await supabase.rpc("calculate_stage_scores", { p_stage_id: sid });
+      if (error) throw error;
+      await supabase.rpc("update_total_ranking", { p_game_id: activeGameId }).catch(() => undefined);
+      toast.success("Etappe berekend");
+      await loadOverview();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setStageBusy(null);
+    }
+  }
+
+  async function deleteResults(sid: string, num: number) {
+    if (!supabase) return;
+    if (!confirm(`Weet je zeker dat je de uitslag van etappe ${num} wilt wissen? Punten worden herberekend. Andere etappes blijven ongewijzigd.`)) return;
+    setStageBusy(sid);
+    try {
+      const { error } = await supabase.rpc("delete_stage_results", { p_stage_id: sid });
+      if (error) throw error;
+      toast.success(`Uitslag etappe ${num} verwijderd`);
+      await loadOverview();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setStageBusy(null);
+    }
+  }
 
   async function loadSchema() {
     if (!supabase || !activeGameId) return;
@@ -236,25 +328,117 @@ export default function CalculationTab({
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-display flex items-center gap-2"><Calculator className="w-5 h-5" />Etappe herberekenen</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
-          <div className="md:col-span-2">
-            <Label>Etappe</Label>
-            <Select value={stageId} onValueChange={setStageId}>
-              <SelectTrigger data-testid="recalc-stage-select"><SelectValue placeholder="Kies etappe" /></SelectTrigger>
-              <SelectContent>
-                {stages.map((s) => <SelectItem key={s.id} value={s.id}>Etappe {s.stage_number}{s.date ? ` (${s.date})` : ""}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-end">
-            <Button data-testid="recalc-stage-btn" onClick={calcStage} disabled={busy || !stageId} className="w-full">
-              {busy ? "Bezig..." : "Herbereken"}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <CardTitle className="font-display flex items-center gap-2">
+              <Calculator className="w-5 h-5" />Berekening per etappe
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={loadOverview} disabled={loadingOverview}>
+              <RefreshCw className={`w-4 h-4 mr-1 ${loadingOverview ? "animate-spin" : ""}`} />Herlaad
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Stap 2 — Punten worden hier per etappe berekend op basis van de geüploade uitslag. Controleer daarna in <strong>Fiatteren</strong> en publiceer naar deelnemers.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {loadingOverview ? (
+            <p className="text-sm text-muted-foreground italic">Laden…</p>
+          ) : overview.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic">Geen etappes.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left border-b text-xs uppercase tracking-wider text-muted-foreground">
+                    <th className="py-2 pr-2">Etappe</th>
+                    <th className="py-2 pr-2">Uitslag</th>
+                    <th className="py-2 pr-2">Status</th>
+                    <th className="py-2 pr-2">Berekening</th>
+                    <th className="py-2 pr-2">Laatste calc</th>
+                    <th className="py-2 pr-2 text-right">Acties</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {overview.map((o) => {
+                    const hasResults = o.results_count > 0;
+                    const calculated = o.points_count > 0;
+                    return (
+                      <tr key={o.stage_id} className="border-b last:border-0 align-top">
+                        <td className="py-2 pr-2">
+                          <div className="font-display font-bold">Etappe {o.stage_number}</div>
+                          {o.stage_name && <div className="text-xs text-muted-foreground">{o.stage_name}</div>}
+                        </td>
+                        <td className="py-2 pr-2">
+                          {hasResults ? (
+                            <span className="inline-flex items-center gap-1 text-xs">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                              {o.results_count} renners
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                              <AlertTriangle className="w-3.5 h-3.5" />Geen uitslag
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-2">
+                          {o.results_status === "approved" ? (
+                            <Badge className="bg-green-600 hover:bg-green-600">Goedgekeurd</Badge>
+                          ) : o.results_status === "pending" ? (
+                            <Badge className="bg-orange-500 hover:bg-orange-500">In afwachting</Badge>
+                          ) : (
+                            <Badge variant="secondary">Concept</Badge>
+                          )}
+                        </td>
+                        <td className="py-2 pr-2">
+                          {calculated ? (
+                            <span className="text-xs">
+                              <strong>{o.points_count}</strong> entries · <strong>{o.points_sum}</strong> pt totaal
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Niet berekend</span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-2 text-xs text-muted-foreground">
+                          {o.last_calc_at ? (
+                            <span className="inline-flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {new Date(o.last_calc_at).toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          ) : "—"}
+                        </td>
+                        <td className="py-2 pr-2">
+                          <div className="flex flex-wrap justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={!hasResults || stageBusy === o.stage_id}
+                              onClick={() => calcOne(o.stage_id)}
+                              title={!hasResults ? "Upload eerst een uitslag" : undefined}
+                            >
+                              <Calculator className="w-3.5 h-3.5 mr-1" />
+                              {calculated ? "Herbereken" : "Bereken"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive"
+                              disabled={!hasResults || stageBusy === o.stage_id}
+                              onClick={() => deleteResults(o.stage_id, o.stage_number)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5 mr-1" />Wis uitslag
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader>

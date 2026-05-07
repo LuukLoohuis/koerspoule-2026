@@ -1100,6 +1100,16 @@ export type Database = {
           submitted_for_approval_at: string
         }[]
       }
+      admin_stage_points_breakdown: {
+        Args: { p_stage_id: string }
+        Returns: {
+          breakdown: Json
+          display_name: string
+          entry_id: string
+          team_name: string
+          total_stage_points: number
+        }[]
+      }
       admin_update_entry_status: {
         Args: { p_entry_id: string; p_status: string }
         Returns: undefined
@@ -1138,6 +1148,7 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      delete_stage_results: { Args: { p_stage_id: string }; Returns: undefined }
       delete_subpoule: { Args: { p_subpoule_id: string }; Returns: undefined }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
