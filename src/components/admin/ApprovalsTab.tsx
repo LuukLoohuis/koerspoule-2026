@@ -187,7 +187,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            De punten zijn al berekend in de Uitslagen-tab. Fiatteren is je laatste controle en maakt de uitslag zichtbaar voor de deelnemers.
+            Stap 3 — De punten zijn al berekend. Klap per etappe de puntenberekening uit om te controleren waarom een deelnemer een bepaald aantal punten heeft, en publiceer daarna naar de deelnemers.
           </p>
         </CardHeader>
         <CardContent className="space-y-2">
