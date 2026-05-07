@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-type Props = { gameId?: string; gameName?: string };
+type Props = { gameId?: string; gameName?: string; gameStatus?: string };
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
