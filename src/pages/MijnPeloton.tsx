@@ -1080,7 +1080,7 @@ export default function MijnPeloton() {
           {/* ── TAB: Subpoules ── */}
           <TabsContent value="subpoules" className="mt-6">
             <div className="max-w-3xl">
-              <SubpouleManager gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} />
+              <SubpouleManager gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} gameStatus={selectedGameObj?.status} />
             </div>
           </TabsContent>
 
