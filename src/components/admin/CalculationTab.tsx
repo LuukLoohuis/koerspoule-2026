@@ -25,6 +25,97 @@ export default function CalculationTab({
   const [schemaPoints, setSchemaPoints] = useState<number[]>(DEFAULT_STAGE_POINTS);
   const [loadingSchema, setLoadingSchema] = useState(false);
 
+  type StageOverview = {
+    stage_id: string;
+    stage_number: number;
+    stage_name: string | null;
+    results_status: "draft" | "pending" | "approved";
+    results_count: number;
+    points_count: number;
+    points_sum: number;
+    last_calc_at: string | null;
+  };
+  const [overview, setOverview] = useState<StageOverview[]>([]);
+  const [loadingOverview, setLoadingOverview] = useState(false);
+  const [stageBusy, setStageBusy] = useState<string | null>(null);
+
+  const loadOverview = useCallback(async () => {
+    if (!supabase || !activeGameId) return;
+    setLoadingOverview(true);
+    try {
+      const stageIds = stages.map((s) => s.id);
+      if (stageIds.length === 0) { setOverview([]); return; }
+      const [resultsRes, pointsRes, stagesRes] = await Promise.all([
+        supabase.from("stage_results").select("stage_id").in("stage_id", stageIds),
+        supabase.from("stage_points").select("stage_id, points, created_at").in("stage_id", stageIds),
+        supabase.from("stages").select("id, results_status").in("id", stageIds),
+      ]);
+      const rCount = new Map<string, number>();
+      (resultsRes.data ?? []).forEach((r: any) => rCount.set(r.stage_id, (rCount.get(r.stage_id) ?? 0) + 1));
+      const pAgg = new Map<string, { count: number; sum: number; last: string | null }>();
+      (pointsRes.data ?? []).forEach((p: any) => {
+        const cur = pAgg.get(p.stage_id) ?? { count: 0, sum: 0, last: null };
+        cur.count += 1;
+        cur.sum += Number(p.points ?? 0);
+        if (!cur.last || (p.created_at && p.created_at > cur.last)) cur.last = p.created_at;
+        pAgg.set(p.stage_id, cur);
+      });
+      const statusMap = new Map<string, string>();
+      (stagesRes.data ?? []).forEach((s: any) => statusMap.set(s.id, s.results_status ?? "draft"));
+      setOverview(
+        stages.map((s) => {
+          const p = pAgg.get(s.id) ?? { count: 0, sum: 0, last: null };
+          return {
+            stage_id: s.id,
+            stage_number: s.stage_number,
+            stage_name: s.name,
+            results_status: (statusMap.get(s.id) ?? "draft") as StageOverview["results_status"],
+            results_count: rCount.get(s.id) ?? 0,
+            points_count: p.count,
+            points_sum: p.sum,
+            last_calc_at: p.last,
+          };
+        })
+      );
+    } finally {
+      setLoadingOverview(false);
+    }
+  }, [activeGameId, stages]);
+
+  useEffect(() => { loadOverview(); }, [loadOverview]);
+
+  async function calcOne(sid: string) {
+    if (!supabase) return;
+    setStageBusy(sid);
+    try {
+      const { error } = await supabase.rpc("calculate_stage_scores", { p_stage_id: sid });
+      if (error) throw error;
+      await supabase.rpc("update_total_ranking", { p_game_id: activeGameId }).catch(() => undefined);
+      toast.success("Etappe berekend");
+      await loadOverview();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setStageBusy(null);
+    }
+  }
+
+  async function deleteResults(sid: string, num: number) {
+    if (!supabase) return;
+    if (!confirm(`Weet je zeker dat je de uitslag van etappe ${num} wilt wissen? Punten worden herberekend. Andere etappes blijven ongewijzigd.`)) return;
+    setStageBusy(sid);
+    try {
+      const { error } = await supabase.rpc("delete_stage_results", { p_stage_id: sid });
+      if (error) throw error;
+      toast.success(`Uitslag etappe ${num} verwijderd`);
+      await loadOverview();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setStageBusy(null);
+    }
+  }
+
   async function loadSchema() {
     if (!supabase || !activeGameId) return;
     setLoadingSchema(true);
