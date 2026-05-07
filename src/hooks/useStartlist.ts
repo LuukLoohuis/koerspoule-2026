@@ -9,6 +9,7 @@ export type StartlistTeam = {
     id: string;
     name: string;
     start_number: number | null;
+    is_youth_eligible: boolean;
   }>;
 };
 
