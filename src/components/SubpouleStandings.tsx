@@ -255,8 +255,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
         </CardContent>
       </Card>
 
-      {/* Head-to-head comparison */}
-      {compareMember && (
+      {/* Head-to-head comparison: alleen zichtbaar zodra de koers live is */}
+      {compareMember && ["live", "locked", "finished", "closed"].includes(String(game?.status ?? "")) && (
         <TeamComparison
           opponentUserId={compareMember.user_id}
           opponentName={compareMember.display_name}
