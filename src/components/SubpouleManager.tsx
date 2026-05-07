@@ -219,7 +219,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             <TabsTrigger value="benchmark" disabled={!benchmarkUnlocked} className="gap-1.5 text-xs sm:text-sm" title={!benchmarkUnlocked ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined}>
               <Swords className="h-4 w-4" /> <span className="hidden sm:inline">Benchmark</span>
             </TabsTrigger>
-            <TabsTrigger value="heatmap" className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="heatmap" disabled={!benchmarkUnlocked} className="gap-1.5 text-xs sm:text-sm" title={!benchmarkUnlocked ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined}>
               <Flame className="h-4 w-4" /> <span className="hidden sm:inline">Heatmap</span>
             </TabsTrigger>
           </TabsList>
@@ -246,7 +246,19 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             </div>
           </TabsContent>
           <TabsContent value="heatmap" className="pt-4">
-            <SubpouleHeatmap subpouleId={active.id} />
+            <div key={benchmarkUnlocked ? "heatmap-unlocked" : "heatmap-locked"}>
+              {benchmarkUnlocked ? (
+                <SubpouleHeatmap subpouleId={active.id} />
+              ) : (
+                <Card className="retro-border">
+                  <CardContent className="p-6 text-sm text-muted-foreground text-center space-y-2">
+                    <Flame className="h-8 w-8 text-muted-foreground/50 mx-auto" />
+                    <p className="font-display font-bold text-foreground">Heatmap nog vergrendeld</p>
+                    <p>De heatmap gaat open zodra de admin de inschrijving sluit en de koers live zet.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
