@@ -364,6 +364,17 @@ function RiderRow({
           </SelectContent>
         </Select>
       </TableCell>
+      <TableCell className="text-center">
+        <div className="flex items-center justify-center gap-2">
+          <Checkbox
+            checked={Boolean(rider.is_youth_eligible)}
+            onCheckedChange={async (val) => {
+              await saveField({ is_youth_eligible: Boolean(val) });
+            }}
+            aria-label="Doet mee voor jongerenklassement"
+          />
+        </div>
+      </TableCell>
       <TableCell>
         <Button variant="ghost" size="sm" onClick={onDelete}>
           <Trash2 className="w-4 h-4 text-destructive" />
