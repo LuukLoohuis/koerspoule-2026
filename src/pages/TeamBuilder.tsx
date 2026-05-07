@@ -599,10 +599,10 @@ export default function TeamBuilder() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
-                    { label: "Puntentrui", emoji: "🟣", color: "border-[hsl(var(--jersey-purple))]", value: pointsJersey, setter: setPointsJersey },
-                    { label: "Bergtrui", emoji: "🔵", color: "border-[hsl(var(--jersey-blue))]", value: mountainJersey, setter: setMountainJersey },
-                    { label: "Jongerentrui", emoji: "⚪", color: "border-foreground/30", value: youthJersey, setter: setYouthJersey },
-                  ].map(({ label, emoji, color, value, setter }) => {
+                    { label: "Puntentrui", emoji: "🟣", color: "border-[hsl(var(--jersey-purple))]", value: pointsJersey, setter: setPointsJersey, riders: allStartlistRiders, hint: undefined as string | undefined },
+                    { label: "Bergtrui", emoji: "🔵", color: "border-[hsl(var(--jersey-blue))]", value: mountainJersey, setter: setMountainJersey, riders: allStartlistRiders, hint: undefined },
+                    { label: "Jongerentrui", emoji: "⚪", color: "border-foreground/30", value: youthJersey, setter: setYouthJersey, riders: youthEligibleRiders, hint: `Alleen jongerenklassement-renners (${youthEligibleRiders.length})` },
+                  ].map(({ label, emoji, color, value, setter, riders: jerseyRiders, hint }) => {
                     const picked = value ? riderById.get(value) : null;
                     return (
                       <div key={label} className={cn("rounded-lg border-2 p-3 bg-secondary/30", color)}>
@@ -618,12 +618,15 @@ export default function TeamBuilder() {
                           <div className="font-display italic text-muted-foreground mb-2">leeg</div>
                         )}
                         <RiderSearchSelect
-                          riders={allStartlistRiders}
+                          riders={jerseyRiders}
                           value={value}
                           onChange={setter}
                           placeholder="Zoek renner..."
                           disabled={Boolean(isLocked)}
                         />
+                        {hint && (
+                          <p className="text-[10px] text-muted-foreground mt-2 italic">{hint}</p>
+                        )}
                       </div>
                     );
                   })}
