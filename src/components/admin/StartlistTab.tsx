@@ -16,6 +16,7 @@ export type Rider = {
   start_number: number | null;
   team_id: string | null;
   team_name?: string | null;
+  is_youth_eligible?: boolean;
 };
 
 export type Team = {
