@@ -426,7 +426,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
         )}
 
         <div className="px-3 py-2 text-[10px] text-muted-foreground text-center bg-muted/20 border-t border-border">
-          <Crown className="h-2.5 w-2.5 inline mr-1" /> = joker (×2 punten)
+          <br />
         </div>
       </CardContent>
     </Card>
