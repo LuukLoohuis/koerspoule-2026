@@ -63,7 +63,7 @@ export default function AdminV3() {
         .order("name"),
       supabase
         .from("riders")
-        .select("id, name, start_number, team_id, teams(name)")
+        .select("id, name, start_number, team_id, is_youth_eligible, teams(name)")
         .eq("game_id", gameId)
         .order("start_number", { nullsFirst: false }),
       supabase
