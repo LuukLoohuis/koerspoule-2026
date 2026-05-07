@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-type Props = { gameId?: string; gameName?: string };
+type Props = { gameId?: string; gameName?: string; gameStatus?: string };
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,11 +17,13 @@ import SubpouleHeatmap from "@/components/SubpouleHeatmap";
 import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Swords, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function SubpouleManager({ gameId, gameName }: Props = {}) {
+export default function SubpouleManager({ gameId, gameName, gameStatus }: Props = {}) {
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: currentGame } = useCurrentGame();
   const effectiveGameId = gameId ?? currentGame?.id;
+  const effectiveStatus = gameStatus ?? currentGame?.status;
+  const benchmarkUnlocked = ["live", "locked", "finished", "closed"].includes(String(effectiveStatus ?? ""));
   const game = gameId
     ? { id: gameId, name: gameName ?? "" }
     : currentGame;
@@ -214,7 +216,7 @@ export default function SubpouleManager({ gameId, gameName }: Props = {}) {
             <TabsTrigger value="chart" className="gap-1.5 text-xs sm:text-sm">
               <TrendingUp className="h-4 w-4" /> <span className="hidden sm:inline">Grafiek</span>
             </TabsTrigger>
-            <TabsTrigger value="benchmark" className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="benchmark" disabled={!benchmarkUnlocked} className="gap-1.5 text-xs sm:text-sm" title={!benchmarkUnlocked ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined}>
               <Swords className="h-4 w-4" /> <span className="hidden sm:inline">Benchmark</span>
             </TabsTrigger>
             <TabsTrigger value="heatmap" className="gap-1.5 text-xs sm:text-sm">
@@ -229,7 +231,17 @@ export default function SubpouleManager({ gameId, gameName }: Props = {}) {
             <SubpouleStandings subpouleId={active.id} subpouleName={active.name} />
           </TabsContent>
           <TabsContent value="benchmark" className="pt-4">
-            <SubpouleBenchmark subpouleId={active.id} />
+            {benchmarkUnlocked ? (
+              <SubpouleBenchmark subpouleId={active.id} />
+            ) : (
+              <Card className="retro-border">
+                <CardContent className="p-6 text-sm text-muted-foreground text-center space-y-2">
+                  <Swords className="h-8 w-8 text-muted-foreground/50 mx-auto" />
+                  <p className="font-display font-bold text-foreground">Benchmark nog vergrendeld</p>
+                  <p>De teamvergelijking gaat open zodra de admin de inschrijving sluit en de koers live zet.</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
           <TabsContent value="heatmap" className="pt-4">
             <SubpouleHeatmap subpouleId={active.id} />
