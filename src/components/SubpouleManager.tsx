@@ -17,11 +17,13 @@ import SubpouleHeatmap from "@/components/SubpouleHeatmap";
 import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Swords, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function SubpouleManager({ gameId, gameName }: Props = {}) {
+export default function SubpouleManager({ gameId, gameName, gameStatus }: Props = {}) {
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: currentGame } = useCurrentGame();
   const effectiveGameId = gameId ?? currentGame?.id;
+  const effectiveStatus = gameStatus ?? currentGame?.status;
+  const benchmarkUnlocked = ["live", "locked", "finished", "closed"].includes(String(effectiveStatus ?? ""));
   const game = gameId
     ? { id: gameId, name: gameName ?? "" }
     : currentGame;
