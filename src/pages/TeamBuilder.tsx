@@ -637,7 +637,7 @@ export default function TeamBuilder() {
                 <div className="ornate-frame retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">🚴‍♂️💨</span>
-                    <strong className="font-display text-base">Je peloton is nog niet voltallig</strong>
+                    <strong className="font-display text-base">Je Team is nog niet voltallig</strong>
                   </div>
                   <p className="text-muted-foreground mb-2 font-serif italic">
                     Een paar renners hangen nog achter de bezemwagen — vul de gaten op vóór de flamme rouge:
