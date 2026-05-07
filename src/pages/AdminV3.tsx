@@ -163,8 +163,8 @@ export default function AdminV3() {
           <TabsTrigger value="startlist" disabled={!activeGameId} data-testid="tab-startlist"><Users className="w-4 h-4 mr-2" />Startlijst</TabsTrigger>
           <TabsTrigger value="stages" disabled={!activeGameId} data-testid="tab-stages"><Calendar className="w-4 h-4 mr-2" />Etappes</TabsTrigger>
           <TabsTrigger value="results" disabled={!activeGameId} data-testid="tab-results"><ListChecks className="w-4 h-4 mr-2" />Uitslagen</TabsTrigger>
-          <TabsTrigger value="approvals" disabled={!activeGameId} data-testid="tab-approvals"><ShieldCheck className="w-4 h-4 mr-2" />Fiatteren</TabsTrigger>
           <TabsTrigger value="calc" disabled={!activeGameId} data-testid="tab-calc"><Calculator className="w-4 h-4 mr-2" />Berekening</TabsTrigger>
+          <TabsTrigger value="approvals" disabled={!activeGameId} data-testid="tab-approvals"><ShieldCheck className="w-4 h-4 mr-2" />Fiatteren</TabsTrigger>
           <TabsTrigger value="entries" disabled={!activeGameId} data-testid="tab-entries"><Inbox className="w-4 h-4 mr-2" />Inzendingen</TabsTrigger>
           <TabsTrigger value="notify" data-testid="tab-notify"><Mail className="w-4 h-4 mr-2" />Notify</TabsTrigger>
           <TabsTrigger value="users" data-testid="tab-users"><Shield className="w-4 h-4 mr-2" />Gebruikers</TabsTrigger>
