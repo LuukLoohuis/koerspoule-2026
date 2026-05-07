@@ -247,7 +247,7 @@ export default function StartlistTab({
                   />
                 ))}
                 {filteredRiders.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Geen renners.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Geen renners.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
