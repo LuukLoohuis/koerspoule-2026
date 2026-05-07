@@ -4,8 +4,114 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+
+type BreakdownRow = {
+  entry_id: string;
+  team_name: string | null;
+  display_name: string;
+  total_stage_points: number;
+  breakdown: Array<{
+    rider_id: string;
+    rider_name: string | null;
+    finish_position: number | null;
+    base_pts: number;
+    is_joker: boolean;
+    multiplier: number;
+    total: number;
+  }>;
+};
+
+function StageBreakdown({ stageId }: { stageId: string }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [rows, setRows] = useState<BreakdownRow[] | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  async function load() {
+    if (!supabase) return;
+    setLoading(true);
+    const { data, error } = await supabase.rpc("admin_stage_points_breakdown", { p_stage_id: stageId });
+    setLoading(false);
+    if (error) { toast.error(error.message); return; }
+    setRows((data ?? []) as BreakdownRow[]);
+  }
+
+  function onToggle(o: boolean) {
+    setOpen(o);
+    if (o && rows === null) load();
+  }
+
+  return (
+    <Collapsible open={open} onOpenChange={onToggle} className="mt-2">
+      <CollapsibleTrigger asChild>
+        <Button variant="ghost" size="sm" className="text-xs">
+          {open ? <ChevronDown className="w-3 h-3 mr-1" /> : <ChevronRight className="w-3 h-3 mr-1" />}
+          <Sparkles className="w-3 h-3 mr-1" />
+          Toon puntenberekening per deelnemer
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-2 border rounded-md p-2 bg-muted/30">
+        {loading && <p className="text-xs text-muted-foreground italic">Berekening laden…</p>}
+        {!loading && rows && rows.length === 0 && (
+          <p className="text-xs text-muted-foreground italic">Geen ingediende deelnemers gevonden.</p>
+        )}
+        {!loading && rows && rows.length > 0 && (
+          <div className="space-y-1 max-h-96 overflow-y-auto">
+            {rows.map((r) => {
+              const isOpen = expanded[r.entry_id] ?? false;
+              return (
+                <div key={r.entry_id} className="border-b last:border-0 pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setExpanded((s) => ({ ...s, [r.entry_id]: !isOpen }))}
+                    className="w-full flex items-center justify-between gap-2 py-1 text-left text-sm hover:bg-muted/50 rounded px-1"
+                  >
+                    <span className="flex items-center gap-2">
+                      {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                      <strong>{r.display_name}</strong>
+                      {r.team_name && <span className="text-xs text-muted-foreground">— {r.team_name}</span>}
+                    </span>
+                    <Badge variant="secondary">{r.total_stage_points} pt</Badge>
+                  </button>
+                  {isOpen && (
+                    <table className="w-full text-xs mt-1 mb-2">
+                      <thead>
+                        <tr className="text-left text-muted-foreground">
+                          <th className="py-1 pr-2">Renner</th>
+                          <th className="py-1 pr-2">Finish</th>
+                          <th className="py-1 pr-2">Basis</th>
+                          <th className="py-1 pr-2">×</th>
+                          <th className="py-1 pr-2 text-right">Totaal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {r.breakdown.map((b, i) => (
+                          <tr key={`${b.rider_id}-${i}`} className="border-t border-muted">
+                            <td className="py-0.5 pr-2">
+                              {b.rider_name ?? "—"}
+                              {b.is_joker && <Badge className="ml-1 text-[10px] py-0" variant="outline">Joker</Badge>}
+                            </td>
+                            <td className="py-0.5 pr-2">{b.finish_position ?? "—"}</td>
+                            <td className="py-0.5 pr-2">{b.base_pts}</td>
+                            <td className="py-0.5 pr-2">{b.multiplier}</td>
+                            <td className="py-0.5 pr-2 text-right font-mono">{b.total}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
 
 type Row = {
   stage_id: string;
