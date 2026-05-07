@@ -274,7 +274,7 @@ function RiderRow({
   const [draftNumber, setDraftNumber] = useState(String(rider.start_number ?? ""));
   const [savingTeam, setSavingTeam] = useState(false);
 
-  async function saveField(patch: Partial<{ name: string; start_number: number | null; team_id: string | null }>) {
+  async function saveField(patch: Partial<{ name: string; start_number: number | null; team_id: string | null; is_youth_eligible: boolean }>) {
     if (!supabase) return;
     const { error } = await supabase.from("riders").update(patch).eq("id", rider.id);
     if (error) {
