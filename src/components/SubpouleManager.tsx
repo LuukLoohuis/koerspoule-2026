@@ -219,7 +219,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             <TabsTrigger value="benchmark" disabled={!benchmarkUnlocked} className="gap-1.5 text-xs sm:text-sm" title={!benchmarkUnlocked ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined}>
               <Swords className="h-4 w-4" /> <span className="hidden sm:inline">Benchmark</span>
             </TabsTrigger>
-            <TabsTrigger value="heatmap" className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="heatmap" disabled={!benchmarkUnlocked} className="gap-1.5 text-xs sm:text-sm" title={!benchmarkUnlocked ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined}>
               <Flame className="h-4 w-4" /> <span className="hidden sm:inline">Heatmap</span>
             </TabsTrigger>
           </TabsList>
