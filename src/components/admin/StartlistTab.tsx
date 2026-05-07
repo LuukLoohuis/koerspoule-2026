@@ -232,6 +232,7 @@ export default function StartlistTab({
                   <TableHead className="w-24">#</TableHead>
                   <TableHead>Renner</TableHead>
                   <TableHead>Team</TableHead>
+                  <TableHead className="w-32 text-center" title="Doet mee voor jongerenklassement">Jongeren</TableHead>
                   <TableHead className="w-16"></TableHead>
                 </TableRow>
               </TableHeader>
