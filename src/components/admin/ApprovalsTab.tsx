@@ -195,26 +195,29 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
             <p className="text-sm text-muted-foreground italic">Geen uitslagen wachten op goedkeuring.</p>
           ) : (
             pending.map((r) => (
-              <div key={r.stage_id} className="flex items-center justify-between gap-3 border rounded-md p-3 flex-wrap">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-display font-bold">Etappe {r.stage_number}</span>
-                    {r.stage_name && <span className="text-sm text-muted-foreground">— {r.stage_name}</span>}
-                    <StatusBadge s={r.results_status} />
+              <div key={r.stage_id} className="border rounded-md p-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-display font-bold">Etappe {r.stage_number}</span>
+                      {r.stage_name && <span className="text-sm text-muted-foreground">— {r.stage_name}</span>}
+                      <StatusBadge s={r.results_status} />
+                    </div>
+                    {r.submitted_for_approval_at && (
+                      <p className="text-xs text-muted-foreground">
+                        Ingediend op {new Date(r.submitted_for_approval_at).toLocaleString("nl-NL")}
+                      </p>
+                    )}
                   </div>
-                  {r.submitted_for_approval_at && (
-                    <p className="text-xs text-muted-foreground">
-                      Ingediend op {new Date(r.submitted_for_approval_at).toLocaleString("nl-NL")}
-                    </p>
-                  )}
+                  <Button
+                    onClick={() => approve(r.stage_id)}
+                    disabled={busyId === r.stage_id}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <ShieldCheck className="w-4 h-4 mr-2" />Fiatteren
+                  </Button>
                 </div>
-                <Button
-                  onClick={() => approve(r.stage_id)}
-                  disabled={busyId === r.stage_id}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <ShieldCheck className="w-4 h-4 mr-2" />Fiatteren
-                </Button>
+                <StageBreakdown stageId={r.stage_id} />
               </div>
             ))
           )}
