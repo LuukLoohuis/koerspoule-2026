@@ -181,6 +181,7 @@ export default function TeamBuilder() {
   }, [validPicksByCategory]);
 
   const handlePickToggle = async (categoryId: string, riderId: string) => {
+    if (!isAuthed) return requireAuth("een renner te kiezen");
     if (!entry) return;
     try {
       await togglePick.mutateAsync({ entryId: entry.id, categoryId, riderId });
