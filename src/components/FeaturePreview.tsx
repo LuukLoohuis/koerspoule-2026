@@ -180,17 +180,17 @@ export default function FeaturePreview() {
                   }}
                 />
                 <ReferenceLine
-                  x={1000}
+                  x={userScore}
                   stroke="hsl(var(--primary))"
                   strokeWidth={2}
                   strokeDasharray="4 2"
-                  label={{ value: "JIJ", fill: "hsl(var(--primary))", fontSize: 10, position: "top" }}
+                  label={{ value: `JIJ · ${userScore} pt`, fill: "hsl(var(--primary))", fontSize: 10, position: "top" }}
                 />
                 <Bar dataKey="count" radius={[3, 3, 0, 0]}>
                   {monteCarloData.map((d, i) => (
                     <Cell
                       key={i}
-                      fill={d.score >= userScore ? "hsl(var(--vintage-gold))" : "hsl(var(--muted-foreground) / 0.45)"}
+                      fill={d.score <= userScore ? "hsl(var(--vintage-gold))" : "hsl(var(--muted-foreground) / 0.45)"}
                     />
                   ))}
                 </Bar>
@@ -198,8 +198,14 @@ export default function FeaturePreview() {
             </ResponsiveContainer>
           </div>
           <p className="text-xs text-muted-foreground mt-2 font-serif italic">
-            5.000 willekeurige ploegen → jij scoort beter dan <strong className="text-foreground">85%</strong>.
-            Aap met de dartpijl verslagen.
+            {isLoggedIn && userScore > 0 ? (
+              <>
+                Jouw stand: <strong className="text-foreground">{userScore} pt</strong> — beter dan{" "}
+                <strong className="text-foreground">{percentile}%</strong> van 5.000 willekeurige ploegen.
+              </>
+            ) : (
+              <>5.000 willekeurige ploegen vergeleken met jouw team. Log in om jouw percentiel te zien.</>
+            )}
           </p>
         </article>
 
