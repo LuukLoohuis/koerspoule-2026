@@ -126,6 +126,7 @@ export default function HorsCategorieTab() {
   const { data: pickStats = [] } = usePickStats(isLive ? game?.id : undefined);
   const { data: jokerStats = [] } = useJokerStats(isLive ? game?.id : undefined);
   const { data: totals = [] } = useEntryTotals(isLive ? game?.id : undefined);
+  const { data: myStageTotal = 0 } = useMyStagePointTotal(entry?.id);
 
   const allRiderIdsSet = useMemo(() => {
     const s = new Set<string>();
@@ -198,13 +199,13 @@ export default function HorsCategorieTab() {
     }
     randomScores.sort((a, b) => a - b);
 
-    // User's "estimated" score using same weights for fair comparison vs random
+    // User's actual score: sum of processed stage points only, excluding prediction bonuses.
     const userPicks: string[] = [];
     for (const cat of categories) {
       const arr = picksByCategory.get(cat.id) ?? [];
       userPicks.push(...arr);
     }
-    const userEstimated = userPicks.length ? scoreFromRiderIds(userPicks) : 0;
+    const userActual = userPicks.length ? myStageTotal : 0;
 
     const mean = randomScores.reduce((a, b) => a + b, 0) / randomScores.length;
     const median = randomScores[Math.floor(randomScores.length / 2)];
@@ -212,9 +213,9 @@ export default function HorsCategorieTab() {
     const beatPct =
       randomScores.length === 0
         ? 0
-        : (randomScores.filter((s) => userEstimated > s).length / randomScores.length) * 100;
-    const aboveMedian = userEstimated > median ? 100 : 0;
-    const top10 = userEstimated > top10cut;
+        : (randomScores.filter((s) => userActual > s).length / randomScores.length) * 100;
+    const aboveMedian = userActual > median ? 100 : 0;
+    const top10 = userActual > top10cut;
     const worseThanApe = beatPct < 50;
 
     // Distribution buckets
@@ -229,8 +230,8 @@ export default function HorsCategorieTab() {
       return { bucket: Math.round((from + to) / 2), count };
     });
 
-    return { mean, median, top10cut, beatPct, top10, worseThanApe, aboveMedian, userEstimated, dist };
-  }, [categories, pickStats, totals, picksByCategory, game?.id]);
+    return { mean, median, top10cut, beatPct, top10, worseThanApe, aboveMedian, userActual, dist };
+  }, [categories, pickStats, totals, picksByCategory, myStageTotal, game?.id]);
 
   // ---- Section 2: Pelotonkeuzes per category ----
   const pickStatsByCat = useMemo(() => {
