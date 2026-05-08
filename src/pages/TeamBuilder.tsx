@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +11,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useEntry } from "@/hooks/useEntry";
 import { useStartlist } from "@/hooks/useStartlist";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import RiderSearchSelect from "@/components/RiderSearchSelect";
 import FlagIcon from "@/components/FlagIcon";
@@ -34,11 +36,22 @@ function getCategoryIcon(name: string): ReactNode {
 
 export default function TeamBuilder() {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAuthed = Boolean(user);
   const { data: game, isLoading: gameLoading } = useCurrentGame();
   const { data: profile } = useProfile();
   const isAdmin = Boolean(profile?.is_admin);
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(game?.id);
   const { entry, isLoading: entryLoading, picksByCategory, jokerIds, predictions, togglePick, saveJoker, savePredictions, submitEntry, revertEntry } = useEntry(game?.id);
+
+  const requireAuth = (action: string) => {
+    toast({
+      title: "Maak een account aan",
+      description: `Je moet ingelogd zijn om ${action}.`,
+    });
+    navigate("/login");
+  };
 
   const [startlistSearch, setStartlistSearch] = useState("");
   const [startlistTeamFilter, setStartlistTeamFilter] = useState("all");
@@ -168,6 +181,7 @@ export default function TeamBuilder() {
   }, [validPicksByCategory]);
 
   const handlePickToggle = async (categoryId: string, riderId: string) => {
+    if (!isAuthed) return requireAuth("een renner te kiezen");
     if (!entry) return;
     try {
       await togglePick.mutateAsync({ entryId: entry.id, categoryId, riderId });
@@ -211,6 +225,7 @@ export default function TeamBuilder() {
   };
 
   const handleSubmit = async () => {
+    if (!isAuthed) return requireAuth("je team in te dienen");
     if (!entry) return;
     try {
       await submitEntry.mutateAsync({ entryId: entry.id });

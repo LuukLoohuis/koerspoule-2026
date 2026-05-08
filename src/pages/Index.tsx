@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, Bike, BookOpen } from "lucide-react";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import CountdownBanner from "@/components/CountdownBanner";
+
+const FeaturePreview = lazy(() => import("@/components/FeaturePreview"));
 
 const features = [
 {
@@ -75,6 +78,11 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* Feature Preview (subpoule chart, Monte Carlo, categorieën) */}
+      <Suspense fallback={<div className="container mx-auto px-4 py-16 text-center text-muted-foreground font-serif italic">Voorbeelden laden...</div>}>
+        <FeaturePreview />
+      </Suspense>
 
       {/* Features */}
       <section className="container mx-auto px-4 py-16 md:py-24 vintage-texture">
