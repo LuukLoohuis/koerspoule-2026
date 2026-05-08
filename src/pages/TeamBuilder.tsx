@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +11,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useEntry } from "@/hooks/useEntry";
 import { useStartlist } from "@/hooks/useStartlist";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import RiderSearchSelect from "@/components/RiderSearchSelect";
 import FlagIcon from "@/components/FlagIcon";
