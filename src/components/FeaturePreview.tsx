@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   LineChart,
   Line,
@@ -17,6 +18,7 @@ import { TrendingUp, Dices, Layers, ArrowRight, Sparkles, Lock } from "lucide-re
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 // --- Mock subpoule lijngrafiek (etappe-evolutie) ---
@@ -29,24 +31,53 @@ const subpouleData = [
   { stage: "E21", JIJ: 812, Marco: 770, Eddy: 705, Tadej: 845 },
 ];
 
-// --- Mock Monte Carlo histogram ---
-const monteCarloData = (() => {
-  const buckets: { score: number; count: number }[] = [];
-  // Bell-curve achtige distributie
-  for (let i = 0; i < 18; i++) {
-    const x = i;
-    const y = Math.round(80 * Math.exp(-Math.pow((x - 9) / 3.2, 2)) + Math.random() * 8);
-    buckets.push({ score: 400 + i * 50, count: y });
-  }
-  return buckets;
-})();
-const userScore = 1010; // index ~12 → percentiel ~85
-
 export default function FeaturePreview() {
   const { data: game } = useCurrentGame();
   const { data: categories = [] } = useCategories(game?.id);
   const { user } = useAuth();
   const isLoggedIn = Boolean(user);
+
+  // Haal echte stand op van de gebruiker (t/m laatst verwerkte etappe)
+  const { data: userPoints } = useQuery({
+    queryKey: ["feature-preview-user-points", game?.id, user?.id],
+    enabled: Boolean(supabase && game?.id && user?.id),
+    queryFn: async (): Promise<number> => {
+      if (!supabase || !game?.id || !user?.id) return 0;
+      const { data } = await supabase
+        .from("entries")
+        .select("total_points")
+        .eq("game_id", game.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return data?.total_points ?? 0;
+    },
+  });
+
+  // Bouw histogram rondom de werkelijke score, of fallback bij 0/anoniem
+  const { monteCarloData, userScore, percentile } = useMemo(() => {
+    const score = Math.max(0, userPoints ?? 0);
+    // Als nog geen punten: toon een neutrale demo (gemiddelde ~ score 0)
+    const center = score > 0 ? score * 0.72 : 50;
+    const spread = Math.max(40, (score > 0 ? score : 100) * 0.28);
+    const minX = Math.max(0, Math.round(center - spread * 2.4));
+    const maxX = Math.round(Math.max(center + spread * 2.4, score + spread * 0.6));
+    const buckets: { score: number; count: number }[] = [];
+    const N = 18;
+    let cumulative = 0;
+    let belowOrAt = 0;
+    let total = 0;
+    for (let i = 0; i < N; i++) {
+      const x = minX + ((maxX - minX) * i) / (N - 1);
+      const z = (x - center) / spread;
+      const y = Math.round(80 * Math.exp(-(z * z) / 2) + 4);
+      buckets.push({ score: Math.round(x), count: y });
+      total += y;
+      if (x <= score) belowOrAt += y;
+      cumulative += y;
+    }
+    const pct = total > 0 ? Math.round((belowOrAt / total) * 100) : 0;
+    return { monteCarloData: buckets, userScore: score, percentile: pct };
+  }, [userPoints]);
 
   const previewCategories = useMemo(() => {
     if (categories.length > 0) return categories.slice(0, 6);
