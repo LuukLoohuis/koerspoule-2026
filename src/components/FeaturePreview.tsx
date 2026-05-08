@@ -134,7 +134,7 @@ export default function FeaturePreview() {
               <Sparkles className="h-3 w-3" /> Uniek
             </span>
           </div>
-          <h3 className="font-display text-lg font-bold mb-3">Monte Carlo simulatie</h3>
+          <h3 className="font-display text-lg font-bold mb-3">Aap met de dartpijl</h3>
           <div className="h-44 -mx-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monteCarloData} margin={{ top: 5, right: 8, left: -22, bottom: 0 }}>
