@@ -152,21 +152,39 @@ function ornament(label: string) {
 export default function HorsCategorieTab() {
   const { data: game } = useCurrentGame();
   const isLive = Boolean(game?.status && ["live", "locked", "finished", "closed"].includes(String(game.status)));
-  const { entry, picksByCategory, jokerIds } = useEntry(game?.id);
+  const { entry, picksByCategory, jokerIds, predictions: myPredictions } = useEntry(game?.id);
   const { data: categories = [] } = useCategories(game?.id);
   const { data: pickStats = [] } = usePickStats(isLive ? game?.id : undefined);
   const { data: jokerStats = [] } = useJokerStats(isLive ? game?.id : undefined);
+  const { data: predictionStats = [] } = usePredictionStats(isLive ? game?.id : undefined);
   const { data: totals = [] } = useEntryTotals(isLive ? game?.id : undefined);
   const { data: myStageTotal = 0 } = useMyStagePointTotal(entry?.id);
+
+  // Set van alle door de gebruiker gekozen renners (picks + jokers) — voor "Jouw keuze" indicatoren
+  const myPickedRiderIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const arr of picksByCategory.values()) for (const id of arr) s.add(id);
+    for (const id of jokerIds) s.add(id);
+    return s;
+  }, [picksByCategory, jokerIds]);
+
+  // Map<"classification:position", riderId> voor de eigen voorspellingen
+  const myPredictionMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of myPredictions) m.set(`${p.classification}:${p.position}`, p.rider_id);
+    return m;
+  }, [myPredictions]);
 
   const allRiderIdsSet = useMemo(() => {
     const s = new Set<string>();
     for (const p of pickStats) s.add(p.rider_id);
     for (const j of jokerStats) s.add(j.rider_id);
+    for (const p of predictionStats) s.add(p.rider_id);
     for (const arr of picksByCategory.values()) for (const id of arr) s.add(id);
     for (const id of jokerIds) s.add(id);
+    for (const p of myPredictions) s.add(p.rider_id);
     return Array.from(s);
-  }, [pickStats, jokerStats, picksByCategory, jokerIds]);
+  }, [pickStats, jokerStats, predictionStats, picksByCategory, jokerIds, myPredictions]);
   const { data: riders = [] } = useRiderNames(allRiderIdsSet);
   const ridersById = useMemo(() => Object.fromEntries(riders.map((r) => [r.id, r])), [riders]);
 
