@@ -14,6 +14,38 @@ import { Lock, Sparkles, BarChart3, Megaphone, Trophy } from "lucide-react";
 type PickStat = { category_id: string; rider_id: string; pick_count: number; total_entries: number };
 type JokerStat = { rider_id: string; joker_count: number; total_entries: number };
 type StagePoint = { entry_id: string; points: number };
+type PredictionStat = { classification: string; position: number; rider_id: string; pick_count: number; total_entries: number };
+
+function usePredictionStats(gameId?: string) {
+  return useQuery({
+    queryKey: ["game-prediction-stats", gameId],
+    enabled: Boolean(supabase && gameId),
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<PredictionStat[]> => {
+      const { data, error } = await (supabase as any).rpc("game_prediction_stats", { p_game_id: gameId });
+      if (error) throw error;
+      return (data ?? []) as PredictionStat[];
+    },
+  });
+}
+
+// Heatmap-kleur: zeldzame keuzes (lage ownership) = donker/intens, populair = licht/muted
+function ownershipColor(pct: number): string {
+  // pct 0..100. Lage pct → goud-intens; hoge pct → muted lichtgrijs.
+  const clamped = Math.max(0, Math.min(100, pct));
+  // intensiteit 0 (licht) bij 100% → 1 (donker/intens) bij 0%
+  const intensity = 1 - clamped / 100;
+  // Mengel: van muted-foreground/20 → vintage-gold met hoge alpha
+  const alpha = 0.18 + intensity * 0.7; // 0.18..0.88
+  return `hsl(var(--vintage-gold) / ${alpha.toFixed(2)})`;
+}
+
+const CLASSIFICATION_META: Array<{ key: "gc" | "points" | "kom" | "youth"; label: string; emoji: string; tint: string }> = [
+  { key: "gc", label: "Eindwinnaar", emoji: "🏆", tint: "from-primary/20 to-[hsl(var(--vintage-gold))/0.15]" },
+  { key: "points", label: "Groene trui", emoji: "🟢", tint: "from-emerald-500/15 to-emerald-500/5" },
+  { key: "kom", label: "Bolletjestrui", emoji: "🔴", tint: "from-rose-500/15 to-rose-500/5" },
+  { key: "youth", label: "Witte trui", emoji: "⚪", tint: "from-slate-200/30 to-slate-200/10" },
+];
 
 function usePickStats(gameId?: string) {
   return useQuery({
@@ -120,21 +152,39 @@ function ornament(label: string) {
 export default function HorsCategorieTab() {
   const { data: game } = useCurrentGame();
   const isLive = Boolean(game?.status && ["live", "locked", "finished", "closed"].includes(String(game.status)));
-  const { entry, picksByCategory, jokerIds } = useEntry(game?.id);
+  const { entry, picksByCategory, jokerIds, predictions: myPredictions } = useEntry(game?.id);
   const { data: categories = [] } = useCategories(game?.id);
   const { data: pickStats = [] } = usePickStats(isLive ? game?.id : undefined);
   const { data: jokerStats = [] } = useJokerStats(isLive ? game?.id : undefined);
+  const { data: predictionStats = [] } = usePredictionStats(isLive ? game?.id : undefined);
   const { data: totals = [] } = useEntryTotals(isLive ? game?.id : undefined);
   const { data: myStageTotal = 0 } = useMyStagePointTotal(entry?.id);
+
+  // Set van alle door de gebruiker gekozen renners (picks + jokers) — voor "Jouw keuze" indicatoren
+  const myPickedRiderIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const arr of picksByCategory.values()) for (const id of arr) s.add(id);
+    for (const id of jokerIds) s.add(id);
+    return s;
+  }, [picksByCategory, jokerIds]);
+
+  // Map<"classification:position", riderId> voor de eigen voorspellingen
+  const myPredictionMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of myPredictions) m.set(`${p.classification}:${p.position}`, p.rider_id);
+    return m;
+  }, [myPredictions]);
 
   const allRiderIdsSet = useMemo(() => {
     const s = new Set<string>();
     for (const p of pickStats) s.add(p.rider_id);
     for (const j of jokerStats) s.add(j.rider_id);
+    for (const p of predictionStats) s.add(p.rider_id);
     for (const arr of picksByCategory.values()) for (const id of arr) s.add(id);
     for (const id of jokerIds) s.add(id);
+    for (const p of myPredictions) s.add(p.rider_id);
     return Array.from(s);
-  }, [pickStats, jokerStats, picksByCategory, jokerIds]);
+  }, [pickStats, jokerStats, predictionStats, picksByCategory, jokerIds, myPredictions]);
   const { data: riders = [] } = useRiderNames(allRiderIdsSet);
   const ridersById = useMemo(() => Object.fromEntries(riders.map((r) => [r.id, r])), [riders]);
 
@@ -390,9 +440,28 @@ export default function HorsCategorieTab() {
           <CardTitle className="font-display flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-primary" /> Pelotonkeuzes
           </CardTitle>
-          <p className="text-xs text-muted-foreground font-serif italic">Wie zit waar in de bus, en wie rijdt eenzaam in de kopgroep?</p>
+          <p className="text-xs text-muted-foreground font-serif italic">
+            Volg ik hier het peloton of wijk ik juist af? Donker = zeldzame keuze, licht = pelotonlieveling.
+          </p>
         </CardHeader>
-        <CardContent className="p-4 md:p-6">
+        <CardContent className="p-4 md:p-6 space-y-5">
+          {/* Legenda */}
+          <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-widest font-serif text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-3 w-8 rounded" style={{ background: ownershipColor(5) }} /> Zeldzaam (donker)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-3 w-8 rounded" style={{ background: ownershipColor(50) }} /> Gemiddeld
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-3 w-8 rounded" style={{ background: ownershipColor(95) }} /> Pelotonlieveling
+            </span>
+            <span className="flex items-center gap-1.5 ml-auto">
+              <span className="inline-flex items-center justify-center h-3 w-3 rounded-full bg-primary text-primary-foreground text-[8px] font-bold">★</span>
+              Jouw keuze
+            </span>
+          </div>
+
           {pickStats.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nog geen ingediende ploegen.</p>
           ) : (
@@ -410,25 +479,46 @@ export default function HorsCategorieTab() {
                       {list.map((p) => {
                         const pct = (p.pick_count / Math.max(1, totalEntries)) * 100;
                         const rider = ridersById[p.rider_id];
-                        const badge = pct >= 70 ? "Iedereen-en-z'n-moeder" : pct >= 40 ? "Pelotonlieveling" : pct <= 10 ? "Verborgen parel" : pct <= 25 ? "Differentieel" : null;
+                        const mine = myPickedRiderIds.has(p.rider_id);
+                        const badge =
+                          pct >= 70 ? "Iedereen-en-z'n-moeder"
+                            : pct >= 40 ? "Pelotonlieveling"
+                            : pct <= 10 ? "Verborgen parel"
+                            : pct <= 25 ? "Differentieel"
+                            : null;
                         return (
-                          <div key={p.rider_id}>
+                          <div
+                            key={p.rider_id}
+                            className={cn(
+                              "rounded-md p-2 transition-all",
+                              mine
+                                ? "ring-2 ring-primary shadow-[0_0_12px_hsl(var(--primary)/0.35)] bg-primary/5 border border-primary/40"
+                                : "border border-transparent"
+                            )}
+                          >
                             <div className="flex items-center justify-between gap-2 text-sm">
-                              <span className="font-display font-bold truncate">{rider?.name ?? "Onbekend"}</span>
+                              <span className="font-display font-bold truncate flex items-center gap-1.5">
+                                {mine && (
+                                  <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold shrink-0">★</span>
+                                )}
+                                {rider?.name ?? "Onbekend"}
+                              </span>
                               <span className="font-mono text-xs tabular-nums shrink-0">{pct.toFixed(0)}%</span>
                             </div>
-                            <div className="mt-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+                            <div className="mt-1 h-2 rounded-full bg-secondary overflow-hidden">
                               <div
-                                className={cn(
-                                  "h-full",
-                                  pct >= 50 ? "bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))]" : "bg-primary/60"
-                                )}
-                                style={{ width: `${pct}%` }}
+                                className="h-full transition-colors"
+                                style={{ width: `${Math.max(6, pct)}%`, background: ownershipColor(pct) }}
                               />
                             </div>
-                            {badge && (
-                              <Badge variant="outline" className="text-[10px] mt-1">{badge}</Badge>
-                            )}
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                              {badge && <Badge variant="outline" className="text-[10px]">{badge}</Badge>}
+                              {mine && (
+                                <Badge className="text-[10px] bg-primary/15 text-primary border border-primary/40 hover:bg-primary/20">
+                                  Jouw keuze
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         );
                       })}
@@ -445,9 +535,19 @@ export default function HorsCategorieTab() {
                     {[...jokerStats].sort((a, b) => b.joker_count - a.joker_count).slice(0, 6).map((j) => {
                       const pct = (j.joker_count / Math.max(1, j.total_entries)) * 100;
                       const rider = ridersById[j.rider_id];
+                      const mine = jokerIds.includes(j.rider_id);
                       return (
-                        <div key={j.rider_id} className="flex items-center justify-between gap-2 text-sm bg-card border border-border rounded p-2">
-                          <span className="font-display font-bold truncate">{rider?.name ?? "Onbekend"}</span>
+                        <div
+                          key={j.rider_id}
+                          className={cn(
+                            "flex items-center justify-between gap-2 text-sm bg-card rounded p-2 border",
+                            mine ? "border-primary ring-2 ring-primary/40 shadow-[0_0_10px_hsl(var(--primary)/0.25)]" : "border-border"
+                          )}
+                        >
+                          <span className="font-display font-bold truncate flex items-center gap-1.5">
+                            {mine && <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">★</span>}
+                            {rider?.name ?? "Onbekend"}
+                          </span>
                           <span className="font-mono text-xs tabular-nums">{pct.toFixed(0)}%</span>
                         </div>
                       );
@@ -457,6 +557,87 @@ export default function HorsCategorieTab() {
               )}
             </div>
           )}
+
+          {/* Voorspellingen — Eindwinnaar + Truien */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Trophy className="h-4 w-4 text-[hsl(var(--vintage-gold))]" />
+              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+                Voorspellingen · Eindklassement &amp; truien
+              </p>
+            </div>
+            {predictionStats.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nog geen voorspellingen ingediend.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {CLASSIFICATION_META.map((meta) => {
+                  const rows = predictionStats.filter((p) => p.classification === meta.key);
+                  if (rows.length === 0) return null;
+                  const totalEntries = rows[0]?.total_entries ?? 1;
+                  const top = [...rows].sort((a, b) => b.pick_count - a.pick_count).slice(0, 4);
+                  // Voor GC tonen we positie 1 (winnaar) prioritair
+                  return (
+                    <div key={meta.key} className={cn("rounded-lg border-2 border-border p-3 bg-gradient-to-br", meta.tint)}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                          <span className="text-base leading-none">{meta.emoji}</span>
+                          {meta.label}
+                        </p>
+                        {meta.key === "gc" && (
+                          <span className="text-[9px] font-mono text-muted-foreground">positie 1–3</span>
+                        )}
+                      </div>
+                      <div className="space-y-1.5">
+                        {top.map((p) => {
+                          const pct = (p.pick_count / Math.max(1, totalEntries)) * 100;
+                          const rider = ridersById[p.rider_id];
+                          const mineKey = `${meta.key}:${p.position}`;
+                          const mine = myPredictionMap.get(mineKey) === p.rider_id;
+                          const label =
+                            pct >= 60 ? "Consensus" : pct <= 8 ? "Outsider" : pct <= 20 ? "Differentieel" : null;
+                          return (
+                            <div
+                              key={`${p.rider_id}-${p.position}`}
+                              className={cn(
+                                "rounded-md p-2 transition-all",
+                                mine
+                                  ? "ring-2 ring-primary bg-primary/5 border border-primary/40"
+                                  : "border border-transparent bg-card/40"
+                              )}
+                            >
+                              <div className="flex items-center justify-between gap-2 text-sm">
+                                <span className="font-display font-bold truncate flex items-center gap-1.5">
+                                  {meta.key === "gc" && (
+                                    <span className="text-[10px] font-mono text-muted-foreground tabular-nums">P{p.position}</span>
+                                  )}
+                                  {mine && (
+                                    <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold shrink-0">★</span>
+                                  )}
+                                  <span className="truncate">{rider?.name ?? "Onbekend"}</span>
+                                </span>
+                                <span className="font-mono text-xs tabular-nums shrink-0">{pct.toFixed(0)}%</span>
+                              </div>
+                              <div className="mt-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+                                <div className="h-full" style={{ width: `${Math.max(4, pct)}%`, background: ownershipColor(pct) }} />
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                {label && <Badge variant="outline" className="text-[10px]">{label}</Badge>}
+                                {mine && (
+                                  <Badge className="text-[10px] bg-primary/15 text-primary border border-primary/40 hover:bg-primary/20">
+                                    Jouw keuze
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 

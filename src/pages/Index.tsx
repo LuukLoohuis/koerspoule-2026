@@ -6,6 +6,7 @@ import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import CountdownBanner from "@/components/CountdownBanner";
 
 const FeaturePreview = lazy(() => import("@/components/FeaturePreview"));
+const HorsCategoriePreview = lazy(() => import("@/components/HorsCategoriePreview"));
 
 const features = [
 {
@@ -82,6 +83,11 @@ export default function Index() {
       {/* Feature Preview (subpoule chart, Monte Carlo, categorieën) */}
       <Suspense fallback={<div className="container mx-auto px-4 py-16 text-center text-muted-foreground font-serif italic">Voorbeelden laden...</div>}>
         <FeaturePreview />
+      </Suspense>
+
+      {/* Hors Catégorie compact preview (alleen bij live koers) */}
+      <Suspense fallback={null}>
+        <HorsCategoriePreview />
       </Suspense>
 
       {/* Features */}
