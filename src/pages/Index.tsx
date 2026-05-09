@@ -85,6 +85,11 @@ export default function Index() {
         <FeaturePreview />
       </Suspense>
 
+      {/* Hors Catégorie compact preview (alleen bij live koers) */}
+      <Suspense fallback={null}>
+        <HorsCategoriePreview />
+      </Suspense>
+
       {/* Features */}
       <section className="container mx-auto px-4 py-16 md:py-24 vintage-texture">
         <h2 className="vintage-heading text-3xl md:text-4xl font-bold text-center mb-4">Hoe werkt het?</h2>
