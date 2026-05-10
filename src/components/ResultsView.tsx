@@ -175,26 +175,28 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
 
   if (!game && !stagesLoading) {
     return (
-      <div className="container mx-auto px-4 py-12 text-center">
+      <div className="py-12 text-center">
         <p className="text-muted-foreground italic">Er is nog geen actieve koers ingesteld.</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12">
-      <div className="text-center mb-8">
-        <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Uitslagen & Klassement</h1>
-        {game && (
-          <p className="text-xs text-muted-foreground uppercase tracking-wider font-sans">
-            {game.name}
-          </p>
-        )}
-        <div className="mt-3 flex justify-center">
-          <ResultsUpdatedBadge gameId={gameId} />
+    <div>
+      {showHeader && (
+        <div className="text-center mb-8">
+          <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Uitslagen & Klassement</h1>
+          {game && (
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-sans">
+              {game.name}
+            </p>
+          )}
+          <div className="mt-3 flex justify-center">
+            <ResultsUpdatedBadge gameId={gameId} />
+          </div>
+          <div className="vintage-divider max-w-xs mx-auto mt-4" />
         </div>
-        <div className="vintage-divider max-w-xs mx-auto mt-4" />
-      </div>
+      )}
 
       <Tabs defaultValue="klassement" className="max-w-7xl mx-auto">
         <TabsList className="w-full retro-border">
