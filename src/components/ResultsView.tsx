@@ -44,7 +44,9 @@ function pickInitialStage<T extends { id: string; status: string | null }>(stage
   return 0;
 }
 
-export default function Results() {
+type ResultsViewProps = { showHeader?: boolean };
+
+export default function ResultsView({ showHeader = true }: ResultsViewProps) {
   const { user } = useAuth();
   const { data: game } = useCurrentGame();
   const gameId = game?.id;
