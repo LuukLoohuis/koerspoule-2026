@@ -49,7 +49,7 @@ export function useStages(gameId?: string) {
       if (!supabase || !gameId) return [];
       const { data, error } = await supabase
         .from("stages")
-        .select("id, game_id, stage_number, name, date, status, stage_type, distance_km, is_gc")
+        .select("id, game_id, stage_number, name, date, status, stage_type, distance_km, is_gc, results_status")
         .eq("game_id", gameId)
         .order("stage_number", { ascending: true });
       if (error) throw error;
