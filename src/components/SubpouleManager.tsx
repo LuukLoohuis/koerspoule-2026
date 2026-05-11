@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 type Props = { gameId?: string; gameName?: string; gameStatus?: string };
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,9 +30,31 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
   const { subpoules, isLoading, create, join, leave, remove, removeMember } = useSubpoules(effectiveGameId);
 
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("chart");
   const [createName, setCreateName] = useState("");
   const [createCode, setCreateCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
+
+  // Deeplink support: ?subpoule=...&view=koerscafe
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const spId = params.get("subpoule");
+    const view = params.get("view");
+    if (spId) {
+      const match = subpoules.find((s) => s.id === spId);
+      if (match) {
+        setActiveId(spId);
+        if (view === "koerscafe") {
+          setActiveTab("chat");
+        }
+        // Clean up query params so the URL stays clean
+        const url = new URL(window.location.href);
+        url.searchParams.delete("subpoule");
+        url.searchParams.delete("view");
+        window.history.replaceState({}, "", url.toString());
+      }
+    }
+  }, [subpoules]);
 
   const active = useMemo(
     () => (activeId ? subpoules.find((s) => s.id === activeId) ?? null : null),
@@ -208,7 +230,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="chart" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full grid grid-cols-4">
             <TabsTrigger value="chat" className="gap-1.5 text-xs sm:text-sm">
               <MessageCircle className="h-4 w-4" /> <span className="hidden sm:inline">Chat</span>
