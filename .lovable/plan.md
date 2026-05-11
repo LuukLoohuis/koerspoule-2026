@@ -1,81 +1,127 @@
-## Doel
+# Plan: Koerscafé herbouw
 
-Adminproces rond uitslagen → berekening → fiattering logischer maken, met betere zichtbaarheid, een verwijder-optie per etappe, en transparante puntenopbouw per deelnemer in het fiatteer-scherm.
+Volledige rebuild van de subpoule-chat met realtime, mentions, ongelezen-tracking, deelbaarheid en interactieve elementen. Aangepast op huidige stack (React + Vite + Supabase, géén Next.js/Redis/Socket.IO — Supabase Realtime vervangt websockets).
 
-## 1. Tab-volgorde & hernoeming (`src/pages/AdminV3.tsx`)
+## Wat je krijgt
 
-Huidige volgorde: Uitslagen → Fiatteren → Berekening (Calc).
-Nieuwe volgorde: **Uitslagen → Berekening → Fiatteren**.
+**Kernchat**
+- Realtime berichten via Supabase Realtime (geen polling meer)
+- Initialen-avatar met deterministische kleur per gebruiker
+- Bewerken & verwijderen van eigen berichten (verwijderd = "Dit bericht is verwijderd")
+- Emoji-picker in input
+- Auto-scroll naar nieuwste bericht, behalve als gebruiker omhoog leest → "↓ nieuwe berichten" knop
+- Sticky input, mobile-first chatbubbles, dark-mode compatibel, vintage-styling behouden
 
-- Hernoem `tab-calc` label van "Herberekenen" → "**Berekening**" (icon blijft `Calculator`).
-- Verplaats `<TabsTrigger value="calc">` vóór `<TabsTrigger value="approvals">`, en idem voor `<TabsContent>`.
+**@mentions**
+- Typ `@` → autocomplete dropdown met subpoule-leden
+- Mentions visueel gemarkeerd (primary kleur badge) in renderbericht
+- In-app notificatiebadge voor genoemde gebruiker
+- Klik op mention scrollt/highlight (geen profielpagina aanwezig, dus dat houden we bij naam-tooltip)
 
-## 2. Berekening-tab uitbreiden (`src/components/admin/CalculationTab.tsx`)
+**Ongelezen & notificaties**
+- Per-user `last_read_at` per subpoule
+- Badge in Mijn Peloton → tab "Subpoules" en in subpoule-kaart
+- "Nieuwe berichten"-divider in chat boven het eerste ongelezen bericht
+- Toast bij binnenkomend bericht in andere subpoule waar je lid van bent
 
-Nu: enkel een knop "Volledige herberekening". Wordt:
+**WhatsApp delen + deeplink**
+- Deelknop in chatheader → opent `https://wa.me/?text=...` met link naar `/mijn-peloton?tab=subpoules&subpoule=<id>&view=koerscafe`
+- Deeplink wordt opgevangen in MijnPeloton: opent juiste subpoule + tab
+- Niet-ingelogde bezoeker → redirect naar `/login` met `?redirect=<originele-url>`, na login automatisch terug
 
-**Per-etappe overzicht** met kolommen:
-- Etappe (nummer + naam)
-- **Uitslag**: `—` / `Geüpload (n renners)` (uit `stage_results` count)
-- **Status**: `draft` / `pending` / `approved` (uit `stages.results_status`)
-- **Berekening**: `Niet berekend` / `Berekend (n entries, totaal X pt)` (uit `stage_points` count + sum)
-- **Laatste berekening**: timestamp van max(`stage_points.created_at`) per stage
-- **Acties**:
-  - `Bereken etappe` (call `calculate_stage_scores` RPC) — disabled als geen `stage_results`
-  - `Wis uitslag` (rood, opent confirm; zie §3)
+**Emoji reactions**
+- Reactie-knop (👍 ❤️ 🔥 😂 🚴) onder elk bericht
+- Aantal + wie staat in tooltip
+- Eigen reactie togglebaar
 
-Plus bovenaan: behoud "Volledige herberekening" knop.
-Foutmelding/lege state: als geen `stage_results` → tooltip "Upload eerst een uitslag".
+**Polls & voorspellingen**
+- Eigenaar of elk lid kan poll posten in chat ("Wie wint vandaag?" + 2-6 opties + optionele deadline)
+- Realtime stemresultaten als voortgangsbalken
+- Auto-sluiten op deadline (client-side check + RLS-blocked insert na deadline)
+- Eigen stem zichtbaar gemarkeerd
 
-Nieuwe hook/query: één `useQuery` die per stage joint: results_count, points_count, points_sum, last_calc_at.
+## Technische details
 
-## 3. Uitslag wissen per etappe
+### Database (nieuwe migratie)
 
-**Nieuwe RPC** `delete_stage_results(p_stage_id uuid)`:
-- Admin-only check.
-- `DELETE FROM stage_results WHERE stage_id = p_stage_id`
-- `DELETE FROM stage_points WHERE stage_id = p_stage_id`
-- Zet `stages.results_status = 'draft'`, clear `submitted_for_approval_at`, `approved_by`, `approved_at`.
-- Re-run `update_total_ranking(game_id)` zodat totalen kloppen.
-- Log entry in `results_approval_log` met action `'results_deleted'`.
+**`chat_messages` uitbreiden**
+- `edited_at TIMESTAMPTZ NULL`
+- `deleted_at TIMESTAMPTZ NULL`
+- `mentions UUID[] NULL` (lijst van getagde user_ids)
+- Index op `(subpoule_id, created_at DESC)`
 
-In `CalculationTab`: confirm-dialog "Weet je zeker dat je de uitslag van etappe {n} wilt wissen? Punten worden herberekend. Andere etappes blijven ongewijzigd."
+**Nieuwe tabellen** (allen RLS: alleen subpoule-leden)
+- `chat_read_states (subpoule_id, user_id, last_read_at)` — PK (subpoule_id, user_id)
+- `chat_message_reactions (id, message_id, user_id, emoji, created_at)` — uniek (message_id, user_id, emoji)
+- `chat_polls (id, subpoule_id, message_id, question, options JSONB, deadline TIMESTAMPTZ, created_by, created_at)`
+- `chat_poll_votes (poll_id, user_id, option_index, created_at)` — PK (poll_id, user_id)
 
-## 4. Inzicht in puntenopbouw bij fiatteren (`src/components/admin/ApprovalsTab.tsx` + `StageApprovalCard.tsx`)
+**RPC's**
+- `update_chat_read_state(p_subpoule_id, p_last_read_at)` — upsert
+- `subpoule_unread_counts(p_game_id)` → returns `(subpoule_id, unread_count)` voor huidige user
+- `edit_chat_message(p_message_id, p_body)` — alleen auteur, zet `edited_at`
+- `soft_delete_chat_message(p_message_id)` — alleen auteur of admin
+- `cast_poll_vote(p_poll_id, p_option_index)` — blokkeer na deadline
 
-Per stage in pending/approved status: expandable detail per deelnemer.
+**Realtime publication**
+- `ALTER PUBLICATION supabase_realtime ADD TABLE chat_messages, chat_message_reactions, chat_poll_votes`
 
-**Nieuwe RPC** `admin_stage_points_breakdown(p_stage_id uuid)` returns table:
+### Frontend componenten
+
+**Vervangen**
+- `src/components/PelotonChat.tsx` → volledig herschrijven (realtime subscribe i.p.v. polling)
+
+**Nieuw**
+- `src/components/koerscafe/ChatMessage.tsx` — bubble + avatar + edit/delete/react menu
+- `src/components/koerscafe/ChatInput.tsx` — sticky input + emoji-picker + @mention autocomplete
+- `src/components/koerscafe/MentionDropdown.tsx`
+- `src/components/koerscafe/MessageReactions.tsx`
+- `src/components/koerscafe/PollCard.tsx` + `PollComposer.tsx`
+- `src/components/koerscafe/UnreadDivider.tsx`
+- `src/components/koerscafe/Avatar.tsx` (initialen + HSL kleur uit user_id hash)
+- `src/components/koerscafe/ShareButton.tsx` (WhatsApp deeplink)
+- `src/hooks/useChatRealtime.ts` — Supabase channel subscribe per subpoule
+- `src/hooks/useUnreadCounts.ts` — game-wide badge data
+- `src/hooks/useReadState.ts` — markeer als gelezen on mount/visibility
+
+**Aanpassen**
+- `src/pages/MijnPeloton.tsx` — query params lezen (`subpoule`, `view`), badges in subpoule-tab, toast subscriber voor andere subpoules
+- `src/pages/Login.tsx` — `?redirect=` opslaan en na login navigeren
+- `src/components/SubpouleManager.tsx` — unread-badge per subpoule-kaart
+- Emoji-picker: gebruik lichtgewicht `emoji-mart` of simpele eigen grid (kies bij implementatie de lichtste)
+
+### Beveiliging
+- RLS op alle nieuwe tabellen: alleen leden van de subpoule (via bestaande `is_subpoule_member`)
+- XSS: bericht body altijd via React text-rendering (geen `dangerouslySetInnerHTML`); mentions via parser die alleen `@displayname` matched op bekende user_ids
+- Rate limit: simpele client-debounce + DB-constraint (max 1 bericht/seconde via trigger optioneel)
+- Lengte: body max 2000 chars (al aanwezig), poll-vraag max 200, optie max 80
+
+### Out of scope (bewust)
+- Avatar-uploads, Gravatar
+- Web push / e-mail notificaties
+- Typing indicators, online presence, pinned messages, image uploads, chat search
+- Profielpagina bij mention-klik (bestaat niet in app)
+
+## Bestandsoverzicht
+
+```text
+supabase/migrations/<ts>_koerscafe_rebuild.sql      [nieuw]
+src/components/PelotonChat.tsx                       [herschrijven]
+src/components/koerscafe/                            [nieuwe map, 9 files]
+src/hooks/useChatRealtime.ts                         [nieuw]
+src/hooks/useUnreadCounts.ts                         [nieuw]
+src/hooks/useReadState.ts                            [nieuw]
+src/pages/MijnPeloton.tsx                            [aanpassen: deeplink + badges]
+src/pages/Login.tsx                                  [aanpassen: redirect param]
+src/components/SubpouleManager.tsx                   [aanpassen: unread badge]
 ```
-entry_id, team_name, display_name, total_stage_points,
-breakdown jsonb -- [{rider_id, rider_name, finish_pos, base_pts, is_joker, multiplier, total}]
-```
-SECURITY DEFINER, admin-only. Logica spiegelt `calculate_stage_scores`:
-- Voor elke entry_pick + jokers (zoals nu): join op stage_results.finish_position + points_schema (classification='stage') om base_pts te bepalen, multiplier 2 als joker, anders 1.
 
-In UI: per stage-kaart een collapsible "Toon puntenberekening (n deelnemers)" → tabel of accordion per deelnemer met expandable detail (lazy-loaded: query alleen draaien als card opent). Kolommen: renner | finish | basis | joker ×2 | totaal. Footer: som = stage-totaal.
-
-## 5. UX framing
-
-Berekening-tab krijgt korte header-uitleg:
-> "Stap 2 — Punten worden hier per etappe berekend. Controleer in 'Fiatteren' en publiceer dan naar deelnemers."
-
-Fiatteren-tab krijgt:
-> "Stap 3 — Controleer de berekende punten en publiceer."
-
-## Technisch advies
-
-- **Performance**: alle queries zijn al indexed op `stage_id`/`entry_id`. Breakdown-RPC draait alleen bij openen van detail (lazy). Geen merkbare impact.
-- **Geen AI/credits** nodig — puur DB.
-- **Geen pre-cache** nodig: `stage_points` is al de cache; breakdown is een read-only join die <100ms duurt voor ~150 entries × 12 renners.
-- **Schaalbaarheid**: alle logica blijft server-side in SECURITY DEFINER RPC's, single source of truth gelijk aan `calculate_stage_scores`. Frontend toont enkel.
-- **Debugging-bonus**: breakdown maakt verschillen tussen "verwacht" en "berekend" direct zichtbaar.
-
-## Bestanden
-
-- `src/pages/AdminV3.tsx` — tab-volgorde + label
-- `src/components/admin/CalculationTab.tsx` — volledige rewrite (per-stage tabel + acties)
-- `src/components/admin/ApprovalsTab.tsx` / `StageApprovalCard.tsx` — collapsible breakdown sectie
-- **Migratie**: 2 nieuwe RPC's (`delete_stage_results`, `admin_stage_points_breakdown`)
-
-Geen schema-wijzigingen aan tabellen.
+## Aanpak in stappen
+1. Migratie: kolommen toevoegen, nieuwe tabellen + RLS + RPC's + realtime publication
+2. Realtime chathook + nieuwe message-componenten (kern werkt)
+3. Read-state + badges + divider
+4. @mentions met autocomplete
+5. WhatsApp delen + deeplink + login-redirect
+6. Emoji reactions
+7. Polls (composer + card + voting)
+8. Mobile polish + dark mode check
