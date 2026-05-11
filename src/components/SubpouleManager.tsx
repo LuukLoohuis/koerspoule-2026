@@ -30,9 +30,31 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
   const { subpoules, isLoading, create, join, leave, remove, removeMember } = useSubpoules(effectiveGameId);
 
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("chart");
   const [createName, setCreateName] = useState("");
   const [createCode, setCreateCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
+
+  // Deeplink support: ?subpoule=...&view=koerscafe
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const spId = params.get("subpoule");
+    const view = params.get("view");
+    if (spId) {
+      const match = subpoules.find((s) => s.id === spId);
+      if (match) {
+        setActiveId(spId);
+        if (view === "koerscafe") {
+          setActiveTab("chat");
+        }
+        // Clean up query params so the URL stays clean
+        const url = new URL(window.location.href);
+        url.searchParams.delete("subpoule");
+        url.searchParams.delete("view");
+        window.history.replaceState({}, "", url.toString());
+      }
+    }
+  }, [subpoules]);
 
   const active = useMemo(
     () => (activeId ? subpoules.find((s) => s.id === activeId) ?? null : null),
