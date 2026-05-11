@@ -1051,9 +1051,9 @@ export default function MijnPeloton() {
           </div>
         )}
 
-        {/* Inner tabs: Team / Uitslagen / Subpoules */}
+        {/* Inner tabs: Team / Uitslagen / Subpoules / Benchmark / Palmares / Hors */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
-          <TabsList className="w-full retro-border h-auto p-1 grid grid-cols-2 md:grid-cols-5 gap-1">
+          <TabsList className="w-full retro-border h-auto p-1 grid grid-cols-2 md:grid-cols-6 gap-1">
             <TabsTrigger value="team" className="font-display text-xs md:text-sm px-2 md:px-3">
               🚴‍♂️🚴 Mijn Team
             </TabsTrigger>
@@ -1062,6 +1062,9 @@ export default function MijnPeloton() {
             </TabsTrigger>
             <TabsTrigger value="subpoules" className="font-display text-xs md:text-sm px-2 md:px-3">
               👥 Subpoules
+            </TabsTrigger>
+            <TabsTrigger value="benchmark" className="font-display text-xs md:text-sm px-2 md:px-3">
+              ⚔️ Benchmark
             </TabsTrigger>
             <TabsTrigger value="palmares" className="font-display text-xs md:text-sm px-2 md:px-3">
               🏅 Palmares
@@ -1088,6 +1091,10 @@ export default function MijnPeloton() {
             </div>
           </TabsContent>
 
+          {/* ── TAB: Benchmark ── */}
+          <TabsContent value="benchmark" className="mt-6">
+            <BenchmarkTab gameId={selectedGameObj?.id} />
+          </TabsContent>
 
           {/* ── TAB: Palmares ── */}
           <TabsContent value="palmares" className="mt-6">
