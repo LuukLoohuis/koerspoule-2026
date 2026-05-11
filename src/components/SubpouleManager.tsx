@@ -230,7 +230,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="chart" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full grid grid-cols-4">
             <TabsTrigger value="chat" className="gap-1.5 text-xs sm:text-sm">
               <MessageCircle className="h-4 w-4" /> <span className="hidden sm:inline">Chat</span>
