@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useStages, useStageResults, useStagePoints, useEntries } from "@/hooks/useResults";
+import { useStages, useStageResults, useStagePoints, useEntries, type StageRow, type EntryStanding } from "@/hooks/useResults";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
