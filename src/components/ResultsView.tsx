@@ -692,3 +692,137 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
     </div>
   );
 }
+
+/* ── GC detail (Eindklassement weergave) ── */
+function GcDetail({
+  stages,
+  myEntry,
+}: {
+  stages: StageRow[];
+  myEntry: EntryStanding | undefined;
+}) {
+  // Use last regular stage (21) for the jersey/GC standings
+  const lastRegularStage = [...stages]
+    .filter((s) => !s.is_gc)
+    .sort((a, b) => b.stage_number - a.stage_number)[0];
+  const stage21Approved = lastRegularStage?.results_status === "approved";
+  const { data: results = [], isLoading } = useStageResults(
+    stage21Approved ? lastRegularStage?.id : undefined
+  );
+
+  // My GC bonus points from prediction points
+  const { data: predictionPts = 0 } = useQuery({
+    queryKey: ["gc-prediction-points", myEntry?.id],
+    enabled: Boolean(myEntry?.id && supabase),
+    queryFn: async () => {
+      if (!supabase || !myEntry?.id) return 0;
+      const { data, error } = await supabase
+        .from("entry_prediction_points")
+        .select("points")
+        .eq("entry_id", myEntry.id);
+      if (error) throw error;
+      return (data ?? []).reduce((s: number, r: any) => s + Number(r.points ?? 0), 0);
+    },
+  });
+
+  if (!stage21Approved) {
+    return (
+      <div className="retro-border bg-card p-10 text-center">
+        <Lock className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+        <h3 className="font-display text-lg font-bold mb-1">Eindklassement nog vergrendeld</h3>
+        <p className="text-sm text-muted-foreground">
+          De GC-weergave wordt zichtbaar zodra etappe 21 is gefiatteerd.
+        </p>
+      </div>
+    );
+  }
+
+  const gcRows = results
+    .filter((r) => r.gc_position != null)
+    .sort((a, b) => (a.gc_position ?? 999) - (b.gc_position ?? 999))
+    .slice(0, 20);
+
+  const jerseyDefs = [
+    { key: "points_position" as const, label: "Punten (groen)", color: "bg-emerald-500" },
+    { key: "mountain_position" as const, label: "Berg (bolletjes)", color: "bg-rose-600" },
+    { key: "youth_position" as const, label: "Jongeren (wit)", color: "bg-zinc-200 text-zinc-900" },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* GC top 20 */}
+      <div className="retro-border bg-card lg:col-span-1">
+        <div className="p-4 border-b-2 border-foreground bg-amber-500/20">
+          <h2 className="font-display text-base font-bold flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-amber-600" />
+            Algemeen klassement
+          </h2>
+        </div>
+        {isLoading ? (
+          <div className="p-6 text-sm text-muted-foreground italic text-center">Laden…</div>
+        ) : gcRows.length === 0 ? (
+          <div className="p-6 text-sm text-muted-foreground italic text-center">Nog geen GC-uitslag.</div>
+        ) : (
+          <div className="divide-y divide-border max-h-[600px] overflow-y-auto">
+            {gcRows.map((r) => (
+              <div key={r.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                <div className="flex items-center gap-2 min-w-0">
+                  {rankBadge(r.gc_position!)}
+                  <span className="font-sans truncate">{r.riders?.name ?? r.rider_name ?? "—"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Jersey winners */}
+      <div className="retro-border bg-card lg:col-span-1">
+        <div className="p-4 border-b-2 border-foreground bg-secondary/50">
+          <h2 className="font-display text-base font-bold flex items-center gap-2">
+            <Medal className="h-5 w-5 text-accent" />
+            Truienwinnaars
+          </h2>
+        </div>
+        <div className="p-3 space-y-3">
+          {jerseyDefs.map((j) => {
+            const winner = [...results]
+              .filter((r) => r[j.key] === 1)
+              .map((r) => r.riders?.name ?? r.rider_name)[0];
+            return (
+              <div key={j.key} className="flex items-center gap-3">
+                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0", j.color)}>
+                  <Medal className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{j.label}</div>
+                  <div className="font-display font-bold text-sm truncate">{winner ?? "—"}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* My GC bonus */}
+      <div className="retro-border bg-card lg:col-span-1">
+        <div className="p-4 border-b-2 border-foreground bg-primary/10">
+          <h2 className="font-display text-base font-bold flex items-center justify-between">
+            <span className="flex items-center gap-2"><User className="h-5 w-5 text-primary" />Jouw GC-bonus</span>
+            <span className="font-display text-xl text-primary tabular-nums">{predictionPts} pt</span>
+          </h2>
+        </div>
+        <div className="p-4 text-sm text-muted-foreground space-y-2">
+          <p>
+            Bonuspunten uit jouw voorspellingen voor het eindklassement en de truien.
+            Wordt door de admin berekend met <strong>"Eindklassementen berekenen"</strong>.
+          </p>
+          <ul className="text-xs space-y-1 list-disc pl-5">
+            <li>GC-podium: 50 / 25 / 25 (max 150)</li>
+            <li>Truien: 25 per juiste winnaar</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
