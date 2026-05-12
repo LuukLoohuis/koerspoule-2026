@@ -38,6 +38,8 @@ export default function CalculationTab({
   const [overview, setOverview] = useState<StageOverview[]>([]);
   const [loadingOverview, setLoadingOverview] = useState(false);
   const [stageBusy, setStageBusy] = useState<string | null>(null);
+  const [jokerMultiplier, setJokerMultiplier] = useState<number>(2);
+  const [loadingJokerMultiplier, setLoadingJokerMultiplier] = useState(false);
 
   const regularStages = stages.filter((s: any) => !s.is_gc);
 
@@ -176,6 +178,49 @@ export default function CalculationTab({
   function resetToDefault() {
     if (!confirm("Standaard puntentabel terugzetten? (50, 40, 32, ... , 1)")) return;
     saveSchema([...DEFAULT_STAGE_POINTS]);
+  }
+
+  async function loadJokerMultiplier() {
+    if (!supabase || !activeGameId) return;
+    setLoadingJokerMultiplier(true);
+    try {
+      const { data, error } = await supabase
+        .from("games")
+        .select("joker_multiplier")
+        .eq("id", activeGameId)
+        .single();
+      if (error) throw error;
+      if (data && typeof data.joker_multiplier === "number") {
+        setJokerMultiplier(data.joker_multiplier);
+      }
+    } catch (e) {
+      console.error("Joker multiplier laden mislukt:", e);
+    } finally {
+      setLoadingJokerMultiplier(false);
+    }
+  }
+
+  useEffect(() => {
+    loadJokerMultiplier();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGameId]);
+
+  async function saveJokerMultiplier(value: number) {
+    if (!supabase || !activeGameId) return;
+    setLoadingJokerMultiplier(true);
+    try {
+      const { error } = await supabase
+        .from("games")
+        .update({ joker_multiplier: value })
+        .eq("id", activeGameId);
+      if (error) throw error;
+      setJokerMultiplier(value);
+      toast.success(`Joker multiplier op ${value}x gezet`);
+    } catch (e) {
+      toast.error(`Opslaan mislukt: ${(e as Error).message}`);
+    } finally {
+      setLoadingJokerMultiplier(false);
+    }
   }
 
   // Try multiple RPC variants. Each variant has its own arg shape so we don't
@@ -323,6 +368,39 @@ export default function CalculationTab({
               Herlaad
             </Button>
           </div>
+
+          <div className="rounded-lg border p-4 space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h4 className="font-display font-semibold text-sm">Joker puntenvermenigvuldiging</h4>
+                <p className="text-xs text-muted-foreground">
+                  Kies of jokers de normale punten opleveren (1x) of verdubbeld (2x).
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant={jokerMultiplier === 1 ? "default" : "outline"}
+                  disabled={loadingJokerMultiplier}
+                  onClick={() => saveJokerMultiplier(1)}
+                >
+                  1×
+                </Button>
+                <Button
+                  size="sm"
+                  variant={jokerMultiplier === 2 ? "default" : "outline"}
+                  disabled={loadingJokerMultiplier}
+                  onClick={() => saveJokerMultiplier(2)}
+                >
+                  2×
+                </Button>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Huidige instelling: <strong className="text-foreground">{jokerMultiplier}×</strong> — Joker-renners leveren {jokerMultiplier === 2 ? "dubbele" : "normale"} punten op.
+            </p>
+          </div>
+
           <p className="text-xs text-muted-foreground italic">
             Tip: na opslaan een etappe herberekenen om de stand bij te werken.
           </p>
