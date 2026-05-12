@@ -1,9 +1,11 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
 
 export default function Rules() {
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+
   const { data: game, isLoading: gameLoading } = useCurrentGame();
   const { data: categories = [], isLoading: catsLoading } = useCategories(game?.id);
   const { data: schema = [], isLoading: schemaLoading } = usePointsSchema(game?.id);
