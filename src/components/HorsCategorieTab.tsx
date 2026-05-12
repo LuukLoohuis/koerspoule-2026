@@ -424,19 +424,52 @@ export default function HorsCategorieTab() {
     );
   }
 
+  // ── Sub-tab state ────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur">("dartpijl");
+
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5 pb-6">
 
-      {/* ── Section 1: Monte Carlo ───────────────────────────────────────────── */}
+      {/* ── Sub-tab navigation ─────────────────────────────────────────────── */}
+      <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1">
+        {(
+          [
+            { key: "dartpijl"        as const, label: "Dartpijl",          Icon: Activity  },
+            { key: "pelotonkeuzes"   as const, label: "Pelotonkeuzes",     Icon: BarChart3 },
+            { key: "wielerdirecteur" as const, label: "De Wielerdirecteur", Icon: Megaphone },
+          ]
+        ).map(({ key, label, Icon }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setActiveTab(key)}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors",
+              activeTab === key
+                ? "bg-card text-foreground shadow-sm border border-foreground/10"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
+            )}
+          >
+            <Icon className="h-3.5 w-3.5 shrink-0" />
+            <span className="hidden sm:inline">{label}</span>
+            <span className="sm:hidden">
+              {key === "dartpijl" ? "Dartpijl" : key === "pelotonkeuzes" ? "Peloton" : "Directeur"}
+            </span>
+          </button>
+        ))}
+      </div>
 
-      {!monte ? (
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8 text-center">
-          <span className="text-4xl">🐒</span>
-          <p className="text-white/50 text-sm mt-3 font-serif italic">Nog onvoldoende data om de apen te laten gooien.</p>
-        </div>
-      ) : (
-        <>
+      {/* ── Tab 1: Dartpijl (Monte Carlo) ───────────────────────────────────── */}
+      {activeTab === "dartpijl" && (
+        <div className="space-y-5">
+          {!monte ? (
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8 text-center">
+              <span className="text-4xl">🐒</span>
+              <p className="text-white/50 text-sm mt-3 font-serif italic">Nog onvoldoende data om de apen te laten gooien.</p>
+            </div>
+          ) : (
+          <>
           {/* Hero */}
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] p-6 md:p-8">
             <div
@@ -758,9 +791,12 @@ export default function HorsCategorieTab() {
             </div>
           )}
         </>
+          )}
+        </div>
       )}
 
-      {/* ── Section 2: Pelotonkeuzes ─────────────────────────────────────────── */}
+      {/* ── Tab 2: Pelotonkeuzes ─────────────────────────────────────────────── */}
+      {activeTab === "pelotonkeuzes" && (
       <Card className="ornate-frame retro-border overflow-hidden">
         <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
@@ -930,8 +966,10 @@ export default function HorsCategorieTab() {
           </div>
         </CardContent>
       </Card>
+      )}
 
-      {/* ── Section 3: Wielerdirecteur ───────────────────────────────────────── */}
+      {/* ── Tab 3: De Wielerdirecteur ────────────────────────────────────────── */}
+      {activeTab === "wielerdirecteur" && (
       <Card className="ornate-frame retro-border overflow-hidden">
         <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
@@ -968,6 +1006,7 @@ export default function HorsCategorieTab() {
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
