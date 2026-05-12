@@ -33,6 +33,7 @@ const features = [
 
 
 export default function Index() {
+  const navigate = useNavigate();
   return (
     <div>
       {/* Hero */}
