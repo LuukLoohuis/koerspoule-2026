@@ -169,14 +169,6 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
 
       {/* Per-stage cumulative line chart — herbruikbare component */}
       <SubpouleEvolutionChart subpouleId={subpouleId} />
-
-          <div className="mt-3 flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/30">
-            <span className="h-px w-8 bg-white/20" />
-            <span>Cumulatieve punten</span>
-            <span className="h-px w-8 bg-white/20" />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
