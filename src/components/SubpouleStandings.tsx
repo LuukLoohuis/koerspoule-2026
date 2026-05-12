@@ -1,53 +1,25 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Trophy, TrendingUp, Crown, Swords, Eye, EyeOff } from "lucide-react";
+import { Trophy, Crown, Swords, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useEntries, useStages, useStagePoints } from "@/hooks/useResults";
+import { useEntries } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import TeamComparison from "@/components/TeamComparison";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from "recharts";
+import SubpouleEvolutionChart, { LINE_COLORS } from "@/components/SubpouleEvolutionChart";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 type Props = {
   subpouleId: string;
   subpouleName: string;
 };
 
-// Bold contrasting palette for max distinguishability
-const LINE_COLORS = [
-  "#E6194B", "#3CB44B", "#4363D8", "#F58231",
-  "#911EB4", "#42D4F4", "#F032E6", "#9A6324",
-  "#469990", "#800000", "#808000", "#000075",
-  "#FF6F00", "#00BFA5", "#C71585", "#1E88E5",
-];
-
 export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
-  const isMobile = useIsMobile();
   const { user } = useAuth();
   const { data: game } = useCurrentGame();
-  const { data: members = [], isLoading: membersLoading, error: membersError } = useSubpouleMembers(subpouleId);
+  const { data: members = [], isLoading: membersLoading } = useSubpouleMembers(subpouleId);
   const { data: entries = [] } = useEntries(game?.id);
-  const { data: stages = [] } = useStages(game?.id);
-  const { data: stagePoints = [] } = useStagePoints(game?.id);
-
-  // eslint-disable-next-line no-console
-  console.log("[SubpouleStandings]", { subpouleId, membersLoading, membersCount: members.length, membersError });
-
-  // Members → entries
-  const memberRows = useMemo(() => {
     return members
       .map((m) => {
         const entry = entries.find((e) => e.user_id === m.user_id);
