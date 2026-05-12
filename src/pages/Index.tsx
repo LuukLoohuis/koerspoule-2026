@@ -70,11 +70,23 @@ export default function Index() {
             <div
               className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in"
               style={{ animationDelay: "0.3s" }}>
-              <Button asChild size="lg" className="retro-border-primary text-base font-bold">
-                <Link to="/team-samenstellen">🚴 Stel je ploeg samen</Link>
+              <Button
+                size="lg"
+                className="retro-border-primary text-base font-bold"
+                onClick={() => smoothScrollTo("stel-je-ploeg-samen")}
+              >
+                🚴 Stel je ploeg samen
               </Button>
-              <Button asChild variant="outline" size="lg" className="retro-border text-base">
-                <Link to="/regels">Bekijk spelregels</Link>
+              <Button
+                variant="outline"
+                size="lg"
+                className="retro-border text-base"
+                onClick={() => {
+                  navigate("/uitslagen");
+                  smoothScrollToTop();
+                }}
+              >
+                Bekijk uitslagen
               </Button>
             </div>
           </div>
