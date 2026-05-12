@@ -1,0 +1,217 @@
+import { useState } from "react";
+import {
+  CartesianGrid, Line, LineChart, ReferenceLine,
+  ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from "recharts";
+import { TrendingUp } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { LINE_COLORS } from "@/components/SubpouleEvolutionChart";
+
+const DEMO_MEMBERS = [
+  { user_id: "u1", display_name: "Lars van Dijk" },
+  { user_id: "u2", display_name: "Sofie Hendriks" },
+  { user_id: "u3", display_name: "Bas de Groot" },
+  { user_id: "u4", display_name: "Emma Janssen" },
+  { user_id: "u5", display_name: "Pieter Kuipers" },
+  { user_id: "u6", display_name: "Roos Bakker" },
+];
+
+// Per-stage point gains (8 stages played)
+const STAGE_DELTAS: Record<string, number[]> = {
+  u1: [42, 18, 50, 12, 38, 56, 28, 68],
+  u2: [38, 26, 44, 18, 32, 48, 36, 56],
+  u3: [30, 22, 48, 16, 28, 52, 38, 41],
+  u4: [36, 14, 40, 22, 30, 44, 32, 43],
+  u5: [28, 20, 36, 18, 26, 48, 30, 38],
+  u6: [24, 18, 32, 14, 24, 44, 28, 44],
+};
+
+function buildChartData() {
+  const cum: Record<string, number> = {};
+  for (const m of DEMO_MEMBERS) cum[m.user_id] = 0;
+  return Array.from({ length: 8 }, (_, i) => {
+    const row: Record<string, any> = { stage: `E${i + 1}`, stageNumber: i + 1 };
+    for (const m of DEMO_MEMBERS) {
+      const delta = STAGE_DELTAS[m.user_id][i];
+      cum[m.user_id] += delta;
+      row[`pts_${m.user_id}`] = cum[m.user_id];
+      row[`delta_${m.user_id}`] = delta;
+    }
+    const sorted = DEMO_MEMBERS
+      .map((m) => ({ id: m.user_id, pts: cum[m.user_id] }))
+      .sort((a, b) => b.pts - a.pts);
+    let lastPts = -Infinity, lastRank = 0;
+    sorted.forEach((s, idx) => {
+      const rank = s.pts === lastPts ? lastRank : idx + 1;
+      lastPts = s.pts; lastRank = rank;
+      row[`rank_${s.id}`] = rank;
+    });
+    return row;
+  });
+}
+
+const CHART_DATA = buildChartData();
+
+export default function DemoEvolutionChart() {
+  const isMobile = useIsMobile();
+  const [highlightId, setHighlightId] = useState("u1");
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+
+  const toggleVisible = (uid: string) =>
+    setHiddenIds((prev) => { const n = new Set(prev); n.has(uid) ? n.delete(uid) : n.add(uid); return n; });
+
+  const allHidden = DEMO_MEMBERS.every((m) => hiddenIds.has(m.user_id));
+  const toggleAll = () =>
+    allHidden ? setHiddenIds(new Set()) : setHiddenIds(new Set(DEMO_MEMBERS.map((m) => m.user_id)));
+
+  const chartHeight = isMobile ? 220 : 260;
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]">
+      <div aria-hidden className="pointer-events-none absolute -top-32 -right-24 h-72 w-72 rounded-full blur-3xl opacity-30" style={{ background: "radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)" }} />
+      <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 h-72 w-72 rounded-full blur-3xl opacity-20" style={{ background: "radial-gradient(circle, hsl(var(--accent)) 0%, transparent 70%)" }} />
+      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+
+      <div className="relative p-4">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/50">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_2px_rgba(52,211,153,0.6)]" />
+              Live performance
+            </div>
+            <h3 className="mt-1 font-display text-white text-base sm:text-lg flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              Jouw subpoule
+            </h3>
+            <p className="text-xs text-white/50 mt-1">Etappe-evolutie · klik op een naam om te markeren</p>
+          </div>
+          <button
+            onClick={toggleAll}
+            className="text-[11px] font-medium px-3 py-1.5 rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/25 backdrop-blur-md transition-all"
+          >
+            {allHidden ? "Toon alles" : "Verberg alles"}
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          {DEMO_MEMBERS.map((m, idx) => {
+            const color = LINE_COLORS[idx % LINE_COLORS.length];
+            const visible = !hiddenIds.has(m.user_id);
+            const isHighlighted = m.user_id === highlightId;
+            return (
+              <button
+                key={m.user_id}
+                onClick={() => { setHighlightId(m.user_id); if (!visible) toggleVisible(m.user_id); }}
+                onDoubleClick={() => toggleVisible(m.user_id)}
+                className={cn(
+                  "group flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border backdrop-blur-md transition-all",
+                  visible
+                    ? "border-white/15 bg-white/5 text-white/90 hover:bg-white/10 hover:border-white/30"
+                    : "border-white/5 bg-white/[0.02] text-white/30 hover:text-white/60",
+                  isHighlighted && visible && "ring-1 ring-white/40 bg-white/10"
+                )}
+                title={visible ? "Dubbelklik om te verbergen" : "Klik om te tonen"}
+              >
+                <span
+                  className="h-2 w-2 rounded-full transition-all"
+                  style={{
+                    backgroundColor: visible ? color : "transparent",
+                    border: visible ? "none" : `1.5px solid ${color}`,
+                    boxShadow: isHighlighted && visible ? `0 0 8px ${color}` : "none",
+                  }}
+                />
+                <span className="truncate max-w-[110px]">{m.display_name}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-4" style={{ height: chartHeight }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={CHART_DATA} margin={{ top: 20, right: isMobile ? 8 : 24, left: -8, bottom: 4 }}>
+              <defs>
+                {DEMO_MEMBERS.map((m) => (
+                  <filter key={m.user_id} id={`demo-glow-${m.user_id}`} x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2.5" result="blur" />
+                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                ))}
+              </defs>
+              <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.06)" />
+              <XAxis dataKey="stage" tick={{ fontSize: isMobile ? 10 : 11, fill: "rgba(255,255,255,0.45)", fontWeight: 500 }} axisLine={false} tickLine={false} padding={{ left: 12, right: 12 }} dy={6} />
+              <YAxis allowDecimals={false} tick={{ fontSize: isMobile ? 10 : 11, fill: "rgba(255,255,255,0.4)", fontWeight: 500 }} width={40} axisLine={false} tickLine={false} domain={[0, "auto"]} tickCount={isMobile ? 5 : 6} />
+              <ReferenceLine x="E8" stroke="hsl(var(--primary))" strokeWidth={1} strokeDasharray="3 4" strokeOpacity={0.6} label={{ value: "NU", position: "top", fill: "hsl(var(--primary))", fontSize: 9, fontWeight: 700, letterSpacing: 1 }} />
+              <Tooltip
+                cursor={{ stroke: "rgba(255,255,255,0.25)", strokeWidth: 1, strokeDasharray: "3 4" }}
+                content={(props: any) => {
+                  const { active, payload, label } = props;
+                  if (!active || !payload?.length) return null;
+                  const row = payload[0].payload as Record<string, any>;
+                  const visible = DEMO_MEMBERS.filter((m) => !hiddenIds.has(m.user_id));
+                  const sorted = [...visible].sort((a, b) => (row[`rank_${a.user_id}`] ?? 999) - (row[`rank_${b.user_id}`] ?? 999));
+                  return (
+                    <div className="rounded-xl border border-white/10 bg-slate-900/80 backdrop-blur-xl shadow-2xl text-xs text-white/90 overflow-hidden" style={{ padding: "10px 12px", maxWidth: 240 }}>
+                      <div className="font-display font-semibold text-sm mb-2 text-white flex items-baseline gap-1.5">
+                        <span className="text-[10px] uppercase tracking-widest text-white/40">Etappe</span>
+                        <span>{String(label).replace("E", "")}</span>
+                      </div>
+                      <div className="space-y-1">
+                        {sorted.map((m) => {
+                          const idx = DEMO_MEMBERS.findIndex((r) => r.user_id === m.user_id);
+                          const color = LINE_COLORS[idx % LINE_COLORS.length];
+                          const rank = row[`rank_${m.user_id}`];
+                          const pts = row[`pts_${m.user_id}`] ?? 0;
+                          const delta = row[`delta_${m.user_id}`] ?? 0;
+                          return (
+                            <div key={m.user_id} className="flex items-center gap-2 py-0.5 px-1 -mx-1 rounded">
+                              <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}80` }} />
+                              <span className="w-5 tabular-nums text-white/40 text-[10px]">#{rank}</span>
+                              <span className="truncate flex-1 text-white/80">{m.display_name}</span>
+                              <span className="tabular-nums font-medium text-white">{pts}</span>
+                              {delta > 0 && <span className="tabular-nums text-emerald-400 text-[10px] font-semibold">+{delta}</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                }}
+              />
+              {DEMO_MEMBERS.map((m, idx) => {
+                if (hiddenIds.has(m.user_id)) return null;
+                const color = LINE_COLORS[idx % LINE_COLORS.length];
+                const isHighlighted = m.user_id === highlightId;
+                const dimmed = highlightId && !isHighlighted;
+                return (
+                  <Line
+                    key={m.user_id}
+                    type="monotone"
+                    dataKey={`pts_${m.user_id}`}
+                    stroke={color}
+                    strokeWidth={isHighlighted ? 3 : 1.75}
+                    strokeOpacity={dimmed ? 0.35 : 1}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    filter={isHighlighted ? `url(#demo-glow-${m.user_id})` : undefined}
+                    dot={false}
+                    activeDot={{ r: isHighlighted ? 6 : 4, strokeWidth: 2, stroke: "rgba(15,23,42,0.95)", fill: color }}
+                    animationDuration={700}
+                    animationEasing="ease-out"
+                    connectNulls
+                  />
+                );
+              })}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="mt-3 flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/30">
+          <span className="h-px w-8 bg-white/20" />
+          <span>Cumulatieve punten</span>
+          <span className="h-px w-8 bg-white/20" />
+        </div>
+      </div>
+    </div>
+  );
+}

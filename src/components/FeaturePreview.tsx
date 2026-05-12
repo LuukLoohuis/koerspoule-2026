@@ -1,10 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Lock, Mountain, Bike, Users } from "lucide-react";
+import { ArrowRight, Lock, Mountain, Bike } from "lucide-react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
-import GiroHeatmap from "@/components/GiroHeatmap";
+import SubpouleHeatmap from "@/components/SubpouleHeatmap";
+import DemoEvolutionChart from "@/components/DemoEvolutionChart";
+import DemoSubpouleHeatmap from "@/components/DemoSubpouleHeatmap";
 import { cn, smoothScrollToTop } from "@/lib/utils";
 
 type PreviewRider = { number: number; name: string; team: string };
@@ -58,20 +60,24 @@ export default function FeaturePreview() {
         </p>
       </div>
 
-      {/* Top row: subpoule chart + Giro heatmap */}
+      {/* Top row: subpoule chart + subpoule heatmap */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
         {firstSubpouleId ? (
-          <SubpouleEvolutionChart
-            subpouleId={firstSubpouleId}
-            compact
-            title="Jouw subpoule"
-            subtitle="Etappe-evolutie · live preview"
-          />
+          <>
+            <SubpouleEvolutionChart
+              subpouleId={firstSubpouleId}
+              compact
+              title="Jouw subpoule"
+              subtitle="Etappe-evolutie · live preview"
+            />
+            <SubpouleHeatmap subpouleId={firstSubpouleId} />
+          </>
         ) : (
-          <DemoEvolutionChart isLoggedIn={isLoggedIn} />
+          <>
+            <DemoEvolutionChart />
+            <DemoSubpouleHeatmap />
+          </>
         )}
-
-        <GiroHeatmap compact />
       </div>
 
       {/* Two category blocks */}
@@ -184,72 +190,3 @@ function RiderBlock({
   );
 }
 
-function DemoEvolutionChart({ isLoggedIn }: { isLoggedIn: boolean }) {
-  // Lichte demo-versie zodat publiekelijke bezoekers ook iets zien.
-  // Visueel consistent met SubpouleEvolutionChart maar zonder data.
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)] p-4">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-24 -right-24 h-60 w-60 rounded-full blur-3xl opacity-25"
-        style={{ background: "radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)" }}
-      />
-      <div className="relative">
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/50">
-          <Users className="h-3 w-3" />
-          Subpoule preview
-        </div>
-        <h3 className="mt-1 font-display text-base sm:text-lg text-white">Etappe-evolutie</h3>
-        <p className="text-[11px] text-white/50 mt-0.5">
-          Zodra je in een subpoule zit, zie je hier de live ranking per etappe.
-        </p>
-
-        {/* Decorative SVG line preview */}
-        <svg
-          viewBox="0 0 320 140"
-          className="mt-4 w-full h-44"
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <linearGradient id="demo-grid" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.06)" />
-              <stop offset="100%" stopColor="rgba(255,255,255,0.02)" />
-            </linearGradient>
-          </defs>
-          {[0, 35, 70, 105, 140].map((y) => (
-            <line key={y} x1="0" x2="320" y1={y} y2={y} stroke="url(#demo-grid)" strokeWidth="1" />
-          ))}
-          {[
-            { c: "#E6194B", d: "M0,120 L40,108 L80,90 L120,75 L160,60 L200,45 L240,35 L280,22 L320,10" },
-            { c: "#3CB44B", d: "M0,128 L40,118 L80,102 L120,90 L160,78 L200,68 L240,55 L280,42 L320,32" },
-            { c: "#4363D8", d: "M0,132 L40,124 L80,118 L120,108 L160,98 L200,86 L240,72 L280,60 L320,48" },
-            { c: "#F58231", d: "M0,135 L40,128 L80,124 L120,118 L160,110 L200,100 L240,92 L280,80 L320,68" },
-          ].map((l, i) => (
-            <path
-              key={i}
-              d={l.d}
-              fill="none"
-              stroke={l.c}
-              strokeWidth={i === 0 ? 2.5 : 1.5}
-              strokeOpacity={i === 0 ? 1 : 0.6}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          ))}
-        </svg>
-
-        <div className="mt-3 flex items-center justify-between text-[10px] text-white/40">
-          <span>E1</span>
-          <span>E11</span>
-          <span>E21</span>
-        </div>
-
-        <p className="text-[11px] text-white/50 mt-3 italic">
-          {isLoggedIn
-            ? "Maak of join een subpoule om je echte verloop te zien."
-            : "Login en sluit je aan bij een subpoule voor live data."}
-        </p>
-      </div>
-    </div>
-  );
-}
