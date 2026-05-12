@@ -1,55 +1,35 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useMemo } from "react";
-import { ArrowRight, Layers, Lock, Mountain, Bike, Users } from "lucide-react";
+import { ArrowRight, Lock, Mountain, Bike, Users } from "lucide-react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useCategories } from "@/hooks/useCategories";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import GiroHeatmap from "@/components/GiroHeatmap";
 import { cn, smoothScrollToTop } from "@/lib/utils";
 
-// Categorie-blokken: Klassement vs Sprint & aanval.
-// Heuristisch op basis van categorie-naam (zonder DB-wijziging).
-function classifyCategory(name: string): "klassement" | "sprint" {
-  const n = name.toLowerCase();
-  if (
-    n.includes("sprint") ||
-    n.includes("aanval") ||
-    n.includes("baroudeur") ||
-    n.includes("vlucht") ||
-    n.includes("tijdr") ||
-    n.includes("chrono")
-  ) {
-    return "sprint";
-  }
-  return "klassement";
-}
+type PreviewRider = { number: number; name: string; team: string };
+
+const KLASSEMENT_1_RIDERS: PreviewRider[] = [
+  { number: 91,  name: "Egan Bernal",            team: "Netcompany INEOS" },
+  { number: 92,  name: "Thymen Arensman",         team: "Netcompany INEOS" },
+  { number: 125, name: "Giulio Pellizzari",        team: "Red Bull - BORA - hansgrohe" },
+  { number: 191, name: "Adam Yates",               team: "UAE Team Emirates - XRG" },
+];
+
+const SPRINTERS_1_RIDERS: PreviewRider[] = [
+  { number: 32,  name: "Tobias Lund Andresen",    team: "Decathlon CMA CGM Team" },
+  { number: 65,  name: "Jonathan Milan",           team: "Lidl - Trek" },
+  { number: 201, name: "Dylan Groenewegen",        team: "Unibet Rose Rockets" },
+];
 
 export default function FeaturePreview() {
   const navigate = useNavigate();
   const { data: game } = useCurrentGame();
-  const { data: categories = [] } = useCategories(game?.id);
   const { user } = useAuth();
   const { subpoules } = useSubpoules(game?.id);
   const isLoggedIn = Boolean(user);
 
   const firstSubpouleId = subpoules[0]?.id;
-
-  const previewCategories = useMemo(() => {
-    if (categories.length > 0) return categories;
-    return [
-      { id: "1", name: "Algemeen klassement", short_name: "GC favorieten", max_picks: 1 },
-      { id: "2", name: "Klimmers", short_name: "Bergkoning", max_picks: 1 },
-      { id: "3", name: "Belofte", short_name: "Baby Giro", max_picks: 1 },
-      { id: "4", name: "Sprinters", short_name: "Massasprint", max_picks: 1 },
-      { id: "5", name: "Aanvallers", short_name: "Baroudeurs", max_picks: 1 },
-      { id: "6", name: "Tijdrijders", short_name: "Chrono", max_picks: 1 },
-    ] as Array<{ id: string; name: string; short_name: string | null; max_picks: number }>;
-  }, [categories]);
-
-  const klassementCats = previewCategories.filter((c) => classifyCategory(c.name) === "klassement").slice(0, 3);
-  const sprintCats = previewCategories.filter((c) => classifyCategory(c.name) === "sprint").slice(0, 3);
 
   const ctaPrimary = isLoggedIn ? "/team-samenstellen" : "/login";
 
@@ -96,17 +76,17 @@ export default function FeaturePreview() {
 
       {/* Two category blocks */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-        <CategoryBlock
-          title="Klassement"
+        <RiderBlock
+          title="Klassement 1"
           subtitle="Hoofdrolspelers voor het algemeen klassement"
           icon={<Mountain className="h-5 w-5 text-primary" />}
-          categories={klassementCats}
+          riders={KLASSEMENT_1_RIDERS}
         />
-        <CategoryBlock
-          title="Sprint &amp; aanval"
+        <RiderBlock
+          title="Sprinters 1"
           subtitle="Etappekanonnen, baroudeurs en chronospecialisten"
           icon={<Bike className="h-5 w-5 text-primary" />}
-          categories={sprintCats}
+          riders={SPRINTERS_1_RIDERS}
         />
       </div>
 
@@ -157,18 +137,18 @@ export default function FeaturePreview() {
 
 // ---------- Sub-components ----------
 
-function CategoryBlock({
+function RiderBlock({
   title,
   subtitle,
   icon,
-  categories,
+  riders,
 }: {
   title: string;
   subtitle: string;
   icon: JSX.Element;
-  categories: Array<{ id: string; name: string; short_name: string | null; max_picks: number }>;
+  riders: PreviewRider[];
 }) {
-  if (categories.length === 0) return null;
+  if (riders.length === 0) return null;
   return (
     <article className="ornate-frame retro-border bg-card p-5 group hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary opacity-70" />
@@ -181,21 +161,21 @@ function CategoryBlock({
       <h3 className="font-display text-lg font-bold mb-1">{title}</h3>
       <p className="text-xs text-muted-foreground font-serif italic mb-3">{subtitle}</p>
       <div className="space-y-1.5">
-        {categories.map((c, i) => (
+        {riders.map((r) => (
           <div
-            key={c.id}
+            key={r.number}
             className="flex items-center justify-between gap-2 p-2 rounded-md border border-border bg-secondary/30 hover:bg-secondary hover:border-primary/40 transition-colors"
           >
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[10px] font-mono text-muted-foreground w-6 text-right">
-                {String(i + 1).padStart(2, "0")}
+              <span className="text-[10px] font-mono text-muted-foreground w-8 text-right shrink-0">
+                {r.number}
               </span>
               <span className="font-medium font-sans text-sm truncate">
-                {c.short_name ?? c.name}
+                {r.name}
               </span>
             </div>
-            <span className="text-[10px] font-mono text-muted-foreground shrink-0">
-              {c.max_picks}× pick
+            <span className="text-[10px] font-mono text-muted-foreground shrink-0 truncate max-w-[45%] text-right">
+              {r.team}
             </span>
           </div>
         ))}
