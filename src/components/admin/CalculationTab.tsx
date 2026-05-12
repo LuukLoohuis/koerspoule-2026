@@ -92,7 +92,7 @@ export default function CalculationTab({
     try {
       const { error } = await supabase.rpc("calculate_stage_scores", { p_stage_id: sid });
       if (error) throw error;
-      await supabase.rpc("update_total_ranking", { p_game_id: activeGameId }).catch(() => undefined);
+      try { await supabase.rpc("update_total_ranking", { p_game_id: activeGameId }); } catch { /* ignore */ }
       toast.success("Etappe berekend");
       await loadOverview();
     } catch (e) {
