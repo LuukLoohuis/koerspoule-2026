@@ -1,9 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, Bike, BookOpen } from "lucide-react";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import CountdownBanner from "@/components/CountdownBanner";
+import { smoothScrollTo, smoothScrollToTop } from "@/lib/utils";
 
 const FeaturePreview = lazy(() => import("@/components/FeaturePreview"));
 const HorsCategoriePreview = lazy(() => import("@/components/HorsCategoriePreview"));
@@ -32,6 +33,7 @@ const features = [
 
 
 export default function Index() {
+  const navigate = useNavigate();
   return (
     <div>
       {/* Hero */}
@@ -69,11 +71,23 @@ export default function Index() {
             <div
               className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in"
               style={{ animationDelay: "0.3s" }}>
-              <Button asChild size="lg" className="retro-border-primary text-base font-bold">
-                <Link to="/team-samenstellen">🚴 Stel je ploeg samen</Link>
+              <Button
+                size="lg"
+                className="retro-border-primary text-base font-bold"
+                onClick={() => smoothScrollTo("stel-je-ploeg-samen")}
+              >
+                🚴 Stel je ploeg samen
               </Button>
-              <Button asChild variant="outline" size="lg" className="retro-border text-base">
-                <Link to="/regels">Bekijk spelregels</Link>
+              <Button
+                variant="outline"
+                size="lg"
+                className="retro-border text-base"
+                onClick={() => {
+                  navigate("/uitslagen");
+                  smoothScrollToTop();
+                }}
+              >
+                Bekijk uitslagen
               </Button>
             </div>
           </div>
@@ -91,7 +105,10 @@ export default function Index() {
       </Suspense>
 
       {/* Features */}
-      <section className="container mx-auto px-4 py-16 md:py-24 vintage-texture">
+      <section
+        id="stel-je-ploeg-samen"
+        className="container mx-auto px-4 py-16 md:py-24 vintage-texture scroll-mt-20"
+      >
         <h2 className="vintage-heading text-3xl md:text-4xl font-bold text-center mb-4">Hoe werkt het?</h2>
         <div className="vintage-ornament max-w-xs mx-auto mb-12">
           <span className="vintage-ornament-symbol">✦</span>
