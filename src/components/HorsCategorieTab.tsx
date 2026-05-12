@@ -188,7 +188,7 @@ function DarkStatCard({
 }) {
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 flex flex-col",
+      "relative overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-700 via-slate-700 to-slate-800 p-4 flex flex-col",
       accentColor === "gold"  && "border-[hsl(var(--vintage-gold))/0.25]",
       accentColor === "blue"  && "border-sky-500/25",
       accentColor === "green" && "border-emerald-500/25",
@@ -449,10 +449,10 @@ export default function HorsCategorieTab() {
 
             <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div>
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 mb-3">
-                  <span className="text-lg">🐒</span>
-                  <span>De Aap met de Dartpijl · Monte Carlo · 5.000 simulaties</span>
-                </div>
+                <h2 className="font-display text-3xl md:text-4xl font-black text-white mb-1">
+                  🐒 De aap met de dartpijl
+                </h2>
+                <p className="text-sm text-white/45 mb-5">Monte Carlo Simulatie — 5000 simulaties</p>
                 <div className={cn(
                   "font-display tabular-nums font-black leading-none mb-2",
                   "text-5xl md:text-6xl",
@@ -485,7 +485,7 @@ export default function HorsCategorieTab() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
             {/* Distribution chart */}
-            <div className="md:col-span-2 relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-5">
+            <div className="md:col-span-2 relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-slate-700 via-slate-700 to-slate-800 p-4 md:p-5">
               <div aria-hidden className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full blur-3xl opacity-15"
                 style={{ background: "radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)" }} />
               <div className="relative">
@@ -510,29 +510,82 @@ export default function HorsCategorieTab() {
                           <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="bucket" tick={{ fontSize: 9, fill: "rgba(255,255,255,0.35)" }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 9, fill: "rgba(255,255,255,0.35)" }} axisLine={false} tickLine={false} />
+                      <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.12)" />
+                      <XAxis dataKey="bucket" tick={{ fontSize: 9, fill: "rgba(255,255,255,0.7)" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 9, fill: "rgba(255,255,255,0.7)" }} axisLine={false} tickLine={false} />
                       <Tooltip
-                        cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                        cursor={{ fill: "rgba(255,255,255,0.07)" }}
                         content={(props: any) => {
                           const { active, payload } = props;
                           if (!active || !payload?.length) return null;
                           const { bucket, count } = payload[0].payload;
                           return (
-                            <div className="rounded-xl border border-white/10 bg-slate-900/90 backdrop-blur-xl px-3 py-2 text-xs text-white/80 shadow-xl">
+                            <div className="rounded-xl border border-white/20 bg-slate-800/95 backdrop-blur-xl px-3 py-2 text-xs text-white shadow-xl">
                               <div className="font-mono font-bold text-white">{bucket} pt</div>
-                              <div className="text-white/50">{count} apen</div>
+                              <div className="text-white/60">{count} apen</div>
                             </div>
                           );
                         }}
                       />
-                      <ReferenceLine x={monte.userActual} stroke="hsl(var(--vintage-gold))" strokeWidth={2.5}
-                        label={{ value: `Jij · ${monte.userActual}`, position: "top", fill: "hsl(var(--vintage-gold))", fontSize: 10, fontWeight: 700 }} />
-                      <ReferenceLine x={Math.round(monte.mean)} stroke="rgba(255,255,255,0.45)" strokeWidth={1.5} strokeDasharray="4 3"
-                        label={{ value: "Ø", position: "insideTopRight", fill: "rgba(255,255,255,0.5)", fontSize: 10 }} />
-                      <ReferenceLine x={monte.median} stroke="#34d399" strokeWidth={1.5} strokeDasharray="4 3"
-                        label={{ value: "M", position: "insideTopLeft", fill: "#34d399", fontSize: 10 }} />
+                      {/* Jouw score — amber, solid, thick */}
+                      <ReferenceLine
+                        x={monte.userActual}
+                        stroke="#fbbf24"
+                        strokeWidth={3}
+                        label={(props: any) => {
+                          const { viewBox } = props;
+                          const x = viewBox?.x ?? 0;
+                          const y = viewBox?.y ?? 0;
+                          return (
+                            <g>
+                              <rect x={x - 36} y={y - 24} width={72} height={18} rx={4} fill="#fbbf24" />
+                              <text x={x} y={y - 11} fill="#1c1400" fontSize={9} fontWeight={800} textAnchor="middle">
+                                {`Jij · ${monte.userActual} pt`}
+                              </text>
+                            </g>
+                          );
+                        }}
+                      />
+                      {/* Gemiddelde — sky blue, dashed */}
+                      <ReferenceLine
+                        x={Math.round(monte.mean)}
+                        stroke="#38bdf8"
+                        strokeWidth={2.5}
+                        strokeDasharray="5 3"
+                        label={(props: any) => {
+                          const { viewBox } = props;
+                          const x = viewBox?.x ?? 0;
+                          const y = viewBox?.y ?? 0;
+                          return (
+                            <g>
+                              <rect x={x - 32} y={y - 46} width={64} height={18} rx={4} fill="#38bdf8" />
+                              <text x={x} y={y - 33} fill="#001a27" fontSize={9} fontWeight={800} textAnchor="middle">
+                                {`Gem. · ${Math.round(monte.mean)} pt`}
+                              </text>
+                            </g>
+                          );
+                        }}
+                      />
+                      {/* Mediaan — green, dashed */}
+                      <ReferenceLine
+                        x={monte.median}
+                        stroke="#4ade80"
+                        strokeWidth={2.5}
+                        strokeDasharray="5 3"
+                        label={(props: any) => {
+                          const { viewBox } = props;
+                          const x = viewBox?.x ?? 0;
+                          const y = viewBox?.y ?? 0;
+                          return (
+                            <g>
+                              <rect x={x - 32} y={y - 68} width={64} height={18} rx={4} fill="#4ade80" />
+                              <text x={x} y={y - 55} fill="#001a00" fontSize={9} fontWeight={800} textAnchor="middle">
+                                {`Med. · ${monte.median} pt`}
+                              </text>
+                            </g>
+                          );
+                        }}
+                      />
                       <Bar dataKey="count" radius={[3, 3, 0, 0]} maxBarSize={24} animationDuration={800}>
                         {monte.dist.map((b, i) => (
                           <Cell key={i} fill={b.bucket <= monte.userActual ? "url(#hc-bar-beat)" : "url(#hc-bar-lose)"} />
@@ -541,25 +594,25 @@ export default function HorsCategorieTab() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex flex-wrap gap-4 mt-3 text-[10px] text-white/35">
+                <div className="flex flex-wrap gap-4 mt-3 text-[10px] text-white/70">
                   <span className="flex items-center gap-1.5">
-                    <span className="inline-block h-2 w-4 rounded-sm" style={{ background: "hsl(var(--vintage-gold))" }} />
-                    Jouw score
+                    <span className="inline-block h-2.5 w-3 rounded-sm bg-[#fbbf24]" />
+                    Jou ({monte.userActual} pt)
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="inline-block h-px w-4 border-t border-white/40 border-dashed" />
-                    Gemiddelde (Ø)
+                    <span className="inline-block h-px w-4 border-t-2 border-dashed border-[#38bdf8]" />
+                    Gemiddelde ({Math.round(monte.mean)} pt)
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="inline-block h-px w-4 border-t border-emerald-400/70 border-dashed" />
-                    Mediaan (M)
+                    <span className="inline-block h-px w-4 border-t-2 border-dashed border-[#4ade80]" />
+                    Mediaan ({monte.median} pt)
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Percentile gauge */}
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-5 flex flex-col items-center justify-center gap-1">
+            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-slate-700 via-slate-700 to-slate-800 p-5 flex flex-col items-center justify-center gap-1">
               <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">Percentiel</div>
               <PercentileGauge pct={monte.beatPct} />
               <div className={cn(
@@ -626,7 +679,7 @@ export default function HorsCategorieTab() {
 
           {/* Stage timeline */}
           {stageTimeline.length > 0 && (
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-5">
+            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-slate-700 via-slate-700 to-slate-800 p-4 md:p-5">
               <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full blur-3xl opacity-20"
                 style={{ background: "radial-gradient(circle, hsl(var(--vintage-gold)) 0%, transparent 70%)" }} />
               <div className="relative">
