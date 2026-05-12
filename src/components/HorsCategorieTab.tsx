@@ -560,6 +560,12 @@ export default function HorsCategorieTab() {
                           );
                         }}
                       />
+                      <Bar dataKey="count" radius={[3, 3, 0, 0]} maxBarSize={24} animationDuration={800}>
+                        {monte.dist.map((b, i) => (
+                          <Cell key={i} fill={b.bucket <= monte.userActual ? "url(#hc-bar-beat)" : "url(#hc-bar-lose)"} />
+                        ))}
+                      </Bar>
+                      {/* Reference lines AFTER Bar so they render on top */}
                       {/* Jouw score — amber, solid, thick */}
                       <ReferenceLine
                         x={monte.userActual}
@@ -567,12 +573,12 @@ export default function HorsCategorieTab() {
                         strokeWidth={3}
                         label={(props: any) => {
                           const { viewBox } = props;
-                          const x = viewBox?.x ?? 0;
-                          const y = viewBox?.y ?? 0;
+                          const lx = viewBox?.x ?? 0;
+                          const ly = (viewBox?.y ?? 0) + 6;
                           return (
                             <g>
-                              <rect x={x - 36} y={y - 24} width={72} height={18} rx={4} fill="#fbbf24" />
-                              <text x={x} y={y - 11} fill="#1c1400" fontSize={9} fontWeight={800} textAnchor="middle">
+                              <rect x={lx - 34} y={ly} width={68} height={16} rx={3} fill="#fbbf24" />
+                              <text x={lx} y={ly + 11} fill="#1c1400" fontSize={9} fontWeight={800} textAnchor="middle">
                                 {`Jij · ${monte.userActual} pt`}
                               </text>
                             </g>
@@ -587,12 +593,12 @@ export default function HorsCategorieTab() {
                         strokeDasharray="5 3"
                         label={(props: any) => {
                           const { viewBox } = props;
-                          const x = viewBox?.x ?? 0;
-                          const y = viewBox?.y ?? 0;
+                          const lx = viewBox?.x ?? 0;
+                          const ly = (viewBox?.y ?? 0) + 26;
                           return (
                             <g>
-                              <rect x={x - 32} y={y - 46} width={64} height={18} rx={4} fill="#38bdf8" />
-                              <text x={x} y={y - 33} fill="#001a27" fontSize={9} fontWeight={800} textAnchor="middle">
+                              <rect x={lx - 34} y={ly} width={70} height={16} rx={3} fill="#38bdf8" />
+                              <text x={lx} y={ly + 11} fill="#001a27" fontSize={9} fontWeight={800} textAnchor="middle">
                                 {`Gem. · ${Math.round(monte.mean)} pt`}
                               </text>
                             </g>
@@ -607,23 +613,18 @@ export default function HorsCategorieTab() {
                         strokeDasharray="5 3"
                         label={(props: any) => {
                           const { viewBox } = props;
-                          const x = viewBox?.x ?? 0;
-                          const y = viewBox?.y ?? 0;
+                          const lx = viewBox?.x ?? 0;
+                          const ly = (viewBox?.y ?? 0) + 46;
                           return (
                             <g>
-                              <rect x={x - 32} y={y - 68} width={64} height={18} rx={4} fill="#4ade80" />
-                              <text x={x} y={y - 55} fill="#001a00" fontSize={9} fontWeight={800} textAnchor="middle">
+                              <rect x={lx - 34} y={ly} width={70} height={16} rx={3} fill="#4ade80" />
+                              <text x={lx} y={ly + 11} fill="#001a00" fontSize={9} fontWeight={800} textAnchor="middle">
                                 {`Med. · ${monte.median} pt`}
                               </text>
                             </g>
                           );
                         }}
                       />
-                      <Bar dataKey="count" radius={[3, 3, 0, 0]} maxBarSize={24} animationDuration={800}>
-                        {monte.dist.map((b, i) => (
-                          <Cell key={i} fill={b.bucket <= monte.userActual ? "url(#hc-bar-beat)" : "url(#hc-bar-lose)"} />
-                        ))}
-                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
