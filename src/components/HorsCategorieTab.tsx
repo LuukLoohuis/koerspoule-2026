@@ -1,20 +1,46 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  BarChart, Bar, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, ReferenceLine,
+  Tooltip, ResponsiveContainer, Cell,
+} from "recharts";
 import { supabase } from "@/lib/supabase";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine, Cell } from "recharts";
+import { useStagePoints, useStages } from "@/hooks/useResults";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Lock, Sparkles, BarChart3, Megaphone, Trophy } from "lucide-react";
+import {
+  Lock, Activity, Trophy, BarChart3, Megaphone, Sparkles,
+} from "lucide-react";
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 type PickStat = { category_id: string; rider_id: string; pick_count: number; total_entries: number };
 type JokerStat = { rider_id: string; joker_count: number; total_entries: number };
 type StagePoint = { entry_id: string; points: number };
 type PredictionStat = { classification: string; position: number; rider_id: string; pick_count: number; total_entries: number };
+
+// ─── Ownership colour (unchanged) ────────────────────────────────────────────
+
+function ownershipColor(pct: number): string {
+  const clamped = Math.max(0, Math.min(100, pct));
+  const intensity = 1 - clamped / 100;
+  const alpha = 0.18 + intensity * 0.7;
+  return `hsl(var(--vintage-gold) / ${alpha.toFixed(2)})`;
+}
+
+const CLASSIFICATION_META: Array<{ key: "gc" | "points" | "kom" | "youth"; label: string; emoji: string; tint: string }> = [
+  { key: "gc",     label: "Eindwinnaar",  emoji: "🏆", tint: "from-primary/20 to-[hsl(var(--vintage-gold))/0.15]" },
+  { key: "points", label: "Groene trui",  emoji: "🟢", tint: "from-emerald-500/15 to-emerald-500/5" },
+  { key: "kom",    label: "Bolletjestrui",emoji: "🔴", tint: "from-rose-500/15 to-rose-500/5" },
+  { key: "youth",  label: "Witte trui",   emoji: "⚪", tint: "from-slate-200/30 to-slate-200/10" },
+];
+
+// ─── Data hooks (all unchanged) ───────────────────────────────────────────────
 
 function usePredictionStats(gameId?: string) {
   return useQuery({
@@ -28,25 +54,6 @@ function usePredictionStats(gameId?: string) {
     },
   });
 }
-
-// Heatmap-kleur: zeldzame keuzes (lage ownership) = donker/intens, populair = licht/muted
-function ownershipColor(pct: number): string {
-  // pct 0..100. Lage pct → goud-intens; hoge pct → muted lichtgrijs.
-  const clamped = Math.max(0, Math.min(100, pct));
-  // intensiteit 0 (licht) bij 100% → 1 (donker/intens) bij 0%
-  const intensity = 1 - clamped / 100;
-  // Mengel: van muted-foreground/20 → vintage-gold met hoge alpha
-  const alpha = 0.18 + intensity * 0.7; // 0.18..0.88
-  return `hsl(var(--vintage-gold) / ${alpha.toFixed(2)})`;
-}
-
-const CLASSIFICATION_META: Array<{ key: "gc" | "points" | "kom" | "youth"; label: string; emoji: string; tint: string }> = [
-  { key: "gc", label: "Eindwinnaar", emoji: "🏆", tint: "from-primary/20 to-[hsl(var(--vintage-gold))/0.15]" },
-  { key: "points", label: "Groene trui", emoji: "🟢", tint: "from-emerald-500/15 to-emerald-500/5" },
-  { key: "kom", label: "Bolletjestrui", emoji: "🔴", tint: "from-rose-500/15 to-rose-500/5" },
-  { key: "youth", label: "Witte trui", emoji: "⚪", tint: "from-slate-200/30 to-slate-200/10" },
-];
-
 function usePickStats(gameId?: string) {
   return useQuery({
     queryKey: ["game-pick-stats", gameId],
@@ -97,10 +104,7 @@ function useMyStagePointTotal(entryId?: string) {
     staleTime: 60 * 1000,
     queryFn: async (): Promise<number> => {
       if (!supabase || !entryId) return 0;
-      const { data, error } = await supabase
-        .from("stage_points")
-        .select("points")
-        .eq("entry_id", entryId);
+      const { data, error } = await supabase.from("stage_points").select("points").eq("entry_id", entryId);
       if (error) throw error;
       return (data ?? []).reduce((sum, row) => sum + (row.points ?? 0), 0);
     },
@@ -120,6 +124,8 @@ function useRiderNames(ids: string[]) {
   });
 }
 
+// ─── Monte Carlo helpers (unchanged) ─────────────────────────────────────────
+
 function seededRandom(seed: number) {
   let s = seed >>> 0;
   return () => {
@@ -127,7 +133,6 @@ function seededRandom(seed: number) {
     return s / 0xffffffff;
   };
 }
-
 function pickN<T>(arr: T[], n: number, rng: () => number): T[] {
   if (arr.length <= n) return [...arr];
   const copy = [...arr];
@@ -139,15 +144,80 @@ function pickN<T>(arr: T[], n: number, rng: () => number): T[] {
   return out;
 }
 
-function ornament(label: string) {
+// ─── Visual helpers ───────────────────────────────────────────────────────────
+
+function getNickname(beatPct: number) {
+  if (beatPct >= 99) return { title: "Koningsklasse",      emoji: "👑", good: true };
+  if (beatPct >= 90) return { title: "Wielerdirecteur",    emoji: "🏆", good: true };
+  if (beatPct >= 70) return { title: "Aap-Slayer",         emoji: "⚔️", good: true };
+  if (beatPct >= 50) return { title: "Menselijk Voordeel", emoji: "💪", good: true };
+  if (beatPct >= 30) return { title: "Nek-aan-Nek",        emoji: "🤝", good: false };
+  if (beatPct >= 10) return { title: "Monkey Business",    emoji: "🐒", good: false };
+  return                    { title: "Dartpijl-Niveau",    emoji: "🎯", good: false };
+}
+
+// SVG semicircle gauge — animates on mount
+function PercentileGauge({ pct }: { pct: number }) {
+  const r = 50, cx = 65, cy = 62, sw = 9;
+  const circ = Math.PI * r;
+  const [animated, setAnimated] = useState(false);
+  useEffect(() => { const id = requestAnimationFrame(() => setAnimated(true)); return () => cancelAnimationFrame(id); }, []);
+  const offset = circ * (1 - Math.min(100, Math.max(0, pct)) / 100);
+  const color = pct >= 50 ? "#34d399" : "#f43f5e";
   return (
-    <div className="vintage-ornament mb-2">
-      <span className="vintage-ornament-symbol">✦</span>
-      <span className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground font-serif">{label}</span>
-      <span className="vintage-ornament-symbol">✦</span>
+    <svg viewBox="0 0 130 72" className="w-full max-w-[200px] mx-auto">
+      <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 0 ${cx + r} ${cy}`}
+        fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={sw} strokeLinecap="round" />
+      <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 0 ${cx + r} ${cy}`}
+        fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round"
+        strokeDasharray={`${circ}`}
+        strokeDashoffset={`${animated ? offset : circ}`}
+        style={{ transition: "stroke-dashoffset 1.4s cubic-bezier(0.34,1.56,0.64,1)" }} />
+      <text x={cx - r} y={cy + 13} fontSize="8" fill="rgba(255,255,255,0.35)" textAnchor="middle">0%</text>
+      <text x={cx + r} y={cy + 13} fontSize="8" fill="rgba(255,255,255,0.35)" textAnchor="middle">100%</text>
+    </svg>
+  );
+}
+
+// Premium stat card on dark background
+function DarkStatCard({
+  label, value, unit, icon, description, accentColor,
+}: {
+  label: string; value: string; unit?: string; icon: string;
+  description: string; accentColor: string;
+}) {
+  return (
+    <div className={cn(
+      "relative overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 flex flex-col",
+      accentColor === "gold"  && "border-[hsl(var(--vintage-gold))/0.25]",
+      accentColor === "blue"  && "border-sky-500/25",
+      accentColor === "green" && "border-emerald-500/25",
+      accentColor === "red"   && "border-rose-500/25",
+    )}>
+      <div className="flex items-start justify-between mb-3">
+        <span className="text-2xl leading-none">{icon}</span>
+        <span className={cn(
+          "text-[9px] uppercase tracking-[0.2em] font-semibold",
+          accentColor === "gold"  && "text-[hsl(var(--vintage-gold))]",
+          accentColor === "blue"  && "text-sky-400",
+          accentColor === "green" && "text-emerald-400",
+          accentColor === "red"   && "text-rose-400",
+        )}>{label}</span>
+      </div>
+      <div className={cn(
+        "font-display text-3xl font-bold tabular-nums",
+        accentColor === "gold"  && "text-[hsl(var(--vintage-gold))]",
+        accentColor === "blue"  && "text-sky-400",
+        accentColor === "green" && "text-emerald-400",
+        accentColor === "red"   && "text-rose-400",
+      )}>{value}</div>
+      {unit && <div className="text-white/40 text-xs mt-0.5">{unit}</div>}
+      <p className="text-white/35 text-[11px] mt-3 leading-relaxed flex-1">{description}</p>
     </div>
   );
 }
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function HorsCategorieTab() {
   const { data: game } = useCurrentGame();
@@ -160,7 +230,10 @@ export default function HorsCategorieTab() {
   const { data: totals = [] } = useEntryTotals(isLive ? game?.id : undefined);
   const { data: myStageTotal = 0 } = useMyStagePointTotal(entry?.id);
 
-  // Set van alle door de gebruiker gekozen renners (picks + jokers) — voor "Jouw keuze" indicatoren
+  // Stage-by-stage timeline data
+  const { data: stages = [] } = useStages(isLive ? game?.id : undefined);
+  const { data: allStagePoints = [] } = useStagePoints(isLive ? game?.id : undefined);
+
   const myPickedRiderIds = useMemo(() => {
     const s = new Set<string>();
     for (const arr of picksByCategory.values()) for (const id of arr) s.add(id);
@@ -168,7 +241,6 @@ export default function HorsCategorieTab() {
     return s;
   }, [picksByCategory, jokerIds]);
 
-  // Map<"classification:position", riderId> voor de eigen voorspellingen
   const myPredictionMap = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of myPredictions) m.set(`${p.classification}:${p.position}`, p.rider_id);
@@ -188,54 +260,36 @@ export default function HorsCategorieTab() {
   const { data: riders = [] } = useRiderNames(allRiderIdsSet);
   const ridersById = useMemo(() => Object.fromEntries(riders.map((r) => [r.id, r])), [riders]);
 
-  // ---- Section 1: Monte Carlo ----
+  // ── Monte Carlo (logic unchanged) ──────────────────────────────────────────
   const monte = useMemo(() => {
     const N = 5000;
     if (categories.length === 0 || pickStats.length === 0) return null;
-
-    // For each rider, average points = pick_count * (some proxy). We use ownership as score-weight is unknown,
-    // but we have actual entry totals. So instead, we estimate "random team score" by:
-    //  random_score = sum over picks of (avgPointsPerPick), where avgPointsPerPick is derived from entry totals
-    //  by spreading mean total across mean number of picks per entry.
-    // Simpler & honest: simulate by drawing N random teams from category rider pools, score them as
-    // sum of "rider score" = popularity-weighted contribution. We use real entry totals distribution
-    // for the "human" comparison and only need an approximate aps random distribution.
     const meanTotal = totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : 0;
-
-    // Build per-category rider candidate pools and ownership maps
     const byCat = new Map<string, PickStat[]>();
     for (const p of pickStats) {
       const arr = byCat.get(p.category_id) ?? [];
       arr.push(p);
       byCat.set(p.category_id, arr);
     }
-
-    // Compute "expected score per pick slot": meanTotal / total_slots
     const totalSlots = categories.reduce((s, c) => s + (c.max_picks ?? 1), 0) || 1;
     const baselinePerSlot = meanTotal / totalSlots;
-
-    // Rider score weight = ownership ratio normalized within category, range [0.4 .. 1.6]
     const riderWeight = new Map<string, number>();
     for (const [, list] of byCat) {
       const max = Math.max(1, ...list.map((p) => p.pick_count));
       for (const p of list) {
-        const r = p.pick_count / max; // 0..1
+        const r = p.pick_count / max;
         riderWeight.set(p.rider_id, 0.4 + r * 1.2);
       }
     }
-
     const rng = seededRandom(game?.id?.split("-").reduce((a, c) => a + c.charCodeAt(0), 0) ?? 42);
-
     const scoreFromRiderIds = (riderIds: string[]) => {
       let s = 0;
       for (const rid of riderIds) {
         const w = riderWeight.get(rid) ?? 0.7;
-        // jitter
         s += baselinePerSlot * w * (0.7 + rng() * 0.6);
       }
       return Math.round(s);
     };
-
     const randomScores: number[] = [];
     for (let i = 0; i < N; i++) {
       const team: string[] = [];
@@ -247,27 +301,20 @@ export default function HorsCategorieTab() {
       randomScores.push(scoreFromRiderIds(team));
     }
     randomScores.sort((a, b) => a - b);
-
-    // User's actual score: sum of processed stage points only, excluding prediction bonuses.
     const userPicks: string[] = [];
     for (const cat of categories) {
       const arr = picksByCategory.get(cat.id) ?? [];
       userPicks.push(...arr);
     }
     const userActual = userPicks.length ? myStageTotal : 0;
-
     const mean = randomScores.reduce((a, b) => a + b, 0) / randomScores.length;
     const median = randomScores[Math.floor(randomScores.length / 2)];
     const top10cut = randomScores[Math.floor(randomScores.length * 0.9)];
-    const beatPct =
-      randomScores.length === 0
-        ? 0
-        : (randomScores.filter((s) => userActual > s).length / randomScores.length) * 100;
+    const beatPct = randomScores.length === 0
+      ? 0 : (randomScores.filter((s) => userActual > s).length / randomScores.length) * 100;
     const aboveMedian = userActual > median ? 100 : 0;
     const top10 = userActual > top10cut;
     const worseThanApe = beatPct < 50;
-
-    // Distribution buckets
     const min = randomScores[0];
     const max = randomScores[randomScores.length - 1];
     const buckets = 20;
@@ -278,11 +325,41 @@ export default function HorsCategorieTab() {
       const count = randomScores.filter((s) => s >= from && s < to).length;
       return { bucket: Math.round((from + to) / 2), count };
     });
-
     return { mean, median, top10cut, beatPct, top10, worseThanApe, aboveMedian, userActual, dist };
   }, [categories, pickStats, totals, picksByCategory, myStageTotal, game?.id]);
 
-  // ---- Section 2: Pelotonkeuzes per category ----
+  // ── Stage timeline ──────────────────────────────────────────────────────────
+  const stageTimeline = useMemo(() => {
+    if (!entry?.id || stages.length === 0 || allStagePoints.length === 0) return [];
+    const myPts = new Map<string, number>();
+    const allPts = new Map<string, number[]>();
+    for (const sp of allStagePoints) {
+      if (sp.entry_id === entry.id) myPts.set(sp.stage_id, (myPts.get(sp.stage_id) ?? 0) + sp.points);
+      const arr = allPts.get(sp.stage_id) ?? [];
+      arr.push(sp.points);
+      allPts.set(sp.stage_id, arr);
+    }
+    const approved = stages
+      .filter((s) => s.results_status === "approved")
+      .sort((a, b) => a.stage_number - b.stage_number);
+    let userCum = 0, avgCum = 0;
+    return approved.map((s) => {
+      const u = myPts.get(s.id) ?? 0;
+      const pool = allPts.get(s.id) ?? [];
+      const avg = pool.length ? pool.reduce((a, b) => a + b, 0) / pool.length : 0;
+      userCum += u; avgCum += avg;
+      return { stage: `E${s.stage_number}`, user: userCum, avg: Math.round(avgCum), userDelta: u, avgDelta: Math.round(avg) };
+    });
+  }, [entry?.id, stages, allStagePoints]);
+
+  // ── Derived display values ──────────────────────────────────────────────────
+  const diffPct = monte && monte.mean > 0 ? ((monte.userActual - monte.mean) / monte.mean) * 100 : 0;
+  const isBeating = diffPct >= 0;
+  const nickname = monte ? getNickname(monte.beatPct) : null;
+  const oneInX = monte && monte.beatPct < 99.5
+    ? Math.max(2, Math.round(100 / Math.max(0.1, 100 - monte.beatPct))) : null;
+
+  // ── Section 2: Pelotonkeuzes ────────────────────────────────────────────────
   const pickStatsByCat = useMemo(() => {
     const m = new Map<string, PickStat[]>();
     for (const p of pickStats) {
@@ -294,22 +371,18 @@ export default function HorsCategorieTab() {
     return m;
   }, [pickStats]);
 
-  // ---- Section 3: Wielerdirecteur analyse ----
+  // ── Section 3: Wielerdirecteur ──────────────────────────────────────────────
   const directorAnalysis = useMemo(() => {
     if (!isLive || !entry || picksByCategory.size === 0) return null;
     const myPickIds = new Set<string>();
     for (const arr of picksByCategory.values()) for (const id of arr) myPickIds.add(id);
-
     const ownershipByRider = new Map<string, number>();
     const totalEntries = pickStats[0]?.total_entries ?? 1;
-    for (const p of pickStats) {
-      ownershipByRider.set(p.rider_id, p.pick_count / Math.max(1, totalEntries));
-    }
+    for (const p of pickStats) ownershipByRider.set(p.rider_id, p.pick_count / Math.max(1, totalEntries));
     const myOwnerships = Array.from(myPickIds).map((rid) => ownershipByRider.get(rid) ?? 0);
     const avgOwn = myOwnerships.length ? myOwnerships.reduce((a, b) => a + b, 0) / myOwnerships.length : 0;
     const uniques = myOwnerships.filter((o) => o < 0.15).length;
     const lieflings = myOwnerships.filter((o) => o > 0.5).length;
-
     const labels: string[] = [];
     if (uniques >= 4) labels.push("Pure chaos");
     if (lieflings >= 4) labels.push("Controleploeg");
@@ -317,16 +390,12 @@ export default function HorsCategorieTab() {
     if (avgOwn < 0.25) labels.push("Aanvallende ploeg");
     if (uniques >= 2 && lieflings >= 2) labels.push("Waaierspecialist");
     if (labels.length === 0) labels.push("Knechtenleger");
-
     const lines: string[] = [];
     if (avgOwn > 0.5) lines.push("Je peloton kiest wat iedereen kiest. Een veilige bidon, geen spektakel.");
     else if (avgOwn < 0.2) lines.push("Met deze differentiëlen mik je óf op het podium óf op de bezemwagen.");
     else lines.push("Een nette mix tussen kopgroep en peloton — directeur sportif knikt goedkeurend.");
-
     if (uniques >= 3) lines.push(`${uniques} renners die nauwelijks iemand koos. Lef of waanzin?`);
     if (lieflings >= 3) lines.push(`${lieflings} pelotonlievelingen — geen verrassingen, geen excuses.`);
-
-    // Daily quote
     const day = new Date().getDate();
     const quotes = [
       "Vandaag zou jouw ploeg waarschijnlijk lossen op de eerste col.",
@@ -337,12 +406,10 @@ export default function HorsCategorieTab() {
       "Deze ploeg heeft de organisatie van een vroege vlucht in een regenrit.",
       "Jouw kopman stuurt vandaag z'n knecht naar voren — voor een bidon.",
     ];
-    const quote = quotes[day % quotes.length];
-
-    return { labels, lines, quote, avgOwn, uniques, lieflings };
+    return { labels, lines, quote: quotes[day % quotes.length], avgOwn, uniques, lieflings };
   }, [isLive, entry, picksByCategory, pickStats]);
 
-  // -------- Render --------
+  // ── Locked state ─────────────────────────────────────────────────────────────
   if (!isLive) {
     return (
       <Card className="ornate-frame retro-border">
@@ -357,83 +424,290 @@ export default function HorsCategorieTab() {
     );
   }
 
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-8 pb-6">
-      {/* Hero */}
-      <div className="ornate-frame retro-border bg-gradient-to-br from-card via-card to-primary/10 p-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
-        {ornament("Data cave · alleen voor liefhebbers")}
-        <h2 className="vintage-heading text-3xl font-bold leading-tight">Hors Catégorie</h2>
-        <p className="text-sm text-muted-foreground font-serif italic mt-1">
-          Een verborgen nerdhoek vol grafieken, ownership en directeursbabbels — zoals het hoort na een lange koers.
-        </p>
-      </div>
+    <div className="space-y-5 pb-6">
 
-      {/* === Section 1: Aap === */}
-      <Card className="ornate-frame retro-border overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
-        <CardHeader className="border-b-2 border-foreground bg-secondary/30">
-          <CardTitle className="font-display flex items-center gap-2">
-            <span className="text-2xl">🐒</span> De Aap met de Dartpijl
-          </CardTitle>
-          <p className="text-xs text-muted-foreground font-serif italic">
-            Hoe goed scoort een volledig willekeurige ploeg eigenlijk?
-          </p>
-        </CardHeader>
-        <CardContent className="p-4 md:p-6 space-y-6">
-          {!monte ? (
-            <p className="text-sm text-muted-foreground">Nog onvoldoende data om de apen te laten gooien.</p>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Stat label="Jij scoort beter dan" value={`${monte.beatPct.toFixed(0)}%`} sub="van de apen" accent />
-                <Stat label="Gemiddelde aap" value={`${Math.round(monte.mean)}`} sub="punten" />
-                <Stat label="Boven mediaan?" value={monte.aboveMedian ? "Ja" : "Nee"} sub={`mediaan ${monte.median}`} />
-                <Stat label="Top 10% van apen?" value={monte.top10 ? "✅" : "❌"} sub={`drempel ${monte.top10cut}`} />
-              </div>
+      {/* ── Section 1: Monte Carlo ───────────────────────────────────────────── */}
 
-              <div className="rounded-md border-2 border-border bg-secondary/20 p-3">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground font-serif mb-2">
-                  Distributie van 5.000 willekeurige ploegen
+      {!monte ? (
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8 text-center">
+          <span className="text-4xl">🐒</span>
+          <p className="text-white/50 text-sm mt-3 font-serif italic">Nog onvoldoende data om de apen te laten gooien.</p>
+        </div>
+      ) : (
+        <>
+          {/* Hero */}
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] p-6 md:p-8">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full blur-3xl opacity-25 transition-colors duration-700"
+              style={{ background: `radial-gradient(circle, ${isBeating ? "#34d399" : "#f43f5e"} 0%, transparent 70%)` }}
+            />
+            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.03]"
+              style={{ backgroundImage: "linear-gradient(to right,white 1px,transparent 1px),linear-gradient(to bottom,white 1px,transparent 1px)", backgroundSize: "32px 32px" }} />
+
+            <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div>
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-white/40 mb-3">
+                  <span className="text-lg">🐒</span>
+                  <span>De Aap met de Dartpijl · Monte Carlo · 5.000 simulaties</span>
+                </div>
+                <div className={cn(
+                  "font-display tabular-nums font-black leading-none mb-2",
+                  "text-5xl md:text-6xl",
+                  isBeating ? "text-emerald-400" : "text-rose-400"
+                )}>
+                  {isBeating ? "+" : ""}{diffPct.toFixed(0)}%
+                </div>
+                <p className="text-white/70 text-sm font-medium">
+                  {isBeating ? "beter" : "slechter"} dan de gemiddelde aap
                 </p>
-                <ChartContainer
-                  config={{
-                    count: { label: "Aantal apen", color: "hsl(var(--primary))" },
-                  }}
-                  className="h-[220px] w-full"
-                >
-                  <BarChart data={monte.dist} margin={{ left: -10, right: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="bucket" type="number" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-                    <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <ReferenceLine
-                      x={monte.userActual}
-                      stroke="hsl(var(--vintage-gold))"
-                      strokeWidth={2}
-                      strokeDasharray="4 4"
-                      label={{ value: `Jij · ${monte.userActual} pt`, position: "top", fill: "hsl(var(--vintage-gold))", fontSize: 11 }}
-                    />
-                    <Bar dataKey="count" radius={[2, 2, 0, 0]}>
-                      {monte.dist.map((b, i) => (
-                        <Cell key={i} fill={b.bucket <= monte.userActual ? "hsl(var(--primary)/0.8)" : "hsl(var(--muted-foreground)/0.4)"} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ChartContainer>
+                <p className="text-white/30 text-xs mt-1.5 font-mono">
+                  jij {monte.userActual} pt &nbsp;·&nbsp; gem. aap {Math.round(monte.mean)} pt
+                </p>
               </div>
 
-              <div className="text-sm text-muted-foreground font-serif italic space-y-1">
-                <p>“Jij scoort beter dan {monte.beatPct.toFixed(0)}% van de apen.”</p>
-                {monte.worseThanApe && <p>“Eh… een gemiddelde dartpijl had het ook niet slechter gedaan.” 🎯</p>}
-                {monte.top10 && <p>“Top 10% van de apen — die dartpijl van jou heeft visie.”</p>}
+              {nickname && (
+                <div className="text-center shrink-0">
+                  <div className="text-5xl mb-2">{nickname.emoji}</div>
+                  <div className={cn(
+                    "font-display text-xl font-bold",
+                    nickname.good ? "text-emerald-400" : "text-rose-400"
+                  )}>{nickname.title}</div>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-white/30 mt-1">prestatieklasse</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Distribution chart + Percentile gauge */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            {/* Distribution chart */}
+            <div className="md:col-span-2 relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-5">
+              <div aria-hidden className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full blur-3xl opacity-15"
+                style={{ background: "radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)" }} />
+              <div className="relative">
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">
+                  <BarChart3 className="h-3 w-3" />
+                  Verdeling · 5.000 willekeurige ploegen
+                </div>
+                <h3 className="font-display text-white text-base sm:text-lg mb-1">Aapscore distributie</h3>
+                <p className="text-[11px] text-white/40 mb-4">
+                  Bars links van jou (goud) zijn apen die jij verslaat
+                </p>
+                <div style={{ height: 190 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monte.dist} margin={{ top: 16, right: 4, left: -22, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="hc-bar-beat" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.9} />
+                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
+                        </linearGradient>
+                        <linearGradient id="hc-bar-lose" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
+                          <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="bucket" tick={{ fontSize: 9, fill: "rgba(255,255,255,0.35)" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 9, fill: "rgba(255,255,255,0.35)" }} axisLine={false} tickLine={false} />
+                      <Tooltip
+                        cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                        content={(props: any) => {
+                          const { active, payload } = props;
+                          if (!active || !payload?.length) return null;
+                          const { bucket, count } = payload[0].payload;
+                          return (
+                            <div className="rounded-xl border border-white/10 bg-slate-900/90 backdrop-blur-xl px-3 py-2 text-xs text-white/80 shadow-xl">
+                              <div className="font-mono font-bold text-white">{bucket} pt</div>
+                              <div className="text-white/50">{count} apen</div>
+                            </div>
+                          );
+                        }}
+                      />
+                      <ReferenceLine x={monte.userActual} stroke="hsl(var(--vintage-gold))" strokeWidth={2.5}
+                        label={{ value: `Jij · ${monte.userActual}`, position: "top", fill: "hsl(var(--vintage-gold))", fontSize: 10, fontWeight: 700 }} />
+                      <ReferenceLine x={Math.round(monte.mean)} stroke="rgba(255,255,255,0.45)" strokeWidth={1.5} strokeDasharray="4 3"
+                        label={{ value: "Ø", position: "insideTopRight", fill: "rgba(255,255,255,0.5)", fontSize: 10 }} />
+                      <ReferenceLine x={monte.median} stroke="#34d399" strokeWidth={1.5} strokeDasharray="4 3"
+                        label={{ value: "M", position: "insideTopLeft", fill: "#34d399", fontSize: 10 }} />
+                      <Bar dataKey="count" radius={[3, 3, 0, 0]} maxBarSize={24} animationDuration={800}>
+                        {monte.dist.map((b, i) => (
+                          <Cell key={i} fill={b.bucket <= monte.userActual ? "url(#hc-bar-beat)" : "url(#hc-bar-lose)"} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-wrap gap-4 mt-3 text-[10px] text-white/35">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block h-2 w-4 rounded-sm" style={{ background: "hsl(var(--vintage-gold))" }} />
+                    Jouw score
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block h-px w-4 border-t border-white/40 border-dashed" />
+                    Gemiddelde (Ø)
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block h-px w-4 border-t border-emerald-400/70 border-dashed" />
+                    Mediaan (M)
+                  </span>
+                </div>
               </div>
-            </>
+            </div>
+
+            {/* Percentile gauge */}
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-5 flex flex-col items-center justify-center gap-1">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">Percentiel</div>
+              <PercentileGauge pct={monte.beatPct} />
+              <div className={cn(
+                "font-display text-4xl font-black tabular-nums -mt-2",
+                monte.beatPct >= 50 ? "text-emerald-400" : "text-rose-400"
+              )}>
+                {monte.beatPct.toFixed(0)}%
+              </div>
+              <div className="text-xs text-white/50 text-center">van apen verslagen</div>
+
+              <div className="mt-5 w-full rounded-xl border border-white/8 bg-white/5 p-3 text-center">
+                {oneInX ? (
+                  <>
+                    <div className="text-[10px] text-white/35 uppercase tracking-wider mb-1">
+                      {monte.beatPct >= 50 ? "Slechts" : "Al"}
+                    </div>
+                    <div className="font-display text-2xl font-bold text-white">
+                      1 op {oneInX}
+                    </div>
+                    <div className="text-[10px] text-white/35 mt-0.5">
+                      {monte.beatPct >= 50 ? "apen doet het beter" : "apen doe jij beter"}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-white/50 text-xs">Bijna geen aap verslaat jou 👑</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Stats row: mean · median · fun */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <DarkStatCard
+              label="Gemiddelde aap"
+              value={`${Math.round(monte.mean)}`}
+              unit="punten"
+              icon="🎯"
+              description="Verwacht puntentotaal bij volledig willekeurige rennersselectie op basis van de pool van ingediende teams."
+              accentColor="gold"
+            />
+            <DarkStatCard
+              label="Mediaan aap"
+              value={`${monte.median}`}
+              unit="punten"
+              icon="📊"
+              description="De middelste aap van 5.000. Minder gevoelig voor uitschieters dan het gemiddelde — een eerlijkere maatstaf."
+              accentColor="blue"
+            />
+            <DarkStatCard
+              label={monte.worseThanApe ? "Verlies van de aap" : "Jij vs de aap"}
+              value={monte.worseThanApe
+                ? `−${Math.abs(Math.round(monte.userActual - monte.mean))} pt`
+                : `+${Math.round(monte.userActual - monte.mean)} pt`}
+              unit={monte.worseThanApe ? "onder gemiddelde aap" : "boven gemiddelde aap"}
+              icon={monte.worseThanApe ? "😬" : "🏆"}
+              description={monte.worseThanApe
+                ? "Een willekeurige dartpijl had grofweg hetzelfde resultaat. De apen zijn blij."
+                : oneInX
+                  ? `Slechts 1 op ${oneInX} willekeurige apen scoort hoger dan jij. Dartpijlen staan paf.`
+                  : "Uitstekend resultaat — je overtreft het gros van de willekeurige ploegen."}
+              accentColor={monte.worseThanApe ? "red" : "green"}
+            />
+          </div>
+
+          {/* Stage timeline */}
+          {stageTimeline.length > 0 && (
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-5">
+              <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full blur-3xl opacity-20"
+                style={{ background: "radial-gradient(circle, hsl(var(--vintage-gold)) 0%, transparent 70%)" }} />
+              <div className="relative">
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">
+                  <Activity className="h-3 w-3" />
+                  Etappe voor etappe
+                </div>
+                <h3 className="font-display text-white text-base sm:text-lg mb-0.5">Jij vs de Gemiddelde Aap</h3>
+                <p className="text-[11px] text-white/40 mb-4">Cumulatieve punten per goedgekeurde etappe</p>
+                <div style={{ height: 200 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={stageTimeline} margin={{ top: 10, right: 8, left: -22, bottom: 0 }}>
+                      <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="stage" tick={{ fontSize: 9, fill: "rgba(255,255,255,0.35)" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 9, fill: "rgba(255,255,255,0.35)" }} axisLine={false} tickLine={false} />
+                      <Tooltip
+                        cursor={{ stroke: "rgba(255,255,255,0.15)", strokeWidth: 1 }}
+                        content={(props: any) => {
+                          const { active, payload, label } = props;
+                          if (!active || !payload?.length) return null;
+                          const row = payload[0]?.payload;
+                          return (
+                            <div className="rounded-xl border border-white/10 bg-slate-900/90 backdrop-blur-xl px-3 py-2 text-xs text-white/80 shadow-xl space-y-1">
+                              <div className="font-mono font-bold text-white mb-1">{label}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full" style={{ background: "hsl(var(--vintage-gold))" }} />
+                                <span className="text-white/60">Jij</span>
+                                <span className="ml-auto font-bold text-white">{row.user} pt</span>
+                                {row.userDelta > 0 && <span className="text-emerald-400 text-[10px]">+{row.userDelta}</span>}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-white/30" />
+                                <span className="text-white/60">Gem. aap</span>
+                                <span className="ml-auto font-bold text-white/70">{row.avg} pt</span>
+                                {row.avgDelta > 0 && <span className="text-white/40 text-[10px]">+{row.avgDelta}</span>}
+                              </div>
+                            </div>
+                          );
+                        }}
+                      />
+                      <Line type="monotone" dataKey="user" name="Jij"
+                        stroke="hsl(var(--vintage-gold))" strokeWidth={2.5}
+                        dot={false} activeDot={{ r: 5, fill: "hsl(var(--vintage-gold))", strokeWidth: 0 }}
+                        animationDuration={1000} animationEasing="ease-out" />
+                      <Line type="monotone" dataKey="avg" name="Gem. aap"
+                        stroke="rgba(255,255,255,0.3)" strokeWidth={1.5} strokeDasharray="5 4"
+                        dot={false} activeDot={{ r: 4, fill: "rgba(255,255,255,0.5)", strokeWidth: 0 }}
+                        animationDuration={1000} animationEasing="ease-out" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex gap-5 mt-3 text-[10px] text-white/35">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block h-0.5 w-5 rounded" style={{ background: "hsl(var(--vintage-gold))" }} />
+                    Jouw score
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-5" style={{ borderTop: "1.5px dashed rgba(255,255,255,0.3)" }} />
+                    Gemiddelde aap
+                  </span>
+                </div>
+              </div>
+            </div>
           )}
-        </CardContent>
-      </Card>
 
-      {/* === Section 2: Pelotonkeuzes === */}
+          {/* Commentary */}
+          {(monte.worseThanApe || monte.top10) && (
+            <div className={cn(
+              "rounded-xl border px-4 py-3 text-sm font-serif italic",
+              monte.top10
+                ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-300"
+                : "border-rose-500/30 bg-rose-500/5 text-rose-300"
+            )}>
+              {monte.worseThanApe && <span>"Eh… een gemiddelde dartpijl had het ook niet slechter gedaan." 🎯</span>}
+              {monte.top10 && <span>"Top 10% van de apen — die dartpijl van jou heeft visie." 🔥</span>}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── Section 2: Pelotonkeuzes ─────────────────────────────────────────── */}
       <Card className="ornate-frame retro-border overflow-hidden">
         <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
@@ -445,10 +719,9 @@ export default function HorsCategorieTab() {
           </p>
         </CardHeader>
         <CardContent className="p-4 md:p-6 space-y-5">
-          {/* Legenda */}
           <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-widest font-serif text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <span className="inline-block h-3 w-8 rounded" style={{ background: ownershipColor(5) }} /> Zeldzaam (donker)
+              <span className="inline-block h-3 w-8 rounded" style={{ background: ownershipColor(5) }} /> Zeldzaam
             </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-3 w-8 rounded" style={{ background: ownershipColor(50) }} /> Gemiddeld
@@ -472,9 +745,7 @@ export default function HorsCategorieTab() {
                 if (list.length === 0) return null;
                 return (
                   <div key={cat.id} className="rounded-lg border-2 border-border bg-secondary/20 p-3">
-                    <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">
-                      {cat.short_name ?? cat.name}
-                    </p>
+                    <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">{cat.short_name ?? cat.name}</p>
                     <div className="space-y-2">
                       {list.map((p) => {
                         const pct = (p.pick_count / Math.max(1, totalEntries)) * 100;
@@ -482,42 +753,30 @@ export default function HorsCategorieTab() {
                         const mine = myPickedRiderIds.has(p.rider_id);
                         const badge =
                           pct >= 70 ? "Iedereen-en-z'n-moeder"
-                            : pct >= 40 ? "Pelotonlieveling"
-                            : pct <= 10 ? "Verborgen parel"
-                            : pct <= 25 ? "Differentieel"
-                            : null;
+                          : pct >= 40 ? "Pelotonlieveling"
+                          : pct <= 10 ? "Verborgen parel"
+                          : pct <= 25 ? "Differentieel"
+                          : null;
                         return (
-                          <div
-                            key={p.rider_id}
-                            className={cn(
-                              "rounded-md p-2 transition-all",
-                              mine
-                                ? "ring-2 ring-primary shadow-[0_0_12px_hsl(var(--primary)/0.35)] bg-primary/5 border border-primary/40"
-                                : "border border-transparent"
-                            )}
-                          >
+                          <div key={p.rider_id} className={cn(
+                            "rounded-md p-2 transition-all",
+                            mine
+                              ? "ring-2 ring-primary shadow-[0_0_12px_hsl(var(--primary)/0.35)] bg-primary/5 border border-primary/40"
+                              : "border border-transparent"
+                          )}>
                             <div className="flex items-center justify-between gap-2 text-sm">
                               <span className="font-display font-bold truncate flex items-center gap-1.5">
-                                {mine && (
-                                  <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold shrink-0">★</span>
-                                )}
+                                {mine && <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold shrink-0">★</span>}
                                 {rider?.name ?? "Onbekend"}
                               </span>
                               <span className="font-mono text-xs tabular-nums shrink-0">{pct.toFixed(0)}%</span>
                             </div>
                             <div className="mt-1 h-2 rounded-full bg-secondary overflow-hidden">
-                              <div
-                                className="h-full transition-colors"
-                                style={{ width: `${Math.max(6, pct)}%`, background: ownershipColor(pct) }}
-                              />
+                              <div className="h-full transition-all duration-500" style={{ width: `${Math.max(6, pct)}%`, background: ownershipColor(pct) }} />
                             </div>
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                               {badge && <Badge variant="outline" className="text-[10px]">{badge}</Badge>}
-                              {mine && (
-                                <Badge className="text-[10px] bg-primary/15 text-primary border border-primary/40 hover:bg-primary/20">
-                                  Jouw keuze
-                                </Badge>
-                              )}
+                              {mine && <Badge className="text-[10px] bg-primary/15 text-primary border border-primary/40 hover:bg-primary/20">Jouw keuze</Badge>}
                             </div>
                           </div>
                         );
@@ -527,7 +786,6 @@ export default function HorsCategorieTab() {
                 );
               })}
 
-              {/* Joker leaderboard */}
               {jokerStats.length > 0 && (
                 <div className="rounded-lg border-2 border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.08] p-3 md:col-span-2">
                   <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">🃏 Meest gekozen jokers</p>
@@ -537,13 +795,10 @@ export default function HorsCategorieTab() {
                       const rider = ridersById[j.rider_id];
                       const mine = jokerIds.includes(j.rider_id);
                       return (
-                        <div
-                          key={j.rider_id}
-                          className={cn(
-                            "flex items-center justify-between gap-2 text-sm bg-card rounded p-2 border",
-                            mine ? "border-primary ring-2 ring-primary/40 shadow-[0_0_10px_hsl(var(--primary)/0.25)]" : "border-border"
-                          )}
-                        >
+                        <div key={j.rider_id} className={cn(
+                          "flex items-center justify-between gap-2 text-sm bg-card rounded p-2 border",
+                          mine ? "border-primary ring-2 ring-primary/40 shadow-[0_0_10px_hsl(var(--primary)/0.25)]" : "border-border"
+                        )}>
                           <span className="font-display font-bold truncate flex items-center gap-1.5">
                             {mine && <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">★</span>}
                             {rider?.name ?? "Onbekend"}
@@ -558,7 +813,7 @@ export default function HorsCategorieTab() {
             </div>
           )}
 
-          {/* Voorspellingen — Eindwinnaar + Truien */}
+          {/* Voorspellingen */}
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Trophy className="h-4 w-4 text-[hsl(var(--vintage-gold))]" />
@@ -575,7 +830,6 @@ export default function HorsCategorieTab() {
                   if (rows.length === 0) return null;
                   const totalEntries = rows[0]?.total_entries ?? 1;
                   const top = [...rows].sort((a, b) => b.pick_count - a.pick_count).slice(0, 4);
-                  // Voor GC tonen we positie 1 (winnaar) prioritair
                   return (
                     <div key={meta.key} className={cn("rounded-lg border-2 border-border p-3 bg-gradient-to-br", meta.tint)}>
                       <div className="flex items-center justify-between mb-2">
@@ -583,50 +837,33 @@ export default function HorsCategorieTab() {
                           <span className="text-base leading-none">{meta.emoji}</span>
                           {meta.label}
                         </p>
-                        {meta.key === "gc" && (
-                          <span className="text-[9px] font-mono text-muted-foreground">positie 1–3</span>
-                        )}
+                        {meta.key === "gc" && <span className="text-[9px] font-mono text-muted-foreground">positie 1–3</span>}
                       </div>
                       <div className="space-y-1.5">
                         {top.map((p) => {
                           const pct = (p.pick_count / Math.max(1, totalEntries)) * 100;
                           const rider = ridersById[p.rider_id];
-                          const mineKey = `${meta.key}:${p.position}`;
-                          const mine = myPredictionMap.get(mineKey) === p.rider_id;
-                          const label =
-                            pct >= 60 ? "Consensus" : pct <= 8 ? "Outsider" : pct <= 20 ? "Differentieel" : null;
+                          const mine = myPredictionMap.get(`${meta.key}:${p.position}`) === p.rider_id;
+                          const label = pct >= 60 ? "Consensus" : pct <= 8 ? "Outsider" : pct <= 20 ? "Differentieel" : null;
                           return (
-                            <div
-                              key={`${p.rider_id}-${p.position}`}
-                              className={cn(
-                                "rounded-md p-2 transition-all",
-                                mine
-                                  ? "ring-2 ring-primary bg-primary/5 border border-primary/40"
-                                  : "border border-transparent bg-card/40"
-                              )}
-                            >
+                            <div key={`${p.rider_id}-${p.position}`} className={cn(
+                              "rounded-md p-2 transition-all",
+                              mine ? "ring-2 ring-primary bg-primary/5 border border-primary/40" : "border border-transparent bg-card/40"
+                            )}>
                               <div className="flex items-center justify-between gap-2 text-sm">
                                 <span className="font-display font-bold truncate flex items-center gap-1.5">
-                                  {meta.key === "gc" && (
-                                    <span className="text-[10px] font-mono text-muted-foreground tabular-nums">P{p.position}</span>
-                                  )}
-                                  {mine && (
-                                    <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold shrink-0">★</span>
-                                  )}
+                                  {meta.key === "gc" && <span className="text-[10px] font-mono text-muted-foreground tabular-nums">P{p.position}</span>}
+                                  {mine && <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold shrink-0">★</span>}
                                   <span className="truncate">{rider?.name ?? "Onbekend"}</span>
                                 </span>
                                 <span className="font-mono text-xs tabular-nums shrink-0">{pct.toFixed(0)}%</span>
                               </div>
                               <div className="mt-1 h-1.5 rounded-full bg-secondary overflow-hidden">
-                                <div className="h-full" style={{ width: `${Math.max(4, pct)}%`, background: ownershipColor(pct) }} />
+                                <div className="h-full transition-all duration-500" style={{ width: `${Math.max(4, pct)}%`, background: ownershipColor(pct) }} />
                               </div>
                               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                                 {label && <Badge variant="outline" className="text-[10px]">{label}</Badge>}
-                                {mine && (
-                                  <Badge className="text-[10px] bg-primary/15 text-primary border border-primary/40 hover:bg-primary/20">
-                                    Jouw keuze
-                                  </Badge>
-                                )}
+                                {mine && <Badge className="text-[10px] bg-primary/15 text-primary border border-primary/40 hover:bg-primary/20">Jouw keuze</Badge>}
                               </div>
                             </div>
                           );
@@ -641,7 +878,7 @@ export default function HorsCategorieTab() {
         </CardContent>
       </Card>
 
-      {/* === Section 3: Wielerdirecteur === */}
+      {/* ── Section 3: Wielerdirecteur ───────────────────────────────────────── */}
       <Card className="ornate-frame retro-border overflow-hidden">
         <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
@@ -662,12 +899,12 @@ export default function HorsCategorieTab() {
               </div>
               <div className="space-y-2">
                 {directorAnalysis.lines.map((l, i) => (
-                  <p key={i} className="font-serif italic text-foreground/90 border-l-2 border-primary/60 pl-3">“{l}”</p>
+                  <p key={i} className="font-serif italic text-foreground/90 border-l-2 border-primary/60 pl-3">"{l}"</p>
                 ))}
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <Stat label="Gem. ownership" value={`${(directorAnalysis.avgOwn * 100).toFixed(0)}%`} />
-                <Stat label="Differentiëlen" value={`${directorAnalysis.uniques}`} sub="<15% gekozen" />
+                <Stat label="Gem. ownership"    value={`${(directorAnalysis.avgOwn * 100).toFixed(0)}%`} />
+                <Stat label="Differentiëlen"    value={`${directorAnalysis.uniques}`}   sub="<15% gekozen" />
                 <Stat label="Pelotonlievelingen" value={`${directorAnalysis.lieflings}`} sub=">50% gekozen" />
               </div>
               <div className="rounded-md border-2 border-dashed border-[hsl(var(--vintage-gold))/0.6] bg-[hsl(var(--vintage-gold))/0.08] p-3 flex items-center gap-3">
@@ -682,9 +919,9 @@ export default function HorsCategorieTab() {
   );
 }
 
-function Stat({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: boolean }) {
+function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className={cn("ornate-frame retro-border relative overflow-hidden text-center p-3", accent && "bg-primary/5")}>
+    <div className="ornate-frame retro-border relative overflow-hidden text-center p-3">
       <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))]" />
       <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-serif">{label}</p>
       <p className="font-display text-xl font-bold tabular-nums">{value}</p>
