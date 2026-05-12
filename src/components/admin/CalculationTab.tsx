@@ -93,7 +93,9 @@ export default function CalculationTab({
       const { error } = await supabase.rpc("calculate_stage_scores", { p_stage_id: sid });
       if (error) throw error;
       try { await supabase.rpc("update_total_ranking", { p_game_id: activeGameId }); } catch { /* ignore */ }
-      toast.success("Etappe berekend");
+      // Auto-submit voor fiat zodra berekening klaar is (alleen als nog draft)
+      try { await supabase.rpc("submit_stage_for_approval", { p_stage_id: sid }); } catch { /* ignore – kan al pending/approved zijn */ }
+      toast.success("Etappe berekend — klaar voor fiat");
       await loadOverview();
     } catch (e) {
       toast.error((e as Error).message);
