@@ -146,6 +146,12 @@ function pickN<T>(arr: T[], n: number, rng: () => number): T[] {
 
 // ─── Visual helpers ───────────────────────────────────────────────────────────
 
+function snapToBucket(dist: Array<{ bucket: number }>, value: number): number {
+  return dist.reduce((best, b) =>
+    Math.abs(b.bucket - value) < Math.abs(best.bucket - value) ? b : best
+  ).bucket;
+}
+
 function getNickname(beatPct: number) {
   if (beatPct >= 99) return { title: "Koningsklasse",      emoji: "👑", good: true };
   if (beatPct >= 90) return { title: "Wielerdirecteur",    emoji: "🏆", good: true };
@@ -566,9 +572,10 @@ export default function HorsCategorieTab() {
                         ))}
                       </Bar>
                       {/* Reference lines AFTER Bar so they render on top */}
+                      {/* Root cause fix: x must match an exact bucket value (categorical axis) */}
                       {/* Jouw score — amber, solid, thick */}
                       <ReferenceLine
-                        x={monte.userActual}
+                        x={snapToBucket(monte.dist, monte.userActual)}
                         stroke="#fbbf24"
                         strokeWidth={3}
                         label={(props: any) => {
@@ -587,7 +594,7 @@ export default function HorsCategorieTab() {
                       />
                       {/* Gemiddelde — sky blue, dashed */}
                       <ReferenceLine
-                        x={Math.round(monte.mean)}
+                        x={snapToBucket(monte.dist, Math.round(monte.mean))}
                         stroke="#38bdf8"
                         strokeWidth={2.5}
                         strokeDasharray="5 3"
@@ -607,7 +614,7 @@ export default function HorsCategorieTab() {
                       />
                       {/* Mediaan — green, dashed */}
                       <ReferenceLine
-                        x={monte.median}
+                        x={snapToBucket(monte.dist, monte.median)}
                         stroke="#4ade80"
                         strokeWidth={2.5}
                         strokeDasharray="5 3"
@@ -645,33 +652,46 @@ export default function HorsCategorieTab() {
               </div>
             </div>
 
-            {/* Percentile gauge */}
-            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-slate-700 via-slate-700 to-slate-800 p-5 flex flex-col items-center justify-center gap-1">
-              <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">Percentiel</div>
-              <PercentileGauge pct={monte.beatPct} />
-              <div className={cn(
-                "font-display text-4xl font-black tabular-nums -mt-2",
-                monte.beatPct >= 50 ? "text-emerald-400" : "text-rose-400"
-              )}>
-                {monte.beatPct.toFixed(0)}%
-              </div>
-              <div className="text-xs text-white/50 text-center">van apen verslagen</div>
+            {/* Monkey IQ */}
+            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-slate-700 via-slate-700 to-slate-800 p-5 flex flex-col gap-0">
+              <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 h-44 w-44 rounded-full blur-3xl opacity-20"
+                style={{ background: `radial-gradient(circle, ${monte.beatPct >= 50 ? "#34d399" : "#f43f5e"} 0%, transparent 70%)` }} />
+              <div className="relative flex flex-col h-full">
+                <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-4">🧠 Monkey IQ</div>
 
-              <div className="mt-5 w-full rounded-xl border border-white/8 bg-white/5 p-3 text-center">
-                {oneInX ? (
-                  <>
-                    <div className="text-[10px] text-white/35 uppercase tracking-wider mb-1">
-                      {monte.beatPct >= 50 ? "Slechts" : "Al"}
+                <div className="mb-1 text-[11px] text-white/40">Jij verslaat</div>
+                <div className={cn(
+                  "font-display font-black tabular-nums leading-none text-5xl",
+                  monte.beatPct >= 50 ? "text-emerald-400" : "text-rose-400"
+                )}>
+                  {Math.round((monte.beatPct / 100) * 5000).toLocaleString("nl-NL")}
+                </div>
+                <div className="text-white/40 text-xs mt-1.5 mb-4">van de 5.000 apen</div>
+
+                <div className={cn(
+                  "font-display font-black tabular-nums text-2xl leading-none",
+                  monte.beatPct >= 50 ? "text-emerald-400" : "text-rose-400"
+                )}>
+                  {monte.beatPct.toFixed(1)}%
+                </div>
+                <div className="text-white/35 text-[10px] mt-0.5 mb-5">van de simulaties verslagen</div>
+
+                {nickname && (
+                  <div className={cn(
+                    "mt-auto rounded-xl border px-3 py-3 text-center",
+                    nickname.good
+                      ? "border-emerald-500/30 bg-emerald-500/[0.08]"
+                      : "border-rose-500/30 bg-rose-500/[0.08]"
+                  )}>
+                    <div className="text-3xl mb-1.5 leading-none">{nickname.emoji}</div>
+                    <div className={cn(
+                      "font-display text-sm font-bold",
+                      nickname.good ? "text-emerald-400" : "text-rose-400"
+                    )}>
+                      {nickname.title}
                     </div>
-                    <div className="font-display text-2xl font-bold text-white">
-                      1 op {oneInX}
-                    </div>
-                    <div className="text-[10px] text-white/35 mt-0.5">
-                      {monte.beatPct >= 50 ? "apen doet het beter" : "apen doe jij beter"}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-white/50 text-xs">Bijna geen aap verslaat jou 👑</div>
+                    <div className="text-white/30 text-[9px] uppercase tracking-[0.2em] mt-1">prestatieklasse</div>
+                  </div>
                 )}
               </div>
             </div>
