@@ -294,7 +294,7 @@ export default function HorsCategorieTab() {
         const w = riderWeight.get(rid) ?? 0.7;
         s += baselinePerSlot * w * (0.7 + rng() * 0.6);
       }
-      return Math.round(s);
+      return s;
     };
     const randomScores: number[] = [];
     for (let i = 0; i < N; i++) {
@@ -314,7 +314,10 @@ export default function HorsCategorieTab() {
     }
     const userActual = userPicks.length ? myStageTotal : 0;
     const mean = randomScores.reduce((a, b) => a + b, 0) / randomScores.length;
-    const median = randomScores[Math.floor(randomScores.length / 2)];
+    const mid = Math.floor(randomScores.length / 2);
+    const median = randomScores.length % 2 === 0
+      ? (randomScores[mid - 1] + randomScores[mid]) / 2
+      : randomScores[mid];
     const top10cut = randomScores[Math.floor(randomScores.length * 0.9)];
     const beatPct = randomScores.length === 0
       ? 0 : (randomScores.filter((s) => userActual > s).length / randomScores.length) * 100;
@@ -626,7 +629,7 @@ export default function HorsCategorieTab() {
                             <g>
                               <rect x={lx - 34} y={ly} width={70} height={16} rx={3} fill="#4ade80" />
                               <text x={lx} y={ly + 11} fill="#001a00" fontSize={9} fontWeight={800} textAnchor="middle">
-                                {`Med. · ${monte.median} pt`}
+                                {`Med. · ${Math.round(monte.median)} pt`}
                               </text>
                             </g>
                           );
@@ -646,7 +649,7 @@ export default function HorsCategorieTab() {
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block h-px w-4 border-t-2 border-dashed border-[#4ade80]" />
-                    Mediaan ({monte.median} pt)
+                    Mediaan ({Math.round(monte.median)} pt)
                   </span>
                 </div>
               </div>
@@ -709,7 +712,7 @@ export default function HorsCategorieTab() {
             />
             <DarkStatCard
               label="Mediaan aap"
-              value={`${monte.median}`}
+              value={`${Math.round(monte.median)}`}
               unit="punten"
               icon="📊"
               description="De middelste aap van 5.000. Minder gevoelig voor uitschieters dan het gemiddelde — een eerlijkere maatstaf."
