@@ -159,7 +159,7 @@ function getNickname(beatPct: number) {
   if (beatPct >= 50) return { title: "Menselijk Voordeel", emoji: "💪", good: true };
   if (beatPct >= 30) return { title: "Nek-aan-Nek",        emoji: "🤝", good: false };
   if (beatPct >= 10) return { title: "Monkey Business",    emoji: "🐒", good: false };
-  return                    { title: "Dartpijl-Niveau",    emoji: "🎯", good: false };
+  return                    { title: "Koersinstinct",      emoji: "🎯", good: false };
 }
 
 // SVG semicircle gauge — animates on mount
@@ -657,7 +657,7 @@ export default function HorsCategorieTab() {
               <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 h-44 w-44 rounded-full blur-3xl opacity-20"
                 style={{ background: `radial-gradient(circle, ${monte.beatPct >= 50 ? "#34d399" : "#f43f5e"} 0%, transparent 70%)` }} />
               <div className="relative flex flex-col h-full">
-                <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-4">🧠 Monkey IQ</div>
+                <div className="text-base font-semibold uppercase tracking-[0.2em] text-white/60 mb-4">🧠 Monkey IQ</div>
 
                 <div className="mb-1 text-[11px] text-white/40">Jij verslaat</div>
                 <div className={cn(
