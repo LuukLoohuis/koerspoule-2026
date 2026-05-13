@@ -1090,15 +1090,20 @@ export default function HorsCategorieTab() {
               </div>
               {/* Metric breakdown */}
               <div className="relative mt-5 space-y-3">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center justify-between mb-1">
                   <div className="text-[10px] uppercase tracking-[0.25em] text-white/30">Score opbouw</div>
                   <button
                     type="button"
                     onClick={() => setShowScoreInfo((v) => !v)}
-                    className="flex items-center justify-center h-4 w-4 rounded-full border border-white/20 text-white/30 hover:text-white/70 hover:border-white/40 transition-colors shrink-0"
-                    aria-label="Uitleg scoreberekening"
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold border transition-colors",
+                      showScoreInfo
+                        ? "bg-white/10 border-white/30 text-white"
+                        : "bg-sky-500/20 border-sky-400/50 text-sky-300 hover:bg-sky-500/30 hover:border-sky-400/70"
+                    )}
                   >
-                    {showScoreInfo ? <X className="h-2.5 w-2.5" /> : <Info className="h-2.5 w-2.5" />}
+                    {showScoreInfo ? <X className="h-3 w-3" /> : <Info className="h-3 w-3" />}
+                    {showScoreInfo ? "Sluiten" : "Hoe werkt dit?"}
                   </button>
                 </div>
 
