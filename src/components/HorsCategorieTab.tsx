@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
-  Lock, Activity, Trophy, BarChart3, Megaphone, Sparkles,
+  Lock, Activity, Trophy, BarChart3, Sparkles,
 } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -223,6 +223,20 @@ function DarkStatCard({
   );
 }
 
+// ─── Custom tab icon ─────────────────────────────────────────────────────────
+
+function DirectorIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <rect x="2" y="3" width="12" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+      <rect x="5.5" y="1.5" width="5" height="3" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+      <rect x="3.5" y="9.5" width="2" height="2.5" rx="0.3" fill="currentColor" opacity="0.5"/>
+      <rect x="7" y="7.5" width="2" height="4.5" rx="0.3" fill="currentColor" opacity="0.7"/>
+      <rect x="10.5" y="5.5" width="2" height="6.5" rx="0.3" fill="currentColor"/>
+    </svg>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function HorsCategorieTab() {
@@ -418,6 +432,58 @@ export default function HorsCategorieTab() {
     return { labels, lines, quote: quotes[day % quotes.length], avgOwn, uniques, lieflings };
   }, [isLive, entry, picksByCategory, pickStats]);
 
+  // ── Director Report Score ────────────────────────────────────────────────────
+  const directorScore = useMemo(() => {
+    if (!isLive || !entry || !monte) return null;
+
+    // Pool Ranking (50%): 0 = last place, 1 = first place
+    const n = totals.length;
+    const myRank = n > 0 ? totals.filter((t) => t > myStageTotal).length + 1 : 1;
+    const poolScore = n <= 1 ? 0.75 : (n - myRank) / (n - 1);
+
+    // Monkey comparison (30%)
+    const monkeyScore = monte.beatPct / 100;
+
+    // Joker performance (20%): differentiation × monkey bonus
+    let jokerScore = 0.5;
+    if (jokerIds.length > 0) {
+      const ownerships = jokerIds.map((jid) => {
+        const stat = jokerStats.find((j) => j.rider_id === jid);
+        return stat ? stat.joker_count / Math.max(1, stat.total_entries) : 0.1;
+      });
+      const avgOwn = ownerships.reduce((a, b) => a + b, 0) / ownerships.length;
+      const monkeyBonus = monte.beatPct > 60 ? 0.15 : 0;
+      jokerScore = Math.min(1, 0.4 + (1 - avgOwn) * 0.4 + monkeyBonus);
+    }
+
+    const raw = poolScore * 0.5 + monkeyScore * 0.3 + jokerScore * 0.2;
+    const score = Math.max(3.0, Math.round((raw * 9 + 1) * 10) / 10);
+    const toSub = (v: number) => Math.max(1.0, Math.round((v * 9 + 1) * 10) / 10);
+
+    const analysisMap: Array<[number, string]> = [
+      [9.0, "Koningsklasse prestatie — jouw peloton rijdt vooraan. De simulatieapen trillen in hun startblokken en je klassement spreekt boekdelen. Ik had je zelf kunnen samenstellen."],
+      [8.0, "Uitstekend directeurswerk dit seizoen. Je klassement loopt voor op het peloton en de dartpijlaap zit in de volgauto. Met wat meer differentiëlen pak je de overwinning."],
+      [7.0, "Solide Giro tot dusver. Je scoort boven de mediaan, je renners rijden hun loon bij elkaar. We zien ons op de Zoncolan."],
+      [6.0, "Respectabele prestatie — de directeur knikt, maar kijkt scherp. Je ploeg levert, al is de marge dunner dan de bandjes van Tadej op de Col de la Loze."],
+      [5.0, "Midveld, en dat is eerlijk gezegd precies wat het voelt. De apen rijden mee op jouw wiel — niet verloren, maar ook geen sprint voor de zege."],
+      [4.0, "Moeilijk parcours voor jouw ploeg dit seizoen. De simulatieapen presteren vergelijkbaar en je klassering staat onder druk. Herbezin je voor de volgende editie."],
+      [0.0, "Zwaar seizoen. De cijfers liegen niet, en ik evenmin. Je ploeg verliest op alle fronten. De bezemwagen wacht — maar Rome werd ook niet in één dag gebouwd."],
+    ];
+    const analysis = analysisMap.find(([t]) => score >= t)?.[1] ?? analysisMap[analysisMap.length - 1][1];
+
+    return {
+      score,
+      poolScore, monkeyScore, jokerScore,
+      poolSubScore: toSub(poolScore),
+      monkeySubScore: toSub(monkeyScore),
+      jokerSubScore: toSub(jokerScore),
+      analysis,
+      rankLabel: `Rang #${myRank} van ${n}`,
+      beatLabel: `${monte.beatPct.toFixed(0)}% apen verslagen`,
+      jokerLabel: jokerIds.length === 0 ? "Geen jokers" : `${jokerIds.length} joker${jokerIds.length > 1 ? "s" : ""}`,
+    };
+  }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats]);
+
   // ── Locked state ─────────────────────────────────────────────────────────────
   if (!isLive) {
     return (
@@ -446,7 +512,7 @@ export default function HorsCategorieTab() {
           [
             { key: "dartpijl"        as const, label: "Dartpijl",          Icon: Activity  },
             { key: "pelotonkeuzes"   as const, label: "Pelotonkeuzes",     Icon: BarChart3 },
-            { key: "wielerdirecteur" as const, label: "De Wielerdirecteur", Icon: Megaphone },
+            { key: "wielerdirecteur" as const, label: "De Wielerdirecteur", Icon: DirectorIcon },
           ]
         ).map(({ key, label, Icon }) => (
           <button
@@ -998,11 +1064,75 @@ export default function HorsCategorieTab() {
         <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
           <CardTitle className="font-display flex items-center gap-2">
-            <Megaphone className="h-5 w-5 text-primary" /> De Wielerdirecteur
+            <DirectorIcon className="h-5 w-5 text-primary" /> De Wielerdirecteur
           </CardTitle>
           <p className="text-xs text-muted-foreground font-serif italic">Na rit 12, met een micro voor z'n neus.</p>
         </CardHeader>
         <CardContent className="p-4 md:p-6 space-y-4">
+          {/* ── Director Report Score ──────────────────────────────────────── */}
+          {directorScore && (
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-5 md:p-6">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full blur-3xl opacity-20"
+                style={{ background: `radial-gradient(circle, ${directorScore.score >= 7 ? "#34d399" : directorScore.score >= 5 ? "#fbbf24" : "#f43f5e"} 0%, transparent 70%)` }}
+              />
+              {/* Grade + analysis */}
+              <div className="relative flex flex-col md:flex-row items-start gap-5">
+                <div className="shrink-0">
+                  <div className="text-[10px] uppercase tracking-[0.25em] text-white/40 mb-1">Rapport</div>
+                  <div className={cn(
+                    "font-display text-7xl font-black tabular-nums leading-none",
+                    directorScore.score >= 8 ? "text-emerald-400" :
+                    directorScore.score >= 6 ? "text-amber-400" :
+                    directorScore.score >= 4 ? "text-orange-400" : "text-rose-400"
+                  )}>
+                    {directorScore.score.toFixed(1)}
+                  </div>
+                  <div className="text-white/30 text-xs mt-1 font-mono">van de 10</div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2">Directeursanalyse</div>
+                  <p className="text-white/80 text-sm font-serif italic leading-relaxed">"{directorScore.analysis}"</p>
+                </div>
+              </div>
+              {/* Metric breakdown */}
+              <div className="relative mt-5 space-y-3">
+                <div className="text-[10px] uppercase tracking-[0.25em] text-white/30 mb-1">Score opbouw</div>
+                {[
+                  { label: "Pool Ranking",       sub: directorScore.rankLabel,  pct: directorScore.poolScore,   val: directorScore.poolSubScore,   w: 50 },
+                  { label: "Monkey Vergelijking", sub: directorScore.beatLabel,  pct: directorScore.monkeyScore, val: directorScore.monkeySubScore, w: 30 },
+                  { label: "Joker Prestatie",     sub: directorScore.jokerLabel, pct: directorScore.jokerScore,  val: directorScore.jokerSubScore,  w: 20 },
+                ].map(({ label, sub, pct, val, w }) => (
+                  <div key={label} className="flex items-center gap-3">
+                    <div className="w-36 shrink-0">
+                      <div className="text-white/65 text-xs font-medium leading-none mb-0.5">{label}</div>
+                      <div className="text-white/30 text-[10px]">{sub}</div>
+                    </div>
+                    <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-[width] duration-700",
+                          pct >= 0.7 ? "bg-emerald-400" : pct >= 0.4 ? "bg-amber-400" : "bg-rose-400"
+                        )}
+                        style={{ width: `${Math.round(pct * 100)}%` }}
+                      />
+                    </div>
+                    <div className="shrink-0 w-8 text-right">
+                      <span className={cn(
+                        "font-mono text-xs font-bold tabular-nums",
+                        pct >= 0.7 ? "text-emerald-400" : pct >= 0.4 ? "text-amber-400" : "text-rose-400"
+                      )}>{val.toFixed(1)}</span>
+                    </div>
+                    <div className="shrink-0 w-8 text-right">
+                      <span className="text-white/25 text-[10px] font-mono">{w}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {!directorAnalysis ? (
             <p className="text-sm text-muted-foreground">Stel eerst een team samen — dan praat de directeur graag.</p>
           ) : (
