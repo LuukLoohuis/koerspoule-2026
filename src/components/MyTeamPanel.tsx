@@ -129,6 +129,12 @@ export default function MyTeamPanel() {
     return stage ? { stage, points: top.points } : null;
   }, [stagePoints, stages]);
 
+  const standaloneJokerIds = useMemo(() => {
+    const picked = new Set<string>();
+    for (const arr of picksByCategory.values()) for (const id of arr) picked.add(id);
+    return jokerIds.filter((jid) => !picked.has(jid));
+  }, [picksByCategory, jokerIds]);
+
   if (!user) {
     return <div className="ornate-frame retro-border bg-card p-6 text-muted-foreground">Log in om je team te bekijken.</div>;
   }
@@ -260,115 +266,98 @@ export default function MyTeamPanel() {
           <span className="text-3xl opacity-20 select-none" aria-hidden>🚴</span>
         </div>
 
-        {/* Column labels */}
-        <div className="flex items-center gap-0 px-4 py-1 border-b border-primary/20 bg-primary/5">
-          <span className="font-mono text-[9px] uppercase tracking-[0.3em] font-bold text-primary w-10 text-right pr-2 shrink-0">#</span>
-          <span className="font-mono text-[9px] uppercase tracking-[0.3em] font-bold text-primary flex-1">Renner</span>
-          <span className="font-mono text-[9px] uppercase tracking-[0.3em] font-bold text-primary hidden sm:block">Ploeg</span>
-        </div>
-
-        {/* Category sections */}
-        {categories.map((cat) => {
-          const riderIds = picksByCategory.get(cat.id) ?? [];
-          const pickedRiders = riderIds.map((rid) => ridersById[rid]).filter(Boolean);
-          if (pickedRiders.length === 0) return null;
-          const icon = getCategoryIcon(`${cat.name} ${cat.short_name ?? ""}`);
-          return (
-            <div key={cat.id} className="border-b border-primary/15 last:border-b-0">
-              {/* Category divider row */}
-              <div className="flex items-center gap-2 px-4 py-1.5 bg-primary/[0.06] border-b border-primary/15">
-                <span className="text-base leading-none">{icon}</span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.25em] font-bold text-primary">
-                  {cat.short_name ?? cat.name}
-                </span>
-              </div>
-              {/* Rider rows */}
-              {pickedRiders.map((rider, rIdx) => {
-                const isJoker = jokerIds.includes(rider.id);
-                return (
-                  <div
-                    key={rider.id}
-                    className={cn(
-                      "flex items-center gap-0 px-4 py-2 hover:bg-primary/[0.04] transition-colors",
-                      rIdx < pickedRiders.length - 1 && "border-b border-primary/[0.07]"
-                    )}
-                  >
-                    <span className="font-mono text-xs font-black text-primary tabular-nums w-10 text-right pr-2 shrink-0">
-                      {rider.start_number ?? "—"}
-                    </span>
-                    <span className="font-display font-bold text-sm uppercase tracking-wide flex-1 min-w-0 truncate"
-                      style={{ color: "hsl(25 20% 12%)" }}>
-                      {rider.name}
-                    </span>
-                    {isJoker && (
-                      <span className="mx-2 font-mono text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 border shrink-0"
-                        style={{
-                          borderColor: "hsl(var(--vintage-gold))",
-                          color: "hsl(var(--vintage-gold))",
-                          background: "hsl(var(--vintage-gold) / 0.1)",
-                        }}>
-                        ×2
+        {/* 3-column category grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 border-t border-l border-primary/15">
+          {categories.map((cat) => {
+            const riderIds = picksByCategory.get(cat.id) ?? [];
+            const pickedRiders = riderIds.map((rid) => ridersById[rid]).filter(Boolean);
+            if (pickedRiders.length === 0) return null;
+            const icon = getCategoryIcon(`${cat.name} ${cat.short_name ?? ""}`);
+            return (
+              <div key={cat.id} className="border-r border-b border-primary/15 flex flex-col">
+                {/* Category header */}
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/[0.06] border-b border-primary/15">
+                  <span className="text-sm leading-none">{icon}</span>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold text-primary truncate">
+                    {cat.short_name ?? cat.name}
+                  </span>
+                </div>
+                {/* Rider rows */}
+                {pickedRiders.map((rider, rIdx) => {
+                  const isJoker = jokerIds.includes(rider.id);
+                  return (
+                    <div
+                      key={rider.id}
+                      className={cn(
+                        "flex items-start gap-2 px-3 py-2 hover:bg-primary/[0.04] transition-colors",
+                        rIdx < pickedRiders.length - 1 && "border-b border-primary/[0.07]"
+                      )}
+                    >
+                      <span className="font-mono text-xs font-black text-primary tabular-nums w-7 text-right shrink-0 pt-0.5">
+                        {rider.start_number ?? "—"}
                       </span>
-                    )}
-                    <span className="font-mono text-[10px] shrink-0 hidden sm:block text-right max-w-[45%] truncate"
-                      style={{ color: "hsl(30 15% 42%)" }}>
-                      {rider.team}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-
-        {/* Stand-alone jokers */}
-        {(() => {
-          const allPickIds = new Set<string>();
-          for (const arr of picksByCategory.values()) for (const id of arr) allPickIds.add(id);
-          const standaloneJokers = jokerIds.filter((jid) => !allPickIds.has(jid));
-          if (standaloneJokers.length === 0) return null;
-          return (
-            <div className="border-t border-primary/15">
-              <div className="flex items-center gap-2 px-4 py-1.5 border-b border-primary/15"
-                style={{ background: "hsl(var(--vintage-gold) / 0.08)" }}>
-                <span className="text-base leading-none">🃏</span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.25em] font-bold text-primary">Jokers</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span className="font-display font-bold text-xs uppercase tracking-wide truncate"
+                            style={{ color: "hsl(25 20% 12%)" }}>
+                            {rider.name}
+                          </span>
+                          {isJoker && (
+                            <span className="font-mono text-[7px] font-black uppercase tracking-widest px-1 py-0.5 border shrink-0"
+                              style={{ borderColor: "hsl(var(--vintage-gold))", color: "hsl(var(--vintage-gold))", background: "hsl(var(--vintage-gold) / 0.1)" }}>
+                              ×2
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-mono text-[9px] block truncate" style={{ color: "hsl(30 15% 42%)" }}>
+                          {rider.team}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              {standaloneJokers.map((jid, rIdx) => {
-                const rider = ridersById[jid];
-                return (
-                  <div
-                    key={jid}
-                    className={cn(
-                      "flex items-center gap-0 px-4 py-2 hover:bg-primary/[0.04] transition-colors",
-                      rIdx < standaloneJokers.length - 1 && "border-b border-primary/[0.07]"
-                    )}
-                  >
-                    <span className="font-mono text-xs font-black text-primary tabular-nums w-10 text-right pr-2 shrink-0">
-                      {rider?.start_number ?? "—"}
-                    </span>
-                    <span className="font-display font-bold text-sm uppercase tracking-wide flex-1 min-w-0 truncate"
-                      style={{ color: "hsl(25 20% 12%)" }}>
-                      {rider?.name ?? "Onbekend"}
-                    </span>
-                    <span className="mx-2 font-mono text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 border shrink-0"
-                      style={{
-                        borderColor: "hsl(var(--vintage-gold))",
-                        color: "hsl(var(--vintage-gold))",
-                        background: "hsl(var(--vintage-gold) / 0.1)",
-                      }}>
-                      ×2
-                    </span>
-                    <span className="font-mono text-[10px] shrink-0 hidden sm:block text-right max-w-[45%] truncate"
-                      style={{ color: "hsl(30 15% 42%)" }}>
-                      {rider?.team}
-                    </span>
-                  </div>
-                );
-              })}
+            );
+          })}
+
+          {/* Stand-alone jokers — full width */}
+          {standaloneJokerIds.length > 0 && (
+            <div className="col-span-1 sm:col-span-3 border-r border-b border-primary/15">
+              <div className="flex items-center gap-2 px-3 py-1.5 border-b border-primary/15"
+                style={{ background: "hsl(var(--vintage-gold) / 0.08)" }}>
+                <span className="text-sm leading-none">🃏</span>
+                <span className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold text-primary">Jokers</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 border-l border-primary/15">
+                {standaloneJokerIds.map((jid) => {
+                  const rider = ridersById[jid];
+                  return (
+                    <div key={jid} className="border-r border-b border-primary/15 flex items-start gap-2 px-3 py-2 hover:bg-primary/[0.04] transition-colors">
+                      <span className="font-mono text-xs font-black text-primary tabular-nums w-7 text-right shrink-0 pt-0.5">
+                        {rider?.start_number ?? "—"}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span className="font-display font-bold text-xs uppercase tracking-wide truncate"
+                            style={{ color: "hsl(25 20% 12%)" }}>
+                            {rider?.name ?? "Onbekend"}
+                          </span>
+                          <span className="font-mono text-[7px] font-black uppercase tracking-widest px-1 py-0.5 border shrink-0"
+                            style={{ borderColor: "hsl(var(--vintage-gold))", color: "hsl(var(--vintage-gold))", background: "hsl(var(--vintage-gold) / 0.1)" }}>
+                            ×2
+                          </span>
+                        </div>
+                        <span className="font-mono text-[9px] block truncate" style={{ color: "hsl(30 15% 42%)" }}>
+                          {rider?.team}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          );
-        })()}
+          )}
+        </div>
       </div>
 
       {/* ═══ VOORSPELLINGEN — Vintage Race Program ═══ */}
