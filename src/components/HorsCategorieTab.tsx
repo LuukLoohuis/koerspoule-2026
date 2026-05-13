@@ -405,20 +405,15 @@ export default function HorsCategorieTab() {
     const myOwnerships = Array.from(myPickIds).map((rid) => ownershipByRider.get(rid) ?? 0);
     const avgOwn = myOwnerships.length ? myOwnerships.reduce((a, b) => a + b, 0) / myOwnerships.length : 0;
     const uniques = myOwnerships.filter((o) => o < 0.15).length;
-    const lieflings = myOwnerships.filter((o) => o > 0.5).length;
     const labels: string[] = [];
     if (uniques >= 4) labels.push("Pure chaos");
-    if (lieflings >= 4) labels.push("Controleploeg");
     if (avgOwn > 0.45) labels.push("Pelotonkoers");
     if (avgOwn < 0.25) labels.push("Aanvallende ploeg");
-    if (uniques >= 2 && lieflings >= 2) labels.push("Waaierspecialist");
     if (labels.length === 0) labels.push("Knechtenleger");
     const lines: string[] = [];
     if (avgOwn > 0.5) lines.push("Je peloton kiest wat iedereen kiest. Een veilige bidon, geen spektakel.");
     else if (avgOwn < 0.2) lines.push("Met deze differentiëlen mik je óf op het podium óf op de bezemwagen.");
-    else lines.push("Een nette mix tussen kopgroep en peloton — directeur sportif knikt goedkeurend.");
     if (uniques >= 3) lines.push(`${uniques} renners die nauwelijks iemand koos. Lef of waanzin?`);
-    if (lieflings >= 3) lines.push(`${lieflings} pelotonlievelingen — geen verrassingen, geen excuses.`);
     const day = new Date().getDate();
     const quotes = [
       "Vandaag zou jouw ploeg waarschijnlijk lossen op de eerste col.",
@@ -427,9 +422,8 @@ export default function HorsCategorieTab() {
       "Vier sprinters meenemen naar deze bergen? Ambitieuze tactiek.",
       "Het peloton vertrouwt op Pogačar. Jij vertrouwt op hoop.",
       "Deze ploeg heeft de organisatie van een vroege vlucht in een regenrit.",
-      "Jouw kopman stuurt vandaag z'n knecht naar voren — voor een bidon.",
     ];
-    return { labels, lines, quote: quotes[day % quotes.length], avgOwn, uniques, lieflings };
+    return { labels, lines, quote: quotes[day % quotes.length] };
   }, [isLive, entry, picksByCategory, pickStats]);
 
   // ── Director Report Score ────────────────────────────────────────────────────
@@ -1147,12 +1141,7 @@ export default function HorsCategorieTab() {
                   <p key={i} className="font-serif italic text-foreground/90 border-l-2 border-primary/60 pl-3">"{l}"</p>
                 ))}
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <Stat label="Gem. ownership"    value={`${(directorAnalysis.avgOwn * 100).toFixed(0)}%`} />
-                <Stat label="Differentiëlen"    value={`${directorAnalysis.uniques}`}   sub="<15% gekozen" />
-                <Stat label="Pelotonlievelingen" value={`${directorAnalysis.lieflings}`} sub=">50% gekozen" />
-              </div>
-              <div className="rounded-md border-2 border-dashed border-[hsl(var(--vintage-gold))/0.6] bg-[hsl(var(--vintage-gold))/0.08] p-3 flex items-center gap-3">
+<div className="rounded-md border-2 border-dashed border-[hsl(var(--vintage-gold))/0.6] bg-[hsl(var(--vintage-gold))/0.08] p-3 flex items-center gap-3">
                 <Sparkles className="h-5 w-5 text-[hsl(var(--vintage-gold))] shrink-0" />
                 <p className="text-sm font-serif italic">{directorAnalysis.quote}</p>
               </div>
