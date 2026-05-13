@@ -37,7 +37,7 @@ export default function Layout({ children }: {children: React.ReactNode;}) {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <Link to="/" className="flex items-center gap-2">
-                <img alt="Koerspoule logo" className="h-32" src="/lovable-uploads/449638d0-9263-472b-b9dc-1ca6517ee97f.png" />
+                <img alt="Koerspoule logo" width={256} height={128} decoding="async" className="h-32 w-auto" src="/lovable-uploads/449638d0-9263-472b-b9dc-1ca6517ee97f.png" />
               </Link>
               <a
                 href="https://www.buymeacoffee.com/luukloohuis"
