@@ -99,6 +99,26 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
     return m;
   }, [myEntry, stagePoints]);
 
+  // My rank per stage across all entries
+  const myRankPerStage = useMemo(() => {
+    if (!myEntry) return new Map<string, number>();
+    const perStage = new Map<string, Map<string, number>>();
+    stagePoints.forEach((sp) => {
+      if (!perStage.has(sp.stage_id)) perStage.set(sp.stage_id, new Map());
+      const m = perStage.get(sp.stage_id)!;
+      m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points);
+    });
+    const result = new Map<string, number>();
+    perStage.forEach((entryPts, stageId) => {
+      const myPts = entryPts.get(myEntry.id) ?? 0;
+      if (myPts === 0) return;
+      const sorted = [...entryPts.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+      const idx = sorted.findIndex(([id]) => id === myEntry.id);
+      if (idx >= 0) result.set(stageId, idx + 1);
+    });
+    return result;
+  }, [myEntry, stagePoints]);
+
   // Stage standings: total per entry for selected stage
   const stageStandings = useMemo(() => {
     if (!selectedStage) return [];
@@ -248,6 +268,7 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
                 <StageBars
                   stages={stages}
                   pointsByStageId={myPointsPerStage}
+                  rankByStageId={myRankPerStage}
                   selectedStageId={selectedStage?.id}
                   onSelectStage={(s) => {
                     const idx = stages.findIndex((x) => x.id === s.id);
@@ -463,6 +484,7 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
               <StageBars
                 stages={stages}
                 pointsByStageId={myPointsPerStage}
+                rankByStageId={myRankPerStage}
                 selectedStageId={klassementStage?.id}
                 onSelectStage={(s) => {
                   const idx = stages.findIndex((x) => x.id === s.id);

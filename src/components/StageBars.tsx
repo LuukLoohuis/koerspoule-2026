@@ -29,6 +29,8 @@ export interface StageBarsProps {
   stages: StageRow[];
   /** points per stage (e.g. user's stage points). Keyed by stage.id */
   pointsByStageId?: Map<string, number> | Record<string, number>;
+  /** user's daily stage ranking position per stage. Keyed by stage.id */
+  rankByStageId?: Map<string, number> | Record<string, number>;
   selectedStageId?: string;
   onSelectStage?: (stage: StageRow) => void;
   /** Lock the GC bar until this is true */
@@ -49,6 +51,7 @@ export interface StageBarsProps {
 export default function StageBars({
   stages,
   pointsByStageId,
+  rankByStageId,
   selectedStageId,
   onSelectStage,
   gcUnlocked = false,
@@ -61,6 +64,12 @@ export default function StageBars({
     if (!pointsByStageId) return 0;
     if (pointsByStageId instanceof Map) return pointsByStageId.get(id) ?? 0;
     return pointsByStageId[id] ?? 0;
+  };
+
+  const getRank = (id: string): number | undefined => {
+    if (!rankByStageId) return undefined;
+    if (rankByStageId instanceof Map) return rankByStageId.get(id);
+    return rankByStageId[id];
   };
 
   const maxKm = useMemo(
@@ -87,6 +96,7 @@ export default function StageBars({
         >
           {stages.map((s) => {
             const pts = getPts(s.id);
+            const rank = getRank(s.id);
             const isSelected = s.id === selectedStageId;
             const isGc = s.is_gc;
             const locked = isGc && !gcUnlocked;
@@ -224,6 +234,11 @@ export default function StageBars({
                         </span>
                       ) : (
                         <span className="text-muted-foreground/60">0 pt</span>
+                      )}
+                      {!isGc && rank != null && (
+                        <span className="inline-flex items-center gap-0.5 font-semibold text-primary">
+                          🏆 Positie {rank}
+                        </span>
                       )}
                     </div>
                   </div>
