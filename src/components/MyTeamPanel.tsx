@@ -162,7 +162,7 @@ export default function MyTeamPanel() {
   );
 
   return (
-    <div className="space-y-6 pb-6">
+    <div className="space-y-4 pb-6">
       {/* Vintage header */}
       <div className="ornate-frame retro-border bg-gradient-to-br from-card via-card to-primary/5 p-5 md:p-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
@@ -246,233 +246,222 @@ export default function MyTeamPanel() {
         ))}
       </div>
 
-      {/* Renner-overzicht */}
-      <Card className="ornate-frame retro-border overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
-        <CardHeader className="border-b-2 border-foreground bg-secondary/30">
-          <CardTitle className="font-display flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-primary" /> Mijn renners
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {categories.map((cat) => {
-              const riderIds = picksByCategory.get(cat.id) ?? [];
-              const pickedRiders = riderIds.map((rid) => ridersById[rid]).filter(Boolean);
-              const icon = getCategoryIcon(`${cat.name} ${cat.short_name ?? ""}`);
-              return (
-                <div key={cat.id} className="rounded-lg border-2 border-border bg-secondary/20 p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 border border-primary/30 text-base">
-                      {icon}
-                    </div>
-                    <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex-1 truncate">
-                      {cat.short_name ?? cat.name}
-                    </p>
+      {/* ═══ MIJN RENNERS — Vintage Race Roster ═══ */}
+      <div className="retro-border overflow-hidden rounded-lg border-2 border-primary"
+        style={{ background: "hsl(40 60% 97%)" }}>
+        {/* Programme header */}
+        <div className="bg-primary text-primary-foreground px-4 py-3 flex items-center justify-between">
+          <div>
+            <div className="text-[9px] tracking-[0.35em] uppercase font-mono opacity-60 mb-0.5">
+              Programme Officiel · {game.name}
+            </div>
+            <h2 className="font-display text-xl font-black tracking-tight leading-none">Mijn Renners</h2>
+          </div>
+          <span className="text-3xl opacity-20 select-none" aria-hidden>🚴</span>
+        </div>
+
+        {/* Column labels */}
+        <div className="flex items-center gap-0 px-4 py-1 border-b border-primary/20 bg-primary/5">
+          <span className="font-mono text-[9px] uppercase tracking-[0.3em] font-bold text-primary w-10 text-right pr-2 shrink-0">#</span>
+          <span className="font-mono text-[9px] uppercase tracking-[0.3em] font-bold text-primary flex-1">Renner</span>
+          <span className="font-mono text-[9px] uppercase tracking-[0.3em] font-bold text-primary hidden sm:block">Ploeg</span>
+        </div>
+
+        {/* Category sections */}
+        {categories.map((cat) => {
+          const riderIds = picksByCategory.get(cat.id) ?? [];
+          const pickedRiders = riderIds.map((rid) => ridersById[rid]).filter(Boolean);
+          if (pickedRiders.length === 0) return null;
+          const icon = getCategoryIcon(`${cat.name} ${cat.short_name ?? ""}`);
+          return (
+            <div key={cat.id} className="border-b border-primary/15 last:border-b-0">
+              {/* Category divider row */}
+              <div className="flex items-center gap-2 px-4 py-1.5 bg-primary/[0.06] border-b border-primary/15">
+                <span className="text-base leading-none">{icon}</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.25em] font-bold text-primary">
+                  {cat.short_name ?? cat.name}
+                </span>
+              </div>
+              {/* Rider rows */}
+              {pickedRiders.map((rider, rIdx) => {
+                const isJoker = jokerIds.includes(rider.id);
+                return (
+                  <div
+                    key={rider.id}
+                    className={cn(
+                      "flex items-center gap-0 px-4 py-2 hover:bg-primary/[0.04] transition-colors",
+                      rIdx < pickedRiders.length - 1 && "border-b border-primary/[0.07]"
+                    )}
+                  >
+                    <span className="font-mono text-xs font-black text-primary tabular-nums w-10 text-right pr-2 shrink-0">
+                      {rider.start_number ?? "—"}
+                    </span>
+                    <span className="font-display font-bold text-sm uppercase tracking-wide flex-1 min-w-0 truncate"
+                      style={{ color: "hsl(25 20% 12%)" }}>
+                      {rider.name}
+                    </span>
+                    {isJoker && (
+                      <span className="mx-2 font-mono text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 border shrink-0"
+                        style={{
+                          borderColor: "hsl(var(--vintage-gold))",
+                          color: "hsl(var(--vintage-gold))",
+                          background: "hsl(var(--vintage-gold) / 0.1)",
+                        }}>
+                        ×2
+                      </span>
+                    )}
+                    <span className="font-mono text-[10px] shrink-0 hidden sm:block text-right max-w-[45%] truncate"
+                      style={{ color: "hsl(30 15% 42%)" }}>
+                      {rider.team}
+                    </span>
                   </div>
-                  {pickedRiders.length > 0 ? (
-                    <div className="space-y-1.5">
-                      {pickedRiders.map((rider) => {
-                        const isJoker = jokerIds.includes(rider.id);
-                        return (
-                          <div key={rider.id} className="flex items-center gap-2 p-2 rounded-md bg-card border border-border">
-                            <span className="inline-flex h-7 min-w-[1.75rem] px-1.5 items-center justify-center rounded-full bg-primary/15 border border-primary/30 font-mono text-xs shrink-0">
-                              {rider.start_number ?? "—"}
-                            </span>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-display font-bold text-sm truncate">{rider.name}</div>
-                              {rider.team && (
-                                <div className="text-[11px] text-muted-foreground truncate">{rider.team}</div>
-                              )}
-                            </div>
-                            {isJoker && (
-                              <Badge variant="secondary" className="text-[10px] shrink-0">🃏</Badge>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <span className="text-sm text-muted-foreground italic">Niet gekozen</span>
-                  )}
+                );
+              })}
+            </div>
+          );
+        })}
+
+        {/* Stand-alone jokers */}
+        {(() => {
+          const allPickIds = new Set<string>();
+          for (const arr of picksByCategory.values()) for (const id of arr) allPickIds.add(id);
+          const standaloneJokers = jokerIds.filter((jid) => !allPickIds.has(jid));
+          if (standaloneJokers.length === 0) return null;
+          return (
+            <div className="border-t border-primary/15">
+              <div className="flex items-center gap-2 px-4 py-1.5 border-b border-primary/15"
+                style={{ background: "hsl(var(--vintage-gold) / 0.08)" }}>
+                <span className="text-base leading-none">🃏</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.25em] font-bold text-primary">Jokers</span>
+              </div>
+              {standaloneJokers.map((jid, rIdx) => {
+                const rider = ridersById[jid];
+                return (
+                  <div
+                    key={jid}
+                    className={cn(
+                      "flex items-center gap-0 px-4 py-2 hover:bg-primary/[0.04] transition-colors",
+                      rIdx < standaloneJokers.length - 1 && "border-b border-primary/[0.07]"
+                    )}
+                  >
+                    <span className="font-mono text-xs font-black text-primary tabular-nums w-10 text-right pr-2 shrink-0">
+                      {rider?.start_number ?? "—"}
+                    </span>
+                    <span className="font-display font-bold text-sm uppercase tracking-wide flex-1 min-w-0 truncate"
+                      style={{ color: "hsl(25 20% 12%)" }}>
+                      {rider?.name ?? "Onbekend"}
+                    </span>
+                    <span className="mx-2 font-mono text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 border shrink-0"
+                      style={{
+                        borderColor: "hsl(var(--vintage-gold))",
+                        color: "hsl(var(--vintage-gold))",
+                        background: "hsl(var(--vintage-gold) / 0.1)",
+                      }}>
+                      ×2
+                    </span>
+                    <span className="font-mono text-[10px] shrink-0 hidden sm:block text-right max-w-[45%] truncate"
+                      style={{ color: "hsl(30 15% 42%)" }}>
+                      {rider?.team}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* ═══ VOORSPELLINGEN — Vintage Race Program ═══ */}
+      {predictions.length > 0 && (
+        <div className="retro-border overflow-hidden rounded-lg border-2 border-primary"
+          style={{ background: "hsl(40 60% 97%)" }}>
+          {/* Header */}
+          <div className="bg-primary text-primary-foreground px-4 py-3">
+            <div className="text-[9px] tracking-[0.35em] uppercase font-mono opacity-60 mb-0.5">Prognose Finale</div>
+            <h2 className="font-display text-xl font-black tracking-tight leading-none">Eindklassement Voorspelling</h2>
+          </div>
+
+          {/* GC Podium */}
+          {podium.some(Boolean) && (
+            <div className="border-b border-primary/15">
+              <div className="flex items-center px-4 py-1.5 bg-primary/[0.06] border-b border-primary/15">
+                <span className="font-mono text-[9px] uppercase tracking-[0.3em] font-bold text-primary">
+                  Algemeen Klassement — Top 3
+                </span>
+              </div>
+              {podium.map((p, idx) => {
+                const r = p ? ridersById[p.rider_id] : null;
+                const medals = ["🥇", "🥈", "🥉"];
+                return (
+                  <div
+                    key={idx}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-2.5 hover:bg-primary/[0.04] transition-colors",
+                      idx < 2 && "border-b border-primary/[0.07]"
+                    )}
+                  >
+                    <span className="text-base w-6 shrink-0 leading-none">{medals[idx]}</span>
+                    <span className="font-mono text-[10px] font-black w-4 text-primary shrink-0">{idx + 1}</span>
+                    <span className="font-display font-bold text-sm uppercase tracking-wide flex-1 min-w-0 truncate"
+                      style={{ color: "hsl(25 20% 12%)" }}>
+                      {r?.name ?? <em className="font-serif font-normal normal-case text-muted-foreground">Geen keuze</em>}
+                    </span>
+                    {r?.team && (
+                      <span className="font-mono text-[10px] hidden sm:block shrink-0 text-right max-w-[40%] truncate"
+                        style={{ color: "hsl(30 15% 42%)" }}>
+                        {r.team}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Jerseys */}
+          <div className="grid grid-cols-3">
+            {(["points", "kom", "youth"] as const).map((cls, clsIdx) => {
+              const meta = JERSEY_META[cls];
+              const item = predictions.find((p) => p.classification === cls && p.position === 1);
+              const r = item ? ridersById[item.rider_id] : null;
+              return (
+                <div key={cls}
+                  className={cn("p-3 text-center", clsIdx > 0 && "border-l border-primary/15")}>
+                  <div className="text-xl mb-1.5 leading-none">{meta.emoji}</div>
+                  <div className="font-mono text-[8px] uppercase tracking-[0.2em] font-bold text-primary mb-1.5">
+                    {meta.label}
+                  </div>
+                  <div className="font-display text-[11px] font-bold uppercase leading-tight"
+                    style={{ color: "hsl(25 20% 12%)" }}>
+                    {r?.name ?? <em className="font-serif font-normal normal-case text-muted-foreground">—</em>}
+                  </div>
                 </div>
               );
             })}
-
-            {/* Stand-alone jokers (niet in een categorie) */}
-            {(() => {
-              const allPickIds = new Set<string>();
-              for (const arr of picksByCategory.values()) for (const id of arr) allPickIds.add(id);
-              const standaloneJokers = jokerIds.filter((jid) => !allPickIds.has(jid));
-              if (standaloneJokers.length === 0) return null;
-              return (
-                <div className="rounded-lg border-2 border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.08] p-3 md:col-span-2">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl">🃏</span>
-                    <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                      Jokers
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {standaloneJokers.map((jid) => {
-                      const rider = ridersById[jid];
-                      return (
-                        <div key={jid} className="flex items-center gap-2 p-2 rounded-md bg-card border border-border">
-                          <span className="inline-flex h-7 min-w-[1.75rem] px-1.5 items-center justify-center rounded-full bg-[hsl(var(--vintage-gold))/0.2] border border-[hsl(var(--vintage-gold))/0.5] font-mono text-xs shrink-0">
-                            {rider?.start_number ?? "—"}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-display font-bold text-sm truncate">{rider?.name ?? "Onbekend"}</div>
-                            {rider?.team && (
-                              <div className="text-[11px] text-muted-foreground truncate">{rider.team}</div>
-                            )}
-                          </div>
-                          <Badge variant="secondary" className="text-[10px] shrink-0"></Badge>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })()}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
-      {/* Punten per etappe — met balk */}
+      {/* ═══ PUNTEN PER ETAPPE — StageBars visualizer only ═══ */}
       <Card className="ornate-frame retro-border overflow-hidden">
         <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
           <CardTitle className="font-display">📊 Punten per etappe</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          {/* Premium vertical bar visualizer (zelfde component als Klassement & Etappes) */}
-          <div className="p-4 border-b border-border bg-gradient-to-br from-card via-card to-secondary/20">
-            <p className="text-[11px] text-muted-foreground mb-2">
-              Balkhoogte ∝ km · 🟡 = jouw punten per etappe
-            </p>
-            <StageBars
-              stages={stages}
-              pointsByStageId={stagePointsByStageId}
-              gcUnlocked={stages
-                .filter((x) => !x.is_gc)
-                .some((x) => x.stage_number === 21 && x.results_status === "approved")}
-              trackHeight={130}
-            />
-          </div>
-
-          <div className="divide-y divide-border">
-            {stages.map((stage) => {
-              const pts = stagePointsByStageId[stage.id] ?? 0;
-              const hasResults = pts > 0;
-              const widthPct = maxStagePts > 0 ? (pts / maxStagePts) * 100 : 0;
-              const isBest = bestStage && bestStage.stage.id === stage.id && pts > 0;
-              return (
-                <div
-                  key={stage.id}
-                  className={cn(
-                    "p-3 flex items-center gap-3 relative",
-                    hasResults && "bg-primary/5",
-                    isBest && "bg-[hsl(var(--vintage-gold))/0.12]"
-                  )}
-                >
-                  <span className="font-mono text-xs text-muted-foreground w-10 shrink-0">R{stage.stage_number}</span>
-                  <span className="text-base shrink-0">{STAGE_TYPE_ICON[stage.stage_type] ?? "🚴"}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-sans text-sm truncate flex items-center gap-2">
-                      {stage.name ?? `Etappe ${stage.stage_number}`}
-                      {isBest && <span className="text-[10px] uppercase tracking-widest text-[hsl(var(--vintage-gold))] font-bold">★ Top</span>}
-                    </div>
-                    {hasResults && (
-                      <div className="mt-1 h-1.5 rounded-full bg-secondary overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))]"
-                          style={{ width: `${widthPct}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <span className={cn("font-display text-lg font-bold tabular-nums shrink-0", !hasResults && "text-muted-foreground")}>
-                    {pts}
-                  </span>
-                </div>
-              );
-            })}
-            {stages.length === 0 && (
-              <div className="p-6 text-sm text-muted-foreground text-center">Nog geen etappes ingepland.</div>
-            )}
-          </div>
+        <CardContent className="p-4 bg-gradient-to-br from-card via-card to-secondary/20">
+          <p className="text-[11px] text-muted-foreground mb-2">
+            Balkhoogte ∝ km · 🟡 = jouw punten per etappe
+          </p>
+          <StageBars
+            stages={stages}
+            pointsByStageId={stagePointsByStageId}
+            gcUnlocked={stages
+              .filter((x) => !x.is_gc)
+              .some((x) => x.stage_number === 21 && x.results_status === "approved")}
+            trackHeight={130}
+          />
         </CardContent>
       </Card>
-
-      {/* Voorspellingen */}
-      {predictions.length > 0 && (
-        <Card className="ornate-frame retro-border overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
-          <CardHeader className="border-b-2 border-foreground bg-secondary/30">
-            <CardTitle className="font-display">🎯 Mijn voorspellingen</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-5">
-            {/* Podium GC */}
-            {podium.some(Boolean) && (
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-serif mb-3 text-center">
-                  {JERSEY_META.gc.label}
-                </p>
-                <div className="grid grid-cols-3 gap-2 md:gap-4 items-end max-w-md mx-auto">
-                  {[
-                    { idx: 1, label: "🥈", height: "h-14" },
-                    { idx: 0, label: "🥇", height: "h-20" },
-                    { idx: 2, label: "🥉", height: "h-10" },
-                  ].map(({ idx, label, height }) => {
-                    const p = podium[idx];
-                    const r = p ? ridersById[p.rider_id] : null;
-                    return (
-                      <div key={idx} className="flex flex-col items-center">
-                        <div className="text-2xl md:text-3xl mb-1">{label}</div>
-                        <div className="font-display text-xs md:text-sm font-bold text-center min-h-[2.5rem] flex items-center px-1 leading-tight">
-                          {r?.name ?? <span className="text-muted-foreground italic font-serif">—</span>}
-                        </div>
-                        <div
-                          className={cn(
-                            "w-full rounded-t-md border-2 border-b-0",
-                            height,
-                            idx === 0
-                              ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.2]"
-                              : "border-primary/50 bg-primary/10"
-                          )}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Truitjes */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {(["points", "kom", "youth"] as const).map((cls) => {
-                const meta = JERSEY_META[cls];
-                const item = predictions.find((p) => p.classification === cls && p.position === 1);
-                const r = item ? ridersById[item.rider_id] : null;
-                return (
-                  <div key={cls} className={cn("rounded-lg border-2 p-3", meta.ring, meta.bg)}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span>{meta.emoji}</span>
-                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-serif">
-                        {meta.label}
-                      </span>
-                    </div>
-                    <div className="font-display font-bold truncate">
-                      {r?.name ?? <span className="text-muted-foreground italic font-serif font-normal">Geen voorspelling</span>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
