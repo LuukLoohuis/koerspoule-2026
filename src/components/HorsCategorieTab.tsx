@@ -409,7 +409,6 @@ export default function HorsCategorieTab() {
     if (uniques >= 4) labels.push("Pure chaos");
     if (avgOwn > 0.45) labels.push("Pelotonkoers");
     if (avgOwn < 0.25) labels.push("Aanvallende ploeg");
-    if (labels.length === 0) labels.push("Knechtenleger");
     const lines: string[] = [];
     if (avgOwn > 0.5) lines.push("Je peloton kiest wat iedereen kiest. Een veilige bidon, geen spektakel.");
     else if (avgOwn < 0.2) lines.push("Met deze differentiëlen mik je óf op het podium óf op de bezemwagen.");
@@ -417,7 +416,6 @@ export default function HorsCategorieTab() {
     const day = new Date().getDate();
     const quotes = [
       "Vandaag zou jouw ploeg waarschijnlijk lossen op de eerste col.",
-      "Met deze selectie rijdt je bus harder dan je sprinter.",
       "Je ploeg ademt: all-in op chaos.",
       "Vier sprinters meenemen naar deze bergen? Ambitieuze tactiek.",
       "Het peloton vertrouwt op Pogačar. Jij vertrouwt op hoop.",
