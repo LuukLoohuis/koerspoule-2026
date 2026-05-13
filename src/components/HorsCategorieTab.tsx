@@ -1060,7 +1060,6 @@ export default function HorsCategorieTab() {
           <CardTitle className="font-display flex items-center gap-2">
             <DirectorIcon className="h-5 w-5 text-primary" /> De Wielerdirecteur
           </CardTitle>
-          <p className="text-xs text-muted-foreground font-serif italic">Na rit 12, met een micro voor z'n neus.</p>
         </CardHeader>
         <CardContent className="p-4 md:p-6 space-y-4">
           {/* ── Director Report Score ──────────────────────────────────────── */}
