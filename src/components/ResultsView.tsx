@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin, ArrowUp, ArrowDown, Minus, Calendar, Route, Lock } from "lucide-react";
+import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin, ArrowUp, ArrowDown, Minus, Calendar, Route, Lock, Flag } from "lucide-react";
 import ResultsUpdatedBadge from "@/components/ResultsUpdatedBadge";
 import StageBars from "@/components/StageBars";
 
@@ -500,53 +500,110 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Pool overall standings */}
-            <div className="retro-border bg-card">
-              <div className="p-4 border-b-2 border-foreground bg-secondary/50">
+            <div className="retro-border bg-card overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+              <div className="p-4 border-b-2 border-foreground bg-secondary/50 flex items-center justify-between">
                 <h2 className="font-display text-lg font-bold flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-primary" />
-                  Algemeen klassement alle deelnemers
+                  <Trophy className="h-5 w-5 text-[hsl(var(--vintage-gold))]" />
+                  Algemeen klassement
                 </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <span className="text-[11px] text-muted-foreground font-mono">
                   {overallStandings.length} {overallStandings.length === 1 ? "deelnemer" : "deelnemers"}
-                </p>
+                </span>
               </div>
               {overallStandings.length === 0 ? (
                 <div className="p-6 text-sm text-muted-foreground italic text-center">
                   Nog geen ingestuurde teams.
                 </div>
               ) : (
-                <div className="divide-y divide-border max-h-[600px] overflow-y-auto">
+                <div className="max-h-[600px] overflow-y-auto">
                   {overallStandings.map((s) => {
                     const isMe = s.user_id === user?.id;
                     const dagRank = klassementStageStandings.get(s.id);
+
+                    const rankNumCls =
+                      s.rank === 1 ? "text-amber-400"
+                      : s.rank === 2 ? "text-zinc-400"
+                      : s.rank === 3 ? "text-orange-400"
+                      : "text-muted-foreground/40";
+
+                    const rowAccentCls =
+                      s.rank === 1 ? "border-l-[3px] border-amber-400/70 bg-amber-500/[0.04]"
+                      : s.rank === 2 ? "border-l-[3px] border-zinc-400/50 bg-zinc-500/[0.03]"
+                      : s.rank === 3 ? "border-l-[3px] border-orange-400/50 bg-orange-500/[0.03]"
+                      : "border-l-[3px] border-transparent";
+
+                    const dagBadgeCls =
+                      dagRank == null ? null
+                      : dagRank === 1 ? "bg-amber-500/15 border-amber-400/50 text-amber-500"
+                      : dagRank <= 3 ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
+                      : dagRank <= 5 ? "bg-sky-500/15 border-sky-400/30 text-sky-400"
+                      : "bg-secondary/80 border-border text-muted-foreground/60";
+
                     return (
                       <div
                         key={s.id}
                         className={cn(
-                          "flex items-center justify-between px-3 py-2 text-sm transition-all duration-300",
-                          isMe && "bg-primary/10"
+                          "flex items-center gap-3 px-3 py-2.5 border-b border-border/40 transition-colors",
+                          rowAccentCls,
+                          isMe && "bg-primary/[0.08] ring-1 ring-inset ring-primary/30"
                         )}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
-                          {rankBadge(s.rank)}
-                          <span className={cn("font-sans truncate", isMe && "font-bold text-primary")}>
-                            {s.team_name ?? s.display_name ?? "—"}
-                          </span>
-                          {klassementStageIdx > 0 && (
+                        {/* Rank number */}
+                        <div className={cn(
+                          "shrink-0 font-display font-black tabular-nums leading-none text-center",
+                          s.rank <= 3 ? "text-2xl w-9" : "text-sm w-7",
+                          rankNumCls
+                        )}>
+                          {s.rank}
+                        </div>
+
+                        {/* Name + delta */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
                             <span className={cn(
-                              "inline-flex items-center text-[10px] font-bold tabular-nums",
-                              s.delta > 0 ? "text-emerald-600" : s.delta < 0 ? "text-rose-600" : "text-muted-foreground"
+                              "font-sans text-sm truncate",
+                              isMe ? "font-bold text-primary" : s.rank <= 3 ? "font-semibold" : "font-medium"
                             )}>
-                              {s.delta > 0 ? <ArrowUp className="w-3 h-3" /> : s.delta < 0 ? <ArrowDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                              {s.delta !== 0 && Math.abs(s.delta)}
+                              {s.team_name ?? s.display_name ?? "—"}
                             </span>
+                            {isMe && (
+                              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 rounded px-1 py-px leading-4">
+                                jij
+                              </span>
+                            )}
+                          </div>
+                          {klassementStageIdx > 0 && s.delta !== 0 && (
+                            <div className={cn(
+                              "flex items-center gap-0.5 text-[10px] font-semibold tabular-nums mt-0.5 leading-none",
+                              s.delta > 0 ? "text-emerald-500" : "text-rose-500"
+                            )}>
+                              {s.delta > 0 ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />}
+                              {Math.abs(s.delta)}
+                            </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {dagRank != null && (
-                            <span className="text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">dag #{dagRank}</span>
-                          )}
-                          <span className="font-bold text-sm tabular-nums">{s.cumPts} pt</span>
+
+                        {/* Daily stage position badge */}
+                        {dagRank != null && dagBadgeCls && (
+                          <div className={cn(
+                            "shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-0.5",
+                            dagBadgeCls
+                          )}>
+                            <Flag className="w-2.5 h-2.5 shrink-0" />
+                            <span className="text-[10px] font-bold tabular-nums">#{dagRank}</span>
+                          </div>
+                        )}
+
+                        {/* Total points */}
+                        <div className="shrink-0 text-right min-w-[3rem]">
+                          <span className={cn(
+                            "font-display font-bold tabular-nums",
+                            s.rank === 1 ? "text-xl text-amber-500" : "text-base"
+                          )}>
+                            {s.cumPts}
+                          </span>
+                          <span className="text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
                         </div>
                       </div>
                     );
