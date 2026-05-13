@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
-  Lock, Activity, Trophy, BarChart3, Sparkles,
+  Lock, Activity, Trophy, BarChart3, Sparkles, Info, X,
 } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -493,6 +493,7 @@ export default function HorsCategorieTab() {
 
   // ── Sub-tab state ────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur">("dartpijl");
+  const [showScoreInfo, setShowScoreInfo] = useState(false);
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
@@ -1089,7 +1090,49 @@ export default function HorsCategorieTab() {
               </div>
               {/* Metric breakdown */}
               <div className="relative mt-5 space-y-3">
-                <div className="text-[10px] uppercase tracking-[0.25em] text-white/30 mb-1">Score opbouw</div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="text-[10px] uppercase tracking-[0.25em] text-white/30">Score opbouw</div>
+                  <button
+                    type="button"
+                    onClick={() => setShowScoreInfo((v) => !v)}
+                    className="flex items-center justify-center h-4 w-4 rounded-full border border-white/20 text-white/30 hover:text-white/70 hover:border-white/40 transition-colors shrink-0"
+                    aria-label="Uitleg scoreberekening"
+                  >
+                    {showScoreInfo ? <X className="h-2.5 w-2.5" /> : <Info className="h-2.5 w-2.5" />}
+                  </button>
+                </div>
+
+                {/* Explanation panel */}
+                {showScoreInfo && (
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3 text-[11px] text-white/60 leading-relaxed">
+                    <p className="text-white/80 font-semibold text-xs">Hoe wordt de score berekend?</p>
+                    <p>De rapportscore loopt van <span className="text-white/80 font-mono">1.0</span> tot <span className="text-white/80 font-mono">10.0</span> (minimum 3.0) en is opgebouwd uit drie gewogen onderdelen.</p>
+                    <div className="space-y-2.5">
+                      <div className="flex gap-2">
+                        <span className="shrink-0">🏆</span>
+                        <div>
+                          <span className="text-white/75 font-semibold">Pool Ranking · 50%</span>
+                          <p className="mt-0.5">Jouw positie in de pool ten opzichte van alle andere deelnemers. Rang 1 geeft de maximale bijdrage, de laatste plek de minimale.</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="shrink-0">🐒</span>
+                        <div>
+                          <span className="text-white/75 font-semibold">Monkey Vergelijking · 30%</span>
+                          <p className="mt-0.5">Het percentage van 5.000 willekeurige simulatieploegen dat jij verslaat. Meer dan 60% verslaan geeft een extra bonus op de Joker score.</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="shrink-0">🃏</span>
+                        <div>
+                          <span className="text-white/75 font-semibold">Joker Prestatie · 20%</span>
+                          <p className="mt-0.5">Hoe zeldzaam jouw jokers zijn in de pool — renners die weinig anderen kozen scoren hoger. Een populaire joker (hoge ownership) verlaagt de deelscore.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {[
                   { label: "Pool Ranking",       sub: directorScore.rankLabel,  pct: directorScore.poolScore,   val: directorScore.poolSubScore,   w: 50 },
                   { label: "Monkey Vergelijking", sub: directorScore.beatLabel,  pct: directorScore.monkeyScore, val: directorScore.monkeySubScore, w: 30 },
