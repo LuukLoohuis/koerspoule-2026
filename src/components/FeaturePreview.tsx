@@ -1,10 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Lock, Mountain, Bike } from "lucide-react";
-import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubpoules } from "@/hooks/useSubpoules";
-import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
-import SubpouleHeatmap from "@/components/SubpouleHeatmap";
 import DemoEvolutionChart from "@/components/DemoEvolutionChart";
 import DemoSubpouleHeatmap from "@/components/DemoSubpouleHeatmap";
 import { cn, smoothScrollToTop } from "@/lib/utils";
@@ -26,12 +22,8 @@ const SPRINTERS_1_RIDERS: PreviewRider[] = [
 
 export default function FeaturePreview() {
   const navigate = useNavigate();
-  const { data: game } = useCurrentGame();
   const { user } = useAuth();
-  const { subpoules } = useSubpoules(game?.id);
   const isLoggedIn = Boolean(user);
-
-  const firstSubpouleId = subpoules[0]?.id;
 
   const ctaPrimary = isLoggedIn ? "/team-samenstellen" : "/login";
 
@@ -62,22 +54,8 @@ export default function FeaturePreview() {
 
       {/* Top row: subpoule chart + subpoule heatmap */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
-        {firstSubpouleId ? (
-          <>
-            <SubpouleEvolutionChart
-              subpouleId={firstSubpouleId}
-              compact
-              title="Jouw subpoule"
-              subtitle="Etappe-evolutie · live preview"
-            />
-            <SubpouleHeatmap subpouleId={firstSubpouleId} />
-          </>
-        ) : (
-          <>
-            <DemoEvolutionChart />
-            <DemoSubpouleHeatmap />
-          </>
-        )}
+        <DemoEvolutionChart />
+        <DemoSubpouleHeatmap />
       </div>
 
       {/* Two category blocks */}
