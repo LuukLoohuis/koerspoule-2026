@@ -176,7 +176,7 @@ export default function Index() {
           <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-12 md:gap-14 items-center">
             {/* Linker kolom — koers + CTAs + stats */}
             <div className="relative">
-              <span className="editor-eyebrow">{copy.edition}</span>
+              <span className="editor-eyebrow text-lg">{copy.edition}</span>
 
               <h1
                 className="font-display font-black mt-4 leading-[0.88] tracking-[-0.025em] text-6xl md:text-[92px]"
@@ -206,15 +206,13 @@ export default function Index() {
                 één <em>{copy.jersey}</em>
               </span>
 
-              <p className="font-serif italic text-foreground/80 text-lg md:text-xl max-w-[480px] mt-6 leading-relaxed">
-                21 etappes,{" "}
-                <span style={{ background: "hsl(var(--vintage-gold) / 0.45)", padding: "0 4px" }}>
-                  een paar duizend stoere stuurmannen
-                </span>{" "}
-                die denken het beter te weten dan de directeur sportif. Doe je mee?
+              <p className="font-serif italic text-foreground/80 md:text-xl max-w-[480px] mt-6 leading-relaxed text-lg my-[2px] text-center">
+                Iedereen denkt dat ze het beter weten dan de directeur sportif.
+                <br />
+                Dit is je kans om het te bewijzen.
               </p>
 
-              <div className="flex flex-wrap gap-3 mt-7 items-center">
+              <div className="flex flex-wrap gap-3 mt-7 items-center text-2xl">
                 <Button
                   className="retro-border-primary font-bold"
                   onClick={() => smoothScrollTo("stel-je-ploeg-samen")}
@@ -232,7 +230,7 @@ export default function Index() {
                   Bekijk uitslagen
                 </Button>
                 <span className="margin-note tilt-l hidden md:inline-block ml-3 text-lg">
-                  gratis &amp; for the love of it ✿
+                  Gratis &amp; Uit Liefde voor de koers ✿
                 </span>
               </div>
 
@@ -257,7 +255,7 @@ export default function Index() {
                   className="sticker sticker--hand absolute -top-2 right-6 rotate-[6deg]"
                   aria-hidden
                 >
-                  est. 2009 ✦
+                  est. 2026✦
                 </span>
                 <span
                   className="sticker sticker--gold sticker--hand absolute bottom-8 -left-2 -rotate-[8deg]"
@@ -407,7 +405,7 @@ export default function Index() {
         id="stel-je-ploeg-samen"
         className="container mx-auto px-5 py-12 md:py-16 vintage-texture text-center scroll-mt-16"
       >
-        <span className="editor-eyebrow">Spelregels, in vier alinea's</span>
+        <span className="editor-eyebrow text-lg">Spelregels, in vier alinea's</span>
         <h2 className="vintage-heading text-2xl md:text-3xl font-bold mt-3">Hoe werkt het?</h2>
         <div className="vintage-ornament max-w-[200px] mx-auto mt-3.5 mb-7">
           <span className="vintage-ornament-symbol">✦</span>
@@ -474,7 +472,7 @@ export default function Index() {
 
 function Stat({ value, label, last }: { value: string; label: string; last?: boolean }) {
   return (
-    <div className={`py-4 px-4 ${last ? "" : "border-r border-foreground/10"}`}>
+    <div className={`px-4 py-[16px] ${last ? "" : "border-r border-foreground/10"}`}>
       <div className="font-display font-bold text-3xl leading-none tracking-[-0.02em]">
         {value}
       </div>
