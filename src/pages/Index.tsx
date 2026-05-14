@@ -234,13 +234,6 @@ export default function Index() {
                 </span>
               </div>
 
-              {/* Stats-strip */}
-              <div className="grid grid-cols-2 md:grid-cols-4 mt-10 border-y border-foreground/20">
-                <Stat value="21" label="etappes" />
-                <Stat value="3.420" label="km totaal" />
-                <Stat value="+38.640" label="hoogtemeters" />
-                <Stat value="€ 0" label="inzet" last />
-              </div>
             </div>
 
             {/* Rechter kolom — transparant logo */}
