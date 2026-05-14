@@ -32,6 +32,7 @@ import { Bike, BookOpen, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CountdownBanner from "@/components/CountdownBanner";
 import KoerspouleLogo, { type RaceKey } from "@/components/KoerspouleLogo";
+import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { smoothScrollTo, smoothScrollToTop } from "@/lib/utils";
 
@@ -244,10 +245,14 @@ export default function Index() {
               </div>
             </div>
 
-            {/* Rechter kolom — sticker */}
+            {/* Rechter kolom — transparant logo */}
             <div className="relative flex justify-center">
               <div className="relative w-full max-w-[420px]">
-                <KoerspouleLogo variant="sticker" race={race} className="w-full h-auto block" />
+                <img
+                  src={koerspouleLogo}
+                  alt="Koerspoule logo"
+                  className="w-full h-auto block drop-shadow-xl"
+                />
                 <span
                   className="sticker sticker--hand absolute -top-2 right-6 rotate-[6deg]"
                   aria-hidden
