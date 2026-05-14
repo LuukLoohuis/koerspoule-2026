@@ -102,6 +102,38 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Scoring preview */}
+      <section className="gradient-border-top bg-card">
+        <div className="container mx-auto px-5 py-10 md:py-14">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="vintage-heading text-2xl md:text-3xl font-bold mb-3">
+              Punten per etappe
+            </h2>
+            <div className="vintage-ornament max-w-xs mx-auto mb-6">
+              <span className="vintage-ornament-symbol">⚜</span>
+            </div>
+            <div className="ornate-frame retro-border bg-background p-5 inline-block">
+              <div className="grid grid-cols-5 gap-x-5 gap-y-1.5 text-sm font-sans">
+                {[
+                  [1, 50], [2, 40], [3, 32], [4, 26], [5, 22],
+                  [6, 20], [7, 18], [8, 16], [9, 14], [10, 12],
+                ].map(([pos, pts]) => (
+                  <div key={pos} className="flex items-center gap-1.5">
+                    <span className="font-bold text-muted-foreground w-5 text-right text-xs">
+                      {pos}.
+                    </span>
+                    <span className="font-bold text-primary text-sm">{pts}pt</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3 font-sans">
+              Top 20 levert punten op · Positie 11–20: 10 tot 1 punt
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
       <section
         id="stel-je-ploeg-samen"
@@ -145,38 +177,6 @@ export default function Index() {
       <Suspense fallback={null}>
         <HorsCategoriePreview />
       </Suspense>
-
-      {/* Scoring preview */}
-      <section className="gradient-border-top bg-card">
-        <div className="container mx-auto px-5 py-10 md:py-14">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="vintage-heading text-2xl md:text-3xl font-bold mb-3">
-              Punten per etappe
-            </h2>
-            <div className="vintage-ornament max-w-xs mx-auto mb-6">
-              <span className="vintage-ornament-symbol">⚜</span>
-            </div>
-            <div className="ornate-frame retro-border bg-background p-5 inline-block">
-              <div className="grid grid-cols-5 gap-x-5 gap-y-1.5 text-sm font-sans">
-                {[
-                  [1, 50], [2, 40], [3, 32], [4, 26], [5, 22],
-                  [6, 20], [7, 18], [8, 16], [9, 14], [10, 12],
-                ].map(([pos, pts]) => (
-                  <div key={pos} className="flex items-center gap-1.5">
-                    <span className="font-bold text-muted-foreground w-5 text-right text-xs">
-                      {pos}.
-                    </span>
-                    <span className="font-bold text-primary text-sm">{pts}pt</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-3 font-sans">
-              Top 20 levert punten op · Positie 11–20: 10 tot 1 punt
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* CTA + Countdown */}
       <section className="container mx-auto px-5 py-10 text-center">
