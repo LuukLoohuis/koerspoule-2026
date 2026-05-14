@@ -556,12 +556,7 @@ export default function Index() {
         className="container mx-auto px-5 py-12 md:py-16 vintage-texture text-center scroll-mt-16"
       >
         <span className="editor-eyebrow text-lg">Spelregels, in vier alinea's</span>
-        <div className="flex items-center justify-center gap-24 mt-3">
-          <h2 className="vintage-heading text-2xl md:text-3xl font-bold">Hoe werkt het?</h2>
-          <Button asChild className="retro-border-primary font-bold">
-            <Link to="/preview">Preview</Link>
-          </Button>
-        </div>
+        <h2 className="vintage-heading text-2xl md:text-3xl font-bold mt-3">Hoe werkt het?</h2>
         <div className="vintage-ornament max-w-[200px] mx-auto mt-3.5 mb-7">
           <span className="vintage-ornament-symbol">✦</span>
         </div>
@@ -588,6 +583,12 @@ export default function Index() {
               <p className="text-sm text-muted-foreground m-0">{f.desc}</p>
             </div>
           ))}
+        </div>
+
+        <div className="mt-8">
+          <Button asChild className="retro-border-primary font-bold">
+            <Link to="/preview">Preview</Link>
+          </Button>
         </div>
       </section>
 
