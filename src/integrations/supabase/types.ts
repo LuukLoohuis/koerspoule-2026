@@ -830,6 +830,115 @@ export type Database = {
           },
         ]
       }
+      rubriek_items: {
+        Row: {
+          content: string | null
+          created_at: string
+          game_id: string
+          id: string
+          is_active: boolean
+          question: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          game_id: string
+          id?: string
+          is_active?: boolean
+          question?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          game_id?: string
+          id?: string
+          is_active?: boolean
+          question?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rubriek_items_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rubriek_options: {
+        Row: {
+          id: string
+          rubriek_id: string
+          sort_order: number
+          text: string
+        }
+        Insert: {
+          id?: string
+          rubriek_id: string
+          sort_order?: number
+          text: string
+        }
+        Update: {
+          id?: string
+          rubriek_id?: string
+          sort_order?: number
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rubriek_options_rubriek_id_fkey"
+            columns: ["rubriek_id"]
+            isOneToOne: false
+            referencedRelation: "rubriek_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rubriek_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_id: string
+          rubriek_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_id: string
+          rubriek_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_id?: string
+          rubriek_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rubriek_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "rubriek_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rubriek_votes_rubriek_id_fkey"
+            columns: ["rubriek_id"]
+            isOneToOne: false
+            referencedRelation: "rubriek_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stage_points: {
         Row: {
           created_at: string
@@ -1320,6 +1429,10 @@ export type Database = {
       cast_chat_poll_vote: {
         Args: { p_option_index: number; p_poll_id: string }
         Returns: undefined
+      }
+      cast_rubriek_vote: {
+        Args: { p_option_id: string; p_rubriek_id: string }
+        Returns: Json
       }
       create_chat_poll: {
         Args: {
