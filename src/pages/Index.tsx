@@ -102,6 +102,34 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Features */}
+      <section
+        id="stel-je-ploeg-samen"
+        className="container mx-auto px-5 py-10 md:py-14 vintage-texture scroll-mt-16"
+      >
+        <h2 className="vintage-heading text-2xl md:text-3xl font-bold text-center mb-3">
+          Hoe werkt het?
+        </h2>
+        <div className="vintage-ornament max-w-xs mx-auto mb-8">
+          <span className="vintage-ornament-symbol">✦</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {features.map((f, i) => (
+            <div
+              key={f.title}
+              className="ornate-frame retro-border bg-card p-4 animate-fade-in"
+              style={{ animationDelay: `${0.1 * i}s` }}
+            >
+              <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center mb-3">
+                <f.icon className="h-4.5 w-4.5 text-primary-foreground" />
+              </div>
+              <h3 className="font-display text-base font-bold mb-1.5">{f.title}</h3>
+              <p className="text-xs text-muted-foreground font-sans leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Scoring preview */}
       <section className="gradient-border-top bg-card">
         <div className="container mx-auto px-5 py-10 md:py-14">
@@ -134,32 +162,16 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Features */}
-      <section
-        id="stel-je-ploeg-samen"
-        className="container mx-auto px-5 py-10 md:py-14 vintage-texture scroll-mt-16"
-      >
-        <h2 className="vintage-heading text-2xl md:text-3xl font-bold text-center mb-3">
-          Hoe werkt het?
-        </h2>
-        <div className="vintage-ornament max-w-xs mx-auto mb-8">
-          <span className="vintage-ornament-symbol">✦</span>
+      {/* CTA + Countdown */}
+      <section className="container mx-auto px-5 py-10 text-center">
+        <div className="vintage-ornament max-w-xs mx-auto mb-5">
+          <span className="vintage-ornament-symbol">❧</span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {features.map((f, i) => (
-            <div
-              key={f.title}
-              className="ornate-frame retro-border bg-card p-4 animate-fade-in"
-              style={{ animationDelay: `${0.1 * i}s` }}
-            >
-              <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center mb-3">
-                <f.icon className="h-4.5 w-4.5 text-primary-foreground" />
-              </div>
-              <h3 className="font-display text-base font-bold mb-1.5">{f.title}</h3>
-              <p className="text-xs text-muted-foreground font-sans leading-relaxed">{f.desc}</p>
-            </div>
-          ))}
-        </div>
+        <h2 className="vintage-heading text-2xl font-bold mb-3">Klaar om te koersen?</h2>
+        <CountdownBanner className="max-w-md mx-auto mb-5" />
+        <Button asChild className="retro-border-primary font-bold">
+          <Link to="/team-samenstellen">Schrijf je in →</Link>
+        </Button>
       </section>
 
       {/* Feature Preview */}
@@ -177,18 +189,6 @@ export default function Index() {
       <Suspense fallback={null}>
         <HorsCategoriePreview />
       </Suspense>
-
-      {/* CTA + Countdown */}
-      <section className="container mx-auto px-5 py-10 text-center">
-        <div className="vintage-ornament max-w-xs mx-auto mb-5">
-          <span className="vintage-ornament-symbol">❧</span>
-        </div>
-        <h2 className="vintage-heading text-2xl font-bold mb-3">Klaar om te koersen?</h2>
-        <CountdownBanner className="max-w-md mx-auto mb-5" />
-        <Button asChild className="retro-border-primary font-bold">
-          <Link to="/team-samenstellen">Schrijf je in →</Link>
-        </Button>
-      </section>
     </div>
   );
 }
