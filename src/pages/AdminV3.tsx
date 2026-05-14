@@ -42,7 +42,7 @@ export default function AdminV3() {
     if (error) {
       const retry = await supabase
         .from("games")
-        .select("id, name, game_type, year, status, starts_at, slug, registration_opens_at, registration_closes_at")
+        .select("id, name, game_type, year, status, starts_at, slug, registration_opens_at, registration_closes_at, accent_color")
         .order("year", { ascending: false, nullsFirst: false });
       if (retry.error) {
         console.error("Games load error:", retry.error);
