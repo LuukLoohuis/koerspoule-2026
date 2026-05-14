@@ -1,77 +1,76 @@
--- ── Rubriek: text posts and polls for "De Courant van Vandaag" ───────────────
+-- ── Rubriek: game-scoped text posts + polls for "De Courant van Vandaag" ──────
+-- Mirrors the chat_polls / chat_poll_votes pattern used by the Koerscafé.
+-- options stored as jsonb string-array; votes use option_index (int).
 
-CREATE TABLE IF NOT EXISTS public.rubriek_items (
-  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  game_id    uuid NOT NULL REFERENCES public.games(id) ON DELETE CASCADE,
-  type       text NOT NULL CHECK (type IN ('text', 'poll')) DEFAULT 'text',
-  content    text,
-  question   text,
-  is_active  boolean NOT NULL DEFAULT false,
-  created_by uuid REFERENCES auth.users(id),
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
+DROP TABLE IF EXISTS public.rubriek_votes  CASCADE;
+DROP TABLE IF EXISTS public.rubriek_options CASCADE;
+DROP TABLE IF EXISTS public.rubriek_items  CASCADE;
 
-CREATE TABLE IF NOT EXISTS public.rubriek_options (
+CREATE TABLE public.rubriek_items (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  rubriek_id  uuid NOT NULL REFERENCES public.rubriek_items(id) ON DELETE CASCADE,
-  text        text NOT NULL,
-  sort_order  integer NOT NULL DEFAULT 0
-);
-
-CREATE TABLE IF NOT EXISTS public.rubriek_votes (
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  rubriek_id  uuid NOT NULL REFERENCES public.rubriek_items(id) ON DELETE CASCADE,
-  option_id   uuid NOT NULL REFERENCES public.rubriek_options(id) ON DELETE CASCADE,
-  user_id     uuid NOT NULL,
+  game_id     uuid NOT NULL REFERENCES public.games(id) ON DELETE CASCADE,
+  type        text NOT NULL CHECK (type IN ('text', 'poll')) DEFAULT 'text',
+  content     text,          -- type='text': the post body
+  question    text,          -- type='poll': poll question
+  options     jsonb,         -- type='poll': ["opt1","opt2",...] (2–6 items, same as chat_polls)
+  deadline    timestamptz,   -- optional poll deadline
+  is_active   boolean NOT NULL DEFAULT false,
+  created_by  uuid REFERENCES auth.users(id),
   created_at  timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT rubriek_votes_one_per_user UNIQUE (rubriek_id, user_id)
+  updated_at  timestamptz NOT NULL DEFAULT now()
 );
 
--- RLS
-ALTER TABLE public.rubriek_items   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.rubriek_options ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.rubriek_votes   ENABLE ROW LEVEL SECURITY;
+CREATE TABLE public.rubriek_votes (
+  rubriek_id   uuid NOT NULL REFERENCES public.rubriek_items(id) ON DELETE CASCADE,
+  user_id      uuid NOT NULL,
+  option_index int  NOT NULL,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (rubriek_id, user_id)  -- one row per user; ON CONFLICT allows vote changes
+);
 
--- Public read; only admin can write
+-- ── RLS ──────────────────────────────────────────────────────────────────────
+
+ALTER TABLE public.rubriek_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rubriek_votes ENABLE ROW LEVEL SECURITY;
+
+-- Public read; admin-only writes
 CREATE POLICY "rubriek_items_read"  ON public.rubriek_items FOR SELECT USING (true);
 CREATE POLICY "rubriek_items_write" ON public.rubriek_items FOR ALL
   USING (public.is_admin()) WITH CHECK (public.is_admin());
 
-CREATE POLICY "rubriek_options_read"  ON public.rubriek_options FOR SELECT USING (true);
-CREATE POLICY "rubriek_options_write" ON public.rubriek_options FOR ALL
-  USING (public.is_admin()) WITH CHECK (public.is_admin());
-
--- Everyone can read vote counts; only authenticated users can insert their own vote
+-- Everyone can read vote counts; authenticated users can insert/update their own vote
 CREATE POLICY "rubriek_votes_read"   ON public.rubriek_votes FOR SELECT USING (true);
 CREATE POLICY "rubriek_votes_insert" ON public.rubriek_votes FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL AND auth.uid() = user_id);
+CREATE POLICY "rubriek_votes_update" ON public.rubriek_votes FOR UPDATE
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
--- RPC: atomic vote cast — returns success/already_voted/error
-CREATE OR REPLACE FUNCTION public.cast_rubriek_vote(p_rubriek_id uuid, p_option_id uuid)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+-- ── RPC: cast_rubriek_vote ────────────────────────────────────────────────────
+-- Mirrors cast_chat_poll_vote: validates range + deadline, allows changing vote.
+
+CREATE OR REPLACE FUNCTION public.cast_rubriek_vote(p_rubriek_id uuid, p_option_index int)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_deadline timestamptz;
+  v_count    int;
 BEGIN
-  IF auth.uid() IS NULL THEN
-    RETURN jsonb_build_object('success', false, 'error', 'not_authenticated');
-  END IF;
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Niet ingelogd'; END IF;
 
-  IF NOT EXISTS (
-    SELECT 1 FROM public.rubriek_options
-    WHERE id = p_option_id AND rubriek_id = p_rubriek_id
-  ) THEN
-    RETURN jsonb_build_object('success', false, 'error', 'invalid_option');
-  END IF;
+  SELECT deadline, jsonb_array_length(options)
+    INTO v_deadline, v_count
+    FROM public.rubriek_items
+   WHERE id = p_rubriek_id AND type = 'poll';
 
-  INSERT INTO public.rubriek_votes (rubriek_id, option_id, user_id)
-  VALUES (p_rubriek_id, p_option_id, auth.uid())
-  ON CONFLICT (rubriek_id, user_id) DO NOTHING;
+  IF v_count IS NULL THEN RAISE EXCEPTION 'Poll niet gevonden'; END IF;
+  IF v_deadline IS NOT NULL AND v_deadline <= now() THEN RAISE EXCEPTION 'Poll is gesloten'; END IF;
+  IF p_option_index < 0 OR p_option_index >= v_count THEN RAISE EXCEPTION 'Ongeldige optie'; END IF;
 
-  RETURN jsonb_build_object('success', true);
+  INSERT INTO public.rubriek_votes (rubriek_id, user_id, option_index)
+  VALUES (p_rubriek_id, auth.uid(), p_option_index)
+  ON CONFLICT (rubriek_id, user_id)
+    DO UPDATE SET option_index = EXCLUDED.option_index, created_at = now();
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.cast_rubriek_vote(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.cast_rubriek_vote(uuid, int) TO authenticated;
