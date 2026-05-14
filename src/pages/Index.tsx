@@ -102,22 +102,6 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Feature Preview */}
-      <Suspense
-        fallback={
-          <div className="container mx-auto px-5 py-10 text-center text-muted-foreground font-serif italic text-sm">
-            Voorbeelden laden...
-          </div>
-        }
-      >
-        <FeaturePreview />
-      </Suspense>
-
-      {/* Hors Catégorie compact preview */}
-      <Suspense fallback={null}>
-        <HorsCategoriePreview />
-      </Suspense>
-
       {/* Features */}
       <section
         id="stel-je-ploeg-samen"
@@ -145,6 +129,22 @@ export default function Index() {
           ))}
         </div>
       </section>
+
+      {/* Feature Preview */}
+      <Suspense
+        fallback={
+          <div className="container mx-auto px-5 py-10 text-center text-muted-foreground font-serif italic text-sm">
+            Voorbeelden laden...
+          </div>
+        }
+      >
+        <FeaturePreview />
+      </Suspense>
+
+      {/* Hors Catégorie compact preview */}
+      <Suspense fallback={null}>
+        <HorsCategoriePreview />
+      </Suspense>
 
       {/* Scoring preview */}
       <section className="gradient-border-top bg-card">
