@@ -15,6 +15,7 @@ const navItems = [
   { to: "/uitslagen", label: "Uitslagen" },
   { to: "/mijn-peloton", label: "Mijn Peloton" },
   { to: "/regels", label: "Koersreglement" },
+  { to: "/preview", label: "Preview" },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {

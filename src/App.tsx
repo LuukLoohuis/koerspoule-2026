@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import Legal from "./pages/Legal";
 import AdminV3 from "./pages/AdminV3";
 import GiroPoule2026 from "./pages/GiroPoule2026";
+import Preview from "./pages/Preview";
 import InstagramExport from "./pages/InstagramExport";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/juridisch" element={<Legal />} />
+              <Route path="/preview" element={<Preview />} />
               <Route path="/giro-italia-poule-2026" element={<GiroPoule2026 />} />
               <Route
                 path="/admin"

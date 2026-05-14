@@ -25,7 +25,6 @@
  *   - lucide-react (Trophy, Users, Bike, BookOpen)
  */
 
-import { lazy, Suspense } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bike, BookOpen, Trophy, Users } from "lucide-react";
 
@@ -35,9 +34,6 @@ import KoerspouleLogo, { type RaceKey } from "@/components/KoerspouleLogo";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { smoothScrollTo, smoothScrollToTop } from "@/lib/utils";
-
-const FeaturePreview = lazy(() => import("@/components/FeaturePreview"));
-const HorsCategoriePreview = lazy(() => import("@/components/HorsCategoriePreview"));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Race-aware copy
@@ -429,20 +425,6 @@ export default function Index() {
         </Button>
       </section>
 
-      {/* ─── BESTAANDE PREVIEWS (onveranderd) ─────────────────────────────── */}
-      <Suspense
-        fallback={
-          <div className="container mx-auto px-5 py-10 text-center text-muted-foreground font-serif italic text-sm">
-            Voorbeelden laden…
-          </div>
-        }
-      >
-        <FeaturePreview />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        <HorsCategoriePreview />
-      </Suspense>
     </div>
   );
 }
