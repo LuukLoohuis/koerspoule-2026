@@ -292,8 +292,7 @@ export default function TeamBuilder() {
   }, [allStartlistRiders]);
 
   return (
-    <>
-      <div className="container mx-auto px-5 py-4 md:py-6 pb-32 md:pb-8">
+    <div className="container mx-auto px-5 py-4 md:py-6 pb-32 md:pb-8">
         <div className="max-w-5xl mx-auto">
           {/* Vintage Hero */}
           <div className="text-center mb-6">
