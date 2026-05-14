@@ -382,7 +382,7 @@ export default function Index() {
               </h1>
 
               <span
-                className="margin-note tilt-l hidden lg:inline-block absolute right-6 top-[200px] text-[22px]"
+                className="margin-note tilt-l hidden lg:inline-block absolute right-6 top-[200px] text-[27px]"
                 aria-hidden
               >
                 Dietro ogni maglia rosa
