@@ -1,4 +1,4 @@
-import { Trophy, Mountain, Users, Crown, Star } from "lucide-react";
+import { Mountain, Users, Crown, Star, Trophy } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
 import { usePalmares, type PalmaresGame, type PalmaresSubpoule, type StageDagzege } from "@/hooks/usePalmares";
 import { cn } from "@/lib/utils";
@@ -9,22 +9,6 @@ function gameTypeToCountry(type: string | null): "IT" | "FR" | "ES" {
   if (k === "vuelta" || k === "vta") return "ES";
   return "IT";
 }
-
-const TYPE_COLOR: Record<string, string> = {
-  vlak: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-  heuvelachtig: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  bergop: "bg-rose-500/15 text-rose-400 border-rose-500/30",
-  tijdrit: "bg-sky-500/15 text-sky-400 border-sky-500/30",
-  ploegentijdrit: "bg-violet-500/15 text-violet-400 border-violet-500/30",
-};
-
-const TYPE_LABEL: Record<string, string> = {
-  vlak: "Vlak",
-  heuvelachtig: "Heuvelachtig",
-  bergop: "Bergrit",
-  tijdrit: "Tijdrit",
-  ploegentijdrit: "Ploegentijdrit",
-};
 
 // ── RankBadge ──────────────────────────────────────────────────
 
@@ -38,11 +22,11 @@ function RankBadge({ rank, total }: { rank: number; total: number }) {
     <div className="flex flex-col items-center gap-1.5 shrink-0">
       <div
         className={cn(
-          "relative flex flex-col items-center justify-center rounded-full font-display font-black w-[68px] h-[68px] ring-2",
+          "relative flex flex-col items-center justify-center rounded-full font-display font-black w-16 h-16 ring-2",
           isFirst && "ring-amber-400 bg-amber-950/60 shadow-lg shadow-amber-500/25",
           isSecond && "ring-zinc-400 bg-zinc-800/60 shadow-md shadow-zinc-400/15",
           isThird && "ring-orange-500 bg-orange-950/60 shadow-md shadow-orange-500/15",
-          !isTop && "ring-border bg-secondary/40"
+          !isTop && "ring-white/10 bg-white/5"
         )}
       >
         {isFirst && <Crown className="w-3.5 h-3.5 text-amber-300 mb-0.5" />}
@@ -51,13 +35,19 @@ function RankBadge({ rank, total }: { rank: number; total: number }) {
         <span
           className={cn(
             "leading-none",
-            isFirst ? "text-xl text-amber-200" : isSecond ? "text-xl text-zinc-300" : isThird ? "text-xl text-orange-300" : "text-base text-foreground/70"
+            isFirst
+              ? "text-xl text-amber-200"
+              : isSecond
+              ? "text-xl text-zinc-300"
+              : isThird
+              ? "text-xl text-orange-300"
+              : "text-base text-white/50"
           )}
         >
           #{rank}
         </span>
       </div>
-      <p className="text-[10px] text-muted-foreground font-sans">van {total}</p>
+      <p className="text-[10px] text-white/30 font-sans">van {total}</p>
     </div>
   );
 }
@@ -65,25 +55,24 @@ function RankBadge({ rank, total }: { rank: number; total: number }) {
 // ── DagzegeRow ─────────────────────────────────────────────────
 
 function DagzegeRow({ dz }: { dz: StageDagzege }) {
-  const typeClass = TYPE_COLOR[dz.stage_type ?? "vlak"] ?? TYPE_COLOR.vlak;
-  const typeLabel = TYPE_LABEL[dz.stage_type ?? "vlak"] ?? dz.stage_type ?? "Vlak";
   return (
-    <div className="flex items-center gap-2.5 py-2 px-3 rounded-lg bg-gradient-to-r from-amber-950/30 to-amber-950/5 border border-amber-500/20 hover:border-amber-400/40 hover:from-amber-950/40 transition-colors">
-      <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-amber-500/10 border border-amber-500/30">
+    <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
+      <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-amber-500/15 border border-amber-500/30">
         <Trophy className="w-3.5 h-3.5 text-amber-400" />
       </div>
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        <span className="font-display font-bold text-sm text-amber-100 shrink-0">Rit {dz.stage_number}</span>
+      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        <span className="font-display font-bold text-sm text-amber-100 shrink-0">
+          Rit {dz.stage_number}
+        </span>
         {dz.stage_name && (
-          <span className="text-xs text-foreground/50 truncate hidden sm:block">{dz.stage_name}</span>
+          <span className="text-xs text-white/40 truncate hidden sm:block">
+            · {dz.stage_name}
+          </span>
         )}
       </div>
-      <span className={cn("text-[10px] font-mono rounded border px-1.5 py-0.5 shrink-0", typeClass)}>
-        {typeLabel}
-      </span>
       <div className="flex items-baseline gap-0.5 shrink-0">
         <span className="font-display font-bold text-sm text-amber-400">{dz.points}</span>
-        <span className="text-[10px] text-muted-foreground">pt</span>
+        <span className="text-[10px] text-white/30">pt</span>
       </div>
     </div>
   );
@@ -96,16 +85,13 @@ function GameSection({ g }: { g: PalmaresGame }) {
   const isLive = ["active", "live", "open", "locked"].includes(g.status);
 
   return (
-    <div className="relative rounded-xl border border-border overflow-hidden bg-card">
-      {/* Gold top accent */}
-      <div className="h-0.5 bg-gradient-to-r from-transparent via-amber-500/70 to-transparent" />
-
+    <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 p-4 md:p-5">
       {/* Game header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-secondary/40">
+      <div className="flex items-center gap-3 mb-4">
         <FlagIcon country={country} className="w-7 h-5 rounded-sm shrink-0" />
         <div className="flex-1 min-w-0">
-          <h3 className="font-display font-bold text-sm truncate">{g.game_name}</h3>
-          <p className="text-[10px] text-muted-foreground">
+          <h3 className="font-display font-bold text-sm text-white truncate">{g.game_name}</h3>
+          <p className="text-[10px] text-white/40">
             {isLive ? "🟢 Lopend" : g.year ? `${g.year}` : "Afgelopen"}
           </p>
         </div>
@@ -116,47 +102,45 @@ function GameSection({ g }: { g: PalmaresGame }) {
         )}
       </div>
 
-      <div className="px-4 py-4 space-y-4">
-        {/* Rank + stats row */}
-        <div className="flex items-start gap-4">
-          <RankBadge rank={g.my_rank} total={g.total_participants} />
-          <div className="flex-1 grid grid-cols-3 gap-2 pt-1">
-            <div className="rounded-lg bg-secondary/40 border border-border py-2.5 px-1 text-center">
-              <p className="font-display text-xl font-black text-amber-400">{g.stage_wins}</p>
-              <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Dagzeges</p>
-            </div>
-            <div className="rounded-lg bg-secondary/40 border border-border py-2.5 px-1 text-center">
-              <p className="font-display text-xl font-black">{g.stage_podiums}</p>
-              <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Podia</p>
-            </div>
-            <div className="rounded-lg bg-secondary/40 border border-border py-2.5 px-1 text-center">
-              <p className="font-display text-xl font-black text-primary">{g.approved_points}</p>
-              <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Punten</p>
-            </div>
+      {/* Rank + stats row */}
+      <div className="flex items-start gap-4 mb-4">
+        <RankBadge rank={g.my_rank} total={g.total_participants} />
+        <div className="flex-1 grid grid-cols-3 gap-2 pt-1">
+          <div className="rounded-xl border border-white/10 bg-white/5 py-2.5 px-1 text-center">
+            <p className="font-display text-xl font-black text-amber-400">{g.stage_wins}</p>
+            <p className="text-[10px] text-white/40 leading-tight mt-0.5">Dagzeges</p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/5 py-2.5 px-1 text-center">
+            <p className="font-display text-xl font-black text-white">{g.stage_podiums}</p>
+            <p className="text-[10px] text-white/40 leading-tight mt-0.5">Podia</p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/5 py-2.5 px-1 text-center">
+            <p className="font-display text-xl font-black text-white">{g.approved_points}</p>
+            <p className="text-[10px] text-white/40 leading-tight mt-0.5">Punten</p>
           </div>
         </div>
-
-        {/* Dagzeges list */}
-        {g.dagzeges.length > 0 ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-3.5 h-3.5 text-amber-500" />
-              <span className="text-[11px] font-bold tracking-widest uppercase text-amber-500/80">
-                Dagzeges · Poule
-              </span>
-            </div>
-            <div className="space-y-1.5">
-              {g.dagzeges.map((dz) => (
-                <DagzegeRow key={dz.stage_id} dz={dz} />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground italic font-serif text-center py-1">
-            Nog geen dagzeges — maar elke rit is een nieuwe kans.
-          </p>
-        )}
       </div>
+
+      {/* Dagzeges list */}
+      {g.dagzeges.length > 0 ? (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-3.5 h-3.5 text-amber-500/70" />
+            <span className="text-[10px] uppercase tracking-[0.2em] text-amber-500/60">
+              Dagzeges · Poule
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            {g.dagzeges.map((dz) => (
+              <DagzegeRow key={dz.stage_id} dz={dz} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="text-xs text-white/25 italic font-serif text-center py-1">
+          Nog geen dagzeges — maar elke rit is een nieuwe kans.
+        </p>
+      )}
     </div>
   );
 }
@@ -169,41 +153,44 @@ function SubpouleSection({ s }: { s: PalmaresSubpoule }) {
     s.my_rank === 1 ? "🥇" : s.my_rank === 2 ? "🥈" : s.my_rank === 3 ? "🥉" : null;
 
   return (
-    <div className="relative rounded-xl border border-border overflow-hidden bg-card">
-      <div className="h-0.5 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-secondary/40">
+    <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 p-4 md:p-5">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-3">
         {medal ? (
-          <span className="text-xl w-7 text-center shrink-0">{medal}</span>
+          <span className="text-xl w-8 text-center shrink-0">{medal}</span>
         ) : (
-          <div className="w-7 h-7 rounded-full bg-secondary border border-border flex items-center justify-center text-[11px] font-bold text-muted-foreground shrink-0">
+          <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[11px] font-bold text-white/40 shrink-0">
             #{s.my_rank}
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <h3 className="font-display font-bold text-sm truncate">{s.subpoule_name}</h3>
-          <p className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
+          <h3 className="font-display font-bold text-sm text-white truncate">{s.subpoule_name}</h3>
+          <p className="text-[10px] text-white/40 inline-flex items-center gap-1">
             <FlagIcon country={country} className="w-3.5 h-2.5 inline" /> {s.game_name}
           </p>
         </div>
         <div className="text-right shrink-0">
-          <p className={cn("font-display font-bold text-sm", s.my_rank <= 3 && "text-primary")}>
+          <p
+            className={cn(
+              "font-display font-bold text-sm",
+              s.my_rank <= 3 ? "text-amber-400" : "text-white/60"
+            )}
+          >
             #{s.my_rank}
           </p>
-          <p className="text-[10px] text-muted-foreground">/ {s.total_members}</p>
+          <p className="text-[10px] text-white/30">/ {s.total_members}</p>
         </div>
       </div>
 
-      <div className="px-4 py-3">
-        <div className="flex gap-2">
-          <div className="flex-1 rounded-md bg-secondary/40 border border-border py-2 text-center">
-            <p className="font-display font-bold text-amber-400">{s.stage_wins}</p>
-            <p className="text-[10px] text-muted-foreground">Dagzeges</p>
-          </div>
-          <div className="flex-1 rounded-md bg-secondary/40 border border-border py-2 text-center">
-            <p className="font-display font-bold">{s.stage_podiums}</p>
-            <p className="text-[10px] text-muted-foreground">Podia</p>
-          </div>
+      {/* Stats */}
+      <div className="flex gap-2">
+        <div className="flex-1 rounded-xl border border-white/10 bg-white/5 py-2 text-center">
+          <p className="font-display font-bold text-amber-400">{s.stage_wins}</p>
+          <p className="text-[10px] text-white/40">Dagzeges</p>
+        </div>
+        <div className="flex-1 rounded-xl border border-white/10 bg-white/5 py-2 text-center">
+          <p className="font-display font-bold text-white">{s.stage_podiums}</p>
+          <p className="text-[10px] text-white/40">Podia</p>
         </div>
       </div>
     </div>
@@ -215,8 +202,9 @@ function SubpouleSection({ s }: { s: PalmaresSubpoule }) {
 function PalmaresSkeleton() {
   return (
     <div className="space-y-4">
+      <div className="h-44 animate-pulse bg-white/5 rounded-2xl" />
       {[1, 2].map((i) => (
-        <div key={i} className="h-44 rounded-xl bg-secondary/30 animate-pulse border border-border" />
+        <div key={i} className="h-36 animate-pulse bg-white/5 rounded-2xl" />
       ))}
     </div>
   );
@@ -240,11 +228,12 @@ export default function PalmaresPanel() {
 
   if (games.length === 0) {
     return (
-      <div className="relative rounded-xl border border-border overflow-hidden bg-card p-8 text-center">
-        <div className="h-0.5 bg-gradient-to-r from-transparent via-amber-500/40 to-transparent mb-6" />
-        <Trophy className="w-12 h-12 mx-auto text-muted-foreground/25 mb-3" />
-        <p className="font-display font-bold text-foreground/50 mb-1">Nog geen palmares</p>
-        <p className="text-sm text-muted-foreground italic font-serif">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8 text-center">
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.03]"
+          style={{ backgroundImage: "linear-gradient(to right,white 1px,transparent 1px),linear-gradient(to bottom,white 1px,transparent 1px)", backgroundSize: "32px 32px" }} />
+        <Trophy className="w-12 h-12 mx-auto text-white/15 mb-3" />
+        <p className="font-display font-bold text-white/50 mb-1">Nog geen palmares</p>
+        <p className="text-sm text-white/30 italic font-serif">
           Speel een koers mee om hier je erelijst te zien.
         </p>
       </div>
@@ -253,46 +242,59 @@ export default function PalmaresPanel() {
 
   return (
     <div className="space-y-6">
-      {/* ── Hero stat header ── */}
-      <div className="relative rounded-xl overflow-hidden border border-border bg-card">
-        <div className="h-1 bg-gradient-to-r from-amber-700 via-amber-400 to-amber-700" />
-        <div className="px-5 py-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Trophy className="w-5 h-5 text-amber-400" />
-            <span className="font-display font-black text-lg tracking-wide uppercase">Palmares</span>
-            <span className="ml-1 text-xs text-muted-foreground font-serif italic">Erelijst</span>
+
+      {/* ── Hero card ── */}
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] p-6 md:p-8">
+        {/* Grid overlay */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.03]"
+          style={{ backgroundImage: "linear-gradient(to right,white 1px,transparent 1px),linear-gradient(to bottom,white 1px,transparent 1px)", backgroundSize: "32px 32px" }} />
+        {/* Glow blob */}
+        <div aria-hidden className="pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full blur-3xl opacity-25"
+          style={{ background: "radial-gradient(circle, #f59e0b 0%, transparent 70%)" }} />
+
+        <div className="relative">
+          <div className="flex items-baseline gap-2 mb-1">
+            <h2 className="font-display font-black text-2xl md:text-3xl text-white tracking-wide uppercase">
+              🏆 PALMARES
+            </h2>
           </div>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-6">Erelijst</p>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="text-center p-3 rounded-lg bg-amber-950/20 border border-amber-500/20">
-              <p className="font-display text-2xl font-black text-amber-400">{totalDagzeges}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Dagzeges</p>
+            {/* Total dagzeges */}
+            <div className="text-center p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <p className="font-display font-black text-2xl text-amber-400">{totalDagzeges}</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mt-1">Dagzeges</p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-secondary/40 border border-border">
-              <p className="font-display text-2xl font-black">{totalPodiums}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Podia</p>
+            {/* Total podiums */}
+            <div className="text-center p-3 rounded-xl bg-white/5 border border-white/10">
+              <p className="font-display font-black text-2xl text-white">{totalPodiums}</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mt-1">Podia</p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-secondary/40 border border-border">
-              <p className="font-display text-2xl font-black text-primary">
+            {/* Best pool rank */}
+            <div className="text-center p-3 rounded-xl bg-white/5 border border-white/10">
+              <p className="font-display font-black text-2xl text-white">
                 {bestPoolRank ? `#${bestPoolRank}` : "—"}
               </p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Beste stand</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mt-1">Beste stand</p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-secondary/40 border border-border">
-              <p className="font-display text-2xl font-black text-emerald-400">{subWins}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Subpoule­wins</p>
+            {/* Subpoule wins */}
+            <div className="text-center p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <p className="font-display font-black text-2xl text-emerald-400">{subWins}</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mt-1">Subpoule­wins</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Poule klassement ── */}
+      {/* ── Poule Klassement ── */}
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-1">
-          <Mountain className="w-4 h-4 text-primary" />
-          <span className="font-display font-bold text-sm uppercase tracking-widest text-foreground/60">
+          <Mountain className="w-3.5 h-3.5 text-white/40" />
+          <span className="text-[10px] uppercase tracking-[0.2em] text-white/40">
             Poule Klassement
           </span>
-          <span className="ml-auto text-[11px] text-muted-foreground">
+          <span className="ml-auto text-[10px] text-white/25">
             {games.length} koers{games.length === 1 ? "" : "en"}
           </span>
         </div>
@@ -304,12 +306,10 @@ export default function PalmaresPanel() {
       {/* ── Subpoules ── */}
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-1">
-          <Users className="w-4 h-4 text-primary" />
-          <span className="font-display font-bold text-sm uppercase tracking-widest text-foreground/60">
-            Subpoules
-          </span>
+          <Users className="w-3.5 h-3.5 text-white/40" />
+          <span className="text-[10px] uppercase tracking-[0.2em] text-white/40">Subpoules</span>
           {subpoules.length > 0 && (
-            <span className="ml-auto text-[11px] text-muted-foreground">
+            <span className="ml-auto text-[10px] text-white/25">
               {subpoules.length} subpoule{subpoules.length === 1 ? "" : "s"}
             </span>
           )}
@@ -317,9 +317,9 @@ export default function PalmaresPanel() {
         {subpoules.length > 0 ? (
           subpoules.map((s) => <SubpouleSection key={s.subpoule_id} s={s} />)
         ) : (
-          <div className="rounded-xl border border-dashed border-border p-6 text-center">
-            <Users className="w-8 h-8 mx-auto text-muted-foreground/25 mb-2" />
-            <p className="text-xs text-muted-foreground italic font-serif">
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+            <Users className="w-8 h-8 mx-auto text-white/15 mb-2" />
+            <p className="text-xs text-white/30 italic font-serif">
               Word lid van een subpoule om hier je ranking te zien.
             </p>
           </div>
