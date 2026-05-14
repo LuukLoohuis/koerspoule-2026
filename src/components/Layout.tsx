@@ -48,10 +48,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <img
                   alt="Koerspoule logo"
                   width={256}
-                  height={128}
+                  height={170}
                   decoding="async"
-                  className="h-10 w-auto"
-                  src="/lovable-uploads/449638d0-9263-472b-b9dc-1ca6517ee97f.png"
+                  className="h-14 w-auto"
+                  src={koerspouleLogo}
                 />
               </Link>
               <a
