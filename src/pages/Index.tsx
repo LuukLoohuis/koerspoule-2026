@@ -25,6 +25,7 @@
  *   - lucide-react (Trophy, Users, Bike, BookOpen)
  */
 
+import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bike, BookOpen, Trophy, Users } from "lucide-react";
 
@@ -33,6 +34,9 @@ import CountdownBanner from "@/components/CountdownBanner";
 import KoerspouleLogo, { type RaceKey } from "@/components/KoerspouleLogo";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useAuth } from "@/hooks/useAuth";
+import { useGameBenchmark } from "@/hooks/useSubpouleBenchmark";
+import type { EntryStanding } from "@/hooks/useResults";
 import { smoothScrollTo, smoothScrollToTop } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -151,6 +155,189 @@ export default function Index() {
     "giro") as RaceKey;
   const copy = RACE_COPY[race];
 
+  const { user } = useAuth();
+  const gameId = currentGame?.id;
+
+  // Single source of truth: game_benchmark_data RPC (SECURITY DEFINER).
+  // Returns entries sorted by total_points DESC, approved stages with results,
+  // and stage_points for all entries — all consistently filtered to approved results.
+  // Only call when logged in (the RPC raises if auth.uid() IS NULL).
+  const { data: benchmark } = useGameBenchmark(user ? gameId : undefined);
+
+  const allEntries: EntryStanding[] = useMemo(
+    () =>
+      (benchmark?.entries ?? [])
+        .filter((e) => e.entry_id != null)
+        .map((e) => ({
+          id: e.entry_id!,
+          user_id: e.user_id,
+          team_name: e.team_name,
+          total_points: e.total_points,
+          display_name: e.display_name ?? null,
+        })),
+    [benchmark]
+  );
+  // benchmark.stages: only approved stages that have stage_results (sorted by stage_number)
+  const approvedStages = useMemo(() => benchmark?.stages ?? [], [benchmark]);
+  const stagePoints = useMemo(() => benchmark?.stage_points ?? [], [benchmark]);
+  // Last approved stage with results = last element of benchmark.stages
+  const lastStage = approvedStages.length > 0 ? approvedStages[approvedStages.length - 1] : null;
+
+  const sortedEntries = useMemo(
+    () => [...allEntries].sort((a, b) => b.total_points - a.total_points),
+    [allEntries]
+  );
+  const myEntry = useMemo(
+    () => (user ? allEntries.find((e) => e.user_id === user.id) : undefined),
+    [allEntries, user]
+  );
+  const myRank = useMemo(
+    () => (myEntry ? sortedEntries.findIndex((e) => e.id === myEntry.id) + 1 : null),
+    [sortedEntries, myEntry]
+  );
+
+  const cumulativeByEntry = useMemo(() => {
+    const map = new Map<string, number[]>();
+    if (!approvedStages.length || !allEntries.length) return map;
+    for (const e of allEntries) map.set(e.id, []);
+    const ptsByKey = new Map(stagePoints.map((sp) => [`${sp.stage_id}:${sp.entry_id}`, sp.points]));
+    for (const stage of approvedStages) {
+      for (const e of allEntries) {
+        const arr = map.get(e.id)!;
+        const prev = arr.length ? arr[arr.length - 1] : 0;
+        arr.push(prev + (ptsByKey.get(`${stage.id}:${e.id}`) ?? 0));
+      }
+    }
+    return map;
+  }, [approvedStages, allEntries, stagePoints]);
+
+  const maxCumulative = useMemo(() => {
+    let max = 1;
+    for (const arr of cumulativeByEntry.values()) {
+      const last = arr[arr.length - 1] ?? 0;
+      if (last > max) max = last;
+    }
+    return max;
+  }, [cumulativeByEntry]);
+
+  const myRankProgression = useMemo(() => {
+    if (!myEntry || !approvedStages.length) return [];
+    return approvedStages.map((_, i) => {
+      const sorted = [...allEntries].sort(
+        (a, b) => (cumulativeByEntry.get(b.id)?.[i] ?? 0) - (cumulativeByEntry.get(a.id)?.[i] ?? 0)
+      );
+      return sorted.findIndex((e) => e.id === myEntry.id) + 1;
+    });
+  }, [myEntry, approvedStages, allEntries, cumulativeByEntry]);
+
+  const hasStageData = approvedStages.length > 0 && allEntries.length > 0;
+  const showRealData = Boolean(user) && hasStageData;
+  const showRealSparkline = Boolean(user) && myEntry !== undefined && myRankProgression.length >= 2;
+
+  const JERSEY_COLORS = [
+    "hsl(var(--primary))",
+    "hsl(var(--jersey-giallo))",
+    "hsl(var(--jersey-verde))",
+    null,
+    null,
+  ];
+
+  const realTopFive: TopFiveRow[] = useMemo(() => {
+    if (!showRealData) return [];
+    return sortedEntries.slice(0, 5).map((entry, i) => {
+      const cumulArr = cumulativeByEntry.get(entry.id) ?? [];
+      const n = cumulArr.length;
+      const spark =
+        n === 0
+          ? "0,14 70,14"
+          : cumulArr
+              .map((v, j) => {
+                const x = n === 1 ? 35 : (j / (n - 1)) * 70;
+                const y = 14 - (v / maxCumulative) * 12;
+                return `${x.toFixed(1)},${y.toFixed(1)}`;
+              })
+              .join(" ");
+      return {
+        p: i + 1,
+        name: entry.display_name ?? entry.team_name ?? "Deelnemer",
+        team: entry.team_name ?? "",
+        pts: entry.total_points,
+        jersey: JERSEY_COLORS[i] ?? null,
+        you: entry.user_id === user?.id,
+        spark,
+      };
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showRealData, sortedEntries, cumulativeByEntry, maxCumulative, user?.id]);
+
+  const myRowOutsideTop5: TopFiveRow | null = useMemo(() => {
+    if (!showRealData || !myEntry || !myRank || myRank <= 5) return null;
+    const cumulArr = cumulativeByEntry.get(myEntry.id) ?? [];
+    const n = cumulArr.length;
+    const spark =
+      n === 0
+        ? "0,14 70,14"
+        : cumulArr
+            .map((v, j) => {
+              const x = n === 1 ? 35 : (j / (n - 1)) * 70;
+              const y = 14 - (v / maxCumulative) * 12;
+              return `${x.toFixed(1)},${y.toFixed(1)}`;
+            })
+            .join(" ");
+    return {
+      p: myRank,
+      name: myEntry.display_name ?? myEntry.team_name ?? "Jij",
+      team: myEntry.team_name ?? "",
+      pts: myEntry.total_points,
+      jersey: null,
+      you: true,
+      spark,
+    };
+  }, [showRealData, myEntry, myRank, cumulativeByEntry, maxCumulative]);
+
+  const myProgress = useMemo(() => {
+    if (!showRealSparkline) return MOCK_MY_PROGRESS;
+    const n = myRankProgression.length;
+    const total = allEntries.length || 1;
+    const W = 280, H = 120;
+    const pts = myRankProgression.map((rank, i) => {
+      const x = n === 1 ? W / 2 : (i / (n - 1)) * W;
+      const t = total > 1 ? (rank - 1) / (total - 1) : 0;
+      const y = 20 + t * 80;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    const line = pts.join(" ");
+    const lastX = n === 1 ? W / 2 : W;
+    return {
+      from: myRankProgression[0],
+      to: myRankProgression[n - 1],
+      pointsPolygon: `${line} ${lastX.toFixed(1)},${H} 0,${H}`,
+      pointsLine: line,
+    };
+  }, [showRealSparkline, myRankProgression, allEntries.length]);
+
+  const myProgressEndY = useMemo(() => {
+    if (!showRealSparkline) return 32;
+    const n = myRankProgression.length;
+    const total = allEntries.length || 1;
+    const rank = myRankProgression[n - 1];
+    const t = total > 1 ? (rank - 1) / (total - 1) : 0;
+    return 20 + t * 80;
+  }, [showRealSparkline, myRankProgression, allEntries.length]);
+
+  const rankChangeText = useMemo(() => {
+    if (!showRealSparkline || myRankProgression.length < 2) return "+6 in 4 etappes 🔥";
+    const change = myRankProgression[0] - myRankProgression[myRankProgression.length - 1];
+    const n = myRankProgression.length;
+    if (change > 0) return `+${change} in ${n} etappes 🔥`;
+    if (change < 0) return `${change} in ${n} etappes 📉`;
+    return `stabiel in ${n} etappes`;
+  }, [showRealSparkline, myRankProgression]);
+
+  const totalEntries = allEntries.length || 11;
+  const midRankLabel = `P${Math.round(1 + (totalEntries - 1) * 0.5)}`;
+  const lastRankLabel = `P${showRealData ? totalEntries : 11}`;
+
   return (
     <div>
       {/* ─── HERO ─────────────────────────────────────────────────────────── */}
@@ -263,12 +450,20 @@ export default function Index() {
           <div className="py-5 md:pr-6 md:border-r border-foreground/10">
             <div className="text-xs text-muted-foreground mb-1">Klassement</div>
             <div className="font-display font-bold text-2xl leading-tight">
-              De top vijf na etappe 7
+              De top vijf{lastStage ? ` na etappe ${lastStage.stage_number}` : ""}
             </div>
             <div className="mt-3">
-              {MOCK_TOP_FIVE.map((row) => (
+              {(showRealData ? realTopFive : MOCK_TOP_FIVE).map((row) => (
                 <TopFiveRow key={row.p} row={row} />
               ))}
+              {myRowOutsideTop5 && (
+                <>
+                  <div className="py-1 text-center text-[10px] text-muted-foreground tracking-widest">
+                    · · ·
+                  </div>
+                  <TopFiveRow row={myRowOutsideTop5} />
+                </>
+              )}
             </div>
             <Link
               to="/uitslagen"
@@ -282,8 +477,8 @@ export default function Index() {
           <div className="py-5 md:px-6 md:border-r border-foreground/10 relative">
             <div className="text-xs text-muted-foreground mb-1">Jouw koers</div>
             <div className="font-display font-bold text-2xl leading-tight">
-              Van plek {MOCK_MY_PROGRESS.from} naar plek{" "}
-              <span className="text-primary">{MOCK_MY_PROGRESS.to}</span>
+              Van plek {myProgress.from} naar plek{" "}
+              <span className="text-primary">{myProgress.to}</span>
             </div>
             <div className="mt-3 relative h-[130px]">
               <svg viewBox="0 0 280 120" className="w-full h-full">
@@ -305,19 +500,19 @@ export default function Index() {
                   />
                 ))}
                 <polygon
-                  points={MOCK_MY_PROGRESS.pointsPolygon}
+                  points={myProgress.pointsPolygon}
                   fill="url(#kp-progress-grad)"
                 />
                 <polyline
-                  points={MOCK_MY_PROGRESS.pointsLine}
+                  points={myProgress.pointsLine}
                   fill="none"
                   stroke="hsl(var(--primary))"
                   strokeWidth="2"
                 />
-                <circle cx="280" cy="32" r="4" fill="hsl(var(--primary))" />
+                <circle cx="280" cy={myProgressEndY} r="4" fill="hsl(var(--primary))" />
                 <text
                   x="278"
-                  y="26"
+                  y="16"
                   textAnchor="end"
                   fontFamily="JetBrains Mono"
                   fontSize="9"
@@ -327,27 +522,27 @@ export default function Index() {
                 </text>
                 <text
                   x="278"
-                  y="66"
+                  y="56"
                   textAnchor="end"
                   fontFamily="JetBrains Mono"
                   fontSize="9"
                   fill="hsl(var(--muted-foreground))"
                 >
-                  P5
+                  {midRankLabel}
                 </text>
                 <text
                   x="278"
-                  y="106"
+                  y="96"
                   textAnchor="end"
                   fontFamily="JetBrains Mono"
                   fontSize="9"
                   fill="hsl(var(--muted-foreground))"
                 >
-                  P11
+                  {lastRankLabel}
                 </text>
               </svg>
               <span className="margin-note tilt-l absolute right-2 -bottom-2 text-lg">
-                +6 in 4 etappes 🔥
+                {rankChangeText}
               </span>
             </div>
           </div>
