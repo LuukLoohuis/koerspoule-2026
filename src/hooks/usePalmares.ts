@@ -2,6 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 
+export type StageDagzege = {
+  stage_id: string;
+  stage_number: number;
+  stage_name: string | null;
+  stage_type: string | null;
+  date: string | null;
+  points: number;
+};
+
 export type PalmaresGame = {
   game_id: string;
   game_name: string;
@@ -9,12 +18,13 @@ export type PalmaresGame = {
   year: number | null;
   status: string;
   entry_id: string;
-  total_points: number;
+  approved_points: number;
   my_rank: number;
   total_participants: number;
-  stage_wins: number; // # stages where my entry was #1 in pool
-  stage_podiums: number; // # stages where my entry was top-3 in pool
+  stage_wins: number;
+  stage_podiums: number;
   best_stage_points: number;
+  dagzeges: StageDagzege[];
 };
 
 export type PalmaresSubpoule = {
@@ -28,6 +38,7 @@ export type PalmaresSubpoule = {
   is_winner: boolean;
   stage_wins: number;
   stage_podiums: number;
+  dagzeges: StageDagzege[];
 };
 
 export function usePalmares() {
@@ -42,10 +53,10 @@ export function usePalmares() {
       // 1) All my submitted entries
       const { data: myEntries, error: e1 } = await supabase
         .from("entries")
-        .select("id, game_id, total_points, status")
+        .select("id, game_id, status")
         .eq("user_id", user.id);
       if (e1) throw e1;
-      const entries = (myEntries ?? []).filter((e) => e.status === "submitted" || (e.total_points ?? 0) > 0);
+      const entries = (myEntries ?? []).filter((e) => e.status === "submitted");
       if (entries.length === 0) return { games: [], subpoules: [] };
 
       const gameIds = Array.from(new Set(entries.map((e) => e.game_id)));
@@ -57,51 +68,95 @@ export function usePalmares() {
         .in("id", gameIds);
       const gameMap = new Map((games ?? []).map((g) => [g.id, g]));
 
-      // 3) All entries per game (for ranking + participant count)
+      // 3) All submitted entries per game (for ranking)
       const { data: allEntries } = await supabase
         .from("entries")
-        .select("id, game_id, user_id, total_points")
+        .select("id, game_id, user_id")
         .in("game_id", gameIds)
         .eq("status", "submitted");
 
-      // 4) Stage points across all games at once
-      const { data: stagePoints } = await supabase
-        .from("stage_points")
-        .select("entry_id, stage_id, points, stages!inner(game_id)")
-        .in("stages.game_id", gameIds);
+      // 4) Stage points — only for admin-approved stages
+      type SPRow = {
+        entry_id: string;
+        stage_id: string;
+        points: number;
+        stages: {
+          game_id: string;
+          stage_number: number;
+          name: string | null;
+          stage_type: string | null;
+          date: string | null;
+        };
+      };
 
-      // Index stage points: stage_id → ranked entries
+      const { data: rawSP } = await supabase
+        .from("stage_points")
+        .select(
+          "entry_id, stage_id, points, stages!inner(game_id, stage_number, name, stage_type, date, results_status)"
+        )
+        .in("stages.game_id", gameIds)
+        .eq("stages.results_status", "approved");
+
+      const stagePoints = (rawSP ?? []) as unknown as SPRow[];
+
+      // Index: stage_id → sorted [{ entry_id, points }]
       const stageGroups = new Map<string, { entry_id: string; points: number }[]>();
-      for (const sp of (stagePoints ?? []) as Array<{ entry_id: string; stage_id: string; points: number }>) {
+      type StageMeta = { game_id: string; stage_number: number; name: string | null; stage_type: string | null; date: string | null };
+      const stageMeta = new Map<string, StageMeta>();
+
+      for (const sp of stagePoints) {
         if (!stageGroups.has(sp.stage_id)) stageGroups.set(sp.stage_id, []);
         stageGroups.get(sp.stage_id)!.push({ entry_id: sp.entry_id, points: sp.points });
+        if (!stageMeta.has(sp.stage_id)) stageMeta.set(sp.stage_id, sp.stages);
       }
-      // Sort each group desc
       for (const arr of stageGroups.values()) arr.sort((a, b) => b.points - a.points);
 
-      // Build per-game palmares
+      // Approved points sum per entry (used for ranking)
+      const approvedPtsMap = new Map<string, number>();
+      for (const ranked of stageGroups.values()) {
+        for (const r of ranked) {
+          approvedPtsMap.set(r.entry_id, (approvedPtsMap.get(r.entry_id) ?? 0) + r.points);
+        }
+      }
+
+      // 5) Build per-game palmares
       const palmaresGames: PalmaresGame[] = entries
         .map((myEntry) => {
           const game = gameMap.get(myEntry.game_id);
           if (!game) return null;
 
-          const gameEntries = (allEntries ?? [])
-            .filter((e) => e.game_id === myEntry.game_id)
-            .sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0));
-          const myRank = gameEntries.findIndex((e) => e.id === myEntry.id) + 1;
+          const gameEntries = (allEntries ?? []).filter((e) => e.game_id === myEntry.game_id);
+          const ranked = gameEntries
+            .map((e) => ({ id: e.id, pts: approvedPtsMap.get(e.id) ?? 0 }))
+            .sort((a, b) => b.pts - a.pts);
+          const myRank = ranked.findIndex((e) => e.id === myEntry.id) + 1;
 
-          // count stage wins / podiums for my entry
           let wins = 0;
           let podiums = 0;
           let bestStage = 0;
-          for (const [, ranked] of stageGroups) {
-            const idx = ranked.findIndex((r) => r.entry_id === myEntry.id);
+          const dagzeges: StageDagzege[] = [];
+
+          for (const [stageId, stageRanked] of stageGroups) {
+            const meta = stageMeta.get(stageId);
+            if (!meta || meta.game_id !== myEntry.game_id) continue;
+            const idx = stageRanked.findIndex((r) => r.entry_id === myEntry.id);
             if (idx === -1) continue;
-            const pts = ranked[idx].points;
+            const pts = stageRanked[idx].points;
             if (pts > bestStage) bestStage = pts;
-            if (idx === 0 && pts > 0) wins++;
+            if (idx === 0 && pts > 0) {
+              wins++;
+              dagzeges.push({
+                stage_id: stageId,
+                stage_number: meta.stage_number,
+                stage_name: meta.name,
+                stage_type: meta.stage_type,
+                date: meta.date,
+                points: pts,
+              });
+            }
             if (idx <= 2 && pts > 0) podiums++;
           }
+          dagzeges.sort((a, b) => a.stage_number - b.stage_number);
 
           return {
             game_id: game.id,
@@ -110,17 +165,18 @@ export function usePalmares() {
             year: game.year ?? null,
             status: game.status,
             entry_id: myEntry.id,
-            total_points: myEntry.total_points ?? 0,
+            approved_points: approvedPtsMap.get(myEntry.id) ?? 0,
             my_rank: myRank || gameEntries.length,
             total_participants: gameEntries.length,
             stage_wins: wins,
             stage_podiums: podiums,
             best_stage_points: bestStage,
+            dagzeges,
           };
         })
         .filter((p): p is PalmaresGame => p !== null);
 
-      // 5) Subpoules where I am member
+      // 6) Subpoules where I am a member
       const { data: myMemberships } = await supabase
         .from("subpoule_members")
         .select("subpoule_id, subpoules!inner(id, name, game_id)")
@@ -133,7 +189,6 @@ export function usePalmares() {
       const memberships = (myMemberships ?? []) as unknown as MembershipRow[];
       const subpouleIds = memberships.map((m) => m.subpoule_id);
 
-      // Members of each subpoule
       const { data: allMembers } = subpouleIds.length
         ? await supabase
             .from("subpoule_members")
@@ -147,34 +202,50 @@ export function usePalmares() {
           const game = gameMap.get(sp.game_id);
           if (!game) return null;
 
-          // members of this subpoule
-          const memberUserIds = (allMembers ?? [])
-            .filter((mm) => mm.subpoule_id === sp.id)
-            .map((mm) => mm.user_id);
+          const memberUserIds = new Set(
+            (allMembers ?? [])
+              .filter((mm) => mm.subpoule_id === sp.id)
+              .map((mm) => mm.user_id)
+          );
 
-          // entries of those members in this game
-          const memberEntries = (allEntries ?? [])
-            .filter((e) => e.game_id === sp.game_id && memberUserIds.includes(e.user_id))
-            .sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0));
-
+          const memberEntries = (allEntries ?? []).filter(
+            (e) => e.game_id === sp.game_id && memberUserIds.has(e.user_id)
+          );
           const myEntryInGame = memberEntries.find((e) => e.user_id === user.id);
           if (!myEntryInGame) return null;
 
-          const myRank = memberEntries.findIndex((e) => e.id === myEntryInGame.id) + 1;
+          const subRanked = memberEntries
+            .map((e) => ({ id: e.id, pts: approvedPtsMap.get(e.id) ?? 0 }))
+            .sort((a, b) => b.pts - a.pts);
+          const myRank = subRanked.findIndex((e) => e.id === myEntryInGame.id) + 1;
 
-          // stage wins/podiums within subpoule
           const memberEntryIds = new Set(memberEntries.map((e) => e.id));
           let wins = 0;
           let podiums = 0;
-          for (const [, ranked] of stageGroups) {
-            const subRanked = ranked.filter((r) => memberEntryIds.has(r.entry_id));
-            if (subRanked.length === 0) continue;
-            const idx = subRanked.findIndex((r) => r.entry_id === myEntryInGame.id);
+          const dagzeges: StageDagzege[] = [];
+
+          for (const [stageId, stageRanked] of stageGroups) {
+            const meta = stageMeta.get(stageId);
+            if (!meta || meta.game_id !== sp.game_id) continue;
+            const subGroupRanked = stageRanked.filter((r) => memberEntryIds.has(r.entry_id));
+            if (subGroupRanked.length === 0) continue;
+            const idx = subGroupRanked.findIndex((r) => r.entry_id === myEntryInGame.id);
             if (idx === -1) continue;
-            const pts = subRanked[idx].points;
-            if (idx === 0 && pts > 0) wins++;
+            const pts = subGroupRanked[idx].points;
+            if (idx === 0 && pts > 0) {
+              wins++;
+              dagzeges.push({
+                stage_id: stageId,
+                stage_number: meta.stage_number,
+                stage_name: meta.name,
+                stage_type: meta.stage_type,
+                date: meta.date,
+                points: pts,
+              });
+            }
             if (idx <= 2 && pts > 0) podiums++;
           }
+          dagzeges.sort((a, b) => a.stage_number - b.stage_number);
 
           return {
             subpoule_id: sp.id,
@@ -187,6 +258,7 @@ export function usePalmares() {
             is_winner: myRank === 1,
             stage_wins: wins,
             stage_podiums: podiums,
+            dagzeges,
           };
         })
         .filter((p): p is PalmaresSubpoule => p !== null);
