@@ -397,8 +397,14 @@ export default function Index() {
               </p>
 
               <div className="flex flex-wrap gap-3 mt-7 items-center text-2xl">
-                <Button asChild className="retro-border-primary font-bold">
-                  <Link to="/team-samenstellen">🚴 Stel je ploeg samen</Link>
+                <Button
+                  className="retro-border-primary font-bold"
+                  onClick={() => {
+                    navigate("/team-samenstellen");
+                    smoothScrollToTop();
+                  }}
+                >
+                  🚴 Stel je ploeg samen
                 </Button>
                 <Button
                   variant="outline"
