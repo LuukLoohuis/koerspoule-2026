@@ -594,8 +594,11 @@ export default function Index() {
         </div>
 
         <div className="mt-8">
-          <Button asChild className="retro-border-primary font-bold">
-            <Link to="/preview">Preview</Link>
+          <Button
+            className="retro-border-primary font-bold"
+            onClick={() => { navigate("/preview"); smoothScrollToTop(); }}
+          >
+            Preview
           </Button>
         </div>
       </section>
@@ -607,8 +610,11 @@ export default function Index() {
         </div>
         <h2 className="vintage-heading text-2xl font-bold mb-3">Klaar om te koersen?</h2>
         <CountdownBanner className="max-w-md mx-auto mb-5" />
-        <Button asChild className="retro-border-primary font-bold">
-          <Link to="/team-samenstellen">Schrijf je in →</Link>
+        <Button
+          className="retro-border-primary font-bold"
+          onClick={() => { navigate("/team-samenstellen"); smoothScrollToTop(); }}
+        >
+          Schrijf je in →
         </Button>
       </section>
 
