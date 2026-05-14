@@ -27,6 +27,7 @@
 
 import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import RubriekBlock from "@/components/RubriekBlock";
 import { Bike, BookOpen, Trophy, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -547,28 +548,8 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Mop */}
-          <div className="py-5 md:pl-6 relative">
-            <span
-              className="sticker sticker--hand absolute -top-1 right-2 rotate-[4deg]"
-              aria-hidden
-            >
-              de mop ★
-            </span>
-            <div className="text-xs text-muted-foreground mb-1">Rubriek</div>
-            <div className="mop-card p-4 -rotate-[0.4deg]">
-              <p className="font-display font-bold text-lg leading-snug m-0">
-                "Waarom neemt een classicus nóóit een paraplu mee?"
-              </p>
-              <p className="font-serif italic text-sm text-muted-foreground mt-2 mb-0">
-                …omdat hij toch in de regen rijdt.
-              </p>
-              <div className="flex justify-between items-center mt-3 pt-2.5 border-t border-dashed border-foreground/20">
-                <span className="text-xs text-muted-foreground">142 stemden</span>
-                <button className="text-xs text-primary font-semibold">Stem →</button>
-              </div>
-            </div>
-          </div>
+          {/* Rubriek */}
+          <RubriekBlock gameId={gameId} />
         </div>
       </section>
 

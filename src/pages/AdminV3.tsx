@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LayoutDashboard, Trophy, Tag, Users, ListChecks, Calendar, Calculator, Shield, Inbox, Mail, ShieldCheck, Instagram } from "lucide-react";
+import { LayoutDashboard, Trophy, Tag, Users, ListChecks, Calendar, Calculator, Shield, Inbox, Mail, ShieldCheck, Instagram, Newspaper } from "lucide-react";
 import NotifyTab from "@/components/admin/NotifyTab";
 import ApprovalsTab from "@/components/admin/ApprovalsTab";
 
@@ -20,6 +20,7 @@ import UsersTab from "@/components/admin/UsersTab";
 import EntriesTab from "@/components/admin/EntriesTab";
 import InstagramExport from "@/pages/InstagramExport";
 import DashboardTab from "@/components/admin/DashboardTab";
+import RubriekTab from "@/components/admin/RubriekTab";
 
 export default function AdminV3() {
   const { user, role, loading } = useAuth();
@@ -180,6 +181,7 @@ export default function AdminV3() {
           <TabsTrigger value="notify" data-testid="tab-notify"><Mail className="w-4 h-4 mr-2" />Notify</TabsTrigger>
           <TabsTrigger value="users" data-testid="tab-users"><Shield className="w-4 h-4 mr-2" />Gebruikers</TabsTrigger>
           <TabsTrigger value="instagram" disabled={!activeGameId} data-testid="tab-instagram"><Instagram className="w-4 h-4 mr-2" />Instagram</TabsTrigger>
+          <TabsTrigger value="rubriek" disabled={!activeGameId} data-testid="tab-rubriek"><Newspaper className="w-4 h-4 mr-2" />Rubriek</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard">
@@ -228,6 +230,10 @@ export default function AdminV3() {
 
         <TabsContent value="instagram">
           <InstagramExport gameId={activeGameId} />
+        </TabsContent>
+
+        <TabsContent value="rubriek">
+          <RubriekTab activeGameId={activeGameId} />
         </TabsContent>
       </Tabs>
     </div>
