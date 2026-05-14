@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, Bike, BookOpen } from "lucide-react";
-import koerspouleLogo from "@/assets/koerspoule-logo.png";
+import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import CountdownBanner from "@/components/CountdownBanner";
 import { smoothScrollTo, smoothScrollToTop } from "@/lib/utils";
 
@@ -53,11 +53,11 @@ export default function Index() {
             <img
               src={koerspouleLogo}
               alt="Koerspoule logo"
-              width={576}
-              height={576}
+              width={1280}
+              height={1024}
               fetchPriority="high"
               decoding="async"
-              className="mx-auto w-72 md:w-[28rem] -mb-20 animate-fade-in drop-shadow-lg"
+              className="mx-auto w-80 md:w-[32rem] mb-2 animate-fade-in drop-shadow-2xl"
             />
             <p className="font-serif italic text-foreground/75 mb-0 animate-fade-in text-2xl">
               Giro d'Italia 2026
