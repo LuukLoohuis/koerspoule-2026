@@ -494,6 +494,7 @@ export default function HorsCategorieTab() {
   // ── Sub-tab state ────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur">("dartpijl");
   const [showScoreInfo, setShowScoreInfo] = useState(false);
+  const [showCalc, setShowCalc] = useState(false);
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
@@ -1135,6 +1136,48 @@ export default function HorsCategorieTab() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Berekening knop */}
+                    <button
+                      type="button"
+                      onClick={() => setShowCalc((v) => !v)}
+                      className="mt-1 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold border border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20 transition-colors"
+                    >
+                      {showCalc ? <X className="h-3 w-3" /> : <Info className="h-3 w-3" />}
+                      {showCalc ? "Verberg formules" : "Berekening"}
+                    </button>
+
+                    {showCalc && (
+                      <div className="rounded-lg border border-amber-400/20 bg-black/30 p-3 space-y-3 font-mono text-[10px] text-white/50 leading-relaxed">
+                        <p className="text-amber-300/80 font-semibold text-[11px] not-italic">Exacte formules</p>
+
+                        <div className="space-y-1">
+                          <p className="text-white/35 uppercase tracking-widest text-[9px]">Pool Ranking (50%)</p>
+                          <p className="text-white/70">poolScore = (N − rang) / (N − 1)</p>
+                          <p className="text-white/35 text-[9px]">N = aantal deelnemers · rang = jouw positie</p>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-white/35 uppercase tracking-widest text-[9px]">Monkey Vergelijking (30%)</p>
+                          <p className="text-white/70">monkeyScore = beatPct / 100</p>
+                          <p className="text-white/35 text-[9px]">beatPct = % van 5.000 sim-ploegen verslagen</p>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-white/35 uppercase tracking-widest text-[9px]">Joker Prestatie (20%)</p>
+                          <p className="text-white/70">jokerScore = min(1, 0.4 + (1 − avgOwn) × 0.4 + bonus)</p>
+                          <p className="text-white/35 text-[9px]">avgOwn = gem. ownership jokers · bonus = 0.15 als beatPct &gt; 60%</p>
+                          <p className="text-white/35 text-[9px]">Geen jokers → jokerScore = 0.5</p>
+                        </div>
+
+                        <div className="border-t border-white/10 pt-2 space-y-1">
+                          <p className="text-white/35 uppercase tracking-widest text-[9px]">Eindscore</p>
+                          <p className="text-white/70">raw = poolScore×0.5 + monkeyScore×0.3 + jokerScore×0.2</p>
+                          <p className="text-white/70">score = max(3.0, round((raw × 9 + 1) × 10) / 10)</p>
+                          <p className="text-white/35 text-[9px]">Schaal 1.0 – 10.0 · minimum 3.0</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
