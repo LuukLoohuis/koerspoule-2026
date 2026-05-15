@@ -1055,7 +1055,7 @@ export default function MijnPeloton() {
         {/* Inner tabs: Team / Uitslagen / Subpoules / Benchmark / Palmares / Hors */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
           <div className="overflow-x-auto">
-          <TabsList className="retro-border h-auto p-0.5 grid grid-cols-6 gap-0.5 min-w-[420px] w-full">
+          <TabsList className="retro-border h-auto p-0.5 grid grid-cols-5 gap-0.5 min-w-[360px] w-full">
             <TabsTrigger value="team" className="font-display text-xs px-2 py-1.5">
               🚴‍♂️🚴 Mijn Team
             </TabsTrigger>
@@ -1068,9 +1068,6 @@ export default function MijnPeloton() {
             <TabsTrigger value="benchmark" className="font-display text-xs px-2 py-1.5">
               ⚔️ Benchmark
             </TabsTrigger>
-            <TabsTrigger value="palmares" className="font-display text-xs px-2 py-1.5">
-              🏅 Palmares
-            </TabsTrigger>
             <TabsTrigger value="hors" className="font-display text-xs px-2 py-1.5">
               🏔️ Hors Catégorie
             </TabsTrigger>
@@ -1080,6 +1077,13 @@ export default function MijnPeloton() {
           {/* ── TAB: Mijn Team ── */}
           <TabsContent value="team" className="mt-3">
             <MyTeamPanel />
+            <div className="mt-8 border-t border-foreground/10 pt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-lg">🏅</span>
+                <h3 className="font-display font-bold text-base">Palmares</h3>
+              </div>
+              <PalmaresPanel />
+            </div>
           </TabsContent>
 
           {/* ── TAB: Uitslagen ── */}
@@ -1097,11 +1101,6 @@ export default function MijnPeloton() {
           {/* ── TAB: Benchmark ── */}
           <TabsContent value="benchmark" className="mt-3">
             <BenchmarkTab gameId={selectedGameObj?.id} />
-          </TabsContent>
-
-          {/* ── TAB: Palmares ── */}
-          <TabsContent value="palmares" className="mt-3">
-            <PalmaresPanel />
           </TabsContent>
 
           {/* ── TAB: Hors Catégorie ── */}
