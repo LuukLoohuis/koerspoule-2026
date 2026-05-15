@@ -192,8 +192,61 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="chat" className="pt-3">
+          <TabsContent value="chat" className="pt-3 space-y-3">
             <PelotonChat subpoolName={active.name} subpoolId={active.id} />
+            <Card className="retro-border">
+              <CardHeader className="border-b-2 border-foreground bg-secondary/30">
+                <CardTitle className="font-display flex items-center justify-between gap-2 flex-wrap">
+                  <span className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    {active.name}
+                    {active.is_owner && (
+                      <Badge variant="secondary" className="text-xs gap-1">
+                        <Crown className="h-3 w-3" /> Eigenaar
+                      </Badge>
+                    )}
+                  </span>
+                  <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
+                    Code: {active.code}
+                    <button
+                      onClick={() => copyCode(active.code)}
+                      className="hover:text-foreground"
+                      title="Kopieer code"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y divide-border">
+                  {members.map((m) => (
+                    <div key={m.user_id} className="p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{m.display_name}</span>
+                        {m.user_id === active.owner_user_id && (
+                          <Badge variant="secondary" className="text-xs gap-1">
+                            <Crown className="h-3 w-3" /> Eigenaar
+                          </Badge>
+                        )}
+                        {m.user_id === user.id && (
+                          <Badge variant="outline" className="text-xs">jij</Badge>
+                        )}
+                      </div>
+                      {active.is_owner && m.user_id !== active.owner_user_id && (
+                        <Button
+                          variant="ghost" size="sm"
+                          onClick={() => handleRemoveMember(active.id, m.user_id, m.display_name)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <UserMinus className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
           <TabsContent value="chart" className="pt-3">
             <SubpouleStandings subpouleId={active.id} subpouleName={active.name} />
@@ -229,60 +282,6 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             </div>
           </TabsContent>
         </Tabs>
-
-        <Card className="retro-border">
-          <CardHeader className="border-b-2 border-foreground bg-secondary/30">
-            <CardTitle className="font-display flex items-center justify-between gap-2 flex-wrap">
-              <span className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                {active.name}
-                {active.is_owner && (
-                  <Badge variant="secondary" className="text-xs gap-1">
-                    <Crown className="h-3 w-3" /> Eigenaar
-                  </Badge>
-                )}
-              </span>
-              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-                Code: {active.code}
-                <button
-                  onClick={() => copyCode(active.code)}
-                  className="hover:text-foreground"
-                  title="Kopieer code"
-                >
-                  <Copy className="h-3 w-3" />
-                </button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border">
-              {members.map((m) => (
-                <div key={m.user_id} className="p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{m.display_name}</span>
-                    {m.user_id === active.owner_user_id && (
-                      <Badge variant="secondary" className="text-xs gap-1">
-                        <Crown className="h-3 w-3" /> Eigenaar
-                      </Badge>
-                    )}
-                    {m.user_id === user.id && (
-                      <Badge variant="outline" className="text-xs">jij</Badge>
-                    )}
-                  </div>
-                  {active.is_owner && m.user_id !== active.owner_user_id && (
-                    <Button
-                      variant="ghost" size="sm"
-                      onClick={() => handleRemoveMember(active.id, m.user_id, m.display_name)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <UserMinus className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   }
