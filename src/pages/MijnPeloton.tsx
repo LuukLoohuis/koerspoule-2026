@@ -1057,19 +1057,19 @@ export default function MijnPeloton() {
           <div className="overflow-x-auto">
           <TabsList className="retro-border h-auto p-0.5 grid grid-cols-5 gap-0.5 min-w-[360px] w-full">
             <TabsTrigger value="team" className="font-display text-xs px-2 py-1.5">
-              🚴‍♂️🚴 Mijn Team
+              🚴 <span className="md:hidden">Team</span><span className="hidden md:inline">Mijn Team</span>
             </TabsTrigger>
             <TabsTrigger value="uitslagen" className="font-display text-xs px-2 py-1.5">
-              📋 Uitslagen
+              📋 <span className="md:hidden">Uitsl.</span><span className="hidden md:inline">Uitslagen</span>
             </TabsTrigger>
             <TabsTrigger value="subpoules" className="font-display text-xs px-2 py-1.5">
-              👥 Subpoules
+              👥 <span className="md:hidden">Sub</span><span className="hidden md:inline">Subpoules</span>
             </TabsTrigger>
             <TabsTrigger value="benchmark" className="font-display text-xs px-2 py-1.5">
-              ⚔️ Benchmark
+              ⚔️ <span className="md:hidden">Bench</span><span className="hidden md:inline">Benchmark</span>
             </TabsTrigger>
             <TabsTrigger value="hors" className="font-display text-xs px-2 py-1.5">
-              🏔️ Hors Catégorie
+              🏔️ <span className="md:hidden">Hors</span><span className="hidden md:inline">Hors Catégorie</span>
             </TabsTrigger>
           </TabsList>
           </div>
