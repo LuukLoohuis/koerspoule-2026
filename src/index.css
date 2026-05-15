@@ -331,6 +331,12 @@
     @apply border border-border/60 bg-card rounded-sm p-3;
   }
 
+  /* ── Mobile chart scroll wrapper ── */
+  .chart-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* ── Editorial nav link with bottom indicator ── */
   .nav-link-editorial {
     @apply relative inline-flex items-center px-3 py-1.5 mt-1.5 mb-0.5 text-[13px] uppercase tracking-[0.14em] transition-all duration-150 rounded-[3px] whitespace-nowrap select-none;
@@ -354,5 +360,75 @@
     background: hsl(var(--primary) / 0.08);
     box-shadow: 2px 2px 0 hsl(var(--primary) / 0.35);
     font-weight: 700;
+  }
+}
+
+/* ── Mobile — max-width: 767px ─────────────────────────────────────────────── */
+@media (max-width: 767px) {
+
+  /* Tab bars: horizontally scrollable single row */
+  [role="tablist"] {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 2px;
+    padding-bottom: 1px; /* prevent shadow clip */
+  }
+  [role="tablist"]::-webkit-scrollbar { display: none; }
+  [role="tab"] {
+    flex-shrink: 0 !important;
+    white-space: nowrap;
+  }
+
+  /* Card padding — tighter on mobile */
+  .card-header-mobile { padding: 0.625rem 0.875rem !important; }
+
+  /* Compact editorial table on mobile */
+  .table-editorial th {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.6rem;
+  }
+  .table-editorial td {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.75rem;
+  }
+
+  /* Charts: allow horizontal scroll if wider than viewport */
+  .recharts-responsive-container,
+  .recharts-wrapper {
+    min-width: 0 !important;
+  }
+  .chart-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Reduce container padding */
+  .container {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  /* Ornate feature boxes — less padding on mobile */
+  .ornate-frame.retro-border {
+    padding: 1rem !important;
+  }
+
+  /* Vintage heading — smaller on mobile */
+  .vintage-heading {
+    letter-spacing: 0.07em;
+  }
+
+  /* Section spacing — tighter */
+  .mop-card {
+    padding: 0.75rem !important;
+  }
+
+  /* Sticker — slightly smaller */
+  .sticker--hand {
+    font-size: 12px;
+    padding: 1px 7px;
   }
 }

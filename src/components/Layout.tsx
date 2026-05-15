@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Menu, X, Coffee } from "lucide-react";
 import CookieBanner from "@/components/CookieBanner";
 import RouteSeo from "@/components/RouteSeo";
+import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccentColor } from "@/hooks/useAccentColor";
@@ -156,7 +157,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main content */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pb-16 md:pb-0">{children}</main>
+      <BottomNav />
 
       {/* Footer */}
       <footer className="gradient-border-top bg-card py-5">
