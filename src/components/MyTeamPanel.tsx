@@ -75,6 +75,26 @@ function getCategoryIcon(name: string): ReactNode {
   return "🚴";
 }
 
+type BadgeConfig = { label: string; bg: string; color: string; border: string };
+function getCategoryBadge(name: string): BadgeConfig {
+  const n = (name ?? "").toLowerCase();
+  if (/(gc\s*alien|alien)/.test(n))                   return { label: "ALIEN", bg: "#FFF0F7", color: "#C4185A", border: "#E8336D" };
+  if (/(kop|leider|leader|gc|algemeen|klassement)/.test(n)) return { label: "GC",   bg: "#FFF0F7", color: "#C4185A", border: "#E8336D" };
+  if (/(sprint|spurt)/.test(n))                       return { label: "SPR",   bg: "#EFF3FF", color: "#1D4A9E", border: "#2E5BA8" };
+  if (/(klim|berg|grimp|mountain)/.test(n))           return { label: "KLM",   bg: "#EDF7F1", color: "#1E6B40", border: "#2E8B57" };
+  if (/\bpunch\b/.test(n))                            return { label: "PCH",   bg: "#FFF4EC", color: "#B5620F", border: "#E07B20" };
+  if (/(aanval|attack|baroud)/.test(n))               return { label: "ANV",   bg: "#FFF4EC", color: "#B5620F", border: "#E07B20" };
+  if (/(tijd|chrono|time\s*trial|tt\b)/.test(n))      return { label: "TT",    bg: "#FFFBEC", color: "#9A7A10", border: "#C8A020" };
+  if (/(support|knecht|helper|domestique)/.test(n))   return { label: "SUP",   bg: "#F5F5F5", color: "#5A5A5A", border: "#9A9A9A" };
+  if (/joker/.test(n))                                return { label: "JKR",   bg: "#F5EFFF", color: "#6B2FA0", border: "#7B3FA0" };
+  if (/(klassiek|classic|cobble|kassei)/.test(n))     return { label: "KLS",   bg: "#F8F4EE", color: "#7A5610", border: "#B59240" };
+  if (/\boud\b|veteraan|oldie/.test(n))               return { label: "OUD",   bg: "#F8F4EE", color: "#7A5610", border: "#B59240" };
+  if (/\bnl\b|nederland|dutch/.test(n))               return { label: "NL",    bg: "#F8F4EE", color: "#7A5610", border: "#B59240" };
+  if (/belg|belgi/.test(n))                           return { label: "BEL",   bg: "#F8F4EE", color: "#7A5610", border: "#B59240" };
+  if (/(baby\s*giro|baby|young|youngster)/.test(n))   return { label: "YNG",   bg: "#F8F4EE", color: "#7A5610", border: "#B59240" };
+  return                                                { label: "RNR",   bg: "#F8F4EE", color: "#7A5610", border: "#B59240" };
+}
+
 const JERSEY_META: Record<string, { label: string; emoji: string; ring: string; bg: string }> = {
   gc: { label: "Eindklassement", emoji: "🌹", ring: "border-[hsl(var(--jersey-pink))]", bg: "bg-[hsl(var(--jersey-pink))/0.1]" },
   points: { label: "Puntentrui", emoji: "🟣", ring: "border-[hsl(var(--jersey-purple))]", bg: "bg-[hsl(var(--jersey-purple))/0.1]" },
@@ -340,65 +360,114 @@ export default function MyTeamPanel({ section = "ploeg" }: { section?: "ploeg" |
         ))}
       </div>
 
-      {/* ═══ MIJN RENNERS — Vintage Race Roster ═══ */}
-      <div className="retro-border overflow-hidden rounded-lg border-2 border-primary"
-        style={{ background: "hsl(40 60% 97%)" }}>
+      {/* ═══ MIJN RENNERS — Startlijst Programme Officiel ═══ */}
+      <div className="overflow-hidden rounded-lg border-2"
+        style={{ borderColor: "#C8A020", background: "#FAF7F2" }}>
+
         {/* Programme header */}
-        <div className="bg-primary text-primary-foreground px-4 py-3 flex items-center justify-between">
+        <div className="px-4 py-3 flex items-center justify-between border-b-2"
+          style={{ background: "#2C2416", borderColor: "#C8A020" }}>
           <div>
-            <div className="text-[9px] tracking-[0.35em] uppercase font-mono opacity-60 mb-0.5">
+            <div className="text-[9px] tracking-[0.4em] uppercase font-mono mb-0.5" style={{ color: "#C8A020", opacity: 0.75 }}>
               Programme Officiel · {game.name}
             </div>
-            <h2 className="font-display text-xl font-black tracking-tight leading-none">Mijn Renners</h2>
+            <h2 className="font-display text-xl font-black tracking-tight leading-none text-white">Mijn Renners</h2>
           </div>
-          <span className="text-3xl opacity-20 select-none" aria-hidden>🚴</span>
+          <div className="text-right">
+            <div className="font-mono text-[9px] uppercase tracking-widest" style={{ color: "#C8A020", opacity: 0.6 }}>startlijst</div>
+            <div className="font-display text-2xl font-black tabular-nums" style={{ color: "#C8A020" }}>
+              {Array.from(picksByCategory.values()).reduce((s, arr) => s + arr.length, 0) + standaloneJokerIds.length}
+            </div>
+            <div className="font-mono text-[9px]" style={{ color: "#C8A020", opacity: 0.5 }}>renners</div>
+          </div>
         </div>
 
-        {/* 3-column category grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 border-t border-l border-primary/15">
-          {categories.map((cat) => {
+        {/* Category sections */}
+        <div>
+          {categories.map((cat, catIdx) => {
             const riderIds = picksByCategory.get(cat.id) ?? [];
             const pickedRiders = riderIds.map((rid) => ridersById[rid]).filter(Boolean);
             if (pickedRiders.length === 0) return null;
             const icon = getCategoryIcon(`${cat.name} ${cat.short_name ?? ""}`);
+            const badge = getCategoryBadge(`${cat.name} ${cat.short_name ?? ""}`);
+            const catLabel = (cat.short_name ?? cat.name).toUpperCase();
+
             return (
-              <div key={cat.id} className="border-r border-b border-primary/15 flex flex-col">
-                {/* Category header */}
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/[0.06] border-b border-primary/15">
-                  <span className="text-sm leading-none">{icon}</span>
-                  <span className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold text-primary truncate">
-                    {cat.short_name ?? cat.name}
+              <div key={cat.id} className={catIdx > 0 ? "border-t" : ""} style={{ borderColor: "#E8DDD0" }}>
+                {/* Section header */}
+                <div className="flex items-center gap-2 px-4 py-2"
+                  style={{ background: "#F0EBE1", borderBottom: `1px solid ${badge.border}` }}>
+                  <span className="text-sm leading-none shrink-0">{icon}</span>
+                  <span className="font-mono text-[10px] font-black uppercase tracking-[0.25em]"
+                    style={{ color: badge.color }}>
+                    {catLabel}
+                  </span>
+                  <div className="flex-1 h-px ml-1" style={{ background: badge.border, opacity: 0.35 }} />
+                  <span className="font-mono text-[9px] tabular-nums" style={{ color: badge.border, opacity: 0.7 }}>
+                    {pickedRiders.length}
                   </span>
                 </div>
+
                 {/* Rider rows */}
                 {pickedRiders.map((rider, rIdx) => {
                   const isJoker = jokerIds.includes(rider.id);
+                  const numStr = rider.start_number != null
+                    ? String(rider.start_number).padStart(3, " ") // figure space
+                    : " — ";
                   return (
                     <div
                       key={rider.id}
-                      className={cn(
-                        "flex items-start gap-2 px-3 py-2 hover:bg-primary/[0.04] transition-colors",
-                        rIdx < pickedRiders.length - 1 && "border-b border-primary/[0.07]"
-                      )}
+                      className="flex items-center group transition-colors"
+                      style={{
+                        background: rIdx % 2 === 0 ? "#FAF7F2" : "#F4EFE6",
+                        borderBottom: rIdx < pickedRiders.length - 1 ? "1px solid #EDE8DE" : undefined,
+                        minHeight: "40px",
+                      }}
                     >
-                      <span className="font-mono text-xs font-black text-primary tabular-nums w-7 text-right shrink-0 pt-0.5">
-                        {rider.start_number ?? "—"}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1">
-                          <span className="font-display font-bold text-xs uppercase tracking-wide truncate"
-                            style={{ color: "hsl(25 20% 12%)" }}>
+                      {/* Start number */}
+                      <div className="shrink-0 px-3 py-2.5 border-r w-14 text-right"
+                        style={{ borderColor: "#E0D8CC" }}>
+                        <span className="font-mono font-black tabular-nums leading-none text-[18px]"
+                          style={{ color: "#C8A020", letterSpacing: "-0.02em" }}>
+                          {numStr}
+                        </span>
+                      </div>
+
+                      {/* Emoji */}
+                      <div className="shrink-0 w-9 text-center text-base leading-none select-none">
+                        {icon}
+                      </div>
+
+                      {/* Name + team */}
+                      <div className="flex-1 min-w-0 px-2 py-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-display font-bold truncate"
+                            style={{ fontSize: "15px", color: "#2C2416", lineHeight: 1.2 }}>
                             {rider.name}
                           </span>
                           {isJoker && (
-                            <span className="font-mono text-[7px] font-black uppercase tracking-widest px-1 py-0.5 border shrink-0"
-                              style={{ borderColor: "hsl(var(--vintage-gold))", color: "hsl(var(--vintage-gold))", background: "hsl(var(--vintage-gold) / 0.1)" }}>
+                            <span className="shrink-0 font-mono text-[8px] font-black uppercase px-1.5 py-0.5 rounded"
+                              style={{ background: "#F5EFFF", color: "#6B2FA0", border: "1px solid #7B3FA0", letterSpacing: "0.1em" }}>
                               ×2
                             </span>
                           )}
                         </div>
-                        <span className="font-mono text-[9px] block truncate" style={{ color: "hsl(30 15% 42%)" }}>
+                        <span className="font-mono text-[10px] truncate block"
+                          style={{ color: "#8B7355" }}>
                           {rider.team}
+                        </span>
+                      </div>
+
+                      {/* Role badge */}
+                      <div className="shrink-0 px-3 py-2">
+                        <span className="font-mono text-[9px] font-black uppercase px-2 py-1 rounded"
+                          style={{
+                            background: badge.bg,
+                            color: badge.color,
+                            border: `1px solid ${badge.border}`,
+                            letterSpacing: "0.12em",
+                          }}>
+                          {badge.label}
                         </span>
                       </div>
                     </div>
@@ -408,44 +477,64 @@ export default function MyTeamPanel({ section = "ploeg" }: { section?: "ploeg" |
             );
           })}
 
-          {/* Stand-alone jokers — full width */}
+          {/* Stand-alone jokers */}
           {standaloneJokerIds.length > 0 && (
-            <div className="col-span-1 sm:col-span-3 border-r border-b border-primary/15">
-              <div className="flex items-center gap-2 px-3 py-1.5 border-b border-primary/15"
-                style={{ background: "hsl(var(--vintage-gold) / 0.08)" }}>
-                <span className="text-sm leading-none">🃏</span>
-                <span className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold text-primary">Jokers</span>
+            <div className="border-t" style={{ borderColor: "#E8DDD0" }}>
+              {/* Joker section header */}
+              <div className="flex items-center gap-2 px-4 py-2"
+                style={{ background: "#F0EBE1", borderBottom: "1px solid #7B3FA0" }}>
+                <span className="text-sm leading-none shrink-0">🃏</span>
+                <span className="font-mono text-[10px] font-black uppercase tracking-[0.25em]"
+                  style={{ color: "#6B2FA0" }}>JOKERS</span>
+                <div className="flex-1 h-px ml-1" style={{ background: "#7B3FA0", opacity: 0.35 }} />
+                <span className="font-mono text-[9px] tabular-nums" style={{ color: "#7B3FA0", opacity: 0.7 }}>
+                  {standaloneJokerIds.length}
+                </span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 border-l border-primary/15">
-                {standaloneJokerIds.map((jid) => {
-                  const rider = ridersById[jid];
-                  return (
-                    <div key={jid} className="border-r border-b border-primary/15 flex items-start gap-2 px-3 py-2 hover:bg-primary/[0.04] transition-colors">
-                      <span className="font-mono text-xs font-black text-primary tabular-nums w-7 text-right shrink-0 pt-0.5">
-                        {rider?.start_number ?? "—"}
+              {standaloneJokerIds.map((jid, rIdx) => {
+                const rider = ridersById[jid];
+                const numStr = rider?.start_number != null
+                  ? String(rider.start_number).padStart(3, " ")
+                  : " — ";
+                return (
+                  <div key={jid} className="flex items-center transition-colors"
+                    style={{
+                      background: rIdx % 2 === 0 ? "#FAF7F2" : "#F4EFE6",
+                      borderBottom: rIdx < standaloneJokerIds.length - 1 ? "1px solid #EDE8DE" : undefined,
+                      minHeight: "40px",
+                    }}>
+                    <div className="shrink-0 px-3 py-2.5 border-r w-14 text-right"
+                      style={{ borderColor: "#E0D8CC" }}>
+                      <span className="font-mono font-black tabular-nums leading-none text-[18px]"
+                        style={{ color: "#C8A020", letterSpacing: "-0.02em" }}>
+                        {numStr}
                       </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1">
-                          <span className="font-display font-bold text-xs uppercase tracking-wide truncate"
-                            style={{ color: "hsl(25 20% 12%)" }}>
-                            {rider?.name ?? "Onbekend"}
-                          </span>
-                          <span className="font-mono text-[7px] font-black uppercase tracking-widest px-1 py-0.5 border shrink-0"
-                            style={{ borderColor: "hsl(var(--vintage-gold))", color: "hsl(var(--vintage-gold))", background: "hsl(var(--vintage-gold) / 0.1)" }}>
-                            ×2
-                          </span>
-                        </div>
-                        <span className="font-mono text-[9px] block truncate" style={{ color: "hsl(30 15% 42%)" }}>
-                          {rider?.team}
-                        </span>
-                      </div>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="shrink-0 w-9 text-center text-base leading-none select-none">🃏</div>
+                    <div className="flex-1 min-w-0 px-2 py-2">
+                      <span className="font-display font-bold block truncate"
+                        style={{ fontSize: "15px", color: "#2C2416", lineHeight: 1.2 }}>
+                        {rider?.name ?? "Onbekend"}
+                      </span>
+                      <span className="font-mono text-[10px] truncate block" style={{ color: "#8B7355" }}>
+                        {rider?.team}
+                      </span>
+                    </div>
+                    <div className="shrink-0 px-3 py-2">
+                      <span className="font-mono text-[9px] font-black uppercase px-2 py-1 rounded"
+                        style={{ background: "#F5EFFF", color: "#6B2FA0", border: "1px solid #7B3FA0", letterSpacing: "0.12em" }}>
+                        JKR ×2
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
+
+        {/* Footer rule */}
+        <div className="h-1" style={{ background: "linear-gradient(90deg, transparent, #C8A020 30%, #E8336D 50%, #C8A020 70%, transparent)" }} />
       </div>
 
       {/* ═══ VOORSPELLINGEN — alleen in Prono-sectie ═══ */}
