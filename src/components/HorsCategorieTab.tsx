@@ -173,19 +173,19 @@ function PercentileGauge({ pct }: { pct: number }) {
   return (
     <svg viewBox="0 0 130 72" className="w-full max-w-[200px] mx-auto">
       <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 0 ${cx + r} ${cy}`}
-        fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={sw} strokeLinecap="round" />
+        fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth={sw} strokeLinecap="round" />
       <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 0 ${cx + r} ${cy}`}
         fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round"
         strokeDasharray={`${circ}`}
         strokeDashoffset={`${animated ? offset : circ}`}
         style={{ transition: "stroke-dashoffset 1.4s cubic-bezier(0.34,1.56,0.64,1)" }} />
-      <text x={cx - r} y={cy + 13} fontSize="8" fill="rgba(255,255,255,0.35)" textAnchor="middle">0%</text>
-      <text x={cx + r} y={cy + 13} fontSize="8" fill="rgba(255,255,255,0.35)" textAnchor="middle">100%</text>
+      <text x={cx - r} y={cy + 13} fontSize="8" fill="#888" textAnchor="middle">0%</text>
+      <text x={cx + r} y={cy + 13} fontSize="8" fill="#888" textAnchor="middle">100%</text>
     </svg>
   );
 }
 
-// Premium stat card on dark background
+// Premium stat card on light background
 function DarkStatCard({
   label, value, unit, icon, description, accentColor,
 }: {
@@ -194,7 +194,7 @@ function DarkStatCard({
 }) {
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-2xl border bg-gradient-to-br from-[hsl(var(--v-raised))] via-[hsl(var(--v-raised))] to-[hsl(var(--v-card))] p-4 flex flex-col",
+      "relative overflow-hidden rounded-2xl border bg-card p-4 flex flex-col",
       accentColor === "gold"  && "border-[hsl(var(--vintage-gold))/0.25]",
       accentColor === "blue"  && "border-sky-500/25",
       accentColor === "green" && "border-emerald-500/25",
@@ -205,20 +205,20 @@ function DarkStatCard({
         <span className={cn(
           "text-[9px] uppercase tracking-[0.2em] font-semibold",
           accentColor === "gold"  && "text-[hsl(var(--vintage-gold))]",
-          accentColor === "blue"  && "text-sky-400",
-          accentColor === "green" && "text-emerald-400",
-          accentColor === "red"   && "text-rose-400",
+          accentColor === "blue"  && "text-sky-600",
+          accentColor === "green" && "text-emerald-600",
+          accentColor === "red"   && "text-rose-600",
         )}>{label}</span>
       </div>
       <div className={cn(
         "font-display text-3xl font-bold tabular-nums",
         accentColor === "gold"  && "text-[hsl(var(--vintage-gold))]",
-        accentColor === "blue"  && "text-sky-400",
-        accentColor === "green" && "text-emerald-400",
-        accentColor === "red"   && "text-rose-400",
+        accentColor === "blue"  && "text-sky-600",
+        accentColor === "green" && "text-emerald-600",
+        accentColor === "red"   && "text-rose-600",
       )}>{value}</div>
-      {unit && <div className="text-white/40 text-xs mt-0.5">{unit}</div>}
-      <p className="text-white/35 text-[11px] mt-3 leading-relaxed flex-1">{description}</p>
+      {unit && <div className="text-muted-foreground text-xs mt-0.5">{unit}</div>}
+      <p className="text-muted-foreground text-[11px] mt-3 leading-relaxed flex-1">{description}</p>
     </div>
   );
 }
@@ -533,39 +533,31 @@ export default function HorsCategorieTab() {
       {activeTab === "dartpijl" && (
         <div className="space-y-5">
           {!monte ? (
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[hsl(var(--v-deep))] via-[hsl(var(--v-dark))] to-[hsl(var(--v-deep))] dark-grain p-8 text-center">
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center">
               <span className="text-4xl">🐒</span>
-              <p className="text-white/50 text-sm mt-3 font-serif italic">Nog onvoldoende data om de apen te laten gooien.</p>
+              <p className="text-muted-foreground text-sm mt-3 font-serif italic">Nog onvoldoende data om de apen te laten gooien.</p>
             </div>
           ) : (
           <>
           {/* Hero */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[hsl(var(--v-deep))] via-[hsl(var(--v-dark))] to-[hsl(var(--v-deep))] dark-grain shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] p-6 md:p-8">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full blur-3xl opacity-25 transition-colors duration-700"
-              style={{ background: `radial-gradient(circle, ${isBeating ? "#34d399" : "#f43f5e"} 0%, transparent 70%)` }}
-            />
-            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.03]"
-              style={{ backgroundImage: "linear-gradient(to right,white 1px,transparent 1px),linear-gradient(to bottom,white 1px,transparent 1px)", backgroundSize: "32px 32px" }} />
-
+          <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] p-6 md:p-8">
             <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div>
-                <h2 className="font-display text-3xl md:text-4xl font-black text-white mb-1">
+                <h2 className="font-display text-3xl md:text-4xl font-black text-foreground mb-1">
                   🐒 De aap met de dartpijl
                 </h2>
-                <p className="text-sm text-white/45 mb-5">Monte Carlo Simulatie — 5000 simulaties</p>
+                <p className="text-sm text-muted-foreground mb-5">Monte Carlo Simulatie — 5000 simulaties</p>
                 <div className={cn(
                   "font-display tabular-nums font-black leading-none mb-2",
                   "text-5xl md:text-6xl",
-                  isBeating ? "text-emerald-400" : "text-rose-400"
+                  isBeating ? "text-emerald-600" : "text-rose-600"
                 )}>
                   {isBeating ? "+" : ""}{diffPct.toFixed(0)}%
                 </div>
-                <p className="text-white/70 text-sm font-medium">
+                <p className="text-foreground/80 text-sm font-medium">
                   {isBeating ? "beter" : "slechter"} dan de gemiddelde aap
                 </p>
-                <p className="text-white/30 text-xs mt-1.5 font-mono">
+                <p className="text-muted-foreground/70 text-xs mt-1.5 font-mono">
                   jij {monte.userActual} pt &nbsp;·&nbsp; gem. aap {Math.round(monte.mean)} pt
                 </p>
               </div>
@@ -575,9 +567,9 @@ export default function HorsCategorieTab() {
                   <div className="text-5xl mb-2">{nickname.emoji}</div>
                   <div className={cn(
                     "font-display text-xl font-bold",
-                    nickname.good ? "text-emerald-400" : "text-rose-400"
+                    nickname.good ? "text-emerald-600" : "text-rose-600"
                   )}>{nickname.title}</div>
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-white/30 mt-1">prestatieklasse</div>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mt-1">prestatieklasse</div>
                 </div>
               )}
             </div>
@@ -587,16 +579,14 @@ export default function HorsCategorieTab() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
             {/* Distribution chart */}
-            <div className="md:col-span-2 relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-[hsl(var(--v-raised))] via-[hsl(var(--v-raised))] to-[hsl(var(--v-card))] p-4 md:p-5">
-              <div aria-hidden className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full blur-3xl opacity-15"
-                style={{ background: "radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)" }} />
+            <div className="md:col-span-2 relative overflow-hidden rounded-2xl border border-border bg-card p-4 md:p-5">
               <div className="relative">
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
                   <BarChart3 className="h-3 w-3" />
                   Verdeling · 5.000 willekeurige ploegen
                 </div>
-                <h3 className="font-display text-white text-base sm:text-lg mb-1">Aapscore distributie</h3>
-                <p className="text-[11px] text-white/40 mb-4">
+                <h3 className="font-display text-foreground text-base sm:text-lg mb-1">Aapscore distributie</h3>
+                <p className="text-[11px] text-muted-foreground mb-4">
                   Bars links van jou (goud) zijn apen die jij verslaat
                 </p>
                 <div style={{ height: 190 }}>
@@ -608,23 +598,23 @@ export default function HorsCategorieTab() {
                           <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
                         </linearGradient>
                         <linearGradient id="hc-bar-lose" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
-                          <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+                          <stop offset="0%" stopColor="rgba(0,0,0,0.18)" />
+                          <stop offset="100%" stopColor="rgba(0,0,0,0.04)" />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.12)" />
-                      <XAxis dataKey="bucket" tick={{ fontSize: 9, fill: "rgba(255,255,255,0.7)" }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 9, fill: "rgba(255,255,255,0.7)" }} axisLine={false} tickLine={false} />
+                      <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.08)" />
+                      <XAxis dataKey="bucket" tick={{ fontSize: 9, fill: "#999" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 9, fill: "#999" }} axisLine={false} tickLine={false} />
                       <Tooltip
-                        cursor={{ fill: "rgba(255,255,255,0.07)" }}
+                        cursor={{ fill: "rgba(0,0,0,0.04)" }}
                         content={(props: any) => {
                           const { active, payload } = props;
                           if (!active || !payload?.length) return null;
                           const { bucket, count } = payload[0].payload;
                           return (
-                            <div className="rounded-xl border border-white/20 backdrop-blur-xl px-3 py-2 text-xs text-white shadow-xl" style={{ background: "hsl(28 22% 16% / 0.95)" }}>
-                              <div className="font-mono font-bold text-white">{bucket} pt</div>
-                              <div className="text-white/60">{count} apen</div>
+                            <div className="rounded-xl border border-border backdrop-blur-xl px-3 py-2 text-xs text-foreground shadow-xl" style={{ background: "hsl(var(--card))" }}>
+                              <div className="font-mono font-bold text-foreground">{bucket} pt</div>
+                              <div className="text-foreground/70">{count} apen</div>
                             </div>
                           );
                         }}
@@ -698,7 +688,7 @@ export default function HorsCategorieTab() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex flex-wrap gap-4 mt-3 text-[10px] text-white/70">
+                <div className="flex flex-wrap gap-4 mt-3 text-[10px] text-foreground/80">
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block h-2.5 w-3 rounded-sm bg-[#fbbf24]" />
                     Jou ({monte.userActual} pt)
@@ -716,44 +706,42 @@ export default function HorsCategorieTab() {
             </div>
 
             {/* Monkey IQ */}
-            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-[hsl(var(--v-raised))] via-[hsl(var(--v-raised))] to-[hsl(var(--v-card))] p-5 flex flex-col gap-0">
-              <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 h-44 w-44 rounded-full blur-3xl opacity-20"
-                style={{ background: `radial-gradient(circle, ${monte.beatPct >= 50 ? "#34d399" : "#f43f5e"} 0%, transparent 70%)` }} />
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 flex flex-col gap-0">
               <div className="relative flex flex-col h-full">
-                <div className="text-base font-semibold uppercase tracking-[0.2em] text-white/60 mb-4">🧠 Monkey IQ</div>
+                <div className="text-base font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-4">🧠 Monkey IQ</div>
 
-                <div className="mb-1 text-[11px] text-white/40">Jij verslaat</div>
+                <div className="mb-1 text-[11px] text-muted-foreground">Jij verslaat</div>
                 <div className={cn(
                   "font-display font-black tabular-nums leading-none text-5xl",
-                  monte.beatPct >= 50 ? "text-emerald-400" : "text-rose-400"
+                  monte.beatPct >= 50 ? "text-emerald-600" : "text-rose-600"
                 )}>
                   {Math.round((monte.beatPct / 100) * 5000).toLocaleString("nl-NL")}
                 </div>
-                <div className="text-white/40 text-xs mt-1.5 mb-4">van de 5.000 apen</div>
+                <div className="text-muted-foreground text-xs mt-1.5 mb-4">van de 5.000 apen</div>
 
                 <div className={cn(
                   "font-display font-black tabular-nums text-2xl leading-none",
-                  monte.beatPct >= 50 ? "text-emerald-400" : "text-rose-400"
+                  monte.beatPct >= 50 ? "text-emerald-600" : "text-rose-600"
                 )}>
                   {monte.beatPct.toFixed(1)}%
                 </div>
-                <div className="text-white/35 text-[10px] mt-0.5 mb-5">van de simulaties verslagen</div>
+                <div className="text-muted-foreground text-[10px] mt-0.5 mb-5">van de simulaties verslagen</div>
 
                 {nickname && (
                   <div className={cn(
                     "mt-auto rounded-xl border px-3 py-3 text-center",
                     nickname.good
-                      ? "border-emerald-500/30 bg-emerald-500/[0.08]"
-                      : "border-rose-500/30 bg-rose-500/[0.08]"
+                      ? "border-emerald-300 bg-emerald-50"
+                      : "border-rose-300 bg-rose-50"
                   )}>
                     <div className="text-3xl mb-1.5 leading-none">{nickname.emoji}</div>
                     <div className={cn(
                       "font-display text-sm font-bold",
-                      nickname.good ? "text-emerald-400" : "text-rose-400"
+                      nickname.good ? "text-emerald-600" : "text-rose-600"
                     )}>
                       {nickname.title}
                     </div>
-                    <div className="text-white/30 text-[9px] uppercase tracking-[0.2em] mt-1">prestatieklasse</div>
+                    <div className="text-muted-foreground/70 text-[9px] uppercase tracking-[0.2em] mt-1">prestatieklasse</div>
                   </div>
                 )}
               </div>
@@ -796,42 +784,40 @@ export default function HorsCategorieTab() {
 
           {/* Stage timeline */}
           {stageTimeline.length > 0 && (
-            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-[hsl(var(--v-raised))] via-[hsl(var(--v-raised))] to-[hsl(var(--v-card))] p-4 md:p-5">
-              <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full blur-3xl opacity-20"
-                style={{ background: "radial-gradient(circle, hsl(var(--vintage-gold)) 0%, transparent 70%)" }} />
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 md:p-5">
               <div className="relative">
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
                   <Activity className="h-3 w-3" />
                   Etappe voor etappe
                 </div>
-                <h3 className="font-display text-white text-base sm:text-lg mb-0.5">Jij vs de Gemiddelde Aap</h3>
-                <p className="text-[11px] text-white/40 mb-4">Cumulatieve punten per goedgekeurde etappe</p>
+                <h3 className="font-display text-foreground text-base sm:text-lg mb-0.5">Jij vs de Gemiddelde Aap</h3>
+                <p className="text-[11px] text-muted-foreground mb-4">Cumulatieve punten per goedgekeurde etappe</p>
                 <div style={{ height: 200 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={stageTimeline} margin={{ top: 10, right: 8, left: -22, bottom: 0 }}>
-                      <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="stage" tick={{ fontSize: 9, fill: "rgba(255,255,255,0.35)" }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 9, fill: "rgba(255,255,255,0.35)" }} axisLine={false} tickLine={false} />
+                      <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.06)" />
+                      <XAxis dataKey="stage" tick={{ fontSize: 9, fill: "#bbb" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 9, fill: "#bbb" }} axisLine={false} tickLine={false} />
                       <Tooltip
-                        cursor={{ stroke: "rgba(255,255,255,0.15)", strokeWidth: 1 }}
+                        cursor={{ stroke: "rgba(0,0,0,0.15)", strokeWidth: 1 }}
                         content={(props: any) => {
                           const { active, payload, label } = props;
                           if (!active || !payload?.length) return null;
                           const row = payload[0]?.payload;
                           return (
-                            <div className="rounded-xl border border-white/10 backdrop-blur-xl px-3 py-2 text-xs text-white/80 shadow-xl space-y-1" style={{ background: "hsl(28 30% 11% / 0.90)" }}>
-                              <div className="font-mono font-bold text-white mb-1">{label}</div>
+                            <div className="rounded-xl border border-border backdrop-blur-xl px-3 py-2 text-xs text-foreground shadow-xl space-y-1" style={{ background: "hsl(var(--card))" }}>
+                              <div className="font-mono font-bold text-foreground mb-1">{label}</div>
                               <div className="flex items-center gap-2">
                                 <span className="h-2 w-2 rounded-full" style={{ background: "hsl(var(--vintage-gold))" }} />
-                                <span className="text-white/60">Jij</span>
-                                <span className="ml-auto font-bold text-white">{row.user} pt</span>
-                                {row.userDelta > 0 && <span className="text-emerald-400 text-[10px]">+{row.userDelta}</span>}
+                                <span className="text-foreground/70">Jij</span>
+                                <span className="ml-auto font-bold text-foreground">{row.user} pt</span>
+                                {row.userDelta > 0 && <span className="text-emerald-600 text-[10px]">+{row.userDelta}</span>}
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-white/30" />
-                                <span className="text-white/60">Gem. aap</span>
-                                <span className="ml-auto font-bold text-white/70">{row.avg} pt</span>
-                                {row.avgDelta > 0 && <span className="text-white/40 text-[10px]">+{row.avgDelta}</span>}
+                                <span className="h-2 w-2 rounded-full bg-secondary/60" />
+                                <span className="text-foreground/70">Gem. aap</span>
+                                <span className="ml-auto font-bold text-foreground/80">{row.avg} pt</span>
+                                {row.avgDelta > 0 && <span className="text-muted-foreground text-[10px]">+{row.avgDelta}</span>}
                               </div>
                             </div>
                           );
@@ -842,19 +828,19 @@ export default function HorsCategorieTab() {
                         dot={false} activeDot={{ r: 5, fill: "hsl(var(--vintage-gold))", strokeWidth: 0 }}
                         animationDuration={1000} animationEasing="ease-out" />
                       <Line type="monotone" dataKey="avg" name="Gem. aap"
-                        stroke="rgba(255,255,255,0.3)" strokeWidth={1.5} strokeDasharray="5 4"
-                        dot={false} activeDot={{ r: 4, fill: "rgba(255,255,255,0.5)", strokeWidth: 0 }}
+                        stroke="rgba(0,0,0,0.25)" strokeWidth={1.5} strokeDasharray="5 4"
+                        dot={false} activeDot={{ r: 4, fill: "rgba(0,0,0,0.3)", strokeWidth: 0 }}
                         animationDuration={1000} animationEasing="ease-out" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex gap-5 mt-3 text-[10px] text-white/35">
+                <div className="flex gap-5 mt-3 text-[10px] text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block h-0.5 w-5 rounded" style={{ background: "hsl(var(--vintage-gold))" }} />
                     Jouw score
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="inline-block w-5" style={{ borderTop: "1.5px dashed rgba(255,255,255,0.3)" }} />
+                    <span className="inline-block w-5" style={{ borderTop: "1.5px dashed rgba(0,0,0,0.25)" }} />
                     Gemiddelde aap
                   </span>
                 </div>
@@ -867,8 +853,8 @@ export default function HorsCategorieTab() {
             <div className={cn(
               "rounded-xl border px-4 py-3 text-sm font-serif italic",
               monte.top10
-                ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-300"
-                : "border-rose-500/30 bg-rose-500/5 text-rose-300"
+                ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                : "border-rose-300 bg-rose-50 text-rose-700"
             )}>
               {monte.worseThanApe && <span>"Eh… een gemiddelde dartpijl had het ook niet slechter gedaan." 🎯</span>}
               {monte.top10 && <span>"Top 10% van de apen — die dartpijl van jou heeft visie." 🔥</span>}
@@ -1064,43 +1050,38 @@ export default function HorsCategorieTab() {
         <CardContent className="p-4 md:p-6 space-y-4">
           {/* ── Director Report Score ──────────────────────────────────────── */}
           {directorScore && (
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[hsl(var(--v-deep))] via-[hsl(var(--v-dark))] to-[hsl(var(--v-deep))] dark-grain p-5 md:p-6">
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full blur-3xl opacity-20"
-                style={{ background: `radial-gradient(circle, ${directorScore.score >= 7 ? "#34d399" : directorScore.score >= 5 ? "#fbbf24" : "#f43f5e"} 0%, transparent 70%)` }}
-              />
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 md:p-6">
               {/* Grade + analysis */}
               <div className="relative flex flex-col md:flex-row items-start gap-5">
                 <div className="shrink-0">
-                  <div className="text-[10px] uppercase tracking-[0.25em] text-white/40 mb-1">Rapport</div>
+                  <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1">Rapport</div>
                   <div className={cn(
                     "font-display text-7xl font-black tabular-nums leading-none",
-                    directorScore.score >= 8 ? "text-emerald-400" :
-                    directorScore.score >= 6 ? "text-amber-400" :
-                    directorScore.score >= 4 ? "text-orange-400" : "text-rose-400"
+                    directorScore.score >= 8 ? "text-emerald-600" :
+                    directorScore.score >= 6 ? "text-amber-600" :
+                    directorScore.score >= 4 ? "text-orange-600" : "text-rose-600"
                   )}>
                     {directorScore.score.toFixed(1)}
                   </div>
-                  <div className="text-white/30 text-xs mt-1 font-mono">van de 10</div>
+                  <div className="text-muted-foreground/70 text-xs mt-1 font-mono">van de 10</div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2">Directeursanalyse</div>
-                  <p className="text-white/80 text-sm font-serif italic leading-relaxed">"{directorScore.analysis}"</p>
+                  <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">Directeursanalyse</div>
+                  <p className="text-foreground text-sm font-serif italic leading-relaxed">"{directorScore.analysis}"</p>
                 </div>
               </div>
               {/* Metric breakdown */}
               <div className="relative mt-5 space-y-3">
                 <div className="flex items-center justify-between mb-1">
-                  <div className="text-[10px] uppercase tracking-[0.25em] text-white/30">Score opbouw</div>
+                  <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">Score opbouw</div>
                   <button
                     type="button"
                     onClick={() => setShowScoreInfo((v) => !v)}
                     className={cn(
                       "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold border transition-colors",
                       showScoreInfo
-                        ? "bg-white/10 border-white/30 text-white"
-                        : "bg-sky-500/20 border-sky-400/50 text-sky-300 hover:bg-sky-500/30 hover:border-sky-400/70"
+                        ? "bg-secondary border-border text-foreground"
+                        : "bg-sky-100 border-sky-300 text-sky-700 hover:bg-sky-200"
                     )}
                   >
                     {showScoreInfo ? <X className="h-3 w-3" /> : <Info className="h-3 w-3" />}
@@ -1110,28 +1091,28 @@ export default function HorsCategorieTab() {
 
                 {/* Explanation panel */}
                 {showScoreInfo && (
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3 text-[11px] text-white/60 leading-relaxed">
-                    <p className="text-white/80 font-semibold text-xs">Hoe wordt de score berekend?</p>
-                    <p>De rapportscore loopt van <span className="text-white/80 font-mono">1.0</span> tot <span className="text-white/80 font-mono">10.0</span> (minimum 3.0) en is opgebouwd uit drie gewogen onderdelen.</p>
+                  <div className="rounded-xl border border-border bg-secondary/40 p-4 space-y-3 text-[11px] text-foreground/70 leading-relaxed">
+                    <p className="text-foreground font-semibold text-xs">Hoe wordt de score berekend?</p>
+                    <p>De rapportscore loopt van <span className="text-foreground font-mono">1.0</span> tot <span className="text-foreground font-mono">10.0</span> (minimum 3.0) en is opgebouwd uit drie gewogen onderdelen.</p>
                     <div className="space-y-2.5">
                       <div className="flex gap-2">
                         <span className="shrink-0">🏆</span>
                         <div>
-                          <span className="text-white/75 font-semibold">Pool Ranking · 50%</span>
+                          <span className="text-foreground font-semibold">Pool Ranking · 50%</span>
                           <p className="mt-0.5">Jouw positie in de pool ten opzichte van alle andere deelnemers. Rang 1 geeft de maximale bijdrage, de laatste plek de minimale.</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
                         <span className="shrink-0">🐒</span>
                         <div>
-                          <span className="text-white/75 font-semibold">Monkey Vergelijking · 30%</span>
+                          <span className="text-foreground font-semibold">Monkey Vergelijking · 30%</span>
                           <p className="mt-0.5">Het percentage van 5.000 willekeurige simulatieploegen dat jij verslaat. Meer dan 60% verslaan geeft een extra bonus op de Joker score.</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
                         <span className="shrink-0">🃏</span>
                         <div>
-                          <span className="text-white/75 font-semibold">Joker Prestatie · 20%</span>
+                          <span className="text-foreground font-semibold">Joker Prestatie · 20%</span>
                           <p className="mt-0.5">Hoe zeldzaam jouw jokers zijn in de pool — renners die weinig anderen kozen scoren hoger. Een populaire joker (hoge ownership) verlaagt de deelscore.</p>
                         </div>
                       </div>
@@ -1141,40 +1122,40 @@ export default function HorsCategorieTab() {
                     <button
                       type="button"
                       onClick={() => setShowCalc((v) => !v)}
-                      className="mt-1 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold border border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20 transition-colors"
+                      className="mt-1 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold border border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
                     >
                       {showCalc ? <X className="h-3 w-3" /> : <Info className="h-3 w-3" />}
                       {showCalc ? "Verberg formules" : "Berekening"}
                     </button>
 
                     {showCalc && (
-                      <div className="rounded-lg border border-amber-400/20 bg-black/30 p-3 space-y-3 font-mono text-[10px] text-white/50 leading-relaxed">
-                        <p className="text-amber-300/80 font-semibold text-[11px] not-italic">Exacte formules</p>
+                      <div className="rounded-lg border border-amber-200 bg-secondary/60 p-3 space-y-3 font-mono text-[10px] text-foreground/70 leading-relaxed">
+                        <p className="text-amber-700 font-semibold text-[11px] not-italic">Exacte formules</p>
 
                         <div className="space-y-1">
-                          <p className="text-white/35 uppercase tracking-widest text-[9px]">Pool Ranking (50%)</p>
-                          <p className="text-white/70">poolScore = (N − rang) / (N − 1)</p>
-                          <p className="text-white/35 text-[9px]">N = aantal deelnemers · rang = jouw positie</p>
+                          <p className="text-muted-foreground uppercase tracking-widest text-[9px]">Pool Ranking (50%)</p>
+                          <p className="text-foreground">poolScore = (N − rang) / (N − 1)</p>
+                          <p className="text-muted-foreground text-[9px]">N = aantal deelnemers · rang = jouw positie</p>
                         </div>
 
                         <div className="space-y-1">
-                          <p className="text-white/35 uppercase tracking-widest text-[9px]">Monkey Vergelijking (30%)</p>
-                          <p className="text-white/70">monkeyScore = beatPct / 100</p>
-                          <p className="text-white/35 text-[9px]">beatPct = % van 5.000 sim-ploegen verslagen</p>
+                          <p className="text-muted-foreground uppercase tracking-widest text-[9px]">Monkey Vergelijking (30%)</p>
+                          <p className="text-foreground">monkeyScore = beatPct / 100</p>
+                          <p className="text-muted-foreground text-[9px]">beatPct = % van 5.000 sim-ploegen verslagen</p>
                         </div>
 
                         <div className="space-y-1">
-                          <p className="text-white/35 uppercase tracking-widest text-[9px]">Joker Prestatie (20%)</p>
-                          <p className="text-white/70">jokerScore = min(1, 0.4 + (1 − avgOwn) × 0.4 + bonus)</p>
-                          <p className="text-white/35 text-[9px]">avgOwn = gem. ownership jokers · bonus = 0.15 als beatPct &gt; 60%</p>
-                          <p className="text-white/35 text-[9px]">Geen jokers → jokerScore = 0.5</p>
+                          <p className="text-muted-foreground uppercase tracking-widest text-[9px]">Joker Prestatie (20%)</p>
+                          <p className="text-foreground">jokerScore = min(1, 0.4 + (1 − avgOwn) × 0.4 + bonus)</p>
+                          <p className="text-muted-foreground text-[9px]">avgOwn = gem. ownership jokers · bonus = 0.15 als beatPct &gt; 60%</p>
+                          <p className="text-muted-foreground text-[9px]">Geen jokers → jokerScore = 0.5</p>
                         </div>
 
-                        <div className="border-t border-white/10 pt-2 space-y-1">
-                          <p className="text-white/35 uppercase tracking-widest text-[9px]">Eindscore</p>
-                          <p className="text-white/70">raw = poolScore×0.5 + monkeyScore×0.3 + jokerScore×0.2</p>
-                          <p className="text-white/70">score = max(3.0, round((raw × 9 + 1) × 10) / 10)</p>
-                          <p className="text-white/35 text-[9px]">Schaal 1.0 – 10.0 · minimum 3.0</p>
+                        <div className="border-t border-border pt-2 space-y-1">
+                          <p className="text-muted-foreground uppercase tracking-widest text-[9px]">Eindscore</p>
+                          <p className="text-foreground">raw = poolScore×0.5 + monkeyScore×0.3 + jokerScore×0.2</p>
+                          <p className="text-foreground">score = max(3.0, round((raw × 9 + 1) × 10) / 10)</p>
+                          <p className="text-muted-foreground text-[9px]">Schaal 1.0 – 10.0 · minimum 3.0</p>
                         </div>
                       </div>
                     )}
@@ -1188,10 +1169,10 @@ export default function HorsCategorieTab() {
                 ].map(({ label, sub, pct, val, w }) => (
                   <div key={label} className="flex items-center gap-3">
                     <div className="w-36 shrink-0">
-                      <div className="text-white/65 text-xs font-medium leading-none mb-0.5">{label}</div>
-                      <div className="text-white/30 text-[10px]">{sub}</div>
+                      <div className="text-foreground/70 text-xs font-medium leading-none mb-0.5">{label}</div>
+                      <div className="text-muted-foreground text-[10px]">{sub}</div>
                     </div>
-                    <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
                       <div
                         className={cn(
                           "h-full rounded-full transition-[width] duration-700",
@@ -1203,11 +1184,11 @@ export default function HorsCategorieTab() {
                     <div className="shrink-0 w-8 text-right">
                       <span className={cn(
                         "font-mono text-xs font-bold tabular-nums",
-                        pct >= 0.7 ? "text-emerald-400" : pct >= 0.4 ? "text-amber-400" : "text-rose-400"
+                        pct >= 0.7 ? "text-emerald-400" : pct >= 0.4 ? "text-amber-400" : "bg-rose-400"
                       )}>{val.toFixed(1)}</span>
                     </div>
                     <div className="shrink-0 w-8 text-right">
-                      <span className="text-white/25 text-[10px] font-mono">{w}%</span>
+                      <span className="text-muted-foreground/70 text-[10px] font-mono">{w}%</span>
                     </div>
                   </div>
                 ))}
