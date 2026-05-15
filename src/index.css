@@ -337,6 +337,23 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* ── Vintage dark panel palette ──────────────────────────────────────────
+     Warm sepia-brown alternatives to slate-*, used by Palmares / Dartpijl /
+     Wielerdirecteur. Keeps dark sections tonally linked to the golden/warm
+     editorial palette of the rest of the site.                              */
+  :root {
+    --v-deep:   28 40% 7%;   /* aged race-paper black     — replaces slate-950 */
+    --v-dark:   28 30% 11%;  /* tobacco brown              — replaces slate-900 */
+    --v-card:   28 22% 16%;  /* antique programme card     — replaces slate-800 */
+    --v-raised: 28 18% 21%;  /* raised surface             — replaces slate-700 */
+  }
+
+  /* Subtle noise grain for dark vintage panels */
+  .dark-grain {
+    background-image:
+      url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='0.035' fill-rule='evenodd'%3E%3Cpath d='M3 0h1L0 4V3zM4 3v1H3z'/%3E%3C/g%3E%3C/svg%3E");
+  }
+
   /* ── Editorial nav link with bottom indicator ── */
   .nav-link-editorial {
     @apply relative inline-flex items-center px-3 py-1.5 mt-1.5 mb-0.5 text-[13px] uppercase tracking-[0.14em] transition-all duration-150 rounded-[3px] whitespace-nowrap select-none;

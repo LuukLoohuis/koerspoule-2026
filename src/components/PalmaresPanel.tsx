@@ -85,7 +85,7 @@ function GameSection({ g }: { g: PalmaresGame }) {
   const isLive = ["active", "live", "open", "locked"].includes(g.status);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 p-4 md:p-5">
+    <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-[hsl(var(--v-card))] via-[hsl(var(--v-card))] to-[hsl(var(--v-dark))] p-4 md:p-5">
       {/* Game header */}
       <div className="flex items-center gap-3 mb-4">
         <FlagIcon country={country} className="w-7 h-5 rounded-sm shrink-0" />
@@ -153,7 +153,7 @@ function SubpouleSection({ s }: { s: PalmaresSubpoule }) {
     s.my_rank === 1 ? "🥇" : s.my_rank === 2 ? "🥈" : s.my_rank === 3 ? "🥉" : null;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 p-4 md:p-5">
+    <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-[hsl(var(--v-card))] via-[hsl(var(--v-card))] to-[hsl(var(--v-dark))] p-4 md:p-5">
       {/* Header */}
       <div className="flex items-center gap-3 mb-3">
         {medal ? (
@@ -228,7 +228,7 @@ export default function PalmaresPanel() {
 
   if (games.length === 0) {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8 text-center">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[hsl(var(--v-deep))] via-[hsl(var(--v-dark))] to-[hsl(var(--v-deep))] dark-grain p-8 text-center">
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.03]"
           style={{ backgroundImage: "linear-gradient(to right,white 1px,transparent 1px),linear-gradient(to bottom,white 1px,transparent 1px)", backgroundSize: "32px 32px" }} />
         <Trophy className="w-12 h-12 mx-auto text-white/15 mb-3" />
@@ -244,7 +244,7 @@ export default function PalmaresPanel() {
     <div className="space-y-6">
 
       {/* ── Hero card ── */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] p-6 md:p-8">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[hsl(var(--v-deep))] via-[hsl(var(--v-dark))] to-[hsl(var(--v-deep))] dark-grain shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] p-6 md:p-8">
         {/* Grid overlay */}
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.03]"
           style={{ backgroundImage: "linear-gradient(to right,white 1px,transparent 1px),linear-gradient(to bottom,white 1px,transparent 1px)", backgroundSize: "32px 32px" }} />

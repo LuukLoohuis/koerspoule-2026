@@ -194,7 +194,7 @@ function DarkStatCard({
 }) {
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-2xl border bg-gradient-to-br from-slate-700 via-slate-700 to-slate-800 p-4 flex flex-col",
+      "relative overflow-hidden rounded-2xl border bg-gradient-to-br from-[hsl(var(--v-raised))] via-[hsl(var(--v-raised))] to-[hsl(var(--v-card))] p-4 flex flex-col",
       accentColor === "gold"  && "border-[hsl(var(--vintage-gold))/0.25]",
       accentColor === "blue"  && "border-sky-500/25",
       accentColor === "green" && "border-emerald-500/25",
@@ -533,14 +533,14 @@ export default function HorsCategorieTab() {
       {activeTab === "dartpijl" && (
         <div className="space-y-5">
           {!monte ? (
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8 text-center">
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[hsl(var(--v-deep))] via-[hsl(var(--v-dark))] to-[hsl(var(--v-deep))] dark-grain p-8 text-center">
               <span className="text-4xl">🐒</span>
               <p className="text-white/50 text-sm mt-3 font-serif italic">Nog onvoldoende data om de apen te laten gooien.</p>
             </div>
           ) : (
           <>
           {/* Hero */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] p-6 md:p-8">
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[hsl(var(--v-deep))] via-[hsl(var(--v-dark))] to-[hsl(var(--v-deep))] dark-grain shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] p-6 md:p-8">
             <div
               aria-hidden
               className="pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full blur-3xl opacity-25 transition-colors duration-700"
@@ -587,7 +587,7 @@ export default function HorsCategorieTab() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
             {/* Distribution chart */}
-            <div className="md:col-span-2 relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-slate-700 via-slate-700 to-slate-800 p-4 md:p-5">
+            <div className="md:col-span-2 relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-[hsl(var(--v-raised))] via-[hsl(var(--v-raised))] to-[hsl(var(--v-card))] p-4 md:p-5">
               <div aria-hidden className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full blur-3xl opacity-15"
                 style={{ background: "radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)" }} />
               <div className="relative">
@@ -622,7 +622,7 @@ export default function HorsCategorieTab() {
                           if (!active || !payload?.length) return null;
                           const { bucket, count } = payload[0].payload;
                           return (
-                            <div className="rounded-xl border border-white/20 bg-slate-800/95 backdrop-blur-xl px-3 py-2 text-xs text-white shadow-xl">
+                            <div className="rounded-xl border border-white/20 backdrop-blur-xl px-3 py-2 text-xs text-white shadow-xl" style={{ background: "hsl(28 22% 16% / 0.95)" }}>
                               <div className="font-mono font-bold text-white">{bucket} pt</div>
                               <div className="text-white/60">{count} apen</div>
                             </div>
@@ -716,7 +716,7 @@ export default function HorsCategorieTab() {
             </div>
 
             {/* Monkey IQ */}
-            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-slate-700 via-slate-700 to-slate-800 p-5 flex flex-col gap-0">
+            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-[hsl(var(--v-raised))] via-[hsl(var(--v-raised))] to-[hsl(var(--v-card))] p-5 flex flex-col gap-0">
               <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 h-44 w-44 rounded-full blur-3xl opacity-20"
                 style={{ background: `radial-gradient(circle, ${monte.beatPct >= 50 ? "#34d399" : "#f43f5e"} 0%, transparent 70%)` }} />
               <div className="relative flex flex-col h-full">
@@ -796,7 +796,7 @@ export default function HorsCategorieTab() {
 
           {/* Stage timeline */}
           {stageTimeline.length > 0 && (
-            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-slate-700 via-slate-700 to-slate-800 p-4 md:p-5">
+            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-[hsl(var(--v-raised))] via-[hsl(var(--v-raised))] to-[hsl(var(--v-card))] p-4 md:p-5">
               <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full blur-3xl opacity-20"
                 style={{ background: "radial-gradient(circle, hsl(var(--vintage-gold)) 0%, transparent 70%)" }} />
               <div className="relative">
@@ -819,7 +819,7 @@ export default function HorsCategorieTab() {
                           if (!active || !payload?.length) return null;
                           const row = payload[0]?.payload;
                           return (
-                            <div className="rounded-xl border border-white/10 bg-slate-900/90 backdrop-blur-xl px-3 py-2 text-xs text-white/80 shadow-xl space-y-1">
+                            <div className="rounded-xl border border-white/10 backdrop-blur-xl px-3 py-2 text-xs text-white/80 shadow-xl space-y-1" style={{ background: "hsl(28 30% 11% / 0.90)" }}>
                               <div className="font-mono font-bold text-white mb-1">{label}</div>
                               <div className="flex items-center gap-2">
                                 <span className="h-2 w-2 rounded-full" style={{ background: "hsl(var(--vintage-gold))" }} />
@@ -1064,7 +1064,7 @@ export default function HorsCategorieTab() {
         <CardContent className="p-4 md:p-6 space-y-4">
           {/* ── Director Report Score ──────────────────────────────────────── */}
           {directorScore && (
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-5 md:p-6">
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[hsl(var(--v-deep))] via-[hsl(var(--v-dark))] to-[hsl(var(--v-deep))] dark-grain p-5 md:p-6">
               <div
                 aria-hidden
                 className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full blur-3xl opacity-20"
