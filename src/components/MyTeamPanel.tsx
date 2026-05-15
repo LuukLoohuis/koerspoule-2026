@@ -445,12 +445,6 @@ export default function MyTeamPanel({ section = "ploeg" }: { section?: "ploeg" |
                             style={{ fontSize: "15px", color: "#2C2416", lineHeight: 1.2 }}>
                             {rider.name}
                           </span>
-                          {isJoker && (
-                            <span className="shrink-0 font-mono text-[8px] font-black uppercase px-1.5 py-0.5 rounded"
-                              style={{ background: "#F5EFFF", color: "#6B2FA0", border: "1px solid #7B3FA0", letterSpacing: "0.1em" }}>
-                              ×2
-                            </span>
-                          )}
                         </div>
                         <span className="font-mono text-[10px] truncate block"
                           style={{ color: "#8B7355" }}>
