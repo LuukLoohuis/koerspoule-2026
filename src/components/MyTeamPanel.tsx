@@ -327,27 +327,6 @@ export default function MyTeamPanel({ section = "ploeg" }: { section?: "ploeg" |
         </div>
       )}
 
-      {/* KPI strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { icon: Trophy,   label: "Totaal punten",   value: totalPoints,                                      accent: true  },
-          { icon: Users,    label: "Positie in poule", value: myRank > 0 ? `#${myRank}` : "—",                sub: entries.length > 0 ? `/${entries.length}` : undefined },
-          { icon: Target,   label: "Categorieën",      value: `${picksByCategory.size}/${categories.length}`               },
-          { icon: Sparkles, label: "Beste etappe",     value: bestStage ? `R${bestStage.stage.stage_number}` : "—", sub: bestStage ? ` · ${bestStage.points}pt` : undefined, small: true },
-        ].map(({ icon: Icon, label, value, sub, accent, small }, i) => (
-          <Card key={i} className={cn("ornate-frame retro-border relative overflow-hidden", accent && "bg-primary/5")}>
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))]" />
-            <CardContent className="p-4 text-center">
-              <Icon className="h-5 w-5 mx-auto text-primary mb-1" />
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-serif">{label}</p>
-              <p className={cn("font-display font-bold tabular-nums", small ? "text-xl" : "text-2xl")}>
-                {value}
-                {sub && <span className="text-xs text-muted-foreground font-sans ml-1">{sub}</span>}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
 
       {/* ═══ MIJN RENNERS — Startlijst Programme Officiel ═══ */}
       <div className="overflow-hidden rounded-lg border-2"
