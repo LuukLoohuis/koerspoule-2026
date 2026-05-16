@@ -16,6 +16,44 @@ type Props = {
   subpouleName: string;
 };
 
+function GapBadge({
+  rank,
+  gap,
+  movement,
+  aboveName,
+}: {
+  rank: number;
+  gap: number | null;
+  movement: number | null;
+  aboveName: string | null;
+}) {
+  if (gap === null) return null;
+
+  const isLeader = rank === 1;
+  const label = isLeader ? `+${gap}` : `-${gap}`;
+
+  const gaining = movement !== null && (isLeader ? movement > 0 : movement < 0);
+  const falling = movement !== null && (isLeader ? movement < 0 : movement > 0);
+
+  const tooltip = aboveName
+    ? isLeader
+      ? `Voorsprong op ${aboveName}: ${gap} pt${movement !== null ? ` (${movement >= 0 ? "+" : ""}${movement} deze rit)` : ""}`
+      : `Achterstand op ${aboveName}: ${gap} pt${movement !== null ? ` (gap ${movement >= 0 ? "+" : ""}${movement} deze rit)` : ""}`
+    : undefined;
+
+  return (
+    <span
+      className="inline-flex items-center gap-0.5 text-[9px] font-mono font-semibold tabular-nums leading-none"
+      style={{ color: gaining ? "#2E8B57" : falling ? "#C0392B" : "#9A9A9A" }}
+      title={tooltip}
+    >
+      {gaining && <ArrowUp className="w-2 h-2" />}
+      {falling && <ArrowDown className="w-2 h-2" />}
+      {label}pt
+    </span>
+  );
+}
+
 export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
   const { user } = useAuth();
   const { data: game } = useCurrentGame();
@@ -158,7 +196,33 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
       const rank = i + 1;
       const prevRank = prevRankByUser.get(row.user_id);
       const delta = etappeIdx > 0 && prevRank != null ? prevRank - rank : null;
-      return { ...row, rank, delta };
+
+      let gap_to_above: number | null = null;
+      let gap_movement: number | null = null;
+      let above_name: string | null = null;
+
+      const myPts = row.total_points;
+      const myPrevPts = row.entry_id ? (prevMap.get(row.entry_id) ?? 0) : 0;
+
+      if (rank === 1 && rows.length >= 2) {
+        const r2 = rows[1];
+        above_name = r2.team_name ?? r2.display_name;
+        gap_to_above = myPts - r2.total_points;
+        if (etappeIdx > 0) {
+          const r2PrevPts = r2.entry_id ? (prevMap.get(r2.entry_id) ?? 0) : 0;
+          gap_movement = gap_to_above - (myPrevPts - r2PrevPts);
+        }
+      } else if (rank > 1) {
+        const above = rows[i - 1];
+        above_name = above.team_name ?? above.display_name;
+        gap_to_above = above.total_points - myPts;
+        if (etappeIdx > 0) {
+          const abovePrevPts = above.entry_id ? (prevMap.get(above.entry_id) ?? 0) : 0;
+          gap_movement = gap_to_above - (abovePrevPts - myPrevPts);
+        }
+      }
+
+      return { ...row, rank, delta, gap_to_above, gap_movement, above_name };
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [members, entries, stagePoints, stages, etappeIdx]);
@@ -303,6 +367,12 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                       {Math.abs(m.delta)}
                     </div>
                   )}
+                  <GapBadge
+                    rank={m.rank}
+                    gap={m.gap_to_above}
+                    movement={m.gap_movement}
+                    aboveName={m.above_name}
+                  />
                 </div>
 
                 {stageBadgeCls && (
