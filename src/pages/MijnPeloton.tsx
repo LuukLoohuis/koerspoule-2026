@@ -1059,6 +1059,9 @@ export default function MijnPeloton() {
             <TabsTrigger value="team" className="font-display text-xs px-2 py-1.5">
               🚴 <span className="md:hidden">Team</span><span className="hidden md:inline">Mijn Team</span>
             </TabsTrigger>
+            <TabsTrigger value="subpoules" className="font-display text-xs px-2 py-1.5">
+              👥 <span className="md:hidden">Sub</span><span className="hidden md:inline">Subpoules</span>
+            </TabsTrigger>
             <TabsTrigger value="uitslagen" className="font-display text-xs px-2 py-1.5">
               📋 <span className="md:hidden">Uitsl.</span><span className="hidden md:inline">Uitslagen</span>
             </TabsTrigger>
@@ -1067,9 +1070,6 @@ export default function MijnPeloton() {
             </TabsTrigger>
             <TabsTrigger value="hors" className="font-display text-xs px-2 py-1.5">
               🏔️ <span className="md:hidden">Hors</span><span className="hidden md:inline">Hors Catégorie</span>
-            </TabsTrigger>
-            <TabsTrigger value="subpoules" className="font-display text-xs px-2 py-1.5">
-              👥 <span className="md:hidden">Sub</span><span className="hidden md:inline">Subpoules</span>
             </TabsTrigger>
           </TabsList>
           </div>
@@ -1102,16 +1102,16 @@ export default function MijnPeloton() {
             </Tabs>
           </TabsContent>
 
-          {/* ── TAB: Uitslagen ── */}
-          <TabsContent value="uitslagen" className="mt-3">
-            <MyResultsPanel />
-          </TabsContent>
-
           {/* ── TAB: Subpoules ── */}
           <TabsContent value="subpoules" className="mt-3">
             <div className="max-w-3xl">
               <SubpouleManager gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} gameStatus={selectedGameObj?.status} />
             </div>
+          </TabsContent>
+
+          {/* ── TAB: Uitslagen ── */}
+          <TabsContent value="uitslagen" className="mt-3">
+            <MyResultsPanel />
           </TabsContent>
 
           {/* ── TAB: Benchmark ── */}
