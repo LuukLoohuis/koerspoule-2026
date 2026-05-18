@@ -149,7 +149,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
         <CardHeader className="border-b-2 border-foreground bg-gradient-to-r from-secondary/40 via-secondary/20 to-transparent py-3">
           <CardTitle className="font-display flex items-center gap-2 text-base">
             <Swords className="h-5 w-5 text-primary" />
-            Benchmark{scopeLabel ? <span className="text-xs font-normal text-muted-foreground">· {scopeLabel}</span> : null}
+            RSLT.{scopeLabel ? <span className="text-xs font-normal text-muted-foreground">· {scopeLabel}</span> : null}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-3 space-y-3">
