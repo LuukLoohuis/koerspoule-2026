@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
+import { sendEmail, ploegIngediendHtml } from "@/lib/sendEmail";
 
 type Prediction = {
   classification: "gc" | "points" | "kom" | "youth";
@@ -110,7 +111,17 @@ export function useEntry(gameId?: string) {
       const { error } = await supabase.rpc("submit_entry", { p_entry_id: entryId });
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
+    onSuccess: (_data, { entryId }) => {
+      queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] });
+      if (user?.email) {
+        const teamName = queryClient.getQueryData<{ team_name?: string | null }>(["entry", gameId, user.id])?.team_name;
+        sendEmail(
+          user.email,
+          "Je ploeg is ingediend — Koerspoule",
+          ploegIngediendHtml(user.email, teamName),
+        );
+      }
+    },
   });
 
   // Zet entry terug naar draft zodat de deelnemer mag wijzigen

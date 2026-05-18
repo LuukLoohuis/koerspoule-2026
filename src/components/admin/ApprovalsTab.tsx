@@ -157,6 +157,10 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     }
     toast.success("Uitslag gefiatteerd");
     load();
+
+    // Stuur e-mail naar alle deelnemers via Edge Function (fire-and-forget)
+    supabase.functions.invoke("notify-stage-approved", { body: { stage_id: stageId } })
+      .then(({ error: fnErr }) => { if (fnErr) console.warn("[notify-stage-approved]", fnErr.message); });
   }
 
   const pending = rows.filter((r) => r.results_status === "pending");

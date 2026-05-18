@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { sendEmail, registratieHtml } from "@/lib/sendEmail";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -152,6 +153,8 @@ export default function Login() {
               ? "Je bent ingelogd."
               : "Controleer je inbox voor de bevestigingsmail.",
         });
+
+        sendEmail(email, "Welkom bij Koerspoule! 🌹", registratieHtml(name.trim() || email));
 
         if (data.session) {
           navigate("/", { replace: true });
