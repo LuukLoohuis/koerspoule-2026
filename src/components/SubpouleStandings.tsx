@@ -324,12 +324,12 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
         </div>
 
         {/* Column headers */}
-        <div className="flex items-center gap-3 px-3 py-1 border-b border-border bg-secondary/30">
+        <div className="flex items-center gap-3 px-3 py-1.5 border-b border-border bg-secondary/40">
           <div className="shrink-0 w-9" />
-          <div className="flex-1 min-w-0 text-[9px] font-mono uppercase tracking-[0.18em] text-muted-foreground/60">Naam</div>
-          {stages.length > 0 && <div className="shrink-0 w-8 text-[9px] font-mono uppercase tracking-[0.18em] text-muted-foreground/60 text-center">Rit</div>}
-          <div className="shrink-0 min-w-[3rem] text-right text-[9px] font-mono uppercase tracking-[0.18em] text-muted-foreground/60">Pts</div>
-          <div className="shrink-0 min-w-[64px] text-right text-[9px] font-mono uppercase tracking-[0.18em] text-muted-foreground/60">Gap</div>
+          <div className="flex-1 min-w-0 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Naam</div>
+          {stages.length > 0 && <div className="shrink-0 w-8 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground text-center">Rit</div>}
+          <div className="shrink-0 min-w-[3rem] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Pts</div>
+          <div className="shrink-0 min-w-[64px] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Gap</div>
           <div className="shrink-0 w-7" />
         </div>
 
