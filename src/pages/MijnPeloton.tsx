@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import LeCoupTactique from "@/components/LeCoupTactique";
 import FlagIcon from "@/components/FlagIcon";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
@@ -96,7 +97,12 @@ export default function MijnPeloton() {
   }, [allGames, selectedGame]);
   const selectedGameObj = allGames.find((g) => g.id === selectedGame) ?? null;
   const isDraft = ["draft", "concept"].includes(selectedGameObj?.status ?? "");
-  const [gameTab, setGameTab] = useState("team");
+  const [searchParams] = useSearchParams();
+  const [gameTab, setGameTab] = useState(() => searchParams.get("tab") ?? "team");
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t) setGameTab(t);
+  }, [searchParams]);
   const [uitslagenView, setUitslagenView] = useState<"etappes" | "poule" | "giro">("etappes");
   const [selectedPool, setSelectedPool] = useState<string | null>(null);
   const [newPoolName, setNewPoolName] = useState("");
