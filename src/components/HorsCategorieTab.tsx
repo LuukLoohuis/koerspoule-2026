@@ -493,7 +493,7 @@ export default function HorsCategorieTab() {
   }
 
   // ── Sub-tab state ────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur">("dartpijl");
+  const [activeTab, setActiveTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "benchmark">("dartpijl");
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
 
@@ -508,6 +508,7 @@ export default function HorsCategorieTab() {
             { key: "dartpijl"        as const, label: "Dartpijl",          Icon: Activity  },
             { key: "pelotonkeuzes"   as const, label: "Pelotonkeuzes",     Icon: BarChart3 },
             { key: "wielerdirecteur" as const, label: "De Wielerdirecteur", Icon: DirectorIcon },
+            { key: "benchmark"       as const, label: "Benchmark",          Icon: Swords    },
           ]
         ).map(({ key, label, Icon }) => (
           <button
@@ -524,11 +525,16 @@ export default function HorsCategorieTab() {
             <Icon className="h-3.5 w-3.5 shrink-0" />
             <span className="hidden sm:inline">{label}</span>
             <span className="sm:hidden">
-              {key === "dartpijl" ? "Dartpijl" : key === "pelotonkeuzes" ? "Peloton" : "Directeur"}
+              {key === "dartpijl" ? "Dartpijl" : key === "pelotonkeuzes" ? "Peloton" : key === "wielerdirecteur" ? "Directeur" : "Bench"}
             </span>
           </button>
         ))}
       </div>
+
+      {/* ── Tab: Benchmark ───────────────────────────────────────────────── */}
+      {activeTab === "benchmark" && (
+        <BenchmarkTab gameId={game?.id} />
+      )}
 
       {/* ── Tab 1: Dartpijl (Monte Carlo) ───────────────────────────────────── */}
       {activeTab === "dartpijl" && (
