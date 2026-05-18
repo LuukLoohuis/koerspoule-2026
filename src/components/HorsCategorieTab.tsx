@@ -506,10 +506,10 @@ export default function HorsCategorieTab() {
         <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
           {(
             [
-              { key: "dartpijl"        as const, label: "Dartpijl",          short: "Dartpijl",  Icon: Activity     },
-              { key: "pelotonkeuzes"   as const, label: "Pelotonkeuzes",     short: "Peloton",   Icon: BarChart3    },
-              { key: "wielerdirecteur" as const, label: "De Wielerdirecteur", short: "Directeur", Icon: DirectorIcon },
-              { key: "benchmark"       as const, label: "Benchmark",          short: "Bench",     Icon: Swords       },
+              { key: "dartpijl"        as const, label: "Dartpijl",           short: "Dart",    Icon: Activity     },
+              { key: "pelotonkeuzes"   as const, label: "Pelotonkeuzes",      short: "Peloton", Icon: BarChart3    },
+              { key: "wielerdirecteur" as const, label: "De Wielerdirecteur",  short: "D.S.",    Icon: DirectorIcon },
+              { key: "benchmark"       as const, label: "Benchmark",           short: "Bench",   Icon: Swords       },
             ]
           ).map(({ key, label, short, Icon }) => (
             <button
@@ -517,15 +517,17 @@ export default function HorsCategorieTab() {
               type="button"
               onClick={() => setActiveTab(key)}
               className={cn(
-                "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors md:flex-1 flex-none md:min-w-0 min-w-[72px]",
+                "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors md:flex-1 flex-none min-w-[44px] [@media(min-width:380px)]:min-w-[64px] md:min-w-0",
                 activeTab === key
                   ? "bg-card text-foreground shadow-sm border border-foreground/10"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
               )}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" />
+              {/* < 380px: icon only */}
+              <span className="hidden [@media(min-width:380px)]:inline sm:hidden">{short}</span>
+              {/* ≥ 640px: full label */}
               <span className="hidden sm:inline">{label}</span>
-              <span className="sm:hidden">{short}</span>
             </button>
           ))}
         </div>
