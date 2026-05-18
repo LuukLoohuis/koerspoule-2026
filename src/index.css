@@ -454,3 +454,72 @@
     padding: 1px 7px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE UX IMPROVEMENTS — max-width 768px
+   Desktop (≥769px) blijft 100% ongewijzigd
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Kaarten: compactere padding ─────────────────────────── */
+  [data-slot="card-content"] {
+    padding: 12px !important;
+  }
+  [data-slot="card-header"] {
+    padding: 12px 12px 8px !important;
+  }
+
+  /* ── Knoppen: grotere taptargets ─────────────────────────── */
+  button:not([class*="MobielTab"]):not([data-sidebar]) {
+    min-height: 36px;
+  }
+
+  /* ── Cijfers en statistieken ──────────────────────────────── */
+  .font-mono,
+  [class*="tabular"] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Lange namen: afkappen met ellipsis ───────────────────── */
+  .truncate-mobile {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* ── Scrollbare containers: scrollbar verbergen ───────────── */
+  .overflow-x-auto {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .overflow-x-auto::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ── Swipe-hint animatie (eenmalig bij mount) ─────────────── */
+  @keyframes swipe-hint {
+    0%   { transform: translateX(0); }
+    25%  { transform: translateX(-8px); }
+    75%  { transform: translateX(4px); }
+    100% { transform: translateX(0); }
+  }
+  .swipe-hint {
+    animation: swipe-hint 0.6s ease 0.8s 1 both;
+  }
+
+  /* ── Witruimte: minder verticale ruimte ───────────────────── */
+  .space-y-6 > * + * {
+    margin-top: 1rem !important;
+  }
+  .space-y-5 > * + * {
+    margin-top: 0.875rem !important;
+  }
+
+  /* ── Grote statistieken: minimaal 18px bold ───────────────── */
+  .stat-number {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums;
+  }
+}

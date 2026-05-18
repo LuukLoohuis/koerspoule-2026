@@ -26,9 +26,12 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" aria-label="Mobiele navigatie">
       {/* Giro gradient rule */}
-      <div className="h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent" />
+      <div className="h-[2px] bg-gradient-to-r from-transparent via-[#E8336D] to-transparent" />
 
-      <div className="grid grid-cols-4 bg-card border-t border-border/60">
+      <div
+        className="grid grid-cols-4 border-t border-border/60"
+        style={{ background: "#FAF7F2" }}
+      >
         {NAV.map(({ label, labelXs, icon: Icon, to, tab }) => {
           const active = tab
             ? pathname === to && tabParam === tab
@@ -41,22 +44,36 @@ export default function BottomNav() {
               key={label}
               onClick={() => navigate(tab ? `${to}?tab=${tab}` : to)}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 py-2 transition-colors relative",
-                active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                "flex flex-col items-center justify-center gap-1 py-2.5 min-h-[52px]",
+                "transition-colors relative select-none",
+                active ? "text-[#E8336D]" : "text-[#9A8A7A] hover:text-[#1a1a1a]",
               )}
               aria-current={active ? "page" : undefined}
             >
+              {/* Active pill background */}
               {active && (
-                <span className="absolute top-0 left-1/4 right-1/4 h-[2px] rounded-full bg-primary" />
+                <span
+                  className="absolute inset-x-2 inset-y-1.5 rounded-xl pointer-events-none"
+                  style={{ background: "rgba(232,51,109,0.10)" }}
+                />
               )}
+
               <Icon
-                className={cn("h-5 w-5 transition-transform", active && "scale-110")}
+                className={cn(
+                  "h-[22px] w-[22px] shrink-0 transition-transform relative z-10",
+                  active && "scale-110",
+                )}
                 strokeWidth={active ? 2.5 : 1.75}
               />
-              <span className="font-mono text-[9px] uppercase tracking-[0.12em] leading-none font-bold">
-                <span className="[@media(max-width:380px)]:hidden">{label}</span>
-                {labelXs && (
-                  <span className="hidden [@media(max-width:380px)]:inline">{labelXs}</span>
+
+              <span className="text-[10px] font-bold uppercase tracking-[0.08em] leading-none relative z-10 whitespace-nowrap">
+                {labelXs ? (
+                  <>
+                    <span className="[@media(max-width:360px)]:hidden">{label}</span>
+                    <span className="hidden [@media(max-width:360px)]:inline">{labelXs}</span>
+                  </>
+                ) : (
+                  label
                 )}
               </span>
             </button>

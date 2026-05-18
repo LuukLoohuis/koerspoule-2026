@@ -22,6 +22,7 @@ import MyResultsPanel from "@/components/MyResultsPanel";
 import PalmaresPanel from "@/components/PalmaresPanel";
 import HorsCategorieTab from "@/components/HorsCategorieTab";
 import BenchmarkTab from "@/components/BenchmarkTab";
+import { MobielTabBalk } from "@/components/MobielTabBalk";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -1061,48 +1062,77 @@ export default function MijnPeloton() {
 
         {/* Inner tabs: Team / Uitslagen / Subpoules / Hors */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
-          <div className="overflow-x-auto">
-          <TabsList className="retro-border h-auto p-0.5 grid grid-cols-4 gap-0.5 min-w-[320px] w-full">
-            <TabsTrigger value="team" className="font-display text-xs px-2 py-1.5">
-              🚴 <span className="md:hidden">Team</span><span className="hidden md:inline">Mijn Team</span>
-            </TabsTrigger>
-            <TabsTrigger value="subpoules" className="font-display text-xs px-2 py-1.5">
-              👥 <span className="md:hidden">Sub</span><span className="hidden md:inline">Subpoules</span>
-            </TabsTrigger>
-            <TabsTrigger value="uitslagen" className="font-display text-xs px-2 py-1.5">
-              📋 <span className="md:hidden">Uitsl.</span><span className="hidden md:inline">Uitslagen</span>
-            </TabsTrigger>
-            <TabsTrigger value="hors" className="font-display text-xs px-2 py-1.5">
-              🏔️ <span className="md:hidden">Hors</span><span className="hidden md:inline">Hors Catégorie</span>
-            </TabsTrigger>
-          </TabsList>
+
+          {/* Mobile tab nav — MobielTabBalk (scrollable chips) */}
+          <div className="md:hidden mb-3">
+            <MobielTabBalk
+              tabs={[
+                { key: "team",      label: "Mijn Team",      icon: User      },
+                { key: "subpoules", label: "Subpoules",       icon: Users     },
+                { key: "uitslagen", label: "Uitslagen",       icon: Trophy    },
+                { key: "hors",      label: "Hors Catégorie",  icon: Mountain  },
+              ]}
+              active={gameTab}
+              onChange={setGameTab}
+            />
+          </div>
+
+          {/* Desktop tab nav — ongewijzigd */}
+          <div className="hidden md:block overflow-x-auto">
+            <TabsList className="retro-border h-auto p-0.5 grid grid-cols-4 gap-0.5 min-w-[320px] w-full">
+              <TabsTrigger value="team" className="font-display text-xs px-2 py-1.5">
+                🚴 <span className="md:hidden">Team</span><span className="hidden md:inline">Mijn Team</span>
+              </TabsTrigger>
+              <TabsTrigger value="subpoules" className="font-display text-xs px-2 py-1.5">
+                👥 <span className="md:hidden">Sub</span><span className="hidden md:inline">Subpoules</span>
+              </TabsTrigger>
+              <TabsTrigger value="uitslagen" className="font-display text-xs px-2 py-1.5">
+                📋 <span className="md:hidden">Uitsl.</span><span className="hidden md:inline">Uitslagen</span>
+              </TabsTrigger>
+              <TabsTrigger value="hors" className="font-display text-xs px-2 py-1.5">
+                🏔️ <span className="md:hidden">Hors</span><span className="hidden md:inline">Hors Catégorie</span>
+              </TabsTrigger>
+            </TabsList>
           </div>
 
           {/* ── TAB: Mijn Team (with sub-tabs) ── */}
           <TabsContent value="team" className="mt-3">
             <Tabs value={teamSubTab} onValueChange={setTeamSubTab}>
-              {/* Tab nav — zelfde layout als Hors Catégorie */}
-              <div className="overflow-x-auto -mx-1 px-1 md:overflow-visible mb-3" style={{ scrollbarWidth: "none" }}>
+
+              {/* Mobile tab nav — pill (3 tabs) */}
+              <div className="md:hidden mb-3">
+                <MobielTabBalk
+                  tabs={[
+                    { key: "ploeg",    label: "Mijn Ploeg", icon: Users  },
+                    { key: "prono",    label: "Pronostiek", icon: Target },
+                    { key: "palmares", label: "Palmares",   icon: Trophy },
+                  ]}
+                  active={teamSubTab}
+                  onChange={(k) => setTeamSubTab(k as typeof teamSubTab)}
+                />
+              </div>
+
+              {/* Desktop tab nav — ongewijzigd */}
+              <div className="hidden md:block overflow-x-auto -mx-1 px-1 mb-3" style={{ scrollbarWidth: "none" }}>
                 <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
                   {([
-                    { value: "ploeg",    label: "Mijn Ploeg",  short: "\n",    Icon: Users   },
-                    { value: "prono",    label: "Pronostiek",  short: "Prono",    Icon: Target  },
-                    { value: "palmares", label: "Palmares",    short: "Palmares", Icon: Trophy  },
-                  ] as const).map(({ value, label, short, Icon }) => (
+                    { value: "ploeg",    label: "Mijn Ploeg", Icon: Users  },
+                    { value: "prono",    label: "Pronostiek", Icon: Target },
+                    { value: "palmares", label: "Palmares",   Icon: Trophy },
+                  ] as const).map(({ value, label, Icon }) => (
                     <button
                       key={value}
                       type="button"
                       onClick={() => setTeamSubTab(value)}
                       className={cn(
-                        "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors md:flex-1 flex-none min-w-[44px] [@media(min-width:380px)]:min-w-[64px] md:min-w-0",
+                        "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1",
                         teamSubTab === value
                           ? "bg-card text-foreground shadow-sm border border-foreground/10"
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
                       )}
                     >
                       <Icon className="h-3.5 w-3.5 shrink-0" />
-                      <span className="sm:hidden [@media(max-width:380px)]:hidden">{short}</span>
-                      <span className="hidden sm:inline">{label}</span>
+                      <span>{label}</span>
                     </button>
                   ))}
                 </div>

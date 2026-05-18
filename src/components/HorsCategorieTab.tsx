@@ -17,6 +17,7 @@ import {
   Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords,
 } from "lucide-react";
 import BenchmarkTab from "@/components/BenchmarkTab";
+import { MobielTabBalk } from "@/components/MobielTabBalk";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -502,7 +503,23 @@ export default function HorsCategorieTab() {
     <div className="space-y-5 pb-6">
 
       {/* ── Sub-tab navigation ─────────────────────────────────────────────── */}
-      <div className="overflow-x-auto -mx-1 px-1 md:overflow-visible" style={{ scrollbarWidth: "none" }}>
+
+      {/* Mobile — MobielTabBalk (scrollable chips) */}
+      <div className="md:hidden">
+        <MobielTabBalk
+          tabs={[
+            { key: "dartpijl",        label: "Dartpijl",          icon: Activity     },
+            { key: "pelotonkeuzes",   label: "Pelotonkeuzes",     icon: BarChart3    },
+            { key: "wielerdirecteur", label: "De Wielerdirecteur", icon: DirectorIcon },
+            { key: "benchmark",       label: "Benchmark",          icon: Swords       },
+          ]}
+          active={activeTab}
+          onChange={(k) => setActiveTab(k as typeof activeTab)}
+        />
+      </div>
+
+      {/* Desktop — bestaande chip-balk ongewijzigd */}
+      <div className="hidden md:block overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
         <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
           {(
             [
@@ -511,23 +528,20 @@ export default function HorsCategorieTab() {
               { key: "wielerdirecteur" as const, label: "De Wielerdirecteur",  short: "CEO",    Icon: DirectorIcon },
               { key: "benchmark"       as const, label: "Benchmark",           short: "Bench",   Icon: Swords       },
             ]
-          ).map(({ key, label, short, Icon }) => (
+          ).map(({ key, label, Icon }) => (
             <button
               key={key}
               type="button"
               onClick={() => setActiveTab(key)}
               className={cn(
-                "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors md:flex-1 flex-none min-w-[44px] [@media(min-width:380px)]:min-w-[64px] md:min-w-0",
+                "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1",
                 activeTab === key
                   ? "bg-card text-foreground shadow-sm border border-foreground/10"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
               )}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" />
-              {/* < 380px: icon only */}
-              <span className="sm:hidden [@media(max-width:380px)]:hidden">{short}</span>
-              {/* ≥ 640px: full label */}
-              <span className="hidden sm:inline">{label}</span>
+              <span>{label}</span>
             </button>
           ))}
         </div>

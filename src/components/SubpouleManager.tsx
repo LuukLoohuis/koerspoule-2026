@@ -16,6 +16,7 @@ import SubpouleBenchmark from "@/components/SubpouleBenchmark";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
 import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Swords, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MobielTabBalk } from "@/components/MobielTabBalk";
 
 export default function SubpouleManager({ gameId, gameName, gameStatus }: Props = {}) {
   const { toast } = useToast();
@@ -177,15 +178,30 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* Tab nav — zelfde layout als Hors Catégorie */}
-          <div className="overflow-x-auto -mx-1 px-1 md:overflow-visible mb-1" style={{ scrollbarWidth: "none" }}>
+
+          {/* Mobile tab nav — MobielTabBalk */}
+          <div className="md:hidden mb-2">
+            <MobielTabBalk
+              tabs={[
+                { key: "chat",      label: "Chat",      icon: MessageCircle, disabled: false              },
+                { key: "chart",     label: "Grafiek",   icon: TrendingUp,    disabled: false              },
+                { key: "benchmark", label: "Benchmark", icon: Swords,        disabled: !benchmarkUnlocked },
+                { key: "heatmap",   label: "Heatmap",   icon: Flame,         disabled: !benchmarkUnlocked },
+              ]}
+              active={activeTab}
+              onChange={(k) => !["benchmark","heatmap"].includes(k) || benchmarkUnlocked ? setActiveTab(k as typeof activeTab) : undefined}
+            />
+          </div>
+
+          {/* Desktop tab nav — ongewijzigd */}
+          <div className="hidden md:block overflow-x-auto -mx-1 px-1 mb-1" style={{ scrollbarWidth: "none" }}>
             <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
               {([
-                { value: "chat",      label: "Chat",      short: "Chat",    Icon: MessageCircle, disabled: false              },
-                { value: "chart",     label: "Grafiek",   short: "Grafiek", Icon: TrendingUp,    disabled: false              },
-                { value: "benchmark", label: "Benchmark", short: "Bench",   Icon: Swords,        disabled: !benchmarkUnlocked },
-                { value: "heatmap",   label: "Heatmap",   short: "Heat",    Icon: Flame,         disabled: !benchmarkUnlocked },
-              ] as const).map(({ value, label, short, Icon, disabled }) => (
+                { value: "chat",      label: "Chat",      Icon: MessageCircle, disabled: false              },
+                { value: "chart",     label: "Grafiek",   Icon: TrendingUp,    disabled: false              },
+                { value: "benchmark", label: "Benchmark", Icon: Swords,        disabled: !benchmarkUnlocked },
+                { value: "heatmap",   label: "Heatmap",   Icon: Flame,         disabled: !benchmarkUnlocked },
+              ] as const).map(({ value, label, Icon, disabled }) => (
                 <button
                   key={value}
                   type="button"
@@ -193,7 +209,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
                   onClick={() => !disabled && setActiveTab(value)}
                   title={disabled ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined}
                   className={cn(
-                    "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors md:flex-1 flex-none min-w-[44px] [@media(min-width:380px)]:min-w-[64px] md:min-w-0",
+                    "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1",
                     disabled && "opacity-40 cursor-not-allowed",
                     !disabled && activeTab === value
                       ? "bg-card text-foreground shadow-sm border border-foreground/10"
@@ -201,8 +217,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
                   )}
                 >
                   <Icon className="h-3.5 w-3.5 shrink-0" />
-                  <span className="sm:hidden [@media(max-width:380px)]:hidden">{short}</span>
-                  <span className="hidden sm:inline">{label}</span>
+                  <span>{label}</span>
                 </button>
               ))}
             </div>
