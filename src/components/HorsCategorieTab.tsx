@@ -14,8 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
-  Lock, Activity, Trophy, BarChart3, Sparkles, Info, X,
+  Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords,
 } from "lucide-react";
+import BenchmarkTab from "@/components/BenchmarkTab";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
