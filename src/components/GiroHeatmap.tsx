@@ -81,7 +81,7 @@ export default function GiroHeatmap({ className, compact = false }: Props) {
             </div>
             <h3 className={cn("mt-1 font-display text-white flex items-center gap-2", compact ? "text-base" : "text-lg sm:text-xl")}>
               <TrendingUp className="h-4 w-4 text-primary" />
-              Heatmap per profiel
+              HEAT per profiel
             </h3>
             <p className="text-[11px] text-white/50 mt-0.5">
               Verwachte raceactiviteit per etappe-profiel · donker = hoge intensiteit

@@ -239,7 +239,7 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
       <Tabs defaultValue="klassement" className="max-w-7xl mx-auto">
         <TabsList className="w-full retro-border">
           <TabsTrigger value="klassement" className="flex-1 font-display">🏆 Klassement</TabsTrigger>
-          <TabsTrigger value="etappes" className="flex-1 font-display">📋 Etappes</TabsTrigger>
+          <TabsTrigger value="etappes" className="flex-1 font-display">📋 RSLT.</TabsTrigger>
         </TabsList>
 
         {/* ── ETAPPES TAB ── */}
