@@ -177,20 +177,36 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full grid grid-cols-4">
-            <TabsTrigger value="chat" className="gap-1 text-xs py-1.5">
-              <MessageCircle className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Chat</span>
-            </TabsTrigger>
-            <TabsTrigger value="chart" className="gap-1 text-xs py-1.5">
-              <TrendingUp className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Grafiek</span>
-            </TabsTrigger>
-            <TabsTrigger value="benchmark" disabled={!benchmarkUnlocked} className="gap-1 text-xs py-1.5" title={!benchmarkUnlocked ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined}>
-              <Swords className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Benchmark</span>
-            </TabsTrigger>
-            <TabsTrigger value="heatmap" disabled={!benchmarkUnlocked} className="gap-1 text-xs py-1.5" title={!benchmarkUnlocked ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined}>
-              <Flame className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Heatmap</span>
-            </TabsTrigger>
-          </TabsList>
+          {/* Tab nav — zelfde layout als Hors Catégorie */}
+          <div className="overflow-x-auto -mx-1 px-1 md:overflow-visible mb-1" style={{ scrollbarWidth: "none" }}>
+            <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
+              {([
+                { value: "chat",      label: "Chat",      short: "Chat",    Icon: MessageCircle, disabled: false              },
+                { value: "chart",     label: "Grafiek",   short: "Grafiek", Icon: TrendingUp,    disabled: false              },
+                { value: "benchmark", label: "Benchmark", short: "Bench",   Icon: Swords,        disabled: !benchmarkUnlocked },
+                { value: "heatmap",   label: "Heatmap",   short: "Heat",    Icon: Flame,         disabled: !benchmarkUnlocked },
+              ] as const).map(({ value, label, short, Icon, disabled }) => (
+                <button
+                  key={value}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => !disabled && setActiveTab(value)}
+                  title={disabled ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors md:flex-1 flex-none min-w-[44px] [@media(min-width:380px)]:min-w-[64px] md:min-w-0",
+                    disabled && "opacity-40 cursor-not-allowed",
+                    !disabled && activeTab === value
+                      ? "bg-card text-foreground shadow-sm border border-foreground/10"
+                      : !disabled ? "text-muted-foreground hover:text-foreground hover:bg-secondary/60" : "text-muted-foreground",
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="hidden [@media(min-width:380px)]:inline sm:hidden">{short}</span>
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
           <TabsContent value="chat" className="pt-3 space-y-3">
             <PelotonChat subpoolName={active.name} subpoolId={active.id} />
