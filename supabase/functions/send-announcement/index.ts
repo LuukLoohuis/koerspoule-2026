@@ -1,103 +1,163 @@
-// Send Giro 2026 announcement email to all notify_subscribers
-// Admin-only. Enqueues to transactional_emails queue (notify.koerspoule.nl).
-import { createClient } from 'npm:@supabase/supabase-js@2'
+// Stuurt een aangepast bericht naar alle deelnemers van een koers (of alle koersen).
+// Admin-only. Filtert uitgeschreven adressen. Voegt persoonlijke uitschrijflink toe.
+import { createClient } from "npm:@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const MAIL_WORKER = "https://koerspoule-mail.luuk-loohuis.workers.dev";
+const BASE_URL = "https://koerspoule.nl";
+
+function buildHtml(body: string, unsubscribeUrl: string): string {
+  return `<!doctype html>
+<html><body style="margin:0;background:#faf7f2;font-family:Georgia,serif;color:#1a1a1a;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#fff;border:1px solid #e8e0d5;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <span style="font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;color:#c8102e;letter-spacing:0.05em;">KOERSPOULE</span>
+    </div>
+    ${body}
+    <hr style="border:none;border-top:1px solid #ede8df;margin:32px 0 16px;"/>
+    <p style="font-size:11px;color:#999;text-align:center;margin:0;">
+      Koerspoule &nbsp;·&nbsp;
+      <a href="${BASE_URL}" style="color:#999;">koerspoule.nl</a>
+      &nbsp;·&nbsp;
+      <a href="${unsubscribeUrl}" style="color:#999;">Uitschrijven</a>
+    </p>
+  </div>
+</body></html>`;
 }
 
-const SENDER_DOMAIN = 'notify.koerspoule.nl'
-const FROM = `Koerspoule <hallo@${SENDER_DOMAIN}>`
+async function getOrCreateToken(admin: ReturnType<typeof createClient>, email: string): Promise<string> {
+  const { data: existing } = await admin
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", email)
+    .maybeSingle();
+  if (existing?.token) return existing.token;
 
-function buildHtml(unsubscribeUrl: string) {
-  return `<!doctype html>
-<html><body style="margin:0;background:#ffffff;font-family:Georgia,serif;color:#1a1a1a;">
-  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
-    <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;margin:0 0 8px;color:#c8102e;">La Corsa Rosa is begonnen 🌹</h1>
-    <p style="font-size:14px;color:#666;margin:0 0 24px;font-style:italic;">Giro d'Italia 2026 — Koerspoule</p>
-    <p style="font-size:16px;line-height:1.6;">Beste koersliefhebber,</p>
-    <p style="font-size:16px;line-height:1.6;">De inschrijving voor de <strong>Giro 2026 Koerspoule</strong> is geopend! Stel je ploeg samen, kies je jokers en daag je vrienden uit in een eigen subpoule.</p>
-    <p style="font-size:16px;line-height:1.6;">Deadline: <strong>4–8 mei</strong>. Niet wachten — de gruppetto vertrekt zonder jou.</p>
-    <p style="text-align:center;margin:32px 0;">
-      <a href="https://koerspoule.nl" style="display:inline-block;background:#c8102e;color:#fff;text-decoration:none;padding:14px 28px;border-radius:6px;font-weight:bold;">Schrijf je in →</a>
-    </p>
-    <p style="font-size:14px;color:#666;line-height:1.5;">Veel koersplezier,<br/>Het Koerspoule team</p>
-    <hr style="border:none;border-top:1px solid #eee;margin:32px 0 16px;"/>
-    <p style="font-size:11px;color:#999;text-align:center;">Je ontvangt deze mail omdat je je hebt aangemeld voor updates op koerspoule.nl. <a href="${unsubscribeUrl}" style="color:#999;">Uitschrijven</a></p>
-  </div>
-</body></html>`
+  const token = crypto.randomUUID().replace(/-/g, "");
+  await admin.from("email_unsubscribe_tokens").insert({ token, email });
+  return token;
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey     = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    // Admin auth check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...CORS, "Content-Type": "application/json" } });
+    }
+    const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
+    const { data: { user }, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
-    // Verify caller is admin
-    const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } })
-    const { data: { user }, error: userErr } = await userClient.auth.getUser()
-    if (userErr || !user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    const admin = createClient(supabaseUrl, serviceKey);
+    const { data: roleRow } = await admin.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+    if (!roleRow) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...CORS, "Content-Type": "application/json" } });
+    }
 
-    const admin = createClient(supabaseUrl, serviceKey)
-    const { data: roles } = await admin.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').maybeSingle()
-    if (!roles) return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    const { subject, body, gameId, testEmail, dryRun } = await req.json() as {
+      subject?: string;
+      body?: string;
+      gameId?: string;
+      testEmail?: string;
+      dryRun?: boolean;
+    };
 
-    const body = await req.json().catch(() => ({}))
-    const subject = (body.subject as string) || "🌹 De Giro 2026 Koerspoule is open — schrijf je in!"
-    const dryRun = body.dryRun === true
-    const testEmail = body.testEmail as string | undefined
-
-    let recipients: string[] = []
+    // Test mail: stuur alleen naar testEmail, geen token/opt-out check
     if (testEmail) {
-      recipients = [testEmail]
-    } else {
-      const { data: subs, error } = await admin
-        .from('notify_subscribers')
-        .select('email')
-        .is('unsubscribed_at', null)
-      if (error) throw error
-      recipients = (subs ?? []).map((s) => s.email)
+      const token = await getOrCreateToken(admin, testEmail);
+      const unsubUrl = `${BASE_URL}/uitschrijven?token=${token}`;
+      await fetch(MAIL_WORKER, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: testEmail,
+          subject: `[TEST] ${subject ?? "Testmail Koerspoule"}`,
+          html: buildHtml(body ?? "<p>Testmail</p>", unsubUrl),
+        }),
+      });
+      return new Response(JSON.stringify({ sent: 1, total: 1 }), { headers: { ...CORS, "Content-Type": "application/json" } });
     }
+
+    // Haal deelnemers op (uniek per user_id)
+    let entriesQuery = admin.from("entries").select("user_id").not("user_id", "is", null);
+    if (gameId) entriesQuery = entriesQuery.eq("game_id", gameId);
+    const { data: entries, error: entriesErr } = await entriesQuery;
+    if (entriesErr) throw entriesErr;
+
+    const userIds = [...new Set((entries ?? []).map((e: { user_id: string }) => e.user_id).filter(Boolean))];
+
+    // Haal emails op via auth.users
+    const { data: { users }, error: usersErr } = await admin.auth.admin.listUsers({ perPage: 1000 });
+    if (usersErr) throw usersErr;
+
+    const emailMap = new Map<string, string>();
+    for (const u of users ?? []) {
+      if (u.email) emailMap.set(u.id, u.email);
+    }
+
+    const allEmails = userIds.map((id) => emailMap.get(id)).filter(Boolean) as string[];
+
+    // Haal uitgeschreven adressen op
+    const { data: suppressed } = await admin.from("suppressed_emails").select("email");
+    const suppressedSet = new Set((suppressed ?? []).map((s: { email: string }) => s.email.toLowerCase()));
+
+    const recipients = allEmails.filter((e) => !suppressedSet.has(e.toLowerCase()));
+    const suppressedCount = allEmails.length - recipients.length;
 
     if (dryRun) {
-      return new Response(JSON.stringify({ recipients_count: recipients.length, sample: recipients.slice(0, 5) }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      return new Response(
+        JSON.stringify({ recipients_count: recipients.length, suppressed_count: suppressedCount }),
+        { headers: { ...CORS, "Content-Type": "application/json" } }
+      );
     }
 
-    let enqueued = 0
-    const errors: string[] = []
-    for (const to of recipients) {
-      const messageId = `giro2026-announce-${crypto.randomUUID()}`
-      const unsubscribeUrl = `https://koerspoule.nl/unsubscribe?email=${encodeURIComponent(to)}`
-      const payload = {
-        message_id: messageId,
-        idempotency_key: messageId,
-        purpose: 'transactional',
-        label: 'giro2026-announcement',
-        to,
-        from: FROM,
-        sender_domain: SENDER_DOMAIN,
-        subject,
-        html: buildHtml(unsubscribeUrl),
-        queued_at: new Date().toISOString(),
-      }
-      const { error } = await admin.rpc('enqueue_email', { queue_name: 'transactional_emails', payload })
-      if (error) errors.push(`${to}: ${error.message}`)
-      else enqueued++
-    }
+    // Verstuur
+    let sent = 0;
+    const errors: string[] = [];
 
-    return new Response(JSON.stringify({ enqueued, total: recipients.length, errors: errors.slice(0, 10) }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    await Promise.allSettled(
+      recipients.map(async (email) => {
+        try {
+          const token = await getOrCreateToken(admin, email);
+          const unsubUrl = `${BASE_URL}/uitschrijven?token=${token}`;
+          const res = await fetch(MAIL_WORKER, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: email,
+              subject: subject ?? "Bericht van Koerspoule",
+              html: buildHtml(body ?? "", unsubUrl),
+            }),
+          });
+          if (res.ok) sent++;
+          else errors.push(`${email}: HTTP ${res.status}`);
+        } catch (e) {
+          errors.push(`${email}: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      })
+    );
+
+    return new Response(
+      JSON.stringify({ sent, total: recipients.length, suppressed: suppressedCount, errors: errors.slice(0, 10) }),
+      { headers: { ...CORS, "Content-Type": "application/json" } }
+    );
+  } catch (err: unknown) {
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
+      { status: 500, headers: { ...CORS, "Content-Type": "application/json" } }
+    );
   }
-})
+});

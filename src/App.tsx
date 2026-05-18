@@ -19,6 +19,7 @@ import AdminV3 from "./pages/AdminV3";
 import GiroPoule2026 from "./pages/GiroPoule2026";
 import Preview from "./pages/Preview";
 import InstagramExport from "./pages/InstagramExport";
+import Uitschrijven from "./pages/Uitschrijven";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/juridisch" element={<Legal />} />
               <Route path="/preview" element={<Preview />} />
               <Route path="/giro-italia-poule-2026" element={<GiroPoule2026 />} />
+              <Route path="/uitschrijven" element={<Uitschrijven />} />
               <Route
                 path="/admin"
                 element={
