@@ -97,42 +97,56 @@ export function useKaravaanFeed(params: {
         return { etappes: [], ministrip: null, myEntryId: null, lastVisited: null };
       }
 
-      // 3. Alle entries in deze game (voor overall + subpoule scope)
-      const { data: entryRows } = await supabase
-        .from("entries")
-        .select("id, user_id, team_name")
-        .eq("game_id", gameId);
-      const allEntries = (entryRows ?? []) as Array<{ id: string; user_id: string; team_name: string | null }>;
+      // 3. Alle entries in deze game — via RPC `game_entries_standings` (zelfde
+      // bron als Uitslagen). Belangrijk: directe `from("entries").select()` is
+      // beperkt door RLS en geeft alleen de eigen entry terug — die kant kan
+      // dus niet gebruikt worden voor poule-brede rankings.
+      const { data: standingsRows } = await (supabase as any).rpc("game_entries_standings", {
+        p_game_id: gameId,
+      });
+      const standings = ((standingsRows ?? []) as Array<{
+        id: string;
+        user_id: string;
+        team_name: string | null;
+        display_name: string | null;
+        total_points: number;
+      }>);
+      const allEntries = standings.map((s) => ({
+        id: s.id,
+        user_id: s.user_id,
+        team_name: s.team_name,
+      }));
+      const officialTotalByEntry = new Map<string, number>(
+        standings.map((s) => [s.id, s.total_points ?? 0]),
+      );
+      const displayByUser = new Map<string, string | null>(
+        standings.map((s) => [s.user_id, s.display_name ?? null]),
+      );
 
-      // 4. Profiles voor display_name
-      const allUserIds = Array.from(new Set(allEntries.map((e) => e.user_id)));
+      // 4. Profiles — alleen voor last_visited_karavaan (display_name komt al uit RPC)
       const { data: profileRows } = await supabase
         .from("profiles")
         .select("id, display_name, last_visited_karavaan")
-        .in("id", allUserIds.length > 0 ? allUserIds : [userId]);
-      const profileById = new Map(
-        (profileRows ?? []).map((p: any) => [p.id as string, p as { id: string; display_name: string | null; last_visited_karavaan: string | null }]),
-      );
-
-      const myProfile = profileById.get(userId);
+        .eq("id", userId);
+      const myProfile = ((profileRows ?? [])[0] ?? null) as { id: string; display_name: string | null; last_visited_karavaan: string | null } | null;
       const lastVisited = myProfile?.last_visited_karavaan ?? null;
 
-      // 5. Stage points (per-etappe, voor cumulatieve deltas in oudere stages)
+      // Helper-map zodat oude code-paden die op `profileById` leunden blijven werken
+      const profileById = new Map<string, { id: string; display_name: string | null; last_visited_karavaan: string | null }>();
+      for (const [uid, name] of displayByUser) {
+        profileById.set(uid, { id: uid, display_name: name, last_visited_karavaan: null });
+      }
+      if (myProfile) profileById.set(userId, myProfile);
+
+      // 5. Stage points (per-etappe, voor cumulatieve deltas in oudere stages).
+      // Stage_points kan eveneens RLS-beperkt zijn; bij gebrek aan een RPC werken
+      // we hier best-effort. Voor de FINAL ranking gebruiken we hoe dan ook
+      // de RPC-totalen, dus de eindstand klopt sowieso.
       const { data: spRows } = await supabase
         .from("stage_points")
         .select("entry_id, stage_id, points")
         .in("stage_id", stageIds);
       const stagePoints = (spRows ?? []) as Array<{ entry_id: string; stage_id: string; points: number }>;
-
-      // 5b. Officiële totalen per entry — zelfde RPC als Uitslagen-tab gebruikt.
-      // Bevat alle bonussen (classification-voorspellingen e.d.) naast stage-punten.
-      const { data: standingsRows } = await (supabase as any).rpc("game_entries_standings", {
-        p_game_id: gameId,
-      });
-      const officialTotalByEntry = new Map<string, number>();
-      for (const r of (standingsRows ?? []) as Array<{ id: string; total_points: number }>) {
-        officialTotalByEntry.set(r.id, r.total_points ?? 0);
-      }
 
       // Cumulatieve totalen per entry, per stage — terugrekenen vanuit de
       // officiële totalen (RPC = zelfde bron als Uitslagen). Voor de laatste

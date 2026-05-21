@@ -1537,7 +1537,7 @@ export default function HorsCategorieTab() {
                   );
                 })()}
 
-                {/* De selectie — per categorie */}
+                {/* De selectie — per categorie (desktop: 2-koloms grid, mobiel: stack) */}
                 {emiratesData.picks.length > 0 ? (
                   <div className="space-y-3">
                     <div className="vintage-ornament">
@@ -1547,6 +1547,7 @@ export default function HorsCategorieTab() {
                       </span>
                       <span className="vintage-ornament-symbol">✦</span>
                     </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {emiratesData.picks.map((cat) => (
                       <div
                         key={cat.categoryId}
@@ -1599,6 +1600,7 @@ export default function HorsCategorieTab() {
                         </ol>
                       </div>
                     ))}
+                    </div>
 
                     {/* Jokers (x1) */}
                     {emiratesData.jokers.length > 0 && (
