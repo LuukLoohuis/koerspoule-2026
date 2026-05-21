@@ -257,8 +257,23 @@ export default function HorsCategorieTab() {
   const { data: stages = [] } = useStages(isLive ? game?.id : undefined);
   const { data: allStagePoints = [] } = useStagePoints(isLive ? game?.id : undefined);
 
-  // Super Team data — best teams up to the last approved stage
+  // The Emirates — entries (voor leider/eigen score) + alle stage_results (voor droomploeg)
   const { data: entriesList = [] } = useEntries(isLive ? game?.id : undefined);
+  const { data: allStageResults = [] } = useQuery({
+    queryKey: ["all-stage-results", game?.id],
+    enabled: Boolean(supabase && isLive && game?.id),
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<Array<{ stage_id: string; rider_id: string | null; finish_position: number }>> => {
+      if (!supabase || !game?.id) return [];
+      const { data, error } = await (supabase as any)
+        .from("stage_results")
+        .select("stage_id, rider_id, finish_position, stages!inner(game_id, results_status)")
+        .eq("stages.game_id", game.id)
+        .eq("stages.results_status", "approved");
+      if (error) throw error;
+      return (data ?? []) as Array<{ stage_id: string; rider_id: string | null; finish_position: number }>;
+    },
+  });
 
   const myPickedRiderIds = useMemo(() => {
     const s = new Set<string>();
@@ -381,25 +396,67 @@ export default function HorsCategorieTab() {
     });
   }, [entry?.id, stages, allStagePoints]);
 
-  // ── The Emirates — maximaal haalbaar puntentotaal ──────────────────────────
-  // Plafond per etappe = som van pointsTable (positie 1 t/m 20).
-  // Vergelijking met huidige leider en eigen score (t/m laatst bijgewerkte etappe).
+  // ── The Emirates — de droomploeg achterop gezien ────────────────────────────
+  // Per categorie de top-N renners met de meeste etappe-punten (50, 40, …, 1
+  // voor positie 1 t/m 20), binnen de toegestane max_picks. Totaal = ceiling.
+  type DreamRider = { riderId: string; name: string; startNumber: number | null; points: number };
+  type DreamCategory = { categoryId: string; categoryName: string; shortName: string | null; maxPicks: number; riders: DreamRider[]; subtotal: number };
   const emiratesData = useMemo(() => {
-    const maxPerStage = Object.values(pointsTable).reduce((a, b) => a + b, 0); // 305
     const approvedStages = stages
       .filter((s) => s.results_status === "approved")
       .sort((a, b) => a.stage_number - b.stage_number);
     if (approvedStages.length === 0) {
       return {
-        maxPerStage,
-        maxTotal: 0,
-        stagesList: [] as Array<{ number: number; name: string | null }>,
+        total: 0,
+        picks: [] as DreamCategory[],
         ranking: [] as Array<{ entryId: string; teamName: string; points: number; isMe: boolean }>,
         lastStage: null as null | { number: number; name: string | null },
+        stagesCount: 0,
       };
     }
     const last = approvedStages[approvedStages.length - 1];
-    const maxTotal = maxPerStage * approvedStages.length;
+
+    // 1) per-rider totaal aan etappe-punten over alle bijgewerkte etappes
+    const riderTotals = new Map<string, number>();
+    for (const r of allStageResults) {
+      if (!r.rider_id) continue;
+      const pts = pointsTable[r.finish_position] ?? 0;
+      if (pts === 0) continue;
+      riderTotals.set(r.rider_id, (riderTotals.get(r.rider_id) ?? 0) + pts);
+    }
+
+    // 2) per categorie de top max_picks renners
+    const picks: DreamCategory[] = categories
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((cat) => {
+        const candidates: DreamRider[] = (cat.category_riders ?? [])
+          .map((cr) =>
+            cr.riders
+              ? {
+                  riderId: cr.riders.id,
+                  name: cr.riders.name,
+                  startNumber: cr.riders.start_number,
+                  points: riderTotals.get(cr.riders.id) ?? 0,
+                }
+              : null,
+          )
+          .filter((x): x is DreamRider => Boolean(x))
+          .sort((a, b) => b.points - a.points);
+        const optimal = candidates.slice(0, cat.max_picks);
+        const subtotal = optimal.reduce((s, r) => s + r.points, 0);
+        return {
+          categoryId: cat.id,
+          categoryName: cat.name,
+          shortName: cat.short_name,
+          maxPicks: cat.max_picks,
+          riders: optimal,
+          subtotal,
+        };
+      });
+    const total = picks.reduce((s, c) => s + c.subtotal, 0);
+
+    // 3) huidige ranking (voor leider/eigen score-vergelijking)
     const approvedIds = new Set(approvedStages.map((s) => s.id));
     const totalsByEntry = new Map<string, number>();
     for (const sp of allStagePoints) {
@@ -414,14 +471,15 @@ export default function HorsCategorieTab() {
         return { entryId: id, teamName, points, isMe: entry?.id === id };
       })
       .sort((a, b) => b.points - a.points);
+
     return {
-      maxPerStage,
-      maxTotal,
-      stagesList: approvedStages.map((s) => ({ number: s.stage_number, name: s.name })),
+      total,
+      picks,
       ranking,
       lastStage: { number: last.stage_number, name: last.name },
+      stagesCount: approvedStages.length,
     };
-  }, [stages, allStagePoints, entriesList, entry?.id]);
+  }, [stages, categories, allStageResults, allStagePoints, entriesList, entry?.id]);
 
   // ── Derived display values ──────────────────────────────────────────────────
   const diffPct = monte && monte.mean > 0 ? ((monte.userActual - monte.mean) / monte.mean) * 100 : 0;
@@ -1292,7 +1350,7 @@ export default function HorsCategorieTab() {
       </Card>
       )}
 
-      {/* ── Tab: The Emirates — maximaal haalbare score ──────────────────────── */}
+      {/* ── Tab: The Emirates — de droomploeg achterop gezien ─────────────────── */}
       {activeTab === "superteam" && (
         <Card className="ornate-frame retro-border overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
@@ -1310,7 +1368,7 @@ export default function HorsCategorieTab() {
                   Wat zie je hier?
                 </p>
                 <p className="font-serif italic text-sm text-foreground/85 leading-snug">
-                  Het maximaal haalbare puntentotaal in de poule — wat je gescoord zou hebben als je elke top-20 perfect getroffen had, t/m de laatst door de jury bijgewerkte etappe. Pogi en zijn UAE-konvooi komen dichtbij; niemand komt erbij.
+                  De droomploeg achterop gezien: welke renners je per categorie had moeten kiezen om het maximaal haalbare puntentotaal binnen te halen, t/m de laatst door de jury bijgewerkte etappe. Niemand wist het van tevoren — Pogi misschien wel.
                 </p>
               </div>
             </div>
@@ -1320,7 +1378,7 @@ export default function HorsCategorieTab() {
                 <Lock className="h-10 w-10 text-muted-foreground/50 mx-auto" />
                 <p className="font-display text-lg font-bold">Nog geen etappe bijgewerkt</p>
                 <p className="text-sm text-muted-foreground font-serif italic max-w-md mx-auto">
-                  Zodra de jury de eerste etappe-uitslag bijwerkt, verschijnt hier het plafond.
+                  Zodra de jury de eerste etappe-uitslag bijwerkt, ontvouwt zich hier de droomploeg.
                 </p>
               </div>
             ) : (
@@ -1335,7 +1393,7 @@ export default function HorsCategorieTab() {
                   <span className="vintage-ornament-symbol">✦</span>
                 </div>
 
-                {/* Hero — het plafond */}
+                {/* Hero — de droomploeg */}
                 <div
                   className="relative overflow-hidden rounded-2xl border-2 border-[hsl(var(--vintage-gold))] p-5 md:p-7 shadow-[3px_3px_0_hsl(var(--vintage-gold)/0.5)]"
                   style={{
@@ -1359,7 +1417,7 @@ export default function HorsCategorieTab() {
                         strokeWidth={2.2}
                       />
                       <span className="font-display text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-muted-foreground mt-1.5 text-center">
-                        Het<br />Plafond
+                        De<br />Droomploeg
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -1367,30 +1425,30 @@ export default function HorsCategorieTab() {
                         Maximaal haalbaar
                       </div>
                       <h3 className="font-display font-black text-2xl md:text-4xl leading-tight">
-                        De Perfecte Ploeg
+                        Wat je had moeten kiezen
                       </h3>
                       <p className="font-serif italic text-sm text-muted-foreground mt-0.5">
-                        als élke top-20 perfect was voorspeld
+                        per categorie de top-scorende renners
                       </p>
                       <div className="mt-3 flex items-baseline gap-2 flex-wrap">
                         <span className="font-display font-black text-4xl md:text-6xl tabular-nums text-[hsl(var(--vintage-gold))] leading-none">
-                          {emiratesData.maxTotal}
+                          {emiratesData.total}
                         </span>
                         <span className="font-serif italic text-sm text-muted-foreground">
-                          punten over {emiratesData.stagesList.length} etappe
-                          {emiratesData.stagesList.length === 1 ? "" : "s"}
+                          punten over {emiratesData.stagesCount} etappe
+                          {emiratesData.stagesCount === 1 ? "" : "s"}
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Comparison: leader & own score vs ceiling */}
-                {emiratesData.ranking.length > 0 && (() => {
+                {/* Comparison: leader & own score vs droomploeg */}
+                {emiratesData.ranking.length > 0 && emiratesData.total > 0 && (() => {
                   const leader = emiratesData.ranking[0];
                   const me = emiratesData.ranking.find((r) => r.isMe);
                   const pct = (p: number) =>
-                    emiratesData.maxTotal > 0 ? Math.round((p / emiratesData.maxTotal) * 100) : 0;
+                    emiratesData.total > 0 ? Math.round((p / emiratesData.total) * 100) : 0;
                   return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="rounded-xl border-2 border-foreground/20 bg-card p-3 md:p-4">
@@ -1405,7 +1463,7 @@ export default function HorsCategorieTab() {
                             {leader.points}
                           </span>
                           <span className="text-xs font-serif italic text-muted-foreground">
-                            {pct(leader.points)}% van het plafond
+                            {pct(leader.points)}% van de droomploeg
                           </span>
                         </div>
                       </div>
@@ -1422,7 +1480,7 @@ export default function HorsCategorieTab() {
                               {me.points}
                             </span>
                             <span className="text-xs font-serif italic text-muted-foreground">
-                              {pct(me.points)}% van het plafond
+                              {pct(me.points)}% van de droomploeg
                             </span>
                           </div>
                         </div>
@@ -1431,54 +1489,93 @@ export default function HorsCategorieTab() {
                   );
                 })()}
 
-                {/* Per-stage breakdown */}
-                <div className="rounded-xl border border-border bg-card overflow-hidden">
-                  <div className="px-3 py-2 bg-secondary/40 border-b border-border flex items-center justify-between">
-                    <span className="font-display text-xs uppercase tracking-widest text-muted-foreground">
-                      Per etappe
-                    </span>
-                    <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
-                      max pt
-                    </span>
-                  </div>
-                  <ol className="divide-y divide-border">
-                    {emiratesData.stagesList.map((s) => (
-                      <li
-                        key={s.number}
-                        className="flex items-center gap-3 px-3 py-2 text-sm"
+                {/* De selectie — per categorie */}
+                {emiratesData.picks.length > 0 ? (
+                  <div className="space-y-3">
+                    <div className="vintage-ornament">
+                      <span className="vintage-ornament-symbol">✦</span>
+                      <span className="font-display text-xs uppercase tracking-[0.25em] text-muted-foreground">
+                        De Selectie
+                      </span>
+                      <span className="vintage-ornament-symbol">✦</span>
+                    </div>
+                    {emiratesData.picks.map((cat) => (
+                      <div
+                        key={cat.categoryId}
+                        className="rounded-xl border border-border bg-card overflow-hidden"
                       >
-                        <span className="font-display font-bold tabular-nums w-9 text-muted-foreground shrink-0">
-                          E{s.number}
-                        </span>
-                        <span className="flex-1 truncate font-sans font-medium text-foreground/80">
-                          {s.name ?? `Etappe ${s.number}`}
-                        </span>
-                        <span className="font-display font-bold tabular-nums text-[hsl(var(--vintage-gold))]">
-                          {emiratesData.maxPerStage}
-                        </span>
-                      </li>
+                        <div className="flex items-center justify-between gap-3 px-3 py-2 bg-secondary/40 border-b border-border">
+                          <div className="flex items-baseline gap-2 min-w-0">
+                            <span className="font-display font-bold text-sm uppercase tracking-wider truncate">
+                              {cat.categoryName}
+                            </span>
+                            <span className="text-[10px] font-serif italic text-muted-foreground shrink-0">
+                              {cat.maxPicks} pick{cat.maxPicks === 1 ? "" : "s"}
+                            </span>
+                          </div>
+                          <span className="font-display font-black tabular-nums text-[hsl(var(--vintage-gold))] shrink-0">
+                            {cat.subtotal} pt
+                          </span>
+                        </div>
+                        <ol className="divide-y divide-border">
+                          {cat.riders.length === 0 ? (
+                            <li className="px-3 py-2 text-sm text-muted-foreground font-serif italic">
+                              Nog niemand in deze categorie heeft gescoord.
+                            </li>
+                          ) : (
+                            cat.riders.map((r, i) => (
+                              <li
+                                key={r.riderId}
+                                className="flex items-center gap-2 md:gap-3 px-3 py-2 text-sm"
+                              >
+                                <span className="font-display font-bold text-xs text-muted-foreground w-5 shrink-0 tabular-nums">
+                                  {i + 1}.
+                                </span>
+                                {r.startNumber !== null && (
+                                  <span className="font-display font-bold tabular-nums text-[10px] bg-foreground text-background px-1.5 py-0.5 rounded shrink-0">
+                                    {r.startNumber}
+                                  </span>
+                                )}
+                                <span className="flex-1 truncate font-sans font-medium">
+                                  {r.name}
+                                </span>
+                                <span className="font-display font-bold tabular-nums shrink-0">
+                                  {r.points}
+                                </span>
+                                <span className="text-[10px] uppercase tracking-widest text-muted-foreground shrink-0">
+                                  pt
+                                </span>
+                              </li>
+                            ))
+                          )}
+                        </ol>
+                      </div>
                     ))}
-                    <li className="flex items-center gap-3 px-3 py-2.5 bg-secondary/30 border-t-2 border-foreground/20">
-                      <span className="font-display font-black tabular-nums w-9 text-muted-foreground shrink-0">
-                        Σ
+                    {/* Totaal-rij */}
+                    <div className="rounded-xl border-2 border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.08] px-3 py-2.5 flex items-center justify-between">
+                      <span className="font-display font-black text-sm uppercase tracking-widest">
+                        Totaal droomploeg
                       </span>
-                      <span className="flex-1 font-display font-bold text-xs uppercase tracking-widest text-muted-foreground">
-                        Totaal plafond
+                      <span className="font-display font-black text-lg tabular-nums text-[hsl(var(--vintage-gold))]">
+                        {emiratesData.total} pt
                       </span>
-                      <span className="font-display font-black tabular-nums text-base text-[hsl(var(--vintage-gold))]">
-                        {emiratesData.maxTotal}
-                      </span>
-                    </li>
-                  </ol>
-                </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground font-serif italic">
+                      Selectiegegevens worden geladen…
+                    </p>
+                  </div>
+                )}
 
                 {/* Footnote */}
                 <div className="mop-card p-3 -rotate-[0.3deg]">
                   <p className="font-serif italic text-xs md:text-sm leading-snug">
                     <span className="font-display font-bold uppercase tracking-widest text-xs">
-                      Het plafond:
+                      De droomploeg:
                     </span>{" "}
-                    {emiratesData.maxPerStage} pt per etappe — de optelsom van 50 + 40 + 32 + 26 + … + 2 + 1 voor positie 1 t/m 20. Wint zelden iemand, maar Pogi komt verdacht dichtbij.
+                    per categorie pakken we de top-scorers met de meeste etappe-punten (50 voor positie 1, 40 voor 2, … 1 voor 20). Een ploegleider met deze helderziendheid kostte miljoenen.
                   </p>
                 </div>
               </>
