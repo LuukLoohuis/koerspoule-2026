@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin, ArrowUp, ArrowDown, Minus, Calendar, Route, Lock, Flag } from "lucide-react";
+import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin, ArrowUp, ArrowDown, Minus, Calendar, Route, Lock, Flag, ClipboardList } from "lucide-react";
 import ResultsUpdatedBadge from "@/components/ResultsUpdatedBadge";
 import StageBars from "@/components/StageBars";
 
@@ -237,9 +237,21 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
       )}
 
       <Tabs defaultValue="klassement" className="max-w-7xl mx-auto">
-        <TabsList className="w-full retro-border">
-          <TabsTrigger value="klassement" className="flex-1 font-display">🏆 Klassement</TabsTrigger>
-          <TabsTrigger value="etappes" className="flex-1 font-display">📋 RSLT.</TabsTrigger>
+        <TabsList className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 h-auto w-full">
+          <TabsTrigger
+            value="klassement"
+            className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-foreground/10"
+          >
+            <Trophy className="h-3.5 w-3.5 shrink-0" />
+            <span>Klassement</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="etappes"
+            className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-foreground/10"
+          >
+            <ClipboardList className="h-3.5 w-3.5 shrink-0" />
+            <span>Resultaten</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* ── ETAPPES TAB ── */}
