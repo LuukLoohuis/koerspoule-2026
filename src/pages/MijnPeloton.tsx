@@ -1142,7 +1142,7 @@ export default function MijnPeloton() {
             <MobielTabBalk
               tabs={[
                 { key: "karavaan",  label: "Gazetta",         icon: Newspaper },
-                { key: "team",      label: "Mijn Team",      icon: User      },
+                { key: "team",      label: "Volgwagen",      icon: User      },
                 { key: "subpoules", label: "Subpoules",       icon: Users     },
                 { key: "uitslagen", label: "Uitslagen",       icon: Trophy    },
                 { key: "hors",      label: "Hors Catégorie",  icon: Mountain  },
@@ -1157,7 +1157,7 @@ export default function MijnPeloton() {
             <TabsList className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 h-auto w-full">
               {([
                 { key: "karavaan",  label: "Gazetta",        Icon: Newspaper },
-                { key: "team",      label: "Mijn Team",      Icon: User    },
+                { key: "team",      label: "Volgwagen",      Icon: User    },
                 { key: "subpoules", label: "Subpoules",       Icon: Users   },
                 { key: "uitslagen", label: "Uitslagen",       Icon: Trophy  },
                 { key: "hors",      label: "Hors Catégorie",  Icon: Mountain },
