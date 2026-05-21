@@ -17,6 +17,9 @@ export default {
         display: ['"Playfair Display"', 'serif'],
         serif: ['"Source Serif 4"', 'serif'],
         sans: ['"DM Sans"', 'sans-serif'],
+        oswald: ['"Oswald"', '"Helvetica Neue"', 'sans-serif'],
+        inter: ['"Inter"', '"DM Sans"', 'sans-serif'],
+        stamp: ['"Special Elite"', '"Courier Prime"', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -71,6 +74,22 @@ export default {
         vintage: {
           brown: "hsl(var(--vintage-brown))",
           gold: "hsl(var(--vintage-gold))",
+        },
+        // Maillot-palet: krachtige Tour-poster-accenten, naast `vintage` voor warmere tinten.
+        maillot: {
+          jaune: "hsl(var(--maillot-jaune))",
+          "jaune-dark": "hsl(var(--maillot-jaune-dark))",
+          bolletjes: "hsl(var(--bolletjes-bright))",
+          groen: "hsl(var(--maillot-groen))",
+          wit: "hsl(var(--maillot-wit))",
+        },
+        paper: {
+          DEFAULT: "hsl(var(--paper))",
+          dark: "hsl(var(--paper-dark))",
+        },
+        ink: {
+          DEFAULT: "hsl(var(--ink))",
+          soft: "hsl(var(--ink-soft))",
         },
       },
       borderRadius: {

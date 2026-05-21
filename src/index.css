@@ -61,6 +61,18 @@
 
     /* Shared background for Wielerdirecteur + Verloop per Etappe */
     --bg-wielerdirecteur: var(--card);
+
+    /* ── Maillot-palet (Tour-poster accenten) ─────────────────── */
+    /* Helderder geel dan --vintage-gold; voor leader-rows en stamps */
+    --maillot-jaune: 46 92% 53%;        /* ~#F5C518 */
+    --maillot-jaune-dark: 42 88% 42%;   /* ~#C99A0F */
+    --bolletjes-bright: 351 71% 50%;    /* ~#D7263D — bergkoning rood */
+    --maillot-groen: 122 45% 33%;       /* ~#2E7D32 — sprint groen */
+    --maillot-wit: 0 0% 98%;
+    --paper: 42 47% 90%;                /* ~#F4ECD8 papier-geel */
+    --paper-dark: 41 41% 83%;           /* ~#E8DCC0 papier-schaduw */
+    --ink: 0 0% 10%;                    /* ~#1A1A1A krantenkop-zwart */
+    --ink-soft: 0 0% 24%;               /* ~#3D3D3D secundaire tekst */
   }
 
   .dark {
@@ -385,6 +397,40 @@
     background: hsl(var(--primary) / 0.08);
     box-shadow: 2px 2px 0 hsl(var(--primary) / 0.35);
     font-weight: 700;
+  }
+
+  /* ─── Maillot-poster utilities (Tour-stijl accenten) ─────────────────────── */
+
+  /* Krantenkop in Oswald — uppercase, condensed, voor poster-titels */
+  .heading-oswald {
+    font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 1.05;
+    color: hsl(var(--ink));
+  }
+
+  /* Overline / etappe-caption in Special Elite — typmachine-stempel */
+  .overline-stamp {
+    font-family: 'Special Elite', 'Courier Prime', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 11px;
+    color: hsl(var(--ink-soft));
+  }
+
+  /* Dubbele lijn onder page-headers — klassieke poster-look */
+  .double-rule {
+    border-bottom: 1px solid hsl(var(--ink));
+    box-shadow: 0 4px 0 -3px hsl(var(--ink));
+    padding-bottom: 0.5rem;
+  }
+
+  /* Leader-rij geel-getint in klassementen */
+  .maillot-leader-row {
+    background: hsl(var(--maillot-jaune) / 0.22) !important;
+    border-left: 3px solid hsl(var(--maillot-jaune));
   }
 }
 

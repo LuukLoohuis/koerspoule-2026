@@ -23,6 +23,7 @@ import PalmaresPanel from "@/components/PalmaresPanel";
 import HorsCategorieTab from "@/components/HorsCategorieTab";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
+import Stamp from "@/components/retro/Stamp";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -950,15 +951,23 @@ export default function MijnPeloton() {
   /* ── Main overview ── */
   return (
     <div className="container mx-auto px-5 py-4 md:py-6">
+      {/* Page-header in Tour-poster stijl: stamp + Oswald-titel + dubbele lijn */}
+      <div className="relative mb-5 md:mb-6">
+        <div className="flex flex-col items-center text-center gap-2">
+          <span className="overline-stamp">— Bulletin du Peloton —</span>
+          <h1 className="heading-oswald text-4xl md:text-5xl">Mijn Peloton</h1>
+          <p className="text-muted-foreground font-serif italic max-w-md">
+            Welkom terug, {displayName}! Beheer je koersen en subpoules.
+          </p>
+        </div>
+        {/* Stamp rechtsboven op desktop */}
+        <div className="hidden md:block absolute top-0 right-0">
+          <Stamp tone="wine" rotation={-4}>{`Dag ${new Date().getDate()} · ${new Date().toLocaleDateString("nl-NL", { month: "short" }).toUpperCase()}`}</Stamp>
+        </div>
+        <div className="double-rule mt-3 mx-auto max-w-md" />
+      </div>
       <div className="text-center mb-4">
-         
-         <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Mijn Peloton
-
-        </h1>
-        <p className="text-muted-foreground font-serif">
-          Welkom terug, {displayName}! Beheer je koersen en subpoules.
-        </p>
-        <div className="mt-3 flex items-center justify-center gap-2 text-sm">
+        <div className="mt-3 flex items-center justify-center gap-2 text-sm flex-wrap">
           <span className="font-serif text-muted-foreground">Jouw ploegnaam:</span>
           {editingName ? (
             <>
