@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
+import JerseyBadge from "@/components/retro/JerseyBadge";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -1495,9 +1496,12 @@ export default function HorsCategorieTab() {
                     emiratesData.total > 0 ? Math.round((p / emiratesData.total) * 100) : 0;
                   return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="rounded-xl border-2 border-foreground/20 bg-card p-3 md:p-4">
-                        <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-serif mb-1">
-                          Huidige leider
+                      <div className="rounded-xl border-2 border-[hsl(var(--maillot-jaune))/0.7] bg-[hsl(var(--maillot-jaune))/0.08] p-3 md:p-4">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <JerseyBadge color="yellow" size={14} />
+                          <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-serif">
+                            Huidige leider
+                          </span>
                         </div>
                         <p className="font-display font-bold text-base md:text-lg leading-tight truncate">
                           {leader.teamName}

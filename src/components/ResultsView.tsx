@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin, ArrowUp, ArrowDown, Minus, Calendar, Route, Lock, Flag, ClipboardList } from "lucide-react";
 import ResultsUpdatedBadge from "@/components/ResultsUpdatedBadge";
+import RetroStamp from "@/components/retro/Stamp";
+import JerseyBadge from "@/components/retro/JerseyBadge";
 import StageBars from "@/components/StageBars";
 
 const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
@@ -222,17 +224,23 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
   return (
     <div>
       {showHeader && (
-        <div className="text-center mb-4">
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Uitslagen & Klassement</h1>
-          {game && (
-            <p className="text-xs text-muted-foreground uppercase tracking-wider font-sans">
-              {game.name}
-            </p>
-          )}
-          <div className="mt-3 flex justify-center">
-            <ResultsUpdatedBadge gameId={gameId} />
+        <div className="relative mb-5 md:mb-6">
+          <div className="flex flex-col items-center text-center gap-2">
+            <span className="overline-stamp">— Bulletin Officiel —</span>
+            <h1 className="heading-oswald text-4xl md:text-5xl">Uitslagen &amp; Klassement</h1>
+            {game && (
+              <p className="text-muted-foreground font-serif italic">{game.name}</p>
+            )}
+            <div className="mt-2 flex justify-center">
+              <ResultsUpdatedBadge gameId={gameId} />
+            </div>
           </div>
-          <div className="vintage-divider max-w-xs mx-auto mt-4" />
+          <div className="hidden md:block absolute top-0 right-0">
+            <RetroStamp tone="wine" rotation={-4}>
+              {`Dag ${new Date().getDate()} · ${new Date().toLocaleDateString("nl-NL", { month: "short" }).toUpperCase()}`}
+            </RetroStamp>
+          </div>
+          <div className="double-rule mt-3 mx-auto max-w-md" />
         </div>
       )}
 
@@ -573,6 +581,9 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
                         {/* Name + delta */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
+                            {s.rank === 1 && (
+                              <JerseyBadge color="yellow" size={14} title="Leider van het klassement" />
+                            )}
                             <span className={cn(
                               "font-sans text-sm truncate",
                               isMe ? "font-bold text-primary" : s.rank <= 3 ? "font-semibold" : "font-medium"

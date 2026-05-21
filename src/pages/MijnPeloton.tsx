@@ -24,6 +24,7 @@ import HorsCategorieTab from "@/components/HorsCategorieTab";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import Stamp from "@/components/retro/Stamp";
+import JerseyBadge from "@/components/retro/JerseyBadge";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -245,6 +246,9 @@ export default function MijnPeloton() {
                         )}>
                           {idx + 1}
                         </span>
+                        {idx === 0 && (
+                          <JerseyBadge color="yellow" size={14} title="Leider van de subpoule" />
+                        )}
                         <span className={cn("font-sans font-medium truncate text-slate-800", isMe && "text-primary font-bold")}>
                           {team.userName}
                           {isMe && <span className="ml-1 text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">JIJ</span>}

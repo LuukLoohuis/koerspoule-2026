@@ -557,8 +557,8 @@ export default function Index() {
         id="stel-je-ploeg-samen"
         className="container mx-auto px-5 py-12 md:py-16 vintage-texture text-center scroll-mt-16"
       >
-        <span className="editor-eyebrow text-lg">Spelregels, in vier alinea's</span>
-        <h2 className="vintage-heading text-2xl md:text-3xl font-bold mt-3">Hoe werkt het?</h2>
+        <span className="overline-stamp text-sm md:text-base">— Spelregels in vier alinea's —</span>
+        <h2 className="heading-oswald text-3xl md:text-4xl mt-3">Hoe werkt het?</h2>
         <div className="vintage-ornament max-w-[200px] mx-auto mt-3.5 mb-7">
           <span className="vintage-ornament-symbol">✦</span>
         </div>
@@ -612,7 +612,7 @@ export default function Index() {
         <div className="vintage-ornament max-w-xs mx-auto mb-5">
           <span className="vintage-ornament-symbol">❧</span>
         </div>
-        <h2 className="vintage-heading text-2xl font-bold mb-3">Klaar om te koersen?</h2>
+        <h2 className="heading-oswald text-3xl md:text-4xl mb-3">Klaar om te koersen?</h2>
         <CountdownBanner className="max-w-md mx-auto mb-5" />
         <Button
           className="retro-border-primary font-bold"
