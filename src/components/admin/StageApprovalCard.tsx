@@ -4,8 +4,28 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2 } from "lucide-react";
+import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, Mic } from "lucide-react";
 import { toast } from "sonner";
+
+// Fire-and-forget: roep de Wuyts/De Cauwer-commentaargenerator aan voor deze etappe.
+// Faalt stil; admin krijgt geen blokkerende foutmelding.
+async function triggerCommentary(stageId: string, force = false) {
+  if (!supabase) return;
+  try {
+    const { data, error } = await supabase.functions.invoke("generate-stage-commentary", {
+      body: { stage_id: stageId, force },
+    });
+    if (error) throw error;
+    const generated = (data as { generated?: number })?.generated ?? 0;
+    if (generated > 0) {
+      toast.success(`🎙️ Commentaar gegenereerd voor ${generated} subpoule${generated === 1 ? "" : "s"}`);
+    } else if (force) {
+      toast.info("Commentaargenerator klaar — geen subpoules verwerkt.");
+    }
+  } catch (e) {
+    toast.error(`Commentaargenerator faalde: ${(e as Error).message}`);
+  }
+}
 
 type StageStatus = {
   id: string;
@@ -127,9 +147,11 @@ export default function StageApprovalCard({
                 </Button>
                 <Button
                   disabled={busy}
-                  onClick={() => {
+                  onClick={async () => {
                     if (!confirm("Uitslag fiatteren? De punten worden direct herberekend en zichtbaar voor alle deelnemers.")) return;
-                    call("approve_stage_results", "Uitslag gefiatteerd en gepubliceerd");
+                    await call("approve_stage_results", "Uitslag gefiatteerd en gepubliceerd");
+                    // Trigger Wuyts/De Cauwer-commentaargenerator (async, niet-blokkerend voor admin)
+                    void triggerCommentary(stageId, false);
                   }}
                   className="bg-green-600 hover:bg-green-700"
                 >
@@ -138,16 +160,31 @@ export default function StageApprovalCard({
               </>
             )}
             {s === "approved" && (
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={() => {
-                  if (!confirm("Goedkeuring intrekken? De uitslag verdwijnt voor deelnemers en de punten worden gewist.")) return;
-                  call("revoke_stage_approval", "Goedkeuring ingetrokken");
-                }}
-              >
-                <Undo2 className="w-4 h-4 mr-2" />Goedkeuring intrekken
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={async () => {
+                    if (!confirm("Wuyts/De Cauwer-commentaar opnieuw genereren voor alle subpoules? Overschrijft bestaand commentaar.")) return;
+                    setBusy(true);
+                    await triggerCommentary(stageId, true);
+                    setBusy(false);
+                  }}
+                  className="border-[hsl(var(--vintage-gold))] text-[hsl(var(--vintage-gold))]"
+                >
+                  <Mic className="w-4 h-4 mr-2" />Commentaar regenereren
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => {
+                    if (!confirm("Goedkeuring intrekken? De uitslag verdwijnt voor deelnemers en de punten worden gewist.")) return;
+                    call("revoke_stage_approval", "Goedkeuring ingetrokken");
+                  }}
+                >
+                  <Undo2 className="w-4 h-4 mr-2" />Goedkeuring intrekken
+                </Button>
+              </>
             )}
           </div>
         </div>

@@ -157,6 +157,21 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     }
     toast.success("Uitslag gefiatteerd");
     load();
+    // Trigger Wuyts/De Cauwer-commentaargenerator (async, niet-blokkerend)
+    void (async () => {
+      try {
+        const { data, error: ge } = await supabase.functions.invoke("generate-stage-commentary", {
+          body: { stage_id: stageId, force: false },
+        });
+        if (ge) throw ge;
+        const generated = (data as { generated?: number })?.generated ?? 0;
+        if (generated > 0) {
+          toast.success(`🎙️ Commentaar gegenereerd voor ${generated} subpoule${generated === 1 ? "" : "s"}`);
+        }
+      } catch (e) {
+        toast.error(`Commentaargenerator faalde: ${(e as Error).message}`);
+      }
+    })();
   }
 
   const pending = rows.filter((r) => r.results_status === "pending");

@@ -13,6 +13,7 @@ import ChatInput from "@/components/koerscafe/ChatInput";
 import UnreadDivider from "@/components/koerscafe/UnreadDivider";
 import PollComposer from "@/components/koerscafe/PollComposer";
 import ShareButton from "@/components/koerscafe/ShareButton";
+import KoerscommentaarBanner from "@/components/koerscafe/KoerscommentaarBanner";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface Props {
@@ -198,6 +199,7 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
+        <KoerscommentaarBanner subpouleId={subpoolId} />
         <div
           ref={scrollRef}
           onScroll={handleScroll}
