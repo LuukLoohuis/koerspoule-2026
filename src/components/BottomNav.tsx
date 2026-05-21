@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Flag, Users, Bike } from "lucide-react";
+import { Newspaper, Flag, Users, Bike } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,9 +12,9 @@ type NavItem = {
 };
 
 const NAV: NavItem[] = [
-  { label: "Home",           icon: Home,  to: "/"             },
-  { label: "Results",        icon: Flag,  to: "/uitslagen"    },
-  { label: "Peloton",        icon: Users, to: "/mijn-peloton" },
+  { label: "Gazetta",        icon: Newspaper, to: "/karavaan"     },
+  { label: "Results",        icon: Flag,      to: "/uitslagen"    },
+  { label: "Peloton",        icon: Users,     to: "/mijn-peloton" },
   { label: "Hors Catégorie", labelXs: "Hors Cat.", icon: Bike, to: "/mijn-peloton", tab: "hors" },
 ];
 

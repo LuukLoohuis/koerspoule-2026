@@ -1141,7 +1141,7 @@ export default function MijnPeloton() {
           <div className="md:hidden mb-3">
             <MobielTabBalk
               tabs={[
-                { key: "karavaan",  label: "De Karavaan",     icon: Newspaper },
+                { key: "karavaan",  label: "Gazetta",         icon: Newspaper },
                 { key: "team",      label: "Mijn Team",      icon: User      },
                 { key: "subpoules", label: "Subpoules",       icon: Users     },
                 { key: "uitslagen", label: "Uitslagen",       icon: Trophy    },
@@ -1156,7 +1156,7 @@ export default function MijnPeloton() {
           <div className="hidden md:block overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
             <TabsList className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 h-auto w-full">
               {([
-                { key: "karavaan",  label: "De Karavaan",    Icon: Newspaper },
+                { key: "karavaan",  label: "Gazetta",        Icon: Newspaper },
                 { key: "team",      label: "Mijn Team",      Icon: User    },
                 { key: "subpoules", label: "Subpoules",       Icon: Users   },
                 { key: "uitslagen", label: "Uitslagen",       Icon: Trophy  },

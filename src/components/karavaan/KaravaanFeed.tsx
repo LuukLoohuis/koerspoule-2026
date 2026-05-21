@@ -64,7 +64,7 @@ export default function KaravaanFeed({ onGoToPloeg }: { onGoToPloeg?: () => void
         <Newspaper className="h-10 w-10 text-muted-foreground/50 mx-auto" />
         <p className="font-display font-bold text-lg">Je zit nog niet in een subpoule</p>
         <p className="text-sm text-muted-foreground font-serif italic max-w-md mx-auto">
-          De Karavaan rijdt mee met je subpoules. Maak er een aan of word lid via de Subpoules-tab.
+          De Gazetta rolt mee met je subpoules. Maak er een aan of word lid via de Subpoules-tab.
         </p>
       </div>
     );
@@ -329,7 +329,7 @@ function EmptyFeed() {
   return (
     <div className="rounded-xl border-2 border-dashed border-foreground/20 bg-card p-6 text-center space-y-3">
       <Newspaper className="h-10 w-10 text-muted-foreground/50 mx-auto" />
-      <p className="font-display font-bold text-lg">De Karavaan is nog onderweg…</p>
+      <p className="font-display font-bold text-lg">De Gazetta gaat zo de pers in…</p>
       <p className="text-sm text-muted-foreground font-serif italic max-w-md mx-auto">
         De eerste etappe-updates verschijnen hier zodra de jury de uitslagen heeft gefiatteerd.
       </p>
