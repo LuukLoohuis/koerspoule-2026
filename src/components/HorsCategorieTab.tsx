@@ -8,13 +8,14 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
+import { pointsTable } from "@/data/riders";
 import { useCategories } from "@/hooks/useCategories";
 import { useStagePoints, useStages, useEntries } from "@/hooks/useResults";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
-  Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Medal,
+  Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown,
 } from "lucide-react";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
@@ -380,15 +381,25 @@ export default function HorsCategorieTab() {
     });
   }, [entry?.id, stages, allStagePoints]);
 
-  // ── Super Team leaderboard ─────────────────────────────────────────────────
-  // Cumulatieve punten per team t/m de laatst gefiatteerde etappe.
-  const superTeamData = useMemo(() => {
+  // ── The Emirates — maximaal haalbaar puntentotaal ──────────────────────────
+  // Plafond per etappe = som van pointsTable (positie 1 t/m 20).
+  // Vergelijking met huidige leider en eigen score (t/m laatst bijgewerkte etappe).
+  const emiratesData = useMemo(() => {
+    const maxPerStage = Object.values(pointsTable).reduce((a, b) => a + b, 0); // 305
     const approvedStages = stages
       .filter((s) => s.results_status === "approved")
       .sort((a, b) => a.stage_number - b.stage_number);
-    if (approvedStages.length === 0 || allStagePoints.length === 0 || entriesList.length === 0) {
-      return { ranking: [] as Array<{ entryId: string; teamName: string; displayName: string | null; points: number; isMe: boolean }>, lastStage: null as null | { number: number; name: string | null } };
+    if (approvedStages.length === 0) {
+      return {
+        maxPerStage,
+        maxTotal: 0,
+        stagesList: [] as Array<{ number: number; name: string | null }>,
+        ranking: [] as Array<{ entryId: string; teamName: string; points: number; isMe: boolean }>,
+        lastStage: null as null | { number: number; name: string | null },
+      };
     }
+    const last = approvedStages[approvedStages.length - 1];
+    const maxTotal = maxPerStage * approvedStages.length;
     const approvedIds = new Set(approvedStages.map((s) => s.id));
     const totalsByEntry = new Map<string, number>();
     for (const sp of allStagePoints) {
@@ -400,17 +411,13 @@ export default function HorsCategorieTab() {
       .map(([id, points]) => {
         const e = entriesById.get(id);
         const teamName = e?.team_name?.trim() || e?.display_name?.trim() || "Naamloze ploeg";
-        return {
-          entryId: id,
-          teamName,
-          displayName: e?.display_name?.trim() || null,
-          points,
-          isMe: entry?.id === id,
-        };
+        return { entryId: id, teamName, points, isMe: entry?.id === id };
       })
       .sort((a, b) => b.points - a.points);
-    const last = approvedStages[approvedStages.length - 1];
     return {
+      maxPerStage,
+      maxTotal,
+      stagesList: approvedStages.map((s) => ({ number: s.stage_number, name: s.name })),
       ranking,
       lastStage: { number: last.stage_number, name: last.name },
     };
@@ -1285,7 +1292,7 @@ export default function HorsCategorieTab() {
       </Card>
       )}
 
-      {/* ── Tab: The Emirates ────────────────────────────────────────────────── */}
+      {/* ── Tab: The Emirates — maximaal haalbare score ──────────────────────── */}
       {activeTab === "superteam" && (
         <Card className="ornate-frame retro-border overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
@@ -1303,16 +1310,17 @@ export default function HorsCategorieTab() {
                   Wat zie je hier?
                 </p>
                 <p className="font-serif italic text-sm text-foreground/85 leading-snug">
-                  De koningsploeg van de poule. We tellen alle punten op die elke speler heeft binnengeharkt t/m de laatste door de jury gefiatteerde etappe — en hijsen de leider in het goud. Net als Pogi en zijn UAE-konvooi: efficiënt, voorin, zelden te kloppen.
+                  Het maximaal haalbare puntentotaal in de poule — wat je gescoord zou hebben als je elke top-20 perfect getroffen had, t/m de laatst door de jury bijgewerkte etappe. Pogi en zijn UAE-konvooi komen dichtbij; niemand komt erbij.
                 </p>
               </div>
             </div>
-            {superTeamData.ranking.length === 0 || !superTeamData.lastStage ? (
+
+            {emiratesData.lastStage === null ? (
               <div className="text-center py-8 space-y-3">
                 <Lock className="h-10 w-10 text-muted-foreground/50 mx-auto" />
-                <p className="font-display text-lg font-bold">Nog geen gefiatteerde etappe</p>
+                <p className="font-display text-lg font-bold">Nog geen etappe bijgewerkt</p>
                 <p className="text-sm text-muted-foreground font-serif italic max-w-md mx-auto">
-                  Zodra de jury haar zegel op de eerste etappe drukt, hijsen we hier de gouden leiderstrui.
+                  Zodra de jury de eerste etappe-uitslag bijwerkt, verschijnt hier het plafond.
                 </p>
               </div>
             ) : (
@@ -1321,219 +1329,156 @@ export default function HorsCategorieTab() {
                 <div className="vintage-ornament">
                   <span className="vintage-ornament-symbol">✦</span>
                   <span className="font-serif italic text-xs md:text-sm text-muted-foreground tracking-wide text-center">
-                    Tussenstand t/m etappe {superTeamData.lastStage.number}
-                    {superTeamData.lastStage.name ? ` — ${superTeamData.lastStage.name}` : ""}
+                    T/m etappe {emiratesData.lastStage.number}
+                    {emiratesData.lastStage.name ? ` — ${emiratesData.lastStage.name}` : ""}
                   </span>
                   <span className="vintage-ornament-symbol">✦</span>
                 </div>
 
-                {/* Champion hero */}
-                {superTeamData.ranking[0] && (
+                {/* Hero — het plafond */}
+                <div
+                  className="relative overflow-hidden rounded-2xl border-2 border-[hsl(var(--vintage-gold))] p-5 md:p-7 shadow-[3px_3px_0_hsl(var(--vintage-gold)/0.5)]"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, hsl(var(--vintage-gold) / 0.22), hsl(var(--vintage-gold) / 0.06) 60%, hsl(var(--card)))",
+                  }}
+                >
                   <div
-                    className="relative overflow-hidden rounded-2xl border-2 border-[hsl(var(--vintage-gold))] p-5 md:p-7 shadow-[3px_3px_0_hsl(var(--vintage-gold)/0.5)]"
+                    aria-hidden
+                    className="absolute inset-0 opacity-[0.07] pointer-events-none"
                     style={{
-                      background:
-                        "linear-gradient(135deg, hsl(var(--vintage-gold) / 0.22), hsl(var(--vintage-gold) / 0.06) 60%, hsl(var(--card)))",
+                      backgroundImage:
+                        "radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1.5px)",
+                      backgroundSize: "12px 12px",
                     }}
-                  >
-                    <div
-                      aria-hidden
-                      className="absolute inset-0 opacity-[0.07] pointer-events-none"
-                      style={{
-                        backgroundImage:
-                          "radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1.5px)",
-                        backgroundSize: "12px 12px",
-                      }}
-                    />
-                    <div className="relative flex items-start gap-4 md:gap-5">
-                      <div className="shrink-0 flex flex-col items-center">
-                        <Crown
-                          className="h-9 w-9 md:h-11 md:w-11 text-[hsl(var(--vintage-gold))]"
-                          strokeWidth={2.2}
-                        />
-                        <span className="font-display text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-muted-foreground mt-1.5 text-center">
-                          Maglia<br />d'Oro
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1 font-serif">
-                          Leider van de poule
-                        </div>
-                        <h3
-                          className={cn(
-                            "font-display font-black text-2xl md:text-4xl leading-tight break-words",
-                            superTeamData.ranking[0].isMe ? "text-primary" : "text-foreground",
-                          )}
-                        >
-                          {superTeamData.ranking[0].teamName}
-                        </h3>
-                        {superTeamData.ranking[0].displayName &&
-                          superTeamData.ranking[0].displayName !== superTeamData.ranking[0].teamName && (
-                            <p className="font-serif italic text-sm text-muted-foreground mt-0.5">
-                              gemanaged door {superTeamData.ranking[0].displayName}
-                            </p>
-                          )}
-                        <div className="mt-3 flex items-baseline gap-2 flex-wrap">
-                          <span className="font-display font-black text-3xl md:text-5xl tabular-nums text-[hsl(var(--vintage-gold))]">
-                            {superTeamData.ranking[0].points}
-                          </span>
-                          <span className="font-serif italic text-sm text-muted-foreground">
-                            punten in {superTeamData.lastStage.number} etappe
-                            {superTeamData.lastStage.number === 1 ? "" : "s"}
-                          </span>
-                        </div>
-                        {superTeamData.ranking[0].isMe && (
-                          <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-xs font-display font-bold uppercase tracking-widest">
-                            <Sparkles className="h-3 w-3" /> Dat ben jij
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Podium 2 & 3 */}
-                {superTeamData.ranking.length > 1 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {[1, 2].map((idx) => {
-                      const r = superTeamData.ranking[idx];
-                      if (!r) return null;
-                      const isSilver = idx === 1;
-                      const top1 = superTeamData.ranking[0]?.points ?? r.points;
-                      const gap = top1 - r.points;
-                      return (
-                        <div
-                          key={r.entryId}
-                          className={cn(
-                            "relative overflow-hidden rounded-xl border-2 p-3 md:p-4 flex items-center gap-3",
-                            isSilver
-                              ? "border-slate-400/70 bg-gradient-to-br from-slate-300/30 to-card"
-                              : "border-amber-700/50 bg-gradient-to-br from-amber-700/15 to-card",
-                            r.isMe && "ring-2 ring-primary ring-offset-2 ring-offset-card",
-                          )}
-                        >
-                          <Medal
-                            className={cn(
-                              "h-7 w-7 shrink-0",
-                              isSilver ? "text-slate-500" : "text-amber-700",
-                            )}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-serif">
-                              {isSilver ? "Tweede" : "Derde"} plaats
-                            </div>
-                            <p
-                              className={cn(
-                                "font-display font-bold text-base md:text-lg leading-tight truncate",
-                                r.isMe && "text-primary",
-                              )}
-                            >
-                              {r.teamName}
-                              {r.isMe && (
-                                <span className="ml-2 text-[10px] uppercase tracking-widest text-primary">
-                                  (jij)
-                                </span>
-                              )}
-                            </p>
-                            <p className="text-xs text-muted-foreground font-serif italic">
-                              {gap > 0 ? `${gap} pt achterstand` : "gelijk aan leider"}
-                            </p>
-                          </div>
-                          <div className="shrink-0 text-right">
-                            <span className="font-display font-black text-xl md:text-2xl tabular-nums">
-                              {r.points}
-                            </span>
-                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">pt</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Full ranking (positions 4+) */}
-                {superTeamData.ranking.length > 3 && (
-                  <div className="rounded-xl border border-border bg-card overflow-hidden">
-                    <div className="px-3 py-2 bg-secondary/40 border-b border-border">
-                      <span className="font-display text-xs uppercase tracking-widest text-muted-foreground">
-                        Achter de podiumtreden
+                  />
+                  <div className="relative flex items-start gap-4 md:gap-5">
+                    <div className="shrink-0 flex flex-col items-center">
+                      <Crown
+                        className="h-9 w-9 md:h-11 md:w-11 text-[hsl(var(--vintage-gold))]"
+                        strokeWidth={2.2}
+                      />
+                      <span className="font-display text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-muted-foreground mt-1.5 text-center">
+                        Het<br />Plafond
                       </span>
                     </div>
-                    <ol className="divide-y divide-border">
-                      {superTeamData.ranking.slice(3).map((r, i) => {
-                        const rank = i + 4;
-                        return (
-                          <li
-                            key={r.entryId}
-                            className={cn(
-                              "flex items-center gap-3 px-3 py-2 text-sm",
-                              r.isMe && "bg-primary/10",
-                            )}
-                          >
-                            <span className="font-display font-bold tabular-nums w-7 text-muted-foreground shrink-0">
-                              {rank}.
-                            </span>
-                            <span
-                              className={cn(
-                                "flex-1 truncate font-sans font-medium",
-                                r.isMe && "text-primary font-display font-bold",
-                              )}
-                            >
-                              {r.teamName}
-                              {r.isMe && (
-                                <span className="ml-2 text-[10px] uppercase tracking-widest text-primary">
-                                  (jij)
-                                </span>
-                              )}
-                            </span>
-                            <span className="font-display font-bold tabular-nums">{r.points}</span>
-                          </li>
-                        );
-                      })}
-                    </ol>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1 font-serif">
+                        Maximaal haalbaar
+                      </div>
+                      <h3 className="font-display font-black text-2xl md:text-4xl leading-tight">
+                        De Perfecte Ploeg
+                      </h3>
+                      <p className="font-serif italic text-sm text-muted-foreground mt-0.5">
+                        als élke top-20 perfect was voorspeld
+                      </p>
+                      <div className="mt-3 flex items-baseline gap-2 flex-wrap">
+                        <span className="font-display font-black text-4xl md:text-6xl tabular-nums text-[hsl(var(--vintage-gold))] leading-none">
+                          {emiratesData.maxTotal}
+                        </span>
+                        <span className="font-serif italic text-sm text-muted-foreground">
+                          punten over {emiratesData.stagesList.length} etappe
+                          {emiratesData.stagesList.length === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
 
-                {/* Own position callout (if outside top 3) */}
-                {(() => {
-                  const myIdx = superTeamData.ranking.findIndex((r) => r.isMe);
-                  if (myIdx < 3) return null;
-                  const me = superTeamData.ranking[myIdx];
-                  const leader = superTeamData.ranking[0];
-                  const gap = leader.points - me.points;
+                {/* Comparison: leader & own score vs ceiling */}
+                {emiratesData.ranking.length > 0 && (() => {
+                  const leader = emiratesData.ranking[0];
+                  const me = emiratesData.ranking.find((r) => r.isMe);
+                  const pct = (p: number) =>
+                    emiratesData.maxTotal > 0 ? Math.round((p / emiratesData.maxTotal) * 100) : 0;
                   return (
-                    <div className="rounded-xl border-2 border-primary/40 bg-primary/5 p-3 md:p-4 flex items-center gap-3">
-                      <div className="shrink-0 text-center min-w-[60px]">
-                        <div className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
-                          Jouw plek
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="rounded-xl border-2 border-foreground/20 bg-card p-3 md:p-4">
+                        <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-serif mb-1">
+                          Huidige leider
                         </div>
-                        <div className="font-display font-black text-2xl text-primary leading-none">
-                          #{myIdx + 1}
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-display font-bold text-base truncate">{me.teamName}</p>
-                        <p className="text-xs font-serif italic text-muted-foreground">
-                          {gap > 0
-                            ? `${gap} pt achter The Emirates`
-                            : "op gelijke hoogte met de leider"}
+                        <p className="font-display font-bold text-base md:text-lg leading-tight truncate">
+                          {leader.teamName}
                         </p>
+                        <div className="mt-1 flex items-baseline gap-2 flex-wrap">
+                          <span className="font-display font-black text-2xl md:text-3xl tabular-nums">
+                            {leader.points}
+                          </span>
+                          <span className="text-xs font-serif italic text-muted-foreground">
+                            {pct(leader.points)}% van het plafond
+                          </span>
+                        </div>
                       </div>
-                      <div className="shrink-0 text-right">
-                        <span className="font-display font-black text-xl tabular-nums">{me.points}</span>
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">pt</p>
-                      </div>
+                      {me && (
+                        <div className="rounded-xl border-2 border-primary/40 bg-primary/5 p-3 md:p-4">
+                          <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-serif mb-1">
+                            Jouw score
+                          </div>
+                          <p className="font-display font-bold text-base md:text-lg leading-tight truncate text-primary">
+                            {me.teamName}
+                          </p>
+                          <div className="mt-1 flex items-baseline gap-2 flex-wrap">
+                            <span className="font-display font-black text-2xl md:text-3xl tabular-nums text-primary">
+                              {me.points}
+                            </span>
+                            <span className="text-xs font-serif italic text-muted-foreground">
+                              {pct(me.points)}% van het plafond
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
+
+                {/* Per-stage breakdown */}
+                <div className="rounded-xl border border-border bg-card overflow-hidden">
+                  <div className="px-3 py-2 bg-secondary/40 border-b border-border flex items-center justify-between">
+                    <span className="font-display text-xs uppercase tracking-widest text-muted-foreground">
+                      Per etappe
+                    </span>
+                    <span className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
+                      max pt
+                    </span>
+                  </div>
+                  <ol className="divide-y divide-border">
+                    {emiratesData.stagesList.map((s) => (
+                      <li
+                        key={s.number}
+                        className="flex items-center gap-3 px-3 py-2 text-sm"
+                      >
+                        <span className="font-display font-bold tabular-nums w-9 text-muted-foreground shrink-0">
+                          E{s.number}
+                        </span>
+                        <span className="flex-1 truncate font-sans font-medium text-foreground/80">
+                          {s.name ?? `Etappe ${s.number}`}
+                        </span>
+                        <span className="font-display font-bold tabular-nums text-[hsl(var(--vintage-gold))]">
+                          {emiratesData.maxPerStage}
+                        </span>
+                      </li>
+                    ))}
+                    <li className="flex items-center gap-3 px-3 py-2.5 bg-secondary/30 border-t-2 border-foreground/20">
+                      <span className="font-display font-black tabular-nums w-9 text-muted-foreground shrink-0">
+                        Σ
+                      </span>
+                      <span className="flex-1 font-display font-bold text-xs uppercase tracking-widest text-muted-foreground">
+                        Totaal plafond
+                      </span>
+                      <span className="font-display font-black tabular-nums text-base text-[hsl(var(--vintage-gold))]">
+                        {emiratesData.maxTotal}
+                      </span>
+                    </li>
+                  </ol>
+                </div>
 
                 {/* Footnote */}
                 <div className="mop-card p-3 -rotate-[0.3deg]">
                   <p className="font-serif italic text-xs md:text-sm leading-snug">
                     <span className="font-display font-bold uppercase tracking-widest text-xs">
-                      Klassementscommissie:
+                      Het plafond:
                     </span>{" "}
-                    telt alleen etappes die officieel door de jury gefiatteerd zijn. Tussenuitslagen blijven buiten beschouwing — zoals het hoort op de Champs-Élysées.
+                    {emiratesData.maxPerStage} pt per etappe — de optelsom van 50 + 40 + 32 + 26 + … + 2 + 1 voor positie 1 t/m 20. Wint zelden iemand, maar Pogi komt verdacht dichtbij.
                   </p>
                 </div>
               </>
