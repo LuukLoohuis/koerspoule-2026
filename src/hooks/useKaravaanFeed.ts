@@ -117,23 +117,34 @@ export function useKaravaanFeed(params: {
       const myProfile = profileById.get(userId);
       const lastVisited = myProfile?.last_visited_karavaan ?? null;
 
-      // 5. Stage points (alleen voor approved stages, om deltas te berekenen)
+      // 5. Stage points (per-etappe, voor cumulatieve deltas in oudere stages)
       const { data: spRows } = await supabase
         .from("stage_points")
         .select("entry_id, stage_id, points")
         .in("stage_id", stageIds);
       const stagePoints = (spRows ?? []) as Array<{ entry_id: string; stage_id: string; points: number }>;
 
-      // Cumulatieve totalen per entry, per stage (op stage_number ordering)
+      // 5b. Officiële totalen per entry — zelfde RPC als Uitslagen-tab gebruikt.
+      // Bevat alle bonussen (classification-voorspellingen e.d.) naast stage-punten.
+      const { data: standingsRows } = await (supabase as any).rpc("game_entries_standings", {
+        p_game_id: gameId,
+      });
+      const officialTotalByEntry = new Map<string, number>();
+      for (const r of (standingsRows ?? []) as Array<{ id: string; total_points: number }>) {
+        officialTotalByEntry.set(r.id, r.total_points ?? 0);
+      }
+
+      // Cumulatieve totalen per entry, per stage (uit stage_points — voor historische
+      // tussenstanden zonder snapshot-tabel is dit de beste benadering).
       const sortedStages = [...approvedStages].sort((a, b) => a.stage_number - b.stage_number);
       const cumByEntryByStage = new Map<string, Map<string, number>>(); // entry_id -> stage_id -> cum
-      const totalByEntry = new Map<string, number>();
+      const stagePointsCumTotal = new Map<string, number>();
       for (const stage of sortedStages) {
         for (const entry of allEntries) {
           const pts = stagePoints.find((sp) => sp.entry_id === entry.id && sp.stage_id === stage.id)?.points ?? 0;
-          const prev = totalByEntry.get(entry.id) ?? 0;
+          const prev = stagePointsCumTotal.get(entry.id) ?? 0;
           const next = prev + pts;
-          totalByEntry.set(entry.id, next);
+          stagePointsCumTotal.set(entry.id, next);
           if (!cumByEntryByStage.has(entry.id)) cumByEntryByStage.set(entry.id, new Map());
           cumByEntryByStage.get(entry.id)!.set(stage.id, next);
         }
@@ -142,18 +153,24 @@ export function useKaravaanFeed(params: {
       const myEntry = allEntries.find((e) => e.user_id === userId);
       const myEntryId = myEntry?.id ?? null;
 
-      // Helper: bouw ranglijst voor een set entries op basis van cum-totalen t/m een bepaalde stage
+      // Helper: bouw ranglijst. Voor de LAATSTE stage gebruiken we de officiële
+      // totalen uit de RPC (matcht Uitslagen 1:1). Voor oudere stages cumulatieve
+      // stage_points — best-effort, geen perfecte historische snapshot.
+      const lastStageId = sortedStages.length > 0 ? sortedStages[sortedStages.length - 1].id : null;
       const buildRanking = (entryIds: string[], stageId: string): KaravaanRanking[] => {
+        const useOfficial = stageId === lastStageId;
         const rows = entryIds.map((eid) => {
           const entry = allEntries.find((e) => e.id === eid)!;
           const prof = profileById.get(entry.user_id);
-          const cum = cumByEntryByStage.get(eid)?.get(stageId) ?? 0;
+          const points = useOfficial
+            ? (officialTotalByEntry.get(eid) ?? 0)
+            : (cumByEntryByStage.get(eid)?.get(stageId) ?? 0);
           const teamName = entry.team_name?.trim() || prof?.display_name?.trim() || "Naamloze ploeg";
           return {
             entry_id: eid,
             team_name: teamName,
             display_name: prof?.display_name ?? null,
-            points: cum,
+            points,
             is_me: entry.user_id === userId,
           };
         });
