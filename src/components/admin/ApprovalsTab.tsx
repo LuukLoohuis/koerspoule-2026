@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic } from "lucide-react";
 import { toast } from "sonner";
 
 type BreakdownRow = {
@@ -285,6 +285,33 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                     {r.approved_by_name ? ` · ${r.approved_by_name}` : ""}
                   </span>
                 )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-[hsl(var(--vintage-gold))] text-[hsl(var(--vintage-gold))]"
+                  onClick={async () => {
+                    if (!confirm("Commentaar regenereren voor alle subpoules? Overschrijft bestaand commentaar voor deze etappe.")) return;
+                    try {
+                      const { data, error } = await supabase.functions.invoke("generate-stage-commentary", {
+                        body: { stage_id: r.stage_id, force: true },
+                      });
+                      if (error) {
+                        let detail = error.message;
+                        const ctx = (error as { context?: Response }).context;
+                        if (ctx && typeof ctx.text === "function") {
+                          try { const body = await ctx.text(); if (body) detail = body; } catch { /* keep fallback */ }
+                        }
+                        throw new Error(detail);
+                      }
+                      const generated = (data as { generated?: number })?.generated ?? 0;
+                      toast.success(`🎙️ Commentaar gegenereerd voor ${generated} subpoule${generated === 1 ? "" : "s"}`);
+                    } catch (e) {
+                      toast.error(`Faalde: ${(e as Error).message}`);
+                    }
+                  }}
+                >
+                  <Mic className="w-3 h-3 mr-1" />Regenereer commentaar
+                </Button>
                 <Button
                   size="sm"
                   variant="ghost"
