@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Trash2, Upload, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { extractPdfText, parseProCyclingStatsStartlist, detectStruckBibs, type ParsedStartlistTeam } from "@/lib/startlistImport";
+import { extractPdfText, parseProCyclingStatsStartlist, type ParsedStartlistTeam } from "@/lib/startlistImport";
 
 export type Rider = {
   id: string;
@@ -52,15 +52,6 @@ export default function StartlistTab({
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<ParsedStartlistTeam[]>([]);
   const [importing, setImporting] = useState(false);
-  // Corrigeerbare DNF-selectie in de preview, gekeyed op rugnummer.
-  const [dnfBibs, setDnfBibs] = useState<Set<number>>(new Set());
-  const toggleDnfBib = (bib: number, on: boolean) =>
-    setDnfBibs((prev) => {
-      const next = new Set(prev);
-      if (on) next.add(bib);
-      else next.delete(bib);
-      return next;
-    });
 
   async function createTeam() {
     if (!supabase || !newTeamName.trim()) return;
@@ -116,22 +107,8 @@ export default function StartlistTab({
     try {
       const text = await extractPdfText(importFile);
       const parsed = parseProCyclingStatsStartlist(text);
-      // Detecteer doorgestreepte (DNF) renners; faalt detectie, dan gewoon leeg.
-      let struck = new Set<number>();
-      try {
-        struck = await detectStruckBibs(importFile);
-      } catch (e) {
-        console.warn("DNF-detectie faalde, ga door zonder:", e);
-      }
-      const withDnf = parsed.map((t) => ({
-        ...t,
-        riders: t.riders.map((r) => ({ ...r, dnf: struck.has(r.start_number) })),
-      }));
-      setImportPreview(withDnf);
-      setDnfBibs(new Set(struck));
-      toast.success(
-        `Preview: ${parsed.length} teams, ${parsed.reduce((s, t) => s + t.riders.length, 0)} renners, ${struck.size} DNF gedetecteerd`,
-      );
+      setImportPreview(parsed);
+      toast.success(`Preview: ${parsed.length} teams, ${parsed.reduce((s, t) => s + t.riders.length, 0)} renners`);
     } catch (e) {
       toast.error(`Preview faalde: ${(e as Error).message}`);
     }
@@ -153,15 +130,13 @@ export default function StartlistTab({
         (upsertedTeams ?? []).map((t) => [t.name, t.id])
       );
 
-      // 2) Upsert all riders in one batch. PDF is leidend voor DNF:
-      //    doorgestreept (of in de preview aangevinkt) → is_dnf=true, anders false.
+      // 2) Upsert all riders in one batch
       const riderRows = importPreview.flatMap((t) =>
         t.riders.map((r) => ({
           game_id: activeGameId,
           team_id: teamIdByName.get(t.name) ?? null,
           name: r.name,
           start_number: r.start_number,
-          is_dnf: dnfBibs.has(r.start_number),
         }))
       );
 
@@ -170,12 +145,10 @@ export default function StartlistTab({
         .upsert(riderRows, { onConflict: "game_id,start_number" });
       if (ridErr) throw ridErr;
 
-      const dnfCount = riderRows.filter((r) => r.is_dnf).length;
-      toast.success(`${riderRows.length} renners geïmporteerd (${dnfCount} DNF) in ${importPreview.length} teams`);
+      toast.success(`${riderRows.length} renners geïmporteerd in ${importPreview.length} teams`);
       await reload();
       setImportPreview([]);
       setImportFile(null);
-      setDnfBibs(new Set());
     } catch (e) {
       console.error("Import error:", e);
       toast.error(`Import mislukt: ${(e as Error).message}`);
@@ -208,46 +181,10 @@ export default function StartlistTab({
             </Button>
           </div>
           {importPreview.length > 0 && (
-            <div className="border rounded-md">
-              <div className="flex items-center justify-between gap-2 px-3 py-2 border-b bg-secondary/40 text-xs">
-                <span className="font-medium">
-                  {importPreview.length} teams · {importPreview.reduce((s, t) => s + t.riders.length, 0)} renners
-                </span>
-                <span className="text-destructive font-medium">
-                  {dnfBibs.size} gemarkeerd als DNF
-                </span>
-              </div>
-              <p className="px-3 py-2 text-[11px] text-muted-foreground border-b">
-                Doorgestreepte renners in de PDF zijn automatisch als <b>DNF</b> aangevinkt. Controleer en corrigeer
-                hieronder vóór importeren — bij importeren wordt dit exact zo opgeslagen.
-              </p>
-              <div className="max-h-72 overflow-auto p-2 space-y-3">
-                {importPreview.map((t) => (
-                  <div key={t.name}>
-                    <div className="text-xs font-semibold mb-1">{t.name}</div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
-                      {t.riders.map((r) => {
-                        const isDnf = dnfBibs.has(r.start_number);
-                        return (
-                          <label
-                            key={r.start_number}
-                            className="flex items-center gap-2 text-xs cursor-pointer rounded px-1 py-0.5 hover:bg-secondary"
-                          >
-                            <Checkbox
-                              checked={isDnf}
-                              onCheckedChange={(val) => toggleDnfBib(r.start_number, Boolean(val))}
-                              className={isDnf ? "border-destructive data-[state=checked]:bg-destructive" : ""}
-                              aria-label={`${r.name} DNF`}
-                            />
-                            <span className="font-mono text-muted-foreground w-8 shrink-0">{r.start_number}</span>
-                            <span className={isDnf ? "line-through text-destructive" : ""}>{r.name}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="text-xs text-muted-foreground border rounded-md p-2 max-h-40 overflow-auto">
+              {importPreview.map((t) => (
+                <div key={t.name}><b>{t.name}</b> — {t.riders.length} renners</div>
+              ))}
             </div>
           )}
         </CardContent>
