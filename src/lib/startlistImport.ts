@@ -8,8 +8,124 @@ export type ParsedStartlistTeam = {
   riders: Array<{
     name: string;
     start_number: number;
+    dnf?: boolean;
   }>;
 };
+
+/**
+ * Detecteer doorgestreepte (DNF) renners in een PCS-startlijst-PDF.
+ *
+ * De doorstreping is geen tekst maar een getekend lijntje over de naam. We
+ * renderen elke pagina naar een canvas, bepalen per regel (op rugnummer) de
+ * pixel-bounding-box, en kijken of er door het verticale midden van die regel
+ * een (vrijwel) doorlopende donkere horizontale lijn loopt. Normale tekst heeft
+ * gaten tussen letters/woorden; een doorstreping is één lange streep.
+ *
+ * Best-effort: drempelwaarden zijn afgestemd op PCS-PDF's. De admin corrigeert
+ * de detectie in de preview vóór opslaan, dus een misser is niet fataal.
+ *
+ * @returns Set van rugnummers die als doorgestreept zijn gedetecteerd.
+ */
+export async function detectStruckBibs(file: File): Promise<Set<number>> {
+  const SCALE = 2;        // render-resolutie
+  const DARK = 145;       // luminantie-grens (< = donker)
+  const GAP = 4 * SCALE;  // toegestaan gaatje (px) binnen één streep
+  const COVER = 0.55;     // streep moet ≥ 55% van de regelbreedte beslaan
+
+  const data = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data }).promise;
+  const struck = new Set<number>();
+
+  for (let i = 1; i <= pdf.numPages; i += 1) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: SCALE });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) continue;
+    await page.render({ canvas, canvasContext: ctx, viewport } as any).promise;
+    const { data: px, width: W, height: H } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    const content = await page.getTextContent();
+    type DItem = { x: number; y: number; w: number; h: number; str: string };
+    const items: DItem[] = [];
+    for (const it of content.items as any[]) {
+      if (!("str" in it)) continue;
+      const s = String(it.str);
+      if (!s.trim()) continue;
+      const m = pdfjsLib.Util.transform(viewport.transform, it.transform);
+      items.push({
+        x: m[4],
+        y: m[5], // device baseline-y
+        w: (it.width ?? 0) * SCALE,
+        h: ((it.height ?? 8) * SCALE) || 16,
+        str: s,
+      });
+    }
+    if (items.length === 0) continue;
+
+    // groepeer items op gedeelde baseline → logische regels
+    items.sort((a, b) => a.y - b.y || a.x - b.x);
+    const Y_TOL = 4 * SCALE;
+    const lines: DItem[][] = [];
+    for (const it of items) {
+      const last = lines[lines.length - 1];
+      if (last && Math.abs(last[0].y - it.y) <= Y_TOL) last.push(it);
+      else lines.push([it]);
+    }
+
+    for (const line of lines) {
+      const text = line.map((l) => l.str).join(" ").replace(/\s+/g, " ").trim();
+      const bibMatch = text.match(/(\d{1,3})\s*\./);
+      if (!bibMatch) continue;
+      const bib = Number(bibMatch[1]);
+      if (bib < 1 || bib > 999) continue;
+
+      const left = Math.min(...line.map((l) => l.x));
+      const right = Math.max(...line.map((l) => l.x + l.w));
+      const lineW = right - left;
+      if (lineW < 10) continue;
+      const baseline = line.reduce((s, l) => s + l.y, 0) / line.length;
+      const h = Math.max(...line.map((l) => l.h));
+
+      // streep-zone: net boven de baseline, rond het x-hoogte-midden
+      const yTop = Math.round(baseline - h * 0.55);
+      const yBot = Math.round(baseline - h * 0.20);
+      const xFrom = Math.max(0, Math.round(left));
+      const xTo = Math.min(W - 1, Math.round(right));
+
+      let strike = false;
+      for (let yy = yTop; yy <= yBot && !strike; yy += 1) {
+        if (yy < 0 || yy >= H) continue;
+        let bestRun = 0;
+        let run = 0;
+        let gapRun = 0;
+        for (let xx = xFrom; xx <= xTo; xx += 1) {
+          const idx = (yy * W + xx) * 4;
+          const lum = 0.299 * px[idx] + 0.587 * px[idx + 1] + 0.114 * px[idx + 2];
+          const alpha = px[idx + 3];
+          const dark = alpha > 20 && lum < DARK;
+          if (dark) {
+            run += gapRun + 1;
+            gapRun = 0;
+            if (run > bestRun) bestRun = run;
+          } else {
+            gapRun += 1;
+            if (gapRun > GAP) {
+              run = 0;
+              gapRun = 0;
+            }
+          }
+        }
+        if (bestRun >= lineW * COVER) strike = true;
+      }
+      if (strike) struck.add(bib);
+    }
+  }
+
+  return struck;
+}
 
 /**
  * Extract text from a PCS startlist PDF.
