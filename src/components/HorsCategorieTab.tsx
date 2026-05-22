@@ -15,11 +15,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
-  Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown,
+  Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Mic,
 } from "lucide-react";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import JerseyBadge from "@/components/retro/JerseyBadge";
+import { useLefevereReport } from "@/hooks/useLefevereReport";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -621,6 +622,10 @@ export default function HorsCategorieTab() {
       monkeySubScore: toSub(monkeyScore),
       jokerSubScore: toSub(jokerScore),
       analysis,
+      rang: myRank,
+      totaal: n,
+      beatPct: monte.beatPct,
+      aantalJokers: jokerIds.length,
       rankLabel: `Rang #${myRank} van ${n}`,
       beatLabel: `${monte.beatPct.toFixed(0)}% apen verslagen`,
       jokerLabel: jokerIds.length === 0 ? "Geen jokers" : `${jokerIds.length} joker${jokerIds.length > 1 ? "s" : ""}`,
@@ -631,6 +636,32 @@ export default function HorsCategorieTab() {
   const [activeTab, setActiveTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark">("dartpijl");
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
+
+  // ── Lefevere directeursanalyse (LLM) — alleen ophalen op de Wielerdirecteur-tab ──
+  const lefevereInput = useMemo(() => {
+    if (!directorScore) return null;
+    const myEmirates = emiratesData.ranking.find((r) => r.isMe);
+    const emiratesPct = emiratesData.total > 0 && myEmirates
+      ? Math.round((myEmirates.points / emiratesData.total) * 100)
+      : undefined;
+    return {
+      score: directorScore.score,
+      components: {
+        poolRanking: { score: directorScore.poolSubScore, weging: 0.5 as const, rang: directorScore.rang, totaalDeelnemers: directorScore.totaal },
+        monkeyVergelijking: { score: directorScore.monkeySubScore, weging: 0.3 as const, percentageVerslagen: Math.round(directorScore.beatPct) },
+        jokerPrestatie: { score: directorScore.jokerSubScore, weging: 0.2 as const, aantalJokers: directorScore.aantalJokers },
+      },
+      deelnemer: { ploegnaam: entry?.team_name ?? undefined },
+      etappePrestatie: {
+        jokerRenners: jokerIds.map((id) => ridersById[id]?.name).filter(Boolean) as string[],
+      },
+      horsCategorieScores: emiratesPct !== undefined
+        ? { emirates: { percentage: emiratesPct, droomploegPunten: emiratesData.total, jouwPunten: myEmirates?.points ?? 0 } }
+        : undefined,
+    };
+  }, [directorScore, emiratesData, entry?.team_name, jokerIds, ridersById]);
+
+  const lefevere = useLefevereReport(lefevereInput, activeTab === "wielerdirecteur" && Boolean(lefevereInput));
 
   // ── Locked state ─────────────────────────────────────────────────────────────
   if (!isLive) {
@@ -1241,8 +1272,15 @@ export default function HorsCategorieTab() {
                   <div className="text-muted-foreground/70 text-xs mt-1 font-mono">van de 10</div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">Directeursanalyse</div>
-                  <p className="text-foreground text-sm font-serif italic leading-relaxed">"{directorScore.analysis}"</p>
+                  <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <Mic className="h-3 w-3 text-[hsl(var(--vintage-gold))]" /> Patrick Lefevere
+                  </div>
+                  <p className="text-foreground text-sm font-serif italic leading-relaxed">
+                    "{lefevere.data?.directeursAnalyse ?? directorScore.analysis}"
+                  </p>
+                  {lefevere.isFetching && (
+                    <p className="text-[10px] text-muted-foreground/60 mt-1 font-sans">Lefevere schrijft zijn rapport…</p>
+                  )}
                 </div>
               </div>
               {/* Metric breakdown */}
@@ -1387,7 +1425,7 @@ export default function HorsCategorieTab() {
               </div>
 <div className="rounded-md border-2 border-dashed border-[hsl(var(--vintage-gold))/0.6] bg-[hsl(var(--vintage-gold))/0.08] p-3 flex items-center gap-3">
                 <Sparkles className="h-5 w-5 text-[hsl(var(--vintage-gold))] shrink-0" />
-                <p className="text-sm font-serif italic">{directorAnalysis.quote}</p>
+                <p className="text-sm font-serif italic">{lefevere.data?.ploegKarakterisering ?? directorAnalysis.quote}</p>
               </div>
             </>
           )}
