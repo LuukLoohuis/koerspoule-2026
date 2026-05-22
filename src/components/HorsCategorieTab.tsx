@@ -21,6 +21,7 @@ import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import JerseyBadge from "@/components/retro/JerseyBadge";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
+import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -642,31 +643,13 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
 
-  // ── Lefevere directeursanalyse (LLM) — alleen ophalen op de Wielerdirecteur-tab ──
-  const lefevereInput = useMemo(() => {
-    if (!directorScore) return null;
-    const myEmirates = emiratesData.ranking.find((r) => r.isMe);
-    const emiratesPct = emiratesData.total > 0 && myEmirates
-      ? Math.round((myEmirates.points / emiratesData.total) * 100)
-      : undefined;
-    return {
-      score: directorScore.score,
-      components: {
-        poolRanking: { score: directorScore.poolSubScore, weging: 0.5 as const, rang: directorScore.rang, totaalDeelnemers: directorScore.totaal },
-        monkeyVergelijking: { score: directorScore.monkeySubScore, weging: 0.3 as const, percentageVerslagen: Math.round(directorScore.beatPct) },
-        jokerPrestatie: { score: directorScore.jokerSubScore, weging: 0.2 as const, aantalJokers: directorScore.aantalJokers },
-      },
-      deelnemer: { ploegnaam: entry?.team_name ?? undefined },
-      etappePrestatie: {
-        jokerRenners: jokerIds.map((id) => ridersById[id]?.name).filter(Boolean) as string[],
-      },
-      horsCategorieScores: emiratesPct !== undefined
-        ? { emirates: { percentage: emiratesPct, droomploegPunten: emiratesData.total, jouwPunten: myEmirates?.points ?? 0 } }
-        : undefined,
-    };
-  }, [directorScore, emiratesData, entry?.team_name, jokerIds, ridersById]);
-
-  const lefevere = useLefevereReport(lefevereInput, activeTab === "wielerdirecteur" && Boolean(lefevereInput));
+  // ── Lefevere directeursanalyse (LLM) — gedeelde input via useHorsCategorieSummary,
+  //    zodat de tekst 1-op-1 identiek is aan die in de Gazetta-feed. ──
+  const horsSummary = useHorsCategorieSummary();
+  const lefevere = useLefevereReport(
+    horsSummary.lefevereInput,
+    activeTab === "wielerdirecteur" && Boolean(horsSummary.lefevereInput),
+  );
 
   // ── Locked state ─────────────────────────────────────────────────────────────
   if (!isLive) {

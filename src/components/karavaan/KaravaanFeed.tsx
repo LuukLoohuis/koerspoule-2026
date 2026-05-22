@@ -6,6 +6,7 @@ import { useSubpoules } from "@/hooks/useSubpoules";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
 import MiniStrip, { type HorsTabKey } from "@/components/karavaan/MiniStrip";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
+import { useLefevereReport } from "@/hooks/useLefevereReport";
 import Stamp from "@/components/retro/Stamp";
 import { cn } from "@/lib/utils";
 
@@ -68,6 +69,9 @@ export default function KaravaanFeed({
   // pagina ("Rendered more hooks than during the previous render") wanneer de
   // gebruiker geen subpoule heeft.
   const horsSummary = useHorsCategorieSummary();
+  // Lefevere-rapport — zelfde gedeelde input als de Wielerdirecteur-tab, dus
+  // dezelfde cache-key → 1-op-1 dezelfde tekst.
+  const lefevere = useLefevereReport(horsSummary.lefevereInput, Boolean(horsSummary.lefevereInput));
 
   // Empty: geen subpoules
   if (subpoules.length === 0 && !subpoulesQuery.isLoading) {
@@ -118,7 +122,14 @@ export default function KaravaanFeed({
           {etappes.map((et, i) => (
             <div key={et.stage_id}>
               {newMarkerIndex === i && <NieuwMarker />}
-              <EtappeBlok etappe={et} defaultOpen={i < 2} showLefevere={i === 0} onOpenHors={onOpenHors} />
+              <EtappeBlok
+                etappe={et}
+                defaultOpen={i < 2}
+                showLefevere={i === 0}
+                lefevereTekst={i === 0 ? lefevere.data?.directeursAnalyse ?? null : null}
+                lefevereLaden={i === 0 && lefevere.isFetching}
+                onOpenHors={onOpenHors}
+              />
             </div>
           ))}
           {newMarkerIndex === etappes.length && <NieuwMarker />}
@@ -178,11 +189,15 @@ function EtappeBlok({
   etappe,
   defaultOpen,
   showLefevere,
+  lefevereTekst,
+  lefevereLaden,
   onOpenHors,
 }: {
   etappe: KaravaanEtappe;
   defaultOpen: boolean;
   showLefevere?: boolean;
+  lefevereTekst?: string | null;
+  lefevereLaden?: boolean;
   onOpenHors?: (tab: HorsTabKey) => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -234,23 +249,35 @@ function EtappeBlok({
             </p>
           )}
 
-          {/* Lefevere teaser — alleen nieuwste etappe */}
+          {/* Lefevere-rapport — alleen nieuwste etappe; 1-op-1 dezelfde tekst als
+              in de Wielerdirecteur-tab */}
           {showLefevere && (
             <button
               type="button"
               onClick={() => onOpenHors?.("wielerdirecteur")}
-              className="w-full text-left rounded-lg border border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.06] p-2.5 md:p-3 flex items-center gap-3 hover:bg-[hsl(var(--vintage-gold))/0.12] transition-colors"
+              className="w-full text-left rounded-lg border border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.06] p-2.5 md:p-3 flex items-start gap-3 hover:bg-[hsl(var(--vintage-gold))/0.12] transition-colors"
             >
-              <ClipboardList className="h-5 w-5 text-[hsl(var(--vintage-gold))] shrink-0" />
+              <ClipboardList className="h-5 w-5 text-[hsl(var(--vintage-gold))] shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <div className="font-display text-[10px] uppercase tracking-[0.2em] text-[hsl(var(--vintage-gold))] font-bold">
-                  Patrick Lefevere
+                <div className="font-display text-[10px] uppercase tracking-[0.2em] text-[hsl(var(--vintage-gold))] font-bold mb-0.5">
+                  Patrick Lefevere · jouw rapport
                 </div>
-                <p className="font-serif italic text-sm text-foreground/85 leading-snug">
-                  Je directeursrapport staat klaar — lees wat de baas ervan vindt.
-                </p>
+                {lefevereTekst ? (
+                  <p className="font-serif italic text-sm text-foreground/90 leading-snug">"{lefevereTekst}"</p>
+                ) : lefevereLaden ? (
+                  <p className="font-serif italic text-sm text-muted-foreground/70 leading-snug">
+                    Lefevere schrijft je rapport…
+                  </p>
+                ) : (
+                  <p className="font-serif italic text-sm text-foreground/85 leading-snug">
+                    Je directeursrapport staat klaar — lees wat de baas ervan vindt.
+                  </p>
+                )}
+                <span className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1 inline-block">
+                  → bekijk je volledige rapport
+                </span>
               </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
             </button>
           )}
 

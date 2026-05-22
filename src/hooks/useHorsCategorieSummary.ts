@@ -6,6 +6,7 @@ import { useEntry } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
 import { useStages, useStagePoints, useEntries } from "@/hooks/useResults";
 import { pointsTable } from "@/data/riders";
+import type { LefevereReportInput } from "@/hooks/useLefevereReport";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -13,6 +14,7 @@ export type HorsSummary = {
   monkeyBeatPct: number | null;   // 0..100
   emiratesPct: number | null;     // 0..100
   directorScore: number | null;   // 1.0..10.0
+  lefevereInput: LefevereReportInput | null;
   isLoading: boolean;
 };
 
@@ -245,7 +247,7 @@ export function useHorsCategorieSummary(): HorsSummary {
   }, [categories, pickStats, totals, picksByCategory, myStageTotal, game?.id]);
 
   // ── Emirates (exact dezelfde formule als HorsCategorieTab) ─────────────────
-  const emiratesPct = useMemo<number | null>(() => {
+  const emirates = useMemo<{ pct: number; dreamTotal: number; myPoints: number } | null>(() => {
     const approvedStages = stages
       .filter((s) => s.results_status === "approved")
       .sort((a, b) => a.stage_number - b.stage_number);
@@ -295,11 +297,14 @@ export function useHorsCategorieSummary(): HorsSummary {
         myPoints += sp.points ?? 0;
       }
     }
-    return Math.round((myPoints / dreamTotal) * 100);
+    return { pct: Math.round((myPoints / dreamTotal) * 100), dreamTotal, myPoints };
   }, [stages, categories, allStageResults, allGameRiders, allStagePoints, entry]);
 
   // ── Wielerdirecteur (exact dezelfde formule als HorsCategorieTab) ──────────
-  const directorScore = useMemo<number | null>(() => {
+  const director = useMemo<
+    | { score: number; rang: number; totaal: number; poolSub: number; monkeySub: number; jokerSub: number }
+    | null
+  >(() => {
     if (!isLive || !entry || !monte) return null;
     const n = totals.length;
     const myRank = n > 0 ? totals.filter((t) => t > myStageTotal).length + 1 : 1;
@@ -316,13 +321,49 @@ export function useHorsCategorieSummary(): HorsSummary {
       jokerScore = Math.min(1, 0.4 + (1 - avgOwn) * 0.4 + monkeyBonus);
     }
     const raw = poolScore * 0.5 + monkeyScore * 0.3 + jokerScore * 0.2;
-    return Math.max(3.0, Math.round((raw * 9 + 1) * 10) / 10);
+    const score = Math.max(3.0, Math.round((raw * 9 + 1) * 10) / 10);
+    const toSub = (v: number) => Math.max(1.0, Math.round((v * 9 + 1) * 10) / 10);
+    return {
+      score,
+      rang: myRank,
+      totaal: n,
+      poolSub: toSub(poolScore),
+      monkeySub: toSub(monkeyScore),
+      jokerSub: toSub(jokerScore),
+    };
   }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats]);
+
+  // ── Lefevere-input — één bron van waarheid, gedeeld met de Wielerdirecteur-
+  //    tab én de Gazetta-feed, zodat de gegenereerde tekst 1-op-1 identiek is
+  //    (zelfde React Query cache-key). ──────────────────────────────────────
+  const ridersById = useMemo(
+    () => Object.fromEntries(allGameRiders.map((r) => [r.id, r])),
+    [allGameRiders],
+  );
+  const lefevereInput = useMemo<LefevereReportInput | null>(() => {
+    if (!director) return null;
+    return {
+      score: director.score,
+      components: {
+        poolRanking: { score: director.poolSub, weging: 0.5, rang: director.rang, totaalDeelnemers: director.totaal },
+        monkeyVergelijking: { score: director.monkeySub, weging: 0.3, percentageVerslagen: Math.round(monte!.beatPct) },
+        jokerPrestatie: { score: director.jokerSub, weging: 0.2, aantalJokers: jokerIds.length },
+      },
+      deelnemer: { ploegnaam: entry?.team_name ?? undefined },
+      etappePrestatie: {
+        jokerRenners: jokerIds.map((id) => ridersById[id]?.name).filter(Boolean) as string[],
+      },
+      horsCategorieScores: emirates
+        ? { emirates: { percentage: emirates.pct, droomploegPunten: emirates.dreamTotal, jouwPunten: emirates.myPoints } }
+        : undefined,
+    };
+  }, [director, monte, jokerIds, entry?.team_name, ridersById, emirates]);
 
   return {
     monkeyBeatPct: monte ? Math.round(monte.beatPct) : null,
-    emiratesPct,
-    directorScore,
+    emiratesPct: emirates ? emirates.pct : null,
+    directorScore: director ? director.score : null,
+    lefevereInput,
     isLoading,
   };
 }
