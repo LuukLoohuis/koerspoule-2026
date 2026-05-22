@@ -111,6 +111,11 @@ export default function MijnPeloton() {
     else if (isKaravaanRoute) setGameTab("karavaan");
   }, [searchParams, isKaravaanRoute]);
   const [teamSubTab, setTeamSubTab] = useState("ploeg");
+  const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
+  const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
+    setHorsTab(tab);
+    setGameTab("hors");
+  };
   const [uitslagenView, setUitslagenView] = useState<"etappes" | "poule" | "giro">("etappes");
   const [selectedPool, setSelectedPool] = useState<string | null>(null);
   const [newPoolName, setNewPoolName] = useState("");
@@ -1176,7 +1181,7 @@ export default function MijnPeloton() {
 
           {/* ── TAB: De Karavaan (landing — feed-overzicht) ── */}
           <TabsContent value="karavaan" className="mt-3">
-            <KaravaanFeed onGoToPloeg={() => setGameTab("team")} />
+            <KaravaanFeed onGoToPloeg={() => setGameTab("team")} onOpenHors={openHors} />
           </TabsContent>
 
           {/* ── TAB: Mijn Team (with sub-tabs) ── */}
@@ -1247,7 +1252,7 @@ export default function MijnPeloton() {
 
           {/* ── TAB: Hors Catégorie ── */}
           <TabsContent value="hors" className="mt-3">
-            <HorsCategorieTab />
+            <HorsCategorieTab initialTab={horsTab} />
           </TabsContent>
 
         </Tabs>

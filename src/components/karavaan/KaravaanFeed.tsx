@@ -1,16 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronRight, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles, ClipboardList } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
-import MiniStrip from "@/components/karavaan/MiniStrip";
+import MiniStrip, { type HorsTabKey } from "@/components/karavaan/MiniStrip";
 import Stamp from "@/components/retro/Stamp";
 import { cn } from "@/lib/utils";
 
 const LAST_SUBPOULE_KEY = "karavaan:lastSubpouleId";
 
-export default function KaravaanFeed({ onGoToPloeg }: { onGoToPloeg?: () => void }) {
+export default function KaravaanFeed({
+  onGoToPloeg,
+  onOpenHors,
+}: {
+  onGoToPloeg?: () => void;
+  onOpenHors?: (tab: HorsTabKey) => void;
+}) {
   const { user } = useAuth();
   const { data: game } = useCurrentGame();
   const subpoulesQuery = useSubpoules(game?.id);
@@ -82,8 +88,8 @@ export default function KaravaanFeed({ onGoToPloeg }: { onGoToPloeg?: () => void
         onSelect={setSelectedSubpouleId}
       />
 
-      {/* Mini-strip */}
-      {ministrip && <MiniStrip data={ministrip} onClickProfile={onGoToPloeg} />}
+      {/* Score-strip */}
+      {ministrip && <MiniStrip data={ministrip} onClickProfile={onGoToPloeg} onOpenHors={onOpenHors} />}
 
       {/* Feed */}
       {feed.isLoading ? (
@@ -95,7 +101,7 @@ export default function KaravaanFeed({ onGoToPloeg }: { onGoToPloeg?: () => void
           {etappes.map((et, i) => (
             <div key={et.stage_id}>
               {newMarkerIndex === i && <NieuwMarker />}
-              <EtappeBlok etappe={et} defaultOpen={i < 2} />
+              <EtappeBlok etappe={et} defaultOpen={i < 2} showLefevere={i === 0} onOpenHors={onOpenHors} />
             </div>
           ))}
           {newMarkerIndex === etappes.length && <NieuwMarker />}
@@ -151,7 +157,17 @@ function SubpouleSwitcher({
 
 // ─── Etappe-blok ────────────────────────────────────────────────────────────
 
-function EtappeBlok({ etappe, defaultOpen }: { etappe: KaravaanEtappe; defaultOpen: boolean }) {
+function EtappeBlok({
+  etappe,
+  defaultOpen,
+  showLefevere,
+  onOpenHors,
+}: {
+  etappe: KaravaanEtappe;
+  defaultOpen: boolean;
+  showLefevere?: boolean;
+  onOpenHors?: (tab: HorsTabKey) => void;
+}) {
   const [open, setOpen] = useState(defaultOpen);
   const datum = new Date(etappe.approved_at).toLocaleDateString("nl-NL", {
     day: "numeric",
@@ -199,6 +215,26 @@ function EtappeBlok({ etappe, defaultOpen }: { etappe: KaravaanEtappe; defaultOp
             <p className="text-xs text-muted-foreground font-serif italic">
               Geen commentaar beschikbaar voor deze etappe.
             </p>
+          )}
+
+          {/* Lefevere teaser — alleen nieuwste etappe */}
+          {showLefevere && (
+            <button
+              type="button"
+              onClick={() => onOpenHors?.("wielerdirecteur")}
+              className="w-full text-left rounded-lg border border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.06] p-2.5 md:p-3 flex items-center gap-3 hover:bg-[hsl(var(--vintage-gold))/0.12] transition-colors"
+            >
+              <ClipboardList className="h-5 w-5 text-[hsl(var(--vintage-gold))] shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="font-display text-[10px] uppercase tracking-[0.2em] text-[hsl(var(--vintage-gold))] font-bold">
+                  Patrick Lefevere
+                </div>
+                <p className="font-serif italic text-sm text-foreground/85 leading-snug">
+                  Je directeursrapport staat klaar — lees wat de baas ervan vindt.
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+            </button>
           )}
 
           {/* Persoonlijke flash */}

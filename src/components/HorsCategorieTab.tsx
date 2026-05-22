@@ -244,7 +244,9 @@ function DirectorIcon({ className }: { className?: string }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function HorsCategorieTab() {
+type HorsTabKey = "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark";
+
+export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabKey } = {}) {
   const { data: game } = useCurrentGame();
   const isLive = Boolean(game?.status && ["live", "locked", "finished", "closed"].includes(String(game.status)));
   const { entry, picksByCategory, jokerIds, predictions: myPredictions } = useEntry(game?.id);
@@ -633,7 +635,10 @@ export default function HorsCategorieTab() {
   }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats]);
 
   // ── Sub-tab state (must be declared before any early return to keep hook order stable) ──
-  const [activeTab, setActiveTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark">("dartpijl");
+  const [activeTab, setActiveTab] = useState<HorsTabKey>(initialTab ?? "dartpijl");
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
 
