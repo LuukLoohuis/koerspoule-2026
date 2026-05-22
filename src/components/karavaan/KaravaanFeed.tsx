@@ -5,6 +5,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
 import MiniStrip, { type HorsTabKey } from "@/components/karavaan/MiniStrip";
+import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import Stamp from "@/components/retro/Stamp";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +79,7 @@ export default function KaravaanFeed({
 
   const etappes = feed.data?.etappes ?? [];
   const ministrip = feed.data?.ministrip;
+  const horsSummary = useHorsCategorieSummary();
 
   return (
     <div className="space-y-4">
@@ -89,7 +91,18 @@ export default function KaravaanFeed({
       />
 
       {/* Score-strip */}
-      {ministrip && <MiniStrip data={ministrip} onClickProfile={onGoToPloeg} onOpenHors={onOpenHors} />}
+      {ministrip && (
+        <MiniStrip
+          data={ministrip}
+          hors={{
+            monkeyBeatPct: horsSummary.monkeyBeatPct,
+            emiratesPct: horsSummary.emiratesPct,
+            directorScore: horsSummary.directorScore,
+          }}
+          onClickProfile={onGoToPloeg}
+          onOpenHors={onOpenHors}
+        />
+      )}
 
       {/* Feed */}
       {feed.isLoading ? (
