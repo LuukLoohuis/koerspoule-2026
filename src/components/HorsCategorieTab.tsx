@@ -1428,10 +1428,6 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
                   <p key={i} className="font-serif italic text-foreground/90 border-l-2 border-primary/60 pl-3">"{l}"</p>
                 ))}
               </div>
-<div className="rounded-md border-2 border-dashed border-[hsl(var(--vintage-gold))/0.6] bg-[hsl(var(--vintage-gold))/0.08] p-3 flex items-center gap-3">
-                <Sparkles className="h-5 w-5 text-[hsl(var(--vintage-gold))] shrink-0" />
-                <p className="text-sm font-serif italic">{lefevere.data?.ploegKarakterisering ?? directorAnalysis.quote}</p>
-              </div>
             </>
           )}
         </CardContent>
