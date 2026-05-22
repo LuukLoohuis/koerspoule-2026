@@ -343,7 +343,10 @@ export function useHorsCategorieSummary(): HorsSummary {
     [allGameRiders],
   );
   const lefevereInput = useMemo<LefevereReportInput | null>(() => {
-    if (!director) return null;
+    // Pas bouwen als ALLE data binnen is — anders rekent `director` op
+    // halve data (lege totals → tijdelijk fout, te hoog cijfer) en genereren
+    // we een rapport dat niet bij het echte cijfer past.
+    if (isLoading || !director) return null;
     return {
       score: director.score,
       components: {
@@ -359,7 +362,7 @@ export function useHorsCategorieSummary(): HorsSummary {
         ? { emirates: { percentage: emirates.pct, droomploegPunten: emirates.dreamTotal, jouwPunten: emirates.myPoints } }
         : undefined,
     };
-  }, [director, monte, jokerIds, entry?.team_name, ridersById, emirates]);
+  }, [isLoading, director, monte, jokerIds, entry?.team_name, ridersById, emirates]);
 
   const stageCount = stages.filter((s) => s.results_status === "approved").length;
 
