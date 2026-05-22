@@ -64,6 +64,11 @@ export default function KaravaanFeed({
     [feed.data?.etappes, feed.data?.lastVisited],
   );
 
+  // Alle hooks vóór de early return aanroepen (Rules of Hooks): anders crasht de
+  // pagina ("Rendered more hooks than during the previous render") wanneer de
+  // gebruiker geen subpoule heeft.
+  const horsSummary = useHorsCategorieSummary();
+
   // Empty: geen subpoules
   if (subpoules.length === 0 && !subpoulesQuery.isLoading) {
     return (
@@ -79,7 +84,6 @@ export default function KaravaanFeed({
 
   const etappes = feed.data?.etappes ?? [];
   const ministrip = feed.data?.ministrip;
-  const horsSummary = useHorsCategorieSummary();
 
   return (
     <div className="space-y-4">
