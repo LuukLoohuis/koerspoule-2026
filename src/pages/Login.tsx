@@ -9,6 +9,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Trophy, Mountain, Medal, Shirt, Star, Bike } from "lucide-react";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { supabase } from "@/lib/supabase";
+import { useThema } from "@/contexts/ThemaContext";
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -61,6 +62,7 @@ const floatingBadges = [
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { thema } = useThema();
   const [searchParams] = useSearchParams();
   const [isRegister, setIsRegister] = useState(() => searchParams.get("register") === "1");
   const [email, setEmail] = useState("");
@@ -259,7 +261,7 @@ export default function Login() {
               transition={{ duration: 0.3 }}
             >
               <h1 className="font-display text-3xl font-bold mb-1 tracking-tight">
-                {isRegister ? "Doe mee aan de Corsa!" : "Bentornato!"}
+                {isRegister ? thema.login_meedoen : thema.login_welkom}
               </h1>
               <p className="text-muted-foreground font-serif italic text-sm">
                 {isRegister

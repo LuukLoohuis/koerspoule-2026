@@ -33,6 +33,8 @@ export type Thema = {
   supporters: string;
   homepage_titel: string;
   homepage_subtitel: string;
+  login_welkom: string;   // begroeting bij inloggen (in de koers-taal)
+  login_meedoen: string;  // titel bij registreren
   quotes: string[];
   truien: Record<TruiType, TruiDef>;
 };
@@ -50,6 +52,8 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     supporters: "Tifosi",
     homepage_titel: "Giro d'Italia 2026",
     homepage_subtitel: "La Corsa Rosa",
+    login_welkom: "Bentornato!",
+    login_meedoen: "Doe mee aan de Corsa!",
     quotes: [
       "Il ciclismo è poesia in movimento.",
       "La strada è lunga, ma la gloria aspetta.",
@@ -74,6 +78,8 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     supporters: "Les Supporters",
     homepage_titel: "Tour de France 2026",
     homepage_subtitel: "La Grande Boucle",
+    login_welkom: "Bon retour !",
+    login_meedoen: "Rejoins la Grande Boucle !",
     quotes: [
       "Le Tour, c'est la vie.",
       "La route est longue, mais la gloire attend.",
@@ -98,6 +104,8 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     supporters: "La Afición",
     homepage_titel: "Vuelta a España 2026",
     homepage_subtitel: "La Vuelta",
+    login_welkom: "¡Bienvenido de nuevo!",
+    login_meedoen: "¡Únete a la Vuelta!",
     quotes: [
       "La Vuelta es pasión pura.",
       "El camino es duro, pero la gloria espera.",
