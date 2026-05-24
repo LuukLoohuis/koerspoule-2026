@@ -5,13 +5,12 @@
 // + ploeg-karakterisering, op basis van het rapportcijfer en concrete etappe-data
 // van de aanroepende user. Returnt JSON; geen DB-storage in deze MVP.
 //
-// Vereist env: ANTHROPIC_API_KEY (in Supabase secrets).
+// Vereist env: OPENAI_API_KEY (in Supabase secrets).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
-const MODEL = "claude-haiku-4-5-20251001";
-const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
+const MODEL = "gpt-5.4-mini";
+const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -99,36 +98,37 @@ Voorbeeld 7 — Cijfer 3.2, 0 punten, joker gemist, slecht-stabiele trend:
 Voorbeeld 8 — Zware bergetappe, cijfer 9.4, zes klimmers in top 10, beide jokers raak, 93% apen:
 {"directeursAnalyse":"Negen komma vier. Kijk, ik ben niet gemakkelijk te imponeren, maar dit is wel iets. Zes klimmers in de top tien én beide jokers raak — dat is professionalisme van de hoogste orde. Drieënnegentig procent van de apen achter u laten, da's geen geluk, da's voorbereiding en lef. Dáár betaal ik voor — chapeau.","ploegKarakterisering":"Je ploeg schittert: chapeau, en doorgaan."}`;
 
-// ─── Anthropic call ─────────────────────────────────────────────────────────
+// ─── OpenAI call (Chat Completions, JSON-mode) ──────────────────────────────
+// Het lange SYSTEM_PROMPT wordt door OpenAI automatisch gecachet (>1024 tokens).
 
-async function callAnthropic(userPrompt: string): Promise<{ directeursAnalyse: string; ploegKarakterisering: string }> {
-  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY niet ingesteld in env");
+async function callOpenAI(userPrompt: string): Promise<{ directeursAnalyse: string; ploegKarakterisering: string }> {
+  const apiKey = Deno.env.get("OPENAI_API_KEY");
+  if (!apiKey) throw new Error("OPENAI_API_KEY niet ingesteld in env");
 
-  const res = await fetch(ANTHROPIC_URL, {
+  const res = await fetch(OPENAI_URL, {
     method: "POST",
     headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
+      "Authorization": `Bearer ${apiKey}`,
       "content-type": "application/json",
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 800,
-      system: [
-        { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+      max_completion_tokens: 2000,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userPrompt },
       ],
-      messages: [{ role: "user", content: userPrompt }],
     }),
   });
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Anthropic API ${res.status}: ${text}`);
+    throw new Error(`OpenAI API ${res.status}: ${text}`);
   }
   const data = await res.json();
-  const text = data?.content?.[0]?.text;
-  if (typeof text !== "string") throw new Error("Geen tekst in Anthropic-antwoord");
+  const text = data?.choices?.[0]?.message?.content;
+  if (typeof text !== "string") throw new Error("Geen tekst in OpenAI-antwoord");
 
   const match = text.match(/\{[\s\S]*\}/);
   const jsonStr = match ? match[0] : text;
@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
     if (typeof body?.score !== "number") return json({ error: "score (number) required" }, 400);
 
     const userPrompt = buildUserPrompt(body);
-    const result = await callAnthropic(userPrompt);
+    const result = await callOpenAI(userPrompt);
 
     return json({ ok: true, ...result, model: MODEL });
   } catch (e) {

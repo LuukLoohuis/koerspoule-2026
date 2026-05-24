@@ -6,13 +6,12 @@
 // `etappe_commentaren`. Idempotent (UPSERT). Roep aan vanuit de admin-UI nadat een
 // etappe is gefiatteerd.
 //
-// Vereist env: ANTHROPIC_API_KEY (in Supabase secrets).
+// Vereist env: OPENAI_API_KEY (in Supabase secrets).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
-const MODEL = "claude-haiku-4-5-20251001";
-const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
+const MODEL = "gpt-5.4-mini";
+const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -113,36 +112,37 @@ type SubpouleMember = {
 
 type CommentaryResult = { michelWuyts: string; joseDeCauwer: string };
 
-// ─── Anthropic call met prompt caching ─────────────────────────────────────
+// ─── OpenAI call (Chat Completions, JSON-mode) ──────────────────────────────
+// Het lange SYSTEM_PROMPT wordt door OpenAI automatisch gecachet (>1024 tokens).
 
-async function callAnthropic(userPrompt: string): Promise<CommentaryResult> {
-  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY niet ingesteld in env");
+async function callOpenAI(userPrompt: string): Promise<CommentaryResult> {
+  const apiKey = Deno.env.get("OPENAI_API_KEY");
+  if (!apiKey) throw new Error("OPENAI_API_KEY niet ingesteld in env");
 
-  const res = await fetch(ANTHROPIC_URL, {
+  const res = await fetch(OPENAI_URL, {
     method: "POST",
     headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
+      "Authorization": `Bearer ${apiKey}`,
       "content-type": "application/json",
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 800,
-      system: [
-        { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+      max_completion_tokens: 2000,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userPrompt },
       ],
-      messages: [{ role: "user", content: userPrompt }],
     }),
   });
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Anthropic API ${res.status}: ${text}`);
+    throw new Error(`OpenAI API ${res.status}: ${text}`);
   }
   const data = await res.json();
-  const text = data?.content?.[0]?.text;
-  if (typeof text !== "string") throw new Error("Geen tekst in Anthropic-antwoord");
+  const text = data?.choices?.[0]?.message?.content;
+  if (typeof text !== "string") throw new Error("Geen tekst in OpenAI-antwoord");
 
   // Probeer JSON eruit te parsen (eventueel zit er wrap omheen ondanks instructies)
   const match = text.match(/\{[\s\S]*\}/);
@@ -451,7 +451,7 @@ Deno.serve(async (req) => {
           members,
         });
 
-        const result = await callAnthropic(userPrompt);
+        const result = await callOpenAI(userPrompt);
 
         const { error: upErr } = await admin
           .from("etappe_commentaren")
