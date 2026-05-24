@@ -64,6 +64,14 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
+    const admin = createClient(supabaseUrl, serviceKey);
+    const { data: roleRow } = await admin
+      .from("user_roles").select("role")
+      .eq("user_id", user.id).eq("role", "admin").maybeSingle();
+    if (!roleRow) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...CORS, "Content-Type": "application/json" } });
+    }
+
     const { stage_id } = await req.json() as { stage_id: string };
     if (!stage_id) {
       return new Response(JSON.stringify({ error: "stage_id verplicht" }), { status: 400, headers: { ...CORS, "Content-Type": "application/json" } });
