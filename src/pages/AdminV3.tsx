@@ -38,7 +38,7 @@ export default function AdminV3() {
     // Try with accent_color first; if the column doesn't exist yet, fall back without it
     let { data, error } = await supabase
       .from("games")
-      .select("id, name, game_type, year, status, starts_at, slug, registration_opens_at, registration_closes_at, accent_color")
+      .select("id, name, game_type, year, status, starts_at, slug, registration_opens_at, registration_closes_at, accent_color, theme")
       .order("year", { ascending: false, nullsFirst: false });
     if (error) {
       const retry = await supabase
@@ -50,7 +50,7 @@ export default function AdminV3() {
         toast.error(`Games laden mislukt: ${retry.error.message}`);
         return;
       }
-      data = retry.data;
+      data = retry.data as typeof data;
     }
     setGames((data ?? []) as Game[]);
     if ((data ?? []).length && !activeGameId) {

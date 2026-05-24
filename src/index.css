@@ -432,7 +432,19 @@
     background: hsl(var(--maillot-jaune) / 0.22) !important;
     border-left: 3px solid hsl(var(--maillot-jaune));
   }
+
+  /* Bolletjestrui-patroon (bergtrui Tour/Vuelta) — voor HTML-elementen.
+     TruiBadge gebruikt eigen SVG; deze klasse is voor losse vlakken. */
+  .trui-bolletjes {
+    background-color: #ffffff;
+    background-image: radial-gradient(circle, var(--bolletje-kleur, #cc0000) 30%, transparent 31%);
+    background-size: 12px 12px;
+  }
 }
+
+/* Bolletje-kleur per thema (Tour = rood, Vuelta = blauw) */
+:root[data-thema="geel"] .trui-bolletjes { --bolletje-kleur: #cc0000; }
+:root[data-thema="rood"] .trui-bolletjes { --bolletje-kleur: #2e5ba8; }
 
 /* ── Mobile — max-width: 767px ─────────────────────────────────────────────── */
 @media (max-width: 767px) {

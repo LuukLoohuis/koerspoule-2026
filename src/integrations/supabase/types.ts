@@ -643,6 +643,7 @@ export type Database = {
           start_date: string | null
           starts_at: string | null
           status: string
+          theme: string | null
           year: number
         }
         Insert: {
@@ -660,6 +661,7 @@ export type Database = {
           start_date?: string | null
           starts_at?: string | null
           status?: string
+          theme?: string | null
           year: number
         }
         Update: {
@@ -677,6 +679,7 @@ export type Database = {
           start_date?: string | null
           starts_at?: string | null
           status?: string
+          theme?: string | null
           year?: number
         }
         Relationships: []

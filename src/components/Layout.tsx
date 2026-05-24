@@ -8,7 +8,6 @@ import RouteSeo from "@/components/RouteSeo";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
-import { useAccentColor } from "@/hooks/useAccentColor";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -26,7 +25,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, role } = useAuth();
   const isLoggedIn = Boolean(user);
 
-  useAccentColor();
+  // Kleur-tokens worden nu door ThemaProvider gezet (vervangt useAccentColor).
 
   const handleLogout = async () => {
     if (!supabase) return;

@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { RACE_PALETTES } from "@/hooks/useAccentColor";
+import { deriveThemaKey, THEMAS, type ThemaKey } from "@/lib/themas";
 
 export type Game = {
   id: string;
@@ -23,6 +23,7 @@ export type Game = {
   registration_opens_at?: string | null;
   registration_closes_at?: string | null;
   accent_color?: string | null;
+  theme?: "roze" | "geel" | "rood" | null;
 };
 
 // Convert ISO timestamp ↔ datetime-local input string (in user's local TZ)
@@ -47,38 +48,42 @@ const STATUS_LABELS: Record<string, string> = {
   finished: "Afgerond",
 };
 
-// Color swatches for race theme selector
-const COLOR_OPTIONS = [
-  { label: "Auto",   value: null,           style: { backgroundColor: "hsl(35,14%,88%)", border: "1px dashed hsl(35,12%,65%)" } },
-  { label: "Giro",   value: RACE_PALETTES.giro.primary,   style: { backgroundColor: `hsl(${RACE_PALETTES.giro.primary})` } },
-  { label: "Tour",   value: RACE_PALETTES.tdf.primary,    style: { backgroundColor: `hsl(${RACE_PALETTES.tdf.primary})` } },
-  { label: "Vuelta", value: RACE_PALETTES.vuelta.primary, style: { backgroundColor: `hsl(${RACE_PALETTES.vuelta.primary})` } },
+// Thema-knoppen: roze (Giro) / geel (Tour) / rood (Vuelta).
+const THEME_BUTTONS: { key: ThemaKey; emoji: string; label: string }[] = [
+  { key: "roze", emoji: "🌸", label: "Giro" },
+  { key: "geel", emoji: "💛", label: "Tour" },
+  { key: "rood", emoji: "🔴", label: "Vuelta" },
 ];
 
-function ColorSwatchPicker({
-  current,
+function ThemeButtons({
+  game,
   onChange,
 }: {
-  current: string | null | undefined;
-  onChange: (color: string | null) => void;
+  game: Game;
+  onChange: (key: ThemaKey) => void;
 }) {
+  const activeKey = deriveThemaKey(game.theme, game.game_type);
   return (
-    <div className="flex items-center gap-1">
-      {COLOR_OPTIONS.map((opt) => {
-        const isActive = (current ?? null) === opt.value;
+    <div className="flex items-center gap-1.5">
+      {THEME_BUTTONS.map((btn) => {
+        const isActive = activeKey === btn.key;
+        const kleur = THEMAS[btn.key].kleuren.primair;
         return (
           <button
-            key={opt.label}
-            title={opt.label}
-            onClick={() => onChange(opt.value)}
-            style={opt.style}
+            key={btn.key}
+            title={`${btn.label} — ${THEMAS[btn.key].koers}`}
+            onClick={() => onChange(btn.key)}
             className={cn(
-              "w-5 h-5 rounded-full transition-all",
+              "flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border transition-all",
               isActive
-                ? "ring-2 ring-offset-1 ring-foreground/60 scale-125"
-                : "opacity-55 hover:opacity-90 hover:scale-110"
+                ? "border-foreground/60 ring-1 ring-foreground/40 shadow-sm"
+                : "border-border opacity-60 hover:opacity-100",
             )}
-          />
+            style={isActive ? { backgroundColor: `${kleur}22`, borderColor: kleur } : undefined}
+          >
+            <span aria-hidden>{btn.emoji}</span>
+            <span>{btn.label}</span>
+          </button>
         );
       })}
     </div>
@@ -143,21 +148,21 @@ export default function GamesTab({
     await reload();
   }
 
-  async function setAccentColor(id: string, color: string | null) {
+  async function setTheme(id: string, theme: "roze" | "geel" | "rood") {
     if (!supabase) return;
-    const { error } = await supabase.from("games").update({ accent_color: color }).eq("id", id);
+    const { error } = await supabase.from("games").update({ theme }).eq("id", id);
     if (error) {
-      if (error.message.includes("accent_color") || error.message.includes("schema cache")) {
+      if (error.message.includes("theme") || error.message.includes("schema cache")) {
         toast.error(
-          "Voer eerst de migratie uit in de Supabase SQL editor: ALTER TABLE games ADD COLUMN IF NOT EXISTS accent_color text; — daarna Settings → API → Reload schema.",
-          { duration: 8000 }
+          "Voer eerst de migratie uit: ALTER TABLE games ADD COLUMN IF NOT EXISTS theme text; — daarna Settings → API → Reload schema.",
+          { duration: 8000 },
         );
       } else {
-        toast.error(`Themakleur bijwerken mislukt: ${error.message}`);
+        toast.error(`Thema bijwerken mislukt: ${error.message}`);
       }
       return;
     }
-    toast.success("Themakleur bijgewerkt");
+    toast.success("Thema geactiveerd");
     await reload();
   }
 
@@ -284,13 +289,13 @@ export default function GamesTab({
         </CardContent>
       </Card>
 
-      {/* Accent color migration note */}
+      {/* Thema migration note */}
       <div className="text-xs text-muted-foreground bg-muted/50 border border-border rounded px-3 py-2">
-        <strong>Themakleur:</strong> vereist kolom in database.{" "}
+        <strong>Thema:</strong> 🌸 Giro · 💛 Tour · 🔴 Vuelta. De hele site herkleurt automatisch op het gekozen thema van de actieve game. Vereist kolom in database:{" "}
         <code className="font-mono bg-muted px-1 rounded">
-          ALTER TABLE games ADD COLUMN IF NOT EXISTS accent_color text;
+          ALTER TABLE games ADD COLUMN IF NOT EXISTS theme text;
         </code>{" "}
-        Voer dit eenmalig uit in de Supabase SQL editor.
+        Voer dit eenmalig uit in de Supabase SQL editor (of via de migratie).
       </div>
 
       <Card>
@@ -335,10 +340,7 @@ export default function GamesTab({
                     </Select>
                   </TableCell>
                   <TableCell>
-                    <ColorSwatchPicker
-                      current={g.accent_color}
-                      onChange={(color) => setAccentColor(g.id, color)}
-                    />
+                    <ThemeButtons game={g} onChange={(key) => setTheme(g.id, key)} />
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {g.starts_at ? new Date(g.starts_at).toLocaleString("nl-NL") : "—"}
