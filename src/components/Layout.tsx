@@ -8,6 +8,7 @@ import RouteSeo from "@/components/RouteSeo";
 import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
+import { useThema } from "@/contexts/ThemaContext";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -23,6 +24,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, role } = useAuth();
+  const { thema } = useThema();
   const isLoggedIn = Boolean(user);
 
   // Kleur-tokens worden nu door ThemaProvider gezet (vervangt useAccentColor).
@@ -166,7 +168,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <span className="vintage-ornament-symbol">⚜</span>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-            <p className="font-serif italic">"La Corsa Rosa" — Koerspoule, uit liefde voor de koers.</p>
+            <p className="font-serif italic">"{thema.homepage_subtitel}" — Koerspoule, uit liefde voor de koers.</p>
             <p className="font-sans">
               Materiaalpech? Mail naar{" "}
               <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors">

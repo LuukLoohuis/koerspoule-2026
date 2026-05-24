@@ -25,6 +25,8 @@ import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import Stamp from "@/components/retro/Stamp";
 import JerseyBadge from "@/components/retro/JerseyBadge";
+import TruiBadge from "@/components/retro/TruiBadge";
+import { useThema } from "@/contexts/ThemaContext";
 import KaravaanFeed from "@/components/karavaan/KaravaanFeed";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
@@ -84,6 +86,7 @@ const MEMBER_COLORS = [
 
 export default function MijnPeloton() {
   const { toast } = useToast();
+  const { thema } = useThema();
   const { data: profile } = useProfile();
   const { data: currentGame } = useCurrentGame();
   const { entry, teamName, saveTeamName } = useEntry(currentGame?.id);
@@ -813,21 +816,21 @@ export default function MijnPeloton() {
                               };
                             }),
                             {
-                              label: "🟢 Puntentrui",
+                              label: thema.truien.punten.naam,
                               myPick: myTeam.predictions.pointsJersey,
                               otherPick: subpoolCompareTeam.predictions.pointsJersey,
                               myPts: calcJerseyPts(myTeam.predictions.pointsJersey, actualPointsJersey),
                               otherPts: calcJerseyPts(subpoolCompareTeam.predictions.pointsJersey, actualPointsJersey)
                             },
                             {
-                              label: "🔴 Bergtrui",
+                              label: thema.truien.berg.naam,
                               myPick: myTeam.predictions.mountainJersey,
                               otherPick: subpoolCompareTeam.predictions.mountainJersey,
                               myPts: calcJerseyPts(myTeam.predictions.mountainJersey, actualMountainJersey),
                               otherPts: calcJerseyPts(subpoolCompareTeam.predictions.mountainJersey, actualMountainJersey)
                             },
                             {
-                              label: "⚪ Jongerentrui",
+                              label: thema.truien.jongeren.naam,
                               myPick: myTeam.predictions.youthJersey,
                               otherPick: subpoolCompareTeam.predictions.youthJersey,
                               myPts: calcJerseyPts(myTeam.predictions.youthJersey, actualYouthJersey),
@@ -1754,13 +1757,14 @@ function WatAlsTab({
 
 }
 const CLASSIFICATION_TABS = [
-{ key: "gc", label: "🏆 Algemeen", jersey: "bg-jersey-pink", valueKey: "time" as const },
-{ key: "points", label: "🟣 Punten", jersey: "bg-jersey-purple", valueKey: "points" as const },
-{ key: "kom", label: "🔵 Berg", jersey: "bg-jersey-blue", valueKey: "points" as const },
-{ key: "youth", label: "⚪ Jongeren", jersey: "bg-jersey-white border", valueKey: "time" as const }] as
+{ key: "gc", trui: "algemeen" as const, valueKey: "time" as const },
+{ key: "points", trui: "punten" as const, valueKey: "points" as const },
+{ key: "kom", trui: "berg" as const, valueKey: "points" as const },
+{ key: "youth", trui: "jongeren" as const, valueKey: "time" as const }] as
 const;
 
 function ClassificationTabs({ myRiderNumbers }: {myRiderNumbers: Set<number>;}) {
+  const { thema } = useThema();
   const [activeClassification, setActiveClassification] = useState("gc");
 
   const activeTab = CLASSIFICATION_TABS.find((t) => t.key === activeClassification) || CLASSIFICATION_TABS[0];
@@ -1779,8 +1783,9 @@ function ClassificationTabs({ myRiderNumbers }: {myRiderNumbers: Set<number>;}) 
             "border-primary bg-primary text-primary-foreground" :
             "border-border hover:border-muted-foreground"
           )}>
-          
-            {tab.label}
+
+            <TruiBadge type={tab.trui} formaat="klein" />
+            {thema.truien[tab.trui].naam}
           </button>
         )}
       </div>
@@ -1788,8 +1793,8 @@ function ClassificationTabs({ myRiderNumbers }: {myRiderNumbers: Set<number>;}) 
       <Card className="retro-border">
         <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-3 px-4">
           <CardTitle className="font-display text-base flex items-center gap-2">
-            <span className={cn("w-4 h-4 rounded-full", activeTab.jersey)} />
-            {activeTab.label} Klassement
+            <TruiBadge type={activeTab.trui} formaat="klein" />
+            {thema.truien[activeTab.trui].naam} Klassement
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0 divide-y divide-border">

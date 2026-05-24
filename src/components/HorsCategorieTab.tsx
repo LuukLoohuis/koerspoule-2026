@@ -20,6 +20,9 @@ import {
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import JerseyBadge from "@/components/retro/JerseyBadge";
+import TruiBadge from "@/components/retro/TruiBadge";
+import { useThema } from "@/contexts/ThemaContext";
+import type { TruiType } from "@/lib/themas";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 
@@ -39,11 +42,11 @@ function ownershipColor(pct: number): string {
   return `hsl(var(--vintage-gold) / ${alpha.toFixed(2)})`;
 }
 
-const CLASSIFICATION_META: Array<{ key: "gc" | "points" | "kom" | "youth"; label: string; emoji: string; tint: string }> = [
-  { key: "gc",     label: "Eindwinnaar",  emoji: "🏆", tint: "from-primary/20 to-[hsl(var(--vintage-gold))/0.15]" },
-  { key: "points", label: "Groene trui",  emoji: "🟢", tint: "from-emerald-500/15 to-emerald-500/5" },
-  { key: "kom",    label: "Bolletjestrui",emoji: "🔴", tint: "from-rose-500/15 to-rose-500/5" },
-  { key: "youth",  label: "Witte trui",   emoji: "⚪", tint: "from-slate-200/30 to-slate-200/10" },
+const CLASSIFICATION_META: Array<{ key: "gc" | "points" | "kom" | "youth"; trui: TruiType; tint: string }> = [
+  { key: "gc",     trui: "algemeen", tint: "from-primary/20 to-[hsl(var(--vintage-gold))/0.15]" },
+  { key: "points", trui: "punten",   tint: "from-emerald-500/15 to-emerald-500/5" },
+  { key: "kom",    trui: "berg",     tint: "from-rose-500/15 to-rose-500/5" },
+  { key: "youth",  trui: "jongeren", tint: "from-slate-200/30 to-slate-200/10" },
 ];
 
 // ─── Data hooks (all unchanged) ───────────────────────────────────────────────
@@ -248,6 +251,7 @@ function DirectorIcon({ className }: { className?: string }) {
 type HorsTabKey = "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark";
 
 export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabKey } = {}) {
+  const { thema } = useThema();
   const { data: game } = useCurrentGame();
   const isLive = Boolean(game?.status && ["live", "locked", "finished", "closed"].includes(String(game.status)));
   const { entry, picksByCategory, jokerIds, predictions: myPredictions } = useEntry(game?.id);
@@ -1188,8 +1192,8 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
                     <div key={meta.key} className={cn("rounded-lg border-2 border-border p-3 bg-gradient-to-br", meta.tint)}>
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                          <span className="text-base leading-none">{meta.emoji}</span>
-                          {meta.label}
+                          <TruiBadge type={meta.trui} formaat="klein" />
+                          {meta.key === "gc" ? "Eindwinnaar" : thema.truien[meta.trui].naam}
                         </p>
                         {meta.key === "gc" && <span className="text-[9px] font-mono text-muted-foreground">positie 1–3</span>}
                       </div>

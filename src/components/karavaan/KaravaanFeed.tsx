@@ -8,6 +8,7 @@ import MiniStrip, { type HorsTabKey } from "@/components/karavaan/MiniStrip";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import Stamp from "@/components/retro/Stamp";
+import { useThema } from "@/contexts/ThemaContext";
 import { cn } from "@/lib/utils";
 
 const LAST_SUBPOULE_KEY = "karavaan:lastSubpouleId";
@@ -24,6 +25,7 @@ export default function KaravaanFeed({
   onOpenUitslagen?: () => void;
 }) {
   const { user } = useAuth();
+  const { thema } = useThema();
   const { data: game } = useCurrentGame();
   const subpoulesQuery = useSubpoules(game?.id);
   const subpoules = subpoulesQuery.subpoules;
@@ -89,7 +91,7 @@ export default function KaravaanFeed({
         <Newspaper className="h-10 w-10 text-muted-foreground/50 mx-auto" />
         <p className="font-display font-bold text-lg">Je zit nog niet in een subpoule</p>
         <p className="text-sm text-muted-foreground font-serif italic max-w-md mx-auto">
-          De Gazetta rolt mee met je subpoules. Maak er een aan of word lid via de Subpoules-tab.
+          De {thema.krant} rolt mee met je subpoules. Maak er een aan of word lid via de Subpoules-tab.
         </p>
       </div>
     );
@@ -417,10 +419,11 @@ function NieuwMarker() {
 }
 
 function EmptyFeed() {
+  const { thema } = useThema();
   return (
     <div className="rounded-xl border-2 border-dashed border-foreground/20 bg-card p-6 text-center space-y-3">
       <Newspaper className="h-10 w-10 text-muted-foreground/50 mx-auto" />
-      <p className="font-display font-bold text-lg">De Gazetta gaat zo de pers in…</p>
+      <p className="font-display font-bold text-lg">De {thema.krant} gaat zo de pers in…</p>
       <p className="text-sm text-muted-foreground font-serif italic max-w-md mx-auto">
         De eerste etappe-updates verschijnen hier zodra de jury de uitslagen heeft gefiatteerd.
       </p>

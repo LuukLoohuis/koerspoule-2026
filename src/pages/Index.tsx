@@ -35,6 +35,8 @@ import CountdownBanner from "@/components/CountdownBanner";
 import KoerspouleLogo, { type RaceKey } from "@/components/KoerspouleLogo";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useThema } from "@/contexts/ThemaContext";
+import type { ThemaKey } from "@/lib/themas";
 import { useAuth } from "@/hooks/useAuth";
 import { useGameBenchmark } from "@/hooks/useSubpouleBenchmark";
 import type { EntryStanding } from "@/hooks/useResults";
@@ -52,6 +54,12 @@ type RaceCopy = {
   edition: string; // volledige editie-string voor eyebrow
   jersey: string;
   startToFinish: string; // bv. "9–31 mei 2026"
+};
+
+const THEMA_TO_RACE: Record<ThemaKey, RaceKey> = {
+  roze: "giro",
+  geel: "tdf",
+  rood: "vuelta",
 };
 
 const RACE_COPY: Record<RaceKey, RaceCopy> = {
@@ -149,11 +157,10 @@ const MOCK_MY_PROGRESS = {
 export default function Index() {
   const navigate = useNavigate();
   const { data: currentGame } = useCurrentGame();
+  const { thema, key: themaKey } = useThema();
 
-  // useCurrentGame() levert (vermoedelijk) een object met `game_type`. Als jouw
-  // hook anders heet of een andere shape teruggeeft, pas deze ene regel aan.
-  const race = ((currentGame as { game_type?: string } | null | undefined)?.game_type ??
-    "giro") as RaceKey;
+  // De hero volgt het actieve thema (admin-keuze), met game_type als fallback.
+  const race = THEMA_TO_RACE[themaKey];
   const copy = RACE_COPY[race];
 
   const { user } = useAuth();
@@ -382,14 +389,10 @@ export default function Index() {
               </h1>
 
               <span
-                className="margin-note tilt-l hidden lg:inline-block absolute right-6 top-[200px] text-[27px]"
+                className="margin-note tilt-l hidden lg:inline-block absolute right-6 top-[200px] text-[27px] max-w-[260px] text-right italic"
                 aria-hidden
               >
-                Dietro ogni maglia rosa
-                <br />
-                c'è un <em>Direttore Sportivo</em>
-                <br />
-                geniale
+                {thema.quotes[0]}
               </span>
 
               <p className="font-serif italic text-foreground/80 md:text-xl max-w-[480px] mt-6 leading-relaxed text-lg my-[2px] text-center">
