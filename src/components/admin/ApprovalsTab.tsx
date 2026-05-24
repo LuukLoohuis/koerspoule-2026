@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic } from "lucide-react";
+import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 
 type BreakdownRow = {
@@ -128,6 +128,34 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [lefBusy, setLefBusy] = useState(false);
+
+  // Wist alle Lefevère-rapporten van deze game → elke deelnemer krijgt een vers
+  // rapport bij de volgende weergave (nu via het nieuwe model / verbeterde prompt).
+  async function regenerateLefevere() {
+    if (!supabase || !activeGameId) return;
+    if (!confirm("Lefevère-rapporten van alle deelnemers wissen? Ze worden opnieuw gegenereerd zodra een deelnemer zijn rapport opent.")) return;
+    setLefBusy(true);
+    try {
+      const { data: entries, error: e1 } = await supabase
+        .from("entries")
+        .select("id")
+        .eq("game_id", activeGameId);
+      if (e1) throw e1;
+      const ids = (entries ?? []).map((x: { id: string }) => x.id);
+      if (ids.length === 0) { toast.info("Geen deelnemers in deze game."); return; }
+      const { error: e2, count } = await supabase
+        .from("lefevere_rapporten")
+        .delete({ count: "exact" })
+        .in("entry_id", ids);
+      if (e2) throw e2;
+      toast.success(`Lefevère-cache gewist (${count ?? 0} rapporten). Regenereren bij volgende weergave.`);
+    } catch (e) {
+      toast.error(`Lefevère wissen faalde: ${(e as Error).message}`);
+    } finally {
+      setLefBusy(false);
+    }
+  }
 
   async function load() {
     if (!supabase || !activeGameId) return;
@@ -212,9 +240,21 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                 <Badge className="bg-orange-500 hover:bg-orange-500">{pending.length}</Badge>
               )}
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={load} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />Herlaad
-            </Button>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[hsl(var(--vintage-gold))] text-[hsl(var(--vintage-gold))]"
+                onClick={regenerateLefevere}
+                disabled={lefBusy || !activeGameId}
+                title="Wist alle Lefevère-rapporten van deze game; ze regenereren bij de volgende weergave."
+              >
+                <Briefcase className={`w-4 h-4 mr-1 ${lefBusy ? "animate-pulse" : ""}`} />Regenereer Lefevère
+              </Button>
+              <Button variant="ghost" size="sm" onClick={load} disabled={loading}>
+                <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />Herlaad
+              </Button>
+            </div>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Stap 3 — De punten zijn al berekend. Klap per etappe de puntenberekening uit om te controleren waarom een deelnemer een bepaald aantal punten heeft, en publiceer daarna naar de deelnemers.
@@ -310,7 +350,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                     }
                   }}
                 >
-                  <Mic className="w-3 h-3 mr-1" />Regenereer commentaar
+                  <Mic className="w-3 h-3 mr-1" />Regenereer Michel &amp; José
                 </Button>
                 <Button
                   size="sm"
