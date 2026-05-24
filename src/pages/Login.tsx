@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Trophy, Mountain, Medal, Shirt, Star, Bike } from "lucide-react";
-import koerspouleLogo from "@/assets/koerspoule-logo.png";
+import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
 
