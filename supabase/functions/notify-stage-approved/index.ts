@@ -77,8 +77,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "stage_id verplicht" }), { status: 400, headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
-    const admin = createClient(supabaseUrl, serviceKey);
-
     // Haal etappe-info op
     const { data: stage, error: stageErr } = await admin
       .from("stages")
