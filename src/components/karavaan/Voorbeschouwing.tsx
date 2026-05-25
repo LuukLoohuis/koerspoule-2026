@@ -104,44 +104,40 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
         )}
       </div>
 
-      <div className="p-4 space-y-3">
-        <div>
-          <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-            {thema.etappe} {stage.stage_number}
-          </p>
-          <h3 className="font-display font-bold text-lg leading-tight">
-            {stage.name?.trim() || `Etappe ${stage.stage_number}`}
-          </h3>
-          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <Mountain className="h-3 w-3" />{typeLabel}
-            </span>
-            {stage.distance_km != null && (
-              <>
-                <span aria-hidden>·</span>
-                <span className="font-mono tabular-nums">{stage.distance_km} km</span>
-              </>
-            )}
-          </div>
+      <div className="px-4 pt-4 pb-3">
+        <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+          {thema.etappe} {stage.stage_number}
+        </p>
+        <h3 className="font-display font-bold text-lg leading-tight">
+          {stage.name?.trim() || `Etappe ${stage.stage_number}`}
+        </h3>
+        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1">
+            <Mountain className="h-3 w-3" />{typeLabel}
+          </span>
+          {stage.distance_km != null && (
+            <>
+              <span aria-hidden>·</span>
+              <span className="font-mono tabular-nums">{stage.distance_km} km</span>
+            </>
+          )}
         </div>
-
-        {/* Profiel: geüploade afbeelding (admin). */}
-        {profielOk ? (
-          <div className="rounded-lg border border-primary/25 bg-white p-1 shadow-sm">
-            <img
-              src={profielUrl as string}
-              alt={`Profiel ${thema.etappe} ${stage.stage_number}`}
-              loading="lazy"
-              onError={() => setFailed(true)}
-              className="w-full max-h-64 object-contain mx-auto"
-            />
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground font-serif italic">
-            Nog geen profiel beschikbaar voor deze {thema.etappe.toLowerCase()}.
-          </p>
-        )}
       </div>
+
+      {/* Profiel — full-bleed, geen wit, beslaat de volle breedte */}
+      {profielOk ? (
+        <img
+          src={profielUrl as string}
+          alt={`Profiel ${thema.etappe} ${stage.stage_number}`}
+          loading="lazy"
+          onError={() => setFailed(true)}
+          className="block w-full h-auto"
+        />
+      ) : (
+        <p className="px-4 pb-4 text-xs text-muted-foreground font-serif italic">
+          Nog geen profiel beschikbaar voor deze {thema.etappe.toLowerCase()}.
+        </p>
+      )}
     </div>
   );
 }
