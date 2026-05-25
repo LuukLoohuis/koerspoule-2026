@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
 import { Mountain, CalendarDays } from "lucide-react";
+import EtappeProfiel, { type ProfielData } from "@/components/karavaan/EtappeProfiel";
 
 type UpcomingStage = {
   id: string;
@@ -12,6 +13,7 @@ type UpcomingStage = {
   stage_type: string | null;
   distance_km: number | null;
   profile_image_url: string | null;
+  profile_data: ProfielData | null;
   status: string | null;
 };
 
@@ -89,7 +91,7 @@ export default function Voorbeschouwing({
       if (!supabase || !gameId) return null;
       const { data, error } = await (supabase as any)
         .from("stages")
-        .select("id, stage_number, name, date, stage_type, distance_km, profile_image_url, status")
+        .select("id, stage_number, name, date, stage_type, distance_km, profile_image_url, profile_data, status")
         .eq("game_id", gameId)
         .eq("is_gc", false)
         .order("stage_number");
@@ -98,12 +100,34 @@ export default function Voorbeschouwing({
     },
   });
 
+  // Bronbeeld-URL: handmatige admin-URL wint, anders afgeleid van touretappe.nl.
+  const profielUrl = stage
+    ? stage.profile_image_url || touretappeProfileUrl(gameType, year, stage.stage_number)
+    : null;
+  const heeftData = Boolean(stage?.profile_data?.punten?.length);
+
+  // Lazy: laat het vision-model het profiel uitlezen als er nog geen data is.
+  const extract = useQuery({
+    queryKey: ["stage-profiel-extract", stage?.id, profielUrl],
+    enabled: Boolean(supabase && stage?.id && profielUrl && !heeftData),
+    staleTime: Infinity,
+    gcTime: 60 * 60 * 1000,
+    retry: 0,
+    queryFn: async (): Promise<ProfielData | null> => {
+      if (!supabase || !stage?.id || !profielUrl) return null;
+      const { data, error } = await supabase.functions.invoke("generate-stage-profile", {
+        body: { stage_id: stage.id, image_url: profielUrl },
+      });
+      if (error) return null;
+      return ((data as { profile_data?: ProfielData })?.profile_data ?? null) as ProfielData | null;
+    },
+  });
+
   if (!stage) return null;
 
   const typeLabel = TYPE_LABEL[String(stage.stage_type)] ?? "Etappe";
   const wanneer = dateBadge(stage.date);
-  // Handmatige URL (admin) wint; anders automatisch afgeleid van touretappe.nl.
-  const profielUrl = stage.profile_image_url || touretappeProfileUrl(gameType, year, stage.stage_number);
+  const profileData: ProfielData | null = stage.profile_data ?? extract.data ?? null;
   const profielOk = Boolean(profielUrl) && profielUrl !== failedUrl;
 
   return (
@@ -144,8 +168,12 @@ export default function Voorbeschouwing({
           </div>
         </div>
 
-        {/* Profiel-afbeelding (alleen het profiel, automatisch van touretappe.nl) */}
-        {profielOk ? (
+        {/* Profiel: strakke AI-SVG zodra data binnen is, anders bronbeeld als fallback. */}
+        {profileData ? (
+          <div className="rounded-lg border border-primary/25 bg-card px-1 py-2">
+            <EtappeProfiel data={profileData} />
+          </div>
+        ) : profielOk ? (
           <div className="overflow-hidden rounded-lg border border-primary/30 bg-white shadow-sm ring-1 ring-foreground/[0.04]">
             <img
               src={profielUrl as string}

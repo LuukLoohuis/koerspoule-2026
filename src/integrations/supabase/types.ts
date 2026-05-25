@@ -1127,6 +1127,7 @@ export type Database = {
           id: string
           is_gc: boolean
           name: string | null
+          profile_data: Json | null
           profile_image_url: string | null
           results_status: string
           stage_number: number
@@ -1144,6 +1145,7 @@ export type Database = {
           id?: string
           is_gc?: boolean
           name?: string | null
+          profile_data?: Json | null
           profile_image_url?: string | null
           results_status?: string
           stage_number: number
@@ -1161,6 +1163,7 @@ export type Database = {
           id?: string
           is_gc?: boolean
           name?: string | null
+          profile_data?: Json | null
           profile_image_url?: string | null
           results_status?: string
           stage_number?: number
