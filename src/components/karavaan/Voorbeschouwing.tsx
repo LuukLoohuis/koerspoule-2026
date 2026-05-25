@@ -146,13 +146,15 @@ export default function Voorbeschouwing({
 
         {/* Profiel-afbeelding (alleen het profiel, automatisch van touretappe.nl) */}
         {profielOk ? (
-          <img
-            src={profielUrl as string}
-            alt={`Profiel ${thema.etappe} ${stage.stage_number}`}
-            loading="lazy"
-            onError={() => setFailedUrl(profielUrl)}
-            className="w-full rounded-md border border-border/60 bg-white"
-          />
+          <div className="overflow-hidden rounded-lg border border-primary/30 bg-white shadow-sm ring-1 ring-foreground/[0.04]">
+            <img
+              src={profielUrl as string}
+              alt={`Profiel ${thema.etappe} ${stage.stage_number}`}
+              loading="lazy"
+              onError={() => setFailedUrl(profielUrl)}
+              className="w-full h-28 md:h-36 object-cover object-center"
+            />
+          </div>
         ) : (
           <p className="text-xs text-muted-foreground font-serif italic">
             Nog geen profiel beschikbaar voor deze {thema.etappe.toLowerCase()}.
