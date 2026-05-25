@@ -165,7 +165,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <footer className="gradient-border-top bg-card py-5 pb-20 md:pb-5">
         <div className="container mx-auto px-5">
           <div className="vintage-ornament max-w-sm mx-auto mb-4">
-            <span className="vintage-ornament-symbol">⚜</span>
+            <span className="vintage-ornament-symbol">{thema.key === "geel" ? "✲" : thema.key === "rood" ? "☀" : "⚜"}</span>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
             <p className="font-serif italic">"{thema.homepage_subtitel}" — Koerspoule, uit liefde voor de koers.</p>

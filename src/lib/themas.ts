@@ -70,7 +70,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
   },
   geel: {
     key: "geel",
-    kleuren: { primair: "#F5C518", secundair: "#1a1a1a", achtergrond: "#FFFDF0", tekst: "#1a1a1a", accent: "#FFFFFF" },
+    kleuren: { primair: "#E0A411", secundair: "#1a1a1a", achtergrond: "#FFFDF0", tekst: "#1a1a1a", accent: "#C0851A" },
     krant: "L'Équipe",
     koers: "Tour de France",
     etappe: "Étape",

@@ -126,6 +126,13 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+    /* Subtiele papier-stipple — kleurt mee met het thema via --ink */
+    background-image:
+      radial-gradient(hsl(var(--ink) / 0.022) 0.5px, transparent 0.6px),
+      radial-gradient(hsl(var(--ink) / 0.018) 0.5px, transparent 0.6px);
+    background-size: 5px 5px, 7px 7px;
+    background-position: 0 0, 2px 3px;
+    background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Playfair Display', serif;

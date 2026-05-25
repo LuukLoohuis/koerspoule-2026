@@ -36,6 +36,7 @@ import KoerspouleLogo, { type RaceKey } from "@/components/KoerspouleLogo";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useThema } from "@/contexts/ThemaContext";
+import Stamp from "@/components/retro/Stamp";
 import type { ThemaKey } from "@/lib/themas";
 import { useAuth } from "@/hooks/useAuth";
 import { useGameBenchmark } from "@/hooks/useSubpouleBenchmark";
@@ -367,6 +368,8 @@ export default function Index() {
           <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-12 md:gap-14 items-center">
             {/* Linker kolom — koers + CTAs + stats */}
             <div className="relative">
+              <Stamp tone="thema" rotation={-2} className="mb-3">{thema.homepage_subtitel}</Stamp>
+              <br className="hidden md:block" />
               <span className="editor-eyebrow text-lg">{copy.edition}</span>
 
               <h1

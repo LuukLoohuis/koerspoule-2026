@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-type Tone = "ink" | "wine" | "jaune";
+type Tone = "ink" | "wine" | "jaune" | "thema";
 
 /**
  * Stempel — typmachine-stijl decoratie voor page-headers en bulletins.
@@ -23,6 +23,7 @@ export default function Stamp({
     ink: "text-foreground border-foreground/70 bg-foreground/[0.04]",
     wine: "text-[hsl(var(--bolletjes-bright))] border-[hsl(var(--bolletjes-bright))/0.7] bg-[hsl(var(--bolletjes-bright))/0.06]",
     jaune: "text-[hsl(var(--maillot-jaune-dark))] border-[hsl(var(--maillot-jaune-dark))/0.7] bg-[hsl(var(--maillot-jaune))/0.12]",
+    thema: "text-primary border-primary/70 bg-primary/[0.07]",
   };
 
   return (
