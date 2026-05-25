@@ -5,6 +5,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
 import MiniStrip, { type HorsTabKey } from "@/components/karavaan/MiniStrip";
+import Voorbeschouwing from "@/components/karavaan/Voorbeschouwing";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import Stamp from "@/components/retro/Stamp";
@@ -124,6 +125,9 @@ export default function KaravaanFeed({
           onOpenHors={onOpenHors}
         />
       )}
+
+      {/* De Voorbeschouwing — vooruitblik op de eerstvolgende etappe */}
+      <Voorbeschouwing gameId={game?.id} />
 
       {/* Feed */}
       {feed.isLoading ? (

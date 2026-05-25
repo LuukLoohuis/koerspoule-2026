@@ -33,6 +33,7 @@ export type Stage = {
   status: string | null;
   stage_type?: StageType | null;
   distance_km?: number | null;
+  profile_image_url?: string | null;
   is_gc?: boolean;
 };
 
@@ -168,6 +169,18 @@ export default function StagesTab({
     await reload();
   }
 
+  async function updateProfileUrl(id: string, value: string) {
+    if (!supabase) return;
+    const url = value.trim() || null;
+    const { error } = await supabase.from("stages").update({ profile_image_url: url } as never).eq("id", id);
+    if (error) {
+      toast.error(`Profiel-URL opslaan mislukt: ${error.message}`);
+      return;
+    }
+    toast.success("Profiel-URL opgeslagen");
+    await reload();
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -243,6 +256,7 @@ export default function StagesTab({
                 <TableHead>Datum</TableHead>
                 <TableHead className="w-24">Km</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Profiel-URL</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-16"></TableHead>
               </TableRow>
@@ -300,6 +314,23 @@ export default function StagesTab({
                       </Select>
                     )}
                   </TableCell>
+                  <TableCell>
+                    {s.is_gc ? (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    ) : (
+                      <Input
+                        type="url"
+                        defaultValue={s.profile_image_url ?? ""}
+                        onBlur={(e) => {
+                          const next = e.target.value;
+                          const cur = s.profile_image_url ?? "";
+                          if (next.trim() !== cur) updateProfileUrl(s.id, next);
+                        }}
+                        className="h-8 w-44 text-xs"
+                        placeholder="https://…/profiel.png"
+                      />
+                    )}
+                  </TableCell>
                   <TableCell><Badge variant="outline" className="text-xs">{s.status ?? "draft"}</Badge></TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" onClick={() => deleteStage(s.id, s.is_gc)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
@@ -307,7 +338,7 @@ export default function StagesTab({
                 </TableRow>
               ))}
               {stages.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Nog geen etappes.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Nog geen etappes.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
