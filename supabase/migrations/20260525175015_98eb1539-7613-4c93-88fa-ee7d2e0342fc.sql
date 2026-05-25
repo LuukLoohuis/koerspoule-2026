@@ -1,0 +1,1 @@
+ALTER TABLE public.stages ADD COLUMN IF NOT EXISTS profile_data jsonb;
