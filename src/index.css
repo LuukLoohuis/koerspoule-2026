@@ -447,11 +447,25 @@
     background-image: radial-gradient(circle, var(--bolletje-kleur, #cc0000) 30%, transparent 31%);
     background-size: 12px 12px;
   }
+
+  /* ── Bolletjes-divider — maillot à pois (Tour) / de lunares (Vuelta) ── */
+  .bolletjes-rule {
+    height: 14px;
+    background-image: radial-gradient(var(--bolletje-kleur, hsl(var(--primary))) 2.4px, transparent 2.7px);
+    background-size: 14px 14px;
+    background-position: center;
+    background-repeat: repeat-x;
+    opacity: 0.72;
+  }
 }
 
 /* Bolletje-kleur per thema (Tour = rood, Vuelta = blauw) */
 :root[data-thema="geel"] .trui-bolletjes { --bolletje-kleur: #cc0000; }
 :root[data-thema="rood"] .trui-bolletjes { --bolletje-kleur: #2e5ba8; }
+
+/* Bolletje-kleur op thema-niveau zodat losse dividers meekleuren */
+:root[data-thema="geel"] { --bolletje-kleur: #cc0000; }
+:root[data-thema="rood"] { --bolletje-kleur: #2e5ba8; }
 
 /* ── Mobile — max-width: 767px ─────────────────────────────────────────────── */
 @media (max-width: 767px) {

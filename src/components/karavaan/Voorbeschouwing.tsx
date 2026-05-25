@@ -87,6 +87,8 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
 
   return (
     <div className="rounded-xl border-2 border-foreground/15 bg-card overflow-hidden shadow-sm">
+      {/* Thema-band — bolletjes (Tour/Vuelta) of accent (Giro) */}
+      <div className="bolletjes-rule" aria-hidden />
       {/* Krant-kop */}
       <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2 border-b border-border/50">
         <div className="flex items-center gap-2">
