@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
-import { Mountain, CalendarDays } from "lucide-react";
+import { Mountain, CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
 
 type UpcomingStage = {
   id: string;
@@ -62,6 +63,7 @@ function dateBadge(date: string | null): string | null {
 export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
   const { thema } = useThema();
   const [failed, setFailed] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const { data: stage } = useQuery({
     queryKey: ["voorbeschouwing-stage", gameId],
@@ -124,15 +126,44 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
         </div>
       </div>
 
-      {/* Profiel — full-bleed, geen wit, beslaat de volle breedte */}
+      {/* Profiel — full-bleed; klik om soepel uit te vouwen */}
       {profielOk ? (
-        <img
-          src={profielUrl as string}
-          alt={`Profiel ${thema.etappe} ${stage.stage_number}`}
-          loading="lazy"
-          onError={() => setFailed(true)}
-          className="block w-full h-auto"
-        />
+        <motion.div
+          initial={false}
+          animate={{ height: open ? "auto" : 104 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          onClick={() => setOpen((o) => !o)}
+          className="relative overflow-hidden cursor-pointer group select-none"
+          role="button"
+          aria-expanded={open}
+          aria-label={open ? "Profiel inklappen" : "Profiel uitvouwen"}
+        >
+          <img
+            src={profielUrl as string}
+            alt={`Profiel ${thema.etappe} ${stage.stage_number}`}
+            loading="lazy"
+            onError={() => setFailed(true)}
+            className="block w-full h-auto"
+          />
+
+          {/* Ingeklapt: fade + uitnodiging om te openen */}
+          {!open && (
+            <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card via-card/80 to-transparent flex items-end justify-center pb-2 pointer-events-none">
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-primary bg-card/90 rounded-full px-2.5 py-1 border border-primary/30 shadow-sm transition-transform group-hover:translate-y-[-1px]">
+                <ChevronDown className="h-3 w-3" /> Toon profiel
+              </span>
+            </div>
+          )}
+
+          {/* Uitgeklapt: inklap-knop */}
+          {open && (
+            <div className="absolute right-2 bottom-2">
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground bg-card/90 rounded-full px-2 py-0.5 border border-border">
+                <ChevronUp className="h-3 w-3" /> Inklappen
+              </span>
+            </div>
+          )}
+        </motion.div>
       ) : (
         <p className="px-4 pb-4 text-xs text-muted-foreground font-serif italic">
           Nog geen profiel beschikbaar voor deze {thema.etappe.toLowerCase()}.
