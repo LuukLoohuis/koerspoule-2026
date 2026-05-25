@@ -22,6 +22,9 @@ export type LefevereReportInput = {
     emirates?: { percentage: number; droomploegPunten: number; jouwPunten: number };
     monkeyIQ?: { score: number; interpretatie: "genie" | "slim" | "gemiddeld" | "aap" };
   };
+  // Variatie-guard: recente eigen rapporten (laatste etappes) om herhaling te vermijden.
+  recenteAnalyses?: string[];
+  recenteKarakteriseringen?: string[];
 };
 
 export type LefevereReportResult = {
@@ -77,9 +80,25 @@ export function useLefevereReport(
         };
       }
 
-      // 2) Niet in cache → genereer via de edge function.
+      // 2) Niet in cache → genereer via de edge function. Eerst de laatste paar
+      //    eigen rapporten ophalen (lagere stage_count) zodat de generator
+      //    herhaling van openingen/boutades kan vermijden (variatie-guard).
+      let recenteAnalyses: string[] = [];
+      let recenteKarakteriseringen: string[] = [];
+      const { data: recent } = await (supabase as any)
+        .from("lefevere_rapporten")
+        .select("directeurs_analyse, ploeg_karakterisering, stage_count")
+        .eq("entry_id", entryId)
+        .lt("stage_count", stageCount)
+        .order("stage_count", { ascending: false })
+        .limit(5);
+      if (Array.isArray(recent)) {
+        recenteAnalyses = recent.map((r: any) => r.directeurs_analyse).filter(Boolean);
+        recenteKarakteriseringen = recent.map((r: any) => r.ploeg_karakterisering).filter(Boolean);
+      }
+
       const { data, error } = await supabase.functions.invoke("generate-lefevere-report", {
-        body: input,
+        body: { ...input, recenteAnalyses, recenteKarakteriseringen },
       });
       if (error) {
         let detail = error.message;
