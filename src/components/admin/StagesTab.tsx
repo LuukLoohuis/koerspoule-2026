@@ -53,6 +53,7 @@ export default function StagesTab({
   const [distanceKm, setDistanceKm] = useState<string>("");
   const [savingType, setSavingType] = useState<string | null>(null);
   const [savingKm, setSavingKm] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<string | null>(null);
 
   const regularStages = stages.filter((s) => !s.is_gc);
   const gcStage = stages.find((s) => s.is_gc) ?? null;
@@ -169,15 +170,42 @@ export default function StagesTab({
     await reload();
   }
 
-  async function updateProfileUrl(id: string, value: string) {
-    if (!supabase) return;
-    const url = value.trim() || null;
-    const { error } = await supabase.from("stages").update({ profile_image_url: url } as never).eq("id", id);
-    if (error) {
-      toast.error(`Profiel-URL opslaan mislukt: ${error.message}`);
+  async function uploadProfile(id: string, file: File | undefined | null) {
+    if (!supabase || !file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Kies een afbeelding (png/jpg).");
       return;
     }
-    toast.success("Profiel-URL opgeslagen");
+    setUploading(id);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${activeGameId}/${id}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("stage-profiles")
+        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("stage-profiles").getPublicUrl(path);
+      // cache-bust zodat een nieuwe upload meteen zichtbaar is
+      const url = `${pub.publicUrl}?v=${Date.now()}`;
+      const { error: updErr } = await supabase.from("stages").update({ profile_image_url: url } as never).eq("id", id);
+      if (updErr) throw updErr;
+      toast.success("Profiel geüpload");
+      await reload();
+    } catch (e) {
+      toast.error(`Upload mislukt: ${(e as Error).message}`);
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  async function clearProfile(id: string) {
+    if (!supabase) return;
+    const { error } = await supabase.from("stages").update({ profile_image_url: null } as never).eq("id", id);
+    if (error) {
+      toast.error(`Verwijderen mislukt: ${error.message}`);
+      return;
+    }
+    toast.success("Profiel verwijderd");
     await reload();
   }
 
@@ -256,7 +284,7 @@ export default function StagesTab({
                 <TableHead>Datum</TableHead>
                 <TableHead className="w-24">Km</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Profiel-URL</TableHead>
+                <TableHead>Profiel</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-16"></TableHead>
               </TableRow>
@@ -318,17 +346,34 @@ export default function StagesTab({
                     {s.is_gc ? (
                       <span className="text-xs text-muted-foreground">—</span>
                     ) : (
-                      <Input
-                        type="url"
-                        defaultValue={s.profile_image_url ?? ""}
-                        onBlur={(e) => {
-                          const next = e.target.value;
-                          const cur = s.profile_image_url ?? "";
-                          if (next.trim() !== cur) updateProfileUrl(s.id, next);
-                        }}
-                        className="h-8 w-44 text-xs"
-                        placeholder="https://…/profiel.png"
-                      />
+                      <div className="flex items-center gap-2">
+                        {s.profile_image_url && (
+                          <img
+                            src={s.profile_image_url}
+                            alt="profiel"
+                            className="h-8 w-16 object-cover rounded border border-border"
+                          />
+                        )}
+                        <label className="cursor-pointer text-xs underline text-primary">
+                          {uploading === s.id ? "Uploaden…" : s.profile_image_url ? "Vervang" : "Upload"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploading === s.id}
+                            onChange={(e) => uploadProfile(s.id, e.target.files?.[0])}
+                          />
+                        </label>
+                        {s.profile_image_url && (
+                          <button
+                            type="button"
+                            className="text-xs text-destructive underline"
+                            onClick={() => clearProfile(s.id)}
+                          >
+                            Verwijder
+                          </button>
+                        )}
+                      </div>
                     )}
                   </TableCell>
                   <TableCell><Badge variant="outline" className="text-xs">{s.status ?? "draft"}</Badge></TableCell>

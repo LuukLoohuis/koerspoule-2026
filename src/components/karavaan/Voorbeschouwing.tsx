@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
 import { Mountain, CalendarDays } from "lucide-react";
-import EtappeProfiel, { type ProfielData } from "@/components/karavaan/EtappeProfiel";
 
 type UpcomingStage = {
   id: string;
@@ -13,7 +12,6 @@ type UpcomingStage = {
   stage_type: string | null;
   distance_km: number | null;
   profile_image_url: string | null;
-  profile_data: ProfielData | null;
   status: string | null;
 };
 
@@ -24,16 +22,6 @@ const TYPE_LABEL: Record<string, string> = {
   bergop: "Bergrit",
   ploegentijdrit: "Ploegentijdrit",
 };
-
-// touretappe.nl host statische, voorspelbare profiel-URL's per koers/jaar/etappe.
-const RACE_SEG: Record<string, string> = { giro: "giro", tdf: "tour", tour: "tour", vuelta: "vuelta" };
-
-/** Leid de profiel-URL af van touretappe.nl. Null als koers/jaar onbekend. */
-function touretappeProfileUrl(gameType: string | null | undefined, year: number | null | undefined, stageNumber: number): string | null {
-  const seg = RACE_SEG[String(gameType)];
-  if (!seg || !year) return null;
-  return `https://cdn.touretappe.nl/images/${seg}/${year}/etappe-${stageNumber}-profiel.jpg`;
-}
 
 function ymdLocal(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -71,17 +59,9 @@ function dateBadge(date: string | null): string | null {
   }
 }
 
-export default function Voorbeschouwing({
-  gameId,
-  gameType,
-  year,
-}: {
-  gameId?: string;
-  gameType?: string | null;
-  year?: number | null;
-}) {
+export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
   const { thema } = useThema();
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
 
   const { data: stage } = useQuery({
     queryKey: ["voorbeschouwing-stage", gameId],
@@ -91,7 +71,7 @@ export default function Voorbeschouwing({
       if (!supabase || !gameId) return null;
       const { data, error } = await (supabase as any)
         .from("stages")
-        .select("id, stage_number, name, date, stage_type, distance_km, profile_image_url, profile_data, status")
+        .select("id, stage_number, name, date, stage_type, distance_km, profile_image_url, status")
         .eq("game_id", gameId)
         .eq("is_gc", false)
         .order("stage_number");
@@ -100,35 +80,12 @@ export default function Voorbeschouwing({
     },
   });
 
-  // Bronbeeld-URL: handmatige admin-URL wint, anders afgeleid van touretappe.nl.
-  const profielUrl = stage
-    ? stage.profile_image_url || touretappeProfileUrl(gameType, year, stage.stage_number)
-    : null;
-  const heeftData = Boolean(stage?.profile_data?.punten?.length);
-
-  // Lazy: laat het vision-model het profiel uitlezen als er nog geen data is.
-  const extract = useQuery({
-    queryKey: ["stage-profiel-extract", stage?.id, profielUrl],
-    enabled: Boolean(supabase && stage?.id && profielUrl && !heeftData),
-    staleTime: Infinity,
-    gcTime: 60 * 60 * 1000,
-    retry: 0,
-    queryFn: async (): Promise<ProfielData | null> => {
-      if (!supabase || !stage?.id || !profielUrl) return null;
-      const { data, error } = await supabase.functions.invoke("generate-stage-profile", {
-        body: { stage_id: stage.id, image_url: profielUrl },
-      });
-      if (error) return null;
-      return ((data as { profile_data?: ProfielData })?.profile_data ?? null) as ProfielData | null;
-    },
-  });
-
   if (!stage) return null;
 
   const typeLabel = TYPE_LABEL[String(stage.stage_type)] ?? "Etappe";
   const wanneer = dateBadge(stage.date);
-  const profileData: ProfielData | null = stage.profile_data ?? extract.data ?? null;
-  const profielOk = Boolean(profielUrl) && profielUrl !== failedUrl;
+  const profielUrl = stage.profile_image_url;
+  const profielOk = Boolean(profielUrl) && !failed;
 
   return (
     <div className="rounded-xl border-2 border-foreground/15 bg-card overflow-hidden shadow-sm">
@@ -168,19 +125,15 @@ export default function Voorbeschouwing({
           </div>
         </div>
 
-        {/* Profiel: strakke AI-SVG zodra data binnen is, anders bronbeeld als fallback. */}
-        {profileData ? (
-          <div className="rounded-lg border border-primary/25 bg-card px-1 py-2">
-            <EtappeProfiel data={profileData} />
-          </div>
-        ) : profielOk ? (
-          <div className="overflow-hidden rounded-lg border border-primary/30 bg-white shadow-sm ring-1 ring-foreground/[0.04]">
+        {/* Profiel: geüploade afbeelding (admin). */}
+        {profielOk ? (
+          <div className="rounded-lg border border-primary/25 bg-white p-1 shadow-sm">
             <img
               src={profielUrl as string}
               alt={`Profiel ${thema.etappe} ${stage.stage_number}`}
               loading="lazy"
-              onError={() => setFailedUrl(profielUrl)}
-              className="w-full h-28 md:h-36 object-cover object-center"
+              onError={() => setFailed(true)}
+              className="w-full max-h-64 object-contain mx-auto"
             />
           </div>
         ) : (
