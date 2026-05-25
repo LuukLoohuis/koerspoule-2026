@@ -6,6 +6,7 @@ export type Game = {
   name: string;
   year: number;
   status: "draft" | "open" | "locked" | "live" | "finished";
+  game_type?: "giro" | "tdf" | "vuelta" | null;
 };
 
 export function useCurrentGame() {
@@ -16,7 +17,7 @@ export function useCurrentGame() {
       // Prefer an actively running game
       const { data: live, error: liveErr } = await supabase
         .from("games")
-        .select("id, name, year, status")
+        .select("id, name, year, status, game_type")
         .in("status", ["open", "locked", "live"])
         .order("year", { ascending: false })
         .limit(1)
@@ -27,7 +28,7 @@ export function useCurrentGame() {
       // Fallback: most recent game of any status (so the app shows real data even pre-launch)
       const { data: any, error: anyErr } = await supabase
         .from("games")
-        .select("id, name, year, status")
+        .select("id, name, year, status, game_type")
         .order("year", { ascending: false })
         .limit(1)
         .maybeSingle();

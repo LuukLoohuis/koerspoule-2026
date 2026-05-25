@@ -23,6 +23,16 @@ const TYPE_LABEL: Record<string, string> = {
   ploegentijdrit: "Ploegentijdrit",
 };
 
+// touretappe.nl host statische, voorspelbare profiel-URL's per koers/jaar/etappe.
+const RACE_SEG: Record<string, string> = { giro: "giro", tdf: "tour", tour: "tour", vuelta: "vuelta" };
+
+/** Leid de profiel-URL af van touretappe.nl. Null als koers/jaar onbekend. */
+function touretappeProfileUrl(gameType: string | null | undefined, year: number | null | undefined, stageNumber: number): string | null {
+  const seg = RACE_SEG[String(gameType)];
+  if (!seg || !year) return null;
+  return `https://cdn.touretappe.nl/images/${seg}/${year}/etappe-${stageNumber}-profiel.jpg`;
+}
+
 function ymdLocal(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -59,9 +69,17 @@ function dateBadge(date: string | null): string | null {
   }
 }
 
-export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
+export default function Voorbeschouwing({
+  gameId,
+  gameType,
+  year,
+}: {
+  gameId?: string;
+  gameType?: string | null;
+  year?: number | null;
+}) {
   const { thema } = useThema();
-  const [imgError, setImgError] = useState(false);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
   const { data: stage } = useQuery({
     queryKey: ["voorbeschouwing-stage", gameId],
@@ -84,6 +102,9 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
 
   const typeLabel = TYPE_LABEL[String(stage.stage_type)] ?? "Etappe";
   const wanneer = dateBadge(stage.date);
+  // Handmatige URL (admin) wint; anders automatisch afgeleid van touretappe.nl.
+  const profielUrl = stage.profile_image_url || touretappeProfileUrl(gameType, year, stage.stage_number);
+  const profielOk = Boolean(profielUrl) && profielUrl !== failedUrl;
 
   return (
     <div className="rounded-xl border-2 border-foreground/15 bg-card overflow-hidden shadow-sm">
@@ -123,14 +144,14 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
           </div>
         </div>
 
-        {/* Profiel-afbeelding */}
-        {stage.profile_image_url && !imgError ? (
+        {/* Profiel-afbeelding (alleen het profiel, automatisch van touretappe.nl) */}
+        {profielOk ? (
           <img
-            src={stage.profile_image_url}
+            src={profielUrl as string}
             alt={`Profiel ${thema.etappe} ${stage.stage_number}`}
             loading="lazy"
-            onError={() => setImgError(true)}
-            className="w-full rounded-md border border-border/60 bg-background"
+            onError={() => setFailedUrl(profielUrl)}
+            className="w-full rounded-md border border-border/60 bg-white"
           />
         ) : (
           <p className="text-xs text-muted-foreground font-serif italic">

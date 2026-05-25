@@ -127,7 +127,11 @@ export default function KaravaanFeed({
       )}
 
       {/* De Voorbeschouwing — vooruitblik op de eerstvolgende etappe */}
-      <Voorbeschouwing gameId={game?.id} />
+      <Voorbeschouwing
+        gameId={game?.id}
+        gameType={(game as { game_type?: string | null } | undefined)?.game_type ?? null}
+        year={(game as { year?: number | null } | undefined)?.year ?? null}
+      />
 
       {/* Feed */}
       {feed.isLoading ? (
