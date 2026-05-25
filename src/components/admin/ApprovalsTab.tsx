@@ -240,21 +240,9 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                 <Badge className="bg-orange-500 hover:bg-orange-500">{pending.length}</Badge>
               )}
             </CardTitle>
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-[hsl(var(--vintage-gold))] text-[hsl(var(--vintage-gold))]"
-                onClick={regenerateLefevere}
-                disabled={lefBusy || !activeGameId}
-                title="Wist alle Lefevère-rapporten van deze game; ze regenereren bij de volgende weergave."
-              >
-                <Briefcase className={`w-4 h-4 mr-1 ${lefBusy ? "animate-pulse" : ""}`} />Regenereer Lefevère
-              </Button>
-              <Button variant="ghost" size="sm" onClick={load} disabled={loading}>
-                <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />Herlaad
-              </Button>
-            </div>
+            <Button variant="ghost" size="sm" onClick={load} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />Herlaad
+            </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Stap 3 — De punten zijn al berekend. Klap per etappe de puntenberekening uit om te controleren waarom een deelnemer een bepaald aantal punten heeft, en publiceer daarna naar de deelnemers.
@@ -351,6 +339,16 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   }}
                 >
                   <Mic className="w-3 h-3 mr-1" />Regenereer Michel &amp; José
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-[hsl(var(--vintage-gold))] text-[hsl(var(--vintage-gold))]"
+                  disabled={lefBusy || !activeGameId}
+                  title="Wist alle Lefevère-rapporten van deze game; ze regenereren bij de volgende weergave."
+                  onClick={regenerateLefevere}
+                >
+                  <Briefcase className={`w-3 h-3 mr-1 ${lefBusy ? "animate-pulse" : ""}`} />Regenereer Lefevère
                 </Button>
                 <Button
                   size="sm"
