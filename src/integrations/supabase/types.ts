@@ -1161,6 +1161,7 @@ export type Database = {
           id?: string
           is_gc?: boolean
           name?: string | null
+          profile_image_url?: string | null
           results_status?: string
           stage_number?: number
           stage_type?: Database["public"]["Enums"]["stage_type_enum"]
