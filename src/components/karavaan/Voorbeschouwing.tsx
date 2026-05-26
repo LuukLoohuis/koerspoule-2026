@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
@@ -13,7 +13,7 @@ type UpcomingStage = {
   stage_type: string | null;
   distance_km: number | null;
   profile_image_url: string | null;
-  status: string | null;
+  results_status: string | null;
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -29,22 +29,13 @@ function ymdLocal(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** Kies de eerstvolgende relevante etappe: vandaag → eerstvolgende toekomstige →
- *  anders de laagste nog niet-afgewerkte etappe. */
+/** Eerstvolgende etappe = laagste etappenummer dat nog NIET gefiatteerd is.
+ *  Zodra een uitslag gefiatteerd is, schuift de voorbeschouwing door naar de
+ *  volgende. Alles gefiatteerd → niets meer te voorbeschouwen. */
 function pickUpcoming(stages: UpcomingStage[]): UpcomingStage | null {
   if (stages.length === 0) return null;
-  const today = ymdLocal(new Date());
-  const withDate = stages.filter((s) => s.date);
-  const vandaag = withDate.find((s) => s.date === today);
-  if (vandaag) return vandaag;
-  const toekomst = withDate
-    .filter((s) => (s.date as string) > today)
-    .sort((a, b) => (a.date as string).localeCompare(b.date as string));
-  if (toekomst.length) return toekomst[0];
-  const open = stages
-    .filter((s) => !["approved", "finished"].includes(String(s.status)))
-    .sort((a, b) => a.stage_number - b.stage_number);
-  return open[0] ?? null;
+  const sorted = [...stages].sort((a, b) => a.stage_number - b.stage_number);
+  return sorted.find((s) => String(s.results_status) !== "approved") ?? null;
 }
 
 function dateBadge(date: string | null): string | null {
@@ -62,18 +53,19 @@ function dateBadge(date: string | null): string | null {
 
 export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
   const { thema } = useThema();
+  const qc = useQueryClient();
   const [failed, setFailed] = useState(false);
   const [open, setOpen] = useState(false);
 
   const { data: stage } = useQuery({
     queryKey: ["voorbeschouwing-stage", gameId],
     enabled: Boolean(supabase && gameId),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
     queryFn: async (): Promise<UpcomingStage | null> => {
       if (!supabase || !gameId) return null;
       const { data, error } = await (supabase as any)
         .from("stages")
-        .select("id, stage_number, name, date, stage_type, distance_km, profile_image_url, status")
+        .select("id, stage_number, name, date, stage_type, distance_km, profile_image_url, results_status")
         .eq("game_id", gameId)
         .eq("is_gc", false)
         .order("stage_number");
@@ -81,6 +73,21 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
       return pickUpcoming((data ?? []) as UpcomingStage[]);
     },
   });
+
+  // Ververs zodra een etappe wijzigt (bv. een uitslag wordt gefiatteerd) →
+  // de voorbeschouwing schuift dan door naar de volgende etappe.
+  useEffect(() => {
+    if (!supabase || !gameId) return;
+    const ch = supabase
+      .channel(`voorbeschouwing-${gameId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "stages", filter: `game_id=eq.${gameId}` }, () => {
+        qc.invalidateQueries({ queryKey: ["voorbeschouwing-stage", gameId] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [gameId, qc]);
 
   if (!stage) return null;
 
