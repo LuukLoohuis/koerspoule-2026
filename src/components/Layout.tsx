@@ -155,6 +155,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </nav>
         )}
+
+        {/* Maillot-accent: bolletjes-band onder de masthead (per thema) */}
+        <div className="bolletjes-rule" aria-hidden />
       </header>
 
       {/* Main content */}

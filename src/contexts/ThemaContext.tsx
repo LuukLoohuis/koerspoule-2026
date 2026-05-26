@@ -16,6 +16,7 @@ function applyThemaTokens(key: ThemaKey) {
   const primair = hexToHsl(k.primair);
   const primairFg = readableForeground(k.primair);
   const achtergrond = hexToHsl(k.achtergrond);
+  const kaart = hexToHsl(k.kaart ?? k.achtergrond);
   const tekst = hexToHsl(k.tekst);
   const accent = hexToHsl(k.accent);
 
@@ -28,10 +29,10 @@ function applyThemaTokens(key: ThemaKey) {
   root.style.setProperty("--sidebar-ring", primair);
   root.style.setProperty("--sidebar-primary-foreground", primairFg);
 
-  // Achtergrond / papier
+  // Achtergrond / papier + licht getinte cards
   root.style.setProperty("--background", achtergrond);
-  root.style.setProperty("--card", achtergrond);
-  root.style.setProperty("--popover", achtergrond);
+  root.style.setProperty("--card", kaart);
+  root.style.setProperty("--popover", kaart);
 
   // Tekst
   root.style.setProperty("--foreground", tekst);

@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin, ArrowUp, ArrowDown, Minus, Calendar, Route, Lock, Flag, ClipboardList, Search } from "lucide-react";
 import ResultsUpdatedBadge from "@/components/ResultsUpdatedBadge";
 import RetroStamp from "@/components/retro/Stamp";
-import JerseyBadge from "@/components/retro/JerseyBadge";
+import TruiBadge from "@/components/retro/TruiBadge";
+import Podium from "@/components/Podium";
 import StageBars from "@/components/StageBars";
 
 const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
@@ -543,6 +544,15 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
                   Nog geen ingestuurde teams.
                 </div>
               ) : (
+                <>
+                <Podium
+                  entries={overallStandings.slice(0, 3).map((s) => ({
+                    rank: s.rank,
+                    name: s.team_name?.trim() || s.display_name || "—",
+                    points: s.cumPts,
+                    isMe: s.user_id === user?.id,
+                  }))}
+                />
                 <StandingsList
                   maxHeightClass="max-h-[600px]"
                   placeholder="Zoek op teamnaam of naam…"
@@ -596,7 +606,7 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             {s.rank === 1 && (
-                              <JerseyBadge color="yellow" size={14} title="Leider van het klassement" />
+                              <TruiBadge type="algemeen" formaat="klein" className="shrink-0" />
                             )}
                             <span className={cn(
                               "font-sans text-sm truncate",
@@ -647,6 +657,7 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
                     };
                   })}
                 />
+                </>
               )}
             </div>
 
