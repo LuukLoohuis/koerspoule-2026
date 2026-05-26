@@ -440,6 +440,35 @@
     border-left: 3px solid hsl(var(--maillot-jaune));
   }
 
+  /* Section-kop met gouden accentlijn (krant/poster-stijl) */
+  .kop-gold {
+    position: relative;
+    padding-bottom: 0.5rem;
+  }
+  .kop-gold::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)),
+      hsl(var(--vintage-gold)) 45%,
+      hsl(var(--vintage-gold) / 0) 100%
+    );
+  }
+
+  /* Subtiele hover-lift voor interactieve tegels */
+  .hover-lift {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px -10px hsl(var(--foreground) / 0.28);
+  }
+
   /* Bolletjestrui-patroon (bergtrui Tour/Vuelta) — voor HTML-elementen.
      TruiBadge gebruikt eigen SVG; deze klasse is voor losse vlakken. */
   .trui-bolletjes {

@@ -106,7 +106,10 @@ function DataCell({
       onClick={onClick}
       disabled={!onClick}
       aria-label={ariaLabel}
-      className="px-2 md:px-3 py-3 md:py-4 text-center min-h-[80px] flex flex-col justify-center border-r border-foreground/10 transition-colors enabled:hover:bg-[hsl(var(--paper-dark))]"
+      className={cn(
+        "px-2 md:px-3 py-3 md:py-4 text-center min-h-[80px] flex flex-col justify-center border-r border-foreground/10 transition-colors enabled:hover:bg-[hsl(var(--paper-dark))]",
+        onClick && "hover-lift",
+      )}
     >
       <div className="flex items-center justify-center gap-1">
         <span className="font-oswald font-bold text-2xl md:text-3xl tabular-nums leading-none text-foreground uppercase">

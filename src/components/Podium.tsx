@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import TruiBadge from "@/components/retro/TruiBadge";
 
@@ -26,7 +27,13 @@ export default function Podium({ entries }: { entries: PodiumEntry[] }) {
           const e = byRank.get(rank);
           if (!e) return <div key={rank} className="flex-1" />;
           return (
-            <div key={rank} className="flex-1 flex flex-col items-center min-w-0">
+            <motion.div
+              key={rank}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: (3 - rank) * 0.08, ease: [0.22, 1, 0.36, 1] }}
+              className="flex-1 flex flex-col items-center min-w-0"
+            >
               {rank === 1 && <TruiBadge type="algemeen" formaat="klein" className="mb-1" />}
               <span className="text-lg leading-none mb-1" aria-hidden>{MEDAL[rank]}</span>
               <span
@@ -50,7 +57,7 @@ export default function Podium({ entries }: { entries: PodiumEntry[] }) {
                   e.isMe && "ring-1 ring-inset ring-primary/40",
                 )}
               />
-            </div>
+            </motion.div>
           );
         })}
       </div>

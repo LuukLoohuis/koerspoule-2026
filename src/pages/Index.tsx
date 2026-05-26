@@ -451,10 +451,10 @@ export default function Index() {
           <span className="text-xs text-muted-foreground">{"\n"}</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 border-b border-foreground/20">
+        <div className="grid grid-cols-1 md:grid-cols-3 border-b-2 border-[hsl(var(--vintage-gold))/0.3]">
           {/* Top 5 */}
-          <div className="py-5 md:pr-6 md:border-r border-foreground/10">
-            <div className="text-xs text-muted-foreground mb-1">Klassement</div>
+          <div className="py-5 md:pr-6 md:border-r border-[hsl(var(--vintage-gold))/0.25]">
+            <div className="overline-stamp mb-1">Klassement</div>
             <div className="font-display font-bold text-2xl leading-tight">
               De top vijf{lastStage ? ` na etappe ${lastStage.stage_number}` : ""}
             </div>
@@ -480,8 +480,8 @@ export default function Index() {
           </div>
 
           {/* Sparkline */}
-          <div className="py-5 md:px-6 md:border-r border-foreground/10 relative">
-            <div className="text-xs text-muted-foreground mb-1">Jouw koers</div>
+          <div className="py-5 md:px-6 md:border-r border-[hsl(var(--vintage-gold))/0.25] relative">
+            <div className="overline-stamp mb-1">Jouw koers</div>
             <div className="font-display font-bold text-2xl leading-tight">
               Van plek {myProgress.from} naar plek{" "}
               <span className="text-primary">{myProgress.to}</span>

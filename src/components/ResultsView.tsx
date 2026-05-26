@@ -531,7 +531,7 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
             <div className="retro-border bg-card overflow-hidden">
               <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
               <div className="p-4 border-b-2 border-foreground bg-secondary/50 flex items-center justify-between">
-                <h2 className="font-display text-lg font-bold flex items-center gap-2">
+                <h2 className="heading-oswald text-xl flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-[hsl(var(--vintage-gold))]" />
                   Algemeen klassement
                 </h2>
@@ -782,16 +782,16 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
       .slice(0, 20);
 
   const tabs = [
-    { id: "gc", label: "Algemeen", icon: "🟡", rows: buildList("gc_position") },
-    { id: "points", label: "Punten", icon: "🟢", rows: buildList("points_position") },
-    { id: "kom", label: "Berg", icon: "🔴", rows: buildList("mountain_position") },
-    { id: "youth", label: "Jongeren", icon: "⚪", rows: buildList("youth_position") },
+    { id: "gc", label: "Algemeen", trui: "algemeen" as const, rows: buildList("gc_position") },
+    { id: "points", label: "Punten", trui: "punten" as const, rows: buildList("points_position") },
+    { id: "kom", label: "Berg", trui: "berg" as const, rows: buildList("mountain_position") },
+    { id: "youth", label: "Jongeren", trui: "jongeren" as const, rows: buildList("youth_position") },
   ];
 
   return (
     <div className="retro-border bg-card">
       <div className="p-4 border-b-2 border-foreground bg-secondary/50">
-        <h2 className="font-display text-lg font-bold flex items-center gap-2">
+        <h2 className="heading-oswald text-xl flex items-center gap-2">
           <Medal className="h-5 w-5 text-accent" />
           Klassementen koers
         </h2>
@@ -810,8 +810,8 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
         <Tabs defaultValue="gc">
           <TabsList className="w-full grid grid-cols-4 rounded-none">
             {tabs.map((t) => (
-              <TabsTrigger key={t.id} value={t.id} className="text-xs">
-                <span className="mr-1">{t.icon}</span>{t.label}
+              <TabsTrigger key={t.id} value={t.id} className="text-xs gap-1">
+                <TruiBadge type={t.trui} formaat="klein" />{t.label}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -830,7 +830,7 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
                       : t.id === "kom" ? r.mountain_position
                       : r.youth_position;
                     return (
-                      <div key={r.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                      <div key={r.id} className={cn("flex items-center justify-between px-3 py-2 text-sm", pos === 1 && "maillot-leader-row")}>
                         <div className="flex items-center gap-2 min-w-0">
                           {rankBadge(pos!)}
                           <span className="font-sans truncate">{r.riders?.name ?? r.rider_name ?? "—"}</span>
