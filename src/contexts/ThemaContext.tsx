@@ -29,15 +29,16 @@ function applyThemaTokens(key: ThemaKey) {
   root.style.setProperty("--sidebar-ring", primair);
   root.style.setProperty("--sidebar-primary-foreground", primairFg);
 
-  // Achtergrond / papier + licht getinte cards
-  root.style.setProperty("--background", achtergrond);
-  root.style.setProperty("--card", kaart);
-  root.style.setProperty("--popover", kaart);
-
-  // Tekst
-  root.style.setProperty("--foreground", tekst);
-  root.style.setProperty("--card-foreground", tekst);
-  root.style.setProperty("--popover-foreground", tekst);
+  // Achtergrond/papier + tekst blijven NEUTRAAL (base-tokens) — gebruiker vond
+  // de getinte roze/gele/rode achtergrond te fel. Alleen accenten zijn themed.
+  root.style.removeProperty("--background");
+  root.style.removeProperty("--card");
+  root.style.removeProperty("--popover");
+  root.style.removeProperty("--foreground");
+  root.style.removeProperty("--card-foreground");
+  root.style.removeProperty("--popover-foreground");
+  // referenties behouden (lint) zonder ze toe te passen
+  void achtergrond; void kaart; void tekst;
 
   // Retro-gold accent → secundair/accent van het thema
   root.style.setProperty("--vintage-gold", accent);
