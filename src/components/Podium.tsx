@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import TruiBadge from "@/components/retro/TruiBadge";
+import { useThema } from "@/contexts/ThemaContext";
 
 export type PodiumEntry = { rank: number; name: string; points: number; isMe?: boolean };
 
@@ -32,6 +33,7 @@ const NUM_SIZE: Record<number, string> = { 1: "text-[3.25rem]", 2: "text-[2.5rem
 /** Klassiek 3-trap podium met sequentieel reveal, goud-shine op #1 en
  *  pulserende leiderstrui. Verschijnt boven het algemeen klassement. */
 export default function Podium({ entries }: { entries: PodiumEntry[] }) {
+  const { thema } = useThema();
   const byRank = new Map(entries.map((e) => [e.rank, e]));
   if (!byRank.has(1)) return null;
 
@@ -70,14 +72,22 @@ export default function Podium({ entries }: { entries: PodiumEntry[] }) {
               transition={{ duration: 0.55, delay: REVEAL_DELAY[rank], ease: [0.22, 1, 0.36, 1] }}
               className="flex-1 flex flex-col items-center min-w-0"
             >
-              {/* Leiderstrui op winnaar — pulseert subtiel */}
+              {/* Beker (of leiderstrui als fallback) op winnaar — pulseert subtiel */}
               {rank === 1 && (
                 <motion.div
                   animate={{ scale: [1, 1.06, 1] }}
                   transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 1.1 }}
                   className="mb-1.5"
                 >
-                  <TruiBadge type="algemeen" formaat="medium" />
+                  {thema.beker ? (
+                    <img
+                      src={thema.beker}
+                      alt={`Beker ${thema.koers}`}
+                      className="h-14 w-auto drop-shadow-[0_4px_8px_rgba(0,0,0,0.28)]"
+                    />
+                  ) : (
+                    <TruiBadge type="algemeen" formaat="medium" />
+                  )}
                 </motion.div>
               )}
 

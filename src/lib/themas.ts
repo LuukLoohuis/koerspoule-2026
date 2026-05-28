@@ -36,9 +36,20 @@ export type Thema = {
   homepage_subtitel: string;
   login_welkom: string;   // begroeting bij inloggen (in de koers-taal)
   login_meedoen: string;  // titel bij registreren
+  beker?: string | null;  // URL/asset van de koers-beker (Trofeo / Coupe). null → fallback op TruiBadge.
   quotes: string[];
   truien: Record<TruiType, TruiDef>;
 };
+
+// Glob-import: pikt elke beker-{segment}.png in src/assets op. Geen bestand
+// aanwezig → leeg object → beker = null → Podium valt terug op de TruiBadge.
+const BEKER_GLOB = import.meta.glob("../assets/beker-*.png", {
+  eager: true,
+  import: "default",
+}) as Record<string, string>;
+function bekerVoor(segment: "giro" | "tour" | "vuelta"): string | null {
+  return BEKER_GLOB[`../assets/beker-${segment}.png`] ?? null;
+}
 
 const WIT_RAND = "#C8B89A";
 
@@ -55,6 +66,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     homepage_subtitel: "La Corsa Rosa",
     login_welkom: "Bentornato!",
     login_meedoen: "Doe mee aan de Corsa!",
+    beker: bekerVoor("giro"),
     quotes: [
       "Il ciclismo è poesia in movimento.",
       "La strada è lunga, ma la gloria aspetta.",
@@ -81,6 +93,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     homepage_subtitel: "La Grande Boucle",
     login_welkom: "Bon retour !",
     login_meedoen: "Rejoins la Grande Boucle !",
+    beker: bekerVoor("tour"),
     quotes: [
       "Le Tour, c'est la vie.",
       "La route est longue, mais la gloire attend.",
@@ -107,6 +120,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     homepage_subtitel: "La Vuelta",
     login_welkom: "¡Bienvenido de nuevo!",
     login_meedoen: "¡Únete a la Vuelta!",
+    beker: bekerVoor("vuelta"),
     quotes: [
       "La Vuelta es pasión pura.",
       "El camino es duro, pero la gloria espera.",
