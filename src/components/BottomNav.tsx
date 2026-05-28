@@ -47,12 +47,17 @@ export default function BottomNav() {
               key={label}
               onClick={() => navigate(tab ? `${to}?tab=${tab}` : to)}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 py-2.5 min-h-[52px]",
-                "transition-colors relative select-none",
+                "group flex flex-col items-center justify-center gap-1 py-2 min-h-[58px]",
+                "transition-transform active:scale-95 relative select-none",
                 active ? "text-primary" : "text-muted-foreground hover:text-foreground",
               )}
               aria-current={active ? "page" : undefined}
             >
+              {/* Active marker — gouden stempelstreep bovenaan */}
+              {active && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 h-[3px] w-7 rounded-b-full bg-[hsl(var(--vintage-gold))] pointer-events-none" />
+              )}
+
               {/* Active pill background */}
               {active && (
                 <span className="absolute inset-x-2 inset-y-1.5 rounded-xl pointer-events-none bg-primary/10" />
@@ -60,13 +65,16 @@ export default function BottomNav() {
 
               <Icon
                 className={cn(
-                  "h-[22px] w-[22px] shrink-0 transition-transform relative z-10",
+                  "h-[23px] w-[23px] shrink-0 transition-transform relative z-10 group-active:scale-90",
                   active && "scale-110",
                 )}
                 strokeWidth={active ? 2.5 : 1.75}
               />
 
-              <span className="text-[10px] font-bold uppercase tracking-[0.08em] leading-none relative z-10 whitespace-nowrap">
+              <span className={cn(
+                "text-[10px] font-bold uppercase tracking-[0.08em] leading-none relative z-10 whitespace-nowrap",
+                active && "text-primary",
+              )}>
                 {labelXs ? (
                   <>
                     <span className="[@media(max-width:360px)]:hidden">{shownLabel}</span>

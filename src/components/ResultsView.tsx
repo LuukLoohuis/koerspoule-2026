@@ -528,9 +528,9 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Pool overall standings */}
-            <div className="retro-border bg-card overflow-hidden">
+            <div className="retro-border bg-card">
               <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
-              <div className="p-4 border-b-2 border-foreground bg-secondary/50 flex items-center justify-between">
+              <div className="sticky top-0 z-20 p-4 border-b-2 border-foreground bg-secondary backdrop-blur-sm flex items-center justify-between">
                 <h2 className="heading-oswald text-xl flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-[hsl(var(--vintage-gold))]" />
                   Algemeen klassement
@@ -588,14 +588,14 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
                       node: (
                       <div
                         className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 border-b border-border/40 transition-colors",
+                          "flex items-center gap-2.5 px-3 py-2.5 border-b border-border/40 transition-colors",
                           rowAccentCls,
                           isMe && "bg-primary/[0.08] ring-1 ring-inset ring-primary/30"
                         )}
                       >
-                        {/* Rank number */}
+                        {/* Rank number — Oswald, klassementbord-stijl */}
                         <div className={cn(
-                          "shrink-0 font-display font-black tabular-nums leading-none text-center",
+                          "shrink-0 font-oswald font-bold tabular-nums leading-none text-center",
                           s.rank <= 3 ? "text-2xl w-9" : "text-sm w-7",
                           rankNumCls
                         )}>
@@ -631,10 +631,10 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
                           )}
                         </div>
 
-                        {/* Daily stage position badge */}
+                        {/* Daily stage position badge — verborgen op smalle schermen */}
                         {dagRank != null && dagBadgeCls && (
                           <div className={cn(
-                            "shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-0.5",
+                            "shrink-0 hidden min-[380px]:inline-flex items-center gap-1 rounded-full border px-2 py-0.5",
                             dagBadgeCls
                           )}>
                             <Flag className="w-2.5 h-2.5 shrink-0" />
@@ -735,8 +735,9 @@ function StandingsList({
   }
 
   return (
-    <div>
-      <div className="p-2 border-b border-border">
+    <div className={cn("overflow-y-auto", maxHeightClass)}>
+      {/* Zoekbalk blijft plakken bovenaan tijdens scrollen */}
+      <div className="sticky top-0 z-10 p-2 border-b border-border bg-card">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <input
@@ -748,7 +749,7 @@ function StandingsList({
           />
         </div>
       </div>
-      <div className={cn("overflow-y-auto", maxHeightClass)}>{body}</div>
+      {body}
     </div>
   );
 }
@@ -790,7 +791,7 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
 
   return (
     <div className="retro-border bg-card">
-      <div className="p-4 border-b-2 border-foreground bg-secondary/50">
+      <div className="sticky top-0 z-20 p-4 border-b-2 border-foreground bg-secondary backdrop-blur-sm">
         <h2 className="heading-oswald text-xl flex items-center gap-2">
           <Medal className="h-5 w-5 text-accent" />
           Klassementen koers
@@ -808,10 +809,15 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
         <div className="p-6 text-sm text-muted-foreground italic text-center">Laden...</div>
       ) : (
         <Tabs defaultValue="gc">
-          <TabsList className="w-full grid grid-cols-4 rounded-none">
+          <TabsList className="flex w-full justify-start gap-1.5 overflow-x-auto no-scrollbar rounded-none border-b border-border/60 bg-secondary/30 p-2 h-auto">
             {tabs.map((t) => (
-              <TabsTrigger key={t.id} value={t.id} className="text-xs gap-1">
-                <TruiBadge type={t.trui} formaat="klein" />{t.label}
+              <TabsTrigger
+                key={t.id}
+                value={t.id}
+                className="shrink-0 flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-primary/60 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm"
+              >
+                <TruiBadge type={t.trui} formaat="klein" />
+                <span className="whitespace-nowrap">{t.label}</span>
               </TabsTrigger>
             ))}
           </TabsList>
