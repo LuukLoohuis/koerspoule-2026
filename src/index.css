@@ -469,6 +469,16 @@
     box-shadow: 0 8px 22px -10px hsl(var(--foreground) / 0.28);
   }
 
+  /* Goud-shine voor podium-#1 — een lichtveeg die over de trede glijdt */
+  .podium-shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(75deg, transparent 30%, hsl(0 0% 100% / 0.55) 50%, transparent 70%);
+    pointer-events: none;
+    animation: podium-shine 3.6s ease-in-out infinite;
+    mix-blend-mode: overlay;
+  }
+
   /* Bolletjestrui-patroon (bergtrui Tour/Vuelta) — voor HTML-elementen.
      TruiBadge gebruikt eigen SVG; deze klasse is voor losse vlakken. */
   .trui-bolletjes {
@@ -630,4 +640,12 @@
     font-weight: 700 !important;
     font-variant-numeric: tabular-nums;
   }
+}
+
+/* Keyframes — buiten @layer zodat ze altijd beschikbaar zijn */
+@keyframes podium-shine {
+  0% { transform: translateX(-120%); opacity: 0; }
+  18% { opacity: 0.55; }
+  55% { opacity: 0.55; }
+  100% { transform: translateX(120%); opacity: 0; }
 }
