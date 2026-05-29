@@ -59,7 +59,7 @@ export function MobielTabBalk({ tabs, active, onChange, className }: Props) {
               className={cn(
                 "flex-1 flex items-center justify-center gap-1.5 rounded-[6px]",
                 "min-h-[44px] px-3 transition-all duration-200",
-                "text-[12px] font-bold uppercase tracking-[0.04em] whitespace-nowrap",
+                "text-[12px] font-display font-bold uppercase tracking-[0.04em] whitespace-nowrap",
                 isActive  ? "shadow-sm" : "hover:bg-black/5",
                 tab.disabled && "opacity-40 cursor-not-allowed",
               )}
@@ -113,7 +113,7 @@ export function MobielTabBalk({ tabs, active, onChange, className }: Props) {
               className={cn(
                 "flex items-center gap-1.5 flex-none rounded-[6px]",
                 "min-h-[44px] px-4 transition-all duration-200",
-                "text-[12px] font-bold uppercase tracking-[0.04em] whitespace-nowrap",
+                "text-[12px] font-display font-bold uppercase tracking-[0.04em] whitespace-nowrap",
                 isActive  ? "shadow-sm" : "hover:bg-black/5",
                 tab.disabled && "opacity-40 cursor-not-allowed",
               )}

@@ -792,7 +792,7 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
               type="button"
               onClick={() => setActiveTab(key)}
               className={cn(
-                "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1",
+                "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-display font-semibold uppercase tracking-wider transition-colors flex-1",
                 activeTab === key
                   ? "bg-card text-foreground shadow-sm border border-foreground/10"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
