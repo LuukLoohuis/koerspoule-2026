@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       const unsubUrl = `${BASE_URL}/uitschrijven?token=${token}`;
       await fetch(MAIL_WORKER, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Worker-Secret": Deno.env.get("MAIL_WORKER_SECRET") ?? "" },
         body: JSON.stringify({
           to: testEmail,
           subject: `[TEST] ${subject ?? "Testmail Koerspoule"}`,
