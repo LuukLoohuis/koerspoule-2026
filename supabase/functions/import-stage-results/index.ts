@@ -32,6 +32,28 @@ const BASE_URL: Record<RaceType, string> = {
 
 const UA = "Mozilla/5.0 (compatible; KoerspouleBot/1.0)";
 
+function normalizeName(s: string): string {
+  return (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ø/g, "o").replace(/æ/g, "ae").replace(/ß/g, "ss")
+    .replace(/[^a-z]/g, "");
+}
+
+function nameKeys(s: string): string[] {
+  const norm = normalizeName(s);
+  const tokens = (s || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z\s\-]/g, " ")
+    .split(/\s+/)
+    .map((t) => t.replace(/-/g, ""))
+    .filter(Boolean);
+  const sorted = [...tokens].sort().join("");
+  return Array.from(new Set([norm, sorted].filter(Boolean)));
+}
+
 function parseRows(html: string): Array<{ position: number; bib: number | null; name: string }> {
   // Find first rankingTable
   const tableMatch = html.match(/<table class="rankingTable[\s\S]*?<\/table>/);
@@ -175,12 +197,16 @@ Deno.serve(async (req) => {
       .eq("game_id", gameId);
     if (ridersErr) throw ridersErr;
 
-    const bibToRider = new Map<number, { id: string; name: string }>();
+    const bibToRider = new Map<number, { id: string; name: string; start_number: number | null }>();
+    const byName = new Map<string, { id: string; name: string; start_number: number | null }>();
     for (const r of ridersData ?? []) {
-      if (r.start_number != null) bibToRider.set(Number(r.start_number), { id: r.id, name: r.name });
+      if (r.start_number != null) bibToRider.set(Number(r.start_number), { id: r.id, name: r.name, start_number: r.start_number });
+      for (const k of nameKeys(r.name)) {
+        if (!byName.has(k)) byName.set(k, { id: r.id, name: r.name, start_number: r.start_number });
+      }
     }
 
-    const matched: Record<Classification, Array<{ position: number; rider_id: string; rider_name: string; start_number: number }>> = {
+    const matched: Record<Classification, Array<{ position: number; rider_id: string; rider_name: string; start_number: number | null }>> = {
       stage: [], gc: [], points: [], mountain: [], youth: [],
     };
     const unmatched: Record<Classification, Array<{ position: number; bib: number | null; name: string }>> = {
@@ -190,11 +216,30 @@ Deno.serve(async (req) => {
     for (const c of classifications) {
       for (const row of results[c]) {
         if (row.position > 20) continue; // top 20 only (matches admin UI)
-        if (row.bib == null) {
-          unmatched[c].push(row);
-          continue;
+        let r = row.bib != null ? bibToRider.get(row.bib) : undefined;
+
+        // Bib-vs-naam conflictcheck: vertrouw een bib-match alleen als de
+        // bronnaam bij die renner past. Zo niet, dan staat het start_number in
+        // onze DB waarschijnlijk fout (verschoven teamblok) → negeer de bib en
+        // match op naam, zodat de uitslag bij de juiste renner belandt.
+        if (r && row.name) {
+          const srcKeys = new Set(nameKeys(row.name));
+          const namesAgree = nameKeys(r.name).some((k) => srcKeys.has(k));
+          if (!namesAgree) {
+            console.warn(
+              `Bib/naam-conflict: bron #${row.bib} "${row.name}" ` +
+              `≠ DB-renner "${r.name}" (#${r.start_number}). Val terug op naam-match.`
+            );
+            r = undefined;
+          }
         }
-        const r = bibToRider.get(row.bib);
+
+        if (!r && row.name) {
+          for (const k of nameKeys(row.name)) {
+            const cand = byName.get(k);
+            if (cand) { r = cand; break; }
+          }
+        }
         if (!r) {
           unmatched[c].push(row);
           continue;
@@ -203,7 +248,7 @@ Deno.serve(async (req) => {
           position: row.position,
           rider_id: r.id,
           rider_name: r.name,
-          start_number: row.bib,
+          start_number: r.start_number ?? row.bib ?? null,
         });
       }
     }

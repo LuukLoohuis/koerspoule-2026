@@ -252,6 +252,7 @@ export default function StartlistTab({
                     key={r.id}
                     rider={r}
                     teams={teams}
+                    activeGameId={activeGameId}
                     onSaved={reload}
                     onDelete={() => deleteRider(r.id)}
                     dnfZichtbaar={dnfZichtbaar}
@@ -273,6 +274,7 @@ export default function StartlistTab({
 function RiderRow({
   rider,
   teams,
+  activeGameId,
   onSaved,
   onDelete,
   dnfZichtbaar,
@@ -280,6 +282,7 @@ function RiderRow({
 }: {
   rider: Rider;
   teams: Team[];
+  activeGameId: string;
   onSaved: () => Promise<void> | void;
   onDelete: () => void;
   dnfZichtbaar: boolean;
@@ -303,6 +306,45 @@ function RiderRow({
     return true;
   }
 
+  // Botsingsveilig startnummer zetten. De DB heeft een unieke index op
+  // (game_id, start_number), dus een nummer naar een al bezet nummer zetten
+  // faalt normaal. Is het doelnummer bezet door een andere renner, dan wisselen
+  // we de twee in drie stappen (eerst de ander tijdelijk op NULL, anders botst
+  // de unieke index halverwege). Zo kun je een verschoven teamblok corrigeren
+  // door telkens het juiste nummer in te typen i.p.v. handmatig te puzzelen.
+  async function saveStartNumber(num: number | null): Promise<boolean> {
+    if (!supabase) return false;
+    if (num != null) {
+      const { data: clash } = await supabase
+        .from("riders")
+        .select("id, name, start_number")
+        .eq("game_id", activeGameId)
+        .eq("start_number", num)
+        .neq("id", rider.id)
+        .maybeSingle();
+      if (clash) {
+        const oldNum = rider.start_number;
+        // Stap 1: botsende renner tijdelijk op NULL (omzeilt de unieke index).
+        const s1 = await supabase.from("riders").update({ start_number: null }).eq("id", clash.id);
+        if (s1.error) { toast.error(`Wisselen mislukt: ${s1.error.message}`); return false; }
+        // Stap 2: deze renner naar het doelnummer.
+        const s2 = await supabase.from("riders").update({ start_number: num }).eq("id", rider.id);
+        if (s2.error) {
+          await supabase.from("riders").update({ start_number: num }).eq("id", clash.id); // rollback
+          toast.error(`Wisselen mislukt: ${s2.error.message}`);
+          return false;
+        }
+        // Stap 3: botsende renner krijgt het oude nummer van deze renner.
+        const s3 = await supabase.from("riders").update({ start_number: oldNum }).eq("id", clash.id);
+        if (s3.error) { toast.error(`Wisselen half mislukt: ${s3.error.message} — controleer #${oldNum}`); return false; }
+        toast.success(`Startnummers gewisseld met ${clash.name} (#${oldNum} ↔ #${num})`);
+        await onSaved();
+        return true;
+      }
+    }
+    return saveField({ start_number: num });
+  }
+
   return (
     <TableRow>
       <TableCell className="font-mono text-xs">
@@ -315,7 +357,7 @@ function RiderRow({
             onBlur={async () => {
               const num = draftNumber.trim() ? Number(draftNumber) : null;
               if (num !== rider.start_number) {
-                const ok = await saveField({ start_number: num });
+                const ok = await saveStartNumber(num);
                 if (!ok) setDraftNumber(String(rider.start_number ?? ""));
               }
               setEditingField(null);

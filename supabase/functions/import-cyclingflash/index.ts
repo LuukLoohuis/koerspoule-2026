@@ -245,6 +245,24 @@ Deno.serve(async (req) => {
       for (const row of raw[c]) {
         if (row.position < 1 || row.position > 20) continue;
         let r = row.bib != null ? byBib.get(row.bib) : undefined;
+
+        // Bib-vs-naam conflictcheck: een bib-match is alleen betrouwbaar als de
+        // bronnaam ook bij die renner past. Wijken ze af, dan klopt het
+        // start_number in onze DB waarschijnlijk niet (bv. een verschoven
+        // teamblok). We negeren dan de bib en matchen op naam, zodat de uitslag
+        // alsnog bij de juiste renner belandt i.p.v. stil bij de buurman.
+        if (r && row.name) {
+          const srcKeys = new Set(nameKeys(row.name));
+          const namesAgree = nameKeys(r.name).some((k) => srcKeys.has(k));
+          if (!namesAgree) {
+            console.warn(
+              `Bib/naam-conflict: bron #${row.bib} "${row.name}" ` +
+              `≠ DB-renner "${r.name}" (#${r.start_number}). Val terug op naam-match.`
+            );
+            r = undefined;
+          }
+        }
+
         if (!r) {
           for (const k of nameKeys(row.name)) {
             const cand = byName.get(k);
