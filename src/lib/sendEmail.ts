@@ -1,13 +1,10 @@
-const MAIL_WORKER = "https://koerspoule-mail.luuk-loohuis.workers.dev";
+import { supabase } from "@/integrations/supabase/client";
+
 const LOGO_URL = "https://cdn.jsdelivr.net/gh/LuukLoohuis/koerspoule-2026@main/public/koerspoule-badge.png";
 
 export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
   try {
-    await fetch(MAIL_WORKER, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to, subject, html }),
-    });
+    await supabase.functions.invoke("send-mail", { body: { to, subject, html } });
   } catch {
     // Fire-and-forget — email failure blokkeert nooit de hoofdflow
   }

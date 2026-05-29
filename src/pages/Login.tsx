@@ -142,7 +142,7 @@ export default function Login() {
           supabase
             .from("profiles")
             .upsert(
-              { id: data.user.id, display_name: name.trim() || email, is_admin: false },
+              { id: data.user.id, display_name: name.trim() || email },
               { onConflict: "id" }
             )
             .then(() => {});

@@ -18,6 +18,27 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
+  // Require an authenticated user (admin-only tool).
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return respond({ error: "Unauthorized" }, 401);
+  }
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: { user }, error: userErr } = await userClient.auth.getUser();
+  if (userErr || !user) return respond({ error: "Unauthorized" }, 401);
+
+  const adminCheck = createClient(supabaseUrl, serviceKey);
+  const { data: roleRow } = await adminCheck
+    .from("user_roles").select("role")
+    .eq("user_id", user.id).eq("role", "admin").maybeSingle();
+  if (!roleRow) return respond({ error: "Forbidden" }, 403);
+
+
   let fc_id: number | null = null;
   let name: string | null = null;
 

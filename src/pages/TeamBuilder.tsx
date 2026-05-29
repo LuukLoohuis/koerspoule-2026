@@ -38,11 +38,11 @@ function getCategoryIcon(name: string): ReactNode {
 export default function TeamBuilder() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const isAuthed = Boolean(user);
   const { data: game, isLoading: gameLoading } = useCurrentGame();
   const { data: profile } = useProfile();
-  const isAdmin = Boolean(profile?.is_admin);
+  const isAdmin = role === "admin";
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(game?.id);
   const { entry, isLoading: entryLoading, picksByCategory, jokerIds, predictions, togglePick, saveJoker, savePredictions, submitEntry, revertEntry } = useEntry(game?.id);
 
