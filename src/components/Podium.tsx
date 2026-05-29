@@ -83,7 +83,7 @@ export default function Podium({ entries }: { entries: PodiumEntry[] }) {
                     <img
                       src={thema.beker}
                       alt={`Beker ${thema.koers}`}
-                      className="h-14 w-auto drop-shadow-[0_4px_8px_rgba(0,0,0,0.28)]"
+                      className="h-16 w-auto drop-shadow-[0_4px_8px_rgba(0,0,0,0.28)]"
                     />
                   ) : (
                     <TruiBadge type="algemeen" formaat="medium" />
