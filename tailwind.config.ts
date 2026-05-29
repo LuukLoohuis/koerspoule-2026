@@ -14,12 +14,13 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['"Playfair Display"', 'serif'],
-        serif: ['"Source Serif 4"', 'serif'],
-        sans: ['"DM Sans"', 'sans-serif'],
+        // Koerspoule type-systeem: Oswald (koppen) + Inter (body) — overal consistent.
+        display: ['"Oswald"', '"Helvetica Neue"', 'sans-serif'],
+        serif: ['"Inter"', 'sans-serif'],
+        sans: ['"Inter"', 'sans-serif'],
         oswald: ['"Oswald"', '"Helvetica Neue"', 'sans-serif'],
-        inter: ['"Inter"', '"DM Sans"', 'sans-serif'],
-        stamp: ['"Special Elite"', '"Courier Prime"', 'monospace'],
+        inter: ['"Inter"', 'sans-serif'],
+        stamp: ['"Oswald"', '"Helvetica Neue"', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

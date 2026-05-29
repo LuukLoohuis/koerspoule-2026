@@ -520,7 +520,7 @@ export default function Index() {
                   x="278"
                   y="16"
                   textAnchor="end"
-                  fontFamily="JetBrains Mono"
+                  fontFamily="Inter"
                   fontSize="9"
                   fill="hsl(var(--muted-foreground))"
                 >
@@ -530,7 +530,7 @@ export default function Index() {
                   x="278"
                   y="56"
                   textAnchor="end"
-                  fontFamily="JetBrains Mono"
+                  fontFamily="Inter"
                   fontSize="9"
                   fill="hsl(var(--muted-foreground))"
                 >
@@ -540,7 +540,7 @@ export default function Index() {
                   x="278"
                   y="96"
                   textAnchor="end"
-                  fontFamily="JetBrains Mono"
+                  fontFamily="Inter"
                   fontSize="9"
                   fill="hsl(var(--muted-foreground))"
                 >
