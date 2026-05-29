@@ -781,7 +781,7 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
       <div className="hidden md:block overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
         <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
           {[
-            { key: "dartpijl" as const, label: "🎯 Dartpijl", short: "Dart", Icon: Activity },
+            { key: "dartpijl" as const, label: "Dartpijl", short: "Dart", Icon: Activity },
             { key: "pelotonkeuzes" as const, label: "Pelotonkeuzes", short: "Peloton", Icon: BarChart3 },
             { key: "wielerdirecteur" as const, label: "De Wielerdirecteur", short: "CEO", Icon: DirectorIcon },
             { key: "superteam" as const, label: "The Emirates", short: "UAE", Icon: Crown },
