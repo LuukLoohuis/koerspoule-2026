@@ -41,14 +41,6 @@ async function fetchRole(userId: string): Promise<AppRole> {
     .maybeSingle();
   if (roleRow) return "admin";
 
-  // 2) Fallback: profiles.is_admin (oudere installaties)
-  const { data: profileRow } = await supabase
-    .from("profiles")
-    .select("is_admin")
-    .eq("id", userId)
-    .maybeSingle();
-  if (profileRow && (profileRow as { is_admin?: boolean }).is_admin) return "admin";
-
   return "user";
 }
 
