@@ -160,8 +160,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="bolletjes-rule" aria-hidden />
       </header>
 
-      {/* Main content */}
-      <main className="flex-1">{children}</main>
+      {/* Main content — alle pagina's behalve de voorpagina krijgen één
+          leesbaar font (Inter) via .content-font; de voorpagina (/) houdt
+          haar eigen editorial typografie. */}
+      <main className={cn("flex-1", location.pathname !== "/" && "content-font")}>{children}</main>
       <BottomNav />
 
       {/* Footer */}

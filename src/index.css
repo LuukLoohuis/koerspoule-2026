@@ -140,6 +140,17 @@
 }
 
 @layer components {
+  /* ── Consistente website-typografie ──────────────────────────────────────
+     Alle pagina-inhoud (alles behalve de voorpagina) gebruikt één goed
+     leesbaar font: Inter. Forceert over alle tailwind font-utilities en
+     losse font-family-declaraties heen, zodat tabjes en content overal
+     gelijk ogen. De voorpagina (/) krijgt deze class niet en behoudt haar
+     eigen editorial typografie (Playfair/Caveat/Oswald). */
+  .content-font,
+  .content-font *:not(svg):not(svg *) {
+    font-family: 'Inter', 'DM Sans', sans-serif !important;
+  }
+
   /* ── Margin-notes (Caveat handschrift-annotaties) ── */
   .margin-note {
     display: inline-block;
