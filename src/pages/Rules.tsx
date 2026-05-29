@@ -25,7 +25,7 @@ export default function Rules() {
         <div className="text-center mb-5">
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Speluitleg & Reglement</h1>
           <p className="text-muted-foreground font-serif italic">
-            "De jury, bestaande uit J.W.M. Broos, heeft gelijk. Zo niet, dan toch."
+            "De jury, bestaande uit Patrick Lefairplay, heeft gelijk. Zo niet, dan toch."
           </p>
           {game && (
             <p className="text-xs text-muted-foreground mt-2 font-sans uppercase tracking-wider">
@@ -40,7 +40,7 @@ export default function Rules() {
           <h2 className="font-display text-2xl font-bold mb-3">📜 Het Reglement</h2>
           <ol className="space-y-3 font-sans text-sm">
             {[
-              "De jury, bestaande uit J.W.M. Broos, heeft gelijk.",
+              "De jury, bestaande uit Patrick Lefairplay, heeft gelijk.",
               "Zo niet, dan toch.",
               "De inschrijving dient binnen te zijn vóór de start van de eerste etappe.",
               "Stel je droomploeg samen in de Team Samenstellen-pagina en zet je beste renners aan de start.",

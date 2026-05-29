@@ -91,7 +91,7 @@ export default function MijnPeloton() {
   const { data: currentGame } = useCurrentGame();
   const { entry, teamName, saveTeamName } = useEntry(currentGame?.id);
   const myTeam = mockTeams[0];
-  const displayName = (teamName?.trim() || profile?.display_name?.trim() || myTeam.userName);
+  const displayName = (teamName?.trim() || profile?.display_name?.trim() || "José Bidon");
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const { data: allGames = [] } = useAllGames();
