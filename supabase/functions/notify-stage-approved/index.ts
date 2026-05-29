@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
         const naam = email.split("@")[0];
         await fetch(MAIL_WORKER, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "X-Worker-Secret": Deno.env.get("MAIL_WORKER_SECRET") ?? "" },
           body: JSON.stringify({
             to: email,
             subject: `Uitslag rit ${stage.stage_number} gepubliceerd — Koerspoule`,
