@@ -682,7 +682,7 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
       <div className="md:hidden">
         <MobielTabBalk
           tabs={[
-            { key: "dartpijl",        label: "Dartpijl",          icon: Activity     },
+            { key: "dartpijl",        label: "🎯 Dartpijl",       icon: Activity     },
             { key: "pelotonkeuzes",   label: "Pelotonkeuzes",     icon: BarChart3    },
             { key: "wielerdirecteur", label: "De Wielerdirecteur", icon: DirectorIcon },
             { key: "superteam",       label: "The Emirates",       icon: Crown        },
@@ -698,7 +698,7 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
         <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
           {(
             [
-              { key: "dartpijl"        as const, label: "Dartpijl",           short: "Dart",    Icon: Activity     },
+              { key: "dartpijl"        as const, label: "🎯 Dartpijl",        short: "Dart",    Icon: Activity     },
               { key: "pelotonkeuzes"   as const, label: "Pelotonkeuzes",      short: "Peloton", Icon: BarChart3    },
               { key: "wielerdirecteur" as const, label: "De Wielerdirecteur",  short: "CEO",    Icon: DirectorIcon },
               { key: "superteam"       as const, label: "The Emirates",        short: "UAE",     Icon: Crown        },
@@ -1048,15 +1048,12 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
           )}
 
           {/* Commentary */}
-          {(monte.worseThanApe || monte.top10) && (
+          {monte.top10 && (
             <div className={cn(
               "rounded-xl border px-4 py-3 text-sm font-serif italic",
-              monte.top10
-                ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                : "border-rose-300 bg-rose-50 text-rose-700"
+              "border-emerald-300 bg-emerald-50 text-emerald-700"
             )}>
-              {monte.worseThanApe && <span>"Eh… een gemiddelde dartpijl had het ook niet slechter gedaan." 🎯</span>}
-              {monte.top10 && <span>"Top 10% van de apen — die dartpijl van jou heeft visie." 🔥</span>}
+              <span>"Top 10% van de apen — die dartpijl van jou heeft visie." 🔥</span>
             </div>
           )}
         </>
