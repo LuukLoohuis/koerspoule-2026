@@ -12,7 +12,7 @@ export function useProfile() {
       if (!supabase || !user?.id) return null;
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, role, is_admin, created_at")
+        .select("id, display_name, created_at")
         .eq("id", user.id)
         .maybeSingle();
       if (error) throw error;
