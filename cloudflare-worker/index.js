@@ -1,19 +1,42 @@
 /**
  * Koerspoule Mail Worker
  * Accepts POST { to, subject, html } and sends via Resend API.
- * Secret: RESEND_API_KEY (set via `wrangler secret put RESEND_API_KEY`)
+ * Requires X-Worker-Secret header matching env.WORKER_SECRET.
+ * Secrets (set via `wrangler secret put`):
+ *   - RESEND_API_KEY
+ *   - WORKER_SECRET
  */
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+const ALLOWED_ORIGINS = new Set([
+  "https://koerspoule.nl",
+  "https://www.koerspoule.nl",
+  "https://koerspoule.lovable.app",
+]);
+
+function corsHeaders(origin) {
+  const allow = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://koerspoule.nl";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Vary": "Origin",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, X-Worker-Secret",
+  };
+}
 
 const FROM = "Koerspoule <noreply@koerspoule.nl>";
 
+function timingSafeEqual(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 export default {
   async fetch(request, env) {
+    const origin = request.headers.get("Origin");
+    const CORS = corsHeaders(origin);
+
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS });
     }
@@ -21,6 +44,21 @@ export default {
     if (request.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,
+        headers: { ...CORS, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Authentication ─────────────────────────────────────────────
+    if (!env.WORKER_SECRET) {
+      return new Response(JSON.stringify({ error: "WORKER_SECRET not configured" }), {
+        status: 500,
+        headers: { ...CORS, "Content-Type": "application/json" },
+      });
+    }
+    const provided = request.headers.get("X-Worker-Secret") ?? "";
+    if (!timingSafeEqual(provided, env.WORKER_SECRET)) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
         headers: { ...CORS, "Content-Type": "application/json" },
       });
     }
