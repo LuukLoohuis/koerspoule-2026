@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Area,
   CartesianGrid,
+  ComposedChart,
   Line,
-  LineChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -95,6 +96,11 @@ export default function SubpouleEvolutionChart({
     const me = memberRows.find((m) => m.user_id === user?.id);
     setHighlightId(me?.user_id ?? memberRows[0]?.user_id ?? null);
   }, [memberRows, user?.id, highlightId]);
+
+  // Weergavemodus: cumulatieve punten of positie/rang (bump chart).
+  const [mode, setMode] = useState<"punten" | "positie">("punten");
+  // Huidige koploper (hoogste totaal) — krijgt een gouden podium-accent.
+  const leaderId = memberRows[0]?.user_id ?? null;
 
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const toggleVisible = (uid: string) => {
@@ -191,12 +197,31 @@ export default function SubpouleEvolutionChart({
             <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
           </div>
           {memberRows.length > 0 && (
-            <button
-              onClick={toggleAll}
-              className={CHART_VISUAL.toggleBtnClass}
-            >
-              {allHidden ? "Toon alles" : "Verberg alles"}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Stand-modus: punten ↔ positie (bump chart) */}
+              <div className="inline-flex rounded-full border border-border bg-secondary/40 p-0.5 text-[11px] font-medium">
+                {([
+                  { k: "punten", label: "Punten" },
+                  { k: "positie", label: "Positie" },
+                ] as const).map(({ k, label }) => (
+                  <button
+                    key={k}
+                    onClick={() => setMode(k)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-full transition-all",
+                      mode === k
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <button onClick={toggleAll} className={CHART_VISUAL.toggleBtnClass}>
+                {allHidden ? "Toon alles" : "Verberg alles"}
+              </button>
+            </div>
           )}
         </div>
 
@@ -254,11 +279,21 @@ export default function SubpouleEvolutionChart({
           ) : (
             <div className="w-full" style={{ height: chartHeight }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart
+                <ComposedChart
                   data={chartData}
-                  margin={{ top: 20, right: isMobile ? 8 : 24, left: -8, bottom: 4 }}
+                  margin={{ top: 20, right: isMobile ? 78 : 116, left: -8, bottom: 4 }}
                 >
                   <defs>
+                    {/* Gradient-vulling onder de gehighlighte lijn (focus) */}
+                    {memberRows.map((m, idx) => {
+                      const color = LINE_COLORS[idx % LINE_COLORS.length];
+                      return (
+                        <linearGradient key={`area-${m.user_id}`} id={`area-${m.user_id}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={color} stopOpacity={0.22} />
+                          <stop offset="100%" stopColor={color} stopOpacity={0} />
+                        </linearGradient>
+                      );
+                    })}
                     {memberRows.map((m) => (
                       <filter
                         key={`glow-${m.user_id}`}
@@ -286,23 +321,37 @@ export default function SubpouleEvolutionChart({
                     padding={{ left: 12, right: 12 }}
                     dy={6}
                   />
-                  <YAxis
-                    allowDecimals={false}
-                    tick={CHART_VISUAL.yTick(isMobile)}
-                    width={40}
-                    axisLine={false}
-                    tickLine={false}
-                    domain={[
-                      0,
-                      (dataMax: number) => {
-                        const max = Math.max(10, Math.ceil(dataMax || 0));
-                        const step =
-                          max <= 50 ? 10 : max <= 100 ? 20 : max <= 500 ? 50 : max <= 1000 ? 100 : 200;
-                        return Math.ceil(max / step) * step;
-                      },
-                    ]}
-                    tickCount={isMobile ? 5 : 6}
-                  />
+                  {mode === "positie" ? (
+                    <YAxis
+                      allowDecimals={false}
+                      tick={CHART_VISUAL.yTick(isMobile)}
+                      width={40}
+                      axisLine={false}
+                      tickLine={false}
+                      reversed
+                      domain={[1, Math.max(1, memberRows.length)]}
+                      tickCount={Math.min(memberRows.length, isMobile ? 5 : 8)}
+                      tickFormatter={(v: number) => `#${v}`}
+                    />
+                  ) : (
+                    <YAxis
+                      allowDecimals={false}
+                      tick={CHART_VISUAL.yTick(isMobile)}
+                      width={40}
+                      axisLine={false}
+                      tickLine={false}
+                      domain={[
+                        0,
+                        (dataMax: number) => {
+                          const max = Math.max(10, Math.ceil(dataMax || 0));
+                          const step =
+                            max <= 50 ? 10 : max <= 100 ? 20 : max <= 500 ? 50 : max <= 1000 ? 100 : 200;
+                          return Math.ceil(max / step) * step;
+                        },
+                      ]}
+                      tickCount={isMobile ? 5 : 6}
+                    />
+                  )}
                   {currentStageLabel && (
                     <ReferenceLine
                       x={currentStageLabel}
@@ -397,20 +446,38 @@ export default function SubpouleEvolutionChart({
                       );
                     }}
                   />
+                  {/* Focus: gradient-vulling onder de gehighlighte lijn (alleen punten-modus) */}
+                  {mode === "punten" && highlightId && !hiddenIds.has(highlightId) && (
+                    <Area
+                      type="monotone"
+                      dataKey={`pts_${highlightId}`}
+                      stroke="none"
+                      fill={`url(#area-${highlightId})`}
+                      fillOpacity={1}
+                      isAnimationActive={false}
+                      dot={false}
+                      activeDot={false}
+                      connectNulls
+                    />
+                  )}
                   {memberRows.map((m, idx) => {
                     if (hiddenIds.has(m.user_id)) return null;
                     const color = LINE_COLORS[idx % LINE_COLORS.length];
                     const isHighlighted = m.user_id === highlightId;
+                    const isLeader = m.user_id === leaderId;
                     const dimmed = highlightId && !isHighlighted;
+                    const dataKey = mode === "positie" ? `rank_${m.user_id}` : `pts_${m.user_id}`;
+                    const cap = isMobile ? 8 : 12;
+                    const nm = m.display_name.length > cap ? `${m.display_name.slice(0, cap - 1)}…` : m.display_name;
                     return (
                       <Line
                         key={m.user_id}
                         type="monotone"
-                        dataKey={`pts_${m.user_id}`}
+                        dataKey={dataKey}
                         name={m.user_id}
                         stroke={color}
                         strokeWidth={isHighlighted ? 3 : 1.75}
-                        strokeOpacity={dimmed ? 0.25 : 1}
+                        strokeOpacity={dimmed ? 0.18 : 1}
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         filter={isHighlighted ? `url(#glow-${m.user_id})` : undefined}
@@ -424,10 +491,34 @@ export default function SubpouleEvolutionChart({
                         animationDuration={700}
                         animationEasing="ease-out"
                         connectNulls
+                        label={(lp: any) => {
+                          const { x, y, index, value } = lp;
+                          if (index !== chartData.length - 1) return null;
+                          if (typeof x !== "number" || typeof y !== "number") return null;
+                          const txt = mode === "positie" ? `#${value} ${nm}` : `${nm} ${value}`;
+                          return (
+                            <g style={{ opacity: dimmed ? 0.45 : 1 }}>
+                              {isLeader && (
+                                <circle cx={x} cy={y} r={6} fill="none" stroke="#F5B301" strokeWidth={2} />
+                              )}
+                              <circle cx={x} cy={y} r={isHighlighted ? 3.5 : 2.5} fill={color} />
+                              <text
+                                x={x + 9}
+                                y={y}
+                                dy={3.5}
+                                fontSize={isHighlighted ? 12 : 10.5}
+                                fontWeight={isHighlighted ? 700 : 500}
+                                fill={isHighlighted ? color : "rgba(0,0,0,0.6)"}
+                              >
+                                {txt}
+                              </text>
+                            </g>
+                          );
+                        }}
                       />
                     );
                   })}
-                </LineChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           )}
@@ -435,7 +526,7 @@ export default function SubpouleEvolutionChart({
 
         <div className={CHART_VISUAL.footerText}>
           <span className={CHART_VISUAL.footerLine} />
-          <span>Cumulatieve punten</span>
+          <span>{mode === "positie" ? "Positie in subpoule per etappe" : "Cumulatieve punten"}</span>
           <span className={CHART_VISUAL.footerLine} />
         </div>
       </div>
