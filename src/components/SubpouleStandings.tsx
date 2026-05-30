@@ -16,65 +16,6 @@ type Props = {
   subpouleName: string;
 };
 
-function GapBadge({
-  rank,
-  gap,
-  movement,
-  aboveName,
-}: {
-  rank: number;
-  gap: number | null;
-  movement: number | null;
-  aboveName: string | null;
-}) {
-  if (gap === null) return null;
-
-  const isLeader = rank === 1;
-  const gaining = movement !== null && (isLeader ? movement > 0 : movement < 0);
-  const falling = movement !== null && (isLeader ? movement < 0 : movement > 0);
-  const state: "up" | "down" | "flat" = gaining ? "up" : falling ? "down" : "flat";
-
-  const palette = {
-    up:   { background: "#D4EDDA", color: "#1E6B3C" },
-    down: { background: "#FADBD8", color: "#922B21" },
-    flat: { background: "#EAECEE", color: "#7A7A7A" },
-  } as const;
-
-  const movAbs = movement !== null ? Math.abs(movement) : null;
-  const tooltip = aboveName
-    ? isLeader
-      ? `Voorsprong op ${aboveName}: ${gap} pt${movAbs !== null ? ` · ${gaining ? "+" : "-"}${movAbs} pt t.o.v. vorige rit` : ""}`
-      : `Achterstand op ${aboveName}: ${gap} pt${movAbs !== null ? ` · ${gaining ? "ingelopen" : "verder achterop"} ${movAbs} pt` : ""}`
-    : undefined;
-
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "3px",
-        minWidth: "64px",
-        padding: "2px 8px",
-        borderRadius: "4px",
-        fontSize: "12px",
-        fontWeight: 700,
-        fontVariantNumeric: "tabular-nums",
-        letterSpacing: "0.02em",
-        whiteSpace: "nowrap",
-        border: "1px solid rgba(0,0,0,0.08)",
-        ...palette[state],
-      }}
-      title={tooltip}
-    >
-      {state === "up"   && <ArrowUp   className="w-3 h-3 shrink-0" />}
-      {state === "down" && <ArrowDown className="w-3 h-3 shrink-0" />}
-      {state === "flat" && <span className="leading-none">—</span>}
-      {gap}pt
-    </span>
-  );
-}
-
 export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
   const { user } = useAuth();
   const { data: game } = useCurrentGame();
@@ -329,7 +270,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
           <div className="flex-1 min-w-0 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Naam</div>
           {stages.length > 0 && <div className="shrink-0 w-8 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground text-center">Rit</div>}
           <div className="shrink-0 min-w-[3rem] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Pts</div>
-          <div className="shrink-0 min-w-[64px] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Gap</div>
+          <div className="shrink-0 min-w-[64px] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title="Punten in de geselecteerde rit">Dag</div>
           <div className="shrink-0 w-7" />
         </div>
 
@@ -424,13 +365,20 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                   <span className="text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
                 </div>
 
-                <div className="shrink-0 flex justify-end" style={{ minWidth: "64px" }}>
-                  <GapBadge
-                    rank={m.rank}
-                    gap={m.gap_to_above}
-                    movement={m.gap_movement}
-                    aboveName={m.above_name}
-                  />
+                <div className="shrink-0 text-right" style={{ minWidth: "64px" }} title="Punten in deze rit">
+                  {m.stage_points > 0 ? (
+                    <>
+                      <span className={cn(
+                        "font-display font-bold tabular-nums text-base",
+                        m.stage_rank === 1 && "text-amber-500"
+                      )}>
+                        +{m.stage_points}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground/40 text-sm">–</span>
+                  )}
                 </div>
 
                 {!isMe && m.entry_id && (
