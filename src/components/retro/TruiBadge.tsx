@@ -9,6 +9,10 @@ import truiGiroAlgemeen from "@/assets/trui-giro-algemeen.png";
 import truiGiroPunten from "@/assets/trui-giro-punten.png";
 import truiGiroBerg from "@/assets/trui-giro-berg.png";
 import truiGiroJongeren from "@/assets/trui-giro-jongeren.png";
+import truiVueltaAlgemeen from "@/assets/trui-vuelta-algemeen.png";
+import truiVueltaPunten from "@/assets/trui-vuelta-punten.png";
+import truiVueltaBerg from "@/assets/trui-vuelta-berg.png";
+import truiVueltaJongeren from "@/assets/trui-vuelta-jongeren.png";
 
 const FORMATEN = {
   klein: { w: 20, h: 28 },
@@ -18,9 +22,9 @@ const FORMATEN = {
 
 /**
  * Echte trui-afbeeldingen per thema:
- *  - geel (Tour): LCL / Škoda / Leclerc / Krys
- *  - roze (Giro): IUMAN / madeinitaly / Mediolanum (blauw) / Mediolanum (wit)
- * Thema's zonder map (bv. rood/Vuelta) vallen terug op het SVG-silhouet.
+ *  - geel (Tour):   LCL / Škoda / Leclerc / Krys
+ *  - roze (Giro):   IUMAN / madeinitaly / Mediolanum (blauw) / Mediolanum (wit)
+ *  - rood (Vuelta): Carrefour / Škoda / Carrefour (bolletjes) / plenitude
  */
 const TRUI_IMG: Partial<Record<string, Record<TruiType, string>>> = {
   geel: {
@@ -34,6 +38,12 @@ const TRUI_IMG: Partial<Record<string, Record<TruiType, string>>> = {
     punten: truiGiroPunten,
     berg: truiGiroBerg,
     jongeren: truiGiroJongeren,
+  },
+  rood: {
+    algemeen: truiVueltaAlgemeen,
+    punten: truiVueltaPunten,
+    berg: truiVueltaBerg,
+    jongeren: truiVueltaJongeren,
   },
 };
 
