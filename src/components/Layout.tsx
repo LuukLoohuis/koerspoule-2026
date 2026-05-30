@@ -99,6 +99,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
+        {/* Tour de France — L'Équipe-poster band (alleen bij geel thema) */}
+        {thema.key === "geel" && (
+          <div className="tdf-poster-band">
+            <div className="container mx-auto px-5">
+              <div className="tdf-poster-band__inner">
+                <span className="tdf-poster-band__title heading-oswald">{thema.koers}</span>
+                <span className="tdf-poster-band__stamp overline-stamp">{thema.krant} · MMXXVI</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Desktop nav strip */}
         <div className="hidden md:block border-t border-border/40 bg-background/40">
           <div className="container mx-auto px-5">
