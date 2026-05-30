@@ -399,9 +399,9 @@ export default function Index() {
               </span>
 
               <p className="font-serif italic text-foreground/80 md:text-xl max-w-[480px] mt-6 leading-relaxed text-lg my-[2px] text-center">
-                Iedereen denkt dat ze het beter weten dan de directeur sportif.
+                Denk jij de koers beter te lezen dan de ploegleider?
                 <br />
-                Dit is je kans om het te bewijzen.
+                Dit is je moment.
               </p>
 
               <div className="flex flex-wrap gap-3 mt-7 items-center text-2xl">
