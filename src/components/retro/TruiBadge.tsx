@@ -1,12 +1,24 @@
 import { cn } from "@/lib/utils";
 import { useThema } from "@/contexts/ThemaContext";
 import type { TruiType } from "@/lib/themas";
+import truiTourAlgemeen from "@/assets/trui-tour-algemeen.png";
+import truiTourPunten from "@/assets/trui-tour-punten.png";
+import truiTourBerg from "@/assets/trui-tour-berg.png";
+import truiTourJongeren from "@/assets/trui-tour-jongeren.png";
 
 const FORMATEN = {
   klein: { w: 20, h: 28 },
   medium: { w: 32, h: 44 },
   groot: { w: 48, h: 64 },
 } as const;
+
+/** Echte Tour-truien (LCL/Škoda/Leclerc/Krys) — gebruikt bij het gele thema. */
+const TOUR_TRUI_IMG: Record<TruiType, string> = {
+  algemeen: truiTourAlgemeen,
+  punten: truiTourPunten,
+  berg: truiTourBerg,
+  jongeren: truiTourJongeren,
+};
 
 type Formaat = keyof typeof FORMATEN;
 
@@ -33,6 +45,28 @@ export default function TruiBadge({
   const naamZichtbaar = toonNaam ?? formaat === "groot";
 
   const isBolletjes = trui.patroon === "bolletjes";
+
+  // Tour de France (geel thema): echte trui-afbeeldingen i.p.v. het SVG-silhouet.
+  const tourImg = thema.key === "geel" ? TOUR_TRUI_IMG[type] : null;
+
+  if (tourImg) {
+    return (
+      <div className={cn("inline-flex flex-col items-center gap-1", className)} title={trui.naam}>
+        <img
+          src={tourImg}
+          alt={trui.naam}
+          height={h}
+          className="shrink-0 w-auto object-contain drop-shadow-sm"
+          style={{ height: h }}
+        />
+        {naamZichtbaar && (
+          <span className="font-display text-[10px] uppercase tracking-wider text-center leading-tight max-w-[5rem]">
+            {trui.naam}
+          </span>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={cn("inline-flex flex-col items-center gap-1", className)} title={trui.naam}>
