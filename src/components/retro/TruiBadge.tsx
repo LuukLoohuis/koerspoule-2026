@@ -5,6 +5,10 @@ import truiTourAlgemeen from "@/assets/trui-tour-algemeen.png";
 import truiTourPunten from "@/assets/trui-tour-punten.png";
 import truiTourBerg from "@/assets/trui-tour-berg.png";
 import truiTourJongeren from "@/assets/trui-tour-jongeren.png";
+import truiGiroAlgemeen from "@/assets/trui-giro-algemeen.png";
+import truiGiroPunten from "@/assets/trui-giro-punten.png";
+import truiGiroBerg from "@/assets/trui-giro-berg.png";
+import truiGiroJongeren from "@/assets/trui-giro-jongeren.png";
 
 const FORMATEN = {
   klein: { w: 20, h: 28 },
@@ -12,12 +16,25 @@ const FORMATEN = {
   groot: { w: 48, h: 64 },
 } as const;
 
-/** Echte Tour-truien (LCL/Škoda/Leclerc/Krys) — gebruikt bij het gele thema. */
-const TOUR_TRUI_IMG: Record<TruiType, string> = {
-  algemeen: truiTourAlgemeen,
-  punten: truiTourPunten,
-  berg: truiTourBerg,
-  jongeren: truiTourJongeren,
+/**
+ * Echte trui-afbeeldingen per thema:
+ *  - geel (Tour): LCL / Škoda / Leclerc / Krys
+ *  - roze (Giro): IUMAN / madeinitaly / Mediolanum (blauw) / Mediolanum (wit)
+ * Thema's zonder map (bv. rood/Vuelta) vallen terug op het SVG-silhouet.
+ */
+const TRUI_IMG: Partial<Record<string, Record<TruiType, string>>> = {
+  geel: {
+    algemeen: truiTourAlgemeen,
+    punten: truiTourPunten,
+    berg: truiTourBerg,
+    jongeren: truiTourJongeren,
+  },
+  roze: {
+    algemeen: truiGiroAlgemeen,
+    punten: truiGiroPunten,
+    berg: truiGiroBerg,
+    jongeren: truiGiroJongeren,
+  },
 };
 
 type Formaat = keyof typeof FORMATEN;
@@ -46,14 +63,15 @@ export default function TruiBadge({
 
   const isBolletjes = trui.patroon === "bolletjes";
 
-  // Tour de France (geel thema): echte trui-afbeeldingen i.p.v. het SVG-silhouet.
-  const tourImg = thema.key === "geel" ? TOUR_TRUI_IMG[type] : null;
+  // Echte trui-afbeeldingen voor thema's die een map hebben (geel/roze),
+  // anders het SVG-silhouet.
+  const themaImg = TRUI_IMG[thema.key]?.[type] ?? null;
 
-  if (tourImg) {
+  if (themaImg) {
     return (
       <div className={cn("inline-flex flex-col items-center gap-1", className)} title={trui.naam}>
         <img
-          src={tourImg}
+          src={themaImg}
           alt={trui.naam}
           height={h}
           className="shrink-0 w-auto object-contain drop-shadow-sm"
