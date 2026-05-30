@@ -99,6 +99,9 @@ export default function SubpouleEvolutionChart({
   // Huidige koploper (hoogste totaal) — krijgt een gouden podium-accent.
   const leaderId = memberRows[0]?.user_id ?? null;
 
+  // Hoe de niet-gemarkeerde spelers getoond worden: fel / gedimd / uit.
+  const [othersMode, setOthersMode] = useState<"fel" | "dim" | "uit">("dim");
+
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const toggleVisible = (uid: string) => {
     setHiddenIds((prev) => {
@@ -199,9 +202,35 @@ export default function SubpouleEvolutionChart({
             <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
           </div>
           {memberRows.length > 0 && (
-            <button onClick={toggleAll} className={CHART_VISUAL.toggleBtnClass}>
-              {allHidden ? "Toon alles" : "Verberg alles"}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              {/* Andere spelers: fel / gedimd / helemaal uit */}
+              <div className="inline-flex items-center gap-1">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-0.5">Anderen</span>
+                <div className="inline-flex rounded-full border border-border bg-secondary/40 p-0.5 text-[11px] font-medium">
+                  {([
+                    { k: "fel", label: "Fel" },
+                    { k: "dim", label: "Gedimd" },
+                    { k: "uit", label: "Uit" },
+                  ] as const).map(({ k, label }) => (
+                    <button
+                      key={k}
+                      onClick={() => setOthersMode(k)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-full transition-all",
+                        othersMode === k
+                          ? "bg-card text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button onClick={toggleAll} className={CHART_VISUAL.toggleBtnClass}>
+                {allHidden ? "Toon alles" : "Verberg alles"}
+              </button>
+            </div>
           )}
         </div>
 
@@ -398,7 +427,11 @@ export default function SubpouleEvolutionChart({
                     const color = LINE_COLORS[idx % LINE_COLORS.length];
                     const isHighlighted = m.user_id === highlightId;
                     const isLeader = m.user_id === leaderId;
-                    const dimmed = highlightId && !isHighlighted;
+                    const isOther = Boolean(highlightId) && !isHighlighted;
+                    // "Uit": verberg de andere spelers volledig.
+                    if (isOther && othersMode === "uit") return null;
+                    // "Gedimd": flauw; "Fel": volle kleur.
+                    const dimmed = isOther && othersMode === "dim";
                     const cap = isMobile ? 9 : 14;
                     const nm = m.display_name.length > cap ? `${m.display_name.slice(0, cap - 1)}…` : m.display_name;
                     return (
