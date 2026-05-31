@@ -1,12 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
-import BenchmarkPanel from "@/components/BenchmarkPanel";
-import { useGameBenchmark } from "@/hooks/useSubpouleBenchmark";
+import CompareSetup from "@/components/CompareSetup";
 
 type Props = { gameId?: string };
 
 export default function BenchmarkTab({ gameId }: Props) {
-  const { data, isLoading } = useGameBenchmark(gameId);
-
   if (!gameId) {
     return (
       <Card className="retro-border">
@@ -19,12 +16,7 @@ export default function BenchmarkTab({ gameId }: Props) {
 
   return (
     <div className="max-w-3xl">
-      <BenchmarkPanel
-        data={data}
-        isLoading={isLoading}
-        scopeLabel="alle deelnemers"
-        emptyOpponentsHint="Nog geen andere deelnemers in deze koers."
-      />
+      <CompareSetup gameId={gameId} />
     </div>
   );
 }

@@ -101,3 +101,67 @@ export function useSubpouleEntries(subpouleId?: string, gameId?: string) {
     },
   });
 }
+
+/**
+ * Game-brede variant: alle ingediende teams in de koers (voor de Hors
+ * Categorie-benchmark). Gebruikt de SECURITY DEFINER RPC game_entries_detail,
+ * zodat ook andermans picks/jokers/voorspellingen leesbaar zijn (RLS staat
+ * directe reads niet toe).
+ */
+export function useGameEntries(gameId?: string) {
+  return useQuery({
+    queryKey: ["game-entries-detail", gameId],
+    enabled: Boolean(supabase && gameId),
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<SubpouleEntriesData> => {
+      if (!supabase || !gameId) return { entries: [], ridersById: new Map() };
+
+      const { data: rowsData, error } = await (supabase as any).rpc("game_entries_detail", {
+        p_game_id: gameId,
+      });
+      if (error) throw error;
+
+      const rows = (rowsData ?? []) as SubpouleEntryDetailRow[];
+      if (rows.length === 0) return { entries: [], ridersById: new Map() };
+
+      const entries: SubpouleEntry[] = rows.map((r) => {
+        const picks = new Map<string, string[]>();
+        const jokers = new Set<string>();
+        for (const p of r.picks ?? []) {
+          const existing = picks.get(p.category_id) ?? [];
+          picks.set(p.category_id, [...existing, p.rider_id]);
+        }
+        for (const j of r.jokers ?? []) jokers.add(j.rider_id);
+        return {
+          user_id: r.user_id,
+          display_name: r.display_name ?? "Onbekend",
+          entry_id: r.entry_id,
+          team_name: r.team_name,
+          total_points: r.total_points ?? 0,
+          picks,
+          jokers,
+          predictions: (r.predictions ?? []) as PredictionEntry[],
+        };
+      });
+
+      const riderIds = new Set<string>();
+      for (const e of entries) {
+        for (const ids of e.picks.values()) for (const id of ids) riderIds.add(id);
+        for (const id of e.jokers) riderIds.add(id);
+        for (const p of e.predictions) riderIds.add(p.rider_id);
+      }
+      const ridersById = new Map<string, { name: string; team: string | null }>();
+      if (riderIds.size > 0) {
+        const { data: rs } = await supabase
+          .from("riders")
+          .select("id, name, team")
+          .in("id", Array.from(riderIds));
+        for (const r of (rs ?? []) as Array<{ id: string; name: string; team: string | null }>) {
+          ridersById.set(r.id, { name: r.name, team: r.team });
+        }
+      }
+
+      return { entries, ridersById };
+    },
+  });
+}
