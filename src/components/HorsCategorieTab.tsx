@@ -324,14 +324,28 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Array<{ stage_id: string; rider_id: string | null; finish_position: number }>> => {
       if (!supabase || !game?.id) return [];
-      const { data, error } = await (supabase as any)
-        .from("stage_results")
-        .select("stage_id, rider_id, finish_position, stages!inner(game_id, results_status)")
-        .eq("stages.game_id", game.id)
-        .eq("stages.results_status", "approved")
-        .range(0, 49999);
-      if (error) throw error;
-      return (data ?? []) as Array<{ stage_id: string; rider_id: string | null; finish_position: number }>;
+      // Paginate to defeat any PostgREST max-rows cap. stage_results can easily
+      // exceed 1000 rows (21 etappes × ~180 finishers ≈ 3.8k), wat de Droomploeg-
+      // berekening anders te laag uitvalt.
+      type Row = { stage_id: string; rider_id: string | null; finish_position: number; stages?: { game_id: string; results_status: string } | null };
+      const PAGE = 1000;
+      let from = 0;
+      const all: Row[] = [];
+      // safety cap at 200k rijen
+      while (from < 200_000) {
+        const { data, error } = await (supabase as any)
+          .from("stage_results")
+          .select("stage_id, rider_id, finish_position, stages!inner(game_id, results_status)")
+          .eq("stages.game_id", game.id)
+          .eq("stages.results_status", "approved")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        const rows = (data ?? []) as Row[];
+        all.push(...rows);
+        if (rows.length < PAGE) break;
+        from += PAGE;
+      }
+      return all.map((r) => ({ stage_id: r.stage_id, rider_id: r.rider_id, finish_position: r.finish_position }));
     },
   });
 
