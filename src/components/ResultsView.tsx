@@ -158,14 +158,25 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
   const overallStandings = useMemo(() => {
     const cur = cumulativeUpTo(klassementStageIdx);
     const prev = cumulativeUpTo(klassementStageIdx - 1);
+    // Voorspellingsbonus (GC-podium + truien). entry_prediction_points is per RLS
+    // niet client-zijdig te lezen voor andere deelnemers, maar total_points bevat
+    // hem wél (= som alle etappepunten + voorspellingen). Bonus = total_points −
+    // som van álle etappepunten. Vóór de slotrit is deze 0.
+    const full = cumulativeUpTo(stages.length - 1);
+    const bonusOf = (e: { id: string; total_points?: number }) =>
+      Math.max(0, (e.total_points ?? 0) - (full.get(e.id) ?? 0));
+
     const prevSorted = [...entries]
-      .map((e) => ({ id: e.id, pts: prev.get(e.id) ?? 0 }))
+      .map((e) => ({ id: e.id, pts: (prev.get(e.id) ?? 0) + bonusOf(e) }))
       .sort((a, b) => b.pts - a.pts);
     const prevRank = new Map<string, number>();
     prevSorted.forEach((r, i) => prevRank.set(r.id, i + 1));
 
     return [...entries]
-      .map((e) => ({ ...e, cumPts: cur.get(e.id) ?? 0 }))
+      .map((e) => {
+        const predBonus = bonusOf(e);
+        return { ...e, predBonus, cumPts: (cur.get(e.id) ?? 0) + predBonus };
+      })
       .sort((a, b) => b.cumPts - a.cumPts)
       .map((row, i) => {
         const prevR = prevRank.get(row.id) ?? i + 1;
@@ -642,15 +653,22 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
                           </div>
                         )}
 
-                        {/* Total points */}
+                        {/* Total points (incl. eventuele voorspellingsbonus) */}
                         <div className="shrink-0 text-right min-w-[3rem]">
-                          <span className={cn(
-                            "font-display font-bold tabular-nums",
-                            s.rank === 1 ? "text-xl text-amber-500" : "text-base"
-                          )}>
-                            {s.cumPts}
-                          </span>
-                          <span className="text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
+                          <div>
+                            <span className={cn(
+                              "font-display font-bold tabular-nums",
+                              s.rank === 1 ? "text-xl text-amber-500" : "text-base"
+                            )}>
+                              {s.cumPts}
+                            </span>
+                            <span className="text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
+                          </div>
+                          {s.predBonus > 0 && (
+                            <div className="text-[9px] text-emerald-600 font-mono leading-none mt-0.5" title="Bonus uit eindklassement-/truivoorspellingen">
+                              +{s.predBonus} vk
+                            </div>
+                          )}
                         </div>
                       </div>
                       ),

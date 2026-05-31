@@ -97,6 +97,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
             team_name: entry?.team_name ?? null,
             entry_id: entry?.id ?? null,
             total_points: entry?.total_points ?? 0,
+            pred_bonus: 0,
             stage_points: 0,
             stage_rank: null as number | null,
             rank: 0,
@@ -113,6 +114,12 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
 
     const curMap = cumUpTo(etappeIdx);
     const prevMap = etappeIdx > 0 ? cumUpTo(etappeIdx - 1) : new Map<string, number>();
+    // Voorspellingsbonus (GC + truien): total_points bevat hem, entry_prediction_points
+    // is per RLS niet leesbaar voor andere deelnemers. Bonus = total_points − som alle
+    // etappepunten. Vóór de slotrit is dit 0.
+    const fullMap = cumUpTo(stages.length - 1);
+    const bonusOf = (entry?: { id: string; total_points?: number } | null) =>
+      entry ? Math.max(0, (entry.total_points ?? 0) - (fullMap.get(entry.id) ?? 0)) : 0;
 
     // Stage pts for the selected stage (used for ranking within subpoule)
     const selStagePts = new Map<string, number>();
@@ -137,7 +144,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
       [...members]
         .map((m) => {
           const entry = entries.find((e) => e.user_id === m.user_id);
-          return { user_id: m.user_id, pts: entry ? (prevMap.get(entry.id) ?? 0) : 0 };
+          return { user_id: m.user_id, pts: entry ? (prevMap.get(entry.id) ?? 0) + bonusOf(entry) : 0 };
         })
         .sort((a, b) => b.pts - a.pts)
         .map((r, i) => [r.user_id, i + 1] as [string, number])
@@ -151,7 +158,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
           display_name: m.display_name,
           team_name: entry?.team_name ?? null,
           entry_id: entry?.id ?? null,
-          total_points: entry ? (curMap.get(entry.id) ?? 0) : 0,
+          total_points: entry ? (curMap.get(entry.id) ?? 0) + bonusOf(entry) : 0,
+          pred_bonus: bonusOf(entry),
           stage_points: entry ? (selStagePts.get(entry.id) ?? 0) : 0,
           stage_rank: stageRankByUser.get(m.user_id) ?? null,
         };
@@ -381,13 +389,20 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
                 )}
 
                 <div className="shrink-0 text-right min-w-[3rem]">
-                  <span className={cn(
-                    "font-display font-bold tabular-nums",
-                    m.rank === 1 ? "text-xl text-amber-500" : "text-base"
-                  )}>
-                    {m.total_points}
-                  </span>
-                  <span className="text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
+                  <div>
+                    <span className={cn(
+                      "font-display font-bold tabular-nums",
+                      m.rank === 1 ? "text-xl text-amber-500" : "text-base"
+                    )}>
+                      {m.total_points}
+                    </span>
+                    <span className="text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
+                  </div>
+                  {m.pred_bonus > 0 && (
+                    <div className="text-[9px] text-emerald-600 font-mono leading-none mt-0.5" title="Bonus uit eindklassement-/truivoorspellingen">
+                      +{m.pred_bonus} vk
+                    </div>
+                  )}
                 </div>
 
                 <div className="shrink-0 text-right" style={{ minWidth: "64px" }} title="Punten in deze rit">
