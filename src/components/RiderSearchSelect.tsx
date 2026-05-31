@@ -42,15 +42,22 @@ export default function RiderSearchSelect({
   const excludeSet = useMemo(() => new Set(excludeIds), [excludeIds]);
 
   const results = useMemo(() => {
-    const q = search.trim().toLowerCase();
     const base = riders.filter((r) => r.id !== value && !excludeSet.has(r.id));
-    if (!q) return base;
-    return base.filter(
-      (r) =>
-        r.name.toLowerCase().includes(q) ||
-        String(r.start_number ?? "").includes(q) ||
-        (r.teamName ?? "").toLowerCase().includes(q)
-    );
+    // Token-gebaseerd zoeken: elk getypt woord moet ergens voorkomen (naam,
+    // rugnummer of ploeg), ongeacht volgorde. Zo matcht "Silva Guillermo" ook
+    // "Guillermo Thomas Silva", en worden leestekens zoals de asterisk op
+    // uitslagenbladen ("SILVA Guillermo Thomas*") genegeerd.
+    const tokens = search
+      .trim()
+      .toLowerCase()
+      .split(/\s+/)
+      .map((t) => t.replace(/[^a-z0-9]/g, ""))
+      .filter(Boolean);
+    if (tokens.length === 0) return base;
+    return base.filter((r) => {
+      const hay = `${r.name} ${r.start_number ?? ""} ${r.teamName ?? ""}`.toLowerCase();
+      return tokens.every((t) => hay.includes(t));
+    });
   }, [search, riders, value, excludeSet]);
 
   if (selected) {
