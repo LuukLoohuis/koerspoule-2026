@@ -327,7 +327,8 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
         .from("stage_results")
         .select("stage_id, rider_id, finish_position, stages!inner(game_id, results_status)")
         .eq("stages.game_id", game.id)
-        .eq("stages.results_status", "approved");
+        .eq("stages.results_status", "approved")
+        .range(0, 49999);
       if (error) throw error;
       return (data ?? []) as Array<{ stage_id: string; rider_id: string | null; finish_position: number }>;
     },
