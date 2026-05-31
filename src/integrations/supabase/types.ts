@@ -1534,6 +1534,19 @@ export type Database = {
       }
       full_recalculation: { Args: { p_game_id: string }; Returns: undefined }
       game_benchmark_data: { Args: { p_game_id: string }; Returns: Json }
+      game_entries_detail: {
+        Args: { p_game_id: string }
+        Returns: {
+          display_name: string
+          entry_id: string
+          jokers: Json
+          picks: Json
+          predictions: Json
+          team_name: string
+          total_points: number
+          user_id: string
+        }[]
+      }
       game_entries_standings: {
         Args: { p_game_id: string }
         Returns: {
