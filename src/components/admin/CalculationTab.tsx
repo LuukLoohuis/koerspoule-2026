@@ -53,8 +53,8 @@ export default function CalculationTab({
       const stageIds = regularStages.map((s) => s.id);
       if (stageIds.length === 0) { setOverview([]); return; }
       const [resultsRes, pointsRes, stagesRes] = await Promise.all([
-        supabase.from("stage_results").select("stage_id").in("stage_id", stageIds),
-        supabase.from("stage_points").select("stage_id, points, created_at").in("stage_id", stageIds),
+        supabase.from("stage_results").select("stage_id").in("stage_id", stageIds).range(0, 199999),
+        supabase.from("stage_points").select("stage_id, points, created_at").in("stage_id", stageIds).range(0, 199999),
         supabase.from("stages").select("id, results_status").in("id", stageIds),
       ]);
       const rCount = new Map<string, number>();

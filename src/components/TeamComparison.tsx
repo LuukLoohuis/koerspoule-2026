@@ -59,7 +59,8 @@ function useRiderBasePoints(gameId: string | undefined) {
       const { data: results } = await supabase
         .from("stage_results")
         .select("rider_id, finish_position, gc_position, mountain_position, points_position, youth_position")
-        .in("stage_id", stageIds);
+        .in("stage_id", stageIds)
+        .range(0, 199999); // anders 1000-rijen cap → late etappes missen
 
       const { data: schema } = await supabase
         .from("points_schema")

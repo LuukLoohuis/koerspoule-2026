@@ -108,7 +108,8 @@ function useEntryTotals(gameId?: string) {
       const { data, error } = await supabase
         .from("stage_points")
         .select("entry_id, points, stages!inner(game_id)")
-        .eq("stages.game_id", gameId);
+        .eq("stages.game_id", gameId)
+        .range(0, 199999); // anders 1000-rijen cap → laatste etappes missen
       if (error) throw error;
       const totalsByEntry = new Map<string, number>();
       for (const row of (data ?? []) as unknown as StagePoint[]) {

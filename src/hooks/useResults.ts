@@ -113,7 +113,11 @@ export function useStagePoints(gameId?: string) {
       const { data, error } = await supabase
         .from("stage_points")
         .select("entry_id, stage_id, points, stages!inner(game_id)")
-        .eq("stages.game_id", gameId);
+        .eq("stages.game_id", gameId)
+        // Zonder expliciete range kapt PostgREST af op 1000 rijen. stage_points =
+        // deelnemers × etappes, dus bij ~50+ deelnemers × 21 etappes worden de
+        // laatste etappes (o.a. rit 21) afgekapt en tellen niet mee.
+        .range(0, 199999);
       if (error) throw error;
       return (data ?? []).map((r: { entry_id: string; stage_id: string; points: number }) => ({
         entry_id: r.entry_id,

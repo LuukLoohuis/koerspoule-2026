@@ -156,7 +156,8 @@ export default function MijnPloegStats() {
         .from("stage_results")
         .select("rider_id, finish_position, stage_id, riders(name)")
         .in("rider_id", allRiderIds)
-        .not("finish_position", "is", null);
+        .not("finish_position", "is", null)
+        .range(0, 199999); // anders 1000-rijen cap → late etappes missen
       return (data ?? []) as Array<{
         rider_id: string;
         finish_position: number;
