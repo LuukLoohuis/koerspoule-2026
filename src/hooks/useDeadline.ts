@@ -52,7 +52,7 @@ function useGameDeadlines() {
       const past = rows.sort((a, b) => b.close - a.close)[0];
       return past ?? null;
     },
-    refetchInterval: 30000,
+    refetchInterval: 60000, // 30s → 60s scheelt query-volume (cloud-kosten)
   });
 }
 
