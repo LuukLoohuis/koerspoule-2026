@@ -40,6 +40,9 @@ export default function CalculationTab({
   const [stageBusy, setStageBusy] = useState<string | null>(null);
   const [jokerMultiplier, setJokerMultiplier] = useState<number>(2);
   const [loadingJokerMultiplier, setLoadingJokerMultiplier] = useState(false);
+  // Aanpasbaar GC-/trui-voorspellingsschema (defaults 50/25/25)
+  const [predScores, setPredScores] = useState({ exact: 50, podium: 25, jersey: 25 });
+  const [loadingPred, setLoadingPred] = useState(false);
 
   const regularStages = stages.filter((s: any) => !s.is_gc);
 
@@ -265,6 +268,57 @@ export default function CalculationTab({
     } catch (e) {
       console.error("Recalc error:", e);
       toast.error(`Herberekenen mislukt: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadPredScores() {
+    if (!supabase || !activeGameId) return;
+    setLoadingPred(true);
+    try {
+      const { data } = await supabase
+        .from("points_schema")
+        .select("classification, points")
+        .eq("game_id", activeGameId)
+        .in("classification", ["pred_gc_exact", "pred_gc_podium", "pred_jersey"])
+        .eq("position", 1);
+      const byCls = new Map<string, number>();
+      (data ?? []).forEach((r: any) => byCls.set(r.classification, r.points));
+      setPredScores({
+        exact: byCls.get("pred_gc_exact") ?? 50,
+        podium: byCls.get("pred_gc_podium") ?? 25,
+        jersey: byCls.get("pred_jersey") ?? 25,
+      });
+    } finally {
+      setLoadingPred(false);
+    }
+  }
+
+  useEffect(() => {
+    loadPredScores();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGameId]);
+
+  async function savePredScores() {
+    if (!supabase || !activeGameId) return;
+    setBusy(true);
+    try {
+      await supabase
+        .from("points_schema")
+        .delete()
+        .eq("game_id", activeGameId)
+        .in("classification", ["pred_gc_exact", "pred_gc_podium", "pred_jersey"]);
+      const rows = [
+        { game_id: activeGameId, classification: "pred_gc_exact", position: 1, points: predScores.exact },
+        { game_id: activeGameId, classification: "pred_gc_podium", position: 1, points: predScores.podium },
+        { game_id: activeGameId, classification: "pred_jersey", position: 1, points: predScores.jersey },
+      ];
+      const { error } = await supabase.from("points_schema").insert(rows);
+      if (error) throw error;
+      toast.success("GC-puntenschema opgeslagen");
+    } catch (e) {
+      toast.error(`Opslaan mislukt: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -524,17 +578,67 @@ export default function CalculationTab({
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-display flex items-center gap-2"><Sparkles className="w-5 h-5" />Eindklassementen berekenen</CardTitle>
+          <CardTitle className="font-display flex items-center gap-2"><Sparkles className="w-5 h-5" />Eindklassement (GC) — etappe 22</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Berekent uitsluitend de <strong>GC-podium punten</strong> (50 / 25, max 150) en
-            <strong> truienpunten</strong> (25 per juiste winnaar) op basis van de laatst
-            beschikbare uitslag. Staat volledig los van de etappepunten (1 t/m 21).
+            Zodra de <strong>laatste etappe (rit 21)</strong> is ingeladen én goedgekeurd, zijn de
+            eindklassementen bekend. Bereken hier de <strong>GC-podium</strong>- en <strong>truienpunten</strong>
+            voor de voorspellingen. Het resultaat telt mee in het totaal; controleer en publiceer daarna in <strong>Fiatteren</strong>.
           </p>
-          <Button data-testid="recalc-predictions-btn" onClick={calcPredictions} disabled={busy} variant="outline">
-            {busy ? "Bezig..." : "Eindklassementen berekenen"}
+
+          {/* Aanpasbaar puntenschema */}
+          <div className="rounded-lg border p-4 space-y-3">
+            <h4 className="font-display font-semibold text-sm">Puntenschema (aanpasbaar)</h4>
+            {loadingPred ? (
+              <p className="text-xs text-muted-foreground italic">Laden…</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="flex flex-col gap-1">
+                  <Label className="text-xs text-muted-foreground">GC — juiste plek (1/2/3)</Label>
+                  <Input
+                    type="number" min={0} value={predScores.exact}
+                    onChange={(e) => setPredScores((s) => ({ ...s, exact: Number(e.target.value) || 0 }))}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-xs text-muted-foreground">GC — in top 3, verkeerde plek</Label>
+                  <Input
+                    type="number" min={0} value={predScores.podium}
+                    onChange={(e) => setPredScores((s) => ({ ...s, podium: Number(e.target.value) || 0 }))}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-xs text-muted-foreground">Trui-winnaar (groen/berg/wit)</Label>
+                  <Input
+                    type="number" min={0} value={predScores.jersey}
+                    onChange={(e) => setPredScores((s) => ({ ...s, jersey: Number(e.target.value) || 0 }))}
+                    className="h-9 text-sm"
+                  />
+                </div>
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              GC-podium: max {predScores.exact * 3} pt (3 × juiste plek). Elke positie apart; een renner scoort max één keer.
+              Truien: {predScores.jersey} pt per juiste winnaar.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={savePredScores} disabled={busy || loadingPred} size="sm">
+                <Save className="w-4 h-4 mr-1" />Schema opslaan
+              </Button>
+              <Button onClick={loadPredScores} disabled={busy || loadingPred} size="sm" variant="ghost">Herlaad</Button>
+            </div>
+          </div>
+
+          <Button data-testid="recalc-predictions-btn" onClick={calcPredictions} disabled={busy}>
+            <Calculator className="w-4 h-4 mr-1" />
+            {busy ? "Bezig..." : "Bereken eindklassement (GC)"}
           </Button>
+          <p className="text-[11px] text-muted-foreground italic">
+            Tip: pas je het schema aan, sla het dan eerst op en klik daarna opnieuw op berekenen.
+          </p>
         </CardContent>
       </Card>
 
