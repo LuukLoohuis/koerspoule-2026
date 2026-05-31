@@ -42,7 +42,10 @@ export default function RiderSearchSelect({
   const excludeSet = useMemo(() => new Set(excludeIds), [excludeIds]);
 
   const results = useMemo(() => {
-    const base = riders.filter((r) => r.id !== value && !excludeSet.has(r.id));
+    // Reeds elders gekozen renners NIET verbergen, maar gedimd tonen met label
+    // "(al gekozen)". Zo kan een renner nooit "verdwijnen" uit de zoeklijst —
+    // je ziet meteen dat/waar hij al in de uitslag staat.
+    const base = riders.filter((r) => r.id !== value);
     // Token-gebaseerd zoeken: elk getypt woord moet ergens voorkomen (naam,
     // rugnummer of ploeg), ongeacht volgorde. Zo matcht "Silva Guillermo" ook
     // "Guillermo Thomas Silva", en worden leestekens zoals de asterisk op
@@ -98,27 +101,40 @@ export default function RiderSearchSelect({
       />
       {open && results.length > 0 && (
         <div className="absolute z-50 mt-1 left-0 w-[max(100%,18rem)] sm:w-[max(100%,22rem)] rounded-md border bg-popover shadow-md max-h-72 overflow-y-auto">
-          {results.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              onClick={() => {
-                onChange(r.id);
-                setSearch("");
-                setOpen(false);
-              }}
-              className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-accent"
-            >
-              <Plus className="h-3 w-3 text-foreground shrink-0" />
-              <span className="text-[11px] text-foreground tabular-nums w-7 text-right shrink-0">
-                #{r.start_number ?? "—"}
-              </span>
-              <span className="font-medium text-foreground truncate flex-1 min-w-0">{r.name}</span>
-              {r.teamName && (
-                <span className="text-[10px] text-foreground truncate max-w-[45%] shrink-0">{r.teamName}</span>
-              )}
-            </button>
-          ))}
+          {results.map((r) => {
+            const used = excludeSet.has(r.id);
+            return (
+              <button
+                key={r.id}
+                type="button"
+                disabled={used}
+                onClick={() => {
+                  if (used) return;
+                  onChange(r.id);
+                  setSearch("");
+                  setOpen(false);
+                }}
+                className={
+                  used
+                    ? "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs opacity-40 cursor-not-allowed"
+                    : "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-accent"
+                }
+                title={used ? "Staat al ergens in deze uitslag" : undefined}
+              >
+                <Plus className="h-3 w-3 text-foreground shrink-0" />
+                <span className="text-[11px] text-foreground tabular-nums w-7 text-right shrink-0">
+                  #{r.start_number ?? "—"}
+                </span>
+                <span className="font-medium text-foreground truncate flex-1 min-w-0">{r.name}</span>
+                {used && (
+                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground shrink-0">al gekozen</span>
+                )}
+                {!used && r.teamName && (
+                  <span className="text-[10px] text-foreground truncate max-w-[45%] shrink-0">{r.teamName}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
       {open && search.trim() && results.length === 0 && (
