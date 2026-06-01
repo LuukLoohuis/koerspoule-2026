@@ -123,17 +123,17 @@ function useAllGameRiders(gameId?: string) {
     queryKey: ["hc-all-game-riders", gameId],
     enabled: Boolean(supabase && gameId),
     staleTime: 5 * 60 * 1000,
-    queryFn: async (): Promise<Array<{ id: string; name: string; start_number: number | null }>> => {
+    queryFn: async (): Promise<Array<{ id: string; name: string; start_number: number | null; is_dnf: boolean }>> => {
       if (!supabase || !gameId) return [];
       const { data: teams } = await supabase.from("teams").select("id").eq("game_id", gameId);
       const teamIds = (teams ?? []).map((t: any) => t.id);
       if (teamIds.length === 0) return [];
       const { data, error } = await supabase
         .from("riders")
-        .select("id, name, start_number")
+        .select("id, name, start_number, is_dnf")
         .in("team_id", teamIds);
       if (error) throw error;
-      return (data ?? []) as Array<{ id: string; name: string; start_number: number | null }>;
+      return (data ?? []) as Array<{ id: string; name: string; start_number: number | null; is_dnf: boolean }>;
     },
   });
 }
@@ -317,7 +317,7 @@ export function useHorsCategorieSummary(): HorsSummary {
 
   // ── Wielerdirecteur (exact dezelfde formule als HorsCategorieTab) ──────────
   const director = useMemo<
-    | { score: number; rang: number; totaal: number; poolSub: number; monkeySub: number; jokerSub: number }
+    | { score: number; rang: number; totaal: number; poolSub: number; monkeySub: number; jokerSub: number; diffSub: number }
     | null
   >(() => {
     if (!isLive || !entry || !monte) return null;
@@ -325,17 +325,50 @@ export function useHorsCategorieSummary(): HorsSummary {
     const myRank = n > 0 ? totals.filter((t) => t > myStageTotal).length + 1 : 1;
     const poolScore = n <= 1 ? 0.75 : (n - myRank) / (n - 1);
     const monkeyScore = monte.beatPct / 100;
+
+    // Per-renner finishpunten (gedeelde basis)
+    const riderTotals = new Map<string, number>();
+    for (const r of allStageResults) {
+      if (!r.rider_id) continue;
+      const pts = pointsTable[r.finish_position] ?? 0;
+      if (pts === 0) continue;
+      riderTotals.set(r.rider_id, (riderTotals.get(r.rider_id) ?? 0) + pts);
+    }
+    const catIds = new Set<string>();
+    for (const c of categories) for (const cr of c.category_riders ?? []) if (cr.riders) catIds.add(cr.riders.id);
+
+    // Joker prestatie — rendement (scoorden je jokers punten?)
     let jokerScore = 0.5;
     if (jokerIds.length > 0) {
-      const ownerships = jokerIds.map((jid) => {
-        const stat = jokerStats.find((j) => j.rider_id === jid);
-        return stat ? stat.joker_count / Math.max(1, stat.total_entries) : 0.1;
-      });
-      const avgOwn = ownerships.reduce((a, b) => a + b, 0) / ownerships.length;
-      const monkeyBonus = monte.beatPct > 60 ? 0.15 : 0;
-      jokerScore = Math.min(1, 0.4 + (1 - avgOwn) * 0.4 + monkeyBonus);
+      const bestJokerPts = allGameRiders
+        .filter((r) => !catIds.has(r.id))
+        .map((r) => riderTotals.get(r.id) ?? 0)
+        .sort((a, b) => b - a)
+        .slice(0, 2)
+        .reduce((s, p) => s + p, 0);
+      const yourJokerPts = jokerIds.reduce((s, jid) => s + (riderTotals.get(jid) ?? 0), 0);
+      const rendement = bestJokerPts > 0 ? Math.min(1, Math.max(0, yourJokerPts / bestJokerPts)) : 0.5;
+      jokerScore = 0.3 + rendement * 0.7;
     }
-    const raw = poolScore * 0.5 + monkeyScore * 0.3 + jokerScore * 0.2;
+
+    // Differentiaal — punten-gewogen uniciteit van je scorende picks
+    let diffScore = 0.5;
+    {
+      const myPickIds: string[] = [];
+      picksByCategory.forEach((ids) => myPickIds.push(...ids));
+      const ownOf = (rid: string) => {
+        const ps = pickStats.find((p) => p.rider_id === rid);
+        return ps && ps.total_entries > 0 ? ps.pick_count / ps.total_entries : 0.15;
+      };
+      let wsum = 0, psum = 0;
+      for (const rid of myPickIds) {
+        const pts = riderTotals.get(rid) ?? 0;
+        if (pts > 0) { wsum += (1 - ownOf(rid)) * pts; psum += pts; }
+      }
+      if (psum > 0) diffScore = Math.min(1, Math.max(0, wsum / psum));
+    }
+
+    const raw = poolScore * 0.45 + monkeyScore * 0.25 + jokerScore * 0.2 + diffScore * 0.1;
     const score = Math.max(3.0, Math.round((raw * 9 + 1) * 10) / 10);
     const toSub = (v: number) => Math.max(1.0, Math.round((v * 9 + 1) * 10) / 10);
     return {
@@ -345,8 +378,9 @@ export function useHorsCategorieSummary(): HorsSummary {
       poolSub: toSub(poolScore),
       monkeySub: toSub(monkeyScore),
       jokerSub: toSub(jokerScore),
+      diffSub: toSub(diffScore),
     };
-  }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats]);
+  }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats]);
 
   // ── Lefevere-input — één bron van waarheid, gedeeld met de Wielerdirecteur-
   //    tab én de Gazetta-feed, zodat de gegenereerde tekst 1-op-1 identiek is
@@ -360,22 +394,31 @@ export function useHorsCategorieSummary(): HorsSummary {
     // halve data (lege totals → tijdelijk fout, te hoog cijfer) en genereren
     // we een rapport dat niet bij het echte cijfer past.
     if (isLoading || !director) return null;
+    // Pech-index: eigen renners (picks + jokers) die zijn uitgevallen (DNF).
+    const myAllRiderIds: string[] = [...jokerIds];
+    picksByCategory.forEach((ids) => myAllRiderIds.push(...ids));
+    const uitvallerNamen = Array.from(new Set(myAllRiderIds))
+      .filter((id) => (ridersById[id] as { is_dnf?: boolean } | undefined)?.is_dnf)
+      .map((id) => ridersById[id]?.name)
+      .filter(Boolean) as string[];
     return {
       score: director.score,
       components: {
-        poolRanking: { score: director.poolSub, weging: 0.5, rang: director.rang, totaalDeelnemers: director.totaal },
-        monkeyVergelijking: { score: director.monkeySub, weging: 0.3, percentageVerslagen: Math.round(monte!.beatPct) },
+        poolRanking: { score: director.poolSub, weging: 0.45, rang: director.rang, totaalDeelnemers: director.totaal },
+        monkeyVergelijking: { score: director.monkeySub, weging: 0.25, percentageVerslagen: Math.round(monte!.beatPct) },
         jokerPrestatie: { score: director.jokerSub, weging: 0.2, aantalJokers: jokerIds.length },
+        differentiaal: { score: director.diffSub, weging: 0.1 },
       },
       deelnemer: { ploegnaam: entry?.team_name ?? undefined },
       etappePrestatie: {
         jokerRenners: jokerIds.map((id) => ridersById[id]?.name).filter(Boolean) as string[],
       },
+      pech: { uitvallers: uitvallerNamen.length, namen: uitvallerNamen },
       horsCategorieScores: emirates
         ? { emirates: { percentage: emirates.pct, droomploegPunten: emirates.dreamTotal, jouwPunten: emirates.myPoints } }
         : undefined,
     };
-  }, [isLoading, director, monte, jokerIds, entry?.team_name, ridersById, emirates]);
+  }, [isLoading, director, monte, jokerIds, entry?.team_name, ridersById, emirates, picksByCategory]);
 
   const stageCount = stages.filter((s) => s.results_status === "approved").length;
 

@@ -671,22 +671,54 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
     const myRank = n > 0 ? totals.filter((t) => t > myStageTotal).length + 1 : 1;
     const poolScore = n <= 1 ? 0.75 : (n - myRank) / (n - 1);
 
-    // Monkey comparison (30%)
+    // Monkey comparison (25%)
     const monkeyScore = monte.beatPct / 100;
 
-    // Joker performance (20%): differentiation × monkey bonus
+    // Per-renner finishpunten over alle goedgekeurde etappes (gedeelde basis)
+    const riderTotals = new Map<string, number>();
+    for (const r of allStageResults) {
+      if (!r.rider_id) continue;
+      const pts = pointsTable[r.finish_position] ?? 0;
+      if (pts === 0) continue;
+      riderTotals.set(r.rider_id, (riderTotals.get(r.rider_id) ?? 0) + pts);
+    }
+    const catIds = new Set<string>();
+    for (const c of categories) for (const cr of c.category_riders ?? []) if (cr.riders) catIds.add(cr.riders.id);
+
+    // Joker prestatie (20%) — RENDEMENT: scoorden je jokers punten t.o.v. de
+    // best mogelijke jokers (de 2 best scorende niet-categorie-renners)?
     let jokerScore = 0.5;
     if (jokerIds.length > 0) {
-      const ownerships = jokerIds.map((jid) => {
-        const stat = jokerStats.find((j) => j.rider_id === jid);
-        return stat ? stat.joker_count / Math.max(1, stat.total_entries) : 0.1;
-      });
-      const avgOwn = ownerships.reduce((a, b) => a + b, 0) / ownerships.length;
-      const monkeyBonus = monte.beatPct > 60 ? 0.15 : 0;
-      jokerScore = Math.min(1, 0.4 + (1 - avgOwn) * 0.4 + monkeyBonus);
+      const bestJokerPts = allGameRiders
+        .filter((r) => !catIds.has(r.id))
+        .map((r) => riderTotals.get(r.id) ?? 0)
+        .sort((a, b) => b - a)
+        .slice(0, 2)
+        .reduce((s, p) => s + p, 0);
+      const yourJokerPts = jokerIds.reduce((s, jid) => s + (riderTotals.get(jid) ?? 0), 0);
+      const rendement = bestJokerPts > 0 ? Math.min(1, Math.max(0, yourJokerPts / bestJokerPts)) : 0.5;
+      jokerScore = 0.3 + rendement * 0.7;
     }
 
-    const raw = poolScore * 0.5 + monkeyScore * 0.3 + jokerScore * 0.2;
+    // Differentiaal (10%) — punten-gewogen uniciteit van je scorende picks:
+    // veel punten met renners die weinig anderen kozen → hoger.
+    let diffScore = 0.5;
+    {
+      const myPickIds: string[] = [];
+      picksByCategory.forEach((ids) => myPickIds.push(...ids));
+      const ownOf = (rid: string) => {
+        const ps = pickStats.find((p) => p.rider_id === rid);
+        return ps && ps.total_entries > 0 ? ps.pick_count / ps.total_entries : 0.15;
+      };
+      let wsum = 0, psum = 0;
+      for (const rid of myPickIds) {
+        const pts = riderTotals.get(rid) ?? 0;
+        if (pts > 0) { wsum += (1 - ownOf(rid)) * pts; psum += pts; }
+      }
+      if (psum > 0) diffScore = Math.min(1, Math.max(0, wsum / psum));
+    }
+
+    const raw = poolScore * 0.45 + monkeyScore * 0.25 + jokerScore * 0.2 + diffScore * 0.1;
     const score = Math.max(3.0, Math.round((raw * 9 + 1) * 10) / 10);
     const toSub = (v: number) => Math.max(1.0, Math.round((v * 9 + 1) * 10) / 10);
 
@@ -727,9 +759,11 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
       poolScore,
       monkeyScore,
       jokerScore,
+      diffScore,
       poolSubScore: toSub(poolScore),
       monkeySubScore: toSub(monkeyScore),
       jokerSubScore: toSub(jokerScore),
+      diffSubScore: toSub(diffScore),
       analysis,
       rang: myRank,
       totaal: n,
@@ -738,8 +772,9 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
       rankLabel: `Rang #${myRank} van ${n}`,
       beatLabel: `${monte.beatPct.toFixed(0)}% apen verslagen`,
       jokerLabel: jokerIds.length === 0 ? "Geen jokers" : `${jokerIds.length} joker${jokerIds.length > 1 ? "s" : ""}`,
+      diffLabel: "Unieke keuzes die scoren",
     };
-  }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats]);
+  }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats]);
 
   // ── Sub-tab state (must be declared before any early return to keep hook order stable) ──
   const [activeTab, setActiveTab] = useState<HorsTabKey>(initialTab ?? "dartpijl");
@@ -1569,14 +1604,14 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
                       <p className="text-foreground font-semibold text-xs">Hoe wordt de score berekend?</p>
                       <p>
                         De rapportscore loopt van <span className="text-foreground font-mono">1.0</span> tot{" "}
-                        <span className="text-foreground font-mono">10.0</span> (minimum 3.0) en is opgebouwd uit drie
+                        <span className="text-foreground font-mono">10.0</span> (minimum 3.0) en is opgebouwd uit vier
                         gewogen onderdelen.
                       </p>
                       <div className="space-y-2.5">
                         <div className="flex gap-2">
                           <span className="shrink-0">🏆</span>
                           <div>
-                            <span className="text-foreground font-semibold">Pool Ranking · 50%</span>
+                            <span className="text-foreground font-semibold">Pool Ranking · 45%</span>
                             <p className="mt-0.5">
                               Jouw positie in de pool ten opzichte van alle andere deelnemers. Rang 1 geeft de maximale
                               bijdrage, de laatste plek de minimale.
@@ -1586,10 +1621,9 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
                         <div className="flex gap-2">
                           <span className="shrink-0">🐒</span>
                           <div>
-                            <span className="text-foreground font-semibold">Monkey Vergelijking · 30%</span>
+                            <span className="text-foreground font-semibold">Monkey Vergelijking · 25%</span>
                             <p className="mt-0.5">
-                              Het percentage van 5.000 willekeurige simulatieploegen dat jij verslaat. Meer dan 60%
-                              verslaan geeft een extra bonus op de Joker score.
+                              Het percentage van 5.000 willekeurige simulatieploegen dat jij verslaat.
                             </p>
                           </div>
                         </div>
@@ -1598,8 +1632,18 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
                           <div>
                             <span className="text-foreground font-semibold">Joker Prestatie · 20%</span>
                             <p className="mt-0.5">
-                              Hoe zeldzaam jouw jokers zijn in de pool — renners die weinig anderen kozen scoren hoger.
-                              Een populaire joker (hoge ownership) verlaagt de deelscore.
+                              Rendement van je jokers: hoeveel punten ze scoorden ten opzichte van de best mogelijke
+                              jokers in het veld. Jokers die niets opleveren drukken de deelscore.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="shrink-0">🎯</span>
+                          <div>
+                            <span className="text-foreground font-semibold">Differentiaal · 10%</span>
+                            <p className="mt-0.5">
+                              Durf dat loont: renners die weinig anderen kozen én punten pakten. Punten-gewogen
+                              uniciteit van je scorende keuzes.
                             </p>
                           </div>
                         </div>
@@ -1631,7 +1675,7 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
 
                           <div className="space-y-1">
                             <p className="text-muted-foreground uppercase tracking-widest text-[9px]">
-                              Monkey Vergelijking (30%)
+                              Monkey Vergelijking (25%)
                             </p>
                             <p className="text-foreground">monkeyScore = beatPct / 100</p>
                             <p className="text-muted-foreground text-[9px]">
@@ -1641,20 +1685,39 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
 
                           <div className="space-y-1">
                             <p className="text-muted-foreground uppercase tracking-widest text-[9px]">
-                              Joker Prestatie (20%)
+                              Joker Prestatie (20%) — rendement
                             </p>
-                            <p className="text-foreground">jokerScore = min(1, 0.4 + (1 − avgOwn) × 0.4 + bonus)</p>
+                            <p className="text-foreground">rendement = jouwJokerPunten / besteJokerPunten</p>
+                            <p className="text-foreground">jokerScore = 0.3 + rendement × 0.7</p>
                             <p className="text-muted-foreground text-[9px]">
-                              avgOwn = gem. ownership jokers · bonus = 0.15 als beatPct &gt; 60%
+                              besteJokerPunten = 2 best scorende niet-categorie-renners · geen jokers → 0.5
                             </p>
-                            <p className="text-muted-foreground text-[9px]">Geen jokers → jokerScore = 0.5</p>
+                          </div>
+
+                          <div className="space-y-1">
+                            <p className="text-muted-foreground uppercase tracking-widest text-[9px]">
+                              Differentiaal (10%)
+                            </p>
+                            <p className="text-foreground">diffScore = Σ((1 − ownership) × punten) / Σ(punten)</p>
+                            <p className="text-muted-foreground text-[9px]">
+                              over je scorende picks · ownership = hoeveel anderen die renner kozen
+                            </p>
                           </div>
 
                           <div className="border-t border-border pt-2 space-y-1">
                             <p className="text-muted-foreground uppercase tracking-widest text-[9px]">Eindscore</p>
-                            <p className="text-foreground">raw = poolScore×0.5 + monkeyScore×0.3 + jokerScore×0.2</p>
+                            <p className="text-foreground">raw = pool×0.45 + monkey×0.25 + joker×0.20 + diff×0.10</p>
                             <p className="text-foreground">score = max(3.0, round((raw × 9 + 1) × 10) / 10)</p>
                             <p className="text-muted-foreground text-[9px]">Schaal 1.0 – 10.0 · minimum 3.0</p>
+                          </div>
+
+                          <div className="border-t border-border pt-2 space-y-1">
+                            <p className="text-amber-700 font-semibold text-[10px] not-italic">Rekenvoorbeeld</p>
+                            <p className="text-muted-foreground text-[9px]">#8 van 50 · 72% apen · jokers 64/100 pt · diff 0.55</p>
+                            <p className="text-foreground">pool = (50−8)/49 = 0.857</p>
+                            <p className="text-foreground">joker = 0.3 + (64/100)×0.7 = 0.748</p>
+                            <p className="text-foreground">raw = 0.45·0.857 + 0.25·0.72 + 0.20·0.748 + 0.10·0.55 = 0.770</p>
+                            <p className="text-foreground">score = (0.770×9 + 1) = 7.9</p>
                           </div>
                         </div>
                       )}
@@ -1667,14 +1730,14 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
                       sub: directorScore.rankLabel,
                       pct: directorScore.poolScore,
                       val: directorScore.poolSubScore,
-                      w: 50,
+                      w: 45,
                     },
                     {
                       label: "Monkey Vergelijking",
                       sub: directorScore.beatLabel,
                       pct: directorScore.monkeyScore,
                       val: directorScore.monkeySubScore,
-                      w: 30,
+                      w: 25,
                     },
                     {
                       label: "Joker Prestatie",
@@ -1682,6 +1745,13 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
                       pct: directorScore.jokerScore,
                       val: directorScore.jokerSubScore,
                       w: 20,
+                    },
+                    {
+                      label: "Differentiaal",
+                      sub: directorScore.diffLabel,
+                      pct: directorScore.diffScore,
+                      val: directorScore.diffSubScore,
+                      w: 10,
                     },
                   ].map(({ label, sub, pct, val, w }) => (
                     <div key={label} className="flex items-center gap-3">

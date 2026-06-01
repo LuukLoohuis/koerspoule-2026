@@ -4,10 +4,13 @@ import { supabase } from "@/lib/supabase";
 export type LefevereReportInput = {
   score: number;
   components: {
-    poolRanking: { score: number; weging: 0.5; rang: number; totaalDeelnemers: number };
-    monkeyVergelijking: { score: number; weging: 0.3; percentageVerslagen: number };
-    jokerPrestatie: { score: number; weging: 0.2; aantalJokers: number };
+    poolRanking: { score: number; weging: number; rang: number; totaalDeelnemers: number };
+    monkeyVergelijking: { score: number; weging: number; percentageVerslagen: number };
+    jokerPrestatie: { score: number; weging: number; aantalJokers: number };
+    differentiaal?: { score: number; weging: number };
   };
+  // Pech-index: eigen renners die zijn uitgevallen (DNF) — alleen voor de tekst.
+  pech?: { uitvallers: number; namen: string[] };
   stage?: { nummer?: number; beschrijving?: string; type?: string };
   deelnemer?: { ploegnaam?: string };
   etappePrestatie?: {

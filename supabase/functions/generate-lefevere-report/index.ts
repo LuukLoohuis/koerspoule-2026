@@ -199,6 +199,8 @@ function buildUserPrompt(input: any): string {
   const ranking = input.components?.poolRanking;
   const monkey = input.components?.monkeyVergelijking;
   const joker = input.components?.jokerPrestatie;
+  const diff = input.components?.differentiaal;
+  const pech = input.pech;
   const stage = input.stage ?? {};
   const ep = input.etappePrestatie ?? {};
   const hc = input.horsCategorieScores ?? {};
@@ -211,9 +213,14 @@ function buildUserPrompt(input: any): string {
 
   lines.push("");
   lines.push("RAPPORT-COMPONENTEN:");
-  if (ranking) lines.push(`  Pool Ranking (50%): rang ${ranking.rang}/${ranking.totaalDeelnemers} → score ${ranking.score?.toFixed?.(1) ?? "?"}/10`);
-  if (monkey) lines.push(`  Monkey Vergelijking (30%): ${monkey.percentageVerslagen ?? "?"}% apen verslagen → score ${monkey.score?.toFixed?.(1) ?? "?"}/10`);
-  if (joker) lines.push(`  Joker Prestatie (20%): ${joker.aantalJokers ?? 0} jokers → score ${joker.score?.toFixed?.(1) ?? "?"}/10`);
+  if (ranking) lines.push(`  Pool Ranking (45%): rang ${ranking.rang}/${ranking.totaalDeelnemers} → score ${ranking.score?.toFixed?.(1) ?? "?"}/10`);
+  if (monkey) lines.push(`  Monkey Vergelijking (25%): ${monkey.percentageVerslagen ?? "?"}% apen verslagen → score ${monkey.score?.toFixed?.(1) ?? "?"}/10`);
+  if (joker) lines.push(`  Joker Prestatie (20%, rendement): ${joker.aantalJokers ?? 0} jokers → score ${joker.score?.toFixed?.(1) ?? "?"}/10`);
+  if (diff) lines.push(`  Differentiaal (10%, unieke keuzes die scoren) → score ${diff.score?.toFixed?.(1) ?? "?"}/10`);
+  if (pech && pech.uitvallers > 0) {
+    lines.push("");
+    lines.push(`PECH (materiaalpech/DNF): ${pech.uitvallers} uitgevallen renner(s)${Array.isArray(pech.namen) && pech.namen.length ? `: ${pech.namen.join(", ")}` : ""}. Verwerk dit met (gespeelde) compassie of als excuus-dat-geen-excuus-is in de toon van een ploegleider.`);
+  }
 
   lines.push("");
   lines.push("ETAPPE-PRESTATIE:");
