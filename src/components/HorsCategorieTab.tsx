@@ -1843,36 +1843,60 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
                       </button>
 
                       {showDiffDetail && (
-                        <div className="px-3 pb-3 space-y-2">
-                          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-1 text-[10px]">
-                            <span className="text-muted-foreground/70 uppercase tracking-wider">Renner</span>
-                            <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Gekozen</span>
-                            <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Punten</span>
-                            <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Bijdrage</span>
-                            {directorScore.diffDetail.rows.map((r) => (
-                              <Fragment key={r.name}>
-                                <span className="truncate text-foreground">{r.name}</span>
-                                <span className={cn("text-right font-mono tabular-nums", r.ownPct <= 25 ? "text-emerald-600" : r.ownPct >= 60 ? "text-rose-500" : "text-foreground/70")}>{r.ownPct}%</span>
-                                <span className="text-right font-mono tabular-nums text-foreground/70">{r.pts}</span>
-                                <span className="text-right font-mono tabular-nums font-semibold text-foreground">+{r.bijdrage}</span>
-                              </Fragment>
-                            ))}
+                        <div className="px-3 pb-3 space-y-3">
+                          {/* 1. Wat meet het */}
+                          <div className="space-y-1">
+                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-semibold">1 · Wat telt mee</p>
+                            <p className="text-[10px] text-muted-foreground leading-snug">
+                              Per renner die punten scoorde:{" "}
+                              <span className="font-mono text-foreground">bijdrage = punten × (1 − gekozen%)</span>.
+                              Hoe minder anderen die renner kozen, hoe zwaarder hij telt.
+                            </p>
+                            <p className="text-[10px] text-muted-foreground leading-snug">
+                              <span className="text-emerald-600 font-semibold">groen</span> = weinig gekozen (≤25%, telt zwaar) ·{" "}
+                              <span className="text-rose-500 font-semibold">rood</span> = veel gekozen (≥60%, telt licht).
+                            </p>
                           </div>
 
-                          <p className="text-[9px] text-muted-foreground leading-snug">
-                            Bijdrage = punten × (1 − gekozen%). Lage "gekozen%" (groen) = unieke keuze die zwaarder telt; hoge % (rood) = populaire renner die minder oplevert.
-                          </p>
+                          {/* 2. Jouw renners */}
+                          <div className="space-y-1">
+                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-semibold">2 · Jouw scorende renners</p>
+                            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-1 text-[10px]">
+                              <span className="text-muted-foreground/70 uppercase tracking-wider">Renner</span>
+                              <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Gekozen</span>
+                              <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Punten</span>
+                              <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Bijdrage</span>
+                              {directorScore.diffDetail.rows.map((r) => (
+                                <Fragment key={r.name}>
+                                  <span className="truncate text-foreground">{r.name}</span>
+                                  <span className={cn("text-right font-mono tabular-nums", r.ownPct <= 25 ? "text-emerald-600" : r.ownPct >= 60 ? "text-rose-500" : "text-foreground/70")}>{r.ownPct}%</span>
+                                  <span className="text-right font-mono tabular-nums text-foreground/70">{r.pts}</span>
+                                  <span className="text-right font-mono tabular-nums font-semibold text-foreground">+{r.bijdrage}</span>
+                                </Fragment>
+                              ))}
+                            </div>
+                            {directorScore.diffDetail.scorers > directorScore.diffDetail.rows.length && (
+                              <p className="text-[9px] text-muted-foreground/60">+ {directorScore.diffDetail.scorers - directorScore.diffDetail.rows.length} meer (top 5 getoond)</p>
+                            )}
+                          </div>
 
-                          {/* Voorbeeldberekening */}
-                          <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2 font-mono text-[9px] text-foreground/80 leading-relaxed">
-                            <p className="text-amber-700 font-semibold not-italic mb-0.5">Voorbeeld</p>
-                            <p>Renner A: 40 pt, 10% gekozen → 40 × (1−0.10) = 36</p>
-                            <p>Renner B: 30 pt, 70% gekozen → 30 × (1−0.70) = 9</p>
-                            <p>diffScore = (36 + 9) / (40 + 30) = 45/70 = 0.64</p>
-                            <p>deelcijfer = (0.64 × 9 + 1) = 6.8 / 10</p>
-                            <p className="text-foreground mt-1">
-                              Jouw diffScore: {directorScore.diffScore.toFixed(2)} → deelcijfer {directorScore.diffSubScore.toFixed(1)}/10 (weegt 10%).
-                            </p>
+                          {/* 3. Voorbeeld */}
+                          <div className="space-y-1">
+                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-semibold">3 · Voorbeeld</p>
+                            <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2 font-mono text-[9px] text-foreground/80 leading-relaxed">
+                              <p>Renner A: 40 pt, 10% gekozen → 40 × (1−0.10) = 36</p>
+                              <p>Renner B: 30 pt, 70% gekozen → 30 × (1−0.70) = 9</p>
+                              <p>diffScore = (36 + 9) / (40 + 30) = 0.64</p>
+                              <p>deelcijfer = (0.64 × 9 + 1) = 6.8 / 10</p>
+                            </div>
+                          </div>
+
+                          {/* Jouw resultaat */}
+                          <div className="flex items-center justify-between rounded-md border border-border bg-secondary/60 px-2.5 py-1.5">
+                            <span className="text-[10px] text-muted-foreground">Jouw differentiaal</span>
+                            <span className="text-[11px] font-mono text-foreground">
+                              diffScore {directorScore.diffScore.toFixed(2)} → <span className="font-bold">{directorScore.diffSubScore.toFixed(1)}/10</span> <span className="text-muted-foreground">(10%)</span>
+                            </span>
                           </div>
                         </div>
                       )}
