@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
@@ -703,19 +703,36 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
     // Differentiaal (10%) — punten-gewogen uniciteit van je scorende picks:
     // veel punten met renners die weinig anderen kozen → hoger.
     let diffScore = 0.5;
+    let diffDetail: {
+      scorers: number;
+      avgOwnPct: number;
+      rows: Array<{ name: string; ownPct: number; pts: number; bijdrage: number }>;
+    } = { scorers: 0, avgOwnPct: 0, rows: [] };
     {
+      const nameById = new Map(allGameRiders.map((r) => [r.id, r.name]));
       const myPickIds: string[] = [];
       picksByCategory.forEach((ids) => myPickIds.push(...ids));
       const ownOf = (rid: string) => {
         const ps = pickStats.find((p) => p.rider_id === rid);
         return ps && ps.total_entries > 0 ? ps.pick_count / ps.total_entries : 0.15;
       };
-      let wsum = 0, psum = 0;
+      let wsum = 0, psum = 0, ownSum = 0;
+      const rows: Array<{ name: string; ownPct: number; pts: number; bijdrage: number }> = [];
       for (const rid of myPickIds) {
         const pts = riderTotals.get(rid) ?? 0;
-        if (pts > 0) { wsum += (1 - ownOf(rid)) * pts; psum += pts; }
+        if (pts > 0) {
+          const own = ownOf(rid);
+          wsum += (1 - own) * pts; psum += pts; ownSum += own;
+          rows.push({ name: nameById.get(rid) ?? "—", ownPct: Math.round(own * 100), pts, bijdrage: Math.round((1 - own) * pts) });
+        }
       }
       if (psum > 0) diffScore = Math.min(1, Math.max(0, wsum / psum));
+      rows.sort((a, b) => b.bijdrage - a.bijdrage);
+      diffDetail = {
+        scorers: rows.length,
+        avgOwnPct: rows.length ? Math.round((ownSum / rows.length) * 100) : 0,
+        rows: rows.slice(0, 5),
+      };
     }
 
     const raw = poolScore * 0.45 + monkeyScore * 0.25 + jokerScore * 0.2 + diffScore * 0.1;
@@ -772,7 +789,8 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
       rankLabel: `Rang #${myRank} van ${n}`,
       beatLabel: `${monte.beatPct.toFixed(0)}% apen verslagen`,
       jokerLabel: jokerIds.length === 0 ? "Geen jokers" : `${jokerIds.length} joker${jokerIds.length > 1 ? "s" : ""}`,
-      diffLabel: "Unieke keuzes die scoren",
+      diffLabel: diffDetail.scorers === 0 ? "Nog geen scorende picks" : `${diffDetail.scorers} scorende picks · gem. ${diffDetail.avgOwnPct}% gekozen`,
+      diffDetail,
     };
   }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats]);
 
@@ -1642,8 +1660,12 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
                           <div>
                             <span className="text-foreground font-semibold">Differentiaal · 10%</span>
                             <p className="mt-0.5">
-                              Durf dat loont: renners die weinig anderen kozen én punten pakten. Punten-gewogen
-                              uniciteit van je scorende keuzes.
+                              Durf dat loont. Je krijgt punten voor renners die <span className="text-foreground font-semibold">én</span>
+                              {" "}punten scoorden <span className="text-foreground font-semibold">én</span> door weinig anderen
+                              gekozen zijn. Per scorende renner telt zijn punten mee, gewogen met <span className="font-mono">(1 − gekozen%)</span>:
+                              een renner die door 10% gekozen is weegt 0.9×, eentje die door 80% gekozen is maar 0.2×. Het
+                              gemiddelde hiervan (punten-gewogen) is je deelscore. Veel punten met weinig-gekozen renners → richting 10.
+                              Alleen maar populaire favorieten → lager.
                             </p>
                           </div>
                         </div>
@@ -1783,6 +1805,35 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
                       </div>
                     </div>
                   ))}
+
+                  {/* Differentiaal — onderliggende cijfers per scorende renner */}
+                  {directorScore.diffDetail && directorScore.diffDetail.rows.length > 0 && (
+                    <div className="mt-2 rounded-lg border border-border bg-secondary/40 p-3">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">🎯 Differentiaal — onderliggend</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          {directorScore.diffDetail.scorers} scoorders · gem. {directorScore.diffDetail.avgOwnPct}% gekozen
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-1 text-[10px]">
+                        <span className="text-muted-foreground/70 uppercase tracking-wider">Renner</span>
+                        <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Gekozen</span>
+                        <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Punten</span>
+                        <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Bijdrage</span>
+                        {directorScore.diffDetail.rows.map((r) => (
+                          <Fragment key={r.name}>
+                            <span className="truncate text-foreground">{r.name}</span>
+                            <span className={cn("text-right font-mono tabular-nums", r.ownPct <= 25 ? "text-emerald-600" : r.ownPct >= 60 ? "text-rose-500" : "text-foreground/70")}>{r.ownPct}%</span>
+                            <span className="text-right font-mono tabular-nums text-foreground/70">{r.pts}</span>
+                            <span className="text-right font-mono tabular-nums font-semibold text-foreground">+{r.bijdrage}</span>
+                          </Fragment>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-[9px] text-muted-foreground leading-snug">
+                        Bijdrage = punten × (1 − gekozen%). Lage "gekozen%" (groen) = unieke keuze die meer telt; hoge % (rood) = populaire renner die minder oplevert.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
