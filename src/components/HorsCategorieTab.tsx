@@ -1787,36 +1787,43 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
                       val: directorScore.diffSubScore,
                       w: 10,
                     },
-                  ].map(({ label, sub, pct, val, w }) => (
-                    <div key={label} className="flex items-center gap-3">
-                      <div className="w-36 shrink-0">
-                        <div className="text-foreground/70 text-xs font-medium leading-none mb-0.5">{label}</div>
-                        <div className="text-muted-foreground text-[10px]">{sub}</div>
+                  ].map(({ label, sub, pct, val, w }) => {
+                    const tone = pct >= 0.7 ? "emerald" : pct >= 0.4 ? "amber" : "rose";
+                    const barCls = tone === "emerald" ? "bg-emerald-500" : tone === "amber" ? "bg-amber-500" : "bg-rose-500";
+                    const chipCls =
+                      tone === "emerald" ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                      : tone === "amber" ? "bg-amber-50 text-amber-700 border-amber-300"
+                      : "bg-rose-50 text-rose-700 border-rose-300";
+                    return (
+                    <div key={label} className="flex items-center gap-3 py-1">
+                      <div className="w-40 shrink-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-foreground text-xs font-semibold leading-none">{label}</span>
+                          <span className="shrink-0 text-[9px] font-bold font-mono tabular-nums text-muted-foreground bg-secondary border border-border rounded px-1 py-px leading-4">
+                            {w}%
+                          </span>
+                        </div>
+                        <div className="text-muted-foreground text-[10px] mt-0.5">{sub}</div>
                       </div>
-                      <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <div className="flex-1 h-2.5 rounded-full bg-secondary/80 overflow-hidden ring-1 ring-inset ring-border/50">
                         <div
-                          className={cn(
-                            "h-full rounded-full transition-[width] duration-700",
-                            pct >= 0.7 ? "bg-emerald-400" : pct >= 0.4 ? "bg-amber-400" : "bg-rose-400",
-                          )}
+                          className={cn("h-full rounded-full transition-[width] duration-700", barCls)}
                           style={{ width: `${Math.round(pct * 100)}%` }}
                         />
                       </div>
-                      <div className="shrink-0 w-8 text-right">
+                      <div className="shrink-0">
                         <span
                           className={cn(
-                            "font-mono text-xs font-bold tabular-nums",
-                            pct >= 0.7 ? "text-emerald-400" : pct >= 0.4 ? "text-amber-400" : "bg-rose-400",
+                            "inline-flex items-baseline gap-0.5 rounded-md border px-1.5 py-0.5 font-mono font-bold tabular-nums text-sm",
+                            chipCls,
                           )}
                         >
-                          {val.toFixed(1)}
+                          {val.toFixed(1)}<span className="text-[9px] font-normal opacity-60">/10</span>
                         </span>
                       </div>
-                      <div className="shrink-0 w-8 text-right">
-                        <span className="text-muted-foreground/70 text-[10px] font-mono">{w}%</span>
-                      </div>
                     </div>
-                  ))}
+                    );
+                  })}
 
                   {/* Differentiaal — onderliggende cijfers per scorende renner (klikbaar) */}
                   {directorScore.diffDetail && directorScore.diffDetail.rows.length > 0 && (
