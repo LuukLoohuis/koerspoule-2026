@@ -22,7 +22,7 @@ import { useStagePoints, useStages, useEntries } from "@/hooks/useResults";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Mic } from "lucide-react";
+import { Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Mic, ChevronDown } from "lucide-react";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import JerseyBadge from "@/components/retro/JerseyBadge";
@@ -690,7 +690,14 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     // Joker prestatie (20%) — RENDEMENT: scoorden je jokers punten t.o.v. de
     // best mogelijke jokers (de 2 best scorende niet-categorie-renners)?
     let jokerScore = 0.5;
+    let jokerDetail: {
+      yourPts: number;
+      bestPts: number;
+      rendementPct: number;
+      rows: Array<{ name: string; pts: number }>;
+    } = { yourPts: 0, bestPts: 0, rendementPct: 0, rows: [] };
     if (jokerIds.length > 0) {
+      const nameByIdJ = new Map(allGameRiders.map((r) => [r.id, r.name]));
       const bestJokerPts = allGameRiders
         .filter((r) => !catIds.has(r.id))
         .map((r) => riderTotals.get(r.id) ?? 0)
@@ -700,6 +707,12 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       const yourJokerPts = jokerIds.reduce((s, jid) => s + (riderTotals.get(jid) ?? 0), 0);
       const rendement = bestJokerPts > 0 ? Math.min(1, Math.max(0, yourJokerPts / bestJokerPts)) : 0.5;
       jokerScore = 0.3 + rendement * 0.7;
+      jokerDetail = {
+        yourPts: yourJokerPts,
+        bestPts: bestJokerPts,
+        rendementPct: Math.round(rendement * 100),
+        rows: jokerIds.map((jid) => ({ name: nameByIdJ.get(jid) ?? "—", pts: riderTotals.get(jid) ?? 0 })),
+      };
     }
 
     // Differentiaal (10%) — punten-gewogen uniciteit van je scorende picks:
@@ -793,6 +806,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       jokerLabel: jokerIds.length === 0 ? "Geen jokers" : `${jokerIds.length} joker${jokerIds.length > 1 ? "s" : ""}`,
       diffLabel: diffDetail.scorers === 0 ? "Nog geen scorende picks" : `${diffDetail.scorers} scorende picks · gem. ${diffDetail.avgOwnPct}% gekozen`,
       diffDetail,
+      jokerDetail,
     };
   }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats]);
 
@@ -803,7 +817,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   }, [initialTab]);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
-  const [showDiffDetail, setShowDiffDetail] = useState(false);
+  const [openComponent, setOpenComponent] = useState<string | null>(null);
 
   // ── Lefevere directeursanalyse (LLM) — gedeelde input via useHorsCategorieSummary,
   //    zodat de tekst 1-op-1 identiek is aan die in de Gazetta-feed. ──
@@ -1760,150 +1774,124 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     </div>
                   )}
 
-                  {[
-                    {
-                      label: "Pool Ranking",
-                      sub: directorScore.rankLabel,
-                      pct: directorScore.poolScore,
-                      val: directorScore.poolSubScore,
-                      w: 45,
-                    },
-                    {
-                      label: "Monkey Vergelijking",
-                      sub: directorScore.beatLabel,
-                      pct: directorScore.monkeyScore,
-                      val: directorScore.monkeySubScore,
-                      w: 25,
-                    },
-                    {
-                      label: "Joker Prestatie",
-                      sub: directorScore.jokerLabel,
-                      pct: directorScore.jokerScore,
-                      val: directorScore.jokerSubScore,
-                      w: 20,
-                    },
-                    {
-                      label: "Differentiaal",
-                      sub: directorScore.diffLabel,
-                      pct: directorScore.diffScore,
-                      val: directorScore.diffSubScore,
-                      w: 10,
-                    },
-                  ].map(({ label, sub, pct, val, w }) => {
+                  <p className="text-[10px] text-muted-foreground/70 -mt-1">Klik een onderdeel open voor de berekening.</p>
+
+                  {([
+                    { key: "pool",   label: "Pool Ranking",        sub: directorScore.rankLabel,  pct: directorScore.poolScore,   val: directorScore.poolSubScore,   w: 45 },
+                    { key: "monkey", label: "Monkey Vergelijking", sub: directorScore.beatLabel,  pct: directorScore.monkeyScore, val: directorScore.monkeySubScore, w: 25 },
+                    { key: "joker",  label: "Joker Prestatie",     sub: directorScore.jokerLabel, pct: directorScore.jokerScore,  val: directorScore.jokerSubScore,  w: 20 },
+                    { key: "diff",   label: "Differentiaal",       sub: directorScore.diffLabel,  pct: directorScore.diffScore,   val: directorScore.diffSubScore,   w: 10 },
+                  ] as const).map(({ key, label, sub, pct, val, w }) => {
                     const tone = pct >= 0.7 ? "emerald" : pct >= 0.4 ? "amber" : "rose";
                     const barCls = tone === "emerald" ? "bg-emerald-500" : tone === "amber" ? "bg-amber-500" : "bg-rose-500";
                     const chipCls =
                       tone === "emerald" ? "bg-emerald-50 text-emerald-700 border-emerald-300"
                       : tone === "amber" ? "bg-amber-50 text-amber-700 border-amber-300"
                       : "bg-rose-50 text-rose-700 border-rose-300";
+                    const open = openComponent === key;
                     return (
-                    <div key={label} className="flex items-center gap-3 py-1">
-                      <div className="w-40 shrink-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-foreground text-xs font-semibold leading-none">{label}</span>
-                          <span className="shrink-0 text-[9px] font-bold font-mono tabular-nums text-muted-foreground bg-secondary border border-border rounded px-1 py-px leading-4">
-                            {w}%
-                          </span>
-                        </div>
-                        <div className="text-muted-foreground text-[10px] mt-0.5">{sub}</div>
-                      </div>
-                      <div className="flex-1 h-2.5 rounded-full bg-secondary/80 overflow-hidden ring-1 ring-inset ring-border/50">
-                        <div
-                          className={cn("h-full rounded-full transition-[width] duration-700", barCls)}
-                          style={{ width: `${Math.round(pct * 100)}%` }}
-                        />
-                      </div>
-                      <div className="shrink-0">
-                        <span
+                      <div key={key}>
+                        <button
+                          type="button"
+                          onClick={() => setOpenComponent(open ? null : key)}
                           className={cn(
-                            "inline-flex items-baseline gap-0.5 rounded-md border px-1.5 py-0.5 font-mono font-bold tabular-nums text-sm",
-                            chipCls,
+                            "w-full flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-lg text-left transition-colors hover:bg-secondary/40",
+                            open && "bg-secondary/40",
                           )}
                         >
-                          {val.toFixed(1)}<span className="text-[9px] font-normal opacity-60">/10</span>
-                        </span>
+                          <div className="w-40 shrink-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-foreground text-xs font-semibold leading-none">{label}</span>
+                              <span className="shrink-0 text-[9px] font-bold font-mono tabular-nums text-muted-foreground bg-secondary border border-border rounded px-1 py-px leading-4">
+                                {w}%
+                              </span>
+                            </div>
+                            <div className="text-muted-foreground text-[10px] mt-0.5">{sub}</div>
+                          </div>
+                          <div className="flex-1 h-2.5 rounded-full bg-secondary/80 overflow-hidden ring-1 ring-inset ring-border/50">
+                            <div className={cn("h-full rounded-full transition-[width] duration-700", barCls)} style={{ width: `${Math.round(pct * 100)}%` }} />
+                          </div>
+                          <span className={cn("shrink-0 inline-flex items-baseline gap-0.5 rounded-md border px-1.5 py-0.5 font-mono font-bold tabular-nums text-sm", chipCls)}>
+                            {val.toFixed(1)}<span className="text-[9px] font-normal opacity-60">/10</span>
+                          </span>
+                          <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform", open && "rotate-180")} />
+                        </button>
+
+                        {open && (
+                          <div className="mt-1 mb-2 rounded-lg border border-border bg-secondary/30 p-3 text-[11px] text-foreground/80 leading-relaxed space-y-2">
+                            {key === "pool" && (
+                              <>
+                                <p className="font-mono text-foreground">poolScore = (N − rang) / (N − 1)</p>
+                                <p className="font-mono text-foreground">= ({directorScore.totaal} − {directorScore.rang}) / ({directorScore.totaal} − 1) = {directorScore.poolScore.toFixed(2)}</p>
+                                <p className="text-muted-foreground">N = aantal deelnemers ({directorScore.totaal}), rang = jouw positie (#{directorScore.rang}). Hoe hoger je staat, hoe hoger de deelscore.</p>
+                              </>
+                            )}
+                            {key === "monkey" && (
+                              <>
+                                <p className="font-mono text-foreground">monkeyScore = beatPct / 100 = {directorScore.beatPct.toFixed(0)} / 100 = {directorScore.monkeyScore.toFixed(2)}</p>
+                                <p className="text-muted-foreground">Je verslaat {directorScore.beatPct.toFixed(0)}% van 5.000 willekeurige simulatieploegen ("apen" die lukraak renners kiezen).</p>
+                              </>
+                            )}
+                            {key === "joker" && (
+                              directorScore.aantalJokers === 0 ? (
+                                <p className="text-muted-foreground">Geen jokers gekozen → neutrale deelscore 0.5.</p>
+                              ) : (
+                                <>
+                                  <div className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-[10px]">
+                                    <span className="text-muted-foreground/70 uppercase tracking-wider">Jouw joker</span>
+                                    <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Punten</span>
+                                    {directorScore.jokerDetail.rows.map((r) => (
+                                      <Fragment key={r.name}>
+                                        <span className="truncate text-foreground">{r.name}</span>
+                                        <span className="text-right font-mono tabular-nums text-foreground">{r.pts}</span>
+                                      </Fragment>
+                                    ))}
+                                  </div>
+                                  <p className="font-mono text-foreground">rendement = {directorScore.jokerDetail.yourPts} / {directorScore.jokerDetail.bestPts} = {directorScore.jokerDetail.rendementPct}%</p>
+                                  <p className="font-mono text-foreground">jokerScore = 0.3 + {(directorScore.jokerDetail.rendementPct / 100).toFixed(2)} × 0.7 = {directorScore.jokerScore.toFixed(2)}</p>
+                                  <p className="text-muted-foreground">besteJokerPunten = de 2 best scorende renners die in géén categorie zitten.</p>
+                                </>
+                              )
+                            )}
+                            {key === "diff" && (
+                              <>
+                                <p className="text-[10px] text-muted-foreground leading-snug">
+                                  Per scorende renner: <span className="font-mono text-foreground">bijdrage = punten × (1 − gekozen%)</span>. Weinig gekozen telt zwaarder.{" "}
+                                  <span className="text-emerald-600 font-semibold">groen</span> ≤25% · <span className="text-rose-500 font-semibold">rood</span> ≥60%.
+                                </p>
+                                {directorScore.diffDetail.rows.length > 0 ? (
+                                  <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-1 text-[10px]">
+                                    <span className="text-muted-foreground/70 uppercase tracking-wider">Renner</span>
+                                    <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Gekozen</span>
+                                    <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Punten</span>
+                                    <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Bijdrage</span>
+                                    {directorScore.diffDetail.rows.map((r) => (
+                                      <Fragment key={r.name}>
+                                        <span className="truncate text-foreground">{r.name}</span>
+                                        <span className={cn("text-right font-mono tabular-nums", r.ownPct <= 25 ? "text-emerald-600" : r.ownPct >= 60 ? "text-rose-500" : "text-foreground/70")}>{r.ownPct}%</span>
+                                        <span className="text-right font-mono tabular-nums text-foreground/70">{r.pts}</span>
+                                        <span className="text-right font-mono tabular-nums font-semibold text-foreground">+{r.bijdrage}</span>
+                                      </Fragment>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-muted-foreground">Nog geen scorende picks.</p>
+                                )}
+                                {directorScore.diffDetail.scorers > directorScore.diffDetail.rows.length && (
+                                  <p className="text-[9px] text-muted-foreground/60">+ {directorScore.diffDetail.scorers - directorScore.diffDetail.rows.length} meer (top 5 getoond)</p>
+                                )}
+                                <p className="font-mono text-foreground">diffScore = Σ bijdrage / Σ punten = {directorScore.diffScore.toFixed(2)}</p>
+                              </>
+                            )}
+                            <div className="flex items-center justify-between rounded-md border border-border bg-secondary/60 px-2.5 py-1.5 mt-1">
+                              <span className="text-[10px] text-muted-foreground">Deelcijfer ({w}%)</span>
+                              <span className="text-[12px] font-mono font-bold text-foreground">{val.toFixed(1)}/10</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
                     );
                   })}
-
-                  {/* Differentiaal — onderliggende cijfers per scorende renner (klikbaar) */}
-                  {directorScore.diffDetail && directorScore.diffDetail.rows.length > 0 && (
-                    <div className="mt-2 rounded-lg border border-border bg-secondary/40">
-                      <button
-                        type="button"
-                        onClick={() => setShowDiffDetail((v) => !v)}
-                        className="w-full flex items-center justify-between gap-2 p-3 text-left"
-                      >
-                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                          {showDiffDetail ? <X className="h-3 w-3" /> : <Info className="h-3 w-3" />}
-                          🎯 Differentiaal — onderliggend
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          {directorScore.diffDetail.scorers} scoorders · gem. {directorScore.diffDetail.avgOwnPct}% gekozen
-                        </span>
-                      </button>
-
-                      {showDiffDetail && (
-                        <div className="px-3 pb-3 space-y-3">
-                          {/* 1. Wat meet het */}
-                          <div className="space-y-1">
-                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-semibold">1 · Wat telt mee</p>
-                            <p className="text-[10px] text-muted-foreground leading-snug">
-                              Per renner die punten scoorde:{" "}
-                              <span className="font-mono text-foreground">bijdrage = punten × (1 − gekozen%)</span>.
-                              Hoe minder anderen die renner kozen, hoe zwaarder hij telt.
-                            </p>
-                            <p className="text-[10px] text-muted-foreground leading-snug">
-                              <span className="text-emerald-600 font-semibold">groen</span> = weinig gekozen (≤25%, telt zwaar) ·{" "}
-                              <span className="text-rose-500 font-semibold">rood</span> = veel gekozen (≥60%, telt licht).
-                            </p>
-                          </div>
-
-                          {/* 2. Jouw renners */}
-                          <div className="space-y-1">
-                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-semibold">2 · Jouw scorende renners</p>
-                            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-1 text-[10px]">
-                              <span className="text-muted-foreground/70 uppercase tracking-wider">Renner</span>
-                              <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Gekozen</span>
-                              <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Punten</span>
-                              <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Bijdrage</span>
-                              {directorScore.diffDetail.rows.map((r) => (
-                                <Fragment key={r.name}>
-                                  <span className="truncate text-foreground">{r.name}</span>
-                                  <span className={cn("text-right font-mono tabular-nums", r.ownPct <= 25 ? "text-emerald-600" : r.ownPct >= 60 ? "text-rose-500" : "text-foreground/70")}>{r.ownPct}%</span>
-                                  <span className="text-right font-mono tabular-nums text-foreground/70">{r.pts}</span>
-                                  <span className="text-right font-mono tabular-nums font-semibold text-foreground">+{r.bijdrage}</span>
-                                </Fragment>
-                              ))}
-                            </div>
-                            {directorScore.diffDetail.scorers > directorScore.diffDetail.rows.length && (
-                              <p className="text-[9px] text-muted-foreground/60">+ {directorScore.diffDetail.scorers - directorScore.diffDetail.rows.length} meer (top 5 getoond)</p>
-                            )}
-                          </div>
-
-                          {/* 3. Voorbeeld */}
-                          <div className="space-y-1">
-                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-semibold">3 · Voorbeeld</p>
-                            <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2 font-mono text-[9px] text-foreground/80 leading-relaxed">
-                              <p>Renner A: 40 pt, 10% gekozen → 40 × (1−0.10) = 36</p>
-                              <p>Renner B: 30 pt, 70% gekozen → 30 × (1−0.70) = 9</p>
-                              <p>diffScore = (36 + 9) / (40 + 30) = 0.64</p>
-                              <p>deelcijfer = (0.64 × 9 + 1) = 6.8 / 10</p>
-                            </div>
-                          </div>
-
-                          {/* Jouw resultaat */}
-                          <div className="flex items-center justify-between rounded-md border border-border bg-secondary/60 px-2.5 py-1.5">
-                            <span className="text-[10px] text-muted-foreground">Jouw differentiaal</span>
-                            <span className="text-[11px] font-mono text-foreground">
-                              diffScore {directorScore.diffScore.toFixed(2)} → <span className="font-bold">{directorScore.diffSubScore.toFixed(1)}/10</span> <span className="text-muted-foreground">(10%)</span>
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
             )}
