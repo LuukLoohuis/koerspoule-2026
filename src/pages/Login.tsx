@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Trophy, Mountain, Medal, Shirt, Star, Bike } from "lucide-react";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
+import { useThema } from "@/contexts/ThemaContext";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
 
@@ -62,6 +63,7 @@ const floatingBadges = [
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { thema } = useThema();
   const { thema } = useThema();
   const [searchParams] = useSearchParams();
   const [isRegister, setIsRegister] = useState(() => searchParams.get("register") === "1");
@@ -286,21 +288,27 @@ export default function Login() {
           </div>
 
           <div className="flex justify-center gap-2 mb-4">
-            {[
-              { emoji: "🩷", label: "Rosa" },
-              { emoji: "🔵", label: "Berg" },
-              { emoji: "🟣", label: "Punten" },
-              { emoji: "⚪", label: "Jongeren" },
-            ].map((jersey) => (
-              <span
-                key={jersey.label}
-                className="jersey-badge border border-border bg-secondary/50 text-secondary-foreground"
-                title={jersey.label}
-              >
-                <span>{jersey.emoji}</span>
-                <span className="text-[10px] font-medium">{jersey.label}</span>
-              </span>
-            ))}
+            {(["algemeen", "punten", "berg", "jongeren"] as const).map((type) => {
+              const trui = thema.truien[type];
+              const isBolletjes = trui.patroon === "bolletjes";
+              return (
+                <span
+                  key={type}
+                  className="jersey-badge border border-border bg-secondary/50 text-secondary-foreground"
+                  title={trui.naam}
+                >
+                  <span
+                    className="h-3 w-3 rounded-full border border-black/20 shrink-0"
+                    style={{
+                      background: isBolletjes
+                        ? `radial-gradient(${trui.bolletjeKleur ?? "#CC0000"} 38%, #fff 40%)`
+                        : trui.kleur,
+                    }}
+                  />
+                  <span className="text-[10px] font-medium">{trui.naam}</span>
+                </span>
+              );
+            })}
           </div>
 
           <AnimatePresence mode="wait">
