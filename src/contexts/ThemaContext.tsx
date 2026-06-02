@@ -49,30 +49,41 @@ function applyThemaTokens(key: ThemaKey) {
 export function ThemaProvider({ children }: { children: React.ReactNode }) {
   const qc = useQueryClient();
 
-  // Actieve game (live/open), nieuwste eerst — bron van het thema.
+  // Thema-bron: de nieuwste NIET-afgeronde game (concept/draft/open/locked/live)
+  // bepaalt de site-stijl. Een afgeronde game levert géén site-thema. Is er geen
+  // niet-afgeronde game, dan valt het terug op de meest recente (afgeronde) game.
   const { data: activeGame } = useQuery({
     queryKey: ["actief-thema-game"],
     queryFn: async () => {
       if (!supabase) return null;
-      const { data, error } = await (supabase as any)
-        .from("games")
-        .select("id, game_type, theme")
-        .in("status", ["live", "open"])
-        .order("year", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) {
-        // theme-kolom bestaat mogelijk nog niet → val terug op game_type
-        const { data: fb } = await (supabase as any)
+      const pick = async (withTheme: boolean) => {
+        const cols = withTheme ? "id, game_type, theme" : "id, game_type";
+        // 1) Nieuwste niet-afgeronde game
+        const active = await (supabase as any)
           .from("games")
-          .select("id, game_type")
-          .in("status", ["live", "open"])
+          .select(cols)
+          .neq("status", "finished")
           .order("year", { ascending: false })
           .limit(1)
           .maybeSingle();
-        return fb ? { ...fb, theme: null } : null;
+        if (active.error) return { error: active.error };
+        if (active.data) return { data: active.data };
+        // 2) Fallback: meest recente game (incl. afgerond)
+        const any = await (supabase as any)
+          .from("games")
+          .select(cols)
+          .order("year", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        return { data: any.data ?? null, error: any.error };
+      };
+      const res = await pick(true);
+      if (res.error) {
+        // theme-kolom bestaat mogelijk nog niet → val terug op game_type
+        const fb = await pick(false);
+        return fb.data ? { ...fb.data, theme: null } : null;
       }
-      return data as { id: string; game_type: string | null; theme: string | null } | null;
+      return res.data as { id: string; game_type: string | null; theme: string | null } | null;
     },
     staleTime: 5 * 60 * 1000,
   });
