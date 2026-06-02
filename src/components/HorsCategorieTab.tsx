@@ -1583,10 +1583,10 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 {/* Grade + analysis */}
                 <div className="relative flex flex-col md:flex-row items-start gap-5">
                   <div className="shrink-0">
-                    <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1">Rapport</div>
+                    <div className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-1">Rapport</div>
                     <div
                       className={cn(
-                        "font-display text-7xl font-black tabular-nums leading-none",
+                        "font-display text-8xl md:text-9xl font-black tabular-nums leading-none",
                         directorScore.score >= 8
                           ? "text-emerald-600"
                           : directorScore.score >= 6
@@ -1598,7 +1598,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     >
                       {directorScore.score.toFixed(1)}
                     </div>
-                    <div className="text-muted-foreground/70 text-xs mt-1 font-mono">van de 10</div>
+                    <div className="text-muted-foreground/70 text-sm mt-1 font-mono">van de 10</div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2 flex items-center gap-1.5">
@@ -1799,22 +1799,22 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                             open && "bg-secondary/40",
                           )}
                         >
-                          <div className="w-40 shrink-0">
+                          <div className="w-44 shrink-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-foreground text-xs font-semibold leading-none">{label}</span>
-                              <span className="shrink-0 text-[9px] font-bold font-mono tabular-nums text-muted-foreground bg-secondary border border-border rounded px-1 py-px leading-4">
+                              <span className="text-foreground text-sm font-semibold leading-none">{label}</span>
+                              <span className="shrink-0 text-[10px] font-bold font-mono tabular-nums text-muted-foreground bg-secondary border border-border rounded px-1 py-0.5 leading-none">
                                 {w}%
                               </span>
                             </div>
-                            <div className="text-muted-foreground text-[10px] mt-0.5">{sub}</div>
+                            <div className="text-muted-foreground text-[11px] mt-1">{sub}</div>
                           </div>
-                          <div className="flex-1 h-2.5 rounded-full bg-secondary/80 overflow-hidden ring-1 ring-inset ring-border/50">
+                          <div className="flex-1 h-3 rounded-full bg-secondary/80 overflow-hidden ring-1 ring-inset ring-border/50">
                             <div className={cn("h-full rounded-full transition-[width] duration-700", barCls)} style={{ width: `${Math.round(pct * 100)}%` }} />
                           </div>
-                          <span className={cn("shrink-0 inline-flex items-baseline gap-0.5 rounded-md border px-1.5 py-0.5 font-mono font-bold tabular-nums text-sm", chipCls)}>
-                            {val.toFixed(1)}<span className="text-[9px] font-normal opacity-60">/10</span>
+                          <span className={cn("shrink-0 inline-flex items-baseline gap-0.5 rounded-md border px-2 py-1 font-mono font-bold tabular-nums text-lg", chipCls)}>
+                            {val.toFixed(1)}<span className="text-[10px] font-normal opacity-60">/10</span>
                           </span>
-                          <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform", open && "rotate-180")} />
+                          <ChevronDown className={cn("h-5 w-5 text-muted-foreground shrink-0 transition-transform", open && "rotate-180")} />
                         </button>
 
                         {open && (
@@ -1883,9 +1883,15 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                                 <p className="font-mono text-foreground">diffScore = Σ bijdrage / Σ punten = {directorScore.diffScore.toFixed(2)}</p>
                               </>
                             )}
-                            <div className="flex items-center justify-between rounded-md border border-border bg-secondary/60 px-2.5 py-1.5 mt-1">
-                              <span className="text-[10px] text-muted-foreground">Deelcijfer ({w}%)</span>
-                              <span className="text-[12px] font-mono font-bold text-foreground">{val.toFixed(1)}/10</span>
+                            <p className="font-mono text-foreground pt-1">
+                              deelcijfer = ({pct.toFixed(2)} × 9 + 1) = {val.toFixed(1)} / 10
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              De deelscore (0–1) wordt omgerekend naar de schaal 1–10 met ×9+1, daarom is 0.63 → 6.7 en niet 6.3.
+                            </p>
+                            <div className="flex items-center justify-between rounded-md border border-border bg-secondary/60 px-3 py-2 mt-1">
+                              <span className="text-xs text-muted-foreground">Deelcijfer ({w}%)</span>
+                              <span className="text-base font-mono font-bold text-foreground">{val.toFixed(1)}/10</span>
                             </div>
                           </div>
                         )}
