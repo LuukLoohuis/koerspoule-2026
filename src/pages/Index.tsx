@@ -401,14 +401,14 @@ export default function Index() {
               </h1>
 
               <div
-                className="hidden lg:flex flex-col items-end absolute right-6 top-[180px] max-w-[280px] text-right"
+                className="hidden lg:flex flex-col items-end absolute right-6 top-[180px] max-w-[380px] text-right"
                 aria-hidden
               >
-                <span className="margin-note tilt-l text-[21px] italic leading-tight">
+                <span className="margin-note tilt-l text-[32px] italic leading-tight">
                   {thema.quotes[0]}
                 </span>
                 {thema.quoteAuteur && (
-                  <span className="margin-note text-[22px] mt-2 tilt-r not-italic">
+                  <span className="margin-note text-[33px] mt-2 tilt-r not-italic">
                     — {thema.quoteAuteur}
                   </span>
                 )}
