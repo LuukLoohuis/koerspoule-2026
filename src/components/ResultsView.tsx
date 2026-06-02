@@ -231,7 +231,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
 
   // Render
 
-  if (!game && !stagesLoading) {
+  if (!gameId && !stagesLoading) {
     return (
       <div className="py-8 text-center">
         <p className="text-muted-foreground italic">Er is nog geen actieve koers ingesteld.</p>
