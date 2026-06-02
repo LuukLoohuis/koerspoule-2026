@@ -10,7 +10,6 @@ import { Trophy, Mountain, Medal, Shirt, Star, Bike } from "lucide-react";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useThema } from "@/contexts/ThemaContext";
 import { supabase } from "@/lib/supabase";
-import { useThema } from "@/contexts/ThemaContext";
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -63,7 +62,6 @@ const floatingBadges = [
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { thema } = useThema();
   const { thema } = useThema();
   const [searchParams] = useSearchParams();
   const [isRegister, setIsRegister] = useState(() => searchParams.get("register") === "1");

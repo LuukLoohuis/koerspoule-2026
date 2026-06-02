@@ -16,7 +16,7 @@ import type { Rider } from "./StartlistTab";
 import RiderSearchSelect, { type RiderOption } from "@/components/RiderSearchSelect";
 import StageApprovalCard from "./StageApprovalCard";
 
-type GameType = "giro" | "tdf" | "vuelta" | null;
+type GameType = "giro" | "tdf" | "vuelta" | "femmes" | null;
 
 type Classification = "stage" | "gc" | "kom" | "points" | "youth";
 
