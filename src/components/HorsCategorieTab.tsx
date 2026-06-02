@@ -300,9 +300,11 @@ function DirectorIcon({ className }: { className?: string }) {
 
 type HorsTabKey = "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark";
 
-export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabKey } = {}) {
+export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameStatus }: { initialTab?: HorsTabKey; gameId?: string; gameStatus?: string } = {}) {
   const { thema } = useThema();
-  const { data: game } = useCurrentGame();
+  const { data: curGame } = useCurrentGame();
+  // Optioneel een specifieke (bv. afgeronde) game tonen i.p.v. de live game.
+  const game = gameIdProp ? { id: gameIdProp, status: gameStatus } : curGame;
   const isLive = Boolean(game?.status && ["live", "locked", "finished", "closed"].includes(String(game.status)));
   const { entry, picksByCategory, jokerIds, predictions: myPredictions } = useEntry(game?.id);
   const { data: categories = [] } = useCategories(game?.id);
@@ -805,7 +807,7 @@ export default function HorsCategorieTab({ initialTab }: { initialTab?: HorsTabK
 
   // ── Lefevere directeursanalyse (LLM) — gedeelde input via useHorsCategorieSummary,
   //    zodat de tekst 1-op-1 identiek is aan die in de Gazetta-feed. ──
-  const horsSummary = useHorsCategorieSummary();
+  const horsSummary = useHorsCategorieSummary(gameIdProp ? { id: gameIdProp, status: gameStatus } : undefined);
   const lefevere = useLefevereReport(horsSummary.lefevereInput, {
     entryId: horsSummary.entryId,
     stageCount: horsSummary.stageCount,

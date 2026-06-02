@@ -167,8 +167,10 @@ function pickN<T>(arr: T[], n: number, rng: () => number): T[] {
  *
  * Geen functionele wijziging tov de tab — enkel projectie naar getallen.
  */
-export function useHorsCategorieSummary(): HorsSummary {
-  const { data: game } = useCurrentGame();
+export function useHorsCategorieSummary(override?: { id?: string; status?: string }): HorsSummary {
+  const { data: curGame } = useCurrentGame();
+  // Optioneel een specifieke (bv. afgeronde) game i.p.v. de live game.
+  const game = override?.id ? { id: override.id, status: override.status } : curGame;
   const isLive = Boolean(
     game?.status && ["live", "locked", "finished", "closed"].includes(String(game.status)),
   );

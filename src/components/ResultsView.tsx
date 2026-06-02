@@ -49,12 +49,18 @@ function pickInitialStage<T extends { id: string; status: string | null }>(stage
   return 0;
 }
 
-type ResultsViewProps = { showHeader?: boolean };
+type ResultsViewProps = {
+  showHeader?: boolean;
+  /** Optioneel: toon een specifieke (bv. afgeronde) game i.p.v. de live game. */
+  gameId?: string;
+  gameName?: string | null;
+};
 
-export default function ResultsView({ showHeader = true }: ResultsViewProps) {
+export default function ResultsView({ showHeader = true, gameId: gameIdProp, gameName: gameNameProp }: ResultsViewProps) {
   const { user } = useAuth();
-  const { data: game } = useCurrentGame();
-  const gameId = game?.id;
+  const { data: curGame } = useCurrentGame();
+  const gameId = gameIdProp ?? curGame?.id;
+  const gameName = gameNameProp ?? curGame?.name;
 
   const { data: stages = [], isLoading: stagesLoading } = useStages(gameId);
   const { data: stagePoints = [] } = useStagePoints(gameId);
@@ -240,8 +246,8 @@ export default function ResultsView({ showHeader = true }: ResultsViewProps) {
           <div className="flex flex-col items-center text-center gap-2">
             <span className="overline-stamp">— Bulletin Officiel —</span>
             <h1 className="heading-oswald text-4xl md:text-5xl">Uitslagen &amp; Klassement</h1>
-            {game && (
-              <p className="text-muted-foreground font-serif italic">{game.name}</p>
+            {gameName && (
+              <p className="text-muted-foreground font-serif italic">{gameName}</p>
             )}
             <div className="mt-2 flex justify-center">
               <ResultsUpdatedBadge gameId={gameId} />

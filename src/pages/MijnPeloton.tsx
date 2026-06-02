@@ -1289,12 +1289,12 @@ export default function MijnPeloton() {
 
           {/* ── TAB: Uitslagen ── */}
           <TabsContent value="uitslagen" className="mt-3">
-            <MyResultsPanel />
+            <MyResultsPanel gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} />
           </TabsContent>
 
           {/* ── TAB: Hors Catégorie ── */}
           <TabsContent value="hors" className="mt-3">
-            <HorsCategorieTab initialTab={horsTab} />
+            <HorsCategorieTab initialTab={horsTab} gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} />
           </TabsContent>
 
         </Tabs>
