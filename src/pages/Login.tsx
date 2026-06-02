@@ -292,11 +292,10 @@ export default function Login() {
               return (
                 <span
                   key={type}
-                  className="jersey-badge border border-border bg-secondary/50 text-secondary-foreground"
+                  className="jersey-badge border border-border bg-secondary/50"
                   title={trui.naam}
                 >
                   <TruiBadge type={type} formaat="klein" className="shrink-0" />
-                  <span className="text-[10px] font-medium">{trui.naam}</span>
                 </span>
               );
             })}
