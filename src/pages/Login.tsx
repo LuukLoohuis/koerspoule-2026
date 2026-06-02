@@ -63,7 +63,6 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { thema } = useThema();
-  const { thema } = useThema();
   const [searchParams] = useSearchParams();
   const [isRegister, setIsRegister] = useState(() => searchParams.get("register") === "1");
   const [email, setEmail] = useState("");
