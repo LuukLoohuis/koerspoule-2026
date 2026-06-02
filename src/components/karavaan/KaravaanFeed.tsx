@@ -19,15 +19,21 @@ export default function KaravaanFeed({
   onOpenHors,
   onOpenSubpoule,
   onOpenUitslagen,
+  gameId,
+  gameStatus,
 }: {
   onGoToPloeg?: () => void;
   onOpenHors?: (tab: HorsTabKey) => void;
   onOpenSubpoule?: (subpouleId: string) => void;
   onOpenUitslagen?: () => void;
+  gameId?: string;
+  gameStatus?: string;
 }) {
   const { user } = useAuth();
   const { thema } = useThema();
-  const { data: game } = useCurrentGame();
+  const { data: curGame } = useCurrentGame();
+  // Optioneel een specifieke (bv. afgeronde) game i.p.v. de live game.
+  const game = gameId ? { id: gameId, status: gameStatus } : curGame;
   const subpoulesQuery = useSubpoules(game?.id);
   const subpoules = subpoulesQuery.subpoules;
 
@@ -75,7 +81,7 @@ export default function KaravaanFeed({
   // Alle hooks vóór de early return aanroepen (Rules of Hooks): anders crasht de
   // pagina ("Rendered more hooks than during the previous render") wanneer de
   // gebruiker geen subpoule heeft.
-  const horsSummary = useHorsCategorieSummary();
+  const horsSummary = useHorsCategorieSummary(gameId ? { id: gameId, status: gameStatus } : undefined);
   // Lefevere-rapport — zelfde gedeelde input als de Wielerdirecteur-tab, dus
   // dezelfde cache-key → 1-op-1 dezelfde tekst. Gepersisteerd per (entry,
   // aantal etappes): regenereert alleen bij een nieuwe gefiatteerde etappe.

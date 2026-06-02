@@ -1223,6 +1223,8 @@ export default function MijnPeloton() {
               onOpenHors={openHors}
               onOpenSubpoule={openSubpouleGrafiek}
               onOpenUitslagen={openUitslagen}
+              gameId={selectedGameObj?.id}
+              gameStatus={selectedGameObj?.status}
             />
           </TabsContent>
 
@@ -1269,10 +1271,10 @@ export default function MijnPeloton() {
                 </div>
               </div>
               <TabsContent value="ploeg">
-                <MyTeamPanel section="ploeg" />
+                <MyTeamPanel section="ploeg" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} />
               </TabsContent>
               <TabsContent value="prono">
-                <MyTeamPanel section="prono" />
+                <MyTeamPanel section="prono" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} />
               </TabsContent>
               <TabsContent value="palmares">
                 <PalmaresPanel />

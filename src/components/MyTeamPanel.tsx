@@ -104,9 +104,21 @@ const JERSEY_META: Record<string, { label: string; emoji: string; ring: string; 
   youth:  { label: "Jongerentrui",   emoji: "⚪", ring: "border-foreground/30",               bg: "bg-secondary/40"                    },
 };
 
-export default function MyTeamPanel({ section = "ploeg" }: { section?: "ploeg" | "prono" }) {
+export default function MyTeamPanel({
+  section = "ploeg",
+  gameId: gameIdProp,
+  gameStatus,
+  gameName,
+}: {
+  section?: "ploeg" | "prono";
+  gameId?: string;
+  gameStatus?: string;
+  gameName?: string | null;
+}) {
   const { user } = useAuth();
-  const { data: game } = useCurrentGame();
+  const { data: curGame } = useCurrentGame();
+  // Optioneel een specifieke (bv. afgeronde) game tonen i.p.v. de live game.
+  const game = gameIdProp ? { id: gameIdProp, status: gameStatus, name: gameName } : curGame;
   const { entry, picksByCategory, jokerIds, predictions, isLoading } = useEntry(game?.id);
   const { data: categories = [] } = useCategories(game?.id);
   const { data: stages = [] } = useStages(game?.id);
