@@ -401,7 +401,7 @@ export default function Index() {
               </h1>
 
               <div
-                className="hidden lg:flex flex-col items-end absolute right-6 top-[180px] max-w-[320px] text-right"
+                className="hidden lg:flex flex-col items-end absolute right-10 top-[180px] max-w-[320px] text-right"
                 aria-hidden
               >
                 <span className="margin-note tilt-l text-[25px] italic leading-tight">
