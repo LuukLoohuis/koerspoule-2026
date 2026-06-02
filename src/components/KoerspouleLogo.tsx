@@ -17,7 +17,7 @@
  *   <KoerspouleLogo variant="wordmark" race={race} />
  */
 
-export type RaceKey = "giro" | "tdf" | "vuelta";
+export type RaceKey = "giro" | "tdf" | "vuelta" | "femmes";
 
 type Variant = "wordmark" | "sticker" | "mark";
 
@@ -33,6 +33,7 @@ const THEMES: Record<RaceKey, Theme> = {
   giro:   { accent: "#ED1E79", dark: "#A8124F", flag: ["#009246", "#ffffff", "#CE2B37"] },
   tdf:    { accent: "#FCD028", dark: "#B89000", flag: ["#0055A4", "#ffffff", "#EF4135"] },
   vuelta: { accent: "#D81E1E", dark: "#8F0D0D", flag: ["#AA151B", "#F1BF00", "#AA151B"] },
+  femmes: { accent: "#FCD028", dark: "#B89000", flag: ["#0055A4", "#ffffff", "#EF4135"] },
 };
 
 function Cyclist({ accent, dark, scale = 1 }: { accent: string; dark: string; scale?: number }) {

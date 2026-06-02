@@ -15,7 +15,7 @@ import { deriveThemaKey, THEMAS, type ThemaKey } from "@/lib/themas";
 export type Game = {
   id: string;
   name: string;
-  game_type: "giro" | "tdf" | "vuelta" | null;
+  game_type: "giro" | "tdf" | "vuelta" | "femmes" | null;
   year: number | null;
   status: "draft" | "open" | "locked" | "live" | "finished";
   starts_at: string | null;
@@ -37,6 +37,7 @@ function toLocalInput(iso: string | null | undefined): string {
 const TYPE_LABELS: Record<string, string> = {
   giro: "Giro d'Italia",
   tdf: "Tour de France",
+  femmes: "Tour de France Femmes",
   vuelta: "Vuelta a España",
 };
 
@@ -99,7 +100,7 @@ export default function GamesTab({
   setActiveGameId: (id: string) => void;
   reload: () => Promise<void> | void;
 }) {
-  const [type, setType] = useState<"giro" | "tdf" | "vuelta">("tdf");
+  const [type, setType] = useState<"giro" | "tdf" | "vuelta" | "femmes">("tdf");
   const [year, setYear] = useState<string>(String(new Date().getFullYear()));
   const [startsAt, setStartsAt] = useState("");
   const [creating, setCreating] = useState(false);
@@ -252,6 +253,7 @@ export default function GamesTab({
               <SelectContent>
                 <SelectItem value="giro">Giro d'Italia</SelectItem>
                 <SelectItem value="tdf">Tour de France</SelectItem>
+                <SelectItem value="femmes">Tour de France Femmes</SelectItem>
                 <SelectItem value="vuelta">Vuelta a España</SelectItem>
               </SelectContent>
             </Select>

@@ -143,6 +143,7 @@ export function deriveThemaKey(theme: string | null | undefined, gameType: strin
   switch (gameType) {
     case "tdf":
     case "tour":
+    case "femmes":
       return "geel";
     case "vuelta":
       return "rood";

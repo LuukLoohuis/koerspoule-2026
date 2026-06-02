@@ -91,6 +91,15 @@ const RACE_COPY: Record<RaceKey, RaceCopy> = {
     jersey: "maillot rojo",
     startToFinish: "22 aug–13 sep 2026",
   },
+  femmes: {
+    longName: "Tour de France Femmes",
+    line1: "Tour de",
+    line2: "France Femmes",
+    yearTag: "'26",
+    edition: "Édition 5 · 1–9 août MMXXVI",
+    jersey: "maillot jaune",
+    startToFinish: "1–9 aug 2026",
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

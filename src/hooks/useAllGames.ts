@@ -6,7 +6,7 @@ export type GameRow = {
   name: string;
   year: number;
   status: "concept" | "draft" | "open" | "locked" | "live" | "finished" | string;
-  game_type: "giro" | "tour" | "vuelta" | string | null;
+  game_type: "giro" | "tour" | "tdf" | "vuelta" | "femmes" | string | null;
 };
 
 export function useAllGames() {
@@ -25,8 +25,9 @@ export function useAllGames() {
         const k = (t ?? "").toLowerCase();
         if (k === "giro") return 0;
         if (k === "tour" || k === "tdf") return 1;
-        if (k === "vuelta" || k === "vta") return 2;
-        return 3;
+        if (k === "femmes") return 2;
+        if (k === "vuelta" || k === "vta") return 3;
+        return 4;
       };
       return [...rows].sort((a, b) => {
         if (b.year !== a.year) return b.year - a.year;
@@ -43,6 +44,7 @@ export function gameTheme(type: string | null | undefined): {
   switch ((type ?? "").toLowerCase()) {
     case "tour":
     case "tdf":
+    case "femmes":
       return { country: "FR", colors: ["#002395", "#ffffff", "#ED2939"] };
     case "vuelta":
     case "vta":
