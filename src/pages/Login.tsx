@@ -10,7 +10,6 @@ import { Trophy, Mountain, Medal, Shirt, Star, Bike } from "lucide-react";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useThema } from "@/contexts/ThemaContext";
 import { supabase } from "@/lib/supabase";
-import { useThema } from "@/contexts/ThemaContext";
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
