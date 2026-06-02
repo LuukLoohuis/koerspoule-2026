@@ -38,6 +38,8 @@ export type Thema = {
   login_meedoen: string;  // titel bij registreren
   beker?: string | null;  // URL/asset van de koers-beker (Trofeo / Coupe). null → fallback op TruiBadge.
   quotes: string[];
+  /** Optionele auteur bij quotes[0] (getoond als handgeschreven signatuur). */
+  quoteAuteur?: string;
   truien: Record<TruiType, TruiDef>;
 };
 
@@ -95,12 +97,13 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     login_meedoen: "Rejoins la Grande Boucle !",
     beker: bekerVoor("tour"),
     quotes: [
-      "Le Tour, c'est la vie.",
+      "Le Tour de France ne se gagne pas en un jour, mais on peut le perdre en un seul.",
       "La route est longue, mais la gloire attend.",
       "Chaque étape est une nouvelle aventure.",
       "Il était une fois un maillot jaune...",
       "Allez, toujours de l'avant!",
     ],
+    quoteAuteur: "Jacques Anquetil",
     truien: {
       algemeen: { naam: "Maillot Jaune", kleur: "#F5C518", patroon: "effen" },
       punten: { naam: "Maillot Vert", kleur: "#27AE60", patroon: "effen" },
