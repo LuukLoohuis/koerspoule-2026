@@ -6,6 +6,7 @@ import { Menu, X, Coffee } from "lucide-react";
 import CookieBanner from "@/components/CookieBanner";
 import RouteSeo from "@/components/RouteSeo";
 import BottomNav from "@/components/BottomNav";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useThema } from "@/contexts/ThemaContext";
@@ -175,7 +176,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content — alle pagina's behalve de voorpagina krijgen één
           leesbaar font (Inter) via .content-font; de voorpagina (/) houdt
           haar eigen editorial typografie. */}
-      <main className={cn("flex-1", location.pathname !== "/" && "content-font")}>{children}</main>
+      <main className={cn("flex-1", location.pathname !== "/" && "content-font")}>
+        <ErrorBoundary key={location.pathname}>{children}</ErrorBoundary>
+      </main>
       <BottomNav />
 
       {/* Footer */}
