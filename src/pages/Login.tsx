@@ -9,6 +9,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Trophy, Mountain, Medal, Shirt, Star, Bike } from "lucide-react";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useThema } from "@/contexts/ThemaContext";
+import TruiBadge from "@/components/retro/TruiBadge";
 import { supabase } from "@/lib/supabase";
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -288,21 +289,13 @@ export default function Login() {
           <div className="flex justify-center gap-2 mb-4">
             {(["algemeen", "punten", "berg", "jongeren"] as const).map((type) => {
               const trui = thema.truien[type];
-              const isBolletjes = trui.patroon === "bolletjes";
               return (
                 <span
                   key={type}
                   className="jersey-badge border border-border bg-secondary/50 text-secondary-foreground"
                   title={trui.naam}
                 >
-                  <span
-                    className="h-3 w-3 rounded-full border border-black/20 shrink-0"
-                    style={{
-                      background: isBolletjes
-                        ? `radial-gradient(${trui.bolletjeKleur ?? "#CC0000"} 38%, #fff 40%)`
-                        : trui.kleur,
-                    }}
-                  />
+                  <TruiBadge type={type} formaat="klein" className="shrink-0" />
                   <span className="text-[10px] font-medium">{trui.naam}</span>
                 </span>
               );
