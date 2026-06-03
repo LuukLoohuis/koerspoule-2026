@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Swords, ArrowUp, ArrowDown, Flag } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useEntries, useStages, useStagePoints } from "@/hooks/useResults";
+import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import TeamComparison from "@/components/TeamComparison";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
@@ -22,7 +22,12 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
   const { data: members = [], isLoading: membersLoading } = useSubpouleMembers(subpouleId);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stages = [] } = useStages(game?.id);
-  const { data: stagePoints = [] } = useStagePoints(game?.id);
+  // Alleen de stage_points van de subpouleleden ophalen (schaalt naar veel deelnemers).
+  const memberEntryIds = useMemo(() => {
+    const memberUserIds = new Set(members.map((m) => m.user_id));
+    return entries.filter((e) => memberUserIds.has(e.user_id)).map((e) => e.id);
+  }, [members, entries]);
+  const { data: stagePoints = [] } = useStagePointsForEntries(game?.id, memberEntryIds);
 
   const [compareId, setCompareId] = useState<string | null>(null);
   const [etappeIdx, setEtappeIdx] = useState<number>(0);

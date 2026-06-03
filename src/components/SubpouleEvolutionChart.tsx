@@ -13,7 +13,7 @@ import { TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useEntries, useStages, useStagePoints } from "@/hooks/useResults";
+import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -72,7 +72,12 @@ export default function SubpouleEvolutionChart({
   const { data: members = [] } = useSubpouleMembers(subpouleId);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stages = [] } = useStages(game?.id);
-  const { data: stagePoints = [] } = useStagePoints(game?.id);
+  // Alleen de stage_points van de subpouleleden (schaalt naar veel deelnemers).
+  const memberEntryIds = useMemo(() => {
+    const memberUserIds = new Set(members.map((m) => m.user_id));
+    return entries.filter((e) => memberUserIds.has(e.user_id)).map((e) => e.id);
+  }, [members, entries]);
+  const { data: stagePoints = [] } = useStagePointsForEntries(game?.id, memberEntryIds);
 
   const memberRows = useMemo(() => {
     return members

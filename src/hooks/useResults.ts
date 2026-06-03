@@ -141,6 +141,33 @@ export function useGameStandings(gameId?: string, uptoStageNumber?: number) {
   });
 }
 
+/** stage_points beperkt tot een set entries (bv. de leden van een subpoule).
+ *  Haalt alleen die rijen op i.p.v. de hele game — schaalt naar veel deelnemers. */
+export function useStagePointsForEntries(gameId?: string, entryIds?: string[]) {
+  const ids = entryIds ?? [];
+  const idsKey = [...ids].sort().join(",");
+  return useQuery({
+    queryKey: ["stage-points-entries", gameId, idsKey],
+    enabled: Boolean(supabase && gameId && ids.length > 0),
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<StagePointsRow[]> => {
+      if (!supabase || !gameId || ids.length === 0) return [];
+      const { data, error } = await supabase
+        .from("stage_points")
+        .select("entry_id, stage_id, points, stages!inner(game_id)")
+        .eq("stages.game_id", gameId)
+        .in("entry_id", ids)
+        .range(0, 199999);
+      if (error) throw error;
+      return (data ?? []).map((r: { entry_id: string; stage_id: string; points: number }) => ({
+        entry_id: r.entry_id,
+        stage_id: r.stage_id,
+        points: r.points,
+      }));
+    },
+  });
+}
+
 export function useStagePoints(gameId?: string) {
   return useQuery({
     queryKey: ["stage-points", gameId],
