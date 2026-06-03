@@ -1590,6 +1590,13 @@ export type Database = {
           total_entries: number
         }[]
       }
+      game_stage_averages: {
+        Args: { p_game_id: string }
+        Returns: {
+          avg_points: number
+          stage_id: string
+        }[]
+      }
       game_standings: {
         Args: { p_game_id: string; p_upto: number }
         Returns: {
