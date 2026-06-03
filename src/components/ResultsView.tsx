@@ -880,9 +880,9 @@ function GcDetail({
     .slice(0, 20);
 
   const jerseyDefs = [
-    { key: "points_position" as const, label: "Punten (groen)", color: "bg-emerald-500" },
-    { key: "mountain_position" as const, label: "Berg (bolletjes)", color: "bg-rose-600" },
-    { key: "youth_position" as const, label: "Jongeren (wit)", color: "bg-zinc-200 text-zinc-900" },
+    { key: "points_position" as const, trui: "punten" as const, label: "Punten" },
+    { key: "mountain_position" as const, trui: "berg" as const, label: "Berg" },
+    { key: "youth_position" as const, trui: "jongeren" as const, label: "Jongeren" },
   ];
 
   return (
@@ -928,9 +928,7 @@ function GcDetail({
               .map((r) => r.riders?.name ?? r.rider_name)[0];
             return (
               <div key={j.key} className="flex items-center gap-3">
-                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0", j.color)}>
-                  <Medal className="w-4 h-4" />
-                </div>
+                <TruiBadge type={j.trui} formaat="medium" />
                 <div className="flex-1 min-w-0">
                   <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{j.label}</div>
                   <div className="font-display font-bold text-sm truncate">{winner ?? "—"}</div>
