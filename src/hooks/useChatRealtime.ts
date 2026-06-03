@@ -19,6 +19,7 @@ export type ChatReactionRow = {
   user_id: string;
   emoji: string;
   created_at: string;
+  subpoule_id?: string | null;
 };
 
 export type ChatPollRow = {
@@ -37,6 +38,7 @@ export type ChatPollVoteRow = {
   user_id: string;
   option_index: number;
   created_at: string;
+  subpoule_id?: string | null;
 };
 
 export function useChatRealtime(subpouleId: string | undefined, gameId: string | undefined) {
@@ -59,7 +61,8 @@ export function useChatRealtime(subpouleId: string | undefined, gameId: string |
         .limit(500),
       supabase
         .from("chat_message_reactions")
-        .select("id, message_id, user_id, emoji, created_at"),
+        .select("id, message_id, user_id, emoji, created_at, subpoule_id")
+        .eq("subpoule_id", subpouleId),
       supabase
         .from("chat_polls")
         .select("id, subpoule_id, message_id, question, options, deadline, created_by, created_at")
@@ -117,7 +120,7 @@ export function useChatRealtime(subpouleId: string | undefined, gameId: string |
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "chat_message_reactions" },
+        { event: "*", schema: "public", table: "chat_message_reactions", filter: `subpoule_id=eq.${subpouleId}` },
         (payload) => {
           setReactions((prev) => {
             if (payload.eventType === "INSERT") {
@@ -151,7 +154,7 @@ export function useChatRealtime(subpouleId: string | undefined, gameId: string |
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "chat_poll_votes" },
+        { event: "*", schema: "public", table: "chat_poll_votes", filter: `subpoule_id=eq.${subpouleId}` },
         (payload) => {
           setVotes((prev) => {
             if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
