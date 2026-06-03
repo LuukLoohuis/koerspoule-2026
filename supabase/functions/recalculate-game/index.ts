@@ -54,12 +54,35 @@ Deno.serve(async (req) => {
       return json({ error: "game_id is required" }, 400);
     }
 
-    const { error } = await supabase.rpc("full_recalculation", {
+    // Batched pad: wis + reken per etappe los af, zodat geen enkele DB-call de
+    // statement_timeout raakt bij veel deelnemers × etappes. Valt terug op de
+    // monolithische full_recalculation als de nieuwe RPCs nog niet bestaan.
+    const { data: stageRows, error: prepErr } = await supabase.rpc("recalc_prepare", {
       p_game_id: game_id,
     });
-    if (error) throw error;
 
-    return json({ ok: true });
+    if (prepErr) {
+      // recalc_prepare ontbreekt (nog niet gedeployd) of faalde → fallback.
+      const missing = /could not find|does not exist|schema cache|function/i.test(prepErr.message ?? "");
+      if (!missing) throw prepErr;
+      const { error } = await supabase.rpc("full_recalculation", { p_game_id: game_id });
+      if (error) throw error;
+      return json({ ok: true, mode: "monolithic" });
+    }
+
+    const stageIds = ((stageRows ?? []) as Array<{ stage_id: string }>).map((r) => r.stage_id);
+    for (const sid of stageIds) {
+      const { error } = await supabase.rpc("recalc_stage", {
+        p_game_id: game_id,
+        p_stage_id: sid,
+      });
+      if (error) throw error;
+    }
+
+    const { error: finErr } = await supabase.rpc("recalc_finalize", { p_game_id: game_id });
+    if (finErr) throw finErr;
+
+    return json({ ok: true, mode: "batched", stages: stageIds.length });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }

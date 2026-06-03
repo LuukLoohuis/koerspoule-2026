@@ -347,16 +347,46 @@ export default function CalculationTab({
     if (!supabase || !activeGameId) return;
     if (!confirm("Volledige herberekening uitvoeren? Dit kan even duren.")) return;
     setBusy(true);
+    const tId = toast.loading("Herberekening voorbereiden...");
     try {
-      await callRpc([
-        { name: "full_recalculation_v4", args: { p_game_id: activeGameId } },
-        { name: "full_recalculation_v3", args: { p_game_id: activeGameId } },
-        { name: "full_recalculation", args: { p_game_id: activeGameId } },
-      ]);
-      toast.success("Volledige herberekening voltooid");
+      // Batched: wis + reken per etappe los af, zodat geen enkele DB-call de
+      // statement_timeout raakt bij veel deelnemers. Valt terug op de
+      // monolithische full_recalculation als de RPCs nog niet gedeployd zijn.
+      const { data: stageRows, error: prepErr } = await supabase.rpc("recalc_prepare", {
+        p_game_id: activeGameId,
+      });
+
+      if (prepErr) {
+        const missing = /could not find|does not exist|schema cache/i.test(prepErr.message ?? "");
+        if (!missing) throw new Error(prepErr.message);
+        toast.loading("Herberekenen (monolithisch)...", { id: tId });
+        await callRpc([
+          { name: "full_recalculation_v4", args: { p_game_id: activeGameId } },
+          { name: "full_recalculation_v3", args: { p_game_id: activeGameId } },
+          { name: "full_recalculation", args: { p_game_id: activeGameId } },
+        ]);
+        toast.success("Volledige herberekening voltooid", { id: tId });
+        return;
+      }
+
+      const stageIds = ((stageRows ?? []) as Array<{ stage_id: string }>).map((r) => r.stage_id);
+      for (let i = 0; i < stageIds.length; i++) {
+        toast.loading(`Etappe ${i + 1}/${stageIds.length} herberekenen...`, { id: tId });
+        const { error } = await supabase.rpc("recalc_stage", {
+          p_game_id: activeGameId,
+          p_stage_id: stageIds[i],
+        });
+        if (error) throw new Error(`Etappe ${i + 1}/${stageIds.length}: ${error.message}`);
+      }
+
+      toast.loading("Voorspellingen en totaalstand afronden...", { id: tId });
+      const { error: finErr } = await supabase.rpc("recalc_finalize", { p_game_id: activeGameId });
+      if (finErr) throw new Error(finErr.message);
+
+      toast.success(`Volledige herberekening voltooid (${stageIds.length} etappes)`, { id: tId });
     } catch (e) {
       console.error("Full recalc error:", e);
-      toast.error((e as Error).message);
+      toast.error((e as Error).message, { id: tId });
     } finally {
       setBusy(false);
     }
