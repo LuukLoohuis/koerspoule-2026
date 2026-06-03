@@ -18,7 +18,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
 import { pointsTable } from "@/data/riders";
 import { useCategories } from "@/hooks/useCategories";
-import { useStagePoints, useStages, useEntries } from "@/hooks/useResults";
+import { useStages, useGameStandings, useStagePointsForEntries, useStageAverages } from "@/hooks/useResults";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,6 @@ import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 
 type PickStat = { category_id: string; rider_id: string; pick_count: number; total_entries: number };
 type JokerStat = { rider_id: string; joker_count: number; total_entries: number };
-type StagePoint = { entry_id: string; points: number };
 type PredictionStat = {
   classification: string;
   position: number;
@@ -96,26 +95,6 @@ function useJokerStats(gameId?: string) {
       const { data, error } = await (supabase as any).rpc("game_joker_stats", { p_game_id: gameId });
       if (error) throw error;
       return (data ?? []) as JokerStat[];
-    },
-  });
-}
-function useEntryTotals(gameId?: string) {
-  return useQuery({
-    queryKey: ["game-stage-point-totals", gameId],
-    enabled: Boolean(supabase && gameId),
-    staleTime: 5 * 60 * 1000,
-    queryFn: async (): Promise<number[]> => {
-      const { data, error } = await supabase
-        .from("stage_points")
-        .select("entry_id, points, stages!inner(game_id)")
-        .eq("stages.game_id", gameId)
-        .range(0, 199999); // anders 1000-rijen cap → laatste etappes missen
-      if (error) throw error;
-      const totalsByEntry = new Map<string, number>();
-      for (const row of (data ?? []) as unknown as StagePoint[]) {
-        totalsByEntry.set(row.entry_id, (totalsByEntry.get(row.entry_id) ?? 0) + (row.points ?? 0));
-      }
-      return Array.from(totalsByEntry.values());
     },
   });
 }
@@ -311,15 +290,29 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   const { data: pickStats = [] } = usePickStats(isLive ? game?.id : undefined);
   const { data: jokerStats = [] } = useJokerStats(isLive ? game?.id : undefined);
   const { data: predictionStats = [] } = usePredictionStats(isLive ? game?.id : undefined);
-  const { data: totals = [] } = useEntryTotals(isLive ? game?.id : undefined);
   const { data: myStageTotal = 0 } = useMyStagePointTotal(entry?.id);
+  const hcGameId = isLive ? game?.id : undefined;
 
   // Stage-by-stage timeline data
-  const { data: stages = [] } = useStages(isLive ? game?.id : undefined);
-  const { data: allStagePoints = [] } = useStagePoints(isLive ? game?.id : undefined);
+  const { data: stages = [] } = useStages(hcGameId);
+  // Hoogste goedgekeurde (niet-GC) etappe → server-side totalen via game_standings,
+  // i.p.v. alle stage_points-rijen van de hele game naar de client te halen.
+  const maxStageNum = useMemo(() => {
+    let m: number | undefined;
+    for (const s of stages) {
+      if (s.results_status === "approved") m = Math.max(m ?? 0, s.stage_number);
+    }
+    return m;
+  }, [stages]);
+  const { data: standRows = [] } = useGameStandings(hcGameId, maxStageNum);
+  // cum_points = stage-punten zonder voorspel-bonus → zelfde verdeling als oude useEntryTotals.
+  const totals = useMemo(() => standRows.map((r) => r.cum_points), [standRows]);
+  // Alleen MIJN stage_points (tijdlijn) + per-etappe gemiddelde (server-side).
+  const myEntryIds = useMemo(() => (entry?.id ? [entry.id] : []), [entry?.id]);
+  const { data: myStageRows = [] } = useStagePointsForEntries(hcGameId, myEntryIds);
+  const { data: stageAverages } = useStageAverages(hcGameId);
 
-  // The Emirates — entries (voor leider/eigen score) + alle stage_results (voor droomploeg)
-  const { data: entriesList = [] } = useEntries(isLive ? game?.id : undefined);
+  // The Emirates — alle stage_results (voor droomploeg)
   const { data: allStageResults = [] } = useQuery({
     queryKey: ["all-stage-results", game?.id],
     enabled: Boolean(supabase && isLive && game?.id),
@@ -464,14 +457,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // ── Stage timeline ──────────────────────────────────────────────────────────
   const stageTimeline = useMemo(() => {
-    if (!entry?.id || stages.length === 0 || allStagePoints.length === 0) return [];
+    if (!entry?.id || stages.length === 0) return [];
+    // Mijn punten per etappe (scoped fetch) + per-etappe gemiddelde (server-side RPC).
     const myPts = new Map<string, number>();
-    const allPts = new Map<string, number[]>();
-    for (const sp of allStagePoints) {
-      if (sp.entry_id === entry.id) myPts.set(sp.stage_id, (myPts.get(sp.stage_id) ?? 0) + sp.points);
-      const arr = allPts.get(sp.stage_id) ?? [];
-      arr.push(sp.points);
-      allPts.set(sp.stage_id, arr);
+    for (const sp of myStageRows) {
+      myPts.set(sp.stage_id, (myPts.get(sp.stage_id) ?? 0) + sp.points);
     }
     const approved = stages
       .filter((s) => s.results_status === "approved")
@@ -480,8 +470,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       avgCum = 0;
     return approved.map((s) => {
       const u = myPts.get(s.id) ?? 0;
-      const pool = allPts.get(s.id) ?? [];
-      const avg = pool.length ? pool.reduce((a, b) => a + b, 0) / pool.length : 0;
+      const avg = stageAverages?.get(s.id) ?? 0;
       userCum += u;
       avgCum += avg;
       return {
@@ -492,7 +481,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         avgDelta: Math.round(avg),
       };
     });
-  }, [entry?.id, stages, allStagePoints]);
+  }, [entry?.id, stages, myStageRows, stageAverages]);
 
   // ── The Emirates — de droomploeg achterop gezien ────────────────────────────
   // Per categorie de top-N renners met de meeste etappe-punten (50, 40, …, 1
@@ -584,20 +573,15 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
     const total = picks.reduce((s, c) => s + c.subtotal, 0) + jokerSubtotal;
 
-    // 3) huidige ranking (voor leider/eigen score-vergelijking)
-    const approvedIds = new Set(approvedStages.map((s) => s.id));
-    const totalsByEntry = new Map<string, number>();
-    for (const sp of allStagePoints) {
-      if (!approvedIds.has(sp.stage_id)) continue;
-      totalsByEntry.set(sp.entry_id, (totalsByEntry.get(sp.entry_id) ?? 0) + (sp.points ?? 0));
-    }
-    const entriesById = new Map(entriesList.map((e) => [e.id, e]));
-    const ranking = Array.from(totalsByEntry.entries())
-      .map(([id, points]) => {
-        const e = entriesById.get(id);
-        const teamName = e?.team_name?.trim() || e?.display_name?.trim() || "Naamloze ploeg";
-        return { entryId: id, teamName, points, isMe: entry?.id === id };
-      })
+    // 3) huidige ranking (voor leider/eigen score-vergelijking) — server-side
+    //    cumulatieve stand t/m de laatste goedgekeurde etappe (incl. GC).
+    const ranking = standRows
+      .map((r) => ({
+        entryId: r.entry_id,
+        teamName: r.team_name?.trim() || r.display_name?.trim() || "Naamloze ploeg",
+        points: r.cum_points,
+        isMe: entry?.id === r.entry_id,
+      }))
       .sort((a, b) => b.points - a.points);
 
     return {
@@ -609,7 +593,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       lastStage: { number: last.stage_number, name: last.name },
       stagesCount: approvedStages.length,
     };
-  }, [stages, categories, allStageResults, allStagePoints, entriesList, entry?.id, allGameRiders]);
+  }, [stages, categories, allStageResults, standRows, entry?.id, allGameRiders]);
 
   // ── Derived display values ──────────────────────────────────────────────────
   const diffPct = monte && monte.mean > 0 ? ((monte.userActual - monte.mean) / monte.mean) * 100 : 0;

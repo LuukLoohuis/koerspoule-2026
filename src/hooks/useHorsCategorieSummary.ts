@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
-import { useStages, useStagePoints, useEntries } from "@/hooks/useResults";
+import { useStages, useStagePointsForEntries, useGameStandings } from "@/hooks/useResults";
 import { pointsTable } from "@/data/riders";
 import type { LefevereReportInput } from "@/hooks/useLefevereReport";
 
@@ -49,26 +49,6 @@ function useJokerStats(gameId?: string) {
       const { data, error } = await (supabase as any).rpc("game_joker_stats", { p_game_id: gameId });
       if (error) throw error;
       return (data ?? []) as JokerStat[];
-    },
-  });
-}
-
-function useEntryTotals(gameId?: string) {
-  return useQuery({
-    queryKey: ["game-stage-point-totals", gameId],
-    enabled: Boolean(supabase && gameId),
-    staleTime: 5 * 60 * 1000,
-    queryFn: async (): Promise<number[]> => {
-      const { data, error } = await supabase!
-        .from("stage_points")
-        .select("entry_id, points, stages!inner(game_id)")
-        .eq("stages.game_id", gameId!);
-      if (error) throw error;
-      const totalsByEntry = new Map<string, number>();
-      for (const row of (data ?? []) as Array<{ entry_id: string; points: number }>) {
-        totalsByEntry.set(row.entry_id, (totalsByEntry.get(row.entry_id) ?? 0) + (row.points ?? 0));
-      }
-      return Array.from(totalsByEntry.values());
     },
   });
 }
@@ -180,32 +160,42 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
   const { data: categories = [] } = useCategories(game?.id);
   const pickStatsQ = usePickStats(gameId);
   const jokerStatsQ = useJokerStats(gameId);
-  const totalsQ = useEntryTotals(gameId);
   const myStageTotalQ = useMyStagePointTotal(entry?.id);
   const stagesQ = useStages(gameId);
-  const allStagePointsQ = useStagePoints(gameId);
-  const entriesQ = useEntries(gameId);
+  const stages = stagesQ.data ?? [];
+  // Hoogste goedgekeurde (niet-GC) etappe → server-side totalen via game_standings,
+  // i.p.v. alle stage_points-rijen van de hele game naar de client te halen.
+  const maxStageNum = useMemo(() => {
+    let m: number | undefined;
+    for (const s of stages) {
+      if (s.results_status === "approved") m = Math.max(m ?? 0, s.stage_number);
+    }
+    return m;
+  }, [stages]);
+  const standQ = useGameStandings(gameId, maxStageNum);
+  const myEntryIds = useMemo(() => (entry?.id ? [entry.id] : []), [entry?.id]);
+  const myStagePointsQ = useStagePointsForEntries(gameId, myEntryIds);
   const allStageResultsQ = useAllStageResults(gameId);
   const allGameRidersQ = useAllGameRiders(gameId);
 
   const isLoading =
     pickStatsQ.isLoading ||
     jokerStatsQ.isLoading ||
-    totalsQ.isLoading ||
+    standQ.isLoading ||
     myStageTotalQ.isLoading ||
     stagesQ.isLoading ||
-    allStagePointsQ.isLoading ||
-    entriesQ.isLoading ||
+    myStagePointsQ.isLoading ||
     allStageResultsQ.isLoading ||
     allGameRidersQ.isLoading;
 
   const pickStats = pickStatsQ.data ?? [];
   const jokerStats = jokerStatsQ.data ?? [];
-  const totals = totalsQ.data ?? [];
+  // game_standings geeft per ingediend team cum_points (stage-punten zonder
+  // voorspel-bonus) → zelfde verdeling als de oude useEntryTotals.
+  const totals = (standQ.data ?? []).map((r) => r.cum_points);
   const myStageTotal = myStageTotalQ.data ?? 0;
-  const stages = stagesQ.data ?? [];
-  const allStagePoints = allStagePointsQ.data ?? [];
-  const entriesList = entriesQ.data ?? [];
+  // Alleen MIJN stage_points (Emirates-eigen-punten). Scoped fetch i.p.v. hele game.
+  const allStagePoints = myStagePointsQ.data ?? [];
   const allStageResults = allStageResultsQ.data ?? [];
   const allGameRiders = allGameRidersQ.data ?? [];
 

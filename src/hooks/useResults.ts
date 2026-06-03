@@ -166,6 +166,29 @@ export function useMyStageRanks(gameId?: string, userId?: string) {
   });
 }
 
+/** Gemiddelde stage-punten per etappe over alle ingediende teams (server-side).
+ *  Map<stage_id, avg>. Voor de Hors Catégorie-tijdlijn, i.p.v. alle stage_points. */
+export function useStageAverages(gameId?: string) {
+  return useQuery({
+    queryKey: ["game-stage-averages", gameId],
+    enabled: Boolean(supabase && gameId),
+    staleTime: 60 * 1000,
+    retry: 0,
+    queryFn: async (): Promise<Map<string, number>> => {
+      if (!supabase || !gameId) return new Map();
+      const { data, error } = await (supabase as any).rpc("game_stage_averages", {
+        p_game_id: gameId,
+      });
+      if (error) throw error;
+      const m = new Map<string, number>();
+      for (const r of (data ?? []) as Array<{ stage_id: string; avg_points: number }>) {
+        m.set(r.stage_id, Number(r.avg_points) || 0);
+      }
+      return m;
+    },
+  });
+}
+
 export function useStagePointsForEntries(gameId?: string, entryIds?: string[]) {
   const ids = entryIds ?? [];
   const idsKey = [...ids].sort().join(",");
