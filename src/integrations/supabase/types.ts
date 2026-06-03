@@ -97,6 +97,7 @@ export type Database = {
           emoji: string
           id: string
           message_id: string
+          subpoule_id: string | null
           user_id: string
         }
         Insert: {
@@ -104,6 +105,7 @@ export type Database = {
           emoji: string
           id?: string
           message_id: string
+          subpoule_id?: string | null
           user_id: string
         }
         Update: {
@@ -111,6 +113,7 @@ export type Database = {
           emoji?: string
           id?: string
           message_id?: string
+          subpoule_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -164,18 +167,21 @@ export type Database = {
           created_at: string
           option_index: number
           poll_id: string
+          subpoule_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           option_index: number
           poll_id: string
+          subpoule_id?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           option_index?: number
           poll_id?: string
+          subpoule_id?: string | null
           user_id?: string
         }
         Relationships: [
