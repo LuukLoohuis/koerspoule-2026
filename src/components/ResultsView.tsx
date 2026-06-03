@@ -828,14 +828,24 @@ function GcDetail({
   stages: StageRow[];
   myEntry: EntryStanding | undefined;
 }) {
-  // Use last regular stage (21) for the jersey/GC standings
+  // Eind-truien + GC-top20 komen van de GC-rit, waar de admin de officiële
+  // eindklassementen uploadt (zelfde bron als het klassement-tabje met de
+  // GC-bar geselecteerd). Val terug op de laatste reguliere rit (21) als er
+  // (nog) geen aparte GC-rit met goedgekeurde uitslag is.
   const lastRegularStage = [...stages]
     .filter((s) => !s.is_gc)
     .sort((a, b) => b.stage_number - a.stage_number)[0];
   const stage21Approved = lastRegularStage?.results_status === "approved";
-  const { data: results = [], isLoading } = useStageResults(
-    stage21Approved ? lastRegularStage?.id : undefined
-  );
+  const gcStage = [...stages]
+    .filter((s) => s.is_gc)
+    .sort((a, b) => b.stage_number - a.stage_number)[0];
+  const gcStageApproved = gcStage?.results_status === "approved";
+  const sourceStageId = gcStageApproved
+    ? gcStage?.id
+    : stage21Approved
+    ? lastRegularStage?.id
+    : undefined;
+  const { data: results = [], isLoading } = useStageResults(sourceStageId);
 
   // My GC bonus points from prediction points
   const { data: predictionPts = 0 } = useQuery({
@@ -852,7 +862,7 @@ function GcDetail({
     },
   });
 
-  if (!stage21Approved) {
+  if (!sourceStageId) {
     return (
       <div className="retro-border bg-card p-6 text-center">
         <Lock className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
