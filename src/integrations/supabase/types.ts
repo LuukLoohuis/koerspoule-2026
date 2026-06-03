@@ -1590,6 +1590,23 @@ export type Database = {
           total_entries: number
         }[]
       }
+      game_standings: {
+        Args: { p_game_id: string; p_upto: number }
+        Returns: {
+          cum_points: number
+          delta: number
+          display_name: string
+          entry_id: string
+          pred_bonus: number
+          prev_rank: number
+          rank: number
+          stage_points: number
+          stage_rank: number
+          team_name: string
+          total: number
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
