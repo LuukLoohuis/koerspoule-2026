@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useStages, useStageResults, useStagePoints, useEntries, type StageRow, type EntryStanding } from "@/hooks/useResults";
+import { useStages, useStageResults, useStagePoints, useEntries, useGameStandings, type StageRow, type EntryStanding } from "@/hooks/useResults";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -161,7 +161,10 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
     return m;
   };
 
-  const overallStandings = useMemo(() => {
+  // Server-side stand (schaalt). Faalt de RPC → fallback op client-berekening.
+  const { data: serverStandings } = useGameStandings(gameId, klassementStage?.stage_number);
+
+  const clientOverallStandings = useMemo(() => {
     const cur = cumulativeUpTo(klassementStageIdx);
     const prev = cumulativeUpTo(klassementStageIdx - 1);
     // Voorspellingsbonus (GC-podium + truien). entry_prediction_points is per RLS
@@ -190,8 +193,26 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
       });
   }, [entries, stagePoints, stages, klassementStageIdx]);
 
+  // Stand uit de server-RPC (indien beschikbaar), anders de client-berekening.
+  const overallStandings = useMemo(() => {
+    if (serverStandings && serverStandings.length > 0) {
+      return serverStandings.map((r) => ({
+        id: r.entry_id,
+        user_id: r.user_id,
+        team_name: r.team_name,
+        display_name: r.display_name,
+        total_points: r.total,
+        predBonus: r.pred_bonus,
+        cumPts: r.total,
+        rank: r.rank,
+        delta: r.delta,
+      }));
+    }
+    return clientOverallStandings;
+  }, [serverStandings, clientOverallStandings]);
+
   // Daily stage rank per entry for the selected klassement stage
-  const klassementStageStandings = useMemo(() => {
+  const clientStageRank = useMemo(() => {
     if (!klassementStage) return new Map<string, number>();
     const map = new Map<string, number>();
     stagePoints
@@ -205,6 +226,17 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
     sorted.forEach((r, i) => rankMap.set(r.id, i + 1));
     return rankMap;
   }, [entries, stagePoints, klassementStage]);
+
+  const klassementStageStandings = useMemo(() => {
+    if (serverStandings && serverStandings.length > 0) {
+      const m = new Map<string, number>();
+      serverStandings.forEach((r) => {
+        if (r.stage_rank != null) m.set(r.entry_id, r.stage_rank);
+      });
+      return m;
+    }
+    return clientStageRank;
+  }, [serverStandings, clientStageRank]);
 
   // Stage points lookup for schema
   const stagePtsTable = useMemo(() => {

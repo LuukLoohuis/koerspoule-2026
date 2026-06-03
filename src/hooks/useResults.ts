@@ -104,6 +104,43 @@ export type StagePointsRow = {
   points: number;
 };
 
+/** Server-side geaggregeerde stand t/m een rit (schaalt naar veel deelnemers).
+ *  Geeft per ingediend team de cumulatieve stand + rang + delta + dag-uitslag,
+ *  i.p.v. alle stage_points-rijen naar de client te halen. Faalt de RPC (nog
+ *  niet gedeployed e.d.), dan valt de UI terug op de client-berekening. */
+export type GameStandingRow = {
+  entry_id: string;
+  user_id: string;
+  team_name: string | null;
+  display_name: string | null;
+  cum_points: number;
+  pred_bonus: number;
+  total: number;
+  rank: number;
+  prev_rank: number;
+  delta: number;
+  stage_points: number;
+  stage_rank: number | null;
+};
+
+export function useGameStandings(gameId?: string, uptoStageNumber?: number) {
+  return useQuery({
+    queryKey: ["game-standings", gameId, uptoStageNumber],
+    enabled: Boolean(supabase && gameId && typeof uptoStageNumber === "number"),
+    staleTime: 60 * 1000,
+    retry: 0, // RPC ontbreekt? meteen terugvallen op client-berekening
+    queryFn: async (): Promise<GameStandingRow[]> => {
+      if (!supabase || !gameId || typeof uptoStageNumber !== "number") return [];
+      const { data, error } = await (supabase as any).rpc("game_standings", {
+        p_game_id: gameId,
+        p_upto: uptoStageNumber,
+      });
+      if (error) throw error;
+      return (data ?? []) as GameStandingRow[];
+    },
+  });
+}
+
 export function useStagePoints(gameId?: string) {
   return useQuery({
     queryKey: ["stage-points", gameId],
