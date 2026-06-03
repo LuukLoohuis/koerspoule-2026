@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useStages, useStageResults, useStagePoints, useEntries, useGameStandings, type StageRow, type EntryStanding } from "@/hooks/useResults";
+import { useStages, useStageResults, useStagePointsForEntries, useMyStageRanks, useEntries, useGameStandings, type StageRow, type EntryStanding } from "@/hooks/useResults";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -39,16 +39,6 @@ function rankBadge(rank: number) {
   );
 }
 
-/** Latest stage that has any results yet (so we don't open on an empty stage) */
-function pickInitialStage<T extends { id: string; status: string | null }>(stages: T[], pointsByStage: Map<string, number>) {
-  // Prefer last stage with results
-  for (let i = stages.length - 1; i >= 0; i--) {
-    if ((pointsByStage.get(stages[i].id) ?? 0) > 0) return i;
-  }
-  // Otherwise first stage
-  return 0;
-}
-
 type ResultsViewProps = {
   showHeader?: boolean;
   /** Optioneel: toon een specifieke (bv. afgeronde) game i.p.v. de live game. */
@@ -63,180 +53,97 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   const gameName = gameNameProp ?? curGame?.name;
 
   const { data: stages = [], isLoading: stagesLoading } = useStages(gameId);
-  const { data: stagePoints = [] } = useStagePoints(gameId);
   const { data: entries = [] } = useEntries(gameId);
   const { data: schema = [] } = usePointsSchema(gameId);
-
-  const stagePointsByStage = useMemo(() => {
-    const m = new Map<string, number>();
-    stagePoints.forEach((sp) => m.set(sp.stage_id, (m.get(sp.stage_id) ?? 0) + sp.points));
-    return m;
-  }, [stagePoints]);
-
-  const [selectedStageIdx, setSelectedStageIdx] = useState<number>(0);
-
-  useEffect(() => {
-    if (stages.length > 0) {
-      setSelectedStageIdx(pickInitialStage(stages, stagePointsByStage));
-    }
-  }, [stages.length, stagePointsByStage.size]);
-
-  const selectedStage = stages[selectedStageIdx];
-  const { data: results = [], isLoading: resultsLoading } = useStageResults(selectedStage?.id);
 
   // My entry in this game
   const myEntry = useMemo(
     () => entries.find((e) => e.user_id === user?.id),
     [entries, user?.id]
   );
+  const myEntryIds = useMemo(() => (myEntry ? [myEntry.id] : []), [myEntry]);
 
-  // My team's points for the selected stage
+  // Alleen mijn eigen stage_points + mijn dagklassering server-side (schaalt).
+  const { data: myStageRows = [] } = useStagePointsForEntries(gameId, myEntryIds);
+  const { data: myRankPerStage = new Map<string, number>() } = useMyStageRanks(gameId, user?.id);
+
+  // Eerste relevante etappe = laatste goedgekeurde (niet-GC) rit (geen fetch nodig).
+  const initialStageIdx = useMemo(() => {
+    let idx = 0;
+    for (let i = stages.length - 1; i >= 0; i--) {
+      if (stages[i].results_status === "approved" && !stages[i].is_gc) { idx = i; break; }
+    }
+    return idx;
+  }, [stages]);
+
+  const [selectedStageIdx, setSelectedStageIdx] = useState<number>(0);
+  useEffect(() => {
+    if (stages.length > 0) setSelectedStageIdx(initialStageIdx);
+  }, [stages.length, initialStageIdx]);
+
+  const selectedStage = stages[selectedStageIdx];
+  const { data: results = [], isLoading: resultsLoading } = useStageResults(selectedStage?.id);
+
+  // Mijn punten voor de geselecteerde rit
   const myStagePoints = useMemo(() => {
     if (!myEntry || !selectedStage) return 0;
-    return stagePoints
-      .filter((sp) => sp.entry_id === myEntry.id && sp.stage_id === selectedStage.id)
-      .reduce((s, r) => s + r.points, 0);
-  }, [myEntry, selectedStage, stagePoints]);
-
-  // Points per stage for "my points per etappe" bar chart
-  const myPointsPerStage = useMemo(() => {
-    if (!myEntry) return new Map<string, number>();
-    const m = new Map<string, number>();
-    stagePoints
-      .filter((sp) => sp.entry_id === myEntry.id)
-      .forEach((sp) => m.set(sp.stage_id, (m.get(sp.stage_id) ?? 0) + sp.points));
-    return m;
-  }, [myEntry, stagePoints]);
-
-  // My rank per stage across all entries
-  const myRankPerStage = useMemo(() => {
-    if (!myEntry) return new Map<string, number>();
-    const perStage = new Map<string, Map<string, number>>();
-    stagePoints.forEach((sp) => {
-      if (!perStage.has(sp.stage_id)) perStage.set(sp.stage_id, new Map());
-      const m = perStage.get(sp.stage_id)!;
-      m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points);
-    });
-    const result = new Map<string, number>();
-    perStage.forEach((entryPts, stageId) => {
-      const myPts = entryPts.get(myEntry.id) ?? 0;
-      if (myPts === 0) return;
-      const sorted = [...entryPts.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
-      const idx = sorted.findIndex(([id]) => id === myEntry.id);
-      if (idx >= 0) result.set(stageId, idx + 1);
-    });
-    return result;
-  }, [myEntry, stagePoints]);
-
-  // Stage standings: total per entry for selected stage
-  const stageStandings = useMemo(() => {
-    if (!selectedStage) return [];
-    const map = new Map<string, number>();
-    stagePoints
+    return myStageRows
       .filter((sp) => sp.stage_id === selectedStage.id)
-      .forEach((sp) => map.set(sp.entry_id, (map.get(sp.entry_id) ?? 0) + sp.points));
-    return entries
-      .map((e) => ({ ...e, stagePts: map.get(e.id) ?? 0 }))
-      .sort((a, b) => b.stagePts - a.stagePts)
-      .map((row, i) => ({ ...row, rank: i + 1 }));
-  }, [entries, stagePoints, selectedStage]);
+      .reduce((s, r) => s + r.points, 0);
+  }, [myEntry, selectedStage, myStageRows]);
 
-  // Overall standings up to selected klassement stage (cumulative)
-  const [klassementStageIdx, setKlassementStageIdx] = useState<number>(0);
-  useEffect(() => {
-    if (stages.length > 0) {
-      setKlassementStageIdx(pickInitialStage(stages, stagePointsByStage));
-    }
-  }, [stages.length, stagePointsByStage.size]);
-
-  const klassementStage = stages[klassementStageIdx];
-
-  const cumulativeUpTo = (upToIdx: number) => {
-    if (upToIdx < 0) return new Map<string, number>();
-    const allowed = new Set(stages.slice(0, upToIdx + 1).map((s) => s.id));
+  // Mijn punten per etappe (StageBars)
+  const myPointsPerStage = useMemo(() => {
     const m = new Map<string, number>();
-    stagePoints
-      .filter((sp) => allowed.has(sp.stage_id))
-      .forEach((sp) => m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points));
+    myStageRows.forEach((sp) => m.set(sp.stage_id, (m.get(sp.stage_id) ?? 0) + sp.points));
     return m;
-  };
+  }, [myStageRows]);
 
-  // Server-side stand (schaalt). Faalt de RPC → fallback op client-berekening.
-  const { data: serverStandings } = useGameStandings(gameId, klassementStage?.stage_number);
-
-  const clientOverallStandings = useMemo(() => {
-    const cur = cumulativeUpTo(klassementStageIdx);
-    const prev = cumulativeUpTo(klassementStageIdx - 1);
-    // Voorspellingsbonus (GC-podium + truien). entry_prediction_points is per RLS
-    // niet client-zijdig te lezen voor andere deelnemers, maar total_points bevat
-    // hem wél (= som alle etappepunten + voorspellingen). Bonus = total_points −
-    // som van álle etappepunten. Vóór de slotrit is deze 0.
-    const full = cumulativeUpTo(stages.length - 1);
-    const bonusOf = (e: { id: string; total_points?: number }) =>
-      Math.max(0, (e.total_points ?? 0) - (full.get(e.id) ?? 0));
-
-    const prevSorted = [...entries]
-      .map((e) => ({ id: e.id, pts: (prev.get(e.id) ?? 0) + bonusOf(e) }))
-      .sort((a, b) => b.pts - a.pts);
-    const prevRank = new Map<string, number>();
-    prevSorted.forEach((r, i) => prevRank.set(r.id, i + 1));
-
-    return [...entries]
-      .map((e) => {
-        const predBonus = bonusOf(e);
-        return { ...e, predBonus, cumPts: (cur.get(e.id) ?? 0) + predBonus };
-      })
-      .sort((a, b) => b.cumPts - a.cumPts)
-      .map((row, i) => {
-        const prevR = prevRank.get(row.id) ?? i + 1;
-        return { ...row, rank: i + 1, delta: prevR - (i + 1) };
-      });
-  }, [entries, stagePoints, stages, klassementStageIdx]);
-
-  // Stand uit de server-RPC (indien beschikbaar), anders de client-berekening.
-  const overallStandings = useMemo(() => {
-    if (serverStandings && serverStandings.length > 0) {
-      return serverStandings.map((r) => ({
+  // Etappe-uitslag (alle teams) van de geselecteerde rit — server-side.
+  const { data: stageStandingsRows = [] } = useGameStandings(gameId, selectedStage?.stage_number);
+  const stageStandings = useMemo(() => {
+    return [...stageStandingsRows]
+      .map((r) => ({
         id: r.entry_id,
         user_id: r.user_id,
         team_name: r.team_name,
         display_name: r.display_name,
-        total_points: r.total,
-        predBonus: r.pred_bonus,
-        cumPts: r.total,
-        rank: r.rank,
-        delta: r.delta,
-      }));
-    }
-    return clientOverallStandings;
-  }, [serverStandings, clientOverallStandings]);
+        stagePts: r.stage_points,
+      }))
+      .sort((a, b) => b.stagePts - a.stagePts)
+      .map((row, i) => ({ ...row, rank: i + 1 }));
+  }, [stageStandingsRows]);
 
-  // Daily stage rank per entry for the selected klassement stage
-  const clientStageRank = useMemo(() => {
-    if (!klassementStage) return new Map<string, number>();
-    const map = new Map<string, number>();
-    stagePoints
-      .filter((sp) => sp.stage_id === klassementStage.id)
-      .forEach((sp) => map.set(sp.entry_id, (map.get(sp.entry_id) ?? 0) + sp.points));
-    const sorted = [...entries]
-      .map((e) => ({ id: e.id, pts: map.get(e.id) ?? 0 }))
-      .filter((e) => e.pts > 0)
-      .sort((a, b) => b.pts - a.pts);
-    const rankMap = new Map<string, number>();
-    sorted.forEach((r, i) => rankMap.set(r.id, i + 1));
-    return rankMap;
-  }, [entries, stagePoints, klassementStage]);
+  // Klassement (cumulatief t/m geselecteerde rit) — server-side.
+  const [klassementStageIdx, setKlassementStageIdx] = useState<number>(0);
+  useEffect(() => {
+    if (stages.length > 0) setKlassementStageIdx(initialStageIdx);
+  }, [stages.length, initialStageIdx]);
 
+  const klassementStage = stages[klassementStageIdx];
+
+  const { data: serverStandings = [] } = useGameStandings(gameId, klassementStage?.stage_number);
+
+  const overallStandings = useMemo(() => {
+    return serverStandings.map((r) => ({
+      id: r.entry_id,
+      user_id: r.user_id,
+      team_name: r.team_name,
+      display_name: r.display_name,
+      total_points: r.total,
+      predBonus: r.pred_bonus,
+      cumPts: r.total,
+      rank: r.rank,
+      delta: r.delta,
+    }));
+  }, [serverStandings]);
+
+  // Dagklassering per team voor de geselecteerde klassement-rit (uit de RPC).
   const klassementStageStandings = useMemo(() => {
-    if (serverStandings && serverStandings.length > 0) {
-      const m = new Map<string, number>();
-      serverStandings.forEach((r) => {
-        if (r.stage_rank != null) m.set(r.entry_id, r.stage_rank);
-      });
-      return m;
-    }
-    return clientStageRank;
-  }, [serverStandings, clientStageRank]);
+    const m = new Map<string, number>();
+    serverStandings.forEach((r) => { if (r.stage_rank != null) m.set(r.entry_id, r.stage_rank); });
+    return m;
+  }, [serverStandings]);
 
   // Stage points lookup for schema
   const stagePtsTable = useMemo(() => {

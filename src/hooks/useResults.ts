@@ -143,6 +143,29 @@ export function useGameStandings(gameId?: string, uptoStageNumber?: number) {
 
 /** stage_points beperkt tot een set entries (bv. de leden van een subpoule).
  *  Haalt alleen die rijen op i.p.v. de hele game — schaalt naar veel deelnemers. */
+/** Jouw dagklassering per etappe (server-side). Map<stage_id, rank>. */
+export function useMyStageRanks(gameId?: string, userId?: string) {
+  return useQuery({
+    queryKey: ["my-stage-ranks", gameId, userId],
+    enabled: Boolean(supabase && gameId && userId),
+    staleTime: 60 * 1000,
+    retry: 0,
+    queryFn: async (): Promise<Map<string, number>> => {
+      if (!supabase || !gameId || !userId) return new Map();
+      const { data, error } = await (supabase as any).rpc("my_stage_ranks", {
+        p_game_id: gameId,
+        p_user_id: userId,
+      });
+      if (error) throw error;
+      const m = new Map<string, number>();
+      for (const r of (data ?? []) as Array<{ stage_id: string; my_rank: number }>) {
+        m.set(r.stage_id, r.my_rank);
+      }
+      return m;
+    },
+  });
+}
+
 export function useStagePointsForEntries(gameId?: string, entryIds?: string[]) {
   const ids = entryIds ?? [];
   const idsKey = [...ids].sort().join(",");
