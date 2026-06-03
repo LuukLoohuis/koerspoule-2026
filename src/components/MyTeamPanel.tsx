@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
-import { useStages, useEntries, useStagePoints } from "@/hooks/useResults";
+import { useStages, useEntries, useMyStageRanks } from "@/hooks/useResults";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -124,7 +124,8 @@ export default function MyTeamPanel({
   const { data: stages = [] } = useStages(game?.id);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stagePoints = [] } = useMyStagePoints(entry?.id);
-  const { data: allStagePoints = [] } = useStagePoints(game?.id);
+  // Mijn dagklassering per etappe: server-side RPC i.p.v. alle stage_points.
+  const { data: myStageRanks } = useMyStageRanks(game?.id, user?.id);
 
   const allRiderIds = useMemo(() => {
     const set = new Set<string>();
@@ -164,24 +165,7 @@ export default function MyTeamPanel({
     return stage ? { stage, points: top.points } : null;
   }, [stagePoints, stages]);
 
-  const myRankPerStage = useMemo(() => {
-    if (!entry) return new Map<string, number>();
-    const perStage = new Map<string, Map<string, number>>();
-    allStagePoints.forEach((sp) => {
-      if (!perStage.has(sp.stage_id)) perStage.set(sp.stage_id, new Map());
-      const m = perStage.get(sp.stage_id)!;
-      m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points);
-    });
-    const result = new Map<string, number>();
-    perStage.forEach((entryPts, stageId) => {
-      const myPts = entryPts.get(entry.id) ?? 0;
-      if (myPts === 0) return;
-      const sorted = [...entryPts.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
-      const idx = sorted.findIndex(([id]) => id === entry.id);
-      if (idx >= 0) result.set(stageId, idx + 1);
-    });
-    return result;
-  }, [entry, allStagePoints]);
+  const myRankPerStage = myStageRanks ?? new Map<string, number>();
 
   const standaloneJokerIds = useMemo(() => {
     const picked = new Set<string>();

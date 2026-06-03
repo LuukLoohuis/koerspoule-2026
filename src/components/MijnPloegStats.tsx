@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
-import { useEntries, useStages, useStagePoints } from "@/hooks/useResults";
+import { useEntries, useStages, useStageAverages, useMyStageRanks, useGameStandings, useStagePointsForEntries } from "@/hooks/useResults";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
 import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
 import { supabase } from "@/lib/supabase";
@@ -11,19 +11,6 @@ import { cn } from "@/lib/utils";
 import { ArrowUp, ArrowDown } from "lucide-react";
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
-
-function buildCumMap(
-  stages: Array<{ id: string }>,
-  stagePoints: Array<{ stage_id: string; entry_id: string; points: number }>,
-  upToIdx: number
-): Map<string, number> {
-  const allowed = new Set(stages.slice(0, upToIdx + 1).map((s) => s.id));
-  const m = new Map<string, number>();
-  stagePoints
-    .filter((sp) => allowed.has(sp.stage_id))
-    .forEach((sp) => m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points));
-  return m;
-}
 
 function rankInMap(
   map: Map<string, number>,
@@ -131,7 +118,8 @@ export default function MijnPloegStats() {
   const { entry, jokerIds, picksByCategory } = useEntry(game?.id);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stages = [] } = useStages(game?.id);
-  const { data: allStagePoints = [] } = useStagePoints(game?.id);
+  const { data: stageAverages } = useStageAverages(game?.id);
+  const { data: myStageRanks } = useMyStageRanks(game?.id, user?.id);
   const { data: schema = [] } = usePointsSchema(game?.id);
   const { subpoules } = useSubpoules(game?.id);
   const firstSubpoule = subpoules[0] ?? null;
@@ -169,56 +157,47 @@ export default function MijnPloegStats() {
 
   const myEntry = useMemo(() => entries.find((e) => e.user_id === user?.id), [entries, user?.id]);
 
-  // Stages that actually have any points recorded
+  // Stages that actually have any points recorded (server-side gemiddelde > 0)
   const stagesWithData = useMemo(() => {
-    const totals = new Map<string, number>();
-    allStagePoints.forEach((sp) => totals.set(sp.stage_id, (totals.get(sp.stage_id) ?? 0) + sp.points));
-    return stages.filter((s) => (totals.get(s.id) ?? 0) > 0);
-  }, [stages, allStagePoints]);
+    return stages.filter((s) => (stageAverages?.get(s.id) ?? 0) > 0);
+  }, [stages, stageAverages]);
 
-  // ── STAT 1: Best stage rank in the full pool ──────────────────────────────
+  // Server-side stand t/m de laatste etappe-met-data → rang-delta voor mijn team.
+  const lastStageNum = stagesWithData.length
+    ? stagesWithData[stagesWithData.length - 1].stage_number
+    : undefined;
+  const { data: standRows = [] } = useGameStandings(game?.id, lastStageNum);
+
+  // Subpoule-leden: scoped stage_points (alleen die teams) voor de subpoule-delta.
+  const memberEntryIds = useMemo(() => {
+    if (!firstSubpoule || !subpouleMembers.length) return [];
+    const uids = new Set(subpouleMembers.map((m) => m.user_id));
+    return entries.filter((e) => uids.has(e.user_id)).map((e) => e.id);
+  }, [firstSubpoule, subpouleMembers, entries]);
+  const { data: memberStagePoints = [] } = useStagePointsForEntries(game?.id, memberEntryIds);
+
+  // ── STAT 1: Best stage rank in the full pool (server-side my_stage_ranks) ──
   const bestStageRank = useMemo(() => {
-    if (!myEntry || !allStagePoints.length || !stages.length) return null;
-
-    const perStage = new Map<string, Map<string, number>>();
-    allStagePoints.forEach((sp) => {
-      if (!perStage.has(sp.stage_id)) perStage.set(sp.stage_id, new Map());
-      const m = perStage.get(sp.stage_id)!;
-      m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points);
-    });
-
+    if (!myStageRanks || myStageRanks.size === 0) return null;
     let best: { rank: number; stageId: string } | null = null;
-    perStage.forEach((entryPts, stageId) => {
-      const myPts = entryPts.get(myEntry.id) ?? 0;
-      if (myPts === 0) return;
-      const sorted = [...entryPts.entries()].sort((a, b) => b[1] - a[1]);
-      const rank = sorted.findIndex(([id]) => id === myEntry.id) + 1;
+    myStageRanks.forEach((rank, stageId) => {
       if (!best || rank < best.rank) best = { rank, stageId };
     });
-
     if (!best) return null;
     const stage = stages.find((s) => s.id === best!.stageId);
     return { rank: best.rank, stage: stage ?? null };
-  }, [myEntry, allStagePoints, stages]);
+  }, [myStageRanks, stages]);
 
-  // ── STAT 2: Overall pool rank + delta ────────────────────────────────────
+  // ── STAT 2: Overall pool rank + delta (delta server-side via game_standings) ──
   const overallStat = useMemo(() => {
     if (!myEntry || !entries.length) return null;
     const sorted = [...entries].sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0));
     const rank = sorted.findIndex((e) => e.id === myEntry.id) + 1;
     if (!rank) return null;
-
-    let delta = 0;
-    if (stagesWithData.length >= 2) {
-      const lastIdx = stages.indexOf(stagesWithData[stagesWithData.length - 1]);
-      const prevIdx = stages.indexOf(stagesWithData[stagesWithData.length - 2]);
-      const curMap = buildCumMap(stages, allStagePoints, lastIdx);
-      const prevMap = buildCumMap(stages, allStagePoints, prevIdx);
-      delta = rankInMap(prevMap, myEntry.id, entries) - rankInMap(curMap, myEntry.id, entries);
-    }
-
+    const myRow = standRows.find((r) => r.entry_id === myEntry.id);
+    const delta = myRow?.delta ?? 0;
     return { rank, total: entries.length, delta };
-  }, [myEntry, entries, stagesWithData, stages, allStagePoints]);
+  }, [myEntry, entries, standRows]);
 
   // ── STAT 3: Subpoule rank + delta ────────────────────────────────────────
   const subpouleStat = useMemo(() => {
@@ -241,7 +220,7 @@ export default function MijnPloegStats() {
       const subCum = (upToIdx: number) => {
         const allowed = new Set(stages.slice(0, upToIdx + 1).map((s) => s.id));
         const m = new Map<string, number>();
-        allStagePoints
+        memberStagePoints
           .filter((sp) => allowed.has(sp.stage_id) && memberEntryIds.has(sp.entry_id))
           .forEach((sp) => m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points));
         return m;
@@ -251,7 +230,7 @@ export default function MijnPloegStats() {
     }
 
     return { rank, total: memberEntries.length, name: firstSubpoule.name, delta };
-  }, [myEntry, firstSubpoule, subpouleMembers, entries, stagesWithData, stages, allStagePoints]);
+  }, [myEntry, firstSubpoule, subpouleMembers, entries, stagesWithData, stages, memberStagePoints]);
 
   // ── STAT 4: Best scoring rider ───────────────────────────────────────────
   const bestRiderStat = useMemo(() => {

@@ -1,7 +1,7 @@
 import { useRef, useState, useMemo, useEffect } from "react";
 import html2canvas from "html2canvas";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useStages, useStagePoints, useEntries } from "@/hooks/useResults";
+import { useStages, useGameStandings } from "@/hooks/useResults";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -533,8 +533,6 @@ export default function InstagramExport({ gameId: propGameId }: { gameId?: strin
   const gameId = propGameId ?? game?.id;
 
   const { data: stages = [] } = useStages(gameId);
-  const { data: stagePoints = [] } = useStagePoints(gameId);
-  const { data: entries = [] } = useEntries(gameId);
   const { data: pickStats = [] } = usePickStats(gameId);
 
   const [activeTab, setActiveTab] = useState<"klassement" | "dagscore" | "etappe">("klassement");
@@ -564,36 +562,27 @@ export default function InstagramExport({ gameId: propGameId }: { gameId?: strin
 
   const gameName = game?.name ?? "Giro d'Italia 2026";
 
-  // Klassement standings (cumulative up to selected stage)
+  // Klassement standings (cumulatief t/m gekozen etappe) — server-side via
+  // game_standings (cum_points), i.p.v. alle stage_points naar de client.
   const klassementStage = stages.find((s) => s.id === klassementStageId);
+  const { data: klassementRows = [] } = useGameStandings(gameId, klassementStage?.stage_number);
   const klassementStandings = useMemo(() => {
-    const idx = stages.findIndex((s) => s.id === klassementStageId);
-    if (idx < 0) return [];
-    const allowed = new Set(stages.slice(0, idx + 1).map((s) => s.id));
-    const m = new Map<string, number>();
-    stagePoints.filter((sp) => allowed.has(sp.stage_id)).forEach((sp) => {
-      m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points);
-    });
-    return [...entries]
-      .map((e) => ({ name: e.team_name ?? e.display_name ?? "—", pts: m.get(e.id) ?? 0 }))
+    return [...klassementRows]
+      .map((r) => ({ name: r.team_name ?? r.display_name ?? "—", pts: r.cum_points }))
       .sort((a, b) => b.pts - a.pts)
       .map((r, i) => ({ ...r, rank: i + 1 }));
-  }, [stages, stagePoints, entries, klassementStageId]);
+  }, [klassementRows]);
 
-  // Dagscore standings (single stage)
+  // Dagscore standings (één etappe) — game_standings stage_points voor die rit.
   const dagscoreStage = stages.find((s) => s.id === dagscoreStageId);
+  const { data: dagscoreRows = [] } = useGameStandings(gameId, dagscoreStage?.stage_number);
   const dagscoreStandings = useMemo(() => {
-    if (!dagscoreStageId) return [];
-    const m = new Map<string, number>();
-    stagePoints.filter((sp) => sp.stage_id === dagscoreStageId).forEach((sp) => {
-      m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points);
-    });
-    return [...entries]
-      .map((e) => ({ name: e.team_name ?? e.display_name ?? "—", pts: m.get(e.id) ?? 0 }))
+    return [...dagscoreRows]
+      .map((r) => ({ name: r.team_name ?? r.display_name ?? "—", pts: r.stage_points }))
       .filter((e) => e.pts > 0)
       .sort((a, b) => b.pts - a.pts)
       .map((r, i) => ({ ...r, rank: i + 1 }));
-  }, [stagePoints, entries, dagscoreStageId]);
+  }, [dagscoreRows]);
 
   // Preview stage
   const previewStage = stages.find((s) => s.id === previewStageId);
