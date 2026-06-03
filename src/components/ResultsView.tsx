@@ -121,6 +121,9 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   }, [stages.length, initialStageIdx]);
 
   const klassementStage = stages[klassementStageIdx];
+  // GC-/truivoorspellings-bonus telt alleen mee in de GC-eindstand, niet bij de
+  // tussenstand per etappe. Dus alleen tonen wanneer de GC-rit geselecteerd is.
+  const isGcKlassement = klassementStage?.is_gc === true;
 
   const { data: serverStandings = [] } = useGameStandings(gameId, klassementStage?.stage_number);
 
@@ -130,13 +133,13 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
       user_id: r.user_id,
       team_name: r.team_name,
       display_name: r.display_name,
-      total_points: r.total,
-      predBonus: r.pred_bonus,
-      cumPts: r.total,
+      total_points: isGcKlassement ? r.total : r.cum_points,
+      predBonus: isGcKlassement ? r.pred_bonus : 0,
+      cumPts: isGcKlassement ? r.total : r.cum_points,
       rank: r.rank,
       delta: r.delta,
     }));
-  }, [serverStandings]);
+  }, [serverStandings, isGcKlassement]);
 
   // Dagklassering per team voor de geselecteerde klassement-rit (uit de RPC).
   const klassementStageStandings = useMemo(() => {

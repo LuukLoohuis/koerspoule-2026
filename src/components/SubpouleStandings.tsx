@@ -121,10 +121,12 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
     const prevMap = etappeIdx > 0 ? cumUpTo(etappeIdx - 1) : new Map<string, number>();
     // Voorspellingsbonus (GC + truien): total_points bevat hem, entry_prediction_points
     // is per RLS niet leesbaar voor andere deelnemers. Bonus = total_points − som alle
-    // etappepunten. Vóór de slotrit is dit 0.
+    // etappepunten. Vóór de slotrit is dit 0. Telt alleen mee in de GC-eindstand,
+    // dus enkel wanneer de GC-rit geselecteerd is — niet bij tussenstanden per etappe.
+    const isGc = selectedEtappe?.is_gc === true;
     const fullMap = cumUpTo(stages.length - 1);
     const bonusOf = (entry?: { id: string; total_points?: number } | null) =>
-      entry ? Math.max(0, (entry.total_points ?? 0) - (fullMap.get(entry.id) ?? 0)) : 0;
+      isGc && entry ? Math.max(0, (entry.total_points ?? 0) - (fullMap.get(entry.id) ?? 0)) : 0;
 
     // Stage pts for the selected stage (used for ranking within subpoule)
     const selStagePts = new Map<string, number>();
