@@ -1656,6 +1656,17 @@ export type Database = {
           read_ct: number
         }[]
       }
+      recalc_finalize: { Args: { p_game_id: string }; Returns: undefined }
+      recalc_prepare: {
+        Args: { p_game_id: string }
+        Returns: {
+          stage_id: string
+        }[]
+      }
+      recalc_stage: {
+        Args: { p_game_id: string; p_stage_id: string }
+        Returns: undefined
+      }
       remove_subpoule_member: {
         Args: { p_subpoule_id: string; p_user_id: string }
         Returns: undefined
