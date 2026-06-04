@@ -1,7 +1,47 @@
 import { useEffect, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
+
+const FAQ_JSONLD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Hoe speel je mee met Koerspoule?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Maak gratis een account met je ploegnaam, stel je ploeg samen door per categorie 1 renner te kiezen plus 2 jokers, voorspel het GC-podium en de truien, en daag je vrienden uit via een subpoule-code.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Hoe verdien je punten in de koerspoule?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Alleen renners uit jouw selectie die in de top 20 van een etappe finishen leveren etappepunten op. Jokers tellen dubbel. Daarnaast verdien je punten voor een correct GC-podium (max 150) en voor het juist voorspellen van de groene, berg- en jongerentrui (25 punten per trui).",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Wanneer moet mijn inschrijving binnen zijn?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "De inschrijving dient binnen te zijn vóór de start van de eerste etappe. Wijzigingen daarna zijn niet meer mogelijk.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Wat gebeurt er als een renner uit de koers stapt?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Als een renner uit jouw selectie uitvalt (DNS/DNF) krijgt die 0 punten en kun je hem niet vervangen. Pech voor jou — dat hoort bij de koers.",
+      },
+    },
+  ],
+};
 
 export default function Rules() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
