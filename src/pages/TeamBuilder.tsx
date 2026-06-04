@@ -753,21 +753,15 @@ export default function TeamBuilder() {
                   <div key={team.id} className="ornate-frame retro-border bg-card p-4 relative overflow-hidden">
                     <div className="absolute top-0 left-0 bottom-0 w-1 bg-gradient-to-b from-primary to-[hsl(var(--vintage-gold))]" />
                     <div className="flex items-center gap-3 mb-2 pl-2">
-                      {team.jersey_url ? (
-                        <>
-                          <img
-                            src={team.jersey_url}
-                            alt={team.name}
-                            className="h-[75px] w-[56px] object-contain shrink-0"
-                            loading="lazy"
-                          />
-                          {/* Naam staat al in de geüploade trui-afbeelding; kop
-                              verborgen voor het oog, wel leesbaar voor screenreaders. */}
-                          <h3 className="sr-only">{team.name}</h3>
-                        </>
-                      ) : (
-                        <h3 className="font-display text-lg font-bold">{team.name}</h3>
+                      {team.jersey_url && (
+                        <img
+                          src={team.jersey_url}
+                          alt={team.name}
+                          className="h-[75px] w-[56px] object-contain shrink-0"
+                          loading="lazy"
+                        />
                       )}
+                      <h3 className="font-display text-lg font-bold">{team.name}</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                       {team.riders.map((rider) => (
