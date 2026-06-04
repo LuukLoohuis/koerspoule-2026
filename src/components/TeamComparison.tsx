@@ -19,6 +19,8 @@ type Props = {
   opponentUserId: string;
   opponentName: string;
   subpouleId?: string;
+  /** Game van de subpoule (bv. afgeronde Giro). Valt terug op de live game. */
+  gameId?: string;
 };
 
 const CLASSIFICATION_LABELS: Record<string, string> = {
@@ -94,9 +96,10 @@ function useRiderBasePoints(gameId: string | undefined) {
   });
 }
 
-export default function TeamComparison({ opponentUserId, opponentName, subpouleId }: Props) {
+export default function TeamComparison({ opponentUserId, opponentName, subpouleId, gameId }: Props) {
   const { user } = useAuth();
-  const { data: game } = useCurrentGame();
+  const { data: curGame } = useCurrentGame();
+  const game = gameId ? { id: gameId } : curGame;
   const { data: categories = [] } = useCategories(game?.id);
 
   // Detaildata via SECURITY DEFINER RPC's (cross-user leesbaar):

@@ -14,11 +14,17 @@ import { cn } from "@/lib/utils";
 type Props = {
   subpouleId: string;
   subpouleName: string;
+  gameId?: string;
+  gameStatus?: string;
 };
 
-export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
+export default function SubpouleStandings({ subpouleId, subpouleName, gameId, gameStatus }: Props) {
   const { user } = useAuth();
-  const { data: game } = useCurrentGame();
+  const { data: curGame } = useCurrentGame();
+  // De subpoule hoort bij een specifieke game (bv. een afgeronde Giro). Gebruik
+  // die i.p.v. de huidige live game, anders laden we de verkeerde entries/punten
+  // en staat alles op 0 / "geen team".
+  const game = gameId ? { id: gameId, status: gameStatus } : curGame;
   const { data: members = [], isLoading: membersLoading } = useSubpouleMembers(subpouleId);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stages = [] } = useStages(game?.id);
@@ -452,11 +458,12 @@ export default function SubpouleStandings({ subpouleId, subpouleName }: Props) {
           opponentUserId={compareMember.user_id}
           opponentName={compareMember.display_name}
           subpouleId={subpouleId}
+          gameId={game?.id}
         />
       )}
 
       {/* Cumulative evolution chart */}
-      <SubpouleEvolutionChart subpouleId={subpouleId} />
+      <SubpouleEvolutionChart subpouleId={subpouleId} gameId={game?.id} />
     </div>
   );
 }

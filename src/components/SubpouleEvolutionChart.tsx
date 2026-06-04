@@ -46,6 +46,8 @@ export const CHART_VISUAL = {
 
 type Props = {
   subpouleId: string;
+  /** Game van de subpoule (bv. afgeronde Giro). Valt terug op de live game. */
+  gameId?: string;
   /** Compact mode: smaller header, smaller chart, fewer legend pills shown */
   compact?: boolean;
   /** Optional title override */
@@ -61,6 +63,7 @@ type Props = {
  */
 export default function SubpouleEvolutionChart({
   subpouleId,
+  gameId,
   compact = false,
   title = "Positieverloop per etappe",
   subtitle = "Positie in de subpoule · klik op een naam om te markeren",
@@ -68,7 +71,8 @@ export default function SubpouleEvolutionChart({
 }: Props) {
   const isMobile = useIsMobile();
   const { user } = useAuth();
-  const { data: game } = useCurrentGame();
+  const { data: curGame } = useCurrentGame();
+  const game = gameId ? { id: gameId } : curGame;
   const { data: members = [] } = useSubpouleMembers(subpouleId);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stages = [] } = useStages(game?.id);
