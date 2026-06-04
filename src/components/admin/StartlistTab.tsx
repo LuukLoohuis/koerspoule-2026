@@ -142,22 +142,59 @@ export default function StartlistTab({
         for (const it of inserted ?? []) teamIdByName.set(it.name, it.id);
       }
 
-      // 2) Upsert all riders in one batch
-      const riderRows = importPreview.flatMap((t) =>
-        t.riders.map((r) => ({
-          game_id: activeGameId,
-          team_id: teamIdByName.get(t.name) ?? null,
-          name: r.name,
-          start_number: r.start_number,
-        }))
+      // 2) Renners op NAAM verzoenen i.p.v. op startnummer. De PCS-startlijst
+      //    bevat vaak geen startnummers; met onConflict op (game_id,start_number)
+      //    botsen NULL-nummers niet, waardoor her-import dubbele renners maakte.
+      //    Nu: bestaat de renner (genormaliseerde naam) al in deze game → updaten
+      //    (team koppelen, nummer bijwerken). Anders → invoegen.
+      const existingRiderByName = new Map<string, string>(riders.map((r) => [norm(r.name), r.id]));
+      const seen = new Set<string>();
+      const riderInserts: Array<{ game_id: string; team_id: string | null; name: string; start_number: number | null }> = [];
+      const riderUpdates: Array<{ id: string; team_id: string | null; start_number: number | null }> = [];
+      for (const t of importPreview) {
+        const teamId = teamIdByName.get(t.name) ?? null;
+        for (const r of t.riders) {
+          const key = norm(r.name);
+          if (seen.has(key)) continue; // dubbel in de PDF zelf overslaan
+          seen.add(key);
+          const existingId = existingRiderByName.get(key);
+          if (existingId) {
+            riderUpdates.push({ id: existingId, team_id: teamId, start_number: r.start_number });
+          } else {
+            riderInserts.push({ game_id: activeGameId, team_id: teamId, name: r.name, start_number: r.start_number });
+          }
+        }
+      }
+
+      if (riderInserts.length > 0) {
+        const { error: insErr } = await supabase.from("riders").insert(riderInserts);
+        if (insErr) throw insErr;
+      }
+
+      // Updates per renner. start_number alleen overschrijven als de PDF er één
+      // geeft (anders bestaand nummer behouden) — voorkomt botsing op de unieke
+      // (game_id,start_number)-index en wissen van handmatig gezette nummers.
+      let updateFails = 0;
+      const updateResults = await Promise.allSettled(
+        riderUpdates.map((u) => {
+          const patch: { team_id: string | null; start_number?: number | null } = { team_id: u.team_id };
+          if (u.start_number != null) patch.start_number = u.start_number;
+          return supabase!
+            .from("riders")
+            .update(patch)
+            .eq("id", u.id)
+            .then((res) => {
+              if (res.error) throw res.error;
+            });
+        }),
       );
+      updateFails = updateResults.filter((r) => r.status === "rejected").length;
 
-      const { error: ridErr } = await supabase
-        .from("riders")
-        .upsert(riderRows, { onConflict: "game_id,start_number" });
-      if (ridErr) throw ridErr;
-
-      toast.success(`${riderRows.length} renners geïmporteerd in ${importPreview.length} teams`);
+      const totalRiders = riderInserts.length + riderUpdates.length;
+      toast.success(
+        `${totalRiders} renners verwerkt (${riderInserts.length} nieuw, ${riderUpdates.length} bijgewerkt` +
+          `${updateFails ? `, ${updateFails} mislukt` : ""}) in ${importPreview.length} teams`,
+      );
       await reload();
       setImportPreview([]);
       setImportFile(null);
