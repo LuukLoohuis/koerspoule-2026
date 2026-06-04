@@ -50,7 +50,7 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
         .maybeSingle();
       if (!cancelled) setLastReadAt(data?.last_read_at ?? null);
     })();
-  }, [user, subpoolId]);
+  }, [user?.id, subpoolId]);
 
   // Mark as read when chat opens (after small delay) and on unmount
   useEffect(() => {
@@ -66,7 +66,9 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
         qc.invalidateQueries({ queryKey: ["subpoule-unread"] });
       });
     };
-  }, [subpoolId, user, qc]);
+    // user?.id i.p.v. user: auth-events leveren een nieuwe user-ref met dezelfde
+    // id; afhankelijk zijn van de id voorkomt overbodige mark_read-writes.
+  }, [subpoolId, user?.id, qc]);
 
   // Hydrate profile names (members + message authors)
   useEffect(() => {
