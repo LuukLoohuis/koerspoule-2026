@@ -758,7 +758,7 @@ export default function TeamBuilder() {
                           <img
                             src={team.jersey_url}
                             alt={team.name}
-                            className="h-32 w-24 object-contain shrink-0"
+                            className="h-[75px] w-[56px] object-contain shrink-0"
                             loading="lazy"
                           />
                           {/* Naam staat al in de geüploade trui-afbeelding; kop
