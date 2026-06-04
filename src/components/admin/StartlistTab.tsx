@@ -376,8 +376,16 @@ function TeamRow({
       const { data: pub } = supabase.storage.from("stage-profiles").getPublicUrl(path);
       // Cache-buster zodat een vervangen trui meteen ververst in de UI.
       const url = `${pub.publicUrl}?v=${Date.now()}`;
-      const { error: updErr } = await supabase.from("teams").update({ jersey_url: url }).eq("id", team.id);
+      // .select() erbij: bevestigt dat de rij echt is bijgewerkt. Zonder dit zou
+      // een mislukte/geweigerde update (0 rijen) stil "lukken".
+      const { data: updated, error: updErr } = await supabase
+        .from("teams")
+        .update({ jersey_url: url })
+        .eq("id", team.id)
+        .select("id, jersey_url")
+        .maybeSingle();
       if (updErr) throw updErr;
+      if (!updated) throw new Error("Geen rij bijgewerkt — trui niet opgeslagen (rechten of ontbrekende kolom?).");
       toast.success("Trui geüpload");
       await onChanged();
     } catch (e) {
