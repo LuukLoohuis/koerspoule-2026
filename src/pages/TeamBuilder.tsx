@@ -757,7 +757,7 @@ export default function TeamBuilder() {
                         <img
                           src={team.jersey_url}
                           alt={team.name}
-                          className="h-16 w-12 object-contain shrink-0"
+                          className="h-32 w-24 object-contain shrink-0"
                           loading="lazy"
                         />
                       )}
