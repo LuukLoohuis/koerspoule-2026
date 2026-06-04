@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 
 const BASE = "https://koerspoule.nl";
 
-type Meta = { title: string; description: string };
+type Meta = { title: string; description: string; noindex?: boolean };
 
 const META: Record<string, Meta> = {
   "/": {
@@ -38,6 +38,7 @@ const META: Record<string, Meta> = {
   "/reset-password": {
     title: "Wachtwoord herstellen | Koerspoule",
     description: "Stel een nieuw wachtwoord in voor je Koerspoule-account.",
+    noindex: true,
   },
   "/juridisch": {
     title: "Juridisch, privacy & cookies | Koerspoule",
@@ -55,6 +56,7 @@ export default function RouteSeo() {
     <Helmet>
       <title>{meta.title}</title>
       <meta name="description" content={meta.description} />
+      {meta.noindex && <meta name="robots" content="noindex, follow" />}
       <link rel="canonical" href={url} />
       <meta property="og:title" content={meta.title} />
       <meta property="og:description" content={meta.description} />
