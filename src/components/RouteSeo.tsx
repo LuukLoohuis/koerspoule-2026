@@ -63,6 +63,14 @@ export default function RouteSeo() {
       <meta property="og:url" content={url} />
       <meta name="twitter:title" content={meta.title} />
       <meta name="twitter:description" content={meta.description} />
+      <script type="application/ld+json">{JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: meta.title,
+        description: meta.description,
+        url,
+        inLanguage: "nl-NL",
+      })}</script>
     </Helmet>
   );
 }
