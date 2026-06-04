@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Trophy, Users, Zap, Mountain, Flag, Sparkles } from "lucide-react";
 
-const PAGE_URL = "https://www.koerspoule.nl/giro-italia-poule-2026";
-const PAGE_TITLE = "Giro d'Italia Poule 2026 maken? | Gratis Wielerpool | Koerspoule";
+const PAGE_URL = "https://koerspoule.nl/giro-italia-poule-2026";
+const PAGE_TITLE = "Giro d'Italia Poule 2026 | Gratis Wielerpool";
 const PAGE_DESCRIPTION =
   "Speel mee met de Giro d'Italia poule 2026. Maak gratis je eigen wielerpool, stel je team samen en versla je vrienden. Start direct!";
 
