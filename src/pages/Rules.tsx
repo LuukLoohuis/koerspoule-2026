@@ -61,6 +61,9 @@ export default function Rules() {
 
   return (
     <div className="container mx-auto px-5 py-6 md:py-8">
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(FAQ_JSONLD)}</script>
+      </Helmet>
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-5">
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Speluitleg & Reglement</h1>
