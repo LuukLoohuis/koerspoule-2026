@@ -368,12 +368,12 @@ function TeamRow({
     setUploading(true);
     try {
       const ext = (file.name.split(".").pop() || "png").toLowerCase();
-      const path = `team-jerseys/${activeGameId}/${team.id}.${ext}`;
+      const path = `${activeGameId}/${team.id}.${ext}`;
       const { error: upErr } = await supabase.storage
-        .from("stage-profiles")
+        .from("team-jerseys")
         .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from("stage-profiles").getPublicUrl(path);
+      const { data: pub } = supabase.storage.from("team-jerseys").getPublicUrl(path);
       // Cache-buster zodat een vervangen trui meteen ververst in de UI.
       const url = `${pub.publicUrl}?v=${Date.now()}`;
       // .select() erbij: bevestigt dat de rij echt is bijgewerkt. Zonder dit zou
