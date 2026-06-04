@@ -32,7 +32,7 @@ export default function BottomNav() {
       <div className="h-[2px] bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
 
       <div
-        className="grid grid-cols-4 border-t border-border/60 bg-card"
+        className="grid grid-cols-4 border-t border-border/60 bg-card pb-[env(safe-area-inset-bottom)]"
       >
         {NAV.map(({ label, labelXs, icon: Icon, to, tab, krant }) => {
           const shownLabel = krant ? thema.krant : label;
