@@ -206,6 +206,11 @@
     height: 3px;
     background: hsl(var(--primary));
   }
+  /* TdF (geel): helder goud als kleine tekst is slecht leesbaar op crème →
+     donkerder amber voor de eyebrow-tekst (streepje blijft helder als accent). */
+  [data-thema="geel"] .editor-eyebrow {
+    color: hsl(36 80% 32%);
+  }
 
   /* ── Mop-card (gele krantenrubriek) ── */
   .mop-card {
