@@ -77,8 +77,8 @@ export default function BottomNav() {
               )}>
                 {labelXs ? (
                   <>
-                    <span className="[@media(max-width:360px)]:hidden">{shownLabel}</span>
-                    <span className="hidden [@media(max-width:360px)]:inline">{labelXs}</span>
+                    <span className="[@media(max-width:480px)]:hidden">{shownLabel}</span>
+                    <span className="hidden [@media(max-width:480px)]:inline">{labelXs}</span>
                   </>
                 ) : (
                   shownLabel
