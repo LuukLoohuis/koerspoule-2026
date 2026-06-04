@@ -5,6 +5,7 @@ export type StartlistTeam = {
   id: string;
   name: string;
   short_name: string | null;
+  jersey_url: string | null;
   riders: Array<{
     id: string;
     name: string;
@@ -22,7 +23,7 @@ export function useStartlist(gameId?: string, search?: string, teamId?: string) 
 
       let teamsQuery = supabase
         .from("teams")
-        .select("id, name, short_name")
+        .select("id, name, short_name, jersey_url")
         .eq("game_id", gameId)
         .order("name", { ascending: true });
 
@@ -53,6 +54,7 @@ export function useStartlist(gameId?: string, search?: string, teamId?: string) 
           id: team.id,
           name: team.name,
           short_name: team.short_name,
+          jersey_url: (team as { jersey_url?: string | null }).jersey_url ?? null,
           riders: (riders ?? [])
             .filter((r) => r.team_id === team.id)
             .map((r) => ({

@@ -752,7 +752,17 @@ export default function TeamBuilder() {
                 startlist.map((team) => (
                   <div key={team.id} className="ornate-frame retro-border bg-card p-4 relative overflow-hidden">
                     <div className="absolute top-0 left-0 bottom-0 w-1 bg-gradient-to-b from-primary to-[hsl(var(--vintage-gold))]" />
-                    <h3 className="font-display text-lg font-bold mb-2 pl-2">{team.name}</h3>
+                    <div className="flex items-center gap-3 mb-2 pl-2">
+                      {team.jersey_url && (
+                        <img
+                          src={team.jersey_url}
+                          alt={team.name}
+                          className="h-10 w-8 object-contain shrink-0"
+                          loading="lazy"
+                        />
+                      )}
+                      <h3 className="font-display text-lg font-bold">{team.name}</h3>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                       {team.riders.map((rider) => (
                         <div key={rider.id} className="border rounded-md p-2 bg-secondary/20 flex items-center gap-2">

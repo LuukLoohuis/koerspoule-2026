@@ -10,6 +10,7 @@ import { Trash2, Upload, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { extractPdfText, parseProCyclingStatsStartlist, type ParsedStartlistTeam } from "@/lib/startlistImport";
+import { cn } from "@/lib/utils";
 
 export type Rider = {
   id: string;
@@ -27,6 +28,7 @@ export type Team = {
   name: string;
   short_name: string | null;
   game_id: string | null;
+  jersey_url?: string | null;
 };
 
 export default function StartlistTab({
@@ -118,17 +120,27 @@ export default function StartlistTab({
     if (!supabase || !activeGameId || !importPreview.length) return;
     setImporting(true);
     try {
-      // 1) Upsert all teams in one batch
-      const teamRows = importPreview.map((t) => ({ game_id: activeGameId, name: t.name }));
-      const { data: upsertedTeams, error: teamErr } = await supabase
-        .from("teams")
-        .upsert(teamRows, { onConflict: "game_id,name" })
-        .select("id, name");
-      if (teamErr) throw teamErr;
-
-      const teamIdByName = new Map<string, string>(
-        (upsertedTeams ?? []).map((t) => [t.name, t.id])
-      );
+      // 1) Koppel aan bestaande (bv. handmatig aangemaakte) teams via een
+      //    genormaliseerde naam-match. Zo komen de renners onder het al
+      //    aangemaakte team te staan en blijft de geüploade trui (jersey_url)
+      //    behouden. Alleen écht nieuwe teams worden aangemaakt.
+      const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+      const existingByNorm = new Map<string, string>(teams.map((t) => [norm(t.name), t.id]));
+      const teamIdByName = new Map<string, string>();
+      const toInsert: Array<{ game_id: string; name: string }> = [];
+      for (const t of importPreview) {
+        const existingId = existingByNorm.get(norm(t.name));
+        if (existingId) teamIdByName.set(t.name, existingId);
+        else toInsert.push({ game_id: activeGameId, name: t.name });
+      }
+      if (toInsert.length > 0) {
+        const { data: inserted, error: teamErr } = await supabase
+          .from("teams")
+          .insert(toInsert)
+          .select("id, name");
+        if (teamErr) throw teamErr;
+        for (const it of inserted ?? []) teamIdByName.set(it.name, it.id);
+      }
 
       // 2) Upsert all riders in one batch
       const riderRows = importPreview.flatMap((t) =>
@@ -194,8 +206,21 @@ export default function StartlistTab({
         <CardHeader><CardTitle className="font-display">Teams in deze game ({teams.length})</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           <div className="flex gap-2">
-            <Input data-testid="new-team-input" placeholder="Teamnaam (bv. UAE Team Emirates)" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} />
+            <Input data-testid="new-team-input" placeholder="Teamnaam (bv. UAE Team Emirates)" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && createTeam()} />
             <Button data-testid="create-team-btn" onClick={createTeam}>Team aanmaken</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Maak hier de teams aan, pas de naam aan en upload per team een trui. Bij het importeren
+            van de PDF-startlijst worden de renners op naam aan deze teams gekoppeld — de geüploade
+            trui blijft daarbij behouden. De trui verschijnt in "Stel je team samen → Startlijst".
+          </p>
+          <div className="divide-y border rounded-md">
+            {[...teams].sort((a, b) => a.name.localeCompare(b.name)).map((t) => (
+              <TeamRow key={t.id} team={t} activeGameId={activeGameId} onChanged={reload} />
+            ))}
+            {teams.length === 0 && (
+              <div className="p-3 text-sm text-muted-foreground">Nog geen teams. Maak er hierboven een aan of importeer een PDF-startlijst.</div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -267,6 +292,134 @@ export default function StartlistTab({
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function TeamRow({
+  team,
+  activeGameId,
+  onChanged,
+}: {
+  team: Team;
+  activeGameId: string;
+  onChanged: () => Promise<void> | void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(team.name);
+  const [uploading, setUploading] = useState(false);
+
+  async function saveName() {
+    const trimmed = draft.trim();
+    if (!supabase || !trimmed || trimmed === team.name) {
+      setEditing(false);
+      setDraft(team.name);
+      return;
+    }
+    const { error } = await supabase.from("teams").update({ name: trimmed }).eq("id", team.id);
+    if (error) {
+      toast.error(`Naam opslaan mislukt: ${error.message}`);
+      return;
+    }
+    toast.success("Teamnaam opgeslagen");
+    setEditing(false);
+    await onChanged();
+  }
+
+  async function uploadJersey(file: File) {
+    if (!supabase) return;
+    setUploading(true);
+    try {
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const path = `team-jerseys/${activeGameId}/${team.id}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("stage-profiles")
+        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("stage-profiles").getPublicUrl(path);
+      // Cache-buster zodat een vervangen trui meteen ververst in de UI.
+      const url = `${pub.publicUrl}?v=${Date.now()}`;
+      const { error: updErr } = await supabase.from("teams").update({ jersey_url: url }).eq("id", team.id);
+      if (updErr) throw updErr;
+      toast.success("Trui geüpload");
+      await onChanged();
+    } catch (e) {
+      toast.error(`Trui upload mislukt: ${(e as Error).message}`);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function deleteTeam() {
+    if (!supabase) return;
+    if (!confirm(`Team "${team.name}" verwijderen? De renners worden losgekoppeld.`)) return;
+    await supabase.from("riders").update({ team_id: null }).eq("team_id", team.id);
+    const { error } = await supabase.from("teams").delete().eq("id", team.id);
+    if (error) {
+      toast.error(`Verwijderen mislukt: ${error.message}`);
+      return;
+    }
+    toast.success("Team verwijderd");
+    await onChanged();
+  }
+
+  return (
+    <div className="flex items-center gap-3 p-2">
+      <div className="w-10 h-12 shrink-0 rounded bg-secondary/40 border flex items-center justify-center overflow-hidden">
+        {team.jersey_url ? (
+          <img src={team.jersey_url} alt={team.name} className="w-full h-full object-contain" />
+        ) : (
+          <span className="text-[9px] text-muted-foreground">geen</span>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        {editing ? (
+          <Input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={saveName}
+            onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()}
+            className="h-8"
+          />
+        ) : (
+          <button
+            className="hover:bg-secondary rounded px-1 py-0.5 text-left font-medium truncate w-full"
+            onClick={() => {
+              setDraft(team.name);
+              setEditing(true);
+            }}
+            title="Klik om de teamnaam te wijzigen"
+          >
+            {team.name}
+          </button>
+        )}
+      </div>
+      <label className="shrink-0">
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          disabled={uploading}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) uploadJersey(f);
+            e.currentTarget.value = "";
+          }}
+        />
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs cursor-pointer hover:bg-secondary",
+            uploading && "opacity-50 pointer-events-none",
+          )}
+        >
+          <Upload className="w-3.5 h-3.5" />
+          {uploading ? "Uploaden..." : team.jersey_url ? "Vervang trui" : "Upload trui"}
+        </span>
+      </label>
+      <Button variant="ghost" size="sm" onClick={deleteTeam} title="Team verwijderen">
+        <Trash2 className="w-4 h-4 text-destructive" />
+      </Button>
     </div>
   );
 }

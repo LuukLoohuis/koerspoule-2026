@@ -68,7 +68,7 @@ export default function AdminV3() {
         .order("sort_order"),
       supabase
         .from("teams")
-        .select("id, name, short_name, game_id")
+        .select("id, name, short_name, game_id, jersey_url")
         .or(`game_id.eq.${gameId},game_id.is.null`)
         .order("name"),
       supabase
