@@ -1307,6 +1307,7 @@ export type Database = {
           created_at: string
           game_id: string | null
           id: string
+          jersey_url: string | null
           name: string
           short_name: string | null
         }
@@ -1315,6 +1316,7 @@ export type Database = {
           created_at?: string
           game_id?: string | null
           id?: string
+          jersey_url?: string | null
           name: string
           short_name?: string | null
         }
@@ -1323,6 +1325,7 @@ export type Database = {
           created_at?: string
           game_id?: string | null
           id?: string
+          jersey_url?: string | null
           name?: string
           short_name?: string | null
         }
