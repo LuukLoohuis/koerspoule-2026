@@ -441,9 +441,9 @@ export default function Index() {
 
             </div>
 
-            {/* Rechter kolom — transparant logo */}
+            {/* Rechter kolom — transparant logo (poster-stijl, lichte tilt) */}
             <div className="relative flex justify-center">
-              <div className="relative w-full max-w-[420px]">
+              <div className="relative w-full max-w-[315px] -rotate-[3deg] transition-transform duration-500 hover:rotate-0 hover:scale-105">
                 <img
                   src={koerspouleLogo}
                   alt="Koerspoule logo"
@@ -594,7 +594,8 @@ export default function Index() {
             >
               <div className="flex items-baseline gap-3 mb-3">
                 <span
-                  className="font-display font-bold text-3xl text-primary leading-none"
+                  className="font-display font-black text-4xl text-primary leading-none"
+                  style={{ textShadow: "2px 2px 0 hsl(var(--foreground) / 0.12)" }}
                   aria-hidden
                 >
                   {["I.", "II.", "III.", "IV."][i]}
