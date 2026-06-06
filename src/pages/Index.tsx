@@ -420,6 +420,21 @@ export default function Index() {
                 Dit is je moment.
               </p>
 
+              {/* Sociale teller — drijft FOMO. Pas tonen vanaf 5 ploegen,
+                  anders voelt het flauw. */}
+              {allEntries.length >= 5 && (
+                <div className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="absolute inset-0 rounded-full bg-emerald-500/40 animate-ping" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  </span>
+                  <span>
+                    <span className="font-display font-bold text-foreground tabular-nums">{allEntries.length}</span>{" "}
+                    ploegleiders al ingeschreven
+                  </span>
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-3 mt-7 items-center text-2xl">
                 <Button
                   className="retro-border-primary font-bold"

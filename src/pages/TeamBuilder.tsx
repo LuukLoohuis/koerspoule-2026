@@ -383,6 +383,18 @@ export default function TeamBuilder() {
                       )}
                     </div>
                   </div>
+                  {/* Nog te doen — concrete nudges naar voltooien (verbergt
+                      zichzelf zodra alles klopt, dus ondersteunt zonder te storen). */}
+                  {!gameLocked && !isSubmitted && missing.length > 0 && (
+                    <ul className="mt-3 pt-3 border-t border-border/60 flex flex-wrap gap-x-4 gap-y-1.5 text-[12px] text-muted-foreground">
+                      {missing.map((m) => (
+                        <li key={m} className="flex items-center gap-1.5">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500/70 shrink-0" />
+                          {m}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
 
@@ -436,8 +448,20 @@ export default function TeamBuilder() {
                       )}
 
                       <div className="flex items-center gap-3 mb-1 mt-1">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-primary/10 text-xl">
+                        <div
+                          className={cn(
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 text-xl relative transition-colors",
+                            complete
+                              ? "border-emerald-500 bg-emerald-500/10"
+                              : "border-primary/40 bg-primary/10"
+                          )}
+                        >
                           {icon}
+                          {complete && (
+                            <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white border-2 border-card shadow-sm">
+                              <Check className="h-3 w-3" strokeWidth={3} />
+                            </span>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
