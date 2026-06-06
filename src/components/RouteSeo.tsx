@@ -7,9 +7,9 @@ type Meta = { title: string; description: string; noindex?: boolean };
 
 const META: Record<string, Meta> = {
   "/": {
-    title: "Koerspoule — Fantasy wielerspel Giro d'Italia 2026",
+    title: "Koerspoule — Gratis wielerpoule voor Tour de France, Giro & Vuelta 2026",
     description:
-      "Gratis fantasy wielerspel voor de Giro d'Italia 2026. Stel je ploeg samen, daag vrienden uit en strijd om de roze trui.",
+      "Gratis wielerspel voor de Tour de France, Giro d'Italia en Vuelta 2026. Stel je ploeg samen, daag vrienden uit en strijd om de trui.",
   },
   "/team-samenstellen": {
     title: "Stel je team samen | Koerspoule",
