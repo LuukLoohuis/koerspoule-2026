@@ -9,9 +9,9 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin, ArrowUp, ArrowDown, Minus, Calendar, Route, Lock, Flag, ClipboardList, Search } from "lucide-react";
 import ResultsUpdatedBadge from "@/components/ResultsUpdatedBadge";
-import RetroStamp from "@/components/retro/Stamp";
 import TruiBadge from "@/components/retro/TruiBadge";
 import Podium from "@/components/Podium";
 import StageBars from "@/components/StageBars";
@@ -37,6 +37,23 @@ function rankBadge(rank: number) {
     <span className={cn("inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold tabular-nums", cls)}>
       {rank}
     </span>
+  );
+}
+
+/** Skeleton-rijen tijdens het laden van een klassement/uitslag-lijst. */
+function RowsSkeleton({ rows = 8 }: { rows?: number }) {
+  return (
+    <div className="divide-y divide-border">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex items-center justify-between px-3 py-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <Skeleton className="h-6 w-6 rounded-full shrink-0" />
+            <Skeleton className="h-4 w-32" style={{ width: `${110 - (i % 4) * 18}px` }} />
+          </div>
+          <Skeleton className="h-4 w-9" />
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -195,11 +212,6 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
             <div className="mt-2 flex justify-center">
               <ResultsUpdatedBadge gameId={gameId} />
             </div>
-          </div>
-          <div className="hidden md:block absolute top-0 right-0">
-            <RetroStamp tone="wine" rotation={-4}>
-              {`Dag ${new Date().getDate()} · ${new Date().toLocaleDateString("nl-NL", { month: "short" }).toUpperCase()}`}
-            </RetroStamp>
           </div>
           <div className="double-rule mt-3 mx-auto max-w-md" />
         </div>
@@ -416,7 +428,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                     </h2>
                   </div>
                   {resultsLoading ? (
-                    <div className="p-4 text-sm text-muted-foreground italic text-center">Laden...</div>
+                    <RowsSkeleton rows={6} />
                   ) : results.filter((r) => r.finish_position != null).length === 0 ? (
                     <div className="p-4 text-sm text-muted-foreground italic text-center">
                       Nog geen uitslag voor deze rit.
@@ -512,14 +524,16 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                   <div>
                     <p className="font-display font-bold text-foreground">Nog geen klassement</p>
                     <p className="text-sm text-muted-foreground mt-0.5 max-w-xs">
-                      Zodra de eerste ploegen zijn ingediend en de jury een rit fiatteert, verschijnt de stand hier.
+                      {user
+                        ? "Zodra de eerste ploegen zijn ingediend en de jury een rit fiatteert, verschijnt de stand hier."
+                        : "Maak gratis een account, stel je ploeg samen en strijd mee om de trui — de stand verschijnt hier zodra de koers begint."}
                     </p>
                   </div>
                   <Link
-                    to="/team-samenstellen"
+                    to={user ? "/team-samenstellen" : "/login"}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground font-bold text-sm border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] hover:brightness-105 active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
                   >
-                    🚴 Stel je ploeg samen
+                    {user ? "🚴 Stel je ploeg samen" : "🚴 Doe gratis mee"}
                   </Link>
                 </div>
               ) : (
@@ -792,7 +806,7 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
           Selecteer een rit om de klassementen te zien.
         </div>
       ) : isLoading ? (
-        <div className="p-6 text-sm text-muted-foreground italic text-center">Laden...</div>
+        <RowsSkeleton />
       ) : (
         <Tabs defaultValue="gc">
           <TabsList className="flex w-full justify-start gap-1.5 overflow-x-auto no-scrollbar rounded-none border-b border-border/60 bg-secondary/30 p-2 h-auto">
@@ -919,7 +933,7 @@ function GcDetail({
           </h2>
         </div>
         {isLoading ? (
-          <div className="p-4 text-sm text-muted-foreground italic text-center">Laden…</div>
+          <RowsSkeleton rows={10} />
         ) : gcRows.length === 0 ? (
           <div className="p-4 text-sm text-muted-foreground italic text-center">Nog geen GC-uitslag.</div>
         ) : (

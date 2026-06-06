@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Check, Info, Lock, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -747,7 +748,20 @@ export default function TeamBuilder() {
                 </div>
               </div>
 
-              {startlistLoading && <div className="retro-border bg-card p-4">Startlijst laden...</div>}
+              {startlistLoading &&
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="retro-border bg-card p-4">
+                    <Skeleton className="h-6 w-44 mb-3" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {Array.from({ length: 4 }).map((__, j) => (
+                        <div key={j} className="flex items-center gap-2 border rounded-md p-2 bg-secondary/20">
+                          <Skeleton className="h-6 w-7 rounded-full shrink-0" />
+                          <Skeleton className="h-4 w-32" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               {!startlistLoading &&
                 startlist.map((team) => (
                   <div key={team.id} className="ornate-frame retro-border bg-card p-4 relative overflow-hidden">
