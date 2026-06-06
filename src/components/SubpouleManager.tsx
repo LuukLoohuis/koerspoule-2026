@@ -14,7 +14,7 @@ import PelotonChat from "@/components/PelotonChat";
 import SubpouleStandings from "@/components/SubpouleStandings";
 import SubpouleBenchmark from "@/components/SubpouleBenchmark";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Swords, Flame } from "lucide-react";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Swords, Flame, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 
@@ -141,6 +141,31 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
     toast({ title: "Code gekopieerd", description: code });
   };
 
+  // "Roep je kopgroep" — deel een uitnodiging via het systeem-deelvenster
+  // (WhatsApp etc) op mobiel; valt terug op kopiëren naar klembord op desktop.
+  const shareInvite = async (name: string, code: string) => {
+    const url = "https://koerspoule.nl/mijn-peloton?tab=subpoules";
+    const text =
+      `🚴 Doe mee met mijn Koerspoule "${name}"!\n` +
+      `Toegangscode: ${code}\n` +
+      `Maak gratis een account en sluit aan: ${url}`;
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: `Koerspoule — ${name}`, text, url });
+        return;
+      }
+    } catch {
+      // gebruiker annuleerde het deelvenster — geen fout tonen
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: "Uitnodiging gekopieerd", description: "Plak 'm in je groepsapp." });
+    } catch {
+      toast({ title: "Kopiëren mislukt", description: text, variant: "destructive" });
+    }
+  };
+
   if (!user) {
     return <div className="retro-border bg-card p-6 text-muted-foreground">Log in om subpoules te beheren.</div>;
   }
@@ -250,6 +275,23 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
+                {/* Roep je kopgroep — uitnodig-CTA (voedt de virale lus) */}
+                <div className="p-3 border-b-2 border-foreground/10 bg-[hsl(var(--vintage-gold)/0.1)] flex flex-wrap items-center gap-3">
+                  <div className="flex-1 min-w-[180px]">
+                    <p className="font-display font-bold text-sm">🚴 Roep je kopgroep</p>
+                    <p className="text-xs text-muted-foreground">
+                      Hoe meer renners, hoe mooier de strijd. Nodig vrienden uit met code{" "}
+                      <span className="font-mono font-bold text-foreground">{active.code}</span>.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => shareInvite(active.name, active.code)}
+                    className="inline-flex items-center gap-2 shrink-0 px-4 py-2 rounded-md bg-primary text-primary-foreground font-bold text-sm border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] hover:brightness-105 active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    Roep je kopgroep
+                  </button>
+                </div>
                 <div className="divide-y divide-border">
                   {members.map((m) => (
                     <div key={m.user_id} className="p-3 flex items-center justify-between">
