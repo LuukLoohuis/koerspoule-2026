@@ -16,7 +16,7 @@ type NavItem = {
 const NAV: NavItem[] = [
   { label: "Gazetta",        icon: Newspaper, to: "/karavaan", krant: true },
   { label: "Uitslagen",      icon: Flag,      to: "/uitslagen"    },
-  { label: "Peloton",        icon: Users,     to: "/mijn-peloton" },
+  { label: "Subpoule",       icon: Users,     to: "/mijn-peloton", tab: "subpoules" },
   { label: "Hors Catégorie", labelXs: "Hors Cat.", icon: Bike, to: "/mijn-peloton", tab: "hors" },
 ];
 
