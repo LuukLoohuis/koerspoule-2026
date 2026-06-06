@@ -1196,7 +1196,7 @@ export default function MijnPeloton() {
 
           {/* Desktop tab nav — chip-stijl, identiek aan Hors Catégorie inner tabs */}
           <div className="hidden md:block overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
-            <TabsList className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 h-auto w-full">
+            <TabsList className="flex gap-1 rounded-[9px] border-2 border-foreground/15 bg-secondary/30 p-1 h-auto w-full">
               {([
                 { key: "karavaan",  label: thema.krant,      Icon: Newspaper },
                 { key: "team",      label: "Volgwagen",      Icon: Car     },
@@ -1207,7 +1207,7 @@ export default function MijnPeloton() {
                 <TabsTrigger
                   key={key}
                   value={key}
-                  className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-foreground/10"
+                  className="flex items-center justify-center gap-1.5 rounded-md px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-foreground/10"
                 >
                   <Icon className="h-3.5 w-3.5 shrink-0" />
                   <span>{label}</span>
