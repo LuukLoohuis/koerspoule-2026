@@ -434,26 +434,29 @@ export default function MyTeamPanel({
       )}
 
 
-      {/* ═══ MIJN RENNERS — Startlijst Programme Officiel ═══ */}
-      <div className="overflow-hidden rounded-lg border-2"
-        style={{ borderColor: "#C8A020", background: "#FAF7F2" }}>
+      {/* ═══ MIJN RENNERS — vintage Programme Officiel ═══
+          Affichestijl, maar rustig en scanbaar. Tokens uit src/index.css. */}
+      <div className="vintage-paper overflow-hidden rounded-lg border-2"
+        style={{ borderColor: "var(--ink-sepia)" }}>
 
-        {/* Programme header */}
+        {/* Programme-header — donkere band met gouden accenten */}
         <div className="px-4 py-3 flex items-center justify-between border-b-2"
-          style={{ background: "#2C2416", borderColor: "#C8A020" }}>
+          style={{ background: "var(--ink-sepia)", borderColor: "var(--medal-gold)" }}>
           <div>
-            <div className="text-[9px] tracking-[0.4em] uppercase font-mono mb-0.5"
-              style={{ color: "#C8A020", opacity: 0.75 }}>
+            <div className="vintage-stamp text-[9px] md:text-[10px] mb-0.5"
+              style={{ color: "var(--medal-gold)", letterSpacing: "0.4em" }}>
               Programme Officiel · {game.name}
             </div>
-            <h2 className="font-display text-xl font-black tracking-tight leading-none text-white">Mijn Renners</h2>
+            <h2 className="vintage-numeral text-xl md:text-2xl text-white" style={{ letterSpacing: "0.02em" }}>
+              MIJN RENNERS
+            </h2>
           </div>
           <div className="text-right">
-            <div className="font-mono text-[9px] uppercase tracking-widest" style={{ color: "#C8A020", opacity: 0.6 }}>startlijst</div>
-            <div className="font-display text-2xl font-black tabular-nums" style={{ color: "#C8A020" }}>
+            <div className="vintage-stamp text-[9px]" style={{ color: "var(--medal-gold)", opacity: 0.7 }}>startlijst</div>
+            <div className="vintage-numeral text-2xl md:text-3xl tabular-nums" style={{ color: "var(--medal-gold)" }}>
               {Array.from(picksByCategory.values()).reduce((s, arr) => s + arr.length, 0) + standaloneJokerIds.length}
             </div>
-            <div className="font-mono text-[9px]" style={{ color: "#C8A020", opacity: 0.5 }}>renners</div>
+            <div className="vintage-stamp text-[9px]" style={{ color: "var(--medal-gold)", opacity: 0.55 }}>renners</div>
             {dnfZichtbaar && (() => {
               const dnfCount = riders.filter((r) => r.is_dnf).length;
               return dnfCount > 0 ? (
@@ -498,18 +501,31 @@ export default function MyTeamPanel({
           // ── Shared sub-components ──────────────────────────────────────────
 
           const SectionHeader = ({ sec, borderRight = false }: { sec: Section; borderRight?: boolean }) => (
-            <div className="flex items-center gap-2 px-3 py-2"
+            <div
+              className="flex items-center gap-2 px-3 py-2.5 sticky top-0 z-10 backdrop-blur"
               style={{
-                background: "#F0EBE1",
-                borderBottom: `1px solid ${sec.badge.border}`,
-                borderRight: borderRight ? "1px solid #E8DDD0" : undefined,
-              }}>
-              <span className="text-sm leading-none shrink-0">{sec.icon}</span>
-              <span className="font-mono text-[10px] font-black uppercase tracking-[0.22em] shrink-0"
-                style={{ color: sec.badge.color }}>{sec.label}</span>
-              <div className="flex-1 h-px" style={{ background: sec.badge.border, opacity: 0.3 }} />
-              <span className="font-mono text-[9px] tabular-nums shrink-0"
-                style={{ color: sec.badge.border, opacity: 0.65 }}>{sec.riders.length}</span>
+                background: "rgba(240,235,225,0.95)",
+                borderBottom: `2px solid ${sec.badge.border}`,
+                borderRight: borderRight ? "1px solid var(--paper-deep)" : undefined,
+                boxShadow: "0 1px 0 rgba(58,42,26,0.06)",
+              }}
+            >
+              {/* Accent-stripe in categorie-kleur links als sectie-marker */}
+              <span aria-hidden className="block w-1 h-5 rounded-sm shrink-0" style={{ background: sec.badge.border }} />
+              <span className="text-base leading-none shrink-0">{sec.icon}</span>
+              <span
+                className="vintage-stamp text-[10px] md:text-[11px] shrink-0"
+                style={{ color: sec.badge.color, letterSpacing: "0.24em" }}
+              >
+                {sec.label}
+              </span>
+              <div className="flex-1 h-px" style={{ background: sec.badge.border, opacity: 0.35 }} />
+              <span
+                className="font-mono text-[10px] font-bold tabular-nums shrink-0 px-1.5 py-0.5 rounded"
+                style={{ color: sec.badge.color, background: sec.badge.bg, border: `1px solid ${sec.badge.border}`, opacity: 0.95 }}
+              >
+                {sec.riders.length}
+              </span>
             </div>
           );
 
@@ -519,52 +535,91 @@ export default function MyTeamPanel({
             rider: Rider | null; icon: ReactNode; badge: BadgeConfig;
             rIdx: number; borderRight?: boolean; isLast?: boolean;
           }) => {
-            const bg = rIdx % 2 === 0 ? "#FAF7F2" : "#F4EFE6";
+            // Subtieler zebra: zachte papier-tinten i.p.v. harde wissel.
+            const bg = rIdx % 2 === 0 ? "var(--paper-light)" : "rgba(237,227,204,0.55)";
             const isDnf = dnfZichtbaar && Boolean(rider?.is_dnf);
             if (!rider) return (
-              <div style={{ background: bg, minHeight: "40px", borderRight: borderRight ? "1px solid #E8DDD0" : undefined,
-                borderBottom: !isLast ? "1px solid #EDE8DE" : undefined }} />
+              <div style={{
+                background: bg, minHeight: "52px",
+                borderRight: borderRight ? "1px solid rgba(58,42,26,0.08)" : undefined,
+                borderBottom: !isLast ? "1px solid rgba(58,42,26,0.10)" : undefined,
+              }} />
             );
             const numStr = rider.start_number != null
               ? String(rider.start_number).padStart(3, " ")
               : " — ";
             return (
-              <div className="flex items-center"
-                style={{ background: isDnf ? "#FFF0F0" : bg, minHeight: "40px",
-                  borderBottom: !isLast ? "1px solid #EDE8DE" : undefined,
-                  borderRight: borderRight ? "1px solid #E8DDD0" : undefined }}>
-                {/* Number */}
-                <div className="shrink-0 px-2 border-r text-right" style={{ width: "44px", borderColor: "#E0D8CC" }}>
-                  <span className="font-mono font-black tabular-nums text-[17px] leading-none"
-                    style={{ color: isDnf ? "#C0392B" : "#C8A020" }}>{numStr}</span>
+              <div
+                className="flex items-center"
+                style={{
+                  background: isDnf ? "rgba(178,58,52,0.08)" : bg,
+                  minHeight: "52px",
+                  borderBottom: !isLast ? "1px solid rgba(58,42,26,0.10)" : undefined,
+                  borderRight: borderRight ? "1px solid rgba(58,42,26,0.08)" : undefined,
+                }}
+              >
+                {/* Rugnummer — groot, vintage maillot-geel display */}
+                <div className="shrink-0 px-2.5 text-right" style={{ width: "52px", borderRight: "1px dashed rgba(58,42,26,0.18)" }}>
+                  <span
+                    className="vintage-numeral tabular-nums text-[20px] leading-none"
+                    style={{ color: isDnf ? "var(--vintage-red)" : "var(--vintage-yellow-hot)", textShadow: isDnf ? undefined : "1px 1px 0 rgba(58,42,26,0.12)" }}
+                  >
+                    {numStr}
+                  </span>
                 </div>
-                {/* Icon */}
-                <div className="shrink-0 w-8 text-center text-sm leading-none select-none">{isDnf ? "❌" : icon}</div>
-                {/* Name + team */}
-                <div className="flex-1 min-w-0 px-1.5 py-2">
-                  <span className="font-display font-bold block truncate"
-                    style={{ fontSize: "14px", color: isDnf ? "#8B4040" : "#2C2416", lineHeight: 1.2,
-                      textDecoration: isDnf ? "line-through" : undefined }}>{rider.name}</span>
+                {/* Categorie-icoon */}
+                <div className="shrink-0 w-9 text-center text-base leading-none select-none">
+                  {isDnf ? <span style={{ color: "var(--vintage-red)" }}>✕</span> : icon}
+                </div>
+                {/* Naam + team */}
+                <div className="flex-1 min-w-0 px-2 py-2">
+                  <span
+                    className="font-display font-bold block truncate"
+                    style={{
+                      fontSize: "14.5px",
+                      color: isDnf ? "rgba(58,42,26,0.5)" : "var(--ink-sepia)",
+                      lineHeight: 1.25,
+                      textDecoration: isDnf ? "line-through" : undefined,
+                    }}
+                  >
+                    {rider.name}
+                  </span>
                   {isDnf ? (
-                    <span className="font-mono text-[9px] block" style={{ color: "#C0392B" }}>
+                    <span className="vintage-stamp text-[9px] block mt-0.5" style={{ color: "var(--vintage-red)", letterSpacing: "0.18em" }}>
                       Uitgevallen{game?.status === "finished" ? " · Definitief" : ""}
                     </span>
-                  ) : (
-                    <span className="font-mono text-[9px] block truncate"
-                      style={{ color: "#8B7355" }}>{rider.team}</span>
-                  )}
+                  ) : rider.team ? (
+                    <span className="font-mono text-[10px] block truncate" style={{ color: "var(--ink-faded)" }}>
+                      {rider.team}
+                    </span>
+                  ) : null}
                 </div>
-                {/* Badge */}
-                <div className="shrink-0 px-2 py-1">
+                {/* Categorie-badge — emaille-plaatje */}
+                <div className="shrink-0 px-2.5 py-1">
                   {isDnf ? (
-                    <span className="font-mono text-[8px] font-black uppercase px-1.5 py-0.5 rounded"
-                      style={{ background: "#FFEBEB", color: "#C0392B", border: "1px solid #E74C3C", letterSpacing: "0.1em" }}>
+                    <span
+                      className="font-mono text-[9px] font-black uppercase px-2 py-1 rounded-sm"
+                      style={{
+                        background: "rgba(178,58,52,0.10)",
+                        color: "var(--vintage-red)",
+                        border: "1px solid var(--vintage-red)",
+                        letterSpacing: "0.16em",
+                        boxShadow: "1px 1px 0 rgba(58,42,26,0.15)",
+                      }}
+                    >
                       DNF
                     </span>
                   ) : (
-                    <span className="font-mono text-[8px] font-black uppercase px-1.5 py-0.5 rounded"
-                      style={{ background: badge.bg, color: badge.color,
-                        border: `1px solid ${badge.border}`, letterSpacing: "0.1em" }}>
+                    <span
+                      className="font-mono text-[9px] font-black uppercase px-2 py-1 rounded-sm"
+                      style={{
+                        background: badge.bg,
+                        color: badge.color,
+                        border: `1px solid ${badge.border}`,
+                        letterSpacing: "0.16em",
+                        boxShadow: "1px 1px 0 rgba(58,42,26,0.15)",
+                      }}
+                    >
                       {badge.label}
                     </span>
                   )}
