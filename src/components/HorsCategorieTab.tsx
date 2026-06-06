@@ -849,7 +849,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
       {/* Desktop — bestaande chip-balk ongewijzigd */}
       <div className="hidden md:block overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
-        <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
+        <div className="flex gap-1 rounded-[9px] border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
           {[
             { key: "dartpijl" as const, label: "Dartpijl", short: "Dart", Icon: Activity },
             { key: "pelotonkeuzes" as const, label: "Pelotonkeuzes", short: "Peloton", Icon: BarChart3 },
@@ -862,7 +862,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
               type="button"
               onClick={() => setActiveTab(key)}
               className={cn(
-                "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-display font-semibold uppercase tracking-wider transition-colors flex-1",
+                "flex items-center justify-center gap-1.5 rounded-md px-3 min-h-[44px] text-xs font-display font-semibold uppercase tracking-wider transition-colors flex-1",
                 activeTab === key
                   ? "bg-card text-foreground shadow-sm border border-foreground/10"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",

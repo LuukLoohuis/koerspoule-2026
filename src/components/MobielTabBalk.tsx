@@ -20,7 +20,10 @@ type Props = {
   className?: string;
 };
 
-const PINK = "#E8336D";
+// Actieve tab volgt het thema (geel = TdF, rood = Vuelta, roze = Giro) via de
+// CSS-tokens; BG/rand/inactief blijven warm-neutraal (perkament) over thema's heen.
+const ACTIVE_BG = "hsl(var(--primary))";
+const ACTIVE_FG = "hsl(var(--primary-foreground))";
 const BG   = "#EDE8DF";
 const BORDER = "#C8B89A";
 const INACTIVE = "#7A6A5A";
@@ -64,8 +67,8 @@ export function MobielTabBalk({ tabs, active, onChange, className }: Props) {
                 tab.disabled && "opacity-40 cursor-not-allowed",
               )}
               style={{
-                background: isActive ? PINK : "transparent",
-                color: isActive ? "#fff" : INACTIVE,
+                background: isActive ? ACTIVE_BG : "transparent",
+                color: isActive ? ACTIVE_FG : INACTIVE,
               }}
             >
               {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
@@ -118,8 +121,8 @@ export function MobielTabBalk({ tabs, active, onChange, className }: Props) {
                 tab.disabled && "opacity-40 cursor-not-allowed",
               )}
               style={{
-                background: isActive ? PINK : "transparent",
-                color: isActive ? "#fff" : INACTIVE,
+                background: isActive ? ACTIVE_BG : "transparent",
+                color: isActive ? ACTIVE_FG : INACTIVE,
               }}
             >
               {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
