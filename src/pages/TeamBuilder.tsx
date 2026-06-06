@@ -670,29 +670,59 @@ export default function TeamBuilder() {
                   Voorspel de eindstand — auto-opslaan tijdens typen.
                 </p>
 
-                {/* Visual podium — retro affiche-stijl: leider-trui boven het
-                    eerste podium-blok, lager voor 2/3. Theme-aware trui (geel
-                    TdF / roze Giro / rood Vuelta). */}
+                {/* Visual podium — retro affiche-stijl: alleen #1 krijgt de
+                    leiderstrui (eindwinnaar); #2/#3 krijgen een medaille-lint.
+                    Theme-aware trui (geel TdF / roze Giro / rood Vuelta). */}
                 <div className="mb-5">
-                  <h3 className="font-display font-bold mb-4 text-center uppercase tracking-[0.18em] text-sm">
-                    <span className="inline-block px-3 py-1 border-y-2 border-foreground/30">
+                  <h3 className="font-display font-bold mb-5 text-center uppercase tracking-[0.22em] text-sm flex items-center justify-center gap-3 text-foreground/70">
+                    <span className="h-px flex-1 max-w-[60px] bg-foreground/30" />
+                    <span className="inline-flex items-center gap-2">
+                      <span aria-hidden>✦</span>
                       Eindklassement podium
+                      <span aria-hidden>✦</span>
                     </span>
+                    <span className="h-px flex-1 max-w-[60px] bg-foreground/30" />
                   </h3>
                   <div className="grid grid-cols-3 gap-2 md:gap-4 items-end">
                     {[
-                      { idx: 1, rank: "2", height: "h-20 md:h-24", order: "order-1", truiSize: "medium" as const },
-                      { idx: 0, rank: "1", height: "h-28 md:h-32", order: "order-2", truiSize: "groot"  as const },
-                      { idx: 2, rank: "3", height: "h-16 md:h-20", order: "order-3", truiSize: "medium" as const },
-                    ].map(({ idx, rank, height, order, truiSize }) => {
+                      { idx: 1, rank: "2", height: "h-24 md:h-32", order: "order-1", medal: "#C0C0C0", medalBg: "from-zinc-200 to-zinc-400" },
+                      { idx: 0, rank: "1", height: "h-32 md:h-44", order: "order-2", medal: "#E0A411", medalBg: "from-amber-300 to-yellow-500" },
+                      { idx: 2, rank: "3", height: "h-20 md:h-24", order: "order-3", medal: "#B87333", medalBg: "from-orange-300 to-orange-600" },
+                    ].map(({ idx, rank, height, order, medal, medalBg }) => {
                       const otherPodium = gcPodium.filter((_, j) => j !== idx && Boolean(_));
                       const picked = gcPodium[idx] ? riderById.get(gcPodium[idx]) : null;
                       const isWinner = idx === 0;
                       return (
                         <div key={idx} className={cn("flex flex-col items-center", order)}>
-                          {/* Trui boven het podium */}
-                          <div className={cn("mb-2", picked ? "opacity-100" : "opacity-50")}>
-                            <TruiBadge type="algemeen" formaat={truiSize} />
+                          {/* Boven het podium: gele trui voor #1, medaille voor #2/#3 */}
+                          <div className={cn("mb-2 transition-opacity", picked ? "opacity-100" : "opacity-55")}>
+                            {isWinner ? (
+                              <div className="relative">
+                                {/* Lauwerkrans-achtige bogen rond de trui */}
+                                <span aria-hidden className="absolute -left-3 top-1/2 -translate-y-1/2 text-xl md:text-2xl text-[hsl(var(--vintage-gold))]/70 select-none">❦</span>
+                                <span aria-hidden className="absolute -right-3 top-1/2 -translate-y-1/2 text-xl md:text-2xl text-[hsl(var(--vintage-gold))]/70 -scale-x-100 select-none">❦</span>
+                                <TruiBadge type="algemeen" formaat="groot" />
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center">
+                                {/* Lint */}
+                                <div className="flex gap-0 -mb-1 z-0">
+                                  <span className="block w-2.5 h-5 bg-rose-700 transform -skew-x-[14deg] rounded-t-sm" />
+                                  <span className="block w-2.5 h-5 bg-white border-x border-rose-700/40 transform -skew-x-[14deg]" />
+                                  <span className="block w-2.5 h-5 bg-blue-700 transform -skew-x-[14deg] rounded-t-sm" />
+                                </div>
+                                {/* Medaille */}
+                                <div
+                                  className={cn(
+                                    "relative z-10 h-10 w-10 md:h-12 md:w-12 rounded-full border-2 flex items-center justify-center bg-gradient-to-b shadow-md",
+                                    medalBg
+                                  )}
+                                  style={{ borderColor: medal }}
+                                >
+                                  <span className="font-display font-black text-base md:text-lg text-foreground/80">{rank}</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
                           {/* Podium-blok */}
                           <div
@@ -700,21 +730,28 @@ export default function TeamBuilder() {
                               "w-full rounded-t-md border-2 border-b-0 flex flex-col items-center justify-center text-center px-2 py-2 mb-2 relative",
                               height,
                               isWinner
-                                ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.18] shadow-[0_-4px_0_hsl(var(--vintage-gold)/0.3)]"
-                                : "border-foreground/40 bg-secondary/40"
+                                ? "border-[hsl(var(--vintage-gold))] bg-gradient-to-b from-[hsl(var(--vintage-gold))/0.30] to-[hsl(var(--vintage-gold))/0.10] shadow-[0_-6px_0_hsl(var(--vintage-gold)/0.35),0_2px_0_hsl(var(--foreground)/0.4)]"
+                                : "border-foreground/40 bg-gradient-to-b from-secondary/60 to-secondary/30 shadow-[0_2px_0_hsl(var(--foreground)/0.25)]"
                             )}
                           >
+                            {/* Hoeknieten als affiche-decoratie */}
+                            <span aria-hidden className="absolute top-1 left-1 h-1 w-1 rounded-full bg-foreground/30" />
+                            <span aria-hidden className="absolute top-1 right-1 h-1 w-1 rounded-full bg-foreground/30" />
                             <span
                               className={cn(
-                                "font-display font-black leading-none mb-1",
-                                isWinner ? "text-3xl md:text-4xl text-[hsl(var(--vintage-gold))]" : "text-2xl md:text-3xl text-foreground/70"
+                                "font-display font-black leading-none mb-1 drop-shadow-sm",
+                                isWinner ? "text-4xl md:text-5xl text-[hsl(var(--vintage-gold))]" : "text-2xl md:text-3xl text-foreground/60"
                               )}
+                              style={isWinner ? { textShadow: "2px 2px 0 hsl(var(--foreground) / 0.18)" } : undefined}
                               aria-hidden
                             >
                               {rank}
                             </span>
                             {picked ? (
-                              <span className="font-display font-bold text-[11px] md:text-sm leading-tight line-clamp-2">
+                              <span className={cn(
+                                "font-display font-bold leading-tight line-clamp-2",
+                                isWinner ? "text-xs md:text-sm" : "text-[11px] md:text-xs"
+                              )}>
                                 {picked.name}
                               </span>
                             ) : (
