@@ -17,7 +17,7 @@ import {
 
 type Game = { id: string; name: string; year: number | null };
 
-const LOGO_URL = "https://cdn.jsdelivr.net/gh/LuukLoohuis/koerspoule-2026@main/public/koerspoule-badge.png";
+const LOGO_URL = "https://cdn.jsdelivr.net/gh/LuukLoohuis/koerspoule-2026@main/public/koerspoule-logo-2026.png";
 
 const DEFAULT_BODY = `<p style="font-size:15px;line-height:1.6;margin:0 0 16px;">Beste deelnemer,</p>
 <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
@@ -33,10 +33,12 @@ export function buildEmailHtml(
   return `<!doctype html>
 <html><body style="margin:0;background:#faf7f2;font-family:Georgia,serif;color:#1a1a1a;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#fff;border:1px solid #e8e0d5;">
-    <div style="text-align:center;margin-bottom:20px;">
-      <img src="${LOGO_URL}" alt="Koerspoule" width="72" height="72"
-           style="display:block;margin:0 auto 10px;border-radius:8px;" />
-      <span style="font-family:'Times New Roman',Times,serif;font-size:${opts.titleSize}px;font-weight:700;color:${opts.titleColor};letter-spacing:0.06em;display:block;">KOERSPOULE</span>
+    <div style="text-align:center;margin-bottom:22px;">
+      <div style="display:inline-block;width:200px;text-align:right;">
+        <img src="${LOGO_URL}" alt="Koerspoule — uit liefde voor de koers" width="200"
+             style="display:block;width:200px;height:auto;margin:0 0 2px;border-radius:8px;" />
+        <span style="font-family:'Brush Script MT','Segoe Script','Snell Roundhand',cursive;font-style:italic;font-size:19px;color:#C0851A;line-height:1;">Uit liefde voor de koers</span>
+      </div>
     </div>
     ${body}
     <hr style="border:none;border-top:1px solid #ede8df;margin:32px 0 16px;"/>
@@ -201,10 +203,12 @@ export default function NotifyTab() {
             </div>
             {/* Live mini-preview of header */}
             <div className="border rounded bg-white p-3 text-center">
-              <img src="/koerspoule-badge.png" alt="" width={40} height={40} className="mx-auto mb-1.5 rounded" />
-              <span style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: titleSize * 0.55, color: titleColor, fontWeight: 700, letterSpacing: "0.06em" }}>
-                KOERSPOULE
-              </span>
+              <div className="inline-block text-right">
+                <img src="/koerspoule-logo-2026.png" alt="Koerspoule" width={150} className="mb-0.5 rounded" />
+                <span style={{ fontFamily: "'Brush Script MT','Segoe Script','Snell Roundhand',cursive", fontStyle: "italic", fontSize: 15, color: "#C0851A", lineHeight: 1 }}>
+                  Uit liefde voor de koers
+                </span>
+              </div>
             </div>
           </div>
 
