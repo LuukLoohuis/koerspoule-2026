@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Check, Info, Lock, Sparkles } from "lucide-react";
+import TruiBadge from "@/components/retro/TruiBadge";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
@@ -669,35 +670,55 @@ export default function TeamBuilder() {
                   Voorspel de eindstand — auto-opslaan tijdens typen.
                 </p>
 
-                {/* Visual podium */}
-                <div className="mb-4">
-                  <h3 className="font-display font-bold mb-3 text-center">Eindklassement podium</h3>
+                {/* Visual podium — retro affiche-stijl: leider-trui boven het
+                    eerste podium-blok, lager voor 2/3. Theme-aware trui (geel
+                    TdF / roze Giro / rood Vuelta). */}
+                <div className="mb-5">
+                  <h3 className="font-display font-bold mb-4 text-center uppercase tracking-[0.18em] text-sm">
+                    <span className="inline-block px-3 py-1 border-y-2 border-foreground/30">
+                      Eindklassement podium
+                    </span>
+                  </h3>
                   <div className="grid grid-cols-3 gap-2 md:gap-4 items-end">
                     {[
-                      { idx: 1, label: "🥈", height: "h-16", order: "order-1" },
-                      { idx: 0, label: "🥇", height: "h-24", order: "order-2" },
-                      { idx: 2, label: "🥉", height: "h-12", order: "order-3" },
-                    ].map(({ idx, label, height, order }) => {
+                      { idx: 1, rank: "2", height: "h-20 md:h-24", order: "order-1", truiSize: "medium" as const },
+                      { idx: 0, rank: "1", height: "h-28 md:h-32", order: "order-2", truiSize: "groot"  as const },
+                      { idx: 2, rank: "3", height: "h-16 md:h-20", order: "order-3", truiSize: "medium" as const },
+                    ].map(({ idx, rank, height, order, truiSize }) => {
                       const otherPodium = gcPodium.filter((_, j) => j !== idx && Boolean(_));
                       const picked = gcPodium[idx] ? riderById.get(gcPodium[idx]) : null;
+                      const isWinner = idx === 0;
                       return (
                         <div key={idx} className={cn("flex flex-col items-center", order)}>
-                          <div className="text-3xl md:text-4xl mb-2">{label}</div>
+                          {/* Trui boven het podium */}
+                          <div className={cn("mb-2", picked ? "opacity-100" : "opacity-50")}>
+                            <TruiBadge type="algemeen" formaat={truiSize} />
+                          </div>
+                          {/* Podium-blok */}
                           <div
                             className={cn(
-                              "w-full rounded-t-lg border-2 border-b-0 flex items-center justify-center text-center px-2 py-3 mb-2",
+                              "w-full rounded-t-md border-2 border-b-0 flex flex-col items-center justify-center text-center px-2 py-2 mb-2 relative",
                               height,
-                              idx === 0
-                                ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.15]"
-                                : "border-primary/50 bg-primary/10"
+                              isWinner
+                                ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.18] shadow-[0_-4px_0_hsl(var(--vintage-gold)/0.3)]"
+                                : "border-foreground/40 bg-secondary/40"
                             )}
                           >
+                            <span
+                              className={cn(
+                                "font-display font-black leading-none mb-1",
+                                isWinner ? "text-3xl md:text-4xl text-[hsl(var(--vintage-gold))]" : "text-2xl md:text-3xl text-foreground/70"
+                              )}
+                              aria-hidden
+                            >
+                              {rank}
+                            </span>
                             {picked ? (
-                              <span className="font-display font-bold text-sm md:text-base leading-tight">
+                              <span className="font-display font-bold text-[11px] md:text-sm leading-tight line-clamp-2">
                                 {picked.name}
                               </span>
                             ) : (
-                              <span className="text-xs text-muted-foreground italic">leeg</span>
+                              <span className="text-[10px] text-muted-foreground italic font-serif">leeg</span>
                             )}
                           </div>
                           <RiderSearchSelect
@@ -721,24 +742,35 @@ export default function TeamBuilder() {
                 <div className="vintage-divider my-4" />
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { label: "Puntentrui", emoji: "🟣", color: "border-[hsl(var(--jersey-purple))]", value: pointsJersey, setter: setPointsJersey, riders: allStartlistRiders, hint: undefined as string | undefined },
-                    { label: "Bergtrui", emoji: "🔵", color: "border-[hsl(var(--jersey-blue))]", value: mountainJersey, setter: setMountainJersey, riders: allStartlistRiders, hint: undefined },
-                    { label: "Jongerentrui", emoji: "⚪", color: "border-foreground/30", value: youthJersey, setter: setYouthJersey, riders: youthEligibleRiders, hint: `Alleen jongerenklassement-renners (${youthEligibleRiders.length})` },
-                  ].map(({ label, emoji, color, value, setter, riders: jerseyRiders, hint }) => {
+                  {([
+                    { label: "Puntentrui",   trui: "punten"    as const, value: pointsJersey,   setter: setPointsJersey,   riders: allStartlistRiders, hint: undefined as string | undefined },
+                    { label: "Bergtrui",     trui: "berg"      as const, value: mountainJersey, setter: setMountainJersey, riders: allStartlistRiders, hint: undefined },
+                    { label: "Jongerentrui", trui: "jongeren"  as const, value: youthJersey,    setter: setYouthJersey,    riders: youthEligibleRiders, hint: `Alleen jongerenklassement-renners (${youthEligibleRiders.length})` },
+                  ]).map(({ label, trui, value, setter, riders: jerseyRiders, hint }) => {
                     const picked = value ? riderById.get(value) : null;
                     return (
-                      <div key={label} className={cn("rounded-lg border-2 p-3 bg-secondary/30", color)}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span>{emoji}</span>
-                          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                            {label}
-                          </span>
+                      <div
+                        key={label}
+                        className={cn(
+                          "retro-border bg-card p-3 flex flex-col gap-2",
+                          picked && "ring-2 ring-emerald-500/30"
+                        )}
+                      >
+                        <div className="flex items-center gap-3 pb-2 border-b border-border/60">
+                          <div className={cn("shrink-0", picked ? "opacity-100" : "opacity-60")}>
+                            <TruiBadge type={trui} formaat="medium" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
+                              Trui
+                            </div>
+                            <div className="font-display font-bold text-sm leading-tight">{label}</div>
+                          </div>
                         </div>
                         {picked ? (
-                          <div className="font-display font-bold mb-2 truncate">{picked.name}</div>
+                          <div className="font-display font-bold text-base truncate">{picked.name}</div>
                         ) : (
-                          <div className="font-display italic text-muted-foreground mb-2">leeg</div>
+                          <div className="font-display italic text-muted-foreground text-sm">leeg</div>
                         )}
                         <RiderSearchSelect
                           riders={jerseyRiders}
@@ -748,7 +780,7 @@ export default function TeamBuilder() {
                           disabled={Boolean(isLocked)}
                         />
                         {hint && (
-                          <p className="text-[10px] text-muted-foreground mt-2 italic">{hint}</p>
+                          <p className="text-[10px] text-muted-foreground italic">{hint}</p>
                         )}
                       </div>
                     );

@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import TruiBadge from "@/components/retro/TruiBadge";
+import type { TruiType } from "@/lib/themas";
 import MijnPloegStats from "@/components/MijnPloegStats";
 import FormMeter from "@/components/FormMeter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -326,9 +328,9 @@ export default function MyTeamPanel({
               </div>
             </div>
 
-            {/* GC Top 3 */}
+            {/* GC Top 3 — thema-trui (leider) als section-icoon i.p.v. roos */}
             {podium.some(Boolean) && (
-              <PronoSection icon="🌹" label="Algemeen Klassement — Top 3" badge={jerseyBadge.gc}>
+              <PronoSection icon={<TruiBadge type="algemeen" formaat="klein" />} label="Algemeen Klassement — Top 3" badge={jerseyBadge.gc}>
                 {podium.map((p, idx) => {
                   const r = p ? ridersById[p.rider_id] : null;
                   return (
@@ -346,17 +348,19 @@ export default function MyTeamPanel({
               </PronoSection>
             )}
 
-            {/* Trui-winnaars: Punten, Berg, Jongeren */}
+            {/* Trui-winnaars: Punten, Berg, Jongeren — thema-aware TruiBadge */}
             {(["points", "kom", "youth"] as const).map((cls) => {
               const meta = JERSEY_META[cls];
               const item = predictions.find((p) => p.classification === cls && p.position === 1);
               const r = item ? ridersById[item.rider_id] : null;
               const badge = jerseyBadge[cls];
+              const truiType: TruiType = cls === "points" ? "punten" : cls === "kom" ? "berg" : "jongeren";
+              const trui = <TruiBadge type={truiType} formaat="klein" />;
               return (
-                <PronoSection key={cls} icon={meta.emoji} label={meta.label} badge={badge}>
+                <PronoSection key={cls} icon={trui} label={meta.label} badge={badge}>
                   <PronoRow
                     pos={1}
-                    icon={meta.emoji}
+                    icon={trui}
                     rider={r ? { name: r.name, team: r.team } : null}
                     badge={badge}
                     isLast
