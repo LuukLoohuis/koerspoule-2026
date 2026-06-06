@@ -18,6 +18,7 @@ import NotFound from "./pages/NotFound";
 import Legal from "./pages/Legal";
 import AdminV3 from "./pages/AdminV3";
 import GiroPoule2026 from "./pages/GiroPoule2026";
+import TourDeFrancePoule2026 from "./pages/TourDeFrancePoule2026";
 import Preview from "./pages/Preview";
 import InstagramExport from "./pages/InstagramExport";
 import Uitschrijven from "./pages/Uitschrijven";
@@ -47,6 +48,10 @@ const App = () => (
               <Route path="/juridisch" element={<Legal />} />
               <Route path="/preview" element={<Preview />} />
               <Route path="/giro-italia-poule-2026" element={<GiroPoule2026 />} />
+              <Route path="/tour-de-france-poule-2026" element={<TourDeFrancePoule2026 />} />
+              <Route path="/tour-de-france-poule" element={<TourDeFrancePoule2026 />} />
+              <Route path="/tourspel" element={<TourDeFrancePoule2026 />} />
+              <Route path="/wielerpoule-tour-de-france" element={<TourDeFrancePoule2026 />} />
               <Route path="/uitschrijven" element={<Uitschrijven />} />
               <Route
                 path="/admin"
