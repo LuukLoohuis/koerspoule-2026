@@ -110,6 +110,8 @@ export default function SubpouleEvolutionChart({
 
   // Hoe de niet-gemarkeerde spelers getoond worden: fel / gedimd / uit.
   const [othersMode, setOthersMode] = useState<"fel" | "dim" | "uit">("dim");
+  // Namen van álle deelnemers aan de rechterkant tonen (aan/uit).
+  const [showNames, setShowNames] = useState(false);
 
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const toggleVisible = (uid: string) => {
@@ -236,6 +238,18 @@ export default function SubpouleEvolutionChart({
                   ))}
                 </div>
               </div>
+              <button
+                onClick={() => setShowNames((v) => !v)}
+                aria-pressed={showNames}
+                className={cn(
+                  "px-2.5 py-1 rounded-full border text-[11px] font-medium transition-all",
+                  showNames
+                    ? "bg-primary text-primary-foreground border-foreground shadow-sm"
+                    : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Namen {showNames ? "aan" : "uit"}
+              </button>
               <button onClick={toggleAll} className={CHART_VISUAL.toggleBtnClass}>
                 {allHidden ? "Toon alles" : "Verberg alles"}
               </button>
@@ -299,7 +313,7 @@ export default function SubpouleEvolutionChart({
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart
                   data={chartData}
-                  margin={{ top: 20, right: isMobile ? 64 : 104, left: -8, bottom: 4 }}
+                  margin={{ top: 20, right: showNames ? (isMobile ? 88 : 132) : (isMobile ? 64 : 104), left: -8, bottom: 4 }}
                 >
                   <defs>
                     {memberRows.map((m) => (
@@ -477,14 +491,18 @@ export default function SubpouleEvolutionChart({
                                 <circle cx={x} cy={y} r={6} fill="none" stroke="#F5B301" strokeWidth={2} />
                               )}
                               <circle cx={x} cy={y} r={isHighlighted ? 4 : 2.75} fill={color} />
-                              {isHighlighted && (
+                              {(isHighlighted || showNames) && (
                                 <text
                                   x={x + 10}
                                   y={y}
                                   dy={3.5}
-                                  fontSize={12}
-                                  fontWeight={700}
+                                  fontSize={isHighlighted ? 12 : 10.5}
+                                  fontWeight={isHighlighted ? 700 : 600}
                                   fill={color}
+                                  stroke="#fff"
+                                  strokeWidth={2.5}
+                                  paintOrder="stroke"
+                                  style={{ strokeLinejoin: "round" }}
                                 >
                                   {nm}
                                 </text>
