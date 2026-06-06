@@ -423,6 +423,59 @@ export default function TeamBuilder() {
                 </div>
               )}
 
+              {/* Mobiele snelnavigatie — chip-rail om naar een categorie te
+                  springen i.p.v. te scrollen door 21 blokken. Voltooide
+                  categorieën krijgen een groen vinkje; sticky onder de
+                  progress-bar zodat 'ie altijd binnen handbereik blijft. */}
+              {categories.length > 6 && (
+                <nav
+                  aria-label="Spring naar categorie"
+                  className="md:hidden sticky top-[78px] z-20 -mx-5 px-5 py-2 bg-background/85 backdrop-blur border-y border-border/60"
+                >
+                  <div
+                    className="flex gap-2 overflow-x-auto pb-1"
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                  >
+                    {categories.map((category, idx) => {
+                      const selected = validPicksByCategory.get(category.id) ?? [];
+                      const max = category.max_picks ?? 1;
+                      const complete = selected.length === max;
+                      const icon = getCategoryIcon(`${category.name} ${category.short_name ?? ""}`);
+                      return (
+                        <a
+                          key={category.id}
+                          href={`#cat-${category.id}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const el = document.getElementById(`cat-${category.id}`);
+                            if (el) {
+                              const y = el.getBoundingClientRect().top + window.scrollY - 140;
+                              window.scrollTo({ top: y, behavior: "smooth" });
+                            }
+                          }}
+                          className={cn(
+                            "shrink-0 flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-[12px] font-display font-bold uppercase tracking-wider relative",
+                            complete
+                              ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                              : "border-border bg-card text-foreground/80"
+                          )}
+                          title={category.name}
+                        >
+                          <span className="text-base leading-none">{icon}</span>
+                          <span className="font-mono text-[10px] opacity-60">{idx + 1}</span>
+                          <span className="max-w-[80px] truncate">{category.short_name ?? category.name}</span>
+                          {complete && (
+                            <span className="ml-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 text-white">
+                              <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                            </span>
+                          )}
+                        </a>
+                      );
+                    })}
+                  </div>
+                </nav>
+              )}
+
               {/* Categories */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {categories.map((category, idx) => {
@@ -433,9 +486,10 @@ export default function TeamBuilder() {
                   const icon = getCategoryIcon(`${category.name} ${category.short_name ?? ""}`);
                   return (
                     <div
+                      id={`cat-${category.id}`}
                       key={category.id}
                       className={cn(
-                        "ornate-frame retro-border bg-card p-4 transition-all relative overflow-hidden",
+                        "ornate-frame retro-border bg-card p-4 transition-all relative overflow-hidden scroll-mt-32",
                         complete && "ring-2 ring-emerald-500/40 shadow-[0_0_25px_-8px_hsl(var(--primary)/0.4)]"
                       )}
                     >
