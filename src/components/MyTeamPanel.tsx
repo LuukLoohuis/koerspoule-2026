@@ -360,7 +360,7 @@ export default function MyTeamPanel({
                 <PronoSection key={cls} icon={trui} label={meta.label} badge={badge}>
                   <PronoRow
                     pos={1}
-                    icon={trui}
+                    icon={medals[0]}
                     rider={r ? { name: r.name, team: r.team } : null}
                     badge={badge}
                     isLast
