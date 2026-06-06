@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useStages, useStageResults, useStagePointsForEntries, useMyStageRanks, useEntries, useGameStandings, type StageRow, type EntryStanding } from "@/hooks/useResults";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
@@ -325,8 +326,13 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                     </p>
                   </div>
                   {stageStandings.length === 0 ? (
-                    <div className="p-4 text-sm text-muted-foreground italic text-center">
-                      Nog geen deelnemers met punten.
+                    <div className="p-8 flex flex-col items-center text-center gap-2">
+                      <div className="w-12 h-12 rounded-full bg-secondary border-2 border-foreground/15 flex items-center justify-center">
+                        <Flag className="h-6 w-6 text-muted-foreground/50" />
+                      </div>
+                      <p className="text-sm text-muted-foreground max-w-xs">
+                        Nog geen punten voor deze rit — de dagstand verschijnt zodra de jury de uitslag fiatteert.
+                      </p>
                     </div>
                   ) : (
                     <StandingsList
@@ -499,8 +505,22 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                 </span>
               </div>
               {overallStandings.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground italic text-center">
-                  Nog geen ingestuurde teams.
+                <div className="p-8 flex flex-col items-center text-center gap-3">
+                  <div className="w-14 h-14 rounded-full bg-secondary border-2 border-foreground/15 flex items-center justify-center">
+                    <Trophy className="h-7 w-7 text-muted-foreground/50" />
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-foreground">Nog geen klassement</p>
+                    <p className="text-sm text-muted-foreground mt-0.5 max-w-xs">
+                      Zodra de eerste ploegen zijn ingediend en de jury een rit fiatteert, verschijnt de stand hier.
+                    </p>
+                  </div>
+                  <Link
+                    to="/team-samenstellen"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground font-bold text-sm border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] hover:brightness-105 active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
+                  >
+                    🚴 Stel je ploeg samen
+                  </Link>
                 </div>
               ) : (
                 <>
