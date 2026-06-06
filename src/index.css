@@ -224,11 +224,13 @@
   .retro-border {
     border: 2px solid hsl(var(--foreground));
     box-shadow: 3px 3px 0 hsl(var(--foreground));
+    border-radius: 9px;
   }
 
   .retro-border-primary {
     border: 2px solid hsl(var(--primary));
     box-shadow: 3px 3px 0 hsl(var(--primary) / 0.5);
+    border-radius: 9px;
   }
 
   /* ── Ornamental dividers ── */
