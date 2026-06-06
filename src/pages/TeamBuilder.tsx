@@ -709,9 +709,6 @@ export default function TeamBuilder() {
                                   aria-hidden
                                   className="absolute inset-0 -m-4 md:-m-6 vintage-sunburst pointer-events-none"
                                 />
-                                {/* Lauwerkrans-glyphs */}
-                                <span aria-hidden className="vintage-laurel absolute -left-2 md:-left-3 top-1/2 -translate-y-1/2 text-2xl md:text-3xl select-none">❦</span>
-                                <span aria-hidden className="vintage-laurel absolute -right-2 md:-right-3 top-1/2 -translate-y-1/2 text-2xl md:text-3xl -scale-x-100 select-none">❦</span>
                                 {/* Gele trui — alleen voor de eindwinnaar */}
                                 <div className={cn("relative z-10", picked ? "opacity-100" : "opacity-60")}>
                                   <TruiBadge type="algemeen" formaat="groot" />
