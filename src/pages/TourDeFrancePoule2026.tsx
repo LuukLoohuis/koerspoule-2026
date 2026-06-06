@@ -9,6 +9,39 @@ const PAGE_TITLE = "Tour de France Poule 2026 — Gratis Wielerspel & Tourspel";
 const PAGE_DESCRIPTION =
   "Maak gratis je eigen Tour de France poule 2026. Stel je wielerploeg samen, doe mee met vrienden en strijd om de gele trui. Hét alternatief voor het AD Tourspel en Scorito.";
 
+// Eén bron voor de FAQ — gebruikt voor zowel de zichtbare sectie als de
+// FAQPage-structured-data (Google verwacht dat de schema-FAQ ook op de pagina staat).
+const FAQS: { q: string; a: string }[] = [
+  {
+    q: "Hoe maak ik een Tour de France poule 2026?",
+    a: "Maak een gratis account op Koerspoule, start je eigen Tour de France poule en nodig vrienden uit met een unieke toegangscode. Binnen een paar minuten ben je klaar.",
+  },
+  {
+    q: "Is de Tour de France poule gratis?",
+    a: "Ja, Koerspoule is volledig gratis. Geen inschrijfgeld, geen advertenties — gewoon spelen met je vrienden.",
+  },
+  {
+    q: "Wanneer kan ik mijn Tourpoule aanmaken?",
+    a: "Nu al. Je kunt vandaag je poule starten en je team alvast samenstellen; de punten tellen vanaf de eerste etappe van de Tour de France 2026.",
+  },
+  {
+    q: "Wanneer start de Tour de France 2026?",
+    a: "De Tour de France 2026 start begin juli. Je kunt nu al je team samenstellen en je poule starten zodat je klaar bent voor de Grand Départ.",
+  },
+  {
+    q: "Wat is het alternatief voor AD Tourspel of Scorito?",
+    a: "Koerspoule is een gratis, reclamevrij alternatief voor het AD Tourspel en Scorito. Speel in eigen privé-poules met vrienden, familie of collega's.",
+  },
+  {
+    q: "Hoe verdien je punten in de Tour de France poule?",
+    a: "Je verdient punten voor etappe-overwinningen, het eindklassement (gele trui), bergklassement (bolletjestrui), puntenklassement (groene trui) en jongerenklassement (witte trui).",
+  },
+  {
+    q: "Kan ik de Tourpoule op mijn telefoon spelen?",
+    a: "Ja. Koerspoule werkt volledig in de browser op mobiel, tablet en desktop — geen app-download nodig.",
+  },
+];
+
 function setMeta(selector: string, attr: string, value: string) {
   let el = document.head.querySelector<HTMLMetaElement>(selector);
   if (!el) {
@@ -68,48 +101,11 @@ export default function TourDeFrancePoule2026() {
         },
         {
           "@type": "FAQPage",
-          mainEntity: [
-            {
-              "@type": "Question",
-              name: "Hoe maak ik een Tour de France poule 2026?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Maak een gratis account op Koerspoule, start je eigen Tour de France poule en nodig vrienden uit met een unieke toegangscode. Binnen een paar minuten ben je klaar.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Is de Tour de France poule gratis?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Ja, Koerspoule is volledig gratis. Geen inschrijfgeld, geen advertenties — gewoon spelen met je vrienden.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Wanneer start de Tour de France 2026?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "De Tour de France 2026 start begin juli. Je kunt nu al je team samenstellen en je poule starten zodat je klaar bent voor de Grand Départ.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Wat is het alternatief voor AD Tourspel of Scorito?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Koerspoule is een gratis, reclamevrij alternatief voor het AD Tourspel en Scorito. Speel in eigen privé-poules met vrienden, familie of collega's.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Hoe verdien je punten in de Tour de France poule?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Je verdient punten voor etappe-overwinningen, het eindklassement (gele trui), bergklassement (bolletjestrui), puntenklassement (groene trui) en jongerenklassement (witte trui).",
-              },
-            },
-          ],
+          mainEntity: FAQS.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
         },
       ],
     });
@@ -279,6 +275,43 @@ export default function TourDeFrancePoule2026() {
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* Veelgestelde vragen — zichtbaar (matcht de FAQPage-structured-data) */}
+        <section>
+          <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
+            ❓ Veelgestelde vragen over de Tour de France poule
+          </h2>
+          <div className="space-y-3">
+            {FAQS.map((f) => (
+              <details key={f.q} className="ornate-frame retro-border bg-card p-4 group">
+                <summary className="font-display font-bold cursor-pointer list-none flex items-center justify-between gap-2">
+                  <span>{f.q}</span>
+                  <span className="text-primary transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-2 text-sm text-muted-foreground font-sans">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        {/* Interne links — andere koersen + uitslagen */}
+        <section className="text-sm text-muted-foreground font-serif">
+          <p>
+            Liever een andere ronde? Maak ook een{" "}
+            <Link to="/giro-italia-poule-2026" className="underline font-bold text-primary">
+              Giro d'Italia poule 2026
+            </Link>{" "}
+            of bekijk de{" "}
+            <Link to="/uitslagen" className="underline font-bold text-primary">
+              live uitslagen en klassementen
+            </Link>
+            . Klaar om te beginnen? Ga naar{" "}
+            <Link to="/team-samenstellen" className="underline font-bold text-primary">
+              stel je team samen
+            </Link>
+            .
+          </p>
         </section>
 
         {/* CTA */}
