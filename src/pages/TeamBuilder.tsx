@@ -662,168 +662,214 @@ export default function TeamBuilder() {
                 </div>
               </div>
 
-              {/* Predictions */}
-              <div className="ornate-frame retro-border bg-card p-4 relative">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary opacity-70" />
-                <h2 className="font-display text-xl font-bold mb-1 mt-1">🏆 Klassementsvoorspellingen</h2>
-                <p className="text-sm text-muted-foreground mb-3 font-serif italic">
-                  Voorspel de eindstand — auto-opslaan tijdens typen.
-                </p>
+              {/* Klassementsvoorspellingen — vintage affichepaneel.
+                  Oud papier + sepia inkt + dubbele kaderlijn + halftone-grain.
+                  Functionaliteit (zoeken, kiezen, auto-opslaan, jongeren-filter)
+                  ongewijzigd. Tokens in src/index.css onder VINTAGE POSTER TOKENS. */}
+              <section className="vintage-paper vintage-frame p-4 md:p-6 relative overflow-hidden">
+                {/* Affiche-koptekst */}
+                <div className="text-center mb-4 md:mb-5 relative">
+                  <div className="vintage-stamp text-[10px] md:text-[11px] mb-1.5">
+                    ✦ Pronostiek · Le palmarès final ✦
+                  </div>
+                  <h2 className="vintage-numeral text-2xl md:text-4xl mb-1" style={{ letterSpacing: "0.04em" }}>
+                    KLASSEMENTSVOORSPELLINGEN
+                  </h2>
+                  <p className="text-xs md:text-sm font-serif italic" style={{ color: "var(--ink-faded)" }}>
+                    Voorspel de eindstand — auto-opslaan tijdens typen.
+                  </p>
+                  {/* Dubbele inktstreep onder de kop */}
+                  <div className="mx-auto mt-3 w-44 md:w-56 h-[2px]" style={{ background: "var(--ink-sepia)" }} />
+                  <div className="mx-auto mt-[2px] w-32 md:w-40 h-[1px]" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
+                </div>
 
-                {/* Visual podium — retro affiche-stijl: alleen #1 krijgt de
-                    leiderstrui (eindwinnaar); #2/#3 krijgen een medaille-lint.
-                    Theme-aware trui (geel TdF / roze Giro / rood Vuelta). */}
-                <div className="mb-5">
-                  <h3 className="font-display font-bold mb-5 text-center uppercase tracking-[0.22em] text-sm flex items-center justify-center gap-3 text-foreground/70">
-                    <span className="h-px flex-1 max-w-[60px] bg-foreground/30" />
-                    <span className="inline-flex items-center gap-2">
-                      <span aria-hidden>✦</span>
-                      Eindklassement podium
-                      <span aria-hidden>✦</span>
-                    </span>
-                    <span className="h-px flex-1 max-w-[60px] bg-foreground/30" />
-                  </h3>
-                  <div className="grid grid-cols-3 gap-2 md:gap-4 items-end">
+                {/* ── Podium ─────────────────────────────────────────────── */}
+                <div className="mb-7 md:mb-8 relative">
+                  <div className="vintage-stamp text-center text-[10px] md:text-[11px] mb-4">
+                    — Eindklassement Podium —
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 md:gap-4 items-end relative">
                     {[
-                      { idx: 1, rank: "2", height: "h-24 md:h-32", order: "order-1", medal: "#C0C0C0", medalBg: "from-zinc-200 to-zinc-400" },
-                      { idx: 0, rank: "1", height: "h-32 md:h-44", order: "order-2", medal: "#E0A411", medalBg: "from-amber-300 to-yellow-500" },
-                      { idx: 2, rank: "3", height: "h-20 md:h-24", order: "order-3", medal: "#B87333", medalBg: "from-orange-300 to-orange-600" },
-                    ].map(({ idx, rank, height, order, medal, medalBg }) => {
+                      { idx: 1, rank: "2", sokkel: "vintage-sokkel--silver", height: "h-24 md:h-32", order: "order-1", medalVar: { "--medal-rim": "var(--medal-silver)", "--medal-fill": "linear-gradient(180deg,#EAE7E0,#9C9890)" } },
+                      { idx: 0, rank: "1", sokkel: "vintage-sokkel--winner", height: "h-36 md:h-48", order: "order-2", medalVar: null },
+                      { idx: 2, rank: "3", sokkel: "vintage-sokkel--bronze", height: "h-20 md:h-24", order: "order-3", medalVar: { "--medal-rim": "var(--medal-bronze)", "--medal-fill": "linear-gradient(180deg,#D69862,#8C5A2A)" } },
+                    ].map(({ idx, rank, sokkel, height, order, medalVar }) => {
                       const otherPodium = gcPodium.filter((_, j) => j !== idx && Boolean(_));
                       const picked = gcPodium[idx] ? riderById.get(gcPodium[idx]) : null;
                       const isWinner = idx === 0;
                       return (
                         <div key={idx} className={cn("flex flex-col items-center", order)}>
-                          {/* Boven het podium: gele trui voor #1, medaille voor #2/#3 */}
-                          <div className={cn("mb-2 transition-opacity", picked ? "opacity-100" : "opacity-55")}>
+                          {/* Eredecoratie boven het podium */}
+                          <div className="mb-2 md:mb-3 relative flex items-center justify-center min-h-[64px] md:min-h-[88px]">
                             {isWinner ? (
-                              <div className="relative">
-                                {/* Lauwerkrans-achtige bogen rond de trui */}
-                                <span aria-hidden className="absolute -left-3 top-1/2 -translate-y-1/2 text-xl md:text-2xl text-[hsl(var(--vintage-gold))]/70 select-none">❦</span>
-                                <span aria-hidden className="absolute -right-3 top-1/2 -translate-y-1/2 text-xl md:text-2xl text-[hsl(var(--vintage-gold))]/70 -scale-x-100 select-none">❦</span>
-                                <TruiBadge type="algemeen" formaat="groot" />
-                              </div>
+                              <>
+                                {/* Sunburst achter de winnaar */}
+                                <div
+                                  aria-hidden
+                                  className="absolute inset-0 -m-4 md:-m-6 vintage-sunburst pointer-events-none"
+                                />
+                                {/* Lauwerkrans-glyphs */}
+                                <span aria-hidden className="vintage-laurel absolute -left-2 md:-left-3 top-1/2 -translate-y-1/2 text-2xl md:text-3xl select-none">❦</span>
+                                <span aria-hidden className="vintage-laurel absolute -right-2 md:-right-3 top-1/2 -translate-y-1/2 text-2xl md:text-3xl -scale-x-100 select-none">❦</span>
+                                {/* Gele trui — alleen voor de eindwinnaar */}
+                                <div className={cn("relative z-10", picked ? "opacity-100" : "opacity-60")}>
+                                  <TruiBadge type="algemeen" formaat="groot" />
+                                </div>
+                              </>
                             ) : (
                               <div className="flex flex-col items-center">
-                                {/* Lint */}
-                                <div className="flex gap-0 -mb-1 z-0">
-                                  <span className="block w-2.5 h-5 bg-rose-700 transform -skew-x-[14deg] rounded-t-sm" />
-                                  <span className="block w-2.5 h-5 bg-white border-x border-rose-700/40 transform -skew-x-[14deg]" />
-                                  <span className="block w-2.5 h-5 bg-blue-700 transform -skew-x-[14deg] rounded-t-sm" />
-                                </div>
-                                {/* Medaille */}
+                                {/* Cocarde-lint */}
                                 <div
-                                  className={cn(
-                                    "relative z-10 h-10 w-10 md:h-12 md:w-12 rounded-full border-2 flex items-center justify-center bg-gradient-to-b shadow-md",
-                                    medalBg
-                                  )}
-                                  style={{ borderColor: medal }}
+                                  className="vintage-ribbon w-9 md:w-11 h-3.5 md:h-4 -mb-1.5 rounded-t-[2px]"
+                                  style={{ clipPath: "polygon(0 0, 100% 0, 88% 100%, 12% 100%)" }}
+                                />
+                                {/* Emaille-medaillon */}
+                                <div
+                                  className="vintage-medal relative z-10 h-12 w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center"
+                                  style={medalVar as React.CSSProperties}
                                 >
-                                  <span className="font-display font-black text-base md:text-lg text-foreground/80">{rank}</span>
+                                  <span className="vintage-numeral text-lg md:text-2xl" style={{ color: "var(--ink-sepia)" }}>
+                                    {rank}
+                                  </span>
                                 </div>
                               </div>
                             )}
                           </div>
-                          {/* Podium-blok */}
+
+                          {/* Sokkel met emaille/hout-uitstraling */}
                           <div
                             className={cn(
-                              "w-full rounded-t-md border-2 border-b-0 flex flex-col items-center justify-center text-center px-2 py-2 mb-2 relative",
+                              "vintage-sokkel relative w-full flex flex-col items-center justify-center text-center px-2 py-2 mb-2 rounded-t-md",
                               height,
-                              isWinner
-                                ? "border-[hsl(var(--vintage-gold))] bg-gradient-to-b from-[hsl(var(--vintage-gold))/0.30] to-[hsl(var(--vintage-gold))/0.10] shadow-[0_-6px_0_hsl(var(--vintage-gold)/0.35),0_2px_0_hsl(var(--foreground)/0.4)]"
-                                : "border-foreground/40 bg-gradient-to-b from-secondary/60 to-secondary/30 shadow-[0_2px_0_hsl(var(--foreground)/0.25)]"
+                              sokkel
                             )}
                           >
-                            {/* Hoeknieten als affiche-decoratie */}
-                            <span aria-hidden className="absolute top-1 left-1 h-1 w-1 rounded-full bg-foreground/30" />
-                            <span aria-hidden className="absolute top-1 right-1 h-1 w-1 rounded-full bg-foreground/30" />
+                            {/* Hoeknieten */}
+                            <span aria-hidden className="absolute top-1 left-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
+                            <span aria-hidden className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
+                            {/* Affiche-cijfer */}
                             <span
                               className={cn(
-                                "font-display font-black leading-none mb-1 drop-shadow-sm",
-                                isWinner ? "text-4xl md:text-5xl text-[hsl(var(--vintage-gold))]" : "text-2xl md:text-3xl text-foreground/60"
+                                "vintage-numeral leading-none mb-1",
+                                isWinner ? "text-5xl md:text-6xl" : "text-3xl md:text-4xl"
                               )}
-                              style={isWinner ? { textShadow: "2px 2px 0 hsl(var(--foreground) / 0.18)" } : undefined}
+                              style={{
+                                color: isWinner ? "var(--ink-sepia)" : "var(--ink-faded)",
+                                textShadow: isWinner ? "2px 2px 0 rgba(255,255,255,0.55), 4px 4px 0 rgba(58,42,26,0.18)" : undefined,
+                              }}
                               aria-hidden
                             >
                               {rank}
                             </span>
+                            {/* Rennernaam of vintage placeholder */}
                             {picked ? (
-                              <span className={cn(
-                                "font-display font-bold leading-tight line-clamp-2",
-                                isWinner ? "text-xs md:text-sm" : "text-[11px] md:text-xs"
-                              )}>
+                              <span
+                                className={cn(
+                                  "font-display font-bold leading-tight line-clamp-2",
+                                  isWinner ? "text-[12px] md:text-sm" : "text-[11px] md:text-xs"
+                                )}
+                                style={{ color: "var(--ink-sepia)" }}
+                              >
                                 {picked.name}
                               </span>
                             ) : (
-                              <span className="text-[10px] text-muted-foreground italic font-serif">leeg</span>
+                              <span className="text-[10px] md:text-xs italic" style={{ color: "var(--ink-sepia)", opacity: 0.7, fontFamily: "'Special Elite','Courier Prime',serif" }}>
+                                nog in te vullen
+                              </span>
                             )}
                           </div>
-                          <RiderSearchSelect
-                            riders={allStartlistRiders}
-                            value={gcPodium[idx]}
-                            onChange={(v) => {
-                              const next = [...gcPodium];
-                              next[idx] = v;
-                              setGcPodium(next);
-                            }}
-                            excludeIds={otherPodium}
-                            placeholder="Zoek..."
-                            disabled={Boolean(isLocked)}
-                          />
+
+                          {/* Vintage formulier-veld */}
+                          <div className="w-full">
+                            <RiderSearchSelect
+                              riders={allStartlistRiders}
+                              value={gcPodium[idx]}
+                              onChange={(v) => {
+                                const next = [...gcPodium];
+                                next[idx] = v;
+                                setGcPodium(next);
+                              }}
+                              excludeIds={otherPodium}
+                              placeholder="Zoek…"
+                              disabled={Boolean(isLocked)}
+                            />
+                          </div>
                         </div>
                       );
                     })}
                   </div>
                 </div>
 
-                <div className="vintage-divider my-4" />
+                {/* Sectie-scheiding affichestijl */}
+                <div className="flex items-center gap-3 my-5">
+                  <div className="flex-1 h-[1.5px]" style={{ background: "var(--ink-sepia)" }} />
+                  <span className="vintage-stamp text-[10px]">Trui-winnaars</span>
+                  <div className="flex-1 h-[1.5px]" style={{ background: "var(--ink-sepia)" }} />
+                </div>
 
+                {/* ── Trui-kaarten (emaille-bordjes) ─────────────────────── */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {([
-                    { label: "Puntentrui",   trui: "punten"    as const, value: pointsJersey,   setter: setPointsJersey,   riders: allStartlistRiders, hint: undefined as string | undefined },
-                    { label: "Bergtrui",     trui: "berg"      as const, value: mountainJersey, setter: setMountainJersey, riders: allStartlistRiders, hint: undefined },
-                    { label: "Jongerentrui", trui: "jongeren"  as const, value: youthJersey,    setter: setYouthJersey,    riders: youthEligibleRiders, hint: `Alleen jongerenklassement-renners (${youthEligibleRiders.length})` },
-                  ]).map(({ label, trui, value, setter, riders: jerseyRiders, hint }) => {
+                    { label: "Maillot à pois",  sub: "Bergtrui",     trui: "berg"     as const, accent: "berg",     value: mountainJersey, setter: setMountainJersey, riders: allStartlistRiders, hint: undefined as string | undefined },
+                    { label: "Maillot vert",    sub: "Puntentrui",   trui: "punten"   as const, accent: "punten",   value: pointsJersey,   setter: setPointsJersey,   riders: allStartlistRiders, hint: undefined },
+                    { label: "Maillot blanc",   sub: "Jongerentrui", trui: "jongeren" as const, accent: "jongeren", value: youthJersey,    setter: setYouthJersey,    riders: youthEligibleRiders, hint: `Alleen jongerenklassement-renners (${youthEligibleRiders.length})` },
+                  ]).map(({ label, sub, trui, accent, value, setter, riders: jerseyRiders, hint }) => {
                     const picked = value ? riderById.get(value) : null;
                     return (
                       <div
                         key={label}
-                        className={cn(
-                          "retro-border bg-card p-3 flex flex-col gap-2",
-                          picked && "ring-2 ring-emerald-500/30"
-                        )}
+                        data-accent={accent}
+                        className={cn("vintage-board p-3 md:p-4 flex flex-col gap-2 relative")}
                       >
-                        <div className="flex items-center gap-3 pb-2 border-b border-border/60">
-                          <div className={cn("shrink-0", picked ? "opacity-100" : "opacity-60")}>
+                        {/* Hoeknieten */}
+                        <span aria-hidden className="absolute top-1.5 left-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
+                        <span aria-hidden className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
+                        <span aria-hidden className="absolute bottom-1.5 left-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
+                        <span aria-hidden className="absolute bottom-1.5 right-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
+
+                        {/* Kop: trui + label */}
+                        <div className="flex items-center gap-3 pb-2 border-b" style={{ borderColor: "var(--ink-sepia)", borderBottomStyle: "dashed", opacity: 1 }}>
+                          <div className={cn("shrink-0 transition-opacity", picked ? "opacity-100" : "opacity-70")} style={{ filter: "drop-shadow(1px 1px 0 rgba(58,42,26,0.18))" }}>
                             <TruiBadge type={trui} formaat="medium" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
-                              Trui
+                            <div className="vintage-stamp text-[9px] md:text-[10px]">{sub}</div>
+                            <div className="vintage-numeral text-lg md:text-xl leading-tight" style={{ color: "var(--ink-sepia)", letterSpacing: "0.02em" }}>
+                              {label}
                             </div>
-                            <div className="font-display font-bold text-sm leading-tight">{label}</div>
                           </div>
                         </div>
+
+                        {/* Gekozen renner of vintage placeholder */}
                         {picked ? (
-                          <div className="font-display font-bold text-base truncate">{picked.name}</div>
+                          <div className="font-display font-bold text-base truncate" style={{ color: "var(--ink-sepia)" }}>
+                            {picked.name}
+                          </div>
                         ) : (
-                          <div className="font-display italic text-muted-foreground text-sm">leeg</div>
+                          <div className="vintage-empty rounded-md px-2 py-1.5 text-xs text-center">
+                            nog in te vullen
+                          </div>
                         )}
+
+                        {/* Vintage formulier-veld */}
                         <RiderSearchSelect
                           riders={jerseyRiders}
                           value={value}
                           onChange={setter}
-                          placeholder="Zoek renner..."
+                          placeholder="Zoek renner…"
                           disabled={Boolean(isLocked)}
                         />
                         {hint && (
-                          <p className="text-[10px] text-muted-foreground italic">{hint}</p>
+                          <p className="text-[10px] italic" style={{ color: "var(--ink-faded)", fontFamily: "'Special Elite','Courier Prime',serif" }}>
+                            {hint}
+                          </p>
                         )}
                       </div>
                     );
                   })}
                 </div>
-              </div>
+              </section>
 
               {!gameLocked && !teamComplete && (
                 <div className="ornate-frame retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
