@@ -202,6 +202,28 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
           </div>
         </div>
 
+        {/* Roep je kopgroep — altijd zichtbaar als je een subpoule open hebt
+            (voedt de virale lus). */}
+        <div className="retro-border bg-[hsl(var(--vintage-gold)/0.12)] p-3 flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-[180px]">
+            <p className="font-display font-bold text-sm">🚴 {active.name}</p>
+            <p className="text-xs text-muted-foreground">
+              Hoe meer renners, hoe mooier de strijd. Nodig vrienden uit met code{" "}
+              <button onClick={() => copyCode(active.code)} className="font-mono font-bold text-foreground underline decoration-dotted underline-offset-2" title="Kopieer code">
+                {active.code}
+              </button>
+              .
+            </p>
+          </div>
+          <button
+            onClick={() => shareInvite(active.name, active.code)}
+            className="inline-flex items-center gap-2 shrink-0 px-4 py-2 rounded-md bg-primary text-primary-foreground font-bold text-sm border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] hover:brightness-105 active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
+          >
+            <Share2 className="h-4 w-4" />
+            Roep je kopgroep
+          </button>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
           {/* Mobile tab nav — MobielTabBalk */}
@@ -275,23 +297,6 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                {/* Roep je kopgroep — uitnodig-CTA (voedt de virale lus) */}
-                <div className="p-3 border-b-2 border-foreground/10 bg-[hsl(var(--vintage-gold)/0.1)] flex flex-wrap items-center gap-3">
-                  <div className="flex-1 min-w-[180px]">
-                    <p className="font-display font-bold text-sm">🚴 Roep je kopgroep</p>
-                    <p className="text-xs text-muted-foreground">
-                      Hoe meer renners, hoe mooier de strijd. Nodig vrienden uit met code{" "}
-                      <span className="font-mono font-bold text-foreground">{active.code}</span>.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => shareInvite(active.name, active.code)}
-                    className="inline-flex items-center gap-2 shrink-0 px-4 py-2 rounded-md bg-primary text-primary-foreground font-bold text-sm border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] hover:brightness-105 active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
-                  >
-                    <Share2 className="h-4 w-4" />
-                    Roep je kopgroep
-                  </button>
-                </div>
                 <div className="divide-y divide-border">
                   {members.map((m) => (
                     <div key={m.user_id} className="p-3 flex items-center justify-between">
