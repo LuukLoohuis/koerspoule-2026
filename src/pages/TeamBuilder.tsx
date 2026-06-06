@@ -691,9 +691,9 @@ export default function TeamBuilder() {
 
                   <div className="grid grid-cols-3 gap-2 md:gap-4 items-end relative">
                     {[
-                      { idx: 1, rank: "2", sokkel: "vintage-sokkel--silver", height: "h-24 md:h-32", order: "order-1", medalVar: { "--medal-rim": "var(--medal-silver)", "--medal-fill": "linear-gradient(180deg,#EAE7E0,#9C9890)" } },
-                      { idx: 0, rank: "1", sokkel: "vintage-sokkel--winner", height: "h-36 md:h-48", order: "order-2", medalVar: null },
-                      { idx: 2, rank: "3", sokkel: "vintage-sokkel--bronze", height: "h-20 md:h-24", order: "order-3", medalVar: { "--medal-rim": "var(--medal-bronze)", "--medal-fill": "linear-gradient(180deg,#D69862,#8C5A2A)" } },
+                      { idx: 1, rank: "2", sokkel: "vintage-sokkel--silver", height: "h-14 md:h-16", order: "order-1", medalVar: { "--medal-rim": "var(--medal-silver)", "--medal-fill": "linear-gradient(180deg,#EAE7E0,#9C9890)" } },
+                      { idx: 0, rank: "1", sokkel: "vintage-sokkel--winner", height: "h-20 md:h-24", order: "order-2", medalVar: null },
+                      { idx: 2, rank: "3", sokkel: "vintage-sokkel--bronze", height: "h-12 md:h-14", order: "order-3", medalVar: { "--medal-rim": "var(--medal-bronze)", "--medal-fill": "linear-gradient(180deg,#D69862,#8C5A2A)" } },
                     ].map(({ idx, rank, sokkel, height, order, medalVar }) => {
                       const otherPodium = gcPodium.filter((_, j) => j !== idx && Boolean(_));
                       const picked = gcPodium[idx] ? riderById.get(gcPodium[idx]) : null;
