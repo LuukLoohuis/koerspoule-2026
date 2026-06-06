@@ -8,6 +8,9 @@ const PAGE_URL = "https://koerspoule.nl/tour-de-france-poule-2026";
 const PAGE_TITLE = "Tour de France Poule 2026 — Gratis Wielerspel & Tourspel";
 const PAGE_DESCRIPTION =
   "Maak gratis je eigen Tour de France poule 2026. Stel je wielerploeg samen, doe mee met vrienden en strijd om de gele trui. Hét alternatief voor het AD Tourspel en Scorito.";
+const PAGE_IMAGE =
+  "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ca7ecdfc-55b1-4686-a4d5-8ada2cae3b6e/id-preview-7b7ff0dd--00edb85e-4817-4978-88c8-1708211db2a7.lovable.app-1773424124582.png";
+const SITE_NAME = "Koerspoule";
 
 // Eén bron voor de FAQ — gebruikt voor zowel de zichtbare sectie als de
 // FAQPage-structured-data (Google verwacht dat de schema-FAQ ook op de pagina staat).
@@ -73,8 +76,18 @@ export default function TourDeFrancePoule2026() {
     setMeta('meta[property="og:description"]', "content", PAGE_DESCRIPTION);
     setMeta('meta[property="og:url"]', "content", PAGE_URL);
     setMeta('meta[property="og:type"]', "content", "website");
+    setMeta('meta[property="og:site_name"]', "content", SITE_NAME);
+    setMeta('meta[property="og:locale"]', "content", "nl_NL");
+    setMeta('meta[property="og:image"]', "content", PAGE_IMAGE);
+    setMeta('meta[property="og:image:alt"]', "content", "Koerspoule — gratis Tour de France poule 2026");
+    setMeta('meta[property="og:image:width"]', "content", "1200");
+    setMeta('meta[property="og:image:height"]', "content", "630");
+    setMeta('meta[name="twitter:card"]', "content", "summary_large_image");
     setMeta('meta[name="twitter:title"]', "content", PAGE_TITLE);
     setMeta('meta[name="twitter:description"]', "content", PAGE_DESCRIPTION);
+    setMeta('meta[name="twitter:image"]', "content", PAGE_IMAGE);
+    setMeta('meta[name="robots"]', "content", "index, follow, max-image-preview:large, max-snippet:-1");
+    setMeta('meta[name="keywords"]', "content", "tour de france poule 2026, tour de france poule, tourspel, tourspel 2026, wielerpoule tour de france, fantasy tour de france, gele trui poule, ad tourspel alternatief, scorito tour de france, koerspoule, manager game wielrennen");
     setLink("canonical", PAGE_URL);
 
     const ldId = "ld-tdf-2026";
@@ -86,11 +99,30 @@ export default function TourDeFrancePoule2026() {
       "@context": "https://schema.org",
       "@graph": [
         {
+          "@type": "WebSite",
+          "@id": "https://koerspoule.nl/#website",
+          name: SITE_NAME,
+          url: "https://koerspoule.nl/",
+          inLanguage: "nl-NL",
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://koerspoule.nl/#organization",
+          name: SITE_NAME,
+          url: "https://koerspoule.nl/",
+          logo: "https://koerspoule.nl/favicon.png",
+          email: "koerspoule@gmail.com",
+        },
+        {
           "@type": "WebPage",
+          "@id": `${PAGE_URL}#webpage`,
           name: PAGE_TITLE,
           description: PAGE_DESCRIPTION,
           url: PAGE_URL,
           inLanguage: "nl-NL",
+          isPartOf: { "@id": "https://koerspoule.nl/#website" },
+          primaryImageOfPage: { "@type": "ImageObject", url: PAGE_IMAGE },
+          about: { "@type": "SportsEvent", name: "Tour de France 2026", sport: "Cycling", startDate: "2026-07-04", location: { "@type": "Place", name: "France" } },
         },
         {
           "@type": "BreadcrumbList",
@@ -106,6 +138,17 @@ export default function TourDeFrancePoule2026() {
             name: f.q,
             acceptedAnswer: { "@type": "Answer", text: f.a },
           })),
+        },
+        {
+          "@type": "Game",
+          name: "Koerspoule Tour de France Poule 2026",
+          description: PAGE_DESCRIPTION,
+          url: PAGE_URL,
+          genre: "Fantasy Sports",
+          gamePlatform: "Web",
+          inLanguage: "nl-NL",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", availability: "https://schema.org/InStock" },
+          publisher: { "@id": "https://koerspoule.nl/#organization" },
         },
       ],
     });
