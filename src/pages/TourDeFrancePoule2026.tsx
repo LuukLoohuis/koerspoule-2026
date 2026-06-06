@@ -1,0 +1,301 @@
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Check, Trophy, Users, Zap, Mountain, Flag, Sparkles } from "lucide-react";
+
+const PAGE_URL = "https://koerspoule.nl/tour-de-france-poule-2026";
+const PAGE_TITLE = "Tour de France Poule 2026 — Gratis Wielerspel & Tourspel";
+const PAGE_DESCRIPTION =
+  "Maak gratis je eigen Tour de France poule 2026. Stel je wielerploeg samen, doe mee met vrienden en strijd om de gele trui. Hét alternatief voor het AD Tourspel en Scorito.";
+
+function setMeta(selector: string, attr: string, value: string) {
+  let el = document.head.querySelector<HTMLMetaElement>(selector);
+  if (!el) {
+    el = document.createElement("meta");
+    const [, key, val] = selector.match(/\[(\w+)="([^"]+)"\]/) ?? [];
+    if (key && val) el.setAttribute(key, val);
+    document.head.appendChild(el);
+  }
+  el.setAttribute(attr, value);
+}
+
+function setLink(rel: string, href: string) {
+  let el = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+  if (!el) {
+    el = document.createElement("link");
+    el.rel = rel;
+    document.head.appendChild(el);
+  }
+  el.href = href;
+}
+
+export default function TourDeFrancePoule2026() {
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = PAGE_TITLE;
+
+    setMeta('meta[name="description"]', "content", PAGE_DESCRIPTION);
+    setMeta('meta[property="og:title"]', "content", PAGE_TITLE);
+    setMeta('meta[property="og:description"]', "content", PAGE_DESCRIPTION);
+    setMeta('meta[property="og:url"]', "content", PAGE_URL);
+    setMeta('meta[property="og:type"]', "content", "website");
+    setMeta('meta[name="twitter:title"]', "content", PAGE_TITLE);
+    setMeta('meta[name="twitter:description"]', "content", PAGE_DESCRIPTION);
+    setLink("canonical", PAGE_URL);
+
+    const ldId = "ld-tdf-2026";
+    document.getElementById(ldId)?.remove();
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = ldId;
+    script.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          name: PAGE_TITLE,
+          description: PAGE_DESCRIPTION,
+          url: PAGE_URL,
+          inLanguage: "nl-NL",
+        },
+        {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://koerspoule.nl/" },
+            { "@type": "ListItem", position: 2, name: "Tour de France Poule 2026", item: PAGE_URL },
+          ],
+        },
+        {
+          "@type": "FAQPage",
+          mainEntity: [
+            {
+              "@type": "Question",
+              name: "Hoe maak ik een Tour de France poule 2026?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Maak een gratis account op Koerspoule, start je eigen Tour de France poule en nodig vrienden uit met een unieke toegangscode. Binnen een paar minuten ben je klaar.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Is de Tour de France poule gratis?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Ja, Koerspoule is volledig gratis. Geen inschrijfgeld, geen advertenties — gewoon spelen met je vrienden.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Wanneer start de Tour de France 2026?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "De Tour de France 2026 start begin juli. Je kunt nu al je team samenstellen en je poule starten zodat je klaar bent voor de Grand Départ.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Wat is het alternatief voor AD Tourspel of Scorito?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Koerspoule is een gratis, reclamevrij alternatief voor het AD Tourspel en Scorito. Speel in eigen privé-poules met vrienden, familie of collega's.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Hoe verdien je punten in de Tour de France poule?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Je verdient punten voor etappe-overwinningen, het eindklassement (gele trui), bergklassement (bolletjestrui), puntenklassement (groene trui) en jongerenklassement (witte trui).",
+              },
+            },
+          ],
+        },
+      ],
+    });
+    document.head.appendChild(script);
+
+    return () => {
+      document.title = prevTitle;
+      document.getElementById(ldId)?.remove();
+    };
+  }, []);
+
+  return (
+    <div className="container mx-auto px-5 py-6 md:py-8">
+      <article className="max-w-4xl mx-auto space-y-7">
+        {/* Hero */}
+        <header className="text-center">
+          <div className="vintage-ornament mb-3">
+            <span className="vintage-ornament-symbol">✦</span>
+            <span className="text-xs tracking-[0.3em] uppercase text-muted-foreground font-serif">
+              La Grande Boucle · 2026
+            </span>
+            <span className="vintage-ornament-symbol">✦</span>
+          </div>
+          <h1 className="vintage-heading text-3xl md:text-4xl font-bold mb-3">
+            🟡 Tour de France Poule 2026 maken
+          </h1>
+          <p className="text-lg text-muted-foreground font-serif italic max-w-2xl mx-auto">
+            De Tour de France is de grootste wielerronde van het jaar. Drie weken lang strijden de
+            beste renners ter wereld om de gele trui. Maak het nog spannender met je eigen Tour de
+            France poule — gratis, reclamevrij en samen met vrienden.
+          </p>
+          <div className="vintage-divider mt-4 max-w-md mx-auto" />
+          <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
+            <Button asChild size="lg" className="retro-border-primary font-bold">
+              <Link to="/login">🚀 Start gratis je Tourpoule</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to="/regels">📖 Bekijk de regels</Link>
+            </Button>
+          </div>
+        </header>
+
+        {/* Hoe werkt het */}
+        <section className="ornate-frame retro-border bg-card p-4 md:p-6">
+          <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
+            🚀 Hoe werkt de Tour de France poule?
+          </h2>
+          <ol className="space-y-2.5">
+            {[
+              "Maak een gratis Koerspoule-account aan",
+              "Start je eigen Tour de France poule",
+              "Nodig vrienden, familie of collega's uit met een toegangscode",
+              "Stel je wielerteam samen uit de officiële Tour-startlijst",
+              "Verdien punten per etappe en klim in het klassement",
+            ].map((step, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-mono font-bold text-sm">
+                  {i + 1}
+                </span>
+                <span className="font-sans pt-0.5">{step}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-4 text-sm text-muted-foreground font-serif italic">
+            👉 Binnen een paar minuten ben je klaar voor de Grand Départ.
+          </p>
+        </section>
+
+        {/* Stel je team samen */}
+        <section>
+          <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
+            🧠 Stel je Tour-team samen
+          </h2>
+          <p className="text-muted-foreground mb-3 font-serif">
+            Kies slim uit verschillende typen renners — de juiste balans bepaalt of jij in het geel
+            eindigt of in de bezemwagen:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { icon: Trophy, emoji: "💛", title: "Klassementsrenners", desc: "Voor de gele trui — de mannen die meedoen om de eindwinst in Parijs." },
+              { icon: Zap, emoji: "💚", title: "Sprinters", desc: "Voor de groene trui en de massasprints op de Champs-Élysées." },
+              { icon: Mountain, emoji: "🔴", title: "Klimmers", desc: "Voor de bolletjestrui — wie pakt de Tourmalet en de Alpe d'Huez?" },
+            ].map(({ icon: Icon, emoji, title, desc }) => (
+              <Card key={title} className="ornate-frame retro-border">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xl">{emoji}</span>
+                    <Icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <h3 className="font-display text-base font-bold mb-1">{title}</h3>
+                  <p className="text-sm text-muted-foreground font-sans">{desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Punten */}
+        <section className="ornate-frame retro-border bg-card p-4 md:p-6">
+          <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
+            📊 Hoe verdien je punten in de Tourpoule?
+          </h2>
+          <p className="text-muted-foreground mb-3 font-serif">
+            Tijdens de drie Tourweken sprokkel je punten met:
+          </p>
+          <ul className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {[
+              { icon: Flag, label: "Etappe-overwinningen" },
+              { icon: Trophy, label: "Eindklassement (geel)" },
+              { icon: Mountain, label: "Bergklassement (bolletjes)" },
+              { icon: Zap, label: "Puntenklassement (groen)" },
+              { icon: Sparkles, label: "Jongerenklassement (wit)" },
+              { icon: Check, label: "Speciale prestaties & jokers" },
+            ].map(({ icon: Icon, label }) => (
+              <li key={label} className="flex items-center gap-3 p-3 rounded-md border-2 border-border bg-secondary/30">
+                <Icon className="h-5 w-5 text-primary shrink-0" />
+                <span className="font-sans font-medium">{label}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Vrienden */}
+        <section>
+          <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
+            🏁 Speel samen met vrienden — alternatief voor AD Tourspel
+          </h2>
+          <p className="text-muted-foreground mb-3 font-serif">
+            Geen massapoule met duizenden onbekenden, maar een eigen privé-poule waar het écht om
+            de bragging rights gaat. Koerspoule is een gratis, reclamevrij alternatief voor het AD
+            Tourspel, Scorito en Tubantia Tourspel.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { emoji: "🔒", title: "Eigen privé poule", desc: "Beveiligd met een unieke toegangscode." },
+              { emoji: "📈", title: "Live tussenstanden", desc: "Volg na elke etappe wie er aan kop staat." },
+              { emoji: "💬", title: "Koerscafé chat", desc: "Praat live mee tijdens de etappes." },
+            ].map(({ emoji, title, desc }) => (
+              <Card key={title} className="ornate-frame retro-border bg-card">
+                <CardContent className="p-4">
+                  <div className="text-xl mb-1.5">{emoji}</div>
+                  <h3 className="font-display text-base font-bold mb-1">{title}</h3>
+                  <p className="text-sm text-muted-foreground font-sans">{desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Waarom */}
+        <section className="ornate-frame retro-border p-4 md:p-6 bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
+          <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
+            🎯 Waarom de Koerspoule Tour de France poule?
+          </h2>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              "100% gratis, geen reclame",
+              "Snel een poule starten",
+              "Live updates per etappe",
+              "Voor elke wielerfan — beginner of kenner",
+              "Speel in eigen privé-poule",
+              "Mooie statistieken & head-to-head",
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-3">
+                <Check className="h-5 w-5 text-[hsl(var(--vintage-gold))] shrink-0" />
+                <span className="font-sans">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* CTA */}
+        <section className="text-center ornate-frame retro-border bg-card p-6">
+          <Users className="h-8 w-8 mx-auto text-primary mb-2" />
+          <h2 className="vintage-heading text-2xl font-bold mb-2">
+            👉 Start jouw Tour de France poule 2026
+          </h2>
+          <p className="text-muted-foreground font-serif italic max-w-xl mx-auto mb-4">
+            De Tour de France komt eraan — wees er op tijd bij. Maak nu je gratis poule en daag je
+            vrienden uit voor drie weken koersplezier.
+          </p>
+          <Button asChild size="lg" className="retro-border-primary font-bold animate-pulse">
+            <Link to="/login">🚴‍♂️ Maak nu je gratis Tourpoule</Link>
+          </Button>
+        </section>
+      </article>
+    </div>
+  );
+}
