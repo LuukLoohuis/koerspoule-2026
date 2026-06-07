@@ -18,6 +18,8 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
 import { pointsTable } from "@/data/riders";
 import { useCategories } from "@/hooks/useCategories";
+import MonkeyExplainerModal from "@/components/horscat/MonkeyExplainerModal";
+import PercentileVerdict from "@/components/horscat/PercentileVerdict";
 import { useStages, useGameStandings, useStagePointsForEntries, useStageAverages } from "@/hooks/useResults";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -890,6 +892,44 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
             </div>
           ) : (
             <>
+              {/* ── Uitleg-laag: titel + ⓘ + percentile + verdict ─────────── */}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h2
+                    style={{
+                      fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
+                      fontWeight: 900,
+                      color: "var(--ink-sepia)",
+                      fontSize: "clamp(22px, 4vw, 28px)",
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      lineHeight: 1.05,
+                    }}
+                  >
+                    <span aria-hidden style={{ marginRight: 6 }}>🐒</span>
+                    De aap met de dartpijl
+                  </h2>
+                  <p
+                    style={{
+                      fontFamily: "'Source Serif 4',Georgia,serif",
+                      fontStyle: "italic",
+                      color: "var(--ink-faded)",
+                      fontSize: "13px",
+                      marginTop: 2,
+                    }}
+                  >
+                    Ben je beter dan blinde gok?
+                  </p>
+                </div>
+                <MonkeyExplainerModal monkeyCount={5000} variant="text" />
+              </div>
+              <PercentileVerdict
+                percentile={Math.round(monte.beatPct)}
+                monkeyCount={5000}
+                hint={`Jij ${monte.userActual} pt · gem. aap ${Math.round(monte.mean)} pt`}
+              />
+              {/* /Uitleg-laag */}
+
               {/* Hero */}
               <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] p-6 md:p-8">
                 <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
