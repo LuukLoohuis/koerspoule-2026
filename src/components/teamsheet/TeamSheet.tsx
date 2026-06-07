@@ -19,6 +19,7 @@ import { useMemo } from "react";
 import { Crown } from "lucide-react";
 import CategoryPanel from "./CategoryPanel";
 import RiderTile from "./RiderTile";
+import Cyclist from "./Cyclist";
 import { Skull } from "./icons";
 import {
   categoryTone,
@@ -26,6 +27,67 @@ import {
   type SheetRider,
   uniqueCategoriesInOrder,
 } from "./tokens";
+
+/** Kleurnaam voor de legenda (verwijst naar de truikleur). */
+function labelName(c: RiderCategory): string {
+  switch (c) {
+    case "GC":       return "Geel";
+    case "ALIEN":    return "Paars";
+    case "SPRINT":   return "Groen";
+    case "KLIM":     return "Bolletjes";
+    case "AANVAL":   return "Oranje";
+    case "PUNCH":    return "Oranje";
+    case "KLASSIEK": return "Bruin";
+    case "TIJDRIT":  return "Bruin";
+    case "TALENT":   return "Wit";
+    case "OUD":      return "Bruin";
+    case "JOKER":    return "Paars";
+    default:         return "Sepia";
+  }
+}
+function humanName(c: RiderCategory): string {
+  switch (c) {
+    case "GC":       return "GC";
+    case "ALIEN":    return "Alien";
+    case "SPRINT":   return "Sprinter";
+    case "KLIM":     return "Klimmer";
+    case "AANVAL":   return "Aanvaller";
+    case "PUNCH":    return "Puncheur";
+    case "KLASSIEK": return "Klassieker";
+    case "TIJDRIT":  return "Tijdridder";
+    case "TALENT":   return "Talent";
+    case "OUD":      return "Oudje";
+    case "JOKER":    return "Joker";
+    default:         return "Overig";
+  }
+}
+
+/** Mini-blok voor de horizontale DNF-band. */
+function RiderTileMiniDnf({ riderName, number, category }: { riderName: string; number: string; category: RiderCategory }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <Cyclist category={category} faded width={42} height={32} />
+      <span className="flex flex-col leading-tight">
+        <span
+          className="truncate"
+          style={{
+            fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
+            fontWeight: 600,
+            fontSize: "12px",
+            color: "rgba(58,42,26,0.45)",
+            textDecoration: "line-through",
+            maxWidth: "140px",
+          }}
+        >
+          {riderName}
+        </span>
+        <span className="font-mono tabular-nums" style={{ color: "#9A8A74", fontSize: "9.5px", letterSpacing: "0.14em" }}>
+          #{number}
+        </span>
+      </span>
+    </span>
+  );
+}
 
 type Props = {
   riders: SheetRider[];
@@ -74,102 +136,112 @@ export default function TeamSheet({ riders, loading = false, selectedRiderId, on
       {/* ── Subtiele achtergrond line-art (achter alles, low contrast) ── */}
       <BackgroundDecor />
 
-      {/* 1. Titel-rij */}
-      <div className="flex items-center gap-3 relative">
-        <div className="flex-1 h-px" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
+      {/* 1. Titel-rij — dubbele inktstrepen links/rechts, gespatieerde caps midden. */}
+      <div className="flex items-center gap-3 relative px-1">
+        <div className="flex-1">
+          <div className="h-[1.5px]" style={{ background: "var(--ink-sepia)" }} />
+          <div className="h-[1px] mt-0.5" style={{ background: "var(--ink-sepia)", opacity: 0.55 }} />
+        </div>
         <h2
-          className="vintage-stamp shrink-0"
-          style={{ color: "var(--ink-sepia)", fontSize: "11.5px", letterSpacing: "0.32em" }}
+          className="shrink-0"
+          style={{
+            fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
+            color: "var(--ink-sepia)",
+            fontSize: "15px",
+            letterSpacing: "0.44em",
+            textTransform: "uppercase",
+            fontWeight: 700,
+            paddingInline: "8px",
+          }}
         >
           Hiërarchie van het peloton
-          <span className="ml-2 font-mono tabular-nums" style={{ color: "var(--ink-faded)", letterSpacing: "0.1em" }}>
+          <span className="ml-2 font-mono tabular-nums" style={{ color: "var(--ink-faded)", letterSpacing: "0.1em", fontSize: "12px" }}>
             ({total})
           </span>
         </h2>
-        <div className="flex-1 h-px" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
+        <div className="flex-1">
+          <div className="h-[1.5px]" style={{ background: "var(--ink-sepia)" }} />
+          <div className="h-[1px] mt-0.5" style={{ background: "var(--ink-sepia)", opacity: 0.55 }} />
+        </div>
       </div>
 
-      {/* 2. HERO — Top Klassement */}
+      {/* 2. HERO — gele banner, kroon + gestapelde "GC IN HET GEEL" links,
+         leiders horizontaal als bunch ernaast. */}
       {heroRiders.length > 0 && (
         <section
-          className="vintage-paper rounded-2xl p-4 md:p-6 relative overflow-hidden"
+          className="rounded-2xl relative overflow-hidden"
           style={{
+            background: "linear-gradient(90deg, var(--vintage-yellow-hot) 0%, var(--vintage-yellow) 18%, #F4ECD8 60%, #F4ECD8 100%)",
             border: "1.5px solid var(--ink-sepia)",
-            boxShadow:
-              "0 2px 0 rgba(58,42,26,0.18), 0 8px 24px -12px rgba(58,42,26,0.35), 0 0 0 4px rgba(232,185,35,0.10) inset",
+            boxShadow: "0 2px 0 rgba(58,42,26,0.18), 0 8px 24px -14px rgba(58,42,26,0.35)",
           }}
           aria-label="Top klassement"
         >
-          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 relative">
-            {/* Linkerblok: kroon + gestapelde titel */}
-            <div className="flex items-center md:items-start gap-3 md:flex-col md:gap-2 shrink-0 md:w-[180px]">
+          <div className="flex items-stretch gap-4 md:gap-6 px-4 py-3 md:px-6 md:py-4 relative min-h-[150px] md:min-h-[180px]">
+            {/* Links: kroon + titel */}
+            <div className="flex items-center gap-3 md:gap-4 shrink-0">
               <Crown
-                className="shrink-0"
-                size={42}
+                size={56}
                 strokeWidth={2.2}
-                style={{ color: "var(--medal-gold)" }}
+                style={{ color: "var(--ink-sepia)", filter: "drop-shadow(1px 1px 0 rgba(255,255,255,0.5))" }}
               />
-              <div>
+              <div className="leading-none">
                 <div
-                  className="font-mono"
                   style={{
-                    color: "var(--ink-faded)",
-                    fontSize: "10px",
-                    letterSpacing: "0.28em",
+                    fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
+                    fontWeight: 900,
+                    color: "var(--ink-sepia)",
+                    fontSize: "34px",
+                    letterSpacing: "0.04em",
                     textTransform: "uppercase",
                   }}
                 >
-                  Le classement
+                  GC
                 </div>
                 <div
-                  className="leading-none mt-0.5"
+                  className="mt-1"
                   style={{
                     fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
                     fontWeight: 800,
                     color: "var(--ink-sepia)",
-                    fontSize: "26px",
-                    letterSpacing: "0.02em",
+                    fontSize: "20px",
+                    letterSpacing: "0.06em",
                     textTransform: "uppercase",
                   }}
                 >
-                  Top
+                  in het geel
                 </div>
-                <div
-                  className="leading-none mt-0.5"
-                  style={{
-                    fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
-                    fontWeight: 800,
-                    color: "var(--ink-sepia)",
-                    fontSize: "26px",
-                    letterSpacing: "0.02em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Klassement
-                </div>
-                <div className="mt-2 h-[2px] w-12" style={{ background: "var(--medal-gold)" }} />
               </div>
             </div>
 
-            {/* Rechterblok: leider-cyclists, grote tiles */}
-            <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-2 gap-y-4">
+            {/* Rechts: leiders in horizontale rij, scrolls op mobiel */}
+            <div
+              className="flex-1 flex items-end gap-3 md:gap-4 overflow-x-auto pb-1"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
               {heroRiders.map((r) => (
-                <RiderTile
-                  key={r.id}
-                  rider={r}
-                  size="hero"
-                  selected={selectedRiderId === r.id}
-                  onClick={onRiderClick}
-                />
+                <div key={r.id} className="shrink-0">
+                  <RiderTile
+                    rider={r}
+                    size="hero"
+                    selected={selectedRiderId === r.id}
+                    onClick={onRiderClick}
+                  />
+                </div>
               ))}
             </div>
           </div>
         </section>
       )}
 
-      {/* 3. CATEGORY grid */}
+      {/* 3. CATEGORY grid — panels in 1 rij op desktop, max 5 kolommen */}
       {otherActiveCats.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 relative">
+        <div
+          className="grid gap-3 md:gap-4 relative"
+          style={{
+            gridTemplateColumns: `repeat(auto-fit, minmax(220px, 1fr))`,
+          }}
+        >
           {otherActiveCats.map((c) => (
             <CategoryPanel
               key={c}
@@ -182,79 +254,80 @@ export default function TeamSheet({ riders, loading = false, selectedRiderId, on
         </div>
       )}
 
-      {/* 4. UITGEVALLEN */}
+      {/* 4. UITGEVALLEN — horizontale band, inline; geen vlak. */}
       {dnfRiders.length > 0 && (
         <section
-          className="vintage-paper rounded-xl p-3 md:p-4 relative"
-          style={{ border: "1px dashed var(--ink-sepia)" }}
+          className="rounded-xl p-3 md:p-3.5 relative flex items-center gap-3 md:gap-4 flex-wrap"
+          style={{ border: "1px dashed var(--ink-sepia)", background: "rgba(244,236,216,0.55)" }}
           aria-label="Uitgevallen"
         >
-          <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: "1px dashed rgba(58,42,26,0.35)" }}>
-            <Skull size={20} strokeWidth={2.2} style={{ color: "var(--ink-faded)" }} />
+          <div className="flex items-center gap-2 shrink-0">
+            <Skull size={24} strokeWidth={2.2} style={{ color: "var(--ink-faded)" }} />
             <h3
-              className="vintage-stamp"
-              style={{ color: "var(--ink-faded)", fontSize: "11px", letterSpacing: "0.28em" }}
+              style={{
+                fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
+                fontWeight: 700,
+                color: "var(--ink-faded)",
+                fontSize: "13px",
+                letterSpacing: "0.28em",
+                textTransform: "uppercase",
+              }}
             >
               Uitgevallen
             </h3>
-            <div className="flex-1 h-px" style={{ background: "rgba(58,42,26,0.18)" }} />
-            <span className="font-mono text-[10px] tabular-nums" style={{ color: "var(--ink-faded)" }}>
-              {dnfRiders.length}
+            <span className="font-mono text-[10px] tabular-nums ml-1" style={{ color: "var(--ink-faded)" }}>
+              ({dnfRiders.length})
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-1">
-            {dnfRiders.map((r) => (
-              <RiderTile
-                key={r.id}
-                rider={r}
-                size="default"
-                selected={selectedRiderId === r.id}
-                onClick={onRiderClick}
-              />
-            ))}
+          <div className="flex-1 min-w-0 flex items-center gap-4 md:gap-5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+            {dnfRiders.map((r) => {
+              const numStr = r.startNumber != null ? String(r.startNumber) : "—";
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={onRiderClick ? () => onRiderClick(r.id) : undefined}
+                  className="flex items-center gap-2 shrink-0"
+                  style={{ background: "transparent", cursor: onRiderClick ? "pointer" : "default" }}
+                  title={`#${numStr} · ${r.name}`}
+                >
+                  <RiderTileMiniDnf riderName={r.name} number={numStr} category={r.category} />
+                </button>
+              );
+            })}
           </div>
         </section>
       )}
 
-      {/* 5. LEGENDA */}
+      {/* 5. LEGENDA — single-line, kleurnaam ingekleurd. */}
       {legendCats.length > 0 && (
         <div
-          className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-3 relative"
+          className="pt-3 text-center relative"
           style={{ borderTop: "1px solid rgba(58,42,26,0.15)" }}
           aria-label="Legenda"
         >
-          {legendCats.map((c) => {
-            const t = categoryTone(c);
-            return (
-              <span key={c} className="inline-flex items-center gap-1.5">
-                <span
-                  aria-hidden
-                  className="block w-3 h-3 rounded-full"
-                  style={{ background: t.jersey, border: "1px solid var(--ink-sepia)" }}
-                />
-                <span
-                  className="vintage-stamp"
-                  style={{ color: "var(--ink-faded)", fontSize: "9.5px", letterSpacing: "0.22em" }}
-                >
-                  {t.label}
+          <p
+            className="inline-block text-[11px] md:text-[12.5px]"
+            style={{
+              fontFamily: "'Source Serif 4',Georgia,serif",
+              color: "var(--ink-faded)",
+              lineHeight: 1.5,
+            }}
+          >
+            {legendCats.map((c, i) => {
+              const t = categoryTone(c);
+              return (
+                <span key={c}>
+                  <span style={{ color: t.jersey, fontWeight: 700 }}>{labelName(c)}</span>
+                  <span style={{ margin: "0 4px" }}> = {humanName(c)}</span>
+                  {i < legendCats.length - 1 && <span style={{ color: "var(--ink-sepia)", margin: "0 4px" }}>·</span>}
                 </span>
-              </span>
-            );
-          })}
-          {/* Uitgevallen-grijs uitleg */}
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className="block w-3 h-3 rounded-full"
-              style={{ background: "#A8A39A", border: "1px solid var(--ink-sepia)" }}
-            />
-            <span
-              className="vintage-stamp"
-              style={{ color: "var(--ink-faded)", fontSize: "9.5px", letterSpacing: "0.22em" }}
-            >
-              Uitgevallen
-            </span>
-          </span>
+              );
+            })}
+            <span style={{ color: "var(--ink-sepia)", margin: "0 4px" }}>·</span>
+            <span style={{ color: "#7A7165", fontWeight: 700 }}>Grijs</span>
+            <span> = Uitgevallen</span>
+          </p>
         </div>
       )}
     </div>
