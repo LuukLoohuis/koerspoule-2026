@@ -24,7 +24,24 @@ import InstagramExport from "./pages/InstagramExport";
 import Uitschrijven from "./pages/Uitschrijven";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: (failureCount, error: unknown) => {
+        const err = error as { code?: string; cause?: { code?: string } } | null;
+        const code = err?.code ?? err?.cause?.code;
+        // Permission denied / RLS / unique violation: nooit retryen
+        if (code === "42501" || code === "PGRST301" || code === "23505") return false;
+        return failureCount < 1;
+      },
+    },
+    mutations: { retry: 0 },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
