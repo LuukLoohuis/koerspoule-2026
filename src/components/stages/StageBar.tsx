@@ -9,10 +9,10 @@ import { StageTypeIcon, MountainTexture, RouteIcon, type StageType } from "./Sta
 
 /* ------------------------------- config -------------------------------- */
 
-const MIN_H = 64;
-const MAX_H = 240;
-const BAR_W = 30;
-const BAR_GAP = 20;
+const MIN_H = 40;
+const MAX_H = 140;   // matcht ongeveer header-hoogte
+const BAR_W = 44;    // bredere capsule
+const BAR_GAP = 14;
 
 /** Pad onder public/ waar de PNG-assets staan. */
 const ASSET_BASE = "/assets/stage-bar";
@@ -134,7 +134,13 @@ export default function StageBar({
   return (
     <div className="sb-panel">
       <Styles />
-      {MAP_SRC && <img className="sb-map" src={MAP_SRC} alt="" aria-hidden="true" />}
+      {/* Map zit in eigen clip-container, panel zelf mag overflow:visible
+          zodat tooltip-tekst niet meer afsnijdt. */}
+      {MAP_SRC && (
+        <div className="sb-map-clip" aria-hidden>
+          <img className="sb-map" src={MAP_SRC} alt="" />
+        </div>
+      )}
 
       <div className="sb-header">
         <div className="sb-title">{title}</div>
@@ -196,15 +202,21 @@ function Styles() {
   border: 1.5px solid rgba(58,42,26,.65);
   border-radius: 18px;
   padding: 18px 20px 20px;
-  overflow: hidden;
+  /* overflow visible — anders snijdt de tooltip-tekst boven de balken af */
   color: #3A2A1A;
   font-family: inherit;
+}
+.sb-map-clip {
+  position: absolute; inset: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  pointer-events: none;
 }
 .sb-map {
   position: absolute; top: -6px; right: -8px;
   width: 360px; max-width: 48%;
   opacity: .22;
-  pointer-events: none; user-select: none;
+  user-select: none;
 }
 .sb-header { position: relative; z-index: 1; margin-bottom: 8px; }
 .sb-title { font-weight: 800; letter-spacing: .5px; font-size: 18px; }
@@ -264,8 +276,8 @@ function Styles() {
 }
 
 .sb-badge {
-  position: absolute; top: -17px; left: 50%; transform: translateX(-50%);
-  width: 34px; height: 34px; z-index: 2;
+  position: absolute; top: -19px; left: 50%; transform: translateX(-50%);
+  width: 38px; height: 38px; z-index: 2;
   filter: drop-shadow(0 2px 3px rgba(58,42,26,.25));
 }
 
