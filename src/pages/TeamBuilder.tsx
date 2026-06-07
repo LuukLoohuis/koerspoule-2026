@@ -588,8 +588,9 @@ export default function TeamBuilder() {
                                   }}
                                   className="opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity p-1 rounded hover:bg-muted"
                                   title="Bekijk seizoensuitslagen"
+                                  aria-label={`Bekijk seizoensuitslagen van ${row.riders!.name}`}
                                 >
-                                  <Info className="h-3.5 w-3.5" />
+                                  <Info className="h-3.5 w-3.5" aria-hidden="true" />
                                 </button>
                               </div>
                             </button>

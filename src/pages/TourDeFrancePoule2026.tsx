@@ -7,7 +7,7 @@ import { Check, Trophy, Users, Zap, Mountain, Flag, Sparkles } from "lucide-reac
 const PAGE_URL = "https://koerspoule.nl/tour-de-france-poule-2026";
 const PAGE_TITLE = "Tour de France Poule 2026 — Gratis Wielerspel & Tourspel";
 const PAGE_DESCRIPTION =
-  "Maak gratis je eigen Tour de France poule 2026. Stel je wielerploeg samen, doe mee met vrienden en strijd om de gele trui. Hét alternatief voor het AD Tourspel en Scorito.";
+  "Maak gratis je Tour de France poule 2026. Stel je team samen, daag vrienden uit en strijd om de gele trui. Reclamevrij alternatief voor AD Tourspel.";
 const PAGE_IMAGE =
   "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ca7ecdfc-55b1-4686-a4d5-8ada2cae3b6e/id-preview-7b7ff0dd--00edb85e-4817-4978-88c8-1708211db2a7.lovable.app-1773424124582.png";
 const SITE_NAME = "Koerspoule";
