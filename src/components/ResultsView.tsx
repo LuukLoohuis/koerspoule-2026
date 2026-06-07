@@ -278,7 +278,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
       )}
 
       <Tabs defaultValue="klassement" className="max-w-7xl mx-auto">
-        <TabsList className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 h-auto w-full">
+        <TabsList className="sticky top-0 z-30 flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/95 backdrop-blur supports-[backdrop-filter]:bg-secondary/80 p-1 h-auto w-full shadow-sm">
           <TabsTrigger
             value="klassement"
             className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-foreground/10"
@@ -312,7 +312,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                   myEntry?.total_points,
                 );
                 return (
-                  <div className="mt-3 mb-4">
+                  <div className="mt-2 mb-2">
                     <StageBar
                       stages={data}
                       gcTotal={gcTotal}
@@ -544,7 +544,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
               myEntry?.total_points,
             );
             return (
-              <div className="mt-3 mb-3">
+              <div className="mt-2 mb-2">
                 <StageBar
                   stages={data}
                   gcTotal={gcTotal}

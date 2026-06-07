@@ -224,7 +224,7 @@ function Styles() {
   background: #F4ECD8;
   border: 1.5px solid rgba(58,42,26,.65);
   border-radius: 18px;
-  padding: 18px 20px 20px;
+  padding: 12px 18px 14px;
   /* overflow visible — anders snijdt de tooltip-tekst boven de balken af */
   color: #3A2A1A;
   font-family: inherit;
@@ -241,10 +241,10 @@ function Styles() {
   opacity: .22;
   user-select: none;
 }
-.sb-header { position: relative; z-index: 1; margin-bottom: 8px; }
-.sb-title { font-weight: 800; letter-spacing: .5px; font-size: 18px; }
-.sb-subtitle { font-size: 15px; color: #5b4a37; margin-top: 1px; }
-.sb-range { font-size: 12px; color: #9A8A74; margin-top: 2px; }
+.sb-header { position: relative; z-index: 1; margin-bottom: 4px; }
+.sb-title { font-weight: 800; letter-spacing: .5px; font-size: 17px; line-height: 1.15; }
+.sb-subtitle { font-size: 14px; color: #5b4a37; margin-top: 0; line-height: 1.2; }
+.sb-range { font-size: 12px; color: #9A8A74; margin-top: 1px; line-height: 1.2; }
 
 .sb-row {
   position: relative; z-index: 1;
@@ -299,10 +299,10 @@ function Styles() {
 }
 
 .sb-num {
-  margin-top: 10px; font-size: 13px; color: #9A8A74;
-  border-bottom: 1px solid #d8c8a8; padding: 0 6px 2px; line-height: 22px;
+  margin-top: 6px; font-size: 12px; color: #9A8A74;
+  border-bottom: 1px solid #d8c8a8; padding: 0 6px 1px; line-height: 18px;
 }
-.sb-pts { font-weight: 800; font-size: 17px; line-height: 22px; margin-top: 2px; }
+.sb-pts { font-weight: 800; font-size: 16px; line-height: 20px; margin-top: 1px; }
 .sb-num--gc, .sb-pts--gc { color: #B8860B; }
 .sb-pts--gc { font-size: 18px; }
 
@@ -339,11 +339,11 @@ function Styles() {
    - France-map dimmer, blijft sfeer
 */
 @media (max-width: 640px) {
-  .sb-panel { padding: 14px 12px 16px; border-radius: 14px; }
-  .sb-title { font-size: 15px; letter-spacing: .4px; }
-  .sb-subtitle { font-size: 13px; }
-  .sb-range { font-size: 11px; }
-  .sb-header { margin-bottom: 6px; }
+  .sb-panel { padding: 10px 10px 12px; border-radius: 14px; }
+  .sb-title { font-size: 14px; letter-spacing: .4px; line-height: 1.15; }
+  .sb-subtitle { font-size: 12px; line-height: 1.2; }
+  .sb-range { font-size: 10.5px; line-height: 1.2; }
+  .sb-header { margin-bottom: 2px; }
   .sb-map { width: 220px; max-width: 55%; opacity: .14; }
 
   .sb-row { gap: 8px; padding-top: 2px; }
@@ -375,11 +375,11 @@ function Styles() {
   }
 
   .sb-num {
-    font-size: 11px; line-height: 18px;
-    margin-top: 6px; padding: 0 4px 1px;
+    font-size: 11px; line-height: 16px;
+    margin-top: 4px; padding: 0 4px 1px;
   }
-  .sb-pts { font-size: 14px; line-height: 18px; }
-  .sb-pts--gc { font-size: 15px; }
+  .sb-pts { font-size: 13px; line-height: 16px; margin-top: 0; }
+  .sb-pts--gc { font-size: 14px; }
 
   /* Tooltip: smaller, mag wrappen, blijft binnen viewport */
   .sb-tooltip {
