@@ -136,11 +136,15 @@ export default function StageBars({
     return <div className="text-center py-8 text-sm text-muted-foreground italic">{emptyLabel}</div>;
   }
 
-  /** Bar-hoogte in pixels. */
+  /** Bar-hoogte in pixels. Bij geen data: ruime uniforme hoogte
+   *  (zoals de referentie-poster) i.p.v. stubby min-hoogte. */
   function barHeight(points: number): number {
-    if (maxPts === minPts) return MIN_H;
+    if (maxPts === 0) return Math.round(MAX_H * 0.78);
+    if (maxPts === minPts) return Math.round(MAX_H * 0.85);
     const ratio = (points - minPts) / (maxPts - minPts);
-    return Math.round(MIN_H + ratio * (MAX_H - MIN_H));
+    // Optisch fijner: schaal van 55%→100% van MAX_H i.p.v. MIN_H→MAX_H.
+    const lo = Math.round(MAX_H * 0.55);
+    return Math.round(lo + ratio * (MAX_H - lo));
   }
 
   return (
