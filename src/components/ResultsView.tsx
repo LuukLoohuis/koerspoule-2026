@@ -304,6 +304,11 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                         const idx = stages.findIndex((x) => x.stage_number === n && !x.is_gc);
                         if (idx >= 0) setSelectedStageIdx(idx);
                       }}
+                      onSelectGc={() => {
+                        const idx = stages.findIndex((x) => x.is_gc);
+                        if (idx >= 0) setSelectedStageIdx(idx);
+                      }}
+                      gcSelected={selectedStage?.is_gc === true}
                       title="ETAPPE-OVERZICHT"
                       subtitle={gameName ? `Komende ${gameName}` : "Etappes"}
                       rangeLabel={
@@ -530,6 +535,11 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                     const idx = stages.findIndex((x) => x.stage_number === n && !x.is_gc);
                     if (idx >= 0) setKlassementStageIdx(idx);
                   }}
+                  onSelectGc={() => {
+                    const idx = stages.findIndex((x) => x.is_gc);
+                    if (idx >= 0) setKlassementStageIdx(idx);
+                  }}
+                  gcSelected={klassementStage?.is_gc === true}
                   title="TUSSENSTAND SELECTEREN"
                   subtitle={`Komende ${gameName ?? "koers"}`}
                   rangeLabel={

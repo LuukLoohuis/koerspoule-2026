@@ -5,7 +5,7 @@
 // badges en de Frankrijk-kaart. Tooltip-iconen via ./StageIcons.
 
 import * as React from "react";
-import { StageTypeIcon, MountainTexture, RouteIcon, type StageType } from "./StageIcons";
+import { StageTypeIcon, RouteIcon, type StageType } from "./StageIcons";
 
 /* ------------------------------- config -------------------------------- */
 
@@ -32,8 +32,6 @@ const BADGE_SRC: Record<StageType | "gc", string> = {
   timetrial: `${ASSET_BASE}/badge-timetrial.png`,
   gc: `${ASSET_BASE}/badge-gc.png`,
 };
-
-const MOUNTAIN_TEXTURE = "#8E2A33";
 
 const TYPE_LABEL: Record<StageType, string> = {
   flat: "Vlakke rit",
@@ -62,6 +60,10 @@ export type StageBarProps = {
   gcTotal: number;
   selectedStage: number | null;
   onSelectStage: (stageNumber: number) => void;
+  /** Klik op de GC-kolom (eindklassement). Optioneel. */
+  onSelectGc?: () => void;
+  /** True als GC momenteel het geselecteerde "klassement" is. */
+  gcSelected?: boolean;
   title?: string;
   subtitle?: string;
   rangeLabel?: string;
@@ -84,11 +86,6 @@ function Capsule({ type, heightPx }: { type: StageType | "gc"; heightPx: number 
         className="sb-capsule-img"
         style={{ backgroundImage: `url(${BAR_SRC[type]})` }}
       />
-      {type === "mountain" && (
-        <div className="sb-texture" style={{ color: MOUNTAIN_TEXTURE }}>
-          <MountainTexture />
-        </div>
-      )}
     </div>
   );
 }
@@ -123,6 +120,8 @@ export default function StageBar({
   gcTotal,
   selectedStage,
   onSelectStage,
+  onSelectGc,
+  gcSelected = false,
   title = "TUSSENSTAND SELECTEREN",
   subtitle = "Komende Tour de France",
   rangeLabel = "T/m rit 21 — Rome – Rome",
@@ -180,14 +179,22 @@ export default function StageBar({
           })}
         </div>
 
-        <div className="sb-col sb-col--gc">
+        <button
+          type="button"
+          className={`sb-col sb-col--gc${gcSelected ? " sb-col--selected" : ""}`}
+          onClick={() => onSelectGc?.()}
+          aria-pressed={gcSelected}
+          aria-label={`Eindklassement, ${gcTotal} punten`}
+          disabled={!onSelectGc}
+          style={onSelectGc ? undefined : { cursor: "default" }}
+        >
           <div className="sb-bar-wrap" style={{ height: MAX_H }}>
             <img className="sb-badge" src={BADGE_SRC.gc} alt="" aria-hidden="true" />
             <Capsule type="gc" heightPx={MAX_H} />
           </div>
           <div className="sb-num sb-num--gc">GC</div>
           <div className="sb-pts sb-pts--gc">{gcTotal}</div>
-        </div>
+        </button>
       </div>
     </div>
   );
@@ -275,11 +282,6 @@ function Styles() {
   position: absolute; inset: 0;
   background-size: 100% 100%; background-repeat: no-repeat;
 }
-.sb-texture {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  width: 100%; height: 55%; pointer-events: none;
-}
-
 .sb-badge {
   position: absolute; top: -19px; left: 50%; transform: translateX(-50%);
   width: 38px; height: 38px; z-index: 2;
