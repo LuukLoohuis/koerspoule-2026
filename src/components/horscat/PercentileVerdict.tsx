@@ -88,29 +88,27 @@ export default function PercentileVerdict({ percentile, monkeyCount = 5000, hint
         {" "}{monkeyCount.toLocaleString("nl-NL")} simulaties houden de schatting kalm — maar de wielergoden
         grinniken altijd ergens mee.
       </p>
-      {/* Commentator-aside in Wuyts/De Cauwer-stijl */}
+      {/* Commentator-aside in Wuyts/De Cauwer-stijl — groter, geen byline. */}
       <p
-        className="mt-3 italic"
+        className="mt-4 italic"
         style={{
-          fontFamily: "'Source Serif 4',Georgia,serif",
+          fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
           fontStyle: "italic",
           color: "var(--ink-sepia)",
-          fontSize: "12.5px",
-          maxWidth: 540,
-          margin: "12px auto 0",
-          borderLeft: "3px solid var(--medal-gold)",
-          paddingLeft: 12,
+          fontSize: "clamp(18px, 3vw, 22px)",
+          maxWidth: 620,
+          margin: "16px auto 0",
+          borderLeft: "4px solid var(--medal-gold)",
+          paddingLeft: 16,
           textAlign: "left",
-          lineHeight: 1.45,
+          lineHeight: 1.4,
+          fontWeight: 500,
         }}
       >
-        <span aria-hidden style={{ fontFamily: "'Playfair Display',Georgia,serif", color: "var(--medal-gold)", fontSize: "20px", lineHeight: 0, verticalAlign: "-3px", marginRight: 4 }}>
+        <span aria-hidden style={{ fontFamily: "'Playfair Display',Georgia,serif", color: "var(--medal-gold)", fontSize: "34px", lineHeight: 0, verticalAlign: "-6px", marginRight: 4 }}>
           “
         </span>
         Awel, één Tour, dat is loterij, hé…
-        <span aria-hidden style={{ display: "block", marginTop: 4, fontStyle: "normal", fontSize: "10px", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ink-faded)" }}>
-          — De commentaarcabine
-        </span>
       </p>
     </div>
   );
