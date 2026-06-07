@@ -210,8 +210,8 @@ function Styles() {
 }
 .sb-map-clip {
   position: absolute; inset: 0;
-  border-radius: 18px;
-  overflow: hidden;
+  /* Geen overflow:hidden meer — kaart mag rustig buiten het paneel
+     vallen voor een nonchalanter affiche-gevoel. */
   pointer-events: none;
 }
 .sb-map {
@@ -228,7 +228,7 @@ function Styles() {
 .sb-row {
   position: relative; z-index: 1;
   display: flex; align-items: flex-end; gap: 14px;
-  padding-top: 24px;
+  padding-top: 4px;
 }
 .sb-labels {
   display: flex; flex-direction: column; justify-content: flex-end;
@@ -243,7 +243,7 @@ function Styles() {
   flex: 1 1 0; min-width: 0;
   display: flex; align-items: flex-end; gap: 4px;
   overflow-y: visible;
-  padding: 24px 4px 0; margin-top: -24px;
+  padding: 0 4px;
 }
 /* Mobiel: nog niet kleiner dan iets leesbaars; dan toch scrollen. */
 @media (max-width: 640px) {
