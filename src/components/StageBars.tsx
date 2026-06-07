@@ -234,13 +234,8 @@ function StageBar({
           }}
           aria-pressed={selected}
         >
-          {/* Bar-baseline + capsule */}
+          {/* Bar + badge — capsule rijst direct uit het papier, geen track erachter */}
           <div className="relative w-full flex items-end justify-center" style={{ height: trackHeight }}>
-            {/* Subtiel papier-baseline-vlak */}
-            <div
-              className="absolute inset-x-1 bottom-0 top-0 rounded-full"
-              style={{ background: "rgba(58,42,26,0.04)", border: "1px solid rgba(58,42,26,0.06)" }}
-            />
             {/* De gekleurde capsule */}
             <div
               className="relative w-full rounded-full transition-[height] duration-500 ease-out"
@@ -248,8 +243,8 @@ function StageBar({
                 height: `${heightPct}%`,
                 background: `linear-gradient(180deg, ${tone.mid} 0%, ${tone.deep} 100%)`,
                 border: `1.5px solid ${tone.ring}`,
-                boxShadow: "0 2px 0 rgba(58,42,26,0.15), inset 0 -6px 0 rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,0.18)",
-                // Lichte bergsilhouet binnen bergrit-balken
+                boxShadow:
+                  "0 2px 0 rgba(58,42,26,0.15), inset 0 -6px 0 rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,0.22)",
                 backgroundImage:
                   type === "bergop"
                     ? `linear-gradient(180deg, ${tone.mid} 0%, ${tone.deep} 100%), url("data:image/svg+xml;utf8,${encodeURIComponent(
