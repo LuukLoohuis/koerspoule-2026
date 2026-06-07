@@ -19,40 +19,11 @@ import { useMemo } from "react";
 import { Crown } from "lucide-react";
 import CategoryPanel from "./CategoryPanel";
 import RiderTile from "./RiderTile";
-import Cyclist from "./Cyclist";
-import { Skull } from "./icons";
 import {
   type RiderCategory,
   type SheetRider,
   uniqueCategoriesInOrder,
 } from "./tokens";
-
-/** Mini-blok voor de horizontale DNF-band. */
-function RiderTileMiniDnf({ riderName, number, category }: { riderName: string; number: string; category: RiderCategory }) {
-  return (
-    <span className="inline-flex items-center gap-2">
-      <Cyclist category={category} faded width={42} height={32} />
-      <span className="flex flex-col leading-tight">
-        <span
-          className="truncate"
-          style={{
-            fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
-            fontWeight: 600,
-            fontSize: "12px",
-            color: "rgba(58,42,26,0.45)",
-            textDecoration: "line-through",
-            maxWidth: "140px",
-          }}
-        >
-          {riderName}
-        </span>
-        <span className="font-mono tabular-nums" style={{ color: "#9A8A74", fontSize: "9.5px", letterSpacing: "0.14em" }}>
-          #{number}
-        </span>
-      </span>
-    </span>
-  );
-}
 
 type Props = {
   riders: SheetRider[];
@@ -64,29 +35,28 @@ type Props = {
 const HERO_CATEGORIES: RiderCategory[] = ["ALIEN", "GC"];
 
 export default function TeamSheet({ riders, loading = false, selectedRiderId, onRiderClick }: Props) {
-  const { activeByCat, dnfRiders, otherActiveCats, total } = useMemo(() => {
-    // DNF-renners blijven óók zichtbaar in hun eigen categorie-panel (doorgestreept
-    // door RiderTile), zodat de hiërarchie compleet leesbaar blijft. De aparte
-    // DNF-strip onderaan blijft een snel overzicht "wie er weg is".
-    const dnf: SheetRider[] = riders.filter((r) => r.status === "DNF");
+  const { activeByCat, dnfCountByCat, otherActiveCats, total } = useMemo(() => {
+    // Conform reference: actieve renners per categorie; DNF wordt onderaan elk
+    // panel als compacte "Uitgevallen ………… N" rij getoond i.p.v. losse tegels.
     const byCat = new Map<RiderCategory, SheetRider[]>();
+    const dnfCounts = new Map<RiderCategory, number>();
     for (const r of riders) {
+      if (r.status === "DNF") {
+        dnfCounts.set(r.category, (dnfCounts.get(r.category) ?? 0) + 1);
+        continue;
+      }
       const list = byCat.get(r.category) ?? [];
       list.push(r);
       byCat.set(r.category, list);
     }
-    // Binnen elk panel: actieve eerst, DNF onderaan.
-    for (const [k, list] of byCat) {
-      list.sort((a, b) => {
-        const da = a.status === "DNF" ? 1 : 0;
-        const db = b.status === "DNF" ? 1 : 0;
-        return da - db;
-      });
-      byCat.set(k, list);
-    }
     const present = uniqueCategoriesInOrder(riders);
     const others = present.filter((c) => !HERO_CATEGORIES.includes(c));
-    return { activeByCat: byCat, dnfRiders: dnf, otherActiveCats: others, total: riders.length };
+    return {
+      activeByCat: byCat,
+      dnfCountByCat: dnfCounts,
+      otherActiveCats: others,
+      total: riders.length,
+    };
   }, [riders]);
 
   if (loading) return <TeamSheetSkeleton />;
@@ -221,6 +191,7 @@ export default function TeamSheet({ riders, loading = false, selectedRiderId, on
               key={c}
               category={c}
               riders={activeByCat.get(c) ?? []}
+              dnfCount={dnfCountByCat.get(c) ?? 0}
               selectedRiderId={selectedRiderId ?? null}
               onRiderClick={onRiderClick}
             />
@@ -228,50 +199,6 @@ export default function TeamSheet({ riders, loading = false, selectedRiderId, on
         </div>
       )}
 
-      {/* 4. UITGEVALLEN — horizontale band, inline; geen vlak. */}
-      {dnfRiders.length > 0 && (
-        <section
-          className="rounded-xl p-3 md:p-3.5 relative flex items-center gap-3 md:gap-4 flex-wrap"
-          style={{ border: "1px dashed var(--ink-sepia)", background: "rgba(244,236,216,0.55)" }}
-          aria-label="Uitgevallen"
-        >
-          <div className="flex items-center gap-2 shrink-0">
-            <Skull size={24} strokeWidth={2.2} style={{ color: "var(--ink-faded)" }} />
-            <h3
-              style={{
-                fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
-                fontWeight: 700,
-                color: "var(--ink-faded)",
-                fontSize: "13px",
-                letterSpacing: "0.28em",
-                textTransform: "uppercase",
-              }}
-            >
-              Uitgevallen
-            </h3>
-            <span className="font-mono text-[10px] tabular-nums ml-1" style={{ color: "var(--ink-faded)" }}>
-              ({dnfRiders.length})
-            </span>
-          </div>
-          <div className="flex-1 min-w-0 flex items-center gap-4 md:gap-5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-            {dnfRiders.map((r) => {
-              const numStr = r.startNumber != null ? String(r.startNumber) : "—";
-              return (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={onRiderClick ? () => onRiderClick(r.id) : undefined}
-                  className="flex items-center gap-2 shrink-0"
-                  style={{ background: "transparent", cursor: onRiderClick ? "pointer" : "default" }}
-                  title={`#${numStr} · ${r.name}`}
-                >
-                  <RiderTileMiniDnf riderName={r.name} number={numStr} category={r.category} />
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
 
     </div>
   );
