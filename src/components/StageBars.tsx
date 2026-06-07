@@ -35,16 +35,23 @@ import {
 
 type StageType = "vlak" | "heuvelachtig" | "bergop" | "tijdrit" | "ploegentijdrit";
 
-/** Solid type-kleuren volgens brief — gebruikt voor capsule-fill, ring en badge. */
+/** Gemini-vintage-blauwdruk: matte zachte vullingen, dik zwart border.
+ *  Top-tint iets lichter dan deep voor subtiele verticale gradient. */
+const INK = "#1E1E1E";
+const PAPER = "#F7F4EB";
+const PAPER_CARD = "#FBF9F4";
+const BORDER = "#D9D2C2";
+const TEXT_MUTED = "#7A756B";
+
 const TYPE_COLOR: Record<StageType, { mid: string; deep: string; texture: string; label: string }> = {
-  vlak:           { mid: "#3F8B5E", deep: "#2E6A4F", texture: "#1F4D38", label: "Vlakke rit" },
-  heuvelachtig:   { mid: "#D9831F", deep: "#C2691C", texture: "#7A410F", label: "Heuvelachtig" },
-  bergop:         { mid: "#D04E6A", deep: "#C0395B", texture: "#7A1A30", label: "Bergrit" },
-  tijdrit:        { mid: "#3F7FB8", deep: "#2E5E8C", texture: "#1F4368", label: "Tijdrit" },
-  ploegentijdrit: { mid: "#6F4FB8", deep: "#5C3F8C", texture: "#3F2A66", label: "Ploegentijdrit" },
+  vlak:           { mid: "#6FB079", deep: "#5AA36A", texture: "#2E6A3E", label: "Vlakke rit" },
+  heuvelachtig:   { mid: "#E5B250", deep: "#DCA037", texture: "#8C6310", label: "Heuvelachtig" },
+  bergop:         { mid: "#D55668", deep: "#C43A55", texture: "#7A1A2C", label: "Bergrit" },
+  tijdrit:        { mid: "#579ADC", deep: "#3F84C5", texture: "#1F4F7C", label: "Tijdrit" },
+  ploegentijdrit: { mid: "#8268C5", deep: "#6B4FB8", texture: "#3F2A78", label: "Ploegentijdrit" },
 };
 
-const GC_GOLD = { mid: "#F2C955", deep: "#C58A12", ring: "#8E600F", label: "Eindklassement" };
+const GC_GOLD = { mid: "#F5CD68", deep: "#F2C14E", ring: INK, label: "Eindklassement" };
 
 /** Mappen onze NL stage_type naar de StageIcons-type-namen (engels). */
 function toIconType(t: StageType): IconStageType {
@@ -239,16 +246,16 @@ function StageBadge({ type, color }: { type: StageType; color: string }) {
       aria-hidden
       className="inline-flex items-center justify-center"
       style={{
-        width: 28,
-        height: 28,
+        width: 30,
+        height: 30,
         borderRadius: "9999px",
-        background: "#FBF4DE",
-        border: `2px solid ${color}`,
-        color,
-        boxShadow: "0 1px 0 rgba(58,42,26,0.18)",
+        background: PAPER,
+        border: `2px solid ${INK}`,
+        color, // icoon erft hier deze kleur
+        boxShadow: "0 1px 0 rgba(30,30,30,0.18)",
       }}
     >
-      {inlineIcon(type, 14)}
+      {inlineIcon(type, 15)}
     </span>
   );
 }
@@ -298,11 +305,11 @@ function StageBar({
               style={{
                 height: `${barHeightPx}px`,
                 background: `linear-gradient(180deg, ${tone.mid} 0%, ${tone.deep} 100%)`,
-                border: `1.5px solid ${tone.deep}`,
+                border: `2px solid ${INK}`,
                 borderTopLeftRadius: BAR_W,
                 borderTopRightRadius: BAR_W,
-                borderBottomLeftRadius: 8,
-                borderBottomRightRadius: 8,
+                borderBottomLeftRadius: 14,
+                borderBottomRightRadius: 14,
                 boxShadow:
                   "0 2px 0 rgba(58,42,26,0.15), inset 0 -6px 0 rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,0.22)",
                 overflow: "hidden",
@@ -323,24 +330,24 @@ function StageBar({
             </div>
           </div>
 
-          {/* Stage-nummer */}
+          {/* Stage-nummer — muted grey met dunne underline */}
           <div
             className="mt-2 font-mono tabular-nums leading-none"
-            style={{ color: "var(--ink-faded)", fontSize: "11px", fontWeight: 600 }}
+            style={{ color: TEXT_MUTED, fontSize: "11px", fontWeight: 600 }}
           >
-            <span style={{ borderBottom: "1px solid rgba(58,42,26,0.35)", paddingBottom: 1 }}>
+            <span style={{ borderBottom: `1px solid ${TEXT_MUTED}55`, paddingBottom: 1 }}>
               {stage.stage_number}
             </span>
           </div>
 
-          {/* Earned points */}
+          {/* Earned points — BOLD donker */}
           {showPoints && (
             <div
               className="mt-1.5 tabular-nums leading-none"
               style={{
-                color: points > 0 ? "var(--ink-sepia)" : "rgba(58,42,26,0.45)",
+                color: points > 0 ? INK : TEXT_MUTED,
                 fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
-                fontWeight: 800,
+                fontWeight: 900,
                 fontSize: points > 0 ? "20px" : "16px",
                 letterSpacing: "0.02em",
               }}
@@ -414,11 +421,11 @@ function GcColumn({
               style={{
                 height: `${MAX_H}px`,
                 background: `linear-gradient(180deg, ${GC_GOLD.mid} 0%, ${GC_GOLD.deep} 100%)`,
-                border: `1.5px solid ${GC_GOLD.ring}`,
+                border: `2px solid ${INK}`,
                 borderTopLeftRadius: BAR_W,
                 borderTopRightRadius: BAR_W,
-                borderBottomLeftRadius: 8,
-                borderBottomRightRadius: 8,
+                borderBottomLeftRadius: 14,
+                borderBottomRightRadius: 14,
                 boxShadow:
                   "0 2px 0 rgba(58,42,26,0.18), inset 0 -8px 0 rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,0.22)",
               }}
@@ -431,10 +438,10 @@ function GcColumn({
                   width: 30,
                   height: 30,
                   borderRadius: "9999px",
-                  background: "#FBF4DE",
-                  border: `2px solid ${GC_GOLD.ring}`,
-                  color: GC_GOLD.ring,
-                  boxShadow: "0 1px 0 rgba(58,42,26,0.18)",
+                  background: GC_GOLD.deep,
+                  border: `2px solid ${INK}`,
+                  color: INK,
+                  boxShadow: "0 1px 0 rgba(30,30,30,0.18)",
                 }}
               >
                 {locked ? <Lock size={14} strokeWidth={2.4} /> : <CrownIcon size={16} />}
@@ -445,12 +452,12 @@ function GcColumn({
           <div
             className="mt-2 leading-none"
             style={{
-              color: GC_GOLD.ring,
+              color: GC_GOLD.deep,
               fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
               fontWeight: 800,
               fontSize: "12px",
               letterSpacing: "0.14em",
-              borderBottom: `1px solid ${GC_GOLD.ring}55`,
+              borderBottom: `1px solid ${GC_GOLD.deep}55`,
               paddingBottom: 1,
             }}
           >
@@ -459,9 +466,9 @@ function GcColumn({
           <div
             className="mt-1.5 tabular-nums leading-none"
             style={{
-              color: GC_GOLD.ring,
+              color: INK,
               fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
-              fontWeight: 800,
+              fontWeight: 900,
               fontSize: "20px",
             }}
           >
