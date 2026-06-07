@@ -132,6 +132,19 @@ export default function StageBar({
   const minKm = kms.length ? Math.min(...kms) : 0;
   const maxKm = kms.length ? Math.max(...kms) : 0;
 
+  // Mobiel: scroll geselecteerde bar centraal in beeld zodra selectie wijzigt.
+  // Op desktop is dit een no-op (alles past, scroll = visible).
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!scrollRef.current || selectedStage == null) return;
+    const target = scrollRef.current.querySelector<HTMLElement>(
+      `[data-stage="${selectedStage}"]`,
+    );
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+  }, [selectedStage]);
+
   return (
     <div className="sb-panel">
       <Styles />
@@ -155,13 +168,14 @@ export default function StageBar({
           <div className="sb-label-points">EARNED&nbsp;POINTS</div>
         </div>
 
-        <div className="sb-scroll">
+        <div className="sb-scroll" ref={scrollRef}>
           {stages.map((stage) => {
             const h = heightForValue(stage.distanceKm, minKm, maxKm);
             const isSel = stage.stageNumber === selectedStage;
             return (
               <button
                 key={stage.stageNumber}
+                data-stage={stage.stageNumber}
                 className={`sb-col${isSel ? " sb-col--selected" : ""}`}
                 onClick={() => onSelectStage(stage.stageNumber)}
                 aria-pressed={isSel}
@@ -252,10 +266,6 @@ function Styles() {
   overflow-y: visible;
   padding: 0 4px;
 }
-/* Mobiel: nog niet kleiner dan iets leesbaars; dan toch scrollen. */
-@media (max-width: 640px) {
-  .sb-scroll { gap: 6px; overflow-x: auto; }
-}
 
 .sb-col {
   display: flex; flex-direction: column; align-items: center;
@@ -320,9 +330,74 @@ function Styles() {
   margin-top: -6px; rotate: 45deg;
 }
 
+/* ------------------------------- mobile -------------------------------- */
+/* 22 ritten + GC + labels passen niet zinvol op een telefoon. Strategie:
+   - labels-kolom verbergen (de bars praten zelf)
+   - horizontaal scrollen met scroll-snap zodat één bar mooi vastklikt
+   - cols een vinger-vriendelijke vaste breedte geven (36px)
+   - badges/labels/tooltip + panel-padding krimpen
+   - France-map dimmer, blijft sfeer
+*/
 @media (max-width: 640px) {
-  .sb-title { font-size: 16px; }
-  .sb-row { gap: 8px; }
+  .sb-panel { padding: 14px 12px 16px; border-radius: 14px; }
+  .sb-title { font-size: 15px; letter-spacing: .4px; }
+  .sb-subtitle { font-size: 13px; }
+  .sb-range { font-size: 11px; }
+  .sb-header { margin-bottom: 6px; }
+  .sb-map { width: 220px; max-width: 55%; opacity: .14; }
+
+  .sb-row { gap: 8px; padding-top: 2px; }
+  .sb-labels { display: none; }
+
+  .sb-scroll {
+    gap: 8px;
+    overflow-x: auto; overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 12px;
+    padding: 0 6px 6px;
+    /* iOS-scrollbar visueel uitzetten, content blijft pannable */
+    scrollbar-width: none;
+  }
+  .sb-scroll::-webkit-scrollbar { display: none; }
+
+  .sb-col {
+    flex: 0 0 36px;            /* vaste vinger-target */
+    scroll-snap-align: center;
+  }
+  .sb-col--gc { flex: 0 0 44px; margin-left: 8px; }
+
+  .sb-bar-wrap { max-width: 36px; min-width: 0; }
+  .sb-col--gc .sb-bar-wrap { width: 44px; }
+
+  .sb-badge {
+    width: 26px; height: 26px; top: -13px;
+  }
+
+  .sb-num {
+    font-size: 11px; line-height: 18px;
+    margin-top: 6px; padding: 0 4px 1px;
+  }
+  .sb-pts { font-size: 14px; line-height: 18px; }
+  .sb-pts--gc { font-size: 15px; }
+
+  /* Tooltip: smaller, mag wrappen, blijft binnen viewport */
+  .sb-tooltip {
+    min-width: 0;
+    width: max-content;
+    max-width: 70vw;
+    white-space: normal;
+    padding: 8px 12px;
+    margin-bottom: 18px;
+    font-size: 12px;
+  }
+  .sb-tip-row { font-size: 12px; gap: 6px; margin-bottom: 2px; }
+  .sb-tip-pts { font-size: 13px; }
+
+  /* Selectie-glow iets subtieler op mobiel */
+  .sb-col--selected .sb-bar-wrap {
+    box-shadow: 0 0 0 2px rgba(232,185,35,.6), 0 0 14px rgba(232,185,35,.45);
+  }
 }
     `}</style>
   );
