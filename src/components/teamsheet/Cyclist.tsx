@@ -1,39 +1,30 @@
 /**
  * Reusable side-profile cyclist illustration.
  *
- * Voorkeur: een echt asset per truikleur (src/assets/riders/<color>.png|svg).
- * Als asset ontbreekt → val terug op een rijkere recolorable SVG met
- * `category` of `jerseyColor` als input. Hierdoor renderen 22 renners zonder
- * 22 losse afbeeldingen.
+ * Cartoon-stijl: dikke zwarte outlines, effen vlakken, racefiets met drop-bars.
+ * Volledig recolorable — geef `category` (token-kleur) of een directe
+ * `jerseyColor`. Helm + sokken/schoenen volgen automatisch de jersey-tint.
  *
- * Gebruik:
- *   <Cyclist category="GC" />
- *   <Cyclist jerseyColor="#7A3FA0" shortsColor="#2A1A2A" faded />
- *   <Cyclist category="SPRINT" width={120} />
+ * Voorkeur: een echt asset per categorie in src/assets/riders/<key>.png/svg.
+ * Resolver-tabel verderop bepaalt welke bestandsnaam bij welke categorie hoort.
  */
 
 import { categoryTone, type RiderCategory } from "./tokens";
 
-// Eager-glob: pakt elk asset src/assets/riders/<naam>.{png,svg,webp} op zodat we
-// per categorie/kleur een rijk illustratief asset kunnen laden zodra de assets
-// in de repo zitten. Lege map = geen records → SVG-fallback wordt gebruikt.
 const RIDER_ASSETS = import.meta.glob("../../assets/riders/*.{png,svg,webp}", {
   eager: true,
   import: "default",
 }) as Record<string, string>;
 
-/** Sleutel-suggesties per categorie (laat assets met deze namen vallen om ze te
- *  activeren: alien.png, gc.png, sprint.png, klim.png, tijdrit.png, aanval.png,
- *  punch.png, klassiek.png, talent.png, oud.png, joker.png). */
 const CATEGORY_ASSET_KEYS: Record<RiderCategory, string[]> = {
-  ALIEN:    ["alien", "purple", "gc"],
-  GC:       ["gc", "leader", "yellow", "purple"],
-  SPRINT:   ["sprint", "sprinter", "blue"],
-  KLIM:     ["klim", "klimmer", "green", "mountain"],
+  ALIEN:    ["alien", "purple"],
+  GC:       ["gc", "yellow", "leader"],
+  SPRINT:   ["sprint", "sprinter", "green"],
+  KLIM:     ["klim", "klimmer", "polka", "mountain"],
   TIJDRIT:  ["tijdrit", "chrono", "brown", "tt"],
   AANVAL:   ["aanval", "attack", "orange"],
   PUNCH:    ["punch", "orange"],
-  KLASSIEK: ["klassiek", "classics", "tan"],
+  KLASSIEK: ["klassiek", "classics", "tan", "brown"],
   TALENT:   ["talent", "white", "young"],
   OUD:      ["oud", "veteraan", "brown"],
   JOKER:    ["joker", "purple"],
@@ -62,9 +53,13 @@ type Props = {
   title?: string;
 };
 
-const INK = "#3A2A1A";
-const SKIN = "#E8C9A8";
-const SKIN_DARK = "#B89270";
+const INK = "#1F1A14";              // bijna zwart voor outline-cartoon
+const SKIN = "#F3D6B0";
+const SKIN_SHADE = "#D9A878";
+const FRAME = "#3B3F45";
+const FRAME_DARK = "#23262B";
+const TIRE = "#1A1A1A";
+const RIM = "#888";
 const RED = "#B23A34";
 
 export default function Cyclist({
@@ -72,17 +67,18 @@ export default function Cyclist({
   jerseyColor,
   shortsColor,
   faded = false,
-  width = 72,
-  height = 56,
+  width = 96,
+  height = 72,
   className,
   title,
 }: Props) {
   const tone = category ? categoryTone(category) : null;
-  const jersey = jerseyColor ?? tone?.jersey ?? "#5A4A38";
-  const shorts = shortsColor ?? tone?.shorts ?? "#2A2218";
-  const jerseyShade = shade(jersey, -0.18);
+  const jersey = jerseyColor ?? tone?.jersey ?? "#E8B923";
+  const shorts = shortsColor ?? tone?.shorts ?? "#1F1A14";
+  // Schoenen + sokken volgen jersey voor "completed kit" gevoel.
+  const sock = jersey;
 
-  // 1) Geef voorrang aan een echt asset als die in src/assets/riders staat.
+  // 1) Echt asset heeft voorrang.
   const asset = !jerseyColor ? resolveAsset(category) : null;
   if (asset) {
     return (
@@ -101,10 +97,10 @@ export default function Cyclist({
     );
   }
 
-  // 2) Fallback: rijke vector-cyclist (zelfde proportie als de hero-illustraties).
+  // 2) Cartoon-stijl vector — past bij reference.
   return (
     <svg
-      viewBox="0 0 120 90"
+      viewBox="0 0 200 150"
       width={width}
       height={height}
       className={className}
@@ -117,148 +113,160 @@ export default function Cyclist({
       aria-label={title}
       aria-hidden={title ? undefined : true}
     >
-      <defs>
-        <linearGradient id={`g-jersey-${jersey}`} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={jersey} />
-          <stop offset="100%" stopColor={jerseyShade} />
-        </linearGradient>
-      </defs>
+      {/* Grondschaduw */}
+      <ellipse cx="100" cy="140" rx="82" ry="4" fill="rgba(31,26,20,0.18)" />
 
-      {/* Grondschaduw onder de fiets */}
-      <ellipse cx="60" cy="84" rx="46" ry="3" fill="rgba(58,42,26,0.18)" />
-
-      {/* Achterwiel */}
+      {/* ─── Achterwiel ─────────────────────────────────────────── */}
       <g>
-        <circle cx="28" cy="70" r="14" fill="none" stroke={INK} strokeWidth="2.2" />
-        <circle cx="28" cy="70" r="2.4" fill={INK} />
-        {/* Spaken */}
-        {Array.from({ length: 8 }).map((_, i) => {
-          const a = (i / 8) * Math.PI * 2;
-          const x = 28 + Math.cos(a) * 12.5;
-          const y = 70 + Math.sin(a) * 12.5;
-          return <line key={i} x1="28" y1="70" x2={x} y2={y} stroke={INK} strokeWidth="0.7" opacity="0.55" />;
+        <circle cx="48" cy="115" r="26" fill="none" stroke={TIRE} strokeWidth="4" />
+        <circle cx="48" cy="115" r="22" fill="none" stroke={RIM} strokeWidth="1.2" />
+        <circle cx="48" cy="115" r="3.5" fill={INK} />
+        {Array.from({ length: 14 }).map((_, i) => {
+          const a = (i / 14) * Math.PI * 2;
+          const x = 48 + Math.cos(a) * 21;
+          const y = 115 + Math.sin(a) * 21;
+          return <line key={i} x1="48" y1="115" x2={x} y2={y} stroke={INK} strokeWidth="0.8" opacity="0.7" />;
         })}
       </g>
 
-      {/* Voorwiel */}
+      {/* ─── Voorwiel ───────────────────────────────────────────── */}
       <g>
-        <circle cx="92" cy="70" r="14" fill="none" stroke={INK} strokeWidth="2.2" />
-        <circle cx="92" cy="70" r="2.4" fill={INK} />
-        {Array.from({ length: 8 }).map((_, i) => {
-          const a = (i / 8) * Math.PI * 2 + 0.35;
-          const x = 92 + Math.cos(a) * 12.5;
-          const y = 70 + Math.sin(a) * 12.5;
-          return <line key={i} x1="92" y1="70" x2={x} y2={y} stroke={INK} strokeWidth="0.7" opacity="0.55" />;
+        <circle cx="152" cy="115" r="26" fill="none" stroke={TIRE} strokeWidth="4" />
+        <circle cx="152" cy="115" r="22" fill="none" stroke={RIM} strokeWidth="1.2" />
+        <circle cx="152" cy="115" r="3.5" fill={INK} />
+        {Array.from({ length: 14 }).map((_, i) => {
+          const a = (i / 14) * Math.PI * 2 + 0.2;
+          const x = 152 + Math.cos(a) * 21;
+          const y = 115 + Math.sin(a) * 21;
+          return <line key={i} x1="152" y1="115" x2={x} y2={y} stroke={INK} strokeWidth="0.8" opacity="0.7" />;
         })}
       </g>
 
-      {/* Frame (driehoek) */}
-      <path
-        d="M28 70 L60 46 L92 70 M60 46 L78 70 M60 46 L66 30 M28 70 L66 30"
-        fill="none"
-        stroke={INK}
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      {/* ─── Frame (dik, cartoon) ───────────────────────────────── */}
+      {/* Voorvork */}
+      <path d="M152 115 L138 65" stroke={FRAME} strokeWidth="5" strokeLinecap="round" />
+      <path d="M152 115 L138 65" stroke={INK} strokeWidth="1" strokeLinecap="round" />
+      {/* Down tube */}
+      <path d="M72 115 L138 65" stroke={FRAME} strokeWidth="5" strokeLinecap="round" />
+      <path d="M72 115 L138 65" stroke={INK} strokeWidth="1" strokeLinecap="round" />
+      {/* Seat tube */}
+      <path d="M72 115 L100 60" stroke={FRAME} strokeWidth="5" strokeLinecap="round" />
+      <path d="M72 115 L100 60" stroke={INK} strokeWidth="1" strokeLinecap="round" />
+      {/* Top tube */}
+      <path d="M100 60 L138 65" stroke={FRAME} strokeWidth="5" strokeLinecap="round" />
+      <path d="M100 60 L138 65" stroke={INK} strokeWidth="1" strokeLinecap="round" />
+      {/* Chain stay */}
+      <path d="M72 115 L48 115" stroke={FRAME_DARK} strokeWidth="4" strokeLinecap="round" />
+      {/* Seat stay */}
+      <path d="M100 60 L48 115" stroke={FRAME_DARK} strokeWidth="3" strokeLinecap="round" opacity="0.85" />
 
-      {/* Crank + crank-arm + tandwiel */}
-      <circle cx="60" cy="70" r="4" fill="#222" stroke={INK} strokeWidth="0.7" />
-      <line x1="60" y1="70" x2="64" y2="64" stroke={INK} strokeWidth="2" strokeLinecap="round" />
+      {/* Crank + tandwiel */}
+      <circle cx="72" cy="115" r="6" fill={FRAME_DARK} stroke={INK} strokeWidth="1" />
+      <circle cx="72" cy="115" r="2.4" fill={INK} />
+      <line x1="72" y1="115" x2="80" y2="105" stroke={INK} strokeWidth="2.4" strokeLinecap="round" />
 
-      {/* Ketting-suggestie (3 stippen) */}
-      <line x1="62" y1="68" x2="90" y2="70" stroke={INK} strokeWidth="0.8" opacity="0.4" />
-
-      {/* Stuur + remhendels */}
-      <path d="M93 46 L102 36 L108 36" stroke={INK} strokeWidth="2.4" fill="none" strokeLinecap="round" />
-      <path d="M102 36 L102 30" stroke={INK} strokeWidth="2" strokeLinecap="round" />
+      {/* Stuur (drop bar) */}
+      <path d="M138 65 L160 50 L168 56 L160 64" stroke={INK} strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Remhendels */}
+      <path d="M160 50 L160 44" stroke={INK} strokeWidth="3" strokeLinecap="round" />
 
       {/* Zadelpen + zadel */}
-      <line x1="60" y1="46" x2="60" y2="32" stroke={INK} strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M52 32 Q60 28 68 32" stroke={INK} strokeWidth="2.6" fill="none" strokeLinecap="round" />
+      <line x1="100" y1="60" x2="100" y2="44" stroke={INK} strokeWidth="3.2" strokeLinecap="round" />
+      <path d="M88 44 Q100 38 112 44" stroke={INK} strokeWidth="4" fill="none" strokeLinecap="round" />
 
-      {/* Broek — kort blokje boven zadel */}
+      {/* ─── Renner ─────────────────────────────────────────────── */}
+      {/* Broek (zit op zadel, gebogen naar voren) */}
       <path
-        d="M50 36 L66 26 L72 30 L58 38 Z"
+        d="M86 50 L108 36 L118 42 L96 56 Z"
         fill={shorts}
         stroke={INK}
-        strokeWidth="0.9"
-        strokeLinejoin="round"
-      />
-
-      {/* Trui — gebogen torso */}
-      <path
-        d="M58 38 L66 22 L86 16 L96 28 L80 32 L70 40 Z"
-        fill={`url(#g-jersey-${jersey})`}
-        stroke={INK}
-        strokeWidth="1.1"
-        strokeLinejoin="round"
-      />
-      {/* Trui-detail: schouder-streep */}
-      <path
-        d="M76 22 L92 24"
-        stroke={jerseyShade}
         strokeWidth="2"
-        strokeLinecap="round"
+        strokeLinejoin="round"
       />
 
-      {/* Voorste arm */}
-      <path d="M88 20 L98 30 L102 36" stroke={jersey} strokeWidth="5" fill="none" strokeLinecap="round" />
-      <path d="M88 20 L98 30 L102 36" stroke={INK} strokeWidth="0.9" fill="none" strokeLinecap="round" />
-      <circle cx="102" cy="36" r="2.6" fill={SKIN} stroke={INK} strokeWidth="0.7" />
-
-      {/* Achterste arm (deels verstopt) */}
-      <path d="M70 22 L82 34" stroke={jerseyShade} strokeWidth="4" fill="none" strokeLinecap="round" opacity="0.85" />
-
-      {/* Voorste been (over de pedaal) */}
-      <path d="M64 30 L68 50 L74 64" stroke={shorts} strokeWidth="5" fill="none" strokeLinecap="round" />
-      <path d="M64 30 L68 50 L74 64" stroke={INK} strokeWidth="0.9" fill="none" strokeLinecap="round" />
-      <path d="M74 64 L80 70" stroke={SKIN_DARK} strokeWidth="3" fill="none" strokeLinecap="round" />
-
-      {/* Achterste been deels achter frame */}
-      <path d="M58 32 L52 50" stroke={shorts} strokeWidth="4.5" fill="none" strokeLinecap="round" opacity="0.7" />
-
-      {/* Helm (aero, met spleet) */}
+      {/* Achterste been (deels achter frame) */}
       <path
-        d="M86 14 Q104 8 108 22 L96 26 Z"
-        fill={`url(#g-jersey-${jersey})`}
+        d="M96 50 L84 100"
+        stroke={shorts}
+        strokeWidth="7"
+        strokeLinecap="round"
+        opacity="0.85"
+      />
+      <path
+        d="M96 50 L84 100"
+        stroke={INK}
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        opacity="0.6"
+      />
+
+      {/* Voorste been over pedaal */}
+      <path d="M104 44 L102 80 L88 108" stroke={shorts} strokeWidth="8" strokeLinecap="round" />
+      <path d="M104 44 L102 80 L88 108" stroke={INK} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+      {/* Kuit/voet */}
+      <path d="M88 108 L80 116" stroke={SKIN_SHADE} strokeWidth="6" strokeLinecap="round" />
+      {/* Sok */}
+      <path d="M80 116 L72 122" stroke={sock} strokeWidth="6" strokeLinecap="round" />
+      <path d="M80 116 L72 122" stroke={INK} strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      {/* Schoen */}
+      <path d="M68 122 L80 124 L80 128 L66 126 Z" fill={sock} stroke={INK} strokeWidth="1.4" strokeLinejoin="round" />
+
+      {/* Torso/trui — gebogen voorover */}
+      <path
+        d="M96 56 L106 28 L142 22 L156 38 L130 44 L116 52 Z"
+        fill={jersey}
+        stroke={INK}
+        strokeWidth="2.2"
+        strokeLinejoin="round"
+      />
+      {/* Schaduw-vouw op trui */}
+      <path
+        d="M120 30 L142 30"
         stroke={INK}
         strokeWidth="1"
+        opacity="0.18"
+      />
+
+      {/* Achterste arm (deels) */}
+      <path d="M124 28 L142 38" stroke={jersey} strokeWidth="7" strokeLinecap="round" opacity="0.9" />
+      <path d="M124 28 L142 38" stroke={INK} strokeWidth="1.4" strokeLinecap="round" fill="none" opacity="0.6" />
+
+      {/* Voorste arm naar stuur */}
+      <path d="M148 26 L160 44 L160 50" stroke={jersey} strokeWidth="8" strokeLinecap="round" />
+      <path d="M148 26 L160 44 L160 50" stroke={INK} strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      {/* Handschoen */}
+      <circle cx="160" cy="50" r="4" fill={SKIN_SHADE} stroke={INK} strokeWidth="1.4" />
+
+      {/* Nek */}
+      <path d="M156 22 L162 18" stroke={SKIN} strokeWidth="6" strokeLinecap="round" />
+
+      {/* Hoofd */}
+      <ellipse cx="164" cy="22" rx="9" ry="10" fill={SKIN} stroke={INK} strokeWidth="2" />
+      {/* Oor-suggestie */}
+      <path d="M158 24 Q156 24 156 21" stroke={INK} strokeWidth="1.2" fill="none" />
+      {/* Neus + mond mini */}
+      <path d="M172 22 Q174 24 172 26" stroke={INK} strokeWidth="1.3" fill="none" strokeLinecap="round" />
+      <path d="M170 28 L173 28" stroke={INK} strokeWidth="1.2" strokeLinecap="round" />
+
+      {/* Aero-helm */}
+      <path
+        d="M155 18 Q160 6 178 14 Q176 22 168 22 L155 22 Z"
+        fill={jersey}
+        stroke={INK}
+        strokeWidth="2.2"
         strokeLinejoin="round"
       />
-      <line x1="92" y1="14" x2="104" y2="14" stroke={INK} strokeWidth="0.7" opacity="0.6" />
-      <line x1="92" y1="18" x2="104" y2="18" stroke={INK} strokeWidth="0.7" opacity="0.6" />
-
-      {/* Gezicht + zonnebril */}
-      <circle cx="99" cy="24" r="3.4" fill={SKIN} stroke={INK} strokeWidth="0.8" />
-      <path d="M97 23 L101 23" stroke={INK} strokeWidth="1.5" strokeLinecap="round" />
+      {/* Helm-ventilatie */}
+      <ellipse cx="166" cy="14" rx="2.5" ry="1.4" fill={INK} opacity="0.7" />
+      <ellipse cx="172" cy="14" rx="2.5" ry="1.4" fill={INK} opacity="0.7" />
+      <ellipse cx="160" cy="14" rx="2.5" ry="1.4" fill={INK} opacity="0.7" />
 
       {faded && (
         <g>
-          <line x1="12" y1="14" x2="108" y2="82" stroke={RED} strokeWidth="4" strokeLinecap="round" />
-          <line x1="108" y1="14" x2="12" y2="82" stroke={RED} strokeWidth="4" strokeLinecap="round" />
+          <line x1="16" y1="14" x2="184" y2="138" stroke={RED} strokeWidth="6" strokeLinecap="round" />
+          <line x1="184" y1="14" x2="16" y2="138" stroke={RED} strokeWidth="6" strokeLinecap="round" />
         </g>
       )}
     </svg>
   );
-}
-
-/** Verschuif een hex-kleur licht-/donkerder (gebruikt voor schaduw op trui). */
-function shade(hex: string, ratio: number): string {
-  const m = hex.replace("#", "").match(/^([0-9a-f]{6})$/i);
-  if (!m) return hex;
-  const n = parseInt(m[1], 16);
-  let r = (n >> 16) & 0xff;
-  let g = (n >> 8) & 0xff;
-  let b = n & 0xff;
-  if (ratio < 0) {
-    r = Math.max(0, Math.round(r * (1 + ratio)));
-    g = Math.max(0, Math.round(g * (1 + ratio)));
-    b = Math.max(0, Math.round(b * (1 + ratio)));
-  } else {
-    r = Math.min(255, Math.round(r + (255 - r) * ratio));
-    g = Math.min(255, Math.round(g + (255 - g) * ratio));
-    b = Math.min(255, Math.round(b + (255 - b) * ratio));
-  }
-  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 }
