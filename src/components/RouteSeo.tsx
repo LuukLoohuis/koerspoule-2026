@@ -7,7 +7,7 @@ type Meta = { title: string; description: string; noindex?: boolean };
 
 const META: Record<string, Meta> = {
   "/": {
-    title: "Koerspoule — Gratis wielerpoule voor Tour de France, Giro & Vuelta 2026",
+    title: "Koerspoule — Gratis Tour, Giro & Vuelta poule 2026",
     description:
       "Gratis wielerspel voor de Tour de France, Giro d'Italia en Vuelta 2026. Stel je ploeg samen, daag vrienden uit en strijd om de trui.",
   },
@@ -26,6 +26,11 @@ const META: Record<string, Meta> = {
     description:
       "Persoonlijk dashboard met je team, palmares, subpoulestand en head-to-head vergelijking met vrienden.",
   },
+  "/karavaan": {
+    title: "Karavaan — koersnieuws & sfeer | Koerspoule",
+    description:
+      "De Koerspoule-karavaan: koersnieuws, voorbeschouwingen en sfeer rond de Giro, Tour en Vuelta.",
+  },
   "/regels": {
     title: "Koersreglement & puntentelling | Koerspoule",
     description:
@@ -43,6 +48,26 @@ const META: Record<string, Meta> = {
   "/juridisch": {
     title: "Juridisch, privacy & cookies | Koerspoule",
     description: "Privacyverklaring, cookieverklaring en gebruiksvoorwaarden van Koerspoule.",
+  },
+  "/uitschrijven": {
+    title: "Uitschrijven voor e-mails | Koerspoule",
+    description: "Schrijf je uit voor Koerspoule-notificaties en koersupdates per e-mail.",
+    noindex: true,
+  },
+  "/admin": {
+    title: "Beheer | Koerspoule",
+    description: "Beheerpaneel voor Koerspoule-organisatoren.",
+    noindex: true,
+  },
+  "/instagram-export": {
+    title: "Instagram export | Koerspoule",
+    description: "Interne tool voor het exporteren van koers-visuals.",
+    noindex: true,
+  },
+  "/preview": {
+    title: "Preview | Koerspoule",
+    description: "Interne preview-omgeving van Koerspoule.",
+    noindex: true,
   },
 };
 
