@@ -81,11 +81,13 @@ export default function StageBars({
     return rankByStageId[id];
   };
 
-  /** Max afstand (km) over non-GC stages → schaalfactor voor balk-hoogte.
-   *  Admin voert km in bij Etappes-tab; hoe meer km, hoe langer de capsule. */
-  const maxKm = useMemo(
-    () => stages.filter((s) => !s.is_gc).reduce((m, s) => Math.max(m, s.distance_km ?? 0), 0),
-    [stages],
+  /** Maximum punten over non-GC stages → schaalfactor voor balk-hoogte.
+   *  Hoge score = lange balk. Clamp in StageBar zelf zodat lage scores leesbaar
+   *  blijven. */
+  const maxPts = useMemo(
+    () => stages.filter((s) => !s.is_gc).reduce((m, s) => Math.max(m, getPts(s.id)), 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stages, pointsByStageId],
   );
   /** GC-totaal = som van alle stage-points. */
   const gcTotal = useMemo(
@@ -104,9 +106,11 @@ export default function StageBars({
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className={cn("w-full", className)}>
+      <div className={cn("w-full relative", className)}>
+        {/* Subtiel low-contrast line-art van Frankrijk in de top-right hoek */}
+        <FranceLineArt />
         {/* Stage-rij met links rij-labels, midden scrollbare balken, rechts GC */}
-        <div className="flex items-stretch gap-3 md:gap-4">
+        <div className="flex items-stretch gap-3 md:gap-4 relative">
           {/* Rij-labels (STAGE / EARNED POINTS) — alleen op desktop, anders teveel ruimte op mobiel */}
           <div
             className="hidden md:flex flex-col justify-end shrink-0 pb-1"
@@ -140,7 +144,7 @@ export default function StageBars({
                   type={type}
                   points={pts}
                   rank={rank}
-                  maxKm={maxKm}
+                  maxPoints={maxPts}
                   trackHeight={trackHeight}
                   selected={isSelected}
                   onClick={() => onSelectStage?.(s)}
@@ -169,6 +173,39 @@ export default function StageBars({
 
 /* ────────────────────────────────────────────────────────────────────────── */
 
+/** Low-contrast SVG line-art van Frankrijk in de hoek rechtsboven. Puur
+ *  decoratief; zit absolute en pointer-events:none, zodat het de selectie/clicks
+ *  niet stoort en de tekst-leesbaarheid intact blijft (opacity 0.08). */
+function FranceLineArt() {
+  return (
+    <svg
+      aria-hidden
+      className="absolute top-0 right-0 pointer-events-none"
+      width="260"
+      height="220"
+      viewBox="0 0 260 220"
+      style={{ opacity: 0.08, color: "var(--ink-sepia)" }}
+    >
+      {/* Sterk vereenvoudigde Frankrijk-omtrek + kaart-grid */}
+      <path
+        d="M70 30 Q90 18 120 22 L150 30 L172 26 L188 38 L196 56 L208 74 L214 96 L220 116 L208 138 L196 154 L186 174 L168 190 L142 198 L118 200 L96 198 L78 188 L66 170 L58 150 L52 130 L48 112 L46 92 L52 70 L60 50 Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {/* Subtiele "wegen" */}
+      <path d="M90 50 L150 90 L200 130" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="3 4" />
+      <path d="M70 130 L130 160 L180 170" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="3 4" />
+      {/* Steden-stippen */}
+      <circle cx="120" cy="60" r="3" fill="currentColor" />
+      <circle cx="170" cy="110" r="3" fill="currentColor" />
+      <circle cx="130" cy="150" r="3" fill="currentColor" />
+      <circle cx="180" cy="170" r="3" fill="currentColor" />
+    </svg>
+  );
+}
+
 function StageBadge({ type, color }: { type: StageType; color: string }) {
   return (
     <span
@@ -194,7 +231,7 @@ function StageBar({
   type,
   points,
   rank,
-  maxKm,
+  maxPoints,
   trackHeight,
   selected,
   onClick,
@@ -204,7 +241,7 @@ function StageBar({
   type: StageType;
   points: number;
   rank?: number;
-  maxKm: number;
+  maxPoints: number;
   trackHeight: number;
   selected: boolean;
   onClick: () => void;
@@ -212,9 +249,9 @@ function StageBar({
 }) {
   const tone = TYPE_COLOR[type] ?? TYPE_COLOR.vlak;
   const km = stage.distance_km ?? 0;
-  // Capsule-hoogte volgt de admin-ingevoerde afstand; min 30% zodat korte
-  // ritten leesbaar blijven, max 100% bij langste rit.
-  const heightPct = maxKm > 0 ? Math.max(30, (km / maxKm) * 100) : 60;
+  // Capsule-hoogte schaalt met earnedPoints. Clamp: min 18% (zelfs 0-pt etappes
+  // blijven leesbaar), max 100% bij hoogste score.
+  const heightPct = maxPoints > 0 ? Math.max(18, (points / maxPoints) * 100) : 24;
 
   return (
     <Tooltip>
