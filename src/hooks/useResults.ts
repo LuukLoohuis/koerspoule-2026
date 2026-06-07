@@ -1,5 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
+
+/** Wacht tot auth-state geresolved is (anon óf ingelogd). Voorkomt RPC-storm
+ *  tijdens de auth-race bij mount en blokkeert queries terwijl loading=true. */
+function useAuthReady(): boolean {
+  return !useAuth().loading;
+}
 
 export type StageRow = {
   id: string;
