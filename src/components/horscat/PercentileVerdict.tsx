@@ -74,18 +74,43 @@ export default function PercentileVerdict({ percentile, monkeyCount = 5000, hint
         </p>
       )}
       <p
-        className="mt-4 italic"
+        className="mt-4"
         style={{
           fontFamily: "'Source Serif 4',Georgia,serif",
           color: "var(--ink-faded)",
           fontSize: "11.5px",
-          maxWidth: 520,
+          maxWidth: 540,
           margin: "16px auto 0",
+          lineHeight: 1.55,
         }}
       >
-        Eén Tour is variance — hoe meer etappes en hoe meer ploegen, hoe meer betekenis het
-        cijfer krijgt. {monkeyCount.toLocaleString("nl-NL")} simulaties houden de schatting
-        rustig, maar de wielergoden kunnen alsnog gnuiven.
+        Eén Tour zit vol toeval. Hoe meer etappes en ploegen, hoe sterker dit cijfer staat.
+        {" "}{monkeyCount.toLocaleString("nl-NL")} simulaties houden de schatting kalm — maar de wielergoden
+        grinniken altijd ergens mee.
+      </p>
+      {/* Commentator-aside in Wuyts/De Cauwer-stijl */}
+      <p
+        className="mt-3 italic"
+        style={{
+          fontFamily: "'Source Serif 4',Georgia,serif",
+          fontStyle: "italic",
+          color: "var(--ink-sepia)",
+          fontSize: "12.5px",
+          maxWidth: 540,
+          margin: "12px auto 0",
+          borderLeft: "3px solid var(--medal-gold)",
+          paddingLeft: 12,
+          textAlign: "left",
+          lineHeight: 1.45,
+        }}
+      >
+        <span aria-hidden style={{ fontFamily: "'Playfair Display',Georgia,serif", color: "var(--medal-gold)", fontSize: "20px", lineHeight: 0, verticalAlign: "-3px", marginRight: 4 }}>
+          “
+        </span>
+        Awel, één Tour, dat is loterij, hé…
+        <span aria-hidden style={{ display: "block", marginTop: 4, fontStyle: "normal", fontSize: "10px", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ink-faded)" }}>
+          — De commentaarcabine
+        </span>
       </p>
     </div>
   );
