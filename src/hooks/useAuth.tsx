@@ -47,6 +47,9 @@ async function fetchRole(userId: string): Promise<AppRole> {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(initialState);
   const mountedRef = useRef(true);
+  // Cache role per user.id — voorkomt extra user_roles SELECTs bij elke
+  // onAuthStateChange (TOKEN_REFRESHED, USER_UPDATED, etc).
+  const roleCacheRef = useRef<Map<string, AppRole>>(new Map());
 
   useEffect(() => {
     mountedRef.current = true;
@@ -62,7 +65,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const user = session?.user ?? null;
       let role: AppRole = "user";
       if (user) {
-        role = await raceFallback(fetchRole(user.id), 5000, "user" as AppRole);
+        const cached = roleCacheRef.current.get(user.id);
+        if (cached) {
+          role = cached;
+        } else {
+          role = await raceFallback(fetchRole(user.id), 5000, "user" as AppRole);
+          roleCacheRef.current.set(user.id, role);
+        }
       }
       if (mountedRef.current) {
         setState({ user, session, loading: false, role });
@@ -76,8 +85,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // Subscribe op auth changes
-    const { data: subscription } = sb.auth.onAuthStateChange((_event, session) => {
+    // Subscribe op auth changes — cache zorgt dat we user_roles niet opnieuw
+    // bevragen bij token-refresh of andere niet-relevante events.
+    const { data: subscription } = sb.auth.onAuthStateChange((event, session) => {
+      // Wis cache bij logout zodat een volgende inlog vers ophaalt
+      if (event === "SIGNED_OUT") roleCacheRef.current.clear();
       resolveAuthFor(session);
     });
 
