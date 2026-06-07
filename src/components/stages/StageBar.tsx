@@ -162,6 +162,30 @@ export default function StageBar({
         <div className="sb-range">{rangeLabel}</div>
       </div>
 
+      {/* Mobiel: floating tooltip valt weg door overflow-clipping van
+          .sb-scroll. Vandaar deze inline caption: alleen op mobile zichtbaar,
+          toont type + km + punten van de geselecteerde rit. Op desktop blijft
+          de floating tooltip in .sb-bar-wrap actief. */}
+      {(() => {
+        const sel = stages.find((s) => s.stageNumber === selectedStage);
+        if (!sel) return null;
+        return (
+          <div className="sb-mobile-caption" role="status">
+            <span className="sb-cap-icon" style={{ color: BADGE_TINT[sel.type] }}>
+              <StageTypeIcon type={sel.type} size={14} />
+            </span>
+            <span className="sb-cap-label">{TYPE_LABEL[sel.type]}</span>
+            <span className="sb-cap-sep">·</span>
+            <span className="sb-cap-km">
+              <RouteIcon size={12} />
+              {sel.distanceKm} km
+            </span>
+            <span className="sb-cap-sep">·</span>
+            <span className="sb-cap-pts">{sel.earnedPoints} pt</span>
+          </div>
+        );
+      })()}
+
       <div className="sb-row">
         <div className="sb-labels">
           <div className="sb-label-stage">STAGE</div>
@@ -242,6 +266,8 @@ function Styles() {
   user-select: none;
 }
 .sb-header { position: relative; z-index: 1; margin-bottom: 4px; }
+/* Mobile-only caption (default hidden, opened in @media block) */
+.sb-mobile-caption { display: none; }
 .sb-title { font-weight: 800; letter-spacing: .5px; font-size: 17px; line-height: 1.15; }
 .sb-subtitle { font-size: 14px; color: #5b4a37; margin-top: 0; line-height: 1.2; }
 .sb-range { font-size: 12px; color: #9A8A74; margin-top: 1px; line-height: 1.2; }
@@ -344,6 +370,23 @@ function Styles() {
   .sb-subtitle { font-size: 12px; line-height: 1.2; }
   .sb-range { font-size: 10.5px; line-height: 1.2; }
   .sb-header { margin-bottom: 2px; }
+
+  /* Inline caption-strip met info van geselecteerde rit. Vervangt de
+     floating tooltip die door .sb-scroll wordt geclipt. */
+  .sb-mobile-caption {
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: 6px; font-size: 12px; font-weight: 600;
+    color: #3A2A1A;
+    padding: 5px 9px; margin: 4px 0 6px;
+    background: #FBF6E9;
+    border: 1px solid rgba(58,42,26,.35);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(58,42,26,.08);
+  }
+  .sb-cap-icon { display: inline-flex; align-items: center; }
+  .sb-cap-km { display: inline-flex; align-items: center; gap: 3px; color: #5b4a37; }
+  .sb-cap-sep { color: #9A8A74; }
+  .sb-cap-pts { font-weight: 800; color: #B8860B; }
   .sb-map { width: 220px; max-width: 55%; opacity: .14; }
 
   .sb-row { gap: 8px; padding-top: 2px; }
@@ -381,18 +424,10 @@ function Styles() {
   .sb-pts { font-size: 13px; line-height: 16px; margin-top: 0; }
   .sb-pts--gc { font-size: 14px; }
 
-  /* Tooltip: smaller, mag wrappen, blijft binnen viewport */
-  .sb-tooltip {
-    min-width: 0;
-    width: max-content;
-    max-width: 70vw;
-    white-space: normal;
-    padding: 8px 12px;
-    margin-bottom: 18px;
-    font-size: 12px;
-  }
-  .sb-tip-row { font-size: 12px; gap: 6px; margin-bottom: 2px; }
-  .sb-tip-pts { font-size: 13px; }
+  /* Floating tooltip op mobile uitschakelen — wordt geclipt door
+     .sb-scroll's afgedwongen overflow-y:auto (CSS-spec: visible + auto
+     valt terug op auto). Inline caption boven de bars vervangt 'em. */
+  .sb-tooltip { display: none; }
 
   /* Selectie-glow iets subtieler op mobiel */
   .sb-col--selected .sb-bar-wrap {
