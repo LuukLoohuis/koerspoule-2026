@@ -1,78 +1,73 @@
 /**
- * CategoryPanel — papier-paneel met categorie-kop en een grid van RiderTiles.
- *
- * Rand-accent in de categorie-kleur, label in gespatieerde caps, telling rechts.
+ * CategoryPanel — papier-paneel met circulair icoon-badge, caps-titel + telling.
+ * Rijen i.p.v. grid (zoals reference): cyclist | naam ……… nummer-chip.
  */
 
+import CategoryBadgeIcon from "./icons";
 import RiderTile from "./RiderTile";
-import { categoryIcon, categoryTone, type RiderCategory, type SheetRider } from "./tokens";
+import { categoryTone, type RiderCategory, type SheetRider } from "./tokens";
 
 type Props = {
   category: RiderCategory;
   riders: SheetRider[];
   selectedRiderId?: string | null;
   onRiderClick?: (id: string) => void;
-  /** Hero-grootte (gebruikt door TeamSheet voor de leiders). */
-  size?: "default" | "hero";
 };
 
-export default function CategoryPanel({
-  category,
-  riders,
-  selectedRiderId,
-  onRiderClick,
-  size = "default",
-}: Props) {
+export default function CategoryPanel({ category, riders, selectedRiderId, onRiderClick }: Props) {
   if (riders.length === 0) return null;
   const tone = categoryTone(category);
-  const icon = categoryIcon(category);
 
   return (
     <section
-      className="vintage-paper rounded-lg p-3 md:p-4 relative"
+      className="vintage-paper rounded-xl relative"
       style={{
-        border: `1px solid ${tone.ink}`,
-        borderLeftWidth: 4,
-        boxShadow: "0 1px 0 rgba(58,42,26,0.10)",
+        border: "1px solid rgba(58,42,26,0.18)",
+        borderLeftWidth: 6,
+        borderLeftColor: tone.jersey,
+        boxShadow: "0 2px 0 rgba(58,42,26,0.10), 0 4px 14px -8px rgba(58,42,26,0.25)",
       }}
       aria-labelledby={`cat-${category}`}
     >
       {/* Kop */}
-      <header className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: `1px dashed ${tone.ink}` }}>
-        <span aria-hidden className="text-base leading-none shrink-0">{icon}</span>
+      <header className="flex items-center gap-3 px-3.5 pt-3.5 pb-2.5">
+        <CategoryBadgeIcon category={category} size={32} />
         <h3
           id={`cat-${category}`}
-          className="vintage-stamp shrink-0"
+          className="shrink-0"
           style={{
             color: tone.ink,
-            fontSize: size === "hero" ? "12px" : "11px",
-            letterSpacing: "0.26em",
+            fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
+            fontWeight: 700,
+            fontSize: "15px",
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
           }}
         >
           {tone.label}
         </h3>
         <div className="flex-1" />
         <span
-          className="font-mono tabular-nums shrink-0"
-          style={{ color: "var(--ink-faded)", fontSize: "10px" }}
+          className="font-mono tabular-nums shrink-0 px-2 py-0.5 rounded-full"
+          style={{
+            background: tone.tint,
+            color: tone.ink,
+            border: `1px solid ${tone.jersey}`,
+            fontSize: "10.5px",
+            fontWeight: 700,
+          }}
         >
           {riders.length}
         </span>
       </header>
 
-      {/* Grid van renners — responsive */}
-      <div
-        className={
-          size === "hero"
-            ? "grid grid-cols-2 gap-x-2 gap-y-3 sm:grid-cols-3"
-            : "grid grid-cols-2 gap-x-1 gap-y-3 sm:grid-cols-3 md:grid-cols-4"
-        }
-      >
+      {/* Rij-lijst (compact, scanbaar) */}
+      <div className="px-2 pb-2.5">
         {riders.map((r) => (
           <RiderTile
             key={r.id}
             rider={r}
-            size={size}
+            size="default"
             selected={selectedRiderId === r.id}
             onClick={onRiderClick}
           />
