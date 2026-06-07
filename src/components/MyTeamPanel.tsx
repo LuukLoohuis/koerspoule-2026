@@ -99,6 +99,105 @@ function getCategoryBadge(name: string): BadgeConfig {
   return                                                     { label: "RNR",   bg: "#F8F4EE", color: "#7A5610", border: "#B59240" };
 }
 
+/** Categorie → hiërarchie van kopman naar achteren in het peloton.
+ *  Lager getal = vooraan rijden. ALIEN voorop, OUD achteraan. */
+function getCategoryRank(name: string): number {
+  const n = (name ?? "").toLowerCase();
+  if (/(gc\s*alien|alien)/.test(n)) return 0;
+  if (/(kop|leider|leader|gc|algemeen|klassement)/.test(n)) return 1;
+  if (/(sprint|spurt)/.test(n)) return 2;
+  if (/(klim|berg|grimp|mountain)/.test(n)) return 3;
+  if (/(aanval|attack|baroud)/.test(n)) return 4;
+  if (/\bpunch\b/.test(n)) return 5;
+  if (/(klassiek|classic|cobble|kassei)/.test(n)) return 6;
+  if (/(tijd|chrono|time\s*trial|tt\b)/.test(n)) return 7;
+  if (/\boud\b|veteraan|oldie/.test(n)) return 8;
+  if (/\bnl\b|nederland|dutch/.test(n)) return 9;
+  if (/belg|belgi/.test(n)) return 9;
+  if (/(baby\s*giro|baby|young|youngster)/.test(n)) return 10;
+  if (/joker/.test(n)) return 11;
+  return 12;
+}
+
+/** Categorie → effen trui-kleur (silhouet, geen logo). */
+function getCategoryJerseyColor(name: string): { jersey: string; shorts: string } {
+  const n = (name ?? "").toLowerCase();
+  if (/(gc\s*alien|alien)/.test(n))                        return { jersey: "#7A3FA0", shorts: "#2A1A2A" };
+  if (/(kop|leider|leader|gc|algemeen|klassement)/.test(n)) return { jersey: "#C0395B", shorts: "#3A1A26" };
+  if (/(sprint|spurt)/.test(n))                            return { jersey: "#2E5E8C", shorts: "#1A2A3A" };
+  if (/(klim|berg|grimp|mountain)/.test(n))                return { jersey: "#2E6A4F", shorts: "#1A2E26" };
+  if (/(aanval|attack|baroud)/.test(n))                    return { jersey: "#D2552A", shorts: "#3A1E10" };
+  if (/\bpunch\b/.test(n))                                 return { jersey: "#E0792A", shorts: "#3A2010" };
+  if (/(tijd|chrono|time\s*trial|tt\b)/.test(n))           return { jersey: "#1A1A1A", shorts: "#0A0A0A" };
+  if (/(klassiek|classic|cobble|kassei)/.test(n))          return { jersey: "#8A6A2A", shorts: "#3A2A10" };
+  if (/\boud\b|veteraan|oldie/.test(n))                    return { jersey: "#8A6A2A", shorts: "#3A2A10" };
+  if (/joker/.test(n))                                     return { jersey: "#7B3FA0", shorts: "#2A1A2A" };
+  return { jersey: "#5A4A38", shorts: "#2A2218" };
+}
+
+/** Klein zijaanzicht-silhouetje van een wielrenner.
+ *  Effen trui-kleur volgt de categorie; oud-papier-stijl, geen logo's. */
+function CyclistFigure({
+  jersey,
+  shorts,
+  dnf = false,
+  width = 56,
+  height = 42,
+}: {
+  jersey: string;
+  shorts: string;
+  dnf?: boolean;
+  width?: number;
+  height?: number;
+}) {
+  const skin = "#E8C9A8";
+  const ink = "#3A2A1A";
+  // ViewBox 56x42: wielen onderaan, fietser gebogen erboven.
+  return (
+    <svg
+      viewBox="0 0 56 42"
+      width={width}
+      height={height}
+      style={{
+        display: "block",
+        filter: dnf ? "grayscale(1) opacity(0.45)" : undefined,
+      }}
+      aria-hidden
+    >
+      {/* Wielen */}
+      <circle cx="13" cy="34" r="6.5" fill="none" stroke={ink} strokeWidth="1.5" />
+      <circle cx="43" cy="34" r="6.5" fill="none" stroke={ink} strokeWidth="1.5" />
+      <circle cx="13" cy="34" r="1" fill={ink} />
+      <circle cx="43" cy="34" r="1" fill={ink} />
+      {/* Frame */}
+      <path d="M13 34 L28 22 L43 34 M28 22 L36 34 M28 22 L32 14" stroke={ink} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Stuur */}
+      <path d="M45 22 L48 18 L51 18" stroke={ink} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      {/* Zadel */}
+      <path d="M22 20 L26 20" stroke={ink} strokeWidth="2" strokeLinecap="round" />
+      {/* Broek (kort blokje boven zadel) */}
+      <path d="M22 19 L31 14 L33 16 L26 20 Z" fill={shorts} stroke={ink} strokeWidth="0.8" strokeLinejoin="round" />
+      {/* Trui — gebogen torso vooroverbuigend */}
+      <path d="M26 20 L31 14 L40 11 L44 16 L36 18 L32 22 Z" fill={jersey} stroke={ink} strokeWidth="0.9" strokeLinejoin="round" />
+      {/* Arm */}
+      <path d="M40 12 L46 16 L48 19" stroke={jersey} strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      <circle cx="48" cy="19" r="1.3" fill={skin} stroke={ink} strokeWidth="0.5" />
+      {/* Been (één zichtbaar, op de trapper) */}
+      <path d="M30 17 L34 28 L38 32" stroke={shorts} strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      <path d="M38 32 L43 34" stroke={skin} strokeWidth="2" fill="none" strokeLinecap="round" />
+      {/* Helm + gezicht */}
+      <path d="M42 9 Q48 7 50 11 L46 13 Z" fill={jersey} stroke={ink} strokeWidth="0.8" strokeLinejoin="round" />
+      <circle cx="47" cy="13" r="2" fill={skin} stroke={ink} strokeWidth="0.7" />
+      {dnf && (
+        <>
+          <line x1="6" y1="6" x2="50" y2="38" stroke="#B23A34" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="50" y1="6" x2="6" y2="38" stroke="#B23A34" strokeWidth="2.5" strokeLinecap="round" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 const JERSEY_META: Record<string, { label: string; emoji: string; ring: string; bg: string }> = {
   gc:     { label: "Eindklassement", emoji: "🌹", ring: "border-[hsl(var(--jersey-pink))]",   bg: "bg-[hsl(var(--jersey-pink))/0.1]"   },
   points: { label: "Puntentrui",     emoji: "🟣", ring: "border-[hsl(var(--jersey-purple))]", bg: "bg-[hsl(var(--jersey-purple))/0.1]" },
@@ -433,6 +532,163 @@ export default function MyTeamPanel({
         </div>
       )}
 
+
+      {/* ═══ HET PELOTON — grafisch overzicht ═══
+          Kleine zijaanzicht-silhouetjes, truikleur = categorie. Sorteert van
+          kopman (ALIEN/GC) naar achteren. Layout waaiert uit over rijen zodat
+          15-25 renners blijven passen. Lijst eronder blijft als zoek-/scan-tool. */}
+      {(() => {
+        type PelotonRider = {
+          id: string;
+          name: string;
+          start_number: number | null;
+          is_dnf?: boolean | null;
+          catName: string;
+          rank: number;
+          jersey: string;
+          shorts: string;
+        };
+        const pelotonRiders: PelotonRider[] = [];
+        for (const cat of categories) {
+          const ids = picksByCategory.get(cat.id) ?? [];
+          const key = `${cat.name} ${cat.short_name ?? ""}`;
+          const colors = getCategoryJerseyColor(key);
+          const rank = getCategoryRank(key);
+          for (const rid of ids) {
+            const r = ridersById[rid];
+            if (!r) continue;
+            pelotonRiders.push({
+              id: r.id,
+              name: r.name,
+              start_number: r.start_number,
+              is_dnf: (r as { is_dnf?: boolean | null }).is_dnf ?? false,
+              catName: cat.short_name ?? cat.name,
+              rank,
+              jersey: colors.jersey,
+              shorts: colors.shorts,
+            });
+          }
+        }
+        for (const jid of standaloneJokerIds) {
+          const r = ridersById[jid];
+          if (!r) continue;
+          const colors = getCategoryJerseyColor("joker");
+          pelotonRiders.push({
+            id: r.id,
+            name: r.name,
+            start_number: r.start_number,
+            is_dnf: (r as { is_dnf?: boolean | null }).is_dnf ?? false,
+            catName: "JOKER",
+            rank: getCategoryRank("joker"),
+            jersey: colors.jersey,
+            shorts: colors.shorts,
+          });
+        }
+        pelotonRiders.sort((a, b) => a.rank - b.rank);
+        if (pelotonRiders.length === 0) return null;
+        return (
+          <div
+            className="vintage-paper rounded-lg p-3 md:p-4 mb-4"
+            style={{ border: "1px solid var(--ink-sepia)" }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <span className="vintage-stamp text-[10px] md:text-[11px]" style={{ color: "var(--ink-sepia)" }}>
+                — Le peloton —
+              </span>
+              <div className="flex-1 h-px" style={{ background: "var(--ink-sepia)", opacity: 0.25 }} />
+              <span className="font-mono text-[10px] tabular-nums" style={{ color: "var(--ink-faded)" }}>
+                {pelotonRiders.length} renners
+              </span>
+            </div>
+            {/* Grid uitwaaiering: mobiel 3/rij, sm 5, md 7, lg 9.
+                gap-y groter zodat namen niet over elkaar vallen; gap-x kleiner
+                voor bunch-overlap-gevoel. Items lichtjes versprongen via every
+                tweede rij negative margin. */}
+            <style>{`
+              .peloton-grid { --peloton-cols: 3; }
+              @media (min-width: 480px) { .peloton-grid { --peloton-cols: 4; } }
+              @media (min-width: 640px) { .peloton-grid { --peloton-cols: 5; } }
+              @media (min-width: 768px) { .peloton-grid { --peloton-cols: 7; } }
+              @media (min-width: 1024px){ .peloton-grid { --peloton-cols: 9; } }
+            `}</style>
+            <div className="peloton-grid grid" style={{
+              gridTemplateColumns: "repeat(var(--peloton-cols, 3), minmax(0,1fr))",
+              rowGap: "1.5rem",
+              columnGap: "0.25rem",
+            }}>
+              {pelotonRiders.map((p, idx) => {
+                const offset = Math.floor(idx / 3) % 2 === 1 ? 6 : 0; // lichte versprong
+                const numStr = p.start_number != null ? String(p.start_number) : "—";
+                return (
+                  <div
+                    key={p.id}
+                    className="flex flex-col items-center text-center min-w-0"
+                    style={{
+                      transform: `translateX(${offset}px)`,
+                    }}
+                    title={`${p.catName} · #${numStr} · ${p.name}`}
+                  >
+                    {/* Naam + nummer BOVEN het figuurtje */}
+                    <div className="mb-1 min-w-0 w-full px-0.5">
+                      <div
+                        className="font-mono text-[9px] md:text-[10px] tabular-nums leading-none mb-0.5"
+                        style={{ color: "#9A8A74", letterSpacing: "0.16em" }}
+                      >
+                        #{numStr}
+                      </div>
+                      <div
+                        className="truncate text-[11px] md:text-[12px]"
+                        style={{
+                          fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
+                          fontWeight: 600,
+                          color: p.is_dnf ? "rgba(58,42,26,0.4)" : "var(--ink-sepia)",
+                          textDecoration: p.is_dnf ? "line-through" : undefined,
+                          lineHeight: 1.15,
+                        }}
+                      >
+                        {p.name}
+                      </div>
+                      {p.is_dnf && dnfZichtbaar && (
+                        <div className="text-[9px] italic mt-0.5" style={{ color: "var(--vintage-red)", fontFamily: "'Source Serif 4',Georgia,serif" }}>
+                          Uitgevallen
+                        </div>
+                      )}
+                    </div>
+                    {/* Fietser */}
+                    <CyclistFigure
+                      jersey={p.jersey}
+                      shorts={p.shorts}
+                      dnf={dnfZichtbaar && Boolean(p.is_dnf)}
+                      width={52}
+                      height={40}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            {/* Categorie-legenda klein onderaan */}
+            <div className="mt-4 pt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5" style={{ borderTop: "1px solid rgba(58,42,26,0.12)" }}>
+              {(() => {
+                const seen = new Set<string>();
+                const items: { label: string; color: string }[] = [];
+                for (const p of pelotonRiders) {
+                  if (seen.has(p.catName)) continue;
+                  seen.add(p.catName);
+                  items.push({ label: p.catName.toUpperCase(), color: p.jersey });
+                }
+                return items.map((it) => (
+                  <span key={it.label} className="inline-flex items-center gap-1.5">
+                    <span aria-hidden className="block w-2.5 h-3.5 rounded-sm" style={{ background: it.color, border: "1px solid var(--ink-sepia)" }} />
+                    <span className="vintage-stamp text-[9px] md:text-[10px]" style={{ color: "var(--ink-faded)", letterSpacing: "0.2em" }}>
+                      {it.label}
+                    </span>
+                  </span>
+                ));
+              })()}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ═══ MIJN RENNERS — vintage Programme Officiel ═══
           Affichestijl, maar rustig en scanbaar. Tokens uit src/index.css. */}
