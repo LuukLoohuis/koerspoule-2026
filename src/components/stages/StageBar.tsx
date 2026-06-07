@@ -69,9 +69,9 @@ export type StageBarProps = {
 
 /* ------------------------------ helpers -------------------------------- */
 
-function heightForPoints(points: number, min: number, max: number): number {
+function heightForValue(value: number, min: number, max: number): number {
   if (max === min) return (MIN_H + MAX_H) / 2;
-  const t = (points - min) / (max - min);
+  const t = (value - min) / (max - min);
   return Math.round(MIN_H + t * (MAX_H - MIN_H));
 }
 
@@ -127,9 +127,11 @@ export default function StageBar({
   subtitle = "Komende Tour de France",
   rangeLabel = "T/m rit 21 — Rome – Rome",
 }: StageBarProps) {
-  const pts = stages.map((s) => s.earnedPoints);
-  const minP = pts.length ? Math.min(...pts) : 0;
-  const maxP = pts.length ? Math.max(...pts) : 0;
+  // Hoogte schaalt met de afstand (admin-input via Etappes-tab). Hoe meer km,
+  // hoe langer de capsule. Punten blijven onder de balk staan als label.
+  const kms = stages.map((s) => s.distanceKm);
+  const minKm = kms.length ? Math.min(...kms) : 0;
+  const maxKm = kms.length ? Math.max(...kms) : 0;
 
   return (
     <div className="sb-panel">
@@ -156,7 +158,7 @@ export default function StageBar({
 
         <div className="sb-scroll">
           {stages.map((stage) => {
-            const h = heightForPoints(stage.earnedPoints, minP, maxP);
+            const h = heightForValue(stage.distanceKm, minKm, maxKm);
             const isSel = stage.stageNumber === selectedStage;
             return (
               <button
@@ -226,7 +228,7 @@ function Styles() {
 .sb-row {
   position: relative; z-index: 1;
   display: flex; align-items: flex-end; gap: 14px;
-  padding-top: 56px;
+  padding-top: 24px;
 }
 .sb-labels {
   display: flex; flex-direction: column; justify-content: flex-end;
@@ -241,7 +243,7 @@ function Styles() {
   flex: 1 1 0; min-width: 0;
   display: flex; align-items: flex-end; gap: 4px;
   overflow-y: visible;
-  padding: 56px 4px 0; margin-top: -56px;
+  padding: 24px 4px 0; margin-top: -24px;
 }
 /* Mobiel: nog niet kleiner dan iets leesbaars; dan toch scrollen. */
 @media (max-width: 640px) {
