@@ -22,45 +22,10 @@ import RiderTile from "./RiderTile";
 import Cyclist from "./Cyclist";
 import { Skull } from "./icons";
 import {
-  categoryTone,
   type RiderCategory,
   type SheetRider,
   uniqueCategoriesInOrder,
 } from "./tokens";
-
-/** Kleurnaam voor de legenda (verwijst naar de truikleur). */
-function labelName(c: RiderCategory): string {
-  switch (c) {
-    case "GC":       return "Geel";
-    case "ALIEN":    return "Paars";
-    case "SPRINT":   return "Groen";
-    case "KLIM":     return "Bolletjes";
-    case "AANVAL":   return "Oranje";
-    case "PUNCH":    return "Oranje";
-    case "KLASSIEK": return "Bruin";
-    case "TIJDRIT":  return "Bruin";
-    case "TALENT":   return "Wit";
-    case "OUD":      return "Bruin";
-    case "JOKER":    return "Paars";
-    default:         return "Sepia";
-  }
-}
-function humanName(c: RiderCategory): string {
-  switch (c) {
-    case "GC":       return "GC";
-    case "ALIEN":    return "Alien";
-    case "SPRINT":   return "Sprinter";
-    case "KLIM":     return "Klimmer";
-    case "AANVAL":   return "Aanvaller";
-    case "PUNCH":    return "Puncheur";
-    case "KLASSIEK": return "Klassieker";
-    case "TIJDRIT":  return "Tijdridder";
-    case "TALENT":   return "Talent";
-    case "OUD":      return "Oudje";
-    case "JOKER":    return "Joker";
-    default:         return "Overig";
-  }
-}
 
 /** Mini-blok voor de horizontale DNF-band. */
 function RiderTileMiniDnf({ riderName, number, category }: { riderName: string; number: string; category: RiderCategory }) {
@@ -139,7 +104,6 @@ export default function TeamSheet({ riders, loading = false, selectedRiderId, on
   }
 
   const heroRiders: SheetRider[] = HERO_CATEGORIES.flatMap((c) => activeByCat.get(c) ?? []);
-  const legendCats = uniqueCategoriesInOrder([...riders.filter((r) => r.status !== "DNF"), ...dnfRiders]);
 
   return (
     <div className="relative space-y-4 md:space-y-5">
@@ -309,37 +273,6 @@ export default function TeamSheet({ riders, loading = false, selectedRiderId, on
         </section>
       )}
 
-      {/* 5. LEGENDA — single-line, kleurnaam ingekleurd. */}
-      {legendCats.length > 0 && (
-        <div
-          className="pt-3 text-center relative"
-          style={{ borderTop: "1px solid rgba(58,42,26,0.15)" }}
-          aria-label="Legenda"
-        >
-          <p
-            className="inline-block text-[11px] md:text-[12.5px]"
-            style={{
-              fontFamily: "'Source Serif 4',Georgia,serif",
-              color: "var(--ink-faded)",
-              lineHeight: 1.5,
-            }}
-          >
-            {legendCats.map((c, i) => {
-              const t = categoryTone(c);
-              return (
-                <span key={c}>
-                  <span style={{ color: t.jersey, fontWeight: 700 }}>{labelName(c)}</span>
-                  <span style={{ margin: "0 4px" }}> = {humanName(c)}</span>
-                  {i < legendCats.length - 1 && <span style={{ color: "var(--ink-sepia)", margin: "0 4px" }}>·</span>}
-                </span>
-              );
-            })}
-            <span style={{ color: "var(--ink-sepia)", margin: "0 4px" }}>·</span>
-            <span style={{ color: "#7A7165", fontWeight: 700 }}>Grijs</span>
-            <span> = Uitgevallen</span>
-          </p>
-        </div>
-      )}
     </div>
   );
 }
