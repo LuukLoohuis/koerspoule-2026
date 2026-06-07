@@ -14,7 +14,51 @@ import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin, ArrowUp,
 import ResultsUpdatedBadge from "@/components/ResultsUpdatedBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
 import Podium from "@/components/Podium";
-import StageBars from "@/components/StageBars";
+import StageBar, { type Stage as StageBarStage } from "@/components/stages/StageBar";
+import type { StageType as StageBarType } from "@/components/stages/StageIcons";
+import type { StageRow } from "@/hooks/useResults";
+
+/** Map onze NL DB-stage_type naar het StageBar engelse type. */
+function mapDbTypeToStage(t: string | null | undefined): StageBarType {
+  switch ((t ?? "").toLowerCase()) {
+    case "heuvel":
+    case "heuvelachtig":
+    case "hilly":
+      return "hilly";
+    case "berg":
+    case "bergop":
+    case "mountain":
+      return "mountain";
+    case "tijdrit":
+    case "ploegentijdrit":
+    case "tt":
+    case "timetrial":
+      return "timetrial";
+    case "vlak":
+    case "flat":
+    default:
+      return "flat";
+  }
+}
+
+/** Bouwt StageBar-props uit onze DB-stages + points-map. */
+function buildStageBarData(
+  stages: StageRow[],
+  pointsByStageId: Map<string, number>,
+  selectedStageId: string | undefined,
+): { data: StageBarStage[]; gcTotal: number; selectedNumber: number | null } {
+  const nonGc = stages.filter((s) => !s.is_gc);
+  const data: StageBarStage[] = nonGc.map((s) => ({
+    stageNumber: s.stage_number,
+    type: mapDbTypeToStage(s.stage_type),
+    distanceKm: s.distance_km ?? 0,
+    earnedPoints: pointsByStageId.get(s.id) ?? 0,
+  }));
+  const gcTotal = data.reduce((acc, s) => acc + s.earnedPoints, 0);
+  const selectedRow = stages.find((s) => s.id === selectedStageId);
+  const selectedNumber = selectedRow ? selectedRow.stage_number : null;
+  return { data, gcTotal, selectedNumber };
+}
 
 const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
   vlak: { label: "Vlak", color: "bg-emerald-500", icon: <Activity className="w-4 h-4" /> },
@@ -243,36 +287,34 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
             <EmptyState message="Nog geen etappes aangemaakt voor deze koers." />
           ) : (
             <>
-              {/* Premium vertical bar visualizer */}
-              <div className="mt-3 mb-4 retro-border bg-gradient-to-br from-card via-card to-secondary/20 p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <h3 className="font-display text-sm font-bold tracking-wide uppercase text-foreground/80">
-                      Etappe-overzicht
-                    </h3>
-                    <p className="text-[11px] text-muted-foreground">
-                      Balkhoogte ∝ km · 🟡 = jouw punten · tik om te openen
-                    </p>
+              {/* Premium vertical bar visualizer — StageBar (PNG-asset variant) */}
+              {(() => {
+                const { data, gcTotal, selectedNumber } = buildStageBarData(
+                  stages,
+                  myPointsPerStage,
+                  selectedStage?.id,
+                );
+                return (
+                  <div className="mt-3 mb-4">
+                    <StageBar
+                      stages={data}
+                      gcTotal={gcTotal}
+                      selectedStage={selectedNumber}
+                      onSelectStage={(n) => {
+                        const idx = stages.findIndex((x) => x.stage_number === n && !x.is_gc);
+                        if (idx >= 0) setSelectedStageIdx(idx);
+                      }}
+                      title="ETAPPE-OVERZICHT"
+                      subtitle={gameName ? `Komende ${gameName}` : "Etappes"}
+                      rangeLabel={
+                        selectedStage
+                          ? `Rit ${selectedStage.stage_number}${selectedStage.name ? ` — ${selectedStage.name}` : ""}`
+                          : `${stages.filter((s) => !s.is_gc).length} ritten`
+                      }
+                    />
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground hidden sm:block">
-                    {stages.filter((s) => !s.is_gc).length} ritten
-                  </span>
-                </div>
-                <StageBars
-                  stages={stages}
-                  pointsByStageId={myPointsPerStage}
-                  rankByStageId={myRankPerStage}
-                  selectedStageId={selectedStage?.id}
-                  onSelectStage={(s) => {
-                    const idx = stages.findIndex((x) => x.id === s.id);
-                    if (idx >= 0) setSelectedStageIdx(idx);
-                  }}
-                  gcUnlocked={stages
-                    .filter((x) => !x.is_gc)
-                    .some((x) => x.stage_number === 21 && x.results_status === "approved")}
-                  trackHeight={150}
-                />
-              </div>
+                );
+              })()}
 
               {/* Selected stage info */}
               {selectedStage && !selectedStage.is_gc && (
@@ -471,65 +513,34 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
 
         {/* ── KLASSEMENT TAB ── */}
         <TabsContent value="klassement">
-          {/* Premium vertical bar selector — same component as Etappes */}
-          {stages.length > 0 && (
-            <div
-              className="mt-3 mb-3 p-5 md:p-6 rounded-2xl relative"
-              style={{
-                background: "#FCFAF5",
-                border: "2px solid #D4CDBA",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.4)",
-              }}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <h3
-                    style={{
-                      fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
-                      fontWeight: 800,
-                      color: "var(--ink-sepia)",
-                      fontSize: "20px",
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                      lineHeight: 1.05,
-                    }}
-                  >
-                    Tussenstand selecteren
-                  </h3>
-                  <p
-                    className="mt-0.5"
-                    style={{
-                      fontFamily: "'Source Serif 4',Georgia,serif",
-                      fontSize: "13px",
-                      color: "var(--ink-faded)",
-                      fontStyle: "normal",
-                    }}
-                  >
-                    Komende {gameName ?? "koers"}
-                  </p>
-                  <p className="text-[11px]" style={{ color: "var(--ink-faded)" }}>
-                    {klassementStage
+          {/* Premium vertical bar selector — StageBar (PNG-asset variant) */}
+          {stages.length > 0 && (() => {
+            const { data, gcTotal, selectedNumber } = buildStageBarData(
+              stages,
+              myPointsPerStage,
+              klassementStage?.id,
+            );
+            return (
+              <div className="mt-3 mb-3">
+                <StageBar
+                  stages={data}
+                  gcTotal={gcTotal}
+                  selectedStage={selectedNumber}
+                  onSelectStage={(n) => {
+                    const idx = stages.findIndex((x) => x.stage_number === n && !x.is_gc);
+                    if (idx >= 0) setKlassementStageIdx(idx);
+                  }}
+                  title="TUSSENSTAND SELECTEREN"
+                  subtitle={`Komende ${gameName ?? "koers"}`}
+                  rangeLabel={
+                    klassementStage
                       ? `T/m rit ${klassementStage.stage_number}${klassementStage.name ? ` — ${klassementStage.name}` : ""}`
-                      : "Kies een rit"}
-                  </p>
-                </div>
+                      : "Kies een rit"
+                  }
+                />
               </div>
-              <StageBars
-                stages={stages}
-                pointsByStageId={myPointsPerStage}
-                rankByStageId={myRankPerStage}
-                selectedStageId={klassementStage?.id}
-                onSelectStage={(s) => {
-                  const idx = stages.findIndex((x) => x.id === s.id);
-                  if (idx >= 0) setKlassementStageIdx(idx);
-                }}
-                gcUnlocked={stages
-                  .filter((x) => !x.is_gc)
-                  .some((x) => x.stage_number === 21 && x.results_status === "approved")}
-                trackHeight={130}
-              />
-            </div>
-          )}
+            );
+          })()}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Pool overall standings */}
