@@ -1,5 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
+
+/** Wacht tot auth-state geresolved is (anon óf ingelogd). Voorkomt RPC-storm
+ *  tijdens de auth-race bij mount en blokkeert queries terwijl loading=true. */
+function useAuthReady(): boolean {
+  return !useAuth().loading;
+}
 
 export type StageRow = {
   id: string;
@@ -22,9 +29,10 @@ export type LastApprovedStage = {
 };
 
 export function useLastApprovedStage(gameId?: string) {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: ["last-approved-stage", gameId],
-    enabled: Boolean(gameId),
+    enabled: authReady && Boolean(gameId),
     queryFn: async (): Promise<LastApprovedStage | null> => {
       if (!supabase || !gameId) return null;
       const { data, error } = await supabase
@@ -42,9 +50,10 @@ export function useLastApprovedStage(gameId?: string) {
 }
 
 export function useStages(gameId?: string) {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: ["stages", gameId],
-    enabled: Boolean(gameId),
+    enabled: authReady && Boolean(gameId),
     queryFn: async (): Promise<StageRow[]> => {
       if (!supabase || !gameId) return [];
       const { data, error } = await supabase
@@ -80,9 +89,10 @@ export type StageResultRow = {
 };
 
 export function useStageResults(stageId?: string) {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: ["stage-results", stageId],
-    enabled: Boolean(stageId),
+    enabled: authReady && Boolean(stageId),
     queryFn: async (): Promise<StageResultRow[]> => {
       if (!supabase || !stageId) return [];
       const { data, error } = await supabase
@@ -124,9 +134,10 @@ export type GameStandingRow = {
 };
 
 export function useGameStandings(gameId?: string, uptoStageNumber?: number) {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: ["game-standings", gameId, uptoStageNumber],
-    enabled: Boolean(supabase && gameId && typeof uptoStageNumber === "number"),
+    enabled: authReady && Boolean(supabase && gameId && typeof uptoStageNumber === "number"),
     staleTime: 60 * 1000,
     retry: 0, // RPC ontbreekt? meteen terugvallen op client-berekening
     queryFn: async (): Promise<GameStandingRow[]> => {
@@ -145,9 +156,10 @@ export function useGameStandings(gameId?: string, uptoStageNumber?: number) {
  *  Haalt alleen die rijen op i.p.v. de hele game — schaalt naar veel deelnemers. */
 /** Jouw dagklassering per etappe (server-side). Map<stage_id, rank>. */
 export function useMyStageRanks(gameId?: string, userId?: string) {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: ["my-stage-ranks", gameId, userId],
-    enabled: Boolean(supabase && gameId && userId),
+    enabled: authReady && Boolean(supabase && gameId && userId),
     staleTime: 60 * 1000,
     retry: 0,
     queryFn: async (): Promise<Map<string, number>> => {
@@ -169,9 +181,10 @@ export function useMyStageRanks(gameId?: string, userId?: string) {
 /** Gemiddelde stage-punten per etappe over alle ingediende teams (server-side).
  *  Map<stage_id, avg>. Voor de Hors Catégorie-tijdlijn, i.p.v. alle stage_points. */
 export function useStageAverages(gameId?: string) {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: ["game-stage-averages", gameId],
-    enabled: Boolean(supabase && gameId),
+    enabled: authReady && Boolean(supabase && gameId),
     staleTime: 60 * 1000,
     retry: 0,
     queryFn: async (): Promise<Map<string, number>> => {
@@ -190,11 +203,12 @@ export function useStageAverages(gameId?: string) {
 }
 
 export function useStagePointsForEntries(gameId?: string, entryIds?: string[]) {
+  const authReady = useAuthReady();
   const ids = entryIds ?? [];
   const idsKey = [...ids].sort().join(",");
   return useQuery({
     queryKey: ["stage-points-entries", gameId, idsKey],
-    enabled: Boolean(supabase && gameId && ids.length > 0),
+    enabled: authReady && Boolean(supabase && gameId && ids.length > 0),
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<StagePointsRow[]> => {
       if (!supabase || !gameId || ids.length === 0) return [];
@@ -215,9 +229,10 @@ export function useStagePointsForEntries(gameId?: string, entryIds?: string[]) {
 }
 
 export function useStagePoints(gameId?: string) {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: ["stage-points", gameId],
-    enabled: Boolean(gameId),
+    enabled: authReady && Boolean(gameId),
     queryFn: async (): Promise<StagePointsRow[]> => {
       if (!supabase || !gameId) return [];
       const { data, error } = await supabase
@@ -248,9 +263,10 @@ export type EntryStanding = {
 };
 
 export function useEntries(gameId?: string) {
+  const authReady = useAuthReady();
   return useQuery({
     queryKey: ["entries-standings", gameId],
-    enabled: Boolean(gameId),
+    enabled: authReady && Boolean(gameId),
     queryFn: async (): Promise<EntryStanding[]> => {
       if (!supabase || !gameId) return [];
       const { data, error } = await (supabase as any).rpc("game_entries_standings", {
