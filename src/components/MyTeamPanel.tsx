@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import TruiBadge from "@/components/retro/TruiBadge";
 import type { TruiType } from "@/lib/themas";
+import TeamSheetView from "@/components/teamsheet/TeamSheet";
+import { detectCategory as detectCategoryT, type SheetRider as SheetRiderT } from "@/components/teamsheet/tokens";
 import MijnPloegStats from "@/components/MijnPloegStats";
 import FormMeter from "@/components/FormMeter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -533,159 +535,43 @@ export default function MyTeamPanel({
       )}
 
 
-      {/* ═══ HET PELOTON — grafisch overzicht ═══
-          Kleine zijaanzicht-silhouetjes, truikleur = categorie. Sorteert van
-          kopman (ALIEN/GC) naar achteren. Layout waaiert uit over rijen zodat
-          15-25 renners blijven passen. Lijst eronder blijft als zoek-/scan-tool. */}
+      {/* ═══ TEAM SHEET — fantasy team-hierarchie (retro-magazinestijl) ═══
+          Hero (ALIEN+GC), category-grid, DNF-blok, legenda. Reusable components
+          in src/components/teamsheet/. Lijst eronder blijft voor snel scannen. */}
       {(() => {
-        type PelotonRider = {
-          id: string;
-          name: string;
-          start_number: number | null;
-          is_dnf?: boolean | null;
-          catName: string;
-          rank: number;
-          jersey: string;
-          shorts: string;
-        };
-        const pelotonRiders: PelotonRider[] = [];
+        const sheet: SheetRiderT[] = [];
         for (const cat of categories) {
           const ids = picksByCategory.get(cat.id) ?? [];
-          const key = `${cat.name} ${cat.short_name ?? ""}`;
-          const colors = getCategoryJerseyColor(key);
-          const rank = getCategoryRank(key);
+          const detectName = `${cat.name} ${cat.short_name ?? ""}`;
+          const category = detectCategoryT(detectName);
           for (const rid of ids) {
             const r = ridersById[rid];
             if (!r) continue;
-            pelotonRiders.push({
+            sheet.push({
               id: r.id,
               name: r.name,
-              start_number: r.start_number,
-              is_dnf: (r as { is_dnf?: boolean | null }).is_dnf ?? false,
-              catName: cat.short_name ?? cat.name,
-              rank,
-              jersey: colors.jersey,
-              shorts: colors.shorts,
+              startNumber: r.start_number,
+              category,
+              status: dnfZichtbaar && (r as { is_dnf?: boolean | null }).is_dnf ? "DNF" : "active",
+              team: r.team,
             });
           }
         }
         for (const jid of standaloneJokerIds) {
           const r = ridersById[jid];
           if (!r) continue;
-          const colors = getCategoryJerseyColor("joker");
-          pelotonRiders.push({
+          sheet.push({
             id: r.id,
             name: r.name,
-            start_number: r.start_number,
-            is_dnf: (r as { is_dnf?: boolean | null }).is_dnf ?? false,
-            catName: "JOKER",
-            rank: getCategoryRank("joker"),
-            jersey: colors.jersey,
-            shorts: colors.shorts,
+            startNumber: r.start_number,
+            category: "JOKER",
+            status: dnfZichtbaar && (r as { is_dnf?: boolean | null }).is_dnf ? "DNF" : "active",
+            team: r.team,
           });
         }
-        pelotonRiders.sort((a, b) => a.rank - b.rank);
-        if (pelotonRiders.length === 0) return null;
         return (
-          <div
-            className="vintage-paper rounded-lg p-3 md:p-4 mb-4"
-            style={{ border: "1px solid var(--ink-sepia)" }}
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <span className="vintage-stamp text-[10px] md:text-[11px]" style={{ color: "var(--ink-sepia)" }}>
-                — Le peloton —
-              </span>
-              <div className="flex-1 h-px" style={{ background: "var(--ink-sepia)", opacity: 0.25 }} />
-              <span className="font-mono text-[10px] tabular-nums" style={{ color: "var(--ink-faded)" }}>
-                {pelotonRiders.length} renners
-              </span>
-            </div>
-            {/* Grid uitwaaiering: mobiel 3/rij, sm 5, md 7, lg 9.
-                gap-y groter zodat namen niet over elkaar vallen; gap-x kleiner
-                voor bunch-overlap-gevoel. Items lichtjes versprongen via every
-                tweede rij negative margin. */}
-            <style>{`
-              .peloton-grid { --peloton-cols: 3; }
-              @media (min-width: 480px) { .peloton-grid { --peloton-cols: 4; } }
-              @media (min-width: 640px) { .peloton-grid { --peloton-cols: 5; } }
-              @media (min-width: 768px) { .peloton-grid { --peloton-cols: 7; } }
-              @media (min-width: 1024px){ .peloton-grid { --peloton-cols: 9; } }
-            `}</style>
-            <div className="peloton-grid grid" style={{
-              gridTemplateColumns: "repeat(var(--peloton-cols, 3), minmax(0,1fr))",
-              rowGap: "1.5rem",
-              columnGap: "0.25rem",
-            }}>
-              {pelotonRiders.map((p, idx) => {
-                const offset = Math.floor(idx / 3) % 2 === 1 ? 6 : 0; // lichte versprong
-                const numStr = p.start_number != null ? String(p.start_number) : "—";
-                return (
-                  <div
-                    key={p.id}
-                    className="flex flex-col items-center text-center min-w-0"
-                    style={{
-                      transform: `translateX(${offset}px)`,
-                    }}
-                    title={`${p.catName} · #${numStr} · ${p.name}`}
-                  >
-                    {/* Naam + nummer BOVEN het figuurtje */}
-                    <div className="mb-1 min-w-0 w-full px-0.5">
-                      <div
-                        className="font-mono text-[9px] md:text-[10px] tabular-nums leading-none mb-0.5"
-                        style={{ color: "#9A8A74", letterSpacing: "0.16em" }}
-                      >
-                        #{numStr}
-                      </div>
-                      <div
-                        className="truncate text-[11px] md:text-[12px]"
-                        style={{
-                          fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
-                          fontWeight: 600,
-                          color: p.is_dnf ? "rgba(58,42,26,0.4)" : "var(--ink-sepia)",
-                          textDecoration: p.is_dnf ? "line-through" : undefined,
-                          lineHeight: 1.15,
-                        }}
-                      >
-                        {p.name}
-                      </div>
-                      {p.is_dnf && dnfZichtbaar && (
-                        <div className="text-[9px] italic mt-0.5" style={{ color: "var(--vintage-red)", fontFamily: "'Source Serif 4',Georgia,serif" }}>
-                          Uitgevallen
-                        </div>
-                      )}
-                    </div>
-                    {/* Fietser */}
-                    <CyclistFigure
-                      jersey={p.jersey}
-                      shorts={p.shorts}
-                      dnf={dnfZichtbaar && Boolean(p.is_dnf)}
-                      width={52}
-                      height={40}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-            {/* Categorie-legenda klein onderaan */}
-            <div className="mt-4 pt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5" style={{ borderTop: "1px solid rgba(58,42,26,0.12)" }}>
-              {(() => {
-                const seen = new Set<string>();
-                const items: { label: string; color: string }[] = [];
-                for (const p of pelotonRiders) {
-                  if (seen.has(p.catName)) continue;
-                  seen.add(p.catName);
-                  items.push({ label: p.catName.toUpperCase(), color: p.jersey });
-                }
-                return items.map((it) => (
-                  <span key={it.label} className="inline-flex items-center gap-1.5">
-                    <span aria-hidden className="block w-2.5 h-3.5 rounded-sm" style={{ background: it.color, border: "1px solid var(--ink-sepia)" }} />
-                    <span className="vintage-stamp text-[9px] md:text-[10px]" style={{ color: "var(--ink-faded)", letterSpacing: "0.2em" }}>
-                      {it.label}
-                    </span>
-                  </span>
-                ));
-              })()}
-            </div>
+          <div className="mb-4 md:mb-6">
+            <TeamSheetView riders={sheet} />
           </div>
         );
       })()}
