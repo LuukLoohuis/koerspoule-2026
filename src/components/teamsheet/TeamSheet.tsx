@@ -97,7 +97,7 @@ export default function TeamSheet({ riders, loading = false, selectedRiderId, on
             paddingInline: "8px",
           }}
         >
-          Hiërarchie van het peloton
+          Mijn Ploeg
           <span className="ml-2 font-mono tabular-nums" style={{ color: "var(--ink-faded)", letterSpacing: "0.1em", fontSize: "12px" }}>
             ({total})
           </span>
