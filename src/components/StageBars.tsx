@@ -26,10 +26,11 @@ import {
 type StageType = "vlak" | "heuvelachtig" | "bergop" | "tijdrit" | "ploegentijdrit";
 
 const TYPE_COLOR: Record<StageType, { mid: string; deep: string; ring: string; label: string }> = {
-  vlak:           { mid: "#3FA76A", deep: "#2E8B57", ring: "#1F6B3F", label: "Vlak" },
-  heuvelachtig:   { mid: "#E0A411", deep: "#C0851A", ring: "#8E600F", label: "Heuvelachtig" },
-  bergop:         { mid: "#D04A66", deep: "#A82C49", ring: "#7A1F36", label: "Bergrit" },
-  tijdrit:        { mid: "#4E81B2", deep: "#2E5E8C", ring: "#1F4368", label: "Tijdrit" },
+  // Frisser/poster-achtig palet zoals het reference-affiche.
+  vlak:           { mid: "#4FB867", deep: "#2F8B3F", ring: "#1E6B2A", label: "Vlak" },
+  heuvelachtig:   { mid: "#F2C13A", deep: "#D89A18", ring: "#8E600F", label: "Heuvelachtig" },
+  bergop:         { mid: "#E2425E", deep: "#B1283F", ring: "#7A1730", label: "Bergrit" },
+  tijdrit:        { mid: "#4F9BD8", deep: "#2E73B0", ring: "#1F4D7C", label: "Tijdrit" },
   ploegentijdrit: { mid: "#7E5BB2", deep: "#5C3F8C", ring: "#3F2A66", label: "Ploegentijdrit" },
 };
 
@@ -80,11 +81,11 @@ export default function StageBars({
     return rankByStageId[id];
   };
 
-  /** Maximum punten over alle non-GC stages → schaalfactor voor balk-hoogte. */
-  const maxPts = useMemo(
-    () => stages.filter((s) => !s.is_gc).reduce((m, s) => Math.max(m, getPts(s.id)), 0),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stages, pointsByStageId],
+  /** Max afstand (km) over non-GC stages → schaalfactor voor balk-hoogte.
+   *  Admin voert km in bij Etappes-tab; hoe meer km, hoe langer de capsule. */
+  const maxKm = useMemo(
+    () => stages.filter((s) => !s.is_gc).reduce((m, s) => Math.max(m, s.distance_km ?? 0), 0),
+    [stages],
   );
   /** GC-totaal = som van alle stage-points. */
   const gcTotal = useMemo(
@@ -139,7 +140,7 @@ export default function StageBars({
                   type={type}
                   points={pts}
                   rank={rank}
-                  maxPoints={maxPts}
+                  maxKm={maxKm}
                   trackHeight={trackHeight}
                   selected={isSelected}
                   onClick={() => onSelectStage?.(s)}
@@ -193,7 +194,7 @@ function StageBar({
   type,
   points,
   rank,
-  maxPoints,
+  maxKm,
   trackHeight,
   selected,
   onClick,
@@ -203,16 +204,17 @@ function StageBar({
   type: StageType;
   points: number;
   rank?: number;
-  maxPoints: number;
+  maxKm: number;
   trackHeight: number;
   selected: boolean;
   onClick: () => void;
   showPoints: boolean;
 }) {
   const tone = TYPE_COLOR[type] ?? TYPE_COLOR.vlak;
-  // Min 22% hoogte (zelfs zonder punten), max 100% bij top-score.
-  const heightPct = maxPoints > 0 ? Math.max(22, (points / maxPoints) * 100) : 28;
   const km = stage.distance_km ?? 0;
+  // Capsule-hoogte volgt de admin-ingevoerde afstand; min 30% zodat korte
+  // ritten leesbaar blijven, max 100% bij langste rit.
+  const heightPct = maxKm > 0 ? Math.max(30, (km / maxKm) * 100) : 60;
 
   return (
     <Tooltip>
