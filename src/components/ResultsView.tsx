@@ -41,11 +41,18 @@ function mapDbTypeToStage(t: string | null | undefined): StageBarType {
   }
 }
 
-/** Bouwt StageBar-props uit onze DB-stages + points-map. */
+/** Bouwt StageBar-props uit onze DB-stages + points-map.
+ *  `totalPointsOverride` (meestal myEntry.total_points uit
+ *  game_entries_standings) is de authoritative totale punten incl.
+ *  eindklassement-bonus. Wanneer aanwezig wordt 'ie gebruikt voor de
+ *  GC-kolom; anders valt de functie terug op een lokale som van de
+ *  etappepunten + GC-bonus uit de points-map (best-effort).
+ */
 function buildStageBarData(
   stages: StageRow[],
   pointsByStageId: Map<string, number>,
   selectedStageId: string | undefined,
+  totalPointsOverride?: number,
 ): { data: StageBarStage[]; gcTotal: number; selectedNumber: number | null } {
   const nonGc = stages.filter((s) => !s.is_gc);
   const data: StageBarStage[] = nonGc.map((s) => ({
@@ -54,12 +61,16 @@ function buildStageBarData(
     distanceKm: s.distance_km ?? 0,
     earnedPoints: pointsByStageId.get(s.id) ?? 0,
   }));
-  // GC-totaal = som van etappepunten + bonus uit het eindklassement-stage.
-  // De is_gc-stage zit in `stages` maar niet in `data`; punten ervan vragen
-  // we apart op uit de points-map en tellen we erbij op.
-  const gcStageId = stages.find((s) => s.is_gc)?.id;
-  const gcBonus = gcStageId ? pointsByStageId.get(gcStageId) ?? 0 : 0;
-  const gcTotal = data.reduce((acc, s) => acc + s.earnedPoints, 0) + gcBonus;
+
+  let gcTotal: number;
+  if (typeof totalPointsOverride === "number") {
+    gcTotal = totalPointsOverride;
+  } else {
+    const gcStageId = stages.find((s) => s.is_gc)?.id;
+    const gcBonus = gcStageId ? pointsByStageId.get(gcStageId) ?? 0 : 0;
+    gcTotal = data.reduce((acc, s) => acc + s.earnedPoints, 0) + gcBonus;
+  }
+
   const selectedRow = stages.find((s) => s.id === selectedStageId);
   const selectedNumber = selectedRow ? selectedRow.stage_number : null;
   return { data, gcTotal, selectedNumber };
@@ -298,6 +309,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                   stages,
                   myPointsPerStage,
                   selectedStage?.id,
+                  myEntry?.total_points,
                 );
                 return (
                   <div className="mt-3 mb-4">
@@ -529,6 +541,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
               stages,
               myPointsPerStage,
               klassementStage?.id,
+              myEntry?.total_points,
             );
             return (
               <div className="mt-3 mb-3">
