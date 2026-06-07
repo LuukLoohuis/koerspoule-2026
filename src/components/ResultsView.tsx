@@ -54,7 +54,12 @@ function buildStageBarData(
     distanceKm: s.distance_km ?? 0,
     earnedPoints: pointsByStageId.get(s.id) ?? 0,
   }));
-  const gcTotal = data.reduce((acc, s) => acc + s.earnedPoints, 0);
+  // GC-totaal = som van etappepunten + bonus uit het eindklassement-stage.
+  // De is_gc-stage zit in `stages` maar niet in `data`; punten ervan vragen
+  // we apart op uit de points-map en tellen we erbij op.
+  const gcStageId = stages.find((s) => s.is_gc)?.id;
+  const gcBonus = gcStageId ? pointsByStageId.get(gcStageId) ?? 0 : 0;
+  const gcTotal = data.reduce((acc, s) => acc + s.earnedPoints, 0) + gcBonus;
   const selectedRow = stages.find((s) => s.id === selectedStageId);
   const selectedNumber = selectedRow ? selectedRow.stage_number : null;
   return { data, gcTotal, selectedNumber };
