@@ -238,29 +238,32 @@ function Styles() {
 .sb-label-stage { margin-bottom: 4px; }
 
 .sb-scroll {
-  display: flex; align-items: flex-end; gap: ${BAR_GAP}px;
-  overflow-x: auto; overflow-y: visible;
+  flex: 1 1 0; min-width: 0;
+  display: flex; align-items: flex-end; gap: 4px;
+  overflow-y: visible;
   padding: 56px 4px 0; margin-top: -56px;
-  scrollbar-width: thin;
 }
-.sb-scroll::-webkit-scrollbar { height: 6px; }
-.sb-scroll::-webkit-scrollbar-thumb { background: #d8c8a8; border-radius: 3px; }
+/* Mobiel: nog niet kleiner dan iets leesbaars; dan toch scrollen. */
+@media (max-width: 640px) {
+  .sb-scroll { gap: 6px; overflow-x: auto; }
+}
 
 .sb-col {
   display: flex; flex-direction: column; align-items: center;
-  flex: none; background: none; border: none; padding: 0; cursor: pointer;
+  flex: 1 1 0; min-width: 0;
+  background: none; border: none; padding: 0; cursor: pointer;
   font: inherit; color: inherit;
 }
-.sb-col--gc { margin-left: 8px; }
+.sb-col--gc { margin-left: 10px; flex: 0 0 auto; }
 
 .sb-bar-wrap {
-  position: relative; width: ${BAR_W}px;
+  position: relative; width: 100%; max-width: ${BAR_W}px; min-width: 24px;
   display: flex; align-items: flex-end; justify-content: center;
   border-radius: ${BAR_W}px;
   filter: drop-shadow(0 3px 5px rgba(58,42,26,.20));
   transition: box-shadow .18s ease;
 }
-.sb-col--gc .sb-bar-wrap { width: ${BAR_W + 6}px; }
+.sb-col--gc .sb-bar-wrap { width: ${BAR_W + 4}px; max-width: none; }
 
 .sb-capsule {
   width: 100%; position: relative;
@@ -297,10 +300,14 @@ function Styles() {
   position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
   margin-bottom: 26px;
   background: #FBF6E9; border: 1.5px solid rgba(58,42,26,.5); border-radius: 12px;
-  padding: 10px 14px; min-width: 130px; white-space: nowrap;
-  box-shadow: 0 6px 16px rgba(58,42,26,.22); z-index: 5;
+  padding: 10px 14px; min-width: 150px; white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(58,42,26,.22); z-index: 50;
+  color: #3A2A1A;
 }
-.sb-tip-row { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 4px; }
+.sb-tip-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; margin-bottom: 4px; color: #3A2A1A; font-weight: 600;
+}
 .sb-tip-pts { font-weight: 800; color: #B8860B; font-size: 15px; }
 .sb-tip-pointer {
   position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
