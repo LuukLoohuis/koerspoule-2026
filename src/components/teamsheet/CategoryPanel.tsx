@@ -4,22 +4,20 @@
  */
 
 import CategoryBadgeIcon from "./icons";
-import Cyclist from "./Cyclist";
 import RiderTile from "./RiderTile";
 import { categoryTone, type RiderCategory, type SheetRider } from "./tokens";
 
 type Props = {
   category: RiderCategory;
-  /** Actieve renners (DNF wordt apart als "Uitgevallen … N" rij getoond). */
+  /** Alle renners van deze categorie. DNF wordt door RiderTile zelf doorgestreept
+   *  en met rood kruis getoond — geen aparte samenvattingsrij. */
   riders: SheetRider[];
-  /** Aantal uitgevallen renners in deze categorie — toont samenvattingsrij onderaan. */
-  dnfCount?: number;
   selectedRiderId?: string | null;
   onRiderClick?: (id: string) => void;
 };
 
-export default function CategoryPanel({ category, riders, dnfCount = 0, selectedRiderId, onRiderClick }: Props) {
-  if (riders.length === 0 && dnfCount === 0) return null;
+export default function CategoryPanel({ category, riders, selectedRiderId, onRiderClick }: Props) {
+  if (riders.length === 0) return null;
   const tone = categoryTone(category);
 
   return (
@@ -76,47 +74,6 @@ export default function CategoryPanel({ category, riders, dnfCount = 0, selected
             onClick={onRiderClick}
           />
         ))}
-        {/* DNF-samenvattingsrij — één regel "Uitgevallen ……… N" met grijs
-            renner-silhouet (volgens reference, compact en rustig). */}
-        {dnfCount > 0 && (
-          <div className="w-full flex items-center gap-2 py-1 px-1">
-            <Cyclist category={category} faded width={56} height={42} />
-            <div className="flex-1 min-w-0 flex items-baseline gap-2">
-              <span
-                className="italic"
-                style={{
-                  fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
-                  fontWeight: 600,
-                  fontSize: "13px",
-                  color: "var(--ink-faded)",
-                  lineHeight: 1.2,
-                }}
-              >
-                Uitgevallen
-              </span>
-              <span
-                aria-hidden
-                className="flex-1 min-w-[10px] mb-[3px]"
-                style={{ borderBottom: "1px dotted rgba(58,42,26,0.35)", height: "1px" }}
-              />
-            </div>
-            <span
-              className="shrink-0 font-mono tabular-nums px-2 py-0.5 rounded-full"
-              style={{
-                background: "rgba(58,42,26,0.08)",
-                color: "var(--ink-faded)",
-                border: "1px solid rgba(58,42,26,0.25)",
-                fontSize: "10.5px",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                minWidth: "30px",
-                textAlign: "center",
-              }}
-            >
-              {dnfCount}
-            </span>
-          </div>
-        )}
       </div>
     </section>
   );

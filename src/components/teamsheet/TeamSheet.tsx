@@ -35,28 +35,27 @@ type Props = {
 const HERO_CATEGORIES: RiderCategory[] = ["ALIEN", "GC"];
 
 export default function TeamSheet({ riders, loading = false, selectedRiderId, onRiderClick }: Props) {
-  const { activeByCat, dnfCountByCat, otherActiveCats, total } = useMemo(() => {
-    // Conform reference: actieve renners per categorie; DNF wordt onderaan elk
-    // panel als compacte "Uitgevallen ………… N" rij getoond i.p.v. losse tegels.
+  const { activeByCat, otherActiveCats, total } = useMemo(() => {
+    // Alle renners per categorie. Binnen elk panel: actieve eerst, DNF onderaan
+    // (RiderTile rendert DNF met doorgestreepte naam + rood kruis door het
+    // silhouet — zo blijven de uitvallers benoemd zichtbaar).
     const byCat = new Map<RiderCategory, SheetRider[]>();
-    const dnfCounts = new Map<RiderCategory, number>();
     for (const r of riders) {
-      if (r.status === "DNF") {
-        dnfCounts.set(r.category, (dnfCounts.get(r.category) ?? 0) + 1);
-        continue;
-      }
       const list = byCat.get(r.category) ?? [];
       list.push(r);
       byCat.set(r.category, list);
     }
+    for (const [k, list] of byCat) {
+      list.sort((a, b) => {
+        const da = a.status === "DNF" ? 1 : 0;
+        const db = b.status === "DNF" ? 1 : 0;
+        return da - db;
+      });
+      byCat.set(k, list);
+    }
     const present = uniqueCategoriesInOrder(riders);
     const others = present.filter((c) => !HERO_CATEGORIES.includes(c));
-    return {
-      activeByCat: byCat,
-      dnfCountByCat: dnfCounts,
-      otherActiveCats: others,
-      total: riders.length,
-    };
+    return { activeByCat: byCat, otherActiveCats: others, total: riders.length };
   }, [riders]);
 
   if (loading) return <TeamSheetSkeleton />;
@@ -191,7 +190,6 @@ export default function TeamSheet({ riders, loading = false, selectedRiderId, on
               key={c}
               category={c}
               riders={activeByCat.get(c) ?? []}
-              dnfCount={dnfCountByCat.get(c) ?? 0}
               selectedRiderId={selectedRiderId ?? null}
               onRiderClick={onRiderClick}
             />
