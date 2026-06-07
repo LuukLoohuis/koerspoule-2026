@@ -500,29 +500,30 @@ export default function MyTeamPanel({
 
           // ── Shared sub-components ──────────────────────────────────────────
 
+          // ── Minimalistische L'Équipe-stijl: typografie + kleur doen het werk.
+          //    Géén iconen, géén badges per rij, géén kaders. Stille kleurcodering
+          //    via een 3px-randje links in de categorie-kleur.
+
           const SectionHeader = ({ sec, borderRight = false }: { sec: Section; borderRight?: boolean }) => (
             <div
-              className="flex items-center gap-2 px-3 py-2.5 sticky top-0 z-10 backdrop-blur"
+              className="flex items-center gap-3 px-3 py-2 sticky top-0 z-10"
               style={{
-                background: "rgba(240,235,225,0.95)",
-                borderBottom: `2px solid ${sec.badge.border}`,
-                borderRight: borderRight ? "1px solid var(--paper-deep)" : undefined,
-                boxShadow: "0 1px 0 rgba(58,42,26,0.06)",
+                background: "rgba(244,236,216,0.95)",
+                backdropFilter: "blur(4px)",
+                borderTop: `1px solid ${sec.badge.border}`,
+                borderRight: borderRight ? "1px solid rgba(58,42,26,0.08)" : undefined,
               }}
             >
-              {/* Accent-stripe in categorie-kleur links als sectie-marker */}
-              <span aria-hidden className="block w-1 h-5 rounded-sm shrink-0" style={{ background: sec.badge.border }} />
-              <span className="text-base leading-none shrink-0">{sec.icon}</span>
               <span
                 className="vintage-stamp text-[10px] md:text-[11px] shrink-0"
-                style={{ color: sec.badge.color, letterSpacing: "0.24em" }}
+                style={{ color: sec.badge.color, letterSpacing: "0.28em" }}
               >
                 {sec.label}
               </span>
-              <div className="flex-1 h-px" style={{ background: sec.badge.border, opacity: 0.35 }} />
+              <div className="flex-1" />
               <span
-                className="font-mono text-[10px] font-bold tabular-nums shrink-0 px-1.5 py-0.5 rounded"
-                style={{ color: sec.badge.color, background: sec.badge.bg, border: `1px solid ${sec.badge.border}`, opacity: 0.95 }}
+                className="font-mono text-[10px] tabular-nums shrink-0"
+                style={{ color: "var(--ink-faded)" }}
               >
                 {sec.riders.length}
               </span>
@@ -530,54 +531,56 @@ export default function MyTeamPanel({
           );
 
           const RiderRow = ({
-            rider, icon, badge, rIdx, borderRight = false, isLast = false,
+            rider, badge, rIdx, borderRight = false, isLast = false,
           }: {
-            rider: Rider | null; icon: ReactNode; badge: BadgeConfig;
+            rider: Rider | null; badge: BadgeConfig;
             rIdx: number; borderRight?: boolean; isLast?: boolean;
           }) => {
-            // Subtieler zebra: zachte papier-tinten i.p.v. harde wissel.
-            const bg = rIdx % 2 === 0 ? "var(--paper-light)" : "rgba(237,227,204,0.55)";
             const isDnf = dnfZichtbaar && Boolean(rider?.is_dnf);
             if (!rider) return (
-              <div style={{
-                background: bg, minHeight: "52px",
-                borderRight: borderRight ? "1px solid rgba(58,42,26,0.08)" : undefined,
-                borderBottom: !isLast ? "1px solid rgba(58,42,26,0.10)" : undefined,
-              }} />
+              <div
+                style={{
+                  minHeight: "44px",
+                  borderRight: borderRight ? "1px solid rgba(58,42,26,0.06)" : undefined,
+                  borderBottom: !isLast ? "1px solid rgba(58,42,26,0.06)" : undefined,
+                }}
+              />
             );
             const numStr = rider.start_number != null
               ? String(rider.start_number).padStart(3, " ")
               : " — ";
+            // 3px linkerrandje in de categorie-kleur (rood bij DNF).
+            const accent = isDnf ? "var(--vintage-red)" : badge.border;
+            void rIdx; // zebra is weg — papier + witruimte volstaan
             return (
               <div
                 className="flex items-center"
                 style={{
-                  background: isDnf ? "rgba(178,58,52,0.08)" : bg,
-                  minHeight: "52px",
-                  borderBottom: !isLast ? "1px solid rgba(58,42,26,0.10)" : undefined,
-                  borderRight: borderRight ? "1px solid rgba(58,42,26,0.08)" : undefined,
+                  minHeight: "44px",
+                  borderLeft: `3px solid ${accent}`,
+                  paddingLeft: "10px",
+                  borderBottom: !isLast ? "1px solid rgba(58,42,26,0.06)" : undefined,
+                  borderRight: borderRight ? "1px solid rgba(58,42,26,0.06)" : undefined,
                 }}
               >
-                {/* Rugnummer — groot, vintage maillot-geel display */}
-                <div className="shrink-0 px-2.5 text-right" style={{ width: "52px", borderRight: "1px dashed rgba(58,42,26,0.18)" }}>
+                {/* Rugnummer — klein, rustig, gedempt inkt-bruin */}
+                <div className="shrink-0 w-12 text-right pr-3">
                   <span
-                    className="vintage-numeral tabular-nums text-[20px] leading-none"
-                    style={{ color: isDnf ? "var(--vintage-red)" : "var(--vintage-yellow-hot)", textShadow: isDnf ? undefined : "1px 1px 0 rgba(58,42,26,0.12)" }}
+                    className="font-mono tabular-nums text-[12.5px] leading-none"
+                    style={{ color: "#9A8A74", fontWeight: 500 }}
                   >
                     {numStr}
                   </span>
                 </div>
-                {/* Categorie-icoon */}
-                <div className="shrink-0 w-9 text-center text-base leading-none select-none">
-                  {isDnf ? <span style={{ color: "var(--vintage-red)" }}>✕</span> : icon}
-                </div>
                 {/* Naam + team */}
-                <div className="flex-1 min-w-0 px-2 py-2">
+                <div className="flex-1 min-w-0 pr-3 py-1.5">
                   <span
-                    className="font-display font-bold block truncate"
+                    className="block truncate"
                     style={{
-                      fontSize: "14.5px",
-                      color: isDnf ? "rgba(58,42,26,0.5)" : "var(--ink-sepia)",
+                      fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      color: isDnf ? "rgba(58,42,26,0.45)" : "var(--ink-sepia)",
                       lineHeight: 1.25,
                       textDecoration: isDnf ? "line-through" : undefined,
                     }}
@@ -585,44 +588,14 @@ export default function MyTeamPanel({
                     {rider.name}
                   </span>
                   {isDnf ? (
-                    <span className="vintage-stamp text-[9px] block mt-0.5" style={{ color: "var(--vintage-red)", letterSpacing: "0.18em" }}>
+                    <span className="block text-[10px] mt-0.5 italic" style={{ color: "var(--vintage-red)", fontFamily: "'Source Serif 4',Georgia,serif" }}>
                       Uitgevallen{game?.status === "finished" ? " · Definitief" : ""}
                     </span>
                   ) : rider.team ? (
-                    <span className="font-mono text-[10px] block truncate" style={{ color: "var(--ink-faded)" }}>
+                    <span className="block truncate text-[11px] italic mt-0.5" style={{ color: "var(--ink-faded)", fontFamily: "'Source Serif 4',Georgia,serif" }}>
                       {rider.team}
                     </span>
                   ) : null}
-                </div>
-                {/* Categorie-badge — emaille-plaatje */}
-                <div className="shrink-0 px-2.5 py-1">
-                  {isDnf ? (
-                    <span
-                      className="font-mono text-[9px] font-black uppercase px-2 py-1 rounded-sm"
-                      style={{
-                        background: "rgba(178,58,52,0.10)",
-                        color: "var(--vintage-red)",
-                        border: "1px solid var(--vintage-red)",
-                        letterSpacing: "0.16em",
-                        boxShadow: "1px 1px 0 rgba(58,42,26,0.15)",
-                      }}
-                    >
-                      DNF
-                    </span>
-                  ) : (
-                    <span
-                      className="font-mono text-[9px] font-black uppercase px-2 py-1 rounded-sm"
-                      style={{
-                        background: badge.bg,
-                        color: badge.color,
-                        border: `1px solid ${badge.border}`,
-                        letterSpacing: "0.16em",
-                        boxShadow: "1px 1px 0 rgba(58,42,26,0.15)",
-                      }}
-                    >
-                      {badge.label}
-                    </span>
-                  )}
                 </div>
               </div>
             );
@@ -656,13 +629,13 @@ export default function MyTeamPanel({
                         <div key={rIdx} className="grid grid-cols-2">
                           <RiderRow
                             rider={left.riders[rIdx] ?? null}
-                            icon={left.icon} badge={left.badge}
+                            badge={left.badge}
                             rIdx={rIdx} borderRight
                             isLast={rIdx === maxRows - 1}
                           />
                           <RiderRow
                             rider={right?.riders[rIdx] ?? null}
-                            icon={right?.icon ?? null} badge={right?.badge ?? left.badge}
+                            badge={right?.badge ?? left.badge}
                             rIdx={rIdx}
                             isLast={rIdx === maxRows - 1}
                           />
@@ -682,7 +655,7 @@ export default function MyTeamPanel({
                     {sec.riders.map((rider, rIdx) => (
                       <RiderRow
                         key={rider.id}
-                        rider={rider} icon={sec.icon} badge={sec.badge}
+                        rider={rider} badge={sec.badge}
                         rIdx={rIdx} isLast={rIdx === sec.riders.length - 1}
                       />
                     ))}
