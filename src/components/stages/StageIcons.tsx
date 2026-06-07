@@ -113,7 +113,7 @@ export function RouteIcon({ size = 18, className, title }: IconProps) {
 
 export function MountainTexture({
   className,
-  opacity = 0.22,
+  opacity = 0.28,
 }: {
   className?: string;
   opacity?: number;
@@ -121,14 +121,21 @@ export function MountainTexture({
   return (
     <svg
       className={className}
-      viewBox="0 0 100 40"
+      viewBox="0 0 100 50"
       preserveAspectRatio="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
       style={{ display: "block" }}
     >
+      {/* back ridge — lighter, taller, sits behind */}
       <path
-        d="M0 40 L0 27 L11 15 L19 23 L29 9 L39 21 L49 13 L61 25 L71 11 L81 21 L91 15 L100 25 L100 40 Z"
+        d="M0 50 L0 22 L14 6 L26 18 L40 2 L54 16 L66 5 L80 17 L92 7 L100 16 L100 50 Z"
+        fill="currentColor"
+        opacity={opacity * 0.55}
+      />
+      {/* front ridge — sharper, more pronounced */}
+      <path
+        d="M0 50 L0 30 L10 18 L20 28 L31 10 L42 26 L52 15 L64 30 L74 12 L85 26 L94 16 L100 28 L100 50 Z"
         fill="currentColor"
         opacity={opacity}
       />

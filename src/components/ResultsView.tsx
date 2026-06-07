@@ -476,10 +476,31 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
             <div className="mt-3 mb-3 retro-border bg-gradient-to-br from-card via-card to-secondary/20 p-3">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <h3 className="font-display text-sm font-bold tracking-wide uppercase text-foreground/80">
+                  <h3
+                    style={{
+                      fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
+                      fontWeight: 800,
+                      color: "var(--ink-sepia)",
+                      fontSize: "20px",
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      lineHeight: 1.05,
+                    }}
+                  >
                     Tussenstand selecteren
                   </h3>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p
+                    className="mt-0.5"
+                    style={{
+                      fontFamily: "'Source Serif 4',Georgia,serif",
+                      fontSize: "13px",
+                      color: "var(--ink-faded)",
+                      fontStyle: "normal",
+                    }}
+                  >
+                    Komende {gameName ?? "koers"}
+                  </p>
+                  <p className="text-[11px]" style={{ color: "var(--ink-faded)" }}>
                     {klassementStage
                       ? `T/m rit ${klassementStage.stage_number}${klassementStage.name ? ` — ${klassementStage.name}` : ""}`
                       : "Kies een rit"}

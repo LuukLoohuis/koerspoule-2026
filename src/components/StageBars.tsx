@@ -68,9 +68,10 @@ function inlineIcon(t: StageType, size = 14) {
   }
 }
 
-const MIN_H = 70;
-const MAX_H = 220;
-const CONTAINER_H = MAX_H; // bottom-aligned, badge sticking out via -top
+const MIN_H = 60;
+const MAX_H = 240;
+const CONTAINER_H = MAX_H;
+const BAR_W = 30; // slim capsule (clamp 26-34 via flex/min/max)
 
 export interface StageBarsProps {
   stages: StageRow[];
@@ -156,10 +157,10 @@ export default function StageBars({
             </div>
           </div>
 
-          {/* Scrollbare bar-rij */}
+          {/* Scrollbare bar-rij — bredere gaps tussen slanke capsules. */}
           <div
-            className="flex-1 min-w-0 flex items-end gap-2 sm:gap-2.5 overflow-x-auto pb-2 px-1 snap-x snap-mandatory"
-            style={{ scrollbarWidth: "thin" }}
+            className="flex-1 min-w-0 flex items-end overflow-x-auto pb-2 px-1 snap-x snap-mandatory"
+            style={{ scrollbarWidth: "thin", gap: "20px" }}
           >
             {stageRows.map((s) => {
               const pts = getPts(s.id);
@@ -207,7 +208,7 @@ function FranceLineArt() {
       width="260"
       height="220"
       viewBox="0 0 260 220"
-      style={{ opacity: 0.08, color: "var(--ink-sepia)" }}
+      style={{ opacity: 0.14, color: "var(--ink-sepia)" }}
     >
       <path
         d="M70 30 Q90 18 120 22 L150 30 L172 26 L188 38 L196 56 L208 74 L214 96 L220 116 L208 138 L196 154 L186 174 L168 190 L142 198 L118 200 L96 198 L78 188 L66 170 L58 150 L52 130 L48 112 L46 92 L52 70 L60 50 Z"
@@ -277,33 +278,38 @@ function StageBar({
           onClick={onClick}
           className={cn(
             "snap-start group relative shrink-0 flex flex-col items-center justify-end",
-            "w-12 sm:w-14 md:w-[58px] rounded-2xl px-1 pb-1 transition-all duration-300 ease-out",
+            "rounded-2xl px-0 pb-1 transition-all duration-300 ease-out",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--medal-gold)]",
             selected && "bg-[hsl(var(--vintage-gold)/0.10)] ring-2 ring-[var(--medal-gold)] shadow-[0_0_22px_-4px_rgba(232,185,35,0.7)]",
           )}
-          style={{ paddingTop: 22 }}
+          style={{ paddingTop: 22, width: BAR_W + 14, minWidth: BAR_W + 14 }}
           aria-pressed={selected}
         >
           {/* Bar-container, badge sticks out boven dankzij top:-14px */}
-          <div className="relative w-full flex items-end justify-center" style={{ height: CONTAINER_H }}>
-            {/* Solid capsule — verticale gradient, niet partial. */}
+          <div className="relative flex items-end justify-center" style={{ height: CONTAINER_H, width: BAR_W }}>
+            {/* Solid capsule — verticale gradient, niet partial. Top fully
+                rounded (BAR_W/2), bottom modest rounded (6-8px) zoals reference. */}
             <div
-              className="relative w-full rounded-full"
+              className="relative w-full"
               style={{
                 height: `${barHeightPx}px`,
                 background: `linear-gradient(180deg, ${tone.mid} 0%, ${tone.deep} 100%)`,
                 border: `1.5px solid ${tone.deep}`,
+                borderTopLeftRadius: BAR_W,
+                borderTopRightRadius: BAR_W,
+                borderBottomLeftRadius: 8,
+                borderBottomRightRadius: 8,
                 boxShadow:
                   "0 2px 0 rgba(58,42,26,0.15), inset 0 -6px 0 rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,0.22)",
                 overflow: "hidden",
-                color: tone.texture, // voor MountainTexture currentColor
+                color: tone.texture,
               }}
             >
               {/* Mountain texture: alleen op bergrit-balken. */}
               {type === "bergop" && (
                 <MountainTexture
                   className="absolute left-0 right-0 bottom-0 w-full"
-                  opacity={0.22}
+                  opacity={0.28}
                 />
               )}
             </div>
@@ -395,16 +401,20 @@ function GcColumn({
             selected && !locked && "bg-[hsl(var(--vintage-gold)/0.18)] ring-2 ring-[var(--medal-gold)] shadow-[0_0_24px_-4px_rgba(232,185,35,0.8)]",
             locked && "opacity-55 cursor-not-allowed",
           )}
-          style={{ width: 60, paddingTop: 22, borderLeft: "1px dashed rgba(58,42,26,0.25)" }}
+          style={{ width: BAR_W + 16, paddingTop: 22, borderLeft: "1px dashed rgba(58,42,26,0.25)" }}
           aria-pressed={selected}
         >
-          <div className="relative w-full flex items-end justify-center" style={{ height: CONTAINER_H }}>
+          <div className="relative flex items-end justify-center" style={{ height: CONTAINER_H, width: BAR_W }}>
             <div
-              className="relative w-full rounded-full"
+              className="relative w-full"
               style={{
                 height: `${MAX_H}px`,
                 background: `linear-gradient(180deg, ${GC_GOLD.mid} 0%, ${GC_GOLD.deep} 100%)`,
                 border: `1.5px solid ${GC_GOLD.ring}`,
+                borderTopLeftRadius: BAR_W,
+                borderTopRightRadius: BAR_W,
+                borderBottomLeftRadius: 8,
+                borderBottomRightRadius: 8,
                 boxShadow:
                   "0 2px 0 rgba(58,42,26,0.18), inset 0 -8px 0 rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,0.22)",
               }}
