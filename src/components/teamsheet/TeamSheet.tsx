@@ -100,16 +100,26 @@ const HERO_CATEGORIES: RiderCategory[] = ["ALIEN", "GC"];
 
 export default function TeamSheet({ riders, loading = false, selectedRiderId, onRiderClick }: Props) {
   const { activeByCat, dnfRiders, otherActiveCats, total } = useMemo(() => {
-    const active: SheetRider[] = [];
-    const dnf: SheetRider[] = [];
-    for (const r of riders) (r.status === "DNF" ? dnf : active).push(r);
+    // DNF-renners blijven óók zichtbaar in hun eigen categorie-panel (doorgestreept
+    // door RiderTile), zodat de hiërarchie compleet leesbaar blijft. De aparte
+    // DNF-strip onderaan blijft een snel overzicht "wie er weg is".
+    const dnf: SheetRider[] = riders.filter((r) => r.status === "DNF");
     const byCat = new Map<RiderCategory, SheetRider[]>();
-    for (const r of active) {
+    for (const r of riders) {
       const list = byCat.get(r.category) ?? [];
       list.push(r);
       byCat.set(r.category, list);
     }
-    const present = uniqueCategoriesInOrder(active);
+    // Binnen elk panel: actieve eerst, DNF onderaan.
+    for (const [k, list] of byCat) {
+      list.sort((a, b) => {
+        const da = a.status === "DNF" ? 1 : 0;
+        const db = b.status === "DNF" ? 1 : 0;
+        return da - db;
+      });
+      byCat.set(k, list);
+    }
+    const present = uniqueCategoriesInOrder(riders);
     const others = present.filter((c) => !HERO_CATEGORIES.includes(c));
     return { activeByCat: byCat, dnfRiders: dnf, otherActiveCats: others, total: riders.length };
   }, [riders]);
