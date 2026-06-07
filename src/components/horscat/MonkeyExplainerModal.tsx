@@ -1,149 +1,173 @@
 /**
  * <MonkeyExplainerModal>
  *
- * Klein info-icoon dat een dialog opent met uitleg over de Monte-Carlo
- * "Aap met de dartpijl"-feature: monkey-metafoor → 5000 sims → percentile
- * → wat de uitslag betekent. Friendly Dutch copy, retro-stijl.
+ * Inline accordion (geen overlay/modal): klik op "Hoe werkt dit?" → uitleg
+ * schuift onder de knop open en duwt content eronder weg. Klik opnieuw → dicht.
+ *
+ * De naam is om backwards-compat redenen ongewijzigd; gedrag = accordion.
  */
 
-import { useState } from "react";
-import { Info, X } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { useEffect, useRef, useState } from "react";
+import { Info, ChevronDown } from "lucide-react";
 
 type Props = {
-  /** Aantal monkey-runs (default 5000) — voor in de tekst. */
   monkeyCount?: number;
-  /** Compacte trigger-knop (anders icoon-alleen). */
+  /** Compacte trigger-knop (icon-only) of "text" met label. */
   variant?: "icon" | "text";
 };
 
 export default function MonkeyExplainerModal({ monkeyCount = 5000, variant = "icon" }: Props) {
   const [open, setOpen] = useState(false);
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {variant === "icon" ? (
-          <button
-            type="button"
-            aria-label="Hoe werkt dit?"
-            title="Hoe werkt dit?"
-            className="inline-flex items-center justify-center rounded-full transition-colors"
-            style={{
-              width: 28,
-              height: 28,
-              border: "1.5px solid var(--ink-sepia)",
-              background: "#FBF4DE",
-              color: "var(--ink-sepia)",
-            }}
-          >
-            <Info size={14} strokeWidth={2.4} />
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5"
-            style={{
-              border: "1.5px solid var(--ink-sepia)",
-              background: "#FBF4DE",
-              color: "var(--ink-sepia)",
-              fontFamily: "'Oswald','Bebas Neue',sans-serif",
-              fontWeight: 700,
-              fontSize: "11px",
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-            }}
-          >
-            <Info size={13} strokeWidth={2.4} />
-            <span>Hoe werkt dit?</span>
-          </button>
-        )}
-      </DialogTrigger>
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [maxH, setMaxH] = useState<number>(0);
 
-      <DialogContent
-        className="vintage-paper max-w-lg max-h-[88vh] overflow-y-auto"
-        style={{ border: "1.5px solid var(--ink-sepia)", color: "var(--ink-sepia)" }}
+  // Bereken doel-hoogte voor het uitvouw-paneel (smooth transition zonder
+  // "hard cut" — vereist een numerieke maxHeight i.p.v. auto).
+  useEffect(() => {
+    if (!panelRef.current) return;
+    if (open) {
+      setMaxH(panelRef.current.scrollHeight);
+    } else {
+      setMaxH(0);
+    }
+  }, [open]);
+
+  // Resize-safety: als het paneel open is en de inhoud verandert (font load,
+  // etc.) updaten we de maxHeight zodat 'ie niet afgeknipt blijft.
+  useEffect(() => {
+    if (!open || !panelRef.current) return;
+    const el = panelRef.current;
+    const obs = new ResizeObserver(() => setMaxH(el.scrollHeight));
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [open]);
+
+  return (
+    <div className="w-full">
+      {/* Trigger */}
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="monkey-explainer-panel"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1.5 rounded-full transition-colors"
+        style={
+          variant === "icon"
+            ? {
+                width: 30,
+                height: 30,
+                justifyContent: "center",
+                border: "1.5px solid var(--ink-sepia)",
+                background: "#FBF4DE",
+                color: "var(--ink-sepia)",
+                borderRadius: 9999,
+              }
+            : {
+                padding: "6px 12px",
+                border: "1.5px solid var(--ink-sepia)",
+                background: "#FBF4DE",
+                color: "var(--ink-sepia)",
+                fontFamily: "'Oswald','Bebas Neue',sans-serif",
+                fontWeight: 700,
+                fontSize: "11px",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+              }
+        }
+        aria-label="Hoe werkt dit?"
+        title="Hoe werkt dit?"
       >
-        <DialogHeader>
-          <DialogTitle
-            className="text-left flex items-center gap-2"
+        <Info size={variant === "icon" ? 14 : 13} strokeWidth={2.4} />
+        {variant === "text" && (
+          <>
+            <span>Hoe werkt dit?</span>
+            <ChevronDown
+              size={13}
+              strokeWidth={2.4}
+              style={{
+                transition: "transform 250ms ease",
+                transform: open ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            />
+          </>
+        )}
+      </button>
+
+      {/* Inline expanding panel */}
+      <div
+        id="monkey-explainer-panel"
+        role="region"
+        aria-label="Uitleg Aap met de dartpijl"
+        style={{
+          overflow: "hidden",
+          maxHeight: `${maxH}px`,
+          transition: "max-height 320ms ease, opacity 240ms ease, margin-top 240ms ease",
+          opacity: open ? 1 : 0,
+          marginTop: open ? 12 : 0,
+        }}
+      >
+        <div
+          ref={panelRef}
+          className="vintage-paper rounded-2xl p-4 md:p-5"
+          style={{
+            border: "1.5px solid var(--ink-sepia)",
+            color: "var(--ink-sepia)",
+            boxShadow: "0 2px 0 rgba(58,42,26,0.14)",
+          }}
+        >
+          <h3
+            className="flex items-center gap-2 mb-2"
             style={{
               fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
               fontWeight: 800,
-              fontSize: "22px",
-              letterSpacing: "0.04em",
+              fontSize: "16px",
+              letterSpacing: "0.06em",
               textTransform: "uppercase",
               color: "var(--ink-sepia)",
             }}
           >
-            <span aria-hidden style={{ fontSize: 26 }}>🐒</span>
-            De aap met de dartpijl
-          </DialogTitle>
-        </DialogHeader>
+            <span aria-hidden style={{ fontSize: 18 }}>🐒</span>
+            De aap met de dartpijl — uitleg
+          </h3>
 
-        <div className="space-y-4 text-[14px]" style={{ fontFamily: "'Source Serif 4',Georgia,serif", lineHeight: 1.55 }}>
-          <p>
-            <strong>Centrale vraag:</strong> ben jij beter dan blinde gok? Een aap kiest zijn
-            ploeg willekeurig — wij simuleren dat heel vaak en kijken of jij het beter doet.
-          </p>
+          <div className="space-y-3 text-[13.5px]" style={{ fontFamily: "'Source Serif 4',Georgia,serif", lineHeight: 1.55 }}>
+            <p>
+              <strong>Centrale vraag:</strong> ben jij beter dan blinde gok? Een aap kiest zijn
+              ploeg willekeurig — wij simuleren dat heel vaak en kijken of jij het beter doet.
+            </p>
 
-          <div>
-            <h3 className="text-[13px] mt-2 mb-1" style={{ fontFamily: "'Oswald',sans-serif", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ink-faded)" }}>
-              Hoe werkt het?
-            </h3>
-            <ol className="list-decimal pl-5 space-y-1.5">
-              <li>Een denkbeeldige aap gooit dartpijlen op de startlijst en kiest zo zijn renners.</li>
-              <li>Dat herhalen we {monkeyCount.toLocaleString("nl-NL")} keer, met exact dezelfde puntentelling als jij.</li>
-              <li>We tellen het percentage apen dat <em>minder</em> punten heeft dan jij.</li>
-              <li>Dat is jouw <strong>percentile</strong>: "Je verslaat X% van de apen".</li>
-            </ol>
+            <div>
+              <h4 className="text-[12px] mt-1 mb-1" style={{ fontFamily: "'Oswald',sans-serif", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ink-faded)" }}>
+                Hoe werkt het?
+              </h4>
+              <ol className="list-decimal pl-5 space-y-1">
+                <li>Een denkbeeldige aap gooit dartpijlen op de startlijst en kiest zo zijn renners.</li>
+                <li>Dat herhalen we {monkeyCount.toLocaleString("nl-NL")} keer, met exact dezelfde puntentelling als jij.</li>
+                <li>We tellen het percentage apen dat <em>minder</em> punten heeft dan jij.</li>
+                <li>Dat is jouw <strong>percentile</strong>: "Je verslaat X% van de apen".</li>
+              </ol>
+            </div>
+
+            <div>
+              <h4 className="text-[12px] mt-1 mb-1" style={{ fontFamily: "'Oswald',sans-serif", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ink-faded)" }}>
+                Wat betekent het?
+              </h4>
+              <ul className="list-disc pl-5 space-y-1">
+                <li><strong>≥ 85%</strong>: petje af — dit is duidelijk skill, geen toeval.</li>
+                <li><strong>60–84%</strong>: netjes — je zit boven het gemiddelde van het toeval.</li>
+                <li><strong>40–59%</strong>: gelijkspel — skill en kans houden elkaar in balans.</li>
+                <li><strong>&lt; 40%</strong>: de aap had het beter gedaan; bananen voor jou.</li>
+              </ul>
+            </div>
+
+            <p style={{ color: "var(--ink-faded)", fontSize: "12px" }}>
+              Eén Tour is een korte steekproef — variance is hoog. Hoe meer etappes en hoe
+              scherper jouw keuzes, hoe meer betekenis het percentage krijgt. {monkeyCount.toLocaleString("nl-NL")} simulaties houden
+              de schatting kalm, niet meer dan dat.
+            </p>
           </div>
-
-          <div>
-            <h3 className="text-[13px] mt-2 mb-1" style={{ fontFamily: "'Oswald',sans-serif", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ink-faded)" }}>
-              Wat betekent het?
-            </h3>
-            <ul className="list-disc pl-5 space-y-1.5">
-              <li><strong>≥ 85%</strong>: petje af — dit is duidelijk skill, geen toeval.</li>
-              <li><strong>60–84%</strong>: netjes — je zit boven het gemiddelde van het toeval.</li>
-              <li><strong>40–59%</strong>: gelijkspel — skill en kans houden elkaar in balans.</li>
-              <li><strong>&lt; 40%</strong>: de aap had het beter gedaan; bananen voor jou.</li>
-            </ul>
-          </div>
-
-          <p style={{ color: "var(--ink-faded)", fontSize: "12.5px" }}>
-            Eén Tour is een korte steekproef — variance is hoog. Hoe meer etappes (en hoe
-            scherper jouw keuzes), hoe meer betekenis het percentage krijgt. {monkeyCount.toLocaleString("nl-NL")} simulaties houden
-            de schatting rustig, niet meer dan dat.
-          </p>
         </div>
-
-        <div className="flex justify-end mt-2">
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5"
-            style={{
-              border: "1.5px solid var(--ink-sepia)",
-              background: "var(--ink-sepia)",
-              color: "var(--paper-light)",
-              fontFamily: "'Oswald','Bebas Neue',sans-serif",
-              fontWeight: 700,
-              fontSize: "11px",
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-            }}
-          >
-            <X size={13} strokeWidth={2.6} />
-            Sluiten
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }

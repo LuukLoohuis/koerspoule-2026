@@ -893,35 +893,37 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           ) : (
             <>
               {/* ── Uitleg-laag: titel + ⓘ + percentile + verdict ─────────── */}
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div>
-                  <h2
-                    style={{
-                      fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
-                      fontWeight: 900,
-                      color: "var(--ink-sepia)",
-                      fontSize: "clamp(22px, 4vw, 28px)",
-                      letterSpacing: "0.04em",
-                      textTransform: "uppercase",
-                      lineHeight: 1.05,
-                    }}
-                  >
-                    <span aria-hidden style={{ marginRight: 6 }}>🐒</span>
-                    De aap met de dartpijl
-                  </h2>
-                  <p
-                    style={{
-                      fontFamily: "'Source Serif 4',Georgia,serif",
-                      fontStyle: "italic",
-                      color: "var(--ink-faded)",
-                      fontSize: "13px",
-                      marginTop: 2,
-                    }}
-                  >
-                    Ben je beter dan blinde gok?
-                  </p>
+              <div>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <h2
+                      style={{
+                        fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
+                        fontWeight: 900,
+                        color: "var(--ink-sepia)",
+                        fontSize: "clamp(22px, 4vw, 28px)",
+                        letterSpacing: "0.04em",
+                        textTransform: "uppercase",
+                        lineHeight: 1.05,
+                      }}
+                    >
+                      <span aria-hidden style={{ marginRight: 6 }}>🐒</span>
+                      De aap met de dartpijl
+                    </h2>
+                    <p
+                      style={{
+                        fontFamily: "'Source Serif 4',Georgia,serif",
+                        fontStyle: "italic",
+                        color: "var(--ink-faded)",
+                        fontSize: "13px",
+                        marginTop: 2,
+                      }}
+                    >
+                      Ben je beter dan blinde gok?
+                    </p>
+                  </div>
+                  <MonkeyExplainerModal monkeyCount={5000} variant="text" />
                 </div>
-                <MonkeyExplainerModal monkeyCount={5000} variant="text" />
               </div>
               <PercentileVerdict
                 percentile={Math.round(monte.beatPct)}
@@ -930,50 +932,6 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
               />
               {/* /Uitleg-laag */}
 
-              {/* Hero */}
-              <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] p-6 md:p-8">
-                <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                  <div>
-                    <h2 className="font-display text-3xl md:text-4xl font-black text-foreground mb-1">
-                      🐒 De aap met de dartpijl
-                    </h2>
-                    <p className="text-sm text-muted-foreground mb-5">Monte Carlo Simulatie — 5000 simulaties</p>
-                    <div
-                      className={cn(
-                        "font-display tabular-nums font-black leading-none mb-2",
-                        "text-5xl md:text-6xl",
-                        isBeating ? "text-emerald-600" : "text-rose-600",
-                      )}
-                    >
-                      {isBeating ? "+" : ""}
-                      {diffPct.toFixed(0)}%
-                    </div>
-                    <p className="text-foreground/80 text-sm font-medium">
-                      {isBeating ? "beter" : "slechter"} dan de gemiddelde aap
-                    </p>
-                    <p className="text-muted-foreground/70 text-xs mt-1.5 font-mono">
-                      jij {monte.userActual} pt &nbsp;·&nbsp; gem. aap {Math.round(monte.mean)} pt
-                    </p>
-                  </div>
-
-                  {nickname && (
-                    <div className="text-center shrink-0">
-                      <div className="text-5xl mb-2">{nickname.emoji}</div>
-                      <div
-                        className={cn(
-                          "font-display text-xl font-bold",
-                          nickname.good ? "text-emerald-600" : "text-rose-600",
-                        )}
-                      >
-                        {nickname.title}
-                      </div>
-                      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70 mt-1">
-                        prestatieklasse
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
 
               {/* Distribution chart + Percentile gauge */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1189,8 +1147,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 </div>
               </div>
 
-              {/* Stats row: mean · median · fun */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Stats row: gemiddelde aap + jij vs aap (2 kaarten, gebalanceerd) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <DarkStatCard
                   label="Gemiddelde aap"
                   value={`${Math.round(monte.mean)}`}
@@ -1198,14 +1156,6 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   icon="🎯"
                   description="Verwacht puntentotaal bij volledig willekeurige rennersselectie op basis van de pool van ingediende teams."
                   accentColor="gold"
-                />
-                <DarkStatCard
-                  label="Mediaan aap"
-                  value={`${Math.round(monte.median)}`}
-                  unit="punten"
-                  icon="📊"
-                  description="De middelste aap van 5.000. Minder gevoelig voor uitschieters dan het gemiddelde — een eerlijkere maatstaf."
-                  accentColor="blue"
                 />
                 <DarkStatCard
                   label={monte.worseThanApe ? "Verlies van de aap" : "Jij vs de aap"}
@@ -1227,106 +1177,6 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 />
               </div>
 
-              {/* Stage timeline */}
-              {stageTimeline.length > 0 && (
-                <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 md:p-5">
-                  <div className="relative">
-                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
-                      <Activity className="h-3 w-3" />
-                      Etappe voor etappe
-                    </div>
-                    <h3 className="font-display text-foreground text-base sm:text-lg mb-0.5">
-                      Jij vs de Gemiddelde Aap
-                    </h3>
-                    <p className="text-[11px] text-muted-foreground mb-4">Cumulatieve punten per goedgekeurde etappe</p>
-                    <div style={{ height: 200 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={stageTimeline} margin={{ top: 10, right: 8, left: -22, bottom: 0 }}>
-                          <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.06)" />
-                          <XAxis
-                            dataKey="stage"
-                            tick={{ fontSize: 9, fill: "#bbb" }}
-                            axisLine={false}
-                            tickLine={false}
-                          />
-                          <YAxis tick={{ fontSize: 9, fill: "#bbb" }} axisLine={false} tickLine={false} />
-                          <Tooltip
-                            cursor={{ stroke: "rgba(0,0,0,0.15)", strokeWidth: 1 }}
-                            content={(props: any) => {
-                              const { active, payload, label } = props;
-                              if (!active || !payload?.length) return null;
-                              const row = payload[0]?.payload;
-                              return (
-                                <div
-                                  className="rounded-xl border border-border backdrop-blur-xl px-3 py-2 text-xs text-foreground shadow-xl space-y-1"
-                                  style={{ background: "hsl(var(--card))" }}
-                                >
-                                  <div className="font-mono font-bold text-foreground mb-1">{label}</div>
-                                  <div className="flex items-center gap-2">
-                                    <span
-                                      className="h-2 w-2 rounded-full"
-                                      style={{ background: "hsl(var(--vintage-gold))" }}
-                                    />
-                                    <span className="text-foreground/70">Jij</span>
-                                    <span className="ml-auto font-bold text-foreground">{row.user} pt</span>
-                                    {row.userDelta > 0 && (
-                                      <span className="text-emerald-600 text-[10px]">+{row.userDelta}</span>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="h-2 w-2 rounded-full bg-secondary/60" />
-                                    <span className="text-foreground/70">Gem. aap</span>
-                                    <span className="ml-auto font-bold text-foreground/80">{row.avg} pt</span>
-                                    {row.avgDelta > 0 && (
-                                      <span className="text-muted-foreground text-[10px]">+{row.avgDelta}</span>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            }}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="user"
-                            name="Jij"
-                            stroke="hsl(var(--vintage-gold))"
-                            strokeWidth={2.5}
-                            dot={false}
-                            activeDot={{ r: 5, fill: "hsl(var(--vintage-gold))", strokeWidth: 0 }}
-                            animationDuration={1000}
-                            animationEasing="ease-out"
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="avg"
-                            name="Gem. aap"
-                            stroke="rgba(0,0,0,0.25)"
-                            strokeWidth={1.5}
-                            strokeDasharray="5 4"
-                            dot={false}
-                            activeDot={{ r: 4, fill: "rgba(0,0,0,0.3)", strokeWidth: 0 }}
-                            animationDuration={1000}
-                            animationEasing="ease-out"
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="flex gap-5 mt-3 text-[10px] text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <span
-                          className="inline-block h-0.5 w-5 rounded"
-                          style={{ background: "hsl(var(--vintage-gold))" }}
-                        />
-                        Jouw score
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="inline-block w-5" style={{ borderTop: "1.5px dashed rgba(0,0,0,0.25)" }} />
-                        Gemiddelde aap
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Commentary */}
               {monte.top10 && (
