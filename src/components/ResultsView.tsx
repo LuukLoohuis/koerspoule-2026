@@ -16,7 +16,7 @@ import TruiBadge from "@/components/retro/TruiBadge";
 import Podium from "@/components/Podium";
 import StageBar, { type Stage as StageBarStage } from "@/components/stages/StageBar";
 import type { StageType as StageBarType } from "@/components/stages/StageIcons";
-import type { StageRow } from "@/hooks/useResults";
+
 
 /** Map onze NL DB-stage_type naar het StageBar engelse type. */
 function mapDbTypeToStage(t: string | null | undefined): StageBarType {
