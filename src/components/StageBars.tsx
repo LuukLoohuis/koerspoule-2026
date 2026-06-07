@@ -35,23 +35,24 @@ import {
 
 type StageType = "vlak" | "heuvelachtig" | "bergop" | "tijdrit" | "ploegentijdrit";
 
-/** Gemini-vintage-blauwdruk: matte zachte vullingen, dik zwart border.
- *  Top-tint iets lichter dan deep voor subtiele verticale gradient. */
-const INK = "#1E1E1E";
-const PAPER = "#F7F4EB";
-const PAPER_CARD = "#FBF9F4";
-const BORDER = "#D9D2C2";
-const TEXT_MUTED = "#7A756B";
+/** Gemini-vintage-blauwdruk v2: diepere matte vullingen, zwart border #2B2924. */
+const INK = "#2B2924";
+const PAPER = "#FAF7F0";
+const PAPER_CARD = "#FCFAF5";
+const BORDER = "#D4CDBA";
+const RULE = "#EBE7DC";
+const TEXT_MUTED = "#8C8573";
+const TEXT_FAINT = "#A39D8B";
 
 const TYPE_COLOR: Record<StageType, { mid: string; deep: string; texture: string; label: string }> = {
-  vlak:           { mid: "#6FB079", deep: "#5AA36A", texture: "#2E6A3E", label: "Vlakke rit" },
-  heuvelachtig:   { mid: "#E5B250", deep: "#DCA037", texture: "#8C6310", label: "Heuvelachtig" },
-  bergop:         { mid: "#D55668", deep: "#C43A55", texture: "#7A1A2C", label: "Bergrit" },
-  tijdrit:        { mid: "#579ADC", deep: "#3F84C5", texture: "#1F4F7C", label: "Tijdrit" },
-  ploegentijdrit: { mid: "#8268C5", deep: "#6B4FB8", texture: "#3F2A78", label: "Ploegentijdrit" },
+  vlak:           { mid: "#3F8E6E", deep: "#2E7D5C", texture: "#1A4D36", label: "Vlakke rit" },
+  heuvelachtig:   { mid: "#D78A2A", deep: "#C97A24", texture: "#7A4511", label: "Heuvelachtig" },
+  bergop:         { mid: "#C04968", deep: "#B03A5B", texture: "#6B1F34", label: "Bergrit" },
+  tijdrit:        { mid: "#3F7BB0", deep: "#2E6B9E", texture: "#1B4263", label: "Tijdrit" },
+  ploegentijdrit: { mid: "#6E55A8", deep: "#5C448C", texture: "#3A2A66", label: "Ploegentijdrit" },
 };
 
-const GC_GOLD = { mid: "#F5CD68", deep: "#F2C14E", ring: INK, label: "Eindklassement" };
+const GC_GOLD = { mid: "#E8BB3F", deep: "#DEAF33", ring: INK, label: "Eindklassement" };
 
 /** Mappen onze NL stage_type naar de StageIcons-type-namen (engels). */
 function toIconType(t: StageType): IconStageType {
@@ -159,11 +160,18 @@ export default function StageBars({
       <div className={cn("w-full relative", className)}>
         <FranceLineArt />
 
-        <div className="flex items-end gap-3 md:gap-4 relative">
-          {/* Rij-labels STAGE / EARNED POINTS — links, op desktop */}
-          <div className="hidden md:flex flex-col justify-end shrink-0 pb-1" style={{ minHeight: CONTAINER_H + 60 }}>
-            <div className="flex flex-col items-start gap-2 pr-2" style={{ color: "var(--ink-faded)" }}>
-              <span style={{ fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", fontFamily: "'Oswald','Bebas Neue',sans-serif", fontWeight: 700 }}>Stage</span>
+        <div className="flex items-end relative">
+          {/* Sticky links: STAGE / EARNED POINTS rij-labels — staan stil bij scroll. */}
+          <div
+            className="hidden md:flex flex-col justify-end shrink-0 sticky left-0 z-20 pr-3 pb-1"
+            style={{
+              minHeight: CONTAINER_H + 80,
+              background: PAPER_CARD,
+              boxShadow: "10px 0 10px -10px rgba(0,0,0,0.05)",
+            }}
+          >
+            <div className="flex flex-col items-start gap-2" style={{ color: TEXT_FAINT }}>
+              <span style={{ fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", fontFamily: "'Oswald','Bebas Neue',sans-serif", fontWeight: 700, borderBottom: `1px solid ${RULE}`, paddingBottom: 4, width: "100%" }}>Stage</span>
               <span style={{ fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", fontFamily: "'Oswald','Bebas Neue',sans-serif", fontWeight: 700 }}>Earned points</span>
             </div>
           </div>
@@ -171,7 +179,7 @@ export default function StageBars({
           {/* Scrollbare bar-rij — bredere gaps tussen slanke capsules. */}
           <div
             className="flex-1 min-w-0 flex items-end overflow-x-auto pb-2 px-1 snap-x snap-mandatory"
-            style={{ scrollbarWidth: "thin", gap: "20px" }}
+            style={{ scrollbarWidth: "thin", gap: "16px" }}
           >
             {stageRows.map((s) => {
               const pts = getPts(s.id);
@@ -202,6 +210,11 @@ export default function StageBars({
               onClick={() => gcUnlocked && onSelectStage?.(gcStage)}
             />
           )}
+        </div>
+
+        {/* Decoratieve scroll-indicator onderaan — esthetisch lijntje. */}
+        <div className="w-full h-1 rounded-full mt-2 relative" style={{ background: RULE }}>
+          <div className="absolute left-[30%] w-1/4 h-full rounded-full" style={{ background: BORDER }} />
         </div>
       </div>
     </TooltipProvider>

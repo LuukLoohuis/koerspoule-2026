@@ -474,11 +474,11 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
           {/* Premium vertical bar selector — same component as Etappes */}
           {stages.length > 0 && (
             <div
-              className="mt-3 mb-3 p-5 md:p-6 rounded-3xl"
+              className="mt-3 mb-3 p-5 md:p-6 rounded-2xl relative"
               style={{
-                background: "#FBF9F4",
-                border: "2px solid #D9D2C2",
-                boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02), 0 1px 0 rgba(30,30,30,0.04)",
+                background: "#FCFAF5",
+                border: "2px solid #D4CDBA",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.4)",
               }}
             >
               <div className="flex items-center justify-between mb-2">
