@@ -40,8 +40,10 @@ function DnfBadge({ size = "default" }: { size?: "default" | "small" }) {
   );
 }
 
-/** Lichtgrijs zodat naam leesbaar blijft maar duidelijk "uitgevallen" leest. */
-const DNF_NAME_COLOR = "#9CA3AF";
+/** Volle ink-sepia met opacity — naam blijft scherp leesbaar, strikethrough in
+ *  rood + DNF-chip doen het werk als "uitgevallen"-marker. */
+const DNF_NAME_COLOR = "var(--ink-sepia)";
+const DNF_NAME_OPACITY = 0.78;
 
 type Props = {
   rider: SheetRider;
