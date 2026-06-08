@@ -19,6 +19,7 @@ import { useMemo } from "react";
 import { Crown } from "lucide-react";
 import CategoryPanel from "./CategoryPanel";
 import RiderTile from "./RiderTile";
+import RiderStageBreakdown from "./RiderStageBreakdown";
 import {
   type RiderCategory,
   type SheetRider,
@@ -88,6 +89,7 @@ export default function TeamSheet({
   }
 
   const heroRiders: SheetRider[] = HERO_CATEGORIES.flatMap((c) => activeByCat.get(c) ?? []);
+  const expandedHeroRider = heroRiders.find((r) => r.id === expandedRiderId) ?? null;
 
   return (
     <div className="relative space-y-4 md:space-y-5">
@@ -149,12 +151,13 @@ export default function TeamSheet({
                     fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
                     fontWeight: 900,
                     color: "var(--ink-sepia)",
-                    fontSize: "34px",
-                    letterSpacing: "0.04em",
+                    fontSize: "clamp(22px, 4.5vw, 32px)",
+                    letterSpacing: "0.02em",
                     textTransform: "uppercase",
+                    lineHeight: 1.05,
                   }}
                 >
-                  GC
+                  JACHT OP GEEL
                 </div>
                 <div
                   className="mt-1"
@@ -167,7 +170,7 @@ export default function TeamSheet({
                     textTransform: "uppercase",
                   }}
                 >
-                  in het geel
+                  van
                 </div>
               </div>
             </div>
@@ -177,23 +180,45 @@ export default function TeamSheet({
               className="flex-1 flex items-end gap-3 md:gap-4 overflow-x-auto pb-1"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {heroRiders.map((r, i) => (
-                <div key={r.id} className="shrink-0">
-                  <RiderTile
-                    rider={r}
-                    size="hero"
-                    selected={selectedRiderId === r.id}
-                    onClick={onRiderClick}
-                    // Hero-strip kit: eerste pick = gele leiderstrui (GC asset),
-                    // overige picks = bolletjes-trui (KLIM asset). Past bij
-                    // de echte wieleresthetiek waar de leider geel draagt en
-                    // de helpers vaak de bolletjestrui meenemen.
-                    cyclistOverride={i === 0 ? "GC" : "KLIM"}
-                  />
-                </div>
-              ))}
+              {heroRiders.map((r, i) => {
+                const isOpen = expandedRiderId === r.id;
+                return (
+                  <div key={r.id} className="shrink-0">
+                    <RiderTile
+                      rider={r}
+                      size="hero"
+                      selected={selectedRiderId === r.id || isOpen}
+                      onClick={onToggleRider ?? onRiderClick}
+                      ariaExpanded={onToggleRider ? isOpen : undefined}
+                      ariaControls={onToggleRider ? `rider-breakdown-${r.id}` : undefined}
+                      // Hero-strip kit: eerste pick = gele leiderstrui (GC asset),
+                      // overige picks = bolletjes-trui (KLIM asset). Past bij
+                      // de echte wieleresthetiek waar de leider geel draagt en
+                      // de helpers vaak de bolletjestrui meenemen.
+                      cyclistOverride={i === 0 ? "GC" : "KLIM"}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
+
+          {/* Punten-dropdown voor een geselecteerde hero-renner: onder de hele
+              strip i.p.v. onder één tegel (de strip is horizontaal, een inline
+              accordion per tegel zou de rij breken). */}
+          {onToggleRider && expandedHeroRider && (
+            <div className="px-4 pb-3 md:px-6 md:pb-4 -mt-1">
+              <RiderStageBreakdown
+                open
+                riderId={expandedHeroRider.id}
+                riderName={expandedHeroRider.name}
+                category={expandedHeroRider.category}
+                gameId={gameId}
+                entryId={entryId}
+                panelId={`rider-breakdown-${expandedHeroRider.id}`}
+              />
+            </div>
+          )}
         </section>
       )}
 
