@@ -1682,6 +1682,13 @@ export type Database = {
         Args: { p_stage_id: string }
         Returns: undefined
       }
+      rider_entry_totals: {
+        Args: { p_entry_id: string; p_game_id: string }
+        Returns: {
+          rider_id: string
+          total_points: number
+        }[]
+      }
       rider_stage_points: {
         Args: { p_entry_id?: string; p_game_id: string; p_rider_id: string }
         Returns: {
