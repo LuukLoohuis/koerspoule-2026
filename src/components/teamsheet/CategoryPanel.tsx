@@ -5,6 +5,7 @@
 
 import CategoryBadgeIcon from "./icons";
 import RiderTile from "./RiderTile";
+import RiderStageBreakdown from "./RiderStageBreakdown";
 import { categoryTone, type RiderCategory, type SheetRider } from "./tokens";
 
 type Props = {
@@ -14,15 +15,58 @@ type Props = {
   riders: SheetRider[];
   selectedRiderId?: string | null;
   onRiderClick?: (id: string) => void;
+  /** Renner met open punten-dropdown (toggle). */
+  expandedRiderId?: string | null;
+  onToggleRider?: (id: string) => void;
+  gameId?: string;
+  entryId?: string | null;
 };
 
-export default function CategoryPanel({ category, riders, selectedRiderId, onRiderClick }: Props) {
+export default function CategoryPanel({
+  category,
+  riders,
+  selectedRiderId,
+  onRiderClick,
+  expandedRiderId,
+  onToggleRider,
+  gameId,
+  entryId,
+}: Props) {
   if (riders.length === 0) return null;
   const tone = categoryTone(category);
 
   // Sorteer: actieve renners eerst, DNF onderaan met vintage divider ertussen.
   const activeRiders = riders.filter((r) => r.status !== "DNF");
   const dnfRiders = riders.filter((r) => r.status === "DNF");
+
+  // Eén renner-rij + (indien open) de inline punten-dropdown eronder.
+  const renderRider = (r: SheetRider) => {
+    const isOpen = expandedRiderId === r.id;
+    const panelId = `rider-breakdown-${r.id}`;
+    return (
+      <div key={r.id}>
+        <RiderTile
+          rider={r}
+          size="default"
+          selected={selectedRiderId === r.id || isOpen}
+          onClick={onToggleRider ?? onRiderClick}
+          ariaExpanded={onToggleRider ? isOpen : undefined}
+          ariaControls={onToggleRider ? panelId : undefined}
+        />
+        {onToggleRider && (
+          <RiderStageBreakdown
+            open={isOpen}
+            riderId={r.id}
+            riderName={r.name}
+            category={category}
+            gameId={gameId}
+            entryId={entryId}
+            panelId={panelId}
+          />
+        )}
+      </div>
+    );
+  };
 
   return (
     <section
@@ -88,15 +132,7 @@ export default function CategoryPanel({ category, riders, selectedRiderId, onRid
 
       {/* Rij-lijst (compact, scanbaar) — actief eerst, DNF onder divider */}
       <div className="px-2 pb-2.5 pt-1">
-        {activeRiders.map((r) => (
-          <RiderTile
-            key={r.id}
-            rider={r}
-            size="default"
-            selected={selectedRiderId === r.id}
-            onClick={onRiderClick}
-          />
-        ))}
+        {activeRiders.map(renderRider)}
 
         {activeRiders.length > 0 && dnfRiders.length > 0 && (
           <div
@@ -131,15 +167,7 @@ export default function CategoryPanel({ category, riders, selectedRiderId, onRid
           </div>
         )}
 
-        {dnfRiders.map((r) => (
-          <RiderTile
-            key={r.id}
-            rider={r}
-            size="default"
-            selected={selectedRiderId === r.id}
-            onClick={onRiderClick}
-          />
-        ))}
+        {dnfRiders.map(renderRider)}
       </div>
     </section>
   );

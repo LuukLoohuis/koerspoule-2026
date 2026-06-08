@@ -54,9 +54,20 @@ type Props = {
    *  index 0 = "GC" (gele trui), overige = "KLIM" (bolletjes). De
    *  chip-kleur + rest van de tile-styling blijft op rider.category. */
   cyclistOverride?: RiderCategory;
+  /** A11y: koppel de tile-knop aan een uitklap-paneel (dropdown). */
+  ariaExpanded?: boolean;
+  ariaControls?: string;
 };
 
-export default function RiderTile({ rider, size = "default", selected = false, onClick, cyclistOverride }: Props) {
+export default function RiderTile({
+  rider,
+  size = "default",
+  selected = false,
+  onClick,
+  cyclistOverride,
+  ariaExpanded,
+  ariaControls,
+}: Props) {
   const cyclistCategory = cyclistOverride ?? rider.category;
   const isHero = size === "hero";
   const dnf = rider.status === "DNF";
@@ -120,7 +131,14 @@ export default function RiderTile({ rider, size = "default", selected = false, o
   // ROW variant — voor category-panels: [cyclist] [naam ……] [chip OF DNF-badge]
   return (
     <Component
-      {...(onClick ? { type: "button" as const, onClick: handleClick } : {})}
+      {...(onClick
+        ? {
+            type: "button" as const,
+            onClick: handleClick,
+            ...(ariaExpanded !== undefined ? { "aria-expanded": ariaExpanded } : {}),
+            ...(ariaControls ? { "aria-controls": ariaControls } : {}),
+          }
+        : {})}
       className="group w-full flex items-center gap-2 py-1 px-1 rounded-md transition-all duration-200"
       style={{
         background: selected ? "rgba(58,42,26,0.07)" : "transparent",

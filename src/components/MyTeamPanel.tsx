@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import TruiBadge from "@/components/retro/TruiBadge";
 import type { TruiType } from "@/lib/themas";
@@ -226,6 +226,20 @@ export default function MyTeamPanel({
   const { data: stages = [] } = useStages(game?.id);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stagePoints = [] } = useMyStagePoints(entry?.id);
+
+  // Welke renner heeft z'n per-etappe-punten dropdown open (één tegelijk).
+  const [expandedRiderId, setExpandedRiderId] = useState<string | null>(null);
+  const toggleRider = (id: string) =>
+    setExpandedRiderId((cur) => (cur === id ? null : id));
+  // Escape sluit de open dropdown.
+  useEffect(() => {
+    if (!expandedRiderId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setExpandedRiderId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [expandedRiderId]);
 
   const allRiderIds = useMemo(() => {
     const set = new Set<string>();
@@ -561,7 +575,13 @@ export default function MyTeamPanel({
         }
         return (
           <div className="mb-4 md:mb-6">
-            <TeamSheetView riders={sheet} />
+            <TeamSheetView
+              riders={sheet}
+              expandedRiderId={expandedRiderId}
+              onToggleRider={toggleRider}
+              gameId={game?.id}
+              entryId={entry?.id}
+            />
           </div>
         );
       })()}

@@ -30,11 +30,26 @@ type Props = {
   loading?: boolean;
   selectedRiderId?: string | null;
   onRiderClick?: (id: string) => void;
+  /** Renner waarvan de per-etappe-punten dropdown openstaat (toggle). */
+  expandedRiderId?: string | null;
+  onToggleRider?: (id: string) => void;
+  /** Nodig voor de punten-RPC in de dropdown. */
+  gameId?: string;
+  entryId?: string | null;
 };
 
 const HERO_CATEGORIES: RiderCategory[] = ["ALIEN", "GC"];
 
-export default function TeamSheet({ riders, loading = false, selectedRiderId, onRiderClick }: Props) {
+export default function TeamSheet({
+  riders,
+  loading = false,
+  selectedRiderId,
+  onRiderClick,
+  expandedRiderId,
+  onToggleRider,
+  gameId,
+  entryId,
+}: Props) {
   const { activeByCat, otherActiveCats, total } = useMemo(() => {
     // Alle renners per categorie. Binnen elk panel: actieve eerst, DNF onderaan
     // (RiderTile rendert DNF met doorgestreepte naam + rood kruis door het
@@ -197,6 +212,10 @@ export default function TeamSheet({ riders, loading = false, selectedRiderId, on
               riders={activeByCat.get(c) ?? []}
               selectedRiderId={selectedRiderId ?? null}
               onRiderClick={onRiderClick}
+              expandedRiderId={expandedRiderId ?? null}
+              onToggleRider={onToggleRider}
+              gameId={gameId}
+              entryId={entryId}
             />
           ))}
         </div>
