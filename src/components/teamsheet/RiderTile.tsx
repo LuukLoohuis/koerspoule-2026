@@ -9,7 +9,7 @@
 
 import { X } from "lucide-react";
 import Cyclist from "./Cyclist";
-import { categoryTone, type SheetRider } from "./tokens";
+import { categoryTone, type RiderCategory, type SheetRider } from "./tokens";
 
 /** Compacte DNF-chip met kruis-icoon. Vervangt het oude italic "Uitgevallen"
  *  tekstje zodat uitgevallen renners visueel duidelijk gemarkeerd zijn.
@@ -50,9 +50,14 @@ type Props = {
   size?: "default" | "hero";
   selected?: boolean;
   onClick?: (id: string) => void;
+  /** Override de category-jersey die Cyclist tekent (bv. in de GC-hero:
+   *  index 0 = "GC" (gele trui), overige = "KLIM" (bolletjes). De
+   *  chip-kleur + rest van de tile-styling blijft op rider.category. */
+  cyclistOverride?: RiderCategory;
 };
 
-export default function RiderTile({ rider, size = "default", selected = false, onClick }: Props) {
+export default function RiderTile({ rider, size = "default", selected = false, onClick, cyclistOverride }: Props) {
+  const cyclistCategory = cyclistOverride ?? rider.category;
   const isHero = size === "hero";
   const dnf = rider.status === "DNF";
   const numStr = rider.startNumber != null ? String(rider.startNumber) : "—";
@@ -107,7 +112,7 @@ export default function RiderTile({ rider, size = "default", selected = false, o
           )}
         </div>
 
-        <Cyclist category={rider.category} faded={dnf} width={108} height={82} />
+        <Cyclist category={cyclistCategory} faded={dnf} width={108} height={82} />
       </Component>
     );
   }
@@ -133,7 +138,7 @@ export default function RiderTile({ rider, size = "default", selected = false, o
       }}
       title={`#${numStr} · ${rider.name}`}
     >
-      <Cyclist category={rider.category} faded={dnf} width={52} height={40} />
+      <Cyclist category={cyclistCategory} faded={dnf} width={52} height={40} />
       <div className="flex-1 min-w-0">
         {/* Eén-regel naam met ellipsis — DNF-badge zit nu rechts i.p.v.
             een tweede element naast het #-chip, dus de naam-kolom heeft

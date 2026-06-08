@@ -162,13 +162,18 @@ export default function TeamSheet({ riders, loading = false, selectedRiderId, on
               className="flex-1 flex items-end gap-3 md:gap-4 overflow-x-auto pb-1"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {heroRiders.map((r) => (
+              {heroRiders.map((r, i) => (
                 <div key={r.id} className="shrink-0">
                   <RiderTile
                     rider={r}
                     size="hero"
                     selected={selectedRiderId === r.id}
                     onClick={onRiderClick}
+                    // Hero-strip kit: eerste pick = gele leiderstrui (GC asset),
+                    // overige picks = bolletjes-trui (KLIM asset). Past bij
+                    // de echte wieleresthetiek waar de leider geel draagt en
+                    // de helpers vaak de bolletjestrui meenemen.
+                    cyclistOverride={i === 0 ? "GC" : "KLIM"}
                   />
                 </div>
               ))}
