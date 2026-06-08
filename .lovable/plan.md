@@ -1,60 +1,73 @@
 ## Doel
 
-In de Gazetta-tab van *Mijn Peloton* de `MiniStrip` uitbreiden zodat de drie Hors Catégorie-shortcuts (Monkey IQ, Emirates, Wielerdirecteur) elk hun bijhorende kerncijfer tonen, en de "→ bekijk je volledige ploeg" CTA visueel verduidelijken. Geen wijzigingen aan rekenlogica of andere tabs.
+1. DNF-namen volledig leesbaar maken in de category-panels op de teamsheet.
+2. Esthetische verfijning van de category-panels (vintage cycling-stijl behouden, leesbaarheid + hiërarchie verbeteren).
 
-## Wat verandert er visueel
+Geen wijzigingen aan data, RPCs of business-logica — alleen `src/components/teamsheet/*`.
 
-Per shortcut-cel in `MiniStrip`:
+---
 
-- **Monkey IQ** → percentage verslagen sim-apen, bv. `73%` met onderschrift `apen verslagen`.
-- **Emirates** → percentage van de droomploeg, bv. `62%` met onderschrift `van droomploeg`.
-- **Wielerdirecteur** → rapportcijfer 1.0–10.0, bv. `7.4` met onderschrift `rapport`.
+## Deel 1 — DNF-leesbaarheid (`RiderTile.tsx`, row variant)
 
-Layout per cel wordt: klein icoon bovenaan, groot cijfer in het midden (zelfde `font-oswald` look als de score-cellen links), label eronder. Cellen blijven volledig klikbaar en navigeren naar dezelfde tabs als nu.
+**Probleem:** rechts van de naam staan nu zowel het #-chip als de DNF-badge. Bij smalle tegels (Sprint, Klim) drukt dat de naam-kolom samen → "Christi an...", "Kaden Groves" wordt half overlapt.
 
-CTA-balk onderaan ("→ bekijk je volledige ploeg") wordt:
+**Fix:**
+- Bij DNF: **DNF-badge vervangt het #-chip** (i.p.v. ernaast). Het startnummer is voor uitgevallen renners niet meer relevant voor scoring → één element rechts, naam krijgt volle ruimte.
+- Naam-kleur terug naar volle ink-sepia met `opacity: 0.75` (i.p.v. grijs `#9CA3AF`) — strikethrough in rood blijft de primaire DNF-marker.
+- `WebkitLineClamp` van 2 → 1 voor row variant, met `title` tooltip voor edge-case lange namen (Christian Scaroni e.d.).
+- Hero variant (Top klassement): DNF-badge blijft onder de naam — daar is verticale ruimte.
 
-- Een echte knop-achtige strook met een herkenbaar icoon (`Users` of `ArrowRight` in een kleine cirkel), label "Bekijk je volledige ploeg", en een `ChevronRight` rechts.
-- Iets meer verticale ademruimte, contrast-achtergrond (`bg-secondary/40` → hover `bg-secondary/60`), zodat ie onmiskenbaar als knop leest in plaats van als platte tekstregel.
+---
 
-## Hoe data ontstaan
+## Deel 2 — Esthetische verfijning category-panels
 
-De cijfers worden vandaag binnen `HorsCategorieTab.tsx` (1700+ regels) berekend. Om die file niet te raken, komt er één nieuwe lichte hook `useHorsCategorieSummary({ gameId, userId })` die enkel de drie geaggregeerde getallen retourneert die `MiniStrip` nodig heeft.
+**A. Sub-tier scheiding (actief ↔ uitgevallen)**
 
-Die hook hergebruikt dezelfde bronnen die `HorsCategorieTab` gebruikt:
+In `CategoryPanel.tsx`: rendervolgorde wordt `actief eerst, DNF onderaan`, met een subtiele vintage divider ertussen wanneer beide groepen bestaan:
 
-- entries + stage_results (Emirates: jouw punten ÷ droomploeg-totaal).
-- monte-carlo simulatie-distributie → percentage verslagen apen.
-- pool-ranking + monkey + joker subscores → eindcijfer Wielerdirecteur (zelfde formule `max(3.0, round((raw × 9 + 1) × 10) / 10)`).
-
-Resultaat-type:
-
-```ts
-type HorsSummary = {
-  monkeyBeatPct: number | null;      // 0..100
-  emiratesPct: number | null;         // 0..100
-  directorScore: number | null;       // 1.0..10.0
-};
+```
+[actieve renners]
+─── ✦ Uitgevallen (2) ✦ ───
+[DNF renners]
 ```
 
-`null` betekent: nog niet berekenbaar (geen gefiatteerde etappes / geen entry). `MiniStrip` toont in dat geval een neutraal "—".
+Divider gebruikt bestaande `.vintage-ornament` styling (uit memory: vintage design system) — geen nieuwe tokens.
 
-## Bestanden
+**B. Category-header verfijning**
 
-```text
-src/hooks/useHorsCategorieSummary.ts   (nieuw — lichte aggregator, leunt op
-                                        bestaande RPC's & tabellen)
-src/components/karavaan/MiniStrip.tsx  (NavCell uitgebreid met value-prop;
-                                        CTA-strook redesigned)
-src/components/karavaan/KaravaanFeed.tsx
-                                       (haalt summary op, geeft door aan
-                                        MiniStrip via nieuwe prop `horsScores`)
-```
+- Icoon-badge: van 32 → 36px, met subtiele box-shadow in de jersey-tint (`tone.tint`).
+- Onder de header een dun gradient-onderlijntje in jersey-kleur (`linear-gradient(90deg, jersey, transparent)`) — sluit aan op de bestaande retro-border-stijl.
+- Telling-chip: zelfde plek, maar font-weight 800 + iets meer letter-spacing voor leesbaarheid van enkele cijfers.
 
-Geen wijzigingen aan `HorsCategorieTab.tsx`, geen wijziging aan bestaande hooks/RPC's, geen DB-migraties, geen edge-functions.
+**C. Rij-hover & focus**
 
-## Out of scope
+- Subtiele `background: tone.tint` op hover (i.p.v. neutraal grijs) → koppelt visueel aan de categorie-kleur.
+- Lichte `transform: translateX(2px)` op hover voor tactiele feedback (200ms ease).
 
-- Geen layout-wijziging aan de score-cellen links (subpoule / overall / punten).
-- Geen wijziging aan de bestaande Hors Catégorie tab zelf.
-- Geen extra tracking of analytics.
+**D. Cyclist-figuur**
+
+- Geen wijziging aan `Cyclist.tsx` zelf — bestaande SVG-varianten per categorie blijven.
+- Wel: in row variant size 56×42 → 52×40 (compacter, geeft meer ruimte aan naam zonder dat figuur kleiner oogt).
+
+---
+
+## Technische scope
+
+**Bestanden:**
+- `src/components/teamsheet/RiderTile.tsx` — DNF-badge vervangt chip, naam-kleur, line-clamp, hover.
+- `src/components/teamsheet/CategoryPanel.tsx` — sortering actief/DNF, divider tussen groepen, header-verfijning.
+
+**Niet aangeraakt:**
+- `tokens.ts`, `icons.tsx`, `Cyclist.tsx`, `TeamSheet.tsx` — geen tokens/iconen/data-wijzigingen nodig.
+- Geen nieuwe dependencies, geen Tailwind config-wijzigingen.
+
+**Verificatie:**
+- Visueel via preview op `/karavaan` (huidige route) → DNF-tegels checken op Sprint (Kaden Groves, Corbin Strong tooltip) en Klim (Christian Scaroni).
+- Hero variant blijft onveranderd.
+
+---
+
+## Niet in deze ronde
+
+- Geen volledige design-directions ronde (skill/redesign) — jij vroeg gericht om "leesbaarheid + esthetiek meedenken", niet om 3 varianten te kiezen. Als je na deze fix alsnog een radicalere herschikking wil, doen we dat als aparte ronde.
+- Geen wijziging aan grid/kolom-aantal van de panels.

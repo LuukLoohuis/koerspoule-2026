@@ -40,8 +40,10 @@ function DnfBadge({ size = "default" }: { size?: "default" | "small" }) {
   );
 }
 
-/** Lichtgrijs zodat naam leesbaar blijft maar duidelijk "uitgevallen" leest. */
-const DNF_NAME_COLOR = "#9CA3AF";
+/** Volle ink-sepia met opacity — naam blijft scherp leesbaar, strikethrough in
+ *  rood + DNF-chip doen het werk als "uitgevallen"-marker. */
+const DNF_NAME_COLOR = "var(--ink-sepia)";
+const DNF_NAME_OPACITY = 0.78;
 
 type Props = {
   rider: SheetRider;
@@ -83,7 +85,8 @@ export default function RiderTile({ rider, size = "default", selected = false, o
               fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
               fontWeight: 700,
               fontSize: "13.5px",
-              color: dnf ? DNF_NAME_COLOR : "var(--ink-sepia)",
+              color: DNF_NAME_COLOR,
+              opacity: dnf ? DNF_NAME_OPACITY : 1,
               textDecoration: dnf ? "line-through" : undefined,
               textDecorationColor: dnf ? "#C0392B" : undefined,
               textDecorationThickness: dnf ? "1.5px" : undefined,
@@ -109,63 +112,69 @@ export default function RiderTile({ rider, size = "default", selected = false, o
     );
   }
 
-  // ROW variant — voor category-panels: [cyclist] [naam ……] [chip]
+  // ROW variant — voor category-panels: [cyclist] [naam ……] [chip OF DNF-badge]
   return (
     <Component
       {...(onClick ? { type: "button" as const, onClick: handleClick } : {})}
-      className="group w-full flex items-center gap-2 py-1 px-1 rounded-md transition-colors"
+      className="group w-full flex items-center gap-2 py-1 px-1 rounded-md transition-all duration-200"
       style={{
         background: selected ? "rgba(58,42,26,0.07)" : "transparent",
         cursor: onClick ? "pointer" : "default",
       }}
+      onMouseEnter={(e) => {
+        if (selected) return;
+        e.currentTarget.style.background = dnf ? "rgba(58,42,26,0.04)" : tone.tint;
+        e.currentTarget.style.transform = "translateX(2px)";
+      }}
+      onMouseLeave={(e) => {
+        if (selected) return;
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.transform = "translateX(0)";
+      }}
       title={`#${numStr} · ${rider.name}`}
     >
-      <Cyclist category={rider.category} faded={dnf} width={56} height={42} />
+      <Cyclist category={rider.category} faded={dnf} width={52} height={40} />
       <div className="flex-1 min-w-0">
-        {/* Volledige naam: mag wrappen naar max 2 regels zodat lange namen
-            niet meer als "Jonathan ..." afgekapt worden. De vintage dotted
-            leader is hier weg — botst met multi-line en kost de horizontale
-            ruimte die we juist aan de naam willen geven. */}
+        {/* Eén-regel naam met ellipsis — DNF-badge zit nu rechts i.p.v.
+            een tweede element naast het #-chip, dus de naam-kolom heeft
+            volle breedte beschikbaar. */}
         <span
-          className="block break-words"
+          className="block truncate"
           style={{
             fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
             fontWeight: 600,
             fontSize: "13px",
-            color: dnf ? DNF_NAME_COLOR : "var(--ink-sepia)",
+            color: DNF_NAME_COLOR,
+            opacity: dnf ? DNF_NAME_OPACITY : 1,
             textDecoration: dnf ? "line-through" : undefined,
             textDecorationColor: dnf ? "#C0392B" : undefined,
             textDecorationThickness: dnf ? "1.5px" : undefined,
-            lineHeight: 1.2,
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
+            lineHeight: 1.25,
           }}
           title={rider.name}
         >
           {rider.name}
         </span>
       </div>
-      {/* Chip-nummer */}
-      <span
-        className="shrink-0 font-mono tabular-nums px-2 py-0.5 rounded-full"
-        style={{
-          background: dnf ? "rgba(58,42,26,0.08)" : tone.tint,
-          color: dnf ? "var(--ink-faded)" : tone.ink,
-          border: `1px solid ${dnf ? "rgba(58,42,26,0.18)" : tone.jersey}`,
-          fontSize: "10.5px",
-          fontWeight: 700,
-          letterSpacing: "0.06em",
-          minWidth: "30px",
-          textAlign: "center",
-        }}
-      >
-        #{numStr}
-      </span>
-      {dnf && (
-        <span className="shrink-0">
-          <DnfBadge size="small" />
+      {/* Rechts: DNF-badge vervangt het #-chip wanneer uitgevallen — startnr
+          telt voor scoring niet meer, en zo houdt de naam-kolom z'n ruimte. */}
+      {dnf ? (
+        <DnfBadge size="small" />
+      ) : (
+        <span
+          className="shrink-0 font-mono tabular-nums px-2 py-0.5 rounded-full"
+          style={{
+            background: tone.tint,
+            color: tone.ink,
+            border: `1px solid ${tone.jersey}`,
+            fontSize: "10.5px",
+            fontWeight: 700,
+            letterSpacing: "0.06em",
+            minWidth: "30px",
+            textAlign: "center",
+          }}
+        >
+          #{numStr}
         </span>
       )}
     </Component>
