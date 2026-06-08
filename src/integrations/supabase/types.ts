@@ -1682,6 +1682,19 @@ export type Database = {
         Args: { p_stage_id: string }
         Returns: undefined
       }
+      rider_stage_points: {
+        Args: { p_entry_id?: string; p_game_id: string; p_rider_id: string }
+        Returns: {
+          base_points: number
+          finish_position: number
+          multiplier: number
+          stage_id: string
+          stage_name: string
+          stage_number: number
+          stage_type: string
+          total_points: number
+        }[]
+      }
       save_entry_jokers: {
         Args: { p_entry_id: string; p_rider_ids: string[] }
         Returns: undefined
