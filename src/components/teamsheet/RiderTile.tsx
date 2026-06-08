@@ -7,8 +7,41 @@
  * Chip-nummer is gekleurd in de categorie-accentkleur.
  */
 
+import { X } from "lucide-react";
 import Cyclist from "./Cyclist";
 import { categoryTone, type SheetRider } from "./tokens";
+
+/** Compacte DNF-chip met kruis-icoon. Vervangt het oude italic "Uitgevallen"
+ *  tekstje zodat uitgevallen renners visueel duidelijk gemarkeerd zijn.
+ */
+function DnfBadge({ size = "default" }: { size?: "default" | "small" }) {
+  const isSmall = size === "small";
+  return (
+    <span
+      className="inline-flex items-center gap-0.5 font-mono font-black uppercase rounded"
+      style={{
+        background: "#FFEBEB",
+        color: "#C0392B",
+        border: "1px solid #E74C3C",
+        letterSpacing: "0.1em",
+        fontSize: isSmall ? "8.5px" : "9.5px",
+        padding: isSmall ? "1px 4px" : "1.5px 5px",
+        lineHeight: 1,
+      }}
+      aria-label="Did not finish"
+    >
+      <X
+        strokeWidth={3.2}
+        style={{ width: isSmall ? 8 : 9, height: isSmall ? 8 : 9 }}
+        aria-hidden
+      />
+      DNF
+    </span>
+  );
+}
+
+/** Lichtgrijs zodat naam leesbaar blijft maar duidelijk "uitgevallen" leest. */
+const DNF_NAME_COLOR = "#9CA3AF";
 
 type Props = {
   rider: SheetRider;
@@ -50,19 +83,18 @@ export default function RiderTile({ rider, size = "default", selected = false, o
               fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
               fontWeight: 700,
               fontSize: "13.5px",
-              color: dnf ? "rgba(58,42,26,0.42)" : "var(--ink-sepia)",
+              color: dnf ? DNF_NAME_COLOR : "var(--ink-sepia)",
               textDecoration: dnf ? "line-through" : undefined,
+              textDecorationColor: dnf ? "#C0392B" : undefined,
+              textDecorationThickness: dnf ? "1.5px" : undefined,
               lineHeight: 1.15,
             }}
           >
             {rider.name}
           </div>
           {dnf && (
-            <div
-              className="italic mt-0.5"
-              style={{ fontFamily: "'Source Serif 4',Georgia,serif", fontSize: "9px", color: "var(--vintage-red)" }}
-            >
-              Uitgevallen
+            <div className="mt-1 flex justify-center">
+              <DnfBadge />
             </div>
           )}
         </div>
@@ -91,8 +123,10 @@ export default function RiderTile({ rider, size = "default", selected = false, o
             fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
             fontWeight: 600,
             fontSize: "13px",
-            color: dnf ? "rgba(58,42,26,0.45)" : "var(--ink-sepia)",
+            color: dnf ? DNF_NAME_COLOR : "var(--ink-sepia)",
             textDecoration: dnf ? "line-through" : undefined,
+            textDecorationColor: dnf ? "#C0392B" : undefined,
+            textDecorationThickness: dnf ? "1.5px" : undefined,
             lineHeight: 1.2,
           }}
         >
@@ -125,11 +159,8 @@ export default function RiderTile({ rider, size = "default", selected = false, o
         #{numStr}
       </span>
       {dnf && (
-        <span
-          className="shrink-0 italic"
-          style={{ fontFamily: "'Source Serif 4',Georgia,serif", fontSize: "9px", color: "var(--vintage-red)" }}
-        >
-          Uitgevallen
+        <span className="shrink-0">
+          <DnfBadge size="small" />
         </span>
       )}
     </Component>
