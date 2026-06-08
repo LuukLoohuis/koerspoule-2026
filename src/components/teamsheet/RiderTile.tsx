@@ -195,7 +195,7 @@ export default function RiderTile({
             ...(ariaControls ? { "aria-controls": ariaControls } : {}),
           }
         : {})}
-      className="group w-full flex items-center gap-2 py-1 px-1 rounded-md transition-all duration-200"
+      className="group w-full flex items-center gap-1.5 py-1 px-1 rounded-md transition-all duration-200"
       style={{
         background: selected ? "rgba(58,42,26,0.07)" : "transparent",
         cursor: onClick ? "pointer" : "default",
@@ -212,7 +212,7 @@ export default function RiderTile({
       }}
       title={rider.name}
     >
-      <Cyclist category={cyclistCategory} faded={dnf} width={52} height={40} />
+      <Cyclist category={cyclistCategory} faded={dnf} width={44} height={34} />
       <div className="flex-1 min-w-0">
         {/* Volledige naam — mag wrappen naar 2 regels zodat 'ie altijd
             zichtbaar is (geen afkapping). */}

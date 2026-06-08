@@ -228,7 +228,10 @@ export default function MyTeamPanel({
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stagePoints = [] } = useMyStagePoints(entry?.id);
   // Totaal behaalde punten per renner (t/m laatst gefiatteerde etappe).
-  const { data: riderTotals } = useRiderEntryTotals(game?.id, entry?.id);
+  const { data: riderTotals, isSuccess: riderTotalsReady } = useRiderEntryTotals(
+    game?.id,
+    entry?.id,
+  );
 
   // Welke renner heeft z'n per-etappe-punten dropdown open (één tegelijk).
   const [expandedRiderId, setExpandedRiderId] = useState<string | null>(null);
@@ -585,6 +588,7 @@ export default function MyTeamPanel({
               gameId={game?.id}
               entryId={entry?.id}
               riderTotals={riderTotals}
+              riderTotalsReady={riderTotalsReady}
             />
           </div>
         );

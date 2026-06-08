@@ -21,6 +21,7 @@ type Props = {
   gameId?: string;
   entryId?: string | null;
   riderTotals?: Map<string, number>;
+  riderTotalsReady?: boolean;
 };
 
 export default function CategoryPanel({
@@ -33,6 +34,7 @@ export default function CategoryPanel({
   gameId,
   entryId,
   riderTotals,
+  riderTotalsReady,
 }: Props) {
   if (riders.length === 0) return null;
   const tone = categoryTone(category);
@@ -54,7 +56,7 @@ export default function CategoryPanel({
           onClick={onToggleRider ?? onRiderClick}
           ariaExpanded={onToggleRider ? isOpen : undefined}
           ariaControls={onToggleRider ? panelId : undefined}
-          totalPoints={riderTotals?.get(r.id)}
+          totalPoints={riderTotalsReady ? (riderTotals?.get(r.id) ?? 0) : undefined}
         />
         {onToggleRider && (
           <RiderStageBreakdown

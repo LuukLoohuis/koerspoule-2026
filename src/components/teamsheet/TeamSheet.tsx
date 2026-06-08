@@ -39,9 +39,23 @@ type Props = {
   entryId?: string | null;
   /** Totaal behaalde punten per renner (rider_id → punten). */
   riderTotals?: Map<string, number>;
+  /** True zodra de totalen geladen zijn — dan tonen renners zonder punten
+   *  "0" i.p.v. "–". */
+  riderTotalsReady?: boolean;
 };
 
 const HERO_CATEGORIES: RiderCategory[] = ["ALIEN", "GC"];
+
+/** Resolve het te tonen totaal: undefined zolang niet geladen (toont "–"),
+ *  anders het getal (0 als de renner niet in de map zit). */
+function resolveTotal(
+  ready: boolean | undefined,
+  totals: Map<string, number> | undefined,
+  riderId: string,
+): number | undefined {
+  if (!ready) return undefined;
+  return totals?.get(riderId) ?? 0;
+}
 
 export default function TeamSheet({
   riders,
@@ -53,6 +67,7 @@ export default function TeamSheet({
   gameId,
   entryId,
   riderTotals,
+  riderTotalsReady,
 }: Props) {
   const { activeByCat, otherActiveCats, total } = useMemo(() => {
     // Alle renners per categorie. Binnen elk panel: actieve eerst, DNF onderaan
@@ -181,7 +196,7 @@ export default function TeamSheet({
                       onClick={onToggleRider ?? onRiderClick}
                       ariaExpanded={onToggleRider ? isOpen : undefined}
                       ariaControls={onToggleRider ? `rider-breakdown-${r.id}` : undefined}
-                      totalPoints={riderTotals?.get(r.id)}
+                      totalPoints={resolveTotal(riderTotalsReady, riderTotals, r.id)}
                       // Hero-strip kit: eerste pick = gele leiderstrui (GC asset),
                       // overige picks = bolletjes-trui (KLIM asset). Past bij
                       // de echte wieleresthetiek waar de leider geel draagt en
@@ -233,6 +248,7 @@ export default function TeamSheet({
               gameId={gameId}
               entryId={entryId}
               riderTotals={riderTotals}
+              riderTotalsReady={riderTotalsReady}
             />
           ))}
         </div>
