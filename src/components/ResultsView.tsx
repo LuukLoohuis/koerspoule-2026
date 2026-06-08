@@ -278,7 +278,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
       )}
 
       <Tabs defaultValue="klassement" className="max-w-7xl mx-auto">
-        <TabsList className="sticky top-0 z-30 flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/95 backdrop-blur supports-[backdrop-filter]:bg-secondary/80 p-1 h-auto w-full shadow-sm">
+        <TabsList className="sticky top-0 z-30 md:static md:z-auto flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/95 backdrop-blur supports-[backdrop-filter]:bg-secondary/80 md:bg-secondary/30 md:backdrop-blur-0 md:supports-[backdrop-filter]:bg-secondary/30 p-1 h-auto w-full shadow-sm md:shadow-none">
           <TabsTrigger
             value="klassement"
             className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-foreground/10"
