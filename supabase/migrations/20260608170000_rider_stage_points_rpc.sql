@@ -94,3 +94,55 @@ CREATE INDEX IF NOT EXISTS stage_results_rider_idx
   ON public.stage_results(rider_id);
 CREATE INDEX IF NOT EXISTS stage_results_game_rider_idx
   ON public.stage_results(game_id, rider_id);
+
+-- rider_entry_totals: totaal behaalde etappepunten PER RENNER voor één entry,
+-- t/m de laatst gefiatteerde (approved) niet-GC etappe. Eén query voor de hele
+-- ploeg, zodat elke renner-tegel z'n totaal kan tonen zonder N losse calls.
+--
+-- Zelfde scoring-regel als rider_stage_points/calculate_stage_scores:
+-- finish_position (klassement 'stage', pos 1..20, did_finish) × joker-mult.
+-- Joker-mult geldt alleen voor renners die joker zijn bij DEZE entry.
+CREATE OR REPLACE FUNCTION public.rider_entry_totals(
+  p_game_id uuid,
+  p_entry_id uuid
+)
+RETURNS TABLE (
+  rider_id uuid,
+  total_points int
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  WITH cfg AS (
+    SELECT COALESCE(g.joker_multiplier, 2) AS mult
+    FROM public.games g WHERE g.id = p_game_id
+  )
+  SELECT
+    sr.rider_id,
+    COALESCE(SUM(
+      COALESCE(ps.points, 0)
+      * CASE WHEN ej.rider_id IS NOT NULL THEN (SELECT mult FROM cfg) ELSE 1 END
+    ), 0)::int AS total_points
+  FROM public.stage_results sr
+  JOIN public.stages s
+    ON s.id = sr.stage_id
+   AND s.game_id = p_game_id
+   AND s.results_status = 'approved'
+   AND COALESCE(s.is_gc, false) = false
+  LEFT JOIN public.points_schema ps
+    ON ps.game_id = p_game_id
+   AND ps.classification = 'stage'
+   AND ps.position = sr.finish_position
+  LEFT JOIN public.entry_jokers ej
+    ON ej.entry_id = p_entry_id
+   AND ej.rider_id = sr.rider_id
+  WHERE COALESCE(sr.did_finish, true) = true
+    AND sr.finish_position BETWEEN 1 AND 20
+  GROUP BY sr.rider_id;
+$$;
+
+REVOKE ALL ON FUNCTION public.rider_entry_totals(uuid, uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rider_entry_totals(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.rider_entry_totals(uuid, uuid) TO anon;

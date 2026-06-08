@@ -14,6 +14,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
 import { useStages, useEntries } from "@/hooks/useResults";
+import { useRiderEntryTotals } from "@/hooks/useRiderEntryTotals";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -226,6 +227,8 @@ export default function MyTeamPanel({
   const { data: stages = [] } = useStages(game?.id);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stagePoints = [] } = useMyStagePoints(entry?.id);
+  // Totaal behaalde punten per renner (t/m laatst gefiatteerde etappe).
+  const { data: riderTotals } = useRiderEntryTotals(game?.id, entry?.id);
 
   // Welke renner heeft z'n per-etappe-punten dropdown open (één tegelijk).
   const [expandedRiderId, setExpandedRiderId] = useState<string | null>(null);
@@ -581,6 +584,7 @@ export default function MyTeamPanel({
               onToggleRider={toggleRider}
               gameId={game?.id}
               entryId={entry?.id}
+              riderTotals={riderTotals}
             />
           </div>
         );

@@ -37,6 +37,8 @@ type Props = {
   /** Nodig voor de punten-RPC in de dropdown. */
   gameId?: string;
   entryId?: string | null;
+  /** Totaal behaalde punten per renner (rider_id → punten). */
+  riderTotals?: Map<string, number>;
 };
 
 const HERO_CATEGORIES: RiderCategory[] = ["ALIEN", "GC"];
@@ -50,6 +52,7 @@ export default function TeamSheet({
   onToggleRider,
   gameId,
   entryId,
+  riderTotals,
 }: Props) {
   const { activeByCat, otherActiveCats, total } = useMemo(() => {
     // Alle renners per categorie. Binnen elk panel: actieve eerst, DNF onderaan
@@ -159,19 +162,6 @@ export default function TeamSheet({
                 >
                   JACHT OP GEEL
                 </div>
-                <div
-                  className="mt-1"
-                  style={{
-                    fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
-                    fontWeight: 800,
-                    color: "var(--ink-sepia)",
-                    fontSize: "20px",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  van
-                </div>
               </div>
             </div>
 
@@ -191,6 +181,7 @@ export default function TeamSheet({
                       onClick={onToggleRider ?? onRiderClick}
                       ariaExpanded={onToggleRider ? isOpen : undefined}
                       ariaControls={onToggleRider ? `rider-breakdown-${r.id}` : undefined}
+                      totalPoints={riderTotals?.get(r.id)}
                       // Hero-strip kit: eerste pick = gele leiderstrui (GC asset),
                       // overige picks = bolletjes-trui (KLIM asset). Past bij
                       // de echte wieleresthetiek waar de leider geel draagt en
@@ -241,6 +232,7 @@ export default function TeamSheet({
               onToggleRider={onToggleRider}
               gameId={gameId}
               entryId={entryId}
+              riderTotals={riderTotals}
             />
           ))}
         </div>

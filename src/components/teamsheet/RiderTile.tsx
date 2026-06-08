@@ -45,6 +45,40 @@ function DnfBadge({ size = "default" }: { size?: "default" | "small" }) {
 const DNF_NAME_COLOR = "var(--ink-sepia)";
 const DNF_NAME_OPACITY = 0.78;
 
+/** Pill met totaal behaalde punten (vervangt het startnummer). */
+function PointsChip({
+  value,
+  tint,
+  ink,
+  jersey,
+}: {
+  value?: number | null;
+  tint: string;
+  ink: string;
+  jersey: string;
+}) {
+  const known = typeof value === "number";
+  return (
+    <span
+      className="shrink-0 font-mono tabular-nums px-2 py-0.5 rounded-full inline-flex items-baseline gap-0.5"
+      style={{
+        background: tint,
+        color: ink,
+        border: `1px solid ${jersey}`,
+        fontSize: "11px",
+        fontWeight: 800,
+        letterSpacing: "0.02em",
+        minWidth: "34px",
+        justifyContent: "center",
+      }}
+      title="Totaal behaalde punten t/m laatst gefiatteerde etappe"
+    >
+      {known ? value : "–"}
+      <span style={{ fontSize: "8px", fontWeight: 700, opacity: 0.7 }}>pt</span>
+    </span>
+  );
+}
+
 type Props = {
   rider: SheetRider;
   size?: "default" | "hero";
@@ -57,6 +91,9 @@ type Props = {
   /** A11y: koppel de tile-knop aan een uitklap-paneel (dropdown). */
   ariaExpanded?: boolean;
   ariaControls?: string;
+  /** Totaal behaalde punten van deze renner t/m laatst gefiatteerde etappe.
+   *  undefined = nog onbekend (laadt) → toont "–". Vervangt het startnummer. */
+  totalPoints?: number | null;
 };
 
 export default function RiderTile({
@@ -67,11 +104,11 @@ export default function RiderTile({
   cyclistOverride,
   ariaExpanded,
   ariaControls,
+  totalPoints,
 }: Props) {
   const cyclistCategory = cyclistOverride ?? rider.category;
   const isHero = size === "hero";
   const dnf = rider.status === "DNF";
-  const numStr = rider.startNumber != null ? String(rider.startNumber) : "—";
   const tone = categoryTone(rider.category);
   const handleClick = onClick ? () => onClick(rider.id) : undefined;
   const Component: "button" | "div" = onClick ? "button" : "div";
@@ -79,22 +116,23 @@ export default function RiderTile({
   if (isHero) {
     return (
       <Component
-        {...(onClick ? { type: "button" as const, onClick: handleClick } : {})}
+        {...(onClick
+          ? {
+              type: "button" as const,
+              onClick: handleClick,
+              ...(ariaExpanded !== undefined ? { "aria-expanded": ariaExpanded } : {}),
+              ...(ariaControls ? { "aria-controls": ariaControls } : {}),
+            }
+          : {})}
         className="group flex flex-col items-center text-center min-w-0 px-1.5 py-2 rounded-lg transition-colors"
         style={{
-          background: selected ? "rgba(58,42,26,0.06)" : "transparent",
+          background: selected ? "rgba(58,42,26,0.10)" : "transparent",
           cursor: onClick ? "pointer" : "default",
         }}
-        title={`#${numStr} · ${rider.name}`}
+        title={rider.name}
       >
-        {/* Labels boven het figuurtje */}
+        {/* Naam + totaal-punten boven het figuurtje (startnummer verwijderd) */}
         <div className="mb-1.5 min-w-0 w-full">
-          <div
-            className="font-mono tabular-nums leading-none mb-0.5"
-            style={{ color: "#9A8A74", fontSize: "10px", letterSpacing: "0.18em" }}
-          >
-            #{numStr}
-          </div>
           <div
             className="break-words"
             style={{
@@ -116,6 +154,9 @@ export default function RiderTile({
           >
             {rider.name}
           </div>
+          <div className="mt-1 flex justify-center">
+            <PointsChip value={totalPoints} tint={tone.tint} ink={tone.ink} jersey={tone.jersey} />
+          </div>
           {dnf && (
             <div className="mt-1 flex justify-center">
               <DnfBadge />
@@ -124,6 +165,21 @@ export default function RiderTile({
         </div>
 
         <Cyclist category={cyclistCategory} faded={dnf} width={108} height={82} />
+
+        {/* Chevron-affordance: signaleert dat de hero-renner uitklapbaar is */}
+        {ariaExpanded !== undefined && (
+          <ChevronDown
+            aria-hidden
+            size={16}
+            strokeWidth={2.4}
+            className="mt-1 transition-transform duration-200"
+            style={{
+              color: "var(--ink-sepia)",
+              opacity: ariaExpanded ? 0.9 : 0.5,
+              transform: ariaExpanded ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          />
+        )}
       </Component>
     );
   }
@@ -158,11 +214,10 @@ export default function RiderTile({
     >
       <Cyclist category={cyclistCategory} faded={dnf} width={52} height={40} />
       <div className="flex-1 min-w-0">
-        {/* Eén-regel naam met ellipsis — DNF-badge zit nu rechts i.p.v.
-            een tweede element naast het #-chip, dus de naam-kolom heeft
-            volle breedte beschikbaar. */}
+        {/* Volledige naam — mag wrappen naar 2 regels zodat 'ie altijd
+            zichtbaar is (geen afkapping). */}
         <span
-          className="block truncate"
+          className="break-words"
           style={{
             fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
             fontWeight: 600,
@@ -172,34 +227,21 @@ export default function RiderTile({
             textDecoration: dnf ? "line-through" : undefined,
             textDecorationColor: dnf ? "#C0392B" : undefined,
             textDecorationThickness: dnf ? "1.5px" : undefined,
-            lineHeight: 1.25,
+            lineHeight: 1.2,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
           }}
           title={rider.name}
         >
           {rider.name}
         </span>
       </div>
-      {/* Rechts: DNF-badge vervangt het #-chip wanneer uitgevallen — startnr
-          telt voor scoring niet meer, en zo houdt de naam-kolom z'n ruimte. */}
-      {dnf ? (
-        <DnfBadge size="small" />
-      ) : (
-        <span
-          className="shrink-0 font-mono tabular-nums px-2 py-0.5 rounded-full"
-          style={{
-            background: tone.tint,
-            color: tone.ink,
-            border: `1px solid ${tone.jersey}`,
-            fontSize: "10.5px",
-            fontWeight: 700,
-            letterSpacing: "0.06em",
-            minWidth: "30px",
-            textAlign: "center",
-          }}
-        >
-          #{numStr}
-        </span>
-      )}
+      {/* Rechts: totaal behaalde punten (startnummer verwijderd). DNF-renners
+          tonen daarnaast nog de DNF-badge. */}
+      {dnf && <DnfBadge size="small" />}
+      <PointsChip value={totalPoints} tint={tone.tint} ink={tone.ink} jersey={tone.jersey} />
       {/* Chevron-affordance: alleen tonen wanneer de tile een uitklap-dropdown
           aanstuurt (ariaExpanded gedefinieerd). Roteert bij openen, en is
           subtiel zichtbaar in rust + duidelijker on hover/open zodat de
