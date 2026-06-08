@@ -7,7 +7,7 @@
  * Chip-nummer is gekleurd in de categorie-accentkleur.
  */
 
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import Cyclist from "./Cyclist";
 import { categoryTone, type RiderCategory, type SheetRider } from "./tokens";
 
@@ -199,6 +199,23 @@ export default function RiderTile({
         >
           #{numStr}
         </span>
+      )}
+      {/* Chevron-affordance: alleen tonen wanneer de tile een uitklap-dropdown
+          aanstuurt (ariaExpanded gedefinieerd). Roteert bij openen, en is
+          subtiel zichtbaar in rust + duidelijker on hover/open zodat de
+          gebruiker ziet dat de rij uitklapbaar is. */}
+      {ariaExpanded !== undefined && (
+        <ChevronDown
+          aria-hidden
+          size={15}
+          strokeWidth={2.4}
+          className="shrink-0 transition-transform duration-200"
+          style={{
+            color: tone.jersey,
+            opacity: ariaExpanded ? 1 : 0.55,
+            transform: ariaExpanded ? "rotate(180deg)" : "rotate(0deg)",
+          }}
+        />
       )}
     </Component>
   );

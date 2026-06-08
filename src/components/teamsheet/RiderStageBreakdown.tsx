@@ -146,12 +146,18 @@ export default function RiderStageBreakdown({
             ))}
           </div>
         ) : isError ? (
-          <p className="italic" style={{ fontSize: "12px", color: "#9A8A74" }}>
-            Kon punten niet laden.
+          <p
+            className="italic"
+            style={{ fontSize: "12px", color: "#C0392B", fontWeight: 600 }}
+          >
+            Kon punten niet laden — probeer later opnieuw.
           </p>
         ) : scored.length === 0 ? (
-          <p className="italic" style={{ fontSize: "12px", color: "#9A8A74" }}>
-            Nog geen punten gescoord
+          <p
+            className="italic"
+            style={{ fontSize: "12.5px", color: "var(--ink-sepia)", opacity: 0.7 }}
+          >
+            Nog geen punten gescoord in goedgekeurde etappes.
           </p>
         ) : (
           <>
