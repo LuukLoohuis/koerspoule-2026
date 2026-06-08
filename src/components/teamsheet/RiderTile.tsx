@@ -78,7 +78,7 @@ export default function RiderTile({ rider, size = "default", selected = false, o
             #{numStr}
           </div>
           <div
-            className="truncate"
+            className="break-words"
             style={{
               fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
               fontWeight: 700,
@@ -88,7 +88,12 @@ export default function RiderTile({ rider, size = "default", selected = false, o
               textDecorationColor: dnf ? "#C0392B" : undefined,
               textDecorationThickness: dnf ? "1.5px" : undefined,
               lineHeight: 1.15,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
             }}
+            title={rider.name}
           >
             {rider.name}
           </div>
@@ -116,9 +121,13 @@ export default function RiderTile({ rider, size = "default", selected = false, o
       title={`#${numStr} · ${rider.name}`}
     >
       <Cyclist category={rider.category} faded={dnf} width={56} height={42} />
-      <div className="flex-1 min-w-0 flex items-baseline gap-2">
+      <div className="flex-1 min-w-0">
+        {/* Volledige naam: mag wrappen naar max 2 regels zodat lange namen
+            niet meer als "Jonathan ..." afgekapt worden. De vintage dotted
+            leader is hier weg — botst met multi-line en kost de horizontale
+            ruimte die we juist aan de naam willen geven. */}
         <span
-          className="truncate"
+          className="block break-words"
           style={{
             fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
             fontWeight: 600,
@@ -128,19 +137,15 @@ export default function RiderTile({ rider, size = "default", selected = false, o
             textDecorationColor: dnf ? "#C0392B" : undefined,
             textDecorationThickness: dnf ? "1.5px" : undefined,
             lineHeight: 1.2,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
           }}
+          title={rider.name}
         >
           {rider.name}
         </span>
-        {/* Dotted leader — vintage uitslag-vibe */}
-        <span
-          aria-hidden
-          className="flex-1 min-w-[10px] mb-[3px]"
-          style={{
-            borderBottom: "1px dotted rgba(58,42,26,0.35)",
-            height: "1px",
-          }}
-        />
       </div>
       {/* Chip-nummer */}
       <span
