@@ -13,13 +13,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
-import { useStages, useEntries, useMyStageRanks } from "@/hooks/useResults";
+import { useStages, useEntries } from "@/hooks/useResults";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Pencil } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
-import StageBars from "@/components/StageBars";
 import type { ReactNode } from "react";
 
 type StagePoint = { stage_id: string; entry_id: string; points: number };
@@ -227,8 +226,6 @@ export default function MyTeamPanel({
   const { data: stages = [] } = useStages(game?.id);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stagePoints = [] } = useMyStagePoints(entry?.id);
-  // Mijn dagklassering per etappe: server-side RPC i.p.v. alle stage_points.
-  const { data: myStageRanks } = useMyStageRanks(game?.id, user?.id);
 
   const allRiderIds = useMemo(() => {
     const set = new Set<string>();
@@ -251,11 +248,6 @@ export default function MyTeamPanel({
   );
   const myRank = entry ? sortedEntries.findIndex((e) => e.id === entry.id) + 1 : 0;
 
-  const stagePointsByStageId = useMemo(
-    () => Object.fromEntries(stagePoints.map((sp) => [sp.stage_id, sp.points])),
-    [stagePoints]
-  );
-
   const maxStagePts = useMemo(
     () => stagePoints.reduce((m, sp) => Math.max(m, sp.points), 0),
     [stagePoints]
@@ -267,8 +259,6 @@ export default function MyTeamPanel({
     const stage = stages.find((s) => s.id === top.stage_id);
     return stage ? { stage, points: top.points } : null;
   }, [stagePoints, stages]);
-
-  const myRankPerStage = myStageRanks ?? new Map<string, number>();
 
   const standaloneJokerIds = useMemo(() => {
     const picked = new Set<string>();
@@ -577,27 +567,6 @@ export default function MyTeamPanel({
       })()}
 
 
-      {/* ═══ PUNTEN PER ETAPPE ═══ */}
-      <Card className="ornate-frame retro-border overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
-        <CardHeader className="border-b-2 border-foreground bg-secondary/30">
-          <CardTitle className="font-display">📊 Punten per etappe</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 bg-gradient-to-br from-card via-card to-secondary/20">
-          <p className="text-[11px] text-muted-foreground mb-2">
-            Balkhoogte ∝ km · 🟡 = jouw punten per etappe
-          </p>
-          <StageBars
-            stages={stages}
-            pointsByStageId={stagePointsByStageId}
-            rankByStageId={myRankPerStage}
-            gcUnlocked={stages
-              .filter((x) => !x.is_gc)
-              .some((x) => x.stage_number === 21 && x.results_status === "approved")}
-            trackHeight={130}
-          />
-        </CardContent>
-      </Card>
     </div>
   );
 }
