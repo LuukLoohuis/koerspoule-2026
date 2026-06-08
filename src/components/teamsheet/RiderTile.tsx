@@ -210,7 +210,7 @@ export default function RiderTile({
         e.currentTarget.style.background = "transparent";
         e.currentTarget.style.transform = "translateX(0)";
       }}
-      title={`#${numStr} · ${rider.name}`}
+      title={rider.name}
     >
       <Cyclist category={cyclistCategory} faded={dnf} width={52} height={40} />
       <div className="flex-1 min-w-0">
