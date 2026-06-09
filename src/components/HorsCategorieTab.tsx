@@ -1130,18 +1130,18 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   const belowMean = diff < 0;
                   return (
                     <DarkStatCard
-                      label={monte.worseThanApe ? "Verlies van de aap" : "Jij vs de aap"}
+                      label={belowMean ? "Verlies van de aap" : "Jij vs de aap"}
                       value={`${belowMean ? "−" : "+"}${Math.abs(diff)} pt`}
                       unit={belowMean ? "onder gemiddelde aap" : "boven gemiddelde aap"}
-                      icon={monte.worseThanApe ? "😬" : "🏆"}
+                      icon={belowMean ? "😬" : "🏆"}
                       description={
-                        monte.worseThanApe
+                        belowMean
                           ? "Een willekeurige dartpijl had grofweg hetzelfde resultaat. De apen zijn blij."
                           : oneInX
                             ? `Slechts 1 op ${oneInX} willekeurige apen scoort hoger dan jij. Dartpijlen staan paf.`
                             : "Uitstekend resultaat — je overtreft het gros van de willekeurige ploegen."
                       }
-                      accentColor={monte.worseThanApe ? "red" : "green"}
+                      accentColor={belowMean ? "red" : "green"}
                     />
                   );
                 })()}
