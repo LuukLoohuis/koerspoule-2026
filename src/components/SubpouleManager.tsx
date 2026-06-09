@@ -240,8 +240,9 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             />
           </div>
 
-          {/* Desktop tab nav — ongewijzigd */}
-          <div className="hidden md:block overflow-x-auto -mx-1 px-1 mb-1" style={{ scrollbarWidth: "none" }}>
+          {/* Desktop tab nav — flush met de panelen eronder (geen -mx-1 px-1
+              meer; die maakte de balk 8px breder dan de StageBar/standings). */}
+          <div className="hidden md:block overflow-x-auto mb-1" style={{ scrollbarWidth: "none" }}>
             <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
               {([
                 { value: "chat",      label: "Chat",      Icon: MessageCircle, disabled: false              },
