@@ -903,3 +903,33 @@
   55% { opacity: 0.55; }
   100% { transform: translateX(120%); opacity: 0; }
 }
+
+/* ───────────────────────── Aap met de dartpijl ───────────────────────── */
+@layer utilities {
+  /* Vintage mechanische "ademhaling" voor de aap-mascotte */
+  @keyframes monkey-idle {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-3px) rotate(0.5deg); }
+  }
+  .animate-monkey-idle {
+    animation: monkey-idle 4s ease-in-out infinite;
+    transform-origin: center bottom;
+    display: inline-block;
+  }
+
+  /* Subtiele, statische riso-grain textuur (zelf-gegenereerde SVG-noise) */
+  .bg-riso-grain {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+}
+
+/* Toegankelijkheid: schakel decoratieve animaties uit bij systeemvoorkeur */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-monkey-idle { animation: none !important; transform: none !important; }
+}

@@ -907,7 +907,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                         lineHeight: 1.05,
                       }}
                     >
-                      <span aria-hidden style={{ marginRight: 6 }}>🐒</span>
+                      <span aria-hidden className="animate-monkey-idle" style={{ marginRight: 6 }}>🐒</span>
                       De aap met de dartpijl
                     </h2>
                     <p
