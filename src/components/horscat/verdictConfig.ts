@@ -16,10 +16,10 @@ export type VerdictBand = {
 };
 
 export const VERDICT_BANDS: VerdictBand[] = [
-  { min: 85, label: "Petje af — de aap kan inpakken.", hint: "Top-tier insight.",                emoji: "🏆", color: "#2E6A4F" },
-  { min: 60, label: "Netjes, je zit boven het toeval.", hint: "Solide skill-signaal.",            emoji: "💪", color: "#2E6A4F" },
-  { min: 40, label: "Gelijkspel met de dobbelsteen.",   hint: "Skill ≈ kans deze ronde.",         emoji: "🎲", color: "#C2691C" },
-  { min: 0,  label: "Au. De aap had het beter gedaan.", hint: "Bananen voor jou, glorie voor 'm.", emoji: "🍌", color: "#C0395B" },
+  { min: 85, label: "Kopman van het peloton — de aap lost in de eerste klim.", hint: "Pure koerskennis: jij stuurt, de dartpijl ziet enkel je achterwiel.", emoji: "🏆", color: "#2E6A4F" },
+  { min: 60, label: "Mee in de kopgroep, vóór de apen.",                       hint: "Boven het toeval — geen meeval, gewoon ploegleidersinzicht.",       emoji: "💪", color: "#2E6A4F" },
+  { min: 40, label: "Schouder aan schouder met de aap in het peloton.",        hint: "5.000 willekeurige ploegen, en jij rijdt er middenin. Skill ≈ geluk deze ronde.", emoji: "🐒", color: "#C2691C" },
+  { min: 0,  label: "De aap met de dartpijl rijdt jou uit het wiel.",          hint: "Een blind geprikte ploeg scoort beter — tijd voor een tactische heroverweging.", emoji: "🍌", color: "#C0395B" },
 ];
 
 export function pickVerdict(percentile: number): VerdictBand {
