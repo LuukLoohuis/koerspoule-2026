@@ -69,6 +69,10 @@ const App = () => (
               <Route path="/tour-de-france-poule" element={<TourDeFrancePoule2026 />} />
               <Route path="/tourspel" element={<TourDeFrancePoule2026 />} />
               <Route path="/wielerpoule-tour-de-france" element={<TourDeFrancePoule2026 />} />
+              <Route path="/tour-de-france-wielerspel-2026" element={<TourDeFrancePoule2026 />} />
+              <Route path="/tour-de-france-wielerspel" element={<TourDeFrancePoule2026 />} />
+              <Route path="/wielerspel" element={<TourDeFrancePoule2026 />} />
+              <Route path="/wielerspel-2026" element={<TourDeFrancePoule2026 />} />
               <Route path="/uitschrijven" element={<Uitschrijven />} />
               <Route
                 path="/admin"

@@ -5,9 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Check, Trophy, Users, Zap, Mountain, Flag, Sparkles } from "lucide-react";
 
 const PAGE_URL = "https://koerspoule.nl/tour-de-france-poule-2026";
-const PAGE_TITLE = "Tour de France Poule 2026 — Gratis Wielerspel & Tourspel";
+const PAGE_TITLE = "Tour de France Wielerspel 2026 — Gratis Poule & Tourspel";
 const PAGE_DESCRIPTION =
-  "Maak gratis je Tour de France poule 2026. Stel je team samen, daag vrienden uit en strijd om de gele trui. Reclamevrij alternatief voor AD Tourspel.";
+  "Speel het gratis Tour de France wielerspel 2026. Stel je team samen, daag vrienden uit en strijd om de gele trui. Reclamevrij alternatief voor AD Tourspel en Scorito.";
 const PAGE_IMAGE =
   "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ca7ecdfc-55b1-4686-a4d5-8ada2cae3b6e/id-preview-7b7ff0dd--00edb85e-4817-4978-88c8-1708211db2a7.lovable.app-1773424124582.png";
 const SITE_NAME = "Koerspoule";
@@ -15,6 +15,10 @@ const SITE_NAME = "Koerspoule";
 // Eén bron voor de FAQ — gebruikt voor zowel de zichtbare sectie als de
 // FAQPage-structured-data (Google verwacht dat de schema-FAQ ook op de pagina staat).
 const FAQS: { q: string; a: string }[] = [
+  {
+    q: "Wat is het beste gratis Tour de France wielerspel 2026?",
+    a: "Koerspoule is een gratis, reclamevrij Tour de France wielerspel voor 2026. Je stelt je eigen ploeg samen, speelt in privé-poules met vrienden en strijdt om de gele, groene, bolletjes- en witte trui — zonder inschrijfgeld of advertenties.",
+  },
   {
     q: "Hoe maak ik een Tour de France poule 2026?",
     a: "Maak een gratis account op Koerspoule, start je eigen Tour de France poule en nodig vrienden uit met een unieke toegangscode. Binnen een paar minuten ben je klaar.",
@@ -87,7 +91,7 @@ export default function TourDeFrancePoule2026() {
     setMeta('meta[name="twitter:description"]', "content", PAGE_DESCRIPTION);
     setMeta('meta[name="twitter:image"]', "content", PAGE_IMAGE);
     setMeta('meta[name="robots"]', "content", "index, follow, max-image-preview:large, max-snippet:-1");
-    setMeta('meta[name="keywords"]', "content", "tour de france poule 2026, tour de france poule, tourspel, tourspel 2026, wielerpoule tour de france, fantasy tour de france, gele trui poule, ad tourspel alternatief, scorito tour de france, koerspoule, manager game wielrennen");
+    setMeta('meta[name="keywords"]', "content", "tour de france wielerspel 2026, tour de france wielerspel, wielerspel 2026, gratis wielerspel, tour de france poule 2026, tour de france poule, tourspel, tourspel 2026, wielerpoule tour de france, fantasy tour de france, gele trui poule, ad tourspel alternatief, scorito tour de france, koerspoule, manager game wielrennen");
     setLink("canonical", PAGE_URL);
 
     const ldId = "ld-tdf-2026";
@@ -141,7 +145,7 @@ export default function TourDeFrancePoule2026() {
         },
         {
           "@type": "Game",
-          name: "Koerspoule Tour de France Poule 2026",
+          name: "Koerspoule — Tour de France Wielerspel & Poule 2026",
           description: PAGE_DESCRIPTION,
           url: PAGE_URL,
           genre: "Fantasy Sports",
@@ -173,12 +177,12 @@ export default function TourDeFrancePoule2026() {
             <span className="vintage-ornament-symbol">✦</span>
           </div>
           <h1 className="vintage-heading text-3xl md:text-4xl font-bold mb-3">
-            🟡 Tour de France Poule 2026 maken
+            🟡 Tour de France Wielerspel 2026
           </h1>
           <p className="text-lg text-muted-foreground font-serif italic max-w-2xl mx-auto">
-            De Tour de France is de grootste wielerronde van het jaar. Drie weken lang strijden de
-            beste renners ter wereld om de gele trui. Maak het nog spannender met je eigen Tour de
-            France poule — gratis, reclamevrij en samen met vrienden.
+            Koerspoule is hét gratis <strong>Tour de France wielerspel 2026</strong>. Drie weken lang
+            strijden de beste renners ter wereld om de gele trui — maak het nog spannender met je eigen
+            Tour de France poule: gratis, reclamevrij en samen met vrienden.
           </p>
           <div className="vintage-divider mt-4 max-w-md mx-auto" />
           <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">

@@ -204,6 +204,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-3 font-sans flex-wrap justify-center">
               <Link to="/tour-de-france-poule-2026" className="underline hover:text-foreground transition-colors">Tour de France poule 2026</Link>
               <span>·</span>
+              <Link to="/tour-de-france-wielerspel-2026" className="underline hover:text-foreground transition-colors">Tour de France wielerspel 2026</Link>
+              <span>·</span>
               <Link to="/giro-italia-poule-2026" className="underline hover:text-foreground transition-colors">Giro poule 2026</Link>
               <span>·</span>
               <button onClick={() => navigate("/juridisch")} className="underline hover:text-foreground transition-colors">Koersregels</button>
