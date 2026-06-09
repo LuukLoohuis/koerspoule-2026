@@ -1125,37 +1125,6 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
               </div>
 
-              {/* Stats row: gemiddelde aap + jij vs aap (2 kaarten, gebalanceerd) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <DarkStatCard
-                  label="Gemiddelde aap"
-                  value={`${Math.round(monte.mean)}`}
-                  unit="punten"
-                  icon="🎯"
-                  description="Verwacht puntentotaal bij volledig willekeurige rennersselectie op basis van de pool van ingediende teams."
-                  accentColor="gold"
-                />
-                {(() => {
-                  const diff = Math.round(monte.userActual - monte.mean);
-                  const belowMean = diff < 0;
-                  return (
-                    <DarkStatCard
-                      label={belowMean ? "Verlies van de aap" : "Jij vs de aap"}
-                      value={`${belowMean ? "−" : "+"}${Math.abs(diff)} pt`}
-                      unit={belowMean ? "onder gemiddelde aap" : "boven gemiddelde aap"}
-                      icon={belowMean ? "😬" : "🏆"}
-                      description={
-                        belowMean
-                          ? "Een willekeurige dartpijl had grofweg hetzelfde resultaat. De apen zijn blij."
-                          : oneInX
-                            ? `Slechts 1 op ${oneInX} willekeurige apen scoort hoger dan jij. Dartpijlen staan paf.`
-                            : "Uitstekend resultaat — je overtreft het gros van de willekeurige ploegen."
-                      }
-                      accentColor={belowMean ? "red" : "green"}
-                    />
-                  );
-                })()}
-              </div>
 
 
               {/* Commentary */}
