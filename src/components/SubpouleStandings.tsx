@@ -226,8 +226,12 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           myEntry?.total_points,
         );
         return (
-          <div className="mt-1 mb-1">
+          // retro-border wrapper zodat de StageBar exact dezelfde kaart-chrome
+          // (2px border + 3px offset-shadow) en breedte krijgt als de
+          // standings-kaart eronder. StageBar zelf chromeless.
+          <div className="retro-border bg-gradient-to-br from-card via-card to-secondary/20 p-3">
             <StageBar
+              chromeless
               stages={data}
               gcTotal={gcTotal}
               selectedStage={selectedNumber}

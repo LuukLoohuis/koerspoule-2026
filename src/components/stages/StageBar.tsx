@@ -67,6 +67,10 @@ export type StageBarProps = {
   title?: string;
   subtitle?: string;
   rangeLabel?: string;
+  /** Verwijder de eigen paneel-chrome (achtergrond/border/radius/padding)
+   *  zodat de StageBar in een externe kaart (bv. retro-border) past en exact
+   *  dezelfde breedte/rand krijgt als zustpanelen. */
+  chromeless?: boolean;
 };
 
 /* ------------------------------ helpers -------------------------------- */
@@ -125,6 +129,7 @@ export default function StageBar({
   title = "TUSSENSTAND SELECTEREN",
   subtitle = "Komende Tour de France",
   rangeLabel = "T/m rit 21 — Rome – Rome",
+  chromeless = false,
 }: StageBarProps) {
   // Hoogte schaalt met de afstand (admin-input via Etappes-tab). Hoe meer km,
   // hoe langer de capsule. Punten blijven onder de balk staan als label.
@@ -146,7 +151,7 @@ export default function StageBar({
   }, [selectedStage]);
 
   return (
-    <div className="sb-panel">
+    <div className={`sb-panel${chromeless ? " sb-panel--bare" : ""}`}>
       <Styles />
       {/* Map zit in eigen clip-container, panel zelf mag overflow:visible
           zodat tooltip-tekst niet meer afsnijdt. */}
@@ -252,6 +257,16 @@ function Styles() {
   /* overflow visible — anders snijdt de tooltip-tekst boven de balken af */
   color: #3A2A1A;
   font-family: inherit;
+}
+/* Chromeless: paneel zit in een externe kaart (retro-border). Eigen
+   achtergrond/border/radius/shadow weg; padding strak zodat het binnen de
+   wrapper-padding valt en exact even breed is als zusterpanelen. */
+.sb-panel--bare {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
 }
 .sb-map-clip {
   position: absolute; inset: 0;
