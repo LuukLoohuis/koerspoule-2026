@@ -8,7 +8,8 @@ import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResu
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import TeamComparison from "@/components/TeamComparison";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
-import StageBars from "@/components/StageBars";
+import StageBar from "@/components/stages/StageBar";
+import { buildStageBarData } from "@/components/stages/stageBarData";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -49,7 +50,6 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   }, [stages.length, stagePoints.length]);
 
   const selectedEtappe = stages[etappeIdx];
-  const gcUnlocked = stages.filter((x) => !x.is_gc).some((x) => x.stage_number === 21 && x.results_status === "approved");
 
   // My entry
   const myEntry = useMemo(() => entries.find((e) => e.user_id === user?.id), [entries, user?.id]);
@@ -61,31 +61,6 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
     stagePoints.filter((sp) => sp.entry_id === myEntry.id).forEach((sp) => m.set(sp.stage_id, (m.get(sp.stage_id) ?? 0) + sp.points));
     return m;
   }, [myEntry, stagePoints]);
-
-  // My rank per stage among subpoule members (drives StageBars rank pill)
-  const myRankPerStage = useMemo(() => {
-    if (!myEntry) return new Map<string, number>();
-    const memberEntryIds = new Set(
-      members.map((m) => entries.find((e) => e.user_id === m.user_id)?.id).filter((id): id is string => id != null)
-    );
-    const perStage = new Map<string, Map<string, number>>();
-    stagePoints
-      .filter((sp) => memberEntryIds.has(sp.entry_id))
-      .forEach((sp) => {
-        if (!perStage.has(sp.stage_id)) perStage.set(sp.stage_id, new Map());
-        const sm = perStage.get(sp.stage_id)!;
-        sm.set(sp.entry_id, (sm.get(sp.entry_id) ?? 0) + sp.points);
-      });
-    const result = new Map<string, number>();
-    perStage.forEach((entryPts, stageId) => {
-      const myPts = entryPts.get(myEntry.id) ?? 0;
-      if (myPts === 0) return;
-      const sorted = [...entryPts.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
-      const idx = sorted.findIndex(([id]) => id === myEntry.id);
-      if (idx >= 0) result.set(stageId, idx + 1);
-    });
-    return result;
-  }, [myEntry, stagePoints, members, entries]);
 
   // Cumulative points up to a given stage index
   const cumUpTo = (upToIdx: number) => {
@@ -242,38 +217,40 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   return (
     <div className="space-y-4">
 
-      {/* Stage selector — drives the standings table below */}
-      {stages.length > 0 && (
-        <div className="retro-border bg-gradient-to-br from-card via-card to-secondary/20 p-3">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h3 className="font-display text-sm font-bold tracking-wide uppercase text-foreground/80">
-                Tussenstand selecteren
-              </h3>
-              <p className="text-[11px] text-muted-foreground">
-                {selectedEtappe
+      {/* Stage selector — identieke etappe-bar als de Uitslagen-tab. */}
+      {stages.length > 0 && (() => {
+        const { data, gcTotal, selectedNumber } = buildStageBarData(
+          stages,
+          myPointsPerStage,
+          selectedEtappe?.id,
+          myEntry?.total_points,
+        );
+        return (
+          <div className="mt-1 mb-1">
+            <StageBar
+              stages={data}
+              gcTotal={gcTotal}
+              selectedStage={selectedNumber}
+              onSelectStage={(n) => {
+                const idx = stages.findIndex((x) => x.stage_number === n && !x.is_gc);
+                if (idx >= 0) setEtappeIdx(idx);
+              }}
+              onSelectGc={() => {
+                const idx = stages.findIndex((x) => x.is_gc);
+                if (idx >= 0) setEtappeIdx(idx);
+              }}
+              gcSelected={selectedEtappe?.is_gc === true}
+              title="TUSSENSTAND SELECTEREN"
+              subtitle={subpouleName}
+              rangeLabel={
+                selectedEtappe
                   ? `T/m rit ${selectedEtappe.stage_number}${selectedEtappe.name ? ` — ${selectedEtappe.name}` : ""}`
-                  : "Kies een rit"}
-              </p>
-            </div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground hidden sm:block">
-              {stages.filter((s) => !s.is_gc).length} ritten
-            </span>
+                  : "Kies een rit"
+              }
+            />
           </div>
-          <StageBars
-            stages={stages}
-            pointsByStageId={myPointsPerStage}
-            rankByStageId={myRankPerStage}
-            selectedStageId={selectedEtappe?.id}
-            onSelectStage={(s) => {
-              const idx = stages.findIndex((x) => x.id === s.id);
-              if (idx >= 0) setEtappeIdx(idx);
-            }}
-            gcUnlocked={gcUnlocked}
-            trackHeight={130}
-          />
-        </div>
-      )}
+        );
+      })()}
 
       {/* Cumulative standings up to the selected stage */}
       <div className="retro-border bg-card overflow-hidden">
