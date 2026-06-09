@@ -928,61 +928,71 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
               {/* /Uitleg-laag */}
 
 
-              {/* Headline + Monkey IQ naast elkaar */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <PercentileVerdict
-                  percentile={Math.round(monte.beatPct)}
-                  monkeyCount={5000}
-                  hint={`Jij ${monte.userActual} pt · gem. aap ${Math.round(monte.mean)} pt`}
-                />
-                <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 flex flex-col gap-0">
-                  <div className="relative flex flex-col h-full">
-                    <div className="text-base font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-4">
-                      🧠 Monkey IQ
-                    </div>
-                    <div className="mb-1 text-[11px] text-muted-foreground">Jij verslaat</div>
-                    <div
-                      className={cn(
-                        "font-display font-black tabular-nums leading-none text-5xl",
-                        monte.beatPct >= 50 ? "text-emerald-600" : "text-rose-600",
-                      )}
-                    >
-                      {Math.round((monte.beatPct / 100) * 5000).toLocaleString("nl-NL")}
-                    </div>
-                    <div className="text-muted-foreground text-xs mt-1.5 mb-4">van de 5.000 apen</div>
-                    <div
-                      className={cn(
-                        "font-display font-black tabular-nums text-2xl leading-none",
-                        monte.beatPct >= 50 ? "text-emerald-600" : "text-rose-600",
-                      )}
-                    >
-                      {monte.beatPct.toFixed(1)}%
-                    </div>
-                    <div className="text-muted-foreground text-[10px] mt-0.5 mb-5">van de simulaties verslagen</div>
-                    {nickname && (
-                      <div
-                        className={cn(
-                          "mt-auto rounded-xl border px-3 py-3 text-center",
-                          nickname.good ? "border-emerald-300 bg-emerald-50" : "border-rose-300 bg-rose-50",
-                        )}
-                      >
-                        <div className="text-3xl mb-1.5 leading-none">{nickname.emoji}</div>
-                        <div
-                          className={cn(
-                            "font-display text-sm font-bold",
-                            nickname.good ? "text-emerald-600" : "text-rose-600",
-                          )}
-                        >
-                          {nickname.title}
-                        </div>
-                        <div className="text-muted-foreground/70 text-[9px] uppercase tracking-[0.2em] mt-1">
-                          prestatieklasse
-                        </div>
-                      </div>
-                    )}
+              {/* Headline — volle breedte */}
+              <PercentileVerdict
+                percentile={Math.round(monte.beatPct)}
+                monkeyCount={5000}
+                hint={`Jij ${monte.userActual} pt · gem. aap ${Math.round(monte.mean)} pt`}
+              />
+
+              {/* KPI-dashboard: gem. aap · jij vs aap · apen verslagen */}
+              {(() => {
+                const diff = Math.round(monte.userActual - monte.mean);
+                const belowMean = diff < 0;
+                const beatenApes = Math.round((monte.beatPct / 100) * 5000);
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <DarkStatCard
+                      label="Gemiddelde aap"
+                      value={`${Math.round(monte.mean)}`}
+                      unit="punten"
+                      icon="🎯"
+                      description="Verwacht puntentotaal bij volledig willekeurige rennersselectie op basis van de pool van ingediende teams."
+                      accentColor="gold"
+                    />
+                    <DarkStatCard
+                      label={belowMean ? "Onder de gemiddelde aap" : "Boven de gemiddelde aap"}
+                      value={`${belowMean ? "−" : "+"}${Math.abs(diff)} pt`}
+                      unit={belowMean ? "onder gemiddelde aap" : "boven gemiddelde aap"}
+                      icon={belowMean ? "😬" : "🏆"}
+                      description={
+                        belowMean
+                          ? "Een willekeurige dartpijl had grofweg hetzelfde resultaat. De apen grijnzen."
+                          : "Jij scoort hoger dan een willekeurig samengestelde ploeg. Koerskennis loont."
+                      }
+                      accentColor={belowMean ? "red" : "green"}
+                    />
+                    <DarkStatCard
+                      label="Apen verslagen"
+                      value={`${beatenApes.toLocaleString("nl-NL")} / 5.000`}
+                      unit={`${monte.beatPct.toFixed(1)}% van de simulaties verslagen`}
+                      icon="🧠"
+                      description="Aantal willekeurige ploegen dat jij achter je laat in deze Monte Carlo-simulatie."
+                      accentColor={monte.beatPct >= 50 ? "green" : "red"}
+                    />
                   </div>
+                );
+              })()}
+
+              {nickname && (
+                <div
+                  className={cn(
+                    "rounded-xl border px-4 py-2.5 flex items-center justify-center gap-2.5 text-sm",
+                    nickname.good ? "border-emerald-300 bg-emerald-50" : "border-rose-300 bg-rose-50",
+                  )}
+                >
+                  <span className="text-xl leading-none">{nickname.emoji}</span>
+                  <span className="text-muted-foreground/80 text-[10px] uppercase tracking-[0.2em]">Prestatieklasse</span>
+                  <span
+                    className={cn(
+                      "font-display font-bold",
+                      nickname.good ? "text-emerald-600" : "text-rose-600",
+                    )}
+                  >
+                    {nickname.title}
+                  </span>
                 </div>
-              </div>
+              )}
 
               {/* Distribution chart — full width */}
               <div>
