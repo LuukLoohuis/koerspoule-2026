@@ -1,73 +1,19 @@
-## Doel
+## Probleem
 
-1. DNF-namen volledig leesbaar maken in de category-panels op de teamsheet.
-2. Esthetische verfijning van de category-panels (vintage cycling-stijl behouden, leesbaarheid + hiërarchie verbeteren).
+De kaart "Jij vs de aap" toont `+−1 pt boven gemiddelde aap`, terwijl jij (1659 pt) juist 1 punt **onder** het gemiddelde (1660 pt) zit. De waarde, eenheid, icoon en kleur worden nu gekozen op basis van `monte.worseThanApe` (= `beatPct < 50`, dus of je minder dan de helft van de apen verslaat). Dat is niet hetzelfde als "boven of onder het gemiddelde": bij een rechts-scheve verdeling kun je >50% van de apen verslaan en toch onder het rekenkundig gemiddelde zitten — precies wat hier gebeurt.
 
-Geen wijzigingen aan data, RPCs of business-logica — alleen `src/components/teamsheet/*`.
+## Oplossing
 
----
+In `src/components/HorsCategorieTab.tsx` (rond regels 1128-1145) de kaart laten kiezen op basis van het werkelijke verschil `userActual - mean` in plaats van `worseThanApe`:
 
-## Deel 1 — DNF-leesbaarheid (`RiderTile.tsx`, row variant)
+- Bereken `diff = Math.round(monte.userActual - monte.mean)` één keer.
+- `value`: `${diff >= 0 ? "+" : "−"}${Math.abs(diff)} pt` (geen dubbele tekens meer).
+- `unit`: `diff >= 0 ? "boven gemiddelde aap" : "onder gemiddelde aap"`.
+- `label`, `icon`, `accentColor` en de `description` blijven gekoppeld aan `monte.worseThanApe` (die gaat over percentiel — een ander, valide concept voor de "toon").
+  - Alternatief, als je consistentie wilt: ook deze koppelen aan `diff < 0`. Standaard houd ik ze op `worseThanApe` zodat de copy "Verlies van de aap" pas verschijnt als je echt door de meerderheid van de apen verslagen wordt; bij een klein negatief verschil (zoals nu) blijft het de groene "Jij vs de aap"-kaart met "−1 pt onder gemiddelde aap".
 
-**Probleem:** rechts van de naam staan nu zowel het #-chip als de DNF-badge. Bij smalle tegels (Sprint, Klim) drukt dat de naam-kolom samen → "Christi an...", "Kaden Groves" wordt half overlapt.
+## Edge cases
 
-**Fix:**
-- Bij DNF: **DNF-badge vervangt het #-chip** (i.p.v. ernaast). Het startnummer is voor uitgevallen renners niet meer relevant voor scoring → één element rechts, naam krijgt volle ruimte.
-- Naam-kleur terug naar volle ink-sepia met `opacity: 0.75` (i.p.v. grijs `#9CA3AF`) — strikethrough in rood blijft de primaire DNF-marker.
-- `WebkitLineClamp` van 2 → 1 voor row variant, met `title` tooltip voor edge-case lange namen (Christian Scaroni e.d.).
-- Hero variant (Top klassement): DNF-badge blijft onder de naam — daar is verticale ruimte.
+- `diff === 0` → toont `+0 pt boven gemiddelde aap` (acceptabel; komt zelden voor door afronding).
 
----
-
-## Deel 2 — Esthetische verfijning category-panels
-
-**A. Sub-tier scheiding (actief ↔ uitgevallen)**
-
-In `CategoryPanel.tsx`: rendervolgorde wordt `actief eerst, DNF onderaan`, met een subtiele vintage divider ertussen wanneer beide groepen bestaan:
-
-```
-[actieve renners]
-─── ✦ Uitgevallen (2) ✦ ───
-[DNF renners]
-```
-
-Divider gebruikt bestaande `.vintage-ornament` styling (uit memory: vintage design system) — geen nieuwe tokens.
-
-**B. Category-header verfijning**
-
-- Icoon-badge: van 32 → 36px, met subtiele box-shadow in de jersey-tint (`tone.tint`).
-- Onder de header een dun gradient-onderlijntje in jersey-kleur (`linear-gradient(90deg, jersey, transparent)`) — sluit aan op de bestaande retro-border-stijl.
-- Telling-chip: zelfde plek, maar font-weight 800 + iets meer letter-spacing voor leesbaarheid van enkele cijfers.
-
-**C. Rij-hover & focus**
-
-- Subtiele `background: tone.tint` op hover (i.p.v. neutraal grijs) → koppelt visueel aan de categorie-kleur.
-- Lichte `transform: translateX(2px)` op hover voor tactiele feedback (200ms ease).
-
-**D. Cyclist-figuur**
-
-- Geen wijziging aan `Cyclist.tsx` zelf — bestaande SVG-varianten per categorie blijven.
-- Wel: in row variant size 56×42 → 52×40 (compacter, geeft meer ruimte aan naam zonder dat figuur kleiner oogt).
-
----
-
-## Technische scope
-
-**Bestanden:**
-- `src/components/teamsheet/RiderTile.tsx` — DNF-badge vervangt chip, naam-kleur, line-clamp, hover.
-- `src/components/teamsheet/CategoryPanel.tsx` — sortering actief/DNF, divider tussen groepen, header-verfijning.
-
-**Niet aangeraakt:**
-- `tokens.ts`, `icons.tsx`, `Cyclist.tsx`, `TeamSheet.tsx` — geen tokens/iconen/data-wijzigingen nodig.
-- Geen nieuwe dependencies, geen Tailwind config-wijzigingen.
-
-**Verificatie:**
-- Visueel via preview op `/karavaan` (huidige route) → DNF-tegels checken op Sprint (Kaden Groves, Corbin Strong tooltip) en Klim (Christian Scaroni).
-- Hero variant blijft onveranderd.
-
----
-
-## Niet in deze ronde
-
-- Geen volledige design-directions ronde (skill/redesign) — jij vroeg gericht om "leesbaarheid + esthetiek meedenken", niet om 3 varianten te kiezen. Als je na deze fix alsnog een radicalere herschikking wil, doen we dat als aparte ronde.
-- Geen wijziging aan grid/kolom-aantal van de panels.
+Laat het me weten als je liever óók label/kleur/icoon laat omslaan zodra `diff < 0` (dus puur op het gemiddelde i.p.v. op het percentiel).

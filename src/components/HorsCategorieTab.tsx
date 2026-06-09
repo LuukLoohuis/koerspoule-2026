@@ -1125,24 +1125,26 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   description="Verwacht puntentotaal bij volledig willekeurige rennersselectie op basis van de pool van ingediende teams."
                   accentColor="gold"
                 />
-                <DarkStatCard
-                  label={monte.worseThanApe ? "Verlies van de aap" : "Jij vs de aap"}
-                  value={
-                    monte.worseThanApe
-                      ? `−${Math.abs(Math.round(monte.userActual - monte.mean))} pt`
-                      : `+${Math.round(monte.userActual - monte.mean)} pt`
-                  }
-                  unit={monte.worseThanApe ? "onder gemiddelde aap" : "boven gemiddelde aap"}
-                  icon={monte.worseThanApe ? "😬" : "🏆"}
-                  description={
-                    monte.worseThanApe
-                      ? "Een willekeurige dartpijl had grofweg hetzelfde resultaat. De apen zijn blij."
-                      : oneInX
-                        ? `Slechts 1 op ${oneInX} willekeurige apen scoort hoger dan jij. Dartpijlen staan paf.`
-                        : "Uitstekend resultaat — je overtreft het gros van de willekeurige ploegen."
-                  }
-                  accentColor={monte.worseThanApe ? "red" : "green"}
-                />
+                {(() => {
+                  const diff = Math.round(monte.userActual - monte.mean);
+                  const belowMean = diff < 0;
+                  return (
+                    <DarkStatCard
+                      label={monte.worseThanApe ? "Verlies van de aap" : "Jij vs de aap"}
+                      value={`${belowMean ? "−" : "+"}${Math.abs(diff)} pt`}
+                      unit={belowMean ? "onder gemiddelde aap" : "boven gemiddelde aap"}
+                      icon={monte.worseThanApe ? "😬" : "🏆"}
+                      description={
+                        monte.worseThanApe
+                          ? "Een willekeurige dartpijl had grofweg hetzelfde resultaat. De apen zijn blij."
+                          : oneInX
+                            ? `Slechts 1 op ${oneInX} willekeurige apen scoort hoger dan jij. Dartpijlen staan paf.`
+                            : "Uitstekend resultaat — je overtreft het gros van de willekeurige ploegen."
+                      }
+                      accentColor={monte.worseThanApe ? "red" : "green"}
+                    />
+                  );
+                })()}
               </div>
 
 
