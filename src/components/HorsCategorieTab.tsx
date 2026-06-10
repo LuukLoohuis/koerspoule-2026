@@ -12,6 +12,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  ComposedChart,
+  Area,
 } from "recharts";
 import { supabase } from "@/lib/supabase";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
