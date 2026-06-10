@@ -20,6 +20,7 @@ import { pointsTable } from "@/data/riders";
 import { useCategories } from "@/hooks/useCategories";
 import MonkeyExplainerModal from "@/components/horscat/MonkeyExplainerModal";
 import PercentileVerdict from "@/components/horscat/PercentileVerdict";
+import monkeyDart from "@/assets/horscat/monkey-dart.png";
 import { useStages, useGameStandings, useStagePointsForEntries, useStageAverages } from "@/hooks/useResults";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -882,7 +883,18 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
       {/* ── Tab 1: Dartpijl (Monte Carlo) ───────────────────────────────────── */}
       {activeTab === "dartpijl" && (
-        <div className="space-y-5">
+        <div className="space-y-5 relative">
+          {/* Mascotte — vintage aap met dartpijl, decoratief top-right.
+              Verborgen op kleine schermen (zou content verdringen). */}
+          {monte && (
+            <img
+              src={monkeyDart}
+              alt=""
+              aria-hidden
+              className="animate-monkey-idle pointer-events-none select-none hidden lg:block absolute -top-6 right-0 w-44 xl:w-52 z-10"
+              style={{ filter: "drop-shadow(0 6px 10px rgba(58,42,26,0.18))" }}
+            />
+          )}
           {!monte ? (
             <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center">
               <span className="text-4xl">🐒</span>
