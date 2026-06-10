@@ -883,18 +883,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
       {/* ── Tab 1: Dartpijl (Monte Carlo) ───────────────────────────────────── */}
       {activeTab === "dartpijl" && (
-        <div className="space-y-5 relative">
-          {/* Mascotte — vintage aap met dartpijl, decoratief top-right.
-              Verborgen op kleine schermen (zou content verdringen). */}
-          {monte && (
-            <img
-              src={monkeyDart}
-              alt=""
-              aria-hidden
-              className="animate-monkey-idle pointer-events-none select-none hidden lg:block absolute -top-6 right-0 w-44 xl:w-52 z-10"
-              style={{ filter: "drop-shadow(0 6px 10px rgba(58,42,26,0.18))" }}
-            />
-          )}
+        <div className="space-y-5">
           {!monte ? (
             <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center">
               <span className="text-4xl">🐒</span>
@@ -1007,7 +996,17 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
               )}
 
               {/* Distribution chart — full width */}
-              <div>
+              <div className="relative">
+                {/* Mascotte — piept over de rechterbovenhoek van de grafiek
+                    (zoals de affiche-referentie). pointer-events-none zodat
+                    de grafiek-tooltip bruikbaar blijft. Verborgen op mobiel. */}
+                <img
+                  src={monkeyDart}
+                  alt=""
+                  aria-hidden
+                  className="animate-monkey-idle pointer-events-none select-none hidden md:block absolute -top-14 -right-3 w-48 lg:w-60 z-20"
+                  style={{ filter: "drop-shadow(0 6px 10px rgba(58,42,26,0.18))" }}
+                />
                 <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 md:p-5">
                   <div className="relative">
                     <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">

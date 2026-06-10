@@ -5,6 +5,7 @@
  * Bands & copy via verdictConfig.ts — band-tekst hier nooit hardcoden.
  */
 
+import { useEffect, useRef, useState } from "react";
 import { pickVerdict } from "./verdictConfig";
 
 type Props = {
@@ -17,8 +18,41 @@ type Props = {
   className?: string;
 };
 
+/** Telt 0 → target in ~1.2s bij mount. Respecteert prefers-reduced-motion
+ *  (springt direct naar target). */
+function useCountUp(target: number, durationMs = 1200): number {
+  const reduce =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const [value, setValue] = useState(reduce ? target : 0);
+  const rafRef = useRef<number>();
+
+  useEffect(() => {
+    if (reduce) {
+      setValue(target);
+      return;
+    }
+    let startTs: number | null = null;
+    const tick = (ts: number) => {
+      if (startTs === null) startTs = ts;
+      const t = Math.min(1, (ts - startTs) / durationMs);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - t, 3);
+      setValue(Math.round(eased * target));
+      if (t < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [target, durationMs, reduce]);
+
+  return value;
+}
+
 export default function PercentileVerdict({ percentile, monkeyCount = 5000, hint, className }: Props) {
   const v = pickVerdict(percentile);
+  const shown = useCountUp(percentile);
   return (
     <div
       className={"vintage-paper rounded-2xl p-5 md:p-6 text-center " + (className ?? "")}
@@ -41,7 +75,7 @@ export default function PercentileVerdict({ percentile, monkeyCount = 5000, hint
         }}
         aria-label={`Je verslaat ${percentile} procent van de apen`}
       >
-        {percentile}%
+        {shown}%
       </div>
       <p
         className="mt-1"
