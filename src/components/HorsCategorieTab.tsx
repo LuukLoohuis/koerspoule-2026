@@ -12,6 +12,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  ComposedChart,
+  Area,
 } from "recharts";
 import { supabase } from "@/lib/supabase";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -1007,82 +1009,210 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   className="animate-monkey-idle pointer-events-none select-none hidden md:block absolute -top-14 -right-3 w-48 lg:w-60 z-20"
                   style={{ filter: "drop-shadow(0 6px 10px rgba(58,42,26,0.18))" }}
                 />
-                <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 md:p-5">
+                <div
+                  className="relative overflow-hidden rounded-2xl p-4 md:p-5"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, #f5ecd3 0%, #efe4c4 100%)",
+                    border: "1px solid rgba(58,42,26,0.18)",
+                    boxShadow:
+                      "inset 0 0 0 1px rgba(255,255,255,0.4), 0 1px 0 rgba(58,42,26,0.06)",
+                  }}
+                >
+                  {/* Paper-grain overlay */}
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 opacity-[0.18] mix-blend-multiply"
+                    style={{
+                      backgroundImage:
+                        "radial-gradient(rgba(58,42,26,0.18) 1px, transparent 1px)",
+                      backgroundSize: "3px 3px",
+                    }}
+                  />
                   <div className="relative">
-                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
+                    <div
+                      className="flex items-center gap-2 mb-1"
+                      style={{
+                        fontFamily: "'Oswald','Bebas Neue',sans-serif",
+                        fontSize: 10,
+                        letterSpacing: "0.22em",
+                        textTransform: "uppercase",
+                        color: "rgba(58,42,26,0.65)",
+                      }}
+                    >
                       <BarChart3 className="h-3 w-3" />
                       Verdeling · 5.000 willekeurige ploegen
                     </div>
-                    <h3 className="font-display text-foreground text-base sm:text-lg mb-1">Aapscore distributie</h3>
-                    <p className="text-[11px] text-muted-foreground mb-4">
-                      Bars links van jou (goud) zijn apen die jij verslaat
-                    </p>
-                    <div style={{ height: 190 }}>
+                    <h3
+                      style={{
+                        fontFamily: "'Playfair Display',Georgia,serif",
+                        fontWeight: 800,
+                        fontSize: "clamp(20px, 3.6vw, 26px)",
+                        color: "#3a2a1a",
+                        lineHeight: 1.1,
+                        marginBottom: 10,
+                      }}
+                    >
+                      Aapscore distributie
+                    </h3>
+                    <div style={{ height: 220 }} className="relative">
+                      {/* Handwritten callout — desktop only */}
+                      <div
+                        aria-hidden
+                        className="hidden sm:block absolute z-10 pointer-events-none"
+                        style={{ left: "8%", top: "30%" }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: "'Caveat','Source Serif 4',cursive",
+                            fontSize: 16,
+                            color: "#3a2a1a",
+                            fontStyle: "italic",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Apen die jij verslaat
+                        </span>
+                        <svg
+                          width="60"
+                          height="22"
+                          viewBox="0 0 60 22"
+                          style={{ display: "block", marginTop: 2 }}
+                        >
+                          <path
+                            d="M2 2 C 20 6, 35 14, 56 20"
+                            stroke="#3a2a1a"
+                            strokeWidth="1.2"
+                            fill="none"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M56 20 L 50 18 M 56 20 L 53 14"
+                            stroke="#3a2a1a"
+                            strokeWidth="1.2"
+                            fill="none"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={monte.dist} margin={{ top: 16, right: 4, left: -22, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="hc-bar-beat" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.9} />
-                              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
-                            </linearGradient>
-                            <linearGradient id="hc-bar-lose" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="rgba(0,0,0,0.18)" />
-                              <stop offset="100%" stopColor="rgba(0,0,0,0.04)" />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.08)" />
+                        <ComposedChart
+                          data={(() => {
+                            // bell-curve overlay: normaal-fit op mean/std van de dist
+                            const total = monte.dist.reduce((s, b) => s + b.count, 0) || 1;
+                            const mean = monte.dist.reduce((s, b) => s + b.bucket * b.count, 0) / total;
+                            const variance =
+                              monte.dist.reduce((s, b) => s + b.count * (b.bucket - mean) ** 2, 0) / total;
+                            const std = Math.sqrt(variance) || 1;
+                            const peakCount = Math.max(...monte.dist.map((b) => b.count));
+                            return monte.dist.map((b) => {
+                              const z = (b.bucket - mean) / std;
+                              const pdf = Math.exp(-0.5 * z * z);
+                              return { ...b, curve: pdf * peakCount };
+                            });
+                          })()}
+                          margin={{ top: 20, right: 8, left: -18, bottom: 4 }}
+                        >
+                          <CartesianGrid
+                            vertical={false}
+                            stroke="rgba(58,42,26,0.10)"
+                            strokeDasharray="2 4"
+                          />
                           <XAxis
                             dataKey="bucket"
-                            tick={{ fontSize: 9, fill: "#999" }}
+                            tick={{
+                              fontSize: 10,
+                              fill: "rgba(58,42,26,0.7)",
+                              fontFamily: "'Oswald',sans-serif",
+                            }}
                             axisLine={false}
                             tickLine={false}
                           />
-                          <YAxis tick={{ fontSize: 9, fill: "#999" }} axisLine={false} tickLine={false} />
+                          <YAxis
+                            tick={{
+                              fontSize: 10,
+                              fill: "rgba(58,42,26,0.6)",
+                              fontFamily: "'Oswald',sans-serif",
+                            }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
                           <Tooltip
-                            cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                            cursor={{ fill: "rgba(58,42,26,0.06)" }}
                             content={(props: any) => {
                               const { active, payload } = props;
                               if (!active || !payload?.length) return null;
                               const { bucket, count } = payload[0].payload;
                               return (
                                 <div
-                                  className="rounded-xl border border-border backdrop-blur-xl px-3 py-2 text-xs text-foreground shadow-xl"
-                                  style={{ background: "hsl(var(--card))" }}
+                                  className="rounded-md px-3 py-2 text-xs shadow-lg"
+                                  style={{
+                                    background: "#f5ecd3",
+                                    border: "1px solid rgba(58,42,26,0.3)",
+                                    color: "#3a2a1a",
+                                    fontFamily: "'Oswald',sans-serif",
+                                  }}
                                 >
-                                  <div className="font-mono font-bold text-foreground">{bucket} pt</div>
-                                  <div className="text-foreground/70">{count} apen</div>
+                                  <div style={{ fontWeight: 700 }}>{bucket} pt</div>
+                                  <div style={{ opacity: 0.75 }}>{count} apen</div>
                                 </div>
                               );
                             }}
                           />
-                          <Bar dataKey="count" radius={[3, 3, 0, 0]} maxBarSize={24} animationDuration={800}>
+                          {/* Bell-curve overlay (achter de bars) */}
+                          <Area
+                            type="monotone"
+                            dataKey="curve"
+                            stroke="rgba(58,42,26,0.35)"
+                            strokeWidth={1}
+                            fill="rgba(58,42,26,0.08)"
+                            isAnimationActive={false}
+                            dot={false}
+                            activeDot={false}
+                            legendType="none"
+                          />
+                          <Bar
+                            dataKey="count"
+                            maxBarSize={18}
+                            animationDuration={700}
+                            stroke="rgba(58,42,26,0.55)"
+                            strokeWidth={0.75}
+                          >
                             {monte.dist.map((b, i) => (
                               <Cell
                                 key={i}
-                                fill={b.bucket <= monte.userActual ? "url(#hc-bar-beat)" : "url(#hc-bar-lose)"}
+                                fill={b.bucket <= monte.userActual ? "#c9a227" : "#bdb7a8"}
                               />
                             ))}
                           </Bar>
-                          {/* Reference lines AFTER Bar so they render on top */}
-                          {/* Root cause fix: x must match an exact bucket value (categorical axis) */}
-                          {/* Jouw score — amber, solid, thick */}
+                          {/* Jouw score — gouden dashed line + kroon + label */}
                           <ReferenceLine
                             x={snapToBucket(monte.dist, monte.userActual)}
-                            stroke="#fbbf24"
-                            strokeWidth={3}
+                            stroke="#c9a227"
+                            strokeWidth={2}
+                            strokeDasharray="4 3"
                             label={(props: any) => {
                               const { viewBox } = props;
                               const lx = viewBox?.x ?? 0;
-                              const ly = (viewBox?.y ?? 0) + 6;
+                              const ly = (viewBox?.y ?? 0);
                               return (
                                 <g>
-                                  <rect x={lx - 34} y={ly} width={68} height={16} rx={3} fill="#fbbf24" />
+                                  {/* Kroontje */}
+                                  <path
+                                    d={`M ${lx - 9} ${ly - 4} L ${lx - 6} ${ly - 11} L ${lx - 3} ${ly - 6} L ${lx} ${ly - 13} L ${lx + 3} ${ly - 6} L ${lx + 6} ${ly - 11} L ${lx + 9} ${ly - 4} Z`}
+                                    fill="#c9a227"
+                                    stroke="#3a2a1a"
+                                    strokeWidth={0.6}
+                                    strokeLinejoin="round"
+                                  />
                                   <text
                                     x={lx}
-                                    y={ly + 11}
-                                    fill="#1c1400"
-                                    fontSize={9}
-                                    fontWeight={800}
+                                    y={ly + 14}
+                                    fill="#3a2a1a"
+                                    fontSize={11}
+                                    fontStyle="italic"
+                                    fontFamily="'Playfair Display',Georgia,serif"
+                                    fontWeight={700}
                                     textAnchor="middle"
                                   >
                                     {`Jij · ${monte.userActual} pt`}
@@ -1091,48 +1221,49 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                               );
                             }}
                           />
-                          {/* Gemiddelde — sky blue, dashed */}
+                          {/* Gemiddelde — blauwe dashed line */}
                           <ReferenceLine
                             x={snapToBucket(monte.dist, Math.round(monte.mean))}
-                            stroke="#38bdf8"
-                            strokeWidth={2.5}
+                            stroke="#3b6fa0"
+                            strokeWidth={1.5}
                             strokeDasharray="5 3"
                             label={(props: any) => {
                               const { viewBox } = props;
                               const lx = viewBox?.x ?? 0;
-                              const ly = (viewBox?.y ?? 0) + 26;
+                              const ly = (viewBox?.y ?? 0) + 36;
                               return (
-                                <g>
-                                  <rect x={lx - 34} y={ly} width={70} height={16} rx={3} fill="#38bdf8" />
-                                  <text
-                                    x={lx}
-                                    y={ly + 11}
-                                    fill="#001a27"
-                                    fontSize={9}
-                                    fontWeight={800}
-                                    textAnchor="middle"
-                                  >
-                                    {`Gem. · ${Math.round(monte.mean)} pt`}
-                                  </text>
-                                </g>
+                                <text
+                                  x={lx + 6}
+                                  y={ly}
+                                  fill="#3b6fa0"
+                                  fontSize={9}
+                                  fontWeight={700}
+                                  fontFamily="'Oswald',sans-serif"
+                                  textAnchor="start"
+                                  style={{ letterSpacing: "0.1em", textTransform: "uppercase" }}
+                                >
+                                  {`Gemiddelde · ${Math.round(monte.mean)} pt`}
+                                </text>
                               );
                             }}
                           />
-                        </BarChart>
+                        </ComposedChart>
                       </ResponsiveContainer>
                     </div>
-                    <div className="flex flex-wrap gap-4 mt-3 text-[10px] text-foreground/80">
-                      <span className="flex items-center gap-1.5">
-                        <span className="inline-block h-2.5 w-3 rounded-sm bg-[#fbbf24]" />
-                        Jou ({monte.userActual} pt)
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="inline-block h-px w-4 border-t-2 border-dashed border-[#38bdf8]" />
-                        Gemiddelde ({Math.round(monte.mean)} pt)
-                      </span>
-                    </div>
+                    <p
+                      className="text-center mt-2"
+                      style={{
+                        fontFamily: "'Source Serif 4',Georgia,serif",
+                        fontStyle: "italic",
+                        fontSize: 11,
+                        color: "rgba(58,42,26,0.7)",
+                      }}
+                    >
+                      Bars links van jou (goud) zijn apen die jij verslaat
+                    </p>
                   </div>
                 </div>
+
 
               </div>
 
