@@ -328,8 +328,9 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="chart" className="pt-3">
+          <TabsContent value="chart" className="pt-3 space-y-4">
             <SubpouleStandings subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
+            <DaguitslagChart subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
           </TabsContent>
           <TabsContent value="benchmark" className="pt-3">
             <div key={benchmarkUnlocked ? "unlocked" : "locked"}>
