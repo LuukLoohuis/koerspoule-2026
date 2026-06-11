@@ -1,20 +1,16 @@
 /**
  * <AapscoreDistributie>
  *
- * FT/Economist-stijl distributiegrafiek op perkament: waar valt jouw team
- * tussen 5.000 willekeurige "apenteams". Custom SVG (geen Recharts) voor
- * exacte controle over gridlines, annotaties en de gereserveerde hoek voor
- * de mascotte.
+ * FT/Bloomberg-grade distributiegrafiek: waar valt jouw team tussen 5.000
+ * willekeurige "apenteams". Pass 3 — clean FT-modus: off-white (FT-salmon)
+ * kaart, koele grijze staven, één thema-accent, precieze typografie. Geen
+ * perkament, geen grain, geen retro-randen.
  *
- * Ontwerpdiscipline:
- *  - Typografie draagt het ontwerp: titel → deck → grafiek → bron.
- *  - Eén kleur voor alle staven (inkt, gedempt); precies één accent: de bin
- *    waarin jouw score valt, in het actieve thema (--primary).
- *  - Geen verticale gridlines, geen chart-box, geen legenda — direct labelen.
- *  - Mascotte = redactionele spot-illustratie, statisch rechtsboven.
+ * Custom SVG voor exacte controle over gridlines, annotatieplaatsing en de
+ * gereserveerde hoek voor de mascotte (die nu écht aanwezig is: groot,
+ * rechtsboven, voeten richting de histogram-rand).
  *
- * Zuiver presentatie-component: alle data via props, geen berekeningen die
- * de simulatie raken.
+ * Zuiver presentatie-component: alle data via props, simulatie onaangeroerd.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -32,13 +28,18 @@ type Props = {
   className?: string;
 };
 
-/* Tokens: --ink-sepia/--ink-faded zijn volledige kleuren; --primary en
-   --vintage-gold zijn HSL-tripletten. */
-const INK = "var(--ink-sepia)";
-const INK_FADED = "var(--ink-faded)";
+/* FT-palet — bewust hardcoded neutralen (geen thema-tokens: dit zijn
+   chart-conventies, geen merk-kleuren). Eén accent via het race-thema. */
+const CARD_BG = "#FFF1E5"; // FT-salmon, subtiel
+const BAR_GREY = "#C8C8C8";
+const GRID = "#E6E6E6";
+const AXIS_TEXT = "#333333";
+const MUTED = "#666666";
+const FAINT = "#999999";
+const TITLE_INK = "#111111";
 const ACCENT = "hsl(var(--primary))";
 
-const FONT_SANS = "'Oswald','Archivo Black',sans-serif";
+const FONT_SANS = "'Inter','DM Sans',sans-serif";
 const FONT_MONO = "'JetBrains Mono',monospace";
 
 function prefersReducedMotion(): boolean {
@@ -55,7 +56,7 @@ function niceCeil(v: number): number {
   return nice * mag;
 }
 
-/** Slim key-figures strookje: grote cijfers, hairline-scheiding, geen kaartjes. */
+/** FT key-numbers rij: kale cijfers, hairline-scheiding, geen kaartjes. */
 function KeyFigures({
   mean,
   median,
@@ -74,17 +75,14 @@ function KeyFigures({
     { label: "Apen verslagen", value: `${Math.round(beatPct)}%` },
   ];
   return (
-    <div
-      className="grid grid-cols-2 sm:flex sm:items-stretch mt-3 mb-4"
-      style={{ borderTop: "1px solid color-mix(in srgb, var(--ink-sepia) 18%, transparent)" }}
-    >
+    <div className="grid grid-cols-2 sm:grid-cols-4 mt-4 mb-3">
       {items.map((it, i) => (
         <div
           key={it.label}
-          className="flex-1 py-2.5 pr-3"
+          className="py-1.5 pr-3"
           style={{
-            borderLeft:
-              i > 0 ? "1px solid color-mix(in srgb, var(--ink-sepia) 14%, transparent)" : undefined,
+            borderLeft: i % 2 === 1 || i >= 1 ? `1px solid ${GRID}` : undefined,
+            // mobiel (2×2): alleen kolom 2 een divider; desktop: alle vanaf i>0
             paddingLeft: i > 0 ? 12 : 0,
           }}
         >
@@ -93,9 +91,9 @@ function KeyFigures({
             style={{
               fontFamily: FONT_SANS,
               fontWeight: 700,
-              fontSize: "clamp(18px, 2.6vw, 22px)",
-              lineHeight: 1.1,
-              color: it.accent ? ACCENT : INK,
+              fontSize: it.accent ? 24 : 20,
+              lineHeight: 1.15,
+              color: it.accent ? ACCENT : TITLE_INK,
             }}
           >
             {it.value}
@@ -103,10 +101,10 @@ function KeyFigures({
           <div
             style={{
               fontFamily: FONT_SANS,
-              fontSize: 9,
-              letterSpacing: "0.14em",
+              fontSize: 10,
+              letterSpacing: "0.12em",
               textTransform: "uppercase",
-              color: INK_FADED,
+              color: MUTED,
               marginTop: 2,
             }}
           >
@@ -130,7 +128,7 @@ export default function AapscoreDistributie({
   const reduce = prefersReducedMotion();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(0);
-  const [shown, setShown] = useState(reduce);
+  const [mounted, setMounted] = useState(reduce);
 
   useEffect(() => {
     if (!wrapRef.current) return;
@@ -142,10 +140,10 @@ export default function AapscoreDistributie({
     return () => obs.disconnect();
   }, []);
 
-  // Eén rustige 200ms fade bij mount (geen entrance-circus).
+  // Staven groeien bij mount; aap fadet daarna in. Reduced motion → direct.
   useEffect(() => {
     if (reduce) return;
-    const id = requestAnimationFrame(() => setShown(true));
+    const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);
   }, [reduce]);
 
@@ -159,11 +157,13 @@ export default function AapscoreDistributie({
   const domainMax = dist[dist.length - 1].bucket + step / 2;
   const span = Math.max(1, domainMax - domainMin);
 
-  const H = isMobile ? 190 : 230;
+  const H = isMobile ? 200 : 250;
   const padL = 6;
-  const padR = 10;
-  const gridTop = 22; // ruimte voor het bovenste gridline-label
-  const baseline = H - 20; // ruimte voor x-labels
+  // Desktop: rechts ruimte reserveren zodat de staart-staven vrij blijven van
+  // de mascotte die van boven het plotgebied in hangt.
+  const padR = isMobile ? 10 : 96;
+  const gridTop = 24;
+  const baseline = H - 22;
   const plotW = Math.max(0, w - padL - padR);
   const plotH = baseline - gridTop;
 
@@ -184,87 +184,70 @@ export default function AapscoreDistributie({
   const gap = 2;
   const barW = Math.max(1, slot - gap);
 
-  /* ── annotatie-plaatsing (expliciet, niet aan een library overgelaten) ── */
-  const xUser = Math.max(padL + 1, Math.min(w - padR - 1, xOf(userActual)));
+  /* ── annotaties: expliciete plaatsing, nooit clippen ─────────────────── */
+  const xUser = Math.max(padL + 1, Math.min(padL + plotW - 1, xOf(userActual)));
   const userFrac = (xUser - padL) / Math.max(1, plotW);
-  // Label aan de kant met de meeste ruimte; elleboog wijst naar de lijn.
-  const labelLeft = userFrac > 0.6;
+  const labelLeft = userFrac > 0.55; // rechterhelft → label links van de lijn
   const elbow = 7;
   const tx = labelLeft ? xUser - elbow - 4 : xUser + elbow + 4;
   const tAnchor: "start" | "end" = labelLeft ? "end" : "start";
 
   const xMedian = xOf(median);
   const medianFrac = (xMedian - padL) / Math.max(1, plotW);
-  // Mediaan-label onderin, aan de tegenovergestelde kant van het Jij-label
-  // wanneer de lijnen dicht bij elkaar staan.
   const medianClose = Math.abs(medianFrac - userFrac) < 0.12;
-  const medLeft = medianClose ? !labelLeft : medianFrac > 0.6;
+  const medLeft = medianClose ? !labelLeft : medianFrac > 0.55;
   const mtx = medLeft ? xMedian - 6 : xMedian + 6;
   const mAnchor: "start" | "end" = medLeft ? "end" : "start";
 
-  // x-ticks: 4 (mobiel) / 5 nette waarden uit de bins.
   const tickCount = isMobile ? 4 : 5;
   const ticks = Array.from({ length: tickCount }, (_, i) =>
     dist[Math.round((i / (tickCount - 1)) * (dist.length - 1))].bucket,
   );
 
   return (
-    <div
-      ref={wrapRef}
-      className={"relative " + (className ?? "")}
-      style={{
-        opacity: shown ? 1 : 0,
-        transition: reduce ? undefined : "opacity 200ms ease-out",
-      }}
-    >
+    <div ref={wrapRef} className={"relative " + (className ?? "")}>
       <div
-        className="relative overflow-hidden rounded-2xl p-4 md:p-5"
+        className="relative rounded-xl p-4 md:p-5"
         style={{
-          background: "linear-gradient(180deg,#f5ecd3 0%,#efe4c4 100%)",
-          border: "1px solid color-mix(in srgb, var(--ink-sepia) 18%, transparent)",
-          boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.4), 0 1px 0 rgba(58,42,26,0.06)",
+          background: CARD_BG,
+          border: "1px solid rgba(0,0,0,0.08)",
         }}
       >
-        {/* Paper-grain */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.14] mix-blend-multiply"
-          style={{
-            backgroundImage: "radial-gradient(rgba(58,42,26,0.18) 1px, transparent 1px)",
-            backgroundSize: "3px 3px",
-          }}
-        />
-
-        {/* Mascotte — statische redactionele spot-illustratie, rechtsboven.
-            Kolom-logo, geen interactie-element. */}
+        {/* Mascotte — grote redactionele aanwezigheid rechtsboven; hangt op
+            desktop van boven het plotgebied in (staart-staven zijn laag en
+            het plot reserveert rechts padding). Fade-in ná de staven. */}
         <img
           src={aapDartpijl}
           alt=""
           aria-hidden
-          className="animate-monkey-idle pointer-events-none select-none absolute top-3 right-3 z-10 h-[56px] sm:h-[72px] md:h-[96px] w-auto"
-          style={{ filter: "drop-shadow(0 4px 8px rgba(58,42,26,0.2))" }}
+          className="animate-monkey-idle pointer-events-none select-none absolute z-10 w-auto h-[110px] md:h-[180px] top-3 right-3 md:top-4 md:right-4"
+          style={{
+            filter: "drop-shadow(0 8px 14px rgba(0,0,0,0.18))",
+            opacity: mounted ? 1 : 0,
+            transition: reduce ? undefined : "opacity 150ms ease-out 320ms",
+          }}
         />
 
         <div className="relative">
-          {/* Kop: titel → deck (FT-hiërarchie). Rechts vrijgehouden voor de aap. */}
+          {/* Titel + deck — FT-hiërarchie, rechts vrijgehouden voor de aap */}
           <h3
-            className="pr-16 sm:pr-24 md:pr-28"
+            className="pr-28 md:pr-48"
             style={{
               fontFamily: FONT_SANS,
               fontWeight: 700,
-              fontSize: "clamp(16px, 3vw, 20px)",
-              lineHeight: 1.2,
-              color: INK,
+              fontSize: 18,
+              lineHeight: 1.25,
+              color: TITLE_INK,
             }}
           >
             Hoe scoort jouw team tegen {monkeyCount.toLocaleString("nl-NL")} willekeurige apen?
           </h3>
           <p
-            className="pr-16 sm:pr-24 md:pr-28"
+            className="pr-28 md:pr-48"
             style={{
-              fontFamily: "'Source Serif 4',Georgia,serif",
-              fontSize: 12,
-              color: INK_FADED,
+              fontFamily: FONT_SANS,
+              fontSize: 13,
+              color: MUTED,
               marginTop: 3,
             }}
           >
@@ -277,20 +260,20 @@ export default function AapscoreDistributie({
             {userActual} punten en verslaat {Math.round(beatPct)}% van de apen.
           </p>
 
-          {/* Key figures — FT-strook, geen kaartjes */}
+          {/* Key figures — kaal, hairline dividers */}
           <KeyFigures mean={mean} median={median} userActual={userActual} beatPct={beatPct} />
 
           {/* Plot */}
           {w > 0 && (
             <svg
-              width={w - (isMobile ? 0 : 0)}
+              width={w}
               height={H}
               viewBox={`0 0 ${w} ${H}`}
               style={{ display: "block", maxWidth: "100%" }}
               role="img"
               aria-hidden
             >
-              {/* Horizontale hairline-gridlines + labels erboven-links */}
+              {/* Horizontale hairlines + label erboven-links */}
               {gridVals.map((gv, i) => {
                 const y = yOf(gv);
                 const top = i === gridVals.length - 1;
@@ -298,20 +281,13 @@ export default function AapscoreDistributie({
                   <g key={gv}>
                     <line
                       x1={padL}
-                      x2={w - padR}
+                      x2={padL + plotW}
                       y1={y}
                       y2={y}
-                      stroke={INK}
-                      strokeOpacity={0.14}
-                      strokeWidth={1}
+                      stroke={GRID}
+                      strokeWidth={0.75}
                     />
-                    <text
-                      x={padL}
-                      y={y - 4}
-                      fontFamily={FONT_MONO}
-                      fontSize={9}
-                      fill={INK_FADED}
-                    >
+                    <text x={padL} y={y - 4} fontFamily={FONT_MONO} fontSize={10} fill={MUTED}>
                       {Math.round(gv)}
                       {top ? " aantal apenteams" : ""}
                     </text>
@@ -319,7 +295,8 @@ export default function AapscoreDistributie({
                 );
               })}
 
-              {/* Staven — één inkt-tint, accent alleen op de user-bin */}
+              {/* Staven — FT-grijs, accent alleen op de user-bin; groeien bij
+                  mount vanaf de baseline (transform-box: fill-box). */}
               {dist.map((b, i) => {
                 const x = padL + i * slot + gap / 2;
                 const y = yOf(b.count);
@@ -331,21 +308,25 @@ export default function AapscoreDistributie({
                     y={y}
                     width={barW}
                     height={Math.max(0, baseline - y)}
-                    fill={isUser ? ACCENT : INK}
-                    fillOpacity={isUser ? 0.92 : 0.3}
+                    fill={isUser ? ACCENT : BAR_GREY}
+                    style={{
+                      transformBox: "fill-box",
+                      transformOrigin: "bottom",
+                      transform: mounted ? "scaleY(1)" : "scaleY(0)",
+                      transition: reduce ? undefined : "transform 300ms ease-out",
+                    }}
                   />
                 );
               })}
 
-              {/* Mediaan — subtiele dashed hairline, direct gelabeld */}
+              {/* Mediaan — dashed hairline, direct label */}
               <line
                 x1={xMedian}
                 x2={xMedian}
                 y1={gridTop + 6}
                 y2={baseline}
-                stroke={INK}
-                strokeOpacity={0.45}
-                strokeWidth={1}
+                stroke={FAINT}
+                strokeWidth={0.75}
                 strokeDasharray="3 3"
               />
               <text
@@ -353,49 +334,48 @@ export default function AapscoreDistributie({
                 y={baseline - 6}
                 textAnchor={mAnchor}
                 fontFamily={FONT_MONO}
-                fontSize={9}
-                fill={INK_FADED}
+                fontSize={10}
+                fill={FAINT}
               >
                 mediaan {Math.round(median)}
               </text>
 
-              {/* Jij — dunne inkt-lijn over volle plothoogte + FT-annotatie */}
+              {/* Jij — dunne donkere lijn + directe tekst-annotatie */}
               <line
                 x1={xUser}
                 x2={xUser}
                 y1={gridTop - 2}
                 y2={baseline}
-                stroke={INK}
-                strokeWidth={1.25}
+                stroke={AXIS_TEXT}
+                strokeWidth={1}
               />
-              {/* elleboog */}
               <line
                 x1={xUser}
                 x2={labelLeft ? xUser - elbow : xUser + elbow}
-                y1={gridTop + 6}
-                y2={gridTop + 6}
-                stroke={INK}
+                y1={gridTop + 7}
+                y2={gridTop + 7}
+                stroke={AXIS_TEXT}
                 strokeWidth={1}
               />
               <text
                 x={tx}
-                y={gridTop + 9}
+                y={gridTop + 10}
                 textAnchor={tAnchor}
                 fontFamily={FONT_SANS}
                 fontWeight={700}
-                fontSize={isMobile ? 10.5 : 11.5}
-                fill={INK}
+                fontSize={12}
+                fill={TITLE_INK}
               >
                 Jouw team · {userActual} pt
               </text>
               <text
                 x={tx}
-                y={gridTop + 21}
+                y={gridTop + 24}
                 textAnchor={tAnchor}
-                fontFamily="'Source Serif 4',Georgia,serif"
+                fontFamily={FONT_SANS}
                 fontStyle="italic"
-                fontSize={isMobile ? 9.5 : 10}
-                fill={INK_FADED}
+                fontSize={11}
+                fill={MUTED}
               >
                 beter dan {Math.round(beatPct)}% van de apen
               </text>
@@ -403,24 +383,24 @@ export default function AapscoreDistributie({
               {/* Baseline + x-labels (mono, geen tick-marks) */}
               <line
                 x1={padL}
-                x2={w - padR}
+                x2={padL + plotW}
                 y1={baseline}
                 y2={baseline}
-                stroke={INK}
-                strokeOpacity={0.5}
+                stroke={AXIS_TEXT}
+                strokeOpacity={0.6}
                 strokeWidth={1}
               />
               {ticks.map((t) => {
-                const x = Math.max(padL + 8, Math.min(w - padR - 8, xOf(t)));
+                const x = Math.max(padL + 10, Math.min(padL + plotW - 10, xOf(t)));
                 return (
                   <text
                     key={t}
                     x={x}
-                    y={baseline + 13}
+                    y={baseline + 14}
                     textAnchor="middle"
                     fontFamily={FONT_MONO}
-                    fontSize={9}
-                    fill={INK_FADED}
+                    fontSize={11}
+                    fill={AXIS_TEXT}
                   >
                     {t}
                   </text>
@@ -430,14 +410,7 @@ export default function AapscoreDistributie({
           )}
 
           {/* Bron-regel */}
-          <p
-            style={{
-              fontFamily: FONT_MONO,
-              fontSize: 9,
-              color: INK_FADED,
-              marginTop: 8,
-            }}
-          >
+          <p style={{ fontFamily: FONT_SANS, fontSize: 10, color: FAINT, marginTop: 8 }}>
             Bron: {monkeyCount.toLocaleString("nl-NL")} Monte Carlo-simulaties · Koerspoule
           </p>
         </div>
