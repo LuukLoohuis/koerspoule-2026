@@ -1194,7 +1194,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 {/* Grade + analysis */}
                 <div className="relative flex flex-col md:flex-row items-start gap-5">
                   <div className="shrink-0">
-                    <div className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-1">Rapport</div>
+                    <div className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-1">Directeur Sportif Rapport</div>
                     <div
                       className={cn(
                         "font-display text-8xl md:text-9xl font-black tabular-nums leading-none",
