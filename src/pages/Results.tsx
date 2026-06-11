@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import ResultsView from "@/components/ResultsView";
-import FlagIcon from "@/components/FlagIcon";
-import { useAllGames, gameTheme } from "@/hooks/useAllGames";
-import { cn } from "@/lib/utils";
+import GameSwitcher from "@/components/GameSwitcher";
+import { useAllGames } from "@/hooks/useAllGames";
 
 export default function Results() {
   const { data: games = [] } = useAllGames();
