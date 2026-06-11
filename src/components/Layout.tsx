@@ -24,6 +24,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, role } = useAuth();
+  // Routes met een eigen sticky in-page tabbalk: daar verbergt BottomNav zich
+  // (zie BottomNav.tsx). Footer-padding hieronder volgt dezelfde conditie.
+  const bottomNavHidden =
+    location.pathname.startsWith("/mijn-peloton") ||
+    location.pathname.startsWith("/karavaan");
   const { thema } = useThema();
   const isLoggedIn = Boolean(user);
 
@@ -186,8 +191,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </main>
       <BottomNav />
 
-      {/* Footer */}
-      <footer className="gradient-border-top bg-card py-5 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-5">
+      {/* Footer — extra bottom-padding reserveert ruimte voor de fixed
+          BottomNav. Op routes waar de BottomNav verborgen is (MijnPeloton)
+          vervalt die reservering zodat er geen dode ruimte ontstaat. */}
+      <footer
+        className={cn(
+          "gradient-border-top bg-card py-5 md:pb-5",
+          bottomNavHidden
+            ? "pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+            : "pb-[calc(5rem+env(safe-area-inset-bottom))]",
+        )}
+      >
         <div className="container mx-auto px-5">
           <div className="bolletjes-rule max-w-xs mx-auto mb-3" aria-hidden />
           <div className="vintage-ornament max-w-sm mx-auto mb-4">

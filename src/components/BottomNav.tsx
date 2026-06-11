@@ -26,6 +26,13 @@ export default function BottomNav() {
   const { thema } = useThema();
   const tabParam = new URLSearchParams(search).get("tab");
 
+  // Op de MijnPeloton-routes (/mijn-peloton + /karavaan) staat al een sticky
+  // in-page tabbalk met dezelfde bestemmingen. Twee concurrerende mobiele
+  // balken = dubbel; daarom hier de globale BottomNav verbergen.
+  if (pathname.startsWith("/mijn-peloton") || pathname.startsWith("/karavaan")) {
+    return null;
+  }
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" aria-label="Mobiele navigatie">
       {/* Accent gradient rule — volgt thema */}

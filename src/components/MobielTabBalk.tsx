@@ -58,6 +58,7 @@ export function MobielTabBalk({ tabs, active, onChange, className }: Props) {
               key={tab.key}
               type="button"
               disabled={tab.disabled}
+              aria-current={isActive ? "page" : undefined}
               onClick={() => !tab.disabled && onChange(tab.key)}
               className={cn(
                 "flex-1 flex items-center justify-center gap-1.5 rounded-[6px]",
@@ -112,6 +113,7 @@ export function MobielTabBalk({ tabs, active, onChange, className }: Props) {
               ref={isActive ? activeRef : undefined}
               type="button"
               disabled={tab.disabled}
+              aria-current={isActive ? "page" : undefined}
               onClick={() => !tab.disabled && onChange(tab.key)}
               className={cn(
                 "flex items-center gap-1.5 flex-none rounded-[6px]",
