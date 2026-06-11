@@ -1057,6 +1057,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                       const beat = Math.round(monte.beatPct);
                       const clampedPctX = Math.max(8, Math.min(92, userPctX));
                       return (
+                    <>
                     <div style={{ height: 240 }} className="relative">
                       {/* Monkey illustration — anchored to Jij marker on md+, top-right corner on mobile */}
                       <img
