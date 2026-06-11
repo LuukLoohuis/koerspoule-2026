@@ -58,10 +58,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, className }:
 
         {/* Scroll-snap rail met edge-fade */}
         <div
-          className={cn(
-            "relative transition-all duration-200",
-            compact ? "py-1.5" : "py-2.5",
-          )}
+          className="relative py-2.5 transition-all duration-200"
           style={{
             maskImage:
               "linear-gradient(to right, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%)",
@@ -83,7 +80,6 @@ export default function GameSwitcher({ games, selectedId, onSelect, className }:
               const isActive = selectedId === game.id;
               const isLive = LIVE.includes(game.status);
               const isDraft = DRAFT.includes(game.status);
-              const label = compact ? shortName(game.name) : game.name;
 
               return (
                 <button
@@ -94,8 +90,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, className }:
                   className={cn(
                     "group snap-start flex items-center gap-2 rounded-lg border-2 shrink-0",
                     "font-display font-bold transition-all duration-200",
-                    "min-h-[44px]",
-                    compact ? "px-2 py-1 text-xs" : "px-2.5 py-1.5 text-sm",
+                    "min-h-[44px] px-2.5 py-1.5 text-sm",
                     isActive
                       ? "text-white shadow-md"
                       : "bg-card border-border text-foreground/80 hover:border-foreground/30 hover:bg-secondary/50",
@@ -124,13 +119,13 @@ export default function GameSwitcher({ games, selectedId, onSelect, className }:
                     className="whitespace-nowrap"
                     style={isActive ? { textShadow: "0 1px 2px rgba(0,0,0,0.45)" } : undefined}
                   >
-                    {label}
+                    {game.name}
                   </span>
                   {isLive && (
                     <span
                       className={cn(
                         "inline-flex items-center gap-1 rounded-full leading-none",
-                        compact ? "px-1 py-0.5 text-[8px]" : "px-1.5 py-0.5 text-[9px]",
+                        "px-1.5 py-0.5 text-[9px]",
                         "font-bold uppercase tracking-wider",
                         isActive
                           ? "bg-white/25 text-white"
@@ -138,14 +133,14 @@ export default function GameSwitcher({ games, selectedId, onSelect, className }:
                       )}
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                      {!compact && "Live"}
+                      Live
                     </span>
                   )}
                   {isDraft && (
                     <span
                       className={cn(
                         "inline-flex items-center gap-1 rounded-full leading-none",
-                        compact ? "px-1 py-0.5" : "px-1.5 py-0.5 text-[9px]",
+                        "px-1.5 py-0.5 text-[9px]",
                         "font-bold uppercase tracking-wider",
                         isActive
                           ? "bg-white/25 text-white"
@@ -153,7 +148,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, className }:
                       )}
                     >
                       <Lock className="w-2.5 h-2.5" />
-                      {!compact && "Concept"}
+                      Concept
                     </span>
                   )}
                 </button>
