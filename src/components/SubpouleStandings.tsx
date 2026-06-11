@@ -165,40 +165,9 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
       const rank = i + 1;
       const prevRank = prevRankByUser.get(row.user_id);
       const delta = etappeIdx > 0 && prevRank != null ? prevRank - rank : null;
-
-      let gap_to_above: number | null = null;
-      let gap_movement: number | null = null;
-      let above_name: string | null = null;
-      // Inloop/uitloop op de speler direct boven je in DEZE rit:
-      // jouw dagpunten − dagpunten van de buur erboven. + = ingelopen, − = uitgelopen.
-      // Voor #1: marge t.o.v. #2 (positief = uitgelopen op nr. 2).
-      let close_on_above: number | null = null;
-
-      const myPts = row.total_points;
-      const myPrevPts = row.entry_id ? (prevMap.get(row.entry_id) ?? 0) : 0;
-
-      if (rank === 1 && rows.length >= 2) {
-        const r2 = rows[1];
-        above_name = r2.team_name ?? r2.display_name;
-        gap_to_above = myPts - r2.total_points;
-        close_on_above = row.stage_points - r2.stage_points;
-        if (etappeIdx > 0) {
-          const r2PrevPts = r2.entry_id ? (prevMap.get(r2.entry_id) ?? 0) : 0;
-          gap_movement = gap_to_above - (myPrevPts - r2PrevPts);
-        }
-      } else if (rank > 1) {
-        const above = rows[i - 1];
-        above_name = above.team_name ?? above.display_name;
-        gap_to_above = above.total_points - myPts;
-        close_on_above = row.stage_points - above.stage_points;
-        if (etappeIdx > 0) {
-          const abovePrevPts = above.entry_id ? (prevMap.get(above.entry_id) ?? 0) : 0;
-          gap_movement = gap_to_above - (abovePrevPts - myPrevPts);
-        }
-      }
-
-      return { ...row, rank, delta, gap_to_above, gap_movement, above_name, close_on_above };
+      return { ...row, rank, delta };
     });
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [members, entries, stagePoints, stages, etappeIdx]);
 
