@@ -1007,7 +1007,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   src={monkeyDart}
                   alt=""
                   aria-hidden
-                  className="animate-monkey-idle pointer-events-none select-none hidden md:block absolute -top-14 -right-3 w-48 lg:w-60 z-20"
+                  className="animate-monkey-idle pointer-events-none select-none hidden md:block absolute -top-20 -right-2 w-32 lg:w-40 z-20"
                   style={{ filter: "drop-shadow(0 6px 10px rgba(58,42,26,0.18))" }}
                 />
                 <div
