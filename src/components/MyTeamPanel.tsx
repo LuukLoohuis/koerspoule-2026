@@ -9,6 +9,8 @@ import FormMeter from "@/components/FormMeter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
@@ -18,7 +20,7 @@ import { useRiderEntryTotals } from "@/hooks/useRiderEntryTotals";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { Pencil } from "lucide-react";
+import { Check, Pencil, X } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
 
@@ -222,7 +224,12 @@ export default function MyTeamPanel({
   const { data: curGame } = useCurrentGame();
   // Optioneel een specifieke (bv. afgeronde) game tonen i.p.v. de live game.
   const game = gameIdProp ? { id: gameIdProp, status: gameStatus, name: gameName } : curGame;
-  const { entry, picksByCategory, jokerIds, predictions, isLoading } = useEntry(game?.id);
+  const { entry, picksByCategory, jokerIds, predictions, isLoading, teamName, saveTeamName } = useEntry(game?.id);
+  const { toast } = useToast();
+  // Ploegnaam-editor (verhuisd uit MijnPeloton): inline nudge in Zone 1 van
+  // het Salle-de-Course-dashboard zolang er geen naam is ingesteld.
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
   const { data: categories = [] } = useCategories(game?.id);
   const { data: stages = [] } = useStages(game?.id);
   const { data: entries = [] } = useEntries(game?.id);
@@ -491,58 +498,170 @@ export default function MyTeamPanel({
 
   return (
     <div className="space-y-3 pb-4">
-      {/* Vintage header */}
-      <div className="ornate-frame retro-border bg-gradient-to-br from-card via-card to-primary/5 p-4 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
-        <div className="vintage-ornament mb-2">
-          <span className="vintage-ornament-symbol">✦</span>
-          <span className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground font-serif">
-            {game.name}
-          </span>
-          <span className="vintage-ornament-symbol">✦</span>
-        </div>
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div>
-            <h2 className="vintage-heading text-2xl md:text-3xl font-bold leading-tight">
-              {entry.team_name ?? user.user_metadata?.team_name ?? "Mijn ploeg"}
-            </h2>
-            <p className="text-xs text-muted-foreground font-serif italic mt-1">
-              Directeur sportif: {user.user_metadata?.display_name ?? user.email}
-            </p>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-5xl font-extrabold leading-none text-primary">{totalPoints}</span>
-            <span className="text-xs uppercase tracking-widest text-muted-foreground font-serif">punten</span>
-          </div>
-        </div>
-      </div>
+      {/* ═══ LA SALLE DE COURSE — geïntegreerd DS-dashboard ═══
+          Eén retro-border kaart met vier zones: La Une (masthead) →
+          Tableau de Bord (statraster) → Forme du Jour (FormMeter) →
+          Orders van de DS (CTA). Race-briefing voor de directeur sportif. */}
+      {(() => {
+        const stampColor = "color-mix(in srgb, var(--ink-sepia) 60%, transparent)";
+        const hairline = "1px solid color-mix(in srgb, var(--ink-sepia) 20%, transparent)";
+        const hasName = Boolean(entry.team_name?.trim());
+        const shownName = entry.team_name ?? user.user_metadata?.team_name ?? "Mijn ploeg";
+        return (
+          <div className="ornate-frame retro-border bg-card relative overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
 
-      <MijnPloegStats />
+            {/* ── Zone 1: La Une (masthead) ── */}
+            <div className="px-4 md:px-5 pt-3 pb-4">
+              <div
+                className="text-center font-mono text-[10px] tracking-[0.3em] uppercase mb-3"
+                style={{ color: stampColor }}
+              >
+                ◆ La Salle de Course ◆
+              </div>
+              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="font-display text-3xl md:text-4xl font-black uppercase leading-tight flex items-center gap-2 min-w-0">
+                    <span className="truncate">{shownName}</span>
+                    {hasName && !editingName && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 shrink-0"
+                        disabled={!entry?.id}
+                        onClick={() => {
+                          setNameDraft(teamName ?? "");
+                          setEditingName(true);
+                        }}
+                        title="Ploegnaam wijzigen"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </h2>
+                  <p className="text-xs text-muted-foreground font-serif italic mt-1">
+                    Directeur sportif: {user.user_metadata?.display_name ?? user.email}
+                  </p>
+                </div>
+                <div className="md:text-right shrink-0">
+                  <div className="flex items-baseline gap-1.5 md:justify-end">
+                    <span className="font-display text-6xl font-extrabold leading-none text-primary tabular-nums">
+                      {totalPoints}
+                    </span>
+                    <span className="text-xs uppercase tracking-widest text-muted-foreground font-serif">pt</span>
+                  </div>
+                  <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-1">
+                    seizoensstand
+                  </div>
+                </div>
+              </div>
 
-      {/* Form-meter — laatste 3 etappes vs seizoensgemiddelde */}
-      <FormMeter stagePoints={stagePoints} stages={stages} />
+              {/* Zone 0: ploegnaam-nudge — alleen zonder naam (of tijdens edit) */}
+              {(!hasName || editingName) && (
+                <div className="mt-3 flex items-center gap-2 text-sm flex-wrap">
+                  {editingName ? (
+                    <>
+                      <Input
+                        value={nameDraft}
+                        onChange={(e) => setNameDraft(e.target.value)}
+                        placeholder="bv. Team Bidon"
+                        className="h-8 w-48"
+                        maxLength={40}
+                        autoFocus
+                      />
+                      <Button
+                        size="sm"
+                        variant="default"
+                        disabled={!entry?.id || saveTeamName.isPending}
+                        onClick={async () => {
+                          if (!entry?.id) return;
+                          try {
+                            await saveTeamName.mutateAsync({ entryId: entry.id, teamName: nameDraft });
+                            toast({ title: "Ploegnaam opgeslagen" });
+                            setEditingName(false);
+                          } catch (e) {
+                            toast({ title: "Opslaan mislukt", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+                          }
+                        }}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingName(false)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                      disabled={!entry?.id}
+                      onClick={() => {
+                        setNameDraft(teamName ?? "");
+                        setEditingName(true);
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      <span className="font-serif italic">Stel je ploegnaam in</span>
+                    </button>
+                  )}
+                </div>
+              )}
 
-      {/* Status / wijzig CTA */}
-      {!gameLocked && (
-        <div className={cn(
-          "ornate-frame retro-border p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3",
-          isSubmitted ? "bg-emerald-500/10 border-emerald-500/40" : "bg-amber-500/10 border-amber-500/40"
-        )}>
-          <div className="text-sm">
-            {isSubmitted ? (
-              <>✅ <strong>Team ingediend.</strong> Je kunt nog wijzigen tot de admin de koers op deadline zet.</>
-            ) : (
-              <>🚴‍♂️ <strong>Je peloton staat nog niet aan de start.</strong> Bevestig je inzending in de teambuilder.</>
+              {/* Vintage dubbele liniaal */}
+              <div className="mt-3">
+                <div className="h-[2px]" style={{ background: "var(--ink-sepia)" }} />
+                <div className="h-[1px] mt-[2px]" style={{ background: "var(--ink-sepia)", opacity: 0.55 }} />
+              </div>
+            </div>
+
+            {/* ── Zone 2: Tableau de Bord (statraster) ── */}
+            <div className="px-4 md:px-5 pb-4">
+              <div
+                className="font-mono text-[10px] tracking-[0.25em] uppercase mb-2"
+                style={{ color: stampColor }}
+              >
+                — Tableau de Bord —
+              </div>
+              <MijnPloegStats />
+            </div>
+
+            {/* ── Zone 3: Forme du Jour (eigen zone-label + vorm-wash) ── */}
+            <div style={{ borderTop: hairline }}>
+              <FormMeter stagePoints={stagePoints} stages={stages} />
+            </div>
+
+            {/* ── Zone 4: Orders van de DS (CTA) ── */}
+            {!gameLocked && (
+              <div
+                className={cn("px-4 md:px-5 py-3", isSubmitted ? "bg-emerald-500/10" : "bg-amber-500/10")}
+                style={{ borderTop: hairline }}
+              >
+                <div
+                  className="font-mono text-[10px] tracking-[0.25em] uppercase mb-2"
+                  style={{ color: stampColor }}
+                >
+                  — Orders van de DS —
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="text-sm">
+                    {isSubmitted ? (
+                      <>✅ <strong>Team ingediend.</strong> Je kunt nog wijzigen tot de admin de koers op deadline zet.</>
+                    ) : (
+                      <>🚴‍♂️ <strong>Je peloton staat nog niet aan de start.</strong> Bevestig je inzending in de teambuilder.</>
+                    )}
+                  </div>
+                  <Button asChild size="sm" variant={isSubmitted ? "outline" : "default"} className="w-full sm:w-auto">
+                    <Link to="/team-samenstellen">
+                      <Pencil className="h-4 w-4 mr-2" />
+                      {isSubmitted ? "Wijzigen" : "Naar teambuilder"}
+                    </Link>
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
-          <Button asChild size="sm" variant={isSubmitted ? "outline" : "default"}>
-            <Link to="/team-samenstellen">
-              <Pencil className="h-4 w-4 mr-2" />
-              {isSubmitted ? "Wijzigen" : "Naar teambuilder"}
-            </Link>
-          </Button>
-        </div>
-      )}
+        );
+      })()}
 
 
       {/* ═══ TEAM SHEET — fantasy team-hierarchie (retro-magazinestijl) ═══

@@ -74,24 +74,36 @@ function rankColor(rank: number | null): string {
   return "hsl(25 20% 12%)";
 }
 
+/** Hairline tussen de cellen — gedrukte krantentabel, geen losse kaartjes. */
+const CELL_HAIRLINE = "1px solid color-mix(in srgb, var(--ink-sepia) 20%, transparent)";
+
 function StatCard({
   label,
   delay,
   isEmpty,
+  index,
   children,
 }: {
   label: string;
   delay: number;
   isEmpty: boolean;
+  /** Positie in het 2×2 raster: bepaalt de interne hairlines + goud-anker. */
+  index: number;
   children?: React.ReactNode;
 }) {
   return (
     <div
-      className="flex flex-col gap-1.5 p-3 rounded-[5px] opacity-0 min-h-[88px]"
+      className="flex flex-col gap-1.5 p-3 opacity-0 min-h-[80px]"
       style={{
-        background: "hsl(var(--bg-wielerdirecteur))",
-        border: "1px solid #C8B89A",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+        // Kolom 2 krijgt een hairline links, rij 2 een hairline boven.
+        // Cel 1 (linksboven) krijgt het gouden anker-randje.
+        borderLeft:
+          index === 0
+            ? "3px solid hsl(var(--vintage-gold))"
+            : index % 2 === 1
+              ? CELL_HAIRLINE
+              : undefined,
+        borderTop: index >= 2 ? CELL_HAIRLINE : undefined,
         animation: `ploegStatsFadeIn 0.45s ease-out ${delay}ms forwards`,
       }}
     >
@@ -273,10 +285,10 @@ export default function MijnPloegStats() {
   );
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+    <div className="grid grid-cols-2">
 
-      {/* 1 — Beste etappe */}
-      <StatCard label="Beste etappe" delay={0} isEmpty={!bestStageRank}>
+      {/* 1 — Meilleure étape */}
+      <StatCard label="Meilleure étape" delay={0} index={0} isEmpty={!bestStageRank}>
         {bestStageRank && (
           <>
             <Num n={aBestRank} rank={bestStageRank.rank} />
@@ -289,8 +301,8 @@ export default function MijnPloegStats() {
         )}
       </StatCard>
 
-      {/* 2 — Overall poule */}
-      <StatCard label="Overall poule" delay={80} isEmpty={!overallStat}>
+      {/* 2 — Classement général */}
+      <StatCard label="Classement général" delay={80} index={1} isEmpty={!overallStat}>
         {overallStat && (
           <>
             <div className="flex items-baseline gap-2">
@@ -304,8 +316,8 @@ export default function MijnPloegStats() {
         )}
       </StatCard>
 
-      {/* 3 — Subpoule */}
-      <StatCard label="Subpoule" delay={160} isEmpty={!subpouleStat}>
+      {/* 3 — Sous-peloton */}
+      <StatCard label="Sous-peloton" delay={160} index={2} isEmpty={!subpouleStat}>
         {subpouleStat && (
           <>
             <div className="flex items-baseline gap-2">
@@ -319,8 +331,8 @@ export default function MijnPloegStats() {
         )}
       </StatCard>
 
-      {/* 4 — Topscorer */}
-      <StatCard label="Topscorer" delay={240} isEmpty={!bestRiderStat}>
+      {/* 4 — Coureur étoile */}
+      <StatCard label="Coureur étoile" delay={240} index={3} isEmpty={!bestRiderStat}>
         {bestRiderStat && (
           <>
             <span

@@ -9,11 +9,10 @@ import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } fro
 import { pointsTable, classificationPoints, riderCategories } from "@/data/riders";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight, MoreHorizontal, Check, X, Pencil, Newspaper, Car } from "lucide-react";
+import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight, MoreHorizontal, Pencil, Newspaper, Car } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
 import PelotonChat from "@/components/PelotonChat";
 import SubpouleManager from "@/components/SubpouleManager";
@@ -90,11 +89,9 @@ export default function MijnPeloton() {
   const { thema } = useThema();
   const { data: profile } = useProfile();
   const { data: currentGame } = useCurrentGame();
-  const { entry, teamName, saveTeamName } = useEntry(currentGame?.id);
+  const { teamName } = useEntry(currentGame?.id);
   const myTeam = mockTeams[0];
   const displayName = (teamName?.trim() || profile?.display_name?.trim() || "José Bidon");
-  const [editingName, setEditingName] = useState(false);
-  const [nameDraft, setNameDraft] = useState("");
   const { data: allGames = [] } = useAllGames();
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   useEffect(() => {
@@ -1124,62 +1121,8 @@ export default function MijnPeloton() {
                 </div>
               </div>
               <TabsContent value="ploeg" className="space-y-3">
-                {/* Ploegnaam-editor — verhuisd van het overzicht naar de Volgwagen */}
-                <div className="retro-border bg-card px-3 py-2.5">
-                  <div className="flex items-center justify-center gap-2 text-sm flex-wrap">
-                    <span className="font-serif text-muted-foreground">Jouw ploegnaam:</span>
-                    {editingName ? (
-                      <>
-                        <Input
-                          value={nameDraft}
-                          onChange={(e) => setNameDraft(e.target.value)}
-                          placeholder="bv. Team Bidon"
-                          className="h-8 w-48"
-                          maxLength={40}
-                          autoFocus
-                        />
-                        <Button
-                          size="sm"
-                          variant="default"
-                          disabled={!entry?.id || saveTeamName.isPending}
-                          onClick={async () => {
-                            if (!entry?.id) return;
-                            try {
-                              await saveTeamName.mutateAsync({ entryId: entry.id, teamName: nameDraft });
-                              toast({ title: "Ploegnaam opgeslagen" });
-                              setEditingName(false);
-                            } catch (e) {
-                              toast({ title: "Opslaan mislukt", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
-                            }
-                          }}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingName(false)}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <span className="font-display font-bold text-foreground">
-                          {teamName?.trim() || <span className="italic text-muted-foreground">nog niet ingesteld</span>}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 px-2"
-                          disabled={!entry?.id}
-                          onClick={() => {
-                            setNameDraft(teamName ?? "");
-                            setEditingName(true);
-                          }}
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
+                {/* Ploegnaam-editor zit nu in het Salle-de-Course-dashboard
+                    binnen MyTeamPanel (Zone 1-nudge). */}
                 <MyTeamPanel section="ploeg" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} />
               </TabsContent>
 

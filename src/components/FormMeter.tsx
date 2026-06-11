@@ -106,30 +106,39 @@ export default function FormMeter({
 
   const { recent, recentAvg, seasonAvg, level, diffPct, approvedCount } = data;
 
+  // Zone "Forme du Jour" op het Salle-de-Course-dashboard: geen eigen kaart
+  // meer — alleen een subtiele vorm-tint als wash over de zone. De parent
+  // levert de border-top; het zone-label zit hier zodat de wash 'm meeneemt.
   return (
-    <div className={cn("relative rounded-lg border-2 overflow-hidden", level.borderColor, level.bg)}>
-      <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
-      <div className="p-3 md:p-4">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <level.Icon className={cn("h-4 w-4 shrink-0", level.color)} />
-            <span className="overline-stamp">Form-meter · laatste {recent.length}</span>
+    <div className={cn("relative", level.bg)}>
+      <div
+        className="pt-3 text-center font-mono text-[10px] tracking-[0.25em] uppercase"
+        style={{ color: "color-mix(in srgb, var(--ink-sepia) 60%, transparent)" }}
+      >
+        — Forme du Jour —
+      </div>
+
+      <div className="p-3 md:p-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
+        {/* Links: vorm-oordeel + tagline + % */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <level.Icon className={cn("h-4 w-4 shrink-0", level.color)} />
+              <span className={cn("heading-oswald text-2xl md:text-3xl truncate", level.color)}>
+                {level.label}
+              </span>
+            </div>
+            <span className={cn("font-display text-xs font-bold uppercase tracking-widest shrink-0", level.color)}>
+              {diffPct > 0 ? `+${diffPct}%` : `${diffPct}%`}
+            </span>
           </div>
-          <span className={cn("font-display text-xs font-bold uppercase tracking-widest", level.color)}>
-            {diffPct > 0 ? `+${diffPct}%` : `${diffPct}%`}
-          </span>
+          <p className="font-serif italic text-sm text-foreground/80 mt-1.5 leading-snug">
+            {level.tagline}
+          </p>
         </div>
 
-        <div className="flex items-baseline gap-2 mb-3">
-          <span className={cn("heading-oswald text-2xl md:text-3xl", level.color)}>{level.label}</span>
-        </div>
-
-        <p className="font-serif italic text-sm text-foreground/80 mb-3 leading-snug">
-          {level.tagline}
-        </p>
-
-        {/* Tegels — laatste etappes naast elkaar */}
-        <div className="grid grid-cols-3 gap-2 mb-2">
+        {/* Rechts: laatste 3 etappes als mini-tegels */}
+        <div className="grid grid-cols-3 gap-2 md:w-60 shrink-0">
           {Array.from({ length: 3 }).map((_, i) => {
             const r = recent[recent.length - 3 + i] ?? null;
             if (!r) {
@@ -151,12 +160,12 @@ export default function FormMeter({
             );
           })}
         </div>
-
-        {/* Mini-explainer */}
-        <p className="text-[10px] font-serif italic text-muted-foreground">
-          Gemiddelde laatste {recent.length}: <span className="font-bold tabular-nums">{recentAvg.toFixed(1)}</span> pt · seizoensgemiddelde over {approvedCount} etappe{approvedCount === 1 ? "" : "s"}: <span className="font-bold tabular-nums">{seasonAvg.toFixed(1)}</span> pt
-        </p>
       </div>
+
+      {/* Seizoensgemiddelde — onderaan de zone, mono en gedempt */}
+      <p className="px-3 md:px-4 pb-3 text-[10px] font-mono text-muted-foreground">
+        Gem. laatste {recent.length}: <span className="font-bold tabular-nums">{recentAvg.toFixed(1)}</span> pt · seizoen over {approvedCount} etappe{approvedCount === 1 ? "" : "s"}: <span className="font-bold tabular-nums">{seasonAvg.toFixed(1)}</span> pt
+      </p>
     </div>
   );
 }
