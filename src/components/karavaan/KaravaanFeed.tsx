@@ -133,8 +133,71 @@ export default function KaravaanFeed({
         />
       )}
 
+      {/* Daguitslag van de subpoule — horizontale bars per lid */}
+      {selectedSubpouleId && (
+        <DaguitslagChart
+          subpouleId={selectedSubpouleId}
+          subpouleName={subpoules.find((s) => s.id === selectedSubpouleId)?.name ?? ""}
+          gameId={game?.id}
+          gameStatus={game?.status}
+        />
+      )}
+
+      {/* HC teaser — slim banner op mobiel, ruimer op desktop */}
+      <button
+        type="button"
+        onClick={() => onOpenHors?.("dartpijl")}
+        className="group block w-full text-left"
+        aria-label="Open de Hors Catégorie statistieken"
+      >
+        {/* Mobiel: slim 52px banner */}
+        <div className="md:hidden relative retro-border bg-card flex items-center gap-2.5 px-3 h-[52px] transition-shadow group-hover:shadow-[3px_3px_0_hsl(var(--foreground))]">
+          <div className="shrink-0 bg-foreground text-background font-display font-black text-sm tracking-tighter px-2 py-1 leading-none">
+            HC
+          </div>
+          <span className="font-display font-bold text-[13px] truncate flex-1">
+            Statistieken — Hors&nbsp;Catégorie
+          </span>
+          <span aria-hidden className="shrink-0 text-base text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all">
+            →
+          </span>
+        </div>
+        {/* Desktop: poëtische tile */}
+        <div className="hidden md:flex relative retro-border bg-card overflow-hidden items-stretch transition-shadow group-hover:shadow-[5px_5px_0_hsl(var(--foreground))]">
+          <div className="relative shrink-0 bg-foreground text-background px-5 py-4 flex flex-col items-center justify-center border-r-2 border-foreground min-w-[112px]">
+            <div
+              aria-hidden
+              className="absolute inset-0 opacity-20"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle, hsl(var(--destructive)) 1.2px, transparent 1.5px)",
+                backgroundSize: "10px 10px",
+              }}
+            />
+            <span className="relative font-display text-[10px] uppercase tracking-[0.25em] opacity-75 leading-none">Col</span>
+            <span className="relative font-display font-black text-5xl leading-none mt-1.5 tracking-tighter">HC</span>
+            <span className="relative font-display text-[10px] uppercase tracking-[0.25em] opacity-75 leading-none mt-1.5">Hors&nbsp;Cat.</span>
+          </div>
+          <div className="flex-1 px-5 py-4 relative">
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span className="vintage-heading text-lg font-bold tracking-wider">Statistieken</span>
+              <span className="font-serif italic text-sm text-muted-foreground">21&nbsp;km à 8&nbsp;%</span>
+            </div>
+            <p className="font-serif italic text-[0.95rem] mt-1 leading-snug pr-10 text-foreground/85">
+              « De grupetto rolt naar de finish. De cijferfetishisten klimmen door — naar de{" "}
+              <span className="not-italic font-display font-bold text-foreground underline decoration-[hsl(var(--vintage-gold))] decoration-2 underline-offset-2">
+                Hors&nbsp;Catégorie
+              </span>
+              . »
+            </p>
+            <span aria-hidden className="absolute right-4 top-1/2 -translate-y-1/2 font-display text-2xl text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all">→</span>
+          </div>
+        </div>
+      </button>
+
       {/* De Voorbeschouwing — vooruitblik op de eerstvolgende etappe */}
       <Voorbeschouwing gameId={game?.id} />
+
 
       {/* Feed */}
       {feed.isLoading ? (
