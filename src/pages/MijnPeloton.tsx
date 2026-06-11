@@ -975,14 +975,23 @@ export default function MijnPeloton() {
   }
 
   /* ── Main overview ── */
+  const hasTeamName = Boolean(teamName?.trim());
   return (
-    <div className="container mx-auto px-5 py-4 md:py-6">
-      {/* Page-header in Tour-poster stijl: stamp + Oswald-titel + dubbele lijn */}
-      <div className="relative mb-5 md:mb-6">
-        <div className="flex flex-col items-center text-center gap-2">
+    <div className="container mx-auto px-5 pb-4 md:py-6">
+      {/* 1. GameSwitcher — sticky bovenaan, full-bleed op mobiel */}
+      <GameSwitcher
+        games={allGames}
+        selectedId={selectedGame}
+        onSelect={setSelectedGame}
+        className="-mx-5 md:mx-0 mb-3 md:mb-5"
+      />
+
+      {/* 2. Compact masthead */}
+      <div className="relative mb-3 md:mb-6">
+        <div className="flex flex-col items-center text-center gap-1 md:gap-2">
           <span className="overline-stamp">— Bulletin du Peloton —</span>
-          <h1 className="heading-oswald text-4xl md:text-5xl">Mijn Peloton</h1>
-          <p className="text-muted-foreground font-serif italic max-w-md">
+          <h1 className="heading-oswald text-3xl md:text-5xl">Mijn Peloton</h1>
+          <p className="hidden md:block text-muted-foreground font-serif italic max-w-md">
             Welkom terug, {displayName}! Beheer je koersen en subpoules.
           </p>
         </div>
@@ -990,130 +999,31 @@ export default function MijnPeloton() {
         <div className="hidden md:block absolute top-0 right-0">
           <Stamp tone="wine" rotation={-4}>{`Dag ${new Date().getDate()} · ${new Date().toLocaleDateString("nl-NL", { month: "short" }).toUpperCase()}`}</Stamp>
         </div>
-        <div className="double-rule mt-3 mx-auto max-w-md" />
-      </div>
-      <div className="text-center mb-4">
-        <div className="mt-3 flex items-center justify-center gap-2 text-sm flex-wrap">
-          <span className="font-serif text-muted-foreground">Jouw ploegnaam:</span>
-          {editingName ? (
-            <>
-              <Input
-                value={nameDraft}
-                onChange={(e) => setNameDraft(e.target.value)}
-                placeholder="bv. Team Bidon"
-                className="h-8 w-48"
-                maxLength={40}
-                autoFocus
-              />
-              <Button
-                size="sm"
-                variant="default"
-                disabled={!entry?.id || saveTeamName.isPending}
-                onClick={async () => {
-                  if (!entry?.id) return;
-                  try {
-                    await saveTeamName.mutateAsync({ entryId: entry.id, teamName: nameDraft });
-                    toast({ title: "Ploegnaam opgeslagen" });
-                    setEditingName(false);
-                  } catch (e) {
-                    toast({ title: "Opslaan mislukt", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
-                  }
-                }}
-              >
-                <Check className="h-4 w-4" />
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditingName(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </>
-          ) : (
-            <>
-              <span className="font-display font-bold text-foreground">
-                {teamName?.trim() || <span className="italic text-muted-foreground">nog niet ingesteld</span>}
-              </span>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 px-2"
-                disabled={!entry?.id}
-                onClick={() => {
-                  setNameDraft(teamName ?? "");
-                  setEditingName(true);
-                }}
-              >
-                <Pencil className="h-3 w-3" />
-              </Button>
-            </>
-          )}
-        </div>
-        <div className="vintage-divider max-w-xs mx-auto mt-4" />
+        <div className="double-rule mt-2 md:mt-3 mx-auto max-w-md" />
       </div>
 
-      <div className="max-w-5xl mx-auto">
-        {/* ── Hellingsbord: teaser naar Hors Catégorie ── */}
+      {/* 3. Ploegnaam-nudge — alleen tonen als er nog géén ploegnaam is */}
+      {!hasTeamName && (
         <button
           type="button"
-          onClick={() => setGameTab("hors")}
-          className="group block w-full mb-4 text-left"
-          aria-label="Open de Hors Catégorie statistieken"
+          onClick={() => { setGameTab("team"); setTeamSubTab("ploeg"); }}
+          className="w-full mb-3 retro-border bg-card px-3 py-2 flex items-center justify-between gap-3 text-left hover:bg-secondary/40 transition-colors"
+          aria-label="Stel je ploegnaam in in de Volgwagen"
         >
-          <div className="relative retro-border bg-card overflow-hidden flex items-stretch transition-shadow group-hover:shadow-[5px_5px_0_hsl(var(--foreground))]">
-            {/* Iconic black HC tile — echte hellingsbord-stijl */}
-            <div className="relative shrink-0 bg-foreground text-background px-4 md:px-5 py-3 md:py-4 flex flex-col items-center justify-center border-r-2 border-foreground min-w-[92px] md:min-w-[112px]">
-              <div
-                aria-hidden
-                className="absolute inset-0 opacity-20"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle, hsl(var(--destructive)) 1.2px, transparent 1.5px)",
-                  backgroundSize: "10px 10px",
-                }}
-              />
-              <span className="relative font-display text-[9px] md:text-[10px] uppercase tracking-[0.25em] opacity-75 leading-none">
-                Col
-              </span>
-              <span className="relative font-display font-black text-4xl md:text-5xl leading-none mt-1.5 tracking-tighter">
-                HC
-              </span>
-              <span className="relative font-display text-[9px] md:text-[10px] uppercase tracking-[0.25em] opacity-75 leading-none mt-1.5">
-                Hors&nbsp;Cat.
-              </span>
-            </div>
-
-            {/* Sign body */}
-            <div className="flex-1 px-4 md:px-5 py-3 md:py-4 relative">
-              <div className="flex items-baseline gap-2 flex-wrap">
-                <span className="vintage-heading text-base md:text-lg font-bold tracking-wider">
-                  Statistieken
-                </span>
-                <span className="font-serif italic text-xs md:text-sm text-muted-foreground">
-                  21&nbsp;km à 8&nbsp;%
-                </span>
-              </div>
-              <p className="font-serif italic text-sm md:text-[0.95rem] mt-1 leading-snug pr-10 text-foreground/85">
-                « De grupetto rolt naar de finish. De cijferfetishisten klimmen door — naar de{" "}
-                <span className="not-italic font-display font-bold text-foreground underline decoration-[hsl(var(--vintage-gold))] decoration-2 underline-offset-2">
-                  Hors&nbsp;Catégorie
-                </span>
-                . »
-              </p>
-              <span
-                aria-hidden
-                className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 font-display text-2xl text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all"
-              >
-                →
-              </span>
-            </div>
-          </div>
+          <span className="flex items-center gap-2 min-w-0">
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="font-display text-sm font-bold truncate">
+              Stel je ploegnaam in
+            </span>
+            <span className="hidden sm:inline text-xs font-serif italic text-muted-foreground truncate">
+              — geef je team een naam voor de start
+            </span>
+          </span>
+          <span className="shrink-0 text-base text-muted-foreground" aria-hidden>→</span>
         </button>
+      )}
 
-        {/* Game selector — sticky, scroll-snap, compact-on-scroll */}
-        <GameSwitcher
-          games={allGames}
-          selectedId={selectedGame}
-          onSelect={setSelectedGame}
-          className="-mx-5 mb-4"
-        />
+      <div className="max-w-5xl mx-auto">
 
 
         {isDraft && (
@@ -1129,6 +1039,7 @@ export default function MijnPeloton() {
             </p>
           </div>
         )}
+
 
         {/* Inner tabs: Team / Uitslagen / Subpoules / Hors */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
