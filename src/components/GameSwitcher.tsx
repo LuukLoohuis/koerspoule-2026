@@ -1,10 +1,8 @@
 /**
- * GameSwitcher — horizontal, sticky, scroll-snap game selector.
+ * GameSwitcher — horizontal, scroll-snap game selector.
  * Replaces the old wrapping flex of buttons in MijnPeloton.
  * - One row, edge-fade masks, hidden scrollbar.
  * - Auto-centers active card on selection.
- * - Compact-on-scroll: shrinks padding + hides Concept label + drops overline
- *   after scrolling past ~40px.
  */
 import { useEffect, useRef, useState } from "react";
 import { Lock } from "lucide-react";
