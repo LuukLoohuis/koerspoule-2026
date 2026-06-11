@@ -22,7 +22,7 @@ import { pointsTable } from "@/data/riders";
 import { useCategories } from "@/hooks/useCategories";
 import MonkeyExplainerModal from "@/components/horscat/MonkeyExplainerModal";
 import PercentileVerdict from "@/components/horscat/PercentileVerdict";
-import monkeyDartAsset from "@/assets/horscat/monkey-dart-bike.png.asset.json";
+import monkeyDartAsset from "@/assets/monkey-dart.png.asset.json";
 const monkeyDart = monkeyDartAsset.url;
 import { useStages, useGameStandings, useStagePointsForEntries, useStageAverages } from "@/hooks/useResults";
 import { Badge } from "@/components/ui/badge";
@@ -1000,16 +1000,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
               {/* Distribution chart — full width */}
               <div className="relative">
-                {/* Mascotte — piept over de rechterbovenhoek van de grafiek
-                    (zoals de affiche-referentie). pointer-events-none zodat
-                    de grafiek-tooltip bruikbaar blijft. Verborgen op mobiel. */}
-                <img
-                  src={monkeyDart}
-                  alt=""
-                  aria-hidden
-                  className="animate-monkey-idle pointer-events-none select-none hidden md:block absolute -top-20 -right-2 w-32 lg:w-40 z-20"
-                  style={{ filter: "drop-shadow(0 6px 10px rgba(58,42,26,0.18))" }}
-                />
+                {/* Monkey illustration is rendered INSIDE the chart, anchored to the Jij marker (see below). */}
                 <div
                   className="relative overflow-hidden rounded-2xl p-4 md:p-5"
                   style={{
@@ -1056,7 +1047,84 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     >
                       Aapscore distributie
                     </h3>
-                    <div style={{ height: 220 }} className="relative">
+                    {(() => {
+                      // Compute Jij position as % of chart width (bin index → percentage)
+                      const dist = monte.dist;
+                      let uIdx = dist.findIndex((b) => b.bucket >= monte.userActual);
+                      if (uIdx < 0) uIdx = dist.length - 1;
+                      const userPctX = ((uIdx + 0.5) / Math.max(1, dist.length)) * 100;
+                      const flip = userPctX > 55;
+                      const beat = Math.round(monte.beatPct);
+                      const clampedPctX = Math.max(8, Math.min(92, userPctX));
+                      return (
+                    <>
+                    <div style={{ height: 240 }} className="relative">
+                      {/* Monkey illustration — anchored to Jij marker on md+, top-right corner on mobile */}
+                      <img
+                        src={monkeyDart}
+                        alt="Aap met dartpijl"
+                        aria-hidden
+                        className="pointer-events-none select-none absolute z-30 hidden md:block animate-monkey-idle"
+                        style={{
+                          left: `calc(${clampedPctX}% + ${flip ? -8 : 8}px)`,
+                          transform: `translateX(-50%) scaleX(${flip ? -1 : 1})`,
+                          bottom: 28,
+                          height: 130,
+                          width: "auto",
+                          filter: "drop-shadow(0 6px 10px rgba(58,42,26,0.22))",
+                        }}
+                      />
+                      {/* Mobile: monkey in top-right corner + hand-drawn dart trajectory */}
+                      <img
+                        src={monkeyDart}
+                        alt="Aap met dartpijl"
+                        aria-hidden
+                        className="pointer-events-none select-none absolute md:hidden z-30 animate-monkey-idle"
+                        style={{
+                          right: -6,
+                          top: -10,
+                          height: 88,
+                          width: "auto",
+                          transform: "scaleX(-1)",
+                          filter: "drop-shadow(0 4px 8px rgba(58,42,26,0.22))",
+                        }}
+                      />
+                      <svg
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 md:hidden z-20"
+                        width="100%"
+                        height="100%"
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                      >
+                        <path
+                          d={`M 92 14 Q ${(clampedPctX + 92) / 2} 4, ${clampedPctX} 70`}
+                          stroke="#3a2a1a"
+                          strokeOpacity="0.55"
+                          strokeWidth="0.5"
+                          strokeDasharray="1.4 1.6"
+                          fill="none"
+                          vectorEffect="non-scaling-stroke"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      {/* Percentile editorial caption near the monkey */}
+                      <div
+                        className="absolute z-30 pointer-events-none hidden md:block"
+                        style={{
+                          left: `calc(${clampedPctX}% + ${flip ? -150 : 80}px)`,
+                          bottom: 130,
+                          maxWidth: 180,
+                          textAlign: flip ? "right" : "left",
+                          fontFamily: "'Source Serif 4',Georgia,serif",
+                          fontStyle: "italic",
+                          fontSize: 12,
+                          lineHeight: 1.25,
+                          color: "#3a2a1a",
+                        }}
+                      >
+                        “Beter dan <strong>{beat}%</strong> van de apen.”
+                      </div>
                       {/* Handwritten callout — desktop only */}
                       <div
                         aria-hidden
@@ -1256,12 +1324,15 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                       style={{
                         fontFamily: "'Source Serif 4',Georgia,serif",
                         fontStyle: "italic",
-                        fontSize: 11,
-                        color: "rgba(58,42,26,0.7)",
+                        fontSize: 12,
+                        color: "rgba(58,42,26,0.78)",
                       }}
                     >
-                      Bars links van jou (goud) zijn apen die jij verslaat
+                      “Beter dan <strong>{beat}%</strong> van de apen — die dartpijl van jou heeft visie.”
                     </p>
+                    </>
+                      );
+                    })()}
                   </div>
                 </div>
 
