@@ -77,7 +77,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, className }:
         className,
       )}
     >
-      <div className="container mx-auto px-3 md:px-5">
+      <div className="px-3 md:px-5">
         {/* Overline — verbergen in compact-mode */}
         <div
           className={cn(
