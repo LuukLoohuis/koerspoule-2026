@@ -39,6 +39,15 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
 
   const [compareId, setCompareId] = useState<string | null>(null);
   const [etappeIdx, setEtappeIdx] = useState<number>(0);
+  const [showTapHint, setShowTapHint] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem("subpoule-tap-hint-dismissed") !== "1";
+  });
+  const dismissTapHint = () => {
+    setShowTapHint(false);
+    try { sessionStorage.setItem("subpoule-tap-hint-dismissed", "1"); } catch { /* ignore */ }
+  };
+
 
   // Initialize to last stage with any points
   useEffect(() => {
@@ -89,10 +98,6 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
             stage_rank: null as number | null,
             rank: 0,
             delta: null as number | null,
-            gap_to_above: null as number | null,
-            gap_movement: null as number | null,
-            above_name: null as string | null,
-            close_on_above: null as number | null,
           };
         })
         .sort((a, b) => b.total_points - a.total_points)
@@ -109,6 +114,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
     const fullMap = cumUpTo(stages.length - 1);
     const bonusOf = (entry?: { id: string; total_points?: number } | null) =>
       isGc && entry ? Math.max(0, (entry.total_points ?? 0) - (fullMap.get(entry.id) ?? 0)) : 0;
+
 
     // Stage pts for the selected stage (used for ranking within subpoule)
     const selStagePts = new Map<string, number>();
