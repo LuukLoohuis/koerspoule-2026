@@ -417,13 +417,14 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                     <>
                       <span className={cn(
                         "font-display font-bold tabular-nums text-base",
-                        // Mobiel: kleur volgt stage_rank-tier (vervangt Rit-badge).
-                        // Desktop: alleen #1 amber, rest neutraal.
-                        `md:${m.stage_rank === 1 ? "text-amber-500" : ""}`,
-                        dagPtsColorCls + " md:" + (m.stage_rank === 1 ? "text-amber-500" : "text-foreground"),
+                        // Mobiel: kleur volgt stage_rank-tier (vervangt de losse Rit-badge).
+                        // Desktop: alleen #1 amber, anders neutraal foreground.
+                        dagPtsColorCls,
+                        m.stage_rank === 1 ? "md:text-amber-500" : "md:text-foreground",
                       )}>
                         +{m.stage_points}
                       </span>
+
                       <span className="hidden md:inline text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
                     </>
                   ) : (
