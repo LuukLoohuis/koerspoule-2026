@@ -249,20 +249,40 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           )}
         </div>
 
+        {/* Eenmalige hint op mobiel: hele rij = vergelijken */}
+        {showTapHint && (
+          <div className="md:hidden px-3 py-1.5 border-b border-border bg-secondary/30 text-[10px] text-muted-foreground font-sans italic flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1.5">
+              <ArrowLeftRight className="w-3 h-3 shrink-0" />
+              Tik op een speler om te vergelijken
+            </span>
+            <button
+              onClick={dismissTapHint}
+              className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 hover:text-foreground px-1"
+              aria-label="Hint sluiten"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         {/* Column headers */}
-        <div className="flex items-center gap-3 px-3 py-1.5 border-b border-border bg-secondary/40">
+        <div className="flex items-center gap-2 md:gap-3 px-3 py-1.5 border-b border-border bg-secondary/40">
           <div className="shrink-0 w-9" />
           <div className="flex-1 min-w-0 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Naam</div>
-          {stages.length > 0 && <div className="shrink-0 w-8 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground text-center">Rit</div>}
-          <div className="shrink-0 min-w-[3rem] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Pts</div>
-          <div className="shrink-0 min-w-[64px] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title="Punten in de geselecteerde rit">Dag</div>
-          <div className="shrink-0 w-7" />
+          {stages.length > 0 && (
+            <div className="hidden md:block shrink-0 w-8 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground text-center">Rit</div>
+          )}
+          <div className="shrink-0 min-w-[2.5rem] md:min-w-[3rem] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Pts</div>
+          <div className="shrink-0 min-w-[48px] md:min-w-[64px] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title="Punten in de geselecteerde rit">Dag</div>
+          <div className="hidden md:block shrink-0 w-7" />
         </div>
 
         <div className="max-h-[600px] overflow-y-auto">
           {memberRows.map((m) => {
             const isMe = m.user_id === user?.id;
             const isComparing = m.user_id === compareId;
+            const canCompare = !isMe && !!m.entry_id;
 
             const rankNumCls =
               m.rank === 1 ? "text-amber-400"
@@ -283,90 +303,107 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
               : m.stage_rank <= 5 ? "bg-sky-500/15 border-sky-400/30 text-sky-400"
               : "bg-secondary/80 border-border text-muted-foreground/60";
 
+            // Dag-cell krijgt mobiel een gekleurde tint op basis van stage_rank
+            // (vervangt de aparte Rit-badge op kleine schermen).
+            const dagPtsColorCls =
+              m.stage_rank == null ? ""
+              : m.stage_rank === 1 ? "text-amber-500"
+              : m.stage_rank <= 3 ? "text-emerald-500"
+              : m.stage_rank <= 5 ? "text-sky-500"
+              : "";
+
+            const handleRowToggle = () => {
+              if (!canCompare) return;
+              setCompareId(isComparing ? null : m.user_id);
+              if (showTapHint) dismissTapHint();
+            };
+
             return (
               <div
                 key={m.user_id}
+                role={canCompare ? "button" : undefined}
+                tabIndex={canCompare ? 0 : undefined}
+                aria-pressed={canCompare ? isComparing : undefined}
+                aria-label={canCompare ? `Vergelijk met ${m.team_name ?? m.display_name ?? "speler"}` : undefined}
+                onClick={canCompare ? handleRowToggle : undefined}
+                onKeyDown={canCompare ? (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleRowToggle();
+                  }
+                } : undefined}
                 className={cn(
-                  "flex items-center gap-3 px-3 border-b border-border/40 transition-colors",
+                  "flex items-center gap-2 md:gap-3 px-3 border-b border-border/40 transition-all duration-120 select-none",
                   rowAccentCls,
                   isMe && "bg-primary/[0.08] ring-1 ring-inset ring-primary/30",
-                  isComparing && "bg-accent/10"
+                  isComparing && "bg-accent/15 ring-1 ring-inset ring-accent/50",
+                  canCompare && "cursor-pointer hover:bg-accent/10 active:bg-accent/20 active:scale-[0.997] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                 )}
                 style={{ minHeight: "44px" }}
               >
                 <div className={cn(
-                  "shrink-0 font-display font-black tabular-nums leading-none text-center",
-                  m.rank <= 3 ? "text-2xl w-9" : "text-sm w-7",
-                  rankNumCls
+                  "shrink-0 font-display font-black tabular-nums leading-none text-center flex flex-col items-center justify-center",
+                  m.rank <= 3 ? "w-9" : "w-7",
+                  rankNumCls,
                 )}>
-                  {m.rank}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className={cn(
-                      "font-sans text-sm truncate",
-                      isMe ? "font-bold text-primary" : m.rank <= 3 ? "font-semibold" : "font-medium"
-                    )}>
-                      {m.team_name ?? m.display_name ?? "—"}
+                  <span className={cn(m.rank <= 3 ? "text-2xl" : "text-sm")}>{m.rank}</span>
+                  {m.delta != null && m.delta !== 0 && (
+                    <span
+                      className={cn(
+                        "inline-flex items-center text-[9px] font-bold tabular-nums leading-none mt-0.5",
+                        m.delta > 0 ? "text-emerald-500" : "text-rose-500",
+                      )}
+                      title={`${m.delta > 0 ? "Gestegen" : "Gedaald"} ${Math.abs(m.delta)} plek t.o.v. vorige rit`}
+                    >
+                      {m.delta > 0 ? <ArrowUp className="w-2 h-2" /> : <ArrowDown className="w-2 h-2" />}
+                      {Math.abs(m.delta)}
                     </span>
-                    {isMe && (
-                      <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 rounded px-1 py-px leading-4">
-                        jij
-                      </span>
-                    )}
-                    {!m.entry_id && (
-                      <Badge variant="secondary" className="text-xs">geen team</Badge>
-                    )}
-                  </div>
-                  {((m.delta != null && m.delta !== 0) || (m.close_on_above != null && m.close_on_above !== 0)) && (
-                    <div className="flex items-center gap-2 mt-0.5 leading-none text-[10px] font-semibold tabular-nums">
-                      {/* Positiewissel in het klassement */}
-                      {m.delta != null && m.delta !== 0 && (
-                        <span
-                          className={cn("flex items-center gap-0.5", m.delta > 0 ? "text-emerald-500" : "text-rose-500")}
-                          title={`${m.delta > 0 ? "Gestegen" : "Gedaald"} ${Math.abs(m.delta)} plek t.o.v. vorige rit`}
-                        >
-                          {m.delta > 0 ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />}
-                          {Math.abs(m.delta)}
-                        </span>
-                      )}
-                      {/* Inlopen/uitlopen op de speler direct erboven, deze rit */}
-                      {m.close_on_above != null && m.close_on_above !== 0 && m.above_name && (
-                        <span
-                          className={cn(m.close_on_above > 0 ? "text-emerald-600" : "text-rose-600")}
-                          title={
-                            m.rank === 1
-                              ? `${m.close_on_above > 0 ? "Marge vergroot" : "Marge verkleind"} met ${Math.abs(m.close_on_above)} pt op ${m.above_name} deze rit · ${m.gap_to_above} pt voorsprong`
-                              : `${m.close_on_above > 0 ? "Ingelopen" : "Uitgelopen"} ${Math.abs(m.close_on_above)} pt op ${m.above_name} deze rit · ${m.gap_to_above} pt achterstand`
-                          }
-                        >
-                          {m.close_on_above > 0 ? "▲" : "▼"}{Math.abs(m.close_on_above)} {m.rank === 1 ? "marge" : `op #${m.rank - 1}`}
-                        </span>
-                      )}
-                    </div>
                   )}
                 </div>
 
+                <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                  <span className={cn(
+                    "font-sans text-sm truncate",
+                    isMe ? "font-bold text-primary" : m.rank <= 3 ? "font-semibold" : "font-medium",
+                  )}>
+                    {m.team_name ?? m.display_name ?? "—"}
+                  </span>
+                  {isMe && (
+                    <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 rounded px-1 py-px leading-4">
+                      jij
+                    </span>
+                  )}
+                  {isComparing && (
+                    <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider bg-accent/30 text-accent-foreground border border-accent/60 rounded px-1 py-px leading-4">
+                      <ArrowLeftRight className="w-2.5 h-2.5" />
+                      vs jij
+                    </span>
+                  )}
+                  {!m.entry_id && (
+                    <Badge variant="secondary" className="text-xs shrink-0">geen team</Badge>
+                  )}
+                </div>
+
+                {/* Rit-badge: alleen desktop */}
                 {stageBadgeCls && (
                   <div className={cn(
-                    "shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-0.5",
-                    stageBadgeCls
+                    "hidden md:inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5",
+                    stageBadgeCls,
                   )}>
                     <Flag className="w-2.5 h-2.5 shrink-0" />
                     <span className="text-[10px] font-bold tabular-nums">#{m.stage_rank}</span>
                   </div>
                 )}
 
-                <div className="shrink-0 text-right min-w-[3rem]">
+                <div className="shrink-0 text-right min-w-[2.5rem] md:min-w-[3rem]">
                   <div>
                     <span className={cn(
                       "font-display font-bold tabular-nums",
-                      m.rank === 1 ? "text-xl text-amber-500" : "text-base"
+                      m.rank === 1 ? "text-lg md:text-xl text-amber-500" : "text-base",
                     )}>
                       {m.total_points}
                     </span>
-                    <span className="text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
+                    <span className="hidden md:inline text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
                   </div>
                   {m.pred_bonus > 0 && (
                     <div className="text-[9px] text-emerald-600 font-mono leading-none mt-0.5" title="Bonus uit eindklassement-/truivoorspellingen">
@@ -375,29 +412,34 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   )}
                 </div>
 
-                <div className="shrink-0 text-right" style={{ minWidth: "64px" }} title="Punten in deze rit">
+                <div className="shrink-0 text-right min-w-[48px] md:min-w-[64px]" title="Punten in deze rit">
                   {m.stage_points > 0 ? (
                     <>
                       <span className={cn(
                         "font-display font-bold tabular-nums text-base",
-                        m.stage_rank === 1 && "text-amber-500"
+                        // Mobiel: kleur volgt stage_rank-tier (vervangt Rit-badge).
+                        // Desktop: alleen #1 amber, rest neutraal.
+                        `md:${m.stage_rank === 1 ? "text-amber-500" : ""}`,
+                        dagPtsColorCls + " md:" + (m.stage_rank === 1 ? "text-amber-500" : "text-foreground"),
                       )}>
                         +{m.stage_points}
                       </span>
-                      <span className="text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
+                      <span className="hidden md:inline text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
                     </>
                   ) : (
                     <span className="text-muted-foreground/40 text-sm">–</span>
                   )}
                 </div>
 
-                {!isMe && m.entry_id && (
+                {/* Compare-knop: alleen desktop. Mobiel = hele rij. */}
+                {canCompare && (
                   <button
-                    onClick={() => setCompareId(isComparing ? null : m.user_id)}
+                    onClick={(e) => { e.stopPropagation(); setCompareId(isComparing ? null : m.user_id); }}
                     className={cn(
-                      "shrink-0 p-1.5 rounded border border-border hover:bg-accent/20 transition-colors",
-                      isComparing && "bg-accent/30 border-accent"
+                      "hidden md:inline-flex shrink-0 p-1.5 rounded border border-border hover:bg-accent/20 transition-colors",
+                      isComparing && "bg-accent/30 border-accent",
                     )}
+                    aria-label={isComparing ? "Vergelijking sluiten" : "Vergelijk met jouw team"}
                     title={isComparing ? "Vergelijking sluiten" : "Vergelijk met jouw team"}
                   >
                     <Swords className="h-3.5 w-3.5" />
@@ -407,6 +449,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
             );
           })}
         </div>
+
       </div>
 
       {/* Head-to-head comparison */}
