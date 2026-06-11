@@ -1000,16 +1000,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
               {/* Distribution chart — full width */}
               <div className="relative">
-                {/* Mascotte — piept over de rechterbovenhoek van de grafiek
-                    (zoals de affiche-referentie). pointer-events-none zodat
-                    de grafiek-tooltip bruikbaar blijft. Verborgen op mobiel. */}
-                <img
-                  src={monkeyDart}
-                  alt=""
-                  aria-hidden
-                  className="animate-monkey-idle pointer-events-none select-none hidden md:block absolute -top-20 -right-2 w-32 lg:w-40 z-20"
-                  style={{ filter: "drop-shadow(0 6px 10px rgba(58,42,26,0.18))" }}
-                />
+                {/* Monkey illustration is rendered INSIDE the chart, anchored to the Jij marker (see below). */}
                 <div
                   className="relative overflow-hidden rounded-2xl p-4 md:p-5"
                   style={{
