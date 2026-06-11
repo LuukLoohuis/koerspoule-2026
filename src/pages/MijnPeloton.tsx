@@ -1239,7 +1239,7 @@ function WatAlsTab({
 
   // Monte Carlo stats (stable)
   const monkeyStats = useMemo(() => {
-    const SIMS = 1000;
+    const SIMS = 5000;
     const totals: number[] = [];
     for (let i = 0; i < SIMS; i++) {
       let total = 0;
@@ -1426,67 +1426,12 @@ function WatAlsTab({
             🐒 De Aap met Dartpijlen
           </CardTitle>
           <p className="text-xs text-muted-foreground font-sans mt-1">
-            1.000 willekeurige teams gesimuleerd — hoe goed ben jij eigenlijk?
+            5.000 willekeurige teams gesimuleerd — hoe goed ben jij eigenlijk?
           </p>
         </CardHeader>
         <CardContent className="p-4 space-y-4">
-          <div className="grid grid-cols-2 gap-2 md:gap-3">
-            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Gemiddeld</p>
-              <p className="font-display font-bold text-base md:text-lg">{monkeyStats.avg} pt</p>
-            </div>
-            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Mediaan</p>
-              <p className="font-display font-bold text-base md:text-lg">{monkeyStats.median} pt</p>
-            </div>
-            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Beste aap</p>
-              <p className="font-display font-bold text-base md:text-lg text-primary">{monkeyStats.best} pt</p>
-            </div>
-            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Slechtste aap</p>
-              <p className="font-display font-bold text-base md:text-lg text-destructive">{monkeyStats.worst} pt</p>
-            </div>
-          </div>
+          <MonkeyStatsAndHistogram monkeyStats={monkeyStats} myTotal={myTotal} />
 
-          <div className="p-4 bg-primary/10 rounded-md text-center">
-            <p className="text-sm text-muted-foreground font-sans mb-1">Jij scoort beter dan</p>
-            <p className="font-display font-bold text-3xl text-primary">{monkeyStats.percentile}%</p>
-            <p className="text-sm text-muted-foreground font-sans">van de willekeurige apen-teams</p>
-          </div>
-
-          {/* Histogram */}
-          <div>
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-sans mb-2">
-              📊 Verdeling apenscores
-            </h3>
-            <ChartContainer config={{ count: { label: "Aantal teams", color: "hsl(var(--accent))" } }} className="h-[180px] w-full">
-              <BarChart data={monkeyStats.bins} margin={{ top: 8, right: 4, bottom: 0, left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
-                <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                <ChartTooltip
-                  content={<ChartTooltipContent hideIndicator />}
-                  labelFormatter={(_, payload) => {
-                    if (payload?.[0]?.payload) {
-                      const d = payload[0].payload;
-                      return `${d.min}–${d.max} pt`;
-                    }
-                    return "";
-                  }} />
-                
-                <ReferenceLine x={(() => {
-                  const idx = Math.min(Math.floor((myTotal - monkeyStats.worst) / ((monkeyStats.best - monkeyStats.worst || 1) / 20)), 19);
-                  return monkeyStats.bins[Math.max(0, idx)]?.label;
-                })()} stroke="hsl(var(--primary))" strokeWidth={2} strokeDasharray="4 4" label={{ value: "Jij", position: "top", fontSize: 11, fill: "hsl(var(--primary))" }} />
-                <Bar dataKey="count" radius={[2, 2, 0, 0]}>
-                  {monkeyStats.bins.map((bin, i) =>
-                  <Cell key={i} fill={myTotal >= bin.min && myTotal < bin.max ? "hsl(var(--primary))" : "hsl(var(--accent))"} />
-                  )}
-                </Bar>
-              </BarChart>
-            </ChartContainer>
-          </div>
 
           {/* Example monkey team */}
           <div>
