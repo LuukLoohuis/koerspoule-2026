@@ -1,44 +1,59 @@
-# Histogram redesign — "Aapscore distributie"
+## Doel
+`cron.log_run` uitzetten zodat pg_cron geen rijen meer schrijft naar `cron.job_run_details` (drukt commit-/rollback-volume), terwijl de geplande jobs zelf blijven draaien.
 
-Doel: de bestaande histogram in de Dartpijl-tab krijgt de look van de referentie-poster. Alléén de grafiek-card (regel ~1010–1140 in `src/components/HorsCategorieTab.tsx`). De KPI-rij erboven en de mascotte-illustratie blijven onaangetast (jij levert zelf een PNG aan).
+## Probleem
+- `ALTER SYSTEM SET cron.log_run = 'off'` mag niet in een transactie draaien — werkt dus niet via de SQL-editor en ook niet via het migration-tool (dat wikkelt alles in een transactie).
+- Op Lovable Cloud is er geen directe shell-toegang tot Postgres om de statement buiten een transactie uit te voeren.
 
-## Wat ik aanlever
-- Wachten op jouw geüploade aap-PNG → in `src/assets/` zetten en het bestaande `monkeyDart`-import-pad daarheen wijzen. Voor nu blijft de huidige aap staan.
+## Aanpak
+Twee sporen, in deze volgorde:
 
-## Wat ik nodig heb van jou
-- Eén PNG van de aap (cycling cap + dartpijl + fiets) met **transparante achtergrond**, ongeveer 800×1000 px, vintage stijl. Upload wanneer klaar — ik swap hem dan in.
+### Spoor 1 — per-job uitschakelen via `cron.schedule` (werkt zonder ALTER SYSTEM)
+pg_cron ondersteunt per-job logging via de kolom `cron.job.nodename`/settings is niet beschikbaar, maar we kunnen wél:
 
-## Visuele wijzigingen aan de grafiek-card
+1. Inventariseren welke jobs bestaan en hoe vaak ze draaien:
+   ```sql
+   SELECT jobid, schedule, command, active FROM cron.job ORDER BY jobid;
+   SELECT count(*), date_trunc('hour', start_time) AS h
+   FROM cron.job_run_details
+   WHERE start_time > now() - interval '24 hours'
+   GROUP BY h ORDER BY h DESC;
+   ```
+2. Voor elke job de command wrappen zodat pg_cron niets noemenswaardigs commit (de log-rij blijft, maar we kunnen oude rijen direct opruimen — zie spoor 3).
 
-**Card-omhulsel**
-- Achtergrond: warme crème (`#f3ead3` / vintage paper-token) i.p.v. `bg-card`.
-- Border: dunne `--ink-faded` hairline, rounded-2xl, lichte papier-texture overlay (bestaande utility hergebruiken).
+Dit alleen lost het volume niet structureel op; daarom spoor 2.
 
-**Header in de card**
-- Eyebrow "VERDELING · 5.000 WILLEKEURIGE PLOEGEN" — Oswald uppercase, donker sepia, tracking wijd.
-- Titel "Aapscore distributie" — Playfair Display, fors, sepia.
-- Subkop verplaatst naar onder de grafiek als x-as caption: "Bars links van jou (goud) zijn apen die jij verslaat".
+### Spoor 2 — `cron.log_run` echt uitzetten
+Opties, in volgorde van voorkeur:
 
-**Histogram zelf** (Recharts, geen lib-wissel)
-- Bars **rechthoekig** (radius `[0,0,0,0]`), smaller (`maxBarSize 18`), 1px donker sepia border via `stroke`.
-- Kleuren: goud `#c9a227` voor `bucket ≤ userActual`, warm grijs `#bdb7a8` voor de rest. Geen gradient.
-- Soft bell-curve overlay (`<Area>` of `<Line type="monotone">`) op basis van een normaal-fit (mean/std uit `monte`) — heel licht grijs, geen punten, achter de bars.
-- CartesianGrid: alleen horizontale lijnen, zeer licht (`rgba(58,42,26,0.08)`), `strokeDasharray="2 4"`.
-- Assen: Oswald 9px, sepia-tint, geen lijn/tick.
+A. **Probeer via migration-tool met losse statement.** Het migration-tool voert SQL uit; bij sommige superuser-only GUCs accepteert Supabase een aparte call. Concreet:
+   ```sql
+   ALTER SYSTEM SET cron.log_run = 'off';
+   SELECT pg_reload_conf();
+   ```
+   Als dit faalt met "cannot run inside a transaction block" → door naar B.
 
-**Annotaties op de grafiek**
-- **Jouw bar**: gouden stippellijn (dashed 4 2) i.p.v. solid; klein **kroontje (♛ SVG)** boven de top van de bar + label "Jij · {userActual} pt" in Playfair italic, zonder achtergrondbalk.
-- **Gemiddelde**: dunne blauwe dashed line + label "Gemiddelde · {mean} pt" in Oswald uppercase 10px, blauw `#3b6fa0`.
-- **Callout "Apen die jij verslaat"**: handgeschreven-achtige tekst (Caveat of Source Serif italic) links-boven boven het gouden gebied, met dun krul-lijntje (SVG path) dat naar de bars wijst. Alleen op `sm+` tonen.
+B. **Support-ticket / Lovable Cloud verzoek.** Op managed Supabase is `ALTER SYSTEM` voorbehouden aan superuser en moet buiten een tx draaien. Op Lovable Cloud heb je geen directe DB-superuser shell; deze parameter zetten vereist actie van het platform. We documenteren dit en vragen jou om het ticket-pad te bevestigen voordat we contact opnemen, of we kiezen voor spoor 3 als interim.
 
-**Footer-caption**
-- Onder de chart, gecentreerd, kleine italic serif: "Bars links van jou (goud) zijn apen die jij verslaat".
+### Spoor 3 — interim: opruim-job zodat de tabel niet groeit
+Onafhankelijk van spoor 2 toevoegen, want dit helpt direct tegen disk- en vacuum-druk:
 
-## Bestanden
-- `src/components/HorsCategorieTab.tsx` — alleen de chart-card block (regels ~1010–1140) herschreven. Geen logica/data-veranderingen, geen wijzigingen aan `monte`-berekening of KPI-rij.
-- Geen nieuwe dependencies.
+```sql
+SELECT cron.schedule(
+  'purge-job-run-details',
+  '*/15 * * * *',
+  $$DELETE FROM cron.job_run_details WHERE end_time < now() - interval '1 hour'$$
+);
+```
 
-## Out of scope
-- KPI-dashboard rij (gem. aap / diff / apen verslagen) blijft 1-op-1.
-- Headline "63%" / `PercentileVerdict` blijft.
-- Aap-illustratie wordt pas geswapt zodra jij de PNG uploadt.
+(Interval naar wens; 1 uur is ruim genoeg om nog te debuggen.)
+
+## Bevestiging na uitvoer
+- `SHOW cron.log_run;` → `off`
+- `SELECT count(*) FROM cron.job_run_details;` → blijft stabiel
+- `SELECT count(*) FROM cron.job WHERE active;` → ongewijzigd (jobs draaien door)
+- DB health opnieuw checken: rolled-back transactions zou moeten afvlakken.
+
+## Vraag aan jou
+1. Mag ik spoor 2A proberen via het migration-tool (kans op falen, maar onschuldig)?
+2. Akkoord met spoor 3 (auto-purge elke 15 min, retentie 1 uur) als interim/aanvulling?
