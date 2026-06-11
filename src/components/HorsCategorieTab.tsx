@@ -1047,6 +1047,16 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     >
                       Aapscore distributie
                     </h3>
+                    {(() => {
+                      // Compute Jij position as % of chart width (bin index → percentage)
+                      const dist = monte.dist;
+                      let uIdx = dist.findIndex((b) => b.bucket >= monte.userActual);
+                      if (uIdx < 0) uIdx = dist.length - 1;
+                      const userPctX = ((uIdx + 0.5) / Math.max(1, dist.length)) * 100;
+                      const flip = userPctX > 55;
+                      const beat = Math.round(monte.beatPct);
+                      return null;
+                    })()}
                     <div style={{ height: 220 }} className="relative">
                       {/* Handwritten callout — desktop only */}
                       <div
