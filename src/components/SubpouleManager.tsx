@@ -12,6 +12,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
 import PelotonChat from "@/components/PelotonChat";
 import SubpouleStandings from "@/components/SubpouleStandings";
+import DaguitslagChart from "@/components/DaguitslagChart";
 import SubpouleBenchmark from "@/components/SubpouleBenchmark";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
 import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Swords, Flame, Share2 } from "lucide-react";
@@ -327,8 +328,9 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="chart" className="pt-3">
+          <TabsContent value="chart" className="pt-3 space-y-4">
             <SubpouleStandings subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
+            <DaguitslagChart subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
           </TabsContent>
           <TabsContent value="benchmark" className="pt-3">
             <div key={benchmarkUnlocked ? "unlocked" : "locked"}>
