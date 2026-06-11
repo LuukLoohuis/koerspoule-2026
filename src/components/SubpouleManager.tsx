@@ -12,6 +12,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
 import PelotonChat from "@/components/PelotonChat";
 import SubpouleStandings from "@/components/SubpouleStandings";
+import DaguitslagChart from "@/components/DaguitslagChart";
 import SubpouleBenchmark from "@/components/SubpouleBenchmark";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
 import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Swords, Flame, Share2 } from "lucide-react";
