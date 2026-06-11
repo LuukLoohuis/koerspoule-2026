@@ -147,20 +147,39 @@ export default function TeamSheet({
          leiders horizontaal als bunch ernaast. */}
       {heroRiders.length > 0 && (
         <section
-          className="rounded-2xl relative overflow-hidden"
+          className="rounded-2xl relative overflow-hidden hero-jacht-banner"
           style={{
-            background: "linear-gradient(90deg, var(--vintage-yellow-hot) 0%, var(--vintage-yellow) 18%, #F4ECD8 60%, #F4ECD8 100%)",
             border: "1.5px solid var(--ink-sepia)",
             boxShadow: "0 2px 0 rgba(58,42,26,0.18), 0 8px 24px -14px rgba(58,42,26,0.35)",
           }}
           aria-label="Top klassement"
         >
-          <div className="flex items-stretch gap-4 md:gap-6 px-4 py-3 md:px-6 md:py-4 relative min-h-[150px] md:min-h-[180px]">
-            {/* Links: kroon + titel */}
-            <div className="flex items-center gap-3 md:gap-4 shrink-0">
+          <style>{`
+            .hero-jacht-banner {
+              /* mobiel: gradient top→bottom, titel op geel, riders op parchment */
+              background: linear-gradient(180deg,
+                var(--vintage-yellow-hot) 0%,
+                var(--vintage-yellow) 28%,
+                #F4ECD8 70%,
+                #F4ECD8 100%);
+            }
+            @media (min-width: 768px) {
+              .hero-jacht-banner {
+                background: linear-gradient(90deg,
+                  var(--vintage-yellow-hot) 0%,
+                  var(--vintage-yellow) 18%,
+                  #F4ECD8 60%,
+                  #F4ECD8 100%);
+              }
+            }
+          `}</style>
+
+          <div className="flex flex-col md:flex-row md:items-stretch gap-2 md:gap-6 px-4 py-3 md:px-6 md:py-4 relative md:min-h-[180px]">
+            {/* Rij 1 (mobiel) / Links (desktop): kroon + titel */}
+            <div className="flex items-center gap-2.5 md:gap-4 shrink-0">
               <Crown
-                size={56}
                 strokeWidth={2.2}
+                className="w-8 h-8 md:w-14 md:h-14"
                 style={{ color: "var(--ink-sepia)", filter: "drop-shadow(1px 1px 0 rgba(255,255,255,0.5))" }}
               />
               <div className="leading-none">
@@ -169,10 +188,11 @@ export default function TeamSheet({
                     fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
                     fontWeight: 900,
                     color: "var(--ink-sepia)",
-                    fontSize: "clamp(22px, 4.5vw, 32px)",
+                    fontSize: "clamp(18px, 5.2vw, 32px)",
                     letterSpacing: "0.02em",
                     textTransform: "uppercase",
                     lineHeight: 1.05,
+                    whiteSpace: "nowrap",
                   }}
                 >
                   JACHT OP GEEL
@@ -180,15 +200,24 @@ export default function TeamSheet({
               </div>
             </div>
 
-            {/* Rechts: leiders in horizontale rij, scrolls op mobiel */}
+            {/* Rij 2 (mobiel) / Rechts (desktop): leiders horizontaal */}
             <div
-              className="flex-1 flex items-end gap-3 md:gap-4 overflow-x-auto pb-1"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              className="flex-1 flex items-end gap-3 md:gap-4 overflow-x-auto pb-1 -mx-1 px-1"
+              style={{
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
+                scrollSnapType: "x proximity",
+                // Right-edge fade signaleert: er is meer rechts.
+                maskImage:
+                  "linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%)",
+                WebkitMaskImage:
+                  "linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%)",
+              }}
             >
               {heroRiders.map((r, i) => {
                 const isOpen = expandedRiderId === r.id;
                 return (
-                  <div key={r.id} className="shrink-0">
+                  <div key={r.id} className="shrink-0" style={{ scrollSnapAlign: "start" }}>
                     <RiderTile
                       rider={r}
                       size="hero"
@@ -208,6 +237,7 @@ export default function TeamSheet({
               })}
             </div>
           </div>
+
 
           {/* Punten-dropdown voor een geselecteerde hero-renner: onder de hele
               strip i.p.v. onder één tegel (de strip is horizontaal, een inline
