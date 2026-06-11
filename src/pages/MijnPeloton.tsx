@@ -1179,20 +1179,8 @@ export default function MijnPeloton() {
         {/* Inner tabs: Team / Uitslagen / Subpoules / Hors */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
 
-          {/* Mobile tab nav — MobielTabBalk (scrollable chips) */}
-          <div className="md:hidden mb-3">
-            <MobielTabBalk
-              tabs={[
-                { key: "karavaan",  label: thema.krant,       icon: Newspaper },
-                { key: "team",      label: "Volgwagen",      icon: Car       },
-                { key: "subpoules", label: "Subpoules",       icon: Users     },
-                { key: "uitslagen", label: "Uitslagen",       icon: Trophy    },
-                { key: "hors",      label: "Hors Catégorie",  icon: Mountain  },
-              ]}
-              active={gameTab}
-              onChange={setGameTab}
-            />
-          </div>
+          {/* Mobile primary tabs verwijderd — BottomNav is enige top-level switcher op mobiel */}
+
 
           {/* Desktop tab nav — chip-stijl, identiek aan Hors Catégorie inner tabs */}
           <div className="hidden md:block overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
