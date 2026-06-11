@@ -1213,7 +1213,187 @@ export default function MijnPeloton() {
 
 }
 
-/* ── Hors Catégorie Tab Component ── */
+/* ── Aap met Dartpijlen: stats + histogram ── */
+type MonkeyStatsShape = {
+  avg: number;
+  median: number;
+  best: number;
+  worst: number;
+  percentile: number;
+  bins: { label: string; count: number; min: number; max: number }[];
+};
+
+function MonkeyStatsAndHistogram({
+  monkeyStats,
+  myTotal,
+}: {
+  monkeyStats: MonkeyStatsShape;
+  myTotal: number;
+}) {
+  const [mounted, setMounted] = useState(false);
+  const reduce = useMemo(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
+    [],
+  );
+  useEffect(() => {
+    if (reduce) {
+      setMounted(true);
+      return;
+    }
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, [reduce]);
+
+  const diff = myTotal - monkeyStats.avg;
+  const positive = diff >= 0;
+  const bins = monkeyStats.bins;
+  const maxCount = Math.max(...bins.map((b) => b.count), 1);
+  const userBinIdx = Math.max(
+    0,
+    Math.min(
+      bins.length - 1,
+      bins.findIndex((b) => myTotal >= b.min && myTotal < b.max),
+    ),
+  );
+  const safeUserIdx = userBinIdx < 0 ? 0 : userBinIdx;
+  const avgBinIdx = Math.max(
+    0,
+    Math.min(
+      bins.length - 1,
+      bins.findIndex((b) => monkeyStats.avg >= b.min && monkeyStats.avg < b.max),
+    ),
+  );
+  const safeAvgIdx = avgBinIdx < 0 ? 0 : avgBinIdx;
+
+  const userLeftPct = ((safeUserIdx + 0.5) / bins.length) * 100;
+  const avgLeftPct = ((safeAvgIdx + 0.5) / bins.length) * 100;
+  const userOnRight = userLeftPct > 55;
+
+  const firstLabel = bins[0]?.label;
+  const midLabel = bins[Math.floor(bins.length / 2)]?.label;
+  const lastLabel = bins[bins.length - 1]?.label;
+
+  return (
+    <div className="space-y-4">
+      {/* Three key stats */}
+      <div className="grid grid-cols-3 divide-x divide-border">
+        <div className="px-2 first:pl-0">
+          <p className="font-mono uppercase text-[10px] tracking-[0.2em] text-muted-foreground">
+            Gemiddelde aap
+          </p>
+          <p className="font-display font-bold text-xl md:text-2xl mt-1 tabular-nums">
+            {monkeyStats.avg} <span className="text-xs font-sans font-normal text-muted-foreground">pt</span>
+          </p>
+        </div>
+        <div className="px-2">
+          <p className="font-mono uppercase text-[10px] tracking-[0.2em] text-muted-foreground">
+            Apen verslagen
+          </p>
+          <p className="font-display font-bold text-2xl md:text-3xl mt-1 text-primary tabular-nums">
+            {monkeyStats.percentile}
+            <span className="text-base">%</span>
+          </p>
+        </div>
+        <div className="px-2">
+          <p className="font-mono uppercase text-[10px] tracking-[0.2em] text-muted-foreground">
+            {positive ? "Boven gemiddelde" : "Onder gemiddelde"}
+          </p>
+          <p
+            className={
+              "font-display font-bold text-xl md:text-2xl mt-1 tabular-nums " +
+              (positive ? "text-emerald-600" : "text-rose-600")
+            }
+          >
+            {positive ? "+" : "−"}
+            {Math.abs(diff)}{" "}
+            <span className="text-xs font-sans font-normal text-muted-foreground">pt</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Histogram */}
+      <div>
+        <div className="relative w-full" style={{ height: 200 }}>
+          {/* Bars */}
+          <div className="absolute inset-0 flex items-end gap-[2px]">
+            {bins.map((b, i) => {
+              const isUser = i === safeUserIdx;
+              const h = (b.count / maxCount) * 100;
+              return (
+                <div key={i} className="flex-1 h-full flex flex-col justify-end">
+                  <div
+                    className={isUser ? "bg-primary" : "bg-muted-foreground/25"}
+                    style={{
+                      height: mounted ? `${h}%` : "0%",
+                      transition: reduce ? undefined : "height 400ms ease-out",
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Average marker (dashed) */}
+          <div
+            className="absolute top-0 bottom-0 border-l border-dashed border-muted-foreground/50 pointer-events-none"
+            style={{ left: `${avgLeftPct}%` }}
+          />
+
+          {/* User marker */}
+          <div
+            className="absolute top-0 bottom-0 w-px bg-primary pointer-events-none"
+            style={{ left: `${userLeftPct}%` }}
+          />
+          <div
+            className={
+              "absolute top-1 pointer-events-none whitespace-nowrap " +
+              (userOnRight ? "-translate-x-full pr-1" : "pl-1")
+            }
+            style={{ left: `${userLeftPct}%` }}
+          >
+            <p className="font-mono text-[10px] text-primary font-bold">
+              Jouw team · {myTotal} pt
+            </p>
+            <p className="font-mono italic text-[10px] text-muted-foreground">
+              beter dan {monkeyStats.percentile}% van de apen
+            </p>
+          </div>
+        </div>
+
+        {/* X-axis labels */}
+        <div className="relative mt-1 h-3">
+          <span className="absolute left-0 font-mono text-[9px] text-muted-foreground">
+            {firstLabel}
+          </span>
+          <span className="absolute left-1/2 -translate-x-1/2 font-mono text-[9px] text-muted-foreground">
+            {midLabel}
+          </span>
+          <span className="absolute right-0 font-mono text-[9px] text-muted-foreground">
+            {lastLabel}
+          </span>
+        </div>
+
+        {/* Average label below axis */}
+        <div className="relative h-3">
+          <span
+            className="absolute font-mono text-[9px] text-muted-foreground -translate-x-1/2 whitespace-nowrap"
+            style={{ left: `${avgLeftPct}%` }}
+          >
+            gemiddelde {monkeyStats.avg}
+          </span>
+        </div>
+
+        <p className="font-mono text-[9px] text-muted-foreground mt-2">
+          Bron: 5.000 Monte Carlo-simulaties · Koerspoule
+        </p>
+      </div>
+    </div>
+  );
+}
+
+
 function WatAlsTab({
   getRiderPoints,
   myTeam,
@@ -1239,7 +1419,7 @@ function WatAlsTab({
 
   // Monte Carlo stats (stable)
   const monkeyStats = useMemo(() => {
-    const SIMS = 1000;
+    const SIMS = 5000;
     const totals: number[] = [];
     for (let i = 0; i < SIMS; i++) {
       let total = 0;
@@ -1426,67 +1606,12 @@ function WatAlsTab({
             🐒 De Aap met Dartpijlen
           </CardTitle>
           <p className="text-xs text-muted-foreground font-sans mt-1">
-            1.000 willekeurige teams gesimuleerd — hoe goed ben jij eigenlijk?
+            5.000 willekeurige teams gesimuleerd — hoe goed ben jij eigenlijk?
           </p>
         </CardHeader>
         <CardContent className="p-4 space-y-4">
-          <div className="grid grid-cols-2 gap-2 md:gap-3">
-            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Gemiddeld</p>
-              <p className="font-display font-bold text-base md:text-lg">{monkeyStats.avg} pt</p>
-            </div>
-            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Mediaan</p>
-              <p className="font-display font-bold text-base md:text-lg">{monkeyStats.median} pt</p>
-            </div>
-            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Beste aap</p>
-              <p className="font-display font-bold text-base md:text-lg text-primary">{monkeyStats.best} pt</p>
-            </div>
-            <div className="p-2 md:p-3 bg-secondary/50 rounded-md text-center">
-              <p className="text-[10px] md:text-xs text-muted-foreground font-sans">Slechtste aap</p>
-              <p className="font-display font-bold text-base md:text-lg text-destructive">{monkeyStats.worst} pt</p>
-            </div>
-          </div>
+          <MonkeyStatsAndHistogram monkeyStats={monkeyStats} myTotal={myTotal} />
 
-          <div className="p-4 bg-primary/10 rounded-md text-center">
-            <p className="text-sm text-muted-foreground font-sans mb-1">Jij scoort beter dan</p>
-            <p className="font-display font-bold text-3xl text-primary">{monkeyStats.percentile}%</p>
-            <p className="text-sm text-muted-foreground font-sans">van de willekeurige apen-teams</p>
-          </div>
-
-          {/* Histogram */}
-          <div>
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-sans mb-2">
-              📊 Verdeling apenscores
-            </h3>
-            <ChartContainer config={{ count: { label: "Aantal teams", color: "hsl(var(--accent))" } }} className="h-[180px] w-full">
-              <BarChart data={monkeyStats.bins} margin={{ top: 8, right: 4, bottom: 0, left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
-                <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                <ChartTooltip
-                  content={<ChartTooltipContent hideIndicator />}
-                  labelFormatter={(_, payload) => {
-                    if (payload?.[0]?.payload) {
-                      const d = payload[0].payload;
-                      return `${d.min}–${d.max} pt`;
-                    }
-                    return "";
-                  }} />
-                
-                <ReferenceLine x={(() => {
-                  const idx = Math.min(Math.floor((myTotal - monkeyStats.worst) / ((monkeyStats.best - monkeyStats.worst || 1) / 20)), 19);
-                  return monkeyStats.bins[Math.max(0, idx)]?.label;
-                })()} stroke="hsl(var(--primary))" strokeWidth={2} strokeDasharray="4 4" label={{ value: "Jij", position: "top", fontSize: 11, fill: "hsl(var(--primary))" }} />
-                <Bar dataKey="count" radius={[2, 2, 0, 0]}>
-                  {monkeyStats.bins.map((bin, i) =>
-                  <Cell key={i} fill={myTotal >= bin.min && myTotal < bin.max ? "hsl(var(--primary))" : "hsl(var(--accent))"} />
-                  )}
-                </Bar>
-              </BarChart>
-            </ChartContainer>
-          </div>
 
           {/* Example monkey team */}
           <div>
