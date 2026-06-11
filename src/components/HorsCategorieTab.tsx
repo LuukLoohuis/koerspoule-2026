@@ -1055,9 +1055,75 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                       const userPctX = ((uIdx + 0.5) / Math.max(1, dist.length)) * 100;
                       const flip = userPctX > 55;
                       const beat = Math.round(monte.beatPct);
-                      return null;
-                    })()}
-                    <div style={{ height: 220 }} className="relative">
+                      const clampedPctX = Math.max(8, Math.min(92, userPctX));
+                      return (
+                    <div style={{ height: 240 }} className="relative">
+                      {/* Monkey illustration — anchored to Jij marker on md+, top-right corner on mobile */}
+                      <img
+                        src={monkeyDart}
+                        alt="Aap met dartpijl"
+                        aria-hidden
+                        className="pointer-events-none select-none absolute z-30 hidden md:block animate-monkey-idle"
+                        style={{
+                          left: `calc(${clampedPctX}% + ${flip ? -8 : 8}px)`,
+                          transform: `translateX(-50%) scaleX(${flip ? -1 : 1})`,
+                          bottom: 28,
+                          height: 130,
+                          width: "auto",
+                          filter: "drop-shadow(0 6px 10px rgba(58,42,26,0.22))",
+                        }}
+                      />
+                      {/* Mobile: monkey in top-right corner + hand-drawn dart trajectory */}
+                      <img
+                        src={monkeyDart}
+                        alt="Aap met dartpijl"
+                        aria-hidden
+                        className="pointer-events-none select-none absolute md:hidden z-30 animate-monkey-idle"
+                        style={{
+                          right: -6,
+                          top: -10,
+                          height: 88,
+                          width: "auto",
+                          transform: "scaleX(-1)",
+                          filter: "drop-shadow(0 4px 8px rgba(58,42,26,0.22))",
+                        }}
+                      />
+                      <svg
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 md:hidden z-20"
+                        width="100%"
+                        height="100%"
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                      >
+                        <path
+                          d={`M 92 14 Q ${(clampedPctX + 92) / 2} 4, ${clampedPctX} 70`}
+                          stroke="#3a2a1a"
+                          strokeOpacity="0.55"
+                          strokeWidth="0.5"
+                          strokeDasharray="1.4 1.6"
+                          fill="none"
+                          vectorEffect="non-scaling-stroke"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      {/* Percentile editorial caption near the monkey */}
+                      <div
+                        className="absolute z-30 pointer-events-none hidden md:block"
+                        style={{
+                          left: `calc(${clampedPctX}% + ${flip ? -150 : 80}px)`,
+                          bottom: 130,
+                          maxWidth: 180,
+                          textAlign: flip ? "right" : "left",
+                          fontFamily: "'Source Serif 4',Georgia,serif",
+                          fontStyle: "italic",
+                          fontSize: 12,
+                          lineHeight: 1.25,
+                          color: "#3a2a1a",
+                        }}
+                      >
+                        “Beter dan <strong>{beat}%</strong> van de apen.”
+                      </div>
                       {/* Handwritten callout — desktop only */}
                       <div
                         aria-hidden
