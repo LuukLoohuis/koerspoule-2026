@@ -143,120 +143,106 @@ export default function TeamSheet({
         </div>
       </div>
 
-      {/* 2. HERO — gele banner, kroon + gestapelde "GC IN HET GEEL" links,
-         leiders horizontaal als bunch ernaast. */}
+      {/* 2. HERO — desktop: gele banner. Mobiel: standaard CategoryPanels
+         zodat ALIEN/GC visueel consistent zijn met de overige categorieën. */}
       {heroRiders.length > 0 && (
-        <section
-          className="rounded-2xl relative overflow-hidden hero-jacht-banner"
-          style={{
-            border: "1.5px solid var(--ink-sepia)",
-            boxShadow: "0 2px 0 rgba(58,42,26,0.18), 0 8px 24px -14px rgba(58,42,26,0.35)",
-          }}
-          aria-label="Top klassement"
-        >
-          <style>{`
-            .hero-jacht-banner {
-              /* mobiel: gradient top→bottom, titel op geel, riders op parchment */
-              background: linear-gradient(180deg,
-                var(--vintage-yellow-hot) 0%,
-                var(--vintage-yellow) 28%,
-                #F4ECD8 70%,
-                #F4ECD8 100%);
-            }
-            @media (min-width: 768px) {
-              .hero-jacht-banner {
-                background: linear-gradient(90deg,
-                  var(--vintage-yellow-hot) 0%,
-                  var(--vintage-yellow) 18%,
-                  #F4ECD8 60%,
-                  #F4ECD8 100%);
-              }
-            }
-          `}</style>
-
-          <div className="flex flex-col md:flex-row md:items-stretch gap-2 md:gap-6 px-4 py-3 md:px-6 md:py-4 relative md:min-h-[180px]">
-            {/* Rij 1 (mobiel) / Links (desktop): kroon + titel */}
-            <div className="flex items-center gap-2.5 md:gap-4 shrink-0">
-              <Crown
-                strokeWidth={2.2}
-                className="w-8 h-8 md:w-14 md:h-14"
-                style={{ color: "var(--ink-sepia)", filter: "drop-shadow(1px 1px 0 rgba(255,255,255,0.5))" }}
+        <>
+          {/* Mobiel — render ALIEN/GC als gewone CategoryPanels */}
+          <div className="md:hidden space-y-3">
+            {HERO_CATEGORIES.filter((c) => (activeByCat.get(c)?.length ?? 0) > 0).map((c) => (
+              <CategoryPanel
+                key={c}
+                category={c}
+                riders={activeByCat.get(c) ?? []}
+                selectedRiderId={selectedRiderId ?? null}
+                onRiderClick={onRiderClick}
+                expandedRiderId={expandedRiderId ?? null}
+                onToggleRider={onToggleRider}
+                gameId={gameId}
+                entryId={entryId}
+                riderTotals={riderTotals}
+                riderTotalsReady={riderTotalsReady}
               />
-              <div className="leading-none">
-                <div
-                  style={{
-                    fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
-                    fontWeight: 900,
-                    color: "var(--ink-sepia)",
-                    fontSize: "clamp(18px, 5.2vw, 32px)",
-                    letterSpacing: "0.02em",
-                    textTransform: "uppercase",
-                    lineHeight: 1.05,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  JACHT OP GEEL
+            ))}
+          </div>
+
+          {/* Desktop — gele hero-banner met kroon + leidersstrip */}
+          <section
+            className="hidden md:block rounded-2xl relative overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(90deg, var(--vintage-yellow-hot) 0%, var(--vintage-yellow) 18%, #F4ECD8 60%, #F4ECD8 100%)",
+              border: "1.5px solid var(--ink-sepia)",
+              boxShadow: "0 2px 0 rgba(58,42,26,0.18), 0 8px 24px -14px rgba(58,42,26,0.35)",
+            }}
+            aria-label="Top klassement"
+          >
+            <div className="flex items-stretch gap-6 px-6 py-4 relative min-h-[180px]">
+              <div className="flex items-center gap-4 shrink-0">
+                <Crown
+                  size={56}
+                  strokeWidth={2.2}
+                  style={{ color: "var(--ink-sepia)", filter: "drop-shadow(1px 1px 0 rgba(255,255,255,0.5))" }}
+                />
+                <div className="leading-none">
+                  <div
+                    style={{
+                      fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
+                      fontWeight: 900,
+                      color: "var(--ink-sepia)",
+                      fontSize: "clamp(22px, 4.5vw, 32px)",
+                      letterSpacing: "0.02em",
+                      textTransform: "uppercase",
+                      lineHeight: 1.05,
+                    }}
+                  >
+                    JACHT OP GEEL
+                  </div>
                 </div>
+              </div>
+
+              <div
+                className="flex-1 flex items-end gap-4 overflow-x-auto pb-1"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {heroRiders.map((r, i) => {
+                  const isOpen = expandedRiderId === r.id;
+                  return (
+                    <div key={r.id} className="shrink-0">
+                      <RiderTile
+                        rider={r}
+                        size="hero"
+                        selected={selectedRiderId === r.id || isOpen}
+                        onClick={onToggleRider ?? onRiderClick}
+                        ariaExpanded={onToggleRider ? isOpen : undefined}
+                        ariaControls={onToggleRider ? `rider-breakdown-${r.id}` : undefined}
+                        totalPoints={resolveTotal(riderTotalsReady, riderTotals, r.id)}
+                        cyclistOverride={i === 0 ? "GC" : "KLIM"}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Rij 2 (mobiel) / Rechts (desktop): leiders horizontaal */}
-            <div
-              className="flex-1 flex items-end gap-3 md:gap-4 overflow-x-auto pb-1 -mx-1 px-1"
-              style={{
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-                scrollSnapType: "x proximity",
-                // Right-edge fade signaleert: er is meer rechts.
-                maskImage:
-                  "linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%)",
-                WebkitMaskImage:
-                  "linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%)",
-              }}
-            >
-              {heroRiders.map((r, i) => {
-                const isOpen = expandedRiderId === r.id;
-                return (
-                  <div key={r.id} className="shrink-0" style={{ scrollSnapAlign: "start" }}>
-                    <RiderTile
-                      rider={r}
-                      size="hero"
-                      selected={selectedRiderId === r.id || isOpen}
-                      onClick={onToggleRider ?? onRiderClick}
-                      ariaExpanded={onToggleRider ? isOpen : undefined}
-                      ariaControls={onToggleRider ? `rider-breakdown-${r.id}` : undefined}
-                      totalPoints={resolveTotal(riderTotalsReady, riderTotals, r.id)}
-                      // Hero-strip kit: eerste pick = gele leiderstrui (GC asset),
-                      // overige picks = bolletjes-trui (KLIM asset). Past bij
-                      // de echte wieleresthetiek waar de leider geel draagt en
-                      // de helpers vaak de bolletjestrui meenemen.
-                      cyclistOverride={i === 0 ? "GC" : "KLIM"}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-
-          {/* Punten-dropdown voor een geselecteerde hero-renner: onder de hele
-              strip i.p.v. onder één tegel (de strip is horizontaal, een inline
-              accordion per tegel zou de rij breken). */}
-          {onToggleRider && expandedHeroRider && (
-            <div className="px-4 pb-3 md:px-6 md:pb-4 -mt-1">
-              <RiderStageBreakdown
-                open
-                riderId={expandedHeroRider.id}
-                riderName={expandedHeroRider.name}
-                category={expandedHeroRider.category}
-                gameId={gameId}
-                entryId={entryId}
-                panelId={`rider-breakdown-${expandedHeroRider.id}`}
-              />
-            </div>
-          )}
-        </section>
+            {onToggleRider && expandedHeroRider && (
+              <div className="px-6 pb-4 -mt-1">
+                <RiderStageBreakdown
+                  open
+                  riderId={expandedHeroRider.id}
+                  riderName={expandedHeroRider.name}
+                  category={expandedHeroRider.category}
+                  gameId={gameId}
+                  entryId={entryId}
+                  panelId={`rider-breakdown-${expandedHeroRider.id}`}
+                />
+              </div>
+            )}
+          </section>
+        </>
       )}
+
+
 
       {/* 3. CATEGORY grid — panels in 1 rij op desktop, max 5 kolommen */}
       {otherActiveCats.length > 0 && (
