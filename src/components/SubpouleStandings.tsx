@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Swords, ArrowUp, ArrowDown, Flag } from "lucide-react";
+import { Trophy, Swords, ArrowUp, ArrowDown, Flag, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResults";
@@ -11,6 +11,7 @@ import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import StageBar from "@/components/stages/StageBar";
 import { buildStageBarData } from "@/components/stages/stageBarData";
 import { cn } from "@/lib/utils";
+
 
 type Props = {
   subpouleId: string;
