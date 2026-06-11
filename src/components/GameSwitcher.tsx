@@ -4,7 +4,7 @@
  * - One row, edge-fade masks, hidden scrollbar.
  * - Auto-centers active card on selection.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlagIcon from "@/components/FlagIcon";
@@ -27,19 +27,9 @@ function orderRank(status: string): number {
   return 3;
 }
 
-/** "Tour de France Femmes 2026" → "TdF Femmes 2026", "Tour de France 2026" → "TdF 2026", etc. */
-function shortName(name: string): string {
-  return name
-    .replace(/Tour de France Femmes/i, "TdF Femmes")
-    .replace(/Tour de France/i, "TdF")
-    .replace(/Giro d['']Italia/i, "Giro")
-    .replace(/Vuelta a España/i, "Vuelta");
-}
-
 export default function GameSwitcher({ games, selectedId, onSelect, className }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
-  const [compact, setCompact] = useState(false);
 
   // Sort: live first, draft, finished
   const ordered = [...games].sort((a, b) => {
@@ -48,16 +38,6 @@ export default function GameSwitcher({ games, selectedId, onSelect, className }:
     return 0;
   });
 
-  // Scroll listener for compact mode
-  useEffect(() => {
-    const onScroll = () => {
-      setCompact(window.scrollY > 40);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   // Center active card
   useEffect(() => {
     const el = activeRef.current;
@@ -65,29 +45,16 @@ export default function GameSwitcher({ games, selectedId, onSelect, className }:
     if (!el || !box) return;
     const left = el.offsetLeft - box.clientWidth / 2 + el.clientWidth / 2;
     box.scrollTo({ left, behavior: "smooth" });
-  }, [selectedId, compact]);
+  }, [selectedId]);
 
   return (
     <div
       className={cn(
-        "sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b border-border/60 transition-shadow",
-        compact && "shadow-sm",
+        "bg-card/95 backdrop-blur-sm border-b border-border/60",
         className,
       )}
     >
       <div className="px-3 md:px-5">
-        {/* Overline — verbergen in compact-mode */}
-        <div
-          className={cn(
-            "overflow-hidden transition-all duration-200",
-            compact ? "max-h-0 opacity-0" : "max-h-6 opacity-100 pt-2",
-          )}
-          aria-hidden={compact}
-        >
-          <span className="overline-stamp text-[10px] text-muted-foreground tracking-[0.18em]">
-            — Kies je editie —
-          </span>
-        </div>
 
         {/* Scroll-snap rail met edge-fade */}
         <div
