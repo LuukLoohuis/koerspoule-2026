@@ -22,7 +22,7 @@ import { pointsTable } from "@/data/riders";
 import { useCategories } from "@/hooks/useCategories";
 import MonkeyExplainerModal from "@/components/horscat/MonkeyExplainerModal";
 import PercentileVerdict from "@/components/horscat/PercentileVerdict";
-import monkeyDartAsset from "@/assets/horscat/monkey-dart-bike.png.asset.json";
+import monkeyDartAsset from "@/assets/monkey-dart.png.asset.json";
 const monkeyDart = monkeyDartAsset.url;
 import { useStages, useGameStandings, useStagePointsForEntries, useStageAverages } from "@/hooks/useResults";
 import { Badge } from "@/components/ui/badge";
