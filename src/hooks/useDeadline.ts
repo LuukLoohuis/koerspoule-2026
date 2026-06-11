@@ -52,7 +52,8 @@ function useGameDeadlines() {
       const past = rows.sort((a, b) => b.close - a.close)[0];
       return past ?? null;
     },
-    refetchInterval: 60000, // 30s → 60s scheelt query-volume (cloud-kosten)
+    // Stopt met pollen zodra de query faalt (geen eindeloze 60s-rollback-loop).
+    refetchInterval: (query) => (query.state.status === "error" ? false : 60000),
   });
 }
 

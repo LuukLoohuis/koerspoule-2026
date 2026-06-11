@@ -7,7 +7,11 @@ export function useUnreadCounts(gameId: string | undefined) {
   return useQuery({
     queryKey: ["subpoule-unread", gameId, user?.id],
     enabled: Boolean(supabase && gameId && user?.id),
-    refetchInterval: 60_000, // 30s → 60s scheelt query-volume (cloud-kosten)
+    // Polt elke 60s, MAAR stopt zodra de query faalt — anders blijft een
+    // kapotte/erroring RPC eindeloos elke 60s een teruggerolde transactie
+    // produceren (rollback-storm + cloud-kosten).
+    refetchInterval: (query) => (query.state.status === "error" ? false : 60_000),
+    retry: false,
     queryFn: async () => {
       if (!supabase || !gameId) return {} as Record<string, number>;
       const { data, error } = await supabase.rpc("subpoule_unread_counts", { p_game_id: gameId });
