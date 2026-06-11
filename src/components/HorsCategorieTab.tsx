@@ -1330,7 +1330,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     >
                       “Beter dan <strong>{beat}%</strong> van de apen — die dartpijl van jou heeft visie.”
                     </p>
-                    );
+                    </>
+                      );
                     })()}
                   </div>
                 </div>
