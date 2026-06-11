@@ -1323,12 +1323,14 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                       style={{
                         fontFamily: "'Source Serif 4',Georgia,serif",
                         fontStyle: "italic",
-                        fontSize: 11,
-                        color: "rgba(58,42,26,0.7)",
+                        fontSize: 12,
+                        color: "rgba(58,42,26,0.78)",
                       }}
                     >
-                      Bars links van jou (goud) zijn apen die jij verslaat
+                      “Beter dan <strong>{beat}%</strong> van de apen — die dartpijl van jou heeft visie.”
                     </p>
+                    );
+                    })()}
                   </div>
                 </div>
 
