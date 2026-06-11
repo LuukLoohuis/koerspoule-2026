@@ -106,13 +106,12 @@ export default function MijnPeloton() {
   const isDraft = ["draft", "concept"].includes(selectedGameObj?.status ?? "");
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const isKaravaanRoute = location.pathname === "/karavaan";
-  const [gameTab, setGameTab] = useState(() => searchParams.get("tab") ?? (isKaravaanRoute ? "karavaan" : "team"));
+  // Default landing = karavaan (de gazetta), tenzij ?tab= expliciet gezet is.
+  const [gameTab, setGameTab] = useState(() => searchParams.get("tab") ?? "karavaan");
   useEffect(() => {
     const t = searchParams.get("tab");
-    if (t) setGameTab(t);
-    else if (isKaravaanRoute) setGameTab("karavaan");
-  }, [searchParams, isKaravaanRoute]);
+    setGameTab(t ?? "karavaan");
+  }, [searchParams]);
   const [teamSubTab, setTeamSubTab] = useState("ploeg");
   const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
@@ -1107,60 +1106,14 @@ export default function MijnPeloton() {
           </div>
         </button>
 
-        {/* Game selector */}
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
-          {allGames.map((game) => {
-            const theme = gameTheme(game.game_type);
-            const isActive = selectedGame === game.id;
-            const isLive = ["open", "live", "locked"].includes(game.status);
-            const isDraftBtn = ["draft", "concept"].includes(game.status);
-            return (
-              <button
-                key={game.id}
-                onClick={() => setSelectedGame(game.id)}
-                className={cn(
-                  "group flex items-center gap-2.5 rounded-lg border-2 pl-2 pr-3 py-1.5 font-display font-bold text-sm transition-all",
-                  isActive
-                    ? "text-white shadow-md"
-                    : "bg-card border-border text-foreground/80 hover:border-foreground/30 hover:bg-secondary/50",
-                  isDraftBtn && !isActive && "opacity-80",
-                )}
-                style={isActive ? {
-                  background: `linear-gradient(135deg, ${theme.colors[0]}, ${theme.colors[1]}, ${theme.colors[2]})`,
-                  borderColor: theme.colors[0],
-                } : undefined}
-              >
-                <span className={cn(
-                  "inline-flex items-center justify-center rounded-md overflow-hidden ring-1 shrink-0",
-                  isActive ? "ring-white/60" : "ring-border",
-                )}>
-                  <FlagIcon country={theme.country} />
-                </span>
-                <span style={isActive ? { textShadow: "0 1px 2px rgba(0,0,0,0.45)" } : undefined}>
-                  {game.name}
-                </span>
-                {isLive && (
-                  <span className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider leading-none",
-                    isActive ? "bg-white/25 text-white" : "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30",
-                  )}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                    Live
-                  </span>
-                )}
-                {isDraftBtn && (
-                  <span className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider leading-none",
-                    isActive ? "bg-white/25 text-white" : "bg-secondary text-muted-foreground border border-border",
-                  )}>
-                    <Lock className="w-2.5 h-2.5" />
-                    Concept
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {/* Game selector — sticky, scroll-snap, compact-on-scroll */}
+        <GameSwitcher
+          games={allGames}
+          selectedId={selectedGame}
+          onSelect={setSelectedGame}
+          className="-mx-5 mb-4"
+        />
+
 
         {isDraft && (
           <div className="retro-border bg-card p-4 mb-4 text-center">
