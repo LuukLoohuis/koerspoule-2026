@@ -1179,11 +1179,8 @@ export default function MijnPeloton() {
         {/* Inner tabs: Team / Uitslagen / Subpoules / Hors */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
 
-          {/* Mobile tab nav — primaire balk, sticky onder de viewporttop zodat
-              'ie altijd bereikbaar blijft tijdens scrollen. Dekkende perkament-
-              achtergrond + onderrand zodat content er netjes onderdoor scrollt.
-              -mx-5 px-5 laat de balk edge-to-edge lopen op mobiel. */}
-          <div className="md:hidden sticky top-0 z-30 -mx-5 px-5 py-2 mb-3 bg-[#EDE8DF]/95 backdrop-blur supports-[backdrop-filter]:bg-[#EDE8DF]/80 border-b border-[#C8B89A]/70 shadow-sm">
+          {/* Mobile tab nav — MobielTabBalk (scrollable chips) */}
+          <div className="md:hidden mb-3">
             <MobielTabBalk
               tabs={[
                 { key: "karavaan",  label: thema.krant,       icon: Newspaper },
@@ -1235,10 +1232,8 @@ export default function MijnPeloton() {
           <TabsContent value="team" className="mt-3">
             <Tabs value={teamSubTab} onValueChange={setTeamSubTab}>
 
-              {/* Mobile sub-tab nav — visueel ondergeschikt aan de sticky
-                  primaire balk: ingesprongen + niet-sticky, zodat het niet als
-                  een tweede gelijkwaardige balk leest. */}
-              <div className="md:hidden mt-1 mb-3 mx-3">
+              {/* Mobile tab nav — pill (3 tabs) */}
+              <div className="md:hidden mb-3">
                 <MobielTabBalk
                   tabs={[
                     { key: "ploeg",    label: "Mijn Ploeg", icon: Users  },
