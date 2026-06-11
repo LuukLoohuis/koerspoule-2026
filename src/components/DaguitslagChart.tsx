@@ -158,9 +158,6 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
             >
               volgende →
             </button>
-            <span className="text-[10px] font-mono text-muted-foreground/70 ml-1">
-              {stageIdx + 1}/{approvedStages.length} gefiatteerd
-            </span>
           </div>
         )}
       </div>
