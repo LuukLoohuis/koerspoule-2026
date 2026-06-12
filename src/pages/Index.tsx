@@ -214,6 +214,31 @@ export default function Index() {
     [sortedEntries, myEntry]
   );
 
+  // ── Daguitslag: punten van de laatst gefiatteerde etappe per entry ──
+  const dayPointsByEntry = useMemo(() => {
+    const m = new Map<string, number>();
+    if (!lastStage) return m;
+    for (const sp of stagePoints) {
+      if (sp.stage_id === lastStage.id) {
+        m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points);
+      }
+    }
+    return m;
+  }, [stagePoints, lastStage]);
+
+  const daySortedEntries = useMemo(
+    () =>
+      [...allEntries].sort(
+        (a, b) => (dayPointsByEntry.get(b.id) ?? 0) - (dayPointsByEntry.get(a.id) ?? 0),
+      ),
+    [allEntries, dayPointsByEntry],
+  );
+
+  const myDayRank = useMemo(
+    () => (myEntry ? daySortedEntries.findIndex((e) => e.id === myEntry.id) + 1 : null),
+    [daySortedEntries, myEntry],
+  );
+
   const cumulativeByEntry = useMemo(() => {
     const map = new Map<string, number[]>();
     if (!approvedStages.length || !allEntries.length) return map;
@@ -262,7 +287,8 @@ export default function Index() {
 
   const realTopFive: TopFiveRow[] = useMemo(() => {
     if (!showRealData) return [];
-    return sortedEntries.slice(0, 5).map((entry, i) => {
+    // Daguitslag van de laatst gefiatteerde etappe (niet het klassement).
+    return daySortedEntries.slice(0, 5).map((entry, i) => {
       const cumulArr = cumulativeByEntry.get(entry.id) ?? [];
       const n = cumulArr.length;
       const spark =
@@ -279,17 +305,17 @@ export default function Index() {
         p: i + 1,
         name: entry.display_name ?? entry.team_name ?? "Deelnemer",
         team: entry.team_name ?? "",
-        pts: entry.total_points,
+        pts: dayPointsByEntry.get(entry.id) ?? 0,
         jersey: JERSEY_COLORS[i] ?? null,
         you: entry.user_id === user?.id,
         spark,
       };
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showRealData, sortedEntries, cumulativeByEntry, maxCumulative, user?.id]);
+  }, [showRealData, daySortedEntries, dayPointsByEntry, cumulativeByEntry, maxCumulative, user?.id]);
 
   const myRowOutsideTop5: TopFiveRow | null = useMemo(() => {
-    if (!showRealData || !myEntry || !myRank || myRank <= 5) return null;
+    if (!showRealData || !myEntry || !myDayRank || myDayRank <= 5) return null;
     const cumulArr = cumulativeByEntry.get(myEntry.id) ?? [];
     const n = cumulArr.length;
     const spark =
@@ -303,15 +329,15 @@ export default function Index() {
             })
             .join(" ");
     return {
-      p: myRank,
+      p: myDayRank,
       name: myEntry.display_name ?? myEntry.team_name ?? "Jij",
       team: myEntry.team_name ?? "",
-      pts: myEntry.total_points,
+      pts: dayPointsByEntry.get(myEntry.id) ?? 0,
       jersey: null,
       you: true,
       spark,
     };
-  }, [showRealData, myEntry, myRank, cumulativeByEntry, maxCumulative]);
+  }, [showRealData, myEntry, myDayRank, dayPointsByEntry, cumulativeByEntry, maxCumulative]);
 
   const myProgress = useMemo(() => {
     if (!showRealSparkline) return MOCK_MY_PROGRESS;
@@ -496,9 +522,9 @@ export default function Index() {
         <div className="grid grid-cols-1 md:grid-cols-3 border-b-2 border-[hsl(var(--vintage-gold))/0.3]">
           {/* Top 5 */}
           <div className="py-5 md:pr-6 md:border-r border-[hsl(var(--vintage-gold))/0.25]">
-            <div className="overline-stamp mb-1">Klassement</div>
+            <div className="overline-stamp mb-1">Daguitslag</div>
             <div className="font-display font-bold text-2xl leading-tight">
-              De top vijf{lastStage ? ` na etappe ${lastStage.stage_number}` : ""}
+              De top vijf{lastStage ? ` van etappe ${lastStage.stage_number}` : ""}
             </div>
             <div className="mt-3">
               {(showRealData ? realTopFive : MOCK_TOP_FIVE).map((row) => (
@@ -517,7 +543,7 @@ export default function Index() {
               to="/uitslagen"
               className="inline-block mt-3 text-xs text-primary font-semibold"
             >
-              Heel klassement →
+              Hele daguitslag →
             </Link>
           </div>
 
