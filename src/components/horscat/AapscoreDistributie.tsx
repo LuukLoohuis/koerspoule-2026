@@ -23,8 +23,8 @@ type Props = {
 };
 
 const GOLD = "hsl(var(--vintage-gold))";
-const BAR = "hsl(var(--ink-sepia) / 0.65)";
-const BAR_TOP = "hsl(var(--ink-sepia) / 0.85)";
+const BAR = "color-mix(in srgb, var(--ink-sepia) 65%, transparent)";
+const BAR_TOP = "color-mix(in srgb, var(--ink-sepia) 90%, transparent)";
 const CARD_BG = "#FFF1E5";
 
 const FONT_SANS = "'Inter','DM Sans',sans-serif";
