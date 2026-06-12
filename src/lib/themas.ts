@@ -97,13 +97,12 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     login_meedoen: "Rejoins la Grande Boucle !",
     beker: bekerVoor("tour"),
     quotes: [
-      "“Awel, de Tour, dat is een loterij, hé… maar ge moet wel de goeie nummers hebben.”",
+      "C'est le directeur sportif qui écrit l'histoire.",
       "La route est longue, mais la gloire attend.",
       "Chaque étape est une nouvelle aventure.",
       "Il était une fois un maillot jaune...",
       "Allez, toujours de l'avant!",
     ],
-    quoteAuteur: "Ferry de Groot",
     truien: {
       algemeen: { naam: "Maillot Jaune", kleur: "#F5C518", patroon: "effen" },
       punten: { naam: "Maillot Vert", kleur: "#27AE60", patroon: "effen" },
