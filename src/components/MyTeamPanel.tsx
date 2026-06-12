@@ -943,14 +943,15 @@ export default function MyTeamPanel({
                     </span>
                   </div>
 
-                  {/* Luidsprekergrille */}
+                  {/* Aap met dartpijl — mascotte van de volgwagen */}
                   <img
-                    src="/salle-de-course/radio-grille.png"
+                    src={aapVolgwagen.url}
                     alt=""
                     aria-hidden="true"
                     className="w-full rounded-lg"
-                    style={{ border: "1px solid rgba(0,0,0,0.6)" }}
+                    style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.6)", aspectRatio: "1 / 1", objectFit: "cover" }}
                   />
+
 
                   {/* FM/AM-tuner */}
                   <img
