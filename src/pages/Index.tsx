@@ -453,13 +453,13 @@ export default function Index() {
                 currentGame?.homepage_quote_author ?? thema.quoteAuteur;
               if (!quoteText) return null;
               return (
-                <figure className="hidden lg:flex flex-col items-center text-center max-w-[300px] mx-auto">
+                <figure className="hidden lg:flex flex-col items-center text-center max-w-[360px] mx-auto">
                   <span aria-hidden className="vintage-ornament mb-3 opacity-70" />
-                  <blockquote className="margin-note tilt-l text-[24px] italic leading-snug">
+                  <blockquote className="margin-note tilt-l text-[30px] xl:text-[34px] italic leading-snug">
                     “{quoteText}”
                   </blockquote>
                   {quoteAuthor && (
-                    <figcaption className="margin-note text-[22px] mt-3 tilt-r not-italic">
+                    <figcaption className="margin-note text-[24px] xl:text-[26px] mt-3 tilt-r not-italic">
                       — {quoteAuthor}
                     </figcaption>
                   )}
