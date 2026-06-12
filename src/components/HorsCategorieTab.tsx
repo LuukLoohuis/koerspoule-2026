@@ -908,7 +908,6 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 dist={monte.dist}
                 userActual={monte.userActual}
                 mean={monte.mean}
-                median={monte.median}
                 beatPct={monte.beatPct}
                 monkeyCount={5000}
               />
