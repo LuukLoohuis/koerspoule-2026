@@ -62,9 +62,9 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, c
   const apeLeads = diff > 0;
   const youLead = diff < 0;
   const cue = apeLeads
-    ? `🐒 De aap rijdt ${diff} pt voor`
+    ? `🐒 De aap staat ${diff} pt voor`
     : youLead
-      ? `🚴 Jij rijdt ${Math.abs(diff)} pt voor`
+      ? `🚴 Jij staat ${Math.abs(diff)} pt voor`
       : "📸 Foto-finish — exact gelijk";
 
   const GOLD = "var(--medal-gold)";
