@@ -23,7 +23,8 @@ type Props = {
 };
 
 const GOLD = "hsl(var(--vintage-gold))";
-const BAR = "hsl(var(--ink-sepia) / 0.22)";
+const BAR = "hsl(var(--ink-sepia) / 0.65)";
+const BAR_TOP = "hsl(var(--ink-sepia) / 0.85)";
 const CARD_BG = "#FFF1E5";
 
 const FONT_SANS = "'Inter','DM Sans',sans-serif";
@@ -134,18 +135,19 @@ export default function AapscoreDistributie({
           aria-hidden
           className="animate-monkey-idle pointer-events-none select-none absolute"
           style={{
-            top: isMobile ? 12 : 20,
+            top: isMobile ? 8 : 12,
             right: isMobile ? 12 : 24,
-            height: isMobile ? 56 : 72,
+            height: isMobile ? 140 : 180,
             width: "auto",
-            filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.15))",
-            opacity: mounted ? 0.9 : 0,
+            filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.18))",
+            opacity: mounted ? 1 : 0,
             transition: reduce ? undefined : "opacity 200ms ease-out 200ms",
+            zIndex: 2,
           }}
         />
 
         {/* Titel-blok */}
-        <div style={{ paddingRight: isMobile ? 72 : 96 }}>
+        <div style={{ paddingRight: isMobile ? 140 : 200 }}>
           <div
             style={{
               fontFamily: FONT_MONO,
@@ -264,6 +266,7 @@ export default function AapscoreDistributie({
                   style={{
                     height: `${hPct}%`,
                     background: isUser ? GOLD : BAR,
+                    borderTop: isUser ? undefined : `1px solid ${BAR_TOP}`,
                     borderTopLeftRadius: 2,
                     borderTopRightRadius: 2,
                     transformOrigin: "bottom",
