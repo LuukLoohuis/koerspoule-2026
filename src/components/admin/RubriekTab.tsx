@@ -162,6 +162,9 @@ export default function RubriekTab({ activeGameId }: Props) {
 
   return (
     <div className="space-y-4">
+      <HomepageQuoteCard activeGameId={activeGameId} />
+
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between py-4">
           <CardTitle className="text-lg">Rubriek</CardTitle>
