@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Swords, ArrowUp, ArrowDown, Flag, ArrowLeftRight } from "lucide-react";
@@ -39,6 +39,16 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
 
   const [compareId, setCompareId] = useState<string | null>(null);
   const [etappeIdx, setEtappeIdx] = useState<number>(0);
+  // Auto-scroll naar de benchmark zodra een team gekozen is — de vergelijking
+  // rendert onder de tabel en viel anders buiten beeld (gemiste feedback).
+  const compareRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!compareId || !compareRef.current) return;
+    const id = window.setTimeout(() => {
+      compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120); // korte delay zodat de vergelijking eerst rendert
+    return () => window.clearTimeout(id);
+  }, [compareId]);
   const [showTapHint, setShowTapHint] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return sessionStorage.getItem("subpoule-tap-hint-dismissed") !== "1";
@@ -333,7 +343,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   }
                 } : undefined}
                 className={cn(
-                  "flex items-center gap-2 md:gap-3 px-3 border-b border-border/40 transition-all duration-120 select-none",
+                  "group flex items-center gap-2 md:gap-3 px-3 border-b border-border/40 transition-all duration-120 select-none",
                   rowAccentCls,
                   isMe && "bg-primary/[0.08] ring-1 ring-inset ring-primary/30",
                   isComparing && "bg-accent/15 ring-1 ring-inset ring-accent/50",
@@ -432,19 +442,39 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   )}
                 </div>
 
-                {/* Compare-knop: alleen desktop. Mobiel = hele rij. */}
+                {/* Benchmark-affordance.
+                    Desktop: "⚔ Vergelijk"-pill die bij hover op de rij
+                    binnenschuift (en blijft staan zodra de vergelijking
+                    actief is). Mobiel: subtiel zwaard-icoon dat signaleert
+                    dat de hele rij tapbaar is. */}
                 {canCompare && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setCompareId(isComparing ? null : m.user_id); }}
-                    className={cn(
-                      "hidden md:inline-flex shrink-0 p-1.5 rounded border border-border hover:bg-accent/20 transition-colors",
-                      isComparing && "bg-accent/30 border-accent",
-                    )}
-                    aria-label={isComparing ? "Vergelijking sluiten" : "Vergelijk met jouw team"}
-                    title={isComparing ? "Vergelijking sluiten" : "Vergelijk met jouw team"}
-                  >
-                    <Swords className="h-3.5 w-3.5" />
-                  </button>
+                  <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setCompareId(isComparing ? null : m.user_id); }}
+                      className={cn(
+                        "hidden md:inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1",
+                        "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                        "transition-all duration-150",
+                        isComparing
+                          ? "opacity-100 translate-x-0 bg-accent/30 border-accent text-accent-foreground"
+                          : "opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 focus-visible:opacity-100 focus-visible:translate-x-0 border-border bg-card hover:bg-accent/20 text-muted-foreground",
+                      )}
+                      aria-label={isComparing ? "Vergelijking sluiten" : `Benchmark tegen ${m.team_name ?? m.display_name ?? "dit team"}`}
+                      title={isComparing ? "Vergelijking sluiten" : "Benchmark jouw ploeg tegen dit team"}
+                    >
+                      <Swords className="h-3 w-3" />
+                      {isComparing ? "Sluit" : "Vergelijk"}
+                    </button>
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "md:hidden shrink-0 inline-flex",
+                        isComparing ? "text-accent-foreground" : "text-muted-foreground/40",
+                      )}
+                    >
+                      <Swords className="h-3.5 w-3.5" />
+                    </span>
+                  </>
                 )}
               </div>
             );
@@ -455,12 +485,14 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
 
       {/* Head-to-head comparison */}
       {compareMember && ["live", "locked", "finished", "closed"].includes(String(game?.status ?? "")) && (
-        <TeamComparison
-          opponentUserId={compareMember.user_id}
-          opponentName={compareMember.display_name}
-          subpouleId={subpouleId}
-          gameId={game?.id}
-        />
+        <div ref={compareRef} style={{ scrollMarginTop: 12 }}>
+          <TeamComparison
+            opponentUserId={compareMember.user_id}
+            opponentName={compareMember.display_name}
+            subpouleId={subpouleId}
+            gameId={game?.id}
+          />
+        </div>
       )}
 
       {/* Cumulative evolution chart */}
