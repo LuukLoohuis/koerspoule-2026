@@ -20,7 +20,6 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
 import { pointsTable } from "@/data/riders";
 import { useCategories } from "@/hooks/useCategories";
-import MonkeyExplainerModal from "@/components/horscat/MonkeyExplainerModal";
 import PercentileVerdict from "@/components/horscat/PercentileVerdict";
 import AapscoreDistributie from "@/components/horscat/AapscoreDistributie";
 import { useStages, useGameStandings, useStagePointsForEntries, useStageAverages } from "@/hooks/useResults";
@@ -154,16 +153,6 @@ function pickN<T>(arr: T[], n: number, rng: () => number): T[] {
 
 function snapToBucket(dist: Array<{ bucket: number }>, value: number): number {
   return dist.reduce((best, b) => (Math.abs(b.bucket - value) < Math.abs(best.bucket - value) ? b : best)).bucket;
-}
-
-function getNickname(beatPct: number) {
-  if (beatPct >= 99) return { title: "Koningsklasse", emoji: "👑", good: true };
-  if (beatPct >= 90) return { title: "Wielerdirecteur", emoji: "🏆", good: true };
-  if (beatPct >= 70) return { title: "Aap-Slayer", emoji: "⚔️", good: true };
-  if (beatPct >= 50) return { title: "Menselijk Voordeel", emoji: "💪", good: true };
-  if (beatPct >= 30) return { title: "Nek-aan-Nek", emoji: "🤝", good: false };
-  if (beatPct >= 10) return { title: "Monkey Business", emoji: "🐒", good: false };
-  return { title: "Koersinstinct", emoji: "🎯", good: false };
 }
 
 // SVG semicircle gauge — animates on mount
@@ -558,7 +547,6 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   // ── Derived display values ──────────────────────────────────────────────────
   const diffPct = monte && monte.mean > 0 ? ((monte.userActual - monte.mean) / monte.mean) * 100 : 0;
   const isBeating = diffPct >= 0;
-  const nickname = monte ? getNickname(monte.beatPct) : null;
   const oneInX =
     monte && monte.beatPct < 99.5 ? Math.max(2, Math.round(100 / Math.max(0.1, 100 - monte.beatPct))) : null;
 
@@ -850,69 +838,14 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
             </div>
           ) : (
             <>
-              {/* ── Uitleg-laag: titel + ⓘ + percentile + verdict ─────────── */}
-              <div>
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <div>
-                    <h2
-                      style={{
-                        fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
-                        fontWeight: 900,
-                        color: "var(--ink-sepia)",
-                        fontSize: "clamp(22px, 4vw, 28px)",
-                        letterSpacing: "0.04em",
-                        textTransform: "uppercase",
-                        lineHeight: 1.05,
-                      }}
-                    >
-                      <span aria-hidden className="animate-monkey-idle" style={{ marginRight: 6 }}>🐒</span>
-                      De aap met de dartpijl
-                    </h2>
-                    <p
-                      style={{
-                        fontFamily: "'Source Serif 4',Georgia,serif",
-                        fontStyle: "italic",
-                        color: "var(--ink-faded)",
-                        fontSize: "13px",
-                        marginTop: 2,
-                      }}
-                    >
-                      Ben je beter dan blinde gok?
-                    </p>
-                  </div>
-                  <MonkeyExplainerModal monkeyCount={5000} variant="text" />
-                </div>
-              </div>
-              {/* /Uitleg-laag */}
-
-
-              {/* Headline — volle breedte */}
+              {/* ── Monkey IQ-hero: percentile + verdict + Jij-vs-aap ──
+                  Alle uitleg-/titel-lagen en de Prestatieklasse-banner zijn
+                  bewust verwijderd: de hero vertelt het hele verhaal. */}
               <PercentileVerdict
                 percentile={Math.round(monte.beatPct)}
-                monkeyCount={5000}
-                hint={`Jij ${monte.userActual} pt · gem. aap ${Math.round(monte.mean)} pt`}
+                userPoints={monte.userActual}
+                monkeyAvg={Math.round(monte.mean)}
               />
-
-
-              {nickname && (
-                <div
-                  className={cn(
-                    "rounded-xl border px-4 py-2.5 flex items-center justify-center gap-2.5 text-sm",
-                    nickname.good ? "border-emerald-300 bg-emerald-50" : "border-rose-300 bg-rose-50",
-                  )}
-                >
-                  <span className="text-xl leading-none">{nickname.emoji}</span>
-                  <span className="text-muted-foreground/80 text-[10px] uppercase tracking-[0.2em]">Prestatieklasse</span>
-                  <span
-                    className={cn(
-                      "font-display font-bold",
-                      nickname.good ? "text-emerald-600" : "text-rose-600",
-                    )}
-                  >
-                    {nickname.title}
-                  </span>
-                </div>
-              )}
 
               {/* Distributie — FT-stijl infographic (custom SVG) */}
               <AapscoreDistributie
