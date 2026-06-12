@@ -479,16 +479,32 @@ export default function Index() {
                 currentGame?.homepage_quote_author ?? thema.quoteAuteur;
               if (!quoteText) return null;
               return (
-                <figure className="hidden lg:flex flex-col items-center text-center max-w-[360px] mx-auto">
+                <figure className="hidden lg:flex flex-col items-center text-center max-w-[380px] mx-auto">
                   <span aria-hidden className="vintage-ornament mb-3 opacity-70" />
-                  <blockquote className="margin-note tilt-l text-[30px] xl:text-[34px] italic leading-snug">
-                    “{quoteText}”
-                  </blockquote>
-                  {quoteAuthor && (
-                    <figcaption className="margin-note text-[24px] xl:text-[26px] mt-3 tilt-r not-italic">
-                      — {quoteAuthor}
-                    </figcaption>
-                  )}
+                  {/* Fontgrootte instelbaar via Admin → Rubriek → Homepage quote
+                      (homepage_quote_size, px); leeg = 34px. */}
+                  {(() => {
+                    const raw = currentGame?.homepage_quote_size;
+                    const px = raw ? Math.max(16, Math.min(72, raw)) : 34;
+                    return (
+                      <>
+                        <blockquote
+                          className="margin-note tilt-l italic leading-snug"
+                          style={{ fontSize: px }}
+                        >
+                          “{quoteText}”
+                        </blockquote>
+                        {quoteAuthor && (
+                          <figcaption
+                            className="margin-note mt-3 tilt-r not-italic"
+                            style={{ fontSize: Math.round(px * 0.72) }}
+                          >
+                            — {quoteAuthor}
+                          </figcaption>
+                        )}
+                      </>
+                    );
+                  })()}
                 </figure>
               );
             })()}

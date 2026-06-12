@@ -432,6 +432,7 @@ function HomepageQuoteCard({ activeGameId }: { activeGameId: string }) {
   const qc = useQueryClient();
   const [quote, setQuote] = useState("");
   const [author, setAuthor] = useState("");
+  const [size, setSize] = useState<string>(""); // px; leeg = default
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -440,7 +441,7 @@ function HomepageQuoteCard({ activeGameId }: { activeGameId: string }) {
     setLoaded(true);
     supabase
       .from("games")
-      .select("homepage_quote, homepage_quote_author")
+      .select("homepage_quote, homepage_quote_author, homepage_quote_size")
       .eq("id", activeGameId)
       .maybeSingle()
       .then(({ data, error }) => {
@@ -450,8 +451,17 @@ function HomepageQuoteCard({ activeGameId }: { activeGameId: string }) {
         }
         setQuote((data as any)?.homepage_quote ?? "");
         setAuthor((data as any)?.homepage_quote_author ?? "");
+        const s = (data as any)?.homepage_quote_size;
+        setSize(s ? String(s) : "");
       });
   }
+
+  // Geclampte px-waarde (16–72); null = frontend-default.
+  const sizePx = (() => {
+    const n = parseInt(size, 10);
+    if (!Number.isFinite(n)) return null;
+    return Math.max(16, Math.min(72, n));
+  })();
 
   async function save() {
     if (!supabase) return;
@@ -462,7 +472,8 @@ function HomepageQuoteCard({ activeGameId }: { activeGameId: string }) {
         .update({
           homepage_quote: quote.trim() || null,
           homepage_quote_author: author.trim() || null,
-        })
+          homepage_quote_size: sizePx,
+        } as any)
         .eq("id", activeGameId);
       if (error) throw error;
       toast.success("Quote opgeslagen");
@@ -499,16 +510,40 @@ function HomepageQuoteCard({ activeGameId }: { activeGameId: string }) {
             placeholder="bv. Patrick Lefevere"
           />
         </div>
+        <div>
+          <Label htmlFor="quote-size">Fontgrootte (px, optioneel)</Label>
+          <Input
+            id="quote-size"
+            type="number"
+            min={16}
+            max={72}
+            value={size}
+            onChange={(e) => setSize(e.target.value)}
+            placeholder="standaard 34"
+            className="w-40"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Leeg = standaard (34px). Bereik 16–72px.
+          </p>
+        </div>
         {quote.trim() && (
           <div className="rounded-md border bg-muted/30 p-4 text-center">
             <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
               Voorbeeld
             </p>
-            <blockquote className="italic font-serif text-lg leading-snug">
+            <blockquote
+              className="italic font-serif leading-snug"
+              style={{ fontSize: sizePx ?? 34 }}
+            >
               “{quote}”
             </blockquote>
             {author.trim() && (
-              <p className="mt-2 text-sm not-italic">— {author}</p>
+              <p
+                className="mt-2 not-italic"
+                style={{ fontSize: Math.round((sizePx ?? 34) * 0.72) }}
+              >
+                — {author}
+              </p>
             )}
           </div>
         )}

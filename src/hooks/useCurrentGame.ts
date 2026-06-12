@@ -9,9 +9,16 @@ export type Game = {
   game_type?: "giro" | "tdf" | "vuelta" | null;
   homepage_quote?: string | null;
   homepage_quote_author?: string | null;
+  /** Fontgrootte (px) van de hero-quote; null = frontend-default (34). */
+  homepage_quote_size?: number | null;
 };
 
 const SELECT =
+  "id, name, year, status, game_type, homepage_quote, homepage_quote_author, homepage_quote_size";
+// Zolang de homepage_quote_size-migratie nog niet op de DB staat zou de
+// volle SELECT een 42703 (undefined column) geven en heel current-game
+// breken. Dan vallen we terug op de oude kolomlijst.
+const SELECT_LEGACY =
   "id, name, year, status, game_type, homepage_quote, homepage_quote_author";
 
 export function useCurrentGame() {
@@ -19,26 +26,37 @@ export function useCurrentGame() {
     queryKey: ["current-game"],
     queryFn: async (): Promise<Game | null> => {
       if (!supabase) return null;
-      // Prefer an actively running game
-      const { data: live, error: liveErr } = await supabase
-        .from("games")
-        .select(SELECT)
-        .in("status", ["open", "locked", "live"])
-        .order("year", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (liveErr) throw liveErr;
-      if (live) return live as Game;
 
-      // Fallback: most recent game of any status
-      const { data: any, error: anyErr } = await supabase
-        .from("games")
-        .select(SELECT)
-        .order("year", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (anyErr) throw anyErr;
-      return (any as Game | null) ?? null;
+      const fetchWith = async (select: string) => {
+        // Prefer an actively running game
+        const { data: live, error: liveErr } = await supabase!
+          .from("games")
+          .select(select)
+          .in("status", ["open", "locked", "live"])
+          .order("year", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (liveErr) throw liveErr;
+        if (live) return live as unknown as Game;
+
+        // Fallback: most recent game of any status
+        const { data: any, error: anyErr } = await supabase!
+          .from("games")
+          .select(select)
+          .order("year", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (anyErr) throw anyErr;
+        return (any as unknown as Game | null) ?? null;
+      };
+
+      try {
+        return await fetchWith(SELECT);
+      } catch (e) {
+        const code = (e as { code?: string })?.code;
+        if (code === "42703") return await fetchWith(SELECT_LEGACY);
+        throw e;
+      }
     },
   });
 }
