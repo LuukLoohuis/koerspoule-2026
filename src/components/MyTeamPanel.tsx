@@ -816,8 +816,17 @@ export default function MyTeamPanel({
                         sub={ploegStats.overall ? `van ${ploegStats.overall.total} deelnemers` : undefined}
                       />
                       <Dial label="Seizoensstand" value={totalPoints} sub={ritLabel} />
+                      {/* Status-bewuste accentranden: de rand kleurt mee met de
+                          waarde (boven/onder de drempel), in SPEC-kleuren. */}
                       <Dial
-                        label="Monkey IQ" accent="#5C6B3B"
+                        label="Monkey IQ"
+                        accent={
+                          hors.monkeyBeatPct === null
+                            ? undefined
+                            : hors.monkeyBeatPct > 50
+                              ? "#5C6B3B"
+                              : "#B94A48"
+                        }
                         icon="/salle-de-course/icon-target.png"
                         value={dash(hors.monkeyBeatPct, (n) => `${Math.round(n)}%`)}
                         valueColor={hors.monkeyBeatPct === null ? undefined : "#D49A1A"}
@@ -825,25 +834,35 @@ export default function MyTeamPanel({
                       />
                       <Dial
                         label="Emirates"
+                        accent={
+                          hors.emiratesPct !== null && hors.emiratesPct > 60 ? "#D49A1A" : undefined
+                        }
                         icon="/salle-de-course/icon-crown.png"
                         value={dash(hors.emiratesPct, (n) => `${Math.round(n)}%`)}
                         sub="van droomploeg"
                       />
-                      <Dial
-                        label="Wielerdir."
-                        icon="/salle-de-course/icon-clipboard.png"
-                        value={dash(hors.directorScore, (n) => n.toFixed(1))}
-                        valueColor={
+                      {(() => {
+                        // Rapportkleur (SPEC): >=7 olive, >=5 amber, <5 rood —
+                        // zowel waarde als accentrand kleuren mee.
+                        const dirColor =
                           hors.directorScore === null
                             ? undefined
                             : hors.directorScore >= 7
                               ? "#5C6B3B"
                               : hors.directorScore >= 5
                                 ? "#D49A1A"
-                                : "#B94A48"
-                        }
-                        sub="rapport"
-                      />
+                                : "#B94A48";
+                        return (
+                          <Dial
+                            label="Wielerdir."
+                            accent={dirColor}
+                            icon="/salle-de-course/icon-clipboard.png"
+                            value={dash(hors.directorScore, (n) => n.toFixed(1))}
+                            valueColor={dirColor}
+                            sub="rapport"
+                          />
+                        );
+                      })()}
                     </div>
                   </div>
 
