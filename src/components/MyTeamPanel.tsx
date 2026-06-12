@@ -27,6 +27,8 @@ import { cn } from "@/lib/utils";
 import { Check, Pencil, X } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
+import aapVolgwagen from "@/assets/aap-volgwagen.png.asset.json";
+
 
 type StagePoint = { stage_id: string; entry_id: string; points: number };
 
