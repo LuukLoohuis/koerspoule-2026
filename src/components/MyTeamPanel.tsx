@@ -106,6 +106,8 @@ function AltitudeProfile({ seed }: { seed: number }) {
       </g>
     </svg>
   );
+}
+
 
 function useMyStagePoints(entryId?: string) {
   return useQuery({
