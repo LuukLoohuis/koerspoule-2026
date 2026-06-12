@@ -400,19 +400,6 @@ export default function Index() {
                 </span>
               </h1>
 
-              <div
-                className="hidden lg:flex flex-col items-end absolute right-10 top-[180px] max-w-[320px] text-right"
-                aria-hidden
-              >
-                <span className="margin-note tilt-l text-[25px] italic leading-tight">
-                  {thema.quotes[0]}
-                </span>
-                {thema.quoteAuteur && (
-                  <span className="margin-note text-[26px] mt-2 tilt-r not-italic">
-                    — {thema.quoteAuteur}
-                  </span>
-                )}
-              </div>
 
               <p className="font-serif italic text-foreground/80 md:text-xl max-w-[480px] mt-6 leading-relaxed text-lg my-[2px] text-center">
                 Denk jij de koers beter te lezen dan de ploegleider?
