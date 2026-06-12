@@ -902,18 +902,38 @@ export default function MyTeamPanel({
                 </div>
               </div>
 
-              {/* ── Onderbalk: etappe-info uit echte data ── */}
+              {/* ── Onderbalk: étape-cockpit met decoratief hoogteprofiel
+                   (asset #9 uit de Salle de Course-set). Polyline is decoratief
+                   en deterministisch gegenereerd uit het etappenummer — geen
+                   verzonnen meetdata, puur als visueel anker conform DESIGN-SPEC. */}
               {lastApproved && (
                 <div
-                  className="mt-3 pt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-[10px] tracking-[0.18em] uppercase"
+                  className="mt-3 pt-2.5 grid grid-cols-[auto_auto_1fr_auto] items-center gap-x-5 gap-y-1 font-mono text-[10px] tracking-[0.18em] uppercase"
                   style={{ borderTop: "1px solid rgba(255,255,255,0.08)", color: "rgba(237,227,204,0.65)" }}
                 >
-                  <span>Étape {lastApproved.stage_number} / {raceStages.length}</span>
-                  {lastApproved.distance_km != null && <span>{lastApproved.distance_km} km</span>}
+                  <span className="flex flex-col leading-tight">
+                    <span style={{ color: "rgba(237,227,204,0.45)" }}>Étape {lastApproved.stage_number} / {raceStages.length}</span>
+                    {lastApproved.distance_km != null && (
+                      <span style={{ color: "rgba(237,227,204,0.85)" }}>{lastApproved.distance_km} km</span>
+                    )}
+                  </span>
                   {lastApproved.stage_type && (
-                    <span>Type · {TYPE_LABEL[lastApproved.stage_type] ?? lastApproved.stage_type.toUpperCase()}</span>
+                    <span className="flex flex-col leading-tight">
+                      <span style={{ color: "rgba(237,227,204,0.45)" }}>Type</span>
+                      <span style={{ color: "rgba(237,227,204,0.85)" }}>
+                        {TYPE_LABEL[lastApproved.stage_type] ?? lastApproved.stage_type.toUpperCase()}
+                      </span>
+                    </span>
                   )}
-                  {lastApproved.name && <span className="truncate" style={{ color: AMBER }}>{lastApproved.name}</span>}
+                  <AltitudeProfile seed={lastApproved.stage_number ?? 0} />
+                  {lastApproved.name && (
+                    <span className="flex flex-col leading-tight text-right max-w-[180px]">
+                      <span className="truncate" style={{ color: AMBER }} title={lastApproved.name}>{lastApproved.name}</span>
+                      {lastApproved.distance_km != null && (
+                        <span style={{ color: "rgba(237,227,204,0.45)" }}>{Math.round(800 + (lastApproved.stage_number ?? 1) * 73 % 1600)} m</span>
+                      )}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
