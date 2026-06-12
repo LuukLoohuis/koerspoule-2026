@@ -104,42 +104,94 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, c
 
   return (
     <div
-      className={"vintage-paper rounded-2xl px-5 py-7 md:py-9 text-center " + (className ?? "")}
+      className={"vintage-paper rounded-2xl px-5 py-5 md:py-6 text-center " + (className ?? "")}
       style={{ border: "1.5px solid var(--ink-sepia)", boxShadow: "0 2px 0 rgba(58,42,26,0.18)" }}
     >
-      {/* Eyebrow */}
-      <div
-        className="vintage-stamp uppercase"
-        style={{ color: FADED, fontSize: "11px", letterSpacing: "0.32em" }}
-      >
-        Monkey IQ
-      </div>
+      {/* Score links, vergelijking rechts — compacte hero (mobiel gestapeld) */}
+      <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-10">
+        {/* Links: Monkey IQ + percentage */}
+        <div className="text-center shrink-0">
+          <div
+            className="vintage-stamp uppercase"
+            style={{ color: FADED, fontSize: "11px", letterSpacing: "0.32em" }}
+          >
+            Monkey IQ
+          </div>
+          <div
+            className="mt-1 leading-none tabular-nums"
+            style={{
+              fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
+              fontWeight: 900,
+              color: v.color,
+              fontSize: "clamp(56px, 11vw, 92px)",
+              textShadow: "3px 3px 0 rgba(58,42,26,0.10)",
+            }}
+            aria-label={`Monkey IQ ${percentile} procent — je verslaat ${percentile} procent van de apen`}
+          >
+            {shown}%
+          </div>
+          <p
+            className="mt-1"
+            style={{
+              fontFamily: "'Source Serif 4',Georgia,serif",
+              fontStyle: "italic",
+              color: INK,
+              fontSize: "14px",
+            }}
+          >
+            Je verslaat <strong>{percentile}%</strong> van de apen
+          </p>
+        </div>
 
-      {/* De score */}
-      <div
-        className="mt-2 leading-none tabular-nums"
-        style={{
-          fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
-          fontWeight: 900,
-          color: v.color,
-          fontSize: "clamp(64px, 16vw, 120px)",
-          textShadow: "3px 3px 0 rgba(58,42,26,0.10)",
-        }}
-        aria-label={`Monkey IQ ${percentile} procent — je verslaat ${percentile} procent van de apen`}
-      >
-        {shown}%
+        {/* Rechts: vergelijking — dagklassement-stijl */}
+        <div
+          className="w-full max-w-md md:w-auto md:min-w-[340px] rounded-xl overflow-hidden"
+          style={{
+            border: "1.5px solid rgba(58,42,26,0.45)",
+            background: "#FBF6E9",
+            boxShadow: "0 2px 0 rgba(58,42,26,0.12)",
+          }}
+          role="group"
+          aria-label={`Jij ${userPoints} punten tegenover gemiddelde aap ${monkeyAvg} punten`}
+        >
+          <div className="flex items-stretch">
+            <Side label="Jij" points={userPoints} leads={youLead} />
+            <div
+              className="self-stretch flex items-center px-1"
+              style={{
+                borderLeft: "1px solid rgba(58,42,26,0.18)",
+                borderRight: "1px solid rgba(58,42,26,0.18)",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'Source Serif 4',Georgia,serif",
+                  fontStyle: "italic",
+                  color: FADED,
+                  fontSize: 13,
+                  padding: "0 6px",
+                }}
+              >
+                vs
+              </span>
+            </div>
+            <Side label="Gem. aap" points={monkeyAvg} leads={apeLeads} />
+          </div>
+          {/* Voorsprong-cue */}
+          <div
+            className="py-1.5 text-center"
+            style={{
+              borderTop: "1px dashed rgba(58,42,26,0.25)",
+              fontFamily: "'JetBrains Mono',monospace",
+              fontSize: 10.5,
+              letterSpacing: "0.08em",
+              color: FADED,
+            }}
+          >
+            {cue}
+          </div>
+        </div>
       </div>
-      <p
-        className="mt-2"
-        style={{
-          fontFamily: "'Source Serif 4',Georgia,serif",
-          fontStyle: "italic",
-          color: INK,
-          fontSize: "15px",
-        }}
-      >
-        Je verslaat <strong>{percentile}%</strong> van de apen
-      </p>
 
       {/* Verdict-zin per band */}
       <p
@@ -148,72 +200,23 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, c
           fontFamily: "'Oswald','Bebas Neue',sans-serif",
           fontWeight: 800,
           color: v.color,
-          fontSize: "16px",
+          fontSize: "15px",
           letterSpacing: "0.04em",
           textTransform: "uppercase",
         }}
       >
-        <span aria-hidden style={{ fontSize: "22px" }}>{v.emoji}</span>
+        <span aria-hidden style={{ fontSize: "20px" }}>{v.emoji}</span>
         <span>{v.label}</span>
       </p>
 
-      {/* Vergelijking — dagklassement-stijl */}
-      <div
-        className="mx-auto mt-6 max-w-md rounded-xl overflow-hidden"
-        style={{
-          border: "1.5px solid rgba(58,42,26,0.45)",
-          background: "#FBF6E9",
-          boxShadow: "0 2px 0 rgba(58,42,26,0.12)",
-        }}
-        role="group"
-        aria-label={`Jij ${userPoints} punten tegenover gemiddelde aap ${monkeyAvg} punten`}
-      >
-        <div className="flex items-stretch">
-          <Side label="Jij" points={userPoints} leads={youLead} />
-          <div
-            className="self-stretch flex items-center px-1"
-            style={{
-              borderLeft: "1px solid rgba(58,42,26,0.18)",
-              borderRight: "1px solid rgba(58,42,26,0.18)",
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "'Source Serif 4',Georgia,serif",
-                fontStyle: "italic",
-                color: FADED,
-                fontSize: 13,
-                padding: "0 6px",
-              }}
-            >
-              vs
-            </span>
-          </div>
-          <Side label="Gem. aap" points={monkeyAvg} leads={apeLeads} />
-        </div>
-        {/* Voorsprong-cue */}
-        <div
-          className="py-1.5 text-center"
-          style={{
-            borderTop: "1px dashed rgba(58,42,26,0.25)",
-            fontFamily: "'JetBrains Mono',monospace",
-            fontSize: 10.5,
-            letterSpacing: "0.08em",
-            color: FADED,
-          }}
-        >
-          {cue}
-        </div>
-      </div>
-
       {/* Commentator-quote */}
       <p
-        className="mt-6 italic mx-auto"
+        className="mt-3 italic mx-auto"
         style={{
           fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
           fontStyle: "italic",
           color: INK,
-          fontSize: "clamp(17px, 2.6vw, 21px)",
+          fontSize: "clamp(16px, 2.4vw, 19px)",
           maxWidth: 520,
           lineHeight: 1.4,
           fontWeight: 500,
@@ -224,9 +227,9 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, c
           style={{
             fontFamily: "'Playfair Display',Georgia,serif",
             color: GOLD,
-            fontSize: "32px",
+            fontSize: "28px",
             lineHeight: 0,
-            verticalAlign: "-6px",
+            verticalAlign: "-5px",
             marginRight: 4,
           }}
         >
