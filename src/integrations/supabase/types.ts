@@ -642,6 +642,7 @@ export type Database = {
           game_type: string | null
           homepage_quote: string | null
           homepage_quote_author: string | null
+          homepage_quote_size: number | null
           id: string
           joker_multiplier: number
           name: string
@@ -662,6 +663,7 @@ export type Database = {
           game_type?: string | null
           homepage_quote?: string | null
           homepage_quote_author?: string | null
+          homepage_quote_size?: number | null
           id?: string
           joker_multiplier?: number
           name: string
@@ -682,6 +684,7 @@ export type Database = {
           game_type?: string | null
           homepage_quote?: string | null
           homepage_quote_author?: string | null
+          homepage_quote_size?: number | null
           id?: string
           joker_multiplier?: number
           name?: string
