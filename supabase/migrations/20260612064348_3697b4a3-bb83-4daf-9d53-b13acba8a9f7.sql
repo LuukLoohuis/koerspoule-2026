@@ -1,0 +1,1 @@
+ALTER TABLE public.games ADD COLUMN IF NOT EXISTS homepage_quote text, ADD COLUMN IF NOT EXISTS homepage_quote_author text;

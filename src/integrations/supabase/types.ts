@@ -640,6 +640,8 @@ export type Database = {
           deadline: string | null
           end_date: string | null
           game_type: string | null
+          homepage_quote: string | null
+          homepage_quote_author: string | null
           id: string
           joker_multiplier: number
           name: string
@@ -658,6 +660,8 @@ export type Database = {
           deadline?: string | null
           end_date?: string | null
           game_type?: string | null
+          homepage_quote?: string | null
+          homepage_quote_author?: string | null
           id?: string
           joker_multiplier?: number
           name: string
@@ -676,6 +680,8 @@ export type Database = {
           deadline?: string | null
           end_date?: string | null
           game_type?: string | null
+          homepage_quote?: string | null
+          homepage_quote_author?: string | null
           id?: string
           joker_multiplier?: number
           name?: string

@@ -1,59 +1,46 @@
 ## Doel
-`cron.log_run` uitzetten zodat pg_cron geen rijen meer schrijft naar `cron.job_run_details` (drukt commit-/rollback-volume), terwijl de geplande jobs zelf blijven draaien.
 
-## Probleem
-- `ALTER SYSTEM SET cron.log_run = 'off'` mag niet in een transactie draaien — werkt dus niet via de SQL-editor en ook niet via het migration-tool (dat wikkelt alles in een transactie).
-- Op Lovable Cloud is er geen directe shell-toegang tot Postgres om de statement buiten een transactie uit te voeren.
+1. De quote op de homepagina mooi rechts plaatsen, verticaal gecentreerd, rechts uitgelijnd zodat hij niet meer rommelig in de linker kolom hangt.
+2. Quote (en optionele auteur) bewerkbaar maken in Admin → Rubriek, per editie (game).
 
 ## Aanpak
-Twee sporen, in deze volgorde:
 
-### Spoor 1 — per-job uitschakelen via `cron.schedule` (werkt zonder ALTER SYSTEM)
-pg_cron ondersteunt per-job logging via de kolom `cron.job.nodename`/settings is niet beschikbaar, maar we kunnen wél:
+### 1. Quote-positionering (src/pages/Index.tsx)
 
-1. Inventariseren welke jobs bestaan en hoe vaak ze draaien:
-   ```sql
-   SELECT jobid, schedule, command, active FROM cron.job ORDER BY jobid;
-   SELECT count(*), date_trunc('hour', start_time) AS h
-   FROM cron.job_run_details
-   WHERE start_time > now() - interval '24 hours'
-   GROUP BY h ORDER BY h DESC;
-   ```
-2. Voor elke job de command wrappen zodat pg_cron niets noemenswaardigs commit (de log-rij blijft, maar we kunnen oude rijen direct opruimen — zie spoor 3).
+Verplaats het `<div>` met `thema.quotes[0]` uit de linker kolom (nu `absolute right-10 top-[180px]` binnen de linker kolom) naar de **rechter kolom van de hero-grid**. Daar staat nu de koers-illustratie/poster.
 
-Dit alleen lost het volume niet structureel op; daarom spoor 2.
+- Op `lg:` schermen: quote-blok rechts in de grid, `flex items-center justify-end h-full`, tekst `text-right`, max-width ~360px, italic serif, met optionele auteur eronder.
+- Verticaal centreren t.o.v. de H1 via `items-center` op het grid (al actief) + `self-center` op het quote-blok.
+- Op mobiel: blijft verborgen (`hidden lg:flex`) — geen layout-impact.
+- Vintage-styling behouden: `margin-note tilt-l`, gouden onderstreping of een klein vintage-ornament boven de quote.
 
-### Spoor 2 — `cron.log_run` echt uitzetten
-Opties, in volgorde van voorkeur:
+### 2. Database — quote per game
 
-A. **Probeer via migration-tool met losse statement.** Het migration-tool voert SQL uit; bij sommige superuser-only GUCs accepteert Supabase een aparte call. Concreet:
-   ```sql
-   ALTER SYSTEM SET cron.log_run = 'off';
-   SELECT pg_reload_conf();
-   ```
-   Als dit faalt met "cannot run inside a transaction block" → door naar B.
+Migratie: voeg twee kolommen toe aan `public.games`:
+- `homepage_quote text`
+- `homepage_quote_author text`
 
-B. **Support-ticket / Lovable Cloud verzoek.** Op managed Supabase is `ALTER SYSTEM` voorbehouden aan superuser en moet buiten een tx draaien. Op Lovable Cloud heb je geen directe DB-superuser shell; deze parameter zetten vereist actie van het platform. We documenteren dit en vragen jou om het ticket-pad te bevestigen voordat we contact opnemen, of we kiezen voor spoor 3 als interim.
+Fallback: als kolom leeg is, gebruikt de UI nog steeds `thema.quotes[0]` uit `themas.ts`.
 
-### Spoor 3 — interim: opruim-job zodat de tabel niet groeit
-Onafhankelijk van spoor 2 toevoegen, want dit helpt direct tegen disk- en vacuum-druk:
+### 3. Admin Rubriek — quote-editor
 
-```sql
-SELECT cron.schedule(
-  'purge-job-run-details',
-  '*/15 * * * *',
-  $$DELETE FROM cron.job_run_details WHERE end_time < now() - interval '1 hour'$$
-);
+Bovenaan `src/components/admin/RubriekTab.tsx` een nieuw kaart-blok "Homepage quote":
+- Textarea voor de quote
+- Input voor auteur (optioneel)
+- Knop "Opslaan" → `update games set homepage_quote=…, homepage_quote_author=… where id = activeGameId`
+- Live-preview snippet eronder met dezelfde styling als op de homepage
+- Invalidate `useActiveGame` query na opslaan
+
+### 4. UI bron-of-truth
+
+`useActiveGame` hook (of equivalent) uitbreiden zodat `homepage_quote` + `homepage_quote_author` in `Index.tsx` beschikbaar zijn. In de render:
+```
+const quote = game.homepage_quote ?? thema.quotes[0];
+const author = game.homepage_quote_author ?? thema.quoteAuteur;
 ```
 
-(Interval naar wens; 1 uur is ruim genoeg om nog te debuggen.)
+## Niet doen
 
-## Bevestiging na uitvoer
-- `SHOW cron.log_run;` → `off`
-- `SELECT count(*) FROM cron.job_run_details;` → blijft stabiel
-- `SELECT count(*) FROM cron.job WHERE active;` → ongewijzigd (jobs draaien door)
-- DB health opnieuw checken: rolled-back transactions zou moeten afvlakken.
-
-## Vraag aan jou
-1. Mag ik spoor 2A proberen via het migration-tool (kans op falen, maar onschuldig)?
-2. Akkoord met spoor 3 (auto-purge elke 15 min, retentie 1 uur) als interim/aanvulling?
+- Geen wijziging aan `themas.ts` defaults (blijven als fallback).
+- Geen mobile-quote toevoegen (was er ook niet).
+- Geen wijziging aan andere rubriek-items.
