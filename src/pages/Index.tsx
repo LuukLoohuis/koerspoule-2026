@@ -374,7 +374,9 @@ export default function Index() {
         />
 
         <div className="container mx-auto px-5 md:py-20 relative py-[30px] pt-[20px] pb-[8px] border-0">
-          <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] gap-12 md:gap-14 items-center">
+          {/* lg: 3 kolommen — tekst | quote (midden, in het wit) | logo.
+              md: 2 kolommen (quote hidden), mobiel: gestapeld. */}
+          <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] lg:grid-cols-[1.15fr_0.75fr_0.85fr] gap-12 md:gap-10 items-center">
             {/* Linker kolom — koers + CTAs + stats */}
             <div className="relative">
               <Stamp tone="thema" rotation={-2} className="mb-3">{thema.homepage_subtitel}</Stamp>
@@ -443,8 +445,30 @@ export default function Index() {
 
             </div>
 
-            {/* Rechter kolom — logo + quote */}
-            <div className="relative flex flex-col items-center justify-center gap-6">
+            {/* Middenkolom — quote in het witte gedeelte, links naast het logo.
+                Alleen op lg+ (eronder valt de cel weg via hidden). */}
+            {(() => {
+              const quoteText = currentGame?.homepage_quote ?? thema.quotes[0];
+              const quoteAuthor =
+                currentGame?.homepage_quote_author ?? thema.quoteAuteur;
+              if (!quoteText) return null;
+              return (
+                <figure className="hidden lg:flex flex-col items-center text-center max-w-[300px] mx-auto">
+                  <span aria-hidden className="vintage-ornament mb-3 opacity-70" />
+                  <blockquote className="margin-note tilt-l text-[24px] italic leading-snug">
+                    “{quoteText}”
+                  </blockquote>
+                  {quoteAuthor && (
+                    <figcaption className="margin-note text-[22px] mt-3 tilt-r not-italic">
+                      — {quoteAuthor}
+                    </figcaption>
+                  )}
+                </figure>
+              );
+            })()}
+
+            {/* Rechter kolom — logo */}
+            <div className="relative flex flex-col items-center justify-center">
               <div className="relative w-full max-w-[315px] -rotate-[3deg] transition-transform duration-500 hover:rotate-0 hover:scale-105">
                 <img
                   src={koerspouleLogo}
@@ -452,26 +476,6 @@ export default function Index() {
                   className="w-full h-auto block drop-shadow-xl"
                 />
               </div>
-
-              {(() => {
-                const quoteText = currentGame?.homepage_quote ?? thema.quotes[0];
-                const quoteAuthor =
-                  currentGame?.homepage_quote_author ?? thema.quoteAuteur;
-                if (!quoteText) return null;
-                return (
-                  <figure className="hidden lg:flex flex-col items-center text-center max-w-[340px] mt-2">
-                    <span aria-hidden className="vintage-ornament mb-3 opacity-70" />
-                    <blockquote className="margin-note tilt-l text-[24px] italic leading-snug">
-                      “{quoteText}”
-                    </blockquote>
-                    {quoteAuthor && (
-                      <figcaption className="margin-note text-[22px] mt-3 tilt-r not-italic">
-                        — {quoteAuthor}
-                      </figcaption>
-                    )}
-                  </figure>
-                );
-              })()}
             </div>
           </div>
         </div>
