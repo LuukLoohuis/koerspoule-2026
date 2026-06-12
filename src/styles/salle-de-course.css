@@ -1,0 +1,69 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   La Salle de Course — design tokens (gescoped, raakt geen globale vars).
+   Bron: src/components/salle-de-course/DESIGN-SPEC.md
+   Wrapper: <div className="salle-de-course"> in MyTeamPanel.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.salle-de-course {
+  /* Colors */
+  --sdc-ink: #0F0F10;
+  --sdc-panel: #1A1A1B;
+  --sdc-paper: #E9E2D3;
+  --sdc-amber: #D49A1A;
+  --sdc-olive: #5C6B3B;
+  --sdc-red: #B94A48;
+  --sdc-muted: #6B665C;
+
+  /* Typography scale
+     NB: repo heeft geen globale --font-* vars; stacks hier expliciet,
+     gelijk aan de families die index.html laadt. */
+  --sdc-font-heading: 'Oswald', 'Archivo Black', sans-serif; /* TALL, CONDENSED, ALL CAPS */
+  --sdc-font-body: 'Source Serif 4', Georgia, serif;          /* sentence case */
+  --sdc-font-label: 'JetBrains Mono', monospace;              /* small caps, tracking */
+  --sdc-font-data: 'JetBrains Mono', monospace;               /* tabular nums */
+}
+
+/* Textures — referentieklassen (zie DESIGN-SPEC.md §Texture classes) */
+
+/* Papier met subtiele noise */
+.sdc-paper-texture {
+  background-color: var(--sdc-paper, #E9E2D3);
+  background-image: radial-gradient(rgba(15, 15, 16, 0.06) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+/* Donker paneel met heel subtiele slijtage */
+.sdc-panel-texture {
+  position: relative;
+  background-color: var(--sdc-panel, #1A1A1B);
+}
+.sdc-panel-texture::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.03) 41%, transparent 43%),
+    linear-gradient(245deg, transparent 60%, rgba(255, 255, 255, 0.02) 61%, transparent 63%);
+}
+
+/* Luidsprekergrille: dot-grid */
+.sdc-grille {
+  background-image: radial-gradient(circle, #333 1px, transparent 1px);
+  background-size: 6px 6px;
+}
+
+/* LIVE-dot pulse */
+@keyframes sdc-live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.sdc-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--sdc-red, #B94A48);
+  animation: sdc-live-pulse 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sdc-live-dot { animation: none; }
+}

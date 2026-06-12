@@ -1,3 +1,6 @@
+// DESIGN SYSTEM: See src/components/salle-de-course/DESIGN-SPEC.md
+// Color tokens: src/styles/salle-de-course.css
+// All La Salle de Course components must follow the spec in DESIGN-SPEC.md
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import TruiBadge from "@/components/retro/TruiBadge";
@@ -574,7 +577,7 @@ export default function MyTeamPanel({
 
         return (
           <section
-            className="relative rounded-2xl"
+            className="salle-de-course relative rounded-2xl"
             style={{
               background: `linear-gradient(180deg, #231E18 0%, ${PANEL} 30%, #16120E 100%)`,
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 30px -18px rgba(0,0,0,0.8)",
