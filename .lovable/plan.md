@@ -1,46 +1,54 @@
-## Doel
+# Premium histogram — Aap met de dartpijl
 
-1. De quote op de homepagina mooi rechts plaatsen, verticaal gecentreerd, rechts uitgelijnd zodat hij niet meer rommelig in de linker kolom hangt.
-2. Quote (en optionele auteur) bewerkbaar maken in Admin → Rubriek, per editie (game).
+Het huidige histogram is te krap en heeft te veel ruis (KPI-header, mascotte over de chart, smalle staven, balloon op kleine breedte). De reference toont een rustige, brede, editorial verdeling. Ik herbouw `src/components/horscat/AapscoreDistributie.tsx` zodat het er als een echte statistische grafiek uitziet.
 
-## Aanpak
+## Wat verandert
 
-### 1. Quote-positionering (src/pages/Index.tsx)
+**Layout & ademruimte**
+- Card wordt full-width binnen zijn container, met ruime padding (40px desktop, 20px mobiel).
+- Mascotte (aap) verhuist naar boven-rechts buiten het plot-gebied, kleiner (60–72px), als subtiel merk-element — niet meer over de chart.
+- KPI-header (3 tegels) wordt verwijderd uit dit component. Die info zit al in `PercentileVerdict`/elders; hier alleen titel + deck + chart, conform reference.
 
-Verplaats het `<div>` met `thema.quotes[0]` uit de linker kolom (nu `absolute right-10 top-[180px]` binnen de linker kolom) naar de **rechter kolom van de hero-grid**. Daar staat nu de koers-illustratie/poster.
+**Titel-blok (matcht reference)**
+- Eyebrow: `VERDELING SIMULATIES` (mono, uppercase, tracking 0.18em).
+- Deck: "Verdeling van 5.000 gesimuleerde apenteams, zelfde puntentelling als jouw ploeg."
+- Geen pr-padding meer nodig zonder mascotte-overlap.
 
-- Op `lg:` schermen: quote-blok rechts in de grid, `flex items-center justify-end h-full`, tekst `text-right`, max-width ~360px, italic serif, met optionele auteur eronder.
-- Verticaal centreren t.o.v. de H1 via `items-center` op het grid (al actief) + `self-center` op het quote-blok.
-- Op mobiel: blijft verborgen (`hidden lg:flex`) — geen layout-impact.
-- Vintage-styling behouden: `margin-note tilt-l`, gouden onderstreping of een klein vintage-ornament boven de quote.
+**Histogram (de kern)**
+- Hoogte: 320px desktop / 240px mobiel (was 220/180) → echte chart-proporties.
+- Staven: breder, met `gap-[2px]` i.p.v. `gap-px`, zachte top-corners (`rounded-t-[2px]`).
+- Kleur staven: warme greige (`hsl(var(--ink-sepia) / 0.22)`), user-bin in vol goud (`--vintage-gold`) — exact zoals reference.
+- Y-as: 4 gridlines (dashed, lichter), labels links buiten het plot-gebied met vaste 40px gutter (niet meer overlappend met bar 0).
+- X-as: solid baseline, ticks elke 200pt (1200, 1400, … 2400), labels in serif/sans 12px.
+- X-as titel: "Score (punten)" gecentreerd onder de ticks.
+- Y-as titel: "Aantal apenteams" linksboven, klein mono.
 
-### 2. Database — quote per game
+**Jouw-team annotatie**
+- Stem in goud, dunner (1.5px), met kleine cirkel op bar-top.
+- Balloon: witte card met subtiele goud-rand, bredere padding (12px 16px), tekst hierarchy:
+  - "Jouw team" — 13px semibold, ink
+  - "1659 pt" — 28px bold, goud (was 20px)
+  - "beter dan 51% van de apen" — 12px italic serif
+- Balloon zit altijd net boven de user-bar (niet vastgeplakt aan top van plot), met pijltje/stem naar beneden.
+- Slimme align: als user-bin in linker/rechter 15% zit, klap balloon naar binnen toe.
 
-Migratie: voeg twee kolommen toe aan `public.games`:
-- `homepage_quote text`
-- `homepage_quote_author text`
+**Gemiddelde-marker**
+- Optioneel houden, maar dunner en lichter zodat hij niet concurreert met de gouden user-stem. Label onder de baseline verwijderen (te druk in de reference-stijl).
 
-Fallback: als kolom leeg is, gebruikt de UI nog steeds `thema.quotes[0]` uit `themas.ts`.
+## Mobile
 
-### 3. Admin Rubriek — quote-editor
+- Card-padding 16–20px.
+- Chart-hoogte 240px, ticks elke 400pt (1200, 1600, 2000, 2400).
+- Balloon iets compacter (max-width 150px) maar zelfde hierarchie.
 
-Bovenaan `src/components/admin/RubriekTab.tsx` een nieuw kaart-blok "Homepage quote":
-- Textarea voor de quote
-- Input voor auteur (optioneel)
-- Knop "Opslaan" → `update games set homepage_quote=…, homepage_quote_author=… where id = activeGameId`
-- Live-preview snippet eronder met dezelfde styling als op de homepage
-- Invalidate `useActiveGame` query na opslaan
+## Wat niet verandert
 
-### 4. UI bron-of-truth
+- Data-contract (`dist`, `userActual`, `mean`, `beatPct`, `monkeyCount`) blijft identiek — geen call-site updates nodig.
+- Animaties (rAF count-up, scaleY-in van staven) blijven, maar count-up gaat weg samen met de KPI-header.
+- Verdict-banner (`PercentileVerdict`) en explainer blijven los staan boven/onder dit component.
 
-`useActiveGame` hook (of equivalent) uitbreiden zodat `homepage_quote` + `homepage_quote_author` in `Index.tsx` beschikbaar zijn. In de render:
-```
-const quote = game.homepage_quote ?? thema.quotes[0];
-const author = game.homepage_quote_author ?? thema.quoteAuteur;
-```
+## Bestanden
 
-## Niet doen
+- `src/components/horscat/AapscoreDistributie.tsx` — volledige rewrite van de render, props ongewijzigd.
 
-- Geen wijziging aan `themas.ts` defaults (blijven als fallback).
-- Geen mobile-quote toevoegen (was er ook niet).
-- Geen wijziging aan andere rubriek-items.
+Geen migraties, geen nieuwe deps, geen wijzigingen aan call-sites.
