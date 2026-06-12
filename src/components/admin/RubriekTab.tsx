@@ -424,3 +424,100 @@ function ItemRow({
     </Card>
   );
 }
+
+// ── Homepage Quote ──────────────────────────────────────────────────────────
+// Bewerk de quote die rechts in de hero op de homepage verschijnt.
+
+function HomepageQuoteCard({ activeGameId }: { activeGameId: string }) {
+  const qc = useQueryClient();
+  const [quote, setQuote] = useState("");
+  const [author, setAuthor] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Initial load
+  if (!loaded && supabase && activeGameId) {
+    setLoaded(true);
+    supabase
+      .from("games")
+      .select("homepage_quote, homepage_quote_author")
+      .eq("id", activeGameId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) {
+          toast.error(`Quote laden mislukt: ${error.message}`);
+          return;
+        }
+        setQuote((data as any)?.homepage_quote ?? "");
+        setAuthor((data as any)?.homepage_quote_author ?? "");
+      });
+  }
+
+  async function save() {
+    if (!supabase) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("games")
+        .update({
+          homepage_quote: quote.trim() || null,
+          homepage_quote_author: author.trim() || null,
+        })
+        .eq("id", activeGameId);
+      if (error) throw error;
+      toast.success("Quote opgeslagen");
+      qc.invalidateQueries({ queryKey: ["current-game"] });
+    } catch (e) {
+      toast.error(`Opslaan mislukt: ${(e as Error).message}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="py-4">
+        <CardTitle className="text-lg">Homepage quote</CardTitle>
+      </CardHeader>
+      <CardContent className="border-t pt-4 space-y-3">
+        <div>
+          <Label htmlFor="quote-text">Quote</Label>
+          <Textarea
+            id="quote-text"
+            value={quote}
+            onChange={(e) => setQuote(e.target.value)}
+            placeholder="bv. C'est le directeur sportif qui écrit l'histoire."
+            rows={3}
+          />
+        </div>
+        <div>
+          <Label htmlFor="quote-author">Auteur (optioneel)</Label>
+          <Input
+            id="quote-author"
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            placeholder="bv. Patrick Lefevere"
+          />
+        </div>
+        {quote.trim() && (
+          <div className="rounded-md border bg-muted/30 p-4 text-center">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+              Voorbeeld
+            </p>
+            <blockquote className="italic font-serif text-lg leading-snug">
+              “{quote}”
+            </blockquote>
+            {author.trim() && (
+              <p className="mt-2 text-sm not-italic">— {author}</p>
+            )}
+          </div>
+        )}
+        <div className="flex justify-end">
+          <Button onClick={save} disabled={saving}>
+            {saving ? "Opslaan…" : "Opslaan"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
