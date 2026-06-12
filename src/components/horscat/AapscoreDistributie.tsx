@@ -180,13 +180,72 @@ export default function AapscoreDistributie({
           {Math.round(mean)} punten.
         </p>
 
+        {/* ── KPI-header: drie tegels boven de grafiek ── */}
+        {(() => {
+          const beaten = Math.round((beatPct / 100) * monkeyCount);
+          const avg = Math.round(mean);
+          const delta = userActual - avg;
+          const Label = ({ children }: { children: React.ReactNode }) => (
+            <div
+              style={{
+                fontFamily: FONT_MONO,
+                fontSize: 9,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "var(--ink-faded)",
+                marginTop: 5,
+              }}
+            >
+              {children}
+            </div>
+          );
+          const big = "font-display font-extrabold tabular-nums leading-none text-3xl max-[420px]:text-2xl";
+          return (
+            <div
+              className="grid grid-cols-3 py-4"
+              style={{
+                marginTop: isMobile ? 16 : 24,
+                borderBottom: "1px solid hsl(var(--border))",
+              }}
+            >
+              <div className="pr-3">
+                <div className={big} style={{ color: "hsl(var(--primary))" }}>
+                  {beaten.toLocaleString("nl-NL")}
+                  <span className="text-xl font-medium text-muted-foreground">
+                    {" / "}{monkeyCount.toLocaleString("nl-NL")}
+                  </span>
+                </div>
+                <Label>Apen verslagen</Label>
+              </div>
+              <div className="px-3" style={{ borderLeft: "1px solid hsl(var(--border))" }}>
+                <div className={big} style={{ color: "hsl(var(--foreground))" }}>
+                  {avg.toLocaleString("nl-NL")}
+                  <span className="text-xl font-medium text-muted-foreground"> pt</span>
+                </div>
+                <Label>Gem. score aap</Label>
+              </div>
+              <div className="pl-3" style={{ borderLeft: "1px solid hsl(var(--border))" }}>
+                <div
+                  className={big}
+                  style={{ color: delta > 0 ? "#059669" : delta < 0 ? "#E11D48" : "var(--ink-faded)" }}
+                >
+                  {delta > 0 ? "+" : delta < 0 ? "−" : "±"}
+                  {Math.abs(delta).toLocaleString("nl-NL")}
+                  <span className="text-xl font-medium text-muted-foreground"> pt</span>
+                </div>
+                <Label>{delta >= 0 ? "Boven gem. aap" : "Onder gem. aap"}</Label>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* y-as caption */}
         <div
           style={{
-            fontFamily: FONT_SANS,
-            fontSize: 12,
+            fontFamily: FONT_MONO,
+            fontSize: 10,
             color: "var(--ink-faded)",
-            marginTop: isMobile ? 24 : 36,
+            marginTop: isMobile ? 16 : 20,
             paddingLeft: yGutter,
           }}
         >
@@ -230,8 +289,8 @@ export default function AapscoreDistributie({
                     width: yGutter - 10,
                     textAlign: "right",
                     transform: "translateY(-50%)",
-                    fontFamily: FONT_SANS,
-                    fontSize: 12,
+                    fontFamily: FONT_MONO,
+                    fontSize: 10,
                     color: "var(--ink-faded)",
                   }}
                 >
@@ -254,7 +313,7 @@ export default function AapscoreDistributie({
           {/* staven (binnen het plot-gebied rechts van y-gutter) */}
           <div
             className="absolute inset-y-0 flex items-end"
-            style={{ left: yGutter, right: 0, gap: 2 }}
+            style={{ left: yGutter, right: 0, gap: 1 }}
           >
             {dist.map((b, i) => {
               const hPct = (b.count / yMax) * 100;
@@ -265,6 +324,10 @@ export default function AapscoreDistributie({
                   className="flex-1"
                   style={{
                     height: `${hPct}%`,
+                    // Staart-bins met lage counts zakten onder de 1px en
+                    // verdwenen — daardoor leek de bell-curve afgekapt.
+                    // Elke bin met data blijft minimaal 2px zichtbaar.
+                    minHeight: b.count > 0 ? 2 : 0,
                     background: isUser ? GOLD : BAR,
                     borderTop: isUser ? undefined : `1px solid ${BAR_TOP}`,
                     borderTopLeftRadius: 2,
@@ -397,8 +460,8 @@ export default function AapscoreDistributie({
                   left: `${fracOf(t) * 100}%`,
                   transform: "translateX(-50%)",
                   top: 0,
-                  fontFamily: FONT_SANS,
-                  fontSize: 12,
+                  fontFamily: FONT_MONO,
+                  fontSize: 10,
                   color: "var(--ink-faded)",
                   whiteSpace: "nowrap",
                 }}
@@ -427,7 +490,7 @@ export default function AapscoreDistributie({
         <p
           style={{
             fontFamily: FONT_MONO,
-            fontSize: 10,
+            fontSize: 9,
             color: "var(--ink-faded)",
             marginTop: 18,
           }}
