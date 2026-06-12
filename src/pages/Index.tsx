@@ -400,19 +400,6 @@ export default function Index() {
                 </span>
               </h1>
 
-              <div
-                className="hidden lg:flex flex-col items-end absolute right-10 top-[180px] max-w-[320px] text-right"
-                aria-hidden
-              >
-                <span className="margin-note tilt-l text-[25px] italic leading-tight">
-                  {thema.quotes[0]}
-                </span>
-                {thema.quoteAuteur && (
-                  <span className="margin-note text-[26px] mt-2 tilt-r not-italic">
-                    — {thema.quoteAuteur}
-                  </span>
-                )}
-              </div>
 
               <p className="font-serif italic text-foreground/80 md:text-xl max-w-[480px] mt-6 leading-relaxed text-lg my-[2px] text-center">
                 Denk jij de koers beter te lezen dan de ploegleider?
@@ -456,8 +443,8 @@ export default function Index() {
 
             </div>
 
-            {/* Rechter kolom — transparant logo (poster-stijl, lichte tilt) */}
-            <div className="relative flex justify-center">
+            {/* Rechter kolom — logo + quote */}
+            <div className="relative flex flex-col items-center justify-center gap-6">
               <div className="relative w-full max-w-[315px] -rotate-[3deg] transition-transform duration-500 hover:rotate-0 hover:scale-105">
                 <img
                   src={koerspouleLogo}
@@ -465,6 +452,26 @@ export default function Index() {
                   className="w-full h-auto block drop-shadow-xl"
                 />
               </div>
+
+              {(() => {
+                const quoteText = currentGame?.homepage_quote ?? thema.quotes[0];
+                const quoteAuthor =
+                  currentGame?.homepage_quote_author ?? thema.quoteAuteur;
+                if (!quoteText) return null;
+                return (
+                  <figure className="hidden lg:flex flex-col items-center text-center max-w-[340px] mt-2">
+                    <span aria-hidden className="vintage-ornament mb-3 opacity-70" />
+                    <blockquote className="margin-note tilt-l text-[24px] italic leading-snug">
+                      “{quoteText}”
+                    </blockquote>
+                    {quoteAuthor && (
+                      <figcaption className="margin-note text-[22px] mt-3 tilt-r not-italic">
+                        — {quoteAuthor}
+                      </figcaption>
+                    )}
+                  </figure>
+                );
+              })()}
             </div>
           </div>
         </div>
