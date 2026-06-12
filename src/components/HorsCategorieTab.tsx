@@ -340,6 +340,10 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     const N = 5000;
     if (categories.length === 0 || pickStats.length === 0) return null;
     const meanTotal = totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : 0;
+    // Zonder goedgekeurde stand (meanTotal 0) degenereert de simulatie:
+    // alle 5.000 scores worden exact 0 → één bin → één bar. Dan liever de
+    // nette empty-state van de tab dan een nonsens-histogram.
+    if (meanTotal <= 0) return null;
     const byCat = new Map<string, PickStat[]>();
     for (const p of pickStats) {
       const arr = byCat.get(p.category_id) ?? [];
@@ -393,14 +397,21 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     const worseThanApe = beatPct < 50;
     const min = randomScores[0];
     const max = randomScores[randomScores.length - 1];
-    const buckets = 20;
+    const buckets = 25;
     const step = Math.max(1, (max - min) / buckets);
     const dist = Array.from({ length: buckets }, (_, i) => {
       const from = min + i * step;
       const to = from + step;
-      const count = randomScores.filter((s) => s >= from && s < to).length;
+      // Laatste bin sluit de max-score in (anders valt die buiten elke bin).
+      const last = i === buckets - 1;
+      const count = randomScores.filter((s) => s >= from && (last ? s <= to : s < to)).length;
       return { bucket: Math.round((from + to) / 2), count };
     });
+    if (import.meta.env.DEV) {
+      console.log("[monte] scores sample:", randomScores.slice(0, 10).map((s) => Math.round(s)));
+      console.log("[monte] min/max/mean:", Math.round(min), Math.round(max), Math.round(mean));
+      console.log("[monte] bins:", dist);
+    }
     return { mean, median, top10cut, beatPct, top10, worseThanApe, aboveMedian, userActual, dist };
   }, [categories, pickStats, totals, picksByCategory, myStageTotal, game?.id]);
 
