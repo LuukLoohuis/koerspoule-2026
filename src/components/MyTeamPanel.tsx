@@ -30,6 +30,25 @@ import type { ReactNode } from "react";
 
 type StagePoint = { stage_id: string; entry_id: string; points: number };
 
+/** Digitale klok (HH:MM:SS) voor de radiokop — eigen component zodat de
+ *  1s-tick alleen dít element re-rendert, niet het hele dashboard. */
+function LiveKlok() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    <span
+      className="font-mono font-bold tabular-nums"
+      style={{ color: "#D49A1A", fontSize: 13, letterSpacing: "0.08em" }}
+    >
+      {pad(now.getHours())}:{pad(now.getMinutes())}:{pad(now.getSeconds())}
+    </span>
+  );
+}
+
 function useMyStagePoints(entryId?: string) {
   return useQuery({
     queryKey: ["my-stage-points", entryId],
@@ -514,7 +533,6 @@ export default function MyTeamPanel({
         const PANEL = "#1A1612";
         const PAPER = "#F5ECD7";
         const INK = "#1A1612";
-        const CREAM = "#EDE3CC";
         const AMBER = "hsl(var(--vintage-gold))";
         const hairline = "1px solid rgba(26,22,18,0.18)";
 
@@ -553,16 +571,39 @@ export default function MyTeamPanel({
         );
 
         // Instrument-tegel voor het Tableau de Bord
-        const Dial = ({ label, value, sub, accent }: { label: string; value: ReactNode; sub?: ReactNode; accent?: string }) => (
+        const Dial = ({
+          label,
+          value,
+          sub,
+          accent,
+          icon,
+          valueColor,
+        }: {
+          label: string;
+          value: ReactNode;
+          sub?: ReactNode;
+          accent?: string;
+          /** Asset-pad (bv. /salle-de-course/icon-target.png) — decoratief. */
+          icon?: string;
+          valueColor?: string;
+        }) => (
           <div
             className="p-2.5 md:p-3 min-h-[78px] flex flex-col justify-center gap-1"
             style={{ border: hairline, borderLeft: accent ? `3px solid ${accent}` : hairline, background: PAPER, borderRadius: 6 }}
           >
-            <div className="font-mono text-[9px] tracking-[0.22em] uppercase font-bold" style={{ color: "rgba(26,22,18,0.55)" }}>
+            <div className="font-mono text-[9px] tracking-[0.22em] uppercase font-bold" style={{ color: "#D49A1A" }}>
               {label}
             </div>
-            <div className="font-display font-black leading-none tabular-nums" style={{ color: INK, fontSize: "clamp(22px,2.6vw,30px)" }}>
-              {value}
+            <div className="flex items-center gap-2 min-w-0">
+              {icon && (
+                <img src={icon} alt="" aria-hidden="true" className="h-6 w-auto shrink-0 hidden md:block" />
+              )}
+              <div
+                className="font-display font-black leading-none tabular-nums"
+                style={{ color: valueColor ?? INK, fontSize: "clamp(22px,2.6vw,30px)" }}
+              >
+                {value}
+              </div>
             </div>
             {sub && <div className="font-mono text-[10px] leading-tight" style={{ color: "rgba(26,22,18,0.55)" }}>{sub}</div>}
           </div>
@@ -584,6 +625,13 @@ export default function MyTeamPanel({
               border: "1px solid rgba(0,0,0,0.6)",
             }}
           >
+            {/* Top accent-lijn in het actieve race-thema */}
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-[3px] rounded-t-2xl"
+              style={{ background: "hsl(var(--primary))" }}
+            />
+
             {/* Schroefjes in de hoeken */}
             {[
               "top-2 left-2", "top-2 right-2", "bottom-2 left-2", "bottom-2 right-2",
@@ -709,18 +757,31 @@ export default function MyTeamPanel({
                       />
                       <Dial label="Seizoensstand" value={totalPoints} sub={ritLabel} />
                       <Dial
-                        label="Monkey IQ" accent="#2E8B57"
+                        label="Monkey IQ" accent="#5C6B3B"
+                        icon="/salle-de-course/icon-target.png"
                         value={dash(hors.monkeyBeatPct, (n) => `${Math.round(n)}%`)}
+                        valueColor={hors.monkeyBeatPct === null ? undefined : "#D49A1A"}
                         sub="apen verslagen"
                       />
                       <Dial
                         label="Emirates"
+                        icon="/salle-de-course/icon-crown.png"
                         value={dash(hors.emiratesPct, (n) => `${Math.round(n)}%`)}
                         sub="van droomploeg"
                       />
                       <Dial
                         label="Wielerdir."
+                        icon="/salle-de-course/icon-clipboard.png"
                         value={dash(hors.directorScore, (n) => n.toFixed(1))}
+                        valueColor={
+                          hors.directorScore === null
+                            ? undefined
+                            : hors.directorScore >= 7
+                              ? "#5C6B3B"
+                              : hors.directorScore >= 5
+                                ? "#D49A1A"
+                                : "#B94A48"
+                        }
                         sub="rapport"
                       />
                     </div>
@@ -733,6 +794,7 @@ export default function MyTeamPanel({
                       {[
                         {
                           label: "Beste etappe",
+                          icon: "/salle-de-course/icon-flag.png",
                           value: bestStage ? `${bestStage.points} PT` : "—",
                           sub: bestStage?.stage ? `RIT ${bestStage.stage.stage_number}` : undefined,
                         },
@@ -748,6 +810,7 @@ export default function MyTeamPanel({
                         },
                         {
                           label: "Topscorer",
+                          icon: "/salle-de-course/icon-shirt.png",
                           value: ploegStats.topscorer ? ploegStats.topscorer.name : "—",
                           sub: ploegStats.topscorer ? `${ploegStats.topscorer.points} PT` : undefined,
                           small: true,
@@ -758,15 +821,20 @@ export default function MyTeamPanel({
                           className="px-3 py-1.5 flex flex-col gap-0.5 min-w-0"
                           style={{ borderLeft: i > 0 ? hairline : undefined }}
                         >
-                          <span className="font-mono text-[9px] tracking-[0.2em] uppercase font-bold" style={{ color: "rgba(26,22,18,0.55)" }}>
+                          <span className="font-mono text-[9px] tracking-[0.2em] uppercase font-bold" style={{ color: "#D49A1A" }}>
                             {d.label}
                           </span>
-                          <span
-                            className={cn("font-display font-black leading-tight tabular-nums truncate")}
-                            style={{ color: INK, fontSize: d.small ? "clamp(15px,1.6vw,19px)" : "clamp(20px,2.2vw,26px)" }}
-                            title={typeof d.value === "string" ? d.value : undefined}
-                          >
-                            {d.value}
+                          <span className="flex items-center gap-1.5 min-w-0">
+                            {"icon" in d && d.icon && (
+                              <img src={d.icon} alt="" aria-hidden="true" className="h-5 w-auto shrink-0 hidden md:block" />
+                            )}
+                            <span
+                              className={cn("font-display font-black leading-tight tabular-nums truncate")}
+                              style={{ color: INK, fontSize: d.small ? "clamp(15px,1.6vw,19px)" : "clamp(20px,2.2vw,26px)" }}
+                              title={typeof d.value === "string" ? d.value : undefined}
+                            >
+                              {d.value}
+                            </span>
                           </span>
                           {d.sub && (
                             <span className="font-mono text-[10px]" style={{ color: "rgba(26,22,18,0.55)" }}>{d.sub}</span>
@@ -777,77 +845,59 @@ export default function MyTeamPanel({
                   </div>
                 </div>
 
-                {/* ── Rechterkolom: decoratieve radio-chrome (desktop only) ── */}
+                {/* ── Rechterkolom: radio-chrome met echte assets (desktop only).
+                    Puur decoratief: aria-hidden + pointer-events-none. De klok
+                    is live (LiveKlok), de rest zijn beeld-elementen uit
+                    /public/salle-de-course/. ── */}
                 <div aria-hidden className="hidden lg:flex flex-col gap-2.5 pointer-events-none select-none">
-                  {/* EN DIRECT + luidsprekergrille */}
-                  <div className="rounded-lg p-3" style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.35)" }}>
-                    <div className="flex items-center gap-2 mb-2.5">
-                      <span className="font-mono text-[10px] tracking-[0.25em] uppercase font-bold" style={{ color: "#C0392B" }}>
-                        En direct
-                      </span>
-                      <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#C0392B" }} />
-                    </div>
-                    <div
-                      className="h-16 rounded"
-                      style={{
-                        backgroundImage: `radial-gradient(${PANEL} 1.3px, transparent 1.4px)`,
-                        backgroundSize: "7px 7px",
-                        backgroundPosition: "center",
-                      }}
-                    />
+                  {/* LIVE-badge + digitale klok */}
+                  <div
+                    className="rounded-lg px-3 py-2 flex items-center justify-between"
+                    style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.35)" }}
+                  >
+                    <img src="/salle-de-course/live-badge.png" alt="" aria-hidden="true" className="h-6 w-auto" />
+                    <span
+                      className="rounded px-2 py-0.5"
+                      style={{ background: PANEL, border: "1px solid rgba(0,0,0,0.6)" }}
+                    >
+                      <LiveKlok />
+                    </span>
                   </div>
 
-                  {/* FM-schaal + knoppen */}
-                  <div className="rounded-lg p-3" style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.35)" }}>
-                    <svg viewBox="0 0 200 34" className="w-full" style={{ display: "block" }}>
-                      <line x1="6" y1="12" x2="194" y2="12" stroke={INK} strokeOpacity="0.55" strokeWidth="1" />
-                      {Array.from({ length: 21 }, (_, i) => 6 + i * 9.4).map((x, i) => (
-                        <line key={x} x1={x} y1={12} x2={x} y2={i % 5 === 0 ? 4 : 8} stroke={INK} strokeOpacity="0.5" strokeWidth="1" />
-                      ))}
-                      {["88", "92", "96", "100", "104", "108"].map((t, i) => (
-                        <text key={t} x={6 + i * 37.6} y={26} fontFamily="'JetBrains Mono',monospace" fontSize="7" fill={INK} fillOpacity="0.6">
-                          {t}
-                        </text>
-                      ))}
-                      <line x1="118" y1="2" x2="118" y2="16" stroke="#C0392B" strokeWidth="1.5" />
-                      <text x="160" y="33" fontFamily="'JetBrains Mono',monospace" fontSize="6.5" fill={INK} fillOpacity="0.5">FM · MHz</text>
-                    </svg>
-                    <div className="flex justify-end gap-4 mt-2">
-                      {["VOLUME", "SQUELCH"].map((k) => (
-                        <div key={k} className="flex flex-col items-center gap-1">
-                          <svg viewBox="0 0 36 36" width="34" height="34">
-                            <circle cx="18" cy="18" r="15" fill="#221C16" stroke="rgba(0,0,0,0.7)" />
-                            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" strokeDasharray="2 4" />
-                            <circle cx="13" cy="12" r="4" fill="rgba(255,255,255,0.10)" />
-                            <line x1="18" y1="18" x2="18" y2="6" stroke={CREAM} strokeWidth="1.6" strokeLinecap="round" />
-                          </svg>
-                          <span className="font-mono text-[7px] tracking-[0.2em] uppercase" style={{ color: "rgba(26,22,18,0.55)" }}>{k}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Luidsprekergrille */}
+                  <img
+                    src="/salle-de-course/radio-grille.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="w-full rounded-lg"
+                    style={{ border: "1px solid rgba(0,0,0,0.6)" }}
+                  />
 
-                  {/* Oscilloscoop met fietser-line-art (geen verzonnen telemetrie) */}
-                  <div className="rounded-lg flex-1 min-h-[120px] p-2" style={{ background: "#0F0C09", border: "1px solid rgba(0,0,0,0.7)" }}>
-                    <svg viewBox="0 0 160 110" className="w-full h-full" fill="none" stroke={CREAM} strokeOpacity="0.85" strokeWidth="1.4" strokeLinecap="round">
-                      {/* raster */}
-                      {[22, 44, 66, 88].map((y) => (
-                        <line key={y} x1="4" y1={y} x2="156" y2={y} stroke={CREAM} strokeOpacity="0.07" strokeWidth="0.75" />
-                      ))}
-                      {/* wielen */}
-                      <circle cx="48" cy="78" r="17" />
-                      <circle cx="116" cy="78" r="17" />
-                      <circle cx="48" cy="78" r="2" />
-                      <circle cx="116" cy="78" r="2" />
-                      {/* frame */}
-                      <path d="M48 78 L72 50 L102 50 L116 78 M72 50 L82 74 L48 78 M82 74 L84 78" />
-                      {/* stuur + zadel */}
-                      <path d="M102 50 L108 42 L114 40 M70 46 L62 44" />
-                      {/* renner */}
-                      <path d="M66 46 Q78 24 100 36" />
-                      <circle cx="104" cy="30" r="5" />
-                      <path d="M82 36 L78 56 L86 62 M82 36 L90 52" />
-                    </svg>
+                  {/* FM/AM-tuner */}
+                  <img
+                    src="/salle-de-course/radio-tuner.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="w-full rounded-md"
+                    style={{ border: "1px solid rgba(0,0,0,0.6)" }}
+                  />
+
+                  {/* Fietser-telemetrie (decoratieve tegel uit het affiche) */}
+                  <img
+                    src="/salle-de-course/rider-telemetry.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="w-full rounded-lg"
+                    style={{ border: "1px solid rgba(0,0,0,0.6)" }}
+                  />
+
+                  {/* Knoppen + Team Radio-microfoon */}
+                  <div
+                    className="rounded-lg p-2.5 flex items-start gap-2"
+                    style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.35)" }}
+                  >
+                    <img src="/salle-de-course/radio-knobs.png" alt="" aria-hidden="true" className="w-[32%] h-auto" />
+                    <img src="/salle-de-course/radio-mic.png" alt="" aria-hidden="true" className="flex-1 min-w-0 h-auto" />
                   </div>
                 </div>
               </div>
