@@ -17,17 +17,18 @@ import SubpouleStandings from "@/components/SubpouleStandings";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import DaguitslagChart from "@/components/DaguitslagChart";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Flame, Share2, ListTree, ArrowUp, BarChart3, ArrowUpDown, type LucideIcon } from "lucide-react";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Flame, Share2, ListTree, ArrowUp, BarChart3, ArrowUpDown, Trophy, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Mobiele "spring naar"-secties (volgorde = scrollvolgorde). Icoon per item.
 type JumpItem = { id: string; label: string; Icon: LucideIcon; divider?: boolean };
 const JUMP_ITEMS: JumpItem[] = [
+  { id: "sec-klassement", label: "Ranking", Icon: Trophy },
   { id: "sec-klassementsverloop", label: "Stijgers & Dalers", Icon: TrendingUp },
   { id: "sec-daguitslag", label: "Daguitslag", Icon: BarChart3 },
   { id: "sec-heatmap", label: "Heatmap", Icon: Flame },
   { id: "sec-deelnemers", label: "Deelnemers", Icon: Users },
-  { id: "sec-klassement", label: "Bovenaan", Icon: ArrowUp, divider: true },
+  { id: "__top__", label: "Bovenaan", Icon: ArrowUp, divider: true },
 ];
 const SECTION_IDS = ["sec-klassement", "sec-klassementsverloop", "sec-daguitslag", "sec-heatmap", "sec-deelnemers"];
 
@@ -339,11 +340,15 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
     // dan scrollIntoView op iOS Safari). prefers-reduced-motion → instant.
     const HEADER_OFFSET = 80;
     const jumpTo = (id: string) => {
-      setActiveSection(id);
+      if (id !== "__top__") setActiveSection(id);
       setJumpOpen(false);
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       requestAnimationFrame(() =>
         requestAnimationFrame(() => {
+          if (id === "__top__") {
+            window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+            return;
+          }
           const el = document.getElementById(id);
           if (!el) return;
           const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
