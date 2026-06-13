@@ -1,0 +1,64 @@
+{
+  "$comment": "La Salle de Course — componenten-manifest. Bron: asset-sheet referentie (25 assets). Regels: tekst/data ALTIJD HTML/React (nooit in beeld gebakken); fotorealistische hardware als PNG met echte alpha (per-asset gegenereerd, niet gesliced); decoratie aria-hidden + pointer-events-none; geen verzonnen data (elevation profile alleen decoratief of weg). Zie DESIGN-SPEC.md voor kleuren/typografie.",
+  "design_tokens": {
+    "ink": "#0F0F10",
+    "panel": "#1A1A1B",
+    "paper": "#E9E2D3",
+    "amber": "#D49A1A",
+    "olive": "#5C6B3B",
+    "red": "#B94A48",
+    "muted": "#6B665C",
+    "font_heading": "Oswald, condensed caps",
+    "font_label": "JetBrains Mono, uppercase tracking 0.18em",
+    "font_body": "Source Serif 4",
+    "font_data": "JetBrains Mono, tabular-nums"
+  },
+  "master": [
+    { "component_name": "CockpitFrame", "asset_ref": "01,18", "type": "panel", "position": "outer wrapper, full dashboard", "visual_style": "dark brushed metal, rounded, 4 corner screws, 3px theme accent top", "reusable": true, "recommended_implementation": "css (frame+screws); png screws optioneel", "status": "bestaat (MyTeamPanel section)" },
+    { "component_name": "PaperTexture", "asset_ref": "02", "type": "texture", "position": "overlay op alle ivory cards", "visual_style": "aged ivory, subtiele noise", "reusable": true, "recommended_implementation": "css (.sdc-paper-texture)", "status": "bestaat" },
+    { "component_name": "TitleBar", "asset_ref": "03", "type": "panel", "position": "top, full width binnen frame", "visual_style": "ivory inzet, dunne donkere rand, ◆-markers links/rechts, placeholder-titel", "reusable": true, "recommended_implementation": "css", "status": "nieuw (klein)" },
+    { "component_name": "TeamCard", "asset_ref": "04,05", "type": "card", "position": "rij 1 links (~50%)", "visual_style": "ivory kaart, grote kop-regel + subregel, potlood-edit", "reusable": true, "recommended_implementation": "css + html-tekst (nooit beeld)", "status": "bestaat (masthead)" },
+    { "component_name": "ScoreFlip", "asset_ref": "06", "type": "display", "position": "rij 1 midden-rechts", "visual_style": "split-flap, donkere tiles, amber cijfers, naad", "reusable": true, "recommended_implementation": "css (FlipClock.tsx) — data flipt echt", "status": "bestaat" },
+    { "component_name": "LiveClock", "asset_ref": "07", "type": "display", "position": "rij 1 rechtsboven (sidebar-kop)", "visual_style": "zwart kastje, amber 7-segment, rode status-dot", "reusable": true, "recommended_implementation": "css (LiveKlok) — echte tijd", "status": "bestaat" },
+    { "component_name": "KpiCard", "asset_ref": "14,19,20,21", "type": "card", "position": "rij 2, grid 2×3 links", "visual_style": "ivory, dunne rand, optionele accentstrip links (status-kleur), icoon + label + groot cijfer", "reusable": true, "recommended_implementation": "css + svg/png-icoon", "status": "bestaat (Dial)" },
+    { "component_name": "DetailStrip", "asset_ref": "15,22,23", "type": "card", "position": "rij 3, full width links", "visual_style": "brede ivory strook, 4 cellen met hairline-dividers, icoon links + metric rechts", "reusable": true, "recommended_implementation": "css + svg/png-iconen", "status": "bestaat (Détails)" },
+    { "component_name": "SpeakerGrille", "asset_ref": "08", "type": "decorative", "position": "sidebar boven", "visual_style": "perforatie-matrix, ivory/metaal", "reusable": false, "recommended_implementation": "png (alpha) of css dot-grid fallback", "status": "bestaat (asset-upgrade mogelijk)" },
+    { "component_name": "RadioTuner", "asset_ref": "09", "type": "decorative", "position": "sidebar", "visual_style": "FM/AM-schaal, amber marker, knurled knoppen", "reusable": false, "recommended_implementation": "png (alpha)", "status": "bestaat (asset-upgrade mogelijk)" },
+    { "component_name": "TelemetryTile", "asset_ref": "10", "type": "decorative", "position": "sidebar", "visual_style": "zwart plaatje, chalk-line fietser, GEEN leesbare cijfers", "reusable": false, "recommended_implementation": "png (alpha)", "status": "bestaat (huidige bevat cijfers → upgrade naar tekstloze versie aanbevolen)" },
+    { "component_name": "RadioControlBox", "asset_ref": "11", "type": "control(decoratief)", "position": "sidebar onder", "visual_style": "3 knoppen, tick-marks, ruw metaal", "reusable": false, "recommended_implementation": "png (alpha)", "status": "bestaat (asset-upgrade mogelijk)" },
+    { "component_name": "HandMic", "asset_ref": "12,13", "type": "decorative", "position": "sidebar onder, overlapt licht", "visual_style": "hero-asset, zwarte handset + krulkabel", "reusable": false, "recommended_implementation": "png (alpha)", "status": "bestaat (kabel los = mooier layeren)" },
+    { "component_name": "FooterBar", "asset_ref": "16", "type": "panel", "position": "onderste strook, full width", "visual_style": "donker metaal, interne subdividers, étape-metadata links", "reusable": true, "recommended_implementation": "css + html-tekst", "status": "bestaat (onderbalk)" },
+    { "component_name": "ElevationProfile", "asset_ref": "17", "type": "decorative", "position": "footer midden", "visual_style": "dunne amber berglijn + finishvlag", "reusable": false, "recommended_implementation": "ALLEEN decoratief (aria-hidden) of WEGLATEN — geen hoogtedata in de app", "status": "bewust weggelaten" },
+    { "component_name": "FilmGrain", "asset_ref": "24", "type": "texture", "position": "overlay heel paneel", "visual_style": "subtiel monochroom graan ≤3%", "reusable": true, "recommended_implementation": "css/svg-noise; png optioneel", "status": "optioneel" },
+    { "component_name": "Vignette", "asset_ref": "25", "type": "texture", "position": "overlay heel paneel", "visual_style": "zachte donkere randen", "reusable": true, "recommended_implementation": "css radial-gradient", "status": "optioneel" }
+  ],
+  "responsive_16x9": {
+    "$comment": "Posities als CSS-grid; px-vrij. Breakpoint lg=1024: sidebar zichtbaar; daaronder verborgen (decoratie).",
+    "grid": {
+      "desktop": {
+        "columns": "minmax(0,1fr) 240px",
+        "rows": "auto auto auto auto",
+        "areas": [
+          "titlebar titlebar",
+          "teamcard sidebar",
+          "tableau  sidebar",
+          "details  sidebar",
+          "footer   footer"
+        ]
+      },
+      "mobile": {
+        "columns": "1fr",
+        "areas": ["titlebar", "teamcard", "tableau", "details", "footer"],
+        "notes": "sidebar hidden; KpiCards 2-koloms; ScoreFlip size kleiner; FooterBar wraps"
+      }
+    },
+    "components": [
+      { "component_name": "TitleBar", "grid_area": "titlebar" },
+      { "component_name": "TeamCard + ScoreFlip", "grid_area": "teamcard", "layout": "flex: kop links, flip rechts" },
+      { "component_name": "TableauDeBord (6× KpiCard)", "grid_area": "tableau", "layout": "grid-cols-2 md:grid-cols-3 gap-2" },
+      { "component_name": "DetailStrip", "grid_area": "details", "layout": "grid-cols-2 md:grid-cols-4 divide-x" },
+      { "component_name": "RadioSidebar (LiveClock, Grille, Tuner, Telemetry, ControlBox, Mic)", "grid_area": "sidebar", "visibility": "hidden lg:flex", "a11y": "aria-hidden, pointer-events-none" },
+      { "component_name": "FooterBar", "grid_area": "footer", "layout": "flex wrap, mono labels" }
+    ]
+  }
+}
