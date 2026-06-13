@@ -771,10 +771,10 @@ export default function MyTeamPanel({
 
         return (
           <section
-            className="salle-de-course sdc-frame relative"
+            className="salle-de-course sdc-frame sdc-paper-texture relative"
             style={{
-              // Donkere paneel-vulling onder de transparante kern van de frame.
-              background: `linear-gradient(180deg, #231E18 0%, ${PANEL} 30%, #16120E 100%)`,
+              // Eén doorlopend beige papieroppervlak binnen de frame; instrumenten
+              // + onderbalk liggen als donkere insets daarop (zie referentie/DESIGN-SPEC).
               borderRadius: 14,
             }}
           >
@@ -790,9 +790,11 @@ export default function MyTeamPanel({
                 <div
                   className="relative min-w-0 rounded-lg overflow-hidden self-start"
                   style={{
+                    // Ligt op het beige interieur → hairline + subtiele highlight,
+                    // geen harde slagschaduw (geen zwevende kaart meer).
                     background: PAPER,
-                    border: "1px solid rgba(0,0,0,0.4)",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 6px rgba(0,0,0,0.35)",
+                    border: "1px solid rgba(26,22,18,0.18)",
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4)",
                   }}
                 >
                   <Screws paper />
@@ -1167,8 +1169,16 @@ export default function MyTeamPanel({
                    verzonnen meetdata, puur als visueel anker conform DESIGN-SPEC. */}
               {lastApproved && (
                 <div
-                  className="mt-3 pt-2.5 grid grid-cols-[auto_auto_1fr_auto] items-center gap-x-5 gap-y-1 font-mono text-[10px] tracking-[0.18em] uppercase"
-                  style={{ borderTop: "1px solid rgba(255,255,255,0.08)", color: "rgba(237,227,204,0.65)" }}
+                  className="mt-3 p-3 grid grid-cols-[auto_auto_1fr_auto] items-center gap-x-5 gap-y-1 font-mono text-[10px] tracking-[0.18em] uppercase"
+                  style={{
+                    // Donker verzonken paneel op het beige interieur — houdt de
+                    // lichte crèmetekst + amber AltitudeProfile leesbaar.
+                    background: PANEL,
+                    borderRadius: 10,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    boxShadow: "inset 0 2px 7px rgba(0,0,0,0.5)",
+                    color: "rgba(237,227,204,0.65)",
+                  }}
                 >
                   <span className="flex flex-col leading-tight">
                     <span style={{ color: "rgba(237,227,204,0.45)" }}>Étape {lastApproved.stage_number} / {raceStages.length}</span>

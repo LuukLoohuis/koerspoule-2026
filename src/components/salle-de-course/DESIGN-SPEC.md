@@ -96,6 +96,12 @@ Mijn Ploeg, `src/components/MyTeamPanel.tsx`). Tokens staan gescoped in
 
 ## Layout grid
 
+- Console-interieur (binnen `.sdc-frame`): één doorlopend BEIGE papieroppervlak
+  (`.sdc-paper-texture`), géén donkere vulling. De radio-instrumenten, de
+  mobiele cockpit-band én de étappe-onderbalk liggen als DONKERE recessed insets
+  (`--sdc-panel` + inset-shadow) op dat beige oppervlak. De linker dashboardkaart
+  smelt samen met het interieur (hairline `rgba(26,22,18,0.18)` + subtiele
+  inset-highlight, geen harde slagschaduw).
 - Desktop (lg+): main content links + radioconsole (3 `.sdc-inset`-panelen) rechts (240px)
 - < lg: verticaal gestapeld → mobiele cockpit-band (boven) → papieren dashboard
   (header + tableau 2-koloms + détails) → étape-profielband (onder)
