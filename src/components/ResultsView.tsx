@@ -4,6 +4,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useStages, useStageResults, useStagePointsForEntries, useMyStageRanks, useEntries, useGameStandings, type StageRow, type EntryStanding } from "@/hooks/useResults";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -67,6 +68,7 @@ type ResultsViewProps = {
 
 export default function ResultsView({ showHeader = true, gameId: gameIdProp, gameName: gameNameProp }: ResultsViewProps) {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const { data: curGame } = useCurrentGame();
   const gameId = gameIdProp ?? curGame?.id;
   const gameName = gameNameProp ?? curGame?.name;
@@ -353,7 +355,8 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                     </div>
                   ) : (
                     <StandingsList
-                      maxHeightClass="max-h-[420px]"
+                      topN={isMobile ? 5 : 10}
+                      maxHeightClass={isMobile ? "max-h-[460px]" : "max-h-[620px]"}
                       placeholder="Zoek op teamnaam of naam…"
                       items={stageStandings.map((s) => {
                         const isMe = s.user_id === user?.id;
