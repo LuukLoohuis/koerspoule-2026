@@ -10,6 +10,8 @@ import { detectCategory as detectCategoryT, type SheetRider as SheetRiderT } fro
 import FlipClock from "@/components/FlipClock";
 import { useMijnPloegStats } from "@/hooks/useMijnPloegStats";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
+import { useSubpoules } from "@/hooks/useSubpoules";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -298,11 +300,20 @@ export default function MyTeamPanel({
   gameId: gameIdProp,
   gameStatus,
   gameName,
+  onOpenHors,
+  onOpenUitslagen,
+  onOpenSubpoule,
 }: {
   section?: "ploeg" | "prono";
   gameId?: string;
   gameStatus?: string;
   gameName?: string | null;
+  /** Open een Hors-Catégorie-subtab (Monkey IQ → dartpijl, etc.). */
+  onOpenHors?: (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => void;
+  /** Spring naar de Uitslagen-tab (daguitslag/klassement). */
+  onOpenUitslagen?: () => void;
+  /** Spring naar de Subpoules-tab met deze subpoule open. */
+  onOpenSubpoule?: (subpouleId: string) => void;
 }) {
   const { user } = useAuth();
   const { data: curGame } = useCurrentGame();
@@ -325,7 +336,12 @@ export default function MyTeamPanel({
   );
   // La Salle de Course: één databron voor rangen/delta's/topscorer + de
   // Hors-Catégorie-percentages (— zolang null).
-  const ploegStats = useMijnPloegStats();
+  // Subpoule-selectie: bij meerdere subpoules verschijnt een dropdown bij het
+  // Tableau de Bord; de Sous-peloton-instrumenten volgen de keuze.
+  const { subpoules } = useSubpoules(game?.id);
+  const [selectedSubpouleId, setSelectedSubpouleId] = useState<string | undefined>(undefined);
+  const activeSubpouleId = selectedSubpouleId ?? subpoules[0]?.id;
+  const ploegStats = useMijnPloegStats({ selectedSubpouleId: activeSubpouleId });
   const hors = useHorsCategorieSummary({ id: game?.id, status: game?.status as string | undefined });
 
   // Welke renner heeft z'n per-etappe-punten dropdown open (één tegelijk).
@@ -639,6 +655,8 @@ export default function MyTeamPanel({
           accent,
           icon,
           valueColor,
+          onClick,
+          hint,
         }: {
           label: string;
           value: ReactNode;
@@ -647,13 +665,37 @@ export default function MyTeamPanel({
           /** Asset-pad (bv. /salle-de-course/icon-target.png) — decoratief. */
           icon?: string;
           valueColor?: string;
+          /** Maakt de tegel klikbaar (navigatie); voegt cursor/hover/focus toe. */
+          onClick?: () => void;
+          /** Korte aria/title-omschrijving bij klikbare tegel. */
+          hint?: string;
         }) => (
           <div
-            className="p-2.5 md:p-3 min-h-[78px] flex flex-col justify-center gap-1"
+            role={onClick ? "button" : undefined}
+            tabIndex={onClick ? 0 : undefined}
+            aria-label={onClick ? hint ?? label : undefined}
+            title={onClick ? hint : undefined}
+            onClick={onClick}
+            onKeyDown={
+              onClick
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onClick();
+                    }
+                  }
+                : undefined
+            }
+            className={cn(
+              "p-2.5 md:p-3 min-h-[78px] flex flex-col justify-center gap-1",
+              onClick &&
+                "cursor-pointer transition-[transform,box-shadow] hover:-translate-y-[1px] hover:shadow-[0_3px_10px_rgba(0,0,0,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D49A1A]",
+            )}
             style={{ border: hairline, borderLeft: accent ? `3px solid ${accent}` : hairline, background: PAPER, borderRadius: 6 }}
           >
-            <div className="font-mono text-[9px] tracking-[0.22em] uppercase font-bold" style={{ color: "#D49A1A" }}>
-              {label}
+            <div className="font-mono text-[9px] tracking-[0.22em] uppercase font-bold flex items-center gap-1" style={{ color: "#D49A1A" }}>
+              <span>{label}</span>
+              {onClick && <span aria-hidden className="text-[8px] opacity-60">›</span>}
             </div>
             <div className="flex items-center gap-2 min-w-0">
               {icon && (
@@ -782,17 +824,43 @@ export default function MyTeamPanel({
 
                   {/* Tableau de Bord — 2×3 instrumenten */}
                   <div className="rounded-lg p-3.5 md:p-4" style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.35)" }}>
-                    <div className="mb-2.5"><Stamp>— Tableau de Bord —</Stamp></div>
+                    <div className="mb-2.5 flex items-center justify-between gap-2">
+                      <Stamp>— Tableau de Bord —</Stamp>
+                      {/* Subpoule-kiezer: alleen tonen bij meerdere subpoules. De
+                          Sous-peloton-instrumenten volgen deze keuze. */}
+                      {subpoules.length > 1 && (
+                        <Select value={activeSubpouleId} onValueChange={setSelectedSubpouleId}>
+                          <SelectTrigger
+                            aria-label="Kies subpoule"
+                            className="h-7 w-auto min-w-[140px] max-w-[200px] gap-1.5 rounded-md border-0 px-2.5 font-mono text-[10px] tracking-[0.14em] uppercase font-bold focus:ring-2 focus:ring-[#D49A1A]"
+                            style={{ background: "rgba(26,22,18,0.06)", color: "#0F0F10", borderRadius: 6, boxShadow: "inset 0 0 0 1px rgba(26,22,18,0.22)" }}
+                          >
+                            <SelectValue placeholder="Subpoule" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {subpoules.map((s) => (
+                              <SelectItem key={s.id} value={s.id} className="font-mono text-xs uppercase tracking-wide">
+                                {s.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       <Dial
                         label="Sous-peloton" accent={AMBER}
                         value={<Rank rank={ploegStats.subpoule?.rank ?? null} delta={ploegStats.subpoule?.delta ?? null} />}
                         sub={ploegStats.subpoule ? `van ${ploegStats.subpoule.total} · ${ploegStats.subpoule.name}` : undefined}
+                        onClick={activeSubpouleId && onOpenSubpoule ? () => onOpenSubpoule(activeSubpouleId) : undefined}
+                        hint="Open de subpoule-daguitslag"
                       />
                       <Dial
                         label="Classement gén."
                         value={<Rank rank={ploegStats.overall?.rank ?? null} delta={ploegStats.overall?.delta ?? null} />}
                         sub={ploegStats.overall ? `van ${ploegStats.overall.total} deelnemers` : undefined}
+                        onClick={onOpenUitslagen}
+                        hint="Open de daguitslag van de hele poule"
                       />
                       <Dial label="Seizoensstand" value={totalPoints} sub={ritLabel} />
                       {/* Status-bewuste accentranden: de rand kleurt mee met de
@@ -810,6 +878,8 @@ export default function MyTeamPanel({
                         value={dash(hors.monkeyBeatPct, (n) => `${Math.round(n)}%`)}
                         valueColor={hors.monkeyBeatPct === null ? undefined : "#D49A1A"}
                         sub="apen verslagen"
+                        onClick={onOpenHors ? () => onOpenHors("dartpijl") : undefined}
+                        hint="Open de Dartpijl-analyse"
                       />
                       <Dial
                         label="Emirates"
@@ -819,6 +889,8 @@ export default function MyTeamPanel({
                         icon="/salle-de-course/icon-crown.png"
                         value={dash(hors.emiratesPct, (n) => `${Math.round(n)}%`)}
                         sub="van droomploeg"
+                        onClick={onOpenHors ? () => onOpenHors("superteam") : undefined}
+                        hint="Open The Emirates"
                       />
                       {(() => {
                         // Rapportkleur (SPEC): >=7 olive, >=5 amber, <5 rood —
@@ -839,6 +911,8 @@ export default function MyTeamPanel({
                             value={dash(hors.directorScore, (n) => n.toFixed(1))}
                             valueColor={dirColor}
                             sub="rapport"
+                            onClick={onOpenHors ? () => onOpenHors("wielerdirecteur") : undefined}
+                            hint="Open het Directeur Sportif-rapport"
                           />
                         );
                       })()}
@@ -848,23 +922,45 @@ export default function MyTeamPanel({
                   {/* Détails — rij van 4 kerngetallen */}
                   <div className="rounded-lg p-3.5 md:p-4" style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.35)" }}>
                     <div className="text-center mb-2.5"><Stamp>— Détails —</Stamp></div>
-                    <div className="grid grid-cols-2 md:grid-cols-4">
-                      {[
+                    {(() => {
+                      // Mijn dagklassering op mijn best-scorende rit (zelfde rit).
+                      const bestStageRankNum =
+                        bestStage?.stage && ploegStats.myStageRanks
+                          ? ploegStats.myStageRanks.get(bestStage.stage.id) ?? null
+                          : null;
+                      const details: Array<{
+                        label: string;
+                        value: ReactNode;
+                        sub?: ReactNode;
+                        icon?: string;
+                        small?: boolean;
+                        flagLeft?: boolean;
+                        onClick?: () => void;
+                        hint?: string;
+                      }> = [
                         {
                           label: "Beste etappe",
                           icon: "/salle-de-course/icon-flag.png",
+                          flagLeft: true,
                           value: bestStage ? `${bestStage.points} PT` : "—",
-                          sub: bestStage?.stage ? `RIT ${bestStage.stage.stage_number}` : undefined,
+                          sub: bestStage?.stage
+                            ? `RIT ${bestStage.stage.stage_number}${bestStageRankNum ? ` · ${bestStageRankNum}e plek` : ""}`
+                            : undefined,
+                          onClick: bestStage ? onOpenUitslagen : undefined,
+                          hint: "Bekijk de etappe-uitslagen",
                         },
                         {
                           label: "Overall poule",
                           value: ploegStats.overall ? <Rank rank={ploegStats.overall.rank} delta={ploegStats.overall.delta} /> : "—",
-                          sub: undefined,
+                          onClick: ploegStats.overall ? onOpenUitslagen : undefined,
+                          hint: "Bekijk het poule-klassement",
                         },
                         {
                           label: "Sous-peloton",
                           value: ploegStats.subpoule ? <Rank rank={ploegStats.subpoule.rank} delta={ploegStats.subpoule.delta} /> : "—",
-                          sub: undefined,
+                          sub: ploegStats.subpoule?.name,
+                          onClick: activeSubpouleId && onOpenSubpoule ? () => onOpenSubpoule(activeSubpouleId) : undefined,
+                          hint: "Bekijk het subpoule-klassement",
                         },
                         {
                           label: "Topscorer",
@@ -873,33 +969,67 @@ export default function MyTeamPanel({
                           sub: ploegStats.topscorer ? `${ploegStats.topscorer.points} PT` : undefined,
                           small: true,
                         },
-                      ].map((d, i) => (
-                        <div
-                          key={d.label}
-                          className="px-3 py-1.5 flex flex-col gap-0.5 min-w-0"
-                          style={{ borderLeft: i > 0 ? hairline : undefined }}
-                        >
-                          <span className="font-mono text-[9px] tracking-[0.2em] uppercase font-bold" style={{ color: "#D49A1A" }}>
-                            {d.label}
-                          </span>
-                          <span className="flex items-center gap-1.5 min-w-0">
-                            {"icon" in d && d.icon && (
-                              <img src={d.icon} alt="" aria-hidden="true" className="h-5 w-auto shrink-0 hidden md:block" />
-                            )}
-                            <span
-                              className={cn("font-display font-black leading-tight tabular-nums truncate")}
-                              style={{ color: INK, fontSize: d.small ? "clamp(15px,1.6vw,19px)" : "clamp(20px,2.2vw,26px)" }}
-                              title={typeof d.value === "string" ? d.value : undefined}
-                            >
-                              {d.value}
-                            </span>
-                          </span>
-                          {d.sub && (
-                            <span className="font-mono text-[10px]" style={{ color: "rgba(26,22,18,0.55)" }}>{d.sub}</span>
-                          )}
+                      ];
+                      return (
+                        <div className="grid grid-cols-2 md:grid-cols-4">
+                          {details.map((d, i) => {
+                            const clickable = Boolean(d.onClick);
+                            return (
+                              <div
+                                key={d.label}
+                                role={clickable ? "button" : undefined}
+                                tabIndex={clickable ? 0 : undefined}
+                                aria-label={clickable ? d.hint ?? d.label : undefined}
+                                title={clickable ? d.hint : undefined}
+                                onClick={d.onClick}
+                                onKeyDown={
+                                  clickable
+                                    ? (e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                          e.preventDefault();
+                                          d.onClick?.();
+                                        }
+                                      }
+                                    : undefined
+                                }
+                                className={cn(
+                                  "px-3 py-1.5 min-w-0",
+                                  d.flagLeft ? "flex items-center gap-2.5" : "flex flex-col gap-0.5",
+                                  clickable &&
+                                    "cursor-pointer rounded-md transition-colors hover:bg-[rgba(212,154,26,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D49A1A]",
+                                )}
+                                style={{ borderLeft: i > 0 ? hairline : undefined }}
+                              >
+                                {/* Beste etappe: grotere finishvlag links naast de tekst. */}
+                                {d.flagLeft && d.icon && (
+                                  <img src={d.icon} alt="" aria-hidden="true" className="h-9 md:h-11 w-auto shrink-0" />
+                                )}
+                                <div className="flex flex-col gap-0.5 min-w-0">
+                                  <span className="font-mono text-[9px] tracking-[0.2em] uppercase font-bold" style={{ color: "#D49A1A" }}>
+                                    {d.label}
+                                  </span>
+                                  <span className="flex items-center gap-1.5 min-w-0">
+                                    {!d.flagLeft && d.icon && (
+                                      <img src={d.icon} alt="" aria-hidden="true" className="h-5 w-auto shrink-0 hidden md:block" />
+                                    )}
+                                    <span
+                                      className={cn("font-display font-black leading-tight tabular-nums truncate")}
+                                      style={{ color: INK, fontSize: d.small ? "clamp(15px,1.6vw,19px)" : "clamp(20px,2.2vw,26px)" }}
+                                      title={typeof d.value === "string" ? d.value : undefined}
+                                    >
+                                      {d.value}
+                                    </span>
+                                  </span>
+                                  {d.sub && (
+                                    <span className="font-mono text-[10px]" style={{ color: "rgba(26,22,18,0.55)" }}>{d.sub}</span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })()}
                   </div>
                 </div>
 

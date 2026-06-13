@@ -37,6 +37,8 @@ export type MijnPloegStatsData = {
   subpoule: { rank: number; total: number; delta: number; name: string } | null;
   /** Best scorende renner uit jouw selectie. */
   topscorer: { name: string; points: number } | null;
+  /** Mijn dagklassering per etappe (stage_id → rang) — voor "Beste etappe". */
+  myStageRanks: Map<string, number> | null;
 };
 
 function rankInMap(
@@ -48,7 +50,7 @@ function rankInMap(
   return sorted.findIndex((e) => e.id === entryId) + 1;
 }
 
-export function useMijnPloegStats(): MijnPloegStatsData {
+export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnPloegStatsData {
   const { user } = useAuth();
   const { data: game } = useCurrentGame();
   const { entry, jokerIds, picksByCategory } = useEntry(game?.id);
@@ -58,7 +60,14 @@ export function useMijnPloegStats(): MijnPloegStatsData {
   const { data: myStageRanks } = useMyStageRanks(game?.id, user?.id);
   const { data: schema = [] } = usePointsSchema(game?.id);
   const { subpoules } = useSubpoules(game?.id);
-  const firstSubpoule = subpoules[0] ?? null;
+  // De getoonde subpoule volgt de selectie uit het dashboard (dropdown bij
+  // meerdere subpoules); zonder selectie valt 'ie terug op de eerste.
+  const firstSubpoule =
+    (opts?.selectedSubpouleId
+      ? subpoules.find((s) => s.id === opts.selectedSubpouleId)
+      : undefined) ??
+    subpoules[0] ??
+    null;
   const { data: subpouleMembers = [] } = useSubpouleMembers(firstSubpoule?.id);
 
   // Alle gekozen + joker-renners
@@ -194,5 +203,5 @@ export function useMijnPloegStats(): MijnPloegStatsData {
     return best?.pts ? { name: best.name, points: best.pts } : null;
   }, [schema, ridersAllResults, jokerIds]);
 
-  return { bestStageRank, overall, subpoule, topscorer };
+  return { bestStageRank, overall, subpoule, topscorer, myStageRanks: myStageRanks ?? null };
 }
