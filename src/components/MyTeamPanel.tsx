@@ -680,35 +680,13 @@ export default function MyTeamPanel({
 
         return (
           <section
-            className="salle-de-course relative rounded-2xl"
+            className="salle-de-course sdc-frame relative"
             style={{
+              // Donkere paneel-vulling onder de transparante kern van de frame.
               background: `linear-gradient(180deg, #231E18 0%, ${PANEL} 30%, #16120E 100%)`,
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 30px -18px rgba(0,0,0,0.8)",
-              border: "1px solid rgba(0,0,0,0.6)",
+              borderRadius: 14,
             }}
           >
-            {/* Top accent-lijn in het actieve race-thema */}
-            <div
-              aria-hidden
-              className="absolute inset-x-0 top-0 h-[3px] rounded-t-2xl"
-              style={{ background: "hsl(var(--primary))" }}
-            />
-
-            {/* Schroefjes in de hoeken */}
-            {[
-              "top-2 left-2", "top-2 right-2", "bottom-2 left-2", "bottom-2 right-2",
-            ].map((pos) => (
-              <span
-                key={pos}
-                aria-hidden
-                className={`pointer-events-none absolute ${pos} w-2.5 h-2.5 rounded-full`}
-                style={{
-                  background: "radial-gradient(circle at 35% 30%, #4A4138 0%, #2A241D 55%, #0E0B08 100%)",
-                  boxShadow: "inset 0 1px 1px rgba(255,255,255,0.25), 0 1px 1px rgba(0,0,0,0.6)",
-                }}
-              />
-            ))}
-
             <div className="p-3 md:p-4">
               <div className="lg:grid lg:grid-cols-[1fr_240px] lg:gap-3">
                 {/* ── Linkerkolom: de instrumenten ── */}
@@ -955,31 +933,27 @@ export default function MyTeamPanel({
                   />
 
 
-                  {/* FM/AM-tuner */}
-                  <img
-                    src="/salle-de-course/radio-tuner.png"
-                    alt=""
-                    aria-hidden="true"
-                    className="w-full rounded-md"
-                    style={{ border: "1px solid rgba(0,0,0,0.6)" }}
-                  />
+                  {/* Echte radio-hardware (transparante PNG's, zelfdragend —
+                      géén wrapper-border om de transparante padding). */}
+                  <img src="/salle-de-course/radio-tuner.png" alt="" aria-hidden="true"
+                    className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
 
-                  {/* Fietser-telemetrie (decoratieve tegel uit het affiche) */}
-                  <img
-                    src="/salle-de-course/rider-telemetry.png"
-                    alt=""
-                    aria-hidden="true"
-                    className="w-full rounded-lg"
-                    style={{ border: "1px solid rgba(0,0,0,0.6)" }}
-                  />
+                  <img src="/salle-de-course/radio-grille.png" alt="" aria-hidden="true"
+                    className="w-1/2 h-auto self-start" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
 
-                  {/* Knoppen + Team Radio-microfoon */}
-                  <div
-                    className="rounded-lg p-2.5 flex items-start gap-2"
-                    style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.35)" }}
-                  >
-                    <img src="/salle-de-course/radio-knobs.png" alt="" aria-hidden="true" className="w-[32%] h-auto" />
-                    <img src="/salle-de-course/radio-mic.png" alt="" aria-hidden="true" className="flex-1 min-w-0 h-auto" />
+                  <img src="/salle-de-course/rider-telemetry.png" alt="" aria-hidden="true"
+                    className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
+
+                  {/* Control box (CHANNEL/RF GAIN/SQL) — vol breed */}
+                  <img src="/salle-de-course/radio-knobs.png" alt="" aria-hidden="true"
+                    className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
+
+                  {/* Team Radio-mic + krulkabel naast elkaar */}
+                  <div className="flex items-end gap-2">
+                    <img src="/salle-de-course/radio-mic.png" alt="" aria-hidden="true"
+                      className="w-[38%] h-auto" style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }} />
+                    <img src="/salle-de-course/radio-cable.png" alt="" aria-hidden="true"
+                      className="flex-1 min-w-0 h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
                   </div>
                 </div>
               </div>

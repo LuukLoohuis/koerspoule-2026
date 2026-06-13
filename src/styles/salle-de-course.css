@@ -32,6 +32,19 @@
   background-size: 3px 3px;
 }
 
+/* Fotorealistische cockpit-rand (asset #1) als 9-slice border-image.
+   Slices in px uit frame.png (1501×915): top 142, right 121, bottom 127,
+   left 121. De kern blijft transparant (geen `fill`) zodat de paneel-
+   achtergrond eronder zichtbaar is. Border-width = gerenderde randdikte. */
+.sdc-frame {
+  border-style: solid;
+  border-width: 20px 18px 18px 18px;
+  border-image: url("/salle-de-course/frame.png") 142 121 127 121 stretch;
+}
+@media (min-width: 768px) {
+  .sdc-frame { border-width: 30px 28px 28px 28px; }
+}
+
 /* Donker paneel met heel subtiele slijtage */
 .sdc-panel-texture {
   position: relative;
