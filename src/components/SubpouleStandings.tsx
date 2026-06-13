@@ -518,23 +518,25 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                           "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
                           "transition-all duration-150",
                           isComparing
-                            ? "opacity-100 translate-x-0 bg-accent/30 border-accent text-accent-foreground"
+                            ? "opacity-100 translate-x-0 bg-primary/10 border-primary text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.5)]"
                             : "opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 focus-visible:opacity-100 focus-visible:translate-x-0 border-border bg-card hover:bg-accent/20 text-muted-foreground",
                         )}
                         aria-label={isComparing ? "Vergelijking sluiten" : `Benchmark tegen ${m.team_name ?? m.display_name ?? "dit team"}`}
                         title={isComparing ? "Vergelijking sluiten" : "Benchmark jouw ploeg tegen dit team"}
                       >
-                        <Swords className="h-3 w-3" />
+                        <Swords className="h-3 w-3" strokeWidth={isComparing ? 2.5 : 2} />
                         {isComparing ? "Sluit" : "Vergelijk"}
                       </button>
                       <span
                         aria-hidden
                         className={cn(
                           "md:hidden inline-flex",
-                          isComparing ? "text-accent-foreground" : "text-muted-foreground/40",
+                          isComparing
+                            ? "text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]"
+                            : "text-muted-foreground/40",
                         )}
                       >
-                        <Swords className="h-3.5 w-3.5" />
+                        <Swords className="h-3.5 w-3.5" strokeWidth={isComparing ? 2.5 : 2} />
                       </span>
                     </>
                   )}
