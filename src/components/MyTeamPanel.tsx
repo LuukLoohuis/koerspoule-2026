@@ -27,7 +27,6 @@ import { cn } from "@/lib/utils";
 import { Check, Pencil, X } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
-import aapVolgwagen from "@/assets/aap-volgwagen.png.asset.json";
 
 
 type StagePoint = { stage_id: string; entry_id: string; points: number };
@@ -922,16 +921,6 @@ export default function MyTeamPanel({
                       <LiveKlok />
                     </span>
                   </div>
-
-                  {/* Aap met dartpijl — mascotte van de volgwagen */}
-                  <img
-                    src={aapVolgwagen.url}
-                    alt=""
-                    aria-hidden="true"
-                    className="w-full rounded-lg"
-                    style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.6)", aspectRatio: "1 / 1", objectFit: "cover" }}
-                  />
-
 
                   {/* Echte radio-hardware (transparante PNG's, zelfdragend —
                       géén wrapper-border om de transparante padding). */}
