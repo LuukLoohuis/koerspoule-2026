@@ -299,8 +299,13 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
     );
 
     // Smooth-scroll naar een sectie-anker (mobiele "spring naar"-knop).
-    const jumpTo = (id: string) =>
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Scroll naar een sectie-anker. Defer tot ná het sluiten van het menu
+    // (Radix herstelt focus → kan de scroll anders verstoren).
+    const jumpTo = (id: string) => {
+      window.setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 60);
+    };
 
     const heatmapPanel = (
       <div key={heatmapUnlocked ? "heatmap-unlocked" : "heatmap-locked"}>
@@ -438,22 +443,12 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="top" className="w-52">
-            <DropdownMenuItem asChild>
-              <button type="button" className="w-full" onClick={() => jumpTo("sec-klassementsverloop")}>Stijgers &amp; Dalers</button>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <button type="button" className="w-full" onClick={() => jumpTo("sec-daguitslag")}>Daguitslag</button>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <button type="button" className="w-full" onClick={() => jumpTo("sec-heatmap")}>Heatmap</button>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <button type="button" className="w-full" onClick={() => jumpTo("sec-deelnemers")}>Deelnemers</button>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <button type="button" className="w-full gap-2" onClick={() => jumpTo("sec-klassement")}>
-                <ArrowUp className="h-4 w-4" /> Bovenaan
-              </button>
+            <DropdownMenuItem onSelect={() => jumpTo("sec-klassementsverloop")}>Stijgers &amp; Dalers</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => jumpTo("sec-daguitslag")}>Daguitslag</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => jumpTo("sec-heatmap")}>Heatmap</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => jumpTo("sec-deelnemers")}>Deelnemers</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => jumpTo("sec-klassement")} className="gap-2">
+              <ArrowUp className="h-4 w-4" /> Bovenaan
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
