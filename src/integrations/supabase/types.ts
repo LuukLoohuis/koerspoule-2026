@@ -1259,6 +1259,7 @@ export type Database = {
           id: string
           name: string
           owner_user_id: string
+          slug: string
         }
         Insert: {
           code: string
@@ -1267,6 +1268,7 @@ export type Database = {
           id?: string
           name: string
           owner_user_id: string
+          slug: string
         }
         Update: {
           code?: string
@@ -1275,6 +1277,7 @@ export type Database = {
           id?: string
           name?: string
           owner_user_id?: string
+          slug?: string
         }
         Relationships: [
           {
@@ -1532,10 +1535,15 @@ export type Database = {
         }
         Returns: string
       }
-      create_subpoule: {
-        Args: { p_code: string; p_game_id: string; p_name: string }
-        Returns: string
-      }
+      create_subpoule:
+        | {
+            Args: { p_code: string; p_game_id: string; p_name: string }
+            Returns: string
+          }
+        | {
+            Args: { p_code?: string; p_game_id: string; p_name: string }
+            Returns: string
+          }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1550,6 +1558,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      ensure_unique_slug: { Args: { p_base: string }; Returns: string }
       full_recalculation: { Args: { p_game_id: string }; Returns: undefined }
       game_benchmark_data: { Args: { p_game_id: string }; Returns: Json }
       game_entries_detail: {
@@ -1683,6 +1692,15 @@ export type Database = {
         Args: { p_subpoule_id: string; p_user_id: string }
         Returns: undefined
       }
+      resolve_subpoule_by_slug: {
+        Args: { p_slug: string }
+        Returns: {
+          code: string
+          game_id: string
+          id: string
+          name: string
+        }[]
+      }
       revert_stage_to_draft: {
         Args: { p_stage_id: string }
         Returns: undefined
@@ -1727,6 +1745,7 @@ export type Database = {
         Args: { p_game_id: string }
         Returns: undefined
       }
+      slugify: { Args: { p_text: string }; Returns: string }
       soft_delete_chat_message: {
         Args: { p_message_id: string }
         Returns: undefined
