@@ -335,15 +335,19 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
     );
 
     // Scroll naar een sectie-anker. Sluit het menu expliciet en scroll daarna in
-    // een dubbele rAF (na Radix' sluit/focus-herstel) — betrouwbaarder dan een
-    // setTimeout, ook op iOS Safari. prefers-reduced-motion → instant.
+    // een dubbele rAF; via window.scrollTo met expliciete offset (betrouwbaarder
+    // dan scrollIntoView op iOS Safari). prefers-reduced-motion → instant.
+    const HEADER_OFFSET = 80;
     const jumpTo = (id: string) => {
       setActiveSection(id);
       setJumpOpen(false);
-      const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       requestAnimationFrame(() =>
         requestAnimationFrame(() => {
-          document.getElementById(id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+          const el = document.getElementById(id);
+          if (!el) return;
+          const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+          window.scrollTo({ top, behavior: reduce ? "auto" : "smooth" });
         }),
       );
     };
@@ -474,7 +478,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
         {/* ── MOBIEL: "spring naar"-knop, net boven de chatknop. Gecontroleerd
              menu (retro perkament-look) dat betrouwbaar naar de sectie-ankers
              scrollt; actief item volgt de scroll-spy. ── */}
-        <DropdownMenu open={jumpOpen} onOpenChange={setJumpOpen}>
+        <DropdownMenu open={jumpOpen} onOpenChange={setJumpOpen} modal={false}>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
