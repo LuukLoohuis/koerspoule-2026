@@ -24,19 +24,33 @@ export function useSubpoules(gameId?: string) {
     enabled: Boolean(supabase && gameId && user?.id),
     queryFn: async (): Promise<Subpoule[]> => {
       if (!supabase || !gameId || !user?.id) return [];
-      // RLS limits this to subpoules where user is owner or member
-      const { data, error } = await supabase
+      const COLS_WITH_SLUG = "id, game_id, name, code, slug, owner_user_id, created_at, subpoule_members(user_id)";
+      const COLS_NO_SLUG = "id, game_id, name, code, owner_user_id, created_at, subpoule_members(user_id)";
+      // RLS limits this to subpoules where user is owner or member.
+      let { data, error } = await supabase
         .from("subpoules")
-        .select("id, game_id, name, code, slug, owner_user_id, created_at, subpoule_members(user_id)")
+        .select(COLS_WITH_SLUG)
         .eq("game_id", gameId)
         .order("created_at", { ascending: true });
+      // Robuust: als de slug-migratie nog niet is toegepast (kolom bestaat niet,
+      // PostgREST 42703) val terug op een select zonder slug, zodat de lijst +
+      // join blijven werken. Slug wordt dan leeg gelaten.
+      if (error && (error.code === "42703" || /slug/i.test(error.message ?? ""))) {
+        const retry = await supabase
+          .from("subpoules")
+          .select(COLS_NO_SLUG)
+          .eq("game_id", gameId)
+          .order("created_at", { ascending: true });
+        data = retry.data as typeof data;
+        error = retry.error;
+      }
       if (error) throw error;
       return (data ?? []).map((s) => ({
         id: s.id,
         game_id: s.game_id,
         name: s.name,
         code: s.code,
-        slug: s.slug,
+        slug: (s as { slug?: string }).slug ?? "",
         owner_user_id: s.owner_user_id,
         created_at: s.created_at,
         member_count: (s.subpoule_members as Array<{ user_id: string }> | null)?.length ?? 0,
