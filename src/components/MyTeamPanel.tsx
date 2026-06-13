@@ -908,27 +908,27 @@ export default function MyTeamPanel({
                     is live (LiveKlok), de rest zijn beeld-elementen uit
                     /public/salle-de-course/. ── */}
                 <div aria-hidden className="hidden lg:flex flex-col gap-2.5 pointer-events-none select-none">
-                  {/* LIVE-badge + digitale klok */}
-                  <div
-                    className="rounded-lg px-3 py-2 flex items-center justify-between"
-                    style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.35)" }}
-                  >
-                    <img src="/salle-de-course/live-badge.png" alt="" aria-hidden="true" className="h-6 w-auto" />
+                  {/* 1) LIVE + grille als één paneel. De ingebakken klok wordt
+                         afgedekt door de échte live klok (LiveKlok) op het
+                         venster, zodat 'ie blijft tikken. */}
+                  <div className="relative w-full">
+                    <img src="/salle-de-course/live-grille.png" alt="" aria-hidden="true"
+                      className="w-full h-auto block" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
+                    {/* Live klok over het klok-venster (dekt de statische digits af) */}
                     <span
-                      className="rounded px-2 py-0.5"
-                      style={{ background: PANEL, border: "1px solid rgba(0,0,0,0.6)" }}
+                      className="absolute flex items-center justify-center"
+                      style={{
+                        left: "46.5%", top: "8%", width: "32%", height: "23%",
+                        background: "#0c0a07", borderRadius: "10%",
+                      }}
                     >
                       <LiveKlok />
                     </span>
                   </div>
 
                   {/* Echte radio-hardware (transparante PNG's, zelfdragend).
-                      Volgorde conform affiche: rooster → fietser → tuner →
+                      Volgorde conform affiche: rooster+LIVE → fietser → tuner →
                       control-box met kabel naar de mic. */}
-
-                  {/* 1) Luidsprekergrille — volle breedte, direct onder LIVE */}
-                  <img src="/salle-de-course/radio-grille.png" alt="" aria-hidden="true"
-                    className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
 
                   {/* 2) Fietser-telemetrie */}
                   <img src="/salle-de-course/rider-telemetry.png" alt="" aria-hidden="true"
