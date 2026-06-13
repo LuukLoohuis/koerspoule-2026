@@ -28,7 +28,7 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Check, Pencil, X, Target, Crown, ClipboardList, Flag, Shirt, type LucideIcon } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
-import type { ReactNode, CSSProperties } from "react";
+import type { ReactNode } from "react";
 
 
 type StagePoint = { stage_id: string; entry_id: string; points: number };
@@ -130,31 +130,6 @@ function TunerBar() {
   );
 }
 
-/** Decoratieve radio-knop met label (CSS, DESIGN-SPEC §Radio Knob). */
-function Knob({ label, rot = 0 }: { label: string; rot?: number }) {
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="sdc-knob" style={{ "--sdc-knob-rot": `${rot}deg` } as CSSProperties} />
-      <span className="sdc-knob-label">{label}</span>
-    </div>
-  );
-}
-
-/** Decoratieve fietser-schets in chalk-line stijl (inline SVG, geen data). */
-function ScopeSketch() {
-  return (
-    <svg aria-hidden viewBox="0 0 120 56" className="w-full" style={{ height: 46, display: "block" }}>
-      <g stroke="rgba(237,227,204,0.45)" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke">
-        <circle cx="30" cy="42" r="11" />
-        <circle cx="92" cy="42" r="11" />
-        <path d="M30 42 L52 42 L66 24 L80 42 M52 42 L62 26 L92 42 M66 24 L70 20" />
-        <path d="M58 20 q7 -7 13 0" />
-        <circle cx="75" cy="13" r="3.5" />
-      </g>
-    </svg>
-  );
-}
-
 /** Vier hoek-schroefjes voor een paneel (DESIGN-SPEC §Hoek-schroefjes). */
 function Screws({ paper = false }: { paper?: boolean }) {
   const cls = paper ? "sdc-screw sdc-screw--paper" : "sdc-screw";
@@ -165,44 +140,6 @@ function Screws({ paper = false }: { paper?: boolean }) {
       <span className={cls} style={{ bottom: 6, left: 6 }} />
       <span className={cls} style={{ bottom: 6, right: 6 }} />
     </>
-  );
-}
-
-/** Desktop-radioconsole: drie ingelegde instrumentpanelen (recessed insets)
- *  binnen hetzelfde frame. Volledig decoratief (aria-hidden); alleen LiveKlok
- *  toont echte tijd. */
-function RadioConsole() {
-  return (
-    <div aria-hidden className="hidden lg:flex flex-col gap-3 pointer-events-none select-none">
-      {/* LIVE + grille + live klok */}
-      <div className="sdc-inset p-3">
-        <Screws />
-        <div className="flex items-center justify-between">
-          <span className="sdc-live-badge"><span className="sdc-live-dot" />LIVE</span>
-          <LiveKlok />
-        </div>
-        <div className="sdc-grille mt-2.5" style={{ height: 34, borderRadius: 6, opacity: 0.5 }} />
-      </div>
-      {/* Tuner + VOLUME/SQUELCH + fietser-schets */}
-      <div className="sdc-inset p-3">
-        <Screws />
-        <TunerBar />
-        <div className="flex items-center justify-around mt-2">
-          <Knob label="Volume" rot={-42} />
-          <Knob label="Squelch" rot={28} />
-        </div>
-        <div className="mt-2"><ScopeSketch /></div>
-      </div>
-      {/* Comm-unit: CHANNEL / RF GAIN / SQL */}
-      <div className="sdc-inset p-3">
-        <Screws />
-        <div className="flex items-center justify-around">
-          <Knob label="Channel" rot={-18} />
-          <Knob label="RF Gain" rot={12} />
-          <Knob label="SQL" rot={58} />
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -951,7 +888,7 @@ export default function MyTeamPanel({
 
                   {/* Tableau de Bord — 2×3 instrumenten */}
                   <div className="p-3.5 md:p-4" style={{ borderBottom: "1px solid rgba(26,22,18,0.22)" }}>
-                    <div className="mb-2.5 flex items-center justify-between gap-2">
+                    <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
                       <Stamp>— Tableau de Bord —</Stamp>
                       {/* Subpoule-kiezer: alleen tonen bij meerdere subpoules. De
                           Sous-peloton-instrumenten volgen deze keuze. */}
@@ -1199,10 +1136,29 @@ export default function MyTeamPanel({
                   </div>
                 </div>
 
-                {/* ── Rechterkolom: radioconsole als ingelegde CSS/SVG-instrumenten
-                    binnen hetzelfde frame (geen zwevende PNG's). Decoratief;
-                    alleen LiveKlok is live. ── */}
-                <RadioConsole />
+                {/* ── Rechterkolom: radio-chrome met echte assets (desktop only).
+                    Puur decoratief: aria-hidden + pointer-events-none. De klok
+                    is live (LiveKlok), de rest zijn beeld-elementen uit
+                    /public/salle-de-course/. ── */}
+                <div aria-hidden className="hidden lg:flex flex-col gap-2.5 pointer-events-none select-none">
+                  {/* 1) LIVE + grille als één paneel; live klok over het venster. */}
+                  <div className="relative w-full">
+                    <img src="/salle-de-course/live-grille.png" alt="" aria-hidden="true"
+                      className="w-full h-auto block" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
+                    <span
+                      className="absolute flex items-center justify-center"
+                      style={{ left: "46.5%", top: "8%", width: "32%", height: "23%", background: "#0c0a07", borderRadius: "10%" }}
+                    >
+                      <LiveKlok />
+                    </span>
+                  </div>
+                  {/* 2) Tuner + VOLUME/SQUELCH + fietser-telemetrie. */}
+                  <img src="/salle-de-course/tuner-telemetry.png" alt="" aria-hidden="true"
+                    className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
+                  {/* 3) Comm-unit: control-box + kabel + mic. */}
+                  <img src="/salle-de-course/radio-comm.png" alt="" aria-hidden="true"
+                    className="w-full h-auto" style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }} />
+                </div>
               </div>
 
               {/* ── Onderbalk: étape-cockpit met decoratief hoogteprofiel
