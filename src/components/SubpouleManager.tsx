@@ -10,14 +10,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import PelotonChat from "@/components/PelotonChat";
 import SubpouleStandings from "@/components/SubpouleStandings";
 import DaguitslagChart from "@/components/DaguitslagChart";
-import SubpouleBenchmark from "@/components/SubpouleBenchmark";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Swords, Flame, Share2 } from "lucide-react";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Flame, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MobielTabBalk } from "@/components/MobielTabBalk";
 
 export default function SubpouleManager({ gameId, gameName, gameStatus }: Props = {}) {
   const { toast } = useToast();
@@ -25,7 +24,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
   const { data: currentGame } = useCurrentGame();
   const effectiveGameId = gameId ?? currentGame?.id;
   const effectiveStatus = gameStatus ?? currentGame?.status;
-  const benchmarkUnlocked = ["live", "locked", "finished", "closed"].includes(String(effectiveStatus ?? ""));
+  const heatmapUnlocked = ["live", "locked", "finished", "closed"].includes(String(effectiveStatus ?? ""));
   const game = gameId
     ? { id: gameId, name: gameName ?? "" }
     : currentGame;
@@ -33,6 +32,8 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("chart");
+  // Mobiel: chat opent als floating bottom-sheet i.p.v. een tab.
+  const [chatOpen, setChatOpen] = useState(false);
   const [createName, setCreateName] = useState("");
   const [createCode, setCreateCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
@@ -47,7 +48,8 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
       if (match) {
         setActiveId(spId);
         if (view === "koerscafe") {
-          setActiveTab("chat");
+          setActiveTab("chat"); // desktop-tab
+          setChatOpen(true);    // mobiel bottom-sheet
         }
         // Clean up query params so the URL stays clean
         const url = new URL(window.location.href);
@@ -82,13 +84,14 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
       toast({ title: "Subpoule aangemaakt", description: createName });
       setCreateName(""); setCreateCode("");
       setActiveId(id);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("[SubpouleManager] create failed", e);
+      const err = e as { message?: string; error_description?: string; details?: string; hint?: string } | null;
       const msg =
-        e?.message ||
-        e?.error_description ||
-        e?.details ||
-        e?.hint ||
+        err?.message ||
+        err?.error_description ||
+        err?.details ||
+        err?.hint ||
         "Onbekende fout. Probeer een andere naam of code.";
       toast({ title: "Aanmaken mislukt", description: msg, variant: "destructive" });
     }
@@ -176,6 +179,87 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
 
   // Drilldown view: when a subpoule is selected, show only its detail tab
   if (active && activeId) {
+    // ── Gedeelde panelen — hergebruikt op mobiel (één scrollpagina) en
+    //    desktop (tabs), zodat er geen render-duplicatie ontstaat. ──
+    const membersCard = (
+      <Card className="retro-border">
+        <CardHeader className="border-b-2 border-foreground bg-secondary/30">
+          <CardTitle className="font-display flex items-center justify-between gap-2 flex-wrap">
+            <span className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              {active.name}
+              {active.is_owner && (
+                <Badge variant="secondary" className="text-xs gap-1">
+                  <Crown className="h-3 w-3" /> Eigenaar
+                </Badge>
+              )}
+            </span>
+            <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
+              Code: {active.code}
+              <button
+                onClick={() => copyCode(active.code)}
+                className="hover:text-foreground"
+                title="Kopieer code"
+              >
+                <Copy className="h-3 w-3" />
+              </button>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="divide-y divide-border">
+            {members.map((m) => (
+              <div key={m.user_id} className="p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{m.display_name}</span>
+                  {m.user_id === active.owner_user_id && (
+                    <Badge variant="secondary" className="text-xs gap-1">
+                      <Crown className="h-3 w-3" /> Eigenaar
+                    </Badge>
+                  )}
+                  {m.user_id === user.id && (
+                    <Badge variant="outline" className="text-xs">jij</Badge>
+                  )}
+                </div>
+                {active.is_owner && m.user_id !== active.owner_user_id && (
+                  <Button
+                    variant="ghost" size="sm"
+                    onClick={() => handleRemoveMember(active.id, m.user_id, m.display_name)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <UserMinus className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+
+    const chartPanels = (
+      <>
+        <SubpouleStandings subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
+        <DaguitslagChart subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
+      </>
+    );
+
+    const heatmapPanel = (
+      <div key={heatmapUnlocked ? "heatmap-unlocked" : "heatmap-locked"}>
+        {heatmapUnlocked ? (
+          <SubpouleHeatmap subpouleId={active.id} />
+        ) : (
+          <Card className="retro-border">
+            <CardContent className="p-4 text-sm text-muted-foreground text-center space-y-2">
+              <Flame className="h-8 w-8 text-muted-foreground/50 mx-auto" />
+              <p className="font-display font-bold text-foreground">Heatmap nog vergrendeld</p>
+              <p>De heatmap gaat open zodra de admin de inschrijving sluit en de koers live zet.</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2">
@@ -225,31 +309,23 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
           </button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        {/* ── MOBIEL: geen geneste tabbalk. Eén doorlopende scrollpagina:
+             klassement + etappe-bar → daguitslag → heatmap. Chat opent als
+             floating bottom-sheet (knop hieronder). ── */}
+        <div className="md:hidden space-y-4">
+          {chartPanels}
+          {heatmapPanel}
+        </div>
 
-          {/* Mobile tab nav — MobielTabBalk */}
-          <div className="md:hidden mb-2">
-            <MobielTabBalk
-              tabs={[
-                { key: "chat",      label: "Chat",      icon: MessageCircle, disabled: false              },
-                { key: "chart",     label: "Grafiek",   icon: TrendingUp,    disabled: false              },
-                { key: "benchmark", label: "Benchmark", icon: Swords,        disabled: !benchmarkUnlocked },
-                { key: "heatmap",   label: "Heatmap",   icon: Flame,         disabled: !benchmarkUnlocked },
-              ]}
-              active={activeTab}
-              onChange={(k) => !["benchmark","heatmap"].includes(k) || benchmarkUnlocked ? setActiveTab(k as typeof activeTab) : undefined}
-            />
-          </div>
-
-          {/* Desktop tab nav — flush met de panelen eronder (geen -mx-1 px-1
-              meer; die maakte de balk 8px breder dan de StageBar/standings). */}
-          <div className="hidden md:block overflow-x-auto mb-1" style={{ scrollbarWidth: "none" }}>
+        {/* ── DESKTOP: behoud de tabs (Chat / Grafiek / Heatmap, geen Benchmark). ── */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden md:block w-full">
+          {/* Desktop tab nav — flush met de panelen eronder. */}
+          <div className="overflow-x-auto mb-1" style={{ scrollbarWidth: "none" }}>
             <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
               {([
-                { value: "chat",      label: "Chat",      Icon: MessageCircle, disabled: false              },
-                { value: "chart",     label: "Grafiek",   Icon: TrendingUp,    disabled: false              },
-                { value: "benchmark", label: "Benchmark", Icon: Swords,        disabled: !benchmarkUnlocked },
-                { value: "heatmap",   label: "Heatmap",   Icon: Flame,         disabled: !benchmarkUnlocked },
+                { value: "chat",    label: "Chat",    Icon: MessageCircle, disabled: false            },
+                { value: "chart",   label: "Grafiek", Icon: TrendingUp,    disabled: false            },
+                { value: "heatmap", label: "Heatmap", Icon: Flame,         disabled: !heatmapUnlocked },
               ] as const).map(({ value, label, Icon, disabled }) => (
                 <button
                   key={value}
@@ -274,95 +350,48 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
 
           <TabsContent value="chat" className="pt-3 space-y-3">
             <PelotonChat subpoolName={active.name} subpoolId={active.id} />
-            <Card className="retro-border">
-              <CardHeader className="border-b-2 border-foreground bg-secondary/30">
-                <CardTitle className="font-display flex items-center justify-between gap-2 flex-wrap">
-                  <span className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    {active.name}
-                    {active.is_owner && (
-                      <Badge variant="secondary" className="text-xs gap-1">
-                        <Crown className="h-3 w-3" /> Eigenaar
-                      </Badge>
-                    )}
-                  </span>
-                  <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-                    Code: {active.code}
-                    <button
-                      onClick={() => copyCode(active.code)}
-                      className="hover:text-foreground"
-                      title="Kopieer code"
-                    >
-                      <Copy className="h-3 w-3" />
-                    </button>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-border">
-                  {members.map((m) => (
-                    <div key={m.user_id} className="p-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{m.display_name}</span>
-                        {m.user_id === active.owner_user_id && (
-                          <Badge variant="secondary" className="text-xs gap-1">
-                            <Crown className="h-3 w-3" /> Eigenaar
-                          </Badge>
-                        )}
-                        {m.user_id === user.id && (
-                          <Badge variant="outline" className="text-xs">jij</Badge>
-                        )}
-                      </div>
-                      {active.is_owner && m.user_id !== active.owner_user_id && (
-                        <Button
-                          variant="ghost" size="sm"
-                          onClick={() => handleRemoveMember(active.id, m.user_id, m.display_name)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <UserMinus className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {membersCard}
           </TabsContent>
           <TabsContent value="chart" className="pt-3 space-y-4">
-            <SubpouleStandings subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
-            <DaguitslagChart subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
-          </TabsContent>
-          <TabsContent value="benchmark" className="pt-3">
-            <div key={benchmarkUnlocked ? "unlocked" : "locked"}>
-              {benchmarkUnlocked ? (
-                <SubpouleBenchmark subpouleId={active.id} gameId={effectiveGameId} />
-              ) : (
-                <Card className="retro-border">
-                  <CardContent className="p-4 text-sm text-muted-foreground text-center space-y-2">
-                    <Swords className="h-8 w-8 text-muted-foreground/50 mx-auto" />
-                    <p className="font-display font-bold text-foreground">Benchmark nog vergrendeld</p>
-                    <p>De teamvergelijking gaat open zodra de admin de inschrijving sluit en de koers live zet.</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+            {chartPanels}
           </TabsContent>
           <TabsContent value="heatmap" className="pt-3">
-            <div key={benchmarkUnlocked ? "heatmap-unlocked" : "heatmap-locked"}>
-              {benchmarkUnlocked ? (
-                <SubpouleHeatmap subpouleId={active.id} />
-              ) : (
-                <Card className="retro-border">
-                  <CardContent className="p-4 text-sm text-muted-foreground text-center space-y-2">
-                    <Flame className="h-8 w-8 text-muted-foreground/50 mx-auto" />
-                    <p className="font-display font-bold text-foreground">Heatmap nog vergrendeld</p>
-                    <p>De heatmap gaat open zodra de admin de inschrijving sluit en de koers live zet.</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+            {heatmapPanel}
           </TabsContent>
         </Tabs>
+
+        {/* ── MOBIEL: floating chat-knop, net boven de globale BottomNav
+             (fixed bottom-0 z-50, ~60px). z-40 = onder de sheet-overlay (z-50)
+             maar boven content. ── */}
+        <button
+          type="button"
+          onClick={() => setChatOpen(true)}
+          aria-label="Open koerscafé-chat"
+          className="md:hidden fixed right-4 bottom-[72px] z-40 inline-flex items-center justify-center h-14 w-14 rounded-full bg-primary text-primary-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
+        >
+          <MessageCircle className="h-6 w-6" />
+          {/* TODO: ongelezen-badge zodra PelotonChat/chat-hook een unread-count
+              naar buiten geeft. Nu geen badge (geen telling verzinnen). */}
+        </button>
+
+        {/* Chat bottom-sheet (mobiel). Hoog genoeg voor chat, eigen scroll. */}
+        <Sheet open={chatOpen} onOpenChange={setChatOpen}>
+          <SheetContent
+            side="bottom"
+            className="md:hidden h-[88vh] p-0 flex flex-col gap-0 rounded-t-2xl"
+          >
+            <SheetHeader className="px-4 py-3 border-b-2 border-foreground bg-secondary/30 text-left shrink-0">
+              <SheetTitle className="font-display flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                Koerscafé — {active.name}
+              </SheetTitle>
+            </SheetHeader>
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+              <PelotonChat subpoolName={active.name} subpoolId={active.id} />
+              {membersCard}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     );
   }
