@@ -13,7 +13,7 @@ Mijn Ploeg, `src/components/MyTeamPanel.tsx`). Tokens staan gescoped in
 |-------|-----|-------|
 | INK | #0F0F10 | Primary text, outlines |
 | PANEL | #1A1A1B | Dark instrument panels, radio section |
-| PAPER | #E9E2D3 | Light card background, metric cards |
+| PAPER | #F5EDD8 | Light card background, metric cards |
 | AMBER | #D49A1A | Primary accent, flip clock digits, active states |
 | OLIVE | #5C6B3B | Secondary accent, positive deltas |
 | RED | #B94A48 | Negative deltas, alerts |
@@ -30,7 +30,7 @@ Mijn Ploeg, `src/components/MyTeamPanel.tsx`). Tokens staan gescoped in
 ## Component patterns
 
 ### Metric Card (light — SOUS-PELOTON style)
-- Background: `--sdc-paper` (#E9E2D3)
+- Background: `--sdc-paper` (#F5EDD8)
 - Border: 1px solid rgba(15,15,16,0.15)
 - Optional left accent border: 3px solid `--sdc-amber` of `--sdc-olive`
 - Label: font-mono uppercase text-[9px] tracking-[0.18em] `--sdc-muted`
@@ -90,7 +90,7 @@ Mijn Ploeg, `src/components/MyTeamPanel.tsx`). Tokens staan gescoped in
 
 ## Texture classes (in salle-de-course.css)
 
-- `.sdc-paper-texture`: bg #E9E2D3 + subtiele noise (dot-grid pseudo)
+- `.sdc-paper-texture`: bg #F5EDD8 + subtiele noise (dot-grid pseudo)
 - `.sdc-panel-texture`: bg #1A1A1B + zeer subtiele kras-overlay (::after)
 - `.sdc-grille`: dot-grid via `radial-gradient(circle, #333 1px, transparent 1px)`, size 6px 6px
 

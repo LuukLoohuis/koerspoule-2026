@@ -658,7 +658,7 @@ export default function MyTeamPanel({
           decoratief, aria-hidden, verdwijnt op mobiel. CTA + TeamSheet eronder. */}
       {(() => {
         const PANEL = "#1A1612";
-        const PAPER = "#F5ECD7";
+        const PAPER = "#F5EDD8";
         const INK = "#1A1612";
         const AMBER = "hsl(var(--vintage-gold))";
         const hairline = "1px solid rgba(26,22,18,0.18)";

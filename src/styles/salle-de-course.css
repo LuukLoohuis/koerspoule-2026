@@ -8,7 +8,7 @@
   /* Colors */
   --sdc-ink: #0F0F10;
   --sdc-panel: #1A1A1B;
-  --sdc-paper: #E9E2D3;
+  --sdc-paper: #F5EDD8;
   --sdc-amber: #D49A1A;
   --sdc-olive: #5C6B3B;
   --sdc-red: #B94A48;
@@ -27,7 +27,7 @@
 
 /* Papier met subtiele noise */
 .sdc-paper-texture {
-  background-color: var(--sdc-paper, #E9E2D3);
+  background-color: var(--sdc-paper, #F5EDD8);
   background-image: radial-gradient(rgba(15, 15, 16, 0.06) 1px, transparent 1px);
   background-size: 3px 3px;
 }
