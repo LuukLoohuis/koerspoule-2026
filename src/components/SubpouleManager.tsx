@@ -17,8 +17,19 @@ import SubpouleStandings from "@/components/SubpouleStandings";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import DaguitslagChart from "@/components/DaguitslagChart";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Flame, Share2, ListTree, ArrowUp } from "lucide-react";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Flame, Share2, ListTree, ArrowUp, BarChart3, ArrowUpDown, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Mobiele "spring naar"-secties (volgorde = scrollvolgorde). Icoon per item.
+type JumpItem = { id: string; label: string; Icon: LucideIcon; divider?: boolean };
+const JUMP_ITEMS: JumpItem[] = [
+  { id: "sec-klassementsverloop", label: "Stijgers & Dalers", Icon: TrendingUp },
+  { id: "sec-daguitslag", label: "Daguitslag", Icon: BarChart3 },
+  { id: "sec-heatmap", label: "Heatmap", Icon: Flame },
+  { id: "sec-deelnemers", label: "Deelnemers", Icon: Users },
+  { id: "sec-klassement", label: "Bovenaan", Icon: ArrowUp, divider: true },
+];
+const SECTION_IDS = ["sec-klassement", "sec-klassementsverloop", "sec-daguitslag", "sec-heatmap", "sec-deelnemers"];
 
 export default function SubpouleManager({ gameId, gameName, gameStatus }: Props = {}) {
   const { toast } = useToast();
@@ -36,6 +47,9 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
   const [activeTab, setActiveTab] = useState("chart");
   // Mobiel: chat opent als floating bottom-sheet i.p.v. een tab.
   const [chatOpen, setChatOpen] = useState(false);
+  // Mobiel: "spring naar"-menu (gecontroleerd) + scroll-spy actieve sectie.
+  const [jumpOpen, setJumpOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("sec-klassement");
   const [createName, setCreateName] = useState("");
   const [createCode, setCreateCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
@@ -96,6 +110,28 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
       setPendingOpen(null);
     }
   }, [pendingOpen, subpoules, isLoading, join, toast]);
+
+  // Scroll-spy: markeer de sectie die het meest in beeld is als actief item.
+  useEffect(() => {
+    if (!activeId) return;
+    const els = SECTION_IDS
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => Boolean(el));
+    if (els.length === 0) return;
+    const ratios = new Map<string, number>();
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => ratios.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0));
+        let best = "";
+        let bestR = -1;
+        ratios.forEach((r, id) => { if (r > bestR) { bestR = r; best = id; } });
+        if (best) setActiveSection(best);
+      },
+      { threshold: [0.1, 0.25, 0.5, 0.75], rootMargin: "-80px 0px -45% 0px" },
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [activeId]);
 
   const active = useMemo(
     () => (activeId ? subpoules.find((s) => s.id === activeId) ?? null : null),
@@ -298,13 +334,18 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
       </>
     );
 
-    // Smooth-scroll naar een sectie-anker (mobiele "spring naar"-knop).
-    // Scroll naar een sectie-anker. Defer tot ná het sluiten van het menu
-    // (Radix herstelt focus → kan de scroll anders verstoren).
+    // Scroll naar een sectie-anker. Sluit het menu expliciet en scroll daarna in
+    // een dubbele rAF (na Radix' sluit/focus-herstel) — betrouwbaarder dan een
+    // setTimeout, ook op iOS Safari. prefers-reduced-motion → instant.
     const jumpTo = (id: string) => {
-      window.setTimeout(() => {
-        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 60);
+      setActiveSection(id);
+      setJumpOpen(false);
+      const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          document.getElementById(id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+        }),
+      );
     };
 
     const heatmapPanel = (
@@ -430,26 +471,50 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
           {deelnemersSection}
         </div>
 
-        {/* ── MOBIEL: "spring naar"-knop, net boven de chatknop. Opent een menu
-             dat smooth naar de sectie-ankers scrollt. ── */}
-        <DropdownMenu>
+        {/* ── MOBIEL: "spring naar"-knop, net boven de chatknop. Gecontroleerd
+             menu (retro perkament-look) dat betrouwbaar naar de sectie-ankers
+             scrollt; actief item volgt de scroll-spy. ── */}
+        <DropdownMenu open={jumpOpen} onOpenChange={setJumpOpen}>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
               aria-label="Spring naar sectie"
-              className="md:hidden fixed right-4 bottom-[136px] z-40 inline-flex items-center justify-center h-14 w-14 rounded-full bg-secondary text-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
+              className="md:hidden fixed right-4 bottom-[136px] z-40 inline-flex items-center justify-center h-12 w-12 rounded-full bg-card text-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
             >
-              <ListTree className="h-6 w-6" />
+              <ListTree className="h-5 w-5" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" side="top" className="w-52">
-            <DropdownMenuItem onSelect={() => jumpTo("sec-klassementsverloop")}>Stijgers &amp; Dalers</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => jumpTo("sec-daguitslag")}>Daguitslag</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => jumpTo("sec-heatmap")}>Heatmap</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => jumpTo("sec-deelnemers")}>Deelnemers</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => jumpTo("sec-klassement")} className="gap-2">
-              <ArrowUp className="h-4 w-4" /> Bovenaan
-            </DropdownMenuItem>
+          <DropdownMenuContent
+            align="end"
+            side="top"
+            sideOffset={8}
+            className="w-56 p-0 rounded-xl overflow-hidden border-2 border-foreground bg-card shadow-[4px_4px_0_hsl(var(--foreground))]"
+          >
+            {/* Kopbalk in thema-accent */}
+            <div className="flex items-center gap-2 px-3 py-2 border-b-2 border-foreground bg-[hsl(var(--vintage-gold))] text-foreground font-mono uppercase tracking-[0.2em] text-[10px] font-bold">
+              <ArrowUpDown className="h-3.5 w-3.5" />
+              Spring naar
+            </div>
+            <div className="p-1">
+              {JUMP_ITEMS.map((it) => {
+                const itemActive = activeSection === it.id;
+                return (
+                  <div key={it.id}>
+                    {it.divider && <div className="my-1 border-t border-border" />}
+                    <DropdownMenuItem
+                      onSelect={(e) => { e.preventDefault(); jumpTo(it.id); }}
+                      className={cn(
+                        "font-mono text-[13px] rounded-lg py-2.5 px-2.5 gap-2.5 cursor-pointer border-l-[3px] border-transparent focus:bg-secondary/60 hover:bg-secondary/60",
+                        itemActive && "border-primary bg-primary/10",
+                      )}
+                    >
+                      <it.Icon className={cn("h-4 w-4 shrink-0", itemActive ? "text-primary" : "text-[hsl(var(--vintage-gold))]")} />
+                      {it.label}
+                    </DropdownMenuItem>
+                  </div>
+                );
+              })}
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
 
