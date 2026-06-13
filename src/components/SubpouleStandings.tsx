@@ -39,9 +39,6 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
 
   const [compareId, setCompareId] = useState<string | null>(null);
   const [etappeIdx, setEtappeIdx] = useState<number>(0);
-  // Balkhoogte-modus voor de etappe-bar: relatieve dagprestatie binnen de
-  // subpoule, op punten of op positie. (Niet de km-afstand zoals Uitslagen.)
-  const [barMode, setBarMode] = useState<"points" | "position">("points");
   // Auto-scroll naar de benchmark zodra een team gekozen is — de vergelijking
   // rendert onder de tabel en viel anders buiten beeld (gemiste feedback).
   const compareRef = useRef<HTMLDivElement>(null);
@@ -85,7 +82,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
     return m;
   }, [myEntry, stagePoints]);
 
-  // Relatieve balkhoogte per etappe (alleen subpoule). Ondervloer zodat elke
+  // Relatieve balkhoogte per etappe (alleen subpoule): op POSITIE binnen de
+  // subpoule die dag. Rang 1 = vol, laatste = ondervloer. Ondervloer zodat elke
   // positieve score zichtbaar blijft; 0 dagpunten = fractie 0 = lege balk.
   const barFractionByStageId = useMemo(() => {
     const MIN_VISIBLE_FRAC = 0.2;
@@ -107,24 +105,17 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
       const mine = m?.get(myEntry.id) ?? 0;
       if (mine <= 0) { res.set(s.id, 0); return; }
 
-      if (barMode === "points") {
-        let max = 0;
-        m?.forEach((v) => { if (v > max) max = v; });
-        const frac = max > 0 ? MIN_VISIBLE_FRAC + (1 - MIN_VISIBLE_FRAC) * Math.min(1, mine / max) : 1;
-        res.set(s.id, frac);
-      } else {
-        // Positie: rang binnen subpoule-leden met >0 dagpunten (hoogste = 1).
-        const positives = m ? [...m.values()].filter((v) => v > 0) : [];
-        const N = positives.length;
-        let better = 0;
-        m?.forEach((v) => { if (v > mine) better++; });
-        const rank = better + 1;
-        const frac = N <= 1 ? 1 : MIN_VISIBLE_FRAC + (1 - MIN_VISIBLE_FRAC) * ((N - rank) / (N - 1));
-        res.set(s.id, frac);
-      }
+      // Positie: rang binnen subpoule-leden met >0 dagpunten (hoogste = 1).
+      const positives = m ? [...m.values()].filter((v) => v > 0) : [];
+      const N = positives.length;
+      let better = 0;
+      m?.forEach((v) => { if (v > mine) better++; });
+      const rank = better + 1;
+      const frac = N <= 1 ? 1 : MIN_VISIBLE_FRAC + (1 - MIN_VISIBLE_FRAC) * ((N - rank) / (N - 1));
+      res.set(s.id, frac);
     });
     return res;
-  }, [myEntry, stagePoints, stages, barMode]);
+  }, [myEntry, stagePoints, stages]);
 
   // Cumulative points up to a given stage index
   const cumUpTo = (upToIdx: number) => {
@@ -159,7 +150,21 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
     }
 
     const curMap = cumUpTo(etappeIdx);
-    const prevMap = etappeIdx > 0 ? cumUpTo(etappeIdx - 1) : new Map<string, number>();
+    // Baseline voor positiewisseling = de vórige rit MET data (niet simpelweg
+    // idx-1). Anders vergelijk je met een lege/GC-tussenstap die dezelfde
+    // cumulatieve stand geeft → ruis-pijltjes. Geen eerdere data → geen delta.
+    const stageDayTotal = (idx: number) => {
+      const sid = stages[idx]?.id;
+      if (!sid) return 0;
+      let t = 0;
+      stagePoints.forEach((sp) => { if (sp.stage_id === sid) t += sp.points; });
+      return t;
+    };
+    let prevDataIdx = -1;
+    for (let i = etappeIdx - 1; i >= 0; i--) {
+      if (stageDayTotal(i) > 0) { prevDataIdx = i; break; }
+    }
+    const prevMap = prevDataIdx >= 0 ? cumUpTo(prevDataIdx) : new Map<string, number>();
     // Voorspellingsbonus (GC + truien): total_points bevat hem, entry_prediction_points
     // is per RLS niet leesbaar voor andere deelnemers. Bonus = total_points − som alle
     // etappepunten. Vóór de slotrit is dit 0. Telt alleen mee in de GC-eindstand,
@@ -218,7 +223,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
     return rows.map((row, i) => {
       const rank = i + 1;
       const prevRank = prevRankByUser.get(row.user_id);
-      const delta = etappeIdx > 0 && prevRank != null ? prevRank - rank : null;
+      const delta = prevDataIdx >= 0 && prevRank != null ? prevRank - rank : null;
       return { ...row, rank, delta };
     });
 
@@ -269,33 +274,6 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           // (2px border + 3px offset-shadow) en breedte krijgt als de
           // standings-kaart eronder. StageBar zelf chromeless.
           <div className="retro-border bg-gradient-to-br from-card via-card to-secondary/20 p-3">
-            {/* Segmented toggle: balkhoogte op punten of positie. */}
-            <div className="flex items-center justify-between gap-2 mb-2.5">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                Balkhoogte
-              </span>
-              <div className="inline-flex rounded-full border border-foreground/20 bg-secondary/40 p-0.5">
-                {([
-                  { key: "points", label: "Punten" },
-                  { key: "position", label: "Positie" },
-                ] as const).map((opt) => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => setBarMode(opt.key)}
-                    aria-pressed={barMode === opt.key}
-                    className={cn(
-                      "px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider transition-colors",
-                      barMode === opt.key
-                        ? "bg-[hsl(var(--vintage-gold))] text-background shadow-sm"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
             <StageBar
               chromeless
               stages={dataWithFraction}
@@ -365,7 +343,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           )}
           <div className="shrink-0 min-w-[2.5rem] md:min-w-[3rem] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Pts</div>
           <div className="shrink-0 min-w-[48px] md:min-w-[64px] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title="Punten in de geselecteerde rit">Dag</div>
-          <div className="hidden md:block shrink-0 w-7" />
+          {/* Spacer matcht de vaste-breedte compare-slot op de rijen. */}
+          <div className="shrink-0 w-5 md:w-[104px]" />
         </div>
 
         <div className="max-h-[600px] overflow-y-auto">
@@ -432,8 +411,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                 style={{ minHeight: "44px" }}
               >
                 <div className={cn(
-                  "shrink-0 font-display font-black tabular-nums leading-none text-center flex flex-col items-center justify-center",
-                  m.rank <= 3 ? "w-9" : "w-7",
+                  "shrink-0 w-9 font-display font-black tabular-nums leading-none text-center flex flex-col items-center justify-center",
                   rankNumCls,
                 )}>
                   <span className={cn(m.rank <= 3 ? "text-2xl" : "text-sm")}>{m.rank}</span>
@@ -522,40 +500,42 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   )}
                 </div>
 
-                {/* Benchmark-affordance.
-                    Desktop: "⚔ Vergelijk"-pill die bij hover op de rij
-                    binnenschuift (en blijft staan zodra de vergelijking
-                    actief is). Mobiel: subtiel zwaard-icoon dat signaleert
-                    dat de hele rij tapbaar is. */}
-                {canCompare && (
-                  <>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setCompareId(isComparing ? null : m.user_id); }}
-                      className={cn(
-                        "hidden md:inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1",
-                        "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
-                        "transition-all duration-150",
-                        isComparing
-                          ? "opacity-100 translate-x-0 bg-accent/30 border-accent text-accent-foreground"
-                          : "opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 focus-visible:opacity-100 focus-visible:translate-x-0 border-border bg-card hover:bg-accent/20 text-muted-foreground",
-                      )}
-                      aria-label={isComparing ? "Vergelijking sluiten" : `Benchmark tegen ${m.team_name ?? m.display_name ?? "dit team"}`}
-                      title={isComparing ? "Vergelijking sluiten" : "Benchmark jouw ploeg tegen dit team"}
-                    >
-                      <Swords className="h-3 w-3" />
-                      {isComparing ? "Sluit" : "Vergelijk"}
-                    </button>
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "md:hidden shrink-0 inline-flex",
-                        isComparing ? "text-accent-foreground" : "text-muted-foreground/40",
-                      )}
-                    >
-                      <Swords className="h-3.5 w-3.5" />
-                    </span>
-                  </>
-                )}
+                {/* Benchmark-affordance in een vaste-breedte slot dat op ÉLKE
+                    rij gereserveerd is (ook eigen rij / "geen team"), zodat de
+                    PTS/DAG-kolommen strak onder elkaar uitlijnen.
+                    Desktop: "⚔ Vergelijk"-pill die bij hover binnenschuift.
+                    Mobiel: subtiel zwaard-icoon. */}
+                <div className="shrink-0 flex items-center justify-end w-5 md:w-[104px]">
+                  {canCompare && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setCompareId(isComparing ? null : m.user_id); }}
+                        className={cn(
+                          "hidden md:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1",
+                          "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                          "transition-all duration-150",
+                          isComparing
+                            ? "opacity-100 translate-x-0 bg-accent/30 border-accent text-accent-foreground"
+                            : "opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 focus-visible:opacity-100 focus-visible:translate-x-0 border-border bg-card hover:bg-accent/20 text-muted-foreground",
+                        )}
+                        aria-label={isComparing ? "Vergelijking sluiten" : `Benchmark tegen ${m.team_name ?? m.display_name ?? "dit team"}`}
+                        title={isComparing ? "Vergelijking sluiten" : "Benchmark jouw ploeg tegen dit team"}
+                      >
+                        <Swords className="h-3 w-3" />
+                        {isComparing ? "Sluit" : "Vergelijk"}
+                      </button>
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "md:hidden inline-flex",
+                          isComparing ? "text-accent-foreground" : "text-muted-foreground/40",
+                        )}
+                      >
+                        <Swords className="h-3.5 w-3.5" />
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}
