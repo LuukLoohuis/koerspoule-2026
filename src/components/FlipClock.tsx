@@ -68,6 +68,7 @@ export default function FlipClock({ value, suffix, size = 44, className }: Props
   text-align: center;
   background: linear-gradient(180deg, #2A241D 0%, #1A1612 48%, #14110D 52%, #221D17 100%);
   color: hsl(var(--vintage-gold));
+  text-shadow: 0 0 12px rgba(212,154,26,0.5);
   font-family: 'Oswald','Archivo Black',sans-serif;
   font-weight: 900;
   font-variant-numeric: tabular-nums;

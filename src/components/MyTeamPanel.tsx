@@ -26,9 +26,9 @@ import { useRiderEntryTotals } from "@/hooks/useRiderEntryTotals";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { Check, Pencil, X } from "lucide-react";
+import { Check, Pencil, X, Target, Crown, ClipboardList, Flag, Shirt, type LucideIcon } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
-import type { ReactNode } from "react";
+import type { ReactNode, CSSProperties } from "react";
 
 
 type StagePoint = { stage_id: string; entry_id: string; points: number };
@@ -111,6 +111,116 @@ function AltitudeProfile({ seed }: { seed: number }) {
   );
 }
 
+
+/** Decoratieve radio-tunerschaal (SVG) — FM-schaal met amber marker.
+ *  Géén meetdata; puur cockpit-anker (DESIGN-SPEC §Radio Tuner bar). */
+function TunerBar() {
+  return (
+    <svg aria-hidden viewBox="0 0 200 30" preserveAspectRatio="none" className="w-full" style={{ height: 28, display: "block" }}>
+      <line x1="6" y1="18" x2="194" y2="18" stroke="rgba(237,227,204,0.22)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+      {Array.from({ length: 19 }).map((_, i) => {
+        const x = 8 + i * 10;
+        const major = i % 3 === 0;
+        return <line key={i} x1={x} y1={major ? 10 : 13} x2={x} y2="18" stroke="rgba(237,227,204,0.32)" strokeWidth="1" vectorEffect="non-scaling-stroke" />;
+      })}
+      <line x1="118" y1="6" x2="118" y2="22" stroke="#D49A1A" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      <text x="6" y="28" fontSize="7" fill="#6B665C" fontFamily="monospace">FM</text>
+      <text x="178" y="28" fontSize="7" fill="#6B665C" fontFamily="monospace">MHz</text>
+    </svg>
+  );
+}
+
+/** Decoratieve radio-knop met label (CSS, DESIGN-SPEC §Radio Knob). */
+function Knob({ label, rot = 0 }: { label: string; rot?: number }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className="sdc-knob" style={{ "--sdc-knob-rot": `${rot}deg` } as CSSProperties} />
+      <span className="sdc-knob-label">{label}</span>
+    </div>
+  );
+}
+
+/** Decoratieve fietser-schets in chalk-line stijl (inline SVG, geen data). */
+function ScopeSketch() {
+  return (
+    <svg aria-hidden viewBox="0 0 120 56" className="w-full" style={{ height: 46, display: "block" }}>
+      <g stroke="rgba(237,227,204,0.45)" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke">
+        <circle cx="30" cy="42" r="11" />
+        <circle cx="92" cy="42" r="11" />
+        <path d="M30 42 L52 42 L66 24 L80 42 M52 42 L62 26 L92 42 M66 24 L70 20" />
+        <path d="M58 20 q7 -7 13 0" />
+        <circle cx="75" cy="13" r="3.5" />
+      </g>
+    </svg>
+  );
+}
+
+/** Vier hoek-schroefjes voor een paneel (DESIGN-SPEC §Hoek-schroefjes). */
+function Screws({ paper = false }: { paper?: boolean }) {
+  const cls = paper ? "sdc-screw sdc-screw--paper" : "sdc-screw";
+  return (
+    <>
+      <span className={cls} style={{ top: 6, left: 6 }} />
+      <span className={cls} style={{ top: 6, right: 6 }} />
+      <span className={cls} style={{ bottom: 6, left: 6 }} />
+      <span className={cls} style={{ bottom: 6, right: 6 }} />
+    </>
+  );
+}
+
+/** Desktop-radioconsole: drie ingelegde instrumentpanelen (recessed insets)
+ *  binnen hetzelfde frame. Volledig decoratief (aria-hidden); alleen LiveKlok
+ *  toont echte tijd. */
+function RadioConsole() {
+  return (
+    <div aria-hidden className="hidden lg:flex flex-col gap-3 pointer-events-none select-none">
+      {/* LIVE + grille + live klok */}
+      <div className="sdc-inset p-3">
+        <Screws />
+        <div className="flex items-center justify-between">
+          <span className="sdc-live-badge"><span className="sdc-live-dot" />LIVE</span>
+          <LiveKlok />
+        </div>
+        <div className="sdc-grille mt-2.5" style={{ height: 34, borderRadius: 6, opacity: 0.5 }} />
+      </div>
+      {/* Tuner + VOLUME/SQUELCH + fietser-schets */}
+      <div className="sdc-inset p-3">
+        <Screws />
+        <TunerBar />
+        <div className="flex items-center justify-around mt-2">
+          <Knob label="Volume" rot={-42} />
+          <Knob label="Squelch" rot={28} />
+        </div>
+        <div className="mt-2"><ScopeSketch /></div>
+      </div>
+      {/* Comm-unit: CHANNEL / RF GAIN / SQL */}
+      <div className="sdc-inset p-3">
+        <Screws />
+        <div className="flex items-center justify-around">
+          <Knob label="Channel" rot={-18} />
+          <Knob label="RF Gain" rot={12} />
+          <Knob label="SQL" rot={58} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Mobiele cockpit-band: compacte, full-width donkere instrument-strook bovenaan
+ *  (LIVE-dot + live klok + mini-tuner). Decoratief, alleen LiveKlok is live. */
+function MobileInstrumentBand() {
+  return (
+    <div aria-hidden className="lg:hidden sdc-inset p-3 mb-3 pointer-events-none select-none">
+      <span className="sdc-screw" style={{ top: 6, left: 6 }} />
+      <span className="sdc-screw" style={{ top: 6, right: 6 }} />
+      <div className="flex items-center gap-3">
+        <span className="sdc-live-badge"><span className="sdc-live-dot" />LIVE</span>
+        <LiveKlok />
+        <div className="flex-1 min-w-0"><TunerBar /></div>
+      </div>
+    </div>
+  );
+}
 
 function useMyStagePoints(entryId?: string) {
   return useQuery({
@@ -655,7 +765,7 @@ export default function MyTeamPanel({
           value,
           sub,
           accent,
-          icon,
+          Icon,
           valueColor,
           onClick,
           hint,
@@ -664,8 +774,8 @@ export default function MyTeamPanel({
           value: ReactNode;
           sub?: ReactNode;
           accent?: string;
-          /** Asset-pad (bv. /salle-de-course/icon-target.png) — decoratief. */
-          icon?: string;
+          /** Lucide stroke-icoon (DESIGN-SPEC §Icons). */
+          Icon?: LucideIcon;
           valueColor?: string;
           /** Maakt de tegel klikbaar (navigatie); voegt cursor/hover/focus toe. */
           onClick?: () => void;
@@ -700,8 +810,8 @@ export default function MyTeamPanel({
               {onClick && <span aria-hidden className="text-[8px] opacity-60">›</span>}
             </div>
             <div className="flex items-center gap-2 min-w-0">
-              {icon && (
-                <img src={icon} alt="" aria-hidden="true" className="h-6 w-auto shrink-0 hidden md:block" />
+              {Icon && (
+                <Icon aria-hidden className="h-5 w-5 shrink-0" strokeWidth={1.5} style={{ color: AMBER }} />
               )}
               <div
                 className="font-display font-black leading-none tabular-nums"
@@ -731,19 +841,23 @@ export default function MyTeamPanel({
             }}
           >
             <div className="p-3 md:p-4">
+              {/* Mobiele cockpit-band bovenaan (full width, < lg). */}
+              <MobileInstrumentBand />
+
               <div className="lg:grid lg:grid-cols-[1fr_240px] lg:gap-3">
                 {/* ── Linkerkolom: één doorlopend papieren console-paneel. De
                     secties (masthead → tableau → détails) delen hetzelfde
                     oppervlak en worden gescheiden door dunne hairlines i.p.v.
                     losse kaarten — zodat het als één instrument leest. ── */}
                 <div
-                  className="min-w-0 rounded-lg overflow-hidden self-start"
+                  className="relative min-w-0 rounded-lg overflow-hidden self-start"
                   style={{
                     background: PAPER,
                     border: "1px solid rgba(0,0,0,0.4)",
                     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 6px rgba(0,0,0,0.35)",
                   }}
                 >
+                  <Screws paper />
                   {/* Masthead-sectie */}
                   <div className="p-3.5 md:p-4" style={{ borderBottom: "1px solid rgba(26,22,18,0.22)" }}>
                     <div className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold mb-2.5" style={{ color: AMBER }}>
@@ -752,11 +866,11 @@ export default function MyTeamPanel({
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <h2
-                          className="font-display font-black uppercase leading-none truncate flex items-center gap-2"
-                          style={{ color: INK, fontSize: "clamp(26px,4.5vw,40px)" }}
+                          className="font-display font-black uppercase leading-tight flex items-start gap-2"
+                          style={{ color: INK, fontSize: "clamp(24px,4.5vw,38px)" }}
                           title={shownName}
                         >
-                          <span className="truncate">{shownName}</span>
+                          <span className="break-words [overflow-wrap:anywhere]">{shownName}</span>
                           {hasName && !editingName && (
                             <Button
                               size="sm" variant="ghost" className="h-7 px-2 shrink-0"
@@ -826,7 +940,7 @@ export default function MyTeamPanel({
                         <div className="font-mono text-[10px] tracking-[0.22em] uppercase font-bold mb-1.5" style={{ color: "rgba(26,22,18,0.55)" }}>
                           Seizoensstand
                         </div>
-                        <FlipClock value={totalPoints} suffix="PT" size={40} />
+                        <FlipClock value={totalPoints} suffix="PT" size={52} />
                         <div className="font-mono text-[10px] mt-1.5" style={{ color: "rgba(26,22,18,0.55)" }}>
                           {ritLabel}
                         </div>
@@ -886,7 +1000,7 @@ export default function MyTeamPanel({
                               ? "#5C6B3B"
                               : "#B94A48"
                         }
-                        icon="/salle-de-course/icon-target.png"
+                        Icon={Target}
                         value={dash(hors.monkeyBeatPct, (n) => `${Math.round(n)}%`)}
                         valueColor={hors.monkeyBeatPct === null ? undefined : "#D49A1A"}
                         sub="apen verslagen"
@@ -898,7 +1012,7 @@ export default function MyTeamPanel({
                         accent={
                           hors.emiratesPct !== null && hors.emiratesPct > 60 ? "#D49A1A" : undefined
                         }
-                        icon="/salle-de-course/icon-crown.png"
+                        Icon={Crown}
                         value={dash(hors.emiratesPct, (n) => `${Math.round(n)}%`)}
                         sub="van droomploeg"
                         onClick={onOpenHors ? () => onOpenHors("superteam") : undefined}
@@ -919,7 +1033,7 @@ export default function MyTeamPanel({
                           <Dial
                             label="Wielerdir."
                             accent={dirColor}
-                            icon="/salle-de-course/icon-clipboard.png"
+                            Icon={ClipboardList}
                             value={dash(hors.directorScore, (n) => n.toFixed(1))}
                             valueColor={dirColor}
                             sub="rapport"
@@ -949,7 +1063,7 @@ export default function MyTeamPanel({
                         label: string;
                         value: ReactNode;
                         sub?: ReactNode;
-                        icon?: string;
+                        Icon?: LucideIcon;
                         small?: boolean;
                         flagLeft?: boolean;
                         /** Waarde niet afkappen maar op één regel houden (Beste etappe). */
@@ -963,7 +1077,7 @@ export default function MyTeamPanel({
                       }> = [
                         {
                           label: "Beste etappe",
-                          icon: "/salle-de-course/icon-flag.png",
+                          Icon: Flag,
                           flagLeft: true,
                           nowrap: true,
                           value: bestStage ? (
@@ -997,7 +1111,7 @@ export default function MyTeamPanel({
                         },
                         {
                           label: "Topscorer",
-                          icon: "/salle-de-course/icon-shirt.png",
+                          Icon: Shirt,
                           stack: true,
                           subStrong: true,
                           value: ploegStats.topscorer ? (
@@ -1040,16 +1154,16 @@ export default function MyTeamPanel({
                                 style={{ borderLeft: i > 0 ? hairline : undefined }}
                               >
                                 {/* Beste etappe: finishvlag links naast de tekst. */}
-                                {d.flagLeft && d.icon && (
-                                  <img src={d.icon} alt="" aria-hidden="true" className="h-8 md:h-9 w-auto shrink-0" />
+                                {d.flagLeft && d.Icon && (
+                                  <d.Icon aria-hidden className="h-7 w-7 md:h-8 md:w-8 shrink-0" strokeWidth={1.5} style={{ color: AMBER }} />
                                 )}
                                 <div className="flex flex-col gap-0.5 min-w-0">
                                   <span className="font-mono text-[9px] tracking-[0.2em] uppercase font-bold" style={{ color: "#D49A1A" }}>
                                     {d.label}
                                   </span>
                                   <span className="flex items-center gap-1.5 min-w-0">
-                                    {!d.flagLeft && d.icon && (
-                                      <img src={d.icon} alt="" aria-hidden="true" className="h-5 w-auto shrink-0 hidden md:block" />
+                                    {!d.flagLeft && d.Icon && (
+                                      <d.Icon aria-hidden className="h-5 w-5 shrink-0 hidden md:block" strokeWidth={1.5} style={{ color: AMBER }} />
                                     )}
                                     <span
                                       className={cn(
@@ -1084,44 +1198,10 @@ export default function MyTeamPanel({
                   </div>
                 </div>
 
-                {/* ── Rechterkolom: radio-chrome met echte assets (desktop only).
-                    Puur decoratief: aria-hidden + pointer-events-none. De klok
-                    is live (LiveKlok), de rest zijn beeld-elementen uit
-                    /public/salle-de-course/. ── */}
-                <div aria-hidden className="hidden lg:flex flex-col gap-2.5 pointer-events-none select-none">
-                  {/* 1) LIVE + grille als één paneel. De ingebakken klok wordt
-                         afgedekt door de échte live klok (LiveKlok) op het
-                         venster, zodat 'ie blijft tikken. */}
-                  <div className="relative w-full">
-                    <img src="/salle-de-course/live-grille.png" alt="" aria-hidden="true"
-                      className="w-full h-auto block" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
-                    {/* Live klok over het klok-venster (dekt de statische digits af) */}
-                    <span
-                      className="absolute flex items-center justify-center"
-                      style={{
-                        left: "46.5%", top: "8%", width: "32%", height: "23%",
-                        background: "#0c0a07", borderRadius: "10%",
-                      }}
-                    >
-                      <LiveKlok />
-                    </span>
-                  </div>
-
-                  {/* Echte radio-hardware (transparante PNG's, zelfdragend).
-                      Volgorde conform affiche: rooster+LIVE → fietser → tuner →
-                      control-box met kabel naar de mic. */}
-
-                  {/* 2) Tuner + VOLUME/SQUELCH-knoppen + fietser-telemetrie als
-                         één gecombineerd paneel. */}
-                  <img src="/salle-de-course/tuner-telemetry.png" alt="" aria-hidden="true"
-                    className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
-
-                  {/* 4) Comm-unit: control-box (CHANNEL/RF GAIN/SQL) + krulkabel
-                         + mic als één gecombineerde PNG — kabel zit vast aan
-                         CHANNEL én de mic (geen losse-PNG-naden meer). */}
-                  <img src="/salle-de-course/radio-comm.png" alt="" aria-hidden="true"
-                    className="w-full h-auto" style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }} />
-                </div>
+                {/* ── Rechterkolom: radioconsole als ingelegde CSS/SVG-instrumenten
+                    binnen hetzelfde frame (geen zwevende PNG's). Decoratief;
+                    alleen LiveKlok is live. ── */}
+                <RadioConsole />
               </div>
 
               {/* ── Onderbalk: étape-cockpit met decoratief hoogteprofiel

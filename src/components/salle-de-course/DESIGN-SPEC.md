@@ -67,9 +67,26 @@ Mijn Ploeg, `src/components/MyTeamPanel.tsx`). Tokens staan gescoped in
 - NB: alleen renderen met échte data — geen verzonnen hoogteprofielen.
 
 ### Radio Knob
-- CSS-only: ronde div, radial-gradient voor 3D
+- CSS-only: ronde div (`.sdc-knob`), radial-gradient voor 3D
 - Donkere basis (#1A1A1B), highlight rgba(255,255,255,0.15) top-left arc
-- Marker-lijn: 2px `--sdc-amber`, roteert via CSS transform
+- Marker-lijn: 2px `--sdc-amber`, roteert via CSS var `--sdc-knob-rot`
+- Label eronder: `.sdc-knob-label` (mono 7px, MUTED)
+
+### Recessed inset (instrument-paneel) — `.sdc-inset`
+- Donker instrument dat IN het console ligt i.p.v. zweeft. GEEN drop-shadow.
+- Background `--sdc-panel`; border 1px rgba(255,255,255,0.08);
+  box-shadow `inset 0 2px 7px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.04)`
+- Wordt gebruikt voor LIVE+grille, tuner+knobs+fietser-schets, comm-unit (knobs).
+- Alle instrumenten zijn CSS/SVG (TunerBar/Knob/ScopeSketch) — geen hardware-PNG's meer.
+
+### Hoek-schroefjes — `.sdc-screw`
+- 8px (7px) cirkel, radial-gradient. Gedeeld door paper-console (`.sdc-screw--paper`,
+  lichte variant) én donkere insets, voor één samenhangend toestel.
+- Absoluut in de vier hoeken (6px offset).
+
+### Mobiele cockpit-band
+- < lg: zijkolom vervalt; bovenaan één full-width `.sdc-inset` met LIVE-dot +
+  live klok + mini-TunerBar. Zware hardware (knobs/scope/mic) is desktop-only.
 
 ## Texture classes (in salle-de-course.css)
 
@@ -79,7 +96,10 @@ Mijn Ploeg, `src/components/MyTeamPanel.tsx`). Tokens staan gescoped in
 
 ## Layout grid
 
-- Desktop: main content 75% breed links + radiopaneel 25% rechts
+- Desktop (lg+): main content links + radioconsole (3 `.sdc-inset`-panelen) rechts (240px)
+- < lg: verticaal gestapeld → mobiele cockpit-band (boven) → papieren dashboard
+  (header + tableau 2-koloms + détails) → étape-profielband (onder)
+- Origineel desktop: main content 75% breed links + radiopaneel 25% rechts
 - Main content rijen: header / tableau de bord (2×3) / détails (4-kolom) / bottom bar
 - Interne borders: 1px solid rgba(15,15,16,0.12) op paper, rgba(255,255,255,0.08) op panels
 - Hoek-schroefjes: 8px cirkels, `--sdc-muted`, absolute in kaarthoeken
