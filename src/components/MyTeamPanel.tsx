@@ -413,6 +413,7 @@ export default function MyTeamPanel({
   onOpenHors,
   onOpenUitslagen,
   onOpenSubpoule,
+  onOpenStageResult,
 }: {
   section?: "ploeg" | "prono";
   gameId?: string;
