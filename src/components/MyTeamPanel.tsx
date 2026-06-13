@@ -730,10 +730,20 @@ export default function MyTeamPanel({
           >
             <div className="p-3 md:p-4">
               <div className="lg:grid lg:grid-cols-[1fr_240px] lg:gap-3">
-                {/* ── Linkerkolom: de instrumenten ── */}
-                <div className="flex flex-col gap-2.5 min-w-0">
-                  {/* Masthead-kaart */}
-                  <div className="rounded-lg p-3.5 md:p-4" style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.35)" }}>
+                {/* ── Linkerkolom: één doorlopend papieren console-paneel. De
+                    secties (masthead → tableau → détails) delen hetzelfde
+                    oppervlak en worden gescheiden door dunne hairlines i.p.v.
+                    losse kaarten — zodat het als één instrument leest. ── */}
+                <div
+                  className="min-w-0 rounded-lg overflow-hidden self-start"
+                  style={{
+                    background: PAPER,
+                    border: "1px solid rgba(0,0,0,0.4)",
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 6px rgba(0,0,0,0.35)",
+                  }}
+                >
+                  {/* Masthead-sectie */}
+                  <div className="p-3.5 md:p-4" style={{ borderBottom: "1px solid rgba(26,22,18,0.22)" }}>
                     <div className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold mb-2.5" style={{ color: AMBER }}>
                       ◆ La Salle de Course ◆
                     </div>
@@ -823,7 +833,7 @@ export default function MyTeamPanel({
                   </div>
 
                   {/* Tableau de Bord — 2×3 instrumenten */}
-                  <div className="rounded-lg p-3.5 md:p-4" style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.35)" }}>
+                  <div className="p-3.5 md:p-4" style={{ borderBottom: "1px solid rgba(26,22,18,0.22)" }}>
                     <div className="mb-2.5 flex items-center justify-between gap-2">
                       <Stamp>— Tableau de Bord —</Stamp>
                       {/* Subpoule-kiezer: alleen tonen bij meerdere subpoules. De
@@ -920,7 +930,7 @@ export default function MyTeamPanel({
                   </div>
 
                   {/* Détails — rij van 4 kerngetallen */}
-                  <div className="rounded-lg p-3.5 md:p-4" style={{ background: PAPER, border: "1px solid rgba(0,0,0,0.35)" }}>
+                  <div className="p-3.5 md:p-4">
                     <div className="text-center mb-2.5"><Stamp>— Détails —</Stamp></div>
                     {(() => {
                       // Mijn dagklassering op mijn best-scorende rit (zelfde rit).
