@@ -922,28 +922,45 @@ export default function MyTeamPanel({
                     </span>
                   </div>
 
-                  {/* Echte radio-hardware (transparante PNG's, zelfdragend —
-                      géén wrapper-border om de transparante padding). */}
-                  <img src="/salle-de-course/radio-tuner.png" alt="" aria-hidden="true"
+                  {/* Echte radio-hardware (transparante PNG's, zelfdragend).
+                      Volgorde conform affiche: rooster → fietser → tuner →
+                      control-box met kabel naar de mic. */}
+
+                  {/* 1) Luidsprekergrille — volle breedte, direct onder LIVE */}
+                  <img src="/salle-de-course/radio-grille.png" alt="" aria-hidden="true"
                     className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
 
-                  <img src="/salle-de-course/radio-grille.png" alt="" aria-hidden="true"
-                    className="w-1/2 h-auto self-start" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
-
+                  {/* 2) Fietser-telemetrie */}
                   <img src="/salle-de-course/rider-telemetry.png" alt="" aria-hidden="true"
                     className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
 
-                  {/* Control box (CHANNEL/RF GAIN/SQL) — vol breed */}
-                  <img src="/salle-de-course/radio-knobs.png" alt="" aria-hidden="true"
+                  {/* 3) FM/AM-tuner */}
+                  <img src="/salle-de-course/radio-tuner.png" alt="" aria-hidden="true"
                     className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
 
-                  {/* Team Radio-mic + krulkabel naast elkaar */}
-                  <div className="flex items-end gap-2">
+                  {/* 4) Control-box (CHANNEL/RF GAIN/SQL) + krulkabel die van
+                         CHANNEL (linksonder) naar de mic (rechts) loopt. De
+                         kabel ligt absoluut over de naad zodat 't één geheel
+                         lijkt. */}
+                  <div className="relative">
+                    <img src="/salle-de-course/radio-knobs.png" alt="" aria-hidden="true"
+                      className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
+
+                    {/* Mic rechtsonder, deels onder de control-box hangend */}
                     <img src="/salle-de-course/radio-mic.png" alt="" aria-hidden="true"
-                      className="w-[38%] h-auto" style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }} />
+                      className="absolute right-0 w-[34%] h-auto z-20"
+                      style={{ top: "62%", filter: "drop-shadow(0 5px 9px rgba(0,0,0,0.55))" }} />
+
+                    {/* Krulkabel: linker uiteinde bij CHANNEL (linksonder van de
+                        control-box), rechter uiteinde naar de mic-basis. */}
                     <img src="/salle-de-course/radio-cable.png" alt="" aria-hidden="true"
-                      className="flex-1 min-w-0 h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
+                      className="absolute left-[6%] w-[78%] h-auto z-10"
+                      style={{ top: "78%", filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
                   </div>
+
+                  {/* spacer zodat de absoluut-gepositioneerde mic/kabel ruimte
+                      onder de control-box krijgen */}
+                  <div aria-hidden style={{ height: "clamp(40px, 7vw, 90px)" }} />
                 </div>
               </div>
 
