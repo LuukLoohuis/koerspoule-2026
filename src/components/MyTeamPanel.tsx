@@ -314,6 +314,8 @@ export default function MyTeamPanel({
   onOpenUitslagen?: () => void;
   /** Spring naar de Subpoules-tab met deze subpoule open. */
   onOpenSubpoule?: (subpouleId: string) => void;
+  /** Open de Uitslagen-tab op de Etappe-view bij een specifiek ritnummer. */
+  onOpenStageResult?: (stageNumber: number) => void;
 }) {
   const { user } = useAuth();
   const { data: curGame } = useCurrentGame();
@@ -866,7 +868,7 @@ export default function MyTeamPanel({
                         hint="Open de subpoule-daguitslag"
                       />
                       <Dial
-                        label="Classement gén."
+                        label="Classement Général"
                         value={<Rank rank={ploegStats.overall?.rank ?? null} delta={ploegStats.overall?.delta ?? null} />}
                         sub={ploegStats.overall ? `van ${ploegStats.overall.total} deelnemers` : undefined}
                         onClick={onOpenUitslagen}
@@ -938,6 +940,11 @@ export default function MyTeamPanel({
                         bestStage?.stage && ploegStats.myStageRanks
                           ? ploegStats.myStageRanks.get(bestStage.stage.id) ?? null
                           : null;
+                      // Topscorer-naam over twee regels (voor- + achternaam).
+                      const tsName = ploegStats.topscorer?.name ?? "";
+                      const tsParts = tsName.split(" ").filter(Boolean);
+                      const tsFirst = tsParts[0] ?? tsName;
+                      const tsLast = tsParts.slice(1).join(" ");
                       const details: Array<{
                         label: string;
                         value: ReactNode;
@@ -945,6 +952,12 @@ export default function MyTeamPanel({
                         icon?: string;
                         small?: boolean;
                         flagLeft?: boolean;
+                        /** Waarde niet afkappen maar op één regel houden (Beste etappe). */
+                        nowrap?: boolean;
+                        /** Waarde mag over meerdere regels (Topscorer naam). */
+                        stack?: boolean;
+                        /** Sub groter/sterker tonen (Topscorer punten). */
+                        subStrong?: boolean;
                         onClick?: () => void;
                         hint?: string;
                       }> = [
@@ -952,12 +965,22 @@ export default function MyTeamPanel({
                           label: "Beste etappe",
                           icon: "/salle-de-course/icon-flag.png",
                           flagLeft: true,
-                          value: bestStage ? `${bestStage.points} PT` : "—",
+                          nowrap: true,
+                          value: bestStage ? (
+                            <>
+                              {bestStage.points}
+                              <span style={{ fontSize: "0.42em", fontWeight: 700, marginLeft: 3, color: "rgba(26,22,18,0.55)" }}>PT</span>
+                            </>
+                          ) : "—",
                           sub: bestStage?.stage
-                            ? `RIT ${bestStage.stage.stage_number}${bestStageRankNum ? ` · ${bestStageRankNum}e plek` : ""}`
+                            ? bestStageRankNum
+                              ? `${bestStageRankNum}e in daguitslag · rit ${bestStage.stage.stage_number}`
+                              : `rit ${bestStage.stage.stage_number}`
                             : undefined,
-                          onClick: bestStage ? onOpenUitslagen : undefined,
-                          hint: "Bekijk de etappe-uitslagen",
+                          onClick: bestStage?.stage && onOpenStageResult
+                            ? () => onOpenStageResult(bestStage.stage.stage_number)
+                            : undefined,
+                          hint: "Open de uitslag van deze rit",
                         },
                         {
                           label: "Overall poule",
@@ -975,9 +998,15 @@ export default function MyTeamPanel({
                         {
                           label: "Topscorer",
                           icon: "/salle-de-course/icon-shirt.png",
-                          value: ploegStats.topscorer ? ploegStats.topscorer.name : "—",
+                          stack: true,
+                          subStrong: true,
+                          value: ploegStats.topscorer ? (
+                            <span className="flex flex-col leading-[1.05]">
+                              <span>{tsFirst}</span>
+                              {tsLast && <span>{tsLast}</span>}
+                            </span>
+                          ) : "—",
                           sub: ploegStats.topscorer ? `${ploegStats.topscorer.points} PT` : undefined,
-                          small: true,
                         },
                       ];
                       return (
@@ -1010,9 +1039,9 @@ export default function MyTeamPanel({
                                 )}
                                 style={{ borderLeft: i > 0 ? hairline : undefined }}
                               >
-                                {/* Beste etappe: grotere finishvlag links naast de tekst. */}
+                                {/* Beste etappe: finishvlag links naast de tekst. */}
                                 {d.flagLeft && d.icon && (
-                                  <img src={d.icon} alt="" aria-hidden="true" className="h-9 md:h-11 w-auto shrink-0" />
+                                  <img src={d.icon} alt="" aria-hidden="true" className="h-8 md:h-9 w-auto shrink-0" />
                                 )}
                                 <div className="flex flex-col gap-0.5 min-w-0">
                                   <span className="font-mono text-[9px] tracking-[0.2em] uppercase font-bold" style={{ color: "#D49A1A" }}>
@@ -1023,15 +1052,27 @@ export default function MyTeamPanel({
                                       <img src={d.icon} alt="" aria-hidden="true" className="h-5 w-auto shrink-0 hidden md:block" />
                                     )}
                                     <span
-                                      className={cn("font-display font-black leading-tight tabular-nums truncate")}
-                                      style={{ color: INK, fontSize: d.small ? "clamp(15px,1.6vw,19px)" : "clamp(20px,2.2vw,26px)" }}
+                                      className={cn(
+                                        "font-display font-black leading-tight tabular-nums",
+                                        d.nowrap ? "whitespace-nowrap" : d.stack ? "min-w-0" : "truncate",
+                                      )}
+                                      style={{ color: INK, fontSize: (d.small || d.stack) ? "clamp(15px,1.6vw,18px)" : "clamp(20px,2.2vw,26px)" }}
                                       title={typeof d.value === "string" ? d.value : undefined}
                                     >
                                       {d.value}
                                     </span>
                                   </span>
                                   {d.sub && (
-                                    <span className="font-mono text-[10px]" style={{ color: "rgba(26,22,18,0.55)" }}>{d.sub}</span>
+                                    <span
+                                      className={cn(
+                                        d.subStrong
+                                          ? "font-display font-black tabular-nums text-[13px]"
+                                          : "font-mono text-[10px]",
+                                      )}
+                                      style={{ color: d.subStrong ? "#D49A1A" : "rgba(26,22,18,0.55)" }}
+                                    >
+                                      {d.sub}
+                                    </span>
                                   )}
                                 </div>
                               </div>

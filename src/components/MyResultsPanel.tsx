@@ -9,9 +9,21 @@ import ResultsView from "@/components/ResultsView";
 export default function MyResultsPanel({
   gameId,
   gameName,
+  initialView,
+  initialStageNumber,
 }: {
   gameId?: string;
   gameName?: string | null;
+  initialView?: "etappes" | "klassement";
+  initialStageNumber?: number | null;
 }) {
-  return <ResultsView showHeader={false} gameId={gameId} gameName={gameName} />;
+  return (
+    <ResultsView
+      showHeader={false}
+      gameId={gameId}
+      gameName={gameName}
+      initialView={initialView}
+      initialStageNumber={initialStageNumber}
+    />
+  );
 }

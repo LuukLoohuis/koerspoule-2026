@@ -64,9 +64,13 @@ type ResultsViewProps = {
   /** Optioneel: toon een specifieke (bv. afgeronde) game i.p.v. de live game. */
   gameId?: string;
   gameName?: string | null;
+  /** Deep-link: open op deze view (Etappes/Klassement). */
+  initialView?: "etappes" | "klassement";
+  /** Deep-link: selecteer dit ritnummer in de Etappe-view. */
+  initialStageNumber?: number | null;
 };
 
-export default function ResultsView({ showHeader = true, gameId: gameIdProp, gameName: gameNameProp }: ResultsViewProps) {
+export default function ResultsView({ showHeader = true, gameId: gameIdProp, gameName: gameNameProp, initialView, initialStageNumber }: ResultsViewProps) {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const { data: curGame } = useCurrentGame();
@@ -101,6 +105,19 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   useEffect(() => {
     if (stages.length > 0) setSelectedStageIdx(initialStageIdx);
   }, [stages.length, initialStageIdx]);
+
+  // Welke view (Etappes/Klassement) — controlled zodat deep-links 'm sturen.
+  const [view, setView] = useState<"etappes" | "klassement">(initialView ?? "klassement");
+  // Deep-link: spring naar Etappe-view + het juiste ritnummer wanneer de
+  // parent dat doorgeeft (bv. klik op "Beste etappe" in het dashboard).
+  useEffect(() => {
+    if (initialView) setView(initialView);
+    if (initialStageNumber != null && stages.length > 0) {
+      const idx = stages.findIndex((s) => s.stage_number === initialStageNumber && !s.is_gc);
+      if (idx >= 0) setSelectedStageIdx(idx);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialView, initialStageNumber, stages.length]);
 
   const selectedStage = stages[selectedStageIdx];
   const { data: results = [], isLoading: resultsLoading } = useStageResults(selectedStage?.id);
@@ -220,7 +237,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         </div>
       )}
 
-      <Tabs defaultValue="klassement" className="max-w-7xl mx-auto">
+      <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className="max-w-7xl mx-auto">
         <TabsList className="sticky top-0 z-30 md:static md:z-auto flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/95 backdrop-blur supports-[backdrop-filter]:bg-secondary/80 md:bg-secondary/30 md:backdrop-blur-0 md:supports-[backdrop-filter]:bg-secondary/30 p-1 h-auto w-full shadow-sm md:shadow-none">
           <TabsTrigger
             value="klassement"

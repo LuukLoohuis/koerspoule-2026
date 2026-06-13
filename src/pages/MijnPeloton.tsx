@@ -125,7 +125,13 @@ export default function MijnPeloton() {
     setGameTab("subpoules");
   };
   // overall-cel → Uitslagen-tab (subtab Klassement is daar de default)
-  const openUitslagen = () => setGameTab("uitslagen");
+  const [uitslagenTarget, setUitslagenTarget] = useState<{ view: "etappes" | "klassement"; stageNumber?: number } | null>(null);
+  const openUitslagen = () => { setUitslagenTarget({ view: "klassement" }); setGameTab("uitslagen"); };
+  // Beste-etappe-cel → Uitslagen-tab, Etappe-view, op dat ritnummer.
+  const openStageResult = (stageNumber: number) => {
+    setUitslagenTarget({ view: "etappes", stageNumber });
+    setGameTab("uitslagen");
+  };
   const [uitslagenView, setUitslagenView] = useState<"etappes" | "poule" | "giro">("etappes");
   const [selectedPool, setSelectedPool] = useState<string | null>(null);
   const [newPoolName, setNewPoolName] = useState("");
@@ -1123,7 +1129,7 @@ export default function MijnPeloton() {
               <TabsContent value="ploeg" className="space-y-3">
                 {/* Ploegnaam-editor zit nu in het Salle-de-Course-dashboard
                     binnen MyTeamPanel (Zone 1-nudge). */}
-                <MyTeamPanel section="ploeg" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} onOpenHors={openHors} onOpenUitslagen={openUitslagen} onOpenSubpoule={openSubpouleGrafiek} />
+                <MyTeamPanel section="ploeg" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} onOpenHors={openHors} onOpenUitslagen={openUitslagen} onOpenSubpoule={openSubpouleGrafiek} onOpenStageResult={openStageResult} />
               </TabsContent>
 
               <TabsContent value="prono">
@@ -1142,7 +1148,7 @@ export default function MijnPeloton() {
 
           {/* ── TAB: Uitslagen ── */}
           <TabsContent value="uitslagen" className="mt-3">
-            <MyResultsPanel gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} />
+            <MyResultsPanel gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} initialView={uitslagenTarget?.view} initialStageNumber={uitslagenTarget?.stageNumber} />
           </TabsContent>
 
           {/* ── TAB: Hors Catégorie ── */}
