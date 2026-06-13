@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, type ComponentType } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
@@ -26,7 +26,8 @@ import { useStages, useGameStandings, useStagePointsForEntries, useStageAverages
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Mic, ChevronDown } from "lucide-react";
+import { Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Mic, ChevronDown, ListTree, ArrowUpDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import JerseyBadge from "@/components/retro/JerseyBadge";
@@ -217,6 +218,15 @@ function DirectorIcon({ className }: { className?: string }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 type HorsTabKey = "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark";
+
+// Onderdelen voor het mobiele "Ga naar"-ballonnetje (zelfde volgorde/iconen als de tabs).
+const HORS_TABS: { key: HorsTabKey; label: string; Icon: ComponentType<{ className?: string }> }[] = [
+  { key: "dartpijl", label: "Dartpijl", Icon: Activity },
+  { key: "pelotonkeuzes", label: "Pelotonkeuzes", Icon: BarChart3 },
+  { key: "wielerdirecteur", label: "De Wielerdirecteur", Icon: DirectorIcon },
+  { key: "superteam", label: "The Emirates", Icon: Crown },
+  { key: "benchmark", label: "Benchmark", Icon: Swords },
+];
 
 export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameStatus }: { initialTab?: HorsTabKey; gameId?: string; gameStatus?: string } = {}) {
   const { thema } = useThema();
@@ -748,6 +758,16 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   useEffect(() => {
     if (initialTab) setActiveTab(initialTab);
   }, [initialTab]);
+  // Mobiel "Ga naar"-ballonnetje: wissel tab + scroll naar boven.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const goTo = (key: HorsTabKey) => {
+    setActiveTab(key);
+    setMenuOpen(false);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" })),
+    );
+  };
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
   const [openComponent, setOpenComponent] = useState<string | null>(null);
@@ -1748,6 +1768,49 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           </CardContent>
         </Card>
       )}
+
+      {/* ── MOBIEL: zwevend "Ga naar"-ballonnetje. Hors Cat. is tab-based, dus dit
+           WISSELT van onderdeel (i.p.v. scrollen) + scrollt naar boven. ── */}
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            aria-label="Wissel onderdeel"
+            className="md:hidden fixed right-4 bottom-[72px] z-40 inline-flex items-center justify-center h-12 w-12 rounded-full bg-card text-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
+          >
+            <ListTree className="h-5 w-5" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          side="top"
+          sideOffset={8}
+          className="w-56 p-0 rounded-xl overflow-hidden border-2 border-foreground bg-card shadow-[4px_4px_0_hsl(var(--foreground))]"
+        >
+          <div className="flex items-center gap-2 px-3 py-2 border-b-2 border-foreground bg-[hsl(var(--vintage-gold))] text-foreground font-mono uppercase tracking-[0.2em] text-[10px] font-bold">
+            <ArrowUpDown className="h-3.5 w-3.5" />
+            Ga naar
+          </div>
+          <div className="p-1">
+            {HORS_TABS.map((t) => {
+              const itemActive = activeTab === t.key;
+              return (
+                <DropdownMenuItem
+                  key={t.key}
+                  onSelect={(e) => { e.preventDefault(); goTo(t.key); }}
+                  className={cn(
+                    "font-mono text-[13px] rounded-lg py-2.5 px-2.5 gap-2.5 cursor-pointer border-l-[3px] border-transparent focus:bg-secondary/60 hover:bg-secondary/60",
+                    itemActive && "border-primary bg-primary/10",
+                  )}
+                >
+                  <t.Icon className={cn("h-4 w-4 shrink-0", itemActive ? "text-primary" : "text-[hsl(var(--vintage-gold))]")} />
+                  {t.label}
+                </DropdownMenuItem>
+              );
+            })}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
