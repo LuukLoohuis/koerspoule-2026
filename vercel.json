@@ -1,3 +1,12 @@
 {
+  "redirects": [
+    { "source": "/tour-de-france-poule", "destination": "/tour-de-france-poule-2026", "permanent": true },
+    { "source": "/tourspel", "destination": "/tour-de-france-poule-2026", "permanent": true },
+    { "source": "/wielerpoule-tour-de-france", "destination": "/tour-de-france-poule-2026", "permanent": true },
+    { "source": "/tour-de-france-wielerspel-2026", "destination": "/tour-de-france-poule-2026", "permanent": true },
+    { "source": "/tour-de-france-wielerspel", "destination": "/tour-de-france-poule-2026", "permanent": true },
+    { "source": "/wielerspel", "destination": "/tour-de-france-poule-2026", "permanent": true },
+    { "source": "/wielerspel-2026", "destination": "/tour-de-france-poule-2026", "permanent": true }
+  ],
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

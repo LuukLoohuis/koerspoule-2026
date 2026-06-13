@@ -2,11 +2,13 @@ User-agent: Googlebot
 Allow: /
 Disallow: /admin
 Disallow: /reset-password
+Disallow: /uitschrijven
 
 User-agent: Bingbot
 Allow: /
 Disallow: /admin
 Disallow: /reset-password
+Disallow: /uitschrijven
 
 User-agent: Twitterbot
 Allow: /
@@ -18,5 +20,6 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /reset-password
+Disallow: /uitschrijven
 
 Sitemap: https://koerspoule.nl/sitemap.xml

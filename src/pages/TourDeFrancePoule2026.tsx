@@ -94,6 +94,18 @@ export default function TourDeFrancePoule2026() {
     setMeta('meta[name="keywords"]', "content", "tour de france wielerspel 2026, tour de france wielerspel, wielerspel 2026, gratis wielerspel, tour de france poule 2026, tour de france poule, tourspel, tourspel 2026, wielerpoule tour de france, fantasy tour de france, gele trui poule, ad tourspel alternatief, scorito tour de france, koerspoule, manager game wielrennen");
     setLink("canonical", PAGE_URL);
 
+    // hreflang: zelfde NL-content voor NL + BE, met x-default fallback.
+    for (const lang of ["nl-NL", "nl-BE", "x-default"]) {
+      let alt = document.head.querySelector<HTMLLinkElement>(`link[rel="alternate"][hreflang="${lang}"]`);
+      if (!alt) {
+        alt = document.createElement("link");
+        alt.rel = "alternate";
+        alt.hreflang = lang;
+        document.head.appendChild(alt);
+      }
+      alt.href = PAGE_URL;
+    }
+
     const ldId = "ld-tdf-2026";
     document.getElementById(ldId)?.remove();
     const script = document.createElement("script");

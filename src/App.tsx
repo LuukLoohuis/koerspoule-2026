@@ -1,5 +1,6 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,11 +18,11 @@ import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Legal from "./pages/Legal";
-import AdminV3 from "./pages/AdminV3";
+const AdminV3 = lazy(() => import("./pages/AdminV3"));
 import GiroPoule2026 from "./pages/GiroPoule2026";
 import TourDeFrancePoule2026 from "./pages/TourDeFrancePoule2026";
 import Preview from "./pages/Preview";
-import InstagramExport from "./pages/InstagramExport";
+const InstagramExport = lazy(() => import("./pages/InstagramExport"));
 import Uitschrijven from "./pages/Uitschrijven";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -54,6 +55,7 @@ const App = () => (
         <AuthProvider>
           <ThemaProvider>
           <Layout>
+            <Suspense fallback={null}>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/team-samenstellen" element={<TeamBuilder />} />
@@ -68,13 +70,21 @@ const App = () => (
               <Route path="/preview" element={<Preview />} />
               <Route path="/giro-italia-poule-2026" element={<GiroPoule2026 />} />
               <Route path="/tour-de-france-poule-2026" element={<TourDeFrancePoule2026 />} />
-              <Route path="/tour-de-france-poule" element={<TourDeFrancePoule2026 />} />
-              <Route path="/tourspel" element={<TourDeFrancePoule2026 />} />
-              <Route path="/wielerpoule-tour-de-france" element={<TourDeFrancePoule2026 />} />
-              <Route path="/tour-de-france-wielerspel-2026" element={<TourDeFrancePoule2026 />} />
-              <Route path="/tour-de-france-wielerspel" element={<TourDeFrancePoule2026 />} />
-              <Route path="/wielerspel" element={<TourDeFrancePoule2026 />} />
-              <Route path="/wielerspel-2026" element={<TourDeFrancePoule2026 />} />
+              {/* Keyword-varianten → canonieke landingspagina. Op Vercel vangt
+                  vercel.json deze al af met een echte 301; deze client-side
+                  redirects zijn de fallback (Lovable-hosting) zodat de URL's
+                  nooit 404'en of dunne dubbele content serveren. */}
+              {[
+                "/tour-de-france-poule",
+                "/tourspel",
+                "/wielerpoule-tour-de-france",
+                "/tour-de-france-wielerspel-2026",
+                "/tour-de-france-wielerspel",
+                "/wielerspel",
+                "/wielerspel-2026",
+              ].map((p) => (
+                <Route key={p} path={p} element={<Navigate to="/tour-de-france-poule-2026" replace />} />
+              ))}
               <Route path="/uitschrijven" element={<Uitschrijven />} />
               <Route
                 path="/admin"
@@ -94,6 +104,7 @@ const App = () => (
               />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </Layout>
           </ThemaProvider>
         </AuthProvider>
