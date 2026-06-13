@@ -11,11 +11,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import PelotonChat from "@/components/PelotonChat";
 import SubpouleStandings from "@/components/SubpouleStandings";
+import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import DaguitslagChart from "@/components/DaguitslagChart";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Flame, Share2 } from "lucide-react";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Flame, Share2, ListTree, ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function SubpouleManager({ gameId, gameName, gameStatus }: Props = {}) {
@@ -181,13 +183,13 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
   if (active && activeId) {
     // ── Gedeelde panelen — hergebruikt op mobiel (één scrollpagina) en
     //    desktop (tabs), zodat er geen render-duplicatie ontstaat. ──
-    const membersCard = (
+    const deelnemersSection = (
       <Card className="retro-border">
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
           <CardTitle className="font-display flex items-center justify-between gap-2 flex-wrap">
             <span className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              {active.name}
+              Deelnemers
               {active.is_owner && (
                 <Badge variant="secondary" className="text-xs gap-1">
                   <Crown className="h-3 w-3" /> Eigenaar
@@ -237,12 +239,28 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
       </Card>
     );
 
+    // Losse panelen — als ankerbare secties (mobiel) en in de Grafiek-tab (desktop).
+    const standingsPanel = (
+      <SubpouleStandings subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} showEvolution={false} />
+    );
+    const evolutionPanel = (
+      <SubpouleEvolutionChart subpouleId={active.id} gameId={effectiveGameId} title="Stijgers & Dalers" />
+    );
+    const daguitslagPanel = (
+      <DaguitslagChart subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
+    );
+
     const chartPanels = (
       <>
-        <SubpouleStandings subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
-        <DaguitslagChart subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
+        {standingsPanel}
+        {evolutionPanel}
+        {daguitslagPanel}
       </>
     );
+
+    // Smooth-scroll naar een sectie-anker (mobiele "spring naar"-knop).
+    const jumpTo = (id: string) =>
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
     const heatmapPanel = (
       <div key={heatmapUnlocked ? "heatmap-unlocked" : "heatmap-locked"}>
@@ -309,12 +327,15 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
           </button>
         </div>
 
-        {/* ── MOBIEL: geen geneste tabbalk. Eén doorlopende scrollpagina:
-             klassement + etappe-bar → daguitslag → heatmap. Chat opent als
-             floating bottom-sheet (knop hieronder). ── */}
+        {/* ── MOBIEL: geen geneste tabbalk. Eén doorlopende scrollpagina met
+             ankerbare secties: klassement → stijgers&dalers → daguitslag →
+             heatmap → deelnemers. Chat + "spring naar" als floating knoppen. ── */}
         <div className="md:hidden space-y-4">
-          {chartPanels}
-          {heatmapPanel}
+          <section id="sec-klassement" style={{ scrollMarginTop: 80 }}>{standingsPanel}</section>
+          <section id="sec-klassementsverloop" style={{ scrollMarginTop: 80 }}>{evolutionPanel}</section>
+          <section id="sec-daguitslag" style={{ scrollMarginTop: 80 }}>{daguitslagPanel}</section>
+          <section id="sec-heatmap" style={{ scrollMarginTop: 80 }}>{heatmapPanel}</section>
+          <section id="sec-deelnemers" style={{ scrollMarginTop: 80 }}>{deelnemersSection}</section>
         </div>
 
         {/* ── DESKTOP: behoud de tabs (Chat / Grafiek / Heatmap, geen Benchmark). ── */}
@@ -350,7 +371,6 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
 
           <TabsContent value="chat" className="pt-3 space-y-3">
             <PelotonChat subpoolName={active.name} subpoolId={active.id} />
-            {membersCard}
           </TabsContent>
           <TabsContent value="chart" className="pt-3 space-y-4">
             {chartPanels}
@@ -359,6 +379,44 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             {heatmapPanel}
           </TabsContent>
         </Tabs>
+
+        {/* Desktop: deelnemers altijd onderaan, los van de tabs. */}
+        <div className="hidden md:block">
+          {deelnemersSection}
+        </div>
+
+        {/* ── MOBIEL: "spring naar"-knop, net boven de chatknop. Opent een menu
+             dat smooth naar de sectie-ankers scrollt. ── */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="Spring naar sectie"
+              className="md:hidden fixed right-4 bottom-[136px] z-40 inline-flex items-center justify-center h-14 w-14 rounded-full bg-secondary text-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
+            >
+              <ListTree className="h-6 w-6" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" side="top" className="w-52">
+            <DropdownMenuItem asChild>
+              <button type="button" className="w-full" onClick={() => jumpTo("sec-klassementsverloop")}>Stijgers &amp; Dalers</button>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <button type="button" className="w-full" onClick={() => jumpTo("sec-daguitslag")}>Daguitslag</button>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <button type="button" className="w-full" onClick={() => jumpTo("sec-heatmap")}>Heatmap</button>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <button type="button" className="w-full" onClick={() => jumpTo("sec-deelnemers")}>Deelnemers</button>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <button type="button" className="w-full gap-2" onClick={() => jumpTo("sec-klassement")}>
+                <ArrowUp className="h-4 w-4" /> Bovenaan
+              </button>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* ── MOBIEL: floating chat-knop, net boven de globale BottomNav
              (fixed bottom-0 z-50, ~60px). z-40 = onder de sheet-overlay (z-50)
@@ -388,7 +446,6 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             </SheetHeader>
             <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
               <PelotonChat subpoolName={active.name} subpoolId={active.id} />
-              {membersCard}
             </div>
           </SheetContent>
         </Sheet>

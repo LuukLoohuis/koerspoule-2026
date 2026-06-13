@@ -18,9 +18,12 @@ type Props = {
   subpouleName: string;
   gameId?: string;
   gameStatus?: string;
+  /** Toon de klassementsverloop-grafiek onderaan. Default true. Zet op false
+   *  als de parent 'm als losse, ankerbare sectie zelf rendert. */
+  showEvolution?: boolean;
 };
 
-export default function SubpouleStandings({ subpouleId, subpouleName, gameId, gameStatus }: Props) {
+export default function SubpouleStandings({ subpouleId, subpouleName, gameId, gameStatus, showEvolution = true }: Props) {
   const { user } = useAuth();
   const { data: curGame } = useCurrentGame();
   // De subpoule hoort bij een specifieke game (bv. een afgeronde Giro). Gebruik
@@ -555,8 +558,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
         </div>
       )}
 
-      {/* Cumulative evolution chart */}
-      <SubpouleEvolutionChart subpouleId={subpouleId} gameId={game?.id} />
+      {/* Cumulative evolution chart — alleen als de parent 'm niet zelf rendert. */}
+      {showEvolution && <SubpouleEvolutionChart subpouleId={subpouleId} gameId={game?.id} />}
     </div>
   );
 }
