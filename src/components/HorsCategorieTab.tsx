@@ -35,7 +35,7 @@ import { useThema } from "@/contexts/ThemaContext";
 import type { TruiType } from "@/lib/themas";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
-import aapFietser from "@/assets/horscat/aap-fietser.png.asset.json";
+import aapFietser from "@/assets/horscat/aap-fietser-transparant.png";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -851,7 +851,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   />
                 </div>
                 <img
-                  src={aapFietser.url}
+                  src={aapFietser}
                   alt=""
                   aria-hidden
                   className="hidden md:block shrink-0 select-none pointer-events-none w-[200px] lg:w-[260px] h-auto"
