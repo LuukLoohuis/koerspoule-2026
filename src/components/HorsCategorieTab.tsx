@@ -35,6 +35,7 @@ import { useThema } from "@/contexts/ThemaContext";
 import type { TruiType } from "@/lib/themas";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
+import aapFietser from "@/assets/horscat/aap-fietser.png.asset.json";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
