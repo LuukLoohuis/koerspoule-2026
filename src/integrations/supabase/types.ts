@@ -1535,15 +1535,10 @@ export type Database = {
         }
         Returns: string
       }
-      create_subpoule:
-        | {
-            Args: { p_code: string; p_game_id: string; p_name: string }
-            Returns: string
-          }
-        | {
-            Args: { p_code?: string; p_game_id: string; p_name: string }
-            Returns: string
-          }
+      create_subpoule: {
+        Args: { p_code?: string; p_game_id: string; p_name: string }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
