@@ -226,7 +226,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
     // en biedt de join-flow (de link werkt als invite, net als de code).
     // Fallback op de oude deeplink zolang er nog geen slug is (migratie niet toegepast).
     const url = slug
-      ? `https://koerspoule.nl/subpoule/${slug}`
+      ? `https://koerspoule.nl/${slug}`
       : "https://koerspoule.nl/mijn-peloton?tab=subpoules";
     const text =
       `🚴 Doe mee met mijn Koerspoule "${name}"!\n` +

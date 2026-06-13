@@ -102,6 +102,10 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              {/* Bare subpoule-link: koerspoule.nl/<slug>. Statische routes hierboven
+                  ranken hoger (react-router), dus /regels, /login etc. blijven werken;
+                  alleen onbekende 1-segment-paden landen hier. /subpoule/:slug blijft ook. */}
+              <Route path="/:slug" element={<SubpouleBySlug />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Suspense>

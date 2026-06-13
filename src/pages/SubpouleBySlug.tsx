@@ -26,7 +26,7 @@ export default function SubpouleBySlug() {
     const norm = slugify(slug ?? "");
 
     if (!user) {
-      navigate(`/login?returnTo=${encodeURIComponent(`/subpoule/${norm}`)}`, { replace: true });
+      navigate(`/login?returnTo=${encodeURIComponent(`/${norm}`)}`, { replace: true });
       return;
     }
 
