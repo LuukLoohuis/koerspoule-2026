@@ -20,6 +20,8 @@ type Props = {
   userPoints: number;
   /** Gemiddelde score van de gesimuleerde aap (afgerond). */
   monkeyAvg: number;
+  /** Optionele aap-illustratie, gerenderd BINNEN de kaart (rechts desktop / onder mobiel). */
+  illustrationSrc?: string;
   className?: string;
 };
 
@@ -53,7 +55,7 @@ function useCountUp(target: number, durationMs = 1200): number {
   return value;
 }
 
-export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, className }: Props) {
+export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, illustrationSrc, className }: Props) {
   const v = pickVerdict(percentile);
   const shown = useCountUp(percentile);
 
@@ -107,6 +109,9 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, c
       className={"vintage-paper rounded-2xl px-5 py-5 md:py-6 text-center " + (className ?? "")}
       style={{ border: "1.5px solid var(--ink-sepia)", boxShadow: "0 2px 0 rgba(58,42,26,0.18)" }}
     >
+      {/* Hero-inhoud links, aap-illustratie rechts (desktop) / onder (mobiel) — binnen de kaart. */}
+      <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+        <div className="flex-1 min-w-0">
       {/* Score links, vergelijking rechts — compacte hero (mobiel gestapeld) */}
       <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-10">
         {/* Links: Monkey IQ + percentage */}
@@ -237,6 +242,17 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, c
         </span>
         Awel, de Tour, dat is een loterij, hé…
       </p>
+        </div>
+        {illustrationSrc && (
+          <img
+            src={illustrationSrc}
+            alt=""
+            aria-hidden
+            className="select-none pointer-events-none h-auto shrink-0 w-[130px] mx-auto md:mx-0 md:w-[170px] lg:w-[210px]"
+            style={{ filter: "drop-shadow(0 8px 14px rgba(58,42,26,0.18))" }}
+          />
+        )}
+      </div>
     </div>
   );
 }

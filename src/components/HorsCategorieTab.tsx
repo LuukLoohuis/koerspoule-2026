@@ -842,22 +842,12 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
               {/* ── Monkey IQ-hero: percentile + verdict + Jij-vs-aap ──
                   Alle uitleg-/titel-lagen en de Prestatieklasse-banner zijn
                   bewust verwijderd: de hero vertelt het hele verhaal. */}
-              <div className="flex items-center gap-6">
-                <div className="flex-1 min-w-0">
-                  <PercentileVerdict
-                    percentile={Math.round(monte.beatPct)}
-                    userPoints={monte.userActual}
-                    monkeyAvg={Math.round(monte.mean)}
-                  />
-                </div>
-                <img
-                  src={aapFietser}
-                  alt=""
-                  aria-hidden
-                  className="hidden md:block shrink-0 select-none pointer-events-none w-[200px] lg:w-[260px] h-auto"
-                  style={{ filter: "drop-shadow(0 10px 18px rgba(0,0,0,0.18))" }}
-                />
-              </div>
+              <PercentileVerdict
+                percentile={Math.round(monte.beatPct)}
+                userPoints={monte.userActual}
+                monkeyAvg={Math.round(monte.mean)}
+                illustrationSrc={aapFietser}
+              />
 
               {/* Distributie — FT-stijl infographic (custom SVG) */}
               <AapscoreDistributie
