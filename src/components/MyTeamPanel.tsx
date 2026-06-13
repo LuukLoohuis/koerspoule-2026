@@ -930,12 +930,9 @@ export default function MyTeamPanel({
                       Volgorde conform affiche: rooster+LIVE → fietser → tuner →
                       control-box met kabel naar de mic. */}
 
-                  {/* 2) Fietser-telemetrie */}
-                  <img src="/salle-de-course/rider-telemetry.png" alt="" aria-hidden="true"
-                    className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
-
-                  {/* 3) FM/AM-tuner */}
-                  <img src="/salle-de-course/radio-tuner.png" alt="" aria-hidden="true"
+                  {/* 2) Tuner + VOLUME/SQUELCH-knoppen + fietser-telemetrie als
+                         één gecombineerd paneel. */}
+                  <img src="/salle-de-course/tuner-telemetry.png" alt="" aria-hidden="true"
                     className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
 
                   {/* 4) Comm-unit: control-box (CHANNEL/RF GAIN/SQL) + krulkabel
