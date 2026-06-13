@@ -418,7 +418,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             className="inline-flex items-center gap-2 shrink-0 px-4 py-2 rounded-md bg-primary text-primary-foreground font-bold text-sm border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] hover:brightness-105 active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
           >
             <Share2 className="h-4 w-4" />
-            Roep je kopgroep
+            Daag je vrienden uit
           </button>
         </div>
 
