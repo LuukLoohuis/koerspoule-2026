@@ -11,6 +11,7 @@ import { StageTypeIcon, RouteIcon, type StageType } from "./StageIcons";
 
 const MIN_H = 40;
 const MAX_H = 140;   // matcht ongeveer header-hoogte
+const EMPTY_H = 14;  // dunne placeholder bij 0 (nul dagpunten)
 const BAR_W = 44;    // bredere capsule
 const BAR_GAP = 14;
 
@@ -53,6 +54,13 @@ export type Stage = {
   type: StageType;
   distanceKm: number;
   earnedPoints: number;
+  /**
+   * Optionele relatieve balkhoogte (alleen subpoule-weergave).
+   * - undefined → hoogte schaalt op afstand (km), bestaand gedrag.
+   * - 0         → nul dagpunten: geen capsule, dunne dashed placeholder.
+   * - 0..1      → hoogte = fractie × MAX_H.
+   */
+  barFraction?: number | null;
 };
 
 export type StageBarProps = {
@@ -199,7 +207,15 @@ export default function StageBar({
 
         <div className="sb-scroll" ref={scrollRef}>
           {stages.map((stage) => {
-            const h = heightForValue(stage.distanceKm, minKm, maxKm);
+            // Subpoule-modus: hoogte volgt barFraction (relatieve dagprestatie).
+            // Anders (Uitslagen-tab): hoogte schaalt op afstand (km).
+            const usesFraction = stage.barFraction != null;
+            const isEmpty = usesFraction && (stage.barFraction as number) <= 0;
+            const h = usesFraction
+              ? isEmpty
+                ? EMPTY_H
+                : Math.max(EMPTY_H, Math.round((stage.barFraction as number) * MAX_H))
+              : heightForValue(stage.distanceKm, minKm, maxKm);
             const isSel = stage.stageNumber === selectedStage;
             return (
               <button
@@ -210,10 +226,10 @@ export default function StageBar({
                 aria-pressed={isSel}
                 aria-label={`Rit ${stage.stageNumber}, ${TYPE_LABEL[stage.type]}, ${stage.earnedPoints} punten`}
               >
-                <div className="sb-bar-wrap" style={{ height: h }}>
+                <div className={`sb-bar-wrap${isEmpty ? " sb-bar-wrap--empty" : ""}`} style={{ height: h }}>
                   {isSel && <Tooltip stage={stage} />}
-                  <img className="sb-badge" src={BADGE_SRC[stage.type]} alt="" aria-hidden="true" />
-                  <Capsule type={stage.type} heightPx={h} />
+                  <img className={`sb-badge${isEmpty ? " sb-badge--empty" : ""}`} src={BADGE_SRC[stage.type]} alt="" aria-hidden="true" />
+                  {isEmpty ? <div className="sb-empty" aria-hidden /> : <Capsule type={stage.type} heightPx={h} />}
                 </div>
                 <div className="sb-num">{stage.stageNumber}</div>
                 <div className="sb-pts">{stage.earnedPoints}</div>
@@ -338,6 +354,15 @@ function Styles() {
   width: 38px; height: 38px; z-index: 2;
   filter: drop-shadow(0 2px 3px rgba(58,42,26,.25));
 }
+/* Nul dagpunten: dunne dashed placeholder i.p.v. capsule, badge gedimd. */
+.sb-empty {
+  width: 100%; height: 100%;
+  border: 1.5px dashed rgba(58,42,26,.35);
+  border-radius: ${BAR_W}px;
+  background: rgba(58,42,26,.04);
+}
+.sb-bar-wrap--empty { filter: none; }
+.sb-badge--empty { opacity: .5; }
 
 .sb-num {
   margin-top: 6px; font-size: 12px; color: #9A8A74;

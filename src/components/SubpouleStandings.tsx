@@ -39,6 +39,9 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
 
   const [compareId, setCompareId] = useState<string | null>(null);
   const [etappeIdx, setEtappeIdx] = useState<number>(0);
+  // Balkhoogte-modus voor de etappe-bar: relatieve dagprestatie binnen de
+  // subpoule, op punten of op positie. (Niet de km-afstand zoals Uitslagen.)
+  const [barMode, setBarMode] = useState<"points" | "position">("points");
   // Auto-scroll naar de benchmark zodra een team gekozen is — de vergelijking
   // rendert onder de tabel en viel anders buiten beeld (gemiste feedback).
   const compareRef = useRef<HTMLDivElement>(null);
@@ -81,6 +84,47 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
     stagePoints.filter((sp) => sp.entry_id === myEntry.id).forEach((sp) => m.set(sp.stage_id, (m.get(sp.stage_id) ?? 0) + sp.points));
     return m;
   }, [myEntry, stagePoints]);
+
+  // Relatieve balkhoogte per etappe (alleen subpoule). Ondervloer zodat elke
+  // positieve score zichtbaar blijft; 0 dagpunten = fractie 0 = lege balk.
+  const barFractionByStageId = useMemo(() => {
+    const MIN_VISIBLE_FRAC = 0.2;
+    const res = new Map<string, number>();
+    if (!myEntry) return res;
+
+    // Dagpunten per (entry, stage) binnen de subpoule — som meerdere
+    // klassement-rijen per renner.
+    const byStage = new Map<string, Map<string, number>>();
+    stagePoints.forEach((sp) => {
+      let m = byStage.get(sp.stage_id);
+      if (!m) { m = new Map(); byStage.set(sp.stage_id, m); }
+      m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points);
+    });
+
+    stages.forEach((s) => {
+      if (s.is_gc) return;
+      const m = byStage.get(s.id);
+      const mine = m?.get(myEntry.id) ?? 0;
+      if (mine <= 0) { res.set(s.id, 0); return; }
+
+      if (barMode === "points") {
+        let max = 0;
+        m?.forEach((v) => { if (v > max) max = v; });
+        const frac = max > 0 ? MIN_VISIBLE_FRAC + (1 - MIN_VISIBLE_FRAC) * Math.min(1, mine / max) : 1;
+        res.set(s.id, frac);
+      } else {
+        // Positie: rang binnen subpoule-leden met >0 dagpunten (hoogste = 1).
+        const positives = m ? [...m.values()].filter((v) => v > 0) : [];
+        const N = positives.length;
+        let better = 0;
+        m?.forEach((v) => { if (v > mine) better++; });
+        const rank = better + 1;
+        const frac = N <= 1 ? 1 : MIN_VISIBLE_FRAC + (1 - MIN_VISIBLE_FRAC) * ((N - rank) / (N - 1));
+        res.set(s.id, frac);
+      }
+    });
+    return res;
+  }, [myEntry, stagePoints, stages, barMode]);
 
   // Cumulative points up to a given stage index
   const cumUpTo = (upToIdx: number) => {
@@ -211,14 +255,50 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           selectedEtappe?.id,
           myEntry?.total_points,
         );
+        // Laat buildStageBarData ongemoeid; map er de relatieve dagprestatie
+        // (barFraction) overheen voor de subpoule-weergave.
+        const stageIdByNumber = new Map(
+          stages.filter((s) => !s.is_gc).map((s) => [s.stage_number, s.id]),
+        );
+        const dataWithFraction = data.map((d) => ({
+          ...d,
+          barFraction: barFractionByStageId.get(stageIdByNumber.get(d.stageNumber) ?? "") ?? 0,
+        }));
         return (
           // retro-border wrapper zodat de StageBar exact dezelfde kaart-chrome
           // (2px border + 3px offset-shadow) en breedte krijgt als de
           // standings-kaart eronder. StageBar zelf chromeless.
           <div className="retro-border bg-gradient-to-br from-card via-card to-secondary/20 p-3">
+            {/* Segmented toggle: balkhoogte op punten of positie. */}
+            <div className="flex items-center justify-between gap-2 mb-2.5">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                Balkhoogte
+              </span>
+              <div className="inline-flex rounded-full border border-foreground/20 bg-secondary/40 p-0.5">
+                {([
+                  { key: "points", label: "Punten" },
+                  { key: "position", label: "Positie" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setBarMode(opt.key)}
+                    aria-pressed={barMode === opt.key}
+                    className={cn(
+                      "px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider transition-colors",
+                      barMode === opt.key
+                        ? "bg-[hsl(var(--vintage-gold))] text-background shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <StageBar
               chromeless
-              stages={data}
+              stages={dataWithFraction}
               gcTotal={gcTotal}
               selectedStage={selectedNumber}
               onSelectStage={(n) => {
