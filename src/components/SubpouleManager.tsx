@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 type Props = { gameId?: string; gameName?: string; gameStatus?: string };
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,27 +40,62 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
   const [createCode, setCreateCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
 
-  // Deeplink support: ?subpoule=...&view=koerscafe
+  // Deeplink: ?subpoule=<id>&code=<code>&view=koerscafe. De code komt mee via de
+  // /subpoule/<slug>-resolver zodat een niet-lid kan joinen. We onthouden het
+  // doel en handelen het in een tweede effect af (zodat join → lijst-refresh →
+  // openen netjes verloopt).
+  const [pendingOpen, setPendingOpen] = useState<{ id: string; code?: string; view?: string } | null>(null);
+  const joinedForRef = useRef<string | null>(null);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const spId = params.get("subpoule");
-    const view = params.get("view");
-    if (spId) {
-      const match = subpoules.find((s) => s.id === spId);
-      if (match) {
-        setActiveId(spId);
-        if (view === "koerscafe") {
-          setActiveTab("chat"); // desktop-tab
-          setChatOpen(true);    // mobiel bottom-sheet
-        }
-        // Clean up query params so the URL stays clean
-        const url = new URL(window.location.href);
-        url.searchParams.delete("subpoule");
-        url.searchParams.delete("view");
-        window.history.replaceState({}, "", url.toString());
+    if (!spId) return;
+    setPendingOpen({
+      id: spId,
+      code: params.get("code") ?? undefined,
+      view: params.get("view") ?? undefined,
+    });
+    // URL meteen opschonen (subpoule/code/view weg).
+    const url = new URL(window.location.href);
+    url.searchParams.delete("subpoule");
+    url.searchParams.delete("code");
+    url.searchParams.delete("view");
+    window.history.replaceState({}, "", url.toString());
+  }, []);
+
+  useEffect(() => {
+    if (!pendingOpen) return;
+    const match = subpoules.find((s) => s.id === pendingOpen.id);
+    if (match) {
+      setActiveId(match.id);
+      if (pendingOpen.view === "koerscafe") {
+        setActiveTab("chat"); // desktop-tab
+        setChatOpen(true);    // mobiel bottom-sheet
       }
+      setPendingOpen(null);
+      return;
     }
-  }, [subpoules]);
+    // Nog geen lid: join met de meegegeven code (één keer per id).
+    if (pendingOpen.code && joinedForRef.current !== pendingOpen.id && !join.isPending) {
+      joinedForRef.current = pendingOpen.id;
+      join.mutate(
+        { code: pendingOpen.code },
+        {
+          onError: (e) => {
+            toast({ title: "Joinen mislukt", description: e instanceof Error ? e.message : "", variant: "destructive" });
+            setPendingOpen(null);
+          },
+          // onSuccess: lijst invalideert → dit effect draait opnieuw → match → openen.
+        },
+      );
+      return;
+    }
+    // Geen code en geen match terwijl de lijst klaar is → opgeven.
+    if (!pendingOpen.code && !isLoading) {
+      setPendingOpen(null);
+    }
+  }, [pendingOpen, subpoules, isLoading, join, toast]);
 
   const active = useMemo(
     () => (activeId ? subpoules.find((s) => s.id === activeId) ?? null : null),
@@ -149,8 +184,10 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
 
   // "Roep je kopgroep" — deel een uitnodiging via het systeem-deelvenster
   // (WhatsApp etc) op mobiel; valt terug op kopiëren naar klembord op desktop.
-  const shareInvite = async (name: string, code: string) => {
-    const url = "https://koerspoule.nl/mijn-peloton?tab=subpoules";
+  const shareInvite = async (name: string, code: string, slug: string) => {
+    // Nette deelbare link met de subpoulenaam; resolvet via /subpoule/<slug>
+    // en biedt de join-flow (de link werkt als invite, net als de code).
+    const url = `https://koerspoule.nl/subpoule/${slug}`;
     const text =
       `🚴 Doe mee met mijn Koerspoule "${name}"!\n` +
       `Toegangscode: ${code}\n` +
@@ -319,7 +356,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             </p>
           </div>
           <button
-            onClick={() => shareInvite(active.name, active.code)}
+            onClick={() => shareInvite(active.name, active.code, active.slug)}
             className="inline-flex items-center gap-2 shrink-0 px-4 py-2 rounded-md bg-primary text-primary-foreground font-bold text-sm border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] hover:brightness-105 active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
           >
             <Share2 className="h-4 w-4" />

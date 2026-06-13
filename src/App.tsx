@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import TeamBuilder from "./pages/TeamBuilder";
 import Results from "./pages/Results";
 import MijnPeloton from "./pages/MijnPeloton";
+import SubpouleBySlug from "./pages/SubpouleBySlug";
 import Rules from "./pages/Rules";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="/team-samenstellen" element={<TeamBuilder />} />
               <Route path="/uitslagen" element={<Results />} />
               <Route path="/mijn-peloton" element={<MijnPeloton />} />
+              <Route path="/subpoule/:slug" element={<SubpouleBySlug />} />
               <Route path="/karavaan" element={<MijnPeloton />} />
               <Route path="/regels" element={<Rules />} />
               <Route path="/login" element={<Login />} />

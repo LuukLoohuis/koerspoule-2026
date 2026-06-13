@@ -60,6 +60,11 @@ const floatingBadges = [
   { icon: Bike, label: "Corsa", color: "text-accent", delay: 1.0 },
 ];
 
+/** Veilige bestemming na login: alleen interne paden, anders /karavaan. */
+function safeReturnTo(rt: string | null): string {
+  return rt && rt.startsWith("/") && !rt.startsWith("//") ? rt : "/karavaan";
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -160,7 +165,7 @@ export default function Login() {
         sendEmail(email, "Welkom bij Koerspoule! 🌹", registratieHtml(name.trim() || email));
 
         if (data.session) {
-          navigate("/karavaan", { replace: true });
+          navigate(safeReturnTo(searchParams.get("returnTo")), { replace: true });
         }
       } else {
         const { data, error } = await withTimeout(
@@ -182,7 +187,7 @@ export default function Login() {
           title: "Ingelogd! 🚴",
           description: "Welkom terug bij Koerspoule.",
         });
-        navigate("/karavaan", { replace: true });
+        navigate(safeReturnTo(searchParams.get("returnTo")), { replace: true });
       }
     } catch (error) {
       toast({

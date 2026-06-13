@@ -7,6 +7,7 @@ export type Subpoule = {
   game_id: string;
   name: string;
   code: string;
+  slug: string;
   owner_user_id: string;
   created_at: string;
   member_count: number;
@@ -26,7 +27,7 @@ export function useSubpoules(gameId?: string) {
       // RLS limits this to subpoules where user is owner or member
       const { data, error } = await supabase
         .from("subpoules")
-        .select("id, game_id, name, code, owner_user_id, created_at, subpoule_members(user_id)")
+        .select("id, game_id, name, code, slug, owner_user_id, created_at, subpoule_members(user_id)")
         .eq("game_id", gameId)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -35,6 +36,7 @@ export function useSubpoules(gameId?: string) {
         game_id: s.game_id,
         name: s.name,
         code: s.code,
+        slug: s.slug,
         owner_user_id: s.owner_user_id,
         created_at: s.created_at,
         member_count: (s.subpoule_members as Array<{ user_id: string }> | null)?.length ?? 0,
