@@ -5,6 +5,7 @@ import { Flame, Star, Eye, EyeOff } from "lucide-react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
 import { useSubpouleEntries, type SubpouleEntry } from "@/hooks/useSubpouleEntries";
+import { HeatmapSkeleton } from "@/components/skeletons/SubpouleSkeletons";
 import { cn } from "@/lib/utils";
 
 type Props = { subpouleId: string };
@@ -109,11 +110,7 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
   }, [data, categories, enabledPlayers]);
 
   if (isLoading || !data) {
-    return (
-      <Card className="retro-border">
-        <CardContent className="p-6 text-sm text-muted-foreground">Laden…</CardContent>
-      </Card>
-    );
+    return <HeatmapSkeleton />;
   }
 
   if (allPlayers.length === 0) {

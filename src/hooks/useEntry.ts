@@ -27,6 +27,21 @@ export function useEntry(gameId?: string) {
 
   const SELECT = "id, user_id, game_id, status, team_name, entry_picks(category_id, rider_id), entry_jokers(rider_id), entry_predictions(classification, position, rider_id)";
 
+  // ── Optimistic-update helpers voor de entry-cache ──
+  const entryKey = ["entry", gameId, user?.id];
+  // Cancel lopende fetches, snapshot de vorige cache, schrijf de verwachte
+  // nieuwe waarde meteen → de keuze verschijnt direct.
+  const optimisticEntry = async (update: (e: Entry) => Entry) => {
+    await queryClient.cancelQueries({ queryKey: entryKey });
+    const prev = queryClient.getQueryData<Entry>(entryKey);
+    if (prev) queryClient.setQueryData<Entry>(entryKey, update(prev));
+    return { prev };
+  };
+  const rollbackEntry = (ctx?: { prev?: Entry }) => {
+    if (ctx?.prev) queryClient.setQueryData(entryKey, ctx.prev);
+  };
+  const settleEntry = () => queryClient.invalidateQueries({ queryKey: entryKey });
+
   const entryQuery = useQuery({
     queryKey: ["entry", gameId, user?.id],
     enabled: Boolean(gameId && user?.id && supabase),
@@ -73,7 +88,17 @@ export function useEntry(gameId?: string) {
       });
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
+    // Single-pick categorie: vervang de keuze direct.
+    onMutate: ({ categoryId, riderId }) =>
+      optimisticEntry((e) => ({
+        ...e,
+        entry_picks: [...e.entry_picks.filter((p) => p.category_id !== categoryId), { category_id: categoryId, rider_id: riderId }],
+      })),
+    onError: (err, _v, ctx) => {
+      rollbackEntry(ctx);
+      toast({ title: "Opslaan mislukt", description: err instanceof Error ? err.message : "", variant: "destructive" });
+    },
+    onSettled: settleEntry,
   });
 
   // Toggle: gebruikt voor categorieën met max_picks > 1 (en werkt ook voor max_picks=1)
@@ -87,7 +112,22 @@ export function useEntry(gameId?: string) {
       });
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
+    // Direct toevoegen/verwijderen; de server-side max wordt door onSettled gereconcilieerd.
+    onMutate: ({ categoryId, riderId }) =>
+      optimisticEntry((e) => {
+        const exists = e.entry_picks.some((p) => p.category_id === categoryId && p.rider_id === riderId);
+        return {
+          ...e,
+          entry_picks: exists
+            ? e.entry_picks.filter((p) => !(p.category_id === categoryId && p.rider_id === riderId))
+            : [...e.entry_picks, { category_id: categoryId, rider_id: riderId }],
+        };
+      }),
+    onError: (err, _v, ctx) => {
+      rollbackEntry(ctx);
+      toast({ title: "Opslaan mislukt", description: err instanceof Error ? err.message : "", variant: "destructive" });
+    },
+    onSettled: settleEntry,
   });
 
   const saveJoker = useMutation({
@@ -99,7 +139,13 @@ export function useEntry(gameId?: string) {
       });
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
+    onMutate: ({ riderIds }) =>
+      optimisticEntry((e) => ({ ...e, entry_jokers: riderIds.map((id) => ({ rider_id: id })) })),
+    onError: (err, _v, ctx) => {
+      rollbackEntry(ctx);
+      toast({ title: "Opslaan mislukt", description: err instanceof Error ? err.message : "", variant: "destructive" });
+    },
+    onSettled: settleEntry,
   });
 
   const savePredictions = useMutation({

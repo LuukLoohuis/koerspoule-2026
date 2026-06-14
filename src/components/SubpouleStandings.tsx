@@ -10,6 +10,7 @@ import TeamComparison from "@/components/TeamComparison";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import StageBar from "@/components/stages/StageBar";
 import { buildStageBarData } from "@/components/stages/stageBarData";
+import { StandingsSkeleton } from "@/components/skeletons/SubpouleSkeletons";
 import { cn } from "@/lib/utils";
 
 
@@ -236,11 +237,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   const compareMember = memberRows.find((m) => m.user_id === compareId);
 
   if (membersLoading) {
-    return (
-      <Card className="retro-border">
-        <CardContent className="p-4 text-sm text-muted-foreground">Klassement laden…</CardContent>
-      </Card>
-    );
+    return <StandingsSkeleton />;
   }
   if (memberRows.length === 0) {
     return (
