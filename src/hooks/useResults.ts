@@ -152,6 +152,47 @@ export function useGameStandings(gameId?: string, uptoStageNumber?: number) {
   });
 }
 
+export type GameLeaderboardRow = {
+  entry_id: string;
+  user_id: string;
+  team_name: string | null;
+  total_points: number;
+  rank: number;
+};
+
+/** Voorgerekende globale eindstand uit leaderboard_global_mv (geen live rank()
+ *  per request). Probeert eerst de edge-cache (/api/standings op Vercel); valt
+ *  anders terug op de get_game_leaderboard-RPC. */
+export function useGameLeaderboard(gameId?: string) {
+  const authReady = useAuthReady();
+  return useQuery({
+    queryKey: ["game-leaderboard", gameId],
+    enabled: authReady && Boolean(gameId),
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<GameLeaderboardRow[]> => {
+      if (!gameId) return [];
+      // 1) Edge-cache (Vercel) — raakt de DB niet bij de etappe-piek.
+      try {
+        const res = await fetch(`/api/standings?game=${encodeURIComponent(gameId)}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (Array.isArray(json)) return json as GameLeaderboardRow[];
+        }
+      } catch {
+        /* endpoint niet beschikbaar (bv. Lovable) → RPC-fallback */
+      }
+      // 2) Fallback: directe RPC op de voorgerekende MV.
+      if (!supabase) return [];
+      const sb = supabase as unknown as {
+        rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string } | null }>;
+      };
+      const { data, error } = await sb.rpc("get_game_leaderboard", { p_game_id: gameId });
+      if (error) throw new Error(error.message ?? "get_game_leaderboard faalde");
+      return (data ?? []) as GameLeaderboardRow[];
+    },
+  });
+}
+
 /** stage_points beperkt tot een set entries (bv. de leden van een subpoule).
  *  Haalt alleen die rijen op i.p.v. de hele game — schaalt naar veel deelnemers. */
 /** Jouw dagklassering per etappe (server-side). Map<stage_id, rank>. */
