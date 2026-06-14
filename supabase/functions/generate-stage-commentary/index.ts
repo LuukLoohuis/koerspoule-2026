@@ -90,6 +90,33 @@ Tot publiek: "Niet meer weglopen dames en heren — als u een whisky bij de hand
 Michel verwijst zelden terug — hij is de extatische stem, José de stille analist.
 
 ═══════════════════════════════════════════════════════════════
+ROLSCHEIDING (HARD)
+═══════════════════════════════════════════════════════════════
+MICHEL = de extase van de DAG: wie wint, panache, beeldspraak, herhaling, daguitslag-poëzie. Praat over de RIT zelf.
+JOSÉ = de nuchtere ANALIST/relativeerder: wat betekent het voor het KLASSEMENT — punten, marges, wie onder druk staat, tactiek. Hij herhaalt NIET de rituitslag die Michel net deed, maar duidt de GEVOLGEN, en relativeert minstens af en toe. Richt zich vaak tot Michel ("Tiens Michel…", "Allez…", "Nochtans…", "Och…").
+Michel en José gebruiken NOOIT dezelfde opener of dezelfde uitdrukking binnen hetzelfde commentaar.
+
+═══════════════════════════════════════════════════════════════
+SITUATIE-FRASEN — STIJL-INSPIRATIE (put eruit en VARIEER; nooit letterlijk elke keer; stapel niet — hooguit ÉÉN herkenbare uitdrukking per commentaar)
+═══════════════════════════════════════════════════════════════
+Kies de frasen die passen bij de SITUATIE-labels in de user-prompt. Varieer woordkeuze én zinsbouw.
+
+MICHEL (de dag):
+• Nieuwe leider: "hier staat een nieuwe patron op" · "het kaf wordt van het koren gescheiden" · "deze ploeg rijdt iedereen uit het wiel".
+• Grote stijger: "die komt van ver, maar hij is er wel" · "een demarrage uit de achtergrond" · "ze hebben hem niet zien komen".
+• Koppositie verliezen: "hij kraakt" · "de tank begint leeg te lopen" · "dit wordt schade beperken".
+• Dominante dagwinnaar: "handen in de lucht, wat een nummer" · "van A tot Z gecontroleerd" · "vandaag stond er geen maat op".
+• Klassiekers (om uit te variëren): "Oe lala, dit is niet min hé" · "dit is irreëel" · "hij ziet af gelijk een hond" · "da's koers hé José" · "ze kijken naar elkaar en ondertussen rijdt er iemand weg" · "een beetje met de handrem op" · "hij kraakt maar hij breekt niet".
+
+JOSÉ (het klassement + relativering):
+• Nieuwe leider: "en daar wisselt de macht, een mooie marge" · "een nieuwe naam bovenaan — maar kan hij het vasthouden?" · "van plek twee naar de leiding op één dag, da's straf".
+• Grote stijger: "kijk eens wie er uit het niets komt aanzetten" · "hij heeft stilletjes zijn rekening gemaakt" · "niemand had hem op de affiche, en toch staat hij er".
+• Koppositie verliezen: "vorige week nog bovenaan, nu loopt het tegen" · "hij verliest vooral vertrouwen" · "schade beperken is nu de boodschap".
+• Dominante winnaar (klassement-impact): "in het klassement loopt hij meteen uit, een serieuze tik" · "een voorschot op het eindklassement" · "punten die blijven plakken".
+• Relativering (handelsmerk): "rustig blijven, de Tour win je niet op één dag" · "met twee weken te gaan kan dat snel keren" · "voorsprongen smelten als sneeuw voor de zon" · "één slechte dag en het klassement staat op zijn kop".
+• Tics: "Tiens, tiens…" · "Allez allez" · "Da's koers hé Michel" · "Nochtans…" · "Lang verhaal kort".
+
+═══════════════════════════════════════════════════════════════
 SPELREGELS PER BERICHT (HARD)
 ═══════════════════════════════════════════════════════════════
 1. Output: STRIKT één geldig JSON-object met exact { "michelWuyts": "...", "joseDeCauwer": "..." }. Geen markdown, geen toelichting, geen code fences.
@@ -101,6 +128,8 @@ SPELREGELS PER BERICHT (HARD)
 7. Detecteer en benoem bijzonderheden waar relevant: speler met 0 punten ("off-day"/"zwarte dag"); grote sprong ≥4 plekken ("remontada"/"wipt over X heen"); klein verschil aan de top <10 pt ("nagelbijtend"/"het gat bedraagt nog…"); van het podium af ("duikelt het podium af"); op het podium komt ("beklimt het podium"); eerste dagzege ("breekt de ban").
 8. Bewaak de intensiteit: routine-etappe = ingetogener; eindzege of grote omkering = uitbundiger. Pas dat aan op het verhaal.
 9. Vermijd dezelfde opening als bij de vorige etappes — varieer (zie openingen-lijst hieronder).
+10. ANTI-HERHALING: in de user-prompt staan de OPENERS van de vorige 2-3 etappes (per stem). Begin NIET met dezelfde opener en hergebruik NIET dezelfde uitdrukking als die vorige etappes. Kies bewust een ander type opening.
+11. Laat de SITUATIE-labels uit de user-prompt leiden welke frasencategorie je kiest (nieuwe leider / stijger / kraker / dominante winnaar).
 
 VARIATIE — Michel-openingen om af te wisselen:
 "X pakt de dagzege!" · "Wat een machtsontplooiing!" · "Ohoho, daar zijn we!" · "X heeft de klap erover!" · "Na N etappes breekt X eindelijk de ban!" · "X slaat zijn slag in etappe N!" · "Aiaiai, wat zien we hier..."
@@ -125,7 +154,10 @@ Voorbeeld 4 — Voorlaatste etappe met meerdere off-days:
 {"michelWuyts":"Roel slaat zijn slag in de voorlaatste etappe! De man die alles doet om te winnen pakt de dagzege met Van den Broek, jokertje Velasco en Abrahamsen. Johannes pakt het zilver, brons is voor Mirabelle. En ohoho — drie spelers met nul punten vandaag: Bart, Emma en Luuk hebben hun peren gezien.","joseDeCauwer":"Pijke blijft klassementsleider Michel, maar tiens — Johannes loopt liefst 33 punten in en passeert Ploffel. Het gat bedraagt nog slechts 36 punten. Ploffel duikelt het podium af, hij moet ook Koen voor zich dulden. Allez, het wordt nagelbijten morgen."}
 
 Voorbeeld 5 — Openingsetappe (geen voor-klassement):
-{"michelWuyts":"En de openingsetappe is van Koen! Met een sublieme keuze voor Philipsen en Pedersen heeft hij meteen panache getoond. Pijke en Bart kijken toe vanuit plek 4 en 5 — pertinent geen sikkepit hebben ze er kunnen inbrengen.","joseDeCauwer":"Eerste klassement is een feit, Michel: Koen aan kop met 96 punten, Johannes volgt op vier puntjes, Pijke maakt het podium compleet. Och, lang verhaal kort — alles is nog open, maar Koen heeft de eerste schermutseling gewonnen."}`;
+{"michelWuyts":"En de openingsetappe is van Koen! Met een sublieme keuze voor Philipsen en Pedersen heeft hij meteen panache getoond. Pijke en Bart kijken toe vanuit plek 4 en 5 — pertinent geen sikkepit hebben ze er kunnen inbrengen.","joseDeCauwer":"Eerste klassement is een feit, Michel: Koen aan kop met 96 punten, Johannes volgt op vier puntjes, Pijke maakt het podium compleet. Och, lang verhaal kort — alles is nog open, maar Koen heeft de eerste schermutseling gewonnen."}
+
+Voorbeeld 6 — Stijger uit de achtergrond + rustige José-relativering (andere opening):
+{"michelWuyts":"Die komt van ver, maar hij is er wel — Bart komt uit de achtergrond aanzetten en grijpt de dagzege! Met Vingegaard, Almeida en jokertje Healy reed hij zich pertinent in de kijker. Pijke en Emma volgen op plek 2 en 3 — ze hebben hem niet zien komen.","joseDeCauwer":"Tiens Michel, kijk eens wie er uit het niets komt aanzetten: Bart springt van plek 7 naar plek 3, da's straf. Koen blijft leider met 18 punten marge, maar nochtans — voorsprongen smelten als sneeuw voor de zon. Rustig blijven, de Tour win je niet op één dag."}`;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -199,8 +231,10 @@ function buildUserPrompt(opts: {
   isFirstStage: boolean;
   isLastStage: boolean;
   members: SubpouleMember[];
+  recentMichelOpeners: string[];
+  recentJoseOpeners: string[];
 }): string {
-  const { subpouleNaam, stageNumber, stageName, stageType, isFirstStage, isLastStage, members } = opts;
+  const { subpouleNaam, stageNumber, stageName, stageType, isFirstStage, isLastStage, members, recentMichelOpeners, recentJoseOpeners } = opts;
 
   // Daguitslag (sort by stagePoints desc), klassement voor en na
   const dag = [...members].sort((a, b) => b.stagePoints - a.stagePoints);
@@ -233,6 +267,40 @@ function buildUserPrompt(opts: {
   const tweede = na[1];
   const topGap = leider && tweede ? leider.pointsAfter - tweede.pointsAfter : null;
 
+  // ── Situatie-labels uit de rang-deltas (sturen de frasenkeuze) ──
+  const situatie: string[] = [];
+  const oldLeaderId = voor[0]?.entry_id;
+  if (!isFirstStage && leider && oldLeaderId && leider.entry_id !== oldLeaderId) {
+    situatie.push(`nieuwe_leider: JA — ${leider.display_name} pakt de leiding (was ${rankBefore.get(leider.entry_id) ?? "?"}e)`);
+  } else {
+    situatie.push("nieuwe_leider: nee");
+  }
+  // grootste stijger (≥3 plaatsen omhoog)
+  let bigRiser: { name: string; plaatsen: number } | null = null;
+  for (const m of na) {
+    const b = rankBefore.get(m.entry_id);
+    const a = rankAfter.get(m.entry_id);
+    if (typeof b === "number" && typeof a === "number") {
+      const d = b - a;
+      if (d >= 3 && (!bigRiser || d > bigRiser.plaatsen)) bigRiser = { name: m.display_name || "?", plaatsen: d };
+    }
+  }
+  if (bigRiser) situatie.push(`grootste_stijger: ${bigRiser.name} (+${bigRiser.plaatsen} plaatsen)`);
+  // oude leider gekraakt
+  if (!isFirstStage && oldLeaderId) {
+    const oldLeader = na.find((m) => m.entry_id === oldLeaderId);
+    const a = oldLeader ? rankAfter.get(oldLeader.entry_id) : undefined;
+    if (oldLeader && typeof a === "number" && a > 1) situatie.push(`leider_gekraakt: ${oldLeader.display_name} zakt naar plek ${a}`);
+  }
+  // dominante dagwinnaar (groot verschil op nr. 2)
+  const winnaar = dag[0];
+  const tweedeDag = dag[1];
+  if (winnaar && winnaar.stagePoints > 0 &&
+      (!tweedeDag || winnaar.stagePoints - tweedeDag.stagePoints >= 15 ||
+       (tweedeDag.stagePoints > 0 && winnaar.stagePoints >= 1.5 * tweedeDag.stagePoints))) {
+    situatie.push(`dominante_winnaar: ${winnaar.display_name} (${winnaar.stagePoints} pt, groot verschil met nr. 2)`);
+  }
+
   const contextRegels: string[] = [];
   if (isFirstStage) contextRegels.push("Dit is de OPENINGSETAPPE — er is geen klassement van vóór deze etappe.");
   if (isLastStage) contextRegels.push("Dit is de LAATSTE ETAPPE — José schrijft een eindconclusie i.p.v. een vooruitblik.");
@@ -241,7 +309,10 @@ function buildUserPrompt(opts: {
   return `Subpoule: "${subpouleNaam}"
 Etappe ${stageNumber}${stageName ? ` — ${stageName}` : ""}${stageType ? ` (${stageType})` : ""}
 
-${contextRegels.length > 0 ? "Context: " + contextRegels.join(" ") + "\n\n" : ""}DAGUITSLAG (deze subpoule):
+${contextRegels.length > 0 ? "Context: " + contextRegels.join(" ") + "\n\n" : ""}SITUATIE VAN VANDAAG (kies hierop je frasencategorie):
+${situatie.join("\n")}
+
+${recentMichelOpeners.length > 0 ? `VORIGE MICHEL-OPENERS (NIET herhalen): ${recentMichelOpeners.map((o) => `"${o}…"`).join(" · ")}\n` : ""}${recentJoseOpeners.length > 0 ? `VORIGE JOSÉ-OPENERS (NIET herhalen): ${recentJoseOpeners.map((o) => `"${o}…"`).join(" · ")}\n` : ""}${recentMichelOpeners.length > 0 || recentJoseOpeners.length > 0 ? "\n" : ""}DAGUITSLAG (deze subpoule):
 ${dagLines}
 
 ${isFirstStage ? "" : `KLASSEMENT VOOR DEZE ETAPPE:\n${voorLines}\n\n`}KLASSEMENT NA DEZE ETAPPE:
@@ -385,6 +456,35 @@ async function fetchSubpouleContext(
   });
 }
 
+// ─── Anti-herhaling: openers van de vorige 2-3 etappes (één lichte query) ─────
+
+async function fetchRecentOpeners(
+  admin: ReturnType<typeof createClient>,
+  gameId: string,
+  stageNumber: number,
+  subpouleId: string,
+): Promise<{ michel: string[]; jose: string[] }> {
+  try {
+    const { data } = await admin
+      .from("etappe_commentaren")
+      .select("michel_tekst, jose_tekst, stages!inner(stage_number, game_id)")
+      .eq("subpoule_id", subpouleId)
+      .eq("stages.game_id", gameId)
+      .lt("stages.stage_number", stageNumber);
+    const opener = (t?: string | null) => (t ?? "").trim().split(/\s+/).slice(0, 6).join(" ");
+    const rows = ((data ?? []) as any[])
+      .map((r) => ({ m: opener(r.michel_tekst), j: opener(r.jose_tekst), n: r.stages?.stage_number ?? 0 }))
+      .sort((a, b) => b.n - a.n)
+      .slice(0, 3);
+    return {
+      michel: rows.map((r) => r.m).filter(Boolean),
+      jose: rows.map((r) => r.j).filter(Boolean),
+    };
+  } catch {
+    return { michel: [], jose: [] };
+  }
+}
+
 // ─── Handler ────────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -471,6 +571,8 @@ Deno.serve(async (req) => {
         const members = await fetchSubpouleContext(admin, stageId, stage.game_id, stage.stage_number, sp.id);
         if (members.length === 0) { skipped++; continue; }
 
+        const recentOpeners = await fetchRecentOpeners(admin, stage.game_id, stage.stage_number, sp.id);
+
         const userPrompt = buildUserPrompt({
           subpouleNaam: sp.name,
           stageNumber: stage.stage_number,
@@ -479,6 +581,8 @@ Deno.serve(async (req) => {
           isFirstStage,
           isLastStage,
           members,
+          recentMichelOpeners: recentOpeners.michel,
+          recentJoseOpeners: recentOpeners.jose,
         });
 
         const result = await callOpenAI(userPrompt);
