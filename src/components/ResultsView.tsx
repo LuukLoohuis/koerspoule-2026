@@ -19,6 +19,8 @@ import StageBar from "@/components/stages/StageBar";
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import { useSwipeTabs } from "@/hooks/useSwipeTabs";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
+import { useSwipeHint } from "@/hooks/useSwipeHint";
+import SwipeDots from "@/components/SwipeDots";
 import { buildStageBarData } from "@/components/stages/stageBarData";
 
 const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
@@ -129,6 +131,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
     onChange: (k) => setView(k as "etappes" | "klassement"),
   });
   const barVisible = useAutoHideOnScroll();
+  const peek = useSwipeHint();
 
   const selectedStage = stages[selectedStageIdx];
   const { data: results = [], isLoading: resultsLoading } = useStageResults(selectedStage?.id);
@@ -248,7 +251,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         </div>
       )}
 
-      <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className="max-w-7xl mx-auto" {...resultsSwipe}>
+      <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className={cn("max-w-7xl mx-auto", peek && "kp-swipe-peek")} {...resultsSwipe}>
         {/* Auto-hide alleen op mobiel (max-md); desktop-balk ongewijzigd. */}
         <div
           className={cn(
@@ -273,6 +276,9 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
           </TabsTrigger>
         </TabsList>
         </div>
+
+        {/* Stippen-indicator (mobiel). */}
+        <SwipeDots count={2} activeIndex={view === "klassement" ? 0 : 1} />
 
         {/* ── ETAPPES TAB ── */}
         <TabsContent value="etappes">

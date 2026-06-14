@@ -30,6 +30,8 @@ import { Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Mi
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import { useSwipeTabs } from "@/hooks/useSwipeTabs";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
+import { useSwipeHint } from "@/hooks/useSwipeHint";
+import SwipeDots from "@/components/SwipeDots";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import JerseyBadge from "@/components/retro/JerseyBadge";
@@ -767,6 +769,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     onChange: (k) => setActiveTab(k as HorsTabKey),
   });
   const barVisible = useAutoHideOnScroll();
+  const peek = useSwipeHint();
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
   const [openComponent, setOpenComponent] = useState<string | null>(null);
@@ -797,7 +800,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-5 pb-6" {...swipe}>
+    <div className={cn("space-y-5 pb-6", peek && "kp-swipe-peek")} {...swipe}>
       {/* ── Sub-tab navigation ─────────────────────────────────────────────── */}
 
       {/* Mobile — MobielTabBalk (scrollable chips). Glijdt weg bij omlaag scrollen
@@ -820,6 +823,9 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           onChange={(k) => setActiveTab(k as typeof activeTab)}
         />
       </div>
+
+      {/* Stippen-indicator (mobiel) — toont onderdeel-aantal + actieve. */}
+      <SwipeDots count={HORS_TABS.length} activeIndex={HORS_TABS.findIndex((t) => t.key === activeTab)} />
 
       {/* Desktop — bestaande chip-balk ongewijzigd */}
       <div className="hidden md:block overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>

@@ -25,6 +25,8 @@ import { MobielTabBalk } from "@/components/MobielTabBalk";
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import { useSwipeTabs } from "@/hooks/useSwipeTabs";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
+import { useSwipeHint } from "@/hooks/useSwipeHint";
+import SwipeDots from "@/components/SwipeDots";
 import Stamp from "@/components/retro/Stamp";
 import JerseyBadge from "@/components/retro/JerseyBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
@@ -121,6 +123,7 @@ export default function MijnPeloton() {
     onChange: (k) => setTeamSubTab(k),
   });
   const teamBarVisible = useAutoHideOnScroll();
+  const teamPeek = useSwipeHint();
   const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
     setHorsTab(tab);
@@ -1095,7 +1098,7 @@ export default function MijnPeloton() {
           </TabsContent>
 
           {/* ── TAB: Mijn Team (with sub-tabs) ── */}
-          <TabsContent value="team" className="mt-3" {...teamSwipe}>
+          <TabsContent value="team" className={cn("mt-3", teamPeek && "kp-swipe-peek")} {...teamSwipe}>
             <Tabs value={teamSubTab} onValueChange={setTeamSubTab}>
 
               {/* Mobile tab nav — pill (3 tabs). Auto-hide bij omlaag scrollen. */}
@@ -1115,6 +1118,13 @@ export default function MijnPeloton() {
                   onChange={(k) => setTeamSubTab(k as typeof teamSubTab)}
                 />
               </div>
+
+              {/* Stippen-indicator (mobiel). */}
+              <SwipeDots
+                count={3}
+                activeIndex={["ploeg", "prono", "palmares"].indexOf(teamSubTab)}
+                className="mb-2"
+              />
 
               {/* Desktop tab nav — ongewijzigd */}
               <div className="hidden md:block overflow-x-auto -mx-1 px-1 mb-3" style={{ scrollbarWidth: "none" }}>
