@@ -7,7 +7,7 @@ import { Check, Trophy, Users, Zap, Mountain, Flag, Sparkles } from "lucide-reac
 const PAGE_URL = "https://koerspoule.nl/tour-de-france-poule-2026";
 const PAGE_TITLE = "Tour de France Wielerspel 2026 — Gratis Poule & Tourspel";
 const PAGE_DESCRIPTION =
-  "Speel het gratis Tour de France wielerspel 2026. Stel je team samen, daag vrienden uit en strijd om de gele trui. Gratis alternatief voor AD Tourspel en Scorito.";
+  "Gratis Tour de France wielerspel 2026 — een gratis alternatief voor Scorito. Speel tourspel met vrienden in eigen subpoules, kies vrij uit het peloton op koersintuïtie en strijd om de gele trui.";
 const PAGE_IMAGE =
   "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ca7ecdfc-55b1-4686-a4d5-8ada2cae3b6e/id-preview-7b7ff0dd--00edb85e-4817-4978-88c8-1708211db2a7.lovable.app-1773424124582.png";
 const SITE_NAME = "Koerspoule";
@@ -46,6 +46,22 @@ const FAQS: { q: string; a: string }[] = [
   {
     q: "Kan ik de Tourpoule op mijn telefoon spelen?",
     a: "Ja. Koerspoule werkt volledig in de browser op mobiel, tablet en desktop — geen app-download nodig.",
+  },
+  {
+    q: "Is Koerspoule een gratis alternatief voor Scorito?",
+    a: "Ja. Koerspoule is een volledig gratis Tour de France wielerspel — óók als je met meerdere vrienden in privé-poules speelt. Geen inschrijfgeld en geen betaalde vriendenpoules: je maakt onbeperkt subpoules aan zonder te betalen.",
+  },
+  {
+    q: "Wat is het verschil met Scorito?",
+    a: "Bij Koerspoule kies je vrij uit het hele peloton op koersintuïtie — geen budgetpuzzel of vaste rennerwaardes. Het is gratis, ook met vrienden, en je krijgt eigen features zoals Monkey IQ (versla de aap), de retro Salle de Course-volgwagen en Stijgers & Dalers per etappe.",
+  },
+  {
+    q: "Kan ik gratis een poule met vrienden starten?",
+    a: "Ja. Maak een gratis account, start je eigen subpoule en deel een persoonlijke link (koerspoule.nl/jouwnaam) of toegangscode. Je vrienden, familie of collega's sluiten gratis aan — onbeperkt.",
+  },
+  {
+    q: "Hoe werkt een subpoule?",
+    a: "Een subpoule is je eigen privé-ranglijst binnen de grote poule. Jij start 'm, nodigt mensen uit met een deelbare link of code, en jullie strijden onderling om de eerste plek — met daguitslagen, klassementsverloop en head-to-head-vergelijkingen.",
   },
 ];
 
@@ -91,7 +107,7 @@ export default function TourDeFrancePoule2026() {
     setMeta('meta[name="twitter:description"]', "content", PAGE_DESCRIPTION);
     setMeta('meta[name="twitter:image"]', "content", PAGE_IMAGE);
     setMeta('meta[name="robots"]', "content", "index, follow, max-image-preview:large, max-snippet:-1");
-    setMeta('meta[name="keywords"]', "content", "tour de france wielerspel 2026, tour de france wielerspel, wielerspel 2026, gratis wielerspel, tour de france poule 2026, tour de france poule, tourspel, tourspel 2026, wielerpoule tour de france, fantasy tour de france, gele trui poule, ad tourspel alternatief, scorito tour de france, koerspoule, manager game wielrennen");
+    setMeta('meta[name="keywords"]', "content", "tour de france wielerspel 2026, tour de france wielerspel, wielerspel 2026, gratis wielerspel, alternatief voor scorito, scorito alternatief, gratis alternatief scorito, tourspel met vrienden, tour de france poule 2026, tour de france poule, tourspel, tourspel 2026, wielerpoule tour de france, fantasy tour de france, gele trui poule, ad tourspel alternatief, scorito tour de france, koerspoule, manager game wielrennen");
     setLink("canonical", PAGE_URL);
 
     // hreflang: zelfde NL-content voor NL + BE, met x-default fallback.
@@ -336,6 +352,42 @@ export default function TourDeFrancePoule2026() {
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* Gratis alternatief voor Scorito — eigen, originele invulling */}
+        <section className="ornate-frame retro-border bg-card p-4 md:p-6">
+          <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
+            🆓 Gratis alternatief voor Scorito
+          </h2>
+          <p className="text-muted-foreground mb-4 font-serif">
+            Op zoek naar een <strong>gratis wielerspel</strong> in plaats van een betaald
+            spel? Koerspoule is een volwaardig, <strong>gratis alternatief voor Scorito</strong> —
+            zonder inschrijfgeld, ook als je een <strong>tourspel met vrienden</strong> speelt in
+            meerdere subpoules. Onze aanpak is bewust anders:
+          </p>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+            {[
+              ["💸", "100% gratis — ook vriendenpoules", "Maak onbeperkt subpoules aan met vrienden, familie of collega's. Geen abonnement, geen betaalmuur."],
+              ["🚴", "Koersintuïtie i.p.v. budget", "Kies vrij uit het hele peloton op gevoel en kennis — geen budgetpuzzel of vaste rennerwaardes."],
+              ["🐒", "Unieke features", "Monkey IQ (versla de aap), de retro Salle de Course-volgwagen, Stijgers & Dalers, daguitslagen en heatmaps."],
+              ["👥", "Subpoules met een deelbare link", "Start je eigen poule en deel koerspoule.nl/jouwnaam — je kopgroep sluit in één tik aan."],
+              ["🟡", "Strijd om de échte truien", "Punten voor etappezeges en het algemeen-, punten-, berg- en jongerenklassement."],
+              ["📊", "Diepe inzichten per etappe", "Volg klassementsverloop, head-to-head-vergelijkingen en je positie binnen elke subpoule."],
+            ].map(([emoji, title, desc]) => (
+              <li key={title} className="flex gap-3">
+                <span aria-hidden className="text-xl shrink-0">{emoji}</span>
+                <span>
+                  <span className="font-display font-bold block">{title}</span>
+                  <span className="text-sm text-muted-foreground font-sans">{desc}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm text-muted-foreground font-serif">
+            Klaar om te beginnen? <Link to="/team-samenstellen" className="underline font-bold text-primary">Stel je team samen</Link>,
+            lees de <Link to="/regels" className="underline font-bold text-primary">spelregels</Link> of{" "}
+            <Link to="/mijn-peloton?tab=subpoules" className="underline font-bold text-primary">start een gratis subpoule met vrienden</Link>.
+          </p>
         </section>
 
         {/* Veelgestelde vragen — zichtbaar (matcht de FAQPage-structured-data) */}
