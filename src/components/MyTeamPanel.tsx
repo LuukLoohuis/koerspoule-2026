@@ -1,7 +1,7 @@
 // DESIGN SYSTEM: See src/components/salle-de-course/DESIGN-SPEC.md
 // Color tokens: src/styles/salle-de-course.css
 // All La Salle de Course components must follow the spec in DESIGN-SPEC.md
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import TruiBadge from "@/components/retro/TruiBadge";
 import type { TruiType } from "@/lib/themas";
@@ -421,7 +421,49 @@ export default function MyTeamPanel({
     [riders]
   );
 
-  const totalPoints = stagePoints.reduce((sum, sp) => sum + sp.points, 0);
+  // ── Terugspoelen: kies een etappe → het hele dashboard toont de stand t/m
+  //    die rit (afsnijpunt N = stage_number van de geselecteerde rit). ──
+  const stageNumById = useMemo(
+    () => new Map(stages.map((s) => [s.id, s.stage_number])),
+    [stages],
+  );
+  const approvedRaceStages = useMemo(
+    () =>
+      stages
+        .filter((s) => !s.is_gc && s.results_status === "approved")
+        .sort((a, b) => a.stage_number - b.stage_number),
+    [stages],
+  );
+  const lastApprovedStage = approvedRaceStages[approvedRaceStages.length - 1] ?? null;
+  const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
+  // Default + reset naar de laatste rit zodra de stages laden of veranderen.
+  useEffect(() => {
+    if (lastApprovedStage && !approvedRaceStages.some((s) => s.id === selectedStageId)) {
+      setSelectedStageId(lastApprovedStage.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastApprovedStage?.id, approvedRaceStages, selectedStageId]);
+  const selectedStage = approvedRaceStages.find((s) => s.id === selectedStageId) ?? lastApprovedStage;
+  const cutoffN = selectedStage?.stage_number ?? Number.POSITIVE_INFINITY;
+  const rewound = !!(selectedStage && lastApprovedStage && selectedStage.stage_number < lastApprovedStage.stage_number);
+  // Auto-centreer de geselecteerde rit in de selector (mobiel + desktop).
+  const stageSelectorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = stageSelectorRef.current?.querySelector<HTMLElement>(`[data-stage="${selectedStageId}"]`);
+    if (el) {
+      const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", inline: "center", block: "nearest" });
+    }
+  }, [selectedStageId]);
+
+  // Seizoenspunten t/m rit N = som van mijn stage_points met stage_number <= N.
+  const totalPoints = useMemo(
+    () =>
+      stagePoints
+        .filter((sp) => (stageNumById.get(sp.stage_id) ?? Number.POSITIVE_INFINITY) <= cutoffN)
+        .reduce((sum, sp) => sum + sp.points, 0),
+    [stagePoints, stageNumById, cutoffN],
+  );
 
   const sortedEntries = useMemo(
     () => [...entries].sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0)),
@@ -435,11 +477,14 @@ export default function MyTeamPanel({
   );
 
   const bestStage = useMemo(() => {
-    if (stagePoints.length === 0) return null;
-    const top = stagePoints.reduce((a, b) => (a.points >= b.points ? a : b));
+    const inRange = stagePoints.filter(
+      (sp) => (stageNumById.get(sp.stage_id) ?? Number.POSITIVE_INFINITY) <= cutoffN,
+    );
+    if (inRange.length === 0) return null;
+    const top = inRange.reduce((a, b) => (a.points >= b.points ? a : b));
     const stage = stages.find((s) => s.id === top.stage_id);
     return stage ? { stage, points: top.points } : null;
-  }, [stagePoints, stages]);
+  }, [stagePoints, stages, stageNumById, cutoffN]);
 
   const standaloneJokerIds = useMemo(() => {
     const picked = new Set<string>();
@@ -667,12 +712,10 @@ export default function MyTeamPanel({
         const shownName = entry.team_name ?? user.user_metadata?.team_name ?? "Mijn ploeg";
 
         // Etappe-info uit echte stage-data (géén verzonnen klim/hoogte-data).
+        // De onderbalk + labels volgen de GESELECTEERDE rit (terugspoelen).
         const raceStages = stages.filter((s) => !s.is_gc);
-        const approved = raceStages.filter((s) => s.results_status === "approved");
-        const lastApproved = approved.length
-          ? approved.reduce((a, b) => (a.stage_number > b.stage_number ? a : b))
-          : null;
-        const ritLabel = lastApproved ? `punten t/m rit ${lastApproved.stage_number}` : "nog geen uitslagen";
+        const shownStage = selectedStage;
+        const ritLabel = shownStage ? `punten t/m rit ${shownStage.stage_number}` : "nog geen uitslagen";
         const TYPE_LABEL: Record<string, string> = {
           vlak: "VLAK", heuvelachtig: "HEUVELS", tijdrit: "TIJDRIT",
           bergop: "BERG & COLS", ploegentijdrit: "PLOEGENTIJDRIT",
@@ -1163,16 +1206,68 @@ export default function MyTeamPanel({
                 </div>
               </div>
 
-              {/* ── Onderbalk: étape-cockpit met decoratief hoogteprofiel
-                   (asset #9 uit de Salle de Course-set). Polyline is decoratief
-                   en deterministisch gegenereerd uit het etappenummer — geen
-                   verzonnen meetdata, puur als visueel anker conform DESIGN-SPEC. */}
-              {lastApproved && (
+              {/* ── Etappe-selector: spoel het dashboard terug naar de stand t/m
+                   een gekozen rit. ── */}
+              {approvedRaceStages.length > 0 && (
+                <div
+                  className="mt-3 p-2.5"
+                  style={{ background: PANEL, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 2px 7px rgba(0,0,0,0.5)" }}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-1.5 px-1">
+                    <span className="font-mono text-[9px] tracking-[0.2em] uppercase" style={{ color: "rgba(237,227,204,0.55)" }}>
+                      — Spoel terug —
+                    </span>
+                    {rewound ? (
+                      <button
+                        type="button"
+                        onClick={() => lastApprovedStage && setSelectedStageId(lastApprovedStage.id)}
+                        className="font-mono text-[9px] tracking-[0.12em] uppercase font-bold px-2 py-0.5 rounded inline-flex items-center gap-1"
+                        style={{ color: "#1A1612", background: AMBER }}
+                      >
+                        📻 t/m rit {cutoffN} · terug naar nu ›
+                      </button>
+                    ) : (
+                      <span className="font-mono text-[9px] tracking-[0.12em] uppercase" style={{ color: "rgba(237,227,204,0.4)" }}>
+                        actuele stand
+                      </span>
+                    )}
+                  </div>
+                  <div ref={stageSelectorRef} className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+                    {approvedRaceStages.map((s) => {
+                      const sel = s.id === selectedStageId;
+                      return (
+                        <button
+                          key={s.id}
+                          data-stage={s.id}
+                          type="button"
+                          onClick={() => setSelectedStageId(s.id)}
+                          aria-pressed={sel}
+                          title={s.name ?? `Rit ${s.stage_number}`}
+                          className="shrink-0 h-7 min-w-[28px] px-2 rounded font-mono text-[11px] font-bold tabular-nums transition-colors"
+                          style={sel
+                            ? { background: AMBER, color: "#1A1612" }
+                            : { background: "rgba(237,227,204,0.08)", color: "rgba(237,227,204,0.7)" }}
+                        >
+                          {s.stage_number}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {rewound && (
+                    <p className="mt-1.5 px-1 font-mono text-[9px] leading-snug" style={{ color: "rgba(237,227,204,0.5)" }}>
+                      Seizoensstand &amp; beste etappe tonen t/m rit {cutoffN}. Vergelijkende standen (plek, %, sous-peloton) blijven de actuele stand.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* ── Onderbalk: étape-cockpit met decoratief hoogteprofiel van de
+                   GESELECTEERDE rit. Polyline is decoratief (uit het ritnummer),
+                   geen verzonnen meetdata. ── */}
+              {shownStage && (
                 <div
                   className="mt-3 p-3 grid grid-cols-[auto_auto_1fr_auto] items-center gap-x-5 gap-y-1 font-mono text-[10px] tracking-[0.18em] uppercase"
                   style={{
-                    // Donker verzonken paneel op het beige interieur — houdt de
-                    // lichte crèmetekst + amber AltitudeProfile leesbaar.
                     background: PANEL,
                     borderRadius: 10,
                     border: "1px solid rgba(255,255,255,0.08)",
@@ -1181,25 +1276,25 @@ export default function MyTeamPanel({
                   }}
                 >
                   <span className="flex flex-col leading-tight">
-                    <span style={{ color: "rgba(237,227,204,0.45)" }}>Étape {lastApproved.stage_number} / {raceStages.length}</span>
-                    {lastApproved.distance_km != null && (
-                      <span style={{ color: "rgba(237,227,204,0.85)" }}>{lastApproved.distance_km} km</span>
+                    <span style={{ color: "rgba(237,227,204,0.45)" }}>Étape {shownStage.stage_number} / {raceStages.length}</span>
+                    {shownStage.distance_km != null && (
+                      <span style={{ color: "rgba(237,227,204,0.85)" }}>{shownStage.distance_km} km</span>
                     )}
                   </span>
-                  {lastApproved.stage_type && (
+                  {shownStage.stage_type && (
                     <span className="flex flex-col leading-tight">
                       <span style={{ color: "rgba(237,227,204,0.45)" }}>Type</span>
                       <span style={{ color: "rgba(237,227,204,0.85)" }}>
-                        {TYPE_LABEL[lastApproved.stage_type] ?? lastApproved.stage_type.toUpperCase()}
+                        {TYPE_LABEL[shownStage.stage_type] ?? shownStage.stage_type.toUpperCase()}
                       </span>
                     </span>
                   )}
-                  <AltitudeProfile seed={lastApproved.stage_number ?? 0} />
-                  {lastApproved.name && (
+                  <AltitudeProfile seed={shownStage.stage_number ?? 0} />
+                  {shownStage.name && (
                     <span className="flex flex-col leading-tight text-right max-w-[180px]">
-                      <span className="truncate" style={{ color: AMBER }} title={lastApproved.name}>{lastApproved.name}</span>
-                      {lastApproved.distance_km != null && (
-                        <span style={{ color: "rgba(237,227,204,0.45)" }}>{Math.round(800 + (lastApproved.stage_number ?? 1) * 73 % 1600)} m</span>
+                      <span className="truncate" style={{ color: AMBER }} title={shownStage.name}>{shownStage.name}</span>
+                      {shownStage.distance_km != null && (
+                        <span style={{ color: "rgba(237,227,204,0.45)" }}>{Math.round(800 + (shownStage.stage_number ?? 1) * 73 % 1600)} m</span>
                       )}
                     </span>
                   )}
