@@ -61,10 +61,18 @@ export default function Legal() {
                 <strong>Analytische cookies:</strong> om anoniem inzicht te krijgen in het
                 gebruik van de website (bijv. paginabezoeken).
               </li>
+              <li>
+                <strong>Advertentiecookies (Google AdSense):</strong> wij tonen advertenties via
+                Google AdSense, dat advertentiecookies kan plaatsen. Deze worden{" "}
+                <strong>uitsluitend geladen nadat je daar toestemming voor geeft</strong> in de
+                cookiebanner ("Accepteer alles"). Kies je "Alleen functioneel", dan wordt het
+                advertentiescript niet geladen.
+              </li>
             </ul>
             <p>
-              Wij plaatsen geen tracking- of marketingcookies. Je kunt cookies blokkeren via
-              je browserinstellingen, maar dit kan de werking van de site beïnvloeden.
+              Functionele cookies zijn altijd actief; advertentiecookies alleen met jouw
+              toestemming. Je kunt cookies blokkeren via je browserinstellingen, maar dit kan
+              de werking van de site beïnvloeden.
             </p>
           </div>
         </section>
@@ -125,7 +133,10 @@ export default function Legal() {
                 persoonsgegevens.
               </li>
               <li>Formulieren verzamelen enkel de minimaal benodigde informatie.</li>
-              <li>Wij maken geen gebruik van tracking voor advertentiedoeleinden.</li>
+              <li>
+                Advertenties tonen we via Google AdSense; de bijbehorende advertentiecookies
+                worden alleen geplaatst nadat je daarvoor toestemming geeft.
+              </li>
             </ul>
             <p>
               Voor vragen of verzoeken met betrekking tot je gegevens kun je contact opnemen
