@@ -9,9 +9,11 @@
 -- ───────────────────────────────────────────────────────────────────────────
 
 -- ── DEEL 2: indexen ──
+-- results_status staat op public.stages (filter s.results_status='approved' per
+-- game), niet op stage_results. Composite index dekt die hot-path-lookup.
 create index if not exists stages_game_idx on public.stages(game_id);
-create index if not exists stage_results_status_idx
-  on public.stage_results(stage_id, results_status);
+create index if not exists stages_game_status_idx
+  on public.stages(game_id, results_status);
 
 -- ── DEEL 3a: conservatieve dedup van entries ──
 -- Per (game_id,user_id) houden we ÉÉN winnaar (submitted eerst, dan meeste data,
