@@ -1133,7 +1133,7 @@ export default function MijnPeloton() {
                   !teamBarVisible && "!max-h-0 !mb-0 opacity-0",
                 )}
               >
-                <div className="transition-transform duration-150 ease-out" style={{ transform: `translateX(${teamSwipe.dragX}px)` }}>
+                <div ref={teamSwipe.barRef} className="transition-transform duration-150 ease-out">
                   <MobielTabBalk
                     tabs={[
                       { key: "ploeg",    label: "Mijn Ploeg", icon: Users  },

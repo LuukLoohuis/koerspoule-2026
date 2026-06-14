@@ -408,7 +408,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
               !mobileBarVisible && "!max-h-0 opacity-0",
             )}
           >
-            <div className="transition-transform duration-150 ease-out" style={{ transform: `translateX(${mobileSwipe.dragX}px)` }}>
+            <div ref={mobileSwipe.barRef} className="transition-transform duration-150 ease-out">
               <MobielTabBalk tabs={SUB_TAB_ITEMS} active={mobileTab} onChange={setMobileTab} />
             </div>
           </div>

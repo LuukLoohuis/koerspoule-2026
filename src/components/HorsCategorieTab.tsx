@@ -814,7 +814,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         )}
       >
         {/* Alleen de tabbalk schuift mee met de swipe. */}
-        <div className="transition-transform duration-150 ease-out" style={{ transform: `translateX(${swipe.dragX}px)` }}>
+        <div ref={swipe.barRef} className="transition-transform duration-150 ease-out">
           <MobielTabBalk
             tabs={[
               { key: "dartpijl", label: "Dartpijl", icon: Activity },
