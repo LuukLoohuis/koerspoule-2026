@@ -138,7 +138,7 @@ export function useGameStandings(gameId?: string, uptoStageNumber?: number) {
   return useQuery({
     queryKey: ["game-standings", gameId, uptoStageNumber],
     enabled: authReady && Boolean(supabase && gameId && typeof uptoStageNumber === "number"),
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
     retry: 0, // RPC ontbreekt? meteen terugvallen op client-berekening
     queryFn: async (): Promise<GameStandingRow[]> => {
       if (!supabase || !gameId || typeof uptoStageNumber !== "number") return [];
@@ -160,7 +160,7 @@ export function useMyStageRanks(gameId?: string, userId?: string) {
   return useQuery({
     queryKey: ["my-stage-ranks", gameId, userId],
     enabled: authReady && Boolean(supabase && gameId && userId),
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
     retry: 0,
     queryFn: async (): Promise<Map<string, number>> => {
       if (!supabase || !gameId || !userId) return new Map();
@@ -185,7 +185,7 @@ export function useStageAverages(gameId?: string) {
   return useQuery({
     queryKey: ["game-stage-averages", gameId],
     enabled: authReady && Boolean(supabase && gameId),
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
     retry: 0,
     queryFn: async (): Promise<Map<string, number>> => {
       if (!supabase || !gameId) return new Map();

@@ -54,6 +54,8 @@ export function usePalmares() {
   return useQuery({
     queryKey: ["palmares", user?.id],
     enabled: Boolean(supabase && user?.id),
+    // Historische erelijst — wijzigt zelden.
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<{ games: PalmaresGame[]; subpoules: PalmaresSubpoule[] }> => {
       if (!supabase || !user?.id) return { games: [], subpoules: [] };
 

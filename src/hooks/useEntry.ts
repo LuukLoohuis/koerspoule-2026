@@ -30,6 +30,9 @@ export function useEntry(gameId?: string) {
   const entryQuery = useQuery({
     queryKey: ["entry", gameId, user?.id],
     enabled: Boolean(gameId && user?.id && supabase),
+    // Entry-data wijzigt alleen door gebruikersacties die de query toch
+    // invalideren → 5 min staleTime scheelt onnodige refetches.
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Entry | null> => {
       if (!supabase || !gameId || !user?.id) return null;
 
@@ -41,13 +44,19 @@ export function useEntry(gameId?: string) {
         .maybeSingle();
 
       if (!data) {
-        const { data: created, error: createError } = await supabase
+        // Atomair get-or-create (ON CONFLICT DO NOTHING) i.p.v. een ongeguarde
+        // insert → geen rollback/duplicaten bij gelijktijdige reads.
+        const { data: entryId, error: rpcError } = await supabase.rpc("get_or_create_entry", {
+          p_game_id: gameId,
+        });
+        if (rpcError) throw rpcError;
+        const { data: row, error: selError } = await supabase
           .from("entries")
-          .insert({ game_id: gameId, user_id: user.id, status: "draft" })
           .select(SELECT)
+          .eq("id", entryId)
           .single();
-        if (createError) throw createError;
-        data = created;
+        if (selError) throw selError;
+        data = row;
       }
 
       return data as unknown as Entry;

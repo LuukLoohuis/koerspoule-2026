@@ -57,7 +57,7 @@ function useMyStagePointTotal(entryId?: string) {
   return useQuery({
     queryKey: ["hc-my-stage-point-total", entryId],
     enabled: Boolean(supabase && entryId),
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<number> => {
       if (!supabase || !entryId) return 0;
       const { data, error } = await supabase.from("stage_points").select("points").eq("entry_id", entryId);
