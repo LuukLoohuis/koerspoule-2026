@@ -415,6 +415,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "entry_jokers_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_global_mv"
+            referencedColumns: ["entry_id"]
+          },
+          {
             foreignKeyName: "entry_jokers_rider_id_fkey"
             columns: ["rider_id"]
             isOneToOne: false
@@ -461,6 +468,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "entry_picks_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_global_mv"
+            referencedColumns: ["entry_id"]
+          },
+          {
             foreignKeyName: "entry_picks_rider_id_fkey"
             columns: ["rider_id"]
             isOneToOne: false
@@ -502,6 +516,13 @@ export type Database = {
             referencedRelation: "entries"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "entry_prediction_points_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_global_mv"
+            referencedColumns: ["entry_id"]
+          },
         ]
       }
       entry_predictions: {
@@ -536,6 +557,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entries"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entry_predictions_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_global_mv"
+            referencedColumns: ["entry_id"]
           },
         ]
       }
@@ -737,6 +765,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entries"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lefevere_rapporten_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_global_mv"
+            referencedColumns: ["entry_id"]
           },
         ]
       }
@@ -1045,6 +1080,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entries"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stage_points_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_global_mv"
+            referencedColumns: ["entry_id"]
           },
           {
             foreignKeyName: "stage_points_stage_id_fkey"
@@ -1375,6 +1417,13 @@ export type Database = {
             referencedRelation: "entries"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "total_points_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: true
+            referencedRelation: "leaderboard_global_mv"
+            referencedColumns: ["entry_id"]
+          },
         ]
       }
       user_roles: {
@@ -1426,6 +1475,25 @@ export type Database = {
           user_id: string | null
         }
         Relationships: []
+      }
+      leaderboard_global_mv: {
+        Row: {
+          entry_id: string | null
+          game_id: string | null
+          rank: number | null
+          team_name: string | null
+          total_points: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entries_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -1636,6 +1704,17 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_game_leaderboard: {
+        Args: { p_game_id: string }
+        Returns: {
+          entry_id: string
+          rank: number
+          team_name: string
+          total_points: number
+          user_id: string
+        }[]
+      }
+      get_or_create_entry: { Args: { p_game_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
