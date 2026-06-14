@@ -28,10 +28,14 @@ export default function FloatingTabSwitcher({
   tabs,
   active,
   onChange,
+  offsetClassName = "bottom-[72px]",
 }: {
   tabs: FloatingTab[];
   active: string;
   onChange: (key: string) => void;
+  /** Verticale positie (Tailwind bottom-*). Default net boven de BottomNav;
+   *  override bv. naar "bottom-[136px]" als er nóg een zweefknop onder staat. */
+  offsetClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const select = (key: string) => {
@@ -42,7 +46,7 @@ export default function FloatingTabSwitcher({
   // ── 2 tabs → tweedelig pill-toggle ──
   if (tabs.length === 2) {
     return (
-      <div className="md:hidden fixed right-4 bottom-[72px] z-40 inline-flex rounded-full border-2 border-foreground bg-card shadow-[3px_3px_0_hsl(var(--foreground))] overflow-hidden">
+      <div className={cn("md:hidden fixed right-4 z-40 inline-flex rounded-full border-2 border-foreground bg-card shadow-[3px_3px_0_hsl(var(--foreground))] overflow-hidden", offsetClassName)}>
         {tabs.map((t) => {
           const isActive = active === t.key;
           return (
@@ -72,7 +76,7 @@ export default function FloatingTabSwitcher({
         <button
           type="button"
           aria-label="Ga naar onderdeel"
-          className="md:hidden fixed right-4 bottom-[72px] z-40 inline-flex items-center justify-center h-12 w-12 rounded-full bg-card text-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
+          className={cn("md:hidden fixed right-4 z-40 inline-flex items-center justify-center h-12 w-12 rounded-full bg-card text-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all", offsetClassName)}
         >
           <ListTree className="h-5 w-5" />
         </button>
