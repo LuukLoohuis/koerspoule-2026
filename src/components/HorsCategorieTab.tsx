@@ -802,28 +802,31 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-5 pb-6" {...swipe}>
+    <div className="space-y-5 pb-6" {...swipe.bind}>
       {/* ── Sub-tab navigation ─────────────────────────────────────────────── */}
 
       {/* Mobile — MobielTabBalk (scrollable chips). Glijdt weg bij omlaag scrollen
           (auto-hide); de zwevende schakelaar neemt het wisselen over. */}
       <div
         className={cn(
-          "md:hidden overflow-hidden transition-[max-height,opacity,transform] duration-200 ease-out max-h-[120px]",
-          !barVisible && "!max-h-0 opacity-0 -translate-y-2",
+          "md:hidden overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-h-[120px]",
+          !barVisible && "!max-h-0 opacity-0",
         )}
       >
-        <MobielTabBalk
-          tabs={[
-            { key: "dartpijl", label: "Dartpijl", icon: Activity },
-            { key: "pelotonkeuzes", label: "Pelotonkeuzes", icon: BarChart3 },
-            { key: "wielerdirecteur", label: "De Wielerdirecteur", icon: DirectorIcon },
-            { key: "superteam", label: "The Emirates", icon: Crown },
-            { key: "benchmark", label: "Benchmark", icon: Swords },
-          ]}
-          active={activeTab}
-          onChange={(k) => setActiveTab(k as typeof activeTab)}
-        />
+        {/* Alleen de tabbalk schuift mee met de swipe. */}
+        <div className="transition-transform duration-150 ease-out" style={{ transform: `translateX(${swipe.dragX}px)` }}>
+          <MobielTabBalk
+            tabs={[
+              { key: "dartpijl", label: "Dartpijl", icon: Activity },
+              { key: "pelotonkeuzes", label: "Pelotonkeuzes", icon: BarChart3 },
+              { key: "wielerdirecteur", label: "De Wielerdirecteur", icon: DirectorIcon },
+              { key: "superteam", label: "The Emirates", icon: Crown },
+              { key: "benchmark", label: "Benchmark", icon: Swords },
+            ]}
+            active={activeTab}
+            onChange={(k) => setActiveTab(k as typeof activeTab)}
+          />
+        </div>
       </div>
 
       {/* Swipe-hint (eenmalig, wegklikbaar) + stippen-indicator (mobiel). */}

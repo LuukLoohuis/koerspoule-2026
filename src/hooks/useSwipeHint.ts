@@ -5,7 +5,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 
-const KEY = "kp_swipe_hint_seen_v2";
+const KEY = "kp_swipe_hint_seen_v3";
 
 export function useSwipeHint(): { visible: boolean; dismiss: () => void } {
   const [visible, setVisible] = useState(false);

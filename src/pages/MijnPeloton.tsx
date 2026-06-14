@@ -1123,25 +1123,27 @@ export default function MijnPeloton() {
           </TabsContent>
 
           {/* ── TAB: Mijn Team (with sub-tabs) ── */}
-          <TabsContent value="team" className="mt-3" {...teamSwipe}>
+          <TabsContent value="team" className="mt-3" {...teamSwipe.bind}>
             <Tabs value={teamSubTab} onValueChange={setTeamSubTab}>
 
               {/* Mobile tab nav — pill (3 tabs). Auto-hide bij omlaag scrollen. */}
               <div
                 className={cn(
-                  "md:hidden mb-3 overflow-hidden transition-[max-height,opacity,transform] duration-200 ease-out max-h-[120px]",
-                  !teamBarVisible && "!max-h-0 !mb-0 opacity-0 -translate-y-2",
+                  "md:hidden mb-3 overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-h-[120px]",
+                  !teamBarVisible && "!max-h-0 !mb-0 opacity-0",
                 )}
               >
-                <MobielTabBalk
-                  tabs={[
-                    { key: "ploeg",    label: "Mijn Ploeg", icon: Users  },
-                    { key: "prono",    label: "Pronostiek", icon: Target },
-                    { key: "palmares", label: "Palmares",   icon: Trophy },
-                  ]}
-                  active={teamSubTab}
-                  onChange={(k) => setTeamSubTab(k as typeof teamSubTab)}
-                />
+                <div className="transition-transform duration-150 ease-out" style={{ transform: `translateX(${teamSwipe.dragX}px)` }}>
+                  <MobielTabBalk
+                    tabs={[
+                      { key: "ploeg",    label: "Mijn Ploeg", icon: Users  },
+                      { key: "prono",    label: "Pronostiek", icon: Target },
+                      { key: "palmares", label: "Palmares",   icon: Trophy },
+                    ]}
+                    active={teamSubTab}
+                    onChange={(k) => setTeamSubTab(k as typeof teamSubTab)}
+                  />
+                </div>
               </div>
 
               {/* Swipe-hint + stippen-indicator (mobiel). */}

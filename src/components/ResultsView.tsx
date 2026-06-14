@@ -252,14 +252,16 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         </div>
       )}
 
-      <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className="max-w-7xl mx-auto" {...resultsSwipe}>
+      <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className="max-w-7xl mx-auto" {...resultsSwipe.bind}>
         {/* Auto-hide alleen op mobiel (max-md); desktop-balk ongewijzigd. */}
         <div
           className={cn(
-            "overflow-hidden transition-[max-height,opacity,transform] duration-200 ease-out max-md:max-h-[120px]",
-            !barVisible && "max-md:!max-h-0 max-md:opacity-0 max-md:-translate-y-2",
+            "overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-md:max-h-[120px]",
+            !barVisible && "max-md:!max-h-0 max-md:opacity-0",
           )}
         >
+        {/* Alleen de tabbalk schuift mee met de swipe (dragX=0 op desktop → no-op). */}
+        <div className="transition-transform duration-150 ease-out" style={{ transform: `translateX(${resultsSwipe.dragX}px)` }}>
         <TabsList className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 h-auto w-full">
           <TabsTrigger
             value="klassement"
@@ -276,6 +278,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
             <span>Etappes</span>
           </TabsTrigger>
         </TabsList>
+        </div>
         </div>
 
         {/* Swipe-hint + stippen-indicator (mobiel). */}

@@ -404,18 +404,20 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
         <div className="md:hidden">
           <div
             className={cn(
-              "overflow-hidden transition-[max-height,opacity,transform] duration-200 ease-out max-h-[120px]",
-              !mobileBarVisible && "!max-h-0 opacity-0 -translate-y-2",
+              "overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-h-[120px]",
+              !mobileBarVisible && "!max-h-0 opacity-0",
             )}
           >
-            <MobielTabBalk tabs={SUB_TAB_ITEMS} active={mobileTab} onChange={setMobileTab} />
+            <div className="transition-transform duration-150 ease-out" style={{ transform: `translateX(${mobileSwipe.dragX}px)` }}>
+              <MobielTabBalk tabs={SUB_TAB_ITEMS} active={mobileTab} onChange={setMobileTab} />
+            </div>
           </div>
 
           {/* Swipe-hint (eenmalig, wegklikbaar). */}
           <SwipeHintBar visible={mobileHint.visible} onClose={mobileHint.dismiss} className="mx-auto w-fit my-2" />
 
           {/* Tab-content: swipe wisselt alleen de tab; geen pagina-shift. */}
-          <div className="overflow-x-hidden" {...mobileSwipe}>
+          <div className="overflow-x-hidden" {...mobileSwipe.bind}>
             {mobileActivePanel}
           </div>
         </div>
