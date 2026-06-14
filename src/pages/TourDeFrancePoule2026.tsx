@@ -138,7 +138,9 @@ export default function TourDeFrancePoule2026() {
           inLanguage: "nl-NL",
           isPartOf: { "@id": "https://koerspoule.nl/#website" },
           primaryImageOfPage: { "@type": "ImageObject", url: PAGE_IMAGE },
-          about: { "@type": "SportsEvent", name: "Tour de France 2026", sport: "Cycling", startDate: "2026-07-04", location: { "@type": "Place", name: "France" } },
+          // Topische context als 'Thing' (geen SportsEvent → geen Event-rich-result-
+          // validatie; we organiseren de koers zelf niet).
+          about: { "@type": "Thing", name: "Tour de France 2026" },
         },
         {
           "@type": "BreadcrumbList",
