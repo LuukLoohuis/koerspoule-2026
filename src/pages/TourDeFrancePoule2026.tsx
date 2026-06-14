@@ -7,7 +7,7 @@ import { Check, Trophy, Users, Zap, Mountain, Flag, Sparkles } from "lucide-reac
 const PAGE_URL = "https://koerspoule.nl/tour-de-france-poule-2026";
 const PAGE_TITLE = "Tour de France Wielerspel 2026 — Gratis Poule & Tourspel";
 const PAGE_DESCRIPTION =
-  "Speel het gratis Tour de France wielerspel 2026. Stel je team samen, daag vrienden uit en strijd om de gele trui. Reclamevrij alternatief voor AD Tourspel en Scorito.";
+  "Speel het gratis Tour de France wielerspel 2026. Stel je team samen, daag vrienden uit en strijd om de gele trui. Gratis alternatief voor AD Tourspel en Scorito.";
 const PAGE_IMAGE =
   "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ca7ecdfc-55b1-4686-a4d5-8ada2cae3b6e/id-preview-7b7ff0dd--00edb85e-4817-4978-88c8-1708211db2a7.lovable.app-1773424124582.png";
 const SITE_NAME = "Koerspoule";
@@ -17,7 +17,7 @@ const SITE_NAME = "Koerspoule";
 const FAQS: { q: string; a: string }[] = [
   {
     q: "Wat is het beste gratis Tour de France wielerspel 2026?",
-    a: "Koerspoule is een gratis, reclamevrij Tour de France wielerspel voor 2026. Je stelt je eigen ploeg samen, speelt in privé-poules met vrienden en strijdt om de gele, groene, bolletjes- en witte trui — zonder inschrijfgeld of advertenties.",
+    a: "Koerspoule is een gratis Tour de France wielerspel voor 2026. Je stelt je eigen ploeg samen, speelt in privé-poules met vrienden en strijdt om de gele, groene, bolletjes- en witte trui — zonder inschrijfgeld.",
   },
   {
     q: "Hoe maak ik een Tour de France poule 2026?",
@@ -25,7 +25,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is de Tour de France poule gratis?",
-    a: "Ja, Koerspoule is volledig gratis. Geen inschrijfgeld, geen advertenties — gewoon spelen met je vrienden.",
+    a: "Ja, Koerspoule is volledig gratis. Geen inschrijfgeld — gewoon spelen met je vrienden.",
   },
   {
     q: "Wanneer kan ik mijn Tourpoule aanmaken?",
@@ -37,7 +37,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Wat is het alternatief voor AD Tourspel of Scorito?",
-    a: "Koerspoule is een gratis, reclamevrij alternatief voor het AD Tourspel en Scorito. Speel in eigen privé-poules met vrienden, familie of collega's.",
+    a: "Koerspoule is een gratis alternatief voor het AD Tourspel en Scorito. Speel in eigen privé-poules met vrienden, familie of collega's.",
   },
   {
     q: "Hoe verdien je punten in de Tour de France poule?",
@@ -194,7 +194,7 @@ export default function TourDeFrancePoule2026() {
           <p className="text-lg text-muted-foreground font-serif italic max-w-2xl mx-auto">
             Koerspoule is hét gratis <strong>Tour de France wielerspel 2026</strong>. Drie weken lang
             strijden de beste renners ter wereld om de gele trui — maak het nog spannender met je eigen
-            Tour de France poule: gratis, reclamevrij en samen met vrienden.
+            Tour de France poule: gratis en samen met vrienden.
           </p>
           <div className="vintage-divider mt-4 max-w-md mx-auto" />
           <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
@@ -294,7 +294,7 @@ export default function TourDeFrancePoule2026() {
           </h2>
           <p className="text-muted-foreground mb-3 font-serif">
             Geen massapoule met duizenden onbekenden, maar een eigen privé-poule waar het écht om
-            de bragging rights gaat. Koerspoule is een gratis, reclamevrij alternatief voor het AD
+            de bragging rights gaat. Koerspoule is een gratis alternatief voor het AD
             Tourspel, Scorito en Tubantia Tourspel.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -321,7 +321,7 @@ export default function TourDeFrancePoule2026() {
           </h2>
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              "100% gratis, geen reclame",
+              "100% gratis",
               "Snel een poule starten",
               "Live updates per etappe",
               "Voor elke wielerfan — beginner of kenner",
