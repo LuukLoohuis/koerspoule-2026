@@ -22,6 +22,8 @@ import PalmaresPanel from "@/components/PalmaresPanel";
 import HorsCategorieTab from "@/components/HorsCategorieTab";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
+import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
+import { useSwipeTabs } from "@/hooks/useSwipeTabs";
 import Stamp from "@/components/retro/Stamp";
 import JerseyBadge from "@/components/retro/JerseyBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
@@ -111,6 +113,12 @@ export default function MijnPeloton() {
     setGameTab(t ?? "karavaan");
   }, [searchParams]);
   const [teamSubTab, setTeamSubTab] = useState("ploeg");
+  // Volgwagen-subtabs (mobiel): swipe + zwevende schakelaar.
+  const teamSwipe = useSwipeTabs({
+    keys: ["ploeg", "prono", "palmares"],
+    active: teamSubTab,
+    onChange: (k) => setTeamSubTab(k),
+  });
   const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
     setHorsTab(tab);
@@ -1085,7 +1093,7 @@ export default function MijnPeloton() {
           </TabsContent>
 
           {/* ── TAB: Mijn Team (with sub-tabs) ── */}
-          <TabsContent value="team" className="mt-3">
+          <TabsContent value="team" className="mt-3" {...teamSwipe}>
             <Tabs value={teamSubTab} onValueChange={setTeamSubTab}>
 
               {/* Mobile tab nav — pill (3 tabs) */}
@@ -1138,6 +1146,17 @@ export default function MijnPeloton() {
               <TabsContent value="palmares">
                 <PalmaresPanel />
               </TabsContent>
+
+              {/* Mobiel: één consistente zwevende schakelaar (3 onderdelen). */}
+              <FloatingTabSwitcher
+                tabs={[
+                  { key: "ploeg",    label: "Mijn Ploeg", icon: Users  },
+                  { key: "prono",    label: "Pronostiek", icon: Target },
+                  { key: "palmares", label: "Palmares",   icon: Trophy },
+                ]}
+                active={teamSubTab}
+                onChange={(k) => setTeamSubTab(k)}
+              />
             </Tabs>
           </TabsContent>
 

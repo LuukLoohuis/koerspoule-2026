@@ -26,8 +26,9 @@ import { useStages, useGameStandings, useStagePointsForEntries, useStageAverages
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Mic, ChevronDown, ListTree, ArrowUpDown } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Mic, ChevronDown } from "lucide-react";
+import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
+import { useSwipeTabs } from "@/hooks/useSwipeTabs";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import JerseyBadge from "@/components/retro/JerseyBadge";
@@ -758,16 +759,12 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   useEffect(() => {
     if (initialTab) setActiveTab(initialTab);
   }, [initialTab]);
-  // Mobiel "Ga naar"-ballonnetje: wissel tab + scroll naar boven.
-  const [menuOpen, setMenuOpen] = useState(false);
-  const goTo = (key: HorsTabKey) => {
-    setActiveTab(key);
-    setMenuOpen(false);
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" })),
-    );
-  };
+  // Mobiel: swipe tussen onderdelen (de zwevende schakelaar staat onderaan).
+  const swipe = useSwipeTabs({
+    keys: HORS_TABS.map((t) => t.key),
+    active: activeTab,
+    onChange: (k) => setActiveTab(k as HorsTabKey),
+  });
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
   const [openComponent, setOpenComponent] = useState<string | null>(null);
@@ -798,7 +795,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-5 pb-6">
+    <div className="space-y-5 pb-6" {...swipe}>
       {/* ── Sub-tab navigation ─────────────────────────────────────────────── */}
 
       {/* Mobile — MobielTabBalk (scrollable chips) */}
@@ -1769,48 +1766,12 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         </Card>
       )}
 
-      {/* ── MOBIEL: zwevend "Ga naar"-ballonnetje. Hors Cat. is tab-based, dus dit
-           WISSELT van onderdeel (i.p.v. scrollen) + scrollt naar boven. ── */}
-      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            aria-label="Wissel onderdeel"
-            className="md:hidden fixed right-4 bottom-[72px] z-40 inline-flex items-center justify-center h-12 w-12 rounded-full bg-card text-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
-          >
-            <ListTree className="h-5 w-5" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          side="top"
-          sideOffset={8}
-          className="w-56 p-0 rounded-xl overflow-hidden border-2 border-foreground bg-card shadow-[4px_4px_0_hsl(var(--foreground))]"
-        >
-          <div className="flex items-center gap-2 px-3 py-2 border-b-2 border-foreground bg-[hsl(var(--vintage-gold))] text-foreground font-mono uppercase tracking-[0.2em] text-[10px] font-bold">
-            <ArrowUpDown className="h-3.5 w-3.5" />
-            Ga naar
-          </div>
-          <div className="p-1">
-            {HORS_TABS.map((t) => {
-              const itemActive = activeTab === t.key;
-              return (
-                <DropdownMenuItem
-                  key={t.key}
-                  onSelect={(e) => { e.preventDefault(); goTo(t.key); }}
-                  className={cn(
-                    "font-mono text-[13px] rounded-lg py-2.5 px-2.5 gap-2.5 cursor-pointer border-l-[3px] border-transparent focus:bg-secondary/60 hover:bg-secondary/60",
-                    itemActive && "border-primary bg-primary/10",
-                  )}
-                >
-                  <t.Icon className={cn("h-4 w-4 shrink-0", itemActive ? "text-primary" : "text-[hsl(var(--vintage-gold))]")} />
-                  {t.label}
-                </DropdownMenuItem>
-              );
-            })}
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* ── MOBIEL: één consistente zwevende schakelaar (menu-modus). ── */}
+      <FloatingTabSwitcher
+        tabs={HORS_TABS.map((t) => ({ key: t.key, label: t.label, icon: t.Icon }))}
+        active={activeTab}
+        onChange={(k) => setActiveTab(k as HorsTabKey)}
+      />
     </div>
   );
 }

@@ -16,6 +16,8 @@ import ResultsUpdatedBadge from "@/components/ResultsUpdatedBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
 import Podium from "@/components/Podium";
 import StageBar from "@/components/stages/StageBar";
+import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
+import { useSwipeTabs } from "@/hooks/useSwipeTabs";
 import { buildStageBarData } from "@/components/stages/stageBarData";
 
 const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
@@ -118,6 +120,13 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialView, initialStageNumber, stages.length]);
+
+  // Mobiel: swipe tussen Klassement/Etappes (de zwevende pill staat onderaan).
+  const resultsSwipe = useSwipeTabs({
+    keys: ["klassement", "etappes"],
+    active: view,
+    onChange: (k) => setView(k as "etappes" | "klassement"),
+  });
 
   const selectedStage = stages[selectedStageIdx];
   const { data: results = [], isLoading: resultsLoading } = useStageResults(selectedStage?.id);
@@ -237,8 +246,8 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         </div>
       )}
 
-      <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className="max-w-7xl mx-auto">
-        <TabsList className="sticky top-0 z-30 md:static md:z-auto flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/95 backdrop-blur supports-[backdrop-filter]:bg-secondary/80 md:bg-secondary/30 md:backdrop-blur-0 md:supports-[backdrop-filter]:bg-secondary/30 p-1 h-auto w-full shadow-sm md:shadow-none">
+      <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className="max-w-7xl mx-auto" {...resultsSwipe}>
+        <TabsList className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 h-auto w-full">
           <TabsTrigger
             value="klassement"
             className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-foreground/10"
@@ -694,6 +703,16 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Mobiel: tweedelig pill-toggle Klassement/Etappes (één tik wisselt). */}
+      <FloatingTabSwitcher
+        tabs={[
+          { key: "klassement", label: "Klassement", icon: Trophy },
+          { key: "etappes",    label: "Etappes",    icon: ClipboardList },
+        ]}
+        active={view}
+        onChange={(k) => setView(k as "etappes" | "klassement")}
+      />
     </div>
   );
 }
