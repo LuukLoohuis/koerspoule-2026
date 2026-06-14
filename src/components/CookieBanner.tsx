@@ -1,36 +1,26 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { setAdConsent, loadAdSense, maybeLoadAdSense } from "@/lib/adsense";
+import { initAds } from "@/lib/adsense";
+
+// v2: bestaande bezoekers die de oude banner al accepteerden opnieuw informeren
+// (advertenties via Google AdSense zijn toegevoegd).
+const STORAGE_KEY = "koers-cookies-accepted-v2";
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Eerder al gekozen → banner verbergen; AdSense laden als toestemming gegeven was.
-    if (localStorage.getItem("koers-cookies-accepted")) {
-      maybeLoadAdSense();
-    } else {
-      setVisible(true);
-    }
+    // Laad AdSense + Google's Funding Choices CMP. De CMP toont de
+    // advertentie-toestemmingsmelding aan EU-bezoekers en houdt gepersonaliseerde
+    // advertentiecookies tegen tot toestemming — los van deze functionele banner.
+    initAds();
+    if (!localStorage.getItem(STORAGE_KEY)) setVisible(true);
   }, []);
 
   const close = () => {
-    localStorage.setItem("koers-cookies-accepted", "true");
+    localStorage.setItem(STORAGE_KEY, "true");
     setVisible(false);
-  };
-
-  // Accepteer functionele + advertentiecookies → AdSense laden.
-  const acceptAll = () => {
-    setAdConsent("granted");
-    loadAdSense();
-    close();
-  };
-
-  // Alleen functionele cookies → géén advertentiescript.
-  const onlyFunctional = () => {
-    setAdConsent("denied");
-    close();
   };
 
   if (!visible) return null;
@@ -40,21 +30,16 @@ export default function CookieBanner() {
       <div className="container mx-auto max-w-2xl bg-card border-2 border-foreground rounded-lg p-5 shadow-lg">
         <h3 className="font-serif text-lg font-bold mb-1">Koers Cookies 🍪</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Voor de werking van de site gebruiken we <strong>functionele cookies</strong>. Daarnaast
-          tonen we advertenties via <strong>Google AdSense</strong>, die advertentiecookies plaatsen —
-          die laden we <strong>alleen met jouw toestemming</strong>. Lees meer in ons{" "}
+          Voor de werking van de site gebruiken we <strong>functionele cookies</strong>. We tonen
+          ook advertenties via <strong>Google AdSense</strong>; je toestemming voor
+          advertentiecookies regel je in het aparte Google-venster. Meer info in ons{" "}
           <Link to="/juridisch#cookies" className="underline hover:text-foreground transition-colors">
             cookiebeleid
           </Link>
           .
         </p>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
-          <Button onClick={onlyFunctional} size="sm" variant="outline">
-            Alleen functioneel
-          </Button>
-          <Button onClick={acceptAll} size="sm">
-            Accepteer alles
-          </Button>
+        <div className="flex items-center justify-end gap-3">
+          <Button onClick={close} size="sm">Begrepen!</Button>
         </div>
       </div>
     </div>

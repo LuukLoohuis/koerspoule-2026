@@ -63,16 +63,16 @@ export default function Legal() {
               </li>
               <li>
                 <strong>Advertentiecookies (Google AdSense):</strong> wij tonen advertenties via
-                Google AdSense, dat advertentiecookies kan plaatsen. Deze worden{" "}
-                <strong>uitsluitend geladen nadat je daar toestemming voor geeft</strong> in de
-                cookiebanner ("Accepteer alles"). Kies je "Alleen functioneel", dan wordt het
-                advertentiescript niet geladen.
+                Google AdSense. Je toestemming hiervoor wordt afgehandeld door Google's
+                gecertificeerde toestemmingsvenster (Funding Choices / Privacy &amp; messaging),
+                dat <strong>gepersonaliseerde advertentiecookies pas plaatst nadat je
+                toestemming geeft</strong>.
               </li>
             </ul>
             <p>
               Functionele cookies zijn altijd actief; advertentiecookies alleen met jouw
-              toestemming. Je kunt cookies blokkeren via je browserinstellingen, maar dit kan
-              de werking van de site beïnvloeden.
+              toestemming via het Google-venster. Je kunt cookies blokkeren via je
+              browserinstellingen, maar dit kan de werking van de site beïnvloeden.
             </p>
           </div>
         </section>
