@@ -33,6 +33,7 @@ import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import SwipeDots from "@/components/SwipeDots";
 import SwipeHintBar from "@/components/SwipeHintBar";
+import EmptyState from "@/components/EmptyState";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import JerseyBadge from "@/components/retro/JerseyBadge";
@@ -864,12 +865,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       {activeTab === "dartpijl" && (
         <div className="space-y-5">
           {!monte ? (
-            <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center">
-              <span className="text-4xl">🐒</span>
-              <p className="text-muted-foreground text-sm mt-3 font-serif italic">
-                Nog onvoldoende data om de apen te laten gooien.
-              </p>
-            </div>
+            <EmptyState
+              illustration={aapFietser}
+              title="De apen warmen nog op 🐒"
+              message="Zodra de eerste etappe-uitslag binnen is, gooien de apen hun dartpijlen en zie je hoe jij het tegen ze doet."
+            />
           ) : (
             <>
               {/* ── Monkey IQ-hero: percentile + verdict + Jij-vs-aap ──

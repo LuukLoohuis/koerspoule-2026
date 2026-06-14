@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import LeCoupTactique from "@/components/LeCoupTactique";
 import FlagIcon from "@/components/FlagIcon";
 import koerspouleLogo from "@/assets/koerspoule-logo.png";
@@ -39,6 +39,9 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useAllGames, gameTheme } from "@/hooks/useAllGames";
 import GameSwitcher from "@/components/GameSwitcher";
 import { useEntry } from "@/hooks/useEntry";
+import { useSubpoules } from "@/hooks/useSubpoules";
+import { useAuth } from "@/hooks/useAuth";
+import OnboardingCard from "@/components/OnboardingCard";
 import { Lock } from "lucide-react";
 import {
   ChartContainer,
@@ -108,6 +111,15 @@ export default function MijnPeloton() {
   }, [allGames, selectedGame]);
   const selectedGameObj = allGames.find((g) => g.id === selectedGame) ?? null;
   const isDraft = ["draft", "concept"].includes(selectedGameObj?.status ?? "");
+
+  // Onboarding-voortgang voor de geselecteerde game.
+  const { user: authUser } = useAuth();
+  const navigate = useNavigate();
+  const { entry: selEntry } = useEntry(selectedGameObj?.id);
+  const { subpoules: selSubpoules } = useSubpoules(selectedGameObj?.id);
+  const obHasTeam = selEntry?.status === "submitted";
+  const obInSubpoule = selSubpoules.length > 0;
+  const obLive = obHasTeam && ["live", "locked", "finished", "closed"].includes(selectedGameObj?.status ?? "");
   const [searchParams] = useSearchParams();
   const location = useLocation();
   // Default landing = karavaan (de gazetta), tenzij ?tab= expliciet gezet is.
@@ -1057,6 +1069,18 @@ export default function MijnPeloton() {
           </div>
         )}
 
+
+        {/* Onboarding: 3-stappen-start voor nieuwe gebruikers (self-hiding). */}
+        {authUser && selectedGameObj && (
+          <OnboardingCard
+            hasTeam={!!obHasTeam}
+            inSubpoule={obInSubpoule}
+            liveTracking={!!obLive}
+            onTeam={() => navigate("/team-samenstellen")}
+            onSubpoule={() => setGameTab("subpoules")}
+            onResults={() => setGameTab("uitslagen")}
+          />
+        )}
 
         {/* Inner tabs: Team / Uitslagen / Subpoules / Hors */}
         <Tabs value={gameTab} onValueChange={setGameTab}>

@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import SwipeHintBar from "@/components/SwipeHintBar";
+import EmptyState from "@/components/EmptyState";
 import { useSwipeTabs } from "@/hooks/useSwipeTabs";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
@@ -522,9 +523,12 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
           {isLoading ? (
             <div className="p-4 text-sm text-muted-foreground">Laden…</div>
           ) : subpoules.length === 0 ? (
-            <div className="p-4 text-sm text-muted-foreground">
-              Je zit nog in geen enkele subpoule. Maak er een aan of join met een code.
-            </div>
+            <EmptyState
+              icon={Share2}
+              title="Roep je kopgroep! 🚴"
+              message="Een koers is pas écht leuk met je vrienden erbij. Start hieronder een eigen subpoule of sluit aan met een code."
+              className="border-0 shadow-none"
+            />
           ) : (
             <div className="divide-y divide-border">
               {subpoules.map((sp) => (

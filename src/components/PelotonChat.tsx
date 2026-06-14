@@ -210,8 +210,12 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
           {loading ? (
             <div className="p-8 text-center text-muted-foreground text-sm">Berichten laden…</div>
           ) : visibleMessages.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">
-              Nog geen berichten. Start de conversatie! 💬
+            <div className="p-8 text-center space-y-1.5">
+              <p className="text-3xl" aria-hidden>🎙️</p>
+              <p className="font-display font-bold text-foreground">Stilte voor de storm…</p>
+              <p className="text-sm text-muted-foreground font-serif italic max-w-xs mx-auto">
+                "Awel, hier valt nog niets te beleven, hé." Gooi de eerste boodschap in de groep en zet de toon.
+              </p>
             </div>
           ) : (
             visibleMessages.map((m, i) => (
