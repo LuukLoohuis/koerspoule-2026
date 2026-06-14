@@ -97,7 +97,7 @@ export function useEntry(gameId?: string) {
       })),
     onError: (err, _v, ctx) => {
       rollbackEntry(ctx);
-      toast({ title: "Opslaan mislukt", description: err instanceof Error ? err.message : "", variant: "destructive" });
+      toast.error("Opslaan mislukt", { description: err instanceof Error ? err.message : "" });
     },
     onSettled: settleEntry,
   });
@@ -126,7 +126,7 @@ export function useEntry(gameId?: string) {
       }),
     onError: (err, _v, ctx) => {
       rollbackEntry(ctx);
-      toast({ title: "Opslaan mislukt", description: err instanceof Error ? err.message : "", variant: "destructive" });
+      toast.error("Opslaan mislukt", { description: err instanceof Error ? err.message : "" });
     },
     onSettled: settleEntry,
   });
@@ -144,7 +144,7 @@ export function useEntry(gameId?: string) {
       optimisticEntry((e) => ({ ...e, entry_jokers: riderIds.map((id) => ({ rider_id: id })) })),
     onError: (err, _v, ctx) => {
       rollbackEntry(ctx);
-      toast({ title: "Opslaan mislukt", description: err instanceof Error ? err.message : "", variant: "destructive" });
+      toast.error("Opslaan mislukt", { description: err instanceof Error ? err.message : "" });
     },
     onSettled: settleEntry,
   });
