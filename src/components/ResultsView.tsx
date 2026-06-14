@@ -21,6 +21,7 @@ import { useSwipeTabs } from "@/hooks/useSwipeTabs";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import SwipeDots from "@/components/SwipeDots";
+import SwipeHintBar from "@/components/SwipeHintBar";
 import { buildStageBarData } from "@/components/stages/stageBarData";
 
 const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
@@ -125,13 +126,13 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   }, [initialView, initialStageNumber, stages.length]);
 
   // Mobiel: swipe tussen Klassement/Etappes (de zwevende pill staat onderaan).
+  const hint = useSwipeHint();
   const resultsSwipe = useSwipeTabs({
     keys: ["klassement", "etappes"],
     active: view,
-    onChange: (k) => setView(k as "etappes" | "klassement"),
+    onChange: (k) => { setView(k as "etappes" | "klassement"); hint.dismiss(); },
   });
   const barVisible = useAutoHideOnScroll();
-  const peek = useSwipeHint();
 
   const selectedStage = stages[selectedStageIdx];
   const { data: results = [], isLoading: resultsLoading } = useStageResults(selectedStage?.id);
@@ -251,7 +252,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         </div>
       )}
 
-      <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className={cn("max-w-7xl mx-auto", peek && "kp-swipe-peek")} {...resultsSwipe}>
+      <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className="max-w-7xl mx-auto" {...resultsSwipe}>
         {/* Auto-hide alleen op mobiel (max-md); desktop-balk ongewijzigd. */}
         <div
           className={cn(
@@ -277,7 +278,8 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         </TabsList>
         </div>
 
-        {/* Stippen-indicator (mobiel). */}
+        {/* Swipe-hint + stippen-indicator (mobiel). */}
+        <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mx-auto w-fit mt-2" />
         <SwipeDots count={2} activeIndex={view === "klassement" ? 0 : 1} />
 
         {/* ── ETAPPES TAB ── */}

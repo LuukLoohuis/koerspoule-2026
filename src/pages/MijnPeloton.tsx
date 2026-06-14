@@ -27,6 +27,7 @@ import { useSwipeTabs } from "@/hooks/useSwipeTabs";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import SwipeDots from "@/components/SwipeDots";
+import SwipeHintBar from "@/components/SwipeHintBar";
 import Stamp from "@/components/retro/Stamp";
 import JerseyBadge from "@/components/retro/JerseyBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
@@ -117,13 +118,13 @@ export default function MijnPeloton() {
   }, [searchParams]);
   const [teamSubTab, setTeamSubTab] = useState("ploeg");
   // Volgwagen-subtabs (mobiel): swipe + zwevende schakelaar.
+  const teamHint = useSwipeHint();
   const teamSwipe = useSwipeTabs({
     keys: ["ploeg", "prono", "palmares"],
     active: teamSubTab,
-    onChange: (k) => setTeamSubTab(k),
+    onChange: (k) => { setTeamSubTab(k); teamHint.dismiss(); },
   });
   const teamBarVisible = useAutoHideOnScroll();
-  const teamPeek = useSwipeHint();
   const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
     setHorsTab(tab);
@@ -1098,7 +1099,7 @@ export default function MijnPeloton() {
           </TabsContent>
 
           {/* ── TAB: Mijn Team (with sub-tabs) ── */}
-          <TabsContent value="team" className={cn("mt-3", teamPeek && "kp-swipe-peek")} {...teamSwipe}>
+          <TabsContent value="team" className="mt-3" {...teamSwipe}>
             <Tabs value={teamSubTab} onValueChange={setTeamSubTab}>
 
               {/* Mobile tab nav — pill (3 tabs). Auto-hide bij omlaag scrollen. */}
@@ -1119,7 +1120,8 @@ export default function MijnPeloton() {
                 />
               </div>
 
-              {/* Stippen-indicator (mobiel). */}
+              {/* Swipe-hint + stippen-indicator (mobiel). */}
+              <SwipeHintBar visible={teamHint.visible} onClose={teamHint.dismiss} className="mx-auto w-fit mb-2" />
               <SwipeDots
                 count={3}
                 activeIndex={["ploeg", "prono", "palmares"].indexOf(teamSubTab)}

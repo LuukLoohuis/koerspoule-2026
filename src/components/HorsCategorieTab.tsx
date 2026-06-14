@@ -32,6 +32,7 @@ import { useSwipeTabs } from "@/hooks/useSwipeTabs";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import SwipeDots from "@/components/SwipeDots";
+import SwipeHintBar from "@/components/SwipeHintBar";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import JerseyBadge from "@/components/retro/JerseyBadge";
@@ -763,13 +764,13 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     if (initialTab) setActiveTab(initialTab);
   }, [initialTab]);
   // Mobiel: swipe tussen onderdelen (de zwevende schakelaar staat onderaan).
+  const hint = useSwipeHint();
   const swipe = useSwipeTabs({
     keys: HORS_TABS.map((t) => t.key),
     active: activeTab,
-    onChange: (k) => setActiveTab(k as HorsTabKey),
+    onChange: (k) => { setActiveTab(k as HorsTabKey); hint.dismiss(); },
   });
   const barVisible = useAutoHideOnScroll();
-  const peek = useSwipeHint();
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
   const [openComponent, setOpenComponent] = useState<string | null>(null);
@@ -800,7 +801,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className={cn("space-y-5 pb-6", peek && "kp-swipe-peek")} {...swipe}>
+    <div className="space-y-5 pb-6" {...swipe}>
       {/* ── Sub-tab navigation ─────────────────────────────────────────────── */}
 
       {/* Mobile — MobielTabBalk (scrollable chips). Glijdt weg bij omlaag scrollen
@@ -824,7 +825,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         />
       </div>
 
-      {/* Stippen-indicator (mobiel) — toont onderdeel-aantal + actieve. */}
+      {/* Swipe-hint (eenmalig, wegklikbaar) + stippen-indicator (mobiel). */}
+      <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mx-auto w-fit" />
       <SwipeDots count={HORS_TABS.length} activeIndex={HORS_TABS.findIndex((t) => t.key === activeTab)} />
 
       {/* Desktop — bestaande chip-balk ongewijzigd */}
@@ -1575,7 +1577,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   <div className="relative flex items-start gap-4 md:gap-5">
                     <div className="shrink-0 flex flex-col items-center">
                       <Crown className="h-9 w-9 md:h-11 md:w-11 text-[hsl(var(--vintage-gold))]" strokeWidth={2.2} />
-                      <span className="font-display text-[9px] md:text-[10px] uppercase tracking-[0.25em] text-muted-foreground mt-1.5 text-center">
+                      <span className="font-display text-[9px] md:text-[10px] uppercase tracking-[0.06em] leading-tight text-muted-foreground mt-1.5 text-center max-w-[72px] break-words">
                         De
                         <br />
                         Droomploeg
