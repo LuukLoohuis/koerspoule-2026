@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Mic, ChevronDown } from "lucide-react";
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import { useSwipeTabs } from "@/hooks/useSwipeTabs";
+import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import JerseyBadge from "@/components/retro/JerseyBadge";
@@ -765,6 +766,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     active: activeTab,
     onChange: (k) => setActiveTab(k as HorsTabKey),
   });
+  const barVisible = useAutoHideOnScroll();
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
   const [openComponent, setOpenComponent] = useState<string | null>(null);
@@ -798,8 +800,14 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     <div className="space-y-5 pb-6" {...swipe}>
       {/* ── Sub-tab navigation ─────────────────────────────────────────────── */}
 
-      {/* Mobile — MobielTabBalk (scrollable chips) */}
-      <div className="md:hidden">
+      {/* Mobile — MobielTabBalk (scrollable chips). Glijdt weg bij omlaag scrollen
+          (auto-hide); de zwevende schakelaar neemt het wisselen over. */}
+      <div
+        className={cn(
+          "md:hidden overflow-hidden transition-[max-height,opacity,transform] duration-200 ease-out max-h-[120px]",
+          !barVisible && "!max-h-0 opacity-0 -translate-y-2",
+        )}
+      >
         <MobielTabBalk
           tabs={[
             { key: "dartpijl", label: "Dartpijl", icon: Activity },

@@ -18,6 +18,7 @@ import Podium from "@/components/Podium";
 import StageBar from "@/components/stages/StageBar";
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import { useSwipeTabs } from "@/hooks/useSwipeTabs";
+import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { buildStageBarData } from "@/components/stages/stageBarData";
 
 const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
@@ -127,6 +128,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
     active: view,
     onChange: (k) => setView(k as "etappes" | "klassement"),
   });
+  const barVisible = useAutoHideOnScroll();
 
   const selectedStage = stages[selectedStageIdx];
   const { data: results = [], isLoading: resultsLoading } = useStageResults(selectedStage?.id);
@@ -247,6 +249,13 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
       )}
 
       <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className="max-w-7xl mx-auto" {...resultsSwipe}>
+        {/* Auto-hide alleen op mobiel (max-md); desktop-balk ongewijzigd. */}
+        <div
+          className={cn(
+            "overflow-hidden transition-[max-height,opacity,transform] duration-200 ease-out max-md:max-h-[120px]",
+            !barVisible && "max-md:!max-h-0 max-md:opacity-0 max-md:-translate-y-2",
+          )}
+        >
         <TabsList className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 h-auto w-full">
           <TabsTrigger
             value="klassement"
@@ -263,6 +272,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
             <span>Etappes</span>
           </TabsTrigger>
         </TabsList>
+        </div>
 
         {/* ── ETAPPES TAB ── */}
         <TabsContent value="etappes">

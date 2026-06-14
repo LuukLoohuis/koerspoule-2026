@@ -24,6 +24,7 @@ import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import { useSwipeTabs } from "@/hooks/useSwipeTabs";
+import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import Stamp from "@/components/retro/Stamp";
 import JerseyBadge from "@/components/retro/JerseyBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
@@ -119,6 +120,7 @@ export default function MijnPeloton() {
     active: teamSubTab,
     onChange: (k) => setTeamSubTab(k),
   });
+  const teamBarVisible = useAutoHideOnScroll();
   const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
     setHorsTab(tab);
@@ -1096,8 +1098,13 @@ export default function MijnPeloton() {
           <TabsContent value="team" className="mt-3" {...teamSwipe}>
             <Tabs value={teamSubTab} onValueChange={setTeamSubTab}>
 
-              {/* Mobile tab nav — pill (3 tabs) */}
-              <div className="md:hidden mb-3">
+              {/* Mobile tab nav — pill (3 tabs). Auto-hide bij omlaag scrollen. */}
+              <div
+                className={cn(
+                  "md:hidden mb-3 overflow-hidden transition-[max-height,opacity,transform] duration-200 ease-out max-h-[120px]",
+                  !teamBarVisible && "!max-h-0 !mb-0 opacity-0 -translate-y-2",
+                )}
+              >
                 <MobielTabBalk
                   tabs={[
                     { key: "ploeg",    label: "Mijn Ploeg", icon: Users  },
