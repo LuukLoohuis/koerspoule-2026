@@ -1207,10 +1207,10 @@ export default function MyTeamPanel({
               </div>
 
               {/* ── Etappe-selector: spoel het dashboard terug naar de stand t/m
-                   een gekozen rit. ── */}
+                   een gekozen rit. Alleen desktop; mobiel blijft zoals het was. ── */}
               {approvedRaceStages.length > 0 && (
                 <div
-                  className="mt-3 p-2.5"
+                  className="hidden md:block mt-3 p-2.5"
                   style={{ background: PANEL, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 2px 7px rgba(0,0,0,0.5)" }}
                 >
                   <div className="flex items-center justify-between gap-2 mb-1.5 px-1">
