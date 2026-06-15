@@ -722,9 +722,9 @@ type RaceGeo = {
 
 // Tour (geel) — afgemeten: klass rij1-top ≈ 0.448, daguitslag rij1-top ≈ 0.522.
 const GEO_TOUR: RaceGeo = {
-  klasRows: { top: 480, bottom: 98, left: 122, right: 150 },
+  klasRows: { top: 484, bottom: 94, left: 150, right: 150 },
   klasRit: { top: 440, height: 40 },
-  dagRows: { top: 560, bottom: 118, left: 206, right: 205 },
+  dagRows: { top: 554, bottom: 124, left: 235, right: 205 },
   dagRit: { top: 392, left: 712, width: 268, height: 88 },
   dagTraject: { top: 520, height: 42, width: 560 },
   ritColor: "#E0A411",
