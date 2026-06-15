@@ -44,13 +44,13 @@ function useRiderNames(ids: string[]) {
 
 // ── Export helpers ────────────────────────────────────────────────────────────
 
-const CANVAS_OPTS = { scale: 1, useCORS: true, backgroundColor: null, logging: false, width: 1080, height: 1080 };
+const canvasOpts = (w: number, h: number) => ({ scale: 1, useCORS: true, backgroundColor: null, logging: false, width: w, height: h });
 
-async function doDownload(ref: React.RefObject<HTMLDivElement>, filename: string, setLoading: (v: boolean) => void) {
+async function doDownload(ref: React.RefObject<HTMLDivElement>, filename: string, setLoading: (v: boolean) => void, w = 1080, h = 1080) {
   if (!ref.current) return;
   setLoading(true);
   try {
-    const canvas = await html2canvas(ref.current, CANVAS_OPTS as any);
+    const canvas = await html2canvas(ref.current, canvasOpts(w, h) as any);
     const link = document.createElement("a");
     link.download = filename;
     link.href = canvas.toDataURL("image/png");
@@ -63,11 +63,11 @@ async function doDownload(ref: React.RefObject<HTMLDivElement>, filename: string
   }
 }
 
-async function doCopy(ref: React.RefObject<HTMLDivElement>, setLoading: (v: boolean) => void) {
+async function doCopy(ref: React.RefObject<HTMLDivElement>, setLoading: (v: boolean) => void, w = 1080, h = 1080) {
   if (!ref.current) return;
   setLoading(true);
   try {
-    const canvas = await html2canvas(ref.current, CANVAS_OPTS as any);
+    const canvas = await html2canvas(ref.current, canvasOpts(w, h) as any);
     await new Promise<void>((res, rej) =>
       canvas.toBlob((b) => {
         if (!b) return rej(new Error("No blob"));
@@ -85,26 +85,30 @@ async function doCopy(ref: React.RefObject<HTMLDivElement>, setLoading: (v: bool
 // ── Preview scale wrapper ─────────────────────────────────────────────────────
 
 const DISPLAY = 480;
-const SCALE = DISPLAY / 1080;
 
 function PreviewWrapper({
   children,
   refObj,
+  w = 1080,
+  h = 1080,
 }: {
   children: React.ReactNode;
   refObj: React.RefObject<HTMLDivElement>;
+  w?: number;
+  h?: number;
 }) {
+  const scale = DISPLAY / w;
   return (
     <div
       className="mx-auto rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10"
-      style={{ width: DISPLAY, height: DISPLAY, position: "relative", flexShrink: 0 }}
+      style={{ width: DISPLAY, height: h * scale, position: "relative", flexShrink: 0 }}
     >
       <div
         ref={refObj}
         style={{
-          width: 1080,
-          height: 1080,
-          transform: `scale(${SCALE})`,
+          width: w,
+          height: h,
+          transform: `scale(${scale})`,
           transformOrigin: "top left",
           position: "absolute",
           top: 0,
@@ -548,6 +552,8 @@ type RaceTheme = {
   onPrimary: string; // leesbare tekst op de primaire kleur
   race: string; // footer-tekst
   title: React.ReactNode; // koptitel (script/bold per koers)
+  klassementBg: string; // PNG-sjabloon (public/) voor klassement
+  daguitslagBg: string; // PNG-sjabloon (public/) voor daguitslag
 };
 
 function RaceBike({ size = 54, color = R_INK }: { size?: number; color?: string }) {
@@ -631,9 +637,9 @@ const VueltaTitle = (
 );
 
 const RACE_THEMES: Record<"roze" | "geel" | "rood", RaceTheme> = {
-  geel: { primary: "#E0A411", onPrimary: "#1C1813", race: "TOUR DE FRANCE 2026", title: TourTitle },
-  roze: { primary: "#E8336D", onPrimary: "#FFFFFF", race: "GIRO D'ITALIA 2026", title: GiroTitle },
-  rood: { primary: "#CC0000", onPrimary: "#FFF4EC", race: "LA VUELTA 2026", title: VueltaTitle },
+  geel: { primary: "#E0A411", onPrimary: "#1C1813", race: "TOUR DE FRANCE 2026", title: TourTitle, klassementBg: "/ig/klassement-template.png", daguitslagBg: "/ig/daguitslag-template.png" },
+  roze: { primary: "#E8336D", onPrimary: "#FFFFFF", race: "GIRO D'ITALIA 2026", title: GiroTitle, klassementBg: "/ig/klassement-template-giro.png", daguitslagBg: "/ig/daguitslag-template-giro.png" },
+  rood: { primary: "#CC0000", onPrimary: "#FFF4EC", race: "LA VUELTA 2026", title: VueltaTitle, klassementBg: "/ig/klassement-template-vuelta.png", daguitslagBg: "/ig/daguitslag-template-vuelta.png" },
 };
 
 function RaceFooter({ theme }: { theme: RaceTheme }) {
@@ -675,41 +681,96 @@ function RaceRow({ rank, name, value, theme, medal }: {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PNG-SJABLOON TEMPLATES — de retro-PNG dient als achtergrond, alleen de data
+// (namen + punten + ritnummer + traject) wordt er als tekst-laag overheen gelegd.
+//
+// backgroundSize "100% 100%" → de PNG vult de container exact, dus de overlay-
+// posities hieronder zijn fracties van de container en schalen automatisch mee.
+// De ranks 1..10 en "PT" staan al IN de PNG; wij vullen alleen naam + getal.
+//
+// FIJN-AFSTELLEN: pas onderstaande px-waarden aan op jouw echte PNG. Ze gelden
+// in container-ruimte (klassement 1080×1080, daguitslag 1080×DAG_H).
+// ─────────────────────────────────────────────────────────────────────────────
+
+const KLAS_W = 1080, KLAS_H = 1080;     // klassement-sjabloon: vierkant (1:1)
+const DAG_W = 1080, DAG_H = 1290;       // daguitslag-sjabloon: staand — zet DAG_H op de hoogte van jouw PNG
+
+// Klassement-uitlijning (10 rijen tussen TOP en BOT; naam vanaf LEFT, getal tot RIGHT-inset)
+const KLAS_ROWS = { top: 500, bottom: 85, left: 156, right: 150 };
+const KLAS_RIT = { top: 437, height: 50 };      // "NA RIT N"-cover (gecentreerd)
+
+// Daguitslag-uitlijning
+const DAG_ROWS = { top: 677, bottom: 90, left: 162, right: 150 };
+const DAG_RIT = { top: 470, left: 640, width: 250, height: 92 };   // "RIT N"-cover (zwarte balk)
+const DAG_TRAJECT = { top: 612, height: 46 };   // "plaats start – plaats finish"-cover (gecentreerd)
+
+function OverlayRow({ name, value }: { name: string; value: string }) {
+  return (
+    <div style={{ flex: 1, display: "flex", alignItems: "center", minWidth: 0 }}>
+      <span style={{ flex: 1, minWidth: 0, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 32, color: R_INK, textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {name}
+      </span>
+      <span style={{ flexShrink: 0, paddingLeft: 14, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 32, color: R_INK, fontVariantNumeric: "tabular-nums" }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// 10 gelijke rijen, absoluut over de rij-band van het sjabloon gelegd.
+function OverlayRows({ rows, band, valueFmt }: {
+  rows: Array<{ rank: number; name: string; pts: number }>;
+  band: { top: number; bottom: number; left: number; right: number };
+  valueFmt: (pts: number) => string;
+}) {
+  return (
+    <div style={{ position: "absolute", top: band.top, bottom: band.bottom, left: band.left, right: band.right, display: "flex", flexDirection: "column" }}>
+      {Array.from({ length: 10 }, (_, i) => {
+        const s = rows[i];
+        return (
+          <div key={i} style={{ flex: 1, display: "flex", alignItems: "center" }}>
+            {s ? <OverlayRow name={s.name} value={valueFmt(s.pts)} /> : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TemplateBg({ src, w, h, children }: { src: string; w: number; h: number; children: React.ReactNode }) {
+  return (
+    <div style={{
+      width: w, height: h, position: "relative", overflow: "hidden",
+      backgroundColor: R_PAPER,
+      backgroundImage: `url("${src}")`, backgroundSize: "100% 100%",
+      backgroundRepeat: "no-repeat", backgroundPosition: "center",
+    }}>
+      {children}
+    </div>
+  );
+}
+
 function RaceDaguitslagTemplate({ theme, stageNumber, stageName, stageType, standings }: {
   theme: RaceTheme; stageNumber: number; stageName?: string; stageType?: string; standings: Array<{ rank: number; name: string; pts: number }>;
 }) {
   const rows = standings.slice(0, 10);
+  const traject = stageName ?? "—";
   return (
-    <RaceCardFrame>
-      {/* Kop: titel + fiets + skyline */}
-      <div style={{ position: "relative", padding: "34px 44px 6px", minHeight: 240 }}>
-        {theme.title}
-        <div style={{ position: "absolute", right: 30, top: 24 }}><RaceBike size={210} color={R_INK} /></div>
-        <div style={{ marginTop: 4 }}><RaceMountains width={300} height={70} /></div>
+    <TemplateBg src={theme.daguitslagBg} w={DAG_W} h={DAG_H}>
+      {/* RIT N — over de "RIT XX" in de zwarte balk */}
+      <div style={{ position: "absolute", top: DAG_RIT.top, left: DAG_RIT.left, width: DAG_RIT.width, height: DAG_RIT.height, background: R_INK, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 56, letterSpacing: 1, color: theme.primary, textTransform: "uppercase" }}>RIT {stageNumber}</span>
       </div>
-      {/* DAGUITSLAG | RIT N */}
-      <div style={{ background: theme.primary, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 40px" }}>
-        <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 58, color: theme.onPrimary, letterSpacing: 1 }}>DAGUITSLAG</span>
-        <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 44, color: theme.primary, background: R_INK, padding: "4px 22px", borderRadius: 4 }}>RIT {stageNumber}</span>
+      {/* Traject — over "PLAATS START – PLAATS FINISH" */}
+      <div style={{ position: "absolute", top: DAG_TRAJECT.top, left: "50%", transform: "translateX(-50%)", height: DAG_TRAJECT.height, minWidth: 520, maxWidth: 760, background: R_PAPER, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
+        <span style={{ fontFamily: R_OSWALD, fontWeight: 600, fontSize: 28, letterSpacing: 2, color: R_INK, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {traject}{stageType ? ` · ${TYPE_LABEL[stageType] ?? stageType.toUpperCase()}` : ""}
+        </span>
       </div>
-      {/* TRAJECT */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, padding: "12px 44px 2px" }}>
-        <span style={{ flex: 1, height: 3, background: theme.primary }} />
-        <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 24, letterSpacing: 4, color: R_INK }}>TRAJECT</span>
-        <span style={{ flex: 1, height: 3, background: theme.primary }} />
-        <RaceMountains width={50} height={26} />
-        <RaceFlag size={28} />
-      </div>
-      <div style={{ textAlign: "center", fontFamily: R_OSWALD, fontWeight: 600, fontSize: 28, letterSpacing: 2, color: "rgba(28,24,19,0.8)", padding: "0 44px 10px" }}>{stageName ?? "—"}{stageType ? ` · ${TYPE_LABEL[stageType] ?? stageType.toUpperCase()}` : ""}</div>
-      {/* Top 10 */}
-      <div style={{ flex: 1, margin: "0 34px", border: `3px solid ${R_INK}`, borderRadius: 6, overflow: "hidden", background: R_ROW }}>
-        {rows.length === 0
-          ? <div style={{ padding: 50, textAlign: "center", fontFamily: R_OSWALD, fontSize: 30, color: "rgba(28,24,19,0.5)" }}>Nog geen uitslag</div>
-          : rows.map((s) => <RaceRow key={s.rank} theme={theme} rank={s.rank} name={s.name} value={`+${s.pts}`} medal={s.rank === 1 ? "gold" : undefined} />)}
-      </div>
-      <div style={{ height: 18 }} />
-      <RaceFooter theme={theme} />
-    </RaceCardFrame>
+      {/* Top 10 — naam + punten */}
+      <OverlayRows rows={rows} band={DAG_ROWS} valueFmt={(p) => `+${p}`} />
+    </TemplateBg>
   );
 }
 
@@ -718,34 +779,16 @@ function RaceKlassementTemplate({ theme, gameName, stageNumber, standings }: {
 }) {
   const rows = standings.slice(0, 10);
   return (
-    <RaceCardFrame>
-      {/* Kop: titel + trui + bergen */}
-      <div style={{ position: "relative", display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "34px 44px 6px", minHeight: 240 }}>
-        {theme.title}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-          <RaceJersey size={150} color={theme.primary} />
-          <RaceMountains width={300} height={80} />
-        </div>
+    <TemplateBg src={theme.klassementBg} w={KLAS_W} h={KLAS_H}>
+      {/* NA RIT N — over de "NA RIT XX" in het sjabloon */}
+      <div style={{ position: "absolute", top: KLAS_RIT.top, left: "50%", transform: "translateX(-50%)", height: KLAS_RIT.height, minWidth: 250, background: R_PAPER, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 18px" }}>
+        <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 30, letterSpacing: 3, color: R_INK, textTransform: "uppercase" }}>NA RIT {stageNumber}</span>
       </div>
-      {/* ALGEMEEN KLASSEMENT bar */}
-      <div style={{ background: theme.primary, padding: "12px 44px" }}>
-        <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 56, color: theme.onPrimary, letterSpacing: 1 }}>ALGEMEEN KLASSEMENT</span>
-      </div>
-      {/* NA RIT N */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, padding: "12px 44px 8px" }}>
-        <span style={{ flex: 1, height: 3, background: theme.primary, maxWidth: 80 }} />
-        <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 30, letterSpacing: 3, color: R_INK }}>NA RIT {stageNumber}</span>
-        <span style={{ flex: 1, height: 3, background: theme.primary, maxWidth: 80 }} />
-      </div>
-      {/* Top 10 */}
-      <div style={{ flex: 1, margin: "0 34px", border: `3px solid ${R_INK}`, borderRadius: 6, overflow: "hidden", background: R_ROW }}>
-        {rows.length === 0
-          ? <div style={{ padding: 50, textAlign: "center", fontFamily: R_OSWALD, fontSize: 30, color: "rgba(28,24,19,0.5)" }}>Nog geen klassement</div>
-          : rows.map((s) => <RaceRow key={s.rank} theme={theme} rank={s.rank} name={s.name} value={`${s.pts}`} medal={s.rank === 1 ? "gold" : s.rank === 2 ? "silver" : s.rank === 3 ? "bronze" : undefined} />)}
-      </div>
-      <div style={{ height: 18, fontFamily: R_OSWALD, fontSize: 1, color: "transparent" }}>{gameName}</div>
-      <RaceFooter theme={theme} />
-    </RaceCardFrame>
+      {/* Top 10 — naam + punten */}
+      <OverlayRows rows={rows} band={KLAS_ROWS} valueFmt={(p) => `${p}`} />
+      {/* gameName meegenomen t.b.v. data-context (niet zichtbaar; staat in PNG) */}
+      <span style={{ display: "none" }}>{gameName}</span>
+    </TemplateBg>
   );
 }
 
@@ -903,7 +946,7 @@ export default function InstagramExport({ gameId: propGameId }: { gameId?: strin
             onChange={setDagscoreStageId}
           />
           <div className="flex flex-col items-center gap-3">
-            <PreviewWrapper refObj={ref2}>
+            <PreviewWrapper refObj={ref2} w={DAG_W} h={DAG_H}>
               <RaceDaguitslagTemplate
                 theme={raceTheme}
                 stageNumber={dagscoreStage?.stage_number ?? 0}
@@ -913,8 +956,8 @@ export default function InstagramExport({ gameId: propGameId }: { gameId?: strin
               />
             </PreviewWrapper>
             <ExportButtons
-              onDownload={() => doDownload(ref2, `daguitslag-rit${dagscoreStage?.stage_number ?? 0}.png`, setLoading)}
-              onCopy={() => doCopy(ref2, setLoading)}
+              onDownload={() => doDownload(ref2, `daguitslag-rit${dagscoreStage?.stage_number ?? 0}.png`, setLoading, DAG_W, DAG_H)}
+              onCopy={() => doCopy(ref2, setLoading, DAG_W, DAG_H)}
               loading={loading}
             />
           </div>
