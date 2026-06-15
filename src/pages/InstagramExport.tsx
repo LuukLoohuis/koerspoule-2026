@@ -722,9 +722,9 @@ type RaceGeo = {
 
 // Tour (geel) — afgemeten: klass rij1-top ≈ 0.448, daguitslag rij1-top ≈ 0.522.
 const GEO_TOUR: RaceGeo = {
-  klasRows: { top: 484, bottom: 94, left: 150, right: 150 },
+  klasRows: { top: 484, bottom: 96, left: 150, right: 150 },
   klasRit: { top: 440, height: 40 },
-  dagRows: { top: 554, bottom: 124, left: 235, right: 205 },
+  dagRows: { top: 565, bottom: 108, left: 235, right: 205 },
   dagRit: { top: 392, left: 712, width: 268, height: 88 },
   dagTraject: { top: 520, height: 42, width: 560 },
   ritColor: "#E0A411",
@@ -755,11 +755,11 @@ const RACE_GEO: Record<"roze" | "geel" | "rood", RaceGeo> = {
 
 function OverlayRow({ name, value }: { name: string; value: string }) {
   return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", minWidth: 0 }}>
-      <span style={{ flex: 1, minWidth: 0, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 32, color: R_INK, textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+    <div style={{ flex: 1, display: "flex", alignItems: "center", minWidth: 0, lineHeight: 1 }}>
+      <span style={{ flex: 1, minWidth: 0, lineHeight: 1, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 32, color: R_INK, textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
         {name}
       </span>
-      <span style={{ flexShrink: 0, paddingLeft: 14, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 32, color: R_INK, fontVariantNumeric: "tabular-nums" }}>
+      <span style={{ flexShrink: 0, paddingLeft: 14, lineHeight: 1, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 32, color: R_INK, fontVariantNumeric: "tabular-nums" }}>
         {value}
       </span>
     </div>
