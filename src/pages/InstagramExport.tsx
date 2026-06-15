@@ -1,6 +1,7 @@
 import { useRef, useState, useMemo, useEffect } from "react";
 import html2canvas from "html2canvas";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useThema } from "@/contexts/ThemaContext";
 import { useStages, useGameStandings } from "@/hooks/useResults";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -528,9 +529,204 @@ function EtappePreviewTemplate({
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// TOUR DE FRANCE-TEMPLATES (gebruikt wanneer het thema GEEL is)
+// Vintage trading-card-stijl; auto-gevuld met etappe + uitslag/tussenstand.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TOUR_PAPER = "#F1E7CE";
+const TOUR_YELLOW = "#E8B92C";
+const TOUR_INK = "#1C1813";
+const TOUR_RED = "#B23A22";
+const TOUR_BORDER = "#2A2317";
+const SERIF = "'Playfair Display', Georgia, serif";
+const OSWALD = "'Oswald', 'Archivo Black', sans-serif";
+
+function BikeMark({ size = 54, color = TOUR_YELLOW }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" stroke={color} strokeWidth={3} strokeLinecap="round">
+      <circle cx="16" cy="44" r="13" />
+      <circle cx="48" cy="44" r="13" />
+      <path d="M16 44 L28 24 L44 24 M28 24 L40 44 M44 24 L48 44 M24 24 L32 24" />
+      <path d="M40 22 q4 -5 9 -2" strokeWidth={3} />
+    </svg>
+  );
+}
+
+function FinishFlag({ size = 30 }: { size?: number }) {
+  const cells = [];
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) cells.push(<rect key={`${r}-${c}`} x={c * 7} y={r * 6} width="7" height="6" fill={(r + c) % 2 === 0 ? TOUR_INK : "transparent"} />);
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 30">
+      <line x1="1" y1="0" x2="1" y2="30" stroke={TOUR_INK} strokeWidth="2" />
+      <g transform="translate(2 2)">{cells}</g>
+    </svg>
+  );
+}
+
+function YellowJersey({ size = 120 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100">
+      <path d="M30 20 L20 30 L28 40 L30 38 L30 80 L70 80 L70 38 L72 40 L80 30 L70 20 L60 20 Q50 30 40 20 Z"
+        fill={TOUR_YELLOW} stroke={TOUR_INK} strokeWidth="3" strokeLinejoin="round" />
+      <path d="M40 20 Q50 30 60 20" fill="none" stroke={TOUR_INK} strokeWidth="3" />
+    </svg>
+  );
+}
+
+function Mountains({ width = 360, height = 150 }: { width?: number; height?: number }) {
+  return (
+    <svg width={width} height={height} viewBox="0 0 360 150" fill="none" stroke={TOUR_INK} strokeWidth="2.5" strokeLinejoin="round">
+      <path d="M0 150 L70 60 L110 100 L160 30 L210 95 L260 50 L320 110 L360 75 L360 150 Z" fill="rgba(28,24,19,0.06)" />
+      <path d="M160 30 L175 48 L150 52 Z" fill="rgba(255,255,255,0.6)" stroke="none" />
+      <path d="M0 150 L70 60 L110 100 L160 30 L210 95 L260 50 L320 110 L360 75" />
+    </svg>
+  );
+}
+
+function Laurel({ size = 38 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" stroke={TOUR_INK} strokeWidth="2">
+      <path d="M20 6 C10 10 8 24 14 34 M20 6 C30 10 32 24 26 34" />
+      {[12, 18, 24, 30].map((y, i) => (
+        <g key={i}>
+          <ellipse cx={14 - i} cy={y} rx="3" ry="1.6" transform={`rotate(-40 ${14 - i} ${y})`} />
+          <ellipse cx={26 + i} cy={y} rx="3" ry="1.6" transform={`rotate(40 ${26 + i} ${y})`} />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function TourFooter() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 44px", background: TOUR_INK, color: TOUR_PAPER }}>
+      <span style={{ fontFamily: OSWALD, fontSize: 26, letterSpacing: 1 }}>koerspoule.nl</span>
+      <div style={{ width: 70, height: 70, borderRadius: "50%", border: `3px solid ${TOUR_YELLOW}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <BikeMark size={44} />
+      </div>
+      <span style={{ fontFamily: OSWALD, fontSize: 24, fontWeight: 700, letterSpacing: 2, color: TOUR_YELLOW }}>TOUR DE FRANCE 2026</span>
+    </div>
+  );
+}
+
+function TourCardFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      width: 1080, height: 1080, fontFamily: OSWALD, position: "relative",
+      background: TOUR_INK, padding: 26, boxSizing: "border-box",
+    }}>
+      <div style={{
+        width: "100%", height: "100%", background: TOUR_PAPER,
+        border: `6px solid ${TOUR_BORDER}`, borderRadius: 18, overflow: "hidden",
+        display: "flex", flexDirection: "column",
+        backgroundImage: "radial-gradient(rgba(28,24,19,0.05) 1px, transparent 1px)", backgroundSize: "5px 5px",
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function TourRow({ rank, name, value, suffix = "PT", highlight, laurel }: {
+  rank: number; name: string; value: string; suffix?: string; highlight?: boolean; laurel?: boolean;
+}) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 26, padding: "0 40px", height: 116,
+      background: highlight ? TOUR_YELLOW : "transparent",
+      borderBottom: `2px solid rgba(28,24,19,0.18)`,
+    }}>
+      <span style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 56, width: 70, textAlign: "center", color: TOUR_INK }}>{rank}</span>
+      <span style={{ flex: 1, fontFamily: OSWALD, fontWeight: 700, fontSize: 42, textTransform: "uppercase", color: TOUR_INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: 0.5 }}>{name}</span>
+      {laurel && <Laurel size={46} />}
+      <span style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 50, color: TOUR_INK, display: "flex", alignItems: "flex-end", gap: 4 }}>
+        {value}<span style={{ fontSize: 22, marginBottom: 8 }}>{suffix}</span>
+      </span>
+    </div>
+  );
+}
+
+function TourDaguitslagTemplate({ stageNumber, stageName, stageType, standings }: {
+  stageNumber: number; stageName?: string; stageType?: string; standings: Array<{ rank: number; name: string; pts: number }>;
+}) {
+  const rows = standings.slice(0, 5);
+  return (
+    <TourCardFrame>
+      {/* Gele kop met script + bike */}
+      <div style={{ background: TOUR_YELLOW, padding: "30px 44px", display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 200 }}>
+        <span style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 900, fontSize: 74, lineHeight: 0.95, color: TOUR_INK }}>
+          Le<br />Tour<span style={{ fontSize: 40 }}> de </span>France
+        </span>
+        <BikeMark size={150} color={TOUR_INK} />
+      </div>
+      {/* DAGUITSLAG | RIT N */}
+      <div style={{ background: TOUR_INK, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 44px" }}>
+        <span style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 60, color: TOUR_PAPER, letterSpacing: 1 }}>DAGUITSLAG</span>
+        <span style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 60, color: TOUR_YELLOW }}>RIT {stageNumber}</span>
+      </div>
+      {/* Subtitel: tricolor + naam + type + vlag */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 44px 8px", gap: 16 }}>
+        <span style={{ width: 70, height: 4, background: "#1E3A8C" }} />
+        <span style={{ flex: 1, textAlign: "center", fontFamily: OSWALD, fontWeight: 600, fontSize: 30, letterSpacing: 3, color: TOUR_INK }}>{stageName ?? "—"}</span>
+        <span style={{ width: 70, height: 4, background: TOUR_RED }} />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, padding: "0 44px 14px" }}>
+        {stageType && <span style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 22, color: TOUR_PAPER, background: "#5C6B3B", padding: "4px 14px", borderRadius: 4, letterSpacing: 1 }}>{TYPE_LABEL[stageType] ?? stageType.toUpperCase()}</span>}
+        <FinishFlag size={34} />
+      </div>
+      {/* Top 5 */}
+      <div style={{ flex: 1, margin: "0 36px", border: `3px solid ${TOUR_INK}`, borderRadius: 6, overflow: "hidden", background: "#F7EFD8" }}>
+        {rows.length === 0 ? (
+          <div style={{ padding: 60, textAlign: "center", fontFamily: OSWALD, fontSize: 32, color: "rgba(28,24,19,0.5)" }}>Nog geen uitslag</div>
+        ) : rows.map((s) => (
+          <TourRow key={s.rank} rank={s.rank} name={s.name} value={`+${s.pts}`} highlight={s.rank === 1} />
+        ))}
+      </div>
+      <div style={{ height: 24 }} />
+      <TourFooter />
+    </TourCardFrame>
+  );
+}
+
+function TourKlassementTemplate({ gameName, stageNumber, standings }: {
+  gameName: string; stageNumber: number; standings: Array<{ rank: number; name: string; pts: number }>;
+}) {
+  const rows = standings.slice(0, 5);
+  return (
+    <TourCardFrame>
+      {/* Kop: trui + titel + bergen */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "40px 44px 10px", position: "relative" }}>
+        <div>
+          <YellowJersey size={120} />
+          <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 78, lineHeight: 0.95, color: TOUR_INK, marginTop: 8 }}>TUSSENSTAND</div>
+          <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 40, color: TOUR_RED, letterSpacing: 1 }}>ALGEMEEN KLASSEMENT</div>
+        </div>
+        <div style={{ marginTop: 10 }}><Mountains width={380} height={180} /></div>
+      </div>
+      <div style={{ padding: "6px 44px 20px", fontFamily: OSWALD, fontWeight: 600, fontSize: 30, letterSpacing: 2, color: "rgba(28,24,19,0.7)" }}>
+        {gameName.toUpperCase()} · NA RIT {stageNumber}
+      </div>
+      {/* Top 5 */}
+      <div style={{ flex: 1, margin: "0 36px", border: `3px solid ${TOUR_INK}`, borderRadius: 6, overflow: "hidden", background: "#F7EFD8" }}>
+        {rows.length === 0 ? (
+          <div style={{ padding: 60, textAlign: "center", fontFamily: OSWALD, fontSize: 32, color: "rgba(28,24,19,0.5)" }}>Nog geen klassement</div>
+        ) : rows.map((s) => (
+          <TourRow key={s.rank} rank={s.rank} name={s.name} value={`${s.pts}`} highlight={s.rank === 1} laurel={s.rank === 1} />
+        ))}
+      </div>
+      <div style={{ height: 24 }} />
+      <TourFooter />
+    </TourCardFrame>
+  );
+}
+
 export default function InstagramExport({ gameId: propGameId }: { gameId?: string }) {
   const { data: game } = useCurrentGame();
   const gameId = propGameId ?? game?.id;
+  // Geel thema = Tour de France → gebruik de Tour-templates.
+  const { key: themaKey } = useThema();
+  const isTour = themaKey === "geel";
 
   const { data: stages = [] } = useStages(gameId);
   const { data: pickStats = [] } = usePickStats(gameId);
@@ -653,11 +849,19 @@ export default function InstagramExport({ gameId: propGameId }: { gameId?: strin
           />
           <div className="flex flex-col items-center gap-3">
             <PreviewWrapper refObj={ref1}>
-              <KlassementTemplate
-                gameName={gameName}
-                stageNumber={klassementStage?.stage_number ?? 0}
-                standings={klassementStandings}
-              />
+              {isTour ? (
+                <TourKlassementTemplate
+                  gameName={gameName}
+                  stageNumber={klassementStage?.stage_number ?? 0}
+                  standings={klassementStandings}
+                />
+              ) : (
+                <KlassementTemplate
+                  gameName={gameName}
+                  stageNumber={klassementStage?.stage_number ?? 0}
+                  standings={klassementStandings}
+                />
+              )}
             </PreviewWrapper>
             <ExportButtons
               onDownload={() => doDownload(ref1, `klassement-rit${klassementStage?.stage_number ?? 0}.png`, setLoading)}
@@ -679,12 +883,21 @@ export default function InstagramExport({ gameId: propGameId }: { gameId?: strin
           />
           <div className="flex flex-col items-center gap-3">
             <PreviewWrapper refObj={ref2}>
-              <DagscoreTemplate
-                stageNumber={dagscoreStage?.stage_number ?? 0}
-                stageName={dagscoreStage?.name ?? undefined}
-                stageType={dagscoreStage?.stage_type ?? undefined}
-                standings={dagscoreStandings}
-              />
+              {isTour ? (
+                <TourDaguitslagTemplate
+                  stageNumber={dagscoreStage?.stage_number ?? 0}
+                  stageName={dagscoreStage?.name ?? undefined}
+                  stageType={dagscoreStage?.stage_type ?? undefined}
+                  standings={dagscoreStandings}
+                />
+              ) : (
+                <DagscoreTemplate
+                  stageNumber={dagscoreStage?.stage_number ?? 0}
+                  stageName={dagscoreStage?.name ?? undefined}
+                  stageType={dagscoreStage?.stage_type ?? undefined}
+                  standings={dagscoreStandings}
+                />
+              )}
             </PreviewWrapper>
             <ExportButtons
               onDownload={() => doDownload(ref2, `daguitslag-rit${dagscoreStage?.stage_number ?? 0}.png`, setLoading)}
