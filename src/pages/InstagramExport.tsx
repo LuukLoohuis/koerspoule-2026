@@ -693,17 +693,52 @@ function RaceRow({ rank, name, value, theme, medal }: {
 // in container-ruimte (klassement 1080×1080, daguitslag 1080×DAG_H).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const KLAS_W = 1080, KLAS_H = 1080;     // klassement-sjabloon: vierkant (1:1)
-const DAG_W = 1080, DAG_H = 1290;       // daguitslag-sjabloon: staand — zet DAG_H op de hoogte van jouw PNG
+const KLAS_W = 1080, KLAS_H = 1080;     // klassement-sjabloon: vierkant (1254×1254 → 1:1)
+const DAG_W = 1080, DAG_H = 1080;       // daguitslag-sjabloon: ook vierkant (1254×1254 → 1:1)
 
-// Klassement-uitlijning (10 rijen tussen TOP en BOT; naam vanaf LEFT, getal tot RIGHT-inset)
-const KLAS_ROWS = { top: 500, bottom: 85, left: 156, right: 150 };
-const KLAS_RIT = { top: 437, height: 50 };      // "NA RIT N"-cover (gecentreerd)
+// Uitlijn-geometrie per koers — px in 1080×1080-ruimte, afgemeten op de PNG-sjablonen.
+// (rows: 10 gelijke rijen tussen top/bottom; naam vanaf left, getal tot right-inset.)
+type RaceGeo = {
+  klasRows: { top: number; bottom: number; left: number; right: number };
+  klasRit: { top: number; height: number };          // "NA RIT N"-cover (gecentreerd)
+  dagRows: { top: number; bottom: number; left: number; right: number };
+  dagRit: { top: number; left: number; width: number; height: number };  // "RIT N"-cover (donkere balk)
+  dagTraject: { top: number; height: number; width: number };            // traject-cover (gecentreerd)
+  ritColor: string;                                  // kleur van "RIT N" op de donkere balk
+};
 
-// Daguitslag-uitlijning
-const DAG_ROWS = { top: 677, bottom: 90, left: 162, right: 150 };
-const DAG_RIT = { top: 470, left: 640, width: 250, height: 92 };   // "RIT N"-cover (zwarte balk)
-const DAG_TRAJECT = { top: 612, height: 46 };   // "plaats start – plaats finish"-cover (gecentreerd)
+// Tour (geel) — afgemeten: klass rij1-top ≈ 0.448, daguitslag rij1-top ≈ 0.522.
+const GEO_TOUR: RaceGeo = {
+  klasRows: { top: 484, bottom: 96, left: 122, right: 150 },
+  klasRit: { top: 440, height: 40 },
+  dagRows: { top: 564, bottom: 108, left: 165, right: 155 },
+  dagRit: { top: 390, left: 715, width: 290, height: 92 },
+  dagTraject: { top: 512, height: 44, width: 620 },
+  ritColor: "#E0A411",
+};
+
+// Vuelta (rood) — kop is hoger, dus rijen zitten lager dan bij Tour.
+const GEO_VUELTA: RaceGeo = {
+  klasRows: { top: 565, bottom: 94, left: 122, right: 150 },
+  klasRit: { top: 509, height: 40 },
+  dagRows: { top: 570, bottom: 88, left: 165, right: 155 },
+  dagRit: { top: 452, left: 698, width: 304, height: 92 },
+  dagTraject: { top: 570, height: 42, width: 640 },
+  ritColor: "#FFFFFF",
+};
+
+// Giro (roze) — kop/rijen vrijwel gelijk aan Tour; RIT N is wit op zwarte vlag.
+const GEO_GIRO: RaceGeo = {
+  ...GEO_TOUR,
+  dagTraject: { top: 524, height: 42, width: 620 },
+  ritColor: "#FFFFFF",
+};
+
+const RACE_GEO: Record<"roze" | "geel" | "rood", RaceGeo> = {
+  geel: GEO_TOUR,
+  rood: GEO_VUELTA,
+  roze: GEO_GIRO,
+};
 
 function OverlayRow({ name, value }: { name: string; value: string }) {
   return (
@@ -751,41 +786,41 @@ function TemplateBg({ src, w, h, children }: { src: string; w: number; h: number
   );
 }
 
-function RaceDaguitslagTemplate({ theme, stageNumber, stageName, stageType, standings }: {
-  theme: RaceTheme; stageNumber: number; stageName?: string; stageType?: string; standings: Array<{ rank: number; name: string; pts: number }>;
+function RaceDaguitslagTemplate({ theme, geo, stageNumber, stageName, stageType, standings }: {
+  theme: RaceTheme; geo: RaceGeo; stageNumber: number; stageName?: string; stageType?: string; standings: Array<{ rank: number; name: string; pts: number }>;
 }) {
   const rows = standings.slice(0, 10);
   const traject = stageName ?? "—";
   return (
     <TemplateBg src={theme.daguitslagBg} w={DAG_W} h={DAG_H}>
-      {/* RIT N — over de "RIT XX" in de zwarte balk */}
-      <div style={{ position: "absolute", top: DAG_RIT.top, left: DAG_RIT.left, width: DAG_RIT.width, height: DAG_RIT.height, background: R_INK, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 56, letterSpacing: 1, color: theme.primary, textTransform: "uppercase" }}>RIT {stageNumber}</span>
+      {/* RIT N — over de "RIT XX" in de donkere balk */}
+      <div style={{ position: "absolute", top: geo.dagRit.top, left: geo.dagRit.left, width: geo.dagRit.width, height: geo.dagRit.height, background: R_INK, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 56, letterSpacing: 1, color: geo.ritColor, textTransform: "uppercase" }}>RIT {stageNumber}</span>
       </div>
       {/* Traject — over "PLAATS START – PLAATS FINISH" */}
-      <div style={{ position: "absolute", top: DAG_TRAJECT.top, left: "50%", transform: "translateX(-50%)", height: DAG_TRAJECT.height, minWidth: 520, maxWidth: 760, background: R_PAPER, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
+      <div style={{ position: "absolute", top: geo.dagTraject.top, left: "50%", transform: "translateX(-50%)", height: geo.dagTraject.height, minWidth: geo.dagTraject.width, maxWidth: 820, background: R_PAPER, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
         <span style={{ fontFamily: R_OSWALD, fontWeight: 600, fontSize: 28, letterSpacing: 2, color: R_INK, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {traject}{stageType ? ` · ${TYPE_LABEL[stageType] ?? stageType.toUpperCase()}` : ""}
         </span>
       </div>
       {/* Top 10 — naam + punten */}
-      <OverlayRows rows={rows} band={DAG_ROWS} valueFmt={(p) => `+${p}`} />
+      <OverlayRows rows={rows} band={geo.dagRows} valueFmt={(p) => `+${p}`} />
     </TemplateBg>
   );
 }
 
-function RaceKlassementTemplate({ theme, gameName, stageNumber, standings }: {
-  theme: RaceTheme; gameName: string; stageNumber: number; standings: Array<{ rank: number; name: string; pts: number }>;
+function RaceKlassementTemplate({ theme, geo, gameName, stageNumber, standings }: {
+  theme: RaceTheme; geo: RaceGeo; gameName: string; stageNumber: number; standings: Array<{ rank: number; name: string; pts: number }>;
 }) {
   const rows = standings.slice(0, 10);
   return (
     <TemplateBg src={theme.klassementBg} w={KLAS_W} h={KLAS_H}>
       {/* NA RIT N — over de "NA RIT XX" in het sjabloon */}
-      <div style={{ position: "absolute", top: KLAS_RIT.top, left: "50%", transform: "translateX(-50%)", height: KLAS_RIT.height, minWidth: 250, background: R_PAPER, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 18px" }}>
+      <div style={{ position: "absolute", top: geo.klasRit.top, left: "50%", transform: "translateX(-50%)", height: geo.klasRit.height, minWidth: 250, background: R_PAPER, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 18px" }}>
         <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 30, letterSpacing: 3, color: R_INK, textTransform: "uppercase" }}>NA RIT {stageNumber}</span>
       </div>
       {/* Top 10 — naam + punten */}
-      <OverlayRows rows={rows} band={KLAS_ROWS} valueFmt={(p) => `${p}`} />
+      <OverlayRows rows={rows} band={geo.klasRows} valueFmt={(p) => `${p}`} />
       {/* gameName meegenomen t.b.v. data-context (niet zichtbaar; staat in PNG) */}
       <span style={{ display: "none" }}>{gameName}</span>
     </TemplateBg>
@@ -798,6 +833,7 @@ export default function InstagramExport({ gameId: propGameId }: { gameId?: strin
   // Vintage race-templates per thema (geel=Tour, roze=Giro, rood=Vuelta).
   const { key: themaKey } = useThema();
   const raceTheme = RACE_THEMES[themaKey];
+  const raceGeo = RACE_GEO[themaKey];
 
   const { data: stages = [] } = useStages(gameId);
   const { data: pickStats = [] } = usePickStats(gameId);
@@ -922,6 +958,7 @@ export default function InstagramExport({ gameId: propGameId }: { gameId?: strin
             <PreviewWrapper refObj={ref1}>
               <RaceKlassementTemplate
                 theme={raceTheme}
+                geo={raceGeo}
                 gameName={gameName}
                 stageNumber={klassementStage?.stage_number ?? 0}
                 standings={klassementStandings}
@@ -949,6 +986,7 @@ export default function InstagramExport({ gameId: propGameId }: { gameId?: strin
             <PreviewWrapper refObj={ref2} w={DAG_W} h={DAG_H}>
               <RaceDaguitslagTemplate
                 theme={raceTheme}
+                geo={raceGeo}
                 stageNumber={dagscoreStage?.stage_number ?? 0}
                 stageName={dagscoreStage?.name ?? undefined}
                 stageType={dagscoreStage?.stage_type ?? undefined}
