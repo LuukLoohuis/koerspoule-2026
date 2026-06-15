@@ -44,13 +44,26 @@ function useRiderNames(ids: string[]) {
 
 // ── Export helpers ────────────────────────────────────────────────────────────
 
-const canvasOpts = (w: number, h: number) => ({ scale: 1, useCORS: true, backgroundColor: null, logging: false, width: w, height: h });
+// Vangt de export-node op echte 1080-grootte (preview-transform tijdelijk uit) en op 2×
+// pixeldichtheid → scherpe Instagram-PNG (1080×1080 → 2160×2160 canvas).
+async function capture(el: HTMLDivElement, w: number, h: number) {
+  const prevTransform = el.style.transform;
+  const prevOrigin = el.style.transformOrigin;
+  el.style.transform = "none";
+  el.style.transformOrigin = "top left";
+  try {
+    return await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: null, logging: false, width: w, height: h } as any);
+  } finally {
+    el.style.transform = prevTransform;
+    el.style.transformOrigin = prevOrigin;
+  }
+}
 
 async function doDownload(ref: React.RefObject<HTMLDivElement>, filename: string, setLoading: (v: boolean) => void, w = 1080, h = 1080) {
   if (!ref.current) return;
   setLoading(true);
   try {
-    const canvas = await html2canvas(ref.current, canvasOpts(w, h) as any);
+    const canvas = await capture(ref.current, w, h);
     const link = document.createElement("a");
     link.download = filename;
     link.href = canvas.toDataURL("image/png");
@@ -67,7 +80,7 @@ async function doCopy(ref: React.RefObject<HTMLDivElement>, setLoading: (v: bool
   if (!ref.current) return;
   setLoading(true);
   try {
-    const canvas = await html2canvas(ref.current, canvasOpts(w, h) as any);
+    const canvas = await capture(ref.current, w, h);
     await new Promise<void>((res, rej) =>
       canvas.toBlob((b) => {
         if (!b) return rej(new Error("No blob"));
