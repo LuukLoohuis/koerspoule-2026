@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, ShieldOff, Trash2 } from "lucide-react";
+import { Shield, ShieldOff, Trash2, Download } from "lucide-react";
 import { toast } from "sonner";
+import { exportToXlsx, todayStamp } from "@/lib/exportXlsx";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -69,6 +70,25 @@ export default function UsersTab() {
 
   const filtered = users.filter((u) => !search.trim() || u.email.toLowerCase().includes(search.toLowerCase()));
 
+  function handleExport() {
+    if (filtered.length === 0) {
+      toast.error("Geen gebruikers om te exporteren");
+      return;
+    }
+    try {
+      const rows = filtered.map((u) => ({
+        Email: u.email,
+        "Aangemaakt op": new Date(u.created_at).toLocaleString("nl-NL"),
+        "Aantal teams": u.teams_count,
+        Admin: u.is_admin ? "ja" : "nee",
+      }));
+      exportToXlsx(rows, `koerspoule-gebruikers-${todayStamp()}.xlsx`, "Gebruikers");
+      toast.success(`${rows.length} gebruikers geëxporteerd`);
+    } catch (e: any) {
+      toast.error(`Export mislukt: ${e?.message ?? e}`);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <Card>
@@ -76,7 +96,12 @@ export default function UsersTab() {
           <CardTitle className="font-display flex items-center gap-2"><Shield className="w-5 h-5" />Gebruikers ({users.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Input data-testid="search-users" placeholder="Zoek op e-mail..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <div className="flex gap-2">
+            <Input data-testid="search-users" placeholder="Zoek op e-mail..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Button variant="outline" onClick={handleExport} disabled={loading || filtered.length === 0} data-testid="export-users">
+              <Download className="w-4 h-4 mr-1" />Exporteer naar Excel
+            </Button>
+          </div>
           {loading ? (
             <p className="text-sm text-muted-foreground">Laden...</p>
           ) : (

@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Pencil } from "lucide-react";
+import { Pencil, Download } from "lucide-react";
 import EntryEditorDialog from "./EntryEditorDialog";
+import { exportToXlsx, todayStamp } from "@/lib/exportXlsx";
 
 type Entry = {
   entry_id: string;
@@ -75,15 +76,46 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Input
               data-testid="search-entries"
               placeholder="Zoek op e-mail, ploegnaam of speler..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              className="min-w-[200px] flex-1"
             />
             <Button variant="outline" onClick={load} disabled={loading} data-testid="reload-entries">
               {loading ? "Laden..." : "Vernieuwen"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (filtered.length === 0) {
+                  toast.error("Geen inzendingen om te exporteren");
+                  return;
+                }
+                try {
+                  const rows = filtered.map((e) => ({
+                    Email: e.email,
+                    Spelersnaam: e.display_name,
+                    Ploegnaam: e.team_name ?? "",
+                    Status: e.entry_status,
+                    "Ingediend op": e.submitted_at ? new Date(e.submitted_at).toLocaleString("nl-NL") : "",
+                    "Aangemaakt op": new Date(e.created_at).toLocaleString("nl-NL"),
+                    "Aantal picks": e.picks_count,
+                    "Aantal jokers": e.jokers_count,
+                    "Totaal punten": e.total_points,
+                  }));
+                  exportToXlsx(rows, `koerspoule-inzendingen-${todayStamp()}.xlsx`, "Inzendingen");
+                  toast.success(`${rows.length} inzendingen geëxporteerd`);
+                } catch (err: any) {
+                  toast.error(`Export mislukt: ${err?.message ?? err}`);
+                }
+              }}
+              disabled={loading || filtered.length === 0}
+              data-testid="export-entries"
+            >
+              <Download className="w-4 h-4 mr-1" />Exporteer naar Excel
             </Button>
           </div>
           <div className="border rounded-md max-h-[600px] overflow-auto">
