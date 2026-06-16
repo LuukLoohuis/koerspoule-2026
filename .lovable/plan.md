@@ -1,19 +1,27 @@
-## Plan
+# Excel-export voor Gebruikers en Inzendingen
 
-De nieuw geüploade fietsende aap (Designer_9.png, transparante achtergrond) komt rechts naast het Monkey IQ / Jij-vs-aap blok (`PercentileVerdict`) in het "Aap met Dartpijl"-tab.
+Voeg een **"Exporteer naar Excel"**-knop toe aan zowel het **Gebruikers**- als het **Inzendingen**-tabje in admin.
 
-### Wijzigingen
+## Wijzigingen
 
-1. **Asset uploaden** via `lovable-assets create` vanuit `/mnt/user-uploads/Designer_9.png` → `src/assets/horscat/aap-fietser.png.asset.json`. Originele binary wordt niet in repo gezet.
+**`src/components/admin/UsersTab.tsx`**
+- Knop "Exporteer naar Excel" (Download-icoon) naast de zoekbalk.
+- Exporteert de zichtbare lijst (gefilterd indien zoekterm actief, anders alle gebruikers).
+- Kolommen: `Email`, `Aangemaakt op`, `Aantal teams`, `Admin (ja/nee)`.
+- Bestandsnaam: `koerspoule-gebruikers-YYYY-MM-DD.xlsx`.
 
-2. **`src/components/HorsCategorieTab.tsx`** (rond regel 844):
-   - Wrap `<PercentileVerdict ... />` in een flex-container:
-     - Mobiel: alleen de verdict-kaart (image verborgen, anders te krap).
-     - `md+`: `flex items-center gap-6` met de verdict-kaart links (`flex-1`) en rechts de fietsende aap (`hidden md:block`, `w-[200px] lg:w-[240px]`, `h-auto`, `select-none pointer-events-none`, lichte `drop-shadow`).
-   - Import van het asset-pointer JSON bovenaan.
-   - Optioneel: subtiele `animate-monkey-idle` (bestaande utility) of geen animatie om rustig te houden.
+**`src/components/admin/EntriesTab.tsx`**
+- Knop "Exporteer naar Excel" naast de zoekbalk/reload-knop.
+- Exporteert de zichtbare lijst (gefilterd op zoekterm indien actief).
+- Kolommen: `Email`, `Spelersnaam`, `Ploegnaam`, `Status`, `Ingediend op`, `Aangemaakt op`, `Aantal picks`, `Aantal jokers`, `Totaal punten`.
+- Bestandsnaam: `koerspoule-inzendingen-YYYY-MM-DD.xlsx`.
 
-3. **Geen wijzigingen** aan `PercentileVerdict.tsx` zelf, aan de histogram (waar de andere aap al staat), of aan de KPI-tegels. De compositie van het bestaande blok blijft 1:1 hetzelfde.
+Beide knoppen tonen een toast bij succes/fout en zijn disabled als de lijst leeg is.
 
-### Resultaat
-Op desktop staat de fietsende aap met dartpijl in de pose-richting (naar links kijkend) als visuele "tegenspeler" naast het Monkey IQ-vergelijkingsblok. Op mobiel blijft alles ongewijzigd zodat de hero niet wordt opgedrukt.
+## Technisch
+
+- Nieuwe dependency: `xlsx` (SheetJS), client-side generatie — geen edge function nodig.
+- Geen backend-, schema- of RLS-wijzigingen (admins lezen al uit `admin_user_overview` en `admin_entries_overview`).
+- Kleine gedeelde helper `src/lib/exportXlsx.ts` met één `exportToXlsx(rows, filename, sheetName)`-functie, hergebruikt in beide tabs.
+
+Akkoord om te bouwen?
