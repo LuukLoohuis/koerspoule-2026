@@ -753,36 +753,39 @@ const RACE_GEO: Record<"roze" | "geel" | "rood", RaceGeo> = {
   roze: GEO_GIRO,
 };
 
-function OverlayRow({ name, value }: { name: string; value: string }) {
-  return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", minWidth: 0, lineHeight: 1 }}>
-      <span style={{ flex: 1, minWidth: 0, lineHeight: 1, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 32, color: R_INK, textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-        {name}
-      </span>
-      <span style={{ flexShrink: 0, paddingLeft: 14, lineHeight: 1, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 32, color: R_INK, fontVariantNumeric: "tabular-nums" }}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-// 10 gelijke rijen, absoluut over de rij-band van het sjabloon gelegd.
-function OverlayRows({ rows, band, valueFmt }: {
+// 10 gelijke rijen over de rij-band. BELANGRIJK: geen flexbox-centrering —
+// html2canvas rendert flex `align-items:center` onbetrouwbaar (tekst zakt naar
+// de rij-onderkant in de export). Daarom per rij absoluut gepositioneerd en
+// verticaal gecentreerd via line-height = rijhoogte (door html2canvas wél correct
+// gerenderd). Naam links (ellipsis), punten rechts-uitgelijnd op de right-inset.
+function OverlayRows({ rows, band, containerH, valueFmt }: {
   rows: Array<{ rank: number; name: string; pts: number }>;
   band: { top: number; bottom: number; left: number; right: number };
+  containerH: number;
   valueFmt: (pts: number) => string;
 }) {
+  const rowH = (containerH - band.top - band.bottom) / 10;
+  // html2canvas zet single-line tekst ~8px lager dan de browser; corrigeer omhoog
+  // zodat de export (niet alleen de preview) op de ingebakken rangnummers valt.
+  const H2C_NUDGE = 8;
   return (
-    <div style={{ position: "absolute", top: band.top, bottom: band.bottom, left: band.left, right: band.right, display: "flex", flexDirection: "column" }}>
+    <>
       {Array.from({ length: 10 }, (_, i) => {
         const s = rows[i];
+        if (!s) return null;
+        const top = band.top + i * rowH - H2C_NUDGE;
         return (
-          <div key={i} style={{ flex: 1, display: "flex", alignItems: "center" }}>
-            {s ? <OverlayRow name={s.name} value={valueFmt(s.pts)} /> : null}
+          <div key={i} style={{ position: "absolute", left: band.left, right: band.right, top, height: rowH }}>
+            <span style={{ position: "absolute", left: 0, right: 170, top: 0, height: rowH, lineHeight: `${rowH}px`, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 32, color: R_INK, textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {s.name}
+            </span>
+            <span style={{ position: "absolute", right: 0, top: 0, height: rowH, lineHeight: `${rowH}px`, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 32, color: R_INK, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+              {valueFmt(s.pts)}
+            </span>
           </div>
         );
       })}
-    </div>
+    </>
   );
 }
 
@@ -817,7 +820,7 @@ function RaceDaguitslagTemplate({ theme, geo, stageNumber, stageName, stageType,
         </span>
       </div>
       {/* Top 10 — naam + punten */}
-      <OverlayRows rows={rows} band={geo.dagRows} valueFmt={(p) => `+${p}`} />
+      <OverlayRows rows={rows} band={geo.dagRows} containerH={DAG_H} valueFmt={(p) => `+${p}`} />
     </TemplateBg>
   );
 }
@@ -833,7 +836,7 @@ function RaceKlassementTemplate({ theme, geo, gameName, stageNumber, standings }
         <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 30, letterSpacing: 3, color: R_INK, textTransform: "uppercase" }}>NA RIT {stageNumber}</span>
       </div>
       {/* Top 10 — naam + punten */}
-      <OverlayRows rows={rows} band={geo.klasRows} valueFmt={(p) => `${p}`} />
+      <OverlayRows rows={rows} band={geo.klasRows} containerH={KLAS_H} valueFmt={(p) => `${p}`} />
       {/* gameName meegenomen t.b.v. data-context (niet zichtbaar; staat in PNG) */}
       <span style={{ display: "none" }}>{gameName}</span>
     </TemplateBg>
