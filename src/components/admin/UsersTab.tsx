@@ -138,10 +138,29 @@ export default function UsersTab() {
           <CardTitle className="font-display flex items-center gap-2"><Shield className="w-5 h-5" />Gebruikers ({users.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex gap-2">
-            <Input data-testid="search-users" placeholder="Zoek op e-mail..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <div className="flex gap-2 flex-wrap">
+            <Input data-testid="search-users" placeholder="Zoek op e-mail..." value={search} onChange={(e) => setSearch(e.target.value)} className="min-w-[200px] flex-1" />
             <Button variant="outline" onClick={handleExport} disabled={loading || filtered.length === 0} data-testid="export-users">
               <Download className="w-4 h-4 mr-1" />Exporteer naar Excel
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleImportFile(f);
+              }}
+            />
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              data-testid="import-users"
+            >
+              <Upload className="w-4 h-4 mr-1" />
+              {importing ? "Importeren..." : "Importeer uit Excel"}
             </Button>
           </div>
           {loading ? (
