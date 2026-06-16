@@ -8537,3 +8537,8 @@ CREATE POLICY games_admin_write ON public.games
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
+
+
+-- ########## CLEANUP: stale admin-sync trigger ##########
+drop trigger if exists trg_sync_profile_admin on public.user_roles;
+drop function if exists public.sync_profile_admin();

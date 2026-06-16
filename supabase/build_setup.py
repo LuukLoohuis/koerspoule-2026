@@ -101,6 +101,14 @@ def main():
             continue
         parts.append(f"\n-- ########## MIGRATIE: {os.path.basename(f)} ##########\n")
         parts.append(read(f))
+    # Opruimen: stale trigger uit admin_v3 die nog profiles.is_admin schrijft, terwijl
+    # die kolom later is gedropt (admin loopt nu via user_roles). Anders faalt elke
+    # insert in user_roles. CASCADE op DROP COLUMN verwijdert de trigger niet.
+    parts.append(
+        "\n-- ########## CLEANUP: stale admin-sync trigger ##########\n"
+        "drop trigger if exists trg_sync_profile_admin on public.user_roles;\n"
+        "drop function if exists public.sync_profile_admin();\n"
+    )
     open("supabase/_full_setup.sql", "w").write("\n".join(parts))
     print("geschreven: supabase/_full_setup.sql")
 
