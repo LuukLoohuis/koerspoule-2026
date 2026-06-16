@@ -58,6 +58,15 @@ create policy team_picks_rw on public.team_picks for all
 """
 
 view_re = re.compile(r'create\s+or\s+replace\s+view\s+(public\.\w+)', re.IGNORECASE)
+# Top-level (regelbegin) 'create policy NAME on TABLE' met alles op één regel.
+# Dynamische varianten ('execute format(...create policy...)') beginnen met execute
+# en worden hierdoor NIET geraakt.
+policy_re = re.compile(r'(?im)^([ \t]*)create policy\s+("[^"]+"|\w+)\s+on\s+([\w."]+)')
+
+
+def _policy_sub(m):
+    indent, name, tbl = m.group(1), m.group(2), m.group(3)
+    return f'{indent}drop policy if exists {name} on {tbl};\n{m.group(0)}'
 
 
 def transform(s, name):
@@ -67,6 +76,8 @@ def transform(s, name):
         s = s.replace("game_type public.game_type", "game_type text")  # enum -> text (definitief model)
     # views: drop vóór (her)definitie zodat kolomwijzigingen toegestaan zijn
     s = view_re.sub(lambda m: f'drop view if exists {m.group(1)} cascade;\ncreate or replace view {m.group(1)}', s)
+    # policies: drop vóór create zodat dubbele policy-namen niet afbreken
+    s = policy_re.sub(_policy_sub, s)
     return s
 
 

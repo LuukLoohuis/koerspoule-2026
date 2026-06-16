@@ -306,12 +306,17 @@ create trigger on_auth_user_created
 -- ============================================================
 
 -- profiles
+drop policy if exists "profiles_select_all" on public.profiles;
 create policy "profiles_select_all" on public.profiles for select using (true);
+drop policy if exists "profiles_update_self" on public.profiles;
 create policy "profiles_update_self" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
+drop policy if exists "profiles_admin_all" on public.profiles;
 create policy "profiles_admin_all" on public.profiles for all using (public.is_admin()) with check (public.is_admin());
 
 -- user_roles
+drop policy if exists "user_roles_select_self" on public.user_roles;
 create policy "user_roles_select_self" on public.user_roles for select using (auth.uid() = user_id or public.is_admin());
+drop policy if exists "user_roles_admin_write" on public.user_roles;
 create policy "user_roles_admin_write" on public.user_roles for all using (public.is_admin()) with check (public.is_admin());
 
 -- Public-readable reference data; admin write
@@ -325,22 +330,28 @@ begin
 end $$;
 
 -- entries
+drop policy if exists "entries_select_own_or_admin" on public.entries;
 create policy "entries_select_own_or_admin" on public.entries for select using (auth.uid() = user_id or public.is_admin());
+drop policy if exists "entries_modify_own" on public.entries;
 create policy "entries_modify_own" on public.entries for all using (auth.uid() = user_id or public.is_admin()) with check (auth.uid() = user_id or public.is_admin());
 
 -- entry_picks via entry ownership
+drop policy if exists "entry_picks_select" on public.entry_picks;
 create policy "entry_picks_select" on public.entry_picks for select using (
   exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
 );
+drop policy if exists "entry_picks_modify" on public.entry_picks;
 create policy "entry_picks_modify" on public.entry_picks for all using (
   exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
 ) with check (
   exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
 );
 
+drop policy if exists "entry_jokers_select" on public.entry_jokers;
 create policy "entry_jokers_select" on public.entry_jokers for select using (
   exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
 );
+drop policy if exists "entry_jokers_modify" on public.entry_jokers;
 create policy "entry_jokers_modify" on public.entry_jokers for all using (
   exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
 ) with check (
@@ -348,20 +359,27 @@ create policy "entry_jokers_modify" on public.entry_jokers for all using (
 );
 
 -- subpoules: members + owner can read; owner+admin can write
+drop policy if exists "subpoules_select" on public.subpoules;
 create policy "subpoules_select" on public.subpoules for select using (
   owner_user_id = auth.uid()
   or public.is_admin()
   or exists(select 1 from public.subpoule_members m where m.subpoule_id = id and m.user_id = auth.uid())
 );
+drop policy if exists "subpoules_insert_self" on public.subpoules;
 create policy "subpoules_insert_self" on public.subpoules for insert with check (owner_user_id = auth.uid());
+drop policy if exists "subpoules_update_owner" on public.subpoules;
 create policy "subpoules_update_owner" on public.subpoules for update using (owner_user_id = auth.uid() or public.is_admin());
+drop policy if exists "subpoules_delete_owner" on public.subpoules;
 create policy "subpoules_delete_owner" on public.subpoules for delete using (owner_user_id = auth.uid() or public.is_admin());
 
+drop policy if exists "subpoule_members_select" on public.subpoule_members;
 create policy "subpoule_members_select" on public.subpoule_members for select using (
   user_id = auth.uid() or public.is_admin()
   or exists(select 1 from public.subpoules s where s.id = subpoule_id and s.owner_user_id = auth.uid())
 );
+drop policy if exists "subpoule_members_insert_self" on public.subpoule_members;
 create policy "subpoule_members_insert_self" on public.subpoule_members for insert with check (user_id = auth.uid());
+drop policy if exists "subpoule_members_delete_self" on public.subpoule_members;
 create policy "subpoule_members_delete_self" on public.subpoule_members for delete using (user_id = auth.uid() or public.is_admin()
   or exists(select 1 from public.subpoules s where s.id = subpoule_id and s.owner_user_id = auth.uid()));
 
@@ -688,9 +706,11 @@ create index if not exists classification_results_stage_idx
 alter table public.classification_results enable row level security;
 
 drop policy if exists "read_classification_results" on public.classification_results;
+drop policy if exists "read_classification_results" on public.classification_results;
 create policy "read_classification_results" on public.classification_results
   for select using (auth.uid() is not null);
 
+drop policy if exists "admin_write_classification_results" on public.classification_results;
 drop policy if exists "admin_write_classification_results" on public.classification_results;
 create policy "admin_write_classification_results" on public.classification_results
   for all using (public.is_admin()) with check (public.is_admin());
@@ -893,9 +913,11 @@ create table if not exists public.profiles (
 alter table public.profiles enable row level security;
 
 drop policy if exists "profiles_self_select" on public.profiles;
+drop policy if exists "profiles_self_select" on public.profiles;
 create policy "profiles_self_select" on public.profiles
   for select using (auth.uid() = id or public.is_admin());
 
+drop policy if exists "profiles_self_modify" on public.profiles;
 drop policy if exists "profiles_self_modify" on public.profiles;
 create policy "profiles_self_modify" on public.profiles
   for all using (auth.uid() = id or public.is_admin())
@@ -1339,9 +1361,11 @@ grant select on public.leaderboard_subpoule to authenticated;
 alter table public.entries enable row level security;
 
 drop policy if exists "entries_select" on public.entries;
+drop policy if exists "entries_select" on public.entries;
 create policy "entries_select" on public.entries
   for select using (auth.uid() = user_id or public.is_current_admin());
 
+drop policy if exists "entries_modify" on public.entries;
 drop policy if exists "entries_modify" on public.entries;
 create policy "entries_modify" on public.entries
   for all using (auth.uid() = user_id or public.is_current_admin())
@@ -1351,12 +1375,14 @@ create policy "entries_modify" on public.entries
 alter table public.entry_picks enable row level security;
 
 drop policy if exists "entry_picks_select" on public.entry_picks;
+drop policy if exists "entry_picks_select" on public.entry_picks;
 create policy "entry_picks_select" on public.entry_picks
   for select using (
     exists(select 1 from public.entries e where e.id = entry_id
            and (e.user_id = auth.uid() or public.is_current_admin()))
   );
 
+drop policy if exists "entry_picks_modify" on public.entry_picks;
 drop policy if exists "entry_picks_modify" on public.entry_picks;
 create policy "entry_picks_modify" on public.entry_picks
   for all using (
@@ -1371,12 +1397,14 @@ create policy "entry_picks_modify" on public.entry_picks
 alter table public.entry_jokers enable row level security;
 
 drop policy if exists "entry_jokers_select" on public.entry_jokers;
+drop policy if exists "entry_jokers_select" on public.entry_jokers;
 create policy "entry_jokers_select" on public.entry_jokers
   for select using (
     exists(select 1 from public.entries e where e.id = entry_id
            and (e.user_id = auth.uid() or public.is_current_admin()))
   );
 
+drop policy if exists "entry_jokers_modify" on public.entry_jokers;
 drop policy if exists "entry_jokers_modify" on public.entry_jokers;
 create policy "entry_jokers_modify" on public.entry_jokers
   for all using (
@@ -1391,6 +1419,7 @@ create policy "entry_jokers_modify" on public.entry_jokers
 alter table public.subpoules enable row level security;
 
 drop policy if exists "subpoules_select" on public.subpoules;
+drop policy if exists "subpoules_select" on public.subpoules;
 create policy "subpoules_select" on public.subpoules
   for select using (
     public.is_current_admin()
@@ -1400,6 +1429,7 @@ create policy "subpoules_select" on public.subpoules
   );
 
 drop policy if exists "subpoules_owner_modify" on public.subpoules;
+drop policy if exists "subpoules_owner_modify" on public.subpoules;
 create policy "subpoules_owner_modify" on public.subpoules
   for all using (owner_user_id = auth.uid() or public.is_current_admin())
   with check (owner_user_id = auth.uid() or public.is_current_admin());
@@ -1407,6 +1437,7 @@ create policy "subpoules_owner_modify" on public.subpoules
 -- Subpoule_members: lid ziet eigen lijst, eigenaar/admin alles
 alter table public.subpoule_members enable row level security;
 
+drop policy if exists "subpoule_members_select" on public.subpoule_members;
 drop policy if exists "subpoule_members_select" on public.subpoule_members;
 create policy "subpoule_members_select" on public.subpoule_members
   for select using (
@@ -1416,6 +1447,7 @@ create policy "subpoule_members_select" on public.subpoule_members
     or exists(select 1 from public.subpoule_members sm where sm.subpoule_id = subpoule_id and sm.user_id = auth.uid())
   );
 
+drop policy if exists "subpoule_members_self_modify" on public.subpoule_members;
 drop policy if exists "subpoule_members_self_modify" on public.subpoule_members;
 create policy "subpoule_members_self_modify" on public.subpoule_members
   for all using (
@@ -1446,9 +1478,11 @@ create index if not exists notification_log_game_idx on public.notification_log(
 alter table public.notification_log enable row level security;
 
 drop policy if exists "notification_log_self_select" on public.notification_log;
+drop policy if exists "notification_log_self_select" on public.notification_log;
 create policy "notification_log_self_select" on public.notification_log
   for select using (auth.uid() = user_id or public.is_current_admin());
 
+drop policy if exists "notification_log_admin_write" on public.notification_log;
 drop policy if exists "notification_log_admin_write" on public.notification_log;
 create policy "notification_log_admin_write" on public.notification_log
   for insert with check (public.is_current_admin());
@@ -1739,6 +1773,7 @@ ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 -- SELECT: peloton-chat zichtbaar voor iedereen die is ingelogd;
 --         subpoule-chat alleen voor leden, eigenaar of admin
 DROP POLICY IF EXISTS chat_messages_select ON public.chat_messages;
+drop policy if exists chat_messages_select on public.chat_messages;
 CREATE POLICY chat_messages_select ON public.chat_messages
 FOR SELECT USING (
   auth.uid() IS NOT NULL
@@ -1760,6 +1795,7 @@ FOR SELECT USING (
 
 -- INSERT: alleen als auteur (user_id = auth.uid()) en met dezelfde toegang als SELECT
 DROP POLICY IF EXISTS chat_messages_insert ON public.chat_messages;
+drop policy if exists chat_messages_insert on public.chat_messages;
 CREATE POLICY chat_messages_insert ON public.chat_messages
 FOR INSERT WITH CHECK (
   auth.uid() IS NOT NULL
@@ -1782,6 +1818,7 @@ FOR INSERT WITH CHECK (
 
 -- DELETE: eigen auteur of admin
 DROP POLICY IF EXISTS chat_messages_delete ON public.chat_messages;
+drop policy if exists chat_messages_delete on public.chat_messages;
 CREATE POLICY chat_messages_delete ON public.chat_messages
 FOR DELETE USING (
   user_id = auth.uid() OR public.is_admin()
@@ -1820,11 +1857,13 @@ CREATE TABLE public.entry_predictions (
 
 ALTER TABLE public.entry_predictions ENABLE ROW LEVEL SECURITY;
 
+drop policy if exists entry_predictions_select on public.entry_predictions;
 CREATE POLICY entry_predictions_select ON public.entry_predictions
 FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.entries e WHERE e.id = entry_predictions.entry_id AND (e.user_id = auth.uid() OR public.is_admin()))
 );
 
+drop policy if exists entry_predictions_modify on public.entry_predictions;
 CREATE POLICY entry_predictions_modify ON public.entry_predictions
 FOR ALL USING (
   EXISTS (SELECT 1 FROM public.entries e WHERE e.id = entry_predictions.entry_id AND (e.user_id = auth.uid() OR public.is_admin()))
@@ -1874,6 +1913,7 @@ $$;
 
 -- Bugfix: subpoules_select policy referenced m.id instead of subpoules.id
 DROP POLICY IF EXISTS subpoules_select ON public.subpoules;
+drop policy if exists subpoules_select on public.subpoules;
 CREATE POLICY subpoules_select ON public.subpoules
 FOR SELECT USING (
   (owner_user_id = auth.uid())
@@ -2213,6 +2253,7 @@ CREATE INDEX IF NOT EXISTS entry_prediction_points_entry_idx
 ALTER TABLE public.entry_prediction_points ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS entry_prediction_points_select ON public.entry_prediction_points;
+drop policy if exists entry_prediction_points_select on public.entry_prediction_points;
 CREATE POLICY entry_prediction_points_select
   ON public.entry_prediction_points
   FOR SELECT
@@ -2225,6 +2266,7 @@ CREATE POLICY entry_prediction_points_select
   );
 
 DROP POLICY IF EXISTS entry_prediction_points_admin_write ON public.entry_prediction_points;
+drop policy if exists entry_prediction_points_admin_write on public.entry_prediction_points;
 CREATE POLICY entry_prediction_points_admin_write
   ON public.entry_prediction_points
   FOR ALL
@@ -2539,6 +2581,7 @@ $$;
 
 -- subpoules: SELECT policy via helper
 DROP POLICY IF EXISTS subpoules_select ON public.subpoules;
+drop policy if exists subpoules_select on public.subpoules;
 CREATE POLICY subpoules_select ON public.subpoules
 FOR SELECT
 USING (
@@ -2549,6 +2592,7 @@ USING (
 
 -- subpoule_members: SELECT policy zodat leden elkaar zien
 DROP POLICY IF EXISTS subpoule_members_select ON public.subpoule_members;
+drop policy if exists subpoule_members_select on public.subpoule_members;
 CREATE POLICY subpoule_members_select ON public.subpoule_members
 FOR SELECT
 USING (
@@ -2835,6 +2879,7 @@ GRANT EXECUTE ON FUNCTION public.subpoule_entries_detail(uuid, uuid) TO authenti
 -- ########## MIGRATIE: 20260503153917_329e94a0-b808-4a5b-a0f5-e06aab9fdf64.sql ##########
 
 drop policy if exists "profiles_select_all" on public.profiles;
+drop policy if exists "profiles_select_authenticated" on public.profiles;
 create policy "profiles_select_authenticated" on public.profiles
   for select
   to authenticated
@@ -3321,6 +3366,7 @@ CREATE TABLE IF NOT EXISTS public.email_send_log (
 ALTER TABLE public.email_send_log ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
+  drop policy if exists "Service role can read send log" on public.email_send_log;
   CREATE POLICY "Service role can read send log"
     ON public.email_send_log FOR SELECT
     USING (auth.role() = 'service_role');
@@ -3328,6 +3374,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
+  drop policy if exists "Service role can insert send log" on public.email_send_log;
   CREATE POLICY "Service role can insert send log"
     ON public.email_send_log FOR INSERT
     WITH CHECK (auth.role() = 'service_role');
@@ -3335,6 +3382,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
+  drop policy if exists "Service role can update send log" on public.email_send_log;
   CREATE POLICY "Service role can update send log"
     ON public.email_send_log FOR UPDATE
     USING (auth.role() = 'service_role')
@@ -3400,6 +3448,7 @@ END $$;
 ALTER TABLE public.email_send_state ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
+  drop policy if exists "Service role can manage send state" on public.email_send_state;
   CREATE POLICY "Service role can manage send state"
     ON public.email_send_state FOR ALL
     USING (auth.role() = 'service_role')
@@ -3501,6 +3550,7 @@ CREATE TABLE IF NOT EXISTS public.suppressed_emails (
 ALTER TABLE public.suppressed_emails ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
+  drop policy if exists "Service role can read suppressed emails" on public.suppressed_emails;
   CREATE POLICY "Service role can read suppressed emails"
     ON public.suppressed_emails FOR SELECT
     USING (auth.role() = 'service_role');
@@ -3508,6 +3558,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
+  drop policy if exists "Service role can insert suppressed emails" on public.suppressed_emails;
   CREATE POLICY "Service role can insert suppressed emails"
     ON public.suppressed_emails FOR INSERT
     WITH CHECK (auth.role() = 'service_role');
@@ -3529,6 +3580,7 @@ CREATE TABLE IF NOT EXISTS public.email_unsubscribe_tokens (
 ALTER TABLE public.email_unsubscribe_tokens ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
+  drop policy if exists "Service role can read tokens" on public.email_unsubscribe_tokens;
   CREATE POLICY "Service role can read tokens"
     ON public.email_unsubscribe_tokens FOR SELECT
     USING (auth.role() = 'service_role');
@@ -3536,6 +3588,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
+  drop policy if exists "Service role can insert tokens" on public.email_unsubscribe_tokens;
   CREATE POLICY "Service role can insert tokens"
     ON public.email_unsubscribe_tokens FOR INSERT
     WITH CHECK (auth.role() = 'service_role');
@@ -3543,6 +3596,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
+  drop policy if exists "Service role can mark tokens as used" on public.email_unsubscribe_tokens;
   CREATE POLICY "Service role can mark tokens as used"
     ON public.email_unsubscribe_tokens FOR UPDATE
     USING (auth.role() = 'service_role')
@@ -3655,6 +3709,7 @@ CREATE TABLE IF NOT EXISTS public.notify_subscribers (
 
 ALTER TABLE public.notify_subscribers ENABLE ROW LEVEL SECURITY;
 
+drop policy if exists notify_subscribers_admin_all on public.notify_subscribers;
 CREATE POLICY notify_subscribers_admin_all ON public.notify_subscribers
   FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
@@ -3725,11 +3780,13 @@ CREATE INDEX IF NOT EXISTS idx_results_approval_log_stage ON public.results_appr
 
 ALTER TABLE public.results_approval_log ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "approval_log_admin_all" ON public.results_approval_log;
+drop policy if exists "approval_log_admin_all" on public.results_approval_log;
 CREATE POLICY "approval_log_admin_all" ON public.results_approval_log
   FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- 3. RLS gating: non-admin can only see results/points for approved stages
 DROP POLICY IF EXISTS read_stage_results ON public.stage_results;
+drop policy if exists read_stage_results on public.stage_results;
 CREATE POLICY read_stage_results ON public.stage_results
   FOR SELECT USING (
     auth.uid() IS NOT NULL AND (
@@ -3741,6 +3798,7 @@ CREATE POLICY read_stage_results ON public.stage_results
   );
 
 DROP POLICY IF EXISTS read_stage_points ON public.stage_points;
+drop policy if exists read_stage_points on public.stage_points;
 CREATE POLICY read_stage_points ON public.stage_points
   FOR SELECT USING (
     auth.uid() IS NOT NULL AND (
@@ -4096,38 +4154,47 @@ GRANT EXECUTE ON FUNCTION public.game_entry_totals(uuid) TO authenticated;
 
 -- games
 DROP POLICY IF EXISTS read_games ON public.games;
+drop policy if exists read_games on public.games;
 CREATE POLICY read_games ON public.games FOR SELECT USING (true);
 
 -- categories
 DROP POLICY IF EXISTS read_categories ON public.categories;
+drop policy if exists read_categories on public.categories;
 CREATE POLICY read_categories ON public.categories FOR SELECT USING (true);
 
 -- category_riders
 DROP POLICY IF EXISTS read_category_riders ON public.category_riders;
+drop policy if exists read_category_riders on public.category_riders;
 CREATE POLICY read_category_riders ON public.category_riders FOR SELECT USING (true);
 
 -- riders
 DROP POLICY IF EXISTS read_riders ON public.riders;
+drop policy if exists read_riders on public.riders;
 CREATE POLICY read_riders ON public.riders FOR SELECT USING (true);
 
 -- teams
 DROP POLICY IF EXISTS read_teams ON public.teams;
+drop policy if exists read_teams on public.teams;
 CREATE POLICY read_teams ON public.teams FOR SELECT USING (true);
 
 -- game_riders
 DROP POLICY IF EXISTS read_game_riders ON public.game_riders;
+drop policy if exists read_game_riders on public.game_riders;
 CREATE POLICY read_game_riders ON public.game_riders FOR SELECT USING (true);
 
 -- points_schema
 DROP POLICY IF EXISTS read_points_schema ON public.points_schema;
+drop policy if exists read_points_schema on public.points_schema;
 CREATE POLICY read_points_schema ON public.points_schema FOR SELECT USING (true);
 
 -- startlists
 DROP POLICY IF EXISTS read_startlists ON public.startlists;
+drop policy if exists read_startlists on public.startlists;
 CREATE POLICY read_startlists ON public.startlists FOR SELECT USING (true);
 
 -- stages
 DROP POLICY IF EXISTS read_stages ON public.stages;
+drop policy if exists read_stages on public.stages;
 CREATE POLICY read_stages ON public.stages FOR SELECT USING (true);
 
 
@@ -4807,6 +4874,7 @@ CREATE INDEX IF NOT EXISTS chat_messages_subpoule_created_idx
 
 -- Allow UPDATE on own messages (was forbidden before)
 DROP POLICY IF EXISTS chat_messages_update_own ON public.chat_messages;
+drop policy if exists chat_messages_update_own on public.chat_messages;
 CREATE POLICY chat_messages_update_own ON public.chat_messages
   FOR UPDATE USING (user_id = auth.uid() OR public.is_admin())
   WITH CHECK (user_id = auth.uid() OR public.is_admin());
@@ -4822,14 +4890,17 @@ CREATE TABLE IF NOT EXISTS public.chat_read_states (
 ALTER TABLE public.chat_read_states ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS chat_read_states_select ON public.chat_read_states;
+drop policy if exists chat_read_states_select on public.chat_read_states;
 CREATE POLICY chat_read_states_select ON public.chat_read_states
   FOR SELECT USING (user_id = auth.uid() OR public.is_admin());
 
 DROP POLICY IF EXISTS chat_read_states_upsert ON public.chat_read_states;
+drop policy if exists chat_read_states_upsert on public.chat_read_states;
 CREATE POLICY chat_read_states_upsert ON public.chat_read_states
   FOR INSERT WITH CHECK (user_id = auth.uid());
 
 DROP POLICY IF EXISTS chat_read_states_update ON public.chat_read_states;
+drop policy if exists chat_read_states_update on public.chat_read_states;
 CREATE POLICY chat_read_states_update ON public.chat_read_states
   FOR UPDATE USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
@@ -4845,6 +4916,7 @@ CREATE TABLE IF NOT EXISTS public.chat_message_reactions (
 ALTER TABLE public.chat_message_reactions ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS chat_reactions_select ON public.chat_message_reactions;
+drop policy if exists chat_reactions_select on public.chat_message_reactions;
 CREATE POLICY chat_reactions_select ON public.chat_message_reactions
   FOR SELECT USING (
     auth.uid() IS NOT NULL AND EXISTS (
@@ -4860,6 +4932,7 @@ CREATE POLICY chat_reactions_select ON public.chat_message_reactions
   );
 
 DROP POLICY IF EXISTS chat_reactions_insert ON public.chat_message_reactions;
+drop policy if exists chat_reactions_insert on public.chat_message_reactions;
 CREATE POLICY chat_reactions_insert ON public.chat_message_reactions
   FOR INSERT WITH CHECK (
     user_id = auth.uid() AND EXISTS (
@@ -4875,6 +4948,7 @@ CREATE POLICY chat_reactions_insert ON public.chat_message_reactions
   );
 
 DROP POLICY IF EXISTS chat_reactions_delete ON public.chat_message_reactions;
+drop policy if exists chat_reactions_delete on public.chat_message_reactions;
 CREATE POLICY chat_reactions_delete ON public.chat_message_reactions
   FOR DELETE USING (user_id = auth.uid() OR public.is_admin());
 
@@ -4892,6 +4966,7 @@ CREATE TABLE IF NOT EXISTS public.chat_polls (
 ALTER TABLE public.chat_polls ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS chat_polls_select ON public.chat_polls;
+drop policy if exists chat_polls_select on public.chat_polls;
 CREATE POLICY chat_polls_select ON public.chat_polls
   FOR SELECT USING (
     auth.uid() IS NOT NULL AND (
@@ -4902,6 +4977,7 @@ CREATE POLICY chat_polls_select ON public.chat_polls
   );
 
 DROP POLICY IF EXISTS chat_polls_insert ON public.chat_polls;
+drop policy if exists chat_polls_insert on public.chat_polls;
 CREATE POLICY chat_polls_insert ON public.chat_polls
   FOR INSERT WITH CHECK (
     created_by = auth.uid() AND (
@@ -4912,6 +4988,7 @@ CREATE POLICY chat_polls_insert ON public.chat_polls
   );
 
 DROP POLICY IF EXISTS chat_polls_delete ON public.chat_polls;
+drop policy if exists chat_polls_delete on public.chat_polls;
 CREATE POLICY chat_polls_delete ON public.chat_polls
   FOR DELETE USING (created_by = auth.uid() OR public.is_admin());
 
@@ -4925,6 +5002,7 @@ CREATE TABLE IF NOT EXISTS public.chat_poll_votes (
 ALTER TABLE public.chat_poll_votes ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS chat_poll_votes_select ON public.chat_poll_votes;
+drop policy if exists chat_poll_votes_select on public.chat_poll_votes;
 CREATE POLICY chat_poll_votes_select ON public.chat_poll_votes
   FOR SELECT USING (
     auth.uid() IS NOT NULL AND EXISTS (
@@ -4939,6 +5017,7 @@ CREATE POLICY chat_poll_votes_select ON public.chat_poll_votes
   );
 
 DROP POLICY IF EXISTS chat_poll_votes_insert ON public.chat_poll_votes;
+drop policy if exists chat_poll_votes_insert on public.chat_poll_votes;
 CREATE POLICY chat_poll_votes_insert ON public.chat_poll_votes
   FOR INSERT WITH CHECK (
     user_id = auth.uid() AND EXISTS (
@@ -4954,6 +5033,7 @@ CREATE POLICY chat_poll_votes_insert ON public.chat_poll_votes
   );
 
 DROP POLICY IF EXISTS chat_poll_votes_delete ON public.chat_poll_votes;
+drop policy if exists chat_poll_votes_delete on public.chat_poll_votes;
 CREATE POLICY chat_poll_votes_delete ON public.chat_poll_votes
   FOR DELETE USING (user_id = auth.uid() OR public.is_admin());
 
@@ -5330,6 +5410,7 @@ CREATE TABLE IF NOT EXISTS rider_results_cache (
 -- Allow anyone to read the cache (public data); only the service role can write
 ALTER TABLE rider_results_cache ENABLE ROW LEVEL SECURITY;
 
+drop policy if exists "Public read rider results cache" on rider_results_cache;
 CREATE POLICY "Public read rider results cache"
   ON rider_results_cache FOR SELECT USING (true);
 
@@ -5358,6 +5439,7 @@ CREATE TABLE IF NOT EXISTS rider_results_cache (
 -- Allow anyone to read the cache (public data); only the service role can write
 ALTER TABLE rider_results_cache ENABLE ROW LEVEL SECURITY;
 
+drop policy if exists "Public read rider results cache" on rider_results_cache;
 CREATE POLICY "Public read rider results cache"
   ON rider_results_cache FOR SELECT USING (true);
 
@@ -5414,8 +5496,11 @@ ALTER TABLE public.rubriek_options ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rubriek_votes ENABLE ROW LEVEL SECURITY;
 
 -- Policies: public view
+drop policy if exists "Anyone can view rubriek items" on public.rubriek_items;
 CREATE POLICY "Anyone can view rubriek items" ON public.rubriek_items FOR SELECT USING (true);
+drop policy if exists "Anyone can view rubriek options" on public.rubriek_options;
 CREATE POLICY "Anyone can view rubriek options" ON public.rubriek_options FOR SELECT USING (true);
+drop policy if exists "Anyone can view rubriek votes" on public.rubriek_votes;
 CREATE POLICY "Anyone can view rubriek votes" ON public.rubriek_votes FOR SELECT USING (true);
 
 -- Admin helper: check if user is admin
@@ -5430,9 +5515,11 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Admin policies
+drop policy if exists "Admins can manage rubriek items" on public.rubriek_items;
 CREATE POLICY "Admins can manage rubriek items" ON public.rubriek_items
     FOR ALL USING (public.is_admin());
 
+drop policy if exists "Admins can manage rubriek options" on public.rubriek_options;
 CREATE POLICY "Admins can manage rubriek options" ON public.rubriek_options
     FOR ALL USING (public.is_admin());
 
@@ -5496,13 +5583,18 @@ CREATE TABLE public.rubriek_votes (
 ALTER TABLE public.rubriek_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rubriek_votes ENABLE ROW LEVEL SECURITY;
 
+drop policy if exists "rubriek_items_read" on public.rubriek_items;
 CREATE POLICY "rubriek_items_read"  ON public.rubriek_items FOR SELECT USING (true);
+drop policy if exists "rubriek_items_write" on public.rubriek_items;
 CREATE POLICY "rubriek_items_write" ON public.rubriek_items FOR ALL
   USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+drop policy if exists "rubriek_votes_read" on public.rubriek_votes;
 CREATE POLICY "rubriek_votes_read"   ON public.rubriek_votes FOR SELECT USING (true);
+drop policy if exists "rubriek_votes_insert" on public.rubriek_votes;
 CREATE POLICY "rubriek_votes_insert" ON public.rubriek_votes FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL AND auth.uid() = user_id);
+drop policy if exists "rubriek_votes_update" on public.rubriek_votes;
 CREATE POLICY "rubriek_votes_update" ON public.rubriek_votes FOR UPDATE
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
@@ -5571,14 +5663,19 @@ ALTER TABLE public.rubriek_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rubriek_votes ENABLE ROW LEVEL SECURITY;
 
 -- Public read; admin-only writes
+drop policy if exists "rubriek_items_read" on public.rubriek_items;
 CREATE POLICY "rubriek_items_read"  ON public.rubriek_items FOR SELECT USING (true);
+drop policy if exists "rubriek_items_write" on public.rubriek_items;
 CREATE POLICY "rubriek_items_write" ON public.rubriek_items FOR ALL
   USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- Everyone can read vote counts; authenticated users can insert/update their own vote
+drop policy if exists "rubriek_votes_read" on public.rubriek_votes;
 CREATE POLICY "rubriek_votes_read"   ON public.rubriek_votes FOR SELECT USING (true);
+drop policy if exists "rubriek_votes_insert" on public.rubriek_votes;
 CREATE POLICY "rubriek_votes_insert" ON public.rubriek_votes FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL AND auth.uid() = user_id);
+drop policy if exists "rubriek_votes_update" on public.rubriek_votes;
 CREATE POLICY "rubriek_votes_update" ON public.rubriek_votes FOR UPDATE
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
@@ -5746,6 +5843,7 @@ ALTER TABLE public.etappe_commentaren ENABLE ROW LEVEL SECURITY;
 
 -- SELECT: leden van de subpoule, eigenaar van de subpoule, of admin
 DROP POLICY IF EXISTS etappe_commentaren_select ON public.etappe_commentaren;
+drop policy if exists etappe_commentaren_select on public.etappe_commentaren;
 CREATE POLICY etappe_commentaren_select ON public.etappe_commentaren
 FOR SELECT USING (
   auth.uid() IS NOT NULL
@@ -5767,6 +5865,7 @@ FOR SELECT USING (
 -- INSERT/UPDATE/DELETE: alleen admin via UI. De Edge Function gebruikt service_role
 -- en omzeilt RLS sowieso.
 DROP POLICY IF EXISTS etappe_commentaren_admin_write ON public.etappe_commentaren;
+drop policy if exists etappe_commentaren_admin_write on public.etappe_commentaren;
 CREATE POLICY etappe_commentaren_admin_write ON public.etappe_commentaren
 FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
@@ -5834,6 +5933,7 @@ CREATE INDEX IF NOT EXISTS etappe_commentaren_stage_idx
 ALTER TABLE public.etappe_commentaren ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS etappe_commentaren_select ON public.etappe_commentaren;
+drop policy if exists etappe_commentaren_select on public.etappe_commentaren;
 CREATE POLICY etappe_commentaren_select ON public.etappe_commentaren
 FOR SELECT USING (
   auth.uid() IS NOT NULL
@@ -5853,6 +5953,7 @@ FOR SELECT USING (
 );
 
 DROP POLICY IF EXISTS etappe_commentaren_admin_write ON public.etappe_commentaren;
+drop policy if exists etappe_commentaren_admin_write on public.etappe_commentaren;
 CREATE POLICY etappe_commentaren_admin_write ON public.etappe_commentaren
 FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
@@ -5915,6 +6016,7 @@ ALTER TABLE public.lefevere_rapporten ENABLE ROW LEVEL SECURITY;
 
 -- SELECT: eigen rapport (entry hoort bij de user) of admin
 DROP POLICY IF EXISTS lefevere_rapporten_select ON public.lefevere_rapporten;
+drop policy if exists lefevere_rapporten_select on public.lefevere_rapporten;
 CREATE POLICY lefevere_rapporten_select ON public.lefevere_rapporten
 FOR SELECT USING (
   public.is_admin()
@@ -5926,6 +6028,7 @@ FOR SELECT USING (
 
 -- INSERT: alleen voor je eigen entry
 DROP POLICY IF EXISTS lefevere_rapporten_insert ON public.lefevere_rapporten;
+drop policy if exists lefevere_rapporten_insert on public.lefevere_rapporten;
 CREATE POLICY lefevere_rapporten_insert ON public.lefevere_rapporten
 FOR INSERT WITH CHECK (
   EXISTS (
@@ -5946,6 +6049,7 @@ FOR INSERT WITH CHECK (
 -- ============================================
 
 DROP POLICY IF EXISTS lefevere_rapporten_update ON public.lefevere_rapporten;
+drop policy if exists lefevere_rapporten_update on public.lefevere_rapporten;
 CREATE POLICY lefevere_rapporten_update ON public.lefevere_rapporten
 FOR UPDATE USING (
   EXISTS (
@@ -5980,6 +6084,7 @@ CREATE INDEX IF NOT EXISTS lefevere_rapporten_entry_idx
 ALTER TABLE public.lefevere_rapporten ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS lefevere_rapporten_select ON public.lefevere_rapporten;
+drop policy if exists lefevere_rapporten_select on public.lefevere_rapporten;
 CREATE POLICY lefevere_rapporten_select ON public.lefevere_rapporten
 FOR SELECT USING (
   public.is_admin()
@@ -5990,6 +6095,7 @@ FOR SELECT USING (
 );
 
 DROP POLICY IF EXISTS lefevere_rapporten_insert ON public.lefevere_rapporten;
+drop policy if exists lefevere_rapporten_insert on public.lefevere_rapporten;
 CREATE POLICY lefevere_rapporten_insert ON public.lefevere_rapporten
 FOR INSERT WITH CHECK (
   EXISTS (
@@ -6000,6 +6106,7 @@ FOR INSERT WITH CHECK (
 
 -- ########## MIGRATIE: 20260522161802_b66081b6-d07d-4c2a-80f6-f25c95bf9489.sql ##########
 
+drop policy if exists "lefevere_rapporten_update" on public.lefevere_rapporten;
 CREATE POLICY "lefevere_rapporten_update" ON public.lefevere_rapporten
 FOR UPDATE
 USING (EXISTS (SELECT 1 FROM entries e WHERE e.id = lefevere_rapporten.entry_id AND e.user_id = auth.uid()))
@@ -6010,12 +6117,14 @@ WITH CHECK (EXISTS (SELECT 1 FROM entries e WHERE e.id = lefevere_rapporten.entr
 
 -- 1. rubriek_votes: require authentication to read
 DROP POLICY IF EXISTS rubriek_votes_read ON public.rubriek_votes;
+drop policy if exists rubriek_votes_read on public.rubriek_votes;
 CREATE POLICY rubriek_votes_read ON public.rubriek_votes
   FOR SELECT
   USING (auth.uid() IS NOT NULL);
 
 -- 2. profiles: prevent privilege escalation in policy (defence in depth — trigger also enforces)
 DROP POLICY IF EXISTS profiles_update_self ON public.profiles;
+drop policy if exists profiles_update_self on public.profiles;
 CREATE POLICY profiles_update_self ON public.profiles
   FOR UPDATE
   USING (auth.uid() = id)
@@ -6070,6 +6179,7 @@ UPDATE public.games SET theme = 'rood'  WHERE theme IS NULL AND game_type = 'vue
 -- ============================================
 
 DROP POLICY IF EXISTS lefevere_rapporten_delete_admin ON public.lefevere_rapporten;
+drop policy if exists lefevere_rapporten_delete_admin on public.lefevere_rapporten;
 CREATE POLICY lefevere_rapporten_delete_admin ON public.lefevere_rapporten
 FOR DELETE USING (public.is_admin());
 
@@ -6087,6 +6197,7 @@ UPDATE public.games SET theme = 'rood'  WHERE theme IS NULL AND game_type = 'vue
 -- ########## MIGRATIE: 20260524190908_5051d312-6ee0-4cbf-96da-25e4fc46f0e7.sql ##########
 
 DROP POLICY IF EXISTS lefevere_rapporten_delete_admin ON public.lefevere_rapporten;
+drop policy if exists lefevere_rapporten_delete_admin on public.lefevere_rapporten;
 CREATE POLICY lefevere_rapporten_delete_admin ON public.lefevere_rapporten
 FOR DELETE USING (public.is_admin());
 
@@ -6125,18 +6236,22 @@ values ('stage-profiles', 'stage-profiles', true)
 on conflict (id) do nothing;
 
 drop policy if exists "stage_profiles_read" on storage.objects;
+drop policy if exists "stage_profiles_read" on storage.objects;
 create policy "stage_profiles_read" on storage.objects
   for select using (bucket_id = 'stage-profiles');
 
+drop policy if exists "stage_profiles_admin_insert" on storage.objects;
 drop policy if exists "stage_profiles_admin_insert" on storage.objects;
 create policy "stage_profiles_admin_insert" on storage.objects
   for insert with check (bucket_id = 'stage-profiles' and public.is_admin());
 
 drop policy if exists "stage_profiles_admin_update" on storage.objects;
+drop policy if exists "stage_profiles_admin_update" on storage.objects;
 create policy "stage_profiles_admin_update" on storage.objects
   for update using (bucket_id = 'stage-profiles' and public.is_admin())
   with check (bucket_id = 'stage-profiles' and public.is_admin());
 
+drop policy if exists "stage_profiles_admin_delete" on storage.objects;
 drop policy if exists "stage_profiles_admin_delete" on storage.objects;
 create policy "stage_profiles_admin_delete" on storage.objects
   for delete using (bucket_id = 'stage-profiles' and public.is_admin());
@@ -6197,21 +6312,25 @@ VALUES ('stage-profiles', 'stage-profiles', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
 
 DROP POLICY IF EXISTS "Stage profiles are publicly accessible" ON storage.objects;
+drop policy if exists "Stage profiles are publicly accessible" on storage.objects;
 CREATE POLICY "Stage profiles are publicly accessible"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'stage-profiles');
 
 DROP POLICY IF EXISTS "Admins can upload stage profiles" ON storage.objects;
+drop policy if exists "Admins can upload stage profiles" on storage.objects;
 CREATE POLICY "Admins can upload stage profiles"
 ON storage.objects FOR INSERT
 WITH CHECK (bucket_id = 'stage-profiles' AND public.is_admin());
 
 DROP POLICY IF EXISTS "Admins can update stage profiles" ON storage.objects;
+drop policy if exists "Admins can update stage profiles" on storage.objects;
 CREATE POLICY "Admins can update stage profiles"
 ON storage.objects FOR UPDATE
 USING (bucket_id = 'stage-profiles' AND public.is_admin());
 
 DROP POLICY IF EXISTS "Admins can delete stage profiles" ON storage.objects;
+drop policy if exists "Admins can delete stage profiles" on storage.objects;
 CREATE POLICY "Admins can delete stage profiles"
 ON storage.objects FOR DELETE
 USING (bucket_id = 'stage-profiles' AND public.is_admin());
@@ -6253,12 +6372,14 @@ $$;
 ALTER TABLE public.profiles DROP COLUMN IF EXISTS is_admin CASCADE;
 ALTER TABLE public.profiles DROP COLUMN IF EXISTS role CASCADE;
 
+drop policy if exists profiles_update_self on public.profiles;
 CREATE POLICY profiles_update_self ON public.profiles
   FOR UPDATE TO authenticated
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
 -- Realtime: restrict broadcast/presence reads
+drop policy if exists "deny_broadcast_presence_reads" on realtime.messages;
 CREATE POLICY "deny_broadcast_presence_reads" ON realtime.messages
   FOR SELECT TO authenticated USING (false);
 
@@ -7388,6 +7509,7 @@ END $$;
 
 -- Read policy (anon + authenticated) op private team-jerseys bucket
 DROP POLICY IF EXISTS "team_jerseys_read" ON storage.objects;
+drop policy if exists "team_jerseys_read" on storage.objects;
 CREATE POLICY "team_jerseys_read" ON storage.objects
   FOR SELECT TO anon, authenticated
   USING (bucket_id = 'team-jerseys');
@@ -7396,17 +7518,20 @@ CREATE POLICY "team_jerseys_read" ON storage.objects
 GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
 
 DROP POLICY IF EXISTS "team_jerseys_admin_insert" ON storage.objects;
+drop policy if exists "team_jerseys_admin_insert" on storage.objects;
 CREATE POLICY "team_jerseys_admin_insert" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'team-jerseys' AND public.is_admin());
 
 DROP POLICY IF EXISTS "team_jerseys_admin_update" ON storage.objects;
+drop policy if exists "team_jerseys_admin_update" on storage.objects;
 CREATE POLICY "team_jerseys_admin_update" ON storage.objects
   FOR UPDATE TO authenticated
   USING (bucket_id = 'team-jerseys' AND public.is_admin())
   WITH CHECK (bucket_id = 'team-jerseys' AND public.is_admin());
 
 DROP POLICY IF EXISTS "team_jerseys_admin_delete" ON storage.objects;
+drop policy if exists "team_jerseys_admin_delete" on storage.objects;
 CREATE POLICY "team_jerseys_admin_delete" ON storage.objects
   FOR DELETE TO authenticated
   USING (bucket_id = 'team-jerseys' AND public.is_admin());
@@ -7431,21 +7556,25 @@ ON CONFLICT (id) DO UPDATE SET public = true;
 GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
 
 DROP POLICY IF EXISTS "team_jerseys_read" ON storage.objects;
+drop policy if exists "team_jerseys_read" on storage.objects;
 CREATE POLICY "team_jerseys_read" ON storage.objects
   FOR SELECT USING (bucket_id = 'team-jerseys');
 
 DROP POLICY IF EXISTS "team_jerseys_admin_insert" ON storage.objects;
+drop policy if exists "team_jerseys_admin_insert" on storage.objects;
 CREATE POLICY "team_jerseys_admin_insert" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'team-jerseys' AND public.is_admin());
 
 DROP POLICY IF EXISTS "team_jerseys_admin_update" ON storage.objects;
+drop policy if exists "team_jerseys_admin_update" on storage.objects;
 CREATE POLICY "team_jerseys_admin_update" ON storage.objects
   FOR UPDATE TO authenticated
   USING (bucket_id = 'team-jerseys' AND public.is_admin())
   WITH CHECK (bucket_id = 'team-jerseys' AND public.is_admin());
 
 DROP POLICY IF EXISTS "team_jerseys_admin_delete" ON storage.objects;
+drop policy if exists "team_jerseys_admin_delete" on storage.objects;
 CREATE POLICY "team_jerseys_admin_delete" ON storage.objects
   FOR DELETE TO authenticated
   USING (bucket_id = 'team-jerseys' AND public.is_admin());
@@ -8403,6 +8532,7 @@ ALTER TABLE public.games ADD COLUMN IF NOT EXISTS homepage_quote_author text;
 ALTER TABLE public.games ADD COLUMN IF NOT EXISTS homepage_quote_size integer;
 
 DROP POLICY IF EXISTS games_admin_write ON public.games;
+drop policy if exists games_admin_write on public.games;
 CREATE POLICY games_admin_write ON public.games
   FOR ALL
   USING (public.is_admin())
