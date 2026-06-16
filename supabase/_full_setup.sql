@@ -1,8 +1,8 @@
 -- KOERSPOULE — VOLLEDIGE DB-OPZET (schone Supabase)
 -- Basis 20260430193546 + compat + overige migraties (chronologisch).
--- schema.sql en 4 pg_cron e-mail-jobs uitgesloten. backend_v4: team_id->entry_id.
+-- schema.sql + 4 cron-jobs uit. backend_v4 team_id->entry_id. views: drop+recreate.
 
--- ########## BASIS: 20260430193546_04ef20c4-2ea8-47fd-82b4-c91b214f8812.sql ##########
+-- ########## BASIS ##########
 
 
 -- ============================================================
@@ -551,6 +551,7 @@ end $$;
 -- ============================================================
 -- ADMIN OVERVIEW VIEWS
 -- ============================================================
+drop view if exists public.admin_user_overview cascade;
 create or replace view public.admin_user_overview
 with (security_invoker = true)
 as
@@ -563,6 +564,7 @@ select
 from auth.users u
 left join public.profiles p on p.id = u.id;
 
+drop view if exists public.admin_entries_overview cascade;
 create or replace view public.admin_entries_overview
 with (security_invoker = true)
 as
@@ -592,8 +594,7 @@ create table if not exists public.user_teams (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   game_id uuid not null references public.games(id) on delete cascade,
-  name text,
-  created_at timestamptz not null default now(),
+  name text, created_at timestamptz not null default now(),
   unique(user_id, game_id)
 );
 create table if not exists public.team_picks (
@@ -611,8 +612,7 @@ alter table public.user_teams enable row level security;
 alter table public.team_picks enable row level security;
 drop policy if exists user_teams_rw on public.user_teams;
 create policy user_teams_rw on public.user_teams for all
-  using (auth.uid() = user_id or public.is_admin())
-  with check (auth.uid() = user_id or public.is_admin());
+  using (auth.uid() = user_id or public.is_admin()) with check (auth.uid() = user_id or public.is_admin());
 drop policy if exists team_picks_rw on public.team_picks;
 create policy team_picks_rw on public.team_picks for all
   using (exists(select 1 from public.user_teams t where t.id = team_id and (t.user_id = auth.uid() or public.is_admin())))
@@ -864,6 +864,7 @@ begin
   end if;
 end $$;
 
+drop view if exists public.admin_user_overview cascade;
 create or replace view public.admin_user_overview as
 select
   u.id as user_id,
@@ -1291,6 +1292,7 @@ end $$;
 -- ============================================================
 
 -- Algemeen klassement per game
+drop view if exists public.leaderboard_global cascade;
 create or replace view public.leaderboard_global as
 select
   e.game_id,
@@ -1307,6 +1309,7 @@ left join public.profiles p on p.id = e.user_id;
 grant select on public.leaderboard_global to authenticated;
 
 -- Subpoule klassement
+drop view if exists public.leaderboard_subpoule cascade;
 create or replace view public.leaderboard_subpoule as
 select
   sm.subpoule_id,
@@ -1475,6 +1478,7 @@ end $$;
 -- ============================================================
 -- 8. ADMIN HELPER VIEW: alle inzendingen voor een game
 -- ============================================================
+drop view if exists public.admin_entries_overview cascade;
 create or replace view public.admin_entries_overview as
 select
   e.id as entry_id,
