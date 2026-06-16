@@ -1,11 +1,6 @@
--- ============================================================
 -- KOERSPOULE — VOLLEDIGE DB-OPZET (schone Supabase)
--- Plak in Supabase -> SQL Editor -> New query -> Run.
--- Basis = 20260430193546 (complete backend schema, nieuw model),
--- daarna compat (user_teams/team_picks) + alle overige migraties.
--- UITGESLOTEN: oude schema.sql (conflicteert met de basis) en 4
---   pg_cron e-mail-queue jobs (oude edge-function/secret).
--- ============================================================
+-- Basis 20260430193546 + compat + overige migraties (chronologisch).
+-- schema.sql en 4 pg_cron e-mail-jobs uitgesloten. backend_v4: team_id->entry_id.
 
 -- ########## BASIS: 20260430193546_04ef20c4-2ea8-47fd-82b4-c91b214f8812.sql ##########
 
@@ -593,7 +588,6 @@ grant select on public.admin_entries_overview to authenticated;
 
 
 -- ########## COMPAT: oud team-model (user_teams/team_picks) ##########
--- Niet in de nieuwe basis, maar admin_v3 verwijst ernaar. Legacy, meestal leeg.
 create table if not exists public.user_teams (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -1054,9 +1048,9 @@ begin
     join public.entries e on e.id = ep.entry_id and e.game_id = v_game_id
     group by ep.entry_id
   )
-  insert into public.stage_points(stage_id, team_id, points)
+  insert into public.stage_points(stage_id, entry_id, points)
   select p_stage_id, entry_id, points from entry_points
-  on conflict (stage_id, team_id) do update set points = excluded.points;
+  on conflict (stage_id, entry_id) do update set points = excluded.points;
 end $$;
 
 comment on function public.calculate_stage_points_v4(uuid) is
@@ -1076,16 +1070,16 @@ begin
     raise exception 'Not authorized';
   end if;
 
-  insert into public.total_points(team_id, total_points, updated_at)
+  insert into public.total_points(entry_id, total_points, updated_at)
   select e.id,
          coalesce(sum(sp.points), 0)::int,
          now()
   from public.entries e
-  left join public.stage_points sp on sp.team_id = e.id
+  left join public.stage_points sp on sp.entry_id = e.id
   left join public.stages s on s.id = sp.stage_id and s.game_id = p_game_id
   where e.game_id = p_game_id
   group by e.id
-  on conflict (team_id)
+  on conflict (entry_id)
   do update set total_points = excluded.total_points, updated_at = now();
 end $$;
 
@@ -1307,7 +1301,7 @@ select
   coalesce(tp.total_points, 0) as total_points,
   rank() over (partition by e.game_id order by coalesce(tp.total_points, 0) desc) as rank
 from public.entries e
-left join public.total_points tp on tp.team_id = e.id
+left join public.total_points tp on tp.entry_id = e.id
 left join public.profiles p on p.id = e.user_id;
 
 grant select on public.leaderboard_global to authenticated;
@@ -1327,7 +1321,7 @@ select
 from public.subpoule_members sm
 join public.subpoules sp on sp.id = sm.subpoule_id
 join public.entries e on e.user_id = sm.user_id and e.game_id = sp.game_id
-left join public.total_points tp on tp.team_id = e.id
+left join public.total_points tp on tp.entry_id = e.id
 left join public.profiles p on p.id = e.user_id;
 
 grant select on public.leaderboard_subpoule to authenticated;
@@ -1499,7 +1493,7 @@ select
 from public.entries e
 join auth.users u on u.id = e.user_id
 left join public.profiles p on p.id = e.user_id
-left join public.total_points tp on tp.team_id = e.id;
+left join public.total_points tp on tp.entry_id = e.id;
 
 revoke all on public.admin_entries_overview from anon, authenticated;
 grant select on public.admin_entries_overview to authenticated;
