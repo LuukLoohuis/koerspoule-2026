@@ -1,6 +1,8 @@
 -- KOERSPOULE — VOLLEDIGE DB-OPZET (schone Supabase)
+-- Gegenereerd door supabase/build_setup.py.
 -- Basis 20260430193546 + compat + overige migraties (chronologisch).
--- schema.sql + 4 cron-jobs uit. backend_v4 team_id->entry_id. views: drop+recreate.
+-- Uit: schema.sql + 4 cron-jobs. Fixes: backend_v4 team_id->entry_id,
+-- admin_v3 game_type->text, views drop+recreate.
 
 -- ########## BASIS ##########
 
@@ -640,7 +642,7 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 alter table public.games
-  add column if not exists game_type public.game_type,
+  add column if not exists game_type text,
   add column if not exists year int,
   add column if not exists status public.game_status not null default 'draft';
 
