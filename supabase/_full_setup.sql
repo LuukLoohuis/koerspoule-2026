@@ -1,15 +1,17 @@
 -- ============================================================
 -- KOERSPOULE — VOLLEDIGE DB-OPZET (schone Supabase)
 -- Plak in Supabase -> SQL Editor -> New query -> Run.
--- = schema.sql (basis) + alle migraties (chronologisch).
--- UITGESLOTEN: 4 pg_cron e-mail-queue jobs (oude edge-function/secret).
---   E-mailTABELLEN zitten er wel in; mail-automatisering later opnieuw.
+-- Basis = 20260430193546 (complete backend schema, nieuw model),
+-- daarna compat (user_teams/team_picks) + alle overige migraties.
+-- UITGESLOTEN: oude schema.sql (conflicteert met de basis) en 4
+--   pg_cron e-mail-queue jobs (oude edge-function/secret).
 -- ============================================================
 
--- ########## BASIS: schema.sql ##########
+-- ########## BASIS: 20260430193546_04ef20c4-2ea8-47fd-82b4-c91b214f8812.sql ##########
+
+
 -- ============================================================
--- CYCLING POOL - COMPLETE BACKEND SCHEMA
--- Paste in Supabase SQL Editor (or save as a migration on your side)
+-- KOERSPOULE - COMPLETE BACKEND SCHEMA
 -- ============================================================
 
 create extension if not exists "pgcrypto";
@@ -22,265 +24,278 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 -- ============================================================
--- USER ROLES (separate table -> avoids privilege escalation)
+-- PROFILES
 -- ============================================================
-create table if not exists public.user_roles (
+create table public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  display_name text,
+  is_admin boolean not null default false,
+  role text not null default 'user',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.profiles enable row level security;
+
+-- ============================================================
+-- USER_ROLES (separate, anti-privilege-escalation)
+-- ============================================================
+create table public.user_roles (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   role public.app_role not null default 'user',
   created_at timestamptz not null default now(),
   unique(user_id, role)
 );
-
 alter table public.user_roles enable row level security;
 
 create or replace function public.has_role(_user_id uuid, _role public.app_role)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists(
-    select 1 from public.user_roles
-    where user_id = _user_id and role = _role
-  );
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists(select 1 from public.user_roles where user_id = _user_id and role = _role);
 $$;
 
 create or replace function public.is_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
+returns boolean language sql stable security definer set search_path = public as $$
   select public.has_role(auth.uid(), 'admin');
 $$;
 
 -- ============================================================
--- CORE TABLES
+-- GAMES
 -- ============================================================
-
-create table if not exists public.games (
+create table public.games (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  year int not null,
+  status text not null default 'draft' check (status in ('draft','open','locked','live','finished')),
   start_date date,
   end_date date,
+  deadline timestamptz,
   created_at timestamptz not null default now()
 );
+alter table public.games enable row level security;
 
-create table if not exists public.categories (
+-- ============================================================
+-- TEAMS (wielerploegen)
+-- ============================================================
+create table public.teams (
+  id uuid primary key default gen_random_uuid(),
+  game_id uuid references public.games(id) on delete cascade,
+  name text not null,
+  short_name text,
+  country_code text,
+  created_at timestamptz not null default now()
+);
+alter table public.teams enable row level security;
+
+-- ============================================================
+-- RIDERS
+-- ============================================================
+create table public.riders (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  team_id uuid references public.teams(id) on delete set null,
+  start_number int,
+  country_code text,
+  created_at timestamptz not null default now()
+);
+create index riders_team_idx on public.riders(team_id);
+create index riders_name_idx on public.riders(name);
+alter table public.riders enable row level security;
+
+-- ============================================================
+-- CATEGORIES
+-- ============================================================
+create table public.categories (
   id uuid primary key default gen_random_uuid(),
   game_id uuid not null references public.games(id) on delete cascade,
   name text not null,
-  order_index int not null default 0,
+  short_name text,
+  sort_order int not null default 0,
   created_at timestamptz not null default now(),
   unique(game_id, name)
 );
+alter table public.categories enable row level security;
 
-create table if not exists public.riders (
+-- ============================================================
+-- CATEGORY_RIDERS (which riders belong to which category)
+-- ============================================================
+create table public.category_riders (
   id uuid primary key default gen_random_uuid(),
-  name text not null,
-  team text,
-  created_at timestamptz not null default now()
+  category_id uuid not null references public.categories(id) on delete cascade,
+  rider_id uuid not null references public.riders(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique(category_id, rider_id)
 );
+create index category_riders_cat_idx on public.category_riders(category_id);
+create index category_riders_rider_idx on public.category_riders(rider_id);
+alter table public.category_riders enable row level security;
 
-create index if not exists riders_name_idx on public.riders(name);
-
--- Start list: which riders are in this game, optionally tied to a category
-create table if not exists public.game_riders (
+-- ============================================================
+-- GAME_RIDERS (startlist for a game)
+-- ============================================================
+create table public.game_riders (
   id uuid primary key default gen_random_uuid(),
   game_id uuid not null references public.games(id) on delete cascade,
   rider_id uuid not null references public.riders(id) on delete cascade,
-  category_id uuid references public.categories(id) on delete set null,
   created_at timestamptz not null default now(),
   unique(game_id, rider_id)
 );
-
-create index if not exists game_riders_game_idx on public.game_riders(game_id);
-create index if not exists game_riders_category_idx on public.game_riders(category_id);
+alter table public.game_riders enable row level security;
 
 -- ============================================================
--- USER TEAMS + PICKS
+-- STARTLISTS (snapshots of imports)
 -- ============================================================
+create table public.startlists (
+  id uuid primary key default gen_random_uuid(),
+  game_id uuid not null references public.games(id) on delete cascade,
+  source text,
+  imported_at timestamptz not null default now(),
+  raw jsonb
+);
+alter table public.startlists enable row level security;
 
-create table if not exists public.user_teams (
+-- ============================================================
+-- ENTRIES
+-- ============================================================
+create table public.entries (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   game_id uuid not null references public.games(id) on delete cascade,
-  name text,
+  team_name text,
+  status text not null default 'draft' check (status in ('draft','submitted')),
+  submitted_at timestamptz,
+  total_points int not null default 0,
   created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
   unique(user_id, game_id)
 );
+create index entries_game_idx on public.entries(game_id);
+create index entries_user_idx on public.entries(user_id);
+alter table public.entries enable row level security;
 
-create table if not exists public.team_picks (
+create table public.entry_picks (
   id uuid primary key default gen_random_uuid(),
-  team_id uuid not null references public.user_teams(id) on delete cascade,
-  category_id uuid references public.categories(id) on delete cascade,
+  entry_id uuid not null references public.entries(id) on delete cascade,
+  category_id uuid not null references public.categories(id) on delete cascade,
   rider_id uuid not null references public.riders(id) on delete cascade,
-  is_joker boolean not null default false,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique(entry_id, category_id),
+  unique(entry_id, rider_id)
 );
+alter table public.entry_picks enable row level security;
 
--- HARD CONSTRAINTS (enforced in DB):
--- 1) No duplicate rider per team (joker or pick share uniqueness)
-create unique index if not exists team_picks_unique_rider
-  on public.team_picks(team_id, rider_id);
-
--- 2) Exactly one pick per (team, category) for non-joker picks
-create unique index if not exists team_picks_unique_category
-  on public.team_picks(team_id, category_id)
-  where is_joker = false;
-
--- 3) Jokers have category_id NULL; category picks must have category_id
-alter table public.team_picks
-  drop constraint if exists team_picks_joker_check;
-alter table public.team_picks
-  add constraint team_picks_joker_check
-  check (
-    (is_joker = true  and category_id is null) or
-    (is_joker = false and category_id is not null)
-  );
-
-create index if not exists team_picks_team_idx on public.team_picks(team_id);
+create table public.entry_jokers (
+  id uuid primary key default gen_random_uuid(),
+  entry_id uuid not null references public.entries(id) on delete cascade,
+  rider_id uuid not null references public.riders(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique(entry_id, rider_id)
+);
+alter table public.entry_jokers enable row level security;
 
 -- ============================================================
--- STAGES + RESULTS + POINTS SCHEMA
+-- STAGES + RESULTS
 -- ============================================================
-
-create table if not exists public.stages (
+create table public.stages (
   id uuid primary key default gen_random_uuid(),
   game_id uuid not null references public.games(id) on delete cascade,
   stage_number int not null,
+  name text,
   date date,
+  status text default 'draft',
   created_at timestamptz not null default now(),
   unique(game_id, stage_number)
 );
+alter table public.stages enable row level security;
 
-create table if not exists public.stage_results (
+create table public.stage_results (
   id uuid primary key default gen_random_uuid(),
   stage_id uuid not null references public.stages(id) on delete cascade,
   rider_id uuid not null references public.riders(id) on delete cascade,
-  position int not null,
+  finish_position int,
+  gc_position int,
+  mountain_position int,
+  points_position int,
+  youth_position int,
   created_at timestamptz not null default now(),
-  unique(stage_id, position),
   unique(stage_id, rider_id)
 );
+create index stage_results_stage_idx on public.stage_results(stage_id);
+alter table public.stage_results enable row level security;
 
-create index if not exists stage_results_stage_idx on public.stage_results(stage_id);
-
-create table if not exists public.points_schema (
+-- ============================================================
+-- POINTS_SCHEMA + CALCULATED POINTS
+-- ============================================================
+create table public.points_schema (
   id uuid primary key default gen_random_uuid(),
   game_id uuid not null references public.games(id) on delete cascade,
+  classification text not null check (classification in ('stage','gc','kom','points','youth')),
   position int not null,
   points int not null,
-  unique(game_id, position)
+  unique(game_id, classification, position)
 );
+alter table public.points_schema enable row level security;
 
--- ============================================================
--- CALCULATED POINTS
--- ============================================================
-
-create table if not exists public.stage_points (
+create table public.stage_points (
   id uuid primary key default gen_random_uuid(),
   stage_id uuid not null references public.stages(id) on delete cascade,
-  team_id uuid not null references public.user_teams(id) on delete cascade,
+  entry_id uuid not null references public.entries(id) on delete cascade,
   points int not null default 0,
   created_at timestamptz not null default now(),
-  unique(stage_id, team_id)
+  unique(stage_id, entry_id)
 );
+alter table public.stage_points enable row level security;
 
-create index if not exists stage_points_team_idx on public.stage_points(team_id);
-
-create table if not exists public.total_points (
-  team_id uuid primary key references public.user_teams(id) on delete cascade,
+create table public.total_points (
+  entry_id uuid primary key references public.entries(id) on delete cascade,
   total_points int not null default 0,
   updated_at timestamptz not null default now()
 );
+alter table public.total_points enable row level security;
 
 -- ============================================================
--- RLS
+-- SUBPOULES
 -- ============================================================
-alter table public.games           enable row level security;
-alter table public.categories      enable row level security;
-alter table public.riders          enable row level security;
-alter table public.game_riders     enable row level security;
-alter table public.user_teams      enable row level security;
-alter table public.team_picks      enable row level security;
-alter table public.stages          enable row level security;
-alter table public.stage_results   enable row level security;
-alter table public.points_schema   enable row level security;
-alter table public.stage_points    enable row level security;
-alter table public.total_points    enable row level security;
+create table public.subpoules (
+  id uuid primary key default gen_random_uuid(),
+  game_id uuid not null references public.games(id) on delete cascade,
+  name text not null,
+  code text not null unique,
+  owner_user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique(game_id, name)
+);
+alter table public.subpoules enable row level security;
 
--- Public-readable reference data (any authenticated user); admins can write
-do $$
-declare t text;
-begin
-  foreach t in array array[
-    'games','categories','riders','game_riders',
-    'stages','stage_results','points_schema',
-    'stage_points','total_points'
-  ]
-  loop
-    execute format('drop policy if exists "read_%s" on public.%I', t, t);
-    execute format('create policy "read_%s" on public.%I for select using (auth.uid() is not null)', t, t);
-
-    execute format('drop policy if exists "admin_write_%s" on public.%I', t, t);
-    execute format('create policy "admin_write_%s" on public.%I for all using (public.is_admin()) with check (public.is_admin())', t, t);
-  end loop;
-end $$;
-
--- user_teams: owner or admin
-drop policy if exists "user_teams_select" on public.user_teams;
-create policy "user_teams_select" on public.user_teams
-  for select using (auth.uid() = user_id or public.is_admin());
-
-drop policy if exists "user_teams_modify" on public.user_teams;
-create policy "user_teams_modify" on public.user_teams
-  for all using (auth.uid() = user_id or public.is_admin())
-  with check (auth.uid() = user_id or public.is_admin());
-
--- team_picks: through ownership of team
-drop policy if exists "team_picks_select" on public.team_picks;
-create policy "team_picks_select" on public.team_picks
-  for select using (
-    exists(select 1 from public.user_teams t
-           where t.id = team_id and (t.user_id = auth.uid() or public.is_admin()))
-  );
-
-drop policy if exists "team_picks_modify" on public.team_picks;
-create policy "team_picks_modify" on public.team_picks
-  for all using (
-    exists(select 1 from public.user_teams t
-           where t.id = team_id and (t.user_id = auth.uid() or public.is_admin()))
-  ) with check (
-    exists(select 1 from public.user_teams t
-           where t.id = team_id and (t.user_id = auth.uid() or public.is_admin()))
-  );
-
--- user_roles: users read own role; only admins write
-drop policy if exists "user_roles_select_self" on public.user_roles;
-create policy "user_roles_select_self" on public.user_roles
-  for select using (auth.uid() = user_id or public.is_admin());
-
-drop policy if exists "user_roles_admin_write" on public.user_roles;
-create policy "user_roles_admin_write" on public.user_roles
-  for all using (public.is_admin()) with check (public.is_admin());
+create table public.subpoule_members (
+  id uuid primary key default gen_random_uuid(),
+  subpoule_id uuid not null references public.subpoules(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  joined_at timestamptz not null default now(),
+  unique(subpoule_id, user_id)
+);
+alter table public.subpoule_members enable row level security;
 
 -- ============================================================
--- AUTO-CREATE BASE ROLE ON SIGNUP
+-- TRIGGERS
 -- ============================================================
+create or replace function public.tg_set_updated_at()
+returns trigger language plpgsql as $$
+begin new.updated_at := now(); return new; end $$;
+
+create trigger trg_entries_updated_at before update on public.entries
+  for each row execute function public.tg_set_updated_at();
+create trigger trg_profiles_updated_at before update on public.profiles
+  for each row execute function public.tg_set_updated_at();
+
+-- Profile + role auto-create on signup
 create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
+returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.user_roles(user_id, role)
-  values (new.id, 'user')
-  on conflict do nothing;
+  insert into public.profiles (id, display_name)
+  values (new.id, coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email,'@',1)))
+  on conflict (id) do nothing;
+  insert into public.user_roles (user_id, role)
+  values (new.id, 'user') on conflict do nothing;
   return new;
 end $$;
 
@@ -290,148 +305,328 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- ============================================================
--- RPC: import_stage_results(stage_id, results jsonb)
--- results = [{ "rider_id": "...", "position": 1 }, ...]
+-- RLS POLICIES
 -- ============================================================
-create or replace function public.import_stage_results(
-  p_stage_id uuid,
-  p_results  jsonb
-) returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
+
+-- profiles
+create policy "profiles_select_all" on public.profiles for select using (true);
+create policy "profiles_update_self" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
+create policy "profiles_admin_all" on public.profiles for all using (public.is_admin()) with check (public.is_admin());
+
+-- user_roles
+create policy "user_roles_select_self" on public.user_roles for select using (auth.uid() = user_id or public.is_admin());
+create policy "user_roles_admin_write" on public.user_roles for all using (public.is_admin()) with check (public.is_admin());
+
+-- Public-readable reference data; admin write
+do $$ declare t text;
 begin
-  if not public.is_admin() then
-    raise exception 'Not authorized';
+  foreach t in array array['games','teams','riders','categories','category_riders','game_riders','startlists','stages','stage_results','points_schema','stage_points','total_points']
+  loop
+    execute format('create policy "read_%s" on public.%I for select using (auth.uid() is not null)', t, t);
+    execute format('create policy "admin_write_%s" on public.%I for all using (public.is_admin()) with check (public.is_admin())', t, t);
+  end loop;
+end $$;
+
+-- entries
+create policy "entries_select_own_or_admin" on public.entries for select using (auth.uid() = user_id or public.is_admin());
+create policy "entries_modify_own" on public.entries for all using (auth.uid() = user_id or public.is_admin()) with check (auth.uid() = user_id or public.is_admin());
+
+-- entry_picks via entry ownership
+create policy "entry_picks_select" on public.entry_picks for select using (
+  exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
+);
+create policy "entry_picks_modify" on public.entry_picks for all using (
+  exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
+) with check (
+  exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
+);
+
+create policy "entry_jokers_select" on public.entry_jokers for select using (
+  exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
+);
+create policy "entry_jokers_modify" on public.entry_jokers for all using (
+  exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
+) with check (
+  exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
+);
+
+-- subpoules: members + owner can read; owner+admin can write
+create policy "subpoules_select" on public.subpoules for select using (
+  owner_user_id = auth.uid()
+  or public.is_admin()
+  or exists(select 1 from public.subpoule_members m where m.subpoule_id = id and m.user_id = auth.uid())
+);
+create policy "subpoules_insert_self" on public.subpoules for insert with check (owner_user_id = auth.uid());
+create policy "subpoules_update_owner" on public.subpoules for update using (owner_user_id = auth.uid() or public.is_admin());
+create policy "subpoules_delete_owner" on public.subpoules for delete using (owner_user_id = auth.uid() or public.is_admin());
+
+create policy "subpoule_members_select" on public.subpoule_members for select using (
+  user_id = auth.uid() or public.is_admin()
+  or exists(select 1 from public.subpoules s where s.id = subpoule_id and s.owner_user_id = auth.uid())
+);
+create policy "subpoule_members_insert_self" on public.subpoule_members for insert with check (user_id = auth.uid());
+create policy "subpoule_members_delete_self" on public.subpoule_members for delete using (user_id = auth.uid() or public.is_admin()
+  or exists(select 1 from public.subpoules s where s.id = subpoule_id and s.owner_user_id = auth.uid()));
+
+-- ============================================================
+-- RPC: save_entry_pick
+-- ============================================================
+create or replace function public.save_entry_pick(p_entry_id uuid, p_category_id uuid, p_rider_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_user uuid; v_status text;
+begin
+  select user_id, status into v_user, v_status from public.entries where id = p_entry_id;
+  if v_user is null then raise exception 'Entry not found'; end if;
+  if v_user <> auth.uid() and not public.is_admin() then raise exception 'Not authorized'; end if;
+  if v_status = 'submitted' and not public.is_admin() then raise exception 'Entry already submitted'; end if;
+
+  -- Validate rider belongs to category
+  if not exists(select 1 from public.category_riders where category_id = p_category_id and rider_id = p_rider_id) then
+    raise exception 'Rider does not belong to this category';
   end if;
 
-  delete from public.stage_results where stage_id = p_stage_id;
-
-  insert into public.stage_results(stage_id, rider_id, position)
-  select p_stage_id,
-         (r->>'rider_id')::uuid,
-         (r->>'position')::int
-  from jsonb_array_elements(p_results) r;
+  delete from public.entry_picks where entry_id = p_entry_id and category_id = p_category_id;
+  insert into public.entry_picks (entry_id, category_id, rider_id) values (p_entry_id, p_category_id, p_rider_id);
 end $$;
 
 -- ============================================================
--- RPC: calculate_stage_points(stage_id)   -- joker = 2x
+-- RPC: save_entry_jokers (max 2, must be unique)
 -- ============================================================
-create or replace function public.calculate_stage_points(p_stage_id uuid)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_game_id uuid;
+create or replace function public.save_entry_jokers(p_entry_id uuid, p_rider_ids uuid[])
+returns void language plpgsql security definer set search_path = public as $$
+declare v_user uuid; v_status text;
 begin
-  if not public.is_admin() then
-    raise exception 'Not authorized';
+  select user_id, status into v_user, v_status from public.entries where id = p_entry_id;
+  if v_user is null then raise exception 'Entry not found'; end if;
+  if v_user <> auth.uid() and not public.is_admin() then raise exception 'Not authorized'; end if;
+  if v_status = 'submitted' and not public.is_admin() then raise exception 'Entry already submitted'; end if;
+  if array_length(p_rider_ids,1) > 2 then raise exception 'Maximum 2 jokers'; end if;
+
+  delete from public.entry_jokers where entry_id = p_entry_id;
+  if p_rider_ids is not null and array_length(p_rider_ids,1) > 0 then
+    insert into public.entry_jokers (entry_id, rider_id)
+    select p_entry_id, unnest(p_rider_ids);
+  end if;
+end $$;
+
+-- ============================================================
+-- RPC: submit_entry
+-- ============================================================
+create or replace function public.submit_entry(p_entry_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_user uuid; v_game uuid; v_cat_count int; v_pick_count int;
+begin
+  select user_id, game_id into v_user, v_game from public.entries where id = p_entry_id;
+  if v_user is null then raise exception 'Entry not found'; end if;
+  if v_user <> auth.uid() and not public.is_admin() then raise exception 'Not authorized'; end if;
+
+  select count(*) into v_cat_count from public.categories where game_id = v_game;
+  select count(*) into v_pick_count from public.entry_picks where entry_id = p_entry_id;
+  if v_pick_count <> v_cat_count then
+    raise exception 'Niet alle categorieën zijn ingevuld (% van %)', v_pick_count, v_cat_count;
   end if;
 
-  select game_id into v_game_id from public.stages where id = p_stage_id;
-  if v_game_id is null then
-    raise exception 'Stage not found';
+  update public.entries set status = 'submitted', submitted_at = now() where id = p_entry_id;
+end $$;
+
+-- ============================================================
+-- RPC: assign_admin_role
+-- ============================================================
+create or replace function public.assign_admin_role(p_user_id uuid, p_make_admin boolean)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'Not authorized'; end if;
+  if p_make_admin then
+    insert into public.user_roles(user_id, role) values (p_user_id, 'admin') on conflict do nothing;
+    update public.profiles set is_admin = true where id = p_user_id;
+  else
+    delete from public.user_roles where user_id = p_user_id and role = 'admin';
+    update public.profiles set is_admin = false where id = p_user_id;
   end if;
+end $$;
+
+-- ============================================================
+-- RPC: seed_default_points_schema
+-- ============================================================
+create or replace function public.seed_default_points_schema(p_game_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_stage int[]    := array[25,20,16,14,12,10,9,8,7,6,5,4,3,2,1];
+  v_jersey int[]   := array[15,12,10,8,6,5,4,3,2,1];
+  v_pos int;
+begin
+  if not public.is_admin() then raise exception 'Not authorized'; end if;
+  delete from public.points_schema where game_id = p_game_id;
+  for v_pos in 1..array_length(v_stage,1) loop
+    insert into public.points_schema(game_id, classification, position, points)
+      values (p_game_id, 'stage', v_pos, v_stage[v_pos]);
+  end loop;
+  for v_pos in 1..array_length(v_jersey,1) loop
+    insert into public.points_schema(game_id, classification, position, points) values
+      (p_game_id, 'gc', v_pos, v_jersey[v_pos]),
+      (p_game_id, 'kom', v_pos, v_jersey[v_pos]),
+      (p_game_id, 'points', v_pos, v_jersey[v_pos]),
+      (p_game_id, 'youth', v_pos, v_jersey[v_pos]);
+  end loop;
+end $$;
+
+-- ============================================================
+-- RPC: calculate_stage_scores  (joker = 2x)
+-- ============================================================
+create or replace function public.calculate_stage_scores(p_stage_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_game uuid;
+begin
+  if not public.is_admin() then raise exception 'Not authorized'; end if;
+  select game_id into v_game from public.stages where id = p_stage_id;
+  if v_game is null then raise exception 'Stage not found'; end if;
 
   delete from public.stage_points where stage_id = p_stage_id;
 
-  insert into public.stage_points(stage_id, team_id, points)
-  select
-    p_stage_id,
-    tp.team_id,
-    coalesce(sum(ps.points * case when tp.is_joker then 2 else 1 end), 0)::int as points
-  from public.stage_results sr
-  join public.points_schema  ps
-    on ps.game_id = v_game_id and ps.position = sr.position
-  join public.team_picks     tp on tp.rider_id = sr.rider_id
-  join public.user_teams     ut on ut.id = tp.team_id and ut.game_id = v_game_id
-  group by tp.team_id;
+  with rider_pts as (
+    select sr.rider_id, sum(coalesce(ps.points,0)) as pts
+    from public.stage_results sr
+    left join public.points_schema ps on ps.game_id = v_game and (
+      (ps.classification = 'stage'  and ps.position = sr.finish_position) or
+      (ps.classification = 'gc'     and ps.position = sr.gc_position)     or
+      (ps.classification = 'kom'    and ps.position = sr.mountain_position) or
+      (ps.classification = 'points' and ps.position = sr.points_position) or
+      (ps.classification = 'youth'  and ps.position = sr.youth_position)
+    )
+    where sr.stage_id = p_stage_id
+    group by sr.rider_id
+  ),
+  entry_rider_pts as (
+    -- picks
+    select ep.entry_id, ep.rider_id, coalesce(rp.pts,0) as base_pts,
+           case when ej.rider_id is not null then 2 else 1 end as mult
+    from public.entry_picks ep
+    join public.entries e on e.id = ep.entry_id and e.game_id = v_game and e.status = 'submitted'
+    left join rider_pts rp on rp.rider_id = ep.rider_id
+    left join public.entry_jokers ej on ej.entry_id = ep.entry_id and ej.rider_id = ep.rider_id
+    union all
+    -- jokers that aren't already in picks (extra contribution none, jokers are multipliers on picks)
+    select ej.entry_id, ej.rider_id, coalesce(rp.pts,0), 1
+    from public.entry_jokers ej
+    join public.entries e on e.id = ej.entry_id and e.game_id = v_game and e.status = 'submitted'
+    left join rider_pts rp on rp.rider_id = ej.rider_id
+    where not exists(select 1 from public.entry_picks ep where ep.entry_id = ej.entry_id and ep.rider_id = ej.rider_id)
+  )
+  insert into public.stage_points(stage_id, entry_id, points)
+  select p_stage_id, entry_id, sum(base_pts * mult)::int
+  from entry_rider_pts
+  group by entry_id;
 end $$;
 
 -- ============================================================
--- RPC: update_total_ranking(game_id)
+-- RPC: update_total_ranking + full_recalculation
 -- ============================================================
 create or replace function public.update_total_ranking(p_game_id uuid)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
+returns void language plpgsql security definer set search_path = public as $$
 begin
-  if not public.is_admin() then
-    raise exception 'Not authorized';
-  end if;
+  if not public.is_admin() then raise exception 'Not authorized'; end if;
 
-  insert into public.total_points(team_id, total_points, updated_at)
-  select ut.id,
-         coalesce(sum(sp.points), 0)::int,
-         now()
-  from public.user_teams ut
-  left join public.stage_points sp on sp.team_id = ut.id
-  left join public.stages s        on s.id = sp.stage_id and s.game_id = p_game_id
-  where ut.game_id = p_game_id
-  group by ut.id
-  on conflict (team_id)
-  do update set total_points = excluded.total_points, updated_at = now();
+  insert into public.total_points(entry_id, total_points, updated_at)
+  select e.id, coalesce(sum(sp.points),0)::int, now()
+  from public.entries e
+  left join public.stage_points sp on sp.entry_id = e.id
+  left join public.stages s on s.id = sp.stage_id and s.game_id = p_game_id
+  where e.game_id = p_game_id
+  group by e.id
+  on conflict (entry_id) do update set total_points = excluded.total_points, updated_at = now();
+
+  update public.entries e
+  set total_points = coalesce(tp.total_points,0)
+  from public.total_points tp
+  where tp.entry_id = e.id and e.game_id = p_game_id;
 end $$;
 
--- ============================================================
--- RPC: full_recalculation(game_id)
--- ============================================================
 create or replace function public.full_recalculation(p_game_id uuid)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_stage_id uuid;
+returns void language plpgsql security definer set search_path = public as $$
+declare v_stage uuid;
 begin
-  if not public.is_admin() then
-    raise exception 'Not authorized';
-  end if;
-
-  delete from public.stage_points
-   where stage_id in (select id from public.stages where game_id = p_game_id);
-
-  delete from public.total_points
-   where team_id in (select id from public.user_teams where game_id = p_game_id);
-
-  for v_stage_id in select id from public.stages where game_id = p_game_id loop
-    perform public.calculate_stage_points(v_stage_id);
+  if not public.is_admin() then raise exception 'Not authorized'; end if;
+  delete from public.stage_points where stage_id in (select id from public.stages where game_id = p_game_id);
+  for v_stage in select id from public.stages where game_id = p_game_id loop
+    perform public.calculate_stage_scores(v_stage);
   end loop;
-
   perform public.update_total_ranking(p_game_id);
 end $$;
 
 -- ============================================================
--- RPC: reset_stage_results(stage_id)
+-- ADMIN OVERVIEW VIEWS
 -- ============================================================
-create or replace function public.reset_stage_results(p_stage_id uuid)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare v_game_id uuid;
-begin
-  if not public.is_admin() then
-    raise exception 'Not authorized';
-  end if;
-  select game_id into v_game_id from public.stages where id = p_stage_id;
+create or replace view public.admin_user_overview
+with (security_invoker = true)
+as
+select
+  u.id as user_id,
+  u.email,
+  u.created_at,
+  coalesce(p.is_admin, false) as is_admin,
+  (select count(*) from public.entries e where e.user_id = u.id) as teams_count
+from auth.users u
+left join public.profiles p on p.id = u.id;
 
-  delete from public.stage_results where stage_id = p_stage_id;
-  delete from public.stage_points  where stage_id = p_stage_id;
+create or replace view public.admin_entries_overview
+with (security_invoker = true)
+as
+select
+  e.id as entry_id,
+  e.game_id,
+  e.user_id,
+  e.team_name,
+  e.status as entry_status,
+  e.submitted_at,
+  e.created_at,
+  e.total_points,
+  u.email,
+  coalesce(p.display_name, u.email) as display_name,
+  (select count(*) from public.entry_picks ep where ep.entry_id = e.id) as picks_count,
+  (select count(*) from public.entry_jokers ej where ej.entry_id = e.id) as jokers_count
+from public.entries e
+join auth.users u on u.id = e.user_id
+left join public.profiles p on p.id = e.user_id;
 
-  if v_game_id is not null then
-    perform public.update_total_ranking(v_game_id);
-  end if;
-end $$;
+grant select on public.admin_user_overview to authenticated;
+grant select on public.admin_entries_overview to authenticated;
+
+
+-- ########## COMPAT: oud team-model (user_teams/team_picks) ##########
+-- Niet in de nieuwe basis, maar admin_v3 verwijst ernaar. Legacy, meestal leeg.
+create table if not exists public.user_teams (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  game_id uuid not null references public.games(id) on delete cascade,
+  name text,
+  created_at timestamptz not null default now(),
+  unique(user_id, game_id)
+);
+create table if not exists public.team_picks (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references public.user_teams(id) on delete cascade,
+  category_id uuid references public.categories(id) on delete cascade,
+  rider_id uuid not null references public.riders(id) on delete cascade,
+  is_joker boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists team_picks_unique_rider on public.team_picks(team_id, rider_id);
+create unique index if not exists team_picks_unique_category on public.team_picks(team_id, category_id) where is_joker = false;
+create index if not exists team_picks_team_idx on public.team_picks(team_id);
+alter table public.user_teams enable row level security;
+alter table public.team_picks enable row level security;
+drop policy if exists user_teams_rw on public.user_teams;
+create policy user_teams_rw on public.user_teams for all
+  using (auth.uid() = user_id or public.is_admin())
+  with check (auth.uid() = user_id or public.is_admin());
+drop policy if exists team_picks_rw on public.team_picks;
+create policy team_picks_rw on public.team_picks for all
+  using (exists(select 1 from public.user_teams t where t.id = team_id and (t.user_id = auth.uid() or public.is_admin())))
+  with check (exists(select 1 from public.user_teams t where t.id = team_id and (t.user_id = auth.uid() or public.is_admin())));
+
 
 -- ########## MIGRATIE: 20260201_admin_v3.sql ##########
+
 -- ============================================================
 -- KOERSPOULE 2026 — ADMIN V3 EXTENSIONS (idempotent)
 -- Voer dit uit in de Supabase SQL Editor BOVENOP supabase/schema.sql
@@ -742,6 +937,7 @@ create trigger trg_sync_profile_admin
 
 
 -- ########## MIGRATIE: 20260202_backend_v4.sql ##########
+
 -- ============================================================
 -- KOERSPOULE 2026 — BACKEND V4 (COMPLETE)
 -- Dit is een idempotente migration die de volledige backend
@@ -1341,591 +1537,8 @@ grant execute on function public.is_current_admin() to authenticated;
 -- ============================================================
 
 
--- ########## MIGRATIE: 20260430193546_04ef20c4-2ea8-47fd-82b4-c91b214f8812.sql ##########
-
--- ============================================================
--- KOERSPOULE - COMPLETE BACKEND SCHEMA
--- ============================================================
-
-create extension if not exists "pgcrypto";
-
--- ============================================================
--- ENUMS
--- ============================================================
-do $$ begin
-  create type public.app_role as enum ('user','admin');
-exception when duplicate_object then null; end $$;
-
--- ============================================================
--- PROFILES
--- ============================================================
-create table public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  display_name text,
-  is_admin boolean not null default false,
-  role text not null default 'user',
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-alter table public.profiles enable row level security;
-
--- ============================================================
--- USER_ROLES (separate, anti-privilege-escalation)
--- ============================================================
-create table public.user_roles (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  role public.app_role not null default 'user',
-  created_at timestamptz not null default now(),
-  unique(user_id, role)
-);
-alter table public.user_roles enable row level security;
-
-create or replace function public.has_role(_user_id uuid, _role public.app_role)
-returns boolean language sql stable security definer set search_path = public as $$
-  select exists(select 1 from public.user_roles where user_id = _user_id and role = _role);
-$$;
-
-create or replace function public.is_admin()
-returns boolean language sql stable security definer set search_path = public as $$
-  select public.has_role(auth.uid(), 'admin');
-$$;
-
--- ============================================================
--- GAMES
--- ============================================================
-create table public.games (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  year int not null,
-  status text not null default 'draft' check (status in ('draft','open','locked','live','finished')),
-  start_date date,
-  end_date date,
-  deadline timestamptz,
-  created_at timestamptz not null default now()
-);
-alter table public.games enable row level security;
-
--- ============================================================
--- TEAMS (wielerploegen)
--- ============================================================
-create table public.teams (
-  id uuid primary key default gen_random_uuid(),
-  game_id uuid references public.games(id) on delete cascade,
-  name text not null,
-  short_name text,
-  country_code text,
-  created_at timestamptz not null default now()
-);
-alter table public.teams enable row level security;
-
--- ============================================================
--- RIDERS
--- ============================================================
-create table public.riders (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  team_id uuid references public.teams(id) on delete set null,
-  start_number int,
-  country_code text,
-  created_at timestamptz not null default now()
-);
-create index riders_team_idx on public.riders(team_id);
-create index riders_name_idx on public.riders(name);
-alter table public.riders enable row level security;
-
--- ============================================================
--- CATEGORIES
--- ============================================================
-create table public.categories (
-  id uuid primary key default gen_random_uuid(),
-  game_id uuid not null references public.games(id) on delete cascade,
-  name text not null,
-  short_name text,
-  sort_order int not null default 0,
-  created_at timestamptz not null default now(),
-  unique(game_id, name)
-);
-alter table public.categories enable row level security;
-
--- ============================================================
--- CATEGORY_RIDERS (which riders belong to which category)
--- ============================================================
-create table public.category_riders (
-  id uuid primary key default gen_random_uuid(),
-  category_id uuid not null references public.categories(id) on delete cascade,
-  rider_id uuid not null references public.riders(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  unique(category_id, rider_id)
-);
-create index category_riders_cat_idx on public.category_riders(category_id);
-create index category_riders_rider_idx on public.category_riders(rider_id);
-alter table public.category_riders enable row level security;
-
--- ============================================================
--- GAME_RIDERS (startlist for a game)
--- ============================================================
-create table public.game_riders (
-  id uuid primary key default gen_random_uuid(),
-  game_id uuid not null references public.games(id) on delete cascade,
-  rider_id uuid not null references public.riders(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  unique(game_id, rider_id)
-);
-alter table public.game_riders enable row level security;
-
--- ============================================================
--- STARTLISTS (snapshots of imports)
--- ============================================================
-create table public.startlists (
-  id uuid primary key default gen_random_uuid(),
-  game_id uuid not null references public.games(id) on delete cascade,
-  source text,
-  imported_at timestamptz not null default now(),
-  raw jsonb
-);
-alter table public.startlists enable row level security;
-
--- ============================================================
--- ENTRIES
--- ============================================================
-create table public.entries (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  game_id uuid not null references public.games(id) on delete cascade,
-  team_name text,
-  status text not null default 'draft' check (status in ('draft','submitted')),
-  submitted_at timestamptz,
-  total_points int not null default 0,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique(user_id, game_id)
-);
-create index entries_game_idx on public.entries(game_id);
-create index entries_user_idx on public.entries(user_id);
-alter table public.entries enable row level security;
-
-create table public.entry_picks (
-  id uuid primary key default gen_random_uuid(),
-  entry_id uuid not null references public.entries(id) on delete cascade,
-  category_id uuid not null references public.categories(id) on delete cascade,
-  rider_id uuid not null references public.riders(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  unique(entry_id, category_id),
-  unique(entry_id, rider_id)
-);
-alter table public.entry_picks enable row level security;
-
-create table public.entry_jokers (
-  id uuid primary key default gen_random_uuid(),
-  entry_id uuid not null references public.entries(id) on delete cascade,
-  rider_id uuid not null references public.riders(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  unique(entry_id, rider_id)
-);
-alter table public.entry_jokers enable row level security;
-
--- ============================================================
--- STAGES + RESULTS
--- ============================================================
-create table public.stages (
-  id uuid primary key default gen_random_uuid(),
-  game_id uuid not null references public.games(id) on delete cascade,
-  stage_number int not null,
-  name text,
-  date date,
-  status text default 'draft',
-  created_at timestamptz not null default now(),
-  unique(game_id, stage_number)
-);
-alter table public.stages enable row level security;
-
-create table public.stage_results (
-  id uuid primary key default gen_random_uuid(),
-  stage_id uuid not null references public.stages(id) on delete cascade,
-  rider_id uuid not null references public.riders(id) on delete cascade,
-  finish_position int,
-  gc_position int,
-  mountain_position int,
-  points_position int,
-  youth_position int,
-  created_at timestamptz not null default now(),
-  unique(stage_id, rider_id)
-);
-create index stage_results_stage_idx on public.stage_results(stage_id);
-alter table public.stage_results enable row level security;
-
--- ============================================================
--- POINTS_SCHEMA + CALCULATED POINTS
--- ============================================================
-create table public.points_schema (
-  id uuid primary key default gen_random_uuid(),
-  game_id uuid not null references public.games(id) on delete cascade,
-  classification text not null check (classification in ('stage','gc','kom','points','youth')),
-  position int not null,
-  points int not null,
-  unique(game_id, classification, position)
-);
-alter table public.points_schema enable row level security;
-
-create table public.stage_points (
-  id uuid primary key default gen_random_uuid(),
-  stage_id uuid not null references public.stages(id) on delete cascade,
-  entry_id uuid not null references public.entries(id) on delete cascade,
-  points int not null default 0,
-  created_at timestamptz not null default now(),
-  unique(stage_id, entry_id)
-);
-alter table public.stage_points enable row level security;
-
-create table public.total_points (
-  entry_id uuid primary key references public.entries(id) on delete cascade,
-  total_points int not null default 0,
-  updated_at timestamptz not null default now()
-);
-alter table public.total_points enable row level security;
-
--- ============================================================
--- SUBPOULES
--- ============================================================
-create table public.subpoules (
-  id uuid primary key default gen_random_uuid(),
-  game_id uuid not null references public.games(id) on delete cascade,
-  name text not null,
-  code text not null unique,
-  owner_user_id uuid not null references auth.users(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  unique(game_id, name)
-);
-alter table public.subpoules enable row level security;
-
-create table public.subpoule_members (
-  id uuid primary key default gen_random_uuid(),
-  subpoule_id uuid not null references public.subpoules(id) on delete cascade,
-  user_id uuid not null references auth.users(id) on delete cascade,
-  joined_at timestamptz not null default now(),
-  unique(subpoule_id, user_id)
-);
-alter table public.subpoule_members enable row level security;
-
--- ============================================================
--- TRIGGERS
--- ============================================================
-create or replace function public.tg_set_updated_at()
-returns trigger language plpgsql as $$
-begin new.updated_at := now(); return new; end $$;
-
-create trigger trg_entries_updated_at before update on public.entries
-  for each row execute function public.tg_set_updated_at();
-create trigger trg_profiles_updated_at before update on public.profiles
-  for each row execute function public.tg_set_updated_at();
-
--- Profile + role auto-create on signup
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
-begin
-  insert into public.profiles (id, display_name)
-  values (new.id, coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email,'@',1)))
-  on conflict (id) do nothing;
-  insert into public.user_roles (user_id, role)
-  values (new.id, 'user') on conflict do nothing;
-  return new;
-end $$;
-
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
-
--- ============================================================
--- RLS POLICIES
--- ============================================================
-
--- profiles
-create policy "profiles_select_all" on public.profiles for select using (true);
-create policy "profiles_update_self" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
-create policy "profiles_admin_all" on public.profiles for all using (public.is_admin()) with check (public.is_admin());
-
--- user_roles
-create policy "user_roles_select_self" on public.user_roles for select using (auth.uid() = user_id or public.is_admin());
-create policy "user_roles_admin_write" on public.user_roles for all using (public.is_admin()) with check (public.is_admin());
-
--- Public-readable reference data; admin write
-do $$ declare t text;
-begin
-  foreach t in array array['games','teams','riders','categories','category_riders','game_riders','startlists','stages','stage_results','points_schema','stage_points','total_points']
-  loop
-    execute format('create policy "read_%s" on public.%I for select using (auth.uid() is not null)', t, t);
-    execute format('create policy "admin_write_%s" on public.%I for all using (public.is_admin()) with check (public.is_admin())', t, t);
-  end loop;
-end $$;
-
--- entries
-create policy "entries_select_own_or_admin" on public.entries for select using (auth.uid() = user_id or public.is_admin());
-create policy "entries_modify_own" on public.entries for all using (auth.uid() = user_id or public.is_admin()) with check (auth.uid() = user_id or public.is_admin());
-
--- entry_picks via entry ownership
-create policy "entry_picks_select" on public.entry_picks for select using (
-  exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
-);
-create policy "entry_picks_modify" on public.entry_picks for all using (
-  exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
-) with check (
-  exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
-);
-
-create policy "entry_jokers_select" on public.entry_jokers for select using (
-  exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
-);
-create policy "entry_jokers_modify" on public.entry_jokers for all using (
-  exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
-) with check (
-  exists(select 1 from public.entries e where e.id = entry_id and (e.user_id = auth.uid() or public.is_admin()))
-);
-
--- subpoules: members + owner can read; owner+admin can write
-create policy "subpoules_select" on public.subpoules for select using (
-  owner_user_id = auth.uid()
-  or public.is_admin()
-  or exists(select 1 from public.subpoule_members m where m.subpoule_id = id and m.user_id = auth.uid())
-);
-create policy "subpoules_insert_self" on public.subpoules for insert with check (owner_user_id = auth.uid());
-create policy "subpoules_update_owner" on public.subpoules for update using (owner_user_id = auth.uid() or public.is_admin());
-create policy "subpoules_delete_owner" on public.subpoules for delete using (owner_user_id = auth.uid() or public.is_admin());
-
-create policy "subpoule_members_select" on public.subpoule_members for select using (
-  user_id = auth.uid() or public.is_admin()
-  or exists(select 1 from public.subpoules s where s.id = subpoule_id and s.owner_user_id = auth.uid())
-);
-create policy "subpoule_members_insert_self" on public.subpoule_members for insert with check (user_id = auth.uid());
-create policy "subpoule_members_delete_self" on public.subpoule_members for delete using (user_id = auth.uid() or public.is_admin()
-  or exists(select 1 from public.subpoules s where s.id = subpoule_id and s.owner_user_id = auth.uid()));
-
--- ============================================================
--- RPC: save_entry_pick
--- ============================================================
-create or replace function public.save_entry_pick(p_entry_id uuid, p_category_id uuid, p_rider_id uuid)
-returns void language plpgsql security definer set search_path = public as $$
-declare v_user uuid; v_status text;
-begin
-  select user_id, status into v_user, v_status from public.entries where id = p_entry_id;
-  if v_user is null then raise exception 'Entry not found'; end if;
-  if v_user <> auth.uid() and not public.is_admin() then raise exception 'Not authorized'; end if;
-  if v_status = 'submitted' and not public.is_admin() then raise exception 'Entry already submitted'; end if;
-
-  -- Validate rider belongs to category
-  if not exists(select 1 from public.category_riders where category_id = p_category_id and rider_id = p_rider_id) then
-    raise exception 'Rider does not belong to this category';
-  end if;
-
-  delete from public.entry_picks where entry_id = p_entry_id and category_id = p_category_id;
-  insert into public.entry_picks (entry_id, category_id, rider_id) values (p_entry_id, p_category_id, p_rider_id);
-end $$;
-
--- ============================================================
--- RPC: save_entry_jokers (max 2, must be unique)
--- ============================================================
-create or replace function public.save_entry_jokers(p_entry_id uuid, p_rider_ids uuid[])
-returns void language plpgsql security definer set search_path = public as $$
-declare v_user uuid; v_status text;
-begin
-  select user_id, status into v_user, v_status from public.entries where id = p_entry_id;
-  if v_user is null then raise exception 'Entry not found'; end if;
-  if v_user <> auth.uid() and not public.is_admin() then raise exception 'Not authorized'; end if;
-  if v_status = 'submitted' and not public.is_admin() then raise exception 'Entry already submitted'; end if;
-  if array_length(p_rider_ids,1) > 2 then raise exception 'Maximum 2 jokers'; end if;
-
-  delete from public.entry_jokers where entry_id = p_entry_id;
-  if p_rider_ids is not null and array_length(p_rider_ids,1) > 0 then
-    insert into public.entry_jokers (entry_id, rider_id)
-    select p_entry_id, unnest(p_rider_ids);
-  end if;
-end $$;
-
--- ============================================================
--- RPC: submit_entry
--- ============================================================
-create or replace function public.submit_entry(p_entry_id uuid)
-returns void language plpgsql security definer set search_path = public as $$
-declare v_user uuid; v_game uuid; v_cat_count int; v_pick_count int;
-begin
-  select user_id, game_id into v_user, v_game from public.entries where id = p_entry_id;
-  if v_user is null then raise exception 'Entry not found'; end if;
-  if v_user <> auth.uid() and not public.is_admin() then raise exception 'Not authorized'; end if;
-
-  select count(*) into v_cat_count from public.categories where game_id = v_game;
-  select count(*) into v_pick_count from public.entry_picks where entry_id = p_entry_id;
-  if v_pick_count <> v_cat_count then
-    raise exception 'Niet alle categorieën zijn ingevuld (% van %)', v_pick_count, v_cat_count;
-  end if;
-
-  update public.entries set status = 'submitted', submitted_at = now() where id = p_entry_id;
-end $$;
-
--- ============================================================
--- RPC: assign_admin_role
--- ============================================================
-create or replace function public.assign_admin_role(p_user_id uuid, p_make_admin boolean)
-returns void language plpgsql security definer set search_path = public as $$
-begin
-  if not public.is_admin() then raise exception 'Not authorized'; end if;
-  if p_make_admin then
-    insert into public.user_roles(user_id, role) values (p_user_id, 'admin') on conflict do nothing;
-    update public.profiles set is_admin = true where id = p_user_id;
-  else
-    delete from public.user_roles where user_id = p_user_id and role = 'admin';
-    update public.profiles set is_admin = false where id = p_user_id;
-  end if;
-end $$;
-
--- ============================================================
--- RPC: seed_default_points_schema
--- ============================================================
-create or replace function public.seed_default_points_schema(p_game_id uuid)
-returns void language plpgsql security definer set search_path = public as $$
-declare
-  v_stage int[]    := array[25,20,16,14,12,10,9,8,7,6,5,4,3,2,1];
-  v_jersey int[]   := array[15,12,10,8,6,5,4,3,2,1];
-  v_pos int;
-begin
-  if not public.is_admin() then raise exception 'Not authorized'; end if;
-  delete from public.points_schema where game_id = p_game_id;
-  for v_pos in 1..array_length(v_stage,1) loop
-    insert into public.points_schema(game_id, classification, position, points)
-      values (p_game_id, 'stage', v_pos, v_stage[v_pos]);
-  end loop;
-  for v_pos in 1..array_length(v_jersey,1) loop
-    insert into public.points_schema(game_id, classification, position, points) values
-      (p_game_id, 'gc', v_pos, v_jersey[v_pos]),
-      (p_game_id, 'kom', v_pos, v_jersey[v_pos]),
-      (p_game_id, 'points', v_pos, v_jersey[v_pos]),
-      (p_game_id, 'youth', v_pos, v_jersey[v_pos]);
-  end loop;
-end $$;
-
--- ============================================================
--- RPC: calculate_stage_scores  (joker = 2x)
--- ============================================================
-create or replace function public.calculate_stage_scores(p_stage_id uuid)
-returns void language plpgsql security definer set search_path = public as $$
-declare v_game uuid;
-begin
-  if not public.is_admin() then raise exception 'Not authorized'; end if;
-  select game_id into v_game from public.stages where id = p_stage_id;
-  if v_game is null then raise exception 'Stage not found'; end if;
-
-  delete from public.stage_points where stage_id = p_stage_id;
-
-  with rider_pts as (
-    select sr.rider_id, sum(coalesce(ps.points,0)) as pts
-    from public.stage_results sr
-    left join public.points_schema ps on ps.game_id = v_game and (
-      (ps.classification = 'stage'  and ps.position = sr.finish_position) or
-      (ps.classification = 'gc'     and ps.position = sr.gc_position)     or
-      (ps.classification = 'kom'    and ps.position = sr.mountain_position) or
-      (ps.classification = 'points' and ps.position = sr.points_position) or
-      (ps.classification = 'youth'  and ps.position = sr.youth_position)
-    )
-    where sr.stage_id = p_stage_id
-    group by sr.rider_id
-  ),
-  entry_rider_pts as (
-    -- picks
-    select ep.entry_id, ep.rider_id, coalesce(rp.pts,0) as base_pts,
-           case when ej.rider_id is not null then 2 else 1 end as mult
-    from public.entry_picks ep
-    join public.entries e on e.id = ep.entry_id and e.game_id = v_game and e.status = 'submitted'
-    left join rider_pts rp on rp.rider_id = ep.rider_id
-    left join public.entry_jokers ej on ej.entry_id = ep.entry_id and ej.rider_id = ep.rider_id
-    union all
-    -- jokers that aren't already in picks (extra contribution none, jokers are multipliers on picks)
-    select ej.entry_id, ej.rider_id, coalesce(rp.pts,0), 1
-    from public.entry_jokers ej
-    join public.entries e on e.id = ej.entry_id and e.game_id = v_game and e.status = 'submitted'
-    left join rider_pts rp on rp.rider_id = ej.rider_id
-    where not exists(select 1 from public.entry_picks ep where ep.entry_id = ej.entry_id and ep.rider_id = ej.rider_id)
-  )
-  insert into public.stage_points(stage_id, entry_id, points)
-  select p_stage_id, entry_id, sum(base_pts * mult)::int
-  from entry_rider_pts
-  group by entry_id;
-end $$;
-
--- ============================================================
--- RPC: update_total_ranking + full_recalculation
--- ============================================================
-create or replace function public.update_total_ranking(p_game_id uuid)
-returns void language plpgsql security definer set search_path = public as $$
-begin
-  if not public.is_admin() then raise exception 'Not authorized'; end if;
-
-  insert into public.total_points(entry_id, total_points, updated_at)
-  select e.id, coalesce(sum(sp.points),0)::int, now()
-  from public.entries e
-  left join public.stage_points sp on sp.entry_id = e.id
-  left join public.stages s on s.id = sp.stage_id and s.game_id = p_game_id
-  where e.game_id = p_game_id
-  group by e.id
-  on conflict (entry_id) do update set total_points = excluded.total_points, updated_at = now();
-
-  update public.entries e
-  set total_points = coalesce(tp.total_points,0)
-  from public.total_points tp
-  where tp.entry_id = e.id and e.game_id = p_game_id;
-end $$;
-
-create or replace function public.full_recalculation(p_game_id uuid)
-returns void language plpgsql security definer set search_path = public as $$
-declare v_stage uuid;
-begin
-  if not public.is_admin() then raise exception 'Not authorized'; end if;
-  delete from public.stage_points where stage_id in (select id from public.stages where game_id = p_game_id);
-  for v_stage in select id from public.stages where game_id = p_game_id loop
-    perform public.calculate_stage_scores(v_stage);
-  end loop;
-  perform public.update_total_ranking(p_game_id);
-end $$;
-
--- ============================================================
--- ADMIN OVERVIEW VIEWS
--- ============================================================
-create or replace view public.admin_user_overview
-with (security_invoker = true)
-as
-select
-  u.id as user_id,
-  u.email,
-  u.created_at,
-  coalesce(p.is_admin, false) as is_admin,
-  (select count(*) from public.entries e where e.user_id = u.id) as teams_count
-from auth.users u
-left join public.profiles p on p.id = u.id;
-
-create or replace view public.admin_entries_overview
-with (security_invoker = true)
-as
-select
-  e.id as entry_id,
-  e.game_id,
-  e.user_id,
-  e.team_name,
-  e.status as entry_status,
-  e.submitted_at,
-  e.created_at,
-  e.total_points,
-  u.email,
-  coalesce(p.display_name, u.email) as display_name,
-  (select count(*) from public.entry_picks ep where ep.entry_id = e.id) as picks_count,
-  (select count(*) from public.entry_jokers ej where ej.entry_id = e.id) as jokers_count
-from public.entries e
-join auth.users u on u.id = e.user_id
-left join public.profiles p on p.id = e.user_id;
-
-grant select on public.admin_user_overview to authenticated;
-grant select on public.admin_entries_overview to authenticated;
-
-
 -- ########## MIGRATIE: 20260430193612_ce53ca0e-6b9e-4504-a5a8-c1b228c31bc7.sql ##########
+
 
 -- Lock down SECURITY DEFINER functions: only authenticated users may execute
 revoke execute on function public.has_role(uuid, public.app_role) from public, anon;
@@ -1959,6 +1572,7 @@ begin new.updated_at := now(); return new; end $$;
 
 -- ########## MIGRATIE: 20260430193653_bbb1d92e-467c-4cd0-b657-eb53cd99e29a.sql ##########
 
+
 -- Categories: add max_picks + order_index (alias of sort_order)
 alter table public.categories add column if not exists max_picks int not null default 1;
 alter table public.categories add column if not exists order_index int;
@@ -1976,10 +1590,12 @@ alter table public.game_riders add column if not exists category_id uuid referen
 
 -- ########## MIGRATIE: 20260430193709_25d19525-66bb-428a-aed0-2565e30592c3.sql ##########
 
+
 alter table public.games add column if not exists game_type text default 'giro' check (game_type in ('giro','tour','vuelta','other'));
 
 
 -- ########## MIGRATIE: 20260430193735_f5d76a4d-906e-49ea-8a0b-4b5da5fe4f34.sql ##########
+
 
 alter table public.games add column if not exists starts_at timestamptz;
 alter table public.games add column if not exists slug text;
@@ -1992,6 +1608,7 @@ alter table public.stage_results add column if not exists game_id uuid reference
 
 
 -- ########## MIGRATIE: 20260501170336_42accc6e-39fa-4c8b-8fca-c3af7c756223.sql ##########
+
 -- Deduplicate existing data first to allow unique indexes.
 -- Riders: keep oldest per (game_id, start_number)
 delete from public.riders r
@@ -2019,6 +1636,7 @@ create unique index if not exists teams_game_name_uniq
   where game_id is not null;
 
 -- ########## MIGRATIE: 20260501172931_ef2253ae-99eb-4db5-b698-dc6e27baefcd.sql ##########
+
 -- Fix startlist upsert conflict targets by replacing partial unique indexes
 -- with full unique indexes that PostgREST can use for ON CONFLICT.
 
@@ -2072,15 +1690,18 @@ create unique index riders_game_startnum_uniq
   on public.riders (game_id, start_number);
 
 -- ########## MIGRATIE: 20260501173456_8749659f-c484-441f-9d37-7e3bf7c5deaa.sql ##########
+
 create unique index if not exists category_riders_unique on public.category_riders(category_id, rider_id);
 
 -- ########## MIGRATIE: 20260501180101_7e928cbf-0248-4a4b-b0f9-d4cff899fd60.sql ##########
+
 ALTER TABLE public.games DROP CONSTRAINT IF EXISTS games_game_type_check;
 ALTER TABLE public.games ADD CONSTRAINT games_game_type_check
   CHECK (game_type = ANY (ARRAY['giro'::text, 'tour'::text, 'tdf'::text, 'vuelta'::text, 'other'::text]));
 UPDATE public.games SET game_type = 'tdf' WHERE game_type = 'tour';
 
 -- ########## MIGRATIE: 20260501182253_bccd4cba-32d9-4a7f-be7a-89552be4675f.sql ##########
+
 -- ============================================
 -- 1. STAGES: stage_type kolom
 -- ============================================
@@ -2185,6 +1806,7 @@ ALTER TABLE public.chat_messages REPLICA IDENTITY FULL;
 
 
 -- ########## MIGRATIE: 20260501183203_77f46762-d66f-49c9-a796-16130b6dc1f6.sql ##########
+
 -- entry_predictions table
 CREATE TABLE public.entry_predictions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2249,6 +1871,7 @@ END;
 $$;
 
 -- ########## MIGRATIE: 20260501183720_e0beb57d-7a58-419f-9d10-3763f6bac37f.sql ##########
+
 -- Bugfix: subpoules_select policy referenced m.id instead of subpoules.id
 DROP POLICY IF EXISTS subpoules_select ON public.subpoules;
 CREATE POLICY subpoules_select ON public.subpoules
@@ -2372,9 +1995,11 @@ BEGIN
 END $$;
 
 -- ########## MIGRATIE: 20260501190706_bc00e123-4aff-4b63-be5c-38a2f58c200c.sql ##########
+
 NOTIFY pgrst, 'reload schema';
 
 -- ########## MIGRATIE: 20260502102437_052f8c97-c651-47ce-ad0c-16dd589810e1.sql ##########
+
 -- Fix admin_entries_overview: remove auth.users dependency for client access
 -- Recreate view to run with definer rights so it can read auth.users,
 -- and restrict via underlying RLS check using is_admin() in a wrapper.
@@ -2435,6 +2060,7 @@ GRANT SELECT ON public.admin_entries_overview TO authenticated;
 NOTIFY pgrst, 'reload schema';
 
 -- ########## MIGRATIE: 20260502102707_0f58a5eb-bc9c-41fa-9d49-590895adeead.sql ##########
+
 -- Allow edits on submitted entries until game status is 'closed' or 'live'.
 -- Block only when game.status IN ('closed','live').
 
@@ -2527,6 +2153,7 @@ END;
 $function$;
 
 -- ########## MIGRATIE: 20260502103204_3463befa-b9c3-4675-a9c8-1fc448c6c758.sql ##########
+
 DROP VIEW IF EXISTS public.admin_user_overview;
 
 CREATE OR REPLACE FUNCTION public.admin_user_overview()
@@ -2565,6 +2192,7 @@ GRANT SELECT ON public.admin_user_overview TO authenticated;
 NOTIFY pgrst, 'reload schema';
 
 -- ########## MIGRATIE: 20260502104836_6e968633-10f0-4a3d-924c-1a6c1e54743f.sql ##########
+
 
 -- =========================================================
 -- 1. Nieuwe tabel: entry_prediction_points
@@ -2895,6 +2523,7 @@ END $$;
 
 
 -- ########## MIGRATIE: 20260502110323_8b1b8683-16ba-4fe9-8108-96e941f77a7c.sql ##########
+
 -- Helper: bypass RLS om lidmaatschap te checken
 CREATE OR REPLACE FUNCTION public.is_subpoule_member(_subpoule_id uuid, _user_id uuid)
 RETURNS boolean
@@ -2933,6 +2562,7 @@ USING (
 );
 
 -- ########## MIGRATIE: 20260502152656_9a66c3ab-9f4a-413a-845c-0c4a93285c40.sql ##########
+
 -- Opschonen van vervuilde startlijst-data voor de actieve Giro-game
 DELETE FROM public.riders WHERE game_id = 'f73a2e0f-5633-459a-b958-47babfa5678f';
 DELETE FROM public.teams WHERE game_id = 'f73a2e0f-5633-459a-b958-47babfa5678f';
@@ -2945,6 +2575,7 @@ ALTER TABLE public.riders DROP CONSTRAINT IF EXISTS riders_game_startnumber_uniq
 ALTER TABLE public.riders ADD CONSTRAINT riders_game_startnumber_unique UNIQUE (game_id, start_number);
 
 -- ########## MIGRATIE: 20260502154946_41773efc-c39c-4256-a1a2-9cfdaa33dead.sql ##########
+
 -- Toggle pick: voegt rider toe of verwijdert hem; respecteert categories.max_picks
 CREATE OR REPLACE FUNCTION public.toggle_entry_pick(p_entry_id uuid, p_category_id uuid, p_rider_id uuid)
 RETURNS void
@@ -3004,6 +2635,7 @@ begin
 end $function$;
 
 -- ########## MIGRATIE: 20260502160115_4c591ada-da7f-46ee-ab6d-0bd7b7fe014a.sql ##########
+
 -- Verwijder oude UNIQUE-constraint die maar 1 pick per categorie toestond.
 ALTER TABLE public.entry_picks DROP CONSTRAINT IF EXISTS entry_picks_entry_id_category_id_key;
 
@@ -3013,6 +2645,7 @@ ALTER TABLE public.entry_picks
   UNIQUE (entry_id, category_id, rider_id);
 
 -- ########## MIGRATIE: 20260502161532_ae1efdaf-dfab-4ef1-8206-1890f59b3e56.sql ##########
+
 CREATE OR REPLACE FUNCTION public.submit_entry(p_entry_id uuid)
  RETURNS void
  LANGUAGE plpgsql
@@ -3041,6 +2674,7 @@ begin
 end $function$;
 
 -- ########## MIGRATIE: 20260502162615_603c3d5c-8784-49d4-bd5d-a8ae1cf7a115.sql ##########
+
 CREATE OR REPLACE FUNCTION public.game_entries_standings(p_game_id uuid)
 RETURNS TABLE(
   id uuid,
@@ -3123,18 +2757,21 @@ AS $$
 $$;
 
 -- ########## MIGRATIE: 20260502162630_65f66a00-bd9a-44e0-b8a7-83930ac3549b.sql ##########
+
 REVOKE ALL ON FUNCTION public.game_entries_standings(uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.subpoule_entries_detail(uuid, uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.game_entries_standings(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.subpoule_entries_detail(uuid, uuid) TO authenticated;
 
 -- ########## MIGRATIE: 20260502163015_7565ac67-da03-4b3d-b38d-7f085c187222.sql ##########
+
 REVOKE EXECUTE ON FUNCTION public.game_entries_standings(uuid) FROM anon;
 REVOKE EXECUTE ON FUNCTION public.subpoule_entries_detail(uuid, uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.game_entries_standings(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.subpoule_entries_detail(uuid, uuid) TO authenticated;
 
 -- ########## MIGRATIE: 20260503133342_0fac06e3-f283-4433-aac8-e4faa1043aca.sql ##########
+
 DROP FUNCTION IF EXISTS public.subpoule_entries_detail(uuid, uuid);
 
 CREATE OR REPLACE FUNCTION public.subpoule_entries_detail(p_subpoule_id uuid, p_game_id uuid)
@@ -3196,6 +2833,7 @@ REVOKE EXECUTE ON FUNCTION public.subpoule_entries_detail(uuid, uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.subpoule_entries_detail(uuid, uuid) TO authenticated;
 
 -- ########## MIGRATIE: 20260503153917_329e94a0-b808-4a5b-a0f5-e06aab9fdf64.sql ##########
+
 drop policy if exists "profiles_select_all" on public.profiles;
 create policy "profiles_select_authenticated" on public.profiles
   for select
@@ -3203,26 +2841,31 @@ create policy "profiles_select_authenticated" on public.profiles
   using (auth.uid() is not null);
 
 -- ########## MIGRATIE: 20260503154200_56c90b4a-e8e9-4b0f-a320-809aeac7997c.sql ##########
+
 alter table public.chat_messages
   drop constraint if exists chat_body_max_len;
 alter table public.chat_messages
   add constraint chat_body_max_len check (char_length(body) <= 2000);
 
 -- ########## MIGRATIE: 20260503172033_aa87c872-8cda-4e00-9236-966f563f1f7b.sql ##########
+
 ALTER TABLE public.games
   ADD COLUMN IF NOT EXISTS registration_opens_at timestamptz,
   ADD COLUMN IF NOT EXISTS registration_closes_at timestamptz;
 
 -- ########## MIGRATIE: 20260503181354_21476b9c-17fc-48d4-bd30-b51b8ce4498f.sql ##########
+
 DELETE FROM public.teams
 WHERE game_id = 'f73a2e0f-5633-459a-b958-47babfa5678f'
   AND NOT EXISTS (SELECT 1 FROM public.riders r WHERE r.team_id = teams.id);
 
 -- ########## MIGRATIE: 20260504061956_fd35ca89-91a8-4dbc-b850-c003b01a508c.sql ##########
+
 DELETE FROM public.user_roles WHERE role='admin' AND user_id IN (SELECT id FROM auth.users WHERE email <> 'koerspoule@gmail.com');
 UPDATE public.profiles SET is_admin=false WHERE id IN (SELECT id FROM auth.users WHERE email <> 'koerspoule@gmail.com');
 
 -- ########## MIGRATIE: 20260504062307_6caaf36a-e1d3-4450-9f06-a420c4e44ed4.sql ##########
+
 CREATE OR REPLACE FUNCTION public.prevent_profile_privilege_escalation()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -3250,6 +2893,7 @@ FOR EACH ROW
 EXECUTE FUNCTION public.prevent_profile_privilege_escalation();
 
 -- ########## MIGRATIE: 20260504193226_b70987af-0edf-445e-ac34-fe98679af39c.sql ##########
+
 CREATE OR REPLACE FUNCTION public.toggle_entry_pick(p_entry_id uuid, p_category_id uuid, p_rider_id uuid)
  RETURNS void
  LANGUAGE plpgsql
@@ -3329,6 +2973,7 @@ begin
 end $function$;
 
 -- ########## MIGRATIE: 20260504193948_1efbee0b-eaec-486d-aea0-de1bdcb0343b.sql ##########
+
 -- Clean up stale/cross-race picks before tightening validation.
 DELETE FROM public.entry_picks ep
 USING public.entries e, public.categories c, public.riders r
@@ -3623,6 +3268,7 @@ END;
 $function$;
 
 -- ########## MIGRATIE: 20260504194130_219b95e8-a485-4414-83b3-7518944de662.sql ##########
+
 REVOKE EXECUTE ON FUNCTION public.toggle_entry_pick(uuid, uuid, uuid) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.save_entry_pick(uuid, uuid, uuid) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.save_entry_jokers(uuid, uuid[]) FROM PUBLIC, anon;
@@ -3634,6 +3280,7 @@ GRANT EXECUTE ON FUNCTION public.save_entry_jokers(uuid, uuid[]) TO authenticate
 GRANT EXECUTE ON FUNCTION public.save_entry_predictions(uuid, jsonb) TO authenticated;
 
 -- ########## MIGRATIE: 20260505151157_email_infra.sql ##########
+
 -- Email infrastructure
 -- Creates the queue system, send log, send state, suppression, and unsubscribe
 -- tables used by both auth and transactional emails.
@@ -3930,6 +3577,7 @@ CREATE INDEX IF NOT EXISTS idx_unsubscribe_tokens_token ON public.email_unsubscr
 
 -- ########## MIGRATIE: 20260505151524_aa2de0ba-5b32-4f80-beb9-6042528957f7.sql ##########
 
+
 CREATE OR REPLACE FUNCTION public.admin_delete_user_data(p_user_id uuid)
 RETURNS void
 LANGUAGE plpgsql
@@ -3996,6 +3644,7 @@ $$;
 
 
 -- ########## MIGRATIE: 20260505153649_321311db-2664-4236-800c-4f9ad623172e.sql ##########
+
 CREATE TABLE IF NOT EXISTS public.notify_subscribers (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text NOT NULL UNIQUE,
@@ -4040,6 +3689,7 @@ AS $$
 $$;
 
 -- ########## MIGRATIE: 20260505170729_0050e51e-3443-420a-90a8-169b29e41cb3.sql ##########
+
 
 -- 1. Status & audit columns on stages
 ALTER TABLE public.stages
@@ -4231,9 +3881,11 @@ $$;
 
 
 -- ########## MIGRATIE: 20260507063615_da5f0d6d-904a-41fb-8cfb-86748590fdd2.sql ##########
+
 ALTER TABLE public.riders ADD COLUMN IF NOT EXISTS is_youth_eligible boolean NOT NULL DEFAULT false;
 
 -- ########## MIGRATIE: 20260507071057_80c97786-ec6f-4916-ab72-2781c5ea11b2.sql ##########
+
 
 -- 1) Uitslag van één etappe wissen
 CREATE OR REPLACE FUNCTION public.delete_stage_results(p_stage_id uuid)
@@ -4375,6 +4027,7 @@ $$;
 
 -- ########## MIGRATIE: 20260508070350_91ddc904-43ae-426e-a821-dd0da59f408c.sql ##########
 
+
 -- Pick counts per (category, rider) for a given game, only from submitted entries
 CREATE OR REPLACE FUNCTION public.game_pick_stats(p_game_id uuid)
 RETURNS TABLE(category_id uuid, rider_id uuid, pick_count integer, total_entries integer)
@@ -4437,6 +4090,7 @@ GRANT EXECUTE ON FUNCTION public.game_entry_totals(uuid) TO authenticated;
 
 
 -- ########## MIGRATIE: 20260508074606_68d2a03f-9393-47fc-bf2d-b2729739e466.sql ##########
+
 -- Open public read access to reference data so non-authenticated visitors
 -- can preview the rules and team builder when a game is in open registration.
 
@@ -4478,6 +4132,7 @@ CREATE POLICY read_stages ON public.stages FOR SELECT USING (true);
 
 
 -- ########## MIGRATIE: 20260509064346_f43892c6-0e8a-41c7-aa06-3bc7e3f1a499.sql ##########
+
 CREATE OR REPLACE FUNCTION public.game_prediction_stats(p_game_id uuid)
  RETURNS TABLE(classification text, "position" int, rider_id uuid, pick_count int, total_entries int)
  LANGUAGE sql
@@ -4501,6 +4156,7 @@ $function$;
 GRANT EXECUTE ON FUNCTION public.game_prediction_stats(uuid) TO anon, authenticated;
 
 -- ########## MIGRATIE: 20260510081721_dd4c33fa-3500-45b5-b0f6-3f21ed9157d8.sql ##########
+
 CREATE OR REPLACE FUNCTION public.calculate_prediction_points(p_game_id uuid)
  RETURNS void
  LANGUAGE plpgsql
@@ -4661,6 +4317,7 @@ WHERE tp.entry_id = e.id
   );
 
 -- ########## MIGRATIE: 20260510151319_008194c1-4fbf-4732-9504-419b10704002.sql ##########
+
 DO $$
 DECLARE
   v_stage uuid := '786831a5-46c1-4ae7-ac42-1fea58451c34';
@@ -4731,6 +4388,7 @@ BEGIN
 END $$;
 
 -- ########## MIGRATIE: 20260510171929_90210366-cf16-4b41-a422-3494c8da1928.sql ##########
+
 -- Refresh total_points for active Giro 2026 game (stage points only; predictions still 0 until final stage)
 DO $$
 DECLARE v_game uuid;
@@ -4764,6 +4422,7 @@ BEGIN
 END $$;
 
 -- ########## MIGRATIE: 20260511154850_0b1455ad-4bbf-4020-b415-2a1d717607cf.sql ##########
+
 
 CREATE OR REPLACE FUNCTION public.subpoule_benchmark_data(p_subpoule_id uuid, p_game_id uuid)
 RETURNS jsonb
@@ -4903,6 +4562,7 @@ $$;
 
 
 -- ########## MIGRATIE: 20260511155953_82120787-1e74-43e4-bbe4-3339a3ec88c6.sql ##########
+
 
 -- Updated: include picks (rider names) per entry per category
 CREATE OR REPLACE FUNCTION public.subpoule_benchmark_data(p_subpoule_id uuid, p_game_id uuid)
@@ -5134,6 +4794,7 @@ GRANT EXECUTE ON FUNCTION public.subpoule_benchmark_data(uuid, uuid) TO authenti
 
 
 -- ########## MIGRATIE: 20260511161548_af7437dd-41a6-4881-8d9e-5906a174d87a.sql ##########
+
 
 -- 1. Uitbreidingen op chat_messages
 ALTER TABLE public.chat_messages
@@ -5457,6 +5118,7 @@ ALTER TABLE public.chat_poll_votes REPLICA IDENTITY FULL;
 
 
 -- ########## MIGRATIE: 20260511164609_deb62852-2ebf-4676-a891-598a37cbc878.sql ##########
+
 ALTER TABLE public.stages
   ADD COLUMN IF NOT EXISTS distance_km integer,
   ADD COLUMN IF NOT EXISTS is_gc boolean NOT NULL DEFAULT false;
@@ -5465,11 +5127,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS stages_one_gc_per_game
   ON public.stages (game_id) WHERE is_gc = true;
 
 -- ########## MIGRATIE: 20260512175352_b45090af-ba4f-4551-bf43-3167030d291d.sql ##########
+
 ALTER TABLE public.games ADD COLUMN IF NOT EXISTS joker_multiplier integer NOT NULL DEFAULT 2;
 
 COMMENT ON COLUMN public.games.joker_multiplier IS 'Multiplier voor joker punten: 1 = normaal, 2 = verdubbeld';
 
 -- ########## MIGRATIE: 20260512180047_30def525-cdea-4bc2-8c81-4589d38e9b74.sql ##########
+
 CREATE OR REPLACE FUNCTION public.calculate_stage_scores(p_stage_id uuid)
   RETURNS void
   LANGUAGE plpgsql
@@ -5546,6 +5210,7 @@ BEGIN
 END $function$;
 
 -- ########## MIGRATIE: 20260512180536_4423aff1-593c-478a-93f2-6e8ccd15fc93.sql ##########
+
 CREATE OR REPLACE FUNCTION public.admin_stage_points_breakdown(p_stage_id uuid)
  RETURNS TABLE(entry_id uuid, team_name text, display_name text, total_stage_points integer, breakdown jsonb)
  LANGUAGE sql
@@ -5646,6 +5311,7 @@ AS $function$
 $function$;
 
 -- ########## MIGRATIE: 20260514000000_rider_firstcycling.sql ##########
+
 -- Add FirstCycling rider ID to the riders table for fast result lookups
 ALTER TABLE riders ADD COLUMN IF NOT EXISTS firstcycling_id integer;
 
@@ -5669,9 +5335,11 @@ CREATE POLICY "Public read rider results cache"
 
 
 -- ########## MIGRATIE: 20260514100941_a61b58ed-1121-406b-bb7a-1b254e0ee806.sql ##########
+
 ALTER TABLE games ADD COLUMN IF NOT EXISTS accent_color text;
 
 -- ########## MIGRATIE: 20260514123027_ce8df189-05f3-4ca3-8c52-98e5c4630751.sql ##########
+
 -- Add FirstCycling rider ID to the riders table for fast result lookups
 ALTER TABLE riders ADD COLUMN IF NOT EXISTS firstcycling_id integer;
 
@@ -5694,6 +5362,7 @@ CREATE POLICY "Public read rider results cache"
   ON rider_results_cache FOR SELECT USING (true);
 
 -- ########## MIGRATIE: 20260514155839_b9e4e2b3-236a-4e01-be80-6b5e54b90282.sql ##########
+
 -- Function to update updated_at column if it doesn't exist
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -5797,6 +5466,7 @@ CREATE TRIGGER update_rubriek_items_updated_at
 
 
 -- ########## MIGRATIE: 20260514160424_dc49ac11-83a6-4856-96f5-45e121f7b039.sql ##########
+
 DROP TABLE IF EXISTS public.rubriek_votes  CASCADE;
 DROP TABLE IF EXISTS public.rubriek_options CASCADE;
 DROP TABLE IF EXISTS public.rubriek_items  CASCADE;
@@ -5864,6 +5534,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.cast_rubriek_vote(uuid, int) TO authenticated;
 
 -- ########## MIGRATIE: 20260514200000_rubriek.sql ##########
+
 -- ── Rubriek: game-scoped text posts + polls for "De Courant van Vandaag" ──────
 -- Mirrors the chat_polls / chat_poll_votes pattern used by the Koerscafé.
 -- options stored as jsonb string-array; votes use option_index (int).
@@ -5943,17 +5614,20 @@ GRANT EXECUTE ON FUNCTION public.cast_rubriek_vote(uuid, int) TO authenticated;
 
 
 -- ########## MIGRATIE: 20260517000000_add_is_dnf_to_riders.sql ##########
+
 -- Add is_dnf boolean to riders table for live-game DNF tracking
 alter table riders
   add column if not exists is_dnf boolean not null default false;
 
 
 -- ########## MIGRATIE: 20260517084350_931dce5f-42d2-41b9-b9cd-d9e5dc2d4a6f.sql ##########
+
 -- Add is_dnf boolean to riders table for live-game DNF tracking
 alter table riders
   add column if not exists is_dnf boolean not null default false;
 
 -- ########## MIGRATIE: 20260518000000_public_unsubscribe.sql ##########
+
 -- Publieke uitschrijffunctie: geen auth vereist, veilig via token.
 -- Wordt aangeroepen vanuit de /uitschrijven pagina.
 
@@ -5993,6 +5667,7 @@ GRANT EXECUTE ON FUNCTION public.public_unsubscribe(text) TO anon, authenticated
 
 
 -- ########## MIGRATIE: 20260518155448_a1f541ad-6728-4260-ba24-f0b98ac2efc6.sql ##########
+
 CREATE OR REPLACE FUNCTION public.public_unsubscribe(p_token text)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -6026,6 +5701,7 @@ GRANT EXECUTE ON FUNCTION public.public_unsubscribe(text) TO anon, authenticated
 
 -- ########## MIGRATIE: 20260519153443_fd15ce84-cc3b-4518-b407-484d08e7c93a.sql ##########
 
+
 -- Correct Bahrain-Victorious bib numbers to match official PCS startlist
 -- Use negative temp values to avoid unique constraint conflicts
 UPDATE riders SET start_number = -14 WHERE name = 'Fran Miholjevic';
@@ -6042,6 +5718,7 @@ UPDATE riders SET start_number = 16 WHERE name = 'Alec Segaert';
 
 
 -- ########## MIGRATIE: 20260521000000_etappe_commentaren.sql ##########
+
 -- ============================================
 -- Etappe-commentaren: Michel Wuyts & José De Cauwer
 -- AI-gegenereerd commentaar per subpoule per gefiatteerde etappe.
@@ -6111,6 +5788,7 @@ END $$;
 
 
 -- ########## MIGRATIE: 20260521120000_karavaan_last_visited.sql ##########
+
 -- ============================================
 -- De Karavaan: tijdstempel voor "nieuw sinds je laatste bezoek"
 -- ============================================
@@ -6135,6 +5813,7 @@ GRANT EXECUTE ON FUNCTION public.touch_karavaan_visit() TO authenticated;
 
 
 -- ########## MIGRATIE: 20260521163008_075f7aeb-aa8a-47cb-a5ed-a6e206ffb35b.sql ##########
+
 CREATE TABLE IF NOT EXISTS public.etappe_commentaren (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   stage_id      uuid NOT NULL REFERENCES public.stages(id) ON DELETE CASCADE,
@@ -6190,6 +5869,7 @@ BEGIN
 END $$;
 
 -- ########## MIGRATIE: 20260521182619_10c27d87-af0f-448e-9c23-f6668844c8d0.sql ##########
+
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS last_visited_karavaan timestamptz;
 
@@ -6208,6 +5888,7 @@ REVOKE ALL ON FUNCTION public.touch_karavaan_visit() FROM public;
 GRANT EXECUTE ON FUNCTION public.touch_karavaan_visit() TO authenticated;
 
 -- ########## MIGRATIE: 20260522120000_lefevere_rapporten.sql ##########
+
 -- ============================================
 -- Lefevere-rapporten: cache per (deelnemer, aantal gefiatteerde etappes).
 -- Bespaart Anthropic-calls: het rapport wordt alleen opnieuw gegenereerd
@@ -6255,6 +5936,7 @@ FOR INSERT WITH CHECK (
 
 
 -- ########## MIGRATIE: 20260522130000_lefevere_rapporten_update_policy.sql ##########
+
 -- ============================================
 -- UPDATE-policy voor lefevere_rapporten: eigen rij mogen overschrijven.
 -- Nodig voor het zelf-herstel in useLefevereReport — een rij die ooit met een
@@ -6279,6 +5961,7 @@ FOR UPDATE USING (
 
 
 -- ########## MIGRATIE: 20260522160947_3328afb4-4662-4811-a36c-94ee5b6e2e9d.sql ##########
+
 CREATE TABLE IF NOT EXISTS public.lefevere_rapporten (
   id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   entry_id              uuid NOT NULL REFERENCES public.entries(id) ON DELETE CASCADE,
@@ -6316,12 +5999,14 @@ FOR INSERT WITH CHECK (
 );
 
 -- ########## MIGRATIE: 20260522161802_b66081b6-d07d-4c2a-80f6-f25c95bf9489.sql ##########
+
 CREATE POLICY "lefevere_rapporten_update" ON public.lefevere_rapporten
 FOR UPDATE
 USING (EXISTS (SELECT 1 FROM entries e WHERE e.id = lefevere_rapporten.entry_id AND e.user_id = auth.uid()))
 WITH CHECK (EXISTS (SELECT 1 FROM entries e WHERE e.id = lefevere_rapporten.entry_id AND e.user_id = auth.uid()));
 
 -- ########## MIGRATIE: 20260524083310_7bf1c2c3-15dc-4b3b-a65a-2ad0a1d072af.sql ##########
+
 
 -- 1. rubriek_votes: require authentication to read
 DROP POLICY IF EXISTS rubriek_votes_read ON public.rubriek_votes;
@@ -6359,6 +6044,7 @@ ALTER FUNCTION public.move_to_dlq(text, text, bigint, jsonb) SET search_path = p
 
 
 -- ########## MIGRATIE: 20260524120000_games_theme.sql ##########
+
 -- ============================================
 -- Thema per game: roze (Giro) / geel (Tour) / rood (Vuelta).
 -- Nullable; bij leeg valt de frontend terug op game_type.
@@ -6375,6 +6061,7 @@ UPDATE public.games SET theme = 'rood'  WHERE theme IS NULL AND game_type = 'vue
 
 
 -- ########## MIGRATIE: 20260524140000_lefevere_admin_delete.sql ##########
+
 -- ============================================
 -- DELETE-policy voor lefevere_rapporten: admin mag cache wissen.
 -- Nodig voor de admin-knop "Regenereer Lefevère" in Fiatteren: door de
@@ -6388,6 +6075,7 @@ FOR DELETE USING (public.is_admin());
 
 
 -- ########## MIGRATIE: 20260524175151_1b99e9ee-b913-4d76-a143-5be184a6e54d.sql ##########
+
 ALTER TABLE public.games
   ADD COLUMN IF NOT EXISTS theme text
   CHECK (theme IS NULL OR theme IN ('roze', 'geel', 'rood'));
@@ -6397,11 +6085,13 @@ UPDATE public.games SET theme = 'geel'  WHERE theme IS NULL AND game_type IN ('t
 UPDATE public.games SET theme = 'rood'  WHERE theme IS NULL AND game_type = 'vuelta';
 
 -- ########## MIGRATIE: 20260524190908_5051d312-6ee0-4cbf-96da-25e4fc46f0e7.sql ##########
+
 DROP POLICY IF EXISTS lefevere_rapporten_delete_admin ON public.lefevere_rapporten;
 CREATE POLICY lefevere_rapporten_delete_admin ON public.lefevere_rapporten
 FOR DELETE USING (public.is_admin());
 
 -- ########## MIGRATIE: 20260525120000_stages_profile_image.sql ##########
+
 -- ============================================
 -- Etappe-profiel: URL naar een profielafbeelding (bv. van touretappe.nl of
 -- een eigen upload). Getoond in "De Voorbeschouwing" in de Gazetta.
@@ -6412,6 +6102,7 @@ ALTER TABLE public.stages
 
 
 -- ########## MIGRATIE: 20260525130000_stages_profile_data.sql ##########
+
 -- ============================================
 -- Geëxtraheerde profieldata per etappe (kernpunten: km, hoogte, labels, klim-%).
 -- Gevuld door de edge function generate-stage-profile (vision-model leest het
@@ -6423,6 +6114,7 @@ ALTER TABLE public.stages
 
 
 -- ########## MIGRATIE: 20260525140000_stage_profiles_bucket.sql ##########
+
 -- ============================================
 -- Storage-bucket voor geüploade etappeprofielen (admin upload in StagesTab).
 -- Publiek leesbaar; alleen admins mogen schrijven/wissen.
@@ -6451,6 +6143,7 @@ create policy "stage_profiles_admin_delete" on storage.objects
 
 
 -- ########## MIGRATIE: 20260525170441_ed7bbcba-20d0-4007-ae00-65c7f6fac605.sql ##########
+
 ALTER TABLE public.stages
   ADD COLUMN IF NOT EXISTS profile_image_url text;
 
@@ -6463,6 +6156,7 @@ UPDATE public.games SET theme = 'geel'  WHERE theme IS NULL AND game_type IN ('t
 UPDATE public.games SET theme = 'rood'  WHERE theme IS NULL AND game_type = 'vuelta';
 
 -- ########## MIGRATIE: 20260525172441_5d573c58-1b9e-476c-a046-b629d0a7703f.sql ##########
+
 -- 20260525120000_stages_profile_image (idempotent)
 ALTER TABLE public.stages ADD COLUMN IF NOT EXISTS profile_image_url text;
 
@@ -6484,15 +6178,19 @@ END
 WHERE theme IS NULL;
 
 -- ########## MIGRATIE: 20260525175015_98eb1539-7613-4c93-88fa-ee7d2e0342fc.sql ##########
+
 ALTER TABLE public.stages ADD COLUMN IF NOT EXISTS profile_data jsonb;
 
 -- ########## MIGRATIE: 20260525182733_1f636241-1e86-4bd2-b644-96be061bec78.sql ##########
+
 ALTER TABLE public.stages ADD COLUMN IF NOT EXISTS profile_data jsonb;
 
 -- ########## MIGRATIE: 20260525183543_57627d12-128b-414e-bdf8-dbb7d833c9a0.sql ##########
+
 ALTER TABLE public.stages ADD COLUMN IF NOT EXISTS profile_data jsonb;
 
 -- ########## MIGRATIE: 20260525184638_69dead15-0648-4b07-8d2f-401a0e9c2e60.sql ##########
+
 
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('stage-profiles', 'stage-profiles', true)
@@ -6520,6 +6218,7 @@ USING (bucket_id = 'stage-profiles' AND public.is_admin());
 
 
 -- ########## MIGRATIE: 20260529160546_13dad597-383e-4e66-b5b3-469ec7543407.sql ##########
+
 
 -- profiles cleanup
 DROP TRIGGER IF EXISTS prevent_profile_privilege_escalation_trg ON public.profiles;
@@ -6568,6 +6267,7 @@ DROP POLICY IF EXISTS "Stage profiles are publicly accessible" ON storage.object
 
 
 -- ########## MIGRATIE: 20260531075320_b4dfee50-59c3-4e85-9553-c76fd5dbed20.sql ##########
+
 DROP FUNCTION IF EXISTS public.game_entries_detail(uuid);
 
 CREATE OR REPLACE FUNCTION public.game_entries_detail(p_game_id uuid)
@@ -6619,6 +6319,7 @@ REVOKE EXECUTE ON FUNCTION public.game_entries_detail(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.game_entries_detail(uuid) TO authenticated;
 
 -- ########## MIGRATIE: 20260531120000_game_entries_detail.sql ##########
+
 -- game_entries_detail: zoals subpoule_entries_detail, maar voor ALLE ingediende
 -- teams in een game. Nodig voor de game-brede benchmark (Hors Categorie ->
 -- Benchmark), waar je je team + jokers + voorspellingen met elke andere
@@ -6678,6 +6379,7 @@ GRANT EXECUTE ON FUNCTION public.game_entries_detail(uuid) TO authenticated;
 
 
 -- ########## MIGRATIE: 20260531140000_editable_prediction_scoring.sql ##########
+
 -- Maakt de GC-/trui-voorspellingsscores AANPASBAAR per game.
 -- De puntwaarden komen uit points_schema (nieuwe classificaties), met de
 -- bestaande vaste waarden als fallback:
@@ -6814,6 +6516,7 @@ END $function$;
 
 
 -- ########## MIGRATIE: 20260531160000_total_includes_predictions.sql ##########
+
 -- Het totaalklassement moet de GC-/trui-voorspellingspunten MEETELLEN bij de
 -- 21 etappepunten. update_total_ranking somde tot nu toe alleen stage_points,
 -- waardoor de voorspellingspunten bij elke (her)berekening of fiattering weer
@@ -6855,6 +6558,7 @@ END $$;
 
 
 -- ########## MIGRATIE: 20260531190112_589a66d5-b511-4214-807a-97e779f6c5d8.sql ##########
+
 ALTER TABLE public.points_schema DROP CONSTRAINT IF EXISTS points_schema_classification_check;
 ALTER TABLE public.points_schema
   ADD CONSTRAINT points_schema_classification_check
@@ -6965,6 +6669,7 @@ BEGIN
 END $function$;
 
 -- ########## MIGRATIE: 20260531192547_750d735b-1a3d-4fd8-bd6c-e77ad3814921.sql ##########
+
 CREATE OR REPLACE FUNCTION public.update_total_ranking(p_game_id uuid)
 RETURNS void
 LANGUAGE plpgsql
@@ -7000,6 +6705,7 @@ BEGIN
 END $$;
 
 -- ########## MIGRATIE: 20260531200000_game_type_femmes.sql ##########
+
 -- Sta 'femmes' (Tour de France Femmes) toe als game_type. Femmes hergebruikt het
 -- gele Tour-thema (theme = 'geel'), dus de theme-CHECK hoeft niet te wijzigen.
 ALTER TABLE public.games DROP CONSTRAINT IF EXISTS games_game_type_check;
@@ -7011,6 +6717,7 @@ UPDATE public.games SET theme = 'geel' WHERE theme IS NULL AND game_type = 'femm
 
 
 -- ########## MIGRATIE: 20260601140000_scaling_indexes.sql ##########
+
 -- Schaal-indexes: versnellen de zwaarste reads/recalcs naarmate het aantal
 -- deelnemers groeit. Allemaal IF NOT EXISTS → veilig en idempotent.
 --
@@ -7036,6 +6743,7 @@ CREATE INDEX IF NOT EXISTS category_riders_rider_idx ON public.category_riders(r
 
 
 -- ########## MIGRATIE: 20260601160000_game_standings_rpc.sql ##########
+
 -- Schaalbare standen: server-side aggregatie i.p.v. alle stage_points-rijen
 -- naar de client. Geeft per ingediend team de cumulatieve stand t/m een rit
 -- (stage_number = p_upto), incl. rang, rang-delta t.o.v. de vorige rit, de
@@ -7125,6 +6833,7 @@ GRANT EXECUTE ON FUNCTION public.game_standings(uuid, integer) TO authenticated;
 
 
 -- ########## MIGRATIE: 20260601180000_my_stage_ranks_rpc.sql ##########
+
 -- StageBars: jouw dagklassering per etappe, server-side. Vervangt het ophalen
 -- van alle stage_points naar de client. Geeft per etappe (waar jij punten
 -- scoorde) jouw rang onder alle ingediende teams. SECURITY DEFINER (leest
@@ -7161,6 +6870,7 @@ GRANT EXECUTE ON FUNCTION public.my_stage_ranks(uuid, uuid) TO authenticated;
 
 
 -- ########## MIGRATIE: 20260601200000_game_stage_averages_rpc.sql ##########
+
 -- Hors Catégorie tijdlijn ("Jij vs de Gemiddelde Aap"): gemiddelde stage-punten
 -- per etappe over alle ingediende teams, server-side. Vervangt het ophalen van
 -- alle stage_points naar de client (deelnemers × etappes) door één geaggregeerde
@@ -7188,6 +6898,7 @@ GRANT EXECUTE ON FUNCTION public.game_stage_averages(uuid) TO authenticated;
 
 
 -- ########## MIGRATIE: 20260602190302_c49208de-a84c-41c0-af62-dd2a950239a3.sql ##########
+
 ALTER TABLE public.games DROP CONSTRAINT IF EXISTS games_game_type_check;
 ALTER TABLE public.games ADD CONSTRAINT games_game_type_check
   CHECK (game_type = ANY (ARRAY['giro'::text, 'tour'::text, 'tdf'::text, 'vuelta'::text, 'femmes'::text, 'other'::text]));
@@ -7195,6 +6906,7 @@ ALTER TABLE public.games ADD CONSTRAINT games_game_type_check
 UPDATE public.games SET theme = 'geel' WHERE theme IS NULL AND game_type = 'femmes';
 
 -- ########## MIGRATIE: 20260603064702_f2ce415a-1fd1-4122-a7ee-6741ca144255.sql ##########
+
 -- 20260601140000_scaling_indexes.sql
 CREATE INDEX IF NOT EXISTS stage_points_entry_idx ON public.stage_points(entry_id);
 CREATE INDEX IF NOT EXISTS entry_picks_entry_idx ON public.entry_picks(entry_id);
@@ -7282,6 +6994,7 @@ REVOKE EXECUTE ON FUNCTION public.game_standings(uuid, integer) FROM anon;
 GRANT EXECUTE ON FUNCTION public.game_standings(uuid, integer) TO authenticated;
 
 -- ########## MIGRATIE: 20260603092032_4bfd1161-49e4-43c3-bb70-cd35c699b460.sql ##########
+
 -- Hors Catégorie tijdlijn ("Jij vs de Gemiddelde Aap"): gemiddelde stage-punten
 -- per etappe over alle ingediende teams, server-side. Vervangt het ophalen van
 -- alle stage_points naar de client (deelnemers × etappes) door één geaggregeerde
@@ -7308,6 +7021,7 @@ REVOKE EXECUTE ON FUNCTION public.game_stage_averages(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.game_stage_averages(uuid) TO authenticated;
 
 -- ########## MIGRATIE: 20260603103253_d05bba24-0588-49fb-b740-66101a2e389d.sql ##########
+
 -- ── 1) chat_message_reactions.subpoule_id ───────────────────────────────────
 ALTER TABLE public.chat_message_reactions
   ADD COLUMN IF NOT EXISTS subpoule_id uuid;
@@ -7381,6 +7095,7 @@ CREATE INDEX IF NOT EXISTS idx_chat_poll_votes_subpoule
 ALTER TABLE public.chat_poll_votes REPLICA IDENTITY FULL;
 
 -- ########## MIGRATIE: 20260603110941_a97e14af-faf0-422b-888a-748aff198d23.sql ##########
+
 -- 1) Voorbereiden
 CREATE OR REPLACE FUNCTION public.recalc_prepare(p_game_id uuid)
 RETURNS TABLE(stage_id uuid)
@@ -7445,6 +7160,7 @@ GRANT EXECUTE ON FUNCTION public.recalc_stage(uuid, uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.recalc_finalize(uuid) TO authenticated;
 
 -- ########## MIGRATIE: 20260603120000_chat_realtime_scope.sql ##########
+
 -- Chat realtime schaalbaar maken.
 --
 -- Probleem: chat_message_reactions en chat_poll_votes droegen geen subpoule_id,
@@ -7530,6 +7246,7 @@ ALTER TABLE public.chat_poll_votes REPLICA IDENTITY FULL;
 
 
 -- ########## MIGRATIE: 20260603140000_recalc_batched.sql ##########
+
 -- Batched recalculation: full_recalculation deed alles in één statement
 -- (wipe → loop alle goedgekeurde etappes → voorspellingen → totalen). Bij veel
 -- deelnemers × etappes overschrijdt dat de statement_timeout en faalt de hele
@@ -7603,6 +7320,7 @@ GRANT EXECUTE ON FUNCTION public.recalc_finalize(uuid) TO authenticated;
 
 
 -- ########## MIGRATIE: 20260604120000_team_jersey_url.sql ##########
+
 -- Ploeg-trui (kit-afbeelding) per team. De admin uploadt per team een trui in
 -- de Startlijst-tab; de afbeelding wordt in storage gezet en de publieke URL
 -- hier bewaard. Toont in "Stel je team samen → Startlijst" naast elke ploeg.
@@ -7614,6 +7332,7 @@ ALTER TABLE public.teams
 
 
 -- ########## MIGRATIE: 20260604160000_mark_subpoule_read_noop.sql ##########
+
 -- mark_subpoule_read wierp een EXCEPTION als auth.uid() NULL was. Die functie
 -- wordt bij elke chat-open/-sluit aangeroepen (PelotonChat, ook bij auth-events
 -- als de client-user-ref wisselt). Zonder geldige JWT (anon "rondkijken" of een
@@ -7643,10 +7362,12 @@ END $$;
 
 
 -- ########## MIGRATIE: 20260604180927_1fe3e155-4c8f-4b15-967b-9fa481e735bc.sql ##########
+
 ALTER TABLE public.teams
   ADD COLUMN IF NOT EXISTS jersey_url text;
 
 -- ########## MIGRATIE: 20260604182247_b9b81c02-c409-4ab4-b075-9a503af71395.sql ##########
+
 CREATE OR REPLACE FUNCTION public.mark_subpoule_read(p_subpoule_id uuid)
 RETURNS void
 LANGUAGE plpgsql
@@ -7664,6 +7385,7 @@ BEGIN
 END $$;
 
 -- ########## MIGRATIE: 20260604185219_b0f24883-bd20-425e-85d1-eca4794e9977.sql ##########
+
 -- Read policy (anon + authenticated) op private team-jerseys bucket
 DROP POLICY IF EXISTS "team_jerseys_read" ON storage.objects;
 CREATE POLICY "team_jerseys_read" ON storage.objects
@@ -7690,6 +7412,7 @@ CREATE POLICY "team_jerseys_admin_delete" ON storage.objects
   USING (bucket_id = 'team-jerseys' AND public.is_admin());
 
 -- ########## MIGRATIE: 20260604200000_team_jerseys_bucket.sql ##########
+
 -- Eigen storage-bucket voor ploeg-truien (kit-afbeeldingen). Eerder werd de
 -- stage-profiles-bucket hergebruikt, maar de upload gaf "new row violates
 -- row-level security policy" — de hand-genaamde storage-policies van die bucket
@@ -7729,6 +7452,7 @@ CREATE POLICY "team_jerseys_admin_delete" ON storage.objects
 
 
 -- ########## MIGRATIE: 20260607172521_c578c0da-c900-4cd3-bff8-811ea374cca3.sql ##########
+
 -- Hard search_path lock (defense-in-depth; al gezet maar idempotent)
 alter function public.is_admin() set search_path = public, pg_temp;
 alter function public.game_entries_standings(uuid) set search_path = public, pg_temp;
@@ -7744,6 +7468,7 @@ grant execute on function public.game_entries_standings(uuid) to anon, authentic
 grant execute on function public.game_standings(uuid, integer) to anon, authenticated;
 
 -- ########## MIGRATIE: 20260608160900_f8b7a2da-ff1d-4dd4-9724-ba70ebc2dd44.sql ##########
+
 -- Fix 1: Realtime messages — drop the allow-all SELECT policy so deny-all/topic-scoped policies win
 DROP POLICY IF EXISTS "Authenticated users can receive broadcasts" ON realtime.messages;
 
@@ -7752,6 +7477,7 @@ DROP POLICY IF EXISTS "Authenticated users can receive broadcasts" ON realtime.m
 DROP POLICY IF EXISTS "team_jerseys_read" ON storage.objects;
 
 -- ########## MIGRATIE: 20260608170000_rider_stage_points_rpc.sql ##########
+
 -- rider_stage_points: per-stage punten die één renner heeft gescoord binnen
 -- een game. Gebruikt voor de inline "dossier"-dropdown onder een renner in
 -- Mijn Ploeg.
@@ -7903,6 +7629,7 @@ GRANT EXECUTE ON FUNCTION public.rider_entry_totals(uuid, uuid) TO anon;
 
 
 -- ########## MIGRATIE: 20260608172830_27c5531a-8d58-45c7-a0bc-68835937b9d0.sql ##########
+
 CREATE OR REPLACE FUNCTION public.rider_stage_points(
   p_game_id uuid,
   p_rider_id uuid,
@@ -7981,6 +7708,7 @@ CREATE INDEX IF NOT EXISTS stage_results_game_rider_idx
   ON public.stage_results(game_id, rider_id);
 
 -- ########## MIGRATIE: 20260608182203_bf639c08-d53b-44b5-b5a5-6691d4ad7bc8.sql ##########
+
 -- rider_stage_points: per-stage punten die één renner heeft gescoord binnen
 -- een game. Gebruikt voor de inline "dossier"-dropdown onder een renner in
 -- Mijn Ploeg.
@@ -8131,9 +7859,11 @@ GRANT EXECUTE ON FUNCTION public.rider_entry_totals(uuid, uuid) TO authenticated
 GRANT EXECUTE ON FUNCTION public.rider_entry_totals(uuid, uuid) TO anon;
 
 -- ########## MIGRATIE: 20260612064348_3697b4a3-bb83-4daf-9d53-b13acba8a9f7.sql ##########
+
 ALTER TABLE public.games ADD COLUMN IF NOT EXISTS homepage_quote text, ADD COLUMN IF NOT EXISTS homepage_quote_author text;
 
 -- ########## MIGRATIE: 20260613095818_8956eaf4-f40d-4a67-b4d0-c75e3174770f.sql ##########
+
 -- ───────────────────────────────────────────────────────────────────────────
 -- Subpoule-slugs: nette, deelbare URLs (/subpoule/<naam>).
 -- Voegt een slug-kolom + slugify/ensure_unique_slug helpers toe, backfilt
@@ -8255,6 +7985,7 @@ $$;
 grant execute on function public.resolve_subpoule_by_slug(text) to authenticated;
 
 -- ########## MIGRATIE: 20260613100000_homepage_quote_size.sql ##########
+
 -- Instelbare fontgrootte (px) voor de homepage-hero-quote, beheerd in
 -- Admin → Rubriek → Homepage quote. NULL = frontend-default.
 ALTER TABLE public.games
@@ -8262,6 +7993,7 @@ ALTER TABLE public.games
 
 
 -- ########## MIGRATIE: 20260613100325_61bb593b-2366-4343-acb2-6480a76fa8dc.sql ##########
+
 CREATE OR REPLACE FUNCTION public.slugify(p_text text)
  RETURNS text
  LANGUAGE sql
@@ -8290,6 +8022,7 @@ AS $function$
 $function$;
 
 -- ########## MIGRATIE: 20260613_subpoule_slugs.sql ##########
+
 -- ───────────────────────────────────────────────────────────────────────────
 -- Subpoule-slugs: nette, deelbare URLs (/subpoule/<naam>).
 -- Voegt een slug-kolom + slugify/ensure_unique_slug helpers toe, backfilt
@@ -8412,6 +8145,7 @@ grant execute on function public.resolve_subpoule_by_slug(text) to authenticated
 
 
 -- ########## MIGRATIE: 20260614090000_fix_create_subpoule.sql ##########
+
 -- ───────────────────────────────────────────────────────────────────────────
 -- Fix: dubbele create_subpoule-overload → ambiguïteit bij benoemde args.
 -- Er bestonden twee overloads met dezelfde benoemde parameters maar andere
@@ -8481,6 +8215,7 @@ update public.subpoules
 
 
 -- ########## MIGRATIE: 20260614100000_perf_entries_indexes.sql ##########
+
 -- ───────────────────────────────────────────────────────────────────────────
 -- Performance + integriteit (hygiëne, idempotent):
 --  DEEL 2: ontbrekende indexen op stages / stage_results.
@@ -8566,6 +8301,7 @@ grant execute on function public.get_or_create_entry(uuid) to authenticated;
 
 
 -- ########## MIGRATIE: 20260614110000_leaderboard_mv.sql ##########
+
 -- ───────────────────────────────────────────────────────────────────────────
 -- Voorgerekende globale stand (materialized view) — i.p.v. per request een
 -- live rank() over alle entries. Ververst automatisch ná elke herberekening
@@ -8651,6 +8387,7 @@ grant execute on function public.get_game_leaderboard(uuid) to authenticated, se
 
 
 -- ########## MIGRATIE: 20260616120000_games_admin_write.sql ##########
+
 -- Bug: de homepage-quote (Admin → Rubriek) bleef niet opgeslagen.
 -- Oorzaak: op public.games staat RLS aan, maar er bestond alleen een SELECT-
 -- policy (read_games). Zonder UPDATE-policy raakt een admin-update 0 rijen —
@@ -8670,4 +8407,3 @@ CREATE POLICY games_admin_write ON public.games
   FOR ALL
   USING (public.is_admin())
   WITH CHECK (public.is_admin());
-
