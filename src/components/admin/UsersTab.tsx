@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, ShieldOff, Trash2, Download } from "lucide-react";
+import { Shield, ShieldOff, Trash2, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { exportToXlsx, todayStamp } from "@/lib/exportXlsx";
+import * as XLSX from "xlsx";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -25,6 +26,8 @@ export default function UsersTab() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function load() {
     if (!supabase) return;
@@ -89,6 +92,45 @@ export default function UsersTab() {
     }
   }
 
+  async function handleImportFile(file: File) {
+    if (!supabase) return;
+    setImporting(true);
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
+      const emailRe = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+      const emails = Array.from(new Set(
+        rows.flatMap((r) => Object.values(r))
+          .map((v) => String(v ?? "").trim().toLowerCase())
+          .filter((v) => emailRe.test(v))
+      ));
+      if (emails.length === 0) {
+        toast.error("Geen geldige e-mailadressen gevonden in dit bestand");
+        return;
+      }
+      if (!confirm(`${emails.length} e-mailadres(sen) gevonden. Uitnodigingen versturen?`)) return;
+
+      const redirectTo = `${window.location.origin}/login`;
+      const { data, error } = await supabase.functions.invoke("admin-invite-users", {
+        body: { emails, redirect_to: redirectTo },
+      });
+      if (error || (data as any)?.error) {
+        toast.error(`Import mislukt: ${error?.message ?? (data as any)?.error}`);
+        return;
+      }
+      const { invited = 0, skipped = 0, errors = 0, total = 0 } = (data ?? {}) as any;
+      toast.success(`Import klaar: ${invited}/${total} uitgenodigd, ${skipped} bestonden al, ${errors} fouten`);
+      await load();
+    } catch (e: any) {
+      toast.error(`Import mislukt: ${e?.message ?? e}`);
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   return (
     <div className="space-y-4">
       <Card>
@@ -96,10 +138,29 @@ export default function UsersTab() {
           <CardTitle className="font-display flex items-center gap-2"><Shield className="w-5 h-5" />Gebruikers ({users.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex gap-2">
-            <Input data-testid="search-users" placeholder="Zoek op e-mail..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <div className="flex gap-2 flex-wrap">
+            <Input data-testid="search-users" placeholder="Zoek op e-mail..." value={search} onChange={(e) => setSearch(e.target.value)} className="min-w-[200px] flex-1" />
             <Button variant="outline" onClick={handleExport} disabled={loading || filtered.length === 0} data-testid="export-users">
               <Download className="w-4 h-4 mr-1" />Exporteer naar Excel
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleImportFile(f);
+              }}
+            />
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              data-testid="import-users"
+            >
+              <Upload className="w-4 h-4 mr-1" />
+              {importing ? "Importeren..." : "Importeer uit Excel"}
             </Button>
           </div>
           {loading ? (

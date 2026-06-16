@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.rider-stats]
 verify_jwt = false
+
+[functions.admin-invite-users]
+verify_jwt = false
