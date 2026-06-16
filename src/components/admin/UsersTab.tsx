@@ -92,6 +92,45 @@ export default function UsersTab() {
     }
   }
 
+  async function handleImportFile(file: File) {
+    if (!supabase) return;
+    setImporting(true);
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
+      const emailRe = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+      const emails = Array.from(new Set(
+        rows.flatMap((r) => Object.values(r))
+          .map((v) => String(v ?? "").trim().toLowerCase())
+          .filter((v) => emailRe.test(v))
+      ));
+      if (emails.length === 0) {
+        toast.error("Geen geldige e-mailadressen gevonden in dit bestand");
+        return;
+      }
+      if (!confirm(`${emails.length} e-mailadres(sen) gevonden. Uitnodigingen versturen?`)) return;
+
+      const redirectTo = `${window.location.origin}/login`;
+      const { data, error } = await supabase.functions.invoke("admin-invite-users", {
+        body: { emails, redirect_to: redirectTo },
+      });
+      if (error || (data as any)?.error) {
+        toast.error(`Import mislukt: ${error?.message ?? (data as any)?.error}`);
+        return;
+      }
+      const { invited = 0, skipped = 0, errors = 0, total = 0 } = (data ?? {}) as any;
+      toast.success(`Import klaar: ${invited}/${total} uitgenodigd, ${skipped} bestonden al, ${errors} fouten`);
+      await load();
+    } catch (e: any) {
+      toast.error(`Import mislukt: ${e?.message ?? e}`);
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   return (
     <div className="space-y-4">
       <Card>
