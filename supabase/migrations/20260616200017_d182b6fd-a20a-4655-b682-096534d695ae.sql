@@ -1,0 +1,1 @@
+REVOKE ALL ON public.leaderboard_global_mv FROM anon, authenticated;
