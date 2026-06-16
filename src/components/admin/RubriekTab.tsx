@@ -467,15 +467,20 @@ function HomepageQuoteCard({ activeGameId }: { activeGameId: string }) {
     if (!supabase) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("games")
         .update({
           homepage_quote: quote.trim() || null,
           homepage_quote_author: author.trim() || null,
           homepage_quote_size: sizePx,
         } as any)
-        .eq("id", activeGameId);
+        .eq("id", activeGameId)
+        .select("id");
       if (error) throw error;
+      // RLS zonder write-policy raakt 0 rijen zónder error → expliciet afvangen.
+      if (!data || data.length === 0) {
+        throw new Error("Niets bijgewerkt — ben je als admin ingelogd? (rechten)");
+      }
       toast.success("Quote opgeslagen");
       qc.invalidateQueries({ queryKey: ["current-game"] });
     } catch (e) {
