@@ -4,6 +4,17 @@
 -- Uit: schema.sql + 4 cron-jobs. Fixes: backend_v4 team_id->entry_id,
 -- admin_v3 game_type->text, views drop+recreate.
 
+-- ########## PREP: schema-rechten (Supabase-defaults) ##########
+-- Na 'drop schema public cascade; create schema public' zijn de standaard-
+-- grants weg. Zonder deze geeft PostgREST 403 op alle tabellen. RLS blijft
+-- de rijen beschermen. Default privileges gelden voor tabellen die hierna
+-- worden aangemaakt.
+grant usage on schema public to anon, authenticated, service_role;
+alter default privileges in schema public grant select, insert, update, delete on tables to anon, authenticated;
+alter default privileges in schema public grant all on tables to service_role;
+alter default privileges in schema public grant usage, select on sequences to anon, authenticated, service_role;
+alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;
+
 -- ########## BASIS ##########
 
 
@@ -8542,3 +8553,10 @@ CREATE POLICY games_admin_write ON public.games
 -- ########## CLEANUP: stale admin-sync trigger ##########
 drop trigger if exists trg_sync_profile_admin on public.user_roles;
 drop function if exists public.sync_profile_admin();
+
+
+-- ########## GRANTS: vangnet voor reeds aangemaakte objecten ##########
+grant select, insert, update, delete on all tables in schema public to anon, authenticated;
+grant all on all tables in schema public to service_role;
+grant usage, select on all sequences in schema public to anon, authenticated, service_role;
+grant execute on all functions in schema public to anon, authenticated, service_role;

@@ -92,6 +92,16 @@ def main():
         "-- Basis 20260430193546 + compat + overige migraties (chronologisch).\n"
         "-- Uit: schema.sql + 4 cron-jobs. Fixes: backend_v4 team_id->entry_id,\n"
         "-- admin_v3 game_type->text, views drop+recreate.\n",
+        "-- ########## PREP: schema-rechten (Supabase-defaults) ##########\n"
+        "-- Na 'drop schema public cascade; create schema public' zijn de standaard-\n"
+        "-- grants weg. Zonder deze geeft PostgREST 403 op alle tabellen. RLS blijft\n"
+        "-- de rijen beschermen. Default privileges gelden voor tabellen die hierna\n"
+        "-- worden aangemaakt.\n"
+        "grant usage on schema public to anon, authenticated, service_role;\n"
+        "alter default privileges in schema public grant select, insert, update, delete on tables to anon, authenticated;\n"
+        "alter default privileges in schema public grant all on tables to service_role;\n"
+        "alter default privileges in schema public grant usage, select on sequences to anon, authenticated, service_role;\n"
+        "alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;\n",
         "-- ########## BASIS ##########\n",
         read(BASE),
         COMPAT,
@@ -108,6 +118,13 @@ def main():
         "\n-- ########## CLEANUP: stale admin-sync trigger ##########\n"
         "drop trigger if exists trg_sync_profile_admin on public.user_roles;\n"
         "drop function if exists public.sync_profile_admin();\n"
+    )
+    parts.append(
+        "\n-- ########## GRANTS: vangnet voor reeds aangemaakte objecten ##########\n"
+        "grant select, insert, update, delete on all tables in schema public to anon, authenticated;\n"
+        "grant all on all tables in schema public to service_role;\n"
+        "grant usage, select on all sequences in schema public to anon, authenticated, service_role;\n"
+        "grant execute on all functions in schema public to anon, authenticated, service_role;\n"
     )
     open("supabase/_full_setup.sql", "w").write("\n".join(parts))
     print("geschreven: supabase/_full_setup.sql")
