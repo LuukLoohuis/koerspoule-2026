@@ -12,6 +12,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
+import { RetroTabs } from "@/components/RetroTabs";
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import EmptyState from "@/components/EmptyState";
@@ -424,34 +425,18 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
 
         {/* ── DESKTOP: behoud de tabs (Chat / Grafiek / Heatmap, geen Benchmark). ── */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden md:block w-full">
-          {/* Desktop tab nav — flush met de panelen eronder. */}
-          <div className="overflow-x-auto mb-1" style={{ scrollbarWidth: "none" }}>
-            <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
-              {([
-                { value: "chat",    label: "Chat",    Icon: MessageCircle, disabled: false            },
-                { value: "chart",   label: "Grafiek", Icon: TrendingUp,    disabled: false            },
-                { value: "heatmap", label: "Heatmap", Icon: Flame,         disabled: !heatmapUnlocked },
-              ] as const).map(({ value, label, Icon, disabled }) => (
-                <button
-                  key={value}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => !disabled && setActiveTab(value)}
-                  title={disabled ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined}
-                  className={cn(
-                    "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1",
-                    disabled && "opacity-40 cursor-not-allowed",
-                    !disabled && activeTab === value
-                      ? "bg-card text-foreground shadow-sm border border-foreground/10"
-                      : !disabled ? "text-muted-foreground hover:text-foreground hover:bg-secondary/60" : "text-muted-foreground",
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5 shrink-0" />
-                  <span>{label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Desktop tab nav — retro dossard-tabbalk */}
+          <RetroTabs
+            className="mb-1"
+            aria-label="Subpoule-onderdelen"
+            active={activeTab}
+            onChange={setActiveTab}
+            tabs={[
+              { key: "chat",    label: "Chat",    Icon: MessageCircle },
+              { key: "chart",   label: "Grafiek", Icon: TrendingUp },
+              { key: "heatmap", label: "Heatmap", Icon: Flame, disabled: !heatmapUnlocked, title: !heatmapUnlocked ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined },
+            ]}
+          />
 
           <TabsContent value="chat" className="pt-3 space-y-3">
             <PelotonChat subpoolName={active.name} subpoolId={active.id} />

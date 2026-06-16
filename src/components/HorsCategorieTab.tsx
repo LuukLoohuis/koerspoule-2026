@@ -36,6 +36,7 @@ import SwipeHintBar from "@/components/SwipeHintBar";
 import EmptyState from "@/components/EmptyState";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
+import { RetroTabs } from "@/components/RetroTabs";
 import JerseyBadge from "@/components/retro/JerseyBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
 import { useThema } from "@/contexts/ThemaContext";
@@ -833,33 +834,20 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mx-auto w-fit" />
       <SwipeDots count={HORS_TABS.length} activeIndex={HORS_TABS.findIndex((t) => t.key === activeTab)} />
 
-      {/* Desktop — bestaande chip-balk ongewijzigd */}
-      <div className="hidden md:block overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
-        <div className="flex gap-1 rounded-[9px] border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
-          {[
-            { key: "dartpijl" as const, label: "Dartpijl", short: "Dart", Icon: Activity },
-            { key: "pelotonkeuzes" as const, label: "Pelotonkeuzes", short: "Peloton", Icon: BarChart3 },
-            { key: "wielerdirecteur" as const, label: "De Wielerdirecteur", short: "CEO", Icon: DirectorIcon },
-            { key: "superteam" as const, label: "The Emirates", short: "UAE", Icon: Crown },
-            { key: "benchmark" as const, label: "Benchmark", short: "Bench", Icon: Swords },
-          ].map(({ key, label, Icon }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setActiveTab(key)}
-              className={cn(
-                "flex items-center justify-center gap-1.5 rounded-md px-3 min-h-[44px] text-xs font-display font-semibold uppercase tracking-wider transition-colors flex-1",
-                activeTab === key
-                  ? "bg-card text-foreground shadow-sm border border-foreground/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
-              )}
-            >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Desktop — retro dossard-tabbalk */}
+      <RetroTabs
+        className="hidden md:flex"
+        aria-label="Hors Catégorie-onderdelen"
+        active={activeTab}
+        onChange={(k) => setActiveTab(k as typeof activeTab)}
+        tabs={[
+          { key: "dartpijl",        label: "Dartpijl",          Icon: Activity },
+          { key: "pelotonkeuzes",   label: "Pelotonkeuzes",     Icon: BarChart3 },
+          { key: "wielerdirecteur", label: "De Wielerdirecteur", Icon: DirectorIcon },
+          { key: "superteam",       label: "The Emirates",      Icon: Crown },
+          { key: "benchmark",       label: "Benchmark",         Icon: Swords },
+        ]}
+      />
 
       {/* ── Tab: Benchmark ───────────────────────────────────────────────── */}
       {activeTab === "benchmark" && <BenchmarkTab gameId={game?.id} />}

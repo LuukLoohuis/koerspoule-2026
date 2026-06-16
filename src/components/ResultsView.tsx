@@ -22,6 +22,7 @@ import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import SwipeDots from "@/components/SwipeDots";
 import SwipeHintBar from "@/components/SwipeHintBar";
+import { RetroTabs } from "@/components/RetroTabs";
 import { buildStageBarData } from "@/components/stages/stageBarData";
 
 const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
@@ -253,10 +254,21 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
       )}
 
       <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className="max-w-7xl mx-auto" {...resultsSwipe.bind}>
-        {/* Auto-hide alleen op mobiel (max-md); desktop-balk ongewijzigd. */}
+        {/* Desktop — retro dossard-tabbalk */}
+        <RetroTabs
+          className="hidden md:flex"
+          aria-label="Uitslagen-weergave"
+          active={view}
+          onChange={(v) => setView(v as "etappes" | "klassement")}
+          tabs={[
+            { key: "klassement", label: "Klassement", Icon: Trophy },
+            { key: "etappes",    label: "Etappes",    Icon: ClipboardList },
+          ]}
+        />
+        {/* Mobiel — bestaande swipe/auto-hide tabbalk (ongewijzigd). */}
         <div
           className={cn(
-            "overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-md:max-h-[120px]",
+            "md:hidden overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-md:max-h-[120px]",
             !barVisible && "max-md:!max-h-0 max-md:opacity-0",
           )}
         >

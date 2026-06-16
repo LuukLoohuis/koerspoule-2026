@@ -10,7 +10,8 @@ import { pointsTable, classificationPoints, riderCategories } from "@/data/rider
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { RetroTabs } from "@/components/RetroTabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight, MoreHorizontal, Pencil, Newspaper, Car } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
@@ -1088,27 +1089,20 @@ export default function MijnPeloton() {
           {/* Mobile primary tabs verwijderd — BottomNav is enige top-level switcher op mobiel */}
 
 
-          {/* Desktop tab nav — chip-stijl, identiek aan Hors Catégorie inner tabs */}
-          <div className="hidden md:block overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
-            <TabsList className="flex gap-1 rounded-[9px] border-2 border-foreground/15 bg-secondary/30 p-1 h-auto w-full">
-              {([
-                { key: "karavaan",  label: thema.krant,      Icon: Newspaper },
-                { key: "team",      label: "Volgwagen",      Icon: Car     },
-                { key: "subpoules", label: "Subpoules",       Icon: Users   },
-                { key: "uitslagen", label: "Uitslagen",       Icon: Trophy  },
-                { key: "hors",      label: "Hors Catégorie",  Icon: Mountain },
-              ] as const).map(({ key, label, Icon }) => (
-                <TabsTrigger
-                  key={key}
-                  value={key}
-                  className="flex items-center justify-center gap-1.5 rounded-md px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-foreground/10"
-                >
-                  <Icon className="h-3.5 w-3.5 shrink-0" />
-                  <span>{label}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
+          {/* Desktop tab nav — retro dossard-tabbalk */}
+          <RetroTabs
+            className="hidden md:flex"
+            aria-label="Hoofdnavigatie"
+            active={gameTab}
+            onChange={setGameTab}
+            tabs={[
+              { key: "karavaan",  label: thema.krant,      Icon: Newspaper },
+              { key: "team",      label: "Volgwagen",      Icon: Car      },
+              { key: "subpoules", label: "Subpoules",      Icon: Users    },
+              { key: "uitslagen", label: "Uitslagen",      Icon: Trophy   },
+              { key: "hors",      label: "Hors Catégorie", Icon: Mountain },
+            ]}
+          />
 
           {/* ── TAB: De Karavaan (landing — feed-overzicht) ── */}
           <TabsContent value="karavaan" className="mt-3">
@@ -1154,31 +1148,18 @@ export default function MijnPeloton() {
                 className="mb-2"
               />
 
-              {/* Desktop tab nav — ongewijzigd */}
-              <div className="hidden md:block overflow-x-auto -mx-1 px-1 mb-3" style={{ scrollbarWidth: "none" }}>
-                <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 min-w-max md:min-w-0 md:w-full">
-                  {([
-                    { value: "ploeg",    label: "Mijn Ploeg", Icon: Users  },
-                    { value: "prono",    label: "Pronostiek", Icon: Target },
-                    { value: "palmares", label: "Palmares",   Icon: Trophy },
-                  ] as const).map(({ value, label, Icon }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setTeamSubTab(value)}
-                      className={cn(
-                        "flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1",
-                        teamSubTab === value
-                          ? "bg-card text-foreground shadow-sm border border-foreground/10"
-                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
-                      )}
-                    >
-                      <Icon className="h-3.5 w-3.5 shrink-0" />
-                      <span>{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Desktop sub-tab nav — retro dossard-tabbalk */}
+              <RetroTabs
+                className="hidden md:flex mb-3"
+                aria-label="Volgwagen-onderdelen"
+                active={teamSubTab}
+                onChange={setTeamSubTab}
+                tabs={[
+                  { key: "ploeg",    label: "Mijn Ploeg", Icon: Users  },
+                  { key: "prono",    label: "Pronostiek", Icon: Target },
+                  { key: "palmares", label: "Palmares",   Icon: Trophy },
+                ]}
+              />
               <TabsContent value="ploeg" className="space-y-3">
                 {/* Ploegnaam-editor zit nu in het Salle-de-Course-dashboard
                     binnen MyTeamPanel (Zone 1-nudge). */}
