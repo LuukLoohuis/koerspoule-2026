@@ -106,7 +106,10 @@ export default function MijnPeloton() {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   useEffect(() => {
     if (!selectedGame && allGames.length > 0) {
-      const preferred = allGames.find((g) => ["open", "live", "locked"].includes(g.status)) ?? allGames[0];
+      const preferred =
+        allGames.find((g) => ["open", "live", "locked"].includes(g.status)) ??
+        allGames.find((g) => ["draft", "concept"].includes(g.status)) ??
+        allGames[0];
       setSelectedGame(preferred.id);
     }
   }, [allGames, selectedGame]);
