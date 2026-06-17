@@ -42,7 +42,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  draft: "Concept",
+  draft: "Open",
   open: "Open (inschrijving)",
   locked: "Gesloten (deadline)",
   live: "Live (loopt)",
