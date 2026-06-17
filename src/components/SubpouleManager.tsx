@@ -24,7 +24,7 @@ import SubpouleStandings from "@/components/SubpouleStandings";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import DaguitslagChart from "@/components/DaguitslagChart";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Flame, Share2, BarChart3, Trophy, type LucideIcon } from "lucide-react";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Flame, Share2, BarChart3, Trophy, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Mobiele subpoule-tabs (zoals Hors Categorie). Eén paneel tegelijk.
@@ -52,9 +52,13 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
   const { subpoules, isLoading, create, join, leave, remove, removeMember } = useSubpoules(effectiveGameId);
 
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("chart");
+  // Desktop: 5 dossard-tabs (gelijk aan mobiel). Chat is een apart zijpaneel.
+  const [activeTab, setActiveTab] = useState("klassement");
   // Mobiel: chat opent als floating bottom-sheet i.p.v. een tab.
   const [chatOpen, setChatOpen] = useState(false);
+  // Desktop: chat als rechter zijpaneel (los van de tabrij). Eigen staat zodat
+  // de mobiele Sheet niet meeopent op desktop.
+  const [deskChatOpen, setDeskChatOpen] = useState(false);
   // Mobiel: tab-gebaseerde subpoule-weergave (zoals Hors Categorie).
   const [mobileTab, setMobileTab] = useState<string>("klassement");
   const mobileHint = useSwipeHint();
@@ -98,8 +102,8 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
     if (match) {
       setActiveId(match.id);
       if (pendingOpen.view === "koerscafe") {
-        setActiveTab("chat"); // desktop-tab
-        setChatOpen(true);    // mobiel bottom-sheet
+        setChatOpen(true);     // mobiel bottom-sheet
+        setDeskChatOpen(true); // desktop zijpaneel
       }
       setPendingOpen(null);
       return;
@@ -307,7 +311,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
       </Card>
     );
 
-    // Losse panelen — als ankerbare secties (mobiel) en in de Grafiek-tab (desktop).
+    // Losse panelen — één per tab, hergebruikt op mobiel én desktop.
     const standingsPanel = (
       <SubpouleStandings subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} showEvolution={false} />
     );
@@ -316,14 +320,6 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
     );
     const daguitslagPanel = (
       <DaguitslagChart subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
-    );
-
-    const chartPanels = (
-      <>
-        {standingsPanel}
-        {evolutionPanel}
-        {daguitslagPanel}
-      </>
     );
 
     const heatmapPanel = (
@@ -423,35 +419,76 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
           </div>
         </div>
 
-        {/* ── DESKTOP: behoud de tabs (Chat / Grafiek / Heatmap, geen Benchmark). ── */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden md:block w-full">
-          {/* Desktop tab nav — retro dossard-tabbalk */}
-          <RetroTabs
-            className="mb-1"
-            aria-label="Subpoule-onderdelen"
-            active={activeTab}
-            onChange={setActiveTab}
-            tabs={[
-              { key: "chat",    label: "Chat",    Icon: MessageCircle },
-              { key: "chart",   label: "Grafiek", Icon: TrendingUp },
-              { key: "heatmap", label: "Heatmap", Icon: Flame, disabled: !heatmapUnlocked, title: !heatmapUnlocked ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined },
-            ]}
-          />
+        {/* ── DESKTOP: 5 dossard-tabs (gelijk aan mobiel), één paneel per tab.
+             Chat is een apart rechter zijpaneel, los van de tabrij. ── */}
+        <div className="hidden md:block w-full">
+          <div className="mx-auto max-w-5xl">
+            {/* Tabbalk + Koerscafé-toggle */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="min-w-0 flex-1">
+                <RetroTabs
+                  aria-label="Subpoule-onderdelen"
+                  active={activeTab}
+                  onChange={setActiveTab}
+                  tabs={[
+                    { key: "klassement", label: "Ranking",          Icon: Trophy },
+                    { key: "verloop",    label: "Stijgers & Dalers", Icon: TrendingUp },
+                    { key: "daguitslag", label: "Daguitslag",        Icon: BarChart3 },
+                    { key: "heatmap",    label: "Heatmap",           Icon: Flame, disabled: !heatmapUnlocked, title: !heatmapUnlocked ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined },
+                    { key: "deelnemers", label: "Deelnemers",        Icon: Users },
+                  ]}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setDeskChatOpen((v) => !v)}
+                aria-pressed={deskChatOpen}
+                title="Open of sluit het Koerscafé"
+                className={cn(
+                  "shrink-0 inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl border-2 border-foreground font-display text-xs font-semibold uppercase tracking-wider shadow-[3px_3px_0_hsl(var(--foreground))] transition-all hover:-translate-y-0.5 active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))]",
+                  deskChatOpen ? "bg-primary text-primary-foreground" : "bg-card text-foreground",
+                )}
+              >
+                <MessageCircle className="h-4 w-4" />
+                Koerscafé
+              </button>
+            </div>
 
-          <TabsContent value="chat" className="pt-3 space-y-3">
-            <PelotonChat subpoolName={active.name} subpoolId={active.id} />
-          </TabsContent>
-          <TabsContent value="chart" className="pt-3 space-y-4">
-            {chartPanels}
-          </TabsContent>
-          <TabsContent value="heatmap" className="pt-3">
-            {heatmapPanel}
-          </TabsContent>
-        </Tabs>
+            {/* Content + chat-zijpaneel */}
+            <div className="flex items-start gap-4">
+              <div className="min-w-0 flex-1">
+                {activeTab === "klassement" ? standingsPanel
+                  : activeTab === "verloop" ? evolutionPanel
+                  : activeTab === "daguitslag" ? daguitslagPanel
+                  : activeTab === "heatmap" ? heatmapPanel
+                  : deelnemersSection}
+              </div>
 
-        {/* Desktop: deelnemers altijd onderaan, los van de tabs. */}
-        <div className="hidden md:block">
-          {deelnemersSection}
+              {deskChatOpen && (
+                <aside className="w-[360px] shrink-0">
+                  <div className="retro-border bg-card overflow-hidden sticky top-4">
+                    <div className="flex items-center justify-between border-b-2 border-foreground bg-secondary/30 px-3 py-2">
+                      <span className="font-display font-bold flex items-center gap-2">
+                        <MessageCircle className="h-4 w-4 text-primary" />
+                        Koerscafé
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setDeskChatOpen(false)}
+                        aria-label="Sluit Koerscafé"
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="p-3">
+                      <PelotonChat subpoolName={active.name} subpoolId={active.id} />
+                    </div>
+                  </div>
+                </aside>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* ── MOBIEL: "Ga naar"-bolletje (tab-schakelaar), net boven de chatknop. ── */}
