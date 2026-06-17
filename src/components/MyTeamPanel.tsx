@@ -508,6 +508,54 @@ export default function MyTeamPanel({
           <div className="text-5xl mb-2">🚴‍♂️</div>
           <p className="font-display text-xl font-bold">Nog geen ploeg in de bus</p>
           <p className="text-sm text-muted-foreground font-serif italic">Stel je team samen vóór de flamme rouge.</p>
+
+          {/* Ploegnaam kan al vóór het samenstellen worden gezet (en later altijd
+              aanpasbaar). */}
+          <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
+            {editingName ? (
+              <>
+                <Input
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  placeholder="bv. Team Bidon"
+                  className="h-8 w-48"
+                  maxLength={40}
+                  autoFocus
+                />
+                <Button
+                  size="sm" variant="default"
+                  disabled={!entry?.id || saveTeamName.isPending}
+                  onClick={async () => {
+                    if (!entry?.id) return;
+                    try {
+                      await saveTeamName.mutateAsync({ entryId: entry.id, teamName: nameDraft });
+                      toast({ title: "Ploegnaam opgeslagen" });
+                      setEditingName(false);
+                    } catch (e) {
+                      toast({ title: "Opslaan mislukt", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+                    }
+                  }}
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingName(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </>
+            ) : teamName?.trim() ? (
+              <>
+                <span className="text-sm">Ploegnaam: <span className="font-display font-bold">{teamName}</span></span>
+                <Button size="sm" variant="outline" disabled={!entry?.id} onClick={() => { setNameDraft(teamName ?? ""); setEditingName(true); }}>
+                  <Pencil className="h-3.5 w-3.5 mr-1" /> Wijzig
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" variant="outline" disabled={!entry?.id} onClick={() => { setNameDraft(""); setEditingName(true); }}>
+                <Pencil className="h-3.5 w-3.5 mr-1" /> Stel je ploegnaam in
+              </Button>
+            )}
+          </div>
+
           <Button asChild className="retro-border-primary mt-2">
             <Link to="/team-samenstellen">Naar de teambuilder</Link>
           </Button>
