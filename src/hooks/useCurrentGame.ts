@@ -39,6 +39,18 @@ export function useCurrentGame() {
         if (liveErr) throw liveErr;
         if (live) return live as unknown as Game;
 
+        // Daarna: een concept/draft-game telt ook als "actieve" game, zodat de
+        // subpoule-/dashboard-context al laadt voordat de inschrijving opengaat.
+        const { data: upcoming, error: upcomingErr } = await supabase!
+          .from("games")
+          .select(select)
+          .in("status", ["concept", "draft"])
+          .order("year", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (upcomingErr) throw upcomingErr;
+        if (upcoming) return upcoming as unknown as Game;
+
         // Fallback: most recent game of any status
         const { data: any, error: anyErr } = await supabase!
           .from("games")
