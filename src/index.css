@@ -891,6 +891,16 @@
     .kp-swipe-peek { animation: none; }
   }
 
+  /* Coachmark-gebaar: hand wiebelt links↔rechts om de veeg voor te doen. */
+  @keyframes kp-swipe-nudge {
+    0%, 100% { transform: translateX(-5px); }
+    50%      { transform: translateX(5px); }
+  }
+  .kp-swipe-nudge { animation: kp-swipe-nudge 1.4s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .kp-swipe-nudge { animation: none; }
+  }
+
   /* ── Witruimte: minder verticale ruimte ───────────────────── */
   .space-y-6 > * + * {
     margin-top: 1rem !important;

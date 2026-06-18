@@ -24,7 +24,7 @@ import HorsCategorieTab from "@/components/HorsCategorieTab";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
-import { useSwipeTabs } from "@/hooks/useSwipeTabs";
+import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import SwipeDots from "@/components/SwipeDots";
@@ -133,13 +133,15 @@ export default function MijnPeloton() {
     setGameTab(t ?? "karavaan");
   }, [searchParams]);
   const [teamSubTab, setTeamSubTab] = useState("ploeg");
-  // Volgwagen-subtabs (mobiel): swipe + zwevende schakelaar.
+  // Bump om de ploegnaam-editor in MyTeamPanel te openen + te focussen.
+  const [focusNameSeq, setFocusNameSeq] = useState(0);
+  const goEditTeamName = () => {
+    setGameTab("team");
+    setTeamSubTab("ploeg");
+    setFocusNameSeq((s) => s + 1);
+  };
+  // Volgwagen-subtabs (mobiel): vinger-volgende carrousel + zwevende schakelaar.
   const teamHint = useSwipeHint();
-  const teamSwipe = useSwipeTabs({
-    keys: ["ploeg", "prono", "palmares"],
-    active: teamSubTab,
-    onChange: (k) => { setTeamSubTab(k); teamHint.dismiss(); },
-  });
   const teamBarVisible = useAutoHideOnScroll();
   const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
@@ -1039,7 +1041,7 @@ export default function MijnPeloton() {
       {!hasTeamName && (
         <button
           type="button"
-          onClick={() => { setGameTab("team"); setTeamSubTab("ploeg"); }}
+          onClick={goEditTeamName}
           className="w-full mb-3 retro-border bg-card px-3 py-2 flex items-center justify-between gap-3 text-left hover:bg-secondary/40 transition-colors"
           aria-label="Stel je ploegnaam in in de Volgwagen"
         >
@@ -1075,7 +1077,7 @@ export default function MijnPeloton() {
             <div className="flex flex-wrap gap-2 mt-3">
               <button
                 type="button"
-                onClick={() => { setGameTab("team"); setTeamSubTab("ploeg"); }}
+                onClick={goEditTeamName}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-display font-bold bg-primary text-primary-foreground border-2 border-foreground shadow-[2px_2px_0_hsl(var(--foreground))] hover:-translate-y-0.5 active:translate-y-px active:shadow-[1px_1px_0_hsl(var(--foreground))] transition-all"
               >
                 <Pencil className="h-3.5 w-3.5" /> Ploegnaam kiezen
@@ -1148,7 +1150,7 @@ export default function MijnPeloton() {
           </TabsContent>
 
           {/* ── TAB: Mijn Team (with sub-tabs) ── */}
-          <TabsContent value="team" className="mt-3" {...teamSwipe.bind}>
+          <TabsContent value="team" className="mt-3">
             <Tabs value={teamSubTab} onValueChange={setTeamSubTab}>
 
               {/* Mobile tab nav — pill (3 tabs). Auto-hide bij omlaag scrollen. */}
@@ -1158,17 +1160,15 @@ export default function MijnPeloton() {
                   !teamBarVisible && "!max-h-0 !mb-0 opacity-0",
                 )}
               >
-                <div ref={teamSwipe.barRef} className="transition-transform duration-150 ease-out">
-                  <MobielTabBalk
-                    tabs={[
-                      { key: "ploeg",    label: "Mijn Ploeg", icon: Users  },
-                      { key: "prono",    label: "Pronostiek", icon: Target },
-                      { key: "palmares", label: "Palmares",   icon: Trophy },
-                    ]}
-                    active={teamSubTab}
-                    onChange={(k) => setTeamSubTab(k as typeof teamSubTab)}
-                  />
-                </div>
+                <MobielTabBalk
+                  tabs={[
+                    { key: "ploeg",    label: "Mijn Ploeg", icon: Users  },
+                    { key: "prono",    label: "Pronostiek", icon: Target },
+                    { key: "palmares", label: "Palmares",   icon: Trophy },
+                  ]}
+                  active={teamSubTab}
+                  onChange={(k) => setTeamSubTab(k as typeof teamSubTab)}
+                />
               </div>
 
               {/* Swipe-hint + stippen-indicator (mobiel). */}
@@ -1191,18 +1191,28 @@ export default function MijnPeloton() {
                   { key: "palmares", label: "Palmares",   Icon: Trophy },
                 ]}
               />
-              <TabsContent value="ploeg" className="space-y-3">
-                {/* Ploegnaam-editor zit nu in het Salle-de-Course-dashboard
-                    binnen MyTeamPanel (Zone 1-nudge). */}
-                <MyTeamPanel section="ploeg" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} onOpenHors={openHors} onOpenUitslagen={openUitslagen} onOpenSubpoule={openSubpouleGrafiek} onOpenStageResult={openStageResult} />
-              </TabsContent>
-
-              <TabsContent value="prono">
-                <MyTeamPanel section="prono" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} />
-              </TabsContent>
-              <TabsContent value="palmares">
-                <PalmaresPanel />
-              </TabsContent>
+              {/* Vinger-volgende carrousel tussen de Volgwagen-onderdelen. */}
+              <SwipeCarousel
+                keys={["ploeg", "prono", "palmares"]}
+                activeKey={teamSubTab}
+                onChange={setTeamSubTab}
+                onSwiped={teamHint.dismiss}
+                renderTab={(k) => (
+                  <>
+                    {k === "ploeg" && (
+                      <div className="space-y-3">
+                        {/* Ploegnaam-editor zit nu in het Salle-de-Course-dashboard
+                            binnen MyTeamPanel (Zone 1-nudge). */}
+                        <MyTeamPanel section="ploeg" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} onOpenHors={openHors} onOpenUitslagen={openUitslagen} onOpenSubpoule={openSubpouleGrafiek} onOpenStageResult={openStageResult} focusNameSignal={focusNameSeq} />
+                      </div>
+                    )}
+                    {k === "prono" && (
+                      <MyTeamPanel section="prono" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} />
+                    )}
+                    {k === "palmares" && <PalmaresPanel />}
+                  </>
+                )}
+              />
 
               {/* Mobiel: één consistente zwevende schakelaar (3 onderdelen). */}
               <FloatingTabSwitcher

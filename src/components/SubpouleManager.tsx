@@ -16,7 +16,8 @@ import { RetroTabs } from "@/components/RetroTabs";
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import EmptyState from "@/components/EmptyState";
-import { useSwipeTabs } from "@/hooks/useSwipeTabs";
+import SwipeCarousel from "@/components/SwipeCarousel";
+import SwipeDots from "@/components/SwipeDots";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import PelotonChat from "@/components/PelotonChat";
@@ -64,11 +65,6 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
   // Mobiel: tab-gebaseerde subpoule-weergave (zoals Hors Categorie).
   const [mobileTab, setMobileTab] = useState<string>("klassement");
   const mobileHint = useSwipeHint();
-  const mobileSwipe = useSwipeTabs({
-    keys: SUB_TAB_KEYS,
-    active: mobileTab,
-    onChange: (k) => { setMobileTab(k); mobileHint.dismiss(); },
-  });
   const mobileBarVisible = useAutoHideOnScroll();
   const [createName, setCreateName] = useState("");
   const [createCode, setCreateCode] = useState("");
@@ -341,11 +337,11 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
     );
 
     // Mobiel: het paneel van de actieve tab.
-    const mobileActivePanel =
-      mobileTab === "klassement" ? standingsPanel
-      : mobileTab === "verloop" ? evolutionPanel
-      : mobileTab === "daguitslag" ? daguitslagPanel
-      : mobileTab === "heatmap" ? heatmapPanel
+    const panelFor = (k: string) =>
+      k === "klassement" ? standingsPanel
+      : k === "verloop" ? evolutionPanel
+      : k === "daguitslag" ? daguitslagPanel
+      : k === "heatmap" ? heatmapPanel
       : deelnemersSection;
 
     return (
@@ -407,18 +403,22 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
               !mobileBarVisible && "!max-h-0 opacity-0",
             )}
           >
-            <div ref={mobileSwipe.barRef} className="transition-transform duration-150 ease-out">
-              <MobielTabBalk tabs={SUB_TAB_ITEMS} active={mobileTab} onChange={setMobileTab} />
-            </div>
+            {/* Tabbalk staat stil; de carrousel-content volgt de vinger. */}
+            <MobielTabBalk tabs={SUB_TAB_ITEMS} active={mobileTab} onChange={setMobileTab} />
           </div>
 
-          {/* Swipe-hint (eenmalig, wegklikbaar). */}
+          {/* Swipe-coachmark (eenmalig) + stippen-indicator. */}
           <SwipeHintBar visible={mobileHint.visible} onClose={mobileHint.dismiss} className="mx-auto w-fit my-2" />
+          <SwipeDots count={SUB_TABS.length} activeIndex={SUB_TAB_KEYS.indexOf(mobileTab)} className="mb-2" />
 
-          {/* Tab-content: swipe wisselt alleen de tab; geen pagina-shift. */}
-          <div className="overflow-x-hidden" {...mobileSwipe.bind}>
-            {mobileActivePanel}
-          </div>
+          {/* Vinger-volgende carrousel: alleen het content-vlak beweegt. */}
+          <SwipeCarousel
+            keys={SUB_TAB_KEYS}
+            activeKey={mobileTab}
+            onChange={setMobileTab}
+            onSwiped={mobileHint.dismiss}
+            renderTab={(k) => panelFor(k)}
+          />
         </div>
 
         {/* ── DESKTOP: 5 dossard-tabs (gelijk aan mobiel), één paneel per tab.

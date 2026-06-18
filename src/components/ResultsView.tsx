@@ -17,7 +17,7 @@ import TruiBadge from "@/components/retro/TruiBadge";
 import Podium from "@/components/Podium";
 import StageBar from "@/components/stages/StageBar";
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
-import { useSwipeTabs } from "@/hooks/useSwipeTabs";
+import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import SwipeDots from "@/components/SwipeDots";
@@ -128,11 +128,6 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
 
   // Mobiel: swipe tussen Klassement/Etappes (de zwevende pill staat onderaan).
   const hint = useSwipeHint();
-  const resultsSwipe = useSwipeTabs({
-    keys: ["klassement", "etappes"],
-    active: view,
-    onChange: (k) => { setView(k as "etappes" | "klassement"); hint.dismiss(); },
-  });
   const barVisible = useAutoHideOnScroll();
 
   const selectedStage = stages[selectedStageIdx];
@@ -253,7 +248,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         </div>
       )}
 
-      <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className="max-w-7xl mx-auto" {...resultsSwipe.bind}>
+      <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className="max-w-7xl mx-auto">
         {/* Desktop — retro dossard-tabbalk */}
         <RetroTabs
           className="hidden md:flex"
@@ -272,8 +267,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
             !barVisible && "max-md:!max-h-0 max-md:opacity-0",
           )}
         >
-        {/* Alleen de tabbalk schuift mee met de swipe. */}
-        <div ref={resultsSwipe.barRef} className="transition-transform duration-150 ease-out">
+        {/* Tabbalk staat stil; de carrousel-content volgt de vinger. */}
         <TabsList className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 h-auto w-full">
           <TabsTrigger
             value="klassement"
@@ -291,14 +285,21 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
           </TabsTrigger>
         </TabsList>
         </div>
-        </div>
 
         {/* Swipe-hint + stippen-indicator (mobiel). */}
         <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mx-auto w-fit mt-2" />
         <SwipeDots count={2} activeIndex={view === "klassement" ? 0 : 1} />
 
+        {/* Vinger-volgende carrousel: alleen het content-vlak beweegt. */}
+        <SwipeCarousel
+          keys={["klassement", "etappes"]}
+          activeKey={view}
+          onChange={(k) => setView(k as "etappes" | "klassement")}
+          onSwiped={hint.dismiss}
+          renderTab={(k) => (
+            <>
         {/* ── ETAPPES TAB ── */}
-        <TabsContent value="etappes">
+        {k === "etappes" && (<>
           {stagesLoading ? (
             <p className="text-center text-muted-foreground py-8">Etappes laden...</p>
           ) : stages.length === 0 ? (
@@ -534,10 +535,10 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
               )}
             </>
           )}
-        </TabsContent>
+        </>)}
 
         {/* ── KLASSEMENT TAB ── */}
-        <TabsContent value="klassement">
+        {k === "klassement" && (<>
           {/* Premium vertical bar selector — StageBar (PNG-asset variant) */}
           {stages.length > 0 && (() => {
             const { data, gcTotal, selectedNumber } = buildStageBarData(
@@ -734,7 +735,10 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
             {/* Race classifications (4 jerseys) */}
             <RaceClassifications stageId={klassementStage?.id} />
           </div>
-        </TabsContent>
+        </>)}
+            </>
+          )}
+        />
       </Tabs>
 
       {/* Mobiel: tweedelig pill-toggle Klassement/Etappes (één tik wisselt). */}

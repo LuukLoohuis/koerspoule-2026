@@ -351,6 +351,7 @@ export default function MyTeamPanel({
   onOpenUitslagen,
   onOpenSubpoule,
   onOpenStageResult,
+  focusNameSignal,
 }: {
   section?: "ploeg" | "prono";
   gameId?: string;
@@ -364,6 +365,9 @@ export default function MyTeamPanel({
   onOpenSubpoule?: (subpouleId: string) => void;
   /** Open de Uitslagen-tab op de Etappe-view bij een specifiek ritnummer. */
   onOpenStageResult?: (stageNumber: number) => void;
+  /** Increment om de ploegnaam-editor te openen + het tekstveld te focussen
+   *  (bv. vanuit de "Stel je ploegnaam in"-balk op Mijn Peloton). */
+  focusNameSignal?: number;
 }) {
   const { user } = useAuth();
   const { data: curGame } = useCurrentGame();
@@ -375,6 +379,26 @@ export default function MyTeamPanel({
   // het Salle-de-Course-dashboard zolang er geen naam is ingesteld.
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Externe trigger (balk op Mijn Peloton): open de editor zodra er nog geen
+  // naam is en de entry bestaat.
+  useEffect(() => {
+    if (!focusNameSignal) return;
+    if (entry?.id && !teamName?.trim()) {
+      setNameDraft(teamName ?? "");
+      setEditingName(true);
+    }
+  }, [focusNameSignal, entry?.id, teamName]);
+
+  // Focus het tekstveld zodra de editor opent (betrouwbaarder dan autoFocus
+  // wanneer het veld via een tab-wissel/conditie mount).
+  useEffect(() => {
+    if (editingName) {
+      const id = requestAnimationFrame(() => nameInputRef.current?.focus());
+      return () => cancelAnimationFrame(id);
+    }
+  }, [editingName]);
   const { data: categories = [] } = useCategories(game?.id);
   const { data: stages = [] } = useStages(game?.id);
   const { data: entries = [] } = useEntries(game?.id);
@@ -515,6 +539,7 @@ export default function MyTeamPanel({
             {editingName ? (
               <>
                 <Input
+                  ref={nameInputRef}
                   value={nameDraft}
                   onChange={(e) => setNameDraft(e.target.value)}
                   placeholder="bv. Team Bidon"
@@ -922,6 +947,7 @@ export default function MyTeamPanel({
                             {editingName ? (
                               <>
                                 <Input
+                                  ref={nameInputRef}
                                   value={nameDraft}
                                   onChange={(e) => setNameDraft(e.target.value)}
                                   placeholder="bv. Team Bidon"

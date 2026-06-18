@@ -28,7 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Mic, ChevronDown } from "lucide-react";
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
-import { useSwipeTabs } from "@/hooks/useSwipeTabs";
+import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import SwipeDots from "@/components/SwipeDots";
@@ -765,13 +765,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   useEffect(() => {
     if (initialTab) setActiveTab(initialTab);
   }, [initialTab]);
-  // Mobiel: swipe tussen onderdelen (de zwevende schakelaar staat onderaan).
+  // Mobiel: vinger-volgende carrousel tussen onderdelen (de zwevende schakelaar staat onderaan).
   const hint = useSwipeHint();
-  const swipe = useSwipeTabs({
-    keys: HORS_TABS.map((t) => t.key),
-    active: activeTab,
-    onChange: (k) => { setActiveTab(k as HorsTabKey); hint.dismiss(); },
-  });
   const barVisible = useAutoHideOnScroll();
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
@@ -803,7 +798,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-5 pb-6" {...swipe.bind}>
+    <div className="space-y-5 pb-6">
       {/* ── Sub-tab navigation ─────────────────────────────────────────────── */}
 
       {/* Mobile — MobielTabBalk (scrollable chips). Glijdt weg bij omlaag scrollen
@@ -814,20 +809,18 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           !barVisible && "!max-h-0 opacity-0",
         )}
       >
-        {/* Alleen de tabbalk schuift mee met de swipe. */}
-        <div ref={swipe.barRef} className="transition-transform duration-150 ease-out">
-          <MobielTabBalk
-            tabs={[
-              { key: "dartpijl", label: "Dartpijl", icon: Activity },
-              { key: "pelotonkeuzes", label: "Pelotonkeuzes", icon: BarChart3 },
-              { key: "wielerdirecteur", label: "De Wielerdirecteur", icon: DirectorIcon },
-              { key: "superteam", label: "The Emirates", icon: Crown },
-              { key: "benchmark", label: "Benchmark", icon: Swords },
-            ]}
-            active={activeTab}
-            onChange={(k) => setActiveTab(k as typeof activeTab)}
-          />
-        </div>
+        {/* Tabbalk staat stil; de carrousel-content volgt de vinger. */}
+        <MobielTabBalk
+          tabs={[
+            { key: "dartpijl", label: "Dartpijl", icon: Activity },
+            { key: "pelotonkeuzes", label: "Pelotonkeuzes", icon: BarChart3 },
+            { key: "wielerdirecteur", label: "De Wielerdirecteur", icon: DirectorIcon },
+            { key: "superteam", label: "The Emirates", icon: Crown },
+            { key: "benchmark", label: "Benchmark", icon: Swords },
+          ]}
+          active={activeTab}
+          onChange={(k) => setActiveTab(k as typeof activeTab)}
+        />
       </div>
 
       {/* Swipe-hint (eenmalig, wegklikbaar) + stippen-indicator (mobiel). */}
@@ -849,11 +842,19 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         ]}
       />
 
-      {/* ── Tab: Benchmark ───────────────────────────────────────────────── */}
-      {activeTab === "benchmark" && <BenchmarkTab gameId={game?.id} />}
+      {/* Vinger-volgende carrousel: alleen het content-vlak beweegt. */}
+      <SwipeCarousel
+        keys={HORS_TABS.map((t) => t.key)}
+        activeKey={activeTab}
+        onChange={(k) => setActiveTab(k as HorsTabKey)}
+        onSwiped={hint.dismiss}
+        renderTab={(k) => (
+          <div className="space-y-5">
+            {/* ── Tab: Benchmark ───────────────────────────────────────────────── */}
+            {k === "benchmark" && <BenchmarkTab gameId={game?.id} />}
 
       {/* ── Tab 1: Dartpijl (Monte Carlo) ───────────────────────────────────── */}
-      {activeTab === "dartpijl" && (
+      {k === "dartpijl" && (
         <div className="space-y-5">
           {!monte ? (
             <EmptyState
@@ -901,7 +902,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       )}
 
       {/* ── Tab 2: Pelotonkeuzes ─────────────────────────────────────────────── */}
-      {activeTab === "pelotonkeuzes" && (
+      {k === "pelotonkeuzes" && (
         <Card className="ornate-frame retro-border overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
           <CardHeader className="border-b-2 border-foreground bg-secondary/30">
@@ -1145,7 +1146,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       )}
 
       {/* ── Tab 3: De Wielerdirecteur ────────────────────────────────────────── */}
-      {activeTab === "wielerdirecteur" && (
+      {k === "wielerdirecteur" && (
         <Card
           className="ornate-frame retro-border overflow-hidden"
           style={{ background: "hsl(var(--bg-wielerdirecteur))" }}
@@ -1507,7 +1508,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       )}
 
       {/* ── Tab: The Emirates — de droomploeg achterop gezien ─────────────────── */}
-      {activeTab === "superteam" && (
+      {k === "superteam" && (
         <Card className="ornate-frame retro-border overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
           <CardHeader className="border-b-2 border-foreground bg-secondary/30">
@@ -1772,6 +1773,9 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           </CardContent>
         </Card>
       )}
+          </div>
+        )}
+      />
 
       {/* ── MOBIEL: één consistente zwevende schakelaar (menu-modus). ── */}
       <FloatingTabSwitcher
