@@ -30,7 +30,8 @@ export function SteunKopgroepPill({ className }: { className?: string }) {
         className,
       )}
     >
-      <Coffee className="kp-coffee-steam h-4 w-4 shrink-0" />
+      <Coffee className="kp-coffee-steam h-5 w-5 sm:h-4 sm:w-4 shrink-0" />
+      <span className="sm:hidden">Steun</span>
       <span className="hidden sm:inline">Steun de kopgroep</span>
     </a>
   );
