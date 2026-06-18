@@ -24,6 +24,8 @@ import PelotonChat from "@/components/PelotonChat";
 import SubpouleStandings from "@/components/SubpouleStandings";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import DaguitslagChart from "@/components/DaguitslagChart";
+import DaguitslagCelebration from "@/components/DaguitslagCelebration";
+import { useDaguitslagCelebration } from "@/hooks/useDaguitslagCelebration";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
 import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Flame, Share2, BarChart3, Trophy, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -132,6 +134,11 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
     [subpoules, activeId]
   );
   const { data: members = [] } = useSubpouleMembers(active?.id);
+
+  // Ritzege/podium-feestje voor de actieve subpoule — top-level zodat het op elke
+  // tab afgaat (je landt eerst op Ranking, niet op de Daguitslag).
+  const { celebration: dagCelebration, closeCelebration: closeDagCelebration } =
+    useDaguitslagCelebration(active?.id, effectiveGameId, gameStatus);
 
   const handleCreate = async () => {
     if (!effectiveGameId) {
@@ -346,6 +353,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
 
     return (
       <div className="space-y-4">
+        <DaguitslagCelebration celebration={dagCelebration} onClose={closeDagCelebration} />
         <div className="flex items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => setActiveId(null)} className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Terug naar subpoules
