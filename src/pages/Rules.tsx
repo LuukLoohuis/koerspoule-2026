@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
+import { STEUN_URL } from "@/components/SteunKopgroep";
 
 const FAQ_JSONLD = {
   "@context": "https://schema.org",
@@ -269,7 +270,7 @@ export default function Rules() {
           <div className="vintage-divider max-w-xs mx-auto my-5" />
           <div className="flex justify-center">
             <a
-              href="https://www.buymeacoffee.com/luukloohuis"
+              href={STEUN_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-md font-bold text-white shadow-md hover:opacity-90 transition"

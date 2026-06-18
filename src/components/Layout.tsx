@@ -2,7 +2,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Menu, X, Coffee } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { SteunKopgroepPill } from "@/components/SteunKopgroep";
 import CookieBanner from "@/components/CookieBanner";
 import RouteSeo from "@/components/RouteSeo";
 import BottomNav from "@/components/BottomNav";
@@ -58,17 +59,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   src={koerspouleLogo}
                 />
               </Link>
-              <a
-                href="https://www.buymeacoffee.com/luukloohuis"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Steun de kopgroep"
-                aria-label="Steun de kopgroep via Buy Me a Coffee"
-                className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 border border-primary/30 bg-primary/5 text-primary text-[11px] font-serif italic rounded hover:bg-primary/10 transition-colors"
-              >
-                <Coffee className="h-3 w-3 shrink-0" />
-                <span>Steun de kopgroep</span>
-              </a>
+              <SteunKopgroepPill />
             </div>
 
             {/* Desktop auth */}

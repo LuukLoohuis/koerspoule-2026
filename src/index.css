@@ -901,6 +901,20 @@
     .kp-swipe-nudge { animation: none; }
   }
 
+  /* Koffie-icoon: subtiel "stoom"-wiebeltje, alleen bij hover/focus. */
+  @keyframes kp-coffee-steam {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    30%      { transform: translateY(-1px) rotate(-7deg); }
+    60%      { transform: translateY(-1px) rotate(6deg); }
+  }
+  .group:hover .kp-coffee-steam,
+  .group:focus-visible .kp-coffee-steam {
+    animation: kp-coffee-steam 0.7s ease-in-out;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .kp-coffee-steam { animation: none !important; }
+  }
+
   /* ── Witruimte: minder verticale ruimte ───────────────────── */
   .space-y-6 > * + * {
     margin-top: 1rem !important;

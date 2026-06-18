@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import RiderSearchSelect from "@/components/RiderSearchSelect";
 import RiderDetailPanel from "@/components/RiderDetailPanel";
+import { SteunMoment } from "@/components/SteunKopgroep";
 import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
 
@@ -835,6 +836,7 @@ export default function TeamBuilder() {
           <Button variant="outline" onClick={handleRevert} disabled={revertEntry.isPending} className="w-full">
             ✏️ Wijzigen
           </Button>
+          <SteunMoment storageKey="kp_steun_ingezonden" text="Trakteer de kopgroep op een koffie" />
         </div>
       ) : (
         <>
@@ -1047,11 +1049,14 @@ export default function TeamBuilder() {
                 </div>
               )}
               {!gameLocked && isSubmitted && (
-                <div className="retro-border bg-emerald-500/10 border-emerald-500/40 p-3 text-sm flex items-center justify-between gap-3">
-                  <span>✅ <strong>Team ingediend.</strong> Wil je nog iets aanpassen? Klik op "Wijzigen" — vergeet daarna opnieuw in te dienen.</span>
-                  <Button size="sm" variant="outline" onClick={handleRevert} disabled={revertEntry.isPending}>
-                    ✏️ Wijzigen
-                  </Button>
+                <div className="space-y-2">
+                  <div className="retro-border bg-emerald-500/10 border-emerald-500/40 p-3 text-sm flex items-center justify-between gap-3">
+                    <span>✅ <strong>Team ingediend.</strong> Wil je nog iets aanpassen? Klik op "Wijzigen" — vergeet daarna opnieuw in te dienen.</span>
+                    <Button size="sm" variant="outline" onClick={handleRevert} disabled={revertEntry.isPending}>
+                      ✏️ Wijzigen
+                    </Button>
+                  </div>
+                  <SteunMoment storageKey="kp_steun_ingezonden" text="Trakteer de kopgroep op een koffie" />
                 </div>
               )}
 

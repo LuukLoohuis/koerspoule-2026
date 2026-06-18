@@ -8,6 +8,7 @@ import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import { cn } from "@/lib/utils";
 import DaguitslagCelebration from "@/components/DaguitslagCelebration";
 import { useDaguitslagCelebration } from "@/hooks/useDaguitslagCelebration";
+import { SteunMoment } from "@/components/SteunKopgroep";
 
 type Props = {
   subpouleId: string;
@@ -82,7 +83,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
 
   // Feestje (confetti + banner) bij eigen ritzege/podium — gedeelde hook, zodat
   // het ook op subpoule-tabs zónder deze chart (bv. Ranking) afgaat.
-  const { celebration, closeCelebration } = useDaguitslagCelebration(subpouleId, gameId, gameStatus);
+  const { celebration, closeCelebration, celebratedWin } = useDaguitslagCelebration(subpouleId, gameId, gameStatus);
 
   // Animatie: bars groeien van 0 → eindwaarde bij mount/refresh.
   const [animate, setAnimate] = useState(false);
@@ -264,6 +265,11 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
             <span className="uppercase tracking-wider not-italic font-bold mr-1">Geen punten:</span>
             {zeros.map((z) => z.team_name ?? z.display_name).join(", ")}
           </p>
+        )}
+
+        {/* Rustig steun-momentje ná een eigen ritzege (niet bovenop het feest). */}
+        {celebratedWin && (
+          <SteunMoment storageKey="kp_steun_ritzege" className="mt-3" />
         )}
       </CardContent>
     </Card>

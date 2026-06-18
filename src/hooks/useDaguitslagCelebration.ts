@@ -18,7 +18,7 @@ export function useDaguitslagCelebration(
   subpouleId?: string,
   gameId?: string,
   gameStatus?: string,
-): { celebration: Celebration | null; closeCelebration: () => void } {
+): { celebration: Celebration | null; closeCelebration: () => void; celebratedWin: boolean } {
   const { user } = useAuth();
   const { data: curGame } = useCurrentGame();
   const game = gameId ? { id: gameId, status: gameStatus } : curGame;
@@ -58,6 +58,9 @@ export function useDaguitslagCelebration(
   }, [user?.id, latestApproved, stagePoints, members, entries]);
 
   const [celebration, setCelebration] = useState<Celebration | null>(null);
+  // Blijft true ná een ritzege deze sessie → toont een rustig steun-momentje
+  // ná de banner (niet bovenop het feestmoment zelf).
+  const [celebratedWin, setCelebratedWin] = useState(false);
   const closeCelebration = useCallback(() => setCelebration(null), []);
   const stageId = latestApproved?.id;
   useEffect(() => {
@@ -77,7 +80,8 @@ export function useDaguitslagCelebration(
       /* negeer */
     }
     setCelebration({ type: myRank === 1 ? "win" : "podium", rank: myRank });
+    if (myRank === 1) setCelebratedWin(true);
   }, [stageId, myRank, subpouleId, game?.id]);
 
-  return { celebration, closeCelebration };
+  return { celebration, closeCelebration, celebratedWin };
 }
