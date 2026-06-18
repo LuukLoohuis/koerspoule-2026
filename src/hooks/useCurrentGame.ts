@@ -1,27 +1,44 @@
 import { useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
 /**
  * Realtime + focus-refresh op de games-tabel: zet de admin de koers live/locked,
  * dan pikt een al-open sessie dat direct op (geen handmatige reload nodig).
- * Invalideert zowel current-game als all-games. Eén gedeelde subscriber.
+ *
+ * useCurrentGame mount op veel plekken tegelijk. Eén gedeeld, ref-geteld channel
+ * — anders maken meerdere instances een channel met dezelfde topic en gooit
+ * supabase-js "cannot add postgres_changes callbacks ... after subscribe()".
  */
-function useGamesAutoRefresh() {
-  const qc = useQueryClient();
-  useEffect(() => {
-    if (!supabase) return;
-    const channel = supabase
+let gamesChannel: RealtimeChannel | null = null;
+let gamesRefCount = 0;
+
+function subscribeGames(qc: QueryClient): () => void {
+  if (!supabase) return () => {};
+  gamesRefCount += 1;
+  if (!gamesChannel) {
+    gamesChannel = supabase
       .channel("games-status")
       .on("postgres_changes", { event: "*", schema: "public", table: "games" }, () => {
         qc.invalidateQueries({ queryKey: ["current-game"] });
         qc.invalidateQueries({ queryKey: ["all-games"] });
       })
       .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [qc]);
+  }
+  return () => {
+    gamesRefCount -= 1;
+    if (gamesRefCount <= 0 && gamesChannel) {
+      supabase!.removeChannel(gamesChannel);
+      gamesChannel = null;
+      gamesRefCount = 0;
+    }
+  };
+}
+
+function useGamesAutoRefresh() {
+  const qc = useQueryClient();
+  useEffect(() => subscribeGames(qc), [qc]);
 }
 
 export type Game = {
