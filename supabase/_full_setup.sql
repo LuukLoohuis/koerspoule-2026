@@ -1223,6 +1223,14 @@ begin
 
   -- Deadline-bewaking: vanaf 'locked' geen wijzigingen meer
   if v_status in ('locked', 'live', 'finished') then
+    -- Uitzondering: een UPDATE op de entries-tabel die de status NIET wijzigt
+    -- mag altijd door — zo blijft de ploegnaam (en de systeem-puntentelling)
+    -- aanpasbaar in elke game-status. Submit/revert (status-wissel) en
+    -- INSERT/DELETE blijven geblokkeerd na de deadline.
+    if TG_TABLE_NAME = 'entries' and TG_OP = 'UPDATE'
+       and NEW.status is not distinct from OLD.status then
+      return NEW;
+    end if;
     raise exception 'Deze game is gesloten (status %). Inzendingen kunnen niet meer worden gewijzigd.', v_status
       using errcode = '42501';
   end if;
