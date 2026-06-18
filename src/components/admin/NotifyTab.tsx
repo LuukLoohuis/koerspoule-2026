@@ -34,11 +34,9 @@ export function buildEmailHtml(
 <html><body style="margin:0;background:#faf7f2;font-family:Georgia,serif;color:#1a1a1a;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#fff;border:1px solid #e8e0d5;">
     <div style="text-align:center;margin-bottom:22px;">
-      <div style="display:inline-block;width:200px;text-align:right;">
-        <img src="${LOGO_URL}" alt="Koerspoule — uit liefde voor de koers" width="200"
-             style="display:block;width:200px;height:auto;margin:0 0 2px;border-radius:8px;" />
-        <span style="font-family:'Brush Script MT','Segoe Script','Snell Roundhand',cursive;font-style:italic;font-size:19px;color:#C0851A;line-height:1;">Uit liefde voor de koers</span>
-      </div>
+      <img src="${LOGO_URL}" alt="Koerspoule — uit liefde voor de koers" width="200"
+           style="display:block;width:200px;height:auto;margin:0 auto 6px;border-radius:8px;" />
+      <div style="font-family:'Brush Script MT','Segoe Script','Snell Roundhand',cursive;font-style:italic;font-size:28px;color:#C0851A;line-height:1.1;text-align:center;">Uit liefde voor de koers</div>
     </div>
     ${body}
     <hr style="border:none;border-top:1px solid #ede8df;margin:32px 0 16px;"/>
@@ -203,11 +201,9 @@ export default function NotifyTab() {
             </div>
             {/* Live mini-preview of header */}
             <div className="border rounded bg-white p-3 text-center">
-              <div className="inline-block text-right">
-                <img src="/koerspoule-logo-2026.png" alt="Koerspoule" width={150} className="mb-0.5 rounded" />
-                <span style={{ fontFamily: "'Brush Script MT','Segoe Script','Snell Roundhand',cursive", fontStyle: "italic", fontSize: 15, color: "#C0851A", lineHeight: 1 }}>
-                  Uit liefde voor de koers
-                </span>
+              <img src="/koerspoule-logo-2026.png" alt="Koerspoule" width={150} className="mx-auto mb-1 rounded" />
+              <div style={{ fontFamily: "'Brush Script MT','Segoe Script','Snell Roundhand',cursive", fontStyle: "italic", fontSize: 24, color: "#C0851A", lineHeight: 1.1, textAlign: "center" }}>
+                Uit liefde voor de koers
               </div>
             </div>
           </div>
