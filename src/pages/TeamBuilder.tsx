@@ -5,8 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Check, Info, Lock, Sparkles } from "lucide-react";
+import { Check, ChevronRight, Info, Lock, Sparkles } from "lucide-react";
 import TruiBadge from "@/components/retro/TruiBadge";
+import SwipeCarousel from "@/components/SwipeCarousel";
+import SwipeHintBar from "@/components/SwipeHintBar";
+import { useSwipeHint } from "@/hooks/useSwipeHint";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
@@ -317,6 +320,556 @@ export default function TeamBuilder() {
     return m;
   }, [allStartlistRiders]);
 
+  // ── Mobiele flow: categorie-voor-categorie pager (md:hidden) ───────────────
+  const [activeCatRaw, setActiveCatRaw] = useState<string | null>(null);
+  const mobileHint = useSwipeHint();
+  const pagerRef = useRef<HTMLDivElement>(null);
+
+  const mobileKeys = useMemo(() => [...categories.map((c) => c.id), "overview"], [categories]);
+  const activeCat =
+    activeCatRaw && mobileKeys.includes(activeCatRaw) ? activeCatRaw : categories[0]?.id ?? "overview";
+
+  const riderTeam = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const r of allStartlistRiders) m.set(r.id, r.teamName);
+    return m;
+  }, [allStartlistRiders]);
+
+  const scrollPagerTop = () => {
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const el = pagerRef.current;
+        if (!el) return;
+        const y = el.getBoundingClientRect().top + window.scrollY - 12;
+        window.scrollTo({ top: Math.max(0, y), behavior: reduce ? "auto" : "smooth" });
+      }),
+    );
+  };
+  const jumpToCat = (key: string) => {
+    setActiveCatRaw(key);
+    mobileHint.dismiss();
+    scrollPagerTop();
+  };
+
+  // Gedeeld tussen desktop-layout en het mobiele overzicht-scherm.
+  const jokersBlock = (
+    <div className="ornate-frame retro-border p-4 relative bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[hsl(var(--vintage-gold))] via-primary to-[hsl(var(--vintage-gold))]" />
+      <div className="flex items-center gap-3 mb-1">
+        <span className="text-2xl">🃏</span>
+        <h2 className="font-display text-xl font-bold">Jokers</h2>
+      </div>
+      <p className="text-sm opacity-80 mb-3 font-serif italic">
+        Twee outsiders uit de overige renners. Niet uit een categorie. {jokerPool.length} beschikbaar.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+        {[
+          { draft: jokerDraft1, set: setJokerDraft1, exclude: jokerDraft2, label: "Joker 1" },
+          { draft: jokerDraft2, set: setJokerDraft2, exclude: jokerDraft1, label: "Joker 2" },
+        ].map((slot, i) => {
+          const picked = slot.draft ? riderById.get(slot.draft) : null;
+          return (
+            <div
+              key={i}
+              className={cn(
+                "rounded-lg border-2 p-3 transition-all",
+                picked
+                  ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.1]"
+                  : "border-dashed border-white/30 bg-white/5"
+              )}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-mono uppercase tracking-widest opacity-70">
+                  {slot.label}
+                </span>
+                {picked && (
+                  <span className="text-[10px] font-mono opacity-70">
+                    #{picked.start_number ?? "—"}
+                  </span>
+                )}
+              </div>
+              {picked ? (
+                <div className="font-display text-lg font-bold mb-2">{picked.name}</div>
+              ) : (
+                <div className="font-display text-base italic opacity-50 mb-2">Geen keuze</div>
+              )}
+              <RiderSearchSelect
+                riders={jokerPool}
+                value={slot.draft}
+                onChange={slot.set}
+                excludeIds={slot.exclude ? [slot.exclude] : []}
+                placeholder="Zoek renner..."
+                disabled={Boolean(isLocked)}
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center justify-between flex-wrap gap-2 text-xs opacity-70">
+        <span>Opgeslagen jokers: <strong>{jokerIds.length}/2</strong></span>
+        <span className="italic font-serif">Auto-opslaan tijdens kiezen</span>
+      </div>
+    </div>
+  );
+
+  const predictionsSection = (
+    <section className="vintage-paper vintage-frame p-4 md:p-6 relative overflow-hidden">
+      {/* Affiche-koptekst */}
+      <div className="text-center mb-4 md:mb-5 relative">
+        <div className="vintage-stamp text-[10px] md:text-[11px] mb-1.5">
+          ✦ Pronostiek · Le palmarès final ✦
+        </div>
+        <h2 className="vintage-numeral text-2xl md:text-4xl mb-1" style={{ letterSpacing: "0.04em" }}>
+          KLASSEMENTSVOORSPELLINGEN
+        </h2>
+        <p className="text-xs md:text-sm font-serif italic" style={{ color: "var(--ink-faded)" }}>
+          Voorspel de eindstand — auto-opslaan tijdens typen.
+        </p>
+        {/* Dubbele inktstreep onder de kop */}
+        <div className="mx-auto mt-3 w-44 md:w-56 h-[2px]" style={{ background: "var(--ink-sepia)" }} />
+        <div className="mx-auto mt-[2px] w-32 md:w-40 h-[1px]" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
+      </div>
+
+      {/* ── Podium ─────────────────────────────────────────────── */}
+      <div className="mb-7 md:mb-8 relative">
+        <div className="vintage-stamp text-center text-[10px] md:text-[11px] mb-4">
+          — Eindklassement Podium —
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 md:gap-4 items-end relative">
+          {[
+            { idx: 1, rank: "2", sokkel: "vintage-sokkel--silver", height: "h-14 md:h-16", order: "order-1", medalVar: { "--medal-rim": "var(--medal-silver)", "--medal-fill": "linear-gradient(180deg,#EAE7E0,#9C9890)" } },
+            { idx: 0, rank: "1", sokkel: "vintage-sokkel--winner", height: "h-20 md:h-24", order: "order-2", medalVar: null },
+            { idx: 2, rank: "3", sokkel: "vintage-sokkel--bronze", height: "h-12 md:h-14", order: "order-3", medalVar: { "--medal-rim": "var(--medal-bronze)", "--medal-fill": "linear-gradient(180deg,#D69862,#8C5A2A)" } },
+          ].map(({ idx, rank, sokkel, height, order, medalVar }) => {
+            const otherPodium = gcPodium.filter((_, j) => j !== idx && Boolean(_));
+            const picked = gcPodium[idx] ? riderById.get(gcPodium[idx]) : null;
+            const isWinner = idx === 0;
+            return (
+              <div key={idx} className={cn("flex flex-col items-center", order)}>
+                {/* Eredecoratie boven het podium */}
+                <div className="mb-2 md:mb-3 relative flex items-center justify-center min-h-[64px] md:min-h-[88px]">
+                  {isWinner ? (
+                    <>
+                      {/* Sunburst achter de winnaar */}
+                      <div
+                        aria-hidden
+                        className="absolute inset-0 -m-4 md:-m-6 vintage-sunburst pointer-events-none"
+                      />
+                      {/* Gele trui — alleen voor de eindwinnaar */}
+                      <div className={cn("relative z-10", picked ? "opacity-100" : "opacity-60")}>
+                        <TruiBadge type="algemeen" formaat="groot" />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      {/* Cocarde-lint */}
+                      <div
+                        className="vintage-ribbon w-9 md:w-11 h-3.5 md:h-4 -mb-1.5 rounded-t-[2px]"
+                        style={{ clipPath: "polygon(0 0, 100% 0, 88% 100%, 12% 100%)" }}
+                      />
+                      {/* Emaille-medaillon */}
+                      <div
+                        className="vintage-medal relative z-10 h-12 w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center"
+                        style={medalVar as React.CSSProperties}
+                      >
+                        <span className="vintage-numeral text-lg md:text-2xl" style={{ color: "var(--ink-sepia)" }}>
+                          {rank}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sokkel met emaille/hout-uitstraling */}
+                <div
+                  className={cn(
+                    "vintage-sokkel relative w-full flex flex-col items-center justify-center text-center px-2 py-2 mb-2 rounded-t-md",
+                    height,
+                    sokkel
+                  )}
+                >
+                  {/* Hoeknieten */}
+                  <span aria-hidden className="absolute top-1 left-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
+                  <span aria-hidden className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
+                  {/* Affiche-cijfer */}
+                  <span
+                    className={cn(
+                      "vintage-numeral leading-none mb-1",
+                      isWinner ? "text-5xl md:text-6xl" : "text-3xl md:text-4xl"
+                    )}
+                    style={{
+                      color: isWinner ? "var(--ink-sepia)" : "var(--ink-faded)",
+                      textShadow: isWinner ? "2px 2px 0 rgba(255,255,255,0.55), 4px 4px 0 rgba(58,42,26,0.18)" : undefined,
+                    }}
+                    aria-hidden
+                  >
+                    {rank}
+                  </span>
+                  {/* Rennernaam of vintage placeholder */}
+                  {picked ? (
+                    <span
+                      className={cn(
+                        "font-display font-bold leading-tight line-clamp-2",
+                        isWinner ? "text-[12px] md:text-sm" : "text-[11px] md:text-xs"
+                      )}
+                      style={{ color: "var(--ink-sepia)" }}
+                    >
+                      {picked.name}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] md:text-xs italic" style={{ color: "var(--ink-sepia)", opacity: 0.7, fontFamily: "'Special Elite','Courier Prime',serif" }}>
+                      nog in te vullen
+                    </span>
+                  )}
+                </div>
+
+                {/* Vintage formulier-veld */}
+                <div className="w-full">
+                  <RiderSearchSelect
+                    riders={allStartlistRiders}
+                    value={gcPodium[idx]}
+                    onChange={(v) => {
+                      const next = [...gcPodium];
+                      next[idx] = v;
+                      setGcPodium(next);
+                    }}
+                    excludeIds={otherPodium}
+                    placeholder="Zoek…"
+                    disabled={Boolean(isLocked)}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Sectie-scheiding affichestijl */}
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-[1.5px]" style={{ background: "var(--ink-sepia)" }} />
+        <span className="vintage-stamp text-[10px]">Trui-winnaars</span>
+        <div className="flex-1 h-[1.5px]" style={{ background: "var(--ink-sepia)" }} />
+      </div>
+
+      {/* ── Trui-kaarten (emaille-bordjes) ─────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {([
+          { label: "Maillot à pois",  sub: "Bergtrui",     trui: "berg"     as const, accent: "berg",     value: mountainJersey, setter: setMountainJersey, riders: allStartlistRiders, hint: undefined as string | undefined },
+          { label: "Maillot vert",    sub: "Puntentrui",   trui: "punten"   as const, accent: "punten",   value: pointsJersey,   setter: setPointsJersey,   riders: allStartlistRiders, hint: undefined },
+          { label: "Maillot blanc",   sub: "Jongerentrui", trui: "jongeren" as const, accent: "jongeren", value: youthJersey,    setter: setYouthJersey,    riders: youthEligibleRiders, hint: `Alleen jongerenklassement-renners (${youthEligibleRiders.length})` },
+        ]).map(({ label, sub, trui, accent, value, setter, riders: jerseyRiders, hint }) => {
+          const picked = value ? riderById.get(value) : null;
+          return (
+            <div
+              key={label}
+              data-accent={accent}
+              className={cn("vintage-board p-3 md:p-4 flex flex-col gap-2 relative")}
+            >
+              {/* Hoeknieten */}
+              <span aria-hidden className="absolute top-1.5 left-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
+              <span aria-hidden className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
+              <span aria-hidden className="absolute bottom-1.5 left-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
+              <span aria-hidden className="absolute bottom-1.5 right-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
+
+              {/* Kop: trui + label */}
+              <div className="flex items-center gap-3 pb-2 border-b" style={{ borderColor: "var(--ink-sepia)", borderBottomStyle: "dashed", opacity: 1 }}>
+                <div className={cn("shrink-0 transition-opacity", picked ? "opacity-100" : "opacity-70")} style={{ filter: "drop-shadow(1px 1px 0 rgba(58,42,26,0.18))" }}>
+                  <TruiBadge type={trui} formaat="medium" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="vintage-stamp text-[9px] md:text-[10px]">{sub}</div>
+                  <div className="vintage-numeral text-lg md:text-xl leading-tight" style={{ color: "var(--ink-sepia)", letterSpacing: "0.02em" }}>
+                    {label}
+                  </div>
+                </div>
+              </div>
+
+              {/* Gekozen renner of vintage placeholder */}
+              {picked ? (
+                <div className="font-display font-bold text-base truncate" style={{ color: "var(--ink-sepia)" }}>
+                  {picked.name}
+                </div>
+              ) : (
+                <div className="vintage-empty rounded-md px-2 py-1.5 text-xs text-center">
+                  nog in te vullen
+                </div>
+              )}
+
+              {/* Vintage formulier-veld */}
+              <RiderSearchSelect
+                riders={jerseyRiders}
+                value={value}
+                onChange={setter}
+                placeholder="Zoek renner…"
+                disabled={Boolean(isLocked)}
+              />
+              {hint && (
+                <p className="text-[10px] italic" style={{ color: "var(--ink-faded)", fontFamily: "'Special Elite','Courier Prime',serif" }}>
+                  {hint}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+
+  // ── Mobiel: één categorie per scherm ──
+  const renderCategoryScreen = (category: (typeof categories)[number], idx: number) => {
+    const max = category.max_picks ?? 1;
+    const selected = validPicksByCategory.get(category.id) ?? [];
+    const reached = selected.length >= max;
+    const complete = selected.length === max;
+    const isLast = idx === categories.length - 1;
+    const next = categories[idx + 1];
+    const nextLabel = isLast ? "Naar overzicht" : `Volgende: ${next.short_name ?? next.name}`;
+    return (
+      <div className="space-y-3">
+        {/* Slanke voortgangskop */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+              Categorie {idx + 1} / {categories.length}
+            </div>
+            <h2 className="font-display text-xl font-bold leading-tight">{category.short_name ?? category.name}</h2>
+            <p className="text-xs text-muted-foreground">{max > 1 ? `Kies ${max} renners` : "Kies 1 renner"}</p>
+          </div>
+          <div className="text-right shrink-0">
+            <div className="font-mono text-sm font-bold">
+              {completedPicks}<span className="text-muted-foreground">/{totalRequired}</span>
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">renners</div>
+          </div>
+        </div>
+        <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <span
+            className={cn(
+              "text-[11px] font-mono px-2 py-0.5 rounded-full border",
+              complete
+                ? "border-[hsl(var(--vintage-gold))/0.5] text-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.1]"
+                : "border-border text-muted-foreground"
+            )}
+          >
+            {selected.length}/{max} gekozen
+          </span>
+          {complete && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[hsl(var(--vintage-gold))]">
+              <Check className="h-3.5 w-3.5" /> Compleet
+            </span>
+          )}
+        </div>
+
+        {/* Renner-lijst */}
+        <div className="space-y-2">
+          {category.category_riders.map((row) => {
+            if (!row.riders) return null;
+            const rid = row.riders.id;
+            const isSel = selected.includes(rid);
+            const disabled = Boolean(isLocked) || (!isSel && reached && max > 1);
+            const team = riderTeam.get(rid);
+            return (
+              <div
+                key={row.rider_id}
+                className={cn(
+                  "w-full flex items-center gap-3 rounded-lg border-2 p-3 transition-all",
+                  isSel
+                    ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.12] shadow-[inset_3px_0_0_hsl(var(--vintage-gold))]"
+                    : "border-border bg-card",
+                  disabled && "opacity-50"
+                )}
+              >
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => handlePickToggle(category.id, rid)}
+                  className={cn("flex flex-1 items-center gap-3 min-w-0 text-left", disabled && "cursor-not-allowed")}
+                >
+                  <span
+                    className={cn(
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-mono font-bold border-2",
+                      isSel
+                        ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))] text-foreground"
+                        : "border-border bg-secondary text-muted-foreground"
+                    )}
+                  >
+                    {row.riders.start_number ?? "—"}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-display font-bold leading-tight truncate">{row.riders.name}</span>
+                    {team && <span className="block text-xs text-muted-foreground truncate">{team}</span>}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDetailRider({
+                      id: rid,
+                      name: row.riders!.name,
+                      firstcycling_id: row.riders!.firstcycling_id ?? null,
+                    })
+                  }
+                  className="shrink-0 p-1.5 rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted"
+                  title="Bekijk seizoensuitslagen"
+                  aria-label={`Bekijk seizoensuitslagen van ${row.riders.name}`}
+                >
+                  <Info className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <span
+                  className={cn(
+                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2",
+                    isSel ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))] text-foreground" : "border-border"
+                  )}
+                >
+                  {isSel && <Check className="h-4 w-4" strokeWidth={3} />}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Volgende-knop */}
+        <Button
+          onClick={() => jumpToCat(isLast ? "overview" : next.id)}
+          className="w-full retro-border-primary font-bold justify-center gap-1.5"
+        >
+          {nextLabel} <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  };
+
+  // ── Mobiel: overzicht & inzenden (laatste pager-stap) ──
+  const renderOverview = () => (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Laatste stap</div>
+          <h2 className="font-display text-2xl font-bold leading-tight">Overzicht &amp; inzenden</h2>
+        </div>
+        <div className="text-right shrink-0">
+          <div className="font-mono text-sm font-bold">
+            {completedPicks}<span className="text-muted-foreground">/{totalRequired}</span>
+          </div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">renners</div>
+        </div>
+      </div>
+      <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
+
+      {/* Ploeg per categorie */}
+      <div className="space-y-2">
+        {categories.map((cat, idx) => {
+          const sel = validPicksByCategory.get(cat.id) ?? [];
+          const max = cat.max_picks ?? 1;
+          const complete = sel.length === max;
+          const names = sel.map((id) => riderById.get(id)?.name ?? "—");
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => jumpToCat(cat.id)}
+              className={cn(
+                "w-full flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-colors",
+                complete
+                  ? "border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.08]"
+                  : "border-amber-500/50 bg-amber-500/10"
+              )}
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-border bg-secondary text-lg">
+                {getCategoryIcon(`${cat.name} ${cat.short_name ?? ""}`)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Cat. {idx + 1}</span>
+                <span className="block font-display font-bold leading-tight truncate">{cat.short_name ?? cat.name}</span>
+                <span className="block text-xs text-muted-foreground truncate">
+                  {names.length ? names.join(", ") : "Nog niemand gekozen"}
+                </span>
+              </span>
+              {complete ? (
+                <Check className="h-5 w-5 shrink-0 text-[hsl(var(--vintage-gold))]" />
+              ) : (
+                <span className="shrink-0 text-[11px] font-bold text-amber-600">{sel.length}/{max} →</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {jokersBlock}
+
+      {predictionsSection}
+
+      {/* Status + inzenden */}
+      {gameLocked ? (
+        <div className="retro-border bg-secondary/50 p-3 text-sm">
+          🔒 De koers staat op <strong>{game?.status}</strong> — wijzigen niet meer mogelijk.
+          {!isSubmitted && " Je huidige selectie telt als jouw inzending."}
+        </div>
+      ) : !isAuthed ? (
+        <div className="ornate-frame retro-border bg-primary/10 border-primary/40 p-4 space-y-3 text-center">
+          <p className="text-sm">
+            👀 Je bent aan het rondkijken. <strong>Maak een account aan</strong> om je ploeg in te dienen.
+          </p>
+          <Button onClick={() => navigate("/login")} className="w-full retro-border-primary font-bold">
+            Account aanmaken
+          </Button>
+        </div>
+      ) : isSubmitted ? (
+        <div className="retro-border bg-emerald-500/10 border-emerald-500/40 p-3 text-sm space-y-2">
+          <p>✅ <strong>Team ingediend.</strong> Wil je nog iets aanpassen? Klik op "Wijzigen" — vergeet daarna opnieuw in te dienen.</p>
+          <Button variant="outline" onClick={handleRevert} disabled={revertEntry.isPending} className="w-full">
+            ✏️ Wijzigen
+          </Button>
+        </div>
+      ) : (
+        <>
+          {!teamComplete && (
+            <div className="retro-border bg-amber-500/10 border-amber-500/40 p-3 text-sm">
+              <p className="font-display font-bold mb-1">Nog niet voltallig</p>
+              <ul className="list-disc pl-5 space-y-0.5 text-muted-foreground">
+                {missing.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <Button
+            onClick={handleSubmit}
+            disabled={Boolean(isLocked || isSubmitted || submitEntry.isPending)}
+            className={cn(
+              "w-full retro-border-primary font-bold",
+              teamComplete && !isSubmitted && !isLocked && "animate-pulse"
+            )}
+          >
+            ✅ Team definitief indienen
+          </Button>
+        </>
+      )}
+    </div>
+  );
+
+  const renderMobileTab = (key: string) => {
+    if (key === "overview") return renderOverview();
+    const idx = categories.findIndex((c) => c.id === key);
+    const cat = categories[idx];
+    return cat ? renderCategoryScreen(cat, idx) : null;
+  };
+
   return (
     <div className="container mx-auto px-5 py-4 md:py-6 pb-32 md:pb-8">
         <div className="max-w-5xl mx-auto">
@@ -361,6 +914,60 @@ export default function TeamBuilder() {
                 </div>
               ) : (
               <>
+              {/* ── MOBIEL: gefocuste categorie-voor-categorie pager (md:hidden) ── */}
+              <div className="md:hidden" ref={pagerRef}>
+                {gameLocked && (
+                  <div className="retro-border bg-secondary/50 p-2.5 text-xs mb-2">
+                    🔒 De koers staat op <strong>{game.status}</strong> — wijzigen niet meer mogelijk.
+                  </div>
+                )}
+                {!isAuthed && !gameLocked && (
+                  <div className="retro-border bg-primary/10 border-primary/40 p-2.5 text-xs mb-2 flex items-center justify-between gap-2">
+                    <span>👀 Rondkijken — account nodig om in te dienen.</span>
+                    <Button size="sm" onClick={() => navigate("/login")} className="shrink-0 h-7 px-2 text-xs">Account</Button>
+                  </div>
+                )}
+                <SwipeHintBar visible={mobileHint.visible} onClose={mobileHint.dismiss} className="mx-auto w-fit mb-2" />
+                {/* Tikbare stippen — vrij springen naar elke categorie of het overzicht */}
+                <div className="mb-3 flex flex-wrap items-center justify-center gap-1.5">
+                  {mobileKeys.map((k) => {
+                    const isOverview = k === "overview";
+                    const cat = isOverview ? null : categories.find((c) => c.id === k);
+                    const sel = cat ? validPicksByCategory.get(cat.id) ?? [] : [];
+                    const max = cat?.max_picks ?? 1;
+                    const complete = cat ? sel.length === max : teamComplete;
+                    const isActive = activeCat === k;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => jumpToCat(k)}
+                        aria-label={isOverview ? "Overzicht" : cat?.short_name ?? cat?.name ?? "Categorie"}
+                        aria-current={isActive ? "true" : undefined}
+                        className={cn(
+                          "h-2.5 rounded-full transition-all",
+                          isActive
+                            ? "w-5 bg-primary"
+                            : complete
+                              ? "w-2.5 bg-[hsl(var(--vintage-gold))]"
+                              : "w-2.5 bg-foreground/25",
+                          isOverview && !isActive && "w-3.5 bg-foreground/40"
+                        )}
+                      />
+                    );
+                  })}
+                </div>
+                <SwipeCarousel
+                  keys={mobileKeys}
+                  activeKey={activeCat}
+                  onChange={setActiveCatRaw}
+                  onSwiped={mobileHint.dismiss}
+                  renderTab={renderMobileTab}
+                />
+              </div>
+
+              {/* ── DESKTOP: bestaande layout (ongewijzigd) ── */}
+              <div className="hidden md:block space-y-5">
               {/* Sticky progress bar */}
               <div className="sticky top-2 z-30">
                 <div className="ornate-frame retro-border bg-card/95 backdrop-blur p-3 md:p-4">
@@ -448,58 +1055,6 @@ export default function TeamBuilder() {
                 </div>
               )}
 
-              {/* Mobiele snelnavigatie — chip-rail om naar een categorie te
-                  springen i.p.v. te scrollen door 21 blokken. Voltooide
-                  categorieën krijgen een groen vinkje; sticky onder de
-                  progress-bar zodat 'ie altijd binnen handbereik blijft. */}
-              {categories.length > 6 && (
-                <nav
-                  aria-label="Spring naar categorie"
-                  className="md:hidden sticky top-[78px] z-20 -mx-5 px-5 py-2 bg-background/85 backdrop-blur border-y border-border/60"
-                >
-                  <div
-                    className="flex gap-2 overflow-x-auto pb-1"
-                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                  >
-                    {categories.map((category, idx) => {
-                      const selected = validPicksByCategory.get(category.id) ?? [];
-                      const max = category.max_picks ?? 1;
-                      const complete = selected.length === max;
-                      const icon = getCategoryIcon(`${category.name} ${category.short_name ?? ""}`);
-                      return (
-                        <a
-                          key={category.id}
-                          href={`#cat-${category.id}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            const el = document.getElementById(`cat-${category.id}`);
-                            if (el) {
-                              const y = el.getBoundingClientRect().top + window.scrollY - 140;
-                              window.scrollTo({ top: y, behavior: "smooth" });
-                            }
-                          }}
-                          className={cn(
-                            "shrink-0 flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-[12px] font-display font-bold uppercase tracking-wider relative",
-                            complete
-                              ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                              : "border-border bg-card text-foreground/80"
-                          )}
-                          title={category.name}
-                        >
-                          <span className="text-base leading-none">{icon}</span>
-                          <span className="font-mono text-[10px] opacity-60">{idx + 1}</span>
-                          <span className="max-w-[80px] truncate">{category.short_name ?? category.name}</span>
-                          {complete && (
-                            <span className="ml-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 text-white">
-                              <Check className="h-2.5 w-2.5" strokeWidth={3} />
-                            </span>
-                          )}
-                        </a>
-                      );
-                    })}
-                  </div>
-                </nav>
-              )}
 
               {/* Categories */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -626,272 +1181,11 @@ export default function TeamBuilder() {
                 })}
               </div>
 
-              {/* Jokers */}
-              <div className="ornate-frame retro-border p-4 relative bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[hsl(var(--vintage-gold))] via-primary to-[hsl(var(--vintage-gold))]" />
-                <div className="flex items-center gap-3 mb-1">
-                  <span className="text-2xl">🃏</span>
-                  <h2 className="font-display text-xl font-bold">Jokers</h2>
-                </div>
-                <p className="text-sm opacity-80 mb-3 font-serif italic">
-                  Twee outsiders uit de overige renners. Niet uit een categorie. {jokerPool.length} beschikbaar.
-                </p>
+              {/* Jokers (gedeeld met mobiel overzicht) */}
+              {jokersBlock}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                  {[
-                    { draft: jokerDraft1, set: setJokerDraft1, exclude: jokerDraft2, label: "Joker 1" },
-                    { draft: jokerDraft2, set: setJokerDraft2, exclude: jokerDraft1, label: "Joker 2" },
-                  ].map((slot, i) => {
-                    const picked = slot.draft ? riderById.get(slot.draft) : null;
-                    return (
-                      <div
-                        key={i}
-                        className={cn(
-                          "rounded-lg border-2 p-3 transition-all",
-                          picked
-                            ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.1]"
-                            : "border-dashed border-white/30 bg-white/5"
-                        )}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-mono uppercase tracking-widest opacity-70">
-                            {slot.label}
-                          </span>
-                          {picked && (
-                            <span className="text-[10px] font-mono opacity-70">
-                              #{picked.start_number ?? "—"}
-                            </span>
-                          )}
-                        </div>
-                        {picked ? (
-                          <div className="font-display text-lg font-bold mb-2">{picked.name}</div>
-                        ) : (
-                          <div className="font-display text-base italic opacity-50 mb-2">Geen keuze</div>
-                        )}
-                        <RiderSearchSelect
-                          riders={jokerPool}
-                          value={slot.draft}
-                          onChange={slot.set}
-                          excludeIds={slot.exclude ? [slot.exclude] : []}
-                          placeholder="Zoek renner..."
-                          disabled={Boolean(isLocked)}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="flex items-center justify-between flex-wrap gap-2 text-xs opacity-70">
-                  <span>Opgeslagen jokers: <strong>{jokerIds.length}/2</strong></span>
-                  <span className="italic font-serif">Auto-opslaan tijdens kiezen</span>
-                </div>
-              </div>
-
-              {/* Klassementsvoorspellingen — vintage affichepaneel.
-                  Oud papier + sepia inkt + dubbele kaderlijn + halftone-grain.
-                  Functionaliteit (zoeken, kiezen, auto-opslaan, jongeren-filter)
-                  ongewijzigd. Tokens in src/index.css onder VINTAGE POSTER TOKENS. */}
-              <section className="vintage-paper vintage-frame p-4 md:p-6 relative overflow-hidden">
-                {/* Affiche-koptekst */}
-                <div className="text-center mb-4 md:mb-5 relative">
-                  <div className="vintage-stamp text-[10px] md:text-[11px] mb-1.5">
-                    ✦ Pronostiek · Le palmarès final ✦
-                  </div>
-                  <h2 className="vintage-numeral text-2xl md:text-4xl mb-1" style={{ letterSpacing: "0.04em" }}>
-                    KLASSEMENTSVOORSPELLINGEN
-                  </h2>
-                  <p className="text-xs md:text-sm font-serif italic" style={{ color: "var(--ink-faded)" }}>
-                    Voorspel de eindstand — auto-opslaan tijdens typen.
-                  </p>
-                  {/* Dubbele inktstreep onder de kop */}
-                  <div className="mx-auto mt-3 w-44 md:w-56 h-[2px]" style={{ background: "var(--ink-sepia)" }} />
-                  <div className="mx-auto mt-[2px] w-32 md:w-40 h-[1px]" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
-                </div>
-
-                {/* ── Podium ─────────────────────────────────────────────── */}
-                <div className="mb-7 md:mb-8 relative">
-                  <div className="vintage-stamp text-center text-[10px] md:text-[11px] mb-4">
-                    — Eindklassement Podium —
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 md:gap-4 items-end relative">
-                    {[
-                      { idx: 1, rank: "2", sokkel: "vintage-sokkel--silver", height: "h-14 md:h-16", order: "order-1", medalVar: { "--medal-rim": "var(--medal-silver)", "--medal-fill": "linear-gradient(180deg,#EAE7E0,#9C9890)" } },
-                      { idx: 0, rank: "1", sokkel: "vintage-sokkel--winner", height: "h-20 md:h-24", order: "order-2", medalVar: null },
-                      { idx: 2, rank: "3", sokkel: "vintage-sokkel--bronze", height: "h-12 md:h-14", order: "order-3", medalVar: { "--medal-rim": "var(--medal-bronze)", "--medal-fill": "linear-gradient(180deg,#D69862,#8C5A2A)" } },
-                    ].map(({ idx, rank, sokkel, height, order, medalVar }) => {
-                      const otherPodium = gcPodium.filter((_, j) => j !== idx && Boolean(_));
-                      const picked = gcPodium[idx] ? riderById.get(gcPodium[idx]) : null;
-                      const isWinner = idx === 0;
-                      return (
-                        <div key={idx} className={cn("flex flex-col items-center", order)}>
-                          {/* Eredecoratie boven het podium */}
-                          <div className="mb-2 md:mb-3 relative flex items-center justify-center min-h-[64px] md:min-h-[88px]">
-                            {isWinner ? (
-                              <>
-                                {/* Sunburst achter de winnaar */}
-                                <div
-                                  aria-hidden
-                                  className="absolute inset-0 -m-4 md:-m-6 vintage-sunburst pointer-events-none"
-                                />
-                                {/* Gele trui — alleen voor de eindwinnaar */}
-                                <div className={cn("relative z-10", picked ? "opacity-100" : "opacity-60")}>
-                                  <TruiBadge type="algemeen" formaat="groot" />
-                                </div>
-                              </>
-                            ) : (
-                              <div className="flex flex-col items-center">
-                                {/* Cocarde-lint */}
-                                <div
-                                  className="vintage-ribbon w-9 md:w-11 h-3.5 md:h-4 -mb-1.5 rounded-t-[2px]"
-                                  style={{ clipPath: "polygon(0 0, 100% 0, 88% 100%, 12% 100%)" }}
-                                />
-                                {/* Emaille-medaillon */}
-                                <div
-                                  className="vintage-medal relative z-10 h-12 w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center"
-                                  style={medalVar as React.CSSProperties}
-                                >
-                                  <span className="vintage-numeral text-lg md:text-2xl" style={{ color: "var(--ink-sepia)" }}>
-                                    {rank}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Sokkel met emaille/hout-uitstraling */}
-                          <div
-                            className={cn(
-                              "vintage-sokkel relative w-full flex flex-col items-center justify-center text-center px-2 py-2 mb-2 rounded-t-md",
-                              height,
-                              sokkel
-                            )}
-                          >
-                            {/* Hoeknieten */}
-                            <span aria-hidden className="absolute top-1 left-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
-                            <span aria-hidden className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
-                            {/* Affiche-cijfer */}
-                            <span
-                              className={cn(
-                                "vintage-numeral leading-none mb-1",
-                                isWinner ? "text-5xl md:text-6xl" : "text-3xl md:text-4xl"
-                              )}
-                              style={{
-                                color: isWinner ? "var(--ink-sepia)" : "var(--ink-faded)",
-                                textShadow: isWinner ? "2px 2px 0 rgba(255,255,255,0.55), 4px 4px 0 rgba(58,42,26,0.18)" : undefined,
-                              }}
-                              aria-hidden
-                            >
-                              {rank}
-                            </span>
-                            {/* Rennernaam of vintage placeholder */}
-                            {picked ? (
-                              <span
-                                className={cn(
-                                  "font-display font-bold leading-tight line-clamp-2",
-                                  isWinner ? "text-[12px] md:text-sm" : "text-[11px] md:text-xs"
-                                )}
-                                style={{ color: "var(--ink-sepia)" }}
-                              >
-                                {picked.name}
-                              </span>
-                            ) : (
-                              <span className="text-[10px] md:text-xs italic" style={{ color: "var(--ink-sepia)", opacity: 0.7, fontFamily: "'Special Elite','Courier Prime',serif" }}>
-                                nog in te vullen
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Vintage formulier-veld */}
-                          <div className="w-full">
-                            <RiderSearchSelect
-                              riders={allStartlistRiders}
-                              value={gcPodium[idx]}
-                              onChange={(v) => {
-                                const next = [...gcPodium];
-                                next[idx] = v;
-                                setGcPodium(next);
-                              }}
-                              excludeIds={otherPodium}
-                              placeholder="Zoek…"
-                              disabled={Boolean(isLocked)}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Sectie-scheiding affichestijl */}
-                <div className="flex items-center gap-3 my-5">
-                  <div className="flex-1 h-[1.5px]" style={{ background: "var(--ink-sepia)" }} />
-                  <span className="vintage-stamp text-[10px]">Trui-winnaars</span>
-                  <div className="flex-1 h-[1.5px]" style={{ background: "var(--ink-sepia)" }} />
-                </div>
-
-                {/* ── Trui-kaarten (emaille-bordjes) ─────────────────────── */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {([
-                    { label: "Maillot à pois",  sub: "Bergtrui",     trui: "berg"     as const, accent: "berg",     value: mountainJersey, setter: setMountainJersey, riders: allStartlistRiders, hint: undefined as string | undefined },
-                    { label: "Maillot vert",    sub: "Puntentrui",   trui: "punten"   as const, accent: "punten",   value: pointsJersey,   setter: setPointsJersey,   riders: allStartlistRiders, hint: undefined },
-                    { label: "Maillot blanc",   sub: "Jongerentrui", trui: "jongeren" as const, accent: "jongeren", value: youthJersey,    setter: setYouthJersey,    riders: youthEligibleRiders, hint: `Alleen jongerenklassement-renners (${youthEligibleRiders.length})` },
-                  ]).map(({ label, sub, trui, accent, value, setter, riders: jerseyRiders, hint }) => {
-                    const picked = value ? riderById.get(value) : null;
-                    return (
-                      <div
-                        key={label}
-                        data-accent={accent}
-                        className={cn("vintage-board p-3 md:p-4 flex flex-col gap-2 relative")}
-                      >
-                        {/* Hoeknieten */}
-                        <span aria-hidden className="absolute top-1.5 left-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
-                        <span aria-hidden className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
-                        <span aria-hidden className="absolute bottom-1.5 left-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
-                        <span aria-hidden className="absolute bottom-1.5 right-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.4 }} />
-
-                        {/* Kop: trui + label */}
-                        <div className="flex items-center gap-3 pb-2 border-b" style={{ borderColor: "var(--ink-sepia)", borderBottomStyle: "dashed", opacity: 1 }}>
-                          <div className={cn("shrink-0 transition-opacity", picked ? "opacity-100" : "opacity-70")} style={{ filter: "drop-shadow(1px 1px 0 rgba(58,42,26,0.18))" }}>
-                            <TruiBadge type={trui} formaat="medium" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="vintage-stamp text-[9px] md:text-[10px]">{sub}</div>
-                            <div className="vintage-numeral text-lg md:text-xl leading-tight" style={{ color: "var(--ink-sepia)", letterSpacing: "0.02em" }}>
-                              {label}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Gekozen renner of vintage placeholder */}
-                        {picked ? (
-                          <div className="font-display font-bold text-base truncate" style={{ color: "var(--ink-sepia)" }}>
-                            {picked.name}
-                          </div>
-                        ) : (
-                          <div className="vintage-empty rounded-md px-2 py-1.5 text-xs text-center">
-                            nog in te vullen
-                          </div>
-                        )}
-
-                        {/* Vintage formulier-veld */}
-                        <RiderSearchSelect
-                          riders={jerseyRiders}
-                          value={value}
-                          onChange={setter}
-                          placeholder="Zoek renner…"
-                          disabled={Boolean(isLocked)}
-                        />
-                        {hint && (
-                          <p className="text-[10px] italic" style={{ color: "var(--ink-faded)", fontFamily: "'Special Elite','Courier Prime',serif" }}>
-                            {hint}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
+              {/* Klassementsvoorspellingen (gedeeld met mobiel overzicht) */}
+              {predictionsSection}
 
               {!gameLocked && !teamComplete && (
                 <div className="ornate-frame retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
@@ -939,6 +1233,7 @@ export default function TeamBuilder() {
                 >
                   {isSubmitted ? "✅ Reeds ingediend" : "✅ Team definitief indienen"}
                 </Button>
+              </div>
               </div>
               </>
               )}
@@ -1014,31 +1309,6 @@ export default function TeamBuilder() {
         )}
       </div>
 
-      {/* Mobile sticky action bar */}
-      {gameReady && game && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t-2 border-foreground p-3 flex gap-2">
-          {!gameLocked && isSubmitted && (
-            <Button variant="outline" onClick={handleRevert} disabled={revertEntry.isPending} className="flex-1">
-              ✏️ Wijzigen
-            </Button>
-          )}
-          {!isLocked && !isSubmitted && (
-            <Button variant="outline" onClick={handleSaveDraft} disabled={savePredictions.isPending || saveJoker.isPending} className="flex-1">
-              💾 Opslaan
-            </Button>
-          )}
-          <Button
-            onClick={handleSubmit}
-            disabled={Boolean(isLocked || isSubmitted || submitEntry.isPending)}
-            className={cn(
-              "flex-1 retro-border-primary font-bold",
-              teamComplete && !isSubmitted && !isLocked && "animate-pulse"
-            )}
-          >
-            {isSubmitted ? "✅ Ingediend" : "✅ Definitief indienen"}
-          </Button>
-        </div>
-      )}
       <RiderDetailPanel rider={detailRider} onClose={() => setDetailRider(null)} />
     </div>
   );
