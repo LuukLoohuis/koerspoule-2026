@@ -39,7 +39,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useAllGames, gameTheme } from "@/hooks/useAllGames";
 import GameSwitcher from "@/components/GameSwitcher";
-import { useEntry } from "@/hooks/useEntry";
+import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
+import { Input } from "@/components/ui/input";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useAuth } from "@/hooks/useAuth";
 import OnboardingCard from "@/components/OnboardingCard";
@@ -99,7 +100,7 @@ export default function MijnPeloton() {
   const { thema } = useThema();
   const { data: profile } = useProfile();
   const { data: currentGame } = useCurrentGame();
-  const { teamName } = useEntry(currentGame?.id);
+  const { teamName, entry: nameEntry, saveTeamName } = useEntry(currentGame?.id);
   const myTeam = mockTeams[0];
   const displayName = (teamName?.trim() || profile?.display_name?.trim() || "José Bidon");
   const { data: allGames = [] } = useAllGames();
@@ -139,6 +140,20 @@ export default function MijnPeloton() {
     setGameTab("team");
     setTeamSubTab("ploeg");
     setFocusNameSeq((s) => s + 1);
+  };
+  // Inline ploegnaam invoeren vanuit de nudge-balk (geen tab-sprong nodig).
+  const [nameInput, setNameInput] = useState("");
+  const handleInlineSaveName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = nameInput.trim();
+    if (!name || !nameEntry?.id) return;
+    try {
+      await saveTeamName.mutateAsync({ entryId: nameEntry.id, teamName: name });
+      toast({ title: "Ploegnaam opgeslagen" });
+      setNameInput("");
+    } catch (err) {
+      toast({ title: "Opslaan mislukt", description: entryErrorMessage(err), variant: "destructive" });
+    }
   };
   // Volgwagen-subtabs (mobiel): vinger-volgende carrousel + zwevende schakelaar.
   const teamHint = useSwipeHint();
@@ -1037,25 +1052,52 @@ export default function MijnPeloton() {
         <div className="double-rule mt-2 md:mt-3 mx-auto max-w-md" />
       </div>
 
-      {/* 3. Ploegnaam-nudge — alleen tonen als er nog géén ploegnaam is */}
+      {/* 3. Ploegnaam-nudge — alleen tonen als er nog géén ploegnaam is.
+           Heb je een entry? Dan kun je de naam direct in de balk invoeren.
+           Anders (nog geen entry/niet ingelogd) → naar de Volgwagen. */}
       {!hasTeamName && (
-        <button
-          type="button"
-          onClick={goEditTeamName}
-          className="w-full mb-3 retro-border bg-card px-3 py-2 flex items-center justify-between gap-3 text-left hover:bg-secondary/40 transition-colors"
-          aria-label="Stel je ploegnaam in in de Volgwagen"
-        >
-          <span className="flex items-center gap-2 min-w-0">
+        nameEntry?.id ? (
+          <form
+            onSubmit={handleInlineSaveName}
+            className="w-full mb-3 retro-border bg-card px-3 py-2 flex items-center gap-2"
+          >
             <Pencil className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <span className="font-display text-sm font-bold truncate">
-              Stel je ploegnaam in
+            <Input
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="Stel je ploegnaam in…"
+              maxLength={40}
+              aria-label="Ploegnaam"
+              className="h-9 flex-1 min-w-0 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0 font-display font-bold"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!nameInput.trim() || saveTeamName.isPending}
+              className="shrink-0 retro-border-primary font-bold"
+            >
+              {saveTeamName.isPending ? "…" : "Opslaan"}
+            </Button>
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={goEditTeamName}
+            className="w-full mb-3 retro-border bg-card px-3 py-2 flex items-center justify-between gap-3 text-left hover:bg-secondary/40 transition-colors"
+            aria-label="Stel je ploegnaam in in de Volgwagen"
+          >
+            <span className="flex items-center gap-2 min-w-0">
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="font-display text-sm font-bold truncate">
+                Stel je ploegnaam in
+              </span>
+              <span className="hidden sm:inline text-xs font-serif italic text-muted-foreground truncate">
+                — geef je team een naam voor de start
+              </span>
             </span>
-            <span className="hidden sm:inline text-xs font-serif italic text-muted-foreground truncate">
-              — geef je team een naam voor de start
-            </span>
-          </span>
-          <span className="shrink-0 text-base text-muted-foreground" aria-hidden>→</span>
-        </button>
+            <span className="shrink-0 text-base text-muted-foreground" aria-hidden>→</span>
+          </button>
+        )
       )}
 
       <div className="max-w-5xl mx-auto">
