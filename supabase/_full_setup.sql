@@ -8594,6 +8594,25 @@ end $$;
 notify pgrst, 'reload schema';
 
 
+-- ########## FIX: save_entry_jokers race/dup-veilig ##########
+create or replace function public.save_entry_jokers(p_entry_id uuid, p_rider_ids uuid[])
+returns void language plpgsql security definer set search_path = public as $$
+declare v_user uuid; v_status text;
+begin
+  select user_id, status into v_user, v_status from public.entries where id = p_entry_id;
+  if v_user is null then raise exception 'Entry not found'; end if;
+  if v_user <> auth.uid() and not public.is_admin() then raise exception 'Not authorized'; end if;
+  if v_status = 'submitted' and not public.is_admin() then raise exception 'Entry already submitted'; end if;
+  if array_length(p_rider_ids,1) > 2 then raise exception 'Maximum 2 jokers'; end if;
+  delete from public.entry_jokers where entry_id = p_entry_id;
+  if p_rider_ids is not null and array_length(p_rider_ids,1) > 0 then
+    insert into public.entry_jokers (entry_id, rider_id)
+    select distinct p_entry_id, unnest(p_rider_ids)
+    on conflict (entry_id, rider_id) do nothing;
+  end if;
+end $$;
+
+
 -- ########## GRANTS: vangnet voor reeds aangemaakte objecten ##########
 grant select, insert, update, delete on all tables in schema public to anon, authenticated;
 grant all on all tables in schema public to service_role;

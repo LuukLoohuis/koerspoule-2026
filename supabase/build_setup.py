@@ -155,6 +155,25 @@ def main():
         "notify pgrst, 'reload schema';\n"
     )
     parts.append(
+        "\n-- ########## FIX: save_entry_jokers race/dup-veilig ##########\n"
+        "create or replace function public.save_entry_jokers(p_entry_id uuid, p_rider_ids uuid[])\n"
+        "returns void language plpgsql security definer set search_path = public as $$\n"
+        "declare v_user uuid; v_status text;\n"
+        "begin\n"
+        "  select user_id, status into v_user, v_status from public.entries where id = p_entry_id;\n"
+        "  if v_user is null then raise exception 'Entry not found'; end if;\n"
+        "  if v_user <> auth.uid() and not public.is_admin() then raise exception 'Not authorized'; end if;\n"
+        "  if v_status = 'submitted' and not public.is_admin() then raise exception 'Entry already submitted'; end if;\n"
+        "  if array_length(p_rider_ids,1) > 2 then raise exception 'Maximum 2 jokers'; end if;\n"
+        "  delete from public.entry_jokers where entry_id = p_entry_id;\n"
+        "  if p_rider_ids is not null and array_length(p_rider_ids,1) > 0 then\n"
+        "    insert into public.entry_jokers (entry_id, rider_id)\n"
+        "    select distinct p_entry_id, unnest(p_rider_ids)\n"
+        "    on conflict (entry_id, rider_id) do nothing;\n"
+        "  end if;\n"
+        "end $$;\n"
+    )
+    parts.append(
         "\n-- ########## GRANTS: vangnet voor reeds aangemaakte objecten ##########\n"
         "grant select, insert, update, delete on all tables in schema public to anon, authenticated;\n"
         "grant all on all tables in schema public to service_role;\n"
