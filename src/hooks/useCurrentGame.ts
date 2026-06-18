@@ -1,5 +1,28 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+
+/**
+ * Realtime + focus-refresh op de games-tabel: zet de admin de koers live/locked,
+ * dan pikt een al-open sessie dat direct op (geen handmatige reload nodig).
+ * Invalideert zowel current-game als all-games. Eén gedeelde subscriber.
+ */
+function useGamesAutoRefresh() {
+  const qc = useQueryClient();
+  useEffect(() => {
+    if (!supabase) return;
+    const channel = supabase
+      .channel("games-status")
+      .on("postgres_changes", { event: "*", schema: "public", table: "games" }, () => {
+        qc.invalidateQueries({ queryKey: ["current-game"] });
+        qc.invalidateQueries({ queryKey: ["all-games"] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+}
 
 export type Game = {
   id: string;
@@ -22,8 +45,13 @@ const SELECT_LEGACY =
   "id, name, year, status, game_type, homepage_quote, homepage_quote_author";
 
 export function useCurrentGame() {
+  useGamesAutoRefresh();
   return useQuery({
     queryKey: ["current-game"],
+    // Status-wissels (open→live→locked) snel oppikken, ook bij terugkeer naar de tab.
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     queryFn: async (): Promise<Game | null> => {
       if (!supabase) return null;
 

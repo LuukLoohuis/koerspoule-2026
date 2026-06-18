@@ -12,6 +12,10 @@ export type GameRow = {
 export function useAllGames() {
   return useQuery({
     queryKey: ["all-games"],
+    // Status-wissels snel oppikken (realtime-invalidatie zit in useCurrentGame).
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     queryFn: async (): Promise<GameRow[]> => {
       if (!supabase) return [];
       const { data, error } = await supabase
