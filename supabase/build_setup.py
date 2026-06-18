@@ -139,6 +139,22 @@ def main():
         "end $$;\n"
     )
     parts.append(
+        "\n-- ########## FIX: ontbrekende FK entry_predictions -> entries/riders ##########\n"
+        "-- entry_predictions is aangemaakt zonder FK's; PostgREST kan dan de embed\n"
+        "-- entry_predictions(...) niet vinden (PGRST200) -> entries-query faalt.\n"
+        "do $$ begin\n"
+        "  if not exists (select 1 from pg_constraint where conname = 'entry_predictions_entry_id_fkey') then\n"
+        "    alter table public.entry_predictions add constraint entry_predictions_entry_id_fkey\n"
+        "      foreign key (entry_id) references public.entries(id) on delete cascade;\n"
+        "  end if;\n"
+        "  if not exists (select 1 from pg_constraint where conname = 'entry_predictions_rider_id_fkey') then\n"
+        "    alter table public.entry_predictions add constraint entry_predictions_rider_id_fkey\n"
+        "      foreign key (rider_id) references public.riders(id) on delete cascade;\n"
+        "  end if;\n"
+        "end $$;\n"
+        "notify pgrst, 'reload schema';\n"
+    )
+    parts.append(
         "\n-- ########## GRANTS: vangnet voor reeds aangemaakte objecten ##########\n"
         "grant select, insert, update, delete on all tables in schema public to anon, authenticated;\n"
         "grant all on all tables in schema public to service_role;\n"

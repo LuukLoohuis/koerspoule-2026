@@ -8578,6 +8578,22 @@ begin
 end $$;
 
 
+-- ########## FIX: ontbrekende FK entry_predictions -> entries/riders ##########
+-- entry_predictions is aangemaakt zonder FK's; PostgREST kan dan de embed
+-- entry_predictions(...) niet vinden (PGRST200) -> entries-query faalt.
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'entry_predictions_entry_id_fkey') then
+    alter table public.entry_predictions add constraint entry_predictions_entry_id_fkey
+      foreign key (entry_id) references public.entries(id) on delete cascade;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'entry_predictions_rider_id_fkey') then
+    alter table public.entry_predictions add constraint entry_predictions_rider_id_fkey
+      foreign key (rider_id) references public.riders(id) on delete cascade;
+  end if;
+end $$;
+notify pgrst, 'reload schema';
+
+
 -- ########## GRANTS: vangnet voor reeds aangemaakte objecten ##########
 grant select, insert, update, delete on all tables in schema public to anon, authenticated;
 grant all on all tables in schema public to service_role;
