@@ -66,7 +66,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
   const [deskChatOpen, setDeskChatOpen] = useState(false);
   // Mobiel: tab-gebaseerde subpoule-weergave (zoals Hors Categorie).
   const [mobileTab, setMobileTab] = useState<string>("klassement");
-  const mobileHint = useSwipeHint();
+  const mobileHint = useSwipeHint("subpoule");
   const mobileBarVisible = useAutoHideOnScroll();
   const [createName, setCreateName] = useState("");
   const [createCode, setCreateCode] = useState("");
@@ -417,7 +417,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
 
           {/* Swipe-coachmark (eenmalig) + stippen-indicator. */}
           <SwipeHintBar visible={mobileHint.visible} onClose={mobileHint.dismiss} className="mx-auto w-fit my-2" />
-          <SwipeDots count={SUB_TABS.length} activeIndex={SUB_TAB_KEYS.indexOf(mobileTab)} className="mb-2" />
+          <SwipeDots count={SUB_TABS.length} activeIndex={SUB_TAB_KEYS.indexOf(mobileTab)} activeLabel={SUB_TABS.find((t) => t.key === mobileTab)?.label} className="mb-2" />
 
           {/* Vinger-volgende carrousel: alleen het content-vlak beweegt. */}
           <SwipeCarousel

@@ -23,7 +23,10 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { flushSync } from "react-dom";
 import { cn } from "@/lib/utils";
 
-const AXIS_LOCK_PX = 10; // richting-lock-drempel
+const H_LOCK_PX = 8; // horizontaal commit zodra |dx| dit haalt …
+const H_DOMINANCE = 1.5; // … én |dx| > |dy| * 1.5 (sterke horizontale bias-eis)
+const V_LOCK_PX = 6; // verticaal commit al bij kleine verticale beweging (bias naar scrollen)
+const SCROLL_COOLDOWN_MS = 300; // na (momentum-)scroll: carrousel-start even negeren
 const SNAP_RATIO = 0.35; // ≥35% van de breedte → snap naar buur
 const FLICK_VEL = 0.5; // px/ms → snelle flick snapt ook
 const FLICK_MIN_PX = 24;
@@ -87,6 +90,15 @@ export default function SwipeCarousel({
     const vp = viewportRef.current;
     if (!vp) return;
 
+    // Tijd van de laatste (momentum-)scroll → een carrousel-start vlak ná het
+    // scrollen wordt genegeerd, zodat de browser het gebaar niet half als scroll
+    // pakt. iOS-momentum vuurt ook scroll-events → cooldown loopt door tot het
+    // momentum stopt.
+    let lastScrollT = 0;
+    const onScroll = () => {
+      lastScrollT = performance.now();
+    };
+
     const setX = (px: number, anim: boolean) => {
       const t = trackRef.current;
       if (!t) return;
@@ -124,7 +136,11 @@ export default function SwipeCarousel({
       s.startT = performance.now();
       s.axis = "none";
       s.dir = 0;
-      s.ignore = startedInHorizontalScroller(e.target, vp);
+      // Negeer: gebaar begint in een horizontale scroller (etappe-bar) OF vlak
+      // na een verticale scroll/momentum (cooldown).
+      s.ignore =
+        startedInHorizontalScroller(e.target, vp) ||
+        performance.now() - lastScrollT < SCROLL_COOLDOWN_MS;
       s.width = vp.clientWidth || 1;
       s.reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
       const tr = trackRef.current;
@@ -139,8 +155,13 @@ export default function SwipeCarousel({
       const dy = t.clientY - s.startY;
 
       if (s.axis === "none") {
-        if (Math.abs(dx) < AXIS_LOCK_PX && Math.abs(dy) < AXIS_LOCK_PX) return;
-        if (Math.abs(dx) > Math.abs(dy)) {
+        const adx = Math.abs(dx);
+        const ady = Math.abs(dy);
+        // Nog te weinig signaal → niets beslissen.
+        if (adx < H_LOCK_PX && ady < V_LOCK_PX) return;
+        // Alleen horizontaal als het DUIDELIJK domineert; bij twijfel of
+        // verticaal-overwicht → 'v' (pagina scrollt, nooit kapen).
+        if (adx >= H_LOCK_PX && adx > ady * H_DOMINANCE) {
           s.axis = "h";
           s.dir = dx < 0 ? 1 : -1; // links vegen → volgende
           if (!s.reduce) {
@@ -148,7 +169,7 @@ export default function SwipeCarousel({
             setNeighbor(ni >= 0 ? { key: keysRef.current[ni], dir: s.dir } : null);
           }
         } else {
-          s.axis = "v"; // verticaal → pagina scrollt normaal
+          s.axis = "v"; // verticaal/diagonaal → pagina scrollt normaal
           return;
         }
       }
@@ -234,11 +255,13 @@ export default function SwipeCarousel({
     vp.addEventListener("touchmove", onMove, { passive: false });
     vp.addEventListener("touchend", onEnd, { passive: true });
     vp.addEventListener("touchcancel", onCancel, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       vp.removeEventListener("touchstart", onStart);
       vp.removeEventListener("touchmove", onMove);
       vp.removeEventListener("touchend", onEnd);
       vp.removeEventListener("touchcancel", onCancel);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 

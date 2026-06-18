@@ -127,7 +127,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   }, [initialView, initialStageNumber, stages.length]);
 
   // Mobiel: swipe tussen Klassement/Etappes (de zwevende pill staat onderaan).
-  const hint = useSwipeHint();
+  const hint = useSwipeHint("uitslagen");
   const barVisible = useAutoHideOnScroll();
 
   const selectedStage = stages[selectedStageIdx];
@@ -288,7 +288,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
 
         {/* Swipe-hint + stippen-indicator (mobiel). */}
         <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mx-auto w-fit mt-2" />
-        <SwipeDots count={2} activeIndex={view === "klassement" ? 0 : 1} />
+        <SwipeDots count={2} activeIndex={view === "klassement" ? 0 : 1} activeLabel={view === "klassement" ? "Klassement" : "Etappes"} />
 
         {/* Vinger-volgende carrousel: alleen het content-vlak beweegt. */}
         <SwipeCarousel

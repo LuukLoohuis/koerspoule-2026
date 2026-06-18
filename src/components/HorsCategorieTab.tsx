@@ -766,7 +766,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     if (initialTab) setActiveTab(initialTab);
   }, [initialTab]);
   // Mobiel: vinger-volgende carrousel tussen onderdelen (de zwevende schakelaar staat onderaan).
-  const hint = useSwipeHint();
+  const hint = useSwipeHint("hors");
   const barVisible = useAutoHideOnScroll();
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
@@ -825,7 +825,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
       {/* Swipe-hint (eenmalig, wegklikbaar) + stippen-indicator (mobiel). */}
       <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mx-auto w-fit" />
-      <SwipeDots count={HORS_TABS.length} activeIndex={HORS_TABS.findIndex((t) => t.key === activeTab)} />
+      <SwipeDots count={HORS_TABS.length} activeIndex={HORS_TABS.findIndex((t) => t.key === activeTab)} activeLabel={HORS_TABS.find((t) => t.key === activeTab)?.label} />
 
       {/* Desktop — retro dossard-tabbalk */}
       <RetroTabs

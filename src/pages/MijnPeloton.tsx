@@ -156,7 +156,7 @@ export default function MijnPeloton() {
     }
   };
   // Volgwagen-subtabs (mobiel): vinger-volgende carrousel + zwevende schakelaar.
-  const teamHint = useSwipeHint();
+  const teamHint = useSwipeHint("volgwagen");
   const teamBarVisible = useAutoHideOnScroll();
   const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
@@ -1218,6 +1218,7 @@ export default function MijnPeloton() {
               <SwipeDots
                 count={3}
                 activeIndex={["ploeg", "prono", "palmares"].indexOf(teamSubTab)}
+                activeLabel={({ ploeg: "Mijn Ploeg", prono: "Pronostiek", palmares: "Palmares" } as Record<string, string>)[teamSubTab]}
                 className="mb-2"
               />
 
