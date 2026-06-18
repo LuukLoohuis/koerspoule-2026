@@ -5,7 +5,7 @@
  * - Auto-centers active card on selection.
  */
 import { useEffect, useRef } from "react";
-import { Lock } from "lucide-react";
+import { Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlagIcon from "@/components/FlagIcon";
 import { gameTheme, type GameRow } from "@/hooks/useAllGames";
@@ -144,11 +144,11 @@ export default function GameSwitcher({ games, selectedId, onSelect, className }:
                         "font-bold uppercase tracking-wider",
                         isActive
                           ? "bg-white/25 text-white"
-                          : "bg-secondary text-muted-foreground border border-border",
+                          : "bg-[hsl(var(--vintage-gold)/0.16)] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold)/0.45)]",
                       )}
                     >
-                      <Lock className="w-2.5 h-2.5" />
-                      Concept
+                      <Wrench className="w-2.5 h-2.5" />
+                      In voorbereiding
                     </span>
                   )}
                 </button>

@@ -43,7 +43,7 @@ import { useEntry } from "@/hooks/useEntry";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useAuth } from "@/hooks/useAuth";
 import OnboardingCard from "@/components/OnboardingCard";
-import { Lock } from "lucide-react";
+import { Wrench, Share2 } from "lucide-react";
 import {
   ChartContainer,
   ChartTooltip,
@@ -1060,15 +1060,43 @@ export default function MijnPeloton() {
 
 
         {isDraft && (
-          <div className="retro-border bg-card p-4 mb-4 text-center">
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Lock className="h-4 w-4" />
+          <div className="retro-border bg-[hsl(var(--vintage-gold)/0.10)] p-4 mb-4">
+            <div className="flex items-center gap-2">
+              <Wrench className="h-4 w-4 text-[hsl(var(--vintage-gold))] shrink-0" />
               <span className="font-display font-bold text-sm md:text-base">
-                Inschrijving voorlopig gesloten
+                Startlijst nog niet bekend
               </span>
             </div>
-            <p className="text-xs md:text-sm text-muted-foreground mt-1 font-sans">
-              Opent zodra de officiële startlijst beschikbaar is.
+            <p className="text-xs md:text-sm text-muted-foreground mt-1.5 font-sans">
+              Je <strong className="text-foreground">ploeg kiezen</strong> kan zodra de officiële
+              startlijst er is — nog heel even geduld. Maar je kunt <strong className="text-foreground">nu al</strong>{" "}
+              je ploegnaam kiezen, een subpoule starten en je vrienden uitdagen.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <button
+                type="button"
+                onClick={() => { setGameTab("team"); setTeamSubTab("ploeg"); }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-display font-bold bg-primary text-primary-foreground border-2 border-foreground shadow-[2px_2px_0_hsl(var(--foreground))] hover:-translate-y-0.5 active:translate-y-px active:shadow-[1px_1px_0_hsl(var(--foreground))] transition-all"
+              >
+                <Pencil className="h-3.5 w-3.5" /> Ploegnaam kiezen
+              </button>
+              <button
+                type="button"
+                onClick={() => setGameTab("subpoules")}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-display font-bold bg-card text-foreground border-2 border-foreground shadow-[2px_2px_0_hsl(var(--foreground))] hover:-translate-y-0.5 active:translate-y-px active:shadow-[1px_1px_0_hsl(var(--foreground))] transition-all"
+              >
+                <Users className="h-3.5 w-3.5" /> Subpoule starten
+              </button>
+              <button
+                type="button"
+                onClick={() => setGameTab("subpoules")}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-display font-bold bg-card text-foreground border-2 border-foreground shadow-[2px_2px_0_hsl(var(--foreground))] hover:-translate-y-0.5 active:translate-y-px active:shadow-[1px_1px_0_hsl(var(--foreground))] transition-all"
+              >
+                <Share2 className="h-3.5 w-3.5" /> Vrienden uitdagen
+              </button>
+            </div>
+            <p className="text-[11px] text-muted-foreground/80 mt-2.5 font-serif italic">
+              🔒 Renners kiezen opent zodra de inschrijving live gaat.
             </p>
           </div>
         )}

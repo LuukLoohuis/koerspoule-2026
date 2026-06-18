@@ -46,6 +46,8 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
   const effectiveGameId = gameId ?? currentGame?.id;
   const effectiveStatus = gameStatus ?? currentGame?.status;
   const heatmapUnlocked = ["live", "locked", "finished", "closed"].includes(String(effectiveStatus ?? ""));
+  // Subpoule aanmaken/joinen kan in álle statussen, behalve als de koers afgerond is.
+  const subpoulesLocked = effectiveStatus === "finished";
   const game = gameId
     ? { id: gameId, name: gameName ?? "" }
     : currentGame;
@@ -583,6 +585,17 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
         </CardContent>
       </Card>
 
+      {subpoulesLocked ? (
+        <Card className="retro-border">
+          <CardContent className="p-4 text-center space-y-1">
+            <p className="font-display font-bold text-foreground">Koers afgerond</p>
+            <p className="text-sm text-muted-foreground">
+              Deze koers is voorbij — een nieuwe subpoule aanmaken of joinen kan niet meer.
+              Bekijk de eindstand van je bestaande subpoules hierboven.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
       <Card className="retro-border">
         <CardContent className="p-4">
           <Tabs defaultValue="create">
@@ -615,6 +628,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
           </Tabs>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

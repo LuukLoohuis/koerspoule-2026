@@ -54,7 +54,14 @@ export default function AdminV3() {
     }
     setGames((data ?? []) as Game[]);
     if ((data ?? []).length && !activeGameId) {
-      setActiveGameId(data![0].id);
+      // Standaard: kies bij voorkeur de open game, anders live/locked, anders de
+      // eerste. Handmatige keuze blijft (alleen zetten als nog niets gekozen is).
+      const list = (data ?? []) as Game[];
+      const preferred =
+        list.find((g) => g.status === "open") ??
+        list.find((g) => g.status === "live" || g.status === "locked") ??
+        list[0];
+      setActiveGameId(preferred.id);
     }
   }
 
