@@ -8,5 +8,5 @@
     { "source": "/wielerspel", "destination": "/tour-de-france-poule-2026", "permanent": true },
     { "source": "/wielerspel-2026", "destination": "/tour-de-france-poule-2026", "permanent": true }
   ],
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [{ "source": "/(.*)", "destination": "/app-shell.html" }]
 }

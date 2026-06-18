@@ -1,16 +1,56 @@
-import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Trophy, Users, Zap, Mountain, Flag, Sparkles } from "lucide-react";
 
 const PAGE_URL = "https://koerspoule.nl/tour-de-france-poule-2026";
-const PAGE_TITLE = "Tour de France Wielerspel 2026 — Gratis Poule & Tourspel";
+const PAGE_TITLE = "Tour de France 2026 Wielerspel & Poule — Gratis | Koerspoule";
 const PAGE_DESCRIPTION =
   "Gratis Tour de France wielerspel 2026 — een gratis alternatief voor Scorito. Speel tourspel met vrienden in eigen subpoules, kies vrij uit het peloton op koersintuïtie en strijd om de gele trui.";
-const PAGE_IMAGE =
-  "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ca7ecdfc-55b1-4686-a4d5-8ada2cae3b6e/id-preview-7b7ff0dd--00edb85e-4817-4978-88c8-1708211db2a7.lovable.app-1773424124582.png";
+const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf.png";
+const PAGE_KEYWORDS =
+  "tour de france wielerspel 2026, tour de france wielerspel, wielerspel 2026, gratis wielerspel, alternatief voor scorito, scorito alternatief, gratis alternatief scorito, tourspel met vrienden, tour de france poule 2026, tour de france poule, tourspel, tourspel 2026, wielerpoule tour de france, fantasy tour de france, gele trui poule, ad tourspel alternatief, scorito tour de france, koerspoule, manager game wielrennen";
 const SITE_NAME = "Koerspoule";
+
+// Structured data (@graph) — rendert in de HTML-bron via Helmet, dus ook
+// zichtbaar zonder JS (prerender).
+const JSONLD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    { "@type": "WebSite", "@id": "https://koerspoule.nl/#website", name: SITE_NAME, url: "https://koerspoule.nl/", inLanguage: "nl-NL" },
+    { "@type": "Organization", "@id": "https://koerspoule.nl/#organization", name: SITE_NAME, url: "https://koerspoule.nl/", logo: "https://koerspoule.nl/favicon.png", email: "koerspoule@gmail.com" },
+    {
+      "@type": "WebPage",
+      "@id": `${PAGE_URL}#webpage`,
+      name: PAGE_TITLE,
+      description: PAGE_DESCRIPTION,
+      url: PAGE_URL,
+      inLanguage: "nl-NL",
+      isPartOf: { "@id": "https://koerspoule.nl/#website" },
+      primaryImageOfPage: { "@type": "ImageObject", url: PAGE_IMAGE },
+      about: { "@type": "Thing", name: "Tour de France 2026" },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: "https://koerspoule.nl/" },
+        { "@type": "ListItem", position: 2, name: "Tour de France Poule 2026", item: PAGE_URL },
+      ],
+    },
+    {
+      "@type": "Game",
+      name: "Koerspoule — Tour de France Wielerspel & Poule 2026",
+      description: PAGE_DESCRIPTION,
+      url: PAGE_URL,
+      genre: "Fantasy Sports",
+      gamePlatform: "Web",
+      inLanguage: "nl-NL",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", availability: "https://schema.org/InStock" },
+      publisher: { "@id": "https://koerspoule.nl/#organization" },
+    },
+  ],
+};
 
 // Eén bron voor de FAQ — gebruikt voor zowel de zichtbare sectie als de
 // FAQPage-structured-data (Google verwacht dat de schema-FAQ ook op de pagina staat).
@@ -65,137 +105,45 @@ const FAQS: { q: string; a: string }[] = [
   },
 ];
 
-function setMeta(selector: string, attr: string, value: string) {
-  let el = document.head.querySelector<HTMLMetaElement>(selector);
-  if (!el) {
-    el = document.createElement("meta");
-    const [, key, val] = selector.match(/\[(\w+)="([^"]+)"\]/) ?? [];
-    if (key && val) el.setAttribute(key, val);
-    document.head.appendChild(el);
-  }
-  el.setAttribute(attr, value);
-}
-
-function setLink(rel: string, href: string) {
-  let el = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
-  if (!el) {
-    el = document.createElement("link");
-    el.rel = rel;
-    document.head.appendChild(el);
-  }
-  el.href = href;
-}
-
 export default function TourDeFrancePoule2026() {
-  useEffect(() => {
-    const prevTitle = document.title;
-    document.title = PAGE_TITLE;
-
-    setMeta('meta[name="description"]', "content", PAGE_DESCRIPTION);
-    setMeta('meta[property="og:title"]', "content", PAGE_TITLE);
-    setMeta('meta[property="og:description"]', "content", PAGE_DESCRIPTION);
-    setMeta('meta[property="og:url"]', "content", PAGE_URL);
-    setMeta('meta[property="og:type"]', "content", "website");
-    setMeta('meta[property="og:site_name"]', "content", SITE_NAME);
-    setMeta('meta[property="og:locale"]', "content", "nl_NL");
-    setMeta('meta[property="og:image"]', "content", PAGE_IMAGE);
-    setMeta('meta[property="og:image:alt"]', "content", "Koerspoule — gratis Tour de France poule 2026");
-    setMeta('meta[property="og:image:width"]', "content", "1200");
-    setMeta('meta[property="og:image:height"]', "content", "630");
-    setMeta('meta[name="twitter:card"]', "content", "summary_large_image");
-    setMeta('meta[name="twitter:title"]', "content", PAGE_TITLE);
-    setMeta('meta[name="twitter:description"]', "content", PAGE_DESCRIPTION);
-    setMeta('meta[name="twitter:image"]', "content", PAGE_IMAGE);
-    setMeta('meta[name="robots"]', "content", "index, follow, max-image-preview:large, max-snippet:-1");
-    setMeta('meta[name="keywords"]', "content", "tour de france wielerspel 2026, tour de france wielerspel, wielerspel 2026, gratis wielerspel, alternatief voor scorito, scorito alternatief, gratis alternatief scorito, tourspel met vrienden, tour de france poule 2026, tour de france poule, tourspel, tourspel 2026, wielerpoule tour de france, fantasy tour de france, gele trui poule, ad tourspel alternatief, scorito tour de france, koerspoule, manager game wielrennen");
-    setLink("canonical", PAGE_URL);
-
-    // hreflang: zelfde NL-content voor NL + BE, met x-default fallback.
-    for (const lang of ["nl-NL", "nl-BE", "x-default"]) {
-      let alt = document.head.querySelector<HTMLLinkElement>(`link[rel="alternate"][hreflang="${lang}"]`);
-      if (!alt) {
-        alt = document.createElement("link");
-        alt.rel = "alternate";
-        alt.hreflang = lang;
-        document.head.appendChild(alt);
-      }
-      alt.href = PAGE_URL;
-    }
-
-    const ldId = "ld-tdf-2026";
-    document.getElementById(ldId)?.remove();
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.id = ldId;
-    script.textContent = JSON.stringify({
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "WebSite",
-          "@id": "https://koerspoule.nl/#website",
-          name: SITE_NAME,
-          url: "https://koerspoule.nl/",
-          inLanguage: "nl-NL",
-        },
-        {
-          "@type": "Organization",
-          "@id": "https://koerspoule.nl/#organization",
-          name: SITE_NAME,
-          url: "https://koerspoule.nl/",
-          logo: "https://koerspoule.nl/favicon.png",
-          email: "koerspoule@gmail.com",
-        },
-        {
-          "@type": "WebPage",
-          "@id": `${PAGE_URL}#webpage`,
-          name: PAGE_TITLE,
-          description: PAGE_DESCRIPTION,
-          url: PAGE_URL,
-          inLanguage: "nl-NL",
-          isPartOf: { "@id": "https://koerspoule.nl/#website" },
-          primaryImageOfPage: { "@type": "ImageObject", url: PAGE_IMAGE },
-          // Topische context als 'Thing' (geen SportsEvent → geen Event-rich-result-
-          // validatie; we organiseren de koers zelf niet).
-          about: { "@type": "Thing", name: "Tour de France 2026" },
-        },
-        {
-          "@type": "BreadcrumbList",
-          itemListElement: [
-            { "@type": "ListItem", position: 1, name: "Home", item: "https://koerspoule.nl/" },
-            { "@type": "ListItem", position: 2, name: "Tour de France Poule 2026", item: PAGE_URL },
-          ],
-        },
-        {
-          "@type": "FAQPage",
-          mainEntity: FAQS.map((f) => ({
-            "@type": "Question",
-            name: f.q,
-            acceptedAnswer: { "@type": "Answer", text: f.a },
-          })),
-        },
-        {
-          "@type": "Game",
-          name: "Koerspoule — Tour de France Wielerspel & Poule 2026",
-          description: PAGE_DESCRIPTION,
-          url: PAGE_URL,
-          genre: "Fantasy Sports",
-          gamePlatform: "Web",
-          inLanguage: "nl-NL",
-          offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", availability: "https://schema.org/InStock" },
-          publisher: { "@id": "https://koerspoule.nl/#organization" },
-        },
-      ],
-    });
-    document.head.appendChild(script);
-
-    return () => {
-      document.title = prevTitle;
-      document.getElementById(ldId)?.remove();
-    };
-  }, []);
+  const faqLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  };
 
   return (
     <div className="container mx-auto px-5 py-6 md:py-8">
+      <Helmet>
+        <title>{PAGE_TITLE}</title>
+        <meta name="description" content={PAGE_DESCRIPTION} />
+        <meta name="keywords" content={PAGE_KEYWORDS} />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+        <link rel="canonical" href={PAGE_URL} />
+        <link rel="alternate" hrefLang="nl-NL" href={PAGE_URL} />
+        <link rel="alternate" hrefLang="nl-BE" href={PAGE_URL} />
+        <link rel="alternate" hrefLang="x-default" href={PAGE_URL} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content={SITE_NAME} />
+        <meta property="og:locale" content="nl_NL" />
+        <meta property="og:url" content={PAGE_URL} />
+        <meta property="og:title" content={PAGE_TITLE} />
+        <meta property="og:description" content={PAGE_DESCRIPTION} />
+        <meta property="og:image" content={PAGE_IMAGE} />
+        <meta property="og:image:alt" content="Koerspoule — gratis Tour de France poule 2026" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={PAGE_TITLE} />
+        <meta name="twitter:description" content={PAGE_DESCRIPTION} />
+        <meta name="twitter:image" content={PAGE_IMAGE} />
+        <script type="application/ld+json">{JSON.stringify(JSONLD)}</script>
+        <script type="application/ld+json">{JSON.stringify(faqLd)}</script>
+      </Helmet>
       <article className="max-w-4xl mx-auto space-y-7">
         {/* Hero */}
         <header className="text-center">
@@ -207,7 +155,7 @@ export default function TourDeFrancePoule2026() {
             <span className="vintage-ornament-symbol">✦</span>
           </div>
           <h1 className="vintage-heading text-3xl md:text-4xl font-bold mb-3">
-            🟡 Tour de France Wielerspel 2026
+            🟡 Gratis Tour de France Wielerspel &amp; Tourspel 2026 — speel met vrienden
           </h1>
           <p className="text-lg text-muted-foreground font-serif italic max-w-2xl mx-auto">
             Koerspoule is hét gratis <strong>Tour de France wielerspel 2026</strong>. Drie weken lang

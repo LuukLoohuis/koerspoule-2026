@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,99 +8,43 @@ const PAGE_URL = "https://koerspoule.nl/giro-italia-poule-2026";
 const PAGE_TITLE = "Giro d'Italia Poule 2026 | Gratis Wielerpool";
 const PAGE_DESCRIPTION =
   "Speel mee met de Giro d'Italia poule 2026. Maak gratis je eigen wielerpool, stel je team samen en versla je vrienden. Start direct!";
+const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf.png";
 
-function setMeta(selector: string, attr: string, value: string) {
-  let el = document.head.querySelector<HTMLMetaElement>(selector);
-  if (!el) {
-    el = document.createElement("meta");
-    const [, key, val] = selector.match(/\[(\w+)="([^"]+)"\]/) ?? [];
-    if (key && val) el.setAttribute(key, val);
-    document.head.appendChild(el);
-  }
-  el.setAttribute(attr, value);
-}
-
-function setLink(rel: string, href: string) {
-  let el = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
-  if (!el) {
-    el = document.createElement("link");
-    el.rel = rel;
-    document.head.appendChild(el);
-  }
-  el.href = href;
-}
+// Structured data — rendert in de HTML-bron via Helmet (prerender, geen JS nodig).
+const JSONLD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    { "@type": "WebPage", name: PAGE_TITLE, description: PAGE_DESCRIPTION, url: PAGE_URL, inLanguage: "nl-NL" },
+    {
+      "@type": "FAQPage",
+      mainEntity: [
+        { "@type": "Question", name: "Hoe werkt de Giro d'Italia poule?", acceptedAnswer: { "@type": "Answer", text: "Maak een gratis account, start je eigen poule, nodig vrienden uit, stel je team samen en verdien punten per etappe." } },
+        { "@type": "Question", name: "Is meedoen aan de Giro poule gratis?", acceptedAnswer: { "@type": "Answer", text: "Ja, Koerspoule is volledig gratis. Je maakt in een paar minuten een account en start direct je poule." } },
+        { "@type": "Question", name: "Hoe verdien je punten in de wielerpool?", acceptedAnswer: { "@type": "Answer", text: "Je verdient punten voor etappe-overwinningen, het eindklassement en speciale prestaties van jouw renners." } },
+      ],
+    },
+  ],
+};
 
 export default function GiroPoule2026() {
-  useEffect(() => {
-    const prevTitle = document.title;
-    document.title = PAGE_TITLE;
-
-    setMeta('meta[name="description"]', "content", PAGE_DESCRIPTION);
-    setMeta('meta[property="og:title"]', "content", PAGE_TITLE);
-    setMeta('meta[property="og:description"]', "content", PAGE_DESCRIPTION);
-    setMeta('meta[property="og:url"]', "content", PAGE_URL);
-    setMeta('meta[property="og:type"]', "content", "website");
-    setMeta('meta[name="twitter:title"]', "content", PAGE_TITLE);
-    setMeta('meta[name="twitter:description"]', "content", PAGE_DESCRIPTION);
-    setLink("canonical", PAGE_URL);
-
-    // JSON-LD structured data (FAQPage + WebPage)
-    const ldId = "ld-giro-2026";
-    document.getElementById(ldId)?.remove();
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.id = ldId;
-    script.textContent = JSON.stringify({
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "WebPage",
-          name: PAGE_TITLE,
-          description: PAGE_DESCRIPTION,
-          url: PAGE_URL,
-          inLanguage: "nl-NL",
-        },
-        {
-          "@type": "FAQPage",
-          mainEntity: [
-            {
-              "@type": "Question",
-              name: "Hoe werkt de Giro d'Italia poule?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Maak een gratis account, start je eigen poule, nodig vrienden uit, stel je team samen en verdien punten per etappe.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Is meedoen aan de Giro poule gratis?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Ja, Koerspoule is volledig gratis. Je maakt in een paar minuten een account en start direct je poule.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Hoe verdien je punten in de wielerpool?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Je verdient punten voor etappe-overwinningen, het eindklassement en speciale prestaties van jouw renners.",
-              },
-            },
-          ],
-        },
-      ],
-    });
-    document.head.appendChild(script);
-
-    return () => {
-      document.title = prevTitle;
-      document.getElementById(ldId)?.remove();
-    };
-  }, []);
-
   return (
     <div className="container mx-auto px-5 py-6 md:py-8">
+      <Helmet>
+        <title>{PAGE_TITLE}</title>
+        <meta name="description" content={PAGE_DESCRIPTION} />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+        <link rel="canonical" href={PAGE_URL} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={PAGE_URL} />
+        <meta property="og:title" content={PAGE_TITLE} />
+        <meta property="og:description" content={PAGE_DESCRIPTION} />
+        <meta property="og:image" content={PAGE_IMAGE} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={PAGE_TITLE} />
+        <meta name="twitter:description" content={PAGE_DESCRIPTION} />
+        <meta name="twitter:image" content={PAGE_IMAGE} />
+        <script type="application/ld+json">{JSON.stringify(JSONLD)}</script>
+      </Helmet>
       <article className="max-w-4xl mx-auto space-y-7">
         {/* Hero */}
         <header className="text-center">

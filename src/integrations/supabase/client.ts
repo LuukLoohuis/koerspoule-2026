@@ -27,10 +27,27 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   throw new Error(msg);
 }
 
+// SSR/prerender (Node): geen window → géén localStorage. Een no-op storage +
+// uitgeschakelde sessie-persistentie voorkomt dat de auth-client tijdens de
+// prerender op localStorage probeert te lezen (anders crasht de build).
+const isBrowser = typeof window !== "undefined";
+const noopStorage = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+};
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-  },
+  auth: isBrowser
+    ? {
+        storage: localStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+      }
+    : {
+        storage: noopStorage,
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
 });
