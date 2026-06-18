@@ -22,6 +22,7 @@ import Legal from "./pages/Legal";
 const AdminV3 = lazyWithRetry(() => import("./pages/AdminV3"));
 import GiroPoule2026 from "./pages/GiroPoule2026";
 import TourDeFrancePoule2026 from "./pages/TourDeFrancePoule2026";
+import VueltaPoule2026 from "./pages/VueltaPoule2026";
 import Preview from "./pages/Preview";
 const InstagramExport = lazyWithRetry(() => import("./pages/InstagramExport"));
 import Uitschrijven from "./pages/Uitschrijven";
@@ -70,6 +71,7 @@ const App = () => (
               <Route path="/preview" element={<Preview />} />
               <Route path="/giro-italia-poule-2026" element={<GiroPoule2026 />} />
               <Route path="/tour-de-france-poule-2026" element={<TourDeFrancePoule2026 />} />
+              <Route path="/vuelta-espana-poule-2026" element={<VueltaPoule2026 />} />
               {/* Keyword-varianten → canonieke landingspagina. Op Vercel vangt
                   vercel.json deze al af met een echte 301; deze client-side
                   redirects zijn de fallback (Lovable-hosting) zodat de URL's

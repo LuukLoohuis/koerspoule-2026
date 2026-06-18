@@ -6,7 +6,12 @@
     { "source": "/tour-de-france-wielerspel-2026", "destination": "/tour-de-france-poule-2026", "permanent": true },
     { "source": "/tour-de-france-wielerspel", "destination": "/tour-de-france-poule-2026", "permanent": true },
     { "source": "/wielerspel", "destination": "/tour-de-france-poule-2026", "permanent": true },
-    { "source": "/wielerspel-2026", "destination": "/tour-de-france-poule-2026", "permanent": true }
+    { "source": "/wielerspel-2026", "destination": "/tour-de-france-poule-2026", "permanent": true },
+    { "source": "/vuelta-poule", "destination": "/vuelta-espana-poule-2026", "permanent": true },
+    { "source": "/vuelta-poule-2026", "destination": "/vuelta-espana-poule-2026", "permanent": true },
+    { "source": "/vuelta-a-espana-poule-2026", "destination": "/vuelta-espana-poule-2026", "permanent": true },
+    { "source": "/vuelta-wielerspel", "destination": "/vuelta-espana-poule-2026", "permanent": true },
+    { "source": "/vuelta-wielerspel-2026", "destination": "/vuelta-espana-poule-2026", "permanent": true }
   ],
   "rewrites": [{ "source": "/(.*)", "destination": "/app-shell.html" }]
 }
