@@ -10,8 +10,15 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
-const MODEL = "gpt-5.4-mini";
+// Model + reasoning-budget overschrijfbaar via env (supabase secrets), zodat
+// makkelijk gewisseld kan worden zonder redeploy van code.
+const MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-5.4-mini";
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
+// gpt-5.4-mini is een reasoning-model; reasoning-tokens tellen mee in
+// max_completion_tokens. Laag houden → budget gaat naar de échte tekst.
+// Ondersteund: none | low | medium | high | xhigh.
+const REASONING_EFFORT = Deno.env.get("OPENAI_REASONING_EFFORT") || "low";
+const MAX_TOKENS = Number(Deno.env.get("OPENAI_MAX_TOKENS") || "6000");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -177,7 +184,12 @@ type CommentaryResult = { michelWuyts: string; joseDeCauwer: string };
 // ─── OpenAI call (Chat Completions, JSON-mode) ──────────────────────────────
 // Het lange SYSTEM_PROMPT wordt door OpenAI automatisch gecachet (>1024 tokens).
 
-async function callOpenAI(userPrompt: string): Promise<CommentaryResult> {
+// Eén Chat-Completions-call. Geeft tekst, finish_reason en token-usage terug,
+// zodat de aanroeper truncatie ("length") kan detecteren i.p.v. stil te falen.
+async function openaiChat(
+  userPrompt: string,
+  opts: { maxTokens: number; reasoning: string },
+): Promise<{ text: string; finishReason: string | null; usage: any }> {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) throw new Error("OPENAI_API_KEY niet ingesteld in env");
 
@@ -189,11 +201,8 @@ async function callOpenAI(userPrompt: string): Promise<CommentaryResult> {
     },
     body: JSON.stringify({
       model: MODEL,
-      // Ruim budget: gpt-5-mini is een reasoning-model; reasoning-tokens tellen
-      // mee in max_completion_tokens. Te krap → output wordt leeg/afgekapt en
-      // de JSON-parse faalt (Michel/José kwamen daardoor niet door). 6000 geeft
-      // reasoning én de twee teksten genoeg ruimte.
-      max_completion_tokens: 6000,
+      max_completion_tokens: opts.maxTokens,
+      reasoning_effort: opts.reasoning,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
@@ -208,21 +217,56 @@ async function callOpenAI(userPrompt: string): Promise<CommentaryResult> {
   }
   const data = await res.json();
   const text = data?.choices?.[0]?.message?.content;
-  if (typeof text !== "string") throw new Error("Geen tekst in OpenAI-antwoord");
+  const finishReason = data?.choices?.[0]?.finish_reason ?? null;
+  return { text: typeof text === "string" ? text : "", finishReason, usage: data?.usage };
+}
 
-  // Probeer JSON eruit te parsen (eventueel zit er wrap omheen ondanks instructies)
+function logUsage(tag: string, finishReason: string | null, usage: any) {
+  const reasoning = usage?.completion_tokens_details?.reasoning_tokens ?? "?";
+  console.log(
+    `[commentary] ${tag} finish=${finishReason} prompt=${usage?.prompt_tokens ?? "?"} ` +
+      `completion=${usage?.completion_tokens ?? "?"} reasoning=${reasoning}`,
+  );
+}
+
+function parseCommentary(text: string): { michelWuyts: string; joseDeCauwer: string } | null {
   const match = text.match(/\{[\s\S]*\}/);
   const jsonStr = match ? match[0] : text;
-  let parsed: any;
   try {
-    parsed = JSON.parse(jsonStr);
-  } catch (e) {
-    throw new Error(`Kon JSON niet parsen: ${text.slice(0, 200)}`);
+    const parsed = JSON.parse(jsonStr);
+    if (typeof parsed.michelWuyts === "string" && typeof parsed.joseDeCauwer === "string") {
+      return { michelWuyts: parsed.michelWuyts.trim(), joseDeCauwer: parsed.joseDeCauwer.trim() };
+    }
+  } catch {
+    /* val terug op null → truncatie/parse-fout */
   }
-  if (typeof parsed.michelWuyts !== "string" || typeof parsed.joseDeCauwer !== "string") {
-    throw new Error("JSON mist velden michelWuyts/joseDeCauwer");
+  return null;
+}
+
+async function callOpenAI(userPrompt: string): Promise<CommentaryResult> {
+  // Poging 1 — laag reasoning-budget zodat de tokens naar de tekst gaan.
+  const r1 = await openaiChat(userPrompt, { maxTokens: MAX_TOKENS, reasoning: REASONING_EFFORT });
+  logUsage("try1", r1.finishReason, r1.usage);
+  const truncated1 = r1.finishReason === "length";
+  const parsed1 = truncated1 ? null : parseCommentary(r1.text);
+  if (parsed1) return parsed1;
+
+  // Eén retry bij truncatie/parse-fout: méér budget + reasoning uit.
+  console.warn(
+    `[commentary] try1 onbruikbaar (finish=${r1.finishReason}, len=${r1.text.length}) → retry met meer budget`,
+  );
+  const r2 = await openaiChat(userPrompt, { maxTokens: MAX_TOKENS * 2, reasoning: "none" });
+  logUsage("try2", r2.finishReason, r2.usage);
+  if (r2.finishReason === "length") {
+    throw new Error(
+      `OpenAI output afgekapt (finish_reason=length) ná retry — verhoog OPENAI_MAX_TOKENS of verlaag OPENAI_REASONING_EFFORT. usage=${JSON.stringify(r2.usage)}`,
+    );
   }
-  return { michelWuyts: parsed.michelWuyts.trim(), joseDeCauwer: parsed.joseDeCauwer.trim() };
+  const parsed2 = parseCommentary(r2.text);
+  if (!parsed2) {
+    throw new Error(`Kon JSON niet parsen ná retry (finish=${r2.finishReason}): ${r2.text.slice(0, 200)}`);
+  }
+  return parsed2;
 }
 
 // ─── Prompt builder ─────────────────────────────────────────────────────────
@@ -551,7 +595,14 @@ Deno.serve(async (req) => {
     const { data: subpoules, error: spErr } = await subpouleQuery;
     if (spErr) throw spErr;
     if (!subpoules || subpoules.length === 0) {
-      return json({ ok: true, generated: 0, skipped: 0, message: "Geen subpoules voor deze game" });
+      return json({
+        ok: true,
+        generated: 0,
+        skipped: 0,
+        subpoules: 0,
+        status: "0 subpoules — niets te genereren",
+        message: "0 subpoules — niets te genereren",
+      });
     }
 
     // Skip subpoules die al een commentaar hebben (tenzij force)
@@ -612,7 +663,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ ok: true, generated, skipped, errors });
+    return json({ ok: true, subpoules: subpoules.length, generated, skipped, errors });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }
