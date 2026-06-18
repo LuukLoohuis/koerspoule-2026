@@ -5,6 +5,16 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { sendEmail, ploegIngediendHtml } from "@/lib/sendEmail";
 
+// Haalt een leesbare melding uit een Error óf een Supabase/PostgREST-foutobject
+// (dat geen Error-instance is) → voorkomt "[object Object]" in toasts.
+export function entryErrorMessage(e: unknown): string {
+  if (!e) return "Onbekende fout";
+  if (typeof e === "string") return e;
+  if (e instanceof Error) return e.message;
+  const o = e as { message?: string; details?: string; hint?: string; error_description?: string };
+  return o.message || o.details || o.hint || o.error_description || JSON.stringify(e);
+}
+
 type Prediction = {
   classification: "gc" | "points" | "kom" | "youth";
   position: number;
@@ -97,7 +107,7 @@ export function useEntry(gameId?: string) {
       })),
     onError: (err, _v, ctx) => {
       rollbackEntry(ctx);
-      toast.error("Opslaan mislukt", { description: err instanceof Error ? err.message : "" });
+      toast.error("Opslaan mislukt", { description: entryErrorMessage(err) });
     },
     onSettled: settleEntry,
   });
@@ -126,7 +136,7 @@ export function useEntry(gameId?: string) {
       }),
     onError: (err, _v, ctx) => {
       rollbackEntry(ctx);
-      toast.error("Opslaan mislukt", { description: err instanceof Error ? err.message : "" });
+      toast.error("Opslaan mislukt", { description: entryErrorMessage(err) });
     },
     onSettled: settleEntry,
   });
@@ -144,7 +154,7 @@ export function useEntry(gameId?: string) {
       optimisticEntry((e) => ({ ...e, entry_jokers: riderIds.map((id) => ({ rider_id: id })) })),
     onError: (err, _v, ctx) => {
       rollbackEntry(ctx);
-      toast.error("Opslaan mislukt", { description: err instanceof Error ? err.message : "" });
+      toast.error("Opslaan mislukt", { description: entryErrorMessage(err) });
     },
     onSettled: settleEntry,
   });

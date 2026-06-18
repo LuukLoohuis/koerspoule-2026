@@ -10,7 +10,7 @@ import TruiBadge from "@/components/retro/TruiBadge";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
-import { useEntry } from "@/hooks/useEntry";
+import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { useStartlist } from "@/hooks/useStartlist";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
@@ -192,7 +192,7 @@ export default function TeamBuilder() {
     } catch (error) {
       toast({
         title: "Opslaan mislukt",
-        description: error instanceof Error ? error.message : "Onbekende fout",
+        description: entryErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -222,9 +222,33 @@ export default function TeamBuilder() {
     } catch (error) {
       toast({
         title: "Jokers opslaan mislukt",
-        description: error instanceof Error ? error.message : "Onbekende fout",
+        description: entryErrorMessage(error),
         variant: "destructive",
       });
+    }
+  };
+
+  // Tussentijds opslaan: picks worden al direct opgeslagen; deze knop flusht
+  // bovendien de voorspellingen + jokers en bevestigt dat alles bewaard is.
+  const handleSaveDraft = async () => {
+    if (!isAuthed) return requireAuth("je team op te slaan");
+    if (!entry) return;
+    try {
+      const list: Array<{ classification: "gc" | "points" | "kom" | "youth"; position: number; rider_id: string }> = [];
+      gcPodium.forEach((rid, i) => { if (rid) list.push({ classification: "gc", position: i + 1, rider_id: rid }); });
+      if (pointsJersey) list.push({ classification: "points", position: 1, rider_id: pointsJersey });
+      if (mountainJersey) list.push({ classification: "kom", position: 1, rider_id: mountainJersey });
+      if (youthJersey) list.push({ classification: "youth", position: 1, rider_id: youthJersey });
+      await savePredictions.mutateAsync({ entryId: entry.id, predictions: list });
+      if (
+        jokerDraft1 && jokerDraft2 && jokerDraft1 !== jokerDraft2 &&
+        !selectedPickRiderIds.has(jokerDraft1) && !selectedPickRiderIds.has(jokerDraft2)
+      ) {
+        await saveJoker.mutateAsync({ entryId: entry.id, riderIds: [jokerDraft1, jokerDraft2] });
+      }
+      toast({ title: "Tussentijds opgeslagen ✓", description: "Je kunt later verder waar je gebleven was." });
+    } catch (error) {
+      toast({ title: "Opslaan mislukt", description: entryErrorMessage(error), variant: "destructive" });
     }
   };
 
@@ -237,7 +261,7 @@ export default function TeamBuilder() {
     } catch (error) {
       toast({
         title: "Indienen mislukt",
-        description: error instanceof Error ? error.message : "Onbekende fout",
+        description: entryErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -251,7 +275,7 @@ export default function TeamBuilder() {
     } catch (error) {
       toast({
         title: "Wijzigen mislukt",
-        description: error instanceof Error ? error.message : "Onbekende fout",
+        description: entryErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -900,6 +924,11 @@ export default function TeamBuilder() {
                     ✏️ Wijzigen
                   </Button>
                 )}
+                {!isLocked && !isSubmitted && (
+                  <Button variant="outline" onClick={handleSaveDraft} disabled={savePredictions.isPending || saveJoker.isPending}>
+                    💾 Tussentijds opslaan
+                  </Button>
+                )}
                 <Button
                   onClick={handleSubmit}
                   disabled={Boolean(isLocked || isSubmitted || submitEntry.isPending)}
@@ -991,6 +1020,11 @@ export default function TeamBuilder() {
           {!gameLocked && isSubmitted && (
             <Button variant="outline" onClick={handleRevert} disabled={revertEntry.isPending} className="flex-1">
               ✏️ Wijzigen
+            </Button>
+          )}
+          {!isLocked && !isSubmitted && (
+            <Button variant="outline" onClick={handleSaveDraft} disabled={savePredictions.isPending || saveJoker.isPending} className="flex-1">
+              💾 Opslaan
             </Button>
           )}
           <Button

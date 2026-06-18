@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useEntry } from "@/hooks/useEntry";
+import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
 import { useStages, useEntries } from "@/hooks/useResults";
 import { useRiderEntryTotals } from "@/hooks/useRiderEntryTotals";
@@ -531,7 +531,7 @@ export default function MyTeamPanel({
                       toast({ title: "Ploegnaam opgeslagen" });
                       setEditingName(false);
                     } catch (e) {
-                      toast({ title: "Opslaan mislukt", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+                      toast({ title: "Opslaan mislukt", description: entryErrorMessage(e), variant: "destructive" });
                     }
                   }}
                 >
@@ -939,7 +939,7 @@ export default function MyTeamPanel({
                                       toast({ title: "Ploegnaam opgeslagen" });
                                       setEditingName(false);
                                     } catch (e) {
-                                      toast({ title: "Opslaan mislukt", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+                                      toast({ title: "Opslaan mislukt", description: entryErrorMessage(e), variant: "destructive" });
                                     }
                                   }}
                                 >
