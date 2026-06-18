@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Flag, Medal } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,6 +6,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import { cn } from "@/lib/utils";
+import DaguitslagCelebration, { type Celebration } from "@/components/DaguitslagCelebration";
 
 type Props = {
   subpouleId: string;
@@ -78,6 +79,40 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
   const zeros = rows.filter((r) => r.points === 0);
   const maxPts = scorers[0]?.points ?? 0;
 
+  // ── Feestje: ben ik zélf dagwinnaar/podium in de geselecteerde rit? ──
+  // Rang onder de scorers (alleen wie punten heeft telt mee).
+  const myStageRank = useMemo(() => {
+    if (!user?.id) return 0;
+    const ranked = rows.filter((r) => r.points > 0);
+    const idx = ranked.findIndex((r) => r.user_id === user.id);
+    return idx >= 0 ? idx + 1 : 0;
+  }, [rows, user?.id]);
+
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
+  const closeCelebration = useCallback(() => setCelebration(null), []);
+  const stageId = selectedStage?.id;
+  useEffect(() => {
+    // Alleen echte, gefiatteerde uitslagen (selectedStage komt uit approvedStages),
+    // alleen als ik écht in de uitslag sta op het podium, en hooguit de getoonde
+    // (default = meest recente) rit — geen stapel confetti.
+    if (!stageId || myStageRank < 1 || myStageRank > 3) return;
+    const scope = subpouleId || `game-${game?.id ?? ""}`;
+    const key = `kp_celebrated:${scope}:${stageId}:${myStageRank}`;
+    let already = true;
+    try {
+      already = localStorage.getItem(key) === "1";
+    } catch {
+      already = true; // localStorage geblokkeerd → niet vieren (geen spam/crash)
+    }
+    if (already) return;
+    try {
+      localStorage.setItem(key, "1");
+    } catch {
+      /* negeer */
+    }
+    setCelebration({ type: myStageRank === 1 ? "win" : "podium", rank: myStageRank });
+  }, [stageId, myStageRank, subpouleId, game?.id]);
+
   // Animatie: bars groeien van 0 → eindwaarde bij mount/refresh.
   const [animate, setAnimate] = useState(false);
   const animKey = `${subpouleId}:${selectedStage?.id ?? "none"}`;
@@ -123,6 +158,8 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
   }
 
   return (
+    <>
+    <DaguitslagCelebration celebration={celebration} onClose={closeCelebration} />
     <Card className="retro-border overflow-hidden">
       <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
 
@@ -259,5 +296,6 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
         )}
       </CardContent>
     </Card>
+    </>
   );
 }
