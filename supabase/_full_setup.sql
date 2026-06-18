@@ -3795,13 +3795,19 @@ WHERE results_status = 'draft'
 CREATE TABLE IF NOT EXISTS public.results_approval_log (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   stage_id uuid NOT NULL,
-  action text NOT NULL CHECK (action IN ('submitted','approved','revoked','reverted_to_draft')),
+  action text NOT NULL CHECK (action IN ('submitted','approved','revoked','reverted_to_draft','results_deleted')),
   actor_user_id uuid,
   actor_display_name text,
   note text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_results_approval_log_stage ON public.results_approval_log(stage_id, created_at DESC);
+
+-- Constraint bijwerken op bestaande DB's: 'results_deleted' (van delete_stage_results /
+-- "Wis uitslag") moet toegestaan zijn, anders faalt het wissen op de check-constraint.
+ALTER TABLE public.results_approval_log DROP CONSTRAINT IF EXISTS results_approval_log_action_check;
+ALTER TABLE public.results_approval_log ADD CONSTRAINT results_approval_log_action_check
+  CHECK (action IN ('submitted','approved','revoked','reverted_to_draft','results_deleted'));
 
 ALTER TABLE public.results_approval_log ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "approval_log_admin_all" ON public.results_approval_log;
