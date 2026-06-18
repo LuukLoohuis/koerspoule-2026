@@ -3772,6 +3772,12 @@ ALTER TABLE public.stages
   ADD COLUMN IF NOT EXISTS approved_at timestamptz,
   ADD COLUMN IF NOT EXISTS submitted_for_approval_at timestamptz;
 
+-- "Steun de kopgroep"-banner per etappe — 100% HANDMATIG via de admin-toggle.
+-- Default uit; geen enkele trigger/functie zet 'm ooit automatisch aan.
+ALTER TABLE public.stages
+  ADD COLUMN IF NOT EXISTS support_banner_visible boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS support_banner_updated_at timestamptz;
+
 ALTER TABLE public.stages
   DROP CONSTRAINT IF EXISTS stages_results_status_check;
 ALTER TABLE public.stages

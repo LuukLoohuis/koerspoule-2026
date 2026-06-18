@@ -28,6 +28,8 @@ import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import SwipeDots from "@/components/SwipeDots";
+import { SteunBanner } from "@/components/SteunKopgroep";
+import { useSupportBanner } from "@/hooks/useSupportBanner";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import Stamp from "@/components/retro/Stamp";
 import JerseyBadge from "@/components/retro/JerseyBadge";
@@ -115,6 +117,8 @@ export default function MijnPeloton() {
     }
   }, [allGames, selectedGame]);
   const selectedGameObj = allGames.find((g) => g.id === selectedGame) ?? null;
+  // Handmatige "Steun de kopgroep"-banner: alleen aan als de admin 'm ergens aanzette.
+  const supportBanner = useSupportBanner(selectedGameObj?.id);
   const isDraft = ["draft", "concept"].includes(selectedGameObj?.status ?? "");
 
   // Onboarding-voortgang voor de geselecteerde game.
@@ -1051,6 +1055,11 @@ export default function MijnPeloton() {
         </div>
         <div className="double-rule mt-2 md:mt-3 mx-auto max-w-md" />
       </div>
+
+      {/* Handmatige steun-banner (alleen als de admin 'm aanzette voor deze game). */}
+      {supportBanner.data?.active && (
+        <SteunBanner revKey={supportBanner.data.updatedAt} className="mb-3" />
+      )}
 
       {/* 3. Ploegnaam-nudge — alleen tonen als er nog géén ploegnaam is.
            Heb je een entry? Dan kun je de naam direct in de balk invoeren.
