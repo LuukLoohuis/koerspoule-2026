@@ -524,11 +524,10 @@ export default function MyTeamPanel({
                 />
                 <Button
                   size="sm" variant="default"
-                  disabled={!entry?.id || saveTeamName.isPending}
+                  disabled={saveTeamName.isPending}
                   onClick={async () => {
-                    if (!entry?.id) return;
                     try {
-                      await saveTeamName.mutateAsync({ entryId: entry.id, teamName: nameDraft });
+                      await saveTeamName.mutateAsync({ entryId: entry?.id, teamName: nameDraft });
                       toast({ title: "Ploegnaam opgeslagen" });
                       setEditingName(false);
                     } catch (e) {
@@ -545,12 +544,12 @@ export default function MyTeamPanel({
             ) : teamName?.trim() ? (
               <>
                 <span className="text-sm">Ploegnaam: <span className="font-display font-bold">{teamName}</span></span>
-                <Button size="sm" variant="outline" disabled={!entry?.id} onClick={() => { setNameDraft(teamName ?? ""); setEditingName(true); }}>
+                <Button size="sm" variant="outline" onClick={() => { setNameDraft(teamName ?? ""); setEditingName(true); }}>
                   <Pencil className="h-3.5 w-3.5 mr-1" /> Wijzig
                 </Button>
               </>
             ) : (
-              <Button size="sm" variant="outline" disabled={!entry?.id} onClick={() => { setNameDraft(""); setEditingName(true); }}>
+              <Button size="sm" variant="outline" onClick={() => { setNameDraft(""); setEditingName(true); }}>
                 <Pencil className="h-3.5 w-3.5 mr-1" /> Stel je ploegnaam in
               </Button>
             )}

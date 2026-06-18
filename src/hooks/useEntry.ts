@@ -194,13 +194,23 @@ export function useEntry(gameId?: string) {
   });
 
   const saveTeamName = useMutation({
-    mutationFn: async ({ entryId, teamName }: { entryId: string; teamName: string }) => {
+    // entryId optioneel: bestaat er nog geen entry (bv. draft/Open-fase, nog geen
+    // team), dan maken we 'm eerst aan via get_or_create_entry. Zo kun je je
+    // ploegnaam altijd zetten, ook zonder samengesteld team.
+    mutationFn: async ({ entryId, teamName }: { entryId?: string; teamName: string }) => {
       if (!supabase) throw new Error("Supabase niet geconfigureerd");
+      let id = entryId;
+      if (!id) {
+        if (!gameId) throw new Error("Geen actieve game");
+        const { data: newId, error: rpcError } = await supabase.rpc("get_or_create_entry", { p_game_id: gameId });
+        if (rpcError) throw rpcError;
+        id = newId as string;
+      }
       const trimmed = teamName.trim();
       const { error } = await supabase
         .from("entries")
         .update({ team_name: trimmed.length ? trimmed : null })
-        .eq("id", entryId);
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
