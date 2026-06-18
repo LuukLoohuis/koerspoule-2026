@@ -75,7 +75,7 @@ export function useEntry(gameId?: string) {
         const { data: entryId, error: rpcError } = await supabase.rpc("get_or_create_entry", {
           p_game_id: gameId,
         });
-        if (rpcError) { console.error("[KP] get_or_create_entry FOUT:", JSON.stringify(rpcError)); throw rpcError; }
+        if (rpcError) throw rpcError;
         const { data: row, error: selError } = await supabase
           .from("entries")
           .select(SELECT)
@@ -121,7 +121,7 @@ export function useEntry(gameId?: string) {
         p_category_id: categoryId,
         p_rider_id: riderId,
       });
-      if (error) { console.error("[KP] toggle_entry_pick FOUT:", JSON.stringify(error)); throw error; }
+      if (error) throw error;
     },
     // Direct toevoegen/verwijderen; de server-side max wordt door onSettled gereconcilieerd.
     onMutate: ({ categoryId, riderId }) =>
@@ -213,7 +213,7 @@ export function useEntry(gameId?: string) {
       if (!id) {
         if (!gameId) throw new Error("Geen actieve game");
         const { data: newId, error: rpcError } = await supabase.rpc("get_or_create_entry", { p_game_id: gameId });
-        if (rpcError) { console.error("[KP] get_or_create_entry (naam) FOUT:", JSON.stringify(rpcError)); throw rpcError; }
+        if (rpcError) throw rpcError;
         id = newId as string;
       }
       const trimmed = teamName.trim();
@@ -221,7 +221,7 @@ export function useEntry(gameId?: string) {
         .from("entries")
         .update({ team_name: trimmed.length ? trimmed : null })
         .eq("id", id);
-      if (error) { console.error("[KP] entries.update team_name FOUT:", JSON.stringify(error)); throw error; }
+      if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
   });
