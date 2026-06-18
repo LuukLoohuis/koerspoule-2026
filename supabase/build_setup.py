@@ -120,6 +120,25 @@ def main():
         "drop function if exists public.sync_profile_admin();\n"
     )
     parts.append(
+        "\n-- ########## FIX: admin-checks loskoppelen van gedropte profiles.is_admin ##########\n"
+        "-- profiles.is_admin is later gedropt (admin loopt via user_roles). Functies die\n"
+        "-- die kolom nog lazen/schreven gaven 42703 bij elke entry-write (via triggers).\n"
+        "create or replace function public.is_current_admin()\n"
+        "returns boolean language sql stable security definer set search_path = public as $$\n"
+        "  select exists(select 1 from public.user_roles where user_id = auth.uid() and role = 'admin');\n"
+        "$$;\n"
+        "create or replace function public.assign_admin_role(p_user_id uuid, p_make_admin boolean)\n"
+        "returns void language plpgsql security definer set search_path = public as $$\n"
+        "begin\n"
+        "  if not public.is_admin() then raise exception 'Not authorized'; end if;\n"
+        "  if p_make_admin then\n"
+        "    insert into public.user_roles(user_id, role) values (p_user_id, 'admin') on conflict do nothing;\n"
+        "  else\n"
+        "    delete from public.user_roles where user_id = p_user_id and role = 'admin';\n"
+        "  end if;\n"
+        "end $$;\n"
+    )
+    parts.append(
         "\n-- ########## GRANTS: vangnet voor reeds aangemaakte objecten ##########\n"
         "grant select, insert, update, delete on all tables in schema public to anon, authenticated;\n"
         "grant all on all tables in schema public to service_role;\n"

@@ -8550,9 +8550,32 @@ CREATE POLICY games_admin_write ON public.games
   WITH CHECK (public.is_admin());
 
 
+-- ########## MIGRATIE: 20260616200017_d182b6fd-a20a-4655-b682-096534d695ae.sql ##########
+
+REVOKE ALL ON public.leaderboard_global_mv FROM anon, authenticated;
+
 -- ########## CLEANUP: stale admin-sync trigger ##########
 drop trigger if exists trg_sync_profile_admin on public.user_roles;
 drop function if exists public.sync_profile_admin();
+
+
+-- ########## FIX: admin-checks loskoppelen van gedropte profiles.is_admin ##########
+-- profiles.is_admin is later gedropt (admin loopt via user_roles). Functies die
+-- die kolom nog lazen/schreven gaven 42703 bij elke entry-write (via triggers).
+create or replace function public.is_current_admin()
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists(select 1 from public.user_roles where user_id = auth.uid() and role = 'admin');
+$$;
+create or replace function public.assign_admin_role(p_user_id uuid, p_make_admin boolean)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'Not authorized'; end if;
+  if p_make_admin then
+    insert into public.user_roles(user_id, role) values (p_user_id, 'admin') on conflict do nothing;
+  else
+    delete from public.user_roles where user_id = p_user_id and role = 'admin';
+  end if;
+end $$;
 
 
 -- ########## GRANTS: vangnet voor reeds aangemaakte objecten ##########
