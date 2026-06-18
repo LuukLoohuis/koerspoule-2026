@@ -158,7 +158,11 @@ async function callOpenAI(userPrompt: string): Promise<{ directeursAnalyse: stri
     },
     body: JSON.stringify({
       model: MODEL,
-      max_completion_tokens: 2000,
+      // Ruim budget: gpt-5-mini is een reasoning-model; reasoning-tokens tellen
+      // mee in max_completion_tokens. Met 2000 bleef er na het redeneren te
+      // weinig over → het rapport kwam korter binnen dan voorheen. 6000 geeft
+      // het rapport weer de volle lengte.
+      max_completion_tokens: 6000,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
