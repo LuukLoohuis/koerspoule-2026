@@ -1,4 +1,5 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -18,11 +19,11 @@ import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Legal from "./pages/Legal";
-const AdminV3 = lazy(() => import("./pages/AdminV3"));
+const AdminV3 = lazyWithRetry(() => import("./pages/AdminV3"));
 import GiroPoule2026 from "./pages/GiroPoule2026";
 import TourDeFrancePoule2026 from "./pages/TourDeFrancePoule2026";
 import Preview from "./pages/Preview";
-const InstagramExport = lazy(() => import("./pages/InstagramExport"));
+const InstagramExport = lazyWithRetry(() => import("./pages/InstagramExport"));
 import Uitschrijven from "./pages/Uitschrijven";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
