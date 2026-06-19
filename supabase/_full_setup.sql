@@ -1233,12 +1233,15 @@ begin
     select game_id into v_game_id from public.entries where id = v_entry_id;
   end if;
 
-  if v_game_id is null then return NEW; end if;
+  -- LET OP: bij een DELETE is NEW null. Een BEFORE-trigger die NEW teruggeeft
+  -- ANNULEERT dan de DELETE stil → renners uitklikken/vervangen werkt niet.
+  -- Daarom overal coalesce(NEW, OLD): NEW bij insert/update, OLD bij delete.
+  if v_game_id is null then return coalesce(NEW, OLD); end if;
 
   select status into v_status from public.games where id = v_game_id;
 
   -- Admins mogen altijd
-  if public.is_current_admin() then return NEW; end if;
+  if public.is_current_admin() then return coalesce(NEW, OLD); end if;
 
   -- Deadline-bewaking: vanaf 'locked' geen wijzigingen meer
   if v_status in ('locked', 'live', 'finished') then
@@ -1248,13 +1251,13 @@ begin
     -- INSERT/DELETE blijven geblokkeerd na de deadline.
     if TG_TABLE_NAME = 'entries' and TG_OP = 'UPDATE'
        and NEW.status is not distinct from OLD.status then
-      return NEW;
+      return coalesce(NEW, OLD);
     end if;
     raise exception 'Deze game is gesloten (status %). Inzendingen kunnen niet meer worden gewijzigd.', v_status
       using errcode = '42501';
   end if;
 
-  return NEW;
+  return coalesce(NEW, OLD);
 end $$;
 
 drop trigger if exists trg_deadline_entries on public.entries;
@@ -3193,12 +3196,15 @@ begin
   from public.entry_picks
   where entry_id = p_entry_id and category_id = p_category_id;
 
-  if v_current >= v_max then
-    if v_max = 1 then
-      delete from public.entry_picks where entry_id = p_entry_id and category_id = p_category_id;
-    else
-      raise exception 'Deze categorie is al compleet (%/%). Verwijder eerst een renner uit dit waaiergroepje.', v_current, v_max;
-    end if;
+  -- Enkelvoudige categorie (max 1): ALTIJD vervangen — verwijder de bestaande
+  -- pick(s) in deze categorie ongeacht de telling, dan de nieuwe invoegen.
+  -- (Onvoorwaardelijk i.p.v. afhankelijk van v_current, zodat de wissel altijd
+  -- werkt en niet botst met de enforce_max_picks-trigger.)
+  if v_max = 1 then
+    delete from public.entry_picks
+    where entry_id = p_entry_id and category_id = p_category_id;
+  elsif v_current >= v_max then
+    raise exception 'Deze categorie is al compleet (%/%). Verwijder eerst een renner uit dit waaiergroepje.', v_current, v_max;
   end if;
 
   insert into public.entry_picks (entry_id, category_id, rider_id)
