@@ -8,7 +8,7 @@ const PAGE_URL = "https://koerspoule.nl/vuelta-espana-poule-2026";
 const PAGE_TITLE = "Vuelta a España 2026 Wielerspel & Poule — Gratis | Koerspoule";
 const PAGE_DESCRIPTION =
   "Gratis Vuelta a España wielerspel 2026 — een gratis alternatief voor Scorito. Speel de Vuelta-poule met vrienden in eigen subpoules, kies vrij uit het peloton en strijd om de rode trui (maillot rojo).";
-const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf.png";
+const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf.jpg";
 const PAGE_KEYWORDS =
   "vuelta a españa poule 2026, vuelta poule, vuelta poule 2026, wielerspel vuelta, vuelta wielerspel 2026, gratis vuelta poule, la vuelta 2026, vuelta espana poule, vuelta met vrienden, scorito alternatief vuelta, gratis wielerspel, koerspoule, fantasy vuelta, rode trui poule";
 const SITE_NAME = "Koerspoule";

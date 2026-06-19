@@ -8,7 +8,7 @@ const PAGE_URL = "https://koerspoule.nl/tour-de-france-poule-2026";
 const PAGE_TITLE = "Tour de France 2026 Wielerspel & Poule — Gratis | Koerspoule";
 const PAGE_DESCRIPTION =
   "Gratis Tour de France wielerspel 2026 — een gratis alternatief voor Scorito. Speel tourspel met vrienden in eigen subpoules, kies vrij uit het peloton op koersintuïtie en strijd om de gele trui.";
-const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf.png";
+const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf.jpg";
 const PAGE_KEYWORDS =
   "tour de france wielerspel 2026, tour de france wielerspel, wielerspel 2026, gratis wielerspel, alternatief voor scorito, scorito alternatief, gratis alternatief scorito, tourspel met vrienden, tour de france poule 2026, tour de france poule, tourspel, tourspel 2026, wielerpoule tour de france, fantasy tour de france, gele trui poule, ad tourspel alternatief, scorito tour de france, koerspoule, manager game wielrennen";
 const SITE_NAME = "Koerspoule";

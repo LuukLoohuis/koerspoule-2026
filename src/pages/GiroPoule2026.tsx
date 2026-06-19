@@ -8,7 +8,7 @@ const PAGE_URL = "https://koerspoule.nl/giro-italia-poule-2026";
 const PAGE_TITLE = "Giro d'Italia Poule 2026 | Gratis Wielerpool";
 const PAGE_DESCRIPTION =
   "Speel mee met de Giro d'Italia poule 2026. Maak gratis je eigen wielerpool, stel je team samen en versla je vrienden. Start direct!";
-const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf.png";
+const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf.jpg";
 
 // Structured data — rendert in de HTML-bron via Helmet (prerender, geen JS nodig).
 const JSONLD = {

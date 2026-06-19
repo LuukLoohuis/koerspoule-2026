@@ -2,7 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
 
 const BASE = "https://koerspoule.nl";
-const OG_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf.png";
+const OG_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf.jpg";
 
 type Meta = { title: string; description: string; noindex?: boolean };
 
@@ -84,10 +84,14 @@ export default function RouteSeo() {
       <meta name="description" content={meta.description} />
       {meta.noindex && <meta name="robots" content="noindex, follow" />}
       <link rel="canonical" href={url} />
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="Koerspoule" />
+      <meta property="og:locale" content="nl_NL" />
       <meta property="og:title" content={meta.title} />
       <meta property="og:description" content={meta.description} />
       <meta property="og:url" content={url} />
       <meta property="og:image" content={OG_IMAGE} />
+      <meta property="og:image:type" content="image/jpeg" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta name="twitter:card" content="summary_large_image" />
