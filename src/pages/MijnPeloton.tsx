@@ -117,7 +117,7 @@ export default function MijnPeloton() {
     }
   }, [allGames, selectedGame]);
   const selectedGameObj = allGames.find((g) => g.id === selectedGame) ?? null;
-  // Handmatige "Steun de kopgroep"-banner: alleen aan als de admin 'm ergens aanzette.
+  // Handmatige "Steun Koerspoule"-banner: alleen aan als de admin 'm ergens aanzette.
   const supportBanner = useSupportBanner(selectedGameObj?.id);
   const isDraft = ["draft", "concept"].includes(selectedGameObj?.status ?? "");
 

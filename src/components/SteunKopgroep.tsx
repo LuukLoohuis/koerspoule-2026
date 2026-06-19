@@ -1,5 +1,5 @@
 /**
- * Eén bron voor de "Steun de kopgroep" (Buy Me a Coffee)-donatie.
+ * Eén bron voor de "Steun Koerspoule" (Buy Me a Coffee)-donatie.
  *
  *  - STEUN_URL: de gedeelde donatie-URL (header, Rules, steun-momenten).
  *  - <SteunKopgroepPill>: de warme, retro header-knop. Zichtbaar + tikbaar op
@@ -21,8 +21,8 @@ export function SteunKopgroepPill({ className }: { className?: string }) {
       href={STEUN_URL}
       target="_blank"
       rel="noopener noreferrer"
-      title="Steun de kopgroep"
-      aria-label="Steun de kopgroep via Buy Me a Coffee"
+      title="Steun Koerspoule"
+      aria-label="Steun Koerspoule via Buy Me a Coffee"
       className={cn(
         "group inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10",
         "min-h-[36px] px-2.5 py-1 text-primary text-[11px] font-serif italic",
@@ -32,14 +32,14 @@ export function SteunKopgroepPill({ className }: { className?: string }) {
     >
       <Coffee className="kp-coffee-steam h-5 w-5 sm:h-4 sm:w-4 shrink-0" />
       {/* Label altijd zichtbaar (ook op mobiel). */}
-      <span className="whitespace-nowrap">Steun de kopgroep</span>
+      <span className="whitespace-nowrap">Steun Koerspoule</span>
     </a>
   );
 }
 
 export function SteunMoment({
   storageKey,
-  text = "Vond je dit leuk? Trakteer de kopgroep op een koffie",
+  text = "Vond je dit leuk? Steun Koerspoule met een koffie",
   className,
 }: {
   storageKey: string;
@@ -100,7 +100,7 @@ export function SteunMoment({
 }
 
 /**
- * <SteunBanner> — rustige, retro "Steun de kopgroep"-banner (mobiel + web). Wordt
+ * <SteunBanner> — rustige, retro "Steun Koerspoule"-banner (mobiel + web). Wordt
  * alléén getoond als de admin 'm handmatig heeft aangezet (via stages); MijnPeloton
  * bepaalt de zichtbaarheid. Wegklikbaar per gebruiker; de dismiss-key bevat de
  * laatste updated_at (revKey), zodat 'ie terugkomt als de admin 'm opnieuw aanzet.
@@ -145,7 +145,7 @@ export function SteunBanner({ revKey, className }: { revKey?: string | null; cla
           <Coffee className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-display font-bold leading-tight">Steun de kopgroep ☕</p>
+          <p className="font-display font-bold leading-tight">Steun Koerspoule ☕</p>
           <p className="text-xs text-muted-foreground font-serif italic">
             Plezier aan Koerspoule? Trakteer ons op een koffie — dat houdt de poule draaiende.
           </p>

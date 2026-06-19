@@ -129,7 +129,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [lefBusy, setLefBusy] = useState(false);
-  // Per-etappe "Steun de kopgroep"-banner-staat (100% handmatig; nooit auto).
+  // Per-etappe "Steun Koerspoule"-banner-staat (100% handmatig; nooit auto).
   const [bannerMap, setBannerMap] = useState<Record<string, boolean>>({});
 
   // Wist alle Lefevère-rapporten van deze game → elke deelnemer krijgt een vers
@@ -398,7 +398,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border text-muted-foreground"
                   }
-                  title="Toon de 'Steun de kopgroep'-banner in Mijn Peloton voor deze game. 100% handmatig — gaat nooit vanzelf aan."
+                  title="Toon de 'Steun Koerspoule'-banner in Mijn Peloton voor deze game. 100% handmatig — gaat nooit vanzelf aan."
                   onClick={() => toggleBanner(r.stage_id, !bannerMap[r.stage_id])}
                 >
                   <Coffee className="w-3 h-3 mr-1" />

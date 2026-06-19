@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 /**
- * useSupportBanner — is de handmatige "Steun de kopgroep"-banner aan voor deze
+ * useSupportBanner — is de handmatige "Steun Koerspoule"-banner aan voor deze
  * game? True zodra MINSTENS één etappe support_banner_visible=true heeft. Geeft
  * ook de hoogste support_banner_updated_at terug, voor de dismiss-key (zodat de
  * banner terugkomt als de admin 'm later opnieuw aanzet). Faalt stil (geen

@@ -263,7 +263,7 @@ export default function Rules() {
             </p>
             <p>
               Wil je ons helpen om deze koerspoule te blijven verbeteren en draaiende te houden? Dat kan via de knop{" "}
-              <span className="font-bold text-foreground">"Steun de kopgroep"</span>. Alle steun wordt enorm
+              <span className="font-bold text-foreground">"Steun Koerspoule"</span>. Alle steun wordt enorm
               gewaardeerd!
             </p>
           </div>
@@ -277,7 +277,7 @@ export default function Rules() {
               style={{ backgroundColor: "#e6007e", fontFamily: "Arial, sans-serif", border: "1px solid #ffffff" }}
             >
               <span>🚴</span>
-              <span>Steun de kopgroep</span>
+              <span>Steun Koerspoule</span>
             </a>
           </div>
         </section>

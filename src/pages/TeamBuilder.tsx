@@ -846,7 +846,7 @@ export default function TeamBuilder() {
           <Button variant="outline" onClick={handleRevert} disabled={revertEntry.isPending} className="w-full">
             ✏️ Wijzigen
           </Button>
-          <SteunMoment storageKey="kp_steun_ingezonden" text="Trakteer de kopgroep op een koffie" />
+          <SteunMoment storageKey="kp_steun_ingezonden" text="Steun Koerspoule met een koffie" />
         </div>
       ) : (
         <>
@@ -1081,7 +1081,7 @@ export default function TeamBuilder() {
                       ✏️ Wijzigen
                     </Button>
                   </div>
-                  <SteunMoment storageKey="kp_steun_ingezonden" text="Trakteer de kopgroep op een koffie" />
+                  <SteunMoment storageKey="kp_steun_ingezonden" text="Steun Koerspoule met een koffie" />
                 </div>
               )}
 
