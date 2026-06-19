@@ -114,9 +114,18 @@ export default function TeamBuilder() {
   const [youthJersey, setYouthJersey] = useState("");
 
   const isSubmitted = entry?.status === "submitted";
-  const gameLocked = Boolean(game?.status && ["closed", "locked", "live", "finished"].includes(game.status));
-  const isLocked = gameLocked;
-  const builderVisible = isAdmin || (game?.status ? ["open", "live"].includes(game.status) : false);
+  const status = game?.status ?? "";
+  // Inschrijven (renners kiezen + indienen) mag ALLEEN tijdens 'open_inschrijving'
+  // (admin altijd). 'open' = sneak preview: alles zien, nog niet inschrijven.
+  const canEnroll = isAdmin || status === "open_inschrijving";
+  // "Echt op slot" na de deadline — voor de bestaande gesloten-melding + submitted/revert.
+  const gameLocked = ["closed", "locked", "live", "finished"].includes(status);
+  // Picks/indienen disabled wanneer inschrijven (nog) niet mag.
+  const isLocked = !canEnroll;
+  // Sneak preview-banner: status 'open' en (nog) geen inschrijving.
+  const isPreview = status === "open" && !canEnroll;
+  // Builder-structuur zichtbaar bij preview + inschrijving + live (gelockte weergave).
+  const builderVisible = isAdmin || ["open", "open_inschrijving", "live"].includes(status);
 
   const hydratedRef = useRef(false);
   useEffect(() => {
@@ -916,6 +925,21 @@ export default function TeamBuilder() {
                 </div>
               ) : (
               <>
+              {/* Sneak preview (status 'open'): alles zichtbaar, maar inschrijven kan nog niet. */}
+              {isPreview && (
+                <div className="ornate-frame retro-border bg-[hsl(var(--vintage-gold))/0.12] border-[hsl(var(--vintage-gold))/0.5] p-4 flex items-start gap-3">
+                  <Lock className="h-5 w-5 shrink-0 text-[hsl(var(--vintage-gold))] mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-display font-bold mb-0.5">Inschrijving nog gesloten</p>
+                    <p className="text-muted-foreground font-serif italic">
+                      Tot nader order is de inschrijving gesloten. Zodra de officiële startlijst
+                      definitief is, kun je je ploeg samenstellen. Je kunt nu al een ploegnaam kiezen,
+                      een subpoule starten en vrienden uitnodigen.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* ── MOBIEL: gefocuste categorie-voor-categorie pager (md:hidden) ── */}
               <div className="md:hidden" ref={pagerRef}>
                 {gameLocked && (

@@ -17,7 +17,7 @@ export type Game = {
   name: string;
   game_type: "giro" | "tdf" | "vuelta" | "femmes" | null;
   year: number | null;
-  status: "draft" | "open" | "locked" | "live" | "finished";
+  status: "draft" | "open" | "open_inschrijving" | "locked" | "live" | "finished";
   starts_at: string | null;
   slug: string | null;
   registration_opens_at?: string | null;
@@ -42,8 +42,9 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  draft: "Open",
-  open: "Open (inschrijving)",
+  draft: "Concept (verborgen)",
+  open: "Open — sneak preview (niet inschrijven)",
+  open_inschrijving: "Inschrijving open",
   locked: "Gesloten (deadline)",
   live: "Live (loopt)",
   finished: "Afgerond",

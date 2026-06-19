@@ -73,7 +73,7 @@ create table public.games (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   year int not null,
-  status text not null default 'draft' check (status in ('draft','open','locked','live','finished')),
+  status text not null default 'draft' check (status in ('draft','open','open_inschrijving','locked','live','finished')),
   start_date date,
   end_date date,
   deadline timestamptz,
@@ -667,8 +667,12 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 do $$ begin
-  create type public.game_status as enum ('draft','open','locked','live','finished');
+  create type public.game_status as enum ('draft','open','open_inschrijving','locked','live','finished');
 exception when duplicate_object then null; end $$;
+
+-- Idempotent: voeg 'open_inschrijving' toe aan een bestaande enum (sneak preview
+-- 'open' = alles zien, niet inschrijven; 'open_inschrijving' = inschrijven kan).
+alter type public.game_status add value if not exists 'open_inschrijving';
 
 alter table public.games
   add column if not exists game_type text,
@@ -2715,11 +2719,17 @@ CREATE OR REPLACE FUNCTION public.submit_entry(p_entry_id uuid)
  SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
-declare v_user uuid; v_game uuid; v_missing int;
+declare v_user uuid; v_game uuid; v_missing int; v_game_status text;
 begin
   select user_id, game_id into v_user, v_game from public.entries where id = p_entry_id;
   if v_user is null then raise exception 'Entry not found'; end if;
   if v_user <> auth.uid() and not public.is_admin() then raise exception 'Not authorized'; end if;
+
+  -- Indienen mag ALLEEN tijdens 'open_inschrijving' (admin altijd).
+  select status into v_game_status from public.games where id = v_game;
+  if v_game_status <> 'open_inschrijving' and not public.is_admin() then
+    raise exception 'Indienen kan alleen tijdens de inschrijving.';
+  end if;
 
   select count(*) into v_missing
   from public.categories c
@@ -3103,8 +3113,10 @@ begin
   if v_user <> auth.uid() and not public.is_admin() then raise exception 'Not authorized'; end if;
 
   select status into v_game_status from public.games where id = v_game;
-  if v_game_status in ('closed','live','locked','finished') and not public.is_admin() then
-    raise exception 'Wijzigen niet meer mogelijk: de koers is gesloten of live';
+  -- Renners kiezen mag ALLEEN tijdens 'open_inschrijving' (admin altijd). Bij
+  -- 'open' (sneak preview), draft of na de deadline kan het niet.
+  if v_game_status <> 'open_inschrijving' and not public.is_admin() then
+    raise exception 'De inschrijving is nog niet geopend — je kunt nog geen renners kiezen.';
   end if;
 
   select coalesce(max_picks, 1) into v_max

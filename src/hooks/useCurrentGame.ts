@@ -45,7 +45,7 @@ export type Game = {
   id: string;
   name: string;
   year: number;
-  status: "draft" | "open" | "locked" | "live" | "finished";
+  status: "draft" | "open" | "open_inschrijving" | "locked" | "live" | "finished";
   game_type?: "giro" | "tdf" | "vuelta" | null;
   homepage_quote?: string | null;
   homepage_quote_author?: string | null;
@@ -77,7 +77,7 @@ export function useCurrentGame() {
         const { data: live, error: liveErr } = await supabase!
           .from("games")
           .select(select)
-          .in("status", ["open", "locked", "live"])
+          .in("status", ["open", "open_inschrijving", "locked", "live"])
           .order("year", { ascending: false })
           .limit(1)
           .maybeSingle();

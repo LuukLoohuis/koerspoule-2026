@@ -5,7 +5,7 @@ export type GameRow = {
   id: string;
   name: string;
   year: number;
-  status: "concept" | "draft" | "open" | "locked" | "live" | "finished" | string;
+  status: "concept" | "draft" | "open" | "open_inschrijving" | "locked" | "live" | "finished" | string;
   game_type: "giro" | "tour" | "tdf" | "vuelta" | "femmes" | string | null;
 };
 
