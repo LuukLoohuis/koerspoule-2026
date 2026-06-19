@@ -6,9 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LayoutDashboard, Trophy, Tag, Users, ListChecks, Calendar, Calculator, Shield, Inbox, Mail, ShieldCheck, Instagram, Newspaper } from "lucide-react";
+import { LayoutDashboard, Trophy, Tag, Users, Users2, ListChecks, Calendar, Calculator, Shield, Inbox, Mail, ShieldCheck, Instagram, Newspaper } from "lucide-react";
 import NotifyTab from "@/components/admin/NotifyTab";
 import ApprovalsTab from "@/components/admin/ApprovalsTab";
+import SubpoulesTab from "@/components/admin/SubpoulesTab";
 
 import GamesTab, { type Game } from "@/components/admin/GamesTab";
 import CategoriesTab, { type Category } from "@/components/admin/CategoriesTab";
@@ -187,6 +188,7 @@ export default function AdminV3() {
           <TabsTrigger value="calc" disabled={!activeGameId} data-testid="tab-calc"><Calculator className="w-4 h-4 mr-2" />Berekening</TabsTrigger>
           <TabsTrigger value="approvals" disabled={!activeGameId} data-testid="tab-approvals"><ShieldCheck className="w-4 h-4 mr-2" />Fiatteren</TabsTrigger>
           <TabsTrigger value="entries" disabled={!activeGameId} data-testid="tab-entries"><Inbox className="w-4 h-4 mr-2" />Inzendingen</TabsTrigger>
+          <TabsTrigger value="subpoules" disabled={!activeGameId} data-testid="tab-subpoules"><Users2 className="w-4 h-4 mr-2" />Subpoules</TabsTrigger>
           <TabsTrigger value="notify" data-testid="tab-notify"><Mail className="w-4 h-4 mr-2" />Notify</TabsTrigger>
           <TabsTrigger value="users" data-testid="tab-users"><Shield className="w-4 h-4 mr-2" />Gebruikers</TabsTrigger>
           <TabsTrigger value="instagram" disabled={!activeGameId} data-testid="tab-instagram"><Instagram className="w-4 h-4 mr-2" />Instagram</TabsTrigger>
@@ -227,6 +229,10 @@ export default function AdminV3() {
 
         <TabsContent value="entries">
           <EntriesTab activeGameId={activeGameId} />
+        </TabsContent>
+
+        <TabsContent value="subpoules">
+          <SubpoulesTab activeGameId={activeGameId} />
         </TabsContent>
 
         <TabsContent value="notify">

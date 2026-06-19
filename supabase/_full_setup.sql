@@ -274,6 +274,12 @@ create table public.subpoules (
 );
 alter table public.subpoules enable row level security;
 
+-- Sponsor-/bedrijfslogo-banner per subpoule (admin-beheerd via SubpoulesTab).
+-- banner_url = publieke URL in bucket "subpoule-banners"; banner_enabled = tonen.
+alter table public.subpoules
+  add column if not exists banner_url text,
+  add column if not exists banner_enabled boolean not null default true;
+
 create table public.subpoule_members (
   id uuid primary key default gen_random_uuid(),
   subpoule_id uuid not null references public.subpoules(id) on delete cascade,

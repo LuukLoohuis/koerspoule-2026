@@ -354,6 +354,19 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
     return (
       <div className="space-y-4">
         <DaguitslagCelebration celebration={dagCelebration} onClose={closeDagCelebration} />
+
+        {/* Sponsor-/bedrijfslogo (alleen logo, geen tekst) — strak bovenaan, alleen
+            wanneer gezet én ingeschakeld. Geen layout-sprong als er geen banner is. */}
+        {active.banner_url && active.banner_enabled && (
+          <div className="retro-border bg-card overflow-hidden flex items-center justify-center px-4 py-3">
+            <img
+              src={active.banner_url}
+              alt={`${active.name} logo`}
+              className="max-h-16 md:max-h-20 w-auto object-contain"
+              loading="lazy"
+            />
+          </div>
+        )}
         <div className="flex items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => setActiveId(null)} className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Terug naar subpoules
