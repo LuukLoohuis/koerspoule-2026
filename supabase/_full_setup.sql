@@ -186,8 +186,11 @@ create table public.entry_picks (
   category_id uuid not null references public.categories(id) on delete cascade,
   rider_id uuid not null references public.riders(id) on delete cascade,
   created_at timestamptz not null default now(),
-  unique(entry_id, category_id),
-  unique(entry_id, rider_id)
+  unique(entry_id, category_id)
+  -- NB: géén unique(entry_id, rider_id) — die rauwe constraint gaf een
+  -- duplicate-key-crash bij cross-category picks. De regel "één renner per
+  -- ploeg" wordt afgedwongen door de guard in toggle_entry_pick (nette melding);
+  -- dubbele renner in dezelfde categorie door entry_picks_entry_category_rider_unique.
 );
 alter table public.entry_picks enable row level security;
 
@@ -2717,6 +2720,11 @@ end $function$;
 
 -- Verwijder oude UNIQUE-constraint die maar 1 pick per categorie toestond.
 ALTER TABLE public.entry_picks DROP CONSTRAINT IF EXISTS entry_picks_entry_id_category_id_key;
+
+-- Verwijder de rauwe (entry_id, rider_id)-constraint: die gaf een duplicate-key-
+-- crash bij cross-category picks (bv. Pogačar in 2 categorieën). De regel "één
+-- renner per ploeg" wordt afgedwongen door de guard in toggle_entry_pick.
+ALTER TABLE public.entry_picks DROP CONSTRAINT IF EXISTS entry_picks_entry_id_rider_id_key;
 
 -- Voorkom dezelfde renner dubbel in dezelfde categorie
 ALTER TABLE public.entry_picks
