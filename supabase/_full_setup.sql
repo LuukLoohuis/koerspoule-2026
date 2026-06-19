@@ -685,6 +685,12 @@ alter table public.games
   add column if not exists year int,
   add column if not exists status public.game_status not null default 'draft';
 
+-- Bestaande DB's: de text-check-constraint games_status_check kent 'open_inschrijving'
+-- nog niet → status zetten faalt. Herbouw 'm met de volledige lijst.
+alter table public.games drop constraint if exists games_status_check;
+alter table public.games add constraint games_status_check
+  check (status in ('draft','open','open_inschrijving','locked','live','finished'));
+
 -- Unieke combinatie type+jaar (één Giro 2026, één TdF 2026, etc.)
 create unique index if not exists games_type_year_unique
   on public.games(game_type, year)

@@ -122,8 +122,9 @@ export default function TeamBuilder() {
   const gameLocked = ["closed", "locked", "live", "finished"].includes(status);
   // Picks/indienen disabled wanneer inschrijven (nog) niet mag.
   const isLocked = !canEnroll;
-  // Sneak preview-banner: status 'open' en (nog) geen inschrijving.
-  const isPreview = status === "open" && !canEnroll;
+  // Sneak preview-banner: status 'open' (ook voor admin zichtbaar, zodat je ziet
+  // wat gebruikers zien; admin kan de builder zelf nog wél gebruiken).
+  const isPreview = status === "open";
   // Builder-structuur zichtbaar bij preview + inschrijving + live (gelockte weergave).
   const builderVisible = isAdmin || ["open", "open_inschrijving", "live"].includes(status);
 
