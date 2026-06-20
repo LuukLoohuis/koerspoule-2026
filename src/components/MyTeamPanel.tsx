@@ -1032,7 +1032,7 @@ export default function MyTeamPanel({
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       <Dial
-                        label="Sous-peloton" accent={AMBER}
+                        label="Subpoule" accent={AMBER}
                         value={<Rank rank={ploegStats.subpoule?.rank ?? null} delta={ploegStats.subpoule?.delta ?? null} />}
                         sub={ploegStats.subpoule ? `van ${ploegStats.subpoule.total} · ${ploegStats.subpoule.name}` : undefined}
                         onClick={activeSubpouleId && onOpenSubpoule ? () => onOpenSubpoule(activeSubpouleId) : undefined}
@@ -1160,7 +1160,7 @@ export default function MyTeamPanel({
                           hint: "Bekijk het poule-klassement",
                         },
                         {
-                          label: "Sous-peloton",
+                          label: "Subpoule",
                           value: ploegStats.subpoule ? <Rank rank={ploegStats.subpoule.rank} delta={ploegStats.subpoule.delta} /> : "—",
                           sub: ploegStats.subpoule?.name,
                           onClick: activeSubpouleId && onOpenSubpoule ? () => onOpenSubpoule(activeSubpouleId) : undefined,
@@ -1329,7 +1329,7 @@ export default function MyTeamPanel({
                   </div>
                   {rewound && (
                     <p className="mt-1.5 px-1 font-mono text-[9px] leading-snug" style={{ color: "rgba(237,227,204,0.5)" }}>
-                      Seizoensstand &amp; beste etappe tonen t/m rit {cutoffN}. Vergelijkende standen (plek, %, sous-peloton) blijven de actuele stand.
+                      Seizoensstand &amp; beste etappe tonen t/m rit {cutoffN}. Vergelijkende standen (plek, %, subpoule) blijven de actuele stand.
                     </p>
                   )}
                 </div>

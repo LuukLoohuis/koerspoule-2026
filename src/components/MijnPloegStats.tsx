@@ -164,8 +164,8 @@ export default function MijnPloegStats() {
         )}
       </StatCard>
 
-      {/* 3 — Sous-peloton */}
-      <StatCard label="Sous-peloton" delay={160} index={2} isEmpty={!subpoule}>
+      {/* 3 — Subpoule */}
+      <StatCard label="Subpoule" delay={160} index={2} isEmpty={!subpoule}>
         {subpoule && (
           <>
             <div className="flex items-baseline gap-2">
