@@ -358,11 +358,11 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
         {/* Sponsor-/bedrijfslogo (alleen logo, geen tekst) — strak bovenaan, alleen
             wanneer gezet én ingeschakeld. Geen layout-sprong als er geen banner is. */}
         {active.banner_url && active.banner_enabled && (
-          <div className="retro-border bg-card overflow-hidden flex items-center justify-center px-4 py-3">
+          <div className="retro-border bg-card overflow-hidden">
             <img
               src={active.banner_url}
               alt={`${active.name} logo`}
-              className="w-full max-h-28 md:max-h-40 object-contain"
+              className="block w-full h-auto object-contain"
               loading="lazy"
             />
           </div>
