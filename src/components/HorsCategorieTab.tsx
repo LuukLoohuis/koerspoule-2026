@@ -40,6 +40,7 @@ import { RetroTabs } from "@/components/RetroTabs";
 import JerseyBadge from "@/components/retro/JerseyBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
 import { useThema } from "@/contexts/ThemaContext";
+import { isGameLocked, isAdminOnlyStatus } from "@/lib/gameStatus";
 import type { TruiType } from "@/lib/themas";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
@@ -240,14 +241,17 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   const { data: curGame } = useCurrentGame();
   // Optioneel een specifieke (bv. afgeronde) game tonen i.p.v. de live game.
   const game = gameIdProp ? { id: gameIdProp, status: gameStatus } : curGame;
-  const isLive = Boolean(game?.status && ["live", "locked", "finished", "closed"].includes(String(game.status)));
+  // Twee aparte assen: tab tónen (isVisible, vanaf "open" t/m finished) vs. échte
+  // uitslagdata aanwezig (hasResults, vanaf "live"). Concept/draft = verborgen.
+  const hasResults = isGameLocked(game?.status);
+  const isVisible = Boolean(game?.status) && !isAdminOnlyStatus(game?.status);
   const { entry, picksByCategory, jokerIds, predictions: myPredictions } = useEntry(game?.id);
   const { data: categories = [] } = useCategories(game?.id);
-  const { data: pickStats = [] } = usePickStats(isLive ? game?.id : undefined);
-  const { data: jokerStats = [] } = useJokerStats(isLive ? game?.id : undefined);
-  const { data: predictionStats = [] } = usePredictionStats(isLive ? game?.id : undefined);
+  const { data: pickStats = [] } = usePickStats(hasResults ? game?.id : undefined);
+  const { data: jokerStats = [] } = useJokerStats(hasResults ? game?.id : undefined);
+  const { data: predictionStats = [] } = usePredictionStats(hasResults ? game?.id : undefined);
   const { data: myStageTotal = 0 } = useMyStagePointTotal(entry?.id);
-  const hcGameId = isLive ? game?.id : undefined;
+  const hcGameId = hasResults ? game?.id : undefined;
 
   // Stage-by-stage timeline data
   const { data: stages = [] } = useStages(hcGameId);
@@ -271,7 +275,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   // The Emirates — alle stage_results (voor droomploeg)
   const { data: allStageResults = [] } = useQuery({
     queryKey: ["all-stage-results", game?.id],
-    enabled: Boolean(supabase && isLive && game?.id),
+    enabled: Boolean(supabase && hasResults && game?.id),
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Array<{ stage_id: string; rider_id: string | null; finish_position: number }>> => {
       if (!supabase || !game?.id) return [];
@@ -303,7 +307,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   // Alle renners van deze koers (voor jokerpool: renners die niet in een categorie zitten)
   const { data: allGameRiders = [] } = useQuery({
     queryKey: ["hc-all-game-riders", game?.id],
-    enabled: Boolean(supabase && isLive && game?.id),
+    enabled: Boolean(supabase && hasResults && game?.id),
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Array<{ id: string; name: string; start_number: number | null }>> => {
       if (!supabase || !game?.id) return [];
@@ -586,7 +590,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // ── Section 3: Wielerdirecteur ──────────────────────────────────────────────
   const directorAnalysis = useMemo(() => {
-    if (!isLive || !entry || picksByCategory.size === 0) return null;
+    if (!hasResults || !entry || picksByCategory.size === 0) return null;
     const myPickIds = new Set<string>();
     for (const arr of picksByCategory.values()) for (const id of arr) myPickIds.add(id);
     const ownershipByRider = new Map<string, number>();
@@ -612,11 +616,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       "Deze ploeg heeft de organisatie van een vroege vlucht in een regenrit.",
     ];
     return { labels, lines, quote: quotes[day % quotes.length] };
-  }, [isLive, entry, picksByCategory, pickStats]);
+  }, [hasResults, entry, picksByCategory, pickStats]);
 
   // ── Director Report Score ────────────────────────────────────────────────────
   const directorScore = useMemo(() => {
-    if (!isLive || !entry || !monte) return null;
+    if (!hasResults || !entry || !monte) return null;
 
     // Pool Ranking (50%): 0 = last place, 1 = first place
     const n = totals.length;
@@ -758,7 +762,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       diffDetail,
       jokerDetail,
     };
-  }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats]);
+  }, [hasResults, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats]);
 
   // ── Sub-tab state (must be declared before any early return to keep hook order stable) ──
   const [activeTab, setActiveTab] = useState<HorsTabKey>(initialTab ?? "dartpijl");
@@ -782,14 +786,14 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   });
 
   // ── Locked state ─────────────────────────────────────────────────────────────
-  if (!isLive) {
+  if (!isVisible) {
     return (
       <Card className="ornate-frame retro-border">
         <CardContent className="p-8 text-center space-y-3">
           <Lock className="h-10 w-10 text-muted-foreground/60 mx-auto" />
           <p className="font-display text-xl font-bold">Hors Catégorie nog vergrendeld</p>
           <p className="text-sm text-muted-foreground font-serif italic">
-            De data cave gaat open zodra de admin de inschrijving sluit en de koers live zet.
+            De data cave gaat open zodra de koers in de sneak preview verschijnt.
           </p>
         </CardContent>
       </Card>
