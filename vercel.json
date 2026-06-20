@@ -11,7 +11,11 @@
     { "source": "/vuelta-poule-2026", "destination": "/vuelta-espana-poule-2026", "permanent": true },
     { "source": "/vuelta-a-espana-poule-2026", "destination": "/vuelta-espana-poule-2026", "permanent": true },
     { "source": "/vuelta-wielerspel", "destination": "/vuelta-espana-poule-2026", "permanent": true },
-    { "source": "/vuelta-wielerspel-2026", "destination": "/vuelta-espana-poule-2026", "permanent": true }
+    { "source": "/vuelta-wielerspel-2026", "destination": "/vuelta-espana-poule-2026", "permanent": true },
+    { "source": "/tour-de-france-femmes-wielerspel-2026", "destination": "/tour-de-france-femmes-poule-2026", "permanent": true },
+    { "source": "/tour-de-france-femmes-wielerspel", "destination": "/tour-de-france-femmes-poule-2026", "permanent": true },
+    { "source": "/tour-femmes-poule-2026", "destination": "/tour-de-france-femmes-poule-2026", "permanent": true },
+    { "source": "/wielerspel-dames-2026", "destination": "/tour-de-france-femmes-poule-2026", "permanent": true }
   ],
   "rewrites": [{ "source": "/(.*)", "destination": "/app-shell.html" }]
 }
