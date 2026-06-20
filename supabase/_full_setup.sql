@@ -1225,6 +1225,10 @@ declare
   v_entry_id uuid;
   v_game_id uuid;
 begin
+  -- Vertrouwde server-context (service-role, bv. admin-delete-user) mag altijd —
+  -- die key staat nooit client-side, dus dit opent geen gat.
+  if auth.role() = 'service_role' then return coalesce(NEW, OLD); end if;
+
   -- Vind de bijbehorende entry_id (tabel-afhankelijk)
   if TG_TABLE_NAME = 'entries' then
     v_game_id := coalesce(NEW.game_id, OLD.game_id);
