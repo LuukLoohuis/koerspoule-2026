@@ -880,22 +880,6 @@
     animation: swipe-hint 0.6s ease 0.8s 1 both;
   }
 
-  /* Eenmalige binnenglijd (geen continue beweging) — Koerscafé-paneel dat bij
-     openen soepel van rechts inschuift en daarna stil blijft staan. Alleen op
-     web (≥768px); op mobiel verzorgt de bottom-sheet de entree al. */
-  @keyframes kp-slide-in-right {
-    from { transform: translateX(26px); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
-  }
-  @media (min-width: 768px) {
-    .kp-slide-in-right {
-      animation: kp-slide-in-right 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .kp-slide-in-right { animation: none; }
-  }
-
   /* Eenmalige "peek": ~12px naar links en soepel terug (leert de swipe aan). */
   @keyframes kp-swipe-peek {
     0%   { transform: translateX(0); }
