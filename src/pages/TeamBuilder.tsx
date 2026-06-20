@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Check, ChevronRight, Info, Lock, Sparkles } from "lucide-react";
+import { Check, ChevronRight, Lock, Sparkles } from "lucide-react";
 import TruiBadge from "@/components/retro/TruiBadge";
 import SwipeCarousel from "@/components/SwipeCarousel";
 import SwipeHintBar from "@/components/SwipeHintBar";
@@ -20,7 +20,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { canRegister, isGameLocked, isPreviewStatus, isVisibleToUser } from "@/lib/gameStatus";
 import RiderSearchSelect from "@/components/RiderSearchSelect";
-import RiderDetailPanel from "@/components/RiderDetailPanel";
 import { SteunMoment } from "@/components/SteunKopgroep";
 import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
@@ -108,7 +107,6 @@ export default function TeamBuilder() {
 
   const [jokerDraft1, setJokerDraft1] = useState("");
   const [jokerDraft2, setJokerDraft2] = useState("");
-  const [detailRider, setDetailRider] = useState<{ id: string; name: string; firstcycling_id: number | null } | null>(null);
   const [gcPodium, setGcPodium] = useState<string[]>(["", "", ""]);
   const [pointsJersey, setPointsJersey] = useState("");
   const [mountainJersey, setMountainJersey] = useState("");
@@ -722,21 +720,6 @@ export default function TeamBuilder() {
                     {team && <span className="block text-xs text-muted-foreground truncate">{team}</span>}
                   </span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDetailRider({
-                      id: rid,
-                      name: row.riders!.name,
-                      firstcycling_id: row.riders!.firstcycling_id ?? null,
-                    })
-                  }
-                  className="shrink-0 p-1.5 rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted"
-                  title="Bekijk seizoensuitslagen"
-                  aria-label={`Bekijk seizoensuitslagen van ${row.riders.name}`}
-                >
-                  <Info className="h-4 w-4" aria-hidden="true" />
-                </button>
                 <span
                   className={cn(
                     "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2",
@@ -1186,22 +1169,6 @@ export default function TeamBuilder() {
                               </div>
                               <div className="flex items-center gap-1 shrink-0">
                                 {isSelected && <Check className="h-5 w-5 text-primary" />}
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDetailRider({
-                                      id: row.riders!.id,
-                                      name: row.riders!.name,
-                                      firstcycling_id: row.riders!.firstcycling_id ?? null,
-                                    });
-                                  }}
-                                  className="opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity p-1 rounded hover:bg-muted"
-                                  title="Bekijk seizoensuitslagen"
-                                  aria-label={`Bekijk seizoensuitslagen van ${row.riders!.name}`}
-                                >
-                                  <Info className="h-3.5 w-3.5" aria-hidden="true" />
-                                </button>
                               </div>
                             </button>
                           );
@@ -1339,8 +1306,6 @@ export default function TeamBuilder() {
           </Tabs>
         )}
       </div>
-
-      <RiderDetailPanel rider={detailRider} onClose={() => setDetailRider(null)} />
     </div>
   );
 }
