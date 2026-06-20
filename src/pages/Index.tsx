@@ -526,12 +526,12 @@ export default function Index() {
 
       {/* ─── AFTELLER-BAND (slank, direct onder de hero) ──────────────────── */}
       <section className="container mx-auto px-5 pt-6">
-        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-5">
-          <div className="text-center md:text-left shrink-0">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
+          <div className="text-center md:text-right shrink-0">
             <span className="overline-stamp">— De start nadert —</span>
             <h2 className="heading-oswald text-xl md:text-2xl leading-tight">Klaar om te koersen?</h2>
           </div>
-          <CountdownBanner className="flex-1 w-full md:max-w-xl md:mx-auto" />
+          <CountdownBanner className="w-full md:w-auto md:max-w-xl shrink-0" />
           <Button
             className="retro-border-primary font-bold shrink-0 w-full md:w-auto"
             onClick={() => navigate("/login?register=1")}
