@@ -272,8 +272,8 @@ export default function Rules() {
               href={STEUN_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-md font-bold text-white shadow-md hover:opacity-90 transition"
-              style={{ backgroundColor: "#e6007e", fontFamily: "Arial, sans-serif", border: "1px solid #ffffff" }}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-md font-bold text-foreground shadow-md hover:opacity-90 transition"
+              style={{ backgroundColor: "hsl(var(--vintage-gold))", fontFamily: "Arial, sans-serif", border: "1px solid hsl(var(--foreground))" }}
             >
               <span>🚴</span>
               <span>Steun Koerspoule</span>
