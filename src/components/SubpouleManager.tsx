@@ -362,7 +362,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
             <img
               src={active.banner_url}
               alt={`${active.name} logo`}
-              className="max-h-16 md:max-h-20 w-auto object-contain"
+              className="w-full max-h-28 md:max-h-40 object-contain"
               loading="lazy"
             />
           </div>

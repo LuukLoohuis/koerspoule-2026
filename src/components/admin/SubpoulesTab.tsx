@@ -18,7 +18,7 @@ type Row = {
 };
 
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
-const MAX_BYTES = 3 * 1024 * 1024; // 3 MB
+const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 
 export default function SubpoulesTab({ activeGameId }: { activeGameId: string }) {
   const [rows, setRows] = useState<Row[]>([]);
@@ -81,7 +81,7 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
       return;
     }
     if (file.size > MAX_BYTES) {
-      toast.error("Bestand te groot (max 3 MB).");
+      toast.error("Bestand te groot (max 5 MB).");
       return;
     }
     setBusyId(id);
