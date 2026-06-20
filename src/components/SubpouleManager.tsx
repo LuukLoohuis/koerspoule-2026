@@ -254,7 +254,9 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       `Maak gratis een account en sluit aan: ${url}`;
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({ title: `Koerspoule — ${name}`, text, url });
+        // Geen aparte `url` meegeven: WhatsApp plakt die achter de tekst, en de
+        // link staat al in `text` → anders tweemaal dezelfde site.
+        await navigator.share({ title: `Koerspoule — ${name}`, text });
         return;
       }
     } catch {
