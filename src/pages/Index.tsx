@@ -524,6 +524,23 @@ export default function Index() {
         </div>
       </section>
 
+      {/* ─── AFTELLER-BAND (slank, direct onder de hero) ──────────────────── */}
+      <section className="container mx-auto px-5 pt-6">
+        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-5">
+          <div className="text-center md:text-left shrink-0">
+            <span className="overline-stamp">— De start nadert —</span>
+            <h2 className="heading-oswald text-xl md:text-2xl leading-tight">Klaar om te koersen?</h2>
+          </div>
+          <CountdownBanner className="flex-1 w-full" />
+          <Button
+            className="retro-border-primary font-bold shrink-0 w-full md:w-auto"
+            onClick={() => navigate("/login?register=1")}
+          >
+            Schrijf je in →
+          </Button>
+        </div>
+      </section>
+
       {/* ─── DE COURANT ───────────────────────────────────────────────────── */}
       <section className="container mx-auto px-5 pt-4">
         <div className="flex justify-between items-baseline border-t-2 border-foreground pt-2 text-lg">
@@ -705,7 +722,9 @@ export default function Index() {
           <span className="vintage-ornament-symbol">❧</span>
         </div>
         <h2 className="heading-oswald text-3xl md:text-4xl mb-3">Klaar om te koersen?</h2>
-        <CountdownBanner className="max-w-md mx-auto mb-5" />
+        <p className="text-muted-foreground font-serif italic max-w-md mx-auto mb-5">
+          De afteller staat bovenaan — pak je startbewijs voor de inschrijving sluit.
+        </p>
         <Button
           className="retro-border-primary font-bold"
           onClick={() => navigate("/login?register=1")}
