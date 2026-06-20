@@ -34,9 +34,18 @@ export type PersonalFlash = {
 };
 
 export type MiniStripData = {
-  subpoule: { rank: number; delta: number };
-  overall: { rank: number; delta: number };
-  points: number;
+  // rank/points zijn null vóór er gefiatteerde uitslagen zijn → de strip toont
+  // dan nette placeholders ("—") i.p.v. te verdwijnen.
+  subpoule: { rank: number | null; delta: number };
+  overall: { rank: number | null; delta: number };
+  points: number | null;
+};
+
+// Placeholder-strip: structuur aanwezig, cijfers nog leeg (pre-koers/sneak preview).
+const EMPTY_MINISTRIP: MiniStripData = {
+  subpoule: { rank: null, delta: 0 },
+  overall: { rank: null, delta: 0 },
+  points: null,
 };
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
@@ -82,7 +91,8 @@ export function useKaravaanFeed(params: {
         approved_at: string;
       }>;
       if (approvedStages.length === 0) {
-        return { etappes: [], ministrip: null, myEntryId: null, lastVisited: null };
+        // Nog geen gefiatteerde uitslagen → toon de strip met placeholders.
+        return { etappes: [], ministrip: EMPTY_MINISTRIP, myEntryId: null, lastVisited: null };
       }
       const stageIds = approvedStages.map((s) => s.id);
       const stageById = new Map(approvedStages.map((s) => [s.id, s]));
@@ -94,7 +104,7 @@ export function useKaravaanFeed(params: {
         .eq("subpoule_id", subpouleId);
       const subpouleUserIds = ((memberRows ?? []) as Array<{ user_id: string }>).map((r) => r.user_id);
       if (subpouleUserIds.length === 0) {
-        return { etappes: [], ministrip: null, myEntryId: null, lastVisited: null };
+        return { etappes: [], ministrip: EMPTY_MINISTRIP, myEntryId: null, lastVisited: null };
       }
 
       // 3. Alle entries in deze game — via RPC `game_entries_standings` (zelfde
@@ -256,8 +266,9 @@ export function useKaravaanFeed(params: {
         });
       }
 
-      // 7. Mini-strip: baseer op de laatste etappe
-      let ministrip: MiniStripData | null = null;
+      // 7. Mini-strip: baseer op de laatste etappe. Default = placeholder, zodat
+      // de strip ook zonder eigen ranking zichtbaar blijft.
+      let ministrip: MiniStripData = EMPTY_MINISTRIP;
       if (myEntryId && etappes.length > 0) {
         const last = etappes[etappes.length - 1];
         const sub = last.subpouleStandings.find((r) => r.is_me);

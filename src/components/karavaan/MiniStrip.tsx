@@ -36,9 +36,9 @@ export default function MiniStrip({
     <div className="retro-border bg-card overflow-hidden">
       <div className="grid grid-cols-3 md:grid-cols-6">
         {/* Categorie 1 — positie & punten */}
-        <DataCell value={`${data.subpoule.rank}ᵉ`} label="subpoule" delta={data.subpoule.delta} onClick={onClickSubpoule ?? onClickProfile} ariaLabel="Open je subpoule (grafiek)" />
-        <DataCell value={`${data.overall.rank}ᵉ`} label="overall" delta={data.overall.delta} onClick={onClickOverall ?? onClickProfile} ariaLabel="Open het algemeen klassement" />
-        <DataCell value={data.points} label="punten" onClick={onClickProfile} ariaLabel="Bekijk je volledige ploeg" />
+        <DataCell value={data.subpoule.rank == null ? "—" : `${data.subpoule.rank}ᵉ`} label="subpoule" delta={data.subpoule.rank == null ? undefined : data.subpoule.delta} onClick={onClickSubpoule ?? onClickProfile} ariaLabel="Open je subpoule (grafiek)" />
+        <DataCell value={data.overall.rank == null ? "—" : `${data.overall.rank}ᵉ`} label="overall" delta={data.overall.rank == null ? undefined : data.overall.delta} onClick={onClickOverall ?? onClickProfile} ariaLabel="Open het algemeen klassement" />
+        <DataCell value={data.points ?? "—"} label="punten" onClick={onClickProfile} ariaLabel="Bekijk je volledige ploeg" />
 
         {/* Categorie 2 — Hors Catégorie shortcuts (dikke scheiding op desktop) */}
         <HorsCell
