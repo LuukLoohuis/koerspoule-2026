@@ -2,7 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
 
 const BASE = "https://koerspoule.nl";
-const OG_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf.jpg";
+const OG_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf-v2.jpg";
 
 type Meta = { title: string; description: string; noindex?: boolean };
 
