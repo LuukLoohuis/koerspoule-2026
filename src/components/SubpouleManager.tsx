@@ -489,7 +489,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
 
               {deskChatOpen && (
                 <aside className="w-[360px] shrink-0">
-                  <div className="retro-border bg-card overflow-hidden sticky top-4">
+                  <div className="retro-border no-hover-lift bg-card overflow-hidden sticky top-4">
                     <div className="flex items-center justify-between border-b-2 border-foreground bg-secondary/30 px-3 py-2">
                       <span className="font-display font-bold flex items-center gap-2">
                         <MessageCircle className="h-4 w-4 text-primary" />

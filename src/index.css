@@ -231,6 +231,12 @@
     transform: translate(-1px, -1px) rotate(-0.3deg);
     box-shadow: 5px 5px 0 hsl(var(--foreground));
   }
+  /* Grote lees-/leespanelen (bv. Koerscafé) mogen NIET wiebelen bij hover —
+     de kantel maakt de tekst onrustig. Opt-out: blijf stil staan. */
+  .retro-border.no-hover-lift:hover {
+    transform: none;
+    box-shadow: 3px 3px 0 hsl(var(--foreground));
+  }
 
   .retro-border-primary {
     border: 2px solid hsl(var(--primary));
