@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -583,6 +584,24 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
               message="Een koers is pas écht leuk met je vrienden erbij. Start hieronder een eigen subpoule of sluit aan met een code."
               className="border-0 shadow-none"
             />
+          ) : subpoules.length > 8 ? (
+            // Veel subpoules (bv. als admin alles ziet) → compacte dropdown i.p.v.
+            // een lange lijst. Kiezen opent meteen de subpoule.
+            <div className="p-4 space-y-2">
+              <Select value={activeId ?? undefined} onValueChange={(id) => setActiveId(id)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={`Kies een subpoule… (${subpoules.length})`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {subpoules.map((sp) => (
+                    <SelectItem key={sp.id} value={sp.id}>
+                      {sp.name} · {sp.member_count} leden
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{subpoules.length} subpoules</p>
+            </div>
           ) : (
             <div className="divide-y divide-border">
               {subpoules.map((sp) => (
