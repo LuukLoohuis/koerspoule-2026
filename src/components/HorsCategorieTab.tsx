@@ -40,7 +40,7 @@ import { RetroTabs } from "@/components/RetroTabs";
 import JerseyBadge from "@/components/retro/JerseyBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
 import { useThema } from "@/contexts/ThemaContext";
-import { isGameLocked, isAdminOnlyStatus } from "@/lib/gameStatus";
+import { isGameLocked, isAdminOnlyStatus, isPreviewStatus } from "@/lib/gameStatus";
 import type { TruiType } from "@/lib/themas";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
@@ -245,6 +245,10 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   // uitslagdata aanwezig (hasResults, vanaf "live"). Concept/draft = verborgen.
   const hasResults = isGameLocked(game?.status);
   const isVisible = Boolean(game?.status) && !isAdminOnlyStatus(game?.status);
+  // Sneak preview ('open'): toon UITSLUITEND hier een client-side demo van de
+  // Aap met de Dartpijl op gesimuleerde data. Geen DB-writes/queries. Verdwijnt
+  // volledig zodra de status verder is (open_inschrijving, live, …).
+  const isDemo = isPreviewStatus(game?.status);
   const { entry, picksByCategory, jokerIds, predictions: myPredictions } = useEntry(game?.id);
   const { data: categories = [] } = useCategories(game?.id);
   const { data: pickStats = [] } = usePickStats(hasResults ? game?.id : undefined);
@@ -425,6 +429,50 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     }
     return { mean, median, top10cut, beatPct, top10, worseThanApe, aboveMedian, userActual, dist };
   }, [categories, pickStats, totals, picksByCategory, myStageTotal, game?.id]);
+
+  // ── Demo Monte Carlo (alleen sneak preview 'open') ───────────────────────────
+  // Volledig client-side, deterministisch (vaste seed): ~5 gesimuleerde deelnemers
+  // → 5.000 "apen" + een voorbeeldscore, zodat de Aap met de Dartpijl + percentiel-
+  // verdeling geloofwaardig oogt zonder echte data of DB-writes.
+  const demoMonte = useMemo(() => {
+    if (!isDemo) return null;
+    const rng = seededRandom(20260620);
+    const gauss = () => {
+      let u = 0, v = 0;
+      while (u === 0) u = rng();
+      while (v === 0) v = rng();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    };
+    const N = 5000, MEAN = 430, SD = 95;
+    const scores: number[] = [];
+    for (let i = 0; i < N; i++) scores.push(Math.max(0, Math.round(MEAN + gauss() * SD)));
+    scores.sort((a, b) => a - b);
+    const userActual = 545; // bovengemiddelde voorbeeldploeg
+    const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+    const mid = Math.floor(scores.length / 2);
+    const median = scores.length % 2 === 0 ? (scores[mid - 1] + scores[mid]) / 2 : scores[mid];
+    const top10cut = scores[Math.floor(scores.length * 0.9)];
+    const beatPct = (scores.filter((s) => userActual > s).length / scores.length) * 100;
+    const min = scores[0], max = scores[scores.length - 1];
+    const buckets = 25;
+    const step = Math.max(1, (max - min) / buckets);
+    const dist = Array.from({ length: buckets }, (_, i) => {
+      const from = min + i * step;
+      const to = from + step;
+      const last = i === buckets - 1;
+      const count = scores.filter((s) => s >= from && (last ? s <= to : s < to)).length;
+      return { bucket: Math.round((from + to) / 2), count };
+    });
+    return {
+      mean, median, top10cut, beatPct,
+      top10: userActual > top10cut,
+      worseThanApe: beatPct < 50,
+      aboveMedian: userActual > median ? 100 : 0,
+      userActual, dist,
+    };
+  }, [isDemo]);
+  // In sneak preview tonen we de demo i.p.v. de (lege) echte Monte Carlo.
+  const dartMonte = isDemo ? demoMonte : monte;
 
   // ── Stage timeline ──────────────────────────────────────────────────────────
   const stageTimeline = useMemo(() => {
@@ -803,6 +851,17 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5 pb-6">
+      {/* Sneak preview: ondubbelzinnige "dit is nep"-melding bovenaan. */}
+      {isDemo && (
+        <div className="retro-border bg-[hsl(var(--vintage-gold))/0.08] px-4 py-3 flex items-start gap-2.5">
+          <span className="text-lg leading-none shrink-0" aria-hidden>🎲</span>
+          <p className="text-sm font-serif italic text-foreground/90 leading-snug">
+            <span className="font-display font-bold uppercase tracking-wide not-italic">Gesimuleerde voorbeelddata.</span>{" "}
+            Dit is een voorproefje op ~5 nepdeelnemers. Zodra de inschrijving opent, zie je hier de échte cijfers.
+          </p>
+        </div>
+      )}
+
       {/* ── Sub-tab navigation ─────────────────────────────────────────────── */}
 
       {/* Mobile — MobielTabBalk (scrollable chips). Glijdt weg bij omlaag scrollen
@@ -860,7 +919,12 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       {/* ── Tab 1: Dartpijl (Monte Carlo) ───────────────────────────────────── */}
       {k === "dartpijl" && (
         <div className="space-y-5">
-          {!monte ? (
+          {isDemo && (
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-[hsl(var(--vintage-gold))/0.16] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold))/0.45] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
+              🎲 Demo · gesimuleerde data
+            </div>
+          )}
+          {!dartMonte ? (
             <EmptyState
               illustration={aapFietser}
               title="De apen warmen nog op 🐒"
@@ -872,25 +936,25 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   Alle uitleg-/titel-lagen en de Prestatieklasse-banner zijn
                   bewust verwijderd: de hero vertelt het hele verhaal. */}
               <PercentileVerdict
-                percentile={Math.round(monte.beatPct)}
-                userPoints={monte.userActual}
-                monkeyAvg={Math.round(monte.mean)}
+                percentile={Math.round(dartMonte.beatPct)}
+                userPoints={dartMonte.userActual}
+                monkeyAvg={Math.round(dartMonte.mean)}
                 illustrationSrc={aapFietser}
               />
 
               {/* Distributie — FT-stijl infographic (custom SVG) */}
               <AapscoreDistributie
-                dist={monte.dist}
-                userActual={monte.userActual}
-                mean={monte.mean}
-                beatPct={monte.beatPct}
+                dist={dartMonte.dist}
+                userActual={dartMonte.userActual}
+                mean={dartMonte.mean}
+                beatPct={dartMonte.beatPct}
                 monkeyCount={5000}
               />
 
 
 
               {/* Commentary */}
-              {monte.top10 && (
+              {dartMonte.top10 && (
                 <div
                   className={cn(
                     "rounded-xl border px-4 py-3 text-sm font-serif italic",
