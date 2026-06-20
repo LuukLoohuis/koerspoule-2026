@@ -41,6 +41,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useAllGames, gameTheme } from "@/hooks/useAllGames";
 import GameSwitcher from "@/components/GameSwitcher";
+import { isVisibleToUser, isAdminOnlyStatus } from "@/lib/gameStatus";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { Input } from "@/components/ui/input";
 import { useSubpoules } from "@/hooks/useSubpoules";
@@ -106,23 +107,29 @@ export default function MijnPeloton() {
   const myTeam = mockTeams[0];
   const displayName = (teamName?.trim() || profile?.display_name?.trim() || "José Bidon");
   const { data: allGames = [] } = useAllGames();
+  const { user: authUser, role } = useAuth();
+  const isAdmin = role === "admin";
+  // concept/draft alleen voor admins; gewone gebruikers zien die game niet.
+  const visibleGames = useMemo(
+    () => allGames.filter((g) => isVisibleToUser(g.status, isAdmin)),
+    [allGames, isAdmin],
+  );
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   useEffect(() => {
-    if (!selectedGame && allGames.length > 0) {
+    if (!selectedGame && visibleGames.length > 0) {
       const preferred =
-        allGames.find((g) => ["open", "live", "locked"].includes(g.status)) ??
-        allGames.find((g) => ["draft", "concept"].includes(g.status)) ??
-        allGames[0];
+        visibleGames.find((g) => ["open_inschrijving", "open", "live", "locked"].includes(g.status)) ??
+        visibleGames.find((g) => isAdminOnlyStatus(g.status)) ??
+        visibleGames[0];
       setSelectedGame(preferred.id);
     }
-  }, [allGames, selectedGame]);
+  }, [visibleGames, selectedGame]);
   const selectedGameObj = allGames.find((g) => g.id === selectedGame) ?? null;
   // Handmatige "Steun Koerspoule"-banner: alleen aan als de admin 'm ergens aanzette.
   const supportBanner = useSupportBanner(selectedGameObj?.id);
-  const isDraft = ["draft", "concept"].includes(selectedGameObj?.status ?? "");
+  const isDraft = isAdminOnlyStatus(selectedGameObj?.status);
 
   // Onboarding-voortgang voor de geselecteerde game.
-  const { user: authUser } = useAuth();
   const navigate = useNavigate();
   const { entry: selEntry } = useEntry(selectedGameObj?.id);
   const { subpoules: selSubpoules } = useSubpoules(selectedGameObj?.id);
@@ -1034,9 +1041,10 @@ export default function MijnPeloton() {
     <div className="container mx-auto px-5 pb-4 md:py-6">
       {/* 1. GameSwitcher — sticky bovenaan, full-bleed op mobiel */}
       <GameSwitcher
-        games={allGames}
+        games={visibleGames}
         selectedId={selectedGame}
         onSelect={setSelectedGame}
+        isAdmin={isAdmin}
         className="-mx-5 md:mx-0 mb-3 md:mb-5"
       />
 

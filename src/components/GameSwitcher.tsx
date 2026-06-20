@@ -9,34 +9,25 @@ import { Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlagIcon from "@/components/FlagIcon";
 import { gameTheme, type GameRow } from "@/hooks/useAllGames";
+import { isVisibleToUser, statusBadge, statusOrderRank } from "@/lib/gameStatus";
 
 type Props = {
   games: GameRow[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** concept/draft-games alleen tonen aan admins. */
+  isAdmin?: boolean;
   className?: string;
 };
 
-const LIVE = ["open", "live", "locked"];
-const DRAFT = ["draft", "concept"];
-
-function orderRank(status: string): number {
-  if (LIVE.includes(status)) return 0;
-  if (DRAFT.includes(status)) return 1;
-  if (status === "finished") return 2;
-  return 3;
-}
-
-export default function GameSwitcher({ games, selectedId, onSelect, className }: Props) {
+export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = false, className }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
 
-  // Sort: live first, draft, finished
-  const ordered = [...games].sort((a, b) => {
-    const r = orderRank(a.status) - orderRank(b.status);
-    if (r !== 0) return r;
-    return 0;
-  });
+  // concept/draft verbergen voor niet-admins; daarna sorteren op fase.
+  const ordered = [...games]
+    .filter((g) => isVisibleToUser(g.status, isAdmin))
+    .sort((a, b) => statusOrderRank(a.status) - statusOrderRank(b.status));
 
   // Center active card
   useEffect(() => {
@@ -78,8 +69,8 @@ export default function GameSwitcher({ games, selectedId, onSelect, className }:
             {ordered.map((game) => {
               const theme = gameTheme(game.game_type);
               const isActive = selectedId === game.id;
-              const isLive = LIVE.includes(game.status);
-              const isDraft = DRAFT.includes(game.status);
+              const badge = statusBadge(game.status);
+              const isDraft = badge?.kind === "concept";
 
               return (
                 <button
@@ -121,34 +112,25 @@ export default function GameSwitcher({ games, selectedId, onSelect, className }:
                   >
                     {game.name}
                   </span>
-                  {isLive && (
+                  {badge && (
                     <span
                       className={cn(
                         "inline-flex items-center gap-1 rounded-full leading-none",
-                        "px-1.5 py-0.5 text-[9px]",
-                        "font-bold uppercase tracking-wider",
+                        "px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
                         isActive
                           ? "bg-white/25 text-white"
-                          : "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30",
+                          : badge.kind === "live"
+                            ? "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30"
+                            : badge.kind === "registration"
+                              ? "bg-emerald-500/15 text-emerald-700 border border-emerald-500/40"
+                              : badge.kind === "concept" || badge.kind === "preview"
+                                ? "bg-[hsl(var(--vintage-gold)/0.16)] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold)/0.45)]"
+                                : "bg-secondary text-muted-foreground border border-border",
                       )}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                      Live
-                    </span>
-                  )}
-                  {isDraft && (
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-full leading-none",
-                        "px-1.5 py-0.5 text-[9px]",
-                        "font-bold uppercase tracking-wider",
-                        isActive
-                          ? "bg-white/25 text-white"
-                          : "bg-[hsl(var(--vintage-gold)/0.16)] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold)/0.45)]",
-                      )}
-                    >
-                      <Wrench className="w-2.5 h-2.5" />
-                      In voorbereiding
+                      {badge.kind === "live" && <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />}
+                      {badge.kind === "concept" && <Wrench className="w-2.5 h-2.5" />}
+                      {badge.label}
                     </span>
                   )}
                 </button>

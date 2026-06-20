@@ -50,6 +50,13 @@ const STATUS_LABELS: Record<string, string> = {
   finished: "Afgerond",
 };
 
+// Legacy-statussen: niet meer kiesbaar, maar moeten wél tonen als een bestaande
+// game er nog op staat (anders blijft de selector-trigger leeg).
+const LEGACY_STATUS_LABELS: Record<string, string> = {
+  concept: "Concept (verborgen)",
+  closed: "Afgerond (gesloten)",
+};
+
 // Thema-knoppen: roze (Giro) / geel (Tour) / rood (Vuelta).
 const THEME_BUTTONS: { key: ThemaKey; emoji: string; label: string }[] = [
   { key: "roze", emoji: "🌸", label: "Giro" },
@@ -339,6 +346,11 @@ export default function GamesTab({
                         {Object.entries(STATUS_LABELS).map(([k, v]) => (
                           <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
                         ))}
+                        {!STATUS_LABELS[g.status] && (
+                          <SelectItem value={g.status} className="text-xs">
+                            {LEGACY_STATUS_LABELS[g.status] ?? g.status}
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </TableCell>

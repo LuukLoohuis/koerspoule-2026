@@ -26,6 +26,7 @@ import { useRiderEntryTotals } from "@/hooks/useRiderEntryTotals";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { isGameLocked } from "@/lib/gameStatus";
 import { Check, Pencil, X, Target, Crown, ClipboardList, Flag, Shirt, type LucideIcon } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
@@ -589,7 +590,7 @@ export default function MyTeamPanel({
   }
 
   const isSubmitted = entry.status === "submitted";
-  const gameLocked = Boolean(game?.status && ["closed", "locked", "live", "finished"].includes(game.status as string));
+  const gameLocked = isGameLocked(game?.status as string | null | undefined);
   const dnfZichtbaar = game?.status === "live" || game?.status === "finished";
 
   const podium = ["gc-1", "gc-2", "gc-3"].map((_, i) =>

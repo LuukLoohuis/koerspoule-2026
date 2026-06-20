@@ -82,7 +82,7 @@ function DagzegeRow({ dz }: { dz: StageDagzege }) {
 
 function GameSection({ g }: { g: PalmaresGame }) {
   const country = gameTypeToCountry(g.game_type);
-  const isLive = ["active", "live", "open", "locked"].includes(g.status);
+  const isLive = ["active", "live", "open", "open_inschrijving", "locked"].includes(g.status);
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 md:p-5">

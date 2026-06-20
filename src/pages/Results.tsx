@@ -2,15 +2,24 @@ import { useEffect, useMemo, useState } from "react";
 import ResultsView from "@/components/ResultsView";
 import GameSwitcher from "@/components/GameSwitcher";
 import { useAllGames } from "@/hooks/useAllGames";
+import { useAuth } from "@/hooks/useAuth";
+import { isVisibleToUser } from "@/lib/gameStatus";
 
 export default function Results() {
-  const { data: games = [] } = useAllGames();
+  const { data: allGames = [] } = useAllGames();
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
+  // concept/draft niet tonen aan gewone gebruikers.
+  const games = useMemo(
+    () => allGames.filter((g) => isVisibleToUser(g.status, isAdmin)),
+    [allGames, isAdmin],
+  );
 
   // Standaard-game voor de uitslagen: een lopende game heeft voorrang, anders de
   // meest recente afgeronde game (afgerond ≠ verborgen — de uitslagen blijven zo
   // beschikbaar). games is al gesorteerd op jaar (desc) en type (giro eerst).
   const defaultGameId = useMemo(() => {
-    const live = games.find((g) => ["open", "live", "locked"].includes(g.status));
+    const live = games.find((g) => ["open_inschrijving", "open", "live", "locked"].includes(g.status));
     if (live) return live.id;
     const finished = games.find((g) => g.status === "finished");
     return (finished ?? games[0])?.id ?? null;
@@ -31,6 +40,7 @@ export default function Results() {
             games={games}
             selectedId={selectedId}
             onSelect={setSelectedId}
+            isAdmin={isAdmin}
           />
         </div>
       )}

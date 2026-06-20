@@ -18,6 +18,7 @@ import { useStartlist } from "@/hooks/useStartlist";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { canRegister, isGameLocked, isPreviewStatus, isVisibleToUser } from "@/lib/gameStatus";
 import RiderSearchSelect from "@/components/RiderSearchSelect";
 import RiderDetailPanel from "@/components/RiderDetailPanel";
 import { SteunMoment } from "@/components/SteunKopgroep";
@@ -117,16 +118,16 @@ export default function TeamBuilder() {
   const status = game?.status ?? "";
   // Inschrijven (renners kiezen + indienen) mag ALLEEN tijdens 'open_inschrijving'
   // (admin altijd). 'open' = sneak preview: alles zien, nog niet inschrijven.
-  const canEnroll = isAdmin || status === "open_inschrijving";
+  const canEnroll = isAdmin || canRegister(status);
   // "Echt op slot" na de deadline — voor de bestaande gesloten-melding + submitted/revert.
-  const gameLocked = ["closed", "locked", "live", "finished"].includes(status);
+  const gameLocked = isGameLocked(status);
   // Picks/indienen disabled wanneer inschrijven (nog) niet mag.
   const isLocked = !canEnroll;
   // Sneak preview-banner: status 'open' (ook voor admin zichtbaar, zodat je ziet
   // wat gebruikers zien; admin kan de builder zelf nog wél gebruiken).
-  const isPreview = status === "open";
-  // Builder-structuur zichtbaar bij preview + inschrijving + live (gelockte weergave).
-  const builderVisible = isAdmin || ["open", "open_inschrijving", "live"].includes(status);
+  const isPreview = isPreviewStatus(status);
+  // Builder zichtbaar voor iedereen behalve concept/draft (alleen admin).
+  const builderVisible = isVisibleToUser(status, isAdmin);
 
   const hydratedRef = useRef(false);
   useEffect(() => {
