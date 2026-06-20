@@ -190,7 +190,7 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
   }
 
   return (
-    <Card className="retro-border overflow-hidden">
+    <Card className="kp-slide-in-right retro-border overflow-hidden">
       <CardHeader className="border-b-2 border-foreground bg-secondary/50 py-2.5 px-4">
         <CardTitle className="font-display text-base flex items-center gap-2 justify-between">
           <span className="flex items-center gap-2 min-w-0">
