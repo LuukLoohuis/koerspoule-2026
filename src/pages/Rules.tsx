@@ -203,8 +203,7 @@ export default function Rules() {
 
           <h3 className="font-display text-lg font-bold mb-2">Jokers</h3>
           <p className="text-sm text-muted-foreground mb-3 font-sans">
-            Kies twee Jokers uit je selectie. De etappepunten van een Joker tellen
-            <span className="font-bold text-accent"> dubbel</span> in elke etappe.
+            Kies twee Jokers uit de overige renners die niet in de categorieën worden vermeld.
           </p>
 
           <h3 className="font-display text-lg font-bold mb-2">Totaalklassement</h3>
