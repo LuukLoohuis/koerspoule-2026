@@ -1249,9 +1249,12 @@ begin
     -- mag altijd door — zo blijft de ploegnaam (en de systeem-puntentelling)
     -- aanpasbaar in elke game-status. Submit/revert (status-wissel) en
     -- INSERT/DELETE blijven geblokkeerd na de deadline.
-    if TG_TABLE_NAME = 'entries' and TG_OP = 'UPDATE'
-       and NEW.status is not distinct from OLD.status then
-      return coalesce(NEW, OLD);
+    -- ALLEEN voor entries: NEW.status nooit op entry_picks/entry_jokers lezen
+    -- (die rowtypes hebben geen status-veld → anders 42703-crash).
+    if TG_TABLE_NAME = 'entries' and TG_OP = 'UPDATE' then
+      if NEW.status is not distinct from OLD.status then
+        return coalesce(NEW, OLD);
+      end if;
     end if;
     raise exception 'Deze game is gesloten (status %). Inzendingen kunnen niet meer worden gewijzigd.', v_status
       using errcode = '42501';
