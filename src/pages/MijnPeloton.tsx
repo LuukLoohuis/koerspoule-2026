@@ -1187,7 +1187,7 @@ export default function MijnPeloton() {
             <img
               src={subpouleBanner.url}
               alt={`${subpouleBanner.name} banner`}
-              className="block w-full h-20 md:h-28 object-cover"
+              className="block w-full h-24 md:h-32 object-cover"
               loading="lazy"
             />
           </div>
