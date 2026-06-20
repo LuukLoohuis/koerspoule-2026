@@ -166,6 +166,10 @@ export default function MijnPeloton() {
       toast({ title: "Opslaan mislukt", description: entryErrorMessage(err), variant: "destructive" });
     }
   };
+  // Sponsorbanner van de geopende subpoule (omhoog gerapporteerd door SubpouleManager).
+  // Alleen getoond als korte strip onder de titel op de Subpoules-tab.
+  const [subpouleBanner, setSubpouleBanner] = useState<{ url: string; name: string } | null>(null);
+
   // Volgwagen-subtabs (mobiel): vinger-volgende carrousel + zwevende schakelaar.
   const teamHint = useSwipeHint("volgwagen");
   const teamBarVisible = useAutoHideOnScroll();
@@ -1175,6 +1179,20 @@ export default function MijnPeloton() {
           />
         )}
 
+        {/* Subpoule-sponsorbanner — korte strip onder de titel, boven de tabs.
+            Alleen op de Subpoules-tab én wanneer de open subpoule een actieve
+            banner heeft. Anders niets (geen layout-sprong). */}
+        {gameTab === "subpoules" && subpouleBanner && (
+          <div className="retro-border bg-card overflow-hidden rounded-lg mb-3">
+            <img
+              src={subpouleBanner.url}
+              alt={`${subpouleBanner.name} banner`}
+              className="block w-full h-20 md:h-28 object-cover"
+              loading="lazy"
+            />
+          </div>
+        )}
+
         {/* Inner tabs: Team / Uitslagen / Subpoules / Hors */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
 
@@ -1289,7 +1307,7 @@ export default function MijnPeloton() {
 
           {/* ── TAB: Subpoules ── */}
           <TabsContent value="subpoules" className="mt-3">
-            <SubpouleManager gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} gameStatus={selectedGameObj?.status} />
+            <SubpouleManager gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} gameStatus={selectedGameObj?.status} onActiveBannerChange={setSubpouleBanner} />
           </TabsContent>
 
           {/* ── TAB: Uitslagen ── */}

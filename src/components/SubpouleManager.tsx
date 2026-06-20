@@ -1,5 +1,12 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-type Props = { gameId?: string; gameName?: string; gameStatus?: string };
+type SubpouleBanner = { url: string; name: string };
+type Props = {
+  gameId?: string;
+  gameName?: string;
+  gameStatus?: string;
+  /** Rapporteert de banner van de geopende subpoule omhoog (null = geen). */
+  onActiveBannerChange?: (banner: SubpouleBanner | null) => void;
+};
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,7 +49,7 @@ const SUB_TABS: SubTab[] = [
 const SUB_TAB_KEYS = SUB_TABS.map((t) => t.key);
 const SUB_TAB_ITEMS = SUB_TABS.map((t) => ({ key: t.key, label: t.label, icon: t.Icon }));
 
-export default function SubpouleManager({ gameId, gameName, gameStatus }: Props = {}) {
+export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange }: Props = {}) {
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: currentGame } = useCurrentGame();
@@ -134,6 +141,16 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
     [subpoules, activeId]
   );
   const { data: members = [] } = useSubpouleMembers(active?.id);
+
+  // Banner van de geopende subpoule omhoog rapporteren (paginakop toont 'm als
+  // korte strip). null wanneer geen subpoule open of geen/uitgeschakelde banner.
+  // Bij unmount (andere tab) → null, zodat de strip meteen verdwijnt.
+  useEffect(() => {
+    if (!onActiveBannerChange) return;
+    const show = active?.banner_url && active?.banner_enabled;
+    onActiveBannerChange(show ? { url: active.banner_url, name: active.name } : null);
+    return () => onActiveBannerChange(null);
+  }, [active, onActiveBannerChange]);
 
   // Ritzege/podium-feestje voor de actieve subpoule — top-level zodat het op elke
   // tab afgaat (je landt eerst op Ranking, niet op de Daguitslag).
@@ -355,18 +372,8 @@ export default function SubpouleManager({ gameId, gameName, gameStatus }: Props 
       <div className="space-y-4">
         <DaguitslagCelebration celebration={dagCelebration} onClose={closeDagCelebration} />
 
-        {/* Sponsor-/bedrijfslogo (alleen logo, geen tekst) — strak bovenaan, alleen
-            wanneer gezet én ingeschakeld. Geen layout-sprong als er geen banner is. */}
-        {active.banner_url && active.banner_enabled && (
-          <div className="retro-border bg-card overflow-hidden">
-            <img
-              src={active.banner_url}
-              alt={`${active.name} logo`}
-              className="block w-full h-auto object-contain"
-              loading="lazy"
-            />
-          </div>
-        )}
+        {/* Sponsor-/bedrijfslogo verhuisd naar de Mijn Peloton-paginakop (korte
+            strip onder de titel). Zie MijnPeloton + onActiveBannerChange. */}
         <div className="flex items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => setActiveId(null)} className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Terug naar subpoules
