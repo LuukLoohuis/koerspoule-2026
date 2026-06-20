@@ -531,7 +531,7 @@ export default function Index() {
             <span className="overline-stamp">— De start nadert —</span>
             <h2 className="heading-oswald text-xl md:text-2xl leading-tight">Klaar om te koersen?</h2>
           </div>
-          <CountdownBanner className="flex-1 w-full" />
+          <CountdownBanner className="flex-1 w-full md:max-w-xl md:mx-auto" />
           <Button
             className="retro-border-primary font-bold shrink-0 w-full md:w-auto"
             onClick={() => navigate("/login?register=1")}
