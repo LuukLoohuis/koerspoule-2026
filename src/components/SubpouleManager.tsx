@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -35,7 +36,7 @@ import DaguitslagChart from "@/components/DaguitslagChart";
 import DaguitslagCelebration from "@/components/DaguitslagCelebration";
 import { useDaguitslagCelebration } from "@/hooks/useDaguitslagCelebration";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, MessageCircle, TrendingUp, Flame, Share2, BarChart3, Trophy, X, type LucideIcon } from "lucide-react";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, ChevronsUpDown, MessageCircle, TrendingUp, Flame, Share2, BarChart3, Trophy, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Mobiele subpoule-tabs (zoals Hors Categorie). Eén paneel tegelijk.
@@ -65,6 +66,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   const { subpoules, isLoading, create, join, leave, remove, removeMember } = useSubpoules(effectiveGameId);
 
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [subpouleSearchOpen, setSubpouleSearchOpen] = useState(false);
   // Desktop: 5 dossard-tabs (gelijk aan mobiel). Chat is een apart zijpaneel.
   const [activeTab, setActiveTab] = useState("klassement");
   // Mobiel: chat opent als floating bottom-sheet i.p.v. een tab.
@@ -585,21 +587,45 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
               className="border-0 shadow-none"
             />
           ) : subpoules.length > 8 ? (
-            // Veel subpoules (bv. als admin alles ziet) → compacte dropdown i.p.v.
-            // een lange lijst. Kiezen opent meteen de subpoule.
+            // Veel subpoules (bv. als admin alles ziet) → zoekbare combobox i.p.v.
+            // een lange lijst. Typen filtert op naam + code; kiezen opent meteen.
             <div className="p-4 space-y-2">
-              <Select value={activeId ?? undefined} onValueChange={(id) => setActiveId(id)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={`Kies een subpoule… (${subpoules.length})`} />
-                </SelectTrigger>
-                <SelectContent>
-                  {subpoules.map((sp) => (
-                    <SelectItem key={sp.id} value={sp.id}>
-                      {sp.name} · {sp.member_count} leden
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={subpouleSearchOpen} onOpenChange={setSubpouleSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={subpouleSearchOpen}
+                    className="w-full justify-between font-normal"
+                  >
+                    Kies een subpoule… ({subpoules.length})
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Zoek op naam of code…" />
+                    <CommandList>
+                      <CommandEmpty>Geen subpoule gevonden.</CommandEmpty>
+                      <CommandGroup>
+                        {subpoules.map((sp) => (
+                          <CommandItem
+                            key={sp.id}
+                            value={`${sp.name} ${sp.code}`}
+                            onSelect={() => {
+                              setActiveId(sp.id);
+                              setSubpouleSearchOpen(false);
+                            }}
+                          >
+                            <span className="flex-1 truncate font-medium">{sp.name}</span>
+                            <span className="ml-2 shrink-0 text-xs text-muted-foreground">{sp.member_count} leden</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <p className="text-xs text-muted-foreground">{subpoules.length} subpoules</p>
             </div>
           ) : (
