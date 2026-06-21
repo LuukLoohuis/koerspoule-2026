@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
 import { Mountain, CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
+import StageProfile from "@/components/salle-de-course/StageProfile";
+import type { StageProfileData } from "@/hooks/useResults";
 
 type UpcomingStage = {
   id: string;
@@ -13,6 +15,7 @@ type UpcomingStage = {
   stage_type: string | null;
   distance_km: number | null;
   profile_image_url: string | null;
+  profile_data: StageProfileData | null;
   results_status: string | null;
 };
 
@@ -65,7 +68,7 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
       if (!supabase || !gameId) return null;
       const { data, error } = await (supabase as any)
         .from("stages")
-        .select("id, stage_number, name, date, stage_type, distance_km, profile_image_url, results_status")
+        .select("id, stage_number, name, date, stage_type, distance_km, profile_image_url, profile_data, results_status")
         .eq("game_id", gameId)
         .eq("is_gc", false)
         .order("stage_number");
@@ -95,6 +98,8 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
   const wanneer = dateBadge(stage.date);
   const profielUrl = stage.profile_image_url;
   const profielOk = Boolean(profielUrl) && !failed;
+  // Eigen render uit echte data heeft voorrang op de geüploade afbeelding.
+  const hasProfileData = Array.isArray(stage.profile_data?.points) && stage.profile_data!.points!.length >= 2;
 
   return (
     <div className="rounded-xl border-2 border-foreground/15 bg-card overflow-hidden shadow-sm">
@@ -133,8 +138,13 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
         </div>
       </div>
 
-      {/* Profiel — full-bleed; klik om soepel uit te vouwen */}
-      {profielOk ? (
+      {/* Profiel — eigen render uit profile_data (voorrang); anders geüploade
+          afbeelding (klik om uit te vouwen); anders nette lege-staat. */}
+      {hasProfileData ? (
+        <div className="px-4 pb-4 pt-1" style={{ background: "var(--sdc-paper, #1c1813)", borderRadius: 0 }}>
+          <StageProfile data={stage.profile_data as StageProfileData} />
+        </div>
+      ) : profielOk ? (
         <motion.div
           initial={false}
           animate={{ height: open ? "auto" : 104 }}
