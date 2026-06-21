@@ -40,25 +40,70 @@ export function buildEmailHtml(
     year: "numeric",
     timeZone: "Europe/Amsterdam",
   });
+  // Spiegelt send-announcement/buildHtml() 1-op-1. De datum hier is alleen voor de
+  // preview; de verzonden datum wordt server-side op het verzendmoment bepaald.
   return `<!doctype html>
-<html><body style="margin:0;background:#f4f1ea;font-family:Georgia,serif;color:#1a1a1a;">
-  <div style="max-width:560px;margin:0 auto;background:#fbfaf6;border:1px solid #e8e0d5;">
-    <img src="${HEADER_IMG}" alt="Koerspoule" width="560" style="display:block;width:100%;height:auto;border:0;" />
-    <div style="padding:32px 24px;">
-    <div style="font-family:'Times New Roman',Times,serif;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#6b6357;border-bottom:1px solid #d9d2c2;padding-bottom:12px;margin-bottom:22px;">
-      Koerspoule &nbsp;·&nbsp; Communiqué &nbsp;·&nbsp; ${datum}
-    </div>
-    ${body}
-    <hr style="border:none;border-top:1px solid #ede8df;margin:32px 0 16px;"/>
-    <p style="font-size:11px;color:#999;text-align:center;margin:0;">
-      Koerspoule &nbsp;·&nbsp;
-      <a href="https://koerspoule.nl" style="color:#999;">koerspoule.nl</a>
-      &nbsp;·&nbsp;
-      <a href="${unsubscribeUrl}" style="color:#999;">Uitschrijven</a>
-    </p>
-    </div>
-    <img src="${FOOTER_IMG}" alt="" width="560" style="display:block;width:100%;height:auto;border:0;" />
-  </div>
+<html lang="nl"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Koerspoule Communiqué</title></head>
+<body style="margin:0;padding:0;background-color:#e9e3d6;">
+  <center style="width:100%;background-color:#e9e3d6;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;background-color:#e9e3d6;margin:0;padding:0;">
+      <tr><td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;border-collapse:collapse;margin:0 auto;background-color:#f7f1e4;">
+          <tr><td style="padding:0;line-height:0;font-size:0;">
+            <img src="${HEADER_IMG}" alt="Koerspoule header" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0;" />
+          </td></tr>
+          <tr><td style="background-color:#f7f1e4;padding:26px 42px 18px 42px;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
+            <div style="text-align:center;color:#8a6d2b;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 18px 0;">
+              KOERSPOULE&nbsp;&nbsp;·&nbsp;&nbsp;COMMUNIQUÉ&nbsp;&nbsp;·&nbsp;&nbsp;${datum.toUpperCase()}
+            </div>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;margin:0 0 28px 0;">
+              <tr>
+                <td width="42%" style="border-top:1px solid #ccb06a;font-size:0;line-height:0;">&nbsp;</td>
+                <td width="16%" align="center" style="font-size:12px;line-height:12px;color:#8a6d2b;font-family:Georgia,'Times New Roman',serif;">★</td>
+                <td width="42%" style="border-top:1px solid #ccb06a;font-size:0;line-height:0;">&nbsp;</td>
+              </tr>
+            </table>
+            <div style="font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:32px;color:#3d362e;">
+              ${body}
+            </div>
+            <table role="presentation" align="center" cellspacing="0" cellpadding="0" border="0" style="margin:30px auto 8px auto;border-collapse:separate;">
+              <tr><td align="center" bgcolor="#d4a62b" style="border-radius:6px;">
+                <a href="https://koerspoule.nl" target="_blank" style="display:inline-block;padding:14px 26px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:15px;font-weight:bold;color:#1d1916;text-decoration:none;border-radius:6px;">
+                  Ga naar Koerspoule
+                </a>
+              </td></tr>
+            </table>
+          </td></tr>
+          <tr><td style="background-color:#f7f1e4;padding:8px 42px 24px 42px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;">
+              <tr><td style="border-top:1px solid #d8c89d;font-size:0;line-height:0;">&nbsp;</td></tr>
+            </table>
+            <div style="text-align:center;padding-top:18px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;letter-spacing:2px;text-transform:uppercase;color:#8a6d2b;">
+              Volg Koerspoule
+            </div>
+            <table role="presentation" align="center" cellspacing="0" cellpadding="0" border="0" style="margin:14px auto 10px auto;border-collapse:collapse;">
+              <tr><td align="center" style="padding:0 10px;">
+                <a href="https://instagram.com/koerspoule" target="_blank" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#2b241d;text-decoration:none;font-weight:bold;">
+                  Instagram → @koerspoule
+                </a>
+              </td></tr>
+            </table>
+            <div style="text-align:center;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:24px;color:#655847;">
+              Blijf op de hoogte van updates, standen en koerssfeer.
+            </div>
+            <div style="text-align:center;margin-top:14px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:#9a8f7c;">
+              <a href="https://koerspoule.nl" style="color:#9a8f7c;text-decoration:none;">koerspoule.nl</a>
+              &nbsp;·&nbsp;
+              <a href="${unsubscribeUrl}" style="color:#9a8f7c;text-decoration:underline;">uitschrijven</a>
+            </div>
+          </td></tr>
+          <tr><td style="padding:0;line-height:0;font-size:0;">
+            <img src="${FOOTER_IMG}" alt="Koerspoule footer" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0;" />
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </center>
 </body></html>`;
 }
 
