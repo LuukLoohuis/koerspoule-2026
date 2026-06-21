@@ -22,6 +22,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
 import { useStages, useEntries } from "@/hooks/useResults";
+import StageProfile from "@/components/salle-de-course/StageProfile";
 import { useRiderEntryTotals } from "@/hooks/useRiderEntryTotals";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
@@ -1340,7 +1341,7 @@ export default function MyTeamPanel({
                    geen verzonnen meetdata. ── */}
               {shownStage && (
                 <div
-                  className="mt-3 p-3 grid grid-cols-[auto_auto_1fr_auto] items-center gap-x-5 gap-y-1 font-mono text-[10px] tracking-[0.18em] uppercase"
+                  className="mt-3 p-3 font-mono text-[10px] tracking-[0.18em] uppercase"
                   style={{
                     background: PANEL,
                     borderRadius: 10,
@@ -1349,29 +1350,47 @@ export default function MyTeamPanel({
                     color: "rgba(237,227,204,0.65)",
                   }}
                 >
-                  <span className="flex flex-col leading-tight">
-                    <span style={{ color: "rgba(237,227,204,0.45)" }}>Étape {shownStage.stage_number} / {raceStages.length}</span>
-                    {shownStage.distance_km != null && (
-                      <span style={{ color: "rgba(237,227,204,0.85)" }}>{shownStage.distance_km} km</span>
-                    )}
-                  </span>
-                  {shownStage.stage_type && (
+                  {/* Cockpit-tekstregel */}
+                  <div className="flex items-start justify-between gap-4">
                     <span className="flex flex-col leading-tight">
-                      <span style={{ color: "rgba(237,227,204,0.45)" }}>Type</span>
-                      <span style={{ color: "rgba(237,227,204,0.85)" }}>
-                        {TYPE_LABEL[shownStage.stage_type] ?? shownStage.stage_type.toUpperCase()}
-                      </span>
-                    </span>
-                  )}
-                  <AltitudeProfile seed={shownStage.stage_number ?? 0} />
-                  {shownStage.name && (
-                    <span className="flex flex-col leading-tight text-right max-w-[180px]">
-                      <span className="truncate" style={{ color: AMBER }} title={shownStage.name}>{shownStage.name}</span>
+                      <span style={{ color: "rgba(237,227,204,0.45)" }}>Étape {shownStage.stage_number} / {raceStages.length}</span>
                       {shownStage.distance_km != null && (
-                        <span style={{ color: "rgba(237,227,204,0.45)" }}>{Math.round(800 + (shownStage.stage_number ?? 1) * 73 % 1600)} m</span>
+                        <span style={{ color: "rgba(237,227,204,0.85)" }}>{shownStage.distance_km} km</span>
                       )}
                     </span>
-                  )}
+                    {shownStage.stage_type && (
+                      <span className="flex flex-col leading-tight">
+                        <span style={{ color: "rgba(237,227,204,0.45)" }}>Type</span>
+                        <span style={{ color: "rgba(237,227,204,0.85)" }}>
+                          {TYPE_LABEL[shownStage.stage_type] ?? shownStage.stage_type.toUpperCase()}
+                        </span>
+                      </span>
+                    )}
+                    {shownStage.name && (
+                      <span className="flex flex-col leading-tight text-right max-w-[180px]">
+                        <span className="truncate" style={{ color: AMBER }} title={shownStage.name}>{shownStage.name}</span>
+                      </span>
+                    )}
+                  </div>
+                  {/* Hoogteprofiel — eigen render uit profile_data; anders geüpload
+                      beeld; anders het decoratieve profiel. Vaste hoogte → geen
+                      layout-sprong tussen de varianten. */}
+                  <div className="mt-2">
+                    {shownStage.profile_data?.points && shownStage.profile_data.points.length >= 2 ? (
+                      <StageProfile data={shownStage.profile_data} />
+                    ) : shownStage.profile_image_url ? (
+                      <img
+                        src={shownStage.profile_image_url}
+                        alt={`Hoogteprofiel ${shownStage.name ?? `etappe ${shownStage.stage_number}`}`}
+                        className="block w-full h-24 md:h-28 object-contain"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-24 md:h-28 flex items-center">
+                        <AltitudeProfile seed={shownStage.stage_number ?? 0} />
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
