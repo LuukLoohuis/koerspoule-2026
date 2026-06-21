@@ -136,27 +136,24 @@ export function useSubpouleMembers(subpouleId?: string) {
     enabled: Boolean(supabase && subpouleId),
     queryFn: async () => {
       if (!supabase || !subpouleId) return [];
-      const { data, error } = await supabase
-        .from("subpoule_members")
-        .select("user_id, joined_at")
-        .eq("subpoule_id", subpouleId);
+      // SECURITY DEFINER-RPC: leden + display_name + teamnaam in deze game.
+      // entries.team_name is via RLS niet voor andere leden leesbaar; de RPC
+      // gate't op subpoule-lidmaatschap en geeft alleen display_name + team_name.
+      const { data, error } = await supabase.rpc("subpoule_members_with_team", {
+        p_subpoule_id: subpouleId,
+      });
       if (error) throw error;
-      const rows = (data ?? []) as Array<{ user_id: string; joined_at: string }>;
-      if (rows.length === 0) return [];
-
-      const userIds = rows.map((r) => r.user_id);
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id, display_name")
-        .in("id", userIds);
-      const nameById = new Map<string, string>();
-      for (const p of (profs ?? []) as Array<{ id: string; display_name: string | null }>) {
-        nameById.set(p.id, p.display_name ?? "Onbekend");
-      }
+      const rows = (data ?? []) as Array<{
+        user_id: string;
+        joined_at: string;
+        display_name: string | null;
+        team_name: string | null;
+      }>;
       return rows.map((m) => ({
         user_id: m.user_id,
         joined_at: m.joined_at,
-        display_name: nameById.get(m.user_id) ?? "Onbekend",
+        display_name: m.display_name ?? "Onbekend",
+        team_name: m.team_name ?? null,
       }));
     },
   });

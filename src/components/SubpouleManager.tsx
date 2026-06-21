@@ -310,17 +310,23 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
         <CardContent className="p-0">
           <div className="divide-y divide-border">
             {members.map((m) => (
-              <div key={m.user_id} className="p-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{m.display_name}</span>
-                  {m.user_id === active.owner_user_id && (
-                    <Badge variant="secondary" className="text-xs gap-1">
-                      <Crown className="h-3 w-3" /> Eigenaar
-                    </Badge>
-                  )}
-                  {m.user_id === user.id && (
-                    <Badge variant="outline" className="text-xs">jij</Badge>
-                  )}
+              <div key={m.user_id} className="p-3 flex items-center gap-3">
+                {/* Twee kolommen: deelnemernaam | teamnaam */}
+                <div className="min-w-0 flex-1 grid grid-cols-2 gap-2 items-center">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-medium truncate">{m.display_name}</span>
+                    {m.user_id === active.owner_user_id && (
+                      <Badge variant="secondary" className="text-xs gap-1 shrink-0">
+                        <Crown className="h-3 w-3" /> Eigenaar
+                      </Badge>
+                    )}
+                    {m.user_id === user.id && (
+                      <Badge variant="outline" className="text-xs shrink-0">jij</Badge>
+                    )}
+                  </div>
+                  <span className="text-sm text-muted-foreground truncate" title={m.team_name ?? undefined}>
+                    {m.team_name || "—"}
+                  </span>
                 </div>
                 {active.is_owner && m.user_id !== active.owner_user_id && (
                   <Button
