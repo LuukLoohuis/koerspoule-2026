@@ -18,51 +18,36 @@ function buildHtml(
   _titleColor = "#1a1a1a",
   _titleSize = 11
 ): string {
-  // Datum op het VERZENDMOMENT. buildHtml() wordt per mail vlak vóór de fetch
-  // naar de mail-worker aangeroepen (test + announcement gaan direct, niet via
-  // de queue), dus dit is de echte verzenddatum. Edge functions draaien in UTC →
-  // expliciet timeZone Europe/Amsterdam zodat de datum rond middernacht klopt.
-  const datum = new Date().toLocaleDateString("nl-NL", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "Europe/Amsterdam",
-  });
   return `<!doctype html>
 <html lang="nl" xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Koerspoule Communiqué</title></head>
 <body style="margin:0;padding:0;background-color:#e9e3d6;">
   <center style="width:100%;background-color:#e9e3d6;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;background-color:#e9e3d6;margin:0;padding:0;">
       <tr><td align="center" style="padding:24px 12px;">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;border-collapse:collapse;margin:0 auto;background-color:#f7f1e4;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;border-collapse:collapse;margin:0 auto;background-color:#F4F1EA;">
           <!-- Header-afbeelding -->
-          <tr><td style="padding:0;line-height:0;font-size:0;">
+          <tr><td style="padding:0;line-height:0;font-size:0;background-color:#F4F1EA;">
             <img src="${HEADER_IMG}" alt="Koerspoule header" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0;" />
           </td></tr>
 
-          <!-- Content: communiqué + datum (verzendmoment), bericht, CTA, signature, social, uitschrijven -->
-          <tr><td style="padding:0;">
-            <div style="font-family:Georgia,'Times New Roman',serif;color:#2f2a24;padding:10px 42px 24px 42px;background-color:transparent;">
-              <div style="text-align:center;color:#8a6d2b;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 18px 0;">
-                KOERSPOULE&nbsp;&nbsp;·&nbsp;&nbsp;COMMUNIQUÉ&nbsp;&nbsp;·&nbsp;&nbsp;${datum.toUpperCase()}
-              </div>
-              <div style="margin:0 0 24px 0;border-top:1px solid #ccb06a;"></div>
-              <div style="margin:0 0 18px 0;font-size:32px;line-height:40px;font-weight:bold;color:#211d19;">
+          <!-- Content: bericht, CTA, signature, social, uitschrijven — één doorlopende crème-kolom -->
+          <tr><td style="padding:18px 42px 20px 42px;background-color:#F4F1EA;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
+              <div style="margin:0 0 10px 0;font-size:28px;line-height:34px;font-weight:bold;color:#211d19;">
                 Beste deelnemer,
               </div>
-              <div style="margin:0 0 26px 0;font-size:20px;line-height:34px;color:#3d362e;">
+              <div style="margin:0 0 18px 0;font-size:18px;line-height:30px;color:#3d362e;">
                 ${body}
               </div>
-              <div style="text-align:center;margin:30px 0 34px 0;">
-                <a href="${BASE_URL}" target="_blank" style="display:inline-block;padding:14px 26px;background-color:#d4a62b;color:#1d1916;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;border-radius:6px;">
+              <div style="text-align:center;margin:20px 0 22px 0;">
+                <a href="${BASE_URL}" target="_blank" style="display:inline-block;padding:13px 26px;background-color:#d4a62b;color:#1d1916;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;border-radius:6px;">
                   Ga naar Koerspoule
                 </a>
               </div>
-              <div style="margin:0 0 12px 0;font-size:20px;line-height:34px;color:#3d362e;">
+              <div style="margin:0;font-size:18px;line-height:30px;color:#3d362e;">
                 Veel koersplezier,<br>
                 <strong>Het Koerspoule team</strong>
               </div>
-              <div style="margin-top:28px;padding-top:18px;border-top:1px solid #d8c89d;text-align:center;">
+              <div style="margin-top:20px;padding-top:16px;border-top:1px solid #d8c89d;text-align:center;">
                 <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;letter-spacing:2px;text-transform:uppercase;color:#8a6d2b;margin-bottom:10px;">
                   Volg Koerspoule
                 </div>
@@ -80,11 +65,10 @@ function buildHtml(
                   <a href="${unsubscribeUrl}" style="color:#9a8f7c;text-decoration:underline;">uitschrijven</a>
                 </div>
               </div>
-            </div>
           </td></tr>
 
           <!-- Footer-afbeelding -->
-          <tr><td style="padding:0;line-height:0;font-size:0;">
+          <tr><td style="padding:0;line-height:0;font-size:0;background-color:#F4F1EA;">
             <img src="${FOOTER_IMG}" alt="Koerspoule footer" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0;" />
           </td></tr>
         </table>
