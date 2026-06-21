@@ -18,6 +18,8 @@ import {
 type Game = { id: string; name: string; year: number | null };
 
 const LOGO_URL = "https://cdn.jsdelivr.net/gh/LuukLoohuis/koerspoule-2026@main/public/koerspoule-logo-2026.png";
+const HEADER_IMG = "https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_header_afbeelding.png";
+const FOOTER_IMG = "https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_footer_strip.png";
 
 const DEFAULT_BODY = `<p style="font-size:15px;line-height:1.6;margin:0 0 16px;">Beste deelnemer,</p>
 <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
@@ -41,7 +43,9 @@ export function buildEmailHtml(
   });
   return `<!doctype html>
 <html><body style="margin:0;background:#faf7f2;font-family:Georgia,serif;color:#1a1a1a;">
-  <div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#fff;border:1px solid #e8e0d5;">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e8e0d5;">
+    <img src="${HEADER_IMG}" alt="Koerspoule" width="560" style="display:block;width:100%;height:auto;border:0;" />
+    <div style="padding:32px 24px;">
     <div style="text-align:center;margin-bottom:22px;">
       <img src="${LOGO_URL}" alt="Koerspoule — uit liefde voor de koers" width="200"
            style="display:block;width:200px;height:auto;margin:0 auto 6px;border-radius:8px;" />
@@ -58,6 +62,8 @@ export function buildEmailHtml(
       &nbsp;·&nbsp;
       <a href="${unsubscribeUrl}" style="color:#999;">Uitschrijven</a>
     </p>
+    </div>
+    <img src="${FOOTER_IMG}" alt="" width="560" style="display:block;width:100%;height:auto;border:0;" />
   </div>
 </body></html>`;
 }

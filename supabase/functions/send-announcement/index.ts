@@ -10,6 +10,8 @@ const CORS = {
 const MAIL_WORKER = "https://koerspoule-mail.luuk-loohuis.workers.dev";
 const BASE_URL = "https://koerspoule.nl";
 const LOGO_URL = "https://cdn.jsdelivr.net/gh/LuukLoohuis/koerspoule-2026@main/public/koerspoule-logo-2026.png";
+const HEADER_IMG = "https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_header_afbeelding.png";
+const FOOTER_IMG = "https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_footer_strip.png";
 
 function buildHtml(
   body: string,
@@ -33,6 +35,9 @@ function buildHtml(
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f1ea;padding:48px 16px;">
     <tr><td align="center">
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background:#fbfaf6;border-collapse:collapse;">
+        <tr><td style="padding:0;">
+          <img src="${HEADER_IMG}" alt="Koerspoule" width="560" style="display:block;width:100%;height:auto;border:0;" />
+        </td></tr>
         <tr><td style="padding:40px 56px 8px 56px;text-align:center;">
           <img src="${LOGO_URL}" alt="Koerspoule — uit liefde voor de koers" width="180" style="display:block;width:180px;height:auto;margin:0 auto 4px auto;border-radius:8px;" />
           <div style="font-family:'Brush Script MT','Segoe Script','Snell Roundhand',cursive;font-style:italic;font-size:28px;color:#C0851A;line-height:1.1;text-align:center;margin:8px auto 0 auto;">Uit liefde voor de koers</div>
@@ -51,6 +56,9 @@ function buildHtml(
             &nbsp;·&nbsp;
             <a href="${unsubscribeUrl}" style="color:#8a8275;text-decoration:underline;">uitschrijven</a>
           </div>
+        </td></tr>
+        <tr><td style="padding:0;">
+          <img src="${FOOTER_IMG}" alt="" width="560" style="display:block;width:100%;height:auto;border:0;" />
         </td></tr>
       </table>
     </td></tr>
