@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Trophy } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Trash2, Trophy, LineChart } from "lucide-react";
 import { toast } from "sonner";
 
 export const STAGE_TYPES = [
@@ -34,7 +36,16 @@ export type Stage = {
   stage_type?: StageType | null;
   distance_km?: number | null;
   profile_image_url?: string | null;
+  profile_data?: StageProfileData | null;
   is_gc?: boolean;
+};
+
+export type StageProfileData = {
+  totalKm?: number;
+  minEle?: number;
+  maxEle?: number;
+  points?: Array<{ km: number; hoogte: number }>;
+  cols?: Array<{ km: number; naam: string; categorie: string }>;
 };
 
 export default function StagesTab({
@@ -54,6 +65,66 @@ export default function StagesTab({
   const [savingType, setSavingType] = useState<string | null>(null);
   const [savingKm, setSavingKm] = useState<string | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
+  // Profiel-data (JSON) bewerken via dialog.
+  const [dataDialog, setDataDialog] = useState<Stage | null>(null);
+  const [dataText, setDataText] = useState("");
+  const [savingData, setSavingData] = useState(false);
+
+  function openDataDialog(s: Stage) {
+    setDataDialog(s);
+    setDataText(s.profile_data ? JSON.stringify(s.profile_data, null, 2) : "");
+  }
+
+  function pointCount(s: Stage): number {
+    return Array.isArray(s.profile_data?.points) ? s.profile_data!.points!.length : 0;
+  }
+
+  async function saveProfileData() {
+    if (!supabase || !dataDialog) return;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(dataText);
+    } catch {
+      toast.error("Ongeldige JSON — kan niet parsen.");
+      return;
+    }
+    const obj = parsed as { points?: unknown };
+    const points = obj?.points;
+    const validPoints =
+      Array.isArray(points) &&
+      points.length >= 2 &&
+      points.every(
+        (p) => p && typeof (p as { km?: unknown }).km === "number" && typeof (p as { hoogte?: unknown }).hoogte === "number",
+      );
+    if (typeof parsed !== "object" || parsed === null || !validPoints) {
+      toast.error("Verwacht een object met een points-array van ≥2 items met numerieke km + hoogte.");
+      return;
+    }
+    setSavingData(true);
+    const { error } = await supabase.from("stages").update({ profile_data: parsed } as never).eq("id", dataDialog.id);
+    setSavingData(false);
+    if (error) {
+      toast.error(`Opslaan mislukt: ${error.message}`);
+      return;
+    }
+    toast.success("Profiel-data opgeslagen");
+    setDataDialog(null);
+    await reload();
+  }
+
+  async function clearProfileData() {
+    if (!supabase || !dataDialog) return;
+    setSavingData(true);
+    const { error } = await supabase.from("stages").update({ profile_data: null } as never).eq("id", dataDialog.id);
+    setSavingData(false);
+    if (error) {
+      toast.error(`Wissen mislukt: ${error.message}`);
+      return;
+    }
+    toast.success("Profiel-data gewist");
+    setDataDialog(null);
+    await reload();
+  }
 
   const regularStages = stages.filter((s) => !s.is_gc);
   const gcStage = stages.find((s) => s.is_gc) ?? null;
@@ -373,6 +444,17 @@ export default function StagesTab({
                             Verwijder
                           </button>
                         )}
+                        {/* Profiel-data (JSON) — heeft in de app voorrang op de afbeelding */}
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 text-xs underline text-primary"
+                          onClick={() => openDataDialog(s)}
+                        >
+                          <LineChart className="w-3.5 h-3.5" /> Profiel-data
+                        </button>
+                        <span className="text-[11px] text-muted-foreground">
+                          {pointCount(s) >= 2 ? `✓ data (${pointCount(s)} punten)` : "—"}
+                        </span>
                       </div>
                     )}
                   </TableCell>
@@ -389,6 +471,37 @@ export default function StagesTab({
           </Table>
         </CardContent>
       </Card>
+
+      {/* Profiel-data (JSON) bewerken */}
+      <Dialog open={dataDialog !== null} onOpenChange={(o) => !o && setDataDialog(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              Profiel-data · {dataDialog?.name ?? `Etappe ${dataDialog?.stage_number ?? ""}`}
+            </DialogTitle>
+            <DialogDescription>
+              Plak de JSON: {"{ totalKm, minEle, maxEle, points:[{km,hoogte}], cols:[{km,naam,categorie}] }"}.
+              Heeft in de app voorrang op de geüploade afbeelding.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={dataText}
+            onChange={(e) => setDataText(e.target.value)}
+            placeholder='{ "totalKm": 180, "minEle": 20, "maxEle": 1800, "points": [{ "km": 0, "hoogte": 20 }, ...], "cols": [] }'
+            className="font-mono text-xs h-64"
+          />
+          <DialogFooter className="gap-2 sm:gap-2">
+            {dataDialog?.profile_data && (
+              <Button variant="outline" className="text-destructive" disabled={savingData} onClick={clearProfileData}>
+                Wissen
+              </Button>
+            )}
+            <Button disabled={savingData || !dataText.trim()} onClick={saveProfileData}>
+              {savingData ? "Opslaan…" : "Opslaan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
