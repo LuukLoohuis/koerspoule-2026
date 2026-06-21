@@ -243,6 +243,31 @@ async function callOpenAI(userPrompt: string): Promise<LefevereResult> {
 
 // ─── Prompt builder ─────────────────────────────────────────────────────────
 
+// Voorproefje-prompt (sneak preview): Patlef zet de toon en hypet de aankomende
+// koers ZONDER echte data. Expliciet: geen cijfers, standen, percentages of
+// renners verzinnen — er is nog niets verreden.
+function buildPreviewPrompt(input: any): string {
+  const koers = typeof input?.koersNaam === "string" && input.koersNaam.trim()
+    ? input.koersNaam.trim()
+    : "de aankomende koers";
+  return [
+    "MODUS: VOORPROEFJE (sneak preview — de koers is nog NIET begonnen).",
+    `Schrijf een korte, sfeervolle voorbeschouwing voor ${koers} in jouw stem.`,
+    "",
+    "HARDE REGELS voor dit voorproefje:",
+    "- Er is NOG GEEN data: geen klassement, geen etappe, geen scores.",
+    "- Verzin GEEN cijfers, percentages, posities, rapportcijfers of rennersnamen.",
+    "- Analyseer NIETS — er valt nog niets te analyseren. Zet enkel de toon en hyp de koers.",
+    "- Spreek de deelnemers in het algemeen aan (niet één persoon, geen 'uw ploeg').",
+    "- Behoud je karakteristieke stijl: ambetant, droog, twee quotabele boutades, een mokerslag-slotzin.",
+    "- Houd het bondig (analyse ~3-5 zinnen).",
+    "",
+    "Geef JSON terug met exact deze velden:",
+    '- "directeursAnalyse": de voorbeschouwing (sfeer/teaser, geen data).',
+    '- "ploegKarakterisering": een korte, algemene tagline-zin over wat een poule-deelnemer te wachten staat (geen data).',
+  ].join("\n");
+}
+
 function buildUserPrompt(input: any): string {
   const score = input.score?.toFixed?.(1) ?? "?";
   const ranking = input.components?.poolRanking;
@@ -325,6 +350,42 @@ Deno.serve(async (req) => {
     if (userErr || !userData?.user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
+
+    // ── Preview-modus (sneak preview, status 'open') ───────────────────────────
+    // Eénmalig, gedeeld voorproefje per game: lees uit lefevere_preview; alleen
+    // bij ontbreken genereren (generiek, GEEN echte standen) en met de service-
+    // role wegschrijven. Zo nooit per bezoeker een OpenAI-call.
+    if (body?.preview === true && typeof body?.gameId === "string") {
+      const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+      const { data: cached } = await admin
+        .from("lefevere_preview")
+        .select("directeurs_analyse, ploeg_karakterisering")
+        .eq("game_id", body.gameId)
+        .maybeSingle();
+      if (cached?.directeurs_analyse) {
+        return json({
+          ok: true,
+          directeursAnalyse: cached.directeurs_analyse,
+          ploegKarakterisering: cached.ploeg_karakterisering ?? "",
+          model: MODEL,
+          cached: true,
+        });
+      }
+      const result = await callOpenAI(buildPreviewPrompt(body));
+      await admin.from("lefevere_preview").upsert(
+        {
+          game_id: body.gameId,
+          directeurs_analyse: result.directeursAnalyse,
+          ploeg_karakterisering: result.ploegKarakterisering,
+          model: MODEL,
+          generated_at: new Date().toISOString(),
+        },
+        { onConflict: "game_id" },
+      );
+      return json({ ok: true, ...result, model: MODEL });
+    }
+
     if (typeof body?.score !== "number") return json({ error: "score (number) required" }, 400);
 
     const userPrompt = buildUserPrompt(body);

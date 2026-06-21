@@ -36,6 +36,35 @@ export type LefevereReportResult = {
 };
 
 /**
+ * useLefeverePreview — éénmalig, gedeeld Patlef-voorproefje per game (sneak
+ * preview, status 'open'). De edge function leest/schrijft lefevere_preview
+ * server-side met de service-role: één generatie per game, daarna voor iedereen
+ * uit de cache. React Query dedupet binnen de sessie → geen per-bezoeker-calls.
+ */
+export function useLefeverePreview(gameId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ["lefevere-preview", gameId ?? "nogame"],
+    enabled: Boolean(supabase && enabled && gameId),
+    staleTime: 60 * 60 * 1000,
+    gcTime: 2 * 60 * 60 * 1000,
+    retry: 1,
+    queryFn: async (): Promise<LefevereReportResult> => {
+      if (!supabase || !gameId) throw new Error("no game");
+      const { data, error } = await supabase.functions.invoke("generate-lefevere-report", {
+        body: { preview: true, gameId },
+      });
+      if (error) throw error;
+      const r = data as { directeursAnalyse?: string; ploegKarakterisering?: string };
+      if (typeof r?.directeursAnalyse !== "string") throw new Error("Onverwacht antwoord");
+      return {
+        directeursAnalyse: r.directeursAnalyse,
+        ploegKarakterisering: r.ploegKarakterisering ?? "",
+      };
+    },
+  });
+}
+
+/**
  * useLefevereReport — roept de Supabase edge function `generate-lefevere-report`
  * aan met de huidige rapport-context en cachet het resultaat (5 min) op een
  * key die afgeleid is van het cijfer + voornaamste context. Bij significante

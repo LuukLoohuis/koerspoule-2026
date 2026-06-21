@@ -42,7 +42,7 @@ import TruiBadge from "@/components/retro/TruiBadge";
 import { useThema } from "@/contexts/ThemaContext";
 import { isGameLocked, isAdminOnlyStatus, isPreviewStatus } from "@/lib/gameStatus";
 import type { TruiType } from "@/lib/themas";
-import { useLefevereReport } from "@/hooks/useLefevereReport";
+import { useLefevereReport, useLefeverePreview } from "@/hooks/useLefevereReport";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import aapFietser from "@/assets/horscat/aap-fietser-transparant.png";
 
@@ -832,6 +832,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     stageCount: horsSummary.stageCount,
     enabled: activeTab === "wielerdirecteur" && Boolean(horsSummary.lefevereInput),
   });
+  // Sneak preview: éénmalig, gedeeld Patlef-voorproefje (geen echte stand).
+  const lefeverePreview = useLefeverePreview(game?.id, isDemo && activeTab === "wielerdirecteur");
 
   // ── Locked state ─────────────────────────────────────────────────────────────
   if (!isVisible) {
@@ -1226,6 +1228,34 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-4">
+            {/* ── Sneak preview: Patlef's voorbeschouwing (voorproefje, geen stand) ── */}
+            {isDemo && (
+              <div className="relative overflow-hidden rounded-2xl border border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.06] p-5 md:p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Mic className="h-4 w-4 text-[hsl(var(--vintage-gold))]" />
+                  <span className="font-display text-[11px] uppercase tracking-[0.25em] text-[hsl(var(--vintage-gold))] font-bold">
+                    Patlef's voorbeschouwing — een voorproefje tot de koers begint
+                  </span>
+                </div>
+                {lefeverePreview.data?.directeursAnalyse ? (
+                  <>
+                    <p className="text-foreground text-sm md:text-base font-serif italic leading-relaxed">
+                      "{lefeverePreview.data.directeursAnalyse}"
+                    </p>
+                    {lefeverePreview.data.ploegKarakterisering && (
+                      <p className="mt-2 text-xs text-muted-foreground font-serif">
+                        — {lefeverePreview.data.ploegKarakterisering}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground/70 font-serif italic">
+                    {lefeverePreview.isError ? "Patlef houdt z'n kruit nog even droog." : "Patlef schrijft z'n voorbeschouwing…"}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* ── Director Report Score ──────────────────────────────────────── */}
             {directorScore && (
               <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 md:p-6">
