@@ -30,6 +30,15 @@ export function buildEmailHtml(
   unsubscribeUrl: string,
   opts: { titleColor: string; titleSize: number }
 ): string {
+  // Preview-datum = vandaag (Europe/Amsterdam). LET OP: dit is alleen voor de
+  // admin-preview. De échte verzonden datum wordt server-side bepaald in
+  // send-announcement/buildHtml() op het verzendmoment — niet door de client.
+  const datum = new Date().toLocaleDateString("nl-NL", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Amsterdam",
+  });
   return `<!doctype html>
 <html><body style="margin:0;background:#faf7f2;font-family:Georgia,serif;color:#1a1a1a;">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#fff;border:1px solid #e8e0d5;">
@@ -37,6 +46,9 @@ export function buildEmailHtml(
       <img src="${LOGO_URL}" alt="Koerspoule — uit liefde voor de koers" width="200"
            style="display:block;width:200px;height:auto;margin:0 auto 6px;border-radius:8px;" />
       <div style="font-family:'Brush Script MT','Segoe Script','Snell Roundhand',cursive;font-style:italic;font-size:28px;color:#C0851A;line-height:1.1;text-align:center;">Uit liefde voor de koers</div>
+    </div>
+    <div style="font-family:'Times New Roman',Times,serif;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#6b6357;border-bottom:1px solid #d9d2c2;padding-bottom:12px;margin-bottom:22px;">
+      Koerspoule &nbsp;·&nbsp; Communiqué &nbsp;·&nbsp; ${datum}
     </div>
     ${body}
     <hr style="border:none;border-top:1px solid #ede8df;margin:32px 0 16px;"/>

@@ -17,7 +17,16 @@ function buildHtml(
   _titleColor = "#1a1a1a",
   _titleSize = 11
 ): string {
-  const datum = new Date().toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
+  // Datum op het VERZENDMOMENT. buildHtml() wordt per mail vlak vóór de fetch
+  // naar de mail-worker aangeroepen (test + announcement gaan direct, niet via
+  // de queue), dus dit is de echte verzenddatum. Edge functions draaien in UTC →
+  // expliciet timeZone Europe/Amsterdam zodat de datum rond middernacht klopt.
+  const datum = new Date().toLocaleDateString("nl-NL", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Amsterdam",
+  });
   return `<!doctype html>
 <html lang="nl"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Koerspoule</title></head>
 <body style="margin:0;padding:0;background:#f4f1ea;font-family:'Times New Roman',Times,serif;color:#1a1a1a;">
