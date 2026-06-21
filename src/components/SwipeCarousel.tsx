@@ -23,10 +23,10 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { flushSync } from "react-dom";
 import { cn } from "@/lib/utils";
 
-const H_LOCK_PX = 8; // horizontaal commit zodra |dx| dit haalt …
-const H_DOMINANCE = 1.5; // … én |dx| > |dy| * 1.5 (sterke horizontale bias-eis)
+const H_LOCK_PX = 10; // horizontaal commit zodra |dx| dit haalt … (bewuste commit)
+const H_DOMINANCE = 1.2; // … én |dx| > |dy| * 1.2 (lichte horizontale bias-eis)
 const V_LOCK_PX = 6; // verticaal commit al bij kleine verticale beweging (bias naar scrollen)
-const SCROLL_COOLDOWN_MS = 300; // na (momentum-)scroll: carrousel-start even negeren
+const SCROLL_COOLDOWN_MS = 150; // na (momentum-)scroll: carrousel-start kort negeren
 const SNAP_RATIO = 0.35; // ≥35% van de breedte → snap naar buur
 const FLICK_VEL = 0.5; // px/ms → snelle flick snapt ook
 const FLICK_MIN_PX = 24;
