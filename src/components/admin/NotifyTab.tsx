@@ -17,7 +17,6 @@ import {
 
 type Game = { id: string; name: string; year: number | null };
 
-const LOGO_URL = "https://cdn.jsdelivr.net/gh/LuukLoohuis/koerspoule-2026@main/public/koerspoule-logo-2026.png";
 const HEADER_IMG = "https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_header_afbeelding.png";
 const FOOTER_IMG = "https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_footer_strip.png";
 
@@ -42,15 +41,10 @@ export function buildEmailHtml(
     timeZone: "Europe/Amsterdam",
   });
   return `<!doctype html>
-<html><body style="margin:0;background:#faf7f2;font-family:Georgia,serif;color:#1a1a1a;">
-  <div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e8e0d5;">
+<html><body style="margin:0;background:#f4f1ea;font-family:Georgia,serif;color:#1a1a1a;">
+  <div style="max-width:560px;margin:0 auto;background:#fbfaf6;border:1px solid #e8e0d5;">
     <img src="${HEADER_IMG}" alt="Koerspoule" width="560" style="display:block;width:100%;height:auto;border:0;" />
     <div style="padding:32px 24px;">
-    <div style="text-align:center;margin-bottom:22px;">
-      <img src="${LOGO_URL}" alt="Koerspoule — uit liefde voor de koers" width="200"
-           style="display:block;width:200px;height:auto;margin:0 auto 6px;border-radius:8px;" />
-      <div style="font-family:'Brush Script MT','Segoe Script','Snell Roundhand',cursive;font-style:italic;font-size:28px;color:#C0851A;line-height:1.1;text-align:center;">Uit liefde voor de koers</div>
-    </div>
     <div style="font-family:'Times New Roman',Times,serif;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#6b6357;border-bottom:1px solid #d9d2c2;padding-bottom:12px;margin-bottom:22px;">
       Koerspoule &nbsp;·&nbsp; Communiqué &nbsp;·&nbsp; ${datum}
     </div>

@@ -9,7 +9,6 @@ const CORS = {
 
 const MAIL_WORKER = "https://koerspoule-mail.luuk-loohuis.workers.dev";
 const BASE_URL = "https://koerspoule.nl";
-const LOGO_URL = "https://cdn.jsdelivr.net/gh/LuukLoohuis/koerspoule-2026@main/public/koerspoule-logo-2026.png";
 const HEADER_IMG = "https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_header_afbeelding.png";
 const FOOTER_IMG = "https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_footer_strip.png";
 
@@ -38,11 +37,7 @@ function buildHtml(
         <tr><td style="padding:0;">
           <img src="${HEADER_IMG}" alt="Koerspoule" width="560" style="display:block;width:100%;height:auto;border:0;" />
         </td></tr>
-        <tr><td style="padding:40px 56px 8px 56px;text-align:center;">
-          <img src="${LOGO_URL}" alt="Koerspoule — uit liefde voor de koers" width="180" style="display:block;width:180px;height:auto;margin:0 auto 4px auto;border-radius:8px;" />
-          <div style="font-family:'Brush Script MT','Segoe Script','Snell Roundhand',cursive;font-style:italic;font-size:28px;color:#C0851A;line-height:1.1;text-align:center;margin:8px auto 0 auto;">Uit liefde voor de koers</div>
-        </td></tr>
-        <tr><td style="padding:24px 56px 14px 56px;">
+        <tr><td style="padding:28px 56px 14px 56px;">
           <div style="font-family:'Times New Roman',Times,serif;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#6b6357;border-bottom:1px solid #d9d2c2;padding-bottom:12px;">
             Koerspoule &nbsp;·&nbsp; Communiqué &nbsp;·&nbsp; ${datum}
           </div>
