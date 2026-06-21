@@ -44,8 +44,17 @@ export type StageProfileData = {
   totalKm?: number;
   minEle?: number;
   maxEle?: number;
+  climbMeters?: number;
   points?: Array<{ km: number; hoogte: number }>;
-  cols?: Array<{ km: number; naam: string; categorie: string }>;
+  cols?: Array<{
+    km: number | null;
+    naam: string;
+    categorie: string | null;
+    lengteKm?: number;
+    percentage?: number;
+    geschat?: boolean;
+  }>;
+  sprints?: Array<{ km: number; naam: string }>;
 };
 
 export default function StagesTab({

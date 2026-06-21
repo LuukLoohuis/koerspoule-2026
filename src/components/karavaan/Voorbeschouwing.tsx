@@ -141,7 +141,7 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
       {/* Profiel — eigen render uit profile_data (voorrang); anders geüploade
           afbeelding (klik om uit te vouwen); anders nette lege-staat. */}
       {hasProfileData ? (
-        <div className="px-4 pb-4 pt-1" style={{ background: "var(--sdc-paper, #1c1813)", borderRadius: 0 }}>
+        <div className="px-4 pb-4 pt-1">
           <StageProfile data={stage.profile_data as StageProfileData} />
         </div>
       ) : profielOk ? (
