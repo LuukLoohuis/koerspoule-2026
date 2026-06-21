@@ -17,8 +17,13 @@ import {
 
 type Game = { id: string; name: string; year: number | null };
 
-const HEADER_IMG = "https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_header_afbeelding.png";
-const FOOTER_IMG = "https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_footer_strip.png";
+// ?v= cache-bust gelijk aan send-announcement; bump bij nieuwe upload.
+const IMG_V = "3";
+const HEADER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_header_afbeelding.png?v=${IMG_V}`;
+const FOOTER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_footer_strip.png?v=${IMG_V}`;
+const FRAME_EDGE = "#F5D9A7";
+const FRAME_GOLD = "#DC9E29";
+const FRAME_CREAM = "#F8EBCC";
 
 // Alleen het BERICHT — de begroeting "Beste deelnemer," en de afsluiting
 // "Veel koersplezier, Het Koerspoule team" zitten al vast in de template.
@@ -36,46 +41,50 @@ export function buildEmailHtml(
   <center style="width:100%;background-color:#e9e3d6;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;background-color:#e9e3d6;margin:0;padding:0;">
       <tr><td align="center" style="padding:24px 12px;">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;border-collapse:collapse;margin:0 auto;background-color:#F4F1EA;">
-          <tr><td style="padding:0;line-height:0;font-size:0;background-color:#F4F1EA;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;border-collapse:collapse;margin:0 auto;background-color:${FRAME_EDGE};">
+          <tr><td style="padding:0;line-height:0;font-size:0;background-color:${FRAME_EDGE};">
             <img src="${HEADER_IMG}" alt="Koerspoule header" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0;" />
           </td></tr>
-          <tr><td style="padding:18px 42px 20px 42px;background-color:#F4F1EA;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
-              <div style="margin:0 0 10px 0;font-size:28px;line-height:34px;font-weight:bold;color:#211d19;">
-                Beste deelnemer,
-              </div>
-              <div style="margin:0 0 18px 0;font-size:18px;line-height:30px;color:#3d362e;">
-                ${body}
-              </div>
-              <div style="text-align:center;margin:20px 0 22px 0;">
-                <a href="https://koerspoule.nl" target="_blank" style="display:inline-block;padding:13px 26px;background-color:#d4a62b;color:#1d1916;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;border-radius:6px;">
-                  Ga naar Koerspoule
-                </a>
-              </div>
-              <div style="margin:0;font-size:18px;line-height:30px;color:#3d362e;">
-                Veel koersplezier,<br>
-                <strong>Het Koerspoule team</strong>
-              </div>
-              <div style="margin-top:20px;padding-top:16px;border-top:1px solid #d8c89d;text-align:center;">
-                <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;letter-spacing:2px;text-transform:uppercase;color:#8a6d2b;margin-bottom:10px;">
-                  Volg Koerspoule
+          <tr><td align="center" style="padding:0;background-color:${FRAME_EDGE};">
+            <table role="presentation" width="574" cellspacing="0" cellpadding="0" border="0" style="width:574px;max-width:574px;border-collapse:collapse;background-color:${FRAME_CREAM};border-left:2px solid ${FRAME_GOLD};border-right:2px solid ${FRAME_GOLD};">
+              <tr><td style="padding:16px 28px 20px 28px;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
+                <div style="margin:0 0 10px 0;font-size:28px;line-height:34px;font-weight:bold;color:#211d19;">
+                  Beste deelnemer,
                 </div>
-                <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:bold;">
-                  <a href="https://instagram.com/koerspoule" target="_blank" style="color:#2b241d;text-decoration:none;">
-                    Instagram → @koerspoule
+                <div style="margin:0 0 18px 0;font-size:18px;line-height:30px;color:#3d362e;">
+                  ${body}
+                </div>
+                <div style="text-align:center;margin:20px 0 22px 0;">
+                  <a href="https://koerspoule.nl" target="_blank" style="display:inline-block;padding:13px 26px;background-color:#d4a62b;color:#1d1916;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;border-radius:6px;">
+                    Ga naar Koerspoule
                   </a>
                 </div>
-                <div style="margin-top:10px;font-size:15px;line-height:24px;color:#655847;">
-                  Blijf op de hoogte van updates, standen en koerssfeer.
+                <div style="margin:0;font-size:18px;line-height:30px;color:#3d362e;">
+                  Veel koersplezier,<br>
+                  <strong>Het Koerspoule team</strong>
                 </div>
-                <div style="margin-top:14px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:#9a8f7c;">
-                  <a href="https://koerspoule.nl" style="color:#9a8f7c;text-decoration:none;">koerspoule.nl</a>
-                  &nbsp;·&nbsp;
-                  <a href="${unsubscribeUrl}" style="color:#9a8f7c;text-decoration:underline;">uitschrijven</a>
+                <div style="margin-top:20px;padding-top:16px;border-top:1px solid #d8c89d;text-align:center;">
+                  <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;letter-spacing:2px;text-transform:uppercase;color:#8a6d2b;margin-bottom:10px;">
+                    Volg Koerspoule
+                  </div>
+                  <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:bold;">
+                    <a href="https://instagram.com/koerspoule" target="_blank" style="color:#2b241d;text-decoration:none;">
+                      Instagram → @koerspoule
+                    </a>
+                  </div>
+                  <div style="margin-top:10px;font-size:15px;line-height:24px;color:#655847;">
+                    Blijf op de hoogte van updates, standen en koerssfeer.
+                  </div>
+                  <div style="margin-top:14px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:#9a8f7c;">
+                    <a href="https://koerspoule.nl" style="color:#9a8f7c;text-decoration:none;">koerspoule.nl</a>
+                    &nbsp;·&nbsp;
+                    <a href="${unsubscribeUrl}" style="color:#9a8f7c;text-decoration:underline;">uitschrijven</a>
+                  </div>
                 </div>
-              </div>
+              </td></tr>
+            </table>
           </td></tr>
-          <tr><td style="padding:0;line-height:0;font-size:0;background-color:#F4F1EA;">
+          <tr><td style="padding:0;line-height:0;font-size:0;background-color:${FRAME_EDGE};">
             <img src="${FOOTER_IMG}" alt="Koerspoule footer" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0;" />
           </td></tr>
         </table>
