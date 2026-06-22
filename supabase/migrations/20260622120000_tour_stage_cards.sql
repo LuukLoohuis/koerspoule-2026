@@ -40,6 +40,12 @@ alter table public.tour_stage_cards enable row level security;
 drop policy if exists tour_stage_cards_read on public.tour_stage_cards;
 create policy tour_stage_cards_read on public.tour_stage_cards for select using (true);
 
+-- Grants: bij creatie via de Management API worden de Supabase-rol-defaults niet
+-- automatisch toegekend → expliciet. service_role schrijft (seed), anon/
+-- authenticated lezen (RLS-policy hierboven bepaalt zichtbaarheid).
+grant all on table public.tour_stage_cards to service_role;
+grant select on table public.tour_stage_cards to anon, authenticated;
+
 -- Publieke storage-bucket waar de scraper de beelden naartoe seedt.
 insert into storage.buckets (id, name, public)
 values ('stage-images', 'stage-images', true)
