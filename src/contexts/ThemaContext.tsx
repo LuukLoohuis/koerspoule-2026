@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { THEMAS, deriveThemaKey, hexToHsl, readableForeground, type Thema, type ThemaKey } from "@/lib/themas";
@@ -44,6 +44,40 @@ function applyThemaTokens(key: ThemaKey) {
   root.style.setProperty("--vintage-gold", accent);
 
   root.setAttribute("data-thema", key);
+
+  // Persisteer de toegepaste accent-tokens zodat het no-flash-script in
+  // index.html ze bij een volgend bezoek vóór de eerste paint kan zetten.
+  try {
+    localStorage.setItem(
+      THEMA_TOKENS_LS_KEY,
+      JSON.stringify({ "--primary": primair, "--primary-foreground": primairFg, "--ring": primair, "--jersey-pink": primair, "--vintage-gold": accent }),
+    );
+  } catch { /* ignore */ }
+}
+
+const THEMA_LS_KEY = "koerspoule:themaKey";
+const THEMA_TOKENS_LS_KEY = "koerspoule:themaTokens";
+
+/** Neutrale accent-tokens tijdens het laden (eerste bezoek, geen cache) —
+ *  voorkomt de Giro-roze base-flits zonder een specifiek race-thema te tonen. */
+function neutralizeAccent() {
+  const root = document.documentElement;
+  const neutral = "38 10% 55%"; // warm-grijs, race-neutraal
+  root.style.setProperty("--primary", neutral);
+  root.style.setProperty("--ring", neutral);
+  root.style.setProperty("--jersey-pink", neutral);
+  root.style.setProperty("--sidebar-primary", neutral);
+  root.style.setProperty("--sidebar-ring", neutral);
+  root.setAttribute("data-thema", "loading");
+}
+
+function readCachedKey(): ThemaKey | null {
+  try {
+    const v = typeof localStorage !== "undefined" ? localStorage.getItem(THEMA_LS_KEY) : null;
+    return v && v in THEMAS ? (v as ThemaKey) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function ThemaProvider({ children }: { children: React.ReactNode }) {
@@ -88,14 +122,28 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
     staleTime: 5 * 60 * 1000,
   });
 
-  const key = deriveThemaKey(activeGame?.theme, activeGame?.game_type);
-  // Pas thema-tokens (accent/primair) PAS toe als de bron geladen is — anders
-  // flitst kort het default-thema (Giro/roze) voordat het juiste bekend is.
-  const ready = isFetched;
+  // Laatst-bekende thema uit localStorage → terugkerende bezoekers zien meteen
+  // het juiste thema (geen flits). Eénmalig per mount gelezen.
+  const cachedKey = useMemo(() => readCachedKey(), []);
+
+  // Definitief thema zodra de bron geladen is; daarvóór de cache (indien er is).
+  const fetchedKey = isFetched ? deriveThemaKey(activeGame?.theme, activeGame?.game_type) : null;
+  const resolvedKey: ThemaKey | null = fetchedKey ?? cachedKey;
+  const key: ThemaKey = resolvedKey ?? "roze";
+  // ready voor de hero: zodra we een betrouwbaar thema hebben (fetch of cache).
+  const ready = isFetched || cachedKey != null;
 
   useEffect(() => {
-    if (ready) applyThemaTokens(key);
-  }, [key, ready]);
+    if (isFetched && fetchedKey) {
+      applyThemaTokens(fetchedKey);
+      try { localStorage.setItem(THEMA_LS_KEY, fetchedKey); } catch { /* ignore */ }
+    } else if (cachedKey) {
+      applyThemaTokens(cachedKey);
+    } else {
+      // Eerste bezoek, nog geen data → race-neutrale accenten i.p.v. Giro-roze.
+      neutralizeAccent();
+    }
+  }, [isFetched, fetchedKey, cachedKey]);
 
   // Realtime: themawissel door admin → direct bij alle clients
   useEffect(() => {

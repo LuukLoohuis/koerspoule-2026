@@ -66,6 +66,27 @@
         "email": "koerspoule@gmail.com"
       }
     </script>
+    <!-- No-flash thema: zet vóór de eerste paint de laatst-bekende accent-tokens
+         (of race-neutraal bij eerste bezoek), zodat de Giro-roze base nooit flitst. -->
+    <script>
+      (function () {
+        try {
+          var r = document.documentElement.style;
+          var raw = localStorage.getItem("koerspoule:themaTokens");
+          if (raw) {
+            var t = JSON.parse(raw);
+            for (var k in t) { if (t[k]) r.setProperty(k, t[k]); }
+          } else {
+            var n = "38 10% 55%";
+            r.setProperty("--primary", n);
+            r.setProperty("--ring", n);
+            r.setProperty("--jersey-pink", n);
+            r.setProperty("--sidebar-primary", n);
+            r.setProperty("--sidebar-ring", n);
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
   <body>
