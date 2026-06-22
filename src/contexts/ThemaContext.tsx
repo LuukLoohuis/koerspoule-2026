@@ -3,9 +3,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { THEMAS, deriveThemaKey, hexToHsl, readableForeground, type Thema, type ThemaKey } from "@/lib/themas";
 
-type ThemaContextValue = { thema: Thema; key: ThemaKey };
+type ThemaContextValue = { thema: Thema; key: ThemaKey; ready: boolean };
 
-const ThemaContext = createContext<ThemaContextValue>({ thema: THEMAS.roze, key: "roze" });
+const ThemaContext = createContext<ThemaContextValue>({ thema: THEMAS.roze, key: "roze", ready: false });
 
 /** Zet de thema-kleuren op de bestaande HSL-tokens → hele site herkleurt. */
 function applyThemaTokens(key: ThemaKey) {
@@ -52,7 +52,7 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
   // Thema-bron: de nieuwste NIET-afgeronde game (concept/draft/open/locked/live)
   // bepaalt de site-stijl. Een afgeronde game levert géén site-thema. Is er geen
   // niet-afgeronde game, dan valt het terug op de meest recente (afgeronde) game.
-  const { data: activeGame } = useQuery({
+  const { data: activeGame, isFetched } = useQuery({
     queryKey: ["actief-thema-game"],
     queryFn: async () => {
       if (!supabase) return null;
@@ -89,10 +89,13 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
   });
 
   const key = deriveThemaKey(activeGame?.theme, activeGame?.game_type);
+  // Pas thema-tokens (accent/primair) PAS toe als de bron geladen is — anders
+  // flitst kort het default-thema (Giro/roze) voordat het juiste bekend is.
+  const ready = isFetched;
 
   useEffect(() => {
-    applyThemaTokens(key);
-  }, [key]);
+    if (ready) applyThemaTokens(key);
+  }, [key, ready]);
 
   // Realtime: themawissel door admin → direct bij alle clients
   useEffect(() => {
@@ -108,7 +111,7 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
     };
   }, [qc]);
 
-  return <ThemaContext.Provider value={{ thema: THEMAS[key], key }}>{children}</ThemaContext.Provider>;
+  return <ThemaContext.Provider value={{ thema: THEMAS[key], key, ready }}>{children}</ThemaContext.Provider>;
 }
 
 export function useThema(): ThemaContextValue {

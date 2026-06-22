@@ -167,7 +167,7 @@ const MOCK_MY_PROGRESS = {
 export default function Index() {
   const navigate = useNavigate();
   const { data: currentGame } = useCurrentGame();
-  const { thema, key: themaKey } = useThema();
+  const { thema, key: themaKey, ready: themaReady } = useThema();
 
   // De hero volgt het actieve thema (admin-keuze), met game_type als fallback.
   const race = THEMA_TO_RACE[themaKey];
@@ -405,28 +405,42 @@ export default function Index() {
           <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1fr] lg:grid-cols-[1.15fr_0.75fr_0.85fr] gap-12 md:gap-10 items-center">
             {/* Linker kolom — koers + CTAs + stats */}
             <div className="relative">
-              <Stamp tone="thema" rotation={-2} className="mb-3">{thema.homepage_subtitel}</Stamp>
+              <Stamp tone="thema" rotation={-2} className="mb-3">
+                {themaReady ? thema.homepage_subtitel : "Uit liefde voor de koers"}
+              </Stamp>
               <br className="hidden md:block" />
-              <span className="editor-eyebrow text-lg">{copy.edition}</span>
-
-              <h1
-                className="font-display font-black mt-4 leading-[0.88] tracking-[-0.025em] text-6xl md:text-[92px]"
-                style={{ letterSpacing: "-0.025em" }}
-              >
-                <span>{copy.line1}</span>
-                <br />
-                <span>{copy.line2}</span>{" "}
-                <span className="relative inline-block">
-                  <span
-                    aria-hidden
-                    className="absolute left-1 -right-1 bottom-2 md:bottom-2.5 h-3 md:h-3.5 -rotate-1"
-                    style={{ background: "hsl(var(--vintage-gold) / 0.6)" }}
-                  />
-                  <span className="relative italic font-medium text-primary ml-3.5">
-                    {copy.yearTag}
-                  </span>
-                </span>
-              </h1>
+              {themaReady ? (
+                <>
+                  <span className="editor-eyebrow text-lg">{copy.edition}</span>
+                  <h1
+                    className="font-display font-black mt-4 leading-[0.88] tracking-[-0.025em] text-6xl md:text-[92px]"
+                    style={{ letterSpacing: "-0.025em" }}
+                  >
+                    <span>{copy.line1}</span>
+                    <br />
+                    <span>{copy.line2}</span>{" "}
+                    <span className="relative inline-block">
+                      <span
+                        aria-hidden
+                        className="absolute left-1 -right-1 bottom-2 md:bottom-2.5 h-3 md:h-3.5 -rotate-1"
+                        style={{ background: "hsl(var(--vintage-gold) / 0.6)" }}
+                      />
+                      <span className="relative italic font-medium text-primary ml-3.5">
+                        {copy.yearTag}
+                      </span>
+                    </span>
+                  </h1>
+                </>
+              ) : (
+                /* Neutrale laadtoestand — geen race-specifiek thema, zelfde ruimte. */
+                <div aria-hidden className="mt-4 animate-pulse motion-reduce:animate-none">
+                  <div className="h-5 w-40 rounded bg-foreground/10" />
+                  <div className="mt-4 space-y-3">
+                    <div className="h-[52px] md:h-[80px] w-3/4 rounded bg-foreground/10" />
+                    <div className="h-[52px] md:h-[80px] w-2/3 rounded bg-foreground/10" />
+                  </div>
+                </div>
+              )}
 
 
               <p className="font-serif italic text-foreground/80 md:text-xl max-w-[480px] mt-6 leading-relaxed text-lg my-[2px] text-center">
@@ -475,7 +489,8 @@ export default function Index() {
             {/* Middenkolom — quote in het witte gedeelte, links naast het logo.
                 Alleen op lg+ (eronder valt de cel weg via hidden). */}
             {(() => {
-              const quoteText = currentGame?.homepage_quote ?? thema.quotes[0];
+              // Geen quote tijdens het laden → geen thema-flits.
+              const quoteText = themaReady ? (currentGame?.homepage_quote ?? thema.quotes[0]) : null;
               const quoteAuthor =
                 currentGame?.homepage_quote_author ?? thema.quoteAuteur;
               if (!quoteText) return null;
