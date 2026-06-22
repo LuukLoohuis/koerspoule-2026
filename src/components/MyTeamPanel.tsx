@@ -22,7 +22,6 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
 import { useStages, useEntries } from "@/hooks/useResults";
-import StageProfile from "@/components/salle-de-course/StageProfile";
 import { useRiderEntryTotals } from "@/hooks/useRiderEntryTotals";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
@@ -51,65 +50,6 @@ function LiveKlok() {
     >
       {pad(now.getHours())}:{pad(now.getMinutes())}:{pad(now.getSeconds())}
     </span>
-  );
-}
-
-/** Decoratief hoogteprofiel — polyline + finishvlag, in Salle de Course-amber.
- *  Deterministisch per `seed` (etappenummer) zodat hetzelfde plaatje altijd
- *  bij dezelfde rit hoort. Géén echte meetdata: puur visueel anker, conform
- *  asset #9 uit de DESIGN-SPEC. */
-function AltitudeProfile({ seed }: { seed: number }) {
-  const N = 48;
-  const points = Array.from({ length: N }, (_, i) => {
-    // gestapelde sinus + pseudo-noise op basis van seed → ruwe bergketen
-    const t = i / (N - 1);
-    const s = seed * 0.37 + 1;
-    const base = Math.sin(t * Math.PI * 1.3 + s) * 0.35 + 0.5;
-    const ridge = Math.sin(t * Math.PI * 5.7 + s * 1.9) * 0.18;
-    const noise = Math.sin(i * 12.9898 + s * 78.233) * 0.08;
-    const y = Math.max(0.05, Math.min(0.95, base + ridge + noise));
-    const x = t * 100;
-    return `${x.toFixed(2)},${(100 - y * 100).toFixed(2)}`;
-  }).join(" ");
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      className="w-full h-10 md:h-12"
-      style={{ display: "block" }}
-    >
-      {/* baseline */}
-      <line x1="0" y1="99" x2="100" y2="99" stroke="rgba(237,227,204,0.18)" strokeWidth="0.3" />
-      {/* profielilijn */}
-      <polyline
-        points={points}
-        fill="none"
-        stroke="#D49A1A"
-        strokeWidth="0.9"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
-      />
-      {/* finishvlag rechts */}
-      <g transform="translate(96 8)">
-        <line x1="0" y1="0" x2="0" y2="14" stroke="rgba(237,227,204,0.75)" strokeWidth="0.4" vectorEffect="non-scaling-stroke" />
-        <g>
-          {[0, 1].map((row) =>
-            [0, 1, 2].map((col) => (
-              <rect
-                key={`${row}-${col}`}
-                x={col * 1.2}
-                y={row * 1.2}
-                width="1.2"
-                height="1.2"
-                fill={(row + col) % 2 === 0 ? "rgba(237,227,204,0.85)" : "transparent"}
-              />
-            ))
-          )}
-        </g>
-      </g>
-    </svg>
   );
 }
 
@@ -1450,25 +1390,6 @@ export default function MyTeamPanel({
                       <span className="flex flex-col leading-tight text-right max-w-[180px]">
                         <span className="truncate" style={{ color: AMBER }} title={shownStage.name}>{shownStage.name}</span>
                       </span>
-                    )}
-                  </div>
-                  {/* Hoogteprofiel — eigen render uit profile_data; anders geüpload
-                      beeld; anders het decoratieve profiel. Vaste hoogte → geen
-                      layout-sprong tussen de varianten. */}
-                  <div className="mt-2">
-                    {shownStage.profile_data?.points && shownStage.profile_data.points.length >= 2 ? (
-                      <StageProfile data={shownStage.profile_data} />
-                    ) : shownStage.profile_image_url ? (
-                      <img
-                        src={shownStage.profile_image_url}
-                        alt={`Hoogteprofiel ${shownStage.name ?? `etappe ${shownStage.stage_number}`}`}
-                        className="block w-full h-24 md:h-28 object-contain"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-24 md:h-28 flex items-center">
-                        <AltitudeProfile seed={shownStage.stage_number ?? 0} />
-                      </div>
                     )}
                   </div>
                 </div>
