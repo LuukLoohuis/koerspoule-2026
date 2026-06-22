@@ -114,6 +114,44 @@ function AltitudeProfile({ seed }: { seed: number }) {
 }
 
 
+/** Klein type-icoon voor de étappe-selector, afgeleid uit stage_type.
+ *  Onbekend/leeg type → null (alleen ritnummer). */
+function StageTypeIcon({ type, size = 14 }: { type?: string | null; size?: number }) {
+  const t = String(type ?? "").toLowerCase();
+  const common = { width: size, height: size, viewBox: "0 0 16 16", fill: "none" as const, "aria-hidden": true as const };
+  if (t === "vlak") {
+    return (
+      <svg {...common}>
+        <line x1="2" y1="8" x2="14" y2="8" stroke="#8AA0B0" strokeWidth="1.6" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (t === "heuvelachtig") {
+    return (
+      <svg {...common}>
+        <path d="M2 11 Q5 6 8 9 T14 7" stroke="hsl(var(--vintage-gold))" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (t === "bergop") {
+    return (
+      <svg {...common}>
+        <path d="M2 13 L9 3 L14 13" stroke="#C46A2A" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (t === "ploegentijdrit" || t === "tijdrit") {
+    return (
+      <svg {...common}>
+        <circle cx="8" cy="9" r="5" stroke="#8AA0B0" strokeWidth="1.5" />
+        <path d="M8 9 L8 6 M8 9 L10.5 9.5" stroke="#8AA0B0" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="6.5" y1="2" x2="9.5" y2="2" stroke="#8AA0B0" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  return null;
+}
+
 /** Decoratieve radio-tunerschaal (SVG) — FM-schaal met amber marker.
  *  Géén meetdata; puur cockpit-anker (DESIGN-SPEC §Radio Tuner bar). */
 function TunerBar() {
@@ -1285,53 +1323,95 @@ export default function MyTeamPanel({
                    een gekozen rit. Alleen desktop; mobiel blijft zoals het was. ── */}
               {approvedRaceStages.length > 0 && (
                 <div
-                  className="hidden md:block mt-3 p-2.5"
-                  style={{ background: PANEL, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 2px 7px rgba(0,0,0,0.5)" }}
+                  className="mt-3 p-2.5"
+                  style={{ background: "#1F1813", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 2px 7px rgba(0,0,0,0.5)" }}
                 >
                   <div className="flex items-center justify-between gap-2 mb-1.5 px-1">
                     <span className="font-mono text-[9px] tracking-[0.2em] uppercase" style={{ color: "rgba(237,227,204,0.55)" }}>
                       — Spoel terug —
                     </span>
-                    {rewound ? (
-                      <button
-                        type="button"
-                        onClick={() => lastApprovedStage && setSelectedStageId(lastApprovedStage.id)}
-                        className="font-mono text-[9px] tracking-[0.12em] uppercase font-bold px-2 py-0.5 rounded inline-flex items-center gap-1"
-                        style={{ color: "#1A1612", background: AMBER }}
-                      >
-                        📻 t/m rit {cutoffN} · terug naar nu ›
-                      </button>
-                    ) : (
-                      <span className="font-mono text-[9px] tracking-[0.12em] uppercase" style={{ color: "rgba(237,227,204,0.4)" }}>
-                        actuele stand
-                      </span>
-                    )}
+                    <span className="font-mono text-[9px] tracking-[0.12em] uppercase" style={{ color: "rgba(237,227,204,0.4)" }}>
+                      {rewound ? `t/m rit ${cutoffN}` : "actuele stand"}
+                    </span>
                   </div>
-                  <div ref={stageSelectorRef} className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+
+                  {/* Retro étappe-selector — interne horizontale scroller (de tab-swipe
+                      laat 'm met rust dankzij overflow-x:auto). Pijltjes navigeren. */}
+                  <div
+                    ref={stageSelectorRef}
+                    role="listbox"
+                    aria-label="Kies etappe om naar terug te spoelen"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+                      e.preventDefault();
+                      const i = approvedRaceStages.findIndex((s) => s.id === selectedStageId);
+                      const next = e.key === "ArrowRight" ? i + 1 : i - 1;
+                      const target = approvedRaceStages[next];
+                      if (target) setSelectedStageId(target.id);
+                    }}
+                    className="flex items-end gap-1.5 overflow-x-auto pb-1 pt-1.5 outline-none"
+                    style={{ scrollbarWidth: "none", scrollSnapType: "x mandatory" }}
+                  >
                     {approvedRaceStages.map((s) => {
                       const sel = s.id === selectedStageId;
+                      const isNow = lastApprovedStage?.id === s.id;
                       return (
                         <button
                           key={s.id}
                           data-stage={s.id}
                           type="button"
+                          role="option"
                           onClick={() => setSelectedStageId(s.id)}
                           aria-pressed={sel}
+                          aria-selected={sel}
                           title={s.name ?? `Rit ${s.stage_number}`}
-                          className="shrink-0 h-7 min-w-[28px] px-2 rounded font-mono text-[11px] font-bold tabular-nums transition-colors"
-                          style={sel
-                            ? { background: AMBER, color: "#1A1612" }
-                            : { background: "rgba(237,227,204,0.08)", color: "rgba(237,227,204,0.7)" }}
+                          className="relative shrink-0 flex flex-col items-center justify-end gap-0.5 rounded transition-all"
+                          style={{
+                            scrollSnapAlign: "center",
+                            minWidth: sel ? 46 : 34,
+                            paddingTop: sel ? 8 : 5,
+                            paddingBottom: 4,
+                            paddingLeft: 4,
+                            paddingRight: 4,
+                            background: sel ? "rgba(244,200,75,0.12)" : "rgba(237,227,204,0.06)",
+                            border: sel ? "2px solid #F4C84B" : "1px solid rgba(237,227,204,0.12)",
+                            color: sel ? "#F4C84B" : "rgba(237,227,204,0.7)",
+                          }}
                         >
-                          {s.stage_number}
+                          {/* Geel bovenbalkje bij de actieve rit (niet-kleur-afhankelijk) */}
+                          {sel && (
+                            <span aria-hidden className="absolute top-0 left-1 right-1 rounded-full" style={{ height: 2, background: "#F4C84B" }} />
+                          )}
+                          <StageTypeIcon type={s.stage_type} size={sel ? 16 : 13} />
+                          <span className={`font-mono font-bold tabular-nums leading-none ${sel ? "text-[13px]" : "text-[11px]"}`}>
+                            {s.stage_number}
+                          </span>
+                          {isNow && (
+                            <span className="font-mono uppercase tracking-wider leading-none" style={{ fontSize: 7, color: sel ? "#F4C84B" : "rgba(237,227,204,0.5)" }}>
+                              nu
+                            </span>
+                          )}
                         </button>
                       );
                     })}
                   </div>
+
+                  {/* Teruggespoeld-indicatie — alleen wanneer niet op de laatste rit. */}
                   {rewound && (
-                    <p className="mt-1.5 px-1 font-mono text-[9px] leading-snug" style={{ color: "rgba(237,227,204,0.5)" }}>
-                      Seizoensstand &amp; beste etappe tonen t/m rit {cutoffN}. Vergelijkende standen (plek, %, subpoule) blijven de actuele stand.
-                    </p>
+                    <div className="mt-2 flex items-center justify-between gap-2 px-1">
+                      <span className="font-mono text-[9px] leading-snug" style={{ color: "rgba(237,227,204,0.6)" }}>
+                        Teruggespoeld t/m rit {cutoffN}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => lastApprovedStage && setSelectedStageId(lastApprovedStage.id)}
+                        className="font-mono text-[9px] tracking-[0.12em] uppercase font-bold px-2 py-0.5 rounded inline-flex items-center gap-1 shrink-0"
+                        style={{ color: "#1A1612", background: AMBER }}
+                      >
+                        Terug naar nu →
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
