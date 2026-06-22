@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Flag, Medal } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -167,12 +168,29 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
             >
               volgende →
             </button>
+            {/* Directe sprong naar een rit — compacte dropdown, in sync met stageIdx. */}
+            <Select value={stageIdx >= 0 ? String(stageIdx) : undefined} onValueChange={(v) => setStageIdx(Number(v))}>
+              <SelectTrigger
+                aria-label="Spring naar rit"
+                className="h-6 w-auto min-w-[64px] gap-1 px-2 text-[10px] font-mono uppercase tracking-wider"
+              >
+                <SelectValue placeholder="Rit" />
+              </SelectTrigger>
+              <SelectContent>
+                {approvedStages.map((s, i) => (
+                  <SelectItem key={s.id} value={String(i)} className="text-xs">
+                    Rit {s.stage_number}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
       </div>
 
-      {/* Bars */}
+      {/* Bars — korte fade bij ritwissel (key op rit-id), geen layout-sprong. */}
       <CardContent className="p-3 sm:p-4">
+        <div key={selectedStage.id} className="animate-in fade-in duration-200 motion-reduce:animate-none">
         {scorers.length === 0 ? (
           <p className="text-sm text-muted-foreground italic text-center py-4">
             Niemand scoorde punten in deze rit.
@@ -271,6 +289,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
         {celebratedWin && (
           <SteunMoment storageKey="kp_steun_ritzege" className="mt-3" />
         )}
+        </div>
       </CardContent>
     </Card>
     </>
