@@ -754,7 +754,6 @@ export default function MyTeamPanel({
           (schroeven, grille, FM-schaal, knoppen, oscilloscoop) is CSS/SVG —
           decoratief, aria-hidden, verdwijnt op mobiel. CTA + TeamSheet eronder. */}
       {(() => {
-        const PANEL = "#1A1612";
         const PAPER = "#F5EDD8";
         const INK = "#1A1612";
         const AMBER = "hsl(var(--vintage-gold))";
@@ -763,15 +762,9 @@ export default function MyTeamPanel({
         const hasName = Boolean(entry.team_name?.trim());
         const shownName = entry.team_name ?? user.user_metadata?.team_name ?? "Mijn ploeg";
 
-        // Etappe-info uit echte stage-data (géén verzonnen klim/hoogte-data).
-        // De onderbalk + labels volgen de GESELECTEERDE rit (terugspoelen).
-        const raceStages = stages.filter((s) => !s.is_gc);
+        // Label voor de seizoensstand volgt de GESELECTEERDE rit (terugspoelen).
         const shownStage = selectedStage;
         const ritLabel = shownStage ? `punten t/m rit ${shownStage.stage_number}` : "nog geen uitslagen";
-        const TYPE_LABEL: Record<string, string> = {
-          vlak: "VLAK", heuvelachtig: "HEUVELS", tijdrit: "TIJDRIT",
-          bergop: "BERG & COLS", ploegentijdrit: "PLOEGENTIJDRIT",
-        };
 
         // "—" zolang waardes null zijn (expliciete null-check, loading-proof).
         const dash = (v: number | null | undefined, fmt: (n: number) => string) =>
@@ -1356,44 +1349,6 @@ export default function MyTeamPanel({
                 </div>
               )}
 
-              {/* ── Onderbalk: étape-cockpit met decoratief hoogteprofiel van de
-                   GESELECTEERDE rit. Polyline is decoratief (uit het ritnummer),
-                   geen verzonnen meetdata. ── */}
-              {shownStage && (
-                <div
-                  className="mt-3 p-3 font-mono text-[10px] tracking-[0.18em] uppercase"
-                  style={{
-                    background: PANEL,
-                    borderRadius: 10,
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    boxShadow: "inset 0 2px 7px rgba(0,0,0,0.5)",
-                    color: "rgba(237,227,204,0.65)",
-                  }}
-                >
-                  {/* Cockpit-tekstregel */}
-                  <div className="flex items-start justify-between gap-4">
-                    <span className="flex flex-col leading-tight">
-                      <span style={{ color: "rgba(237,227,204,0.45)" }}>Étape {shownStage.stage_number} / {raceStages.length}</span>
-                      {shownStage.distance_km != null && (
-                        <span style={{ color: "rgba(237,227,204,0.85)" }}>{shownStage.distance_km} km</span>
-                      )}
-                    </span>
-                    {shownStage.stage_type && (
-                      <span className="flex flex-col leading-tight">
-                        <span style={{ color: "rgba(237,227,204,0.45)" }}>Type</span>
-                        <span style={{ color: "rgba(237,227,204,0.85)" }}>
-                          {TYPE_LABEL[shownStage.stage_type] ?? shownStage.stage_type.toUpperCase()}
-                        </span>
-                      </span>
-                    )}
-                    {shownStage.name && (
-                      <span className="flex flex-col leading-tight text-right max-w-[180px]">
-                        <span className="truncate" style={{ color: AMBER }} title={shownStage.name}>{shownStage.name}</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </section>
         );
