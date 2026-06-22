@@ -461,9 +461,15 @@ export default function StagesTab({
                         >
                           <LineChart className="w-3.5 h-3.5" /> Profiel-data
                         </button>
-                        <span className="text-[11px] text-muted-foreground">
-                          {pointCount(s) >= 2 ? `✓ data (${pointCount(s)} punten)` : "—"}
-                        </span>
+                        {pointCount(s) >= 2 ? (
+                          <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px]">
+                            Profiel ✓ {pointCount(s)} pt
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                            Geen profiel
+                          </Badge>
+                        )}
                       </div>
                     )}
                   </TableCell>
