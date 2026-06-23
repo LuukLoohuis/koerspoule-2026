@@ -14,6 +14,7 @@ export type Subpoule = {
   is_owner: boolean;
   banner_url: string | null;
   banner_enabled: boolean;
+  requires_woonplaats: boolean;
 };
 
 export function useSubpoules(gameId?: string) {
@@ -26,8 +27,8 @@ export function useSubpoules(gameId?: string) {
     enabled: Boolean(supabase && gameId && user?.id),
     queryFn: async (): Promise<Subpoule[]> => {
       if (!supabase || !gameId || !user?.id) return [];
-      const COLS_WITH_SLUG = "id, game_id, name, code, slug, banner_url, banner_enabled, owner_user_id, created_at, subpoule_members(user_id)";
-      const COLS_NO_SLUG = "id, game_id, name, code, owner_user_id, created_at, subpoule_members(user_id)";
+      const COLS_WITH_SLUG = "id, game_id, name, code, slug, banner_url, banner_enabled, requires_woonplaats, owner_user_id, created_at, subpoule_members(user_id)";
+      const COLS_NO_SLUG = "id, game_id, name, code, requires_woonplaats, owner_user_id, created_at, subpoule_members(user_id)";
       // RLS limits this to subpoules where user is owner or member.
       let { data, error } = await supabase
         .from("subpoules")
@@ -59,6 +60,7 @@ export function useSubpoules(gameId?: string) {
         is_owner: s.owner_user_id === user.id,
         banner_url: (s as { banner_url?: string | null }).banner_url ?? null,
         banner_enabled: (s as { banner_enabled?: boolean }).banner_enabled ?? true,
+        requires_woonplaats: (s as { requires_woonplaats?: boolean }).requires_woonplaats ?? false,
       }));
     },
   });
@@ -80,11 +82,27 @@ export function useSubpoules(gameId?: string) {
   });
 
   const join = useMutation({
-    mutationFn: async ({ code }: { code: string }) => {
+    mutationFn: async ({ code, woonplaats }: { code: string; woonplaats?: string }) => {
       if (!supabase) throw new Error("Geen verbinding");
-      const { data, error } = await supabase.rpc("join_subpoule", { p_code: code });
+      const { data, error } = await supabase.rpc("join_subpoule", {
+        p_code: code,
+        p_woonplaats: woonplaats ?? null,
+      });
       if (error) throw error;
       return data as string;
+    },
+    onSuccess: invalidate,
+  });
+
+  // Eigen woonplaats achteraf zetten/bijwerken (alleen subpoules die 't vragen).
+  const setWoonplaats = useMutation({
+    mutationFn: async ({ subpouleId, woonplaats }: { subpouleId: string; woonplaats: string }) => {
+      if (!supabase) throw new Error("Geen verbinding");
+      const { error } = await supabase.rpc("set_my_subpoule_woonplaats", {
+        p_subpoule_id: subpouleId,
+        p_woonplaats: woonplaats,
+      });
+      if (error) throw error;
     },
     onSuccess: invalidate,
   });
@@ -127,6 +145,7 @@ export function useSubpoules(gameId?: string) {
     leave,
     remove,
     removeMember,
+    setWoonplaats,
   };
 }
 
@@ -148,12 +167,14 @@ export function useSubpouleMembers(subpouleId?: string) {
         joined_at: string;
         display_name: string | null;
         team_name: string | null;
+        woonplaats: string | null;
       }>;
       return rows.map((m) => ({
         user_id: m.user_id,
         joined_at: m.joined_at,
         display_name: m.display_name ?? "Onbekend",
         team_name: m.team_name ?? null,
+        woonplaats: m.woonplaats ?? null,
       }));
     },
   });

@@ -81,6 +81,11 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   const [createName, setCreateName] = useState("");
   const [createCode, setCreateCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  // Premium-feature: sommige subpoules vragen je woonplaats. We weten dat pas na
+  // een join-poging (RLS verbergt de subpoule vóór lidmaatschap) → de RPC raise't
+  // WOONPLAATS_REQUIRED, waarna we het veld tonen.
+  const [joinWoonplaats, setJoinWoonplaats] = useState("");
+  const [joinNeedsWoonplaats, setJoinNeedsWoonplaats] = useState(false);
 
   // Deeplink: ?subpoule=<id>&code=<code>&view=koerscafe. De code komt mee via de
   // /subpoule/<slug>-resolver zodat een niet-lid kan joinen. We onthouden het
@@ -193,12 +198,21 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
 
   const handleJoin = async () => {
     try {
-      const id = await join.mutateAsync({ code: joinCode });
+      const id = await join.mutateAsync({
+        code: joinCode,
+        woonplaats: joinNeedsWoonplaats ? joinWoonplaats.trim() : undefined,
+      });
       toast({ title: "Welkom in de subpoule!" });
-      setJoinCode("");
+      setJoinCode(""); setJoinWoonplaats(""); setJoinNeedsWoonplaats(false);
       setActiveId(id);
     } catch (e) {
-      toast({ title: "Joinen mislukt", description: e instanceof Error ? e.message : "", variant: "destructive" });
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("WOONPLAATS_REQUIRED")) {
+        setJoinNeedsWoonplaats(true);
+        toast({ title: "Woonplaats vereist", description: "Deze subpoule vraagt je woonplaats — zo kun je je in de ranking vergelijken met streekgenoten." });
+        return;
+      }
+      toast({ title: "Joinen mislukt", description: msg, variant: "destructive" });
     }
   };
 
@@ -346,7 +360,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
 
     // Losse panelen — één per tab, hergebruikt op mobiel én desktop.
     const standingsPanel = (
-      <SubpouleStandings subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} showEvolution={false} />
+      <SubpouleStandings subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} showEvolution={false} requiresWoonplaats={active.requires_woonplaats} />
     );
     const evolutionPanel = (
       <SubpouleEvolutionChart subpouleId={active.id} gameId={effectiveGameId} title="Stijgers & Dalers" />
@@ -702,7 +716,21 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                 <Label htmlFor="join-code">Toegangscode</Label>
                 <Input id="join-code" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="Vraag de eigenaar om de code" />
               </div>
-              <Button onClick={handleJoin} disabled={join.isPending || !joinCode.trim()} className="w-full">
+              {joinNeedsWoonplaats && (
+                <div>
+                  <Label htmlFor="join-woonplaats">Woonplaats</Label>
+                  <Input
+                    id="join-woonplaats"
+                    value={joinWoonplaats}
+                    onChange={(e) => setJoinWoonplaats(e.target.value)}
+                    placeholder="bv. Enschede"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Deze subpoule vergelijkt deelnemers per woonplaats — zo zie je je positie tussen streekgenoten. Alleen je plaats, geen adres.
+                  </p>
+                </div>
+              )}
+              <Button onClick={handleJoin} disabled={join.isPending || !joinCode.trim() || (joinNeedsWoonplaats && !joinWoonplaats.trim())} className="w-full">
                 Joinen
               </Button>
             </TabsContent>

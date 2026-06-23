@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Swords, ArrowUp, ArrowDown, Flag, ArrowLeftRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trophy, Swords, ArrowUp, ArrowDown, Flag, ArrowLeftRight, MapPin } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResults";
@@ -22,10 +27,13 @@ type Props = {
   /** Toon de klassementsverloop-grafiek onderaan. Default true. Zet op false
    *  als de parent 'm als losse, ankerbare sectie zelf rendert. */
   showEvolution?: boolean;
+  /** Premium per-subpoule: woonplaats-filter + labels in de ranking. */
+  requiresWoonplaats?: boolean;
 };
 
-export default function SubpouleStandings({ subpouleId, subpouleName, gameId, gameStatus, showEvolution = true }: Props) {
+export default function SubpouleStandings({ subpouleId, subpouleName, gameId, gameStatus, showEvolution = true, requiresWoonplaats = false }: Props) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: curGame } = useCurrentGame();
   // De subpoule hoort bij een specifieke game (bv. een afgeronde Giro). Gebruik
   // die i.p.v. de huidige live game, anders laden we de verkeerde entries/punten
@@ -234,6 +242,51 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [members, entries, stagePoints, stages, etappeIdx]);
 
+  // ── Woonplaats (alleen subpoules met requires_woonplaats) ───────────────────
+  const woonplaatsByUser = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of members) if (m.woonplaats?.trim()) map.set(m.user_id, m.woonplaats.trim());
+    return map;
+  }, [members]);
+  const woonplaatsen = useMemo(
+    () => [...new Set([...woonplaatsByUser.values()])].sort((a, b) => a.localeCompare(b, "nl")),
+    [woonplaatsByUser],
+  );
+  const ALL = "__all__";
+  const [woonFilter, setWoonFilter] = useState<string>(ALL);
+  // Positie binnen de gekozen woonplaats (memberRows is al op punten gesorteerd).
+  const regioPosByUser = useMemo(() => {
+    const map = new Map<string, number>();
+    if (woonFilter === ALL) return map;
+    memberRows
+      .filter((r) => woonplaatsByUser.get(r.user_id) === woonFilter)
+      .forEach((r, i) => map.set(r.user_id, i + 1));
+    return map;
+  }, [memberRows, woonFilter, woonplaatsByUser]);
+  const displayedRows = useMemo(
+    () => (woonFilter === ALL ? memberRows : memberRows.filter((r) => woonplaatsByUser.get(r.user_id) === woonFilter)),
+    [memberRows, woonFilter, woonplaatsByUser],
+  );
+
+  // Eigen woonplaats nog niet ingevuld? Eénmalige, niet-blokkerende prompt.
+  const ownWoonplaats = user ? woonplaatsByUser.get(user.id) : undefined;
+  const isMember = user ? members.some((m) => m.user_id === user.id) : false;
+  const [woonInput, setWoonInput] = useState("");
+  const [savingWoon, setSavingWoon] = useState(false);
+  const saveOwnWoonplaats = async () => {
+    if (!supabase || !woonInput.trim()) return;
+    setSavingWoon(true);
+    const { error } = await supabase.rpc("set_my_subpoule_woonplaats", {
+      p_subpoule_id: subpouleId,
+      p_woonplaats: woonInput.trim(),
+    });
+    setSavingWoon(false);
+    if (!error) {
+      setWoonInput("");
+      queryClient.invalidateQueries({ queryKey: ["subpoule-members", subpouleId] });
+    }
+  };
+
   const compareMember = memberRows.find((m) => m.user_id === compareId);
 
   if (membersLoading) {
@@ -317,6 +370,48 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           )}
         </div>
 
+        {/* Woonplaats invullen — niet-blokkerende prompt voor wie 'm mist. */}
+        {requiresWoonplaats && isMember && !ownWoonplaats && (
+          <div className="px-3 py-2.5 border-b border-border bg-[hsl(var(--vintage-gold))/0.08] flex flex-col sm:flex-row sm:items-center gap-2">
+            <span className="text-xs text-muted-foreground font-sans flex items-center gap-1.5 shrink-0">
+              <MapPin className="w-3.5 h-3.5 text-[hsl(var(--vintage-gold))]" />
+              Vul je woonplaats in om je met streekgenoten te vergelijken:
+            </span>
+            <div className="flex items-center gap-2 flex-1">
+              <Input
+                value={woonInput}
+                onChange={(e) => setWoonInput(e.target.value)}
+                placeholder="bv. Enschede"
+                className="h-8 text-sm"
+              />
+              <Button size="sm" className="h-8 shrink-0" disabled={savingWoon || !woonInput.trim()} onClick={saveOwnWoonplaats}>
+                {savingWoon ? "Opslaan…" : "Opslaan"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Woonplaats-filter */}
+        {requiresWoonplaats && woonplaatsen.length > 0 && (
+          <div className="px-3 py-2 border-b border-border bg-secondary/30 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+            <Select value={woonFilter} onValueChange={setWoonFilter}>
+              <SelectTrigger className="h-9 w-full sm:w-56 text-sm" aria-label="Filter op woonplaats">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Alle woonplaatsen</SelectItem>
+                {woonplaatsen.map((w) => (
+                  <SelectItem key={w} value={w}>{w}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {woonFilter !== ALL && (
+              <span className="text-[11px] text-muted-foreground font-mono shrink-0">{displayedRows.length} in {woonFilter}</span>
+            )}
+          </div>
+        )}
+
         {/* Eenmalige hint op mobiel: hele rij = vergelijken */}
         {showTapHint && (
           <div className="md:hidden px-3 py-1.5 border-b border-border bg-secondary/30 text-[10px] text-muted-foreground font-sans italic flex items-center justify-between gap-2">
@@ -348,7 +443,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
         </div>
 
         <div className="max-h-[600px] overflow-y-auto">
-          {memberRows.map((m) => {
+          {displayedRows.map((m) => {
             const isMe = m.user_id === user?.id;
             const isComparing = m.user_id === compareId;
             const canCompare = !isMe && !!m.entry_id;
@@ -429,7 +524,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   )}
                 </div>
 
-                <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
                   <span className={cn(
                     "font-sans text-sm truncate",
                     isMe ? "font-bold text-primary" : m.rank <= 3 ? "font-semibold" : "font-medium",
@@ -449,6 +545,21 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   )}
                   {!m.entry_id && (
                     <Badge variant="secondary" className="text-xs shrink-0">geen team</Badge>
+                  )}
+                  </div>
+                  {/* Woonplaats-label + positie binnen de gekozen plaats. */}
+                  {requiresWoonplaats && woonplaatsByUser.get(m.user_id) && (
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-sans truncate">
+                        <MapPin className="w-2.5 h-2.5 shrink-0" />
+                        {woonplaatsByUser.get(m.user_id)}
+                      </span>
+                      {regioPosByUser.get(m.user_id) != null && (
+                        <span className="text-[10px] font-bold text-[hsl(var(--vintage-gold))] tabular-nums">
+                          {regioPosByUser.get(m.user_id)}e in {woonFilter}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
 
