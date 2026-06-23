@@ -4,8 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Swords, ArrowUp, ArrowDown, Flag, ArrowLeftRight, MapPin } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Trophy, Swords, ArrowUp, ArrowDown, Flag, ArrowLeftRight, MapPin, ChevronsUpDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -254,6 +255,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   );
   const ALL = "__all__";
   const [woonFilter, setWoonFilter] = useState<string>(ALL);
+  const [woonOpen, setWoonOpen] = useState(false);
   // Positie binnen de gekozen woonplaats (memberRows is al op punten gesorteerd).
   const regioPosByUser = useMemo(() => {
     const map = new Map<string, number>();
@@ -395,17 +397,38 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
         {requiresWoonplaats && woonplaatsen.length > 0 && (
           <div className="px-3 py-2 border-b border-border bg-secondary/30 flex items-center gap-2">
             <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
-            <Select value={woonFilter} onValueChange={setWoonFilter}>
-              <SelectTrigger className="h-9 w-full sm:w-56 text-sm" aria-label="Filter op woonplaats">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>Alle woonplaatsen</SelectItem>
-                {woonplaatsen.map((w) => (
-                  <SelectItem key={w} value={w}>{w}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={woonOpen} onOpenChange={setWoonOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={woonOpen}
+                  aria-label="Filter op woonplaats"
+                  className="h-9 w-full sm:w-56 justify-between font-normal text-sm"
+                >
+                  {woonFilter === ALL ? "Alle woonplaatsen" : woonFilter}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Zoek woonplaats…" />
+                  <CommandList>
+                    <CommandEmpty>Geen woonplaats gevonden.</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem value="Alle woonplaatsen" onSelect={() => { setWoonFilter(ALL); setWoonOpen(false); }}>
+                        Alle woonplaatsen
+                      </CommandItem>
+                      {woonplaatsen.map((w) => (
+                        <CommandItem key={w} value={w} onSelect={() => { setWoonFilter(w); setWoonOpen(false); }}>
+                          {w}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             {woonFilter !== ALL && (
               <span className="text-[11px] text-muted-foreground font-mono shrink-0">{displayedRows.length} in {woonFilter}</span>
             )}
