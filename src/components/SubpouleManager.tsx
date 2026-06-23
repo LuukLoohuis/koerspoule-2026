@@ -36,7 +36,8 @@ import DaguitslagChart from "@/components/DaguitslagChart";
 import DaguitslagCelebration from "@/components/DaguitslagCelebration";
 import { useDaguitslagCelebration } from "@/hooks/useDaguitslagCelebration";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, ChevronsUpDown, MessageCircle, TrendingUp, Flame, Share2, BarChart3, Trophy, X, type LucideIcon } from "lucide-react";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, ChevronsUpDown, MessageCircle, TrendingUp, Flame, Share2, BarChart3, Trophy, X, MapPin, type LucideIcon } from "lucide-react";
+import StreekKlassement from "@/components/StreekKlassement";
 import { cn } from "@/lib/utils";
 
 // Mobiele subpoule-tabs (zoals Hors Categorie). Eén paneel tegelijk.
@@ -48,8 +49,6 @@ const SUB_TABS: SubTab[] = [
   { key: "heatmap", label: "Heatmap", Icon: Flame },
   { key: "deelnemers", label: "Deelnemers", Icon: Users },
 ];
-const SUB_TAB_KEYS = SUB_TABS.map((t) => t.key);
-const SUB_TAB_ITEMS = SUB_TABS.map((t) => ({ key: t.key, label: t.label, icon: t.Icon }));
 
 export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange }: Props = {}) {
   const { toast } = useToast();
@@ -386,12 +385,31 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       </div>
     );
 
+    // Streekklassement — alleen voor subpoules die woonplaats vragen.
+    const streekPanel = (
+      <StreekKlassement
+        subpouleId={active.id}
+        subpouleName={active.name}
+        gameId={effectiveGameId}
+        gameStatus={gameStatus}
+        streekMin={active.streek_min_deelnemers}
+      />
+    );
+
+    // Dynamische tab-set: "Streek" alleen bij requires_woonplaats.
+    const dynTabs = active.requires_woonplaats
+      ? [...SUB_TABS, { key: "streek", label: "Streek", Icon: MapPin }]
+      : SUB_TABS;
+    const dynTabKeys = dynTabs.map((t) => t.key);
+    const dynTabItems = dynTabs.map((t) => ({ key: t.key, label: t.label, icon: t.Icon }));
+
     // Mobiel: het paneel van de actieve tab.
     const panelFor = (k: string) =>
       k === "klassement" ? standingsPanel
       : k === "verloop" ? evolutionPanel
       : k === "daguitslag" ? daguitslagPanel
       : k === "heatmap" ? heatmapPanel
+      : k === "streek" ? streekPanel
       : deelnemersSection;
 
     return (
@@ -458,16 +476,16 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
             )}
           >
             {/* Tabbalk staat stil; de carrousel-content volgt de vinger. */}
-            <MobielTabBalk tabs={SUB_TAB_ITEMS} active={mobileTab} onChange={setMobileTab} />
+            <MobielTabBalk tabs={dynTabItems} active={mobileTab} onChange={setMobileTab} />
           </div>
 
           {/* Swipe-coachmark (eenmalig) + stippen-indicator. */}
           <SwipeHintBar visible={mobileHint.visible} onClose={mobileHint.dismiss} className="mx-auto w-fit my-2" />
-          <SwipeDots count={SUB_TABS.length} activeIndex={SUB_TAB_KEYS.indexOf(mobileTab)} activeLabel={SUB_TABS.find((t) => t.key === mobileTab)?.label} className="mb-2" />
+          <SwipeDots count={dynTabs.length} activeIndex={dynTabKeys.indexOf(mobileTab)} activeLabel={dynTabs.find((t) => t.key === mobileTab)?.label} className="mb-2" />
 
           {/* Vinger-volgende carrousel: alleen het content-vlak beweegt. */}
           <SwipeCarousel
-            keys={SUB_TAB_KEYS}
+            keys={dynTabKeys}
             activeKey={mobileTab}
             onChange={setMobileTab}
             onSwiped={mobileHint.dismiss}
@@ -492,6 +510,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                     { key: "daguitslag", label: "Daguitslag",        Icon: BarChart3 },
                     { key: "heatmap",    label: "Heatmap",           Icon: Flame, disabled: !heatmapUnlocked, title: !heatmapUnlocked ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined },
                     { key: "deelnemers", label: "Deelnemers",        Icon: Users },
+                    ...(active.requires_woonplaats ? [{ key: "streek", label: "Streek", Icon: MapPin }] : []),
                   ]}
                 />
               </div>
@@ -517,6 +536,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                   : activeTab === "verloop" ? evolutionPanel
                   : activeTab === "daguitslag" ? daguitslagPanel
                   : activeTab === "heatmap" ? heatmapPanel
+                  : activeTab === "streek" ? streekPanel
                   : deelnemersSection}
               </div>
 
@@ -549,7 +569,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
 
         {/* ── MOBIEL: "Ga naar"-bolletje (tab-schakelaar), net boven de chatknop. ── */}
         <FloatingTabSwitcher
-          tabs={SUB_TAB_ITEMS}
+          tabs={dynTabItems}
           active={mobileTab}
           onChange={setMobileTab}
           offsetClassName="bottom-[136px]"

@@ -15,6 +15,7 @@ export type Subpoule = {
   banner_url: string | null;
   banner_enabled: boolean;
   requires_woonplaats: boolean;
+  streek_min_deelnemers: number;
 };
 
 export function useSubpoules(gameId?: string) {
@@ -27,8 +28,8 @@ export function useSubpoules(gameId?: string) {
     enabled: Boolean(supabase && gameId && user?.id),
     queryFn: async (): Promise<Subpoule[]> => {
       if (!supabase || !gameId || !user?.id) return [];
-      const COLS_WITH_SLUG = "id, game_id, name, code, slug, banner_url, banner_enabled, requires_woonplaats, owner_user_id, created_at, subpoule_members(user_id)";
-      const COLS_NO_SLUG = "id, game_id, name, code, requires_woonplaats, owner_user_id, created_at, subpoule_members(user_id)";
+      const COLS_WITH_SLUG = "id, game_id, name, code, slug, banner_url, banner_enabled, requires_woonplaats, streek_min_deelnemers, owner_user_id, created_at, subpoule_members(user_id)";
+      const COLS_NO_SLUG = "id, game_id, name, code, requires_woonplaats, streek_min_deelnemers, owner_user_id, created_at, subpoule_members(user_id)";
       // RLS limits this to subpoules where user is owner or member.
       let { data, error } = await supabase
         .from("subpoules")
@@ -61,6 +62,7 @@ export function useSubpoules(gameId?: string) {
         banner_url: (s as { banner_url?: string | null }).banner_url ?? null,
         banner_enabled: (s as { banner_enabled?: boolean }).banner_enabled ?? true,
         requires_woonplaats: (s as { requires_woonplaats?: boolean }).requires_woonplaats ?? false,
+        streek_min_deelnemers: (s as { streek_min_deelnemers?: number }).streek_min_deelnemers ?? 50,
       }));
     },
   });

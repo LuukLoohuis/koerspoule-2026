@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Upload, Trash2, Eye, EyeOff, Users2, RefreshCw, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,6 +17,7 @@ type Row = {
   banner_url: string | null;
   banner_enabled: boolean;
   requires_woonplaats: boolean;
+  streek_min_deelnemers: number;
 };
 
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
@@ -33,7 +35,7 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
     try {
       const { data, error } = await supabase
         .from("subpoules")
-        .select("id, name, slug, banner_url, banner_enabled, requires_woonplaats, owner_user_id, subpoule_members(user_id)")
+        .select("id, name, slug, banner_url, banner_enabled, requires_woonplaats, streek_min_deelnemers, owner_user_id, subpoule_members(user_id)")
         .eq("game_id", activeGameId)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -63,6 +65,7 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
           banner_url: (s.banner_url as string | null) ?? null,
           banner_enabled: (s.banner_enabled as boolean | null) ?? true,
           requires_woonplaats: (s.requires_woonplaats as boolean | null) ?? false,
+          streek_min_deelnemers: (s.streek_min_deelnemers as number | null) ?? 50,
         })),
       );
     } catch (e) {
@@ -131,6 +134,23 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, requires_woonplaats: next } : r)));
   }
 
+  async function saveStreekMin(id: string, value: string) {
+    if (!supabase) return;
+    const n = Math.round(Number(value));
+    if (!Number.isFinite(n) || n < 1) {
+      toast.error("Minimum moet een geheel getal ≥ 1 zijn.");
+      await load();
+      return;
+    }
+    const { error } = await supabase.from("subpoules").update({ streek_min_deelnemers: n } as never).eq("id", id);
+    if (error) {
+      toast.error(`Opslaan mislukt: ${error.message}`);
+      return;
+    }
+    toast.success(`Drempel: ${n} deelnemers per plaats`);
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, streek_min_deelnemers: n } : r)));
+  }
+
   async function removeBanner(id: string) {
     if (!supabase) return;
     if (!confirm("Logo van deze subpoule verwijderen?")) return;
@@ -197,6 +217,21 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
                   {r.owner_name ?? "—"} · {r.member_count} {r.member_count === 1 ? "lid" : "leden"}
                   {r.slug ? ` · /${r.slug}` : ""}
                 </div>
+                {r.requires_woonplaats && (
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <label className="text-[11px] text-muted-foreground">Min. deelnemers per plaats (streekklassement)</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      step={1}
+                      defaultValue={r.streek_min_deelnemers}
+                      onBlur={(e) => {
+                        if (Number(e.target.value) !== r.streek_min_deelnemers) saveStreekMin(r.id, e.target.value);
+                      }}
+                      className="h-7 w-20 text-xs"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Acties */}
