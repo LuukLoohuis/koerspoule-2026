@@ -206,7 +206,8 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       setJoinCode(""); setJoinWoonplaats(""); setJoinNeedsWoonplaats(false);
       setActiveId(id);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "";
+      // Supabase's PostgrestError is GEEN Error-instance → lees message robuust.
+      const msg = (e as { message?: string })?.message ?? (e instanceof Error ? e.message : "") ?? "";
       if (msg.includes("WOONPLAATS_REQUIRED")) {
         setJoinNeedsWoonplaats(true);
         toast({ title: "Woonplaats vereist", description: "Deze subpoule vraagt je woonplaats — zo kun je je in de ranking vergelijken met streekgenoten." });
