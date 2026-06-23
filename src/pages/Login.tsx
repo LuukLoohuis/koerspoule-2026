@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { sendEmail, registratieHtml } from "@/lib/sendEmail";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,35 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
   const [isSendingReset, setIsSendingReset] = useState(false);
+  // Na een succesvolle signup (zonder directe sessie): toon het bevestigingsscherm
+  // i.p.v. een toast + redirect. null = normale form-modus.
+  const [signupEmail, setSignupEmail] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resendCooldown]);
+
+  const handleResend = async () => {
+    if (!supabase || !signupEmail || resendCooldown > 0 || isResending) return;
+    setIsResending(true);
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.resend({ type: "signup", email: signupEmail }),
+        15000,
+      );
+      if (error) throw error;
+      toast({ title: "Mail opnieuw verstuurd 📬", description: `Check de inbox van ${signupEmail} (ook spam).` });
+      setResendCooldown(30);
+    } catch (error) {
+      toast({ title: "Versturen mislukt", description: formatError(error), variant: "destructive" });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleForgotPassword = async () => {
     if (!supabase) return;
@@ -154,18 +183,15 @@ export default function Login() {
             .then(() => {});
         }
 
-        toast({
-          title: "Account aangemaakt! 🎉",
-          description:
-            data.session
-              ? "Je bent ingelogd."
-              : "Controleer je inbox voor de bevestigingsmail.",
-        });
-
         sendEmail(email, "Welkom bij Koerspoule! 🌹", registratieHtml(name.trim() || email));
 
         if (data.session) {
+          // E-mailbevestiging staat uit → meteen ingelogd.
+          toast({ title: "Account aangemaakt! 🎉", description: "Je bent ingelogd." });
           navigate(safeReturnTo(searchParams.get("returnTo")), { replace: true });
+        } else {
+          // Bevestiging vereist → eigen check-email-scherm, geen redirect/toast.
+          setSignupEmail(email);
         }
       } else {
         const { data, error } = await withTimeout(
@@ -260,19 +286,23 @@ export default function Login() {
 
           <AnimatePresence mode="wait">
             <motion.div
-              key={isRegister ? "register" : "login"}
+              key={signupEmail ? "check" : isRegister ? "register" : "login"}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
             >
               <h1 className="font-display text-3xl font-bold mb-1 tracking-tight">
-                {isRegister ? thema.login_meedoen : thema.login_welkom}
+                {signupEmail
+                  ? "Bijna binnen! Bevestig je e-mail"
+                  : isRegister ? thema.login_meedoen : thema.login_welkom}
               </h1>
               <p className="text-muted-foreground font-serif italic text-sm">
-                {isRegister
-                  ? "Schrijf je in en stel je droomploeg samen."
-                  : "Log in en bekijk je peloton."}
+                {signupEmail
+                  ? "Nog één stapje — check je inbox."
+                  : isRegister
+                    ? "Schrijf je in en stel je droomploeg samen."
+                    : "Log in en bekijk je peloton."}
               </p>
             </motion.div>
           </AnimatePresence>
@@ -306,6 +336,41 @@ export default function Login() {
             })}
           </div>
 
+          {signupEmail ? (
+            <div className="space-y-4 text-center">
+              <p className="font-serif text-sm text-muted-foreground">
+                We stuurden een bevestigingslink naar:
+              </p>
+              <p className="font-display font-bold text-base break-all">{signupEmail}</p>
+              <p className="text-sm text-muted-foreground font-sans leading-relaxed">
+                Open de mail en klik op de link om je account te bevestigen. Geen mail?
+                Check ook je <strong>spam-/ongewenst</strong>-map.
+              </p>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={isResending || resendCooldown > 0}
+                  variant="outline"
+                  className="w-full retro-border font-bold h-11"
+                >
+                  {resendCooldown > 0
+                    ? `Opnieuw versturen (${resendCooldown}s)`
+                    : isResending
+                      ? "Versturen…"
+                      : "Mail niet ontvangen? Opnieuw versturen"}
+                </Button>
+              </motion.div>
+              <button
+                type="button"
+                onClick={() => { setSignupEmail(null); setIsRegister(false); }}
+                className="text-accent font-bold hover:underline transition-colors text-sm"
+              >
+                ← Terug naar inloggen
+              </button>
+            </div>
+          ) : (
+          <>
           <AnimatePresence mode="wait">
             <motion.form
               key={isRegister ? "register-form" : "login-form"}
@@ -406,6 +471,8 @@ export default function Login() {
               {isRegister ? "Log in →" : "Schrijf je in →"}
             </button>
           </p>
+          </>
+          )}
         </motion.div>
 
         <motion.p
