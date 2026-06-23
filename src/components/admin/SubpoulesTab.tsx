@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Trash2, Eye, EyeOff, Users2, RefreshCw } from "lucide-react";
+import { Upload, Trash2, Eye, EyeOff, Users2, RefreshCw, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
 type Row = {
@@ -15,6 +15,7 @@ type Row = {
   member_count: number;
   banner_url: string | null;
   banner_enabled: boolean;
+  requires_woonplaats: boolean;
 };
 
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
@@ -32,7 +33,7 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
     try {
       const { data, error } = await supabase
         .from("subpoules")
-        .select("id, name, slug, banner_url, banner_enabled, owner_user_id, subpoule_members(user_id)")
+        .select("id, name, slug, banner_url, banner_enabled, requires_woonplaats, owner_user_id, subpoule_members(user_id)")
         .eq("game_id", activeGameId)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -61,6 +62,7 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
           member_count: (s.subpoule_members as Array<unknown> | null)?.length ?? 0,
           banner_url: (s.banner_url as string | null) ?? null,
           banner_enabled: (s.banner_enabled as boolean | null) ?? true,
+          requires_woonplaats: (s.requires_woonplaats as boolean | null) ?? false,
         })),
       );
     } catch (e) {
@@ -116,6 +118,17 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
       return;
     }
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, banner_enabled: next } : r)));
+  }
+
+  async function toggleWoonplaats(id: string, next: boolean) {
+    if (!supabase) return;
+    const { error } = await supabase.from("subpoules").update({ requires_woonplaats: next } as never).eq("id", id);
+    if (error) {
+      toast.error(`Togglen mislukt: ${error.message}`);
+      return;
+    }
+    toast.success(next ? "Woonplaats nu vereist" : "Woonplaats niet meer vereist");
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, requires_woonplaats: next } : r)));
   }
 
   async function removeBanner(id: string) {
@@ -174,6 +187,11 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
                   ) : (
                     <Badge variant="outline" className="text-muted-foreground">Geen logo</Badge>
                   )}
+                  {r.requires_woonplaats && (
+                    <Badge className="bg-[hsl(var(--vintage-gold))/0.18] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold))/0.45] gap-1">
+                      <MapPin className="w-3 h-3" /> Woonplaats
+                    </Badge>
+                  )}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {r.owner_name ?? "—"} · {r.member_count} {r.member_count === 1 ? "lid" : "leden"}
@@ -199,6 +217,16 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
                 >
                   <Upload className="w-3.5 h-3.5 mr-1" />
                   {busyId === r.id ? "Uploaden…" : r.banner_url ? "Vervang" : "Upload logo"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant={r.requires_woonplaats ? "default" : "outline"}
+                  className="h-7 text-xs"
+                  onClick={() => toggleWoonplaats(r.id, !r.requires_woonplaats)}
+                  title="Vraag deelnemers hun woonplaats bij toetreden + filter in de ranking"
+                >
+                  <MapPin className="w-3.5 h-3.5 mr-1" />
+                  Woonplaats {r.requires_woonplaats ? "aan" : "uit"}
                 </Button>
                 {r.banner_url && (
                   <>
