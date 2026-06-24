@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import { RetroTabs } from "@/components/RetroTabs";
 import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
@@ -62,7 +63,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   const game = gameId
     ? { id: gameId, name: gameName ?? "" }
     : currentGame;
-  const { subpoules, isLoading, create, join, leave, remove, removeMember } = useSubpoules(effectiveGameId);
+  const { subpoules, isLoading, create, join, leave, remove, removeMember, transferOwnership } = useSubpoules(effectiveGameId);
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [subpouleSearchOpen, setSubpouleSearchOpen] = useState(false);
@@ -80,6 +81,8 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   const [createName, setCreateName] = useState("");
   const [createCode, setCreateCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  // Overdracht-bevestiging: welk lid eigenaar maken (+ subpoule).
+  const [transferTarget, setTransferTarget] = useState<{ subpouleId: string; userId: string; name: string } | null>(null);
   // Premium-feature: sommige subpoules vragen je woonplaats. We weten dat pas na
   // een join-poging (RLS verbergt de subpoule vóór lidmaatschap) → de RPC raise't
   // WOONPLAATS_REQUIRED, waarna we het veld tonen.
@@ -248,6 +251,19 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
     }
   };
 
+  const handleTransfer = async () => {
+    if (!transferTarget) return;
+    const { subpouleId, userId, name } = transferTarget;
+    try {
+      await transferOwnership.mutateAsync({ subpouleId, newOwnerId: userId });
+      toast({ title: "Eigenaarschap overgedragen", description: `Aan ${name}` });
+    } catch (e) {
+      toast({ title: "Overdragen mislukt", description: e instanceof Error ? e.message : "", variant: "destructive" });
+    } finally {
+      setTransferTarget(null);
+    }
+  };
+
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast({ title: "Code gekopieerd", description: code });
@@ -297,6 +313,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
     // ── Gedeelde panelen — hergebruikt op mobiel (één scrollpagina) en
     //    desktop (tabs), zodat er geen render-duplicatie ontstaat. ──
     const deelnemersSection = (
+      <>
       <Card className="retro-border">
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
           <CardTitle className="font-display flex items-center justify-between gap-2 flex-wrap">
@@ -343,19 +360,48 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                   </span>
                 </div>
                 {active.is_owner && m.user_id !== active.owner_user_id && (
-                  <Button
-                    variant="ghost" size="sm"
-                    onClick={() => handleRemoveMember(active.id, m.user_id, m.display_name)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <UserMinus className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost" size="sm"
+                      onClick={() => setTransferTarget({ subpouleId: active.id, userId: m.user_id, name: m.display_name })}
+                      className="text-amber-600 hover:text-amber-600"
+                      title="Maak eigenaar"
+                    >
+                      <Crown className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="sm"
+                      onClick={() => handleRemoveMember(active.id, m.user_id, m.display_name)}
+                      className="text-destructive hover:text-destructive"
+                      title="Verwijder lid"
+                    >
+                      <UserMinus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 )}
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={transferTarget !== null} onOpenChange={(o) => !o && setTransferTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eigenaarschap overdragen aan {transferTarget?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Jij wordt daarna gewoon deelnemer en kunt dit niet zelf terugdraaien.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogAction onClick={handleTransfer} disabled={transferOwnership.isPending}>
+              {transferOwnership.isPending ? "Bezig…" : "Overdragen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      </>
     );
 
     // Losse panelen — één per tab, hergebruikt op mobiel én desktop.

@@ -139,6 +139,21 @@ export function useSubpoules(gameId?: string) {
     onSuccess: invalidate,
   });
 
+  const transferOwnership = useMutation({
+    mutationFn: async ({ subpouleId, newOwnerId }: { subpouleId: string; newOwnerId: string }) => {
+      if (!supabase) throw new Error("Geen verbinding");
+      const { error } = await supabase.rpc("transfer_subpoule_ownership", {
+        p_subpoule_id: subpouleId,
+        p_new_owner: newOwnerId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_data, { subpouleId }) => {
+      invalidate();
+      queryClient.invalidateQueries({ queryKey: ["subpoule-members", subpouleId] });
+    },
+  });
+
   return {
     ...list,
     subpoules: list.data ?? [],
@@ -147,6 +162,7 @@ export function useSubpoules(gameId?: string) {
     leave,
     remove,
     removeMember,
+    transferOwnership,
     setWoonplaats,
   };
 }
