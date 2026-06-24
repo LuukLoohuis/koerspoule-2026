@@ -39,6 +39,7 @@ import { useDaguitslagCelebration } from "@/hooks/useDaguitslagCelebration";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
 import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, ChevronsUpDown, MessageCircle, TrendingUp, Flame, Share2, BarChart3, Trophy, X, MapPin, type LucideIcon } from "lucide-react";
 import StreekKlassement from "@/components/StreekKlassement";
+import WoonplaatsBeheer from "@/components/WoonplaatsBeheer";
 import { cn } from "@/lib/utils";
 
 // Mobiele subpoule-tabs (zoals Hors Categorie). Eén paneel tegelijk.
@@ -203,6 +204,8 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       const id = await join.mutateAsync({
         code: joinCode,
         woonplaats: joinNeedsWoonplaats ? joinWoonplaats.trim() : undefined,
+        // Veld is onthuld → woonplaats is nu optioneel; leeg mag door.
+        allowEmpty: joinNeedsWoonplaats,
       });
       toast({ title: "Welkom in de subpoule!" });
       setJoinCode(""); setJoinWoonplaats(""); setJoinNeedsWoonplaats(false);
@@ -212,7 +215,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       const msg = (e as { message?: string })?.message ?? (e instanceof Error ? e.message : "") ?? "";
       if (msg.includes("WOONPLAATS_REQUIRED")) {
         setJoinNeedsWoonplaats(true);
-        toast({ title: "Woonplaats vereist", description: "Deze subpoule vraagt je woonplaats — zo kun je je in de ranking vergelijken met streekgenoten." });
+        toast({ title: "Woonplaats (optioneel)", description: "Deze subpoule heeft een streekklassement. Vul je plaats in om mee te doen — of laat leeg en join zonder." });
         return;
       }
       toast({ title: "Joinen mislukt", description: msg, variant: "destructive" });
@@ -433,13 +436,16 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
 
     // Streekklassement — alleen voor subpoules die woonplaats vragen.
     const streekPanel = (
-      <StreekKlassement
-        subpouleId={active.id}
-        subpouleName={active.name}
-        gameId={effectiveGameId}
-        gameStatus={gameStatus}
-        streekMin={active.streek_min_deelnemers}
-      />
+      <div className="space-y-4">
+        <WoonplaatsBeheer subpouleId={active.id} />
+        <StreekKlassement
+          subpouleId={active.id}
+          subpouleName={active.name}
+          gameId={effectiveGameId}
+          gameStatus={gameStatus}
+          streekMin={active.streek_min_deelnemers}
+        />
+      </div>
     );
 
     // Dynamische tab-set: "Streek" alleen bij requires_woonplaats.
@@ -785,7 +791,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
               </div>
               {joinNeedsWoonplaats && (
                 <div>
-                  <Label htmlFor="join-woonplaats">Woonplaats</Label>
+                  <Label htmlFor="join-woonplaats">Woonplaats (optioneel)</Label>
                   <Input
                     id="join-woonplaats"
                     value={joinWoonplaats}
@@ -793,11 +799,11 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                     placeholder="bv. Enschede"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Deze subpoule vergelijkt deelnemers per woonplaats — zo zie je je positie tussen streekgenoten. Alleen je plaats, geen adres.
+                    Zo doe je mee aan het streekklassement; alleen je plaats, geen adres. Leeg laten mag — je kunt 'm later toevoegen.
                   </p>
                 </div>
               )}
-              <Button onClick={handleJoin} disabled={join.isPending || !joinCode.trim() || (joinNeedsWoonplaats && !joinWoonplaats.trim())} className="w-full">
+              <Button onClick={handleJoin} disabled={join.isPending || !joinCode.trim()} className="w-full">
                 Joinen
               </Button>
             </TabsContent>

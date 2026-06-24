@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Trophy, Swords, ArrowUp, ArrowDown, Flag, ArrowLeftRight, MapPin, ChevronsUpDown } from "lucide-react";
+import { Trophy, Swords, ArrowUp, ArrowDown, Flag, ArrowLeftRight, MapPin, ChevronsUpDown, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -275,6 +275,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   const isMember = user ? members.some((m) => m.user_id === user.id) : false;
   const [woonInput, setWoonInput] = useState("");
   const [savingWoon, setSavingWoon] = useState(false);
+  const [woonPromptDismissed, setWoonPromptDismissed] = useState(false);
   const saveOwnWoonplaats = async () => {
     if (!supabase || !woonInput.trim()) return;
     setSavingWoon(true);
@@ -372,12 +373,13 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           )}
         </div>
 
-        {/* Woonplaats invullen — niet-blokkerende prompt voor wie 'm mist. */}
-        {requiresWoonplaats && isMember && !ownWoonplaats && (
+        {/* Woonplaats invullen — niet-blokkerende, wegklikbare prompt voor wie 'm mist.
+            Vaste invul-/wijzigplek staat in de Streek-tab (WoonplaatsBeheer). */}
+        {requiresWoonplaats && isMember && !ownWoonplaats && !woonPromptDismissed && (
           <div className="px-3 py-2.5 border-b border-border bg-[hsl(var(--vintage-gold))/0.08] flex flex-col sm:flex-row sm:items-center gap-2">
             <span className="text-xs text-muted-foreground font-sans flex items-center gap-1.5 shrink-0">
               <MapPin className="w-3.5 h-3.5 text-[hsl(var(--vintage-gold))]" />
-              Vul je woonplaats in om je met streekgenoten te vergelijken:
+              Woonplaats toevoegen — doe mee aan het streekklassement:
             </span>
             <div className="flex items-center gap-2 flex-1">
               <Input
@@ -389,6 +391,15 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
               <Button size="sm" className="h-8 shrink-0" disabled={savingWoon || !woonInput.trim()} onClick={saveOwnWoonplaats}>
                 {savingWoon ? "Opslaan…" : "Opslaan"}
               </Button>
+              <button
+                type="button"
+                onClick={() => setWoonPromptDismissed(true)}
+                className="shrink-0 text-muted-foreground/60 hover:text-foreground"
+                aria-label="Sluiten"
+                title="Sluiten"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           </div>
         )}

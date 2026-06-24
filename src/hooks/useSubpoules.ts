@@ -84,11 +84,13 @@ export function useSubpoules(gameId?: string) {
   });
 
   const join = useMutation({
-    mutationFn: async ({ code, woonplaats }: { code: string; woonplaats?: string }) => {
+    mutationFn: async ({ code, woonplaats, allowEmpty }: { code: string; woonplaats?: string; allowEmpty?: boolean }) => {
       if (!supabase) throw new Error("Geen verbinding");
+      const wp = woonplaats?.trim();
       const { data, error } = await supabase.rpc("join_subpoule", {
         p_code: code,
-        p_woonplaats: woonplaats ?? null,
+        p_woonplaats: wp ? wp : null,
+        p_allow_empty: allowEmpty ?? false,
       });
       if (error) throw error;
       return data as string;
@@ -97,6 +99,8 @@ export function useSubpoules(gameId?: string) {
   });
 
   // Eigen woonplaats achteraf zetten/bijwerken (alleen subpoules die 't vragen).
+  // Lege invoer = null (verwijdert woonplaats). Invalideer ook de ledenlijst zodat
+  // ranking/streekklassement/filter direct meeschuiven.
   const setWoonplaats = useMutation({
     mutationFn: async ({ subpouleId, woonplaats }: { subpouleId: string; woonplaats: string }) => {
       if (!supabase) throw new Error("Geen verbinding");
@@ -106,7 +110,10 @@ export function useSubpoules(gameId?: string) {
       });
       if (error) throw error;
     },
-    onSuccess: invalidate,
+    onSuccess: (_data, { subpouleId }) => {
+      invalidate();
+      queryClient.invalidateQueries({ queryKey: ["subpoule-members", subpouleId] });
+    },
   });
 
   const leave = useMutation({
