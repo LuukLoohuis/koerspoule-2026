@@ -26,6 +26,7 @@ import VueltaPoule2026 from "./pages/VueltaPoule2026";
 import TourDeFranceFemmesPoule2026 from "./pages/TourDeFranceFemmesPoule2026";
 import Etappes from "./pages/Etappes";
 import EtappeDetail from "./pages/EtappeDetail";
+import Prizes from "./pages/Prizes";
 import Preview from "./pages/Preview";
 const InstagramExport = lazyWithRetry(() => import("./pages/InstagramExport"));
 import Uitschrijven from "./pages/Uitschrijven";
@@ -78,6 +79,7 @@ const App = () => (
               <Route path="/tour-de-france-femmes-poule-2026" element={<TourDeFranceFemmesPoule2026 />} />
               <Route path="/etappes" element={<Etappes />} />
               <Route path="/etappes/:stageNumber" element={<EtappeDetail />} />
+              <Route path="/prijzen" element={<Prizes />} />
               {[
                 "/tour-de-france-femmes-wielerspel-2026",
                 "/tour-de-france-femmes-wielerspel",

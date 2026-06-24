@@ -11,6 +11,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useThema } from "@/contexts/ThemaContext";
+import { useCurrentGame } from "@/hooks/useCurrentGame";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -26,7 +27,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, role } = useAuth();
   const { thema } = useThema();
+  const { data: currentGame } = useCurrentGame();
   const isLoggedIn = Boolean(user);
+
+  // "Prijzen" alleen in de nav als de actieve game 'm zichtbaar heeft gezet.
+  const visibleNav = currentGame?.prizes_visible
+    ? [...navItems.slice(0, 4), { to: "/prijzen", label: "Prijzen" }, ...navItems.slice(4)]
+    : navItems;
 
   // Kleur-tokens worden nu door ThemaProvider gezet (vervangt useAccentColor).
 
@@ -112,7 +119,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="hidden md:block border-t border-border/40 bg-background/40">
           <div className="container mx-auto px-5">
             <nav className="flex items-center gap-1.5">
-              {navItems.map((item) => {
+              {visibleNav.map((item) => {
                 const isActive = location.pathname === item.to;
                 return (
                   <Link
@@ -134,7 +141,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Mobile nav */}
         {mobileOpen && (
           <nav className="md:hidden border-t border-border/40 bg-background px-4 pb-4 pt-3 flex flex-wrap gap-2">
-            {navItems.map((item) => (
+            {visibleNav.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}

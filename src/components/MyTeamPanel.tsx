@@ -27,7 +27,7 @@ import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { isGameLocked } from "@/lib/gameStatus";
-import { Check, Pencil, X, Target, Crown, ClipboardList, Flag, Shirt, type LucideIcon } from "lucide-react";
+import { Check, Pencil, X, Target, Crown, ClipboardList, Flag, Shirt, Trophy, type LucideIcon } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
 
@@ -332,11 +332,14 @@ export default function MyTeamPanel({
   onOpenSubpoule,
   onOpenStageResult,
   focusNameSignal,
+  prizesVisible,
 }: {
   section?: "ploeg" | "prono";
   gameId?: string;
   gameStatus?: string;
   gameName?: string | null;
+  /** Toon de subtiele "bekijk de prijzen"-tegel (alleen bij prizes_visible). */
+  prizesVisible?: boolean | null;
   /** Open een Hors-Catégorie-subtab (Monkey IQ → dartpijl, etc.). */
   onOpenHors?: (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => void;
   /** Spring naar de Uitslagen-tab (daguitslag/klassement). */
@@ -1374,6 +1377,20 @@ export default function MyTeamPanel({
             </Link>
           </Button>
         </div>
+      )}
+
+      {/* Subtiele koppeling naar de prijzenkast — alleen als de game prijzen toont. */}
+      {prizesVisible && (
+        <Link
+          to="/prijzen"
+          className="group flex items-center gap-3 ornate-frame retro-border p-3 bg-[hsl(var(--vintage-gold)/0.08)] hover:bg-[hsl(var(--vintage-gold)/0.14)] transition-colors"
+        >
+          <Trophy className="h-5 w-5 text-[hsl(var(--vintage-gold))] shrink-0" />
+          <span className="flex-1 min-w-0 text-sm font-serif">
+            Er valt wat te winnen — <span className="font-display font-bold">bekijk de prijzen</span>
+          </span>
+          <span aria-hidden className="text-muted-foreground group-hover:translate-x-0.5 transition-transform">→</span>
+        </Link>
       )}
 
 
