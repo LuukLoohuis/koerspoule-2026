@@ -8,12 +8,13 @@ const GOLD = "hsl(var(--vintage-gold))";
 
 // Sfeerachtergrond achter het podium (zelf geplaatst in public/img/).
 const PODIUM_BG = "/img/prijzen-achtergrond.png";
-// Arc de Triomphe zit midden-boven en botste met de bovenrand van de 1e-kaart.
-// Inzoomen vanaf de bovenrand duwt de Arc omlaag (onder de kaart-rand) zonder de
-// kaarten te wijzigen. Hoger = meer ingezoomd / Arc lager. Mobiel iets minder.
-const BG_ZOOM = 1.28;
+// Achtergrond-tafereel lager in beeld zetten zodat de straat/bogen onder de
+// kaarten aansluiten: lagere Y-positie toont het onderste deel + lichte zoom.
+// Hoger Y% = lager tafereel zichtbaar; hoger ZOOM = meer ingezoomd. Mobiel apart.
+const BG_ZOOM = 1.3;
 const BG_ZOOM_MOBILE = 1.18;
-const BG_POSITION = "center top";
+const BG_POSITION = "center 58%";
+const BG_POSITION_MOBILE = "center 52%";
 // Leesbaarheidslaag: crème/parchment-waas (#F5EDD8) over de achtergrond.
 // Hoger = meer dimmen (beter contrast), lager = meer sfeer zichtbaar.
 const OVERLAY_OPACITY = 0.4;
@@ -170,14 +171,13 @@ export default function Prizes() {
               <section className="relative overflow-hidden rounded-xl" style={{ backgroundColor: `rgb(${CREME_RGB})` }}>
                 {/* Sfeerachtergrond (Champs-Élysées). Inzoomen vanaf de bovenrand
                     duwt de Arc onder de kaart-bovenrand; mobiel iets minder zoom. */}
-                <style>{`.podium-bg{transform:scale(${BG_ZOOM_MOBILE});transform-origin:center top}@media(min-width:768px){.podium-bg{transform:scale(${BG_ZOOM})}}`}</style>
+                <style>{`.podium-bg{object-position:${BG_POSITION_MOBILE};transform:scale(${BG_ZOOM_MOBILE});transform-origin:center center}@media(min-width:768px){.podium-bg{object-position:${BG_POSITION};transform:scale(${BG_ZOOM})}}`}</style>
                 <img
                   src={PODIUM_BG}
                   alt=""
                   aria-hidden
                   loading="lazy"
                   decoding="async"
-                  style={{ objectPosition: BG_POSITION }}
                   className="podium-bg absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
                 />
                 {/* Leesbaarheidslaag tussen achtergrond en kaarten. */}
