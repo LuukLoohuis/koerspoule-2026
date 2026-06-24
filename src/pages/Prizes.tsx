@@ -32,7 +32,7 @@ const podiumOverlay =
   // Zachte vignette (iets meer waas aan de randen + midden) + onderrand-fade
   // naar de paginakleur zodat er geen harde naad ontstaat met de sectie eronder.
   `radial-gradient(125% 100% at 50% 30%, rgba(${CREME_RGB}, ${OVERLAY_OPACITY}) 0%, rgba(${CREME_RGB}, ${OVERLAY_OPACITY + 0.06}) 60%, rgba(${CREME_RGB}, ${OVERLAY_OPACITY + 0.18}) 100%), ` +
-  `linear-gradient(to bottom, transparent 62%, hsl(var(--background)) 100%)`;
+  `linear-gradient(to bottom, transparent 84%, hsl(var(--background) / 0.55) 100%)`;
 
 function SponsorLine({ p }: { p: Prize }) {
   if (!p.sponsor_naam && !p.sponsor_logo_url) return null;
