@@ -6,6 +6,18 @@ import { usePrizes, type Prize } from "@/hooks/usePrizes";
 
 const GOLD = "hsl(var(--vintage-gold))";
 
+// Sfeerachtergrond achter het podium (zelf geplaatst in public/img/).
+const PODIUM_BG = "/img/prijzen-achtergrond.png";
+// Leesbaarheidslaag: crème/parchment-waas (#F5EDD8) over de achtergrond.
+// Hoger = meer dimmen (beter contrast), lager = meer sfeer zichtbaar.
+const OVERLAY_OPACITY = 0.4;
+const CREME_RGB = "245, 237, 216"; // #F5EDD8
+const podiumOverlay =
+  // Zachte vignette (iets meer waas aan de randen + midden) + onderrand-fade
+  // naar de paginakleur zodat er geen harde naad ontstaat met de sectie eronder.
+  `radial-gradient(125% 100% at 50% 30%, rgba(${CREME_RGB}, ${OVERLAY_OPACITY}) 0%, rgba(${CREME_RGB}, ${OVERLAY_OPACITY + 0.06}) 60%, rgba(${CREME_RGB}, ${OVERLAY_OPACITY + 0.18}) 100%), ` +
+  `linear-gradient(to bottom, transparent 62%, hsl(var(--background)) 100%)`;
+
 function SponsorLine({ p }: { p: Prize }) {
   if (!p.sponsor_naam && !p.sponsor_logo_url) return null;
   return (
@@ -135,17 +147,31 @@ export default function Prizes() {
           <>
             {/* Podium — DOM 1,2,3 (mobiel onder elkaar); desktop herschikt naar 2-1-3 */}
             {(podium1 || podium2 || podium3) && (
-              <section>
-                <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
-                  <Trophy className="h-5 w-5" style={{ color: GOLD }} /> Het podium
-                </h2>
-                <div className="flex flex-col md:flex-row md:justify-center md:items-end gap-4 md:gap-3">
-                  <PodiumCard p={podium1} plek={1} />
-                  <PodiumCard p={podium2} plek={2} />
-                  <PodiumCard p={podium3} plek={3} />
+              <section className="relative overflow-hidden rounded-xl" style={{ backgroundColor: `rgb(${CREME_RGB})` }}>
+                {/* Sfeerachtergrond (Champs-Élysées), bovenaan uitgelijnd, lazy. */}
+                <img
+                  src={PODIUM_BG}
+                  alt=""
+                  aria-hidden
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none"
+                />
+                {/* Leesbaarheidslaag tussen achtergrond en kaarten. */}
+                <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: podiumOverlay }} />
+                {/* Inhoud bovenop */}
+                <div className="relative z-10 p-4 md:p-6">
+                  <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+                    <Trophy className="h-5 w-5" style={{ color: GOLD }} /> Het podium
+                  </h2>
+                  <div className="flex flex-col md:flex-row md:justify-center md:items-end gap-4 md:gap-3">
+                    <PodiumCard p={podium1} plek={1} />
+                    <PodiumCard p={podium2} plek={2} />
+                    <PodiumCard p={podium3} plek={3} />
+                  </div>
+                  {/* Vloer onder het podium */}
+                  <div className="hidden md:block h-1 rounded-full mt-3" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}66, transparent)` }} aria-hidden />
                 </div>
-                {/* Vloer onder het podium */}
-                <div className="hidden md:block h-1 rounded-full mt-0" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}66, transparent)` }} aria-hidden />
               </section>
             )}
 
