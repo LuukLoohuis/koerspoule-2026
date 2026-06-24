@@ -187,7 +187,7 @@ export default function Prizes() {
                     className="font-display text-2xl md:text-3xl font-bold mb-4 flex items-center gap-2 text-white"
                     style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6), 0 2px 10px rgba(0,0,0,0.45)" }}
                   >
-                    <Trophy className="h-7 w-7 md:h-8 md:w-8" style={{ color: GOLD, filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.55))" }} /> Het podium
+                    <Trophy className="h-7 w-7 md:h-8 md:w-8" style={{ color: "#FFD400", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.55))" }} /> Het podium
                   </h2>
                   <div className="flex flex-col md:flex-row md:justify-center md:items-end gap-4 md:gap-3">
                     <PodiumCard p={podium1} plek={1} />
