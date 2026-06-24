@@ -357,7 +357,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
       })()}
 
       {/* Cumulative standings up to the selected stage */}
-      <div className="retro-border bg-card overflow-hidden">
+      <div className="retro-border no-hover-lift bg-card overflow-hidden">
         <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
 
         <div className="p-4 border-b-2 border-foreground bg-secondary/50 flex items-center justify-between">
@@ -584,8 +584,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   {/* Woonplaats-label + positie binnen de gekozen plaats. */}
                   {requiresWoonplaats && woonplaatsByUser.get(m.user_id) && (
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-sans truncate">
-                        <MapPin className="w-3.5 h-3.5 shrink-0 text-[hsl(var(--vintage-gold))]" />
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-sans truncate">
+                        <MapPin className="w-4 h-4 shrink-0 text-[hsl(var(--vintage-gold))]" />
                         {woonplaatsByUser.get(m.user_id)}
                       </span>
                       {regioPosByUser.get(m.user_id) != null && (
