@@ -61,8 +61,8 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
       >
         {/* Rang-kop met accent */}
         <div className="flex items-center justify-center gap-2 pt-3 pb-1">
-          <Icon className={isWinner ? "h-7 w-7" : "h-5 w-5"} style={{ color: accent }} strokeWidth={2} />
-          <span className={`font-display font-black tabular-nums ${isWinner ? "text-3xl" : "text-xl"}`} style={{ color: accent }}>
+          <Icon className={isWinner ? "h-9 w-9" : "h-7 w-7"} style={{ color: accent }} strokeWidth={2} />
+          <span className={`font-display font-black tabular-nums ${isWinner ? "text-4xl" : "text-2xl"}`} style={{ color: accent }}>
             {plek}e
           </span>
         </div>
@@ -157,8 +157,8 @@ export default function Prizes() {
                 <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: podiumOverlay }} />
                 {/* Inhoud bovenop */}
                 <div className="relative z-10 p-4 md:p-6">
-                  <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
-                    <Trophy className="h-5 w-5" style={{ color: GOLD }} /> Het podium
+                  <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 flex items-center gap-2">
+                    <Trophy className="h-7 w-7 md:h-8 md:w-8" style={{ color: GOLD }} /> Het podium
                   </h2>
                   <div className="flex flex-col md:flex-row md:justify-center md:items-end gap-4 md:gap-3">
                     <PodiumCard p={podium1} plek={1} />
