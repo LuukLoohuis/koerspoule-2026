@@ -35,18 +35,20 @@ function SponsorLine({ p }: { p: Prize }) {
 }
 
 const PODIUM_CFG = {
-  1: { accent: GOLD, Icon: Shirt, fallback: "Klassementstrui", tred: "md:h-16", mdOrder: "md:order-2" },
-  2: { accent: "#9aa3ad", Icon: Award, fallback: "Beker", tred: "md:h-9", mdOrder: "md:order-1" },
-  3: { accent: "#b87333", Icon: Award, fallback: "Beker", tred: "md:h-6", mdOrder: "md:order-3" },
+  // lift = getrapte ondermarge; met items-end stijgt 1e het hoogst, dan 2e, dan 3e
+  // → schone podium-trappen zonder losse balkjes die met de foto botsen.
+  1: { accent: GOLD, Icon: Shirt, fallback: "Klassementstrui", lift: "md:mb-12", mdOrder: "md:order-2" },
+  2: { accent: "#9aa3ad", Icon: Award, fallback: "Beker", lift: "md:mb-5", mdOrder: "md:order-1" },
+  3: { accent: "#b87333", Icon: Award, fallback: "Beker", lift: "md:mb-0", mdOrder: "md:order-3" },
 } as const;
 
 function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
   const isWinner = plek === 1;
-  const { accent, Icon, fallback, tred, mdOrder } = PODIUM_CFG[plek];
+  const { accent, Icon, fallback, lift, mdOrder } = PODIUM_CFG[plek];
   return (
     // DOM-volgorde 1,2,3 (mobiel correct); op desktop herschikt md:order naar 2-1-3.
-    // Kolommen lijnen onderaan uit → verschillende tred-hoogtes geven treden-gevoel.
-    <div className={`flex-1 min-w-0 flex flex-col ${mdOrder} ${isWinner ? "md:max-w-[44%]" : "md:max-w-[32%]"}`}>
+    // Kolommen lijnen onderaan uit; getrapte ondermarge geeft het podium-trapeffect.
+    <div className={`flex-1 min-w-0 flex flex-col ${mdOrder} ${lift} ${isWinner ? "md:max-w-[44%]" : "md:max-w-[32%]"}`}>
       <Card
         className="ornate-frame bg-card rounded-xl overflow-hidden border transition-shadow"
         style={{
@@ -84,12 +86,6 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
           )}
         </CardContent>
       </Card>
-      {/* Podiumtrede (alleen desktop, CSS — geen afbeelding) */}
-      <div
-        className={`hidden md:block mt-2 rounded-t-sm ${tred}`}
-        style={{ background: `linear-gradient(180deg, ${accent}2e, ${accent}14)`, borderTop: `2px solid ${accent}` }}
-        aria-hidden
-      />
     </div>
   );
 }
