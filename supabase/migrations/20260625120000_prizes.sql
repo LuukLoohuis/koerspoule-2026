@@ -25,7 +25,10 @@ create policy prizes_read on public.prizes for select using (true);
 drop policy if exists prizes_admin_write on public.prizes;
 create policy prizes_admin_write on public.prizes for all using ((select public.is_admin())) with check ((select public.is_admin()));
 
-grant select on public.prizes to anon, authenticated;
+grant select on public.prizes to anon;
+-- authenticated heeft DML-grant nodig zodat de admin (authenticated-rol) kan
+-- schrijven; de RLS-policy prizes_admin_write (is_admin) blijft de echte gate.
+grant select, insert, update, delete on public.prizes to authenticated;
 grant all on public.prizes to service_role;
 
 -- Publieke bucket voor sponsorlogo's/prijsfoto's.
