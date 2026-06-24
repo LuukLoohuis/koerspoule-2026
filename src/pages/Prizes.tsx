@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Award, Gift, Lock } from "lucide-react";
+import { Trophy, Award, Gift, Lock, Shirt } from "lucide-react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { usePrizes, type Prize } from "@/hooks/usePrizes";
 
@@ -22,35 +22,62 @@ function SponsorLine({ p }: { p: Prize }) {
   );
 }
 
+const PODIUM_CFG = {
+  1: { accent: GOLD, Icon: Shirt, fallback: "Klassementstrui", tred: "md:h-16", mdOrder: "md:order-2" },
+  2: { accent: "#9aa3ad", Icon: Award, fallback: "Beker", tred: "md:h-9", mdOrder: "md:order-1" },
+  3: { accent: "#b87333", Icon: Award, fallback: "Beker", tred: "md:h-6", mdOrder: "md:order-3" },
+} as const;
+
 function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
   const isWinner = plek === 1;
-  const Icon = isWinner ? Trophy : Award;
-  const accent = isWinner ? GOLD : plek === 2 ? "#9ca3af" : "#c2702c";
-  // Plek 1 in het midden + hoger; 2 links, 3 rechts (klassiek podium).
-  const order = plek === 1 ? "order-2" : plek === 2 ? "order-1" : "order-3";
-  const lift = isWinner ? "md:-mt-6" : "";
+  const { accent, Icon, fallback, tred, mdOrder } = PODIUM_CFG[plek];
   return (
-    <div className={`flex-1 min-w-0 ${order} ${lift}`}>
-      <Card className={`ornate-frame retro-border h-full ${isWinner ? "border-2" : ""}`} style={isWinner ? { borderColor: accent } : undefined}>
-        <CardContent className="p-4 text-center">
-          <div className="flex items-center justify-center mb-1.5">
-            <Icon className="h-7 w-7" style={{ color: accent }} strokeWidth={2} />
-          </div>
-          <div className="font-display font-black text-2xl tabular-nums" style={{ color: accent }}>{plek}e</div>
+    // DOM-volgorde 1,2,3 (mobiel correct); op desktop herschikt md:order naar 2-1-3.
+    // Kolommen lijnen onderaan uit → verschillende tred-hoogtes geven treden-gevoel.
+    <div className={`flex-1 min-w-0 flex flex-col ${mdOrder} ${isWinner ? "md:max-w-[44%]" : "md:max-w-[32%]"}`}>
+      <Card
+        className="ornate-frame bg-card rounded-xl overflow-hidden border transition-shadow"
+        style={{
+          borderColor: isWinner ? accent : "hsl(var(--border))",
+          borderWidth: isWinner ? 2 : 1,
+          boxShadow: isWinner
+            ? `0 10px 30px -10px ${accent}, 0 0 0 1px ${accent}33`
+            : "0 6px 18px -12px rgba(0,0,0,0.4)",
+        }}
+      >
+        {/* Rang-kop met accent */}
+        <div className="flex items-center justify-center gap-2 pt-3 pb-1">
+          <Icon className={isWinner ? "h-7 w-7" : "h-5 w-5"} style={{ color: accent }} strokeWidth={2} />
+          <span className={`font-display font-black tabular-nums ${isWinner ? "text-3xl" : "text-xl"}`} style={{ color: accent }}>
+            {plek}e
+          </span>
+        </div>
+        <CardContent className={`text-center ${isWinner ? "p-4 pt-1" : "p-3 pt-1"}`}>
           {p ? (
             <>
               {p.afbeelding_url && (
-                <img src={p.afbeelding_url} alt={p.titel} className="mt-2 w-full h-28 object-cover rounded-md border border-border" loading="lazy" />
+                <div className={`w-full ${isWinner ? "aspect-[4/3]" : "aspect-[3/2]"} rounded-lg border border-border bg-secondary/30 overflow-hidden mb-2`}>
+                  <img src={p.afbeelding_url} alt={p.titel} className="w-full h-full object-contain" loading="lazy" />
+                </div>
               )}
-              <h3 className="font-display font-bold text-base mt-2 leading-tight">{p.titel || (isWinner ? "Klassementstrui" : "Beker")}</h3>
+              <h3 className={`font-display font-bold leading-tight ${isWinner ? "text-lg" : "text-sm"}`}>{p.titel || fallback}</h3>
               {p.omschrijving && <p className="text-sm text-muted-foreground font-serif mt-1 leading-snug">{p.omschrijving}</p>}
-              <SponsorLine p={p} />
+              <div className="flex justify-center"><SponsorLine p={p} /></div>
             </>
           ) : (
-            <p className="text-sm text-muted-foreground italic mt-2">Nog niet bekend</p>
+            <div className="py-4 flex flex-col items-center gap-1.5 text-muted-foreground">
+              <Icon className="h-6 w-6 opacity-40" style={{ color: accent }} />
+              <p className="text-sm italic">Nog niet bekend</p>
+            </div>
           )}
         </CardContent>
       </Card>
+      {/* Podiumtrede (alleen desktop, CSS — geen afbeelding) */}
+      <div
+        className={`hidden md:block mt-2 rounded-t-sm ${tred}`}
+        style={{ background: `linear-gradient(180deg, ${accent}2e, ${accent}14)`, borderTop: `2px solid ${accent}` }}
+        aria-hidden
+      />
     </div>
   );
 }
@@ -102,18 +129,25 @@ export default function Prizes() {
           <GeslotenKast />
         ) : (
           <>
-            {/* Podium */}
+            {/* Podium — DOM 1,2,3 (mobiel onder elkaar); desktop herschikt naar 2-1-3 */}
             {(podium1 || podium2 || podium3) && (
               <section>
-                <h2 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
+                <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
                   <Trophy className="h-5 w-5" style={{ color: GOLD }} /> Het podium
                 </h2>
-                <div className="flex flex-col md:flex-row items-stretch gap-4 md:items-end">
-                  <PodiumCard p={podium2} plek={2} />
+                <div className="flex flex-col md:flex-row md:justify-center md:items-end gap-4 md:gap-3">
                   <PodiumCard p={podium1} plek={1} />
+                  <PodiumCard p={podium2} plek={2} />
                   <PodiumCard p={podium3} plek={3} />
                 </div>
+                {/* Vloer onder het podium */}
+                <div className="hidden md:block h-1 rounded-full mt-0" style={{ background: `linear-gradient(90deg, transparent, ${GOLD}66, transparent)` }} aria-hidden />
               </section>
+            )}
+
+            {/* Gouden scheidingslijn */}
+            {(podium1 || podium2 || podium3) && dagprijzen.length > 0 && (
+              <div className="vintage-divider" aria-hidden />
             )}
 
             {/* Dagprijzen */}
