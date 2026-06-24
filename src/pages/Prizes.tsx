@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Award, Gift, Lock, Shirt } from "lucide-react";
+import { Trophy, Award, Gift, Lock, Shirt, Medal } from "lucide-react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { usePrizes, type Prize } from "@/hooks/usePrizes";
 
@@ -103,7 +103,11 @@ export default function Prizes() {
   const podium1 = prizes.find((p) => p.soort === "podium_1");
   const podium2 = prizes.find((p) => p.soort === "podium_2");
   const podium3 = prizes.find((p) => p.soort === "podium_3");
+  const ereplaatsen = prizes
+    .filter((p) => p.soort === "ereplaats" && p.rang != null)
+    .sort((a, b) => (a.rang ?? 0) - (b.rang ?? 0));
   const dagprijzen = prizes.filter((p) => p.soort === "dagprijs");
+  const hasPodium = Boolean(podium1 || podium2 || podium3);
   const hasAny = prizes.length > 0;
 
   const open = Boolean(game?.prizes_visible) && hasAny;
@@ -145,8 +149,39 @@ export default function Prizes() {
               </section>
             )}
 
+            {/* Ereplaatsen 4 t/m 10 — compact, ondergeschikt aan het podium */}
+            {ereplaatsen.length > 0 && (
+              <>
+                {hasPodium && <div className="vintage-divider" aria-hidden />}
+                <section>
+                  <h2 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
+                    <Medal className="h-5 w-5" style={{ color: GOLD }} /> Ereplaatsen
+                  </h2>
+                  <ul className="divide-y divide-border rounded-lg border border-border bg-card overflow-hidden">
+                    {ereplaatsen.map((p) => (
+                      <li key={p.id} className="flex items-center gap-3 px-3 py-2.5">
+                        <span className="font-display font-black tabular-nums text-base w-9 shrink-0 text-center" style={{ color: GOLD }}>
+                          {p.rang}e
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <span className="font-display font-bold text-sm leading-tight">{p.titel || "Prijs"}</span>
+                          {p.omschrijving && <span className="text-sm text-muted-foreground font-serif"> — {p.omschrijving}</span>}
+                        </div>
+                        {(p.sponsor_logo_url || p.sponsor_naam) && (
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {p.sponsor_logo_url && <img src={p.sponsor_logo_url} alt={p.sponsor_naam ?? "sponsor"} className="h-5 w-auto max-w-[60px] object-contain" loading="lazy" />}
+                            {p.sponsor_naam && <span className="hidden sm:inline text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{p.sponsor_naam}</span>}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </>
+            )}
+
             {/* Gouden scheidingslijn */}
-            {(podium1 || podium2 || podium3) && dagprijzen.length > 0 && (
+            {(hasPodium || ereplaatsen.length > 0) && dagprijzen.length > 0 && (
               <div className="vintage-divider" aria-hidden />
             )}
 

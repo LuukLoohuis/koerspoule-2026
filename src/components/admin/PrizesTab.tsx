@@ -19,6 +19,7 @@ type Row = {
   sponsor_logo_url: string | null;
   afbeelding_url: string | null;
   sort_order: number;
+  rang: number | null;
 };
 
 const SOORT_LABEL: Record<PrijsSoort, string> = {
@@ -26,8 +27,10 @@ const SOORT_LABEL: Record<PrijsSoort, string> = {
   podium_2: "Podium 2 — beker",
   podium_3: "Podium 3 — beker",
   dagprijs: "Dagprijs",
+  ereplaats: "Ereplaats (4 t/m 10)",
 };
-const SOORTEN: PrijsSoort[] = ["podium_1", "podium_2", "podium_3", "dagprijs"];
+const SOORTEN: PrijsSoort[] = ["podium_1", "podium_2", "podium_3", "dagprijs", "ereplaats"];
+const RANGEN = [4, 5, 6, 7, 8, 9, 10];
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -84,6 +87,30 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
 
+  // Vrije rang 4..10 binnen deze game (geen dubbele ereplaats-rang).
+  function vrijeRangen(exclId?: string) {
+    const bezet = new Set(rows.filter((r) => r.soort === "ereplaats" && r.id !== exclId && r.rang != null).map((r) => r.rang));
+    return RANGEN.filter((n) => !bezet.has(n));
+  }
+
+  async function changeSoort(id: string, soort: PrijsSoort) {
+    if (soort === "ereplaats") {
+      const vrij = vrijeRangen(id);
+      if (vrij.length === 0) { toast.error("Alle ereplaatsen 4 t/m 10 zijn al gebruikt."); return; }
+      await saveField(id, { soort, rang: vrij[0] });
+    } else {
+      await saveField(id, { soort, rang: null });
+    }
+  }
+
+  async function changeRang(id: string, rang: number) {
+    if (rows.some((r) => r.id !== id && r.soort === "ereplaats" && r.rang === rang)) {
+      toast.error(`Rang ${rang}e is al gebruikt.`);
+      return;
+    }
+    await saveField(id, { rang });
+  }
+
   async function removePrize(id: string) {
     if (!supabase || !confirm("Deze prijs verwijderen?")) return;
     const { error } = await supabase.from("prizes").delete().eq("id", id);
@@ -138,12 +165,26 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
               <div className="grid grid-cols-1 md:grid-cols-[200px_1fr_90px] gap-2">
                 <div>
                   <Label className="text-[11px]">Soort</Label>
-                  <Select value={r.soort} onValueChange={(v) => saveField(r.id, { soort: v as PrijsSoort })}>
+                  <Select value={r.soort} onValueChange={(v) => changeSoort(r.id, v as PrijsSoort)}>
                     <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {SOORTEN.map((s) => <SelectItem key={s} value={s} className="text-xs">{SOORT_LABEL[s]}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  {r.soort === "ereplaats" && (
+                    <div className="mt-1.5">
+                      <Label className="text-[11px]">Rang</Label>
+                      <Select value={r.rang != null ? String(r.rang) : undefined} onValueChange={(v) => changeRang(r.id, Number(v))}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Kies rang" /></SelectTrigger>
+                        <SelectContent>
+                          {RANGEN.map((n) => {
+                            const taken = rows.some((o) => o.id !== r.id && o.soort === "ereplaats" && o.rang === n);
+                            return <SelectItem key={n} value={String(n)} disabled={taken} className="text-xs">{n}e plaats{taken ? " (bezet)" : ""}</SelectItem>;
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <Label className="text-[11px]">Titel</Label>

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
-export type PrijsSoort = "podium_1" | "podium_2" | "podium_3" | "dagprijs";
+export type PrijsSoort = "podium_1" | "podium_2" | "podium_3" | "dagprijs" | "ereplaats";
 
 export type Prize = {
   id: string;
@@ -13,6 +13,7 @@ export type Prize = {
   sponsor_logo_url: string | null;
   afbeelding_url: string | null;
   sort_order: number;
+  rang: number | null;
   created_at: string;
 };
 
