@@ -12,6 +12,16 @@ const PODIUM_BG = "/img/prijzen-achtergrond.png";
 // Hoger = meer dimmen (beter contrast), lager = meer sfeer zichtbaar.
 const OVERLAY_OPACITY = 0.4;
 const CREME_RGB = "245, 237, 216"; // #F5EDD8
+
+// Glas-effect podiumkaarten: crème-vulling op opacity + backdrop-blur, zodat de
+// sfeerachtergrond zacht doorschijnt. Hoger = dekkender (beter leesbaar).
+const GLASS = {
+  empty: 0.5,   // lege/ereplekken (2e, 3e, "nog niet bekend") — luchtigst
+  filled: 0.62, // gevulde niet-winnaar
+  winner: 0.7,  // 1e-plaats — tekstzone iets dekkender
+  photo: 0.92,  // zone rond de sponsorfoto — vrijwel dekkend, geen rommel
+  blur: "6px",
+};
 const podiumOverlay =
   // Zachte vignette (iets meer waas aan de randen + midden) + onderrand-fade
   // naar de paginakleur zodat er geen harde naad ontstaat met de sectie eronder.
@@ -45,14 +55,19 @@ const PODIUM_CFG = {
 function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
   const isWinner = plek === 1;
   const { accent, Icon, fallback, lift, mdOrder } = PODIUM_CFG[plek];
+  // Lege plekken het luchtigst; winnaar iets dekkender; gevuld ertussenin.
+  const fill = !p ? GLASS.empty : isWinner ? GLASS.winner : GLASS.filled;
   return (
     // DOM-volgorde 1,2,3 (mobiel correct); op desktop herschikt md:order naar 2-1-3.
     // Kolommen lijnen onderaan uit; getrapte ondermarge geeft het podium-trapeffect.
     <div className={`flex-1 min-w-0 flex flex-col ${mdOrder} ${lift} ${isWinner ? "md:max-w-[44%]" : "md:max-w-[32%]"}`}>
       <Card
-        className="ornate-frame bg-card rounded-xl overflow-hidden border transition-shadow"
+        className="ornate-frame rounded-xl overflow-hidden border transition-shadow"
         style={{
-          borderColor: isWinner ? accent : "hsl(var(--border))",
+          backgroundColor: `rgba(${CREME_RGB}, ${fill})`,
+          backdropFilter: `blur(${GLASS.blur})`,
+          WebkitBackdropFilter: `blur(${GLASS.blur})`,
+          borderColor: isWinner ? accent : `rgba(${CREME_RGB}, 0.9)`,
           borderWidth: isWinner ? 2 : 1,
           boxShadow: isWinner
             ? `0 10px 30px -10px ${accent}, 0 0 0 1px ${accent}33`
@@ -70,7 +85,10 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
           {p ? (
             <>
               {p.afbeelding_url && (
-                <div className={`w-full ${isWinner ? "aspect-[4/3]" : "aspect-[3/2]"} rounded-lg border border-border bg-secondary/30 overflow-hidden mb-2`}>
+                <div
+                  className={`w-full ${isWinner ? "aspect-[4/3]" : "aspect-[3/2]"} rounded-lg border border-border overflow-hidden mb-2`}
+                  style={{ backgroundColor: `rgba(${CREME_RGB}, ${GLASS.photo})` }}
+                >
                   <img src={p.afbeelding_url} alt={p.titel} className="w-full h-full object-contain" loading="lazy" />
                 </div>
               )}
@@ -157,7 +175,10 @@ export default function Prizes() {
                 <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: podiumOverlay }} />
                 {/* Inhoud bovenop */}
                 <div className="relative z-10 p-4 md:p-6">
-                  <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 flex items-center gap-2">
+                  <h2
+                    className="font-display text-2xl md:text-3xl font-bold mb-4 flex items-center gap-2"
+                    style={{ textShadow: "0 1px 3px rgba(255,255,255,0.7), 0 1px 8px rgba(255,255,255,0.5)" }}
+                  >
                     <Trophy className="h-7 w-7 md:h-8 md:w-8" style={{ color: GOLD }} /> Het podium
                   </h2>
                   <div className="flex flex-col md:flex-row md:justify-center md:items-end gap-4 md:gap-3">
