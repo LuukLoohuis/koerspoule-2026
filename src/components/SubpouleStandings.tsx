@@ -407,7 +407,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
         {/* Woonplaats-filter */}
         {requiresWoonplaats && woonplaatsen.length > 0 && (
           <div className="px-3 py-2 border-b border-border bg-secondary/30 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+            <MapPin className="w-4 h-4 text-[hsl(var(--vintage-gold))] shrink-0" />
             <Popover open={woonOpen} onOpenChange={setWoonOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -585,7 +585,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   {requiresWoonplaats && woonplaatsByUser.get(m.user_id) && (
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-sans truncate">
-                        <MapPin className="w-2.5 h-2.5 shrink-0" />
+                        <MapPin className="w-3.5 h-3.5 shrink-0 text-[hsl(var(--vintage-gold))]" />
                         {woonplaatsByUser.get(m.user_id)}
                       </span>
                       {regioPosByUser.get(m.user_id) != null && (
