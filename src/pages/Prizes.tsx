@@ -8,13 +8,12 @@ const GOLD = "hsl(var(--vintage-gold))";
 
 // Sfeerachtergrond achter het podium (zelf geplaatst in public/img/).
 const PODIUM_BG = "/img/prijzen-achtergrond.png";
-// Achtergrond-tafereel lager in beeld zetten zodat de straat/bogen onder de
-// kaarten aansluiten: lagere Y-positie toont het onderste deel + lichte zoom.
-// Hoger Y% = lager tafereel zichtbaar; hoger ZOOM = meer ingezoomd. Mobiel apart.
-const BG_ZOOM = 1.3;
-const BG_ZOOM_MOBILE = 1.18;
-const BG_POSITION = "center 58%";
-const BG_POSITION_MOBILE = "center 52%";
+// Nieuwe achtergrond is al goed gecomponeerd (tafereel laag, lege lucht boven) →
+// neutraal: cover, gecentreerd, geen zoom. Hier bijstellen indien nodig.
+const BG_ZOOM = 1;
+const BG_ZOOM_MOBILE = 1;
+const BG_POSITION = "center center";
+const BG_POSITION_MOBILE = "center center";
 // Leesbaarheidslaag: crème/parchment-waas (#F5EDD8) over de achtergrond.
 // Hoger = meer dimmen (beter contrast), lager = meer sfeer zichtbaar.
 const OVERLAY_OPACITY = 0.4;
