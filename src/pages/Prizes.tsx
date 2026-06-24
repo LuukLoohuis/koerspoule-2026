@@ -8,6 +8,12 @@ const GOLD = "hsl(var(--vintage-gold))";
 
 // Sfeerachtergrond achter het podium (zelf geplaatst in public/img/).
 const PODIUM_BG = "/img/prijzen-achtergrond.png";
+// Arc de Triomphe zit midden-boven en botste met de bovenrand van de 1e-kaart.
+// Inzoomen vanaf de bovenrand duwt de Arc omlaag (onder de kaart-rand) zonder de
+// kaarten te wijzigen. Hoger = meer ingezoomd / Arc lager. Mobiel iets minder.
+const BG_ZOOM = 1.28;
+const BG_ZOOM_MOBILE = 1.18;
+const BG_POSITION = "center top";
 // Leesbaarheidslaag: crème/parchment-waas (#F5EDD8) over de achtergrond.
 // Hoger = meer dimmen (beter contrast), lager = meer sfeer zichtbaar.
 const OVERLAY_OPACITY = 0.4;
@@ -162,14 +168,17 @@ export default function Prizes() {
             {/* Podium — DOM 1,2,3 (mobiel onder elkaar); desktop herschikt naar 2-1-3 */}
             {(podium1 || podium2 || podium3) && (
               <section className="relative overflow-hidden rounded-xl" style={{ backgroundColor: `rgb(${CREME_RGB})` }}>
-                {/* Sfeerachtergrond (Champs-Élysées), bovenaan uitgelijnd, lazy. */}
+                {/* Sfeerachtergrond (Champs-Élysées). Inzoomen vanaf de bovenrand
+                    duwt de Arc onder de kaart-bovenrand; mobiel iets minder zoom. */}
+                <style>{`.podium-bg{transform:scale(${BG_ZOOM_MOBILE});transform-origin:center top}@media(min-width:768px){.podium-bg{transform:scale(${BG_ZOOM})}}`}</style>
                 <img
                   src={PODIUM_BG}
                   alt=""
                   aria-hidden
                   loading="lazy"
                   decoding="async"
-                  className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none"
+                  style={{ objectPosition: BG_POSITION }}
+                  className="podium-bg absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
                 />
                 {/* Leesbaarheidslaag tussen achtergrond en kaarten. */}
                 <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: podiumOverlay }} />
