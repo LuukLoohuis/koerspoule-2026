@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
 import { Mountain, CalendarDays } from "lucide-react";
@@ -51,7 +50,6 @@ function dateBadge(date: string | null): string | null {
 
 export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
   const { thema } = useThema();
-  const qc = useQueryClient();
 
   const { data: stage } = useQuery({
     queryKey: ["voorbeschouwing-stage", gameId],
@@ -70,20 +68,9 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
     },
   });
 
-  // Ververs zodra een etappe wijzigt (bv. een uitslag wordt gefiatteerd) →
-  // de voorbeschouwing schuift dan door naar de volgende etappe.
-  useEffect(() => {
-    if (!supabase || !gameId) return;
-    const ch = supabase
-      .channel(`voorbeschouwing-${gameId}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "stages", filter: `game_id=eq.${gameId}` }, () => {
-        qc.invalidateQueries({ queryKey: ["voorbeschouwing-stage", gameId] });
-      })
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [gameId, qc]);
+  // Geen realtime-subscription: `stages` staat niet in de realtime-publicatie, dus
+  // een postgres_changes-channel ving toch niks. De query ververst bij focus/remount
+  // (staleTime), zodat de voorbeschouwing na een fiat bij de volgende load doorschuift.
 
   if (!stage) return null;
 

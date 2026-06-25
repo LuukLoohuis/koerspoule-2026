@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { THEMAS, deriveThemaKey, hexToHsl, readableForeground, type Thema, type ThemaKey } from "@/lib/themas";
 
@@ -81,8 +81,6 @@ function readCachedKey(): ThemaKey | null {
 }
 
 export function ThemaProvider({ children }: { children: React.ReactNode }) {
-  const qc = useQueryClient();
-
   // Thema-bron: de nieuwste NIET-afgeronde game (concept/draft/open/locked/live)
   // bepaalt de site-stijl. Een afgeronde game levert géén site-thema. Is er geen
   // niet-afgeronde game, dan valt het terug op de meest recente (afgeronde) game.
@@ -145,19 +143,9 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isFetched, fetchedKey, cachedKey]);
 
-  // Realtime: themawissel door admin → direct bij alle clients
-  useEffect(() => {
-    if (!supabase) return;
-    const ch = supabase
-      .channel("games-thema")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "games" }, () => {
-        qc.invalidateQueries({ queryKey: ["actief-thema-game"] });
-      })
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [qc]);
+  // Geen realtime-subscription: `games` staat niet in de realtime-publicatie, dus
+  // een postgres_changes-channel ving toch niks. De thema-query ververst bij focus/
+  // remount; een admin-themawissel verschijnt zo bij de volgende load i.p.v. live.
 
   return <ThemaContext.Provider value={{ thema: THEMAS[key], key, ready }}>{children}</ThemaContext.Provider>;
 }

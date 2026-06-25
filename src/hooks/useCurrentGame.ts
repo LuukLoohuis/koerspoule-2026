@@ -1,45 +1,14 @@
-import { useEffect } from "react";
-import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 /**
- * Realtime + focus-refresh op de games-tabel: zet de admin de koers live/locked,
- * dan pikt een al-open sessie dat direct op (geen handmatige reload nodig).
+ * Huidige game met focus-/interval-refresh: status-wissels (open→live→locked)
+ * worden opgepikt bij terugkeer naar de tab of na max 15s (staleTime).
  *
- * useCurrentGame mount op veel plekken tegelijk. Eén gedeeld, ref-geteld channel
- * — anders maken meerdere instances een channel met dezelfde topic en gooit
- * supabase-js "cannot add postgres_changes callbacks ... after subscribe()".
+ * Géén realtime-subscription: `games` staat niet in de realtime-publicatie, dus
+ * een postgres_changes-channel ving toch niks en kostte bij veel gelijktijdige
+ * sessies alleen open kanalen. Focus/reconnect-refetch dekt de status-wissels.
  */
-let gamesChannel: RealtimeChannel | null = null;
-let gamesRefCount = 0;
-
-function subscribeGames(qc: QueryClient): () => void {
-  if (!supabase) return () => {};
-  gamesRefCount += 1;
-  if (!gamesChannel) {
-    gamesChannel = supabase
-      .channel("games-status")
-      .on("postgres_changes", { event: "*", schema: "public", table: "games" }, () => {
-        qc.invalidateQueries({ queryKey: ["current-game"] });
-        qc.invalidateQueries({ queryKey: ["all-games"] });
-      })
-      .subscribe();
-  }
-  return () => {
-    gamesRefCount -= 1;
-    if (gamesRefCount <= 0 && gamesChannel) {
-      supabase!.removeChannel(gamesChannel);
-      gamesChannel = null;
-      gamesRefCount = 0;
-    }
-  };
-}
-
-function useGamesAutoRefresh() {
-  const qc = useQueryClient();
-  useEffect(() => subscribeGames(qc), [qc]);
-}
 
 export type Game = {
   id: string;
@@ -64,7 +33,6 @@ const SELECT_LEGACY =
   "id, name, year, status, game_type, homepage_quote, homepage_quote_author";
 
 export function useCurrentGame() {
-  useGamesAutoRefresh();
   return useQuery({
     queryKey: ["current-game"],
     // Status-wissels (open→live→locked) snel oppikken, ook bij terugkeer naar de tab.
