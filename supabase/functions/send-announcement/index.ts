@@ -61,11 +61,15 @@ function buildHtml(
                   <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;letter-spacing:2px;text-transform:uppercase;color:#8a6d2b;margin-bottom:10px;">
                     Volg Koerspoule
                   </div>
-                  <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;font-weight:bold;">
-                    <a href="https://instagram.com/koerspoule" target="_blank" style="color:#2b241d;text-decoration:none;">
-                      Instagram → @koerspoule
-                    </a>
-                  </div>
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+                    <tr>
+                      <td align="center" bgcolor="#1A1612" style="border-radius:10px;border:1px solid #E1A33A;">
+                        <a href="https://www.instagram.com/koerspoule" target="_blank" style="display:inline-block;padding:12px 24px;font-family:Georgia,'Times New Roman',serif;font-size:15px;font-weight:bold;color:#F5EDE0;text-decoration:none;border-radius:10px;">
+                          <span style="color:#E1A33A;font-size:17px;">&#9673;</span>&nbsp;&nbsp;@koerspoule&nbsp;op Instagram
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
                   <div style="margin-top:10px;font-size:15px;line-height:24px;color:#655847;">
                     Blijf op de hoogte van updates, standen en koerssfeer.
                   </div>
