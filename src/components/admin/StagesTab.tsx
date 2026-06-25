@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -78,6 +79,27 @@ export default function StagesTab({
   const [dataDialog, setDataDialog] = useState<Stage | null>(null);
   const [dataText, setDataText] = useState("");
   const [savingData, setSavingData] = useState(false);
+
+  // Voorbeschouwing-sectie per game aan/uit.
+  const [voorVisible, setVoorVisible] = useState(false);
+  const [savingVoor, setSavingVoor] = useState(false);
+  useEffect(() => {
+    if (!supabase || !activeGameId) return;
+    (async () => {
+      const { data } = await supabase.from("games").select("voorbeschouwing_visible").eq("id", activeGameId).maybeSingle();
+      setVoorVisible(Boolean((data as { voorbeschouwing_visible?: boolean } | null)?.voorbeschouwing_visible));
+    })();
+  }, [activeGameId]);
+
+  async function toggleVoor(next: boolean) {
+    if (!supabase || !activeGameId) return;
+    setSavingVoor(true);
+    const { error } = await supabase.from("games").update({ voorbeschouwing_visible: next } as never).eq("id", activeGameId);
+    setSavingVoor(false);
+    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
+    setVoorVisible(next);
+    toast.success(next ? "Voorbeschouwing zichtbaar" : "Voorbeschouwing verborgen");
+  }
 
   function openDataDialog(s: Stage) {
     setDataDialog(s);
@@ -291,6 +313,15 @@ export default function StagesTab({
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardTitle className="font-display text-base">Voorbeschouwing-sectie (L'Équipe)</CardTitle>
+          <Button size="sm" variant={voorVisible ? "default" : "outline"} disabled={savingVoor || !activeGameId} onClick={() => toggleVoor(!voorVisible)} className="h-8">
+            {voorVisible ? "Zichtbaar" : "Verborgen"}
+          </Button>
+        </CardHeader>
+      </Card>
+
       <Card>
         <CardHeader><CardTitle className="font-display">Nieuwe etappe</CardTitle></CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-7">

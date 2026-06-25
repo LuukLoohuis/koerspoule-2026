@@ -52,6 +52,22 @@ function dateBadge(date: string | null): string | null {
 export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
   const { thema } = useThema();
 
+  // Sectie staat default uit; admin zet 'm per game aan in Etappes.
+  const { data: enabled } = useQuery({
+    queryKey: ["voorbeschouwing-enabled", gameId],
+    enabled: Boolean(supabase && gameId),
+    staleTime: 60 * 1000,
+    queryFn: async (): Promise<boolean> => {
+      if (!supabase || !gameId) return false;
+      const { data } = await (supabase as any)
+        .from("games")
+        .select("voorbeschouwing_visible")
+        .eq("id", gameId)
+        .maybeSingle();
+      return Boolean(data?.voorbeschouwing_visible);
+    },
+  });
+
   const { data: stage } = useQuery({
     queryKey: ["voorbeschouwing-stage", gameId],
     enabled: Boolean(supabase && gameId),
@@ -73,7 +89,7 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
   // een postgres_changes-channel ving toch niks. De query ververst bij focus/remount
   // (staleTime), zodat de voorbeschouwing na een fiat bij de volgende load doorschuift.
 
-  if (!stage) return null;
+  if (!enabled || !stage) return null;
 
   const typeLabel = TYPE_LABEL[String(stage.stage_type)] ?? "Etappe";
   const wanneer = dateBadge(stage.date);
