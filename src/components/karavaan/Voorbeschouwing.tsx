@@ -119,7 +119,7 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
           <img
             src={stage.profile_image_url}
             alt={`Hoogteprofiel etappe ${stage.stage_number}`}
-            className="block w-full h-auto max-h-32 object-contain rounded-lg border border-border mt-3"
+            className="block w-full h-28 object-cover rounded-lg border border-border mt-3"
             loading="lazy"
           />
         )}
