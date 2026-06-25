@@ -11,6 +11,7 @@ type UpcomingStage = {
   stage_type: string | null;
   distance_km: number | null;
   results_status: string | null;
+  profile_image_url: string | null;
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -59,7 +60,7 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
       if (!supabase || !gameId) return null;
       const { data, error } = await (supabase as any)
         .from("stages")
-        .select("id, stage_number, name, date, stage_type, distance_km, results_status")
+        .select("id, stage_number, name, date, stage_type, distance_km, results_status, profile_image_url")
         .eq("game_id", gameId)
         .eq("is_gc", false)
         .order("stage_number");
@@ -112,6 +113,16 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
             </>
           )}
         </div>
+
+        {/* Hoogteprofiel van de etappe */}
+        {stage.profile_image_url && (
+          <img
+            src={stage.profile_image_url}
+            alt={`Hoogteprofiel etappe ${stage.stage_number}`}
+            className="block w-full h-auto rounded-lg border border-border mt-3"
+            loading="lazy"
+          />
+        )}
       </div>
     </div>
   );
