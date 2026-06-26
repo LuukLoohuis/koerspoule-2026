@@ -113,6 +113,64 @@ function StageBreakdown({ stageId }: { stageId: string }) {
   );
 }
 
+// Radio Koerspoule — voorbeschouwing per etappe genereren (Ome Gerrit). Cachet
+// per stage; admin-gestuurd, niet automatisch. force = opnieuw genereren.
+function VoorbeschouwingActie({ stageId }: { stageId: string }) {
+  const [tekst, setTekst] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!supabase) return;
+      const { data } = await supabase
+        .from("etappe_voorbeschouwingen")
+        .select("tekst")
+        .eq("stage_id", stageId)
+        .maybeSingle();
+      if (alive) { setTekst(data?.tekst ?? null); setLoaded(true); }
+    })();
+    return () => { alive = false; };
+  }, [stageId]);
+
+  async function genereer(force: boolean) {
+    if (!supabase || busy) return;
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-etappe-voorbeschouwing", {
+        body: { stage_id: stageId, force },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setTekst(data?.tekst ?? null);
+      toast.success(data?.cached ? "Bestaande voorbeschouwing geladen" : "Voorbeschouwing gegenereerd");
+    } catch (e) {
+      toast.error(`Genereren mislukt: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-2 rounded-md border border-border bg-secondary/20 p-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground inline-flex items-center gap-1.5">
+          <Mic className="w-3.5 h-3.5" /> Radio Koerspoule — voorbeschouwing
+        </span>
+        <Button size="sm" variant="outline" className="h-7 text-xs" disabled={busy || !loaded} onClick={() => genereer(Boolean(tekst))}>
+          {busy ? "Bezig…" : tekst ? "Opnieuw genereren" : "Voorbeschouwing genereren"}
+        </Button>
+      </div>
+      {tekst && (
+        <p className="mt-2 text-sm font-serif italic text-foreground/90 whitespace-pre-line leading-snug">
+          {tekst}
+        </p>
+      )}
+    </div>
+  );
+}
+
 type Row = {
   stage_id: string;
   stage_number: number;
@@ -304,6 +362,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   </Button>
                 </div>
                 <StageBreakdown stageId={r.stage_id} />
+                <VoorbeschouwingActie stageId={r.stage_id} />
               </div>
             ))
           )}
@@ -312,14 +371,17 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
 
       <Card>
         <CardHeader><CardTitle className="font-display text-base">Concepten ({drafts.length})</CardTitle></CardHeader>
-        <CardContent className="space-y-1 text-sm">
+        <CardContent className="space-y-2 text-sm">
           {drafts.length === 0 ? (
             <p className="text-muted-foreground italic">Geen concepten.</p>
           ) : drafts.map((r) => (
-            <div key={r.stage_id} className="flex items-center gap-2">
-              <StatusBadge s={r.results_status} />
-              <span>Etappe {r.stage_number}</span>
-              {r.stage_name && <span className="text-muted-foreground">— {r.stage_name}</span>}
+            <div key={r.stage_id} className="border rounded-md p-2">
+              <div className="flex items-center gap-2">
+                <StatusBadge s={r.results_status} />
+                <span>Etappe {r.stage_number}</span>
+                {r.stage_name && <span className="text-muted-foreground">— {r.stage_name}</span>}
+              </div>
+              <VoorbeschouwingActie stageId={r.stage_id} />
             </div>
           ))}
         </CardContent>
@@ -406,6 +468,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                 </Button>
               </div>
               <StageBreakdown stageId={r.stage_id} />
+              <VoorbeschouwingActie stageId={r.stage_id} />
             </div>
           ))}
         </CardContent>
