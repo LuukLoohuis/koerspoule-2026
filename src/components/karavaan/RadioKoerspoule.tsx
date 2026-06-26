@@ -14,16 +14,22 @@ export default function RadioKoerspoule({ gameId }: { gameId?: string }) {
     staleTime: 60 * 1000,
     queryFn: async (): Promise<{ tekst: string; stage_number: number } | null> => {
       if (!supabase || !gameId) return null;
-      // Eerstvolgende etappe = laagste nummer dat nog niet gefiatteerd is.
+      // Eerstvolgende rit = de nog-niet-gefiatteerde etappe met de vroegste datum.
+      // Zo toont 'ie 's ochtends de rit van vandaag en 's avonds (na fiat) die van morgen.
       const { data: stages } = await (supabase as any)
         .from("stages")
-        .select("id, stage_number, results_status")
+        .select("id, stage_number, date, results_status")
         .eq("game_id", gameId)
-        .eq("is_gc", false)
-        .order("stage_number");
+        .eq("is_gc", false);
       const upcoming = (stages ?? [])
-        .sort((a: any, b: any) => a.stage_number - b.stage_number)
-        .find((s: any) => String(s.results_status) !== "approved");
+        .filter((s: any) => String(s.results_status) !== "approved")
+        .sort((a: any, b: any) => {
+          // Op datum (nulls achteraan), dan op etappenummer.
+          if (a.date && b.date) return a.date < b.date ? -1 : a.date > b.date ? 1 : a.stage_number - b.stage_number;
+          if (a.date) return -1;
+          if (b.date) return 1;
+          return a.stage_number - b.stage_number;
+        })[0];
       if (!upcoming) return null;
       const { data: vb } = await (supabase as any)
         .from("etappe_voorbeschouwingen")
@@ -47,9 +53,6 @@ export default function RadioKoerspoule({ gameId }: { gameId?: string }) {
       <div className="px-4 pt-3 pb-4">
         <p className="text-sm font-serif italic leading-relaxed text-foreground/90 whitespace-pre-line">
           {data.tekst}
-        </p>
-        <p className="mt-3 text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-          Ome Gerrit van de Koers · etappe {data.stage_number} · een eigen personage van Radio Koerspoule
         </p>
       </div>
     </div>
