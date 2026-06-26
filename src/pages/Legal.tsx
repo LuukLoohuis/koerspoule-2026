@@ -2,7 +2,7 @@ export default function Legal() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl">
       <h1 className="font-serif text-4xl md:text-5xl font-bold mb-8 text-foreground">
-        Privacybeleid
+        Privacy &amp; voorwaarden
       </h1>
 
       <div className="space-y-12 font-sans text-foreground/90 leading-relaxed">
@@ -34,7 +34,11 @@ export default function Legal() {
               <li>Het bijhouden van scores en klassementen</li>
             </ul>
             <p>
-              Wij delen jouw gegevens niet met derden, tenzij dit wettelijk verplicht is.
+              Wij verkopen jouw gegevens niet en delen ze niet met derden voor hun eigen doeleinden.
+              Wel maken wij gebruik van externe diensten (verwerkers) die namens ons gegevens
+              verwerken om de site te laten draaien — zie het kopje{" "}
+              <a href="#verwerkers" className="underline hover:text-foreground transition-colors">Externe diensten</a>.
+              Daarnaast delen wij gegevens alleen wanneer dit wettelijk verplicht is.
               Je hebt te allen tijde het recht om je gegevens in te zien, te corrigeren of te
               laten verwijderen. Neem hiervoor contact op via{" "}
               <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors">
@@ -79,6 +83,42 @@ export default function Legal() {
               toestemming via het Google-venster. Je kunt cookies blokkeren via je
               browserinstellingen, maar dit kan de werking van de site beïnvloeden.
             </p>
+          </div>
+        </section>
+
+        <div className="vintage-divider" />
+
+        {/* Externe diensten / verwerkers */}
+        <section>
+          <h2 className="font-serif text-2xl font-bold mb-4 text-foreground" id="verwerkers">
+            🤝 Externe diensten (verwerkers)
+          </h2>
+          <div className="space-y-3 text-sm">
+            <p>
+              Om Koerspoule te laten functioneren maken wij gebruik van een aantal externe
+              diensten die namens ons gegevens verwerken. Met deze partijen worden alleen de
+              gegevens gedeeld die nodig zijn voor de betreffende functie:
+            </p>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>
+                <strong>Supabase</strong> — database, accounts/inloggen en opslag van je
+                spelgegevens.
+              </li>
+              <li>
+                <strong>Vercel</strong> — hosting van de website.
+              </li>
+              <li>
+                <strong>Cloudflare</strong> — verzending van e-mails (bevestigings- en
+                notificatiemails).
+              </li>
+              <li>
+                <strong>OpenAI</strong> — het automatisch genereren van redactionele teksten
+                (etappecommentaar en voorbeschouwingen).
+              </li>
+              <li>
+                <strong>Google AdSense</strong> — het tonen van advertenties (zie het cookiebeleid).
+              </li>
+            </ul>
           </div>
         </section>
 
