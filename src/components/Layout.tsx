@@ -206,7 +206,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <span>·</span>
               <Link to="/giro-italia-poule-2026" className="underline hover:text-foreground transition-colors">Giro poule 2026</Link>
               <span>·</span>
-              <button onClick={() => navigate("/juridisch")} className="underline hover:text-foreground transition-colors">Koersregels</button>
+              <button onClick={() => navigate("/juridisch")} className="underline hover:text-foreground transition-colors">Privacybeleid</button>
               <span>·</span>
               {role === "admin" && (
                 <>

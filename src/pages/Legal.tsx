@@ -2,7 +2,7 @@ export default function Legal() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl">
       <h1 className="font-serif text-4xl md:text-5xl font-bold mb-8 text-foreground">
-        Juridische Informatie
+        Privacybeleid
       </h1>
 
       <div className="space-y-12 font-sans text-foreground/90 leading-relaxed">
@@ -20,6 +20,11 @@ export default function Legal() {
             <ul className="list-disc pl-6 space-y-1">
               <li>Naam en e-mailadres (bij registratie)</li>
               <li>Ploegnaam en teamkeuzes</li>
+              <li>
+                Woonplaats — <strong>optioneel</strong>. Bij sommige subpoules kun je je woonplaats
+                opgeven voor het streekklassement. Dit is niet verplicht en je woonplaats is alleen
+                zichtbaar binnen die subpoule.
+              </li>
               <li>Technische gegevens zoals IP-adres en browsertype (voor statistieken)</li>
             </ul>
             <p><strong>Waarvoor gebruiken wij deze gegevens?</strong></p>
@@ -151,7 +156,7 @@ export default function Legal() {
 
       <div className="vintage-divider mt-12 mb-6" />
       <p className="text-xs text-muted-foreground text-center font-sans">
-        Laatst bijgewerkt: maart 2026
+        Laatst bijgewerkt: juni 2026
       </p>
     </div>
   );
