@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, ShieldOff, Trash2, Download, Upload } from "lucide-react";
+import { Shield, ShieldOff, Trash2, Download, Upload, MailCheck } from "lucide-react";
 import { toast } from "sonner";
 import { exportToXlsx, todayStamp } from "@/lib/exportXlsx";
 import * as XLSX from "xlsx";
@@ -56,6 +56,14 @@ export default function UsersTab() {
     }
     toast.success(makeAdmin ? "Admin-rechten toegekend" : "Admin-rechten ingetrokken");
     await load();
+  }
+
+  async function confirmEmail(userId: string, email: string) {
+    if (!supabase) return;
+    if (!confirm(`E-mail van ${email} handmatig bevestigen? Doe dit alleen als de bevestigingsmail niet aankwam.`)) return;
+    const { data, error } = await supabase.functions.invoke("admin-confirm-email", { body: { user_id: userId } });
+    if (error || data?.error) { toast.error(`Bevestigen mislukt: ${error?.message ?? data?.error}`); return; }
+    toast.success(`E-mail van ${email} bevestigd`);
   }
 
   async function deleteUser(userId: string, email: string) {
@@ -197,6 +205,9 @@ export default function UsersTab() {
                             <Shield className="w-4 h-4 mr-1" />Maak admin
                           </Button>
                         )}
+                        <Button size="sm" variant="outline" onClick={() => confirmEmail(u.user_id, u.email)} title="E-mail handmatig bevestigen (als de bevestigingsmail niet aankwam)" data-testid={`confirm-email-${u.user_id}`}>
+                          <MailCheck className="w-4 h-4" />
+                        </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button size="sm" variant="destructive" data-testid={`delete-user-${u.user_id}`}>
