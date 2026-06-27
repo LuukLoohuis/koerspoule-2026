@@ -35,6 +35,8 @@ export function buildEmailHtml(
   opts: { titleColor: string; titleSize: number }
 ): string {
   // Spiegelt send-announcement/buildHtml() 1-op-1 (preview = verzonden mail).
+  // Regeleinden uit het tekstvak omzetten naar <br> (HTML negeert anders newlines).
+  const bodyHtml = body.replace(/\r\n|\r|\n/g, "<br>");
   return `<!doctype html>
 <html lang="nl"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Koerspoule Communiqué</title></head>
 <body style="margin:0;padding:0;background-color:#e9e3d6;">
@@ -52,7 +54,7 @@ export function buildEmailHtml(
                   Beste deelnemer,
                 </div>
                 <div style="margin:0 0 18px 0;font-size:18px;line-height:30px;color:#3d362e;">
-                  ${body}
+                  ${bodyHtml}
                 </div>
                 <div style="text-align:center;margin:20px 0 22px 0;">
                   <a href="https://koerspoule.nl" target="_blank" style="display:inline-block;padding:13px 26px;background-color:#d4a62b;color:#1d1916;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;border-radius:6px;">
