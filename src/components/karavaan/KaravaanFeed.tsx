@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles, ClipboardList } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronsUpDown, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles, ClipboardList } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import DaguitslagChart from "@/components/DaguitslagChart";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -241,12 +244,46 @@ function SubpouleSwitcher({
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
   if (subpoules.length === 0) return null;
   if (subpoules.length === 1) {
     return (
       <div className="flex items-center gap-2 text-xs font-display uppercase tracking-widest text-muted-foreground">
         <span>Subpoule:</span>
         <span className="font-bold text-foreground">{subpoules[0].name}</span>
+      </div>
+    );
+  }
+  // Veel subpoules (bv. als admin alles ziet) → zoekbare dropdown i.p.v. een
+  // muur van pills (zelfde patroon als de Subpoules-tab).
+  if (subpoules.length > 8) {
+    const selected = subpoules.find((s) => s.id === selectedId);
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="overline-stamp">Subpoule</span>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" role="combobox" aria-expanded={open} className="justify-between font-normal min-w-[220px]">
+              <span className="truncate">{selected?.name ?? "Kies een subpoule…"}</span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Zoek subpoule…" />
+              <CommandList>
+                <CommandEmpty>Geen subpoule gevonden.</CommandEmpty>
+                <CommandGroup>
+                  {subpoules.map((s) => (
+                    <CommandItem key={s.id} value={s.name} onSelect={() => { onSelect(s.id); setOpen(false); }}>
+                      <span className="flex-1 truncate font-medium">{s.name}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
     );
   }
