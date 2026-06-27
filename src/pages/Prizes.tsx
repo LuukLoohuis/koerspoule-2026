@@ -251,7 +251,7 @@ export default function Prizes() {
                     <Card key={p.id} className="ornate-frame retro-border">
                       <CardContent className="p-4 flex gap-3">
                         {p.afbeelding_url && (
-                          <img src={p.afbeelding_url} alt={p.titel} className="h-28 w-40 sm:w-44 object-contain rounded-md border border-border bg-secondary/30 shrink-0" loading="lazy" />
+                          <img src={p.afbeelding_url} alt={p.titel} className="w-44 sm:w-56 aspect-[3/2] object-contain rounded-lg border border-border bg-secondary/30 shrink-0" loading="lazy" />
                         )}
                         <div className="min-w-0 flex-1">
                           <h3 className="font-display font-bold leading-tight">{p.titel || "Dagprijs"}</h3>
@@ -278,7 +278,7 @@ export default function Prizes() {
                       <Card key={p.id} className="ornate-frame retro-border">
                         <CardContent className="p-4 flex gap-3">
                           {p.afbeelding_url && (
-                            <img src={p.afbeelding_url} alt={p.titel} className="h-28 w-40 sm:w-44 object-contain rounded-md border border-border bg-secondary/30 shrink-0" loading="lazy" />
+                            <img src={p.afbeelding_url} alt={p.titel} className="w-44 sm:w-56 aspect-[3/2] object-contain rounded-lg border border-border bg-secondary/30 shrink-0" loading="lazy" />
                           )}
                           <div className="min-w-0 flex-1">
                             <h3 className="font-display font-bold leading-tight">{p.titel || "Grootste subpoule"}</h3>
