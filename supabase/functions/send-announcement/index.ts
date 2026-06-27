@@ -25,8 +25,12 @@ function buildHtml(
   _titleColor = "#1a1a1a",
   _titleSize = 11
 ): string {
-  // Regeleinden uit het tekstvak omzetten naar <br> (HTML negeert anders newlines).
-  const bodyHtml = body.replace(/\r\n|\r|\n/g, "<br>");
+  // Compact: lege regel = alinea (nette marge), enkele regelovergang = <br>.
+  const bodyHtml = body
+    .trim()
+    .split(/\n\s*\n+/)
+    .map((p) => `<p style="margin:0 0 11px 0;">${p.replace(/\r\n|\r|\n/g, "<br>")}</p>`)
+    .join("");
   return `<!doctype html>
 <html lang="nl" xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Koerspoule Communiqué</title></head>
 <body style="margin:0;padding:0;background-color:#e9e3d6;">
@@ -47,7 +51,7 @@ function buildHtml(
                 <div style="margin:0 0 10px 0;font-size:28px;line-height:34px;font-weight:bold;color:#211d19;">
                   Beste deelnemer,
                 </div>
-                <div style="margin:0 0 18px 0;font-size:18px;line-height:30px;color:#3d362e;">
+                <div style="margin:0 0 10px 0;font-size:17px;line-height:24px;color:#3d362e;">
                   ${bodyHtml}
                 </div>
                 <div style="text-align:center;margin:20px 0 22px 0;">
