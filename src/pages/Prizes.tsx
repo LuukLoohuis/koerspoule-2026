@@ -215,6 +215,9 @@ export default function Prizes() {
                         <span className="font-display font-black tabular-nums text-base w-9 shrink-0 text-center" style={{ color: GOLD }}>
                           {p.rang}e
                         </span>
+                        {p.afbeelding_url && (
+                          <img src={p.afbeelding_url} alt={p.titel} className="h-16 w-24 object-contain rounded border border-border bg-secondary/30 shrink-0" loading="lazy" />
+                        )}
                         <div className="min-w-0 flex-1">
                           <span className="font-display font-bold text-sm leading-tight">{p.titel || "Prijs"}</span>
                           {p.omschrijving && <span className="text-sm text-muted-foreground font-serif"> — {p.omschrijving}</span>}
@@ -248,7 +251,7 @@ export default function Prizes() {
                     <Card key={p.id} className="ornate-frame retro-border">
                       <CardContent className="p-4 flex gap-3">
                         {p.afbeelding_url && (
-                          <img src={p.afbeelding_url} alt={p.titel} className="h-20 w-24 object-cover rounded-md border border-border shrink-0" loading="lazy" />
+                          <img src={p.afbeelding_url} alt={p.titel} className="h-28 w-40 sm:w-44 object-contain rounded-md border border-border bg-secondary/30 shrink-0" loading="lazy" />
                         )}
                         <div className="min-w-0 flex-1">
                           <h3 className="font-display font-bold leading-tight">{p.titel || "Dagprijs"}</h3>
@@ -275,7 +278,7 @@ export default function Prizes() {
                       <Card key={p.id} className="ornate-frame retro-border">
                         <CardContent className="p-4 flex gap-3">
                           {p.afbeelding_url && (
-                            <img src={p.afbeelding_url} alt={p.titel} className="h-20 w-24 object-cover rounded-md border border-border shrink-0" loading="lazy" />
+                            <img src={p.afbeelding_url} alt={p.titel} className="h-28 w-40 sm:w-44 object-contain rounded-md border border-border bg-secondary/30 shrink-0" loading="lazy" />
                           )}
                           <div className="min-w-0 flex-1">
                             <h3 className="font-display font-bold leading-tight">{p.titel || "Grootste subpoule"}</h3>
