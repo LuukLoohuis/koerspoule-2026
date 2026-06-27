@@ -82,6 +82,12 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   const [createName, setCreateName] = useState("");
   const [createCode, setCreateCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  // Homepage-werving: ?join=<code> vult de join-code voor (geen auto-submit).
+  const [subTab, setSubTab] = useState<"create" | "join">("create");
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("join");
+    if (code) { setJoinCode(code); setSubTab("join"); }
+  }, []);
   // Overdracht-bevestiging: welk lid eigenaar maken (+ subpoule).
   const [transferTarget, setTransferTarget] = useState<{ subpouleId: string; userId: string; name: string } | null>(null);
   // Premium-feature: sommige subpoules vragen je woonplaats. We weten dat pas na
@@ -766,7 +772,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       ) : (
       <Card className="retro-border">
         <CardContent className="p-4">
-          <Tabs defaultValue="create">
+          <Tabs value={subTab} onValueChange={(v) => setSubTab(v as "create" | "join")}>
             <TabsList className="w-full">
               <TabsTrigger value="create" className="flex-1">Nieuwe subpoule</TabsTrigger>
               <TabsTrigger value="join" className="flex-1">Joinen via code</TabsTrigger>

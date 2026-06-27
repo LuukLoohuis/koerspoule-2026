@@ -32,6 +32,7 @@ import { Bike, BookOpen, Trophy, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import CountdownBanner from "@/components/CountdownBanner";
+import WervingStrook from "@/components/WervingStrook";
 import KoerspouleLogo, { type RaceKey } from "@/components/KoerspouleLogo";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -555,6 +556,9 @@ export default function Index() {
           </Button>
         </div>
       </section>
+
+      {/* ─── WERVINGSSTROOK (per subpoule, admin-gestuurd, wegklikbaar) ───── */}
+      <WervingStrook />
 
       {/* ─── DE COURANT ───────────────────────────────────────────────────── */}
       <section className="container mx-auto px-5 pt-4">

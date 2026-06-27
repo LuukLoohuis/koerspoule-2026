@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Upload, Trash2, Eye, EyeOff, Users2, RefreshCw, MapPin } from "lucide-react";
+import { Upload, Trash2, Eye, EyeOff, Users2, RefreshCw, MapPin, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 
 type Row = {
@@ -18,6 +18,9 @@ type Row = {
   banner_enabled: boolean;
   requires_woonplaats: boolean;
   streek_min_deelnemers: number;
+  promote_on_landing: boolean;
+  promote_text: string | null;
+  code: string | null;
 };
 
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
@@ -35,7 +38,7 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
     try {
       const { data, error } = await supabase
         .from("subpoules")
-        .select("id, name, slug, banner_url, banner_enabled, requires_woonplaats, streek_min_deelnemers, owner_user_id, subpoule_members(user_id)")
+        .select("id, name, code, slug, banner_url, banner_enabled, requires_woonplaats, streek_min_deelnemers, promote_on_landing, promote_text, owner_user_id, subpoule_members(user_id)")
         .eq("game_id", activeGameId)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -66,6 +69,9 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
           banner_enabled: (s.banner_enabled as boolean | null) ?? true,
           requires_woonplaats: (s.requires_woonplaats as boolean | null) ?? false,
           streek_min_deelnemers: (s.streek_min_deelnemers as number | null) ?? 50,
+          promote_on_landing: (s.promote_on_landing as boolean | null) ?? false,
+          promote_text: (s.promote_text as string | null) ?? null,
+          code: (s.code as string | null) ?? null,
         })),
       );
     } catch (e) {
@@ -132,6 +138,22 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
     }
     toast.success(next ? "Woonplaats nu vereist" : "Woonplaats niet meer vereist");
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, requires_woonplaats: next } : r)));
+  }
+
+  async function togglePromote(id: string, next: boolean) {
+    if (!supabase) return;
+    const { error } = await supabase.from("subpoules").update({ promote_on_landing: next } as never).eq("id", id);
+    if (error) { toast.error(`Togglen mislukt: ${error.message}`); return; }
+    toast.success(next ? "Wervingsactie op homepage AAN" : "Wervingsactie uit");
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, promote_on_landing: next } : r)));
+  }
+
+  async function savePromoteText(id: string, value: string) {
+    if (!supabase) return;
+    const text = value.trim() || null;
+    const { error } = await supabase.from("subpoules").update({ promote_text: text } as never).eq("id", id);
+    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, promote_text: text } : r)));
   }
 
   async function saveStreekMin(id: string, value: string) {
@@ -232,6 +254,20 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
                     />
                   </div>
                 )}
+                {r.promote_on_landing && (
+                  <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                    <label className="text-[11px] text-muted-foreground">Wervingstekst (optioneel)</label>
+                    <Input
+                      defaultValue={r.promote_text ?? ""}
+                      placeholder={`Doe mee met ${r.name}!`}
+                      onBlur={(e) => {
+                        if ((e.target.value.trim() || null) !== r.promote_text) savePromoteText(r.id, e.target.value);
+                      }}
+                      className="h-7 flex-1 min-w-[180px] text-xs"
+                    />
+                    <span className="text-[11px] font-mono text-muted-foreground">code: {r.code ?? "—"}</span>
+                  </div>
+                )}
               </div>
 
               {/* Acties */}
@@ -262,6 +298,16 @@ export default function SubpoulesTab({ activeGameId }: { activeGameId: string })
                 >
                   <MapPin className="w-3.5 h-3.5 mr-1" />
                   Woonplaats {r.requires_woonplaats ? "aan" : "uit"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant={r.promote_on_landing ? "default" : "outline"}
+                  className="h-7 text-xs"
+                  onClick={() => togglePromote(r.id, !r.promote_on_landing)}
+                  title="Toon een wervingsstrook voor deze subpoule op de homepage (met de code + 'Doe mee')"
+                >
+                  <Megaphone className="w-3.5 h-3.5 mr-1" />
+                  Werven {r.promote_on_landing ? "aan" : "uit"}
                 </Button>
                 {r.banner_url && (
                   <>
