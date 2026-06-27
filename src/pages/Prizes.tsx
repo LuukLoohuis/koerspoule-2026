@@ -50,6 +50,27 @@ function SponsorLine({ p }: { p: Prize }) {
   );
 }
 
+// Chique tekst-hiërarchie op een prijskaart: eyebrow (kapitalen/goud) → elegante
+// Playfair-titel → gouden haarlijn → rustige serif-omschrijving → subtiele sponsor.
+function PrijsTekst({ p, eyebrow, fallback }: { p: Prize; eyebrow: string; fallback: string }) {
+  return (
+    <div className="min-w-0 flex-1 self-center">
+      <div className="flex items-center gap-2">
+        <span className="overline-stamp" style={{ color: GOLD }}>{eyebrow}</span>
+        <span className="h-px flex-1 max-w-[48px]" style={{ background: `linear-gradient(90deg, ${GOLD}, transparent)` }} aria-hidden />
+      </div>
+      <h3 className="font-display font-bold text-xl leading-snug text-foreground mt-1.5">{p.titel || fallback}</h3>
+      {p.omschrijving && (
+        <>
+          <span className="block h-px w-10 my-2" style={{ background: `linear-gradient(90deg, ${GOLD}88, transparent)` }} aria-hidden />
+          <p className="text-sm text-muted-foreground font-serif leading-relaxed">{p.omschrijving}</p>
+        </>
+      )}
+      <SponsorLine p={p} />
+    </div>
+  );
+}
+
 const PODIUM_CFG = {
   // lift = getrapte ondermarge; met items-end stijgt 1e het hoogst, dan 2e, dan 3e
   // → schone podium-trappen zonder losse balkjes die met de foto botsen.
@@ -249,15 +270,11 @@ export default function Prizes() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {dagprijzen.map((p) => (
                     <Card key={p.id} className="ornate-frame retro-border">
-                      <CardContent className="p-4 flex gap-3">
+                      <CardContent className="p-4 flex items-center gap-4">
                         {p.afbeelding_url && (
                           <img src={p.afbeelding_url} alt={p.titel} className="w-44 sm:w-56 aspect-[3/2] object-contain rounded-lg border border-border bg-secondary/30 shrink-0" loading="lazy" />
                         )}
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-display font-bold leading-tight">{p.titel || "Dagprijs"}</h3>
-                          {p.omschrijving && <p className="text-sm text-muted-foreground font-serif mt-0.5 leading-snug">{p.omschrijving}</p>}
-                          <SponsorLine p={p} />
-                        </div>
+                        <PrijsTekst p={p} eyebrow="Dagprijs" fallback="Dagprijs" />
                       </CardContent>
                     </Card>
                   ))}
@@ -276,15 +293,11 @@ export default function Prizes() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {grootsteSubpoule.map((p) => (
                       <Card key={p.id} className="ornate-frame retro-border">
-                        <CardContent className="p-4 flex gap-3">
+                        <CardContent className="p-4 flex items-center gap-4">
                           {p.afbeelding_url && (
                             <img src={p.afbeelding_url} alt={p.titel} className="w-44 sm:w-56 aspect-[3/2] object-contain rounded-lg border border-border bg-secondary/30 shrink-0" loading="lazy" />
                           )}
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-display font-bold leading-tight">{p.titel || "Grootste subpoule"}</h3>
-                            {p.omschrijving && <p className="text-sm text-muted-foreground font-serif mt-0.5 leading-snug">{p.omschrijving}</p>}
-                            <SponsorLine p={p} />
-                          </div>
+                          <PrijsTekst p={p} eyebrow="Grootste subpoule" fallback="Grootste subpoule" />
                         </CardContent>
                       </Card>
                     ))}
