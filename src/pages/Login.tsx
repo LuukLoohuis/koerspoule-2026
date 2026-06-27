@@ -167,8 +167,15 @@ export default function Login() {
 
     try {
       if (isRegister) {
+        // Behoud returnTo (bv. een subpoule-link) door de e-mailbevestiging heen:
+        // de bevestigingslink stuurt de gebruiker terug naar die bestemming.
+        const rt = safeReturnTo(searchParams.get("returnTo"));
         const { data, error } = await withTimeout(
-          supabase.auth.signUp({ email, password }),
+          supabase.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: `${window.location.origin}${rt}` },
+          }),
           15000
         );
         if (error) throw error;
