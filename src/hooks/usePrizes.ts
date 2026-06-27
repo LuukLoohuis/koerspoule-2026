@@ -11,6 +11,7 @@ export type Prize = {
   omschrijving: string;
   sponsor_naam: string | null;
   sponsor_logo_url: string | null;
+  sponsor_url: string | null;
   afbeelding_url: string | null;
   sort_order: number;
   rang: number | null;

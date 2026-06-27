@@ -17,6 +17,7 @@ type Row = {
   omschrijving: string;
   sponsor_naam: string | null;
   sponsor_logo_url: string | null;
+  sponsor_url: string | null;
   afbeelding_url: string | null;
   sort_order: number;
   rang: number | null;
@@ -79,6 +80,17 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
     } as never);
     if (error) { toast.error(`Toevoegen mislukt: ${error.message}`); return; }
     await load();
+  }
+
+  async function saveSponsorUrl(id: string, value: string, current: string | null) {
+    const v = value.trim();
+    const next = v || null;
+    if (next === current) return;
+    if (next && !/^https?:\/\//i.test(next)) {
+      toast.error("Sponsor-link moet met http:// of https:// beginnen.");
+      return;
+    }
+    await saveField(id, { sponsor_url: next });
   }
 
   async function saveField(id: string, patch: Partial<Row>) {
@@ -225,6 +237,17 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
                     </button>
                   </div>
                 </div>
+              </div>
+
+              <div>
+                <Label className="text-[11px]">Sponsor-link (URL) — optioneel</Label>
+                <Input
+                  defaultValue={r.sponsor_url ?? ""}
+                  onBlur={(e) => saveSponsorUrl(r.id, e.target.value, r.sponsor_url)}
+                  className="h-8 text-sm"
+                  placeholder="https://www.viking.nl/…"
+                  inputMode="url"
+                />
               </div>
 
               <div className="flex justify-end">
