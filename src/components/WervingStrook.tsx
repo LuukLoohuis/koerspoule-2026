@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Megaphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { usePromotedSubpoules } from "@/hooks/usePromotedSubpoules";
 
 /**
@@ -10,7 +11,7 @@ import { usePromotedSubpoules } from "@/hooks/usePromotedSubpoules";
  * join-flow met de code voorgevuld (?join=<code>, geen auto-submit). Weggeklikt
  * blijft 'ie weg binnen de sessie (sessionStorage).
  */
-export default function WervingStrook() {
+export default function WervingStrook({ className }: { className?: string }) {
   const navigate = useNavigate();
   const { data = [] } = usePromotedSubpoules();
   const promo = data[0];
@@ -29,8 +30,7 @@ export default function WervingStrook() {
   };
 
   return (
-    <section className="container mx-auto px-5 pt-6">
-      <div className="retro-border bg-card rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 relative">
+    <div className={cn("retro-border bg-card rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 relative", className)}>
         <button
           type="button"
           onClick={close}
@@ -57,7 +57,6 @@ export default function WervingStrook() {
         >
           Doe mee →
         </Button>
-      </div>
-    </section>
+    </div>
   );
 }

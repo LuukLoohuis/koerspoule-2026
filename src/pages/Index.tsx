@@ -558,7 +558,9 @@ export default function Index() {
       </section>
 
       {/* ─── WERVINGSSTROOK (per subpoule, admin-gestuurd, wegklikbaar) ───── */}
-      <WervingStrook />
+      <section className="container mx-auto px-5 pt-6">
+        <WervingStrook />
+      </section>
 
       {/* ─── DE COURANT ───────────────────────────────────────────────────── */}
       <section className="container mx-auto px-5 pt-4">

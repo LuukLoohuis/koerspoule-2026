@@ -6,6 +6,8 @@ type Props = {
   gameStatus?: string;
   /** Rapporteert de banner van de geopende subpoule omhoog (null = geen). */
   onActiveBannerChange?: (banner: SubpouleBanner | null) => void;
+  /** Wervings-deeplink: vult de join-code voor + opent de Join-tab (geen auto-submit). */
+  presetJoinCode?: string;
 };
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,7 +54,7 @@ const SUB_TABS: SubTab[] = [
   { key: "deelnemers", label: "Deelnemers", Icon: Users },
 ];
 
-export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange }: Props = {}) {
+export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange, presetJoinCode }: Props = {}) {
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: currentGame } = useCurrentGame();
@@ -82,12 +84,13 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   const [createName, setCreateName] = useState("");
   const [createCode, setCreateCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
-  // Homepage-werving: ?join=<code> vult de join-code voor (geen auto-submit).
+  // Werving-deeplink: code uit prop (Mijn Peloton) of ?join= in de URL (homepage).
+  // Vult de join-code voor + opent de Join-tab; nooit auto-submit.
   const [subTab, setSubTab] = useState<"create" | "join">("create");
+  const joinFromUrl = presetJoinCode ?? (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("join") : null);
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get("join");
-    if (code) { setJoinCode(code); setSubTab("join"); }
-  }, []);
+    if (joinFromUrl) { setJoinCode(joinFromUrl); setSubTab("join"); }
+  }, [joinFromUrl]);
   // Overdracht-bevestiging: welk lid eigenaar maken (+ subpoule).
   const [transferTarget, setTransferTarget] = useState<{ subpouleId: string; userId: string; name: string } | null>(null);
   // Premium-feature: sommige subpoules vragen je woonplaats. We weten dat pas na

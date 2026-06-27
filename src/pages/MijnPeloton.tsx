@@ -17,6 +17,7 @@ import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Med
 import StageRoadbook from "@/components/StageRoadbook";
 import PelotonChat from "@/components/PelotonChat";
 import SubpouleManager from "@/components/SubpouleManager";
+import WervingStrook from "@/components/WervingStrook";
 import MyTeamPanel from "@/components/MyTeamPanel";
 import MyResultsPanel from "@/components/MyResultsPanel";
 import PalmaresPanel from "@/components/PalmaresPanel";
@@ -1307,7 +1308,10 @@ export default function MijnPeloton() {
 
           {/* ── TAB: Subpoules ── */}
           <TabsContent value="subpoules" className="mt-3">
-            <SubpouleManager gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} gameStatus={selectedGameObj?.status} onActiveBannerChange={setSubpouleBanner} />
+            {/* Wervingsstrook (admin-gestuurd, wegklikbaar) — ook hier zodat leden
+                een promote-subpoule kunnen vinden; "Doe mee" vult de code voor. */}
+            <WervingStrook className="mb-3" />
+            <SubpouleManager gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} gameStatus={selectedGameObj?.status} onActiveBannerChange={setSubpouleBanner} presetJoinCode={searchParams.get("join") ?? undefined} />
           </TabsContent>
 
           {/* ── TAB: Uitslagen ── */}
