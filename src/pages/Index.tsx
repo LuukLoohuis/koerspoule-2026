@@ -474,6 +474,12 @@ export default function Index() {
                   🚴 Stel je ploeg samen
                 </Button>
                 <Button
+                  className="retro-border-primary font-bold"
+                  onClick={() => navigate("/login?register=1")}
+                >
+                  Schrijf je in →
+                </Button>
+                <Button
                   variant="outline"
                   className="retro-border"
                   onClick={() => navigate("/uitslagen")}
