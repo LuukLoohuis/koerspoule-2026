@@ -17,7 +17,7 @@ const FOOTER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/p
 // Frame-kleuren afgestemd op de header/footer-art zodat body naadloos doorloopt.
 const FRAME_EDGE = "#F5D9A7";   // tan rand buiten de gouden lijn (= cap-randen)
 const FRAME_GOLD = "#DC9E29";   // gouden kaderlijn
-const FRAME_CREAM = "#F8EBCC";  // crème binnenvlak (= binnenkant header/footer)
+const FRAME_CREAM = "#F5E9D5";  // = crème onderaan de header-PNG → naadloze overloop
 
 function buildHtml(
   body: string,

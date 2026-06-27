@@ -23,7 +23,7 @@ const HEADER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/p
 const FOOTER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_footer_strip.png?v=${IMG_V}`;
 const FRAME_EDGE = "#F5D9A7";
 const FRAME_GOLD = "#DC9E29";
-const FRAME_CREAM = "#F8EBCC";
+const FRAME_CREAM = "#F5E9D5"; // = crème onderaan de header-PNG → naadloze overloop
 
 // Alleen het BERICHT — de begroeting "Beste deelnemer," en de afsluiting
 // "Veel koersplezier, Het Koerspoule team" zitten al vast in de template.
