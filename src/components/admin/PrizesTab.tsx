@@ -28,8 +28,9 @@ const SOORT_LABEL: Record<PrijsSoort, string> = {
   podium_3: "Podium 3 — beker",
   dagprijs: "Dagprijs",
   ereplaats: "Ereplaats (4 t/m 10)",
+  grootste_subpoule: "Grootste subpoule",
 };
-const SOORTEN: PrijsSoort[] = ["podium_1", "podium_2", "podium_3", "dagprijs", "ereplaats"];
+const SOORTEN: PrijsSoort[] = ["podium_1", "podium_2", "podium_3", "dagprijs", "ereplaats", "grootste_subpoule"];
 const RANGEN = [4, 5, 6, 7, 8, 9, 10];
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 const MAX_BYTES = 5 * 1024 * 1024;

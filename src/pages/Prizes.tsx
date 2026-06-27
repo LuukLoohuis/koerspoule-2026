@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Award, Gift, Lock, Shirt, Medal } from "lucide-react";
+import { Trophy, Award, Gift, Lock, Shirt, Medal, Users } from "lucide-react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { usePrizes, type Prize } from "@/hooks/usePrizes";
 
@@ -139,6 +139,7 @@ export default function Prizes() {
     .filter((p) => p.soort === "ereplaats" && p.rang != null)
     .sort((a, b) => (a.rang ?? 0) - (b.rang ?? 0));
   const dagprijzen = prizes.filter((p) => p.soort === "dagprijs");
+  const grootsteSubpoule = prizes.filter((p) => p.soort === "grootste_subpoule");
   const hasPodium = Boolean(podium1 || podium2 || podium3);
   const hasAny = prizes.length > 0;
 
@@ -259,6 +260,34 @@ export default function Prizes() {
                   ))}
                 </div>
               </section>
+            )}
+
+            {/* Grootste subpoule */}
+            {grootsteSubpoule.length > 0 && (
+              <>
+                {(hasPodium || ereplaatsen.length > 0 || dagprijzen.length > 0) && <div className="vintage-divider" aria-hidden />}
+                <section>
+                  <h2 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
+                    <Users className="h-5 w-5" style={{ color: GOLD }} /> Grootste subpoule
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {grootsteSubpoule.map((p) => (
+                      <Card key={p.id} className="ornate-frame retro-border">
+                        <CardContent className="p-4 flex gap-3">
+                          {p.afbeelding_url && (
+                            <img src={p.afbeelding_url} alt={p.titel} className="h-20 w-24 object-cover rounded-md border border-border shrink-0" loading="lazy" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-display font-bold leading-tight">{p.titel || "Grootste subpoule"}</h3>
+                            {p.omschrijving && <p className="text-sm text-muted-foreground font-serif mt-0.5 leading-snug">{p.omschrijving}</p>}
+                            <SponsorLine p={p} />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+              </>
             )}
           </>
         )}
