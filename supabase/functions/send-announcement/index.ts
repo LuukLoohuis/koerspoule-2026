@@ -11,7 +11,7 @@ const MAIL_WORKER = "https://koerspoule-mail.luuk-loohuis.workers.dev";
 const BASE_URL = "https://koerspoule.nl";
 // ?v= cache-bust: na opnieuw uploaden onder dezelfde naam serveert de CDN/mailclient
 // anders het oude plaatje. Bump dit nummer bij elke nieuwe upload.
-const IMG_V = "3";
+const IMG_V = "4";
 const HEADER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_header_afbeelding.png?v=${IMG_V}`;
 const FOOTER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_footer_strip.png?v=${IMG_V}`;
 // Frame-kleuren afgestemd op de header/footer-art zodat body naadloos doorloopt.

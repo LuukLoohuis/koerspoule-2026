@@ -18,7 +18,7 @@ import {
 type Game = { id: string; name: string; year: number | null };
 
 // ?v= cache-bust gelijk aan send-announcement; bump bij nieuwe upload.
-const IMG_V = "3";
+const IMG_V = "4";
 const HEADER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_header_afbeelding.png?v=${IMG_V}`;
 const FOOTER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_footer_strip.png?v=${IMG_V}`;
 const FRAME_EDGE = "#F5D9A7";
