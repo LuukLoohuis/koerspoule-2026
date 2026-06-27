@@ -8,13 +8,13 @@ import { cn } from "@/lib/utils";
 const GOLD = "hsl(var(--vintage-gold))";
 
 /**
- * Wrapt een prijskaart in een sponsor-link (nieuw tabblad, veilige rel-attributen)
- * als er een sponsor_url is. Affordance: pointer + lichte lift (desktop),
- * permanent ↗-icoon (mobiel) + "Bezoek website"-label op hover (desktop).
- * Geen url → kaart blijft zoals 'ie is (niet klikbaar).
+ * Compacte, chique "Bezoek website"-knop (donker met gouden rand/tekst) die naar
+ * de sponsor doorlinkt in een nieuw tabblad. Geen url → niets (geen layout-sprong:
+ * de knop hoort onderaan bij de overige kaartinhoud). Identiek op mobiel + web.
  */
-function SponsorLink({ p, className, children }: { p?: Prize; className?: string; children: React.ReactNode }) {
-  if (!p?.sponsor_url) return <>{children}</>;
+function SponsorButton({ p, className }: { p?: Prize; className?: string }) {
+  if (!p?.sponsor_url) return null;
+  const label = p.sponsor_naam ? `Bekijk ${p.sponsor_naam}` : "Bezoek website";
   return (
     <a
       href={p.sponsor_url}
@@ -22,17 +22,14 @@ function SponsorLink({ p, className, children }: { p?: Prize; className?: string
       rel="noopener noreferrer nofollow sponsored"
       aria-label={`Bezoek de website van ${p.sponsor_naam || "de sponsor"}`}
       className={cn(
-        "group relative block rounded-xl cursor-pointer transition-transform hover:-translate-y-0.5 motion-reduce:transform-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2",
+        "inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 rounded-lg border text-xs font-bold uppercase tracking-wider",
+        "bg-[#1A1612] hover:bg-[#26201a] text-[hsl(var(--vintage-gold))] border-[hsl(var(--vintage-gold))]",
+        "transition-colors motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] focus-visible:ring-offset-1",
         className,
       )}
     >
-      {children}
-      <span className="absolute bottom-2 right-2 z-10 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground bg-card/85 border border-border shadow-sm">
-        <span className="hidden md:inline-block max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:max-w-[110px] group-hover:opacity-100 motion-reduce:transition-none">
-          Bezoek website
-        </span>
-        <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
-      </span>
+      <span className="truncate">{label}</span>
+      <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden />
     </a>
   );
 }
@@ -98,6 +95,7 @@ function PrijsTekst({ p, eyebrow, fallback }: { p: Prize; eyebrow: string; fallb
         </>
       )}
       <SponsorLine p={p} />
+      <SponsorButton p={p} className="mt-3" />
     </div>
   );
 }
@@ -119,7 +117,6 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
     // DOM-volgorde 1,2,3 (mobiel correct); op desktop herschikt md:order naar 2-1-3.
     // Kolommen lijnen onderaan uit; getrapte ondermarge geeft het podium-trapeffect.
     <div className={`flex-1 min-w-0 flex flex-col ${mdOrder} ${lift} ${isWinner ? "md:max-w-[44%]" : "md:max-w-[32%]"}`}>
-      <SponsorLink p={p}>
       <Card
         className="ornate-frame rounded-xl overflow-hidden border transition-shadow"
         style={{
@@ -154,6 +151,7 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
               <h3 className={`font-display font-bold leading-tight ${isWinner ? "text-lg" : "text-sm"}`}>{p.titel || fallback}</h3>
               {p.omschrijving && <p className="text-sm text-muted-foreground font-serif mt-1 leading-snug">{p.omschrijving}</p>}
               <div className="flex justify-center"><SponsorLine p={p} /></div>
+              <SponsorButton p={p} className="w-full mt-3" />
             </>
           ) : (
             <div className="py-4 flex flex-col items-center gap-1.5 text-muted-foreground">
@@ -163,7 +161,6 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
           )}
         </CardContent>
       </Card>
-      </SponsorLink>
     </div>
   );
 }
@@ -264,46 +261,27 @@ export default function Prizes() {
                     <Medal className="h-5 w-5" style={{ color: GOLD }} /> Ereplaatsen
                   </h2>
                   <ul className="divide-y divide-border rounded-lg border border-border bg-card overflow-hidden">
-                    {ereplaatsen.map((p) => {
-                      const inner = (
-                        <>
-                          <span className="font-display font-black tabular-nums text-base w-9 shrink-0 text-center" style={{ color: GOLD }}>
-                            {p.rang}e
-                          </span>
-                          {p.afbeelding_url && (
-                            <img src={p.afbeelding_url} alt={p.titel} className="h-16 w-24 object-contain rounded border border-border bg-secondary/30 shrink-0" loading="lazy" />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <span className="font-display font-bold text-sm leading-tight">{p.titel || "Prijs"}</span>
-                            {p.omschrijving && <span className="text-sm text-muted-foreground font-serif"> — {p.omschrijving}</span>}
+                    {ereplaatsen.map((p) => (
+                      <li key={p.id} className="flex items-center gap-3 px-3 py-2.5">
+                        <span className="font-display font-black tabular-nums text-base w-9 shrink-0 text-center" style={{ color: GOLD }}>
+                          {p.rang}e
+                        </span>
+                        {p.afbeelding_url && (
+                          <img src={p.afbeelding_url} alt={p.titel} className="h-16 w-24 object-contain rounded border border-border bg-secondary/30 shrink-0" loading="lazy" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <span className="font-display font-bold text-sm leading-tight">{p.titel || "Prijs"}</span>
+                          {p.omschrijving && <span className="text-sm text-muted-foreground font-serif"> — {p.omschrijving}</span>}
+                        </div>
+                        {(p.sponsor_logo_url || p.sponsor_naam) && (
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {p.sponsor_logo_url && <img src={p.sponsor_logo_url} alt={p.sponsor_naam ?? "sponsor"} className="h-5 w-auto max-w-[60px] object-contain" loading="lazy" />}
+                            {p.sponsor_naam && <span className="hidden sm:inline text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{p.sponsor_naam}</span>}
                           </div>
-                          {(p.sponsor_logo_url || p.sponsor_naam) && (
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {p.sponsor_logo_url && <img src={p.sponsor_logo_url} alt={p.sponsor_naam ?? "sponsor"} className="h-5 w-auto max-w-[60px] object-contain" loading="lazy" />}
-                              {p.sponsor_naam && <span className="hidden sm:inline text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{p.sponsor_naam}</span>}
-                            </div>
-                          )}
-                          {p.sponsor_url && <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />}
-                        </>
-                      );
-                      return (
-                        <li key={p.id}>
-                          {p.sponsor_url ? (
-                            <a
-                              href={p.sponsor_url}
-                              target="_blank"
-                              rel="noopener noreferrer nofollow sponsored"
-                              aria-label={`Bezoek de website van ${p.sponsor_naam || "de sponsor"}`}
-                              className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-secondary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60"
-                            >
-                              {inner}
-                            </a>
-                          ) : (
-                            <div className="flex items-center gap-3 px-3 py-2.5">{inner}</div>
-                          )}
-                        </li>
-                      );
-                    })}
+                        )}
+                        <SponsorButton p={p} className="min-h-0 h-8 px-2.5 text-[10px] max-w-[150px]" />
+                      </li>
+                    ))}
                   </ul>
                 </section>
               </>
@@ -322,8 +300,7 @@ export default function Prizes() {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {dagprijzen.map((p) => (
-                    <SponsorLink key={p.id} p={p}>
-                    <Card className="ornate-frame retro-border">
+                    <Card key={p.id} className="ornate-frame retro-border">
                       <CardContent className="p-4 flex items-center gap-4">
                         {p.afbeelding_url && (
                           <img src={p.afbeelding_url} alt={p.titel} className="w-44 sm:w-56 aspect-[3/2] object-contain rounded-lg border border-border bg-secondary/30 shrink-0" loading="lazy" />
@@ -331,7 +308,6 @@ export default function Prizes() {
                         <PrijsTekst p={p} eyebrow="Dagprijs" fallback="Dagprijs" />
                       </CardContent>
                     </Card>
-                    </SponsorLink>
                   ))}
                 </div>
               </section>
@@ -347,8 +323,7 @@ export default function Prizes() {
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {grootsteSubpoule.map((p) => (
-                      <SponsorLink key={p.id} p={p}>
-                      <Card className="ornate-frame retro-border">
+                      <Card key={p.id} className="ornate-frame retro-border">
                         <CardContent className="p-4 flex items-center gap-4">
                           {p.afbeelding_url && (
                             <img src={p.afbeelding_url} alt={p.titel} className="w-44 sm:w-56 aspect-[3/2] object-contain rounded-lg border border-border bg-secondary/30 shrink-0" loading="lazy" />
@@ -356,7 +331,6 @@ export default function Prizes() {
                           <PrijsTekst p={p} eyebrow="Grootste subpoule" fallback="Grootste subpoule" />
                         </CardContent>
                       </Card>
-                      </SponsorLink>
                     ))}
                   </div>
                 </section>
