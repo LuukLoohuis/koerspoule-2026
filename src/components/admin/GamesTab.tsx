@@ -41,11 +41,10 @@ const TYPE_LABELS: Record<string, string> = {
   vuelta: "Vuelta a España",
 };
 
+// Kiesbaar, opgeschoond model: open → open_inschrijving → live → afgerond.
 const STATUS_LABELS: Record<string, string> = {
-  draft: "Concept (verborgen)",
   open: "Open — sneak preview (niet inschrijven)",
   open_inschrijving: "Inschrijving open",
-  locked: "Gesloten (deadline)",
   live: "Live (loopt)",
   finished: "Afgerond",
 };
@@ -53,7 +52,9 @@ const STATUS_LABELS: Record<string, string> = {
 // Legacy-statussen: niet meer kiesbaar, maar moeten wél tonen als een bestaande
 // game er nog op staat (anders blijft de selector-trigger leeg).
 const LEGACY_STATUS_LABELS: Record<string, string> = {
-  concept: "Concept (verborgen)",
+  draft: "Concept (legacy → werkt als open)",
+  concept: "Concept (legacy → werkt als open)",
+  locked: "Gesloten (legacy → werkt als live)",
   closed: "Afgerond (gesloten)",
 };
 
@@ -128,7 +129,7 @@ export default function GamesTab({
         name,
         game_type: type,
         year: yr,
-        status: "draft",
+        status: "open", // nieuwe game start meteen als zichtbare sneak preview
       };
       if (startsAt) payload.starts_at = startsAt;
 

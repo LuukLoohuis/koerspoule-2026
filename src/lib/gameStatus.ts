@@ -2,19 +2,25 @@
  * Centrale game-status-logica. ÉÉN bron voor "wie ziet de game" en "wie mag
  * inschrijven" — zichtbaarheid en inschrijven zijn TWEE aparte assen.
  *
- * Statussen:
- *  - concept / draft : alleen admins zien de game (verborgen in de GameSwitcher
- *                      voor gewone gebruikers). Geen inschrijven.
- *  - open            : sneak preview — iedereen ziet alle tabs, maar GEEN renners
- *                      kiezen/indienen (team builder in preview).
+ * Opgeschoond, kiesbaar model: open → open_inschrijving → live → afgerond(finished).
+ *  - open            : sneak preview — iedereen ziet de game als preview-schil,
+ *                      GEEN renners kiezen/indienen. Default voor een nieuwe game.
  *  - open_inschrijving: iedereen; renners kiezen + indienen MAG.
- *  - live / locked   : iedereen; inschrijving dicht, niets meer aanpassen.
- *  - finished        : iedereen; alles + resultaten terug te kijken, dicht.
- *  - closed          : technisch nog in de DB; in de frontend als finished/dicht.
+ *  - live / locked   : iedereen; inschrijving dicht, volledige inhoud.
+ *  - finished        : iedereen; alles read-only terug te kijken.
+ *
+ * Legacy (niet meer kiesbaar in de admin, waarde blijft in de DB-enum):
+ *  - draft / concept : behandeld als 'open' (zichtbare sneak preview) — er is GEEN
+ *                      status meer die een game volledig verbergt.
+ *  - locked          : behandeld als 'live'.
+ *  - closed          : behandeld als 'finished'.
  */
 
-const ADMIN_ONLY = ["concept", "draft"];
+// Geen enkele status verbergt nog een game (bewust): leeg.
+const ADMIN_ONLY: string[] = [];
 const REGISTRATION = "open_inschrijving";
+// Sneak preview: 'open' + legacy draft/concept.
+const PREVIEW = ["open", "draft", "concept"];
 const LOCKED = ["live", "locked", "finished", "closed"];
 
 const s = (status?: string | null) => String(status ?? "");
@@ -34,9 +40,9 @@ export function canRegister(status?: string | null): boolean {
   return s(status) === REGISTRATION;
 }
 
-/** Sneak preview ('open'): alles zien, niet inschrijven → preview-banner. */
+/** Sneak preview ('open' + legacy draft/concept): preview-schil, niet inschrijven. */
 export function isPreviewStatus(status?: string | null): boolean {
-  return s(status) === "open";
+  return PREVIEW.includes(s(status));
 }
 
 /**
@@ -85,8 +91,7 @@ export type StatusBadge = { label: string; kind: StatusBadgeKind } | null;
 /** Retro-badge voor de GameSwitcher/lijst. Null = geen badge. */
 export function statusBadge(status?: string | null): StatusBadge {
   const v = s(status);
-  if (ADMIN_ONLY.includes(v)) return { label: "Concept · alleen admin", kind: "concept" };
-  if (v === "open") return { label: "Sneak preview", kind: "preview" };
+  if (isPreviewStatus(v)) return { label: "Sneak preview", kind: "preview" };
   if (v === REGISTRATION) return { label: "Inschrijving open", kind: "registration" };
   if (v === "live" || v === "locked") return { label: "Live", kind: "live" };
   if (v === "finished" || v === "closed") return { label: "Afgerond", kind: "finished" };
