@@ -136,19 +136,23 @@ function PrijsKaart({
           </h3>
 
           {p.prijs_label && (
-            <div className="mt-1 font-display font-black leading-[0.95] text-[#d99a00] text-5xl">
+            <div
+              className="mt-1.5 font-display font-black leading-[0.95] tracking-[-0.04em] text-[#d99a00] text-[52px] md:text-[58px]"
+              style={{ textShadow: "0 2px 0 rgba(255,255,255,0.5)" }}
+            >
               {p.prijs_label}
             </div>
           )}
 
           {p.omschrijving && (
-            <p className="mt-3 text-sm font-semibold leading-relaxed text-[#636579]">{p.omschrijving}</p>
+            <p className="mt-3 max-w-[90%] text-[15px] font-semibold leading-[1.5] text-[#626477]">{p.omschrijving}</p>
           )}
 
           {p.sponsor_naam && (
-            <p className="mt-3 text-[11px] uppercase tracking-[0.08em] text-[#77798b]">
-              Aangeboden door <strong className="text-[#222]">{p.sponsor_naam}</strong>
-            </p>
+            <div className="mt-2 pt-4 border-t border-[rgba(145,115,55,0.25)]">
+              <span className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#74758a]">Aangeboden door</span>
+              <strong className="block text-sm font-extrabold uppercase tracking-[0.05em] text-[#22222c]">{p.sponsor_naam}</strong>
+            </div>
           )}
 
           {p.sponsor_url && (
