@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase, Coffee } from "lucide-react";
+import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase, Coffee, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 type BreakdownRow = {
@@ -117,6 +117,7 @@ function StageBreakdown({ stageId }: { stageId: string }) {
 // per stage; admin-gestuurd, niet automatisch. force = opnieuw genereren.
 function VoorbeschouwingActie({ stageId }: { stageId: string }) {
   const [tekst, setTekst] = useState<string | null>(null);
+  const [zichtbaar, setZichtbaar] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -126,13 +127,21 @@ function VoorbeschouwingActie({ stageId }: { stageId: string }) {
       if (!supabase) return;
       const { data } = await supabase
         .from("etappe_voorbeschouwingen")
-        .select("tekst")
+        .select("tekst, zichtbaar")
         .eq("stage_id", stageId)
         .maybeSingle();
-      if (alive) { setTekst(data?.tekst ?? null); setLoaded(true); }
+      if (alive) { setTekst(data?.tekst ?? null); setZichtbaar(Boolean(data?.zichtbaar)); setLoaded(true); }
     })();
     return () => { alive = false; };
   }, [stageId]);
+
+  async function toggleZichtbaar(next: boolean) {
+    if (!supabase) return;
+    const { error } = await supabase.from("etappe_voorbeschouwingen").update({ zichtbaar: next }).eq("stage_id", stageId);
+    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
+    setZichtbaar(next);
+    toast.success(next ? "Radio Koerspoule zichtbaar voor deelnemers" : "Radio Koerspoule verborgen");
+  }
 
   async function genereer(force: boolean) {
     if (!supabase || busy) return;
@@ -158,9 +167,16 @@ function VoorbeschouwingActie({ stageId }: { stageId: string }) {
         <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground inline-flex items-center gap-1.5">
           <Mic className="w-3.5 h-3.5" /> Radio Koerspoule — voorbeschouwing
         </span>
-        <Button size="sm" variant="outline" className="h-7 text-xs" disabled={busy || !loaded} onClick={() => genereer(Boolean(tekst))}>
-          {busy ? "Bezig…" : tekst ? "Opnieuw genereren" : "Voorbeschouwing genereren"}
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          {tekst && (
+            <Button size="sm" variant={zichtbaar ? "default" : "outline"} className="h-7 text-xs" disabled={!loaded} onClick={() => toggleZichtbaar(!zichtbaar)} title="Toon de voorbeschouwing aan deelnemers in L'Équipe">
+              {zichtbaar ? "Zichtbaar voor deelnemers" : "Verborgen"}
+            </Button>
+          )}
+          <Button size="sm" variant="outline" className="h-7 text-xs" disabled={busy || !loaded} onClick={() => genereer(Boolean(tekst))}>
+            {busy ? "Bezig…" : tekst ? "Opnieuw genereren" : "Voorbeschouwing genereren"}
+          </Button>
+        </div>
       </div>
       {tekst && (
         <p className="mt-2 text-sm font-serif italic text-foreground/90 whitespace-pre-line leading-snug">
@@ -189,6 +205,24 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   const [lefBusy, setLefBusy] = useState(false);
   // Per-etappe "Steun Koerspoule"-banner-staat (100% handmatig; nooit auto).
   const [bannerMap, setBannerMap] = useState<Record<string, boolean>>({});
+  // Admin-only testmodus (per game): admin ziet alles ongeacht status. Geen effect op deelnemers.
+  const [testmodus, setTestmodus] = useState(false);
+
+  useEffect(() => {
+    if (!supabase || !activeGameId) return;
+    (async () => {
+      const { data } = await supabase.from("games").select("admin_testmodus").eq("id", activeGameId).maybeSingle();
+      setTestmodus(Boolean(data?.admin_testmodus));
+    })();
+  }, [activeGameId]);
+
+  async function toggleTestmodus(next: boolean) {
+    if (!supabase || !activeGameId) return;
+    const { error } = await supabase.from("games").update({ admin_testmodus: next }).eq("id", activeGameId);
+    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
+    setTestmodus(next);
+    toast.success(next ? "Testmodus AAN — je ziet als admin alles ongeacht de status" : "Testmodus uit — je ziet de game zoals de status hoort");
+  }
 
   // Wist alle Lefevère-rapporten van deze game → elke deelnemer krijgt een vers
   // rapport bij de volgende weergave (nu via het nieuwe model / verbeterde prompt).
@@ -317,6 +351,24 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
 
   return (
     <div className="space-y-6">
+      {/* Admin-only testmodus — losgekoppeld van de game-status; raakt deelnemers niet. */}
+      <Card className={testmodus ? "border-[hsl(var(--vintage-gold))]" : ""}>
+        <CardContent className="flex items-center justify-between gap-3 p-4">
+          <div className="min-w-0">
+            <p className="font-display font-bold flex items-center gap-2">
+              <Eye className="w-4 h-4" /> Testmodus {testmodus ? "AAN" : "uit"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Als admin zie je dan <strong>alles</strong> (L'Équipe, uitslagen, subpoule, Hors Catégorie) ongeacht de game-status.
+              Deelnemers merken hier niets van — die zien de game volgens de status.
+            </p>
+          </div>
+          <Button size="sm" variant={testmodus ? "default" : "outline"} className="shrink-0" disabled={!activeGameId} onClick={() => toggleTestmodus(!testmodus)}>
+            {testmodus ? "Zet uit" : "Zet aan"}
+          </Button>
+        </CardContent>
+      </Card>
+
       <Card className="border-orange-300">
         <CardHeader>
           <div className="flex items-center justify-between gap-2 flex-wrap">

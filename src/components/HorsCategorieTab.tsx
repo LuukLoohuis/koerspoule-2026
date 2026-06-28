@@ -237,7 +237,7 @@ const HORS_TABS: { key: HorsTabKey; label: string; Icon: ComponentType<{ classNa
   { key: "benchmark", label: "Benchmark", Icon: Swords },
 ];
 
-export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameStatus }: { initialTab?: HorsTabKey; gameId?: string; gameStatus?: string } = {}) {
+export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameStatus, adminTestmodus = false }: { initialTab?: HorsTabKey; gameId?: string; gameStatus?: string; adminTestmodus?: boolean } = {}) {
   const { thema } = useThema();
   const { role } = useAuth();
   const { data: curGame } = useCurrentGame();
@@ -245,16 +245,17 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   const game = gameIdProp ? { id: gameIdProp, status: gameStatus } : curGame;
   // Twee aparte assen: tab tónen (isVisible, vanaf "open" t/m finished) vs. échte
   // uitslagdata aanwezig (hasResults, vanaf "live"). Concept/draft = verborgen.
-  // In de sneak preview ('open') ziet de ADMIN de echte HC (maySeeLiveContent
-  // laat de admin door) zodat hij de hele keten kan testen; gewone gebruikers
-  // krijgen daar de demo (isDemo).
+  // Admin-volledig-zicht hangt aan de TESTMODUS (niet meer aan status 'open').
+  // Testmodus aan → admin ziet de echte HC ongeacht status; uit → admin ziet de
+  // game als een deelnemer (in 'open' dus de demo).
   const isAdmin = role === "admin";
-  const hasResults = isGameLocked(game?.status) || (isAdmin && isPreviewStatus(game?.status));
+  const adminSeesAll = isAdmin && adminTestmodus;
+  const hasResults = isGameLocked(game?.status) || adminSeesAll;
   const isVisible = Boolean(game?.status) && !isAdminOnlyStatus(game?.status);
   // Sneak preview ('open'): gewone gebruiker krijgt UITSLUITEND een client-side
   // demo op gesimuleerde data. De ADMIN ziet de echte gevulde HC (kan testen).
   // Verdwijnt zodra de status verder is (open_inschrijving, live, …).
-  const isDemo = isPreviewStatus(game?.status) && role !== "admin";
+  const isDemo = isPreviewStatus(game?.status) && !adminSeesAll;
   const { entry, picksByCategory, jokerIds, predictions: myPredictions } = useEntry(game?.id);
   const { data: categories = [] } = useCategories(game?.id);
   const { data: pickStats = [] } = usePickStats(hasResults ? game?.id : undefined);

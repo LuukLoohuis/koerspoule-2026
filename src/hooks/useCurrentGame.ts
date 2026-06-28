@@ -22,10 +22,12 @@ export type Game = {
   homepage_quote_size?: number | null;
   /** Prijzen-tab zichtbaar voor deelnemers (per game). */
   prizes_visible?: boolean | null;
+  /** Admin-only testmodus: admin ziet alles ongeacht status (geen effect op deelnemers). */
+  admin_testmodus?: boolean | null;
 };
 
 const SELECT =
-  "id, name, year, status, game_type, homepage_quote, homepage_quote_author, homepage_quote_size, prizes_visible";
+  "id, name, year, status, game_type, homepage_quote, homepage_quote_author, homepage_quote_size, prizes_visible, admin_testmodus";
 // Zolang de homepage_quote_size-migratie nog niet op de DB staat zou de
 // volle SELECT een 42703 (undefined column) geven en heel current-game
 // breken. Dan vallen we terug op de oude kolomlijst.

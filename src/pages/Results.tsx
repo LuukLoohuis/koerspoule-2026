@@ -46,7 +46,7 @@ export default function Results() {
         </div>
       )}
 
-      {maySeeLiveContent(selectedGame?.status, isAdmin) ? (
+      {maySeeLiveContent(selectedGame?.status, isAdmin, selectedGame?.admin_testmodus ?? false) ? (
         <ResultsView showHeader gameId={selectedGame?.id} gameName={selectedGame?.name} />
       ) : (
         <SneakPreviewLock

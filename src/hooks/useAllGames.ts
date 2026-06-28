@@ -8,6 +8,7 @@ export type GameRow = {
   status: "concept" | "draft" | "open" | "open_inschrijving" | "locked" | "live" | "finished" | string;
   game_type: "giro" | "tour" | "tdf" | "vuelta" | "femmes" | string | null;
   prizes_visible?: boolean | null;
+  admin_testmodus?: boolean | null;
 };
 
 export function useAllGames() {
@@ -21,7 +22,7 @@ export function useAllGames() {
       if (!supabase) return [];
       const { data, error } = await supabase
         .from("games")
-        .select("id, name, year, status, game_type, prizes_visible")
+        .select("id, name, year, status, game_type, prizes_visible, admin_testmodus")
         .order("year", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;

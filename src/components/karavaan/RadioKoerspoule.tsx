@@ -33,10 +33,10 @@ export default function RadioKoerspoule({ gameId }: { gameId?: string }) {
       if (!upcoming) return null;
       const { data: vb } = await (supabase as any)
         .from("etappe_voorbeschouwingen")
-        .select("tekst")
+        .select("tekst, zichtbaar")
         .eq("stage_id", upcoming.id)
         .maybeSingle();
-      if (!vb?.tekst) return null;
+      if (!vb?.tekst || !vb?.zichtbaar) return null;
       return { tekst: vb.tekst, stage_number: upcoming.stage_number };
     },
   });

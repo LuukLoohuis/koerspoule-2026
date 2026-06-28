@@ -41,22 +41,31 @@ export function isPreviewStatus(status?: string | null): boolean {
 
 /**
  * Mag de HUIDIGE viewer de ECHTE, gevulde game-inhoud zien (uitslagen, ranking,
- * klassementen, commentaar)? De rol-/preview-afscherming geldt UITSLUITEND in de
- * sneak preview ('open'); daar ziet alleen de admin de echte data zodat hij de
- * hele keten kan testen (fiatteren → ranking → HC/subpoule/commentaar).
+ * klassementen, commentaar)?
+ *
+ * DEELNEMER-zicht hangt PUUR aan de status: alleen de sneak preview ('open')
+ * verbergt de echte inhoud (preview-schil). ADMIN-volledig-zicht is LOSGEKOPPELD
+ * van de status en hangt aan de admin-only TESTMODUS (games.admin_testmodus):
+ * staat die aan, dan ziet de admin alles ongeacht de status; staat 'ie uit, dan
+ * ziet de admin de game precies zoals een deelnemer (handig om de preview te
+ * controleren). Beheer/fiatteren staat hier los van (eigen admin-gating).
  *
  * Waarheidstabel (deelnemer = niet-admin):
  *   concept/draft       → game sowieso verborgen (isVisibleToUser)
- *   open                → admin: true · deelnemer: FALSE  (preview-schil)
- *   open_inschrijving   → iedereen: true  (volledige inhoud)
+ *   open                → deelnemer: FALSE · admin: alleen true bij testmodus
+ *   open_inschrijving   → iedereen: true
  *   live / locked       → iedereen: true
  *   finished / closed   → iedereen: true
  *
- * Voeg dus NOOIT een aparte status-check toe die in open_inschrijving/live nog
- * iets verbergt voor deelnemers — alleen 'open' kent rol-afscherming.
+ * Voeg NOOIT een aparte status-check toe die in open_inschrijving/live nog iets
+ * verbergt voor deelnemers — alleen 'open' kent een afscherming.
  */
-export function maySeeLiveContent(status: string | null | undefined, isAdmin: boolean): boolean {
-  return isAdmin || !isPreviewStatus(status);
+export function maySeeLiveContent(
+  status: string | null | undefined,
+  isAdmin: boolean,
+  adminTestmodus = false,
+): boolean {
+  return !isPreviewStatus(status) || (isAdmin && adminTestmodus);
 }
 
 /** Definitief op slot (na de deadline): live/locked/finished/closed. */

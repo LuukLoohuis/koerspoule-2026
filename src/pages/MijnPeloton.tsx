@@ -131,7 +131,7 @@ export default function MijnPeloton() {
   const supportBanner = useSupportBanner(selectedGameObj?.id);
   const isDraft = isAdminOnlyStatus(selectedGameObj?.status);
   // Sneak preview ('open'): admin ziet de echte (test)data, gewone gebruiker de schil.
-  const maySeeLive = maySeeLiveContent(selectedGameObj?.status, isAdmin);
+  const maySeeLive = maySeeLiveContent(selectedGameObj?.status, isAdmin, selectedGameObj?.admin_testmodus ?? false);
 
   // Onboarding-voortgang voor de geselecteerde game.
   const navigate = useNavigate();
@@ -1338,7 +1338,7 @@ export default function MijnPeloton() {
 
           {/* ── TAB: Hors Catégorie ── */}
           <TabsContent value="hors" className="mt-3">
-            <HorsCategorieTab initialTab={horsTab} gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} />
+            <HorsCategorieTab initialTab={horsTab} gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} adminTestmodus={selectedGameObj?.admin_testmodus ?? false} />
           </TabsContent>
 
         </Tabs>
