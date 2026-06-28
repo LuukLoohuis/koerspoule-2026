@@ -41,10 +41,19 @@ export function isPreviewStatus(status?: string | null): boolean {
 
 /**
  * Mag de HUIDIGE viewer de ECHTE, gevulde game-inhoud zien (uitslagen, ranking,
- * klassementen, commentaar)? In de sneak preview ('open') ziet alleen de admin
- * de echte data — zo kan de admin de hele keten testen (fiatteren → ranking →
- * HC/subpoule/commentaar) terwijl een gewone gebruiker de preview-schil houdt.
- * Bij alle andere statussen ziet iedereen de echte inhoud.
+ * klassementen, commentaar)? De rol-/preview-afscherming geldt UITSLUITEND in de
+ * sneak preview ('open'); daar ziet alleen de admin de echte data zodat hij de
+ * hele keten kan testen (fiatteren → ranking → HC/subpoule/commentaar).
+ *
+ * Waarheidstabel (deelnemer = niet-admin):
+ *   concept/draft       → game sowieso verborgen (isVisibleToUser)
+ *   open                → admin: true · deelnemer: FALSE  (preview-schil)
+ *   open_inschrijving   → iedereen: true  (volledige inhoud)
+ *   live / locked       → iedereen: true
+ *   finished / closed   → iedereen: true
+ *
+ * Voeg dus NOOIT een aparte status-check toe die in open_inschrijving/live nog
+ * iets verbergt voor deelnemers — alleen 'open' kent rol-afscherming.
  */
 export function maySeeLiveContent(status: string | null | undefined, isAdmin: boolean): boolean {
   return isAdmin || !isPreviewStatus(status);
