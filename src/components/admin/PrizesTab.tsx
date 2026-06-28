@@ -19,6 +19,9 @@ type Row = {
   sponsor_logo_url: string | null;
   sponsor_url: string | null;
   afbeelding_url: string | null;
+  prijs_label: string | null;
+  badge_top: string | null;
+  badge_bottom: string | null;
   sort_order: number;
   rang: number | null;
 };
@@ -248,6 +251,21 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
                   placeholder="https://www.viking.nl/…"
                   inputMode="url"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div>
+                  <Label className="text-[11px]">Prijs (groot/goud) — optioneel</Label>
+                  <Input defaultValue={r.prijs_label ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.prijs_label && saveField(r.id, { prijs_label: e.target.value.trim() || null })} className="h-8 text-sm" placeholder="bv. €10" />
+                </div>
+                <div>
+                  <Label className="text-[11px]">Badge boven</Label>
+                  <Input defaultValue={r.badge_top ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.badge_top && saveField(r.id, { badge_top: e.target.value.trim() || null })} className="h-8 text-sm" placeholder="bv. Vandaag" />
+                </div>
+                <div>
+                  <Label className="text-[11px]">Badge onder</Label>
+                  <Input defaultValue={r.badge_bottom ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.badge_bottom && saveField(r.id, { badge_bottom: e.target.value.trim() || null })} className="h-8 text-sm" placeholder="bv. Prijs" />
+                </div>
               </div>
 
               <div className="flex justify-end">

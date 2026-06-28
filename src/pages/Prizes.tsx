@@ -101,6 +101,10 @@ function PrijsKaart({
   fallback: string;
   badge?: { top: string; bottom: string };
 }) {
+  // Badge-tekst is admin-bewerkbaar; valt terug op de sectie-default.
+  const badgeTop = p.badge_top ?? badge?.top;
+  const badgeBottom = p.badge_bottom ?? badge?.bottom;
+  const hasBadge = Boolean(badgeTop || badgeBottom);
   return (
     <article className="prijs-kaart overflow-hidden rounded-xl border border-foreground/15 bg-card shadow-[0_12px_32px_rgba(0,0,0,0.08)]">
       <div className="flex flex-col-reverse md:flex-row md:items-stretch">
@@ -112,14 +116,14 @@ function PrijsKaart({
             CARD_TEXT_W,
           )}
         >
-          {/* Ronde zwart/gouden badge rechtsboven */}
-          {badge && (
+          {/* Ronde zwart/gouden badge rechtsboven (groter) */}
+          {hasBadge && (
             <div
-              className="absolute top-4 right-4 flex h-[68px] w-[68px] flex-col items-center justify-center rounded-full border-2 border-[#f5b51b] bg-[#111] text-[#f5b51b] shadow-[0_8px_20px_rgba(0,0,0,0.18)]"
+              className="absolute top-4 right-4 flex h-[92px] w-[92px] flex-col items-center justify-center rounded-full border-2 border-[#f5b51b] bg-[#111] text-center text-[#f5b51b] shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
               aria-hidden
             >
-              <span className="text-[9px] font-bold uppercase tracking-[0.08em] leading-none">{badge.top}</span>
-              <span className="mt-0.5 text-[15px] font-black uppercase leading-none">{badge.bottom}</span>
+              {badgeTop && <span className="px-1 text-[11px] font-bold uppercase tracking-[0.08em] leading-tight">{badgeTop}</span>}
+              {badgeBottom && <span className="mt-0.5 px-1 text-[18px] font-black uppercase leading-tight">{badgeBottom}</span>}
             </div>
           )}
 
@@ -127,9 +131,15 @@ function PrijsKaart({
             {eyebrow}
           </div>
 
-          <h3 className="mt-2 max-w-[78%] font-display font-black text-2xl leading-[1.15] text-[#1f1f28]">
+          <h3 className={cn("mt-2 font-display font-black text-2xl leading-[1.15] text-[#1f1f28]", hasBadge ? "max-w-[66%]" : "max-w-[82%]")}>
             {p.titel || fallback}
           </h3>
+
+          {p.prijs_label && (
+            <div className="mt-1 font-display font-black leading-[0.95] text-[#d99a00] text-5xl">
+              {p.prijs_label}
+            </div>
+          )}
 
           {p.omschrijving && (
             <p className="mt-3 text-sm font-semibold leading-relaxed text-[#636579]">{p.omschrijving}</p>
