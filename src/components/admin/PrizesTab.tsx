@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Upload, Trash2, Plus, Eye, EyeOff } from "lucide-react";
+import { Trophy, Upload, Trash2, Plus, Eye, EyeOff, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import type { PrijsSoort } from "@/hooks/usePrizes";
 
@@ -22,6 +22,7 @@ type Row = {
   prijs_label: string | null;
   badge_top: string | null;
   badge_bottom: string | null;
+  is_dagprijs_vandaag: boolean;
   sort_order: number;
   rang: number | null;
 };
@@ -94,6 +95,19 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
       return;
     }
     await saveField(id, { sponsor_url: next });
+  }
+
+  // Max één "dagprijs van vandaag" per game: bij aanzetten eerst de rest uit.
+  async function toggleDagprijsVandaag(id: string, next: boolean) {
+    if (!supabase) return;
+    if (next) {
+      const { error: clearErr } = await supabase.from("prizes").update({ is_dagprijs_vandaag: false } as never).eq("game_id", activeGameId);
+      if (clearErr) { toast.error(`Opslaan mislukt: ${clearErr.message}`); return; }
+    }
+    const { error } = await supabase.from("prizes").update({ is_dagprijs_vandaag: next } as never).eq("id", id);
+    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, is_dagprijs_vandaag: next } : next ? { ...r, is_dagprijs_vandaag: false } : r)));
+    toast.success(next ? "Dagprijs van vandaag in L'Équipe" : "Dagprijs-banner uit");
   }
 
   async function saveField(id: string, patch: Partial<Row>) {
@@ -268,7 +282,19 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between gap-2">
+                {r.soort === "dagprijs" ? (
+                  <Button
+                    size="sm"
+                    variant={r.is_dagprijs_vandaag ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    onClick={() => toggleDagprijsVandaag(r.id, !r.is_dagprijs_vandaag)}
+                    title="Toon deze dagprijs als banner bovenaan L'Équipe (max. één per game)"
+                  >
+                    <CalendarDays className="w-3.5 h-3.5 mr-1" />
+                    Dagprijs van vandaag {r.is_dagprijs_vandaag ? "aan" : "uit"}
+                  </Button>
+                ) : <span />}
                 <Button size="sm" variant="ghost" className="h-7 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => removePrize(r.id)}>
                   <Trash2 className="w-3.5 h-3.5 mr-1" /> Verwijder
                 </Button>

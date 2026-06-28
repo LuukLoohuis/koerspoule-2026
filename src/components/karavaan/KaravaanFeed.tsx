@@ -11,6 +11,7 @@ import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type Karavaan
 import MiniStrip, { type HorsTabKey } from "@/components/karavaan/MiniStrip";
 import Voorbeschouwing from "@/components/karavaan/Voorbeschouwing";
 import RadioKoerspoule from "@/components/karavaan/RadioKoerspoule";
+import DagprijsBanner from "@/components/karavaan/DagprijsBanner";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import Stamp from "@/components/retro/Stamp";
@@ -114,6 +115,9 @@ export default function KaravaanFeed({
 
   return (
     <div className="space-y-4">
+      {/* Dagprijs van vandaag — compacte strook bovenaan (admin-gestuurd) */}
+      <DagprijsBanner gameId={game?.id} />
+
       {/* Subpoule-switcher */}
       <SubpouleSwitcher
         subpoules={subpoules.map((s) => ({ id: s.id, name: s.name }))}
