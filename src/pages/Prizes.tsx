@@ -22,9 +22,11 @@ function SponsorButton({ p, className }: { p?: Prize; className?: string }) {
       rel="noopener noreferrer nofollow sponsored"
       aria-label={`Bezoek de website van ${p.sponsor_naam || "de sponsor"}`}
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 rounded-lg border text-xs font-bold uppercase tracking-wider",
-        "bg-[#1A1612] hover:bg-[#26201a] text-[hsl(var(--vintage-gold))] border-[hsl(var(--vintage-gold))]",
-        "transition-colors motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] focus-visible:ring-offset-1",
+        "inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 rounded-md border text-xs font-black uppercase tracking-wider",
+        "bg-[#111] hover:bg-[#1d1710] text-[#f5b51b] hover:text-[#ffc94a] border-[#f5b51b]/60",
+        "shadow-[0_8px_18px_rgba(0,0,0,0.16)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.22)] hover:-translate-y-px",
+        "transition-[transform,background-color,box-shadow,color] duration-200 motion-reduce:transition-none motion-reduce:transform-none",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] focus-visible:ring-offset-1",
         className,
       )}
     >
@@ -83,43 +85,77 @@ const CARD_TEXT_W = "md:w-[42%]";
 const CARD_PHOTO_W = "md:w-[58%]";
 
 /**
- * Niet-podium-prijskaart: afgebakend tekstvak LINKS, grotere foto RECHTS (desktop).
- * Mobiel onder elkaar (foto boven, tekst eronder). Beide kanten even hoog
- * (md:items-stretch). Sponsorknop compact onderaan BINNEN het tekstvak.
+ * Niet-podium-prijskaart: premium tekstvlak LINKS (crème-gradient, gouden top-rand,
+ * ronde zwart/gouden badge rechtsboven, sterke titel + zwart/gouden knop), grotere
+ * foto RECHTS (ongewijzigd). Mobiel onder elkaar (foto boven, tekst eronder).
+ * Beide kanten even hoog (md:items-stretch). Tekst blijft datagedreven/aanpasbaar.
  */
-function PrijsKaart({ p, eyebrow, fallback }: { p: Prize; eyebrow: string; fallback: string }) {
+function PrijsKaart({
+  p,
+  eyebrow,
+  fallback,
+  badge,
+}: {
+  p: Prize;
+  eyebrow: string;
+  fallback: string;
+  badge?: { top: string; bottom: string };
+}) {
   return (
-    <Card className="ornate-frame retro-border overflow-hidden">
+    <article className="prijs-kaart overflow-hidden rounded-xl border border-foreground/15 bg-card shadow-[0_12px_32px_rgba(0,0,0,0.08)]">
       <div className="flex flex-col-reverse md:flex-row md:items-stretch">
-        {/* Tekstvak links — eigen kader (subtiele achtergrond + scheidingsrand) */}
-        <div className={cn("flex flex-col p-4 md:p-5 bg-secondary/30 md:border-r border-border md:min-h-[180px]", CARD_TEXT_W)}>
-          <div className="flex items-center gap-2">
-            <span className="overline-stamp" style={{ color: GOLD }}>{eyebrow}</span>
-            <span className="h-px flex-1 max-w-[48px]" style={{ background: `linear-gradient(90deg, ${GOLD}, transparent)` }} aria-hidden />
-          </div>
-          <h3 className="font-display font-bold text-xl leading-snug text-foreground mt-1.5">{p.titel || fallback}</h3>
-          {p.omschrijving && (
-            <>
-              <span className="block h-px w-10 my-2" style={{ background: `linear-gradient(90deg, ${GOLD}88, transparent)` }} aria-hidden />
-              <p className="text-sm text-muted-foreground font-serif leading-relaxed">{p.omschrijving}</p>
-            </>
+        {/* Tekstvlak links — premium crème-paneel met gouden top-rand */}
+        <div
+          className={cn(
+            "relative flex flex-col p-5 md:p-6 md:min-h-[200px] border-t-4 border-[#d99a00]",
+            "bg-gradient-to-br from-[#fffaf0] to-[#f4efe4]",
+            CARD_TEXT_W,
           )}
-          <SponsorLine p={p} />
+        >
+          {/* Ronde zwart/gouden badge rechtsboven */}
+          {badge && (
+            <div
+              className="absolute top-4 right-4 flex h-[68px] w-[68px] flex-col items-center justify-center rounded-full border-2 border-[#f5b51b] bg-[#111] text-[#f5b51b] shadow-[0_8px_20px_rgba(0,0,0,0.18)]"
+              aria-hidden
+            >
+              <span className="text-[9px] font-bold uppercase tracking-[0.08em] leading-none">{badge.top}</span>
+              <span className="mt-0.5 text-[15px] font-black uppercase leading-none">{badge.bottom}</span>
+            </div>
+          )}
+
+          <div className="card-eyebrow text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#b87800]">
+            {eyebrow}
+          </div>
+
+          <h3 className="mt-2 max-w-[78%] font-display font-black text-2xl leading-[1.15] text-[#1f1f28]">
+            {p.titel || fallback}
+          </h3>
+
+          {p.omschrijving && (
+            <p className="mt-3 text-sm font-semibold leading-relaxed text-[#636579]">{p.omschrijving}</p>
+          )}
+
+          {p.sponsor_naam && (
+            <p className="mt-3 text-[11px] uppercase tracking-[0.08em] text-[#77798b]">
+              Aangeboden door <strong className="text-[#222]">{p.sponsor_naam}</strong>
+            </p>
+          )}
+
           {p.sponsor_url && (
-            <div className="mt-auto pt-3">
+            <div className="mt-auto pt-4">
               <SponsorButton p={p} />
             </div>
           )}
         </div>
 
-        {/* Foto rechts (desktop) / boven (mobiel) — groter, vaste verhouding */}
+        {/* Foto rechts (desktop) / boven (mobiel) — ongewijzigd, object-cover */}
         {p.afbeelding_url && (
           <div className={cn("aspect-[3/2] md:aspect-auto overflow-hidden bg-secondary/30 shrink-0", CARD_PHOTO_W)}>
             <img src={p.afbeelding_url} alt={p.titel} className="w-full h-full object-cover" loading="lazy" />
           </div>
         )}
       </div>
-    </Card>
+    </article>
   );
 }
 
@@ -285,7 +321,7 @@ export default function Prizes() {
                   </h2>
                   <div className="grid grid-cols-1 gap-4">
                     {ereplaatsen.map((p) => (
-                      <PrijsKaart key={p.id} p={p} eyebrow={`${p.rang}e plek`} fallback={`${p.rang}e plek`} />
+                      <PrijsKaart key={p.id} p={p} eyebrow={`${p.rang}e plek`} fallback={`${p.rang}e plek`} badge={{ top: `${p.rang}e`, bottom: "Plek" }} />
                     ))}
                   </div>
                 </section>
@@ -305,7 +341,7 @@ export default function Prizes() {
                 </h2>
                 <div className="grid grid-cols-1 gap-4">
                   {dagprijzen.map((p) => (
-                    <PrijsKaart key={p.id} p={p} eyebrow="Dagprijs" fallback="Dagprijs" />
+                    <PrijsKaart key={p.id} p={p} eyebrow="Dagprijs" fallback="Dagprijs" badge={{ top: "Vandaag", bottom: "Prijs" }} />
                   ))}
                 </div>
               </section>
@@ -321,7 +357,7 @@ export default function Prizes() {
                   </h2>
                   <div className="grid grid-cols-1 gap-4">
                     {grootsteSubpoule.map((p) => (
-                      <PrijsKaart key={p.id} p={p} eyebrow="Grootste subpoule" fallback="Grootste subpoule" />
+                      <PrijsKaart key={p.id} p={p} eyebrow="Grootste subpoule" fallback="Grootste subpoule" badge={{ top: "Win", bottom: "Samen" }} />
                     ))}
                   </div>
                 </section>
