@@ -8,6 +8,8 @@ type Props = {
   onActiveBannerChange?: (banner: SubpouleBanner | null) => void;
   /** Wervings-deeplink: vult de join-code voor + opent de Join-tab (geen auto-submit). */
   presetJoinCode?: string;
+  /** False = sneak preview voor een gewone gebruiker → data-panels tonen de schil. */
+  maySeeLive?: boolean;
 };
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +35,7 @@ import SwipeDots from "@/components/SwipeDots";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import PelotonChat from "@/components/PelotonChat";
+import SneakPreviewLock from "@/components/SneakPreviewLock";
 import SubpouleStandings from "@/components/SubpouleStandings";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import DaguitslagChart from "@/components/DaguitslagChart";
@@ -54,7 +57,7 @@ const SUB_TABS: SubTab[] = [
   { key: "deelnemers", label: "Deelnemers", Icon: Users },
 ];
 
-export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange, presetJoinCode }: Props = {}) {
+export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange, presetJoinCode, maySeeLive = true }: Props = {}) {
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: currentGame } = useCurrentGame();
@@ -417,14 +420,22 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
     );
 
     // Losse panelen — één per tab, hergebruikt op mobiel én desktop.
-    const standingsPanel = (
+    // Sneak preview (gewone gebruiker): de data-panels tonen de schil i.p.v. echte
+    // (test)standen/commentaar; admins zien de echte data (maySeeLive=true).
+    const standingsPanel = maySeeLive ? (
       <SubpouleStandings subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} showEvolution={false} requiresWoonplaats={active.requires_woonplaats} />
+    ) : (
+      <SneakPreviewLock title="Klassement binnenkort" note="De stand van deze subpoule verschijnt zodra de koers losbarst." />
     );
-    const evolutionPanel = (
+    const evolutionPanel = maySeeLive ? (
       <SubpouleEvolutionChart subpouleId={active.id} gameId={effectiveGameId} title="Stijgers & Dalers" />
+    ) : (
+      <SneakPreviewLock title="Stijgers & Dalers binnenkort" note="Het verloop verschijnt zodra er etappes verreden zijn." />
     );
-    const daguitslagPanel = (
+    const daguitslagPanel = maySeeLive ? (
       <DaguitslagChart subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
+    ) : (
+      <SneakPreviewLock title="Daguitslag binnenkort" note="De daguitslagen verschijnen zodra de eerste etappe verreden is." />
     );
 
     const heatmapPanel = (
@@ -444,7 +455,9 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
     );
 
     // Streekklassement — alleen voor subpoules die woonplaats vragen.
-    const streekPanel = (
+    const streekPanel = !maySeeLive ? (
+      <SneakPreviewLock title="Streekklassement binnenkort" note="Het streekklassement verschijnt zodra er punten gescoord zijn." />
+    ) : (
       <div className="space-y-4">
         <WoonplaatsBeheer subpouleId={active.id} />
         <StreekKlassement
@@ -619,7 +632,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                       </button>
                     </div>
                     <div className="p-3">
-                      <PelotonChat subpoolName={active.name} subpoolId={active.id} />
+                      {maySeeLive ? <PelotonChat subpoolName={active.name} subpoolId={active.id} /> : <SneakPreviewLock title="Koerscafé binnenkort open" note="Het commentaar van je subpoule verschijnt zodra de koers losbarst." />}
                     </div>
                   </div>
                 </aside>

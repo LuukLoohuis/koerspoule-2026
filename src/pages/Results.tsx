@@ -3,7 +3,8 @@ import ResultsView from "@/components/ResultsView";
 import GameSwitcher from "@/components/GameSwitcher";
 import { useAllGames } from "@/hooks/useAllGames";
 import { useAuth } from "@/hooks/useAuth";
-import { isVisibleToUser } from "@/lib/gameStatus";
+import { isVisibleToUser, maySeeLiveContent } from "@/lib/gameStatus";
+import SneakPreviewLock from "@/components/SneakPreviewLock";
 
 export default function Results() {
   const { data: allGames = [] } = useAllGames();
@@ -45,7 +46,14 @@ export default function Results() {
         </div>
       )}
 
-      <ResultsView showHeader gameId={selectedGame?.id} gameName={selectedGame?.name} />
+      {maySeeLiveContent(selectedGame?.status, isAdmin) ? (
+        <ResultsView showHeader gameId={selectedGame?.id} gameName={selectedGame?.name} />
+      ) : (
+        <SneakPreviewLock
+          title="Uitslagen volgen binnenkort"
+          note="Deze koers staat in de sneak preview. Zodra de inschrijving opengaat verschijnen hier het klassement en de daguitslagen."
+        />
+      )}
     </div>
   );
 }

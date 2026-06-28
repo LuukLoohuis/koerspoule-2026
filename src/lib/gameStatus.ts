@@ -39,6 +39,17 @@ export function isPreviewStatus(status?: string | null): boolean {
   return s(status) === "open";
 }
 
+/**
+ * Mag de HUIDIGE viewer de ECHTE, gevulde game-inhoud zien (uitslagen, ranking,
+ * klassementen, commentaar)? In de sneak preview ('open') ziet alleen de admin
+ * de echte data — zo kan de admin de hele keten testen (fiatteren → ranking →
+ * HC/subpoule/commentaar) terwijl een gewone gebruiker de preview-schil houdt.
+ * Bij alle andere statussen ziet iedereen de echte inhoud.
+ */
+export function maySeeLiveContent(status: string | null | undefined, isAdmin: boolean): boolean {
+  return isAdmin || !isPreviewStatus(status);
+}
+
 /** Definitief op slot (na de deadline): live/locked/finished/closed. */
 export function isGameLocked(status?: string | null): boolean {
   return LOCKED.includes(s(status));

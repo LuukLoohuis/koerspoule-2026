@@ -42,7 +42,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useAllGames, gameTheme } from "@/hooks/useAllGames";
 import GameSwitcher from "@/components/GameSwitcher";
-import { isVisibleToUser, isAdminOnlyStatus } from "@/lib/gameStatus";
+import { isVisibleToUser, isAdminOnlyStatus, maySeeLiveContent } from "@/lib/gameStatus";
+import SneakPreviewLock from "@/components/SneakPreviewLock";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { Input } from "@/components/ui/input";
 import { useSubpoules } from "@/hooks/useSubpoules";
@@ -129,6 +130,8 @@ export default function MijnPeloton() {
   // Handmatige "Steun Koerspoule"-banner: alleen aan als de admin 'm ergens aanzette.
   const supportBanner = useSupportBanner(selectedGameObj?.id);
   const isDraft = isAdminOnlyStatus(selectedGameObj?.status);
+  // Sneak preview ('open'): admin ziet de echte (test)data, gewone gebruiker de schil.
+  const maySeeLive = maySeeLiveContent(selectedGameObj?.status, isAdmin);
 
   // Onboarding-voortgang voor de geselecteerde game.
   const navigate = useNavigate();
@@ -1217,14 +1220,21 @@ export default function MijnPeloton() {
 
           {/* ── TAB: De Karavaan (landing — feed-overzicht) ── */}
           <TabsContent value="karavaan" className="mt-3">
-            <KaravaanFeed
-              onGoToPloeg={() => setGameTab("team")}
-              onOpenHors={openHors}
-              onOpenSubpoule={openSubpouleGrafiek}
-              onOpenUitslagen={openUitslagen}
-              gameId={selectedGameObj?.id}
-              gameStatus={selectedGameObj?.status}
-            />
+            {maySeeLive ? (
+              <KaravaanFeed
+                onGoToPloeg={() => setGameTab("team")}
+                onOpenHors={openHors}
+                onOpenSubpoule={openSubpouleGrafiek}
+                onOpenUitslagen={openUitslagen}
+                gameId={selectedGameObj?.id}
+                gameStatus={selectedGameObj?.status}
+              />
+            ) : (
+              <SneakPreviewLock
+                title="De Karavaan rolt binnenkort uit"
+                note="Zodra de inschrijving opengaat verschijnen hier de etappe-updates, commentaar en standen van je subpoules."
+              />
+            )}
           </TabsContent>
 
           {/* ── TAB: Mijn Team (with sub-tabs) ── */}
@@ -1311,12 +1321,19 @@ export default function MijnPeloton() {
             {/* Wervingsstrook (admin-gestuurd, wegklikbaar) — ook hier zodat leden
                 een promote-subpoule kunnen vinden; "Doe mee" vult de code voor. */}
             <WervingStrook className="mb-3" />
-            <SubpouleManager gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} gameStatus={selectedGameObj?.status} onActiveBannerChange={setSubpouleBanner} presetJoinCode={searchParams.get("join") ?? undefined} />
+            <SubpouleManager gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} gameStatus={selectedGameObj?.status} onActiveBannerChange={setSubpouleBanner} presetJoinCode={searchParams.get("join") ?? undefined} maySeeLive={maySeeLive} />
           </TabsContent>
 
           {/* ── TAB: Uitslagen ── */}
           <TabsContent value="uitslagen" className="mt-3">
-            <MyResultsPanel gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} initialView={uitslagenTarget?.view} initialStageNumber={uitslagenTarget?.stageNumber} />
+            {maySeeLive ? (
+              <MyResultsPanel gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} initialView={uitslagenTarget?.view} initialStageNumber={uitslagenTarget?.stageNumber} />
+            ) : (
+              <SneakPreviewLock
+                title="Uitslagen volgen binnenkort"
+                note="De daguitslagen en het klassement verschijnen hier zodra de koers losbarst."
+              />
+            )}
           </TabsContent>
 
           {/* ── TAB: Hors Catégorie ── */}
