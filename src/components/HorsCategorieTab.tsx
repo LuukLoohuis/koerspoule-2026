@@ -245,7 +245,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   const game = gameIdProp ? { id: gameIdProp, status: gameStatus } : curGame;
   // Twee aparte assen: tab tónen (isVisible, vanaf "open" t/m finished) vs. échte
   // uitslagdata aanwezig (hasResults, vanaf "live"). Concept/draft = verborgen.
-  const hasResults = isGameLocked(game?.status);
+  // In de sneak preview ('open') ziet de ADMIN de echte HC (maySeeLiveContent
+  // laat de admin door) zodat hij de hele keten kan testen; gewone gebruikers
+  // krijgen daar de demo (isDemo).
+  const isAdmin = role === "admin";
+  const hasResults = isGameLocked(game?.status) || (isAdmin && isPreviewStatus(game?.status));
   const isVisible = Boolean(game?.status) && !isAdminOnlyStatus(game?.status);
   // Sneak preview ('open'): gewone gebruiker krijgt UITSLUITEND een client-side
   // demo op gesimuleerde data. De ADMIN ziet de echte gevulde HC (kan testen).
