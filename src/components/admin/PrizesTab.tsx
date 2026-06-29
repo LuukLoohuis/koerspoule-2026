@@ -169,6 +169,24 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
     }
   }
 
+  async function removeAsset(id: string, field: "sponsor_logo_url" | "afbeelding_url") {
+    if (!supabase) return;
+    if (!confirm(field === "sponsor_logo_url" ? "Logo verwijderen?" : "Foto verwijderen?")) return;
+    setBusyId(id);
+    try {
+      // Best-effort: haal het bestand ook uit storage (pad uit de publieke URL).
+      const url = rows.find((r) => r.id === id)?.[field];
+      const m = url?.match(/prize-assets\/(.+?)(\?|$)/);
+      if (m?.[1]) await supabase.storage.from("prize-assets").remove([decodeURIComponent(m[1])]);
+      await saveField(id, { [field]: null } as Partial<Row>);
+      toast.success("Verwijderd");
+    } catch (e) {
+      toast.error(`Verwijderen mislukt: ${(e as Error).message}`);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   if (!activeGameId) return <p className="text-sm text-muted-foreground italic">Kies eerst een actieve game.</p>;
 
   return (
@@ -244,6 +262,11 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
                     <button type="button" className="text-xs underline text-primary inline-flex items-center gap-1" disabled={busyId === r.id} onClick={() => logoRefs.current[r.id]?.click()}>
                       <Upload className="w-3 h-3" /> {r.sponsor_logo_url ? "Logo vervang" : "Logo"}
                     </button>
+                    {r.sponsor_logo_url && (
+                      <button type="button" className="text-xs underline text-destructive inline-flex items-center gap-1" disabled={busyId === r.id} onClick={() => removeAsset(r.id, "sponsor_logo_url")}>
+                        <Trash2 className="w-3 h-3" /> Verwijder
+                      </button>
+                    )}
                   </div>
                   {/* Prijsfoto */}
                   <div className="flex items-center gap-2">
@@ -252,6 +275,11 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
                     <button type="button" className="text-xs underline text-primary inline-flex items-center gap-1" disabled={busyId === r.id} onClick={() => fotoRefs.current[r.id]?.click()}>
                       <Upload className="w-3 h-3" /> {r.afbeelding_url ? "Foto vervang" : "Foto"}
                     </button>
+                    {r.afbeelding_url && (
+                      <button type="button" className="text-xs underline text-destructive inline-flex items-center gap-1" disabled={busyId === r.id} onClick={() => removeAsset(r.id, "afbeelding_url")}>
+                        <Trash2 className="w-3 h-3" /> Verwijder
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
