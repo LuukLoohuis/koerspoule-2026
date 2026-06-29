@@ -1671,12 +1671,14 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                       backgroundSize: "12px 12px",
                     }}
                   />
+                  {/* Blok-titel bovenin */}
+                  <div className="relative font-display font-black uppercase tracking-[0.18em] text-sm md:text-base text-[hsl(var(--vintage-gold))] mb-3">
+                    De Droomploeg
+                  </div>
                   <div className="relative flex items-start gap-4 md:gap-5">
                     <div className="shrink-0 flex flex-col items-center">
                       <Crown className="h-9 w-9 md:h-11 md:w-11 text-[hsl(var(--vintage-gold))]" strokeWidth={2.2} />
                       <span className="font-display text-[9px] md:text-[10px] uppercase tracking-[0.04em] leading-tight text-muted-foreground mt-1.5 text-center whitespace-nowrap">
-                        De
-                        <br />
                         Droomploeg
                       </span>
                     </div>
