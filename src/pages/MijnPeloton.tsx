@@ -1218,23 +1218,18 @@ export default function MijnPeloton() {
             ]}
           />
 
-          {/* ── TAB: De Karavaan (landing — feed-overzicht) ── */}
+          {/* ── TAB: De Karavaan (landing — feed-overzicht) ──
+              L'Équipe is óók in de sneak preview ('open') volledig zichtbaar voor
+              deelnemers (geen preview-schil meer). */}
           <TabsContent value="karavaan" className="mt-3">
-            {maySeeLive ? (
-              <KaravaanFeed
-                onGoToPloeg={() => setGameTab("team")}
-                onOpenHors={openHors}
-                onOpenSubpoule={openSubpouleGrafiek}
-                onOpenUitslagen={openUitslagen}
-                gameId={selectedGameObj?.id}
-                gameStatus={selectedGameObj?.status}
-              />
-            ) : (
-              <SneakPreviewLock
-                title="De Karavaan rolt binnenkort uit"
-                note="Zodra de inschrijving opengaat verschijnen hier de etappe-updates, commentaar en standen van je subpoules."
-              />
-            )}
+            <KaravaanFeed
+              onGoToPloeg={() => setGameTab("team")}
+              onOpenHors={openHors}
+              onOpenSubpoule={openSubpouleGrafiek}
+              onOpenUitslagen={openUitslagen}
+              gameId={selectedGameObj?.id}
+              gameStatus={selectedGameObj?.status}
+            />
           </TabsContent>
 
           {/* ── TAB: Mijn Team (with sub-tabs) ── */}
@@ -1321,7 +1316,7 @@ export default function MijnPeloton() {
             {/* Wervingsstrook (admin-gestuurd, wegklikbaar) — ook hier zodat leden
                 een promote-subpoule kunnen vinden; "Doe mee" vult de code voor. */}
             <WervingStrook className="mb-3" />
-            <SubpouleManager gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} gameStatus={selectedGameObj?.status} onActiveBannerChange={setSubpouleBanner} presetJoinCode={searchParams.get("join") ?? undefined} maySeeLive={maySeeLive} />
+            <SubpouleManager gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} gameStatus={selectedGameObj?.status} onActiveBannerChange={setSubpouleBanner} presetJoinCode={searchParams.get("join") ?? undefined} maySeeLive />
           </TabsContent>
 
           {/* ── TAB: Uitslagen ── */}
