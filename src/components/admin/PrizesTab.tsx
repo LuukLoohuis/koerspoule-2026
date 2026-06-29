@@ -317,6 +317,10 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
               {(r.soort === "dagprijs" || r.soort === "sponsor") && (
                 <div className="rounded-md border border-[hsl(var(--vintage-gold)/0.5)] bg-[hsl(var(--vintage-gold)/0.06)] p-2.5 space-y-2">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--vintage-gold))]">Banner-teksten (L'Équipe)</p>
+                  <div>
+                    <Label className="text-[11px]">Grote titel (banner)</Label>
+                    <Input key={`bt-${r.id}-${r.titel}`} defaultValue={r.titel} onBlur={(e) => e.target.value !== r.titel && saveField(r.id, { titel: e.target.value })} className="h-8 text-sm" placeholder="bv. Bol.com waardebon" />
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <div>
                       <Label className="text-[11px]">Kicker</Label>
