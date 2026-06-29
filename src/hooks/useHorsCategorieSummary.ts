@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useAuth } from "@/hooks/useAuth";
 import { useEntry } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
 import { useStages, useStagePointsForEntries, useGameStandings } from "@/hooks/useResults";
@@ -147,12 +148,16 @@ function pickN<T>(arr: T[], n: number, rng: () => number): T[] {
  *
  * Geen functionele wijziging tov de tab — enkel projectie naar getallen.
  */
-export function useHorsCategorieSummary(override?: { id?: string; status?: string }): HorsSummary {
+export function useHorsCategorieSummary(override?: { id?: string; status?: string; adminTestmodus?: boolean }): HorsSummary {
   const { data: curGame } = useCurrentGame();
+  const { role } = useAuth();
   // Optioneel een specifieke (bv. afgeronde) game i.p.v. de live game.
   const game = override?.id ? { id: override.id, status: override.status } : curGame;
+  // Admin met testmodus ziet de cockpit-cijfers ook in de sneak preview ('open').
+  const testmodus = override?.adminTestmodus ?? curGame?.admin_testmodus ?? false;
+  const adminSeesAll = role === "admin" && Boolean(testmodus);
   const isLive = Boolean(
-    game?.status && ["live", "locked", "finished", "closed"].includes(String(game.status)),
+    (game?.status && ["live", "locked", "finished", "closed"].includes(String(game.status))) || adminSeesAll,
   );
   const gameId = isLive ? game?.id : undefined;
 

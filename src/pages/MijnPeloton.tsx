@@ -1292,7 +1292,7 @@ export default function MijnPeloton() {
                       <div className="space-y-3">
                         {/* Ploegnaam-editor zit nu in het Salle-de-Course-dashboard
                             binnen MyTeamPanel (Zone 1-nudge). */}
-                        <MyTeamPanel section="ploeg" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} prizesVisible={selectedGameObj?.prizes_visible} onOpenHors={openHors} onOpenUitslagen={openUitslagen} onOpenSubpoule={openSubpouleGrafiek} onOpenStageResult={openStageResult} focusNameSignal={focusNameSeq} />
+                        <MyTeamPanel section="ploeg" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} prizesVisible={selectedGameObj?.prizes_visible} adminTestmodus={selectedGameObj?.admin_testmodus ?? false} onOpenHors={openHors} onOpenUitslagen={openUitslagen} onOpenSubpoule={openSubpouleGrafiek} onOpenStageResult={openStageResult} focusNameSignal={focusNameSeq} />
                       </div>
                     )}
                     {k === "prono" && (

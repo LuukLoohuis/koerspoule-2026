@@ -333,6 +333,7 @@ export default function MyTeamPanel({
   onOpenStageResult,
   focusNameSignal,
   prizesVisible,
+  adminTestmodus = false,
 }: {
   section?: "ploeg" | "prono";
   gameId?: string;
@@ -340,6 +341,8 @@ export default function MyTeamPanel({
   gameName?: string | null;
   /** Toon de subtiele "bekijk de prijzen"-tegel (alleen bij prizes_visible). */
   prizesVisible?: boolean | null;
+  /** Admin-testmodus → cockpit-cijfers (Monkey IQ/Emirates/Wielerdir) ook in 'open'. */
+  adminTestmodus?: boolean;
   /** Open een Hors-Catégorie-subtab (Monkey IQ → dartpijl, etc.). */
   onOpenHors?: (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => void;
   /** Spring naar de Uitslagen-tab (daguitslag/klassement). */
@@ -399,7 +402,7 @@ export default function MyTeamPanel({
   const [selectedSubpouleId, setSelectedSubpouleId] = useState<string | undefined>(undefined);
   const activeSubpouleId = selectedSubpouleId ?? subpoules[0]?.id;
   const ploegStats = useMijnPloegStats({ selectedSubpouleId: activeSubpouleId });
-  const hors = useHorsCategorieSummary({ id: game?.id, status: game?.status as string | undefined });
+  const hors = useHorsCategorieSummary({ id: game?.id, status: game?.status as string | undefined, adminTestmodus });
 
   // Welke renner heeft z'n per-etappe-punten dropdown open (één tegelijk).
   const [expandedRiderId, setExpandedRiderId] = useState<string | null>(null);
