@@ -87,10 +87,22 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
               </span>
             )}
           </div>
-          {/* DE GEVER — wie 'm aanbiedt */}
+          {/* DE GEVER — wie 'm aanbiedt (naam linkt naar sponsorsite indien bekend) */}
           {data.sponsor_naam && (
             <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-              aangeboden door <strong className="font-semibold text-foreground/80">{data.sponsor_naam}</strong>
+              aangeboden door{" "}
+              {data.sponsor_url ? (
+                <a
+                  href={data.sponsor_url}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow sponsored"
+                  className="font-semibold text-[hsl(var(--vintage-gold))] underline decoration-dotted underline-offset-2 hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] rounded-sm"
+                >
+                  {data.sponsor_naam}
+                </a>
+              ) : (
+                <strong className="font-semibold text-foreground/80">{data.sponsor_naam}</strong>
+              )}
             </p>
           )}
         </div>
