@@ -35,7 +35,7 @@ function RennersIllustratie() {
   return (
     <svg
       viewBox="0 0 170 80"
-      className="hidden md:block h-[76px] w-auto select-none"
+      className="hidden md:block h-[56px] w-auto select-none"
       aria-hidden
       role="presentation"
       fill="none"
@@ -111,21 +111,21 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
   // Dominant sponsorblok: groot logo op donkere kaart (leest ook met wit logo) +
   // gouden pill-label eronder.
   const logoBlok = (
-    <div className="flex flex-col items-center gap-3 w-full">
+    <div className="flex flex-col items-center gap-2 w-full">
       {logo ? (
         <img
           src={logo}
           alt={data.sponsor_naam ?? "sponsor"}
-          className="w-[200px] max-h-[74px] object-contain rounded-lg bg-black p-1.5"
+          className="w-[164px] max-h-[52px] object-contain rounded-lg bg-black p-1"
           loading="lazy"
         />
       ) : (
-        <div className="w-[200px] h-[74px] rounded-lg bg-black flex items-center justify-center">
-          <span className="text-3xl">🎁</span>
+        <div className="w-[164px] h-[52px] rounded-lg bg-black flex items-center justify-center">
+          <span className="text-2xl">🎁</span>
         </div>
       )}
       <span
-        className="inline-flex items-center justify-center rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-center leading-tight max-w-[210px]"
+        className="inline-flex items-center justify-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-center leading-tight max-w-[200px]"
         style={{ background: GOUD, color: INKT }}
       >
         {sponsorLabel}
@@ -135,19 +135,19 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
 
   return (
     <div
-      className="relative grid grid-cols-1 md:grid-cols-[230px_1fr_auto] items-center gap-5 md:gap-6 overflow-hidden rounded-xl px-5 pb-5 pt-7 md:px-8 md:pb-5 md:pt-7 text-center md:text-left"
+      className="relative grid grid-cols-1 md:grid-cols-[200px_1fr_auto] items-center gap-4 md:gap-5 overflow-hidden rounded-xl px-4 pb-3 pt-5 md:px-6 md:pb-3 md:pt-5 text-center md:text-left"
       style={{ background: "#fbf7eb", border: `2px solid ${GOUD}`, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
     >
       {/* Rode gestippelde lijn bovenrand */}
       <div
-        className="pointer-events-none absolute left-6 right-6 top-3 h-2"
+        className="pointer-events-none absolute left-5 right-5 top-2 h-2"
         style={{ backgroundImage: `radial-gradient(${ROOD} 2px, transparent 3px)`, backgroundSize: "16px 8px", backgroundRepeat: "repeat-x" }}
         aria-hidden
       />
 
       {/* LINKS — dominant sponsorblok (logo linkt naar sponsor indien bekend) */}
       <div
-        className="flex justify-center md:pr-6 md:border-r"
+        className="flex justify-center md:pr-5 md:border-r"
         style={{ borderColor: "rgba(155,106,18,0.35)" }}
       >
         {data.sponsor_url ? (
@@ -168,37 +168,37 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
 
       {/* MIDDEN — kicker + echte prijstitel + waarde-badge + subline */}
       <div className="min-w-0">
-        <p className="mb-1.5 text-[12px] font-black uppercase tracking-[0.18em]" style={{ color: "#b7831d" }}>
+        <p className="mb-1 text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#b7831d" }}>
           {kicker}
         </p>
-        <div className="flex items-center justify-center md:justify-start gap-4 flex-wrap">
-          <h3 className="m-0 font-display font-black leading-[0.95] tracking-[-0.04em] text-[clamp(26px,3.4vw,44px)]" style={{ color: INKT }}>
+        <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap">
+          <h3 className="m-0 font-display font-black leading-[0.95] tracking-[-0.04em] text-[clamp(22px,3vw,34px)]" style={{ color: INKT }}>
             {titel}
           </h3>
           {waarde && (
             <span
-              className="inline-flex h-[64px] w-[64px] shrink-0 items-center justify-center rounded-full text-[21px] font-black"
-              style={{ background: "linear-gradient(145deg,#e8b83c,#c7901c)", color: "#111", border: `3px solid ${GOUD_DONKER}`, boxShadow: `0 4px 0 ${GOUD_SCHADUW}` }}
+              className="inline-flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-full text-[16px] font-black"
+              style={{ background: "linear-gradient(145deg,#e8b83c,#c7901c)", color: "#111", border: `3px solid ${GOUD_DONKER}`, boxShadow: `0 3px 0 ${GOUD_SCHADUW}` }}
             >
               {waarde}
             </span>
           )}
         </div>
         {data.sponsor_naam && (
-          <p className="mt-2 text-[14px]" style={{ color: "#6f6b7d" }}>
+          <p className="mt-1 text-[13px]" style={{ color: "#6f6b7d" }}>
             aangeboden door <strong className="font-bold" style={{ color: "#b7831d" }}>{data.sponsor_naam}</strong>
           </p>
         )}
       </div>
 
       {/* RECHTS — decoratieve illustratie + knop */}
-      <div className="flex flex-col items-center md:items-end gap-3">
+      <div className="flex flex-col items-center md:items-end gap-2">
         <RennersIllustratie />
         <Link
           to="/prijzen"
           aria-label="Bekijk alle prijzen"
-          className="inline-flex w-full md:w-auto items-center justify-center gap-1.5 rounded-md px-5 py-3 text-[13px] font-black uppercase tracking-[0.08em] whitespace-nowrap transition-transform hover:translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2"
-          style={{ background: GOUD, color: INKT, border: `2px solid ${GOUD_DONKER}`, boxShadow: `0 4px 0 ${GOUD_SCHADUW}`, outlineColor: GOUD }}
+          className="inline-flex w-full md:w-auto items-center justify-center gap-1.5 rounded-md px-4 py-2 text-[12px] font-black uppercase tracking-[0.08em] whitespace-nowrap transition-transform hover:translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2"
+          style={{ background: GOUD, color: INKT, border: `2px solid ${GOUD_DONKER}`, boxShadow: `0 3px 0 ${GOUD_SCHADUW}`, outlineColor: GOUD }}
         >
           Alle prijzen <ChevronRight className="h-4 w-4" aria-hidden />
         </Link>
