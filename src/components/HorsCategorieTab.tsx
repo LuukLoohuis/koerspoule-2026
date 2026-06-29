@@ -828,6 +828,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   const hint = useSwipeHint("hors");
   const barVisible = useAutoHideOnScroll();
   const [showScoreInfo, setShowScoreInfo] = useState(false);
+  const [showEmiratesInfo, setShowEmiratesInfo] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
   const [openComponent, setOpenComponent] = useState<string | null>(null);
 
@@ -1605,17 +1606,33 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-5">
-            {/* Intro / explanation */}
-            <div className="rounded-xl border border-foreground/15 bg-gradient-to-br from-[hsl(var(--vintage-gold))/0.10] to-card p-3 md:p-4 flex items-start gap-3">
-              <Info className="h-5 w-5 text-[hsl(var(--vintage-gold))] shrink-0 mt-0.5" />
-              <div className="space-y-1 min-w-0">
-                <p className="font-display text-xs md:text-sm font-bold uppercase tracking-widest">Wat zie je hier?</p>
-                <p className="font-serif italic text-sm text-foreground/85 leading-snug">
-                  De droomploeg achterop gezien: welke renners je per categorie had moeten kiezen om het maximaal
-                  haalbare puntentotaal binnen te halen, t/m de laatst door de jury bijgewerkte etappe. Niemand wist het
-                  van tevoren — Pogi misschien wel.
-                </p>
-              </div>
+            {/* Intro — info-knop met dropdown (uitleg op aanvraag) */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowEmiratesInfo((v) => !v)}
+                aria-expanded={showEmiratesInfo}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors",
+                  showEmiratesInfo
+                    ? "bg-secondary border-border text-foreground"
+                    : "bg-sky-100 border-sky-300 text-sky-700 hover:bg-sky-200",
+                )}
+              >
+                {showEmiratesInfo ? <X className="h-3.5 w-3.5" /> : <Info className="h-3.5 w-3.5" />}
+                Wat zie je hier?
+              </button>
+              {showEmiratesInfo && (
+                <div className="mt-2 rounded-xl border border-foreground/15 bg-gradient-to-br from-[hsl(var(--vintage-gold))/0.10] to-card p-3 md:p-4 space-y-2">
+                  <p className="font-serif text-sm text-foreground/85 leading-snug">
+                    De droomploeg bestaat uit de best scorende renners per categorie. Etappepunten worden toegekend van
+                    50 punten voor plek 1, 40 voor plek 2, aflopend tot 1 punt voor plek 20.
+                  </p>
+                  <p className="font-serif text-sm text-foreground/85 leading-snug">
+                    Daarbovenop komen twee jokers: de twee beste overgebleven renners.
+                  </p>
+                </div>
+              )}
             </div>
 
             {emiratesData.lastStage === null ? (
@@ -1862,10 +1879,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 {/* Footnote */}
                 <div className="mop-card p-3 -rotate-[0.3deg]">
                   <p className="font-serif italic text-xs md:text-sm leading-snug">
-                    <span className="font-display font-bold uppercase tracking-widest text-xs">De droomploeg:</span> per
-                    categorie pakken we de top-scorers met de meeste etappe-punten (50 voor positie 1, 40 voor 2, … 1
-                    voor 20). Daar bovenop twee jokers — de beste resterende renners — op ×1, zoals een gewone pick. Een
-                    ploegleider met deze helderziendheid kostte miljoenen.
+                    De droomploeg bestaat uit de best scorende renners per categorie. Etappepunten worden toegekend van
+                    50 punten voor plek 1, 40 voor plek 2, aflopend tot 1 punt voor plek 20.
+                  </p>
+                  <p className="font-serif italic text-xs md:text-sm leading-snug mt-2">
+                    Daarbovenop komen twee jokers: de twee beste overgebleven renners.
                   </p>
                 </div>
               </>
