@@ -37,8 +37,9 @@ const SOORT_LABEL: Record<PrijsSoort, string> = {
   dagprijs: "Dagprijs",
   ereplaats: "Ereplaats (4 t/m 10)",
   grootste_subpoule: "Grootste subpoule",
+  sponsor: "Sponsor / banner (geen prijs)",
 };
-const SOORTEN: PrijsSoort[] = ["podium_1", "podium_2", "podium_3", "dagprijs", "ereplaats", "grootste_subpoule"];
+const SOORTEN: PrijsSoort[] = ["podium_1", "podium_2", "podium_3", "dagprijs", "ereplaats", "grootste_subpoule", "sponsor"];
 const RANGEN = [4, 5, 6, 7, 8, 9, 10];
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -313,7 +314,7 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
                 </div>
               </div>
 
-              {r.soort === "dagprijs" && (
+              {(r.soort === "dagprijs" || r.soort === "sponsor") && (
                 <div className="rounded-md border border-[hsl(var(--vintage-gold)/0.5)] bg-[hsl(var(--vintage-gold)/0.06)] p-2.5 space-y-2">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--vintage-gold))]">Banner-teksten (L'Équipe)</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -335,16 +336,16 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
               )}
 
               <div className="flex items-center justify-between gap-2">
-                {r.soort === "dagprijs" ? (
+                {(r.soort === "dagprijs" || r.soort === "sponsor") ? (
                   <Button
                     size="sm"
                     variant={r.is_dagprijs_vandaag ? "default" : "outline"}
                     className="h-7 text-xs"
                     onClick={() => toggleDagprijsVandaag(r.id, !r.is_dagprijs_vandaag)}
-                    title="Toon deze dagprijs als banner bovenaan L'Équipe (max. één per game)"
+                    title="Toon deze sponsor/dagprijs als banner bovenaan L'Équipe (max. één per game)"
                   >
                     <CalendarDays className="w-3.5 h-3.5 mr-1" />
-                    Dagprijs van vandaag {r.is_dagprijs_vandaag ? "aan" : "uit"}
+                    Banner tonen {r.is_dagprijs_vandaag ? "aan" : "uit"}
                   </Button>
                 ) : <span />}
                 <Button size="sm" variant="ghost" className="h-7 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => removePrize(r.id)}>

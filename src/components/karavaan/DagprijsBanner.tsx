@@ -86,7 +86,7 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
         </div>
       )}
       <span
-        className="inline-flex items-center justify-center rounded-full px-5 py-2 text-[12px] font-black uppercase tracking-[0.1em] text-center leading-tight max-w-[270px]"
+        className="inline-flex items-center justify-center rounded-full px-5 py-2 text-[12px] font-black uppercase tracking-[0.1em] text-center leading-tight max-w-[270px] transition-all duration-200 group-hover:bg-[#c79a24] group-hover:shadow-[0_3px_10px_rgba(155,106,18,0.35)] group-hover:-translate-y-px motion-reduce:transform-none"
         style={{ background: GOUD, color: INKT }}
       >
         {sponsorLabel}
@@ -130,7 +130,7 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
             target="_blank"
             rel="noopener noreferrer nofollow sponsored"
             aria-label={`Bezoek de website van ${data.sponsor_naam || "de sponsor"}`}
-            className="w-full transition-transform hover:-translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2 rounded-lg"
+            className="group w-full transition-transform hover:-translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2 rounded-lg"
             style={{ outlineColor: GOUD }}
           >
             {logoBlok}
