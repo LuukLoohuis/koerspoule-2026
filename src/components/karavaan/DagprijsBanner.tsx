@@ -19,6 +19,12 @@ const GOUD_DONKER = "#9b6a12";
 const GOUD_SCHADUW = "#8a5d0f";
 const ROOD = "#d3483d";
 const INKT = "#171717";
+const CREME = "#fbf7eb";
+
+// Vaste decoratieve achtergrond (repo-asset, niet beheerbaar). Renners/bergen in
+// de rechterhelft; links faden we naar crème zodat tekst leesbaar blijft.
+// Aanbevolen export: ~1600×360px, renners rechter ⅓, links uitgefade naar crème.
+const BANNER_BG = "/img/dagprijs-banner-bg.png";
 
 // Nette defaults voor lege admin-tekstvelden. De grote titel valt NIET terug
 // op de kicker-tekst (anders dubbel "Dagprijs van vandaag").
@@ -27,59 +33,14 @@ const DEF_SPONSOR_LABEL = "Trotse sponsor van Koerspoule";
 const DEF_TITEL = "Win een dagprijs";
 
 /**
- * Vaste decoratieve retro-wieler-illustratie (repo-asset, niet beheerbaar):
- * sepia bergen + Col du Tourmalet-bord + silhouet-renner met gouden helm. Sepia
- * inkt op transparant. Verborgen op mobiel als 't de leesbaarheid hindert.
- */
-function RennersIllustratie() {
-  return (
-    <svg
-      viewBox="0 0 170 80"
-      className="hidden md:block h-[56px] w-auto select-none"
-      aria-hidden
-      role="presentation"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Zachte bergen achter */}
-      <path d="M70 52 L96 18 L114 40 L130 24 L164 56 L164 64 L70 64 Z" fill="#2a2520" fillOpacity="0.08" />
-      <path d="M70 52 L96 18 L114 40 L130 24 L164 56" stroke="#2a2520" strokeOpacity="0.35" strokeWidth="1.3" strokeLinejoin="round" />
-      {/* Col-bord */}
-      <g>
-        <rect x="140" y="32" width="24" height="15" rx="2" fill="#fbf7eb" stroke="#2a2520" strokeWidth="1.2" />
-        <line x1="144" y1="47" x2="144" y2="64" stroke="#2a2520" strokeWidth="1.4" />
-        <text x="152" y="39" textAnchor="middle" fontSize="4.2" fontWeight="700" fill="#2a2520">COL DU</text>
-        <text x="152" y="45" textAnchor="middle" fontSize="5.4" fontWeight="800" fill="#2a2520">2115</text>
-      </g>
-      {/* Wielen */}
-      <g stroke="#2a2520" strokeWidth="2.4">
-        <circle cx="40" cy="58" r="15" fill="#fbf7eb" />
-        <circle cx="92" cy="58" r="15" fill="#fbf7eb" />
-      </g>
-      <g stroke={GOUD_DONKER} strokeWidth="1.2" strokeOpacity="0.95">
-        <circle cx="40" cy="58" r="15" fill="none" />
-        <circle cx="92" cy="58" r="15" fill="none" />
-      </g>
-      <circle cx="40" cy="58" r="2.4" fill={GOUD_DONKER} />
-      <circle cx="92" cy="58" r="2.4" fill={GOUD_DONKER} />
-      {/* Frame + renner — gevuld silhouet, leest scherp op klein formaat */}
-      <path d="M40 58 L62 40 L92 58 L72 58 Z" fill="#2a2520" />
-      <path d="M62 40 L55 24 L70 22 L66 30 L78 36 L70 40 Z" fill="#2a2520" />
-      <circle cx="62" cy="17" r="6.5" fill="#2a2520" />
-      <path d="M56 14 q7 -7 14 -1" stroke={GOUD} strokeWidth="2.8" strokeLinecap="round" fill="none" />
-      <line x1="40" y1="58" x2="55" y2="24" stroke="#2a2520" strokeWidth="2.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/**
  * Rijke retro sponsor-dagprijs-banner bovenaan L'Équipe. Toont de dagprijs met
  * is_dagprijs_vandaag=true van de actieve game (max. één). Geen actieve dagprijs
  * = geen banner. Leest alleen publieke prijsvelden (RLS: prizes publiek leesbaar).
  *
- * Layout desktop (3 kolommen): LINKS dominant sponsorblok (logo + label-pill) |
- * MIDDEN kicker + echte prijstitel + gouden waarde-badge + subline | RECHTS
- * decoratieve illustratie + "Alle prijzen →". Mobiel: gestapeld, gecentreerd.
+ * Layout desktop: vaste renners-achtergrond rechts + 2 kolommen content:
+ * LINKS dominant sponsorblok (logo + label-pill) | MIDDEN kicker + echte
+ * prijstitel + gouden waarde-badge + subline + "Alle prijzen →".
+ * Mobiel: geen achtergrond, gestapeld en gecentreerd.
  */
 export default function DagprijsBanner({ gameId }: { gameId?: string }) {
   const { data } = useQuery({
@@ -111,21 +72,21 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
   // Dominant sponsorblok: groot logo op donkere kaart (leest ook met wit logo) +
   // gouden pill-label eronder.
   const logoBlok = (
-    <div className="flex flex-col items-center gap-2 w-full">
+    <div className="flex flex-col items-center gap-2.5 w-full">
       {logo ? (
         <img
           src={logo}
           alt={data.sponsor_naam ?? "sponsor"}
-          className="w-[164px] max-h-[52px] object-contain rounded-lg bg-black p-1"
+          className="w-[226px] max-h-[64px] object-contain rounded-lg bg-black p-1.5"
           loading="lazy"
         />
       ) : (
-        <div className="w-[164px] h-[52px] rounded-lg bg-black flex items-center justify-center">
-          <span className="text-2xl">🎁</span>
+        <div className="w-[226px] h-[64px] rounded-lg bg-black flex items-center justify-center">
+          <span className="text-3xl">🎁</span>
         </div>
       )}
       <span
-        className="inline-flex items-center justify-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-center leading-tight max-w-[200px]"
+        className="inline-flex items-center justify-center rounded-full px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.1em] text-center leading-tight max-w-[230px]"
         style={{ background: GOUD, color: INKT }}
       >
         {sponsorLabel}
@@ -135,19 +96,32 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
 
   return (
     <div
-      className="relative grid grid-cols-1 md:grid-cols-[200px_1fr_auto] items-center gap-4 md:gap-5 overflow-hidden rounded-xl px-4 pb-3 pt-5 md:px-6 md:pb-3 md:pt-5 text-center md:text-left"
-      style={{ background: "#fbf7eb", border: `2px solid ${GOUD}`, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
+      className="relative grid grid-cols-1 md:grid-cols-[260px_1fr] items-center gap-4 md:gap-6 overflow-hidden rounded-xl px-4 pb-3 pt-5 md:px-6 md:pb-4 md:pt-5 text-center md:text-left"
+      style={{ background: CREME, border: `2px solid ${GOUD}`, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
     >
+      {/* Vaste renners-achtergrond (rechts), alleen desktop */}
+      <div
+        className="hidden md:block absolute inset-0 pointer-events-none bg-no-repeat"
+        style={{ backgroundImage: `url(${BANNER_BG})`, backgroundSize: "cover", backgroundPosition: "right center" }}
+        aria-hidden
+      />
+      {/* Crème-fade over de linkerkant → tekst altijd leesbaar, ook met achtergrond */}
+      <div
+        className="hidden md:block absolute inset-0 pointer-events-none"
+        style={{ background: `linear-gradient(90deg, ${CREME} 44%, rgba(251,247,235,0.55) 64%, rgba(251,247,235,0) 84%)` }}
+        aria-hidden
+      />
+
       {/* Rode gestippelde lijn bovenrand */}
       <div
-        className="pointer-events-none absolute left-5 right-5 top-2 h-2"
+        className="pointer-events-none absolute left-5 right-5 top-2 h-2 z-10"
         style={{ backgroundImage: `radial-gradient(${ROOD} 2px, transparent 3px)`, backgroundSize: "16px 8px", backgroundRepeat: "repeat-x" }}
         aria-hidden
       />
 
       {/* LINKS — dominant sponsorblok (logo linkt naar sponsor indien bekend) */}
       <div
-        className="flex justify-center md:pr-5 md:border-r"
+        className="relative z-10 flex justify-center md:pr-6 md:border-r"
         style={{ borderColor: "rgba(155,106,18,0.35)" }}
       >
         {data.sponsor_url ? (
@@ -166,42 +140,39 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
         )}
       </div>
 
-      {/* MIDDEN — kicker + echte prijstitel + waarde-badge + subline */}
-      <div className="min-w-0">
+      {/* MIDDEN — kicker + echte prijstitel + waarde-badge + subline + knop */}
+      <div className="relative z-10 min-w-0">
         <p className="mb-1 text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#b7831d" }}>
           {kicker}
         </p>
         <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap">
-          <h3 className="m-0 font-display font-black leading-[0.95] tracking-[-0.04em] text-[clamp(22px,3vw,34px)]" style={{ color: INKT }}>
+          <h3 className="m-0 font-display font-black leading-[0.95] tracking-[-0.04em] text-[clamp(24px,3.2vw,40px)]" style={{ color: INKT }}>
             {titel}
           </h3>
           {waarde && (
             <span
-              className="inline-flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-full text-[16px] font-black"
+              className="inline-flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full text-[17px] font-black"
               style={{ background: "linear-gradient(145deg,#e8b83c,#c7901c)", color: "#111", border: `3px solid ${GOUD_DONKER}`, boxShadow: `0 3px 0 ${GOUD_SCHADUW}` }}
             >
               {waarde}
             </span>
           )}
         </div>
-        {data.sponsor_naam && (
-          <p className="mt-1 text-[13px]" style={{ color: "#6f6b7d" }}>
-            aangeboden door <strong className="font-bold" style={{ color: "#b7831d" }}>{data.sponsor_naam}</strong>
-          </p>
-        )}
-      </div>
-
-      {/* RECHTS — decoratieve illustratie + knop */}
-      <div className="flex flex-col items-center md:items-end gap-2">
-        <RennersIllustratie />
-        <Link
-          to="/prijzen"
-          aria-label="Bekijk alle prijzen"
-          className="inline-flex w-full md:w-auto items-center justify-center gap-1.5 rounded-md px-4 py-2 text-[12px] font-black uppercase tracking-[0.08em] whitespace-nowrap transition-transform hover:translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2"
-          style={{ background: GOUD, color: INKT, border: `2px solid ${GOUD_DONKER}`, boxShadow: `0 3px 0 ${GOUD_SCHADUW}`, outlineColor: GOUD }}
-        >
-          Alle prijzen <ChevronRight className="h-4 w-4" aria-hidden />
-        </Link>
+        <div className="mt-1.5 flex items-center justify-center md:justify-start gap-3 flex-wrap">
+          {data.sponsor_naam && (
+            <p className="text-[13px]" style={{ color: "#6f6b7d" }}>
+              aangeboden door <strong className="font-bold" style={{ color: "#b7831d" }}>{data.sponsor_naam}</strong>
+            </p>
+          )}
+          <Link
+            to="/prijzen"
+            aria-label="Bekijk alle prijzen"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md px-4 py-2 text-[12px] font-black uppercase tracking-[0.08em] whitespace-nowrap transition-transform hover:translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2"
+            style={{ background: GOUD, color: INKT, border: `2px solid ${GOUD_DONKER}`, boxShadow: `0 3px 0 ${GOUD_SCHADUW}`, outlineColor: GOUD }}
+          >
+            Alle prijzen <ChevronRight className="h-4 w-4" aria-hidden />
+          </Link>
+        </div>
       </div>
     </div>
   );
