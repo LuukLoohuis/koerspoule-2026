@@ -54,6 +54,7 @@ export default function StartlistTab({
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<ParsedStartlistTeam[]>([]);
   const [importing, setImporting] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   async function createTeam() {
     if (!supabase || !newTeamName.trim()) return;
@@ -98,6 +99,20 @@ export default function StartlistTab({
       return;
     }
     toast.success("Verwijderd");
+    await reload();
+  }
+
+  async function deleteAllRiders() {
+    if (!supabase || !activeGameId) return;
+    if (!confirm(`ALLE ${riders.length} renners uit de startlijst van deze game verwijderen? Dit kan niet ongedaan gemaakt worden.`)) return;
+    setDeletingAll(true);
+    const { error } = await supabase.from("riders").delete().eq("game_id", activeGameId);
+    setDeletingAll(false);
+    if (error) {
+      toast.error(`Verwijderen mislukt: ${error.message}`);
+      return;
+    }
+    toast.success("Hele startlijst verwijderd");
     await reload();
   }
 
@@ -289,7 +304,14 @@ export default function StartlistTab({
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="font-display">Startlijst ({riders.length})</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardTitle className="font-display">Startlijst ({riders.length})</CardTitle>
+          {riders.length > 0 && (
+            <Button size="sm" variant="outline" className="h-8 text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive" disabled={deletingAll} onClick={deleteAllRiders}>
+              <Trash2 className="w-3.5 h-3.5 mr-1" /> {deletingAll ? "Verwijderen…" : "Alle renners verwijderen"}
+            </Button>
+          )}
+        </CardHeader>
         <CardContent className="space-y-3">
           <Input data-testid="search-startlist" placeholder="Zoek renner of team..." value={search} onChange={(e) => setSearch(e.target.value)} />
           <p className="text-xs text-muted-foreground">Klik op een cel om naam, startnummer of team van een renner te wijzigen.</p>
