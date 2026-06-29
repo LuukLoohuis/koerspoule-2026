@@ -72,21 +72,21 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
   // Dominant sponsorblok: groot logo op donkere kaart (leest ook met wit logo) +
   // gouden pill-label eronder.
   const logoBlok = (
-    <div className="flex flex-col items-center gap-2.5 w-full">
+    <div className="flex flex-col items-center gap-3 w-full">
       {logo ? (
         <img
           src={logo}
           alt={data.sponsor_naam ?? "sponsor"}
-          className="w-[226px] max-h-[64px] object-contain rounded-lg bg-black p-1.5"
+          className="w-[270px] max-h-[84px] object-contain rounded-lg bg-black p-2"
           loading="lazy"
         />
       ) : (
-        <div className="w-[226px] h-[64px] rounded-lg bg-black flex items-center justify-center">
-          <span className="text-3xl">🎁</span>
+        <div className="w-[270px] h-[84px] rounded-lg bg-black flex items-center justify-center">
+          <span className="text-4xl">🎁</span>
         </div>
       )}
       <span
-        className="inline-flex items-center justify-center rounded-full px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.1em] text-center leading-tight max-w-[230px]"
+        className="inline-flex items-center justify-center rounded-full px-5 py-2 text-[12px] font-black uppercase tracking-[0.1em] text-center leading-tight max-w-[270px]"
         style={{ background: GOUD, color: INKT }}
       >
         {sponsorLabel}
@@ -96,7 +96,7 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
 
   return (
     <div
-      className="relative grid grid-cols-1 md:grid-cols-[260px_1fr] items-center gap-4 md:gap-6 overflow-hidden rounded-xl px-4 pb-3 pt-5 md:px-6 md:pb-4 md:pt-5 text-center md:text-left"
+      className="relative grid grid-cols-1 md:grid-cols-[310px_1fr] items-center gap-4 md:gap-7 overflow-hidden rounded-xl px-4 pb-3 pt-5 md:px-6 md:pb-4 md:pt-5 text-center md:text-left"
       style={{ background: CREME, border: `2px solid ${GOUD}`, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
     >
       {/* Vaste renners-achtergrond (rechts), alleen desktop */}
@@ -108,7 +108,7 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
       {/* Crème-fade over de linkerkant → tekst altijd leesbaar, ook met achtergrond */}
       <div
         className="hidden md:block absolute inset-0 pointer-events-none"
-        style={{ background: `linear-gradient(90deg, ${CREME} 44%, rgba(251,247,235,0.55) 64%, rgba(251,247,235,0) 84%)` }}
+        style={{ background: `linear-gradient(90deg, ${CREME} 28%, rgba(251,247,235,0.5) 50%, rgba(251,247,235,0) 70%)` }}
         aria-hidden
       />
 
