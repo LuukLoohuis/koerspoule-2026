@@ -16,6 +16,9 @@ export type Prize = {
   prijs_label: string | null;
   badge_top: string | null;
   badge_bottom: string | null;
+  banner_kicker: string | null;
+  banner_sponsor_label: string | null;
+  banner_waarde: string | null;
   is_dagprijs_vandaag: boolean;
   sort_order: number;
   rang: number | null;

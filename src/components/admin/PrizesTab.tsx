@@ -22,6 +22,9 @@ type Row = {
   prijs_label: string | null;
   badge_top: string | null;
   badge_bottom: string | null;
+  banner_kicker: string | null;
+  banner_sponsor_label: string | null;
+  banner_waarde: string | null;
   is_dagprijs_vandaag: boolean;
   sort_order: number;
   rang: number | null;
@@ -309,6 +312,27 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
                   <Input defaultValue={r.badge_bottom ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.badge_bottom && saveField(r.id, { badge_bottom: e.target.value.trim() || null })} className="h-8 text-sm" placeholder="bv. Prijs" />
                 </div>
               </div>
+
+              {r.soort === "dagprijs" && (
+                <div className="rounded-md border border-[hsl(var(--vintage-gold)/0.5)] bg-[hsl(var(--vintage-gold)/0.06)] p-2.5 space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--vintage-gold))]">Banner-teksten (L'Équipe)</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-[11px]">Kicker</Label>
+                      <Input defaultValue={r.banner_kicker ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.banner_kicker && saveField(r.id, { banner_kicker: e.target.value.trim() || null })} className="h-8 text-sm" placeholder="Dagprijs van vandaag" />
+                    </div>
+                    <div>
+                      <Label className="text-[11px]">Sponsor-label</Label>
+                      <Input defaultValue={r.banner_sponsor_label ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.banner_sponsor_label && saveField(r.id, { banner_sponsor_label: e.target.value.trim() || null })} className="h-8 text-sm" placeholder="Trotse sponsor van Koerspoule" />
+                    </div>
+                    <div>
+                      <Label className="text-[11px]">Waarde (gouden badge)</Label>
+                      <Input defaultValue={r.banner_waarde ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.banner_waarde && saveField(r.id, { banner_waarde: e.target.value.trim() || null })} className="h-8 text-sm" placeholder="€10" />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Titel + sponsornaam + logo hierboven. Lege velden → nette defaults.</p>
+                </div>
+              )}
 
               <div className="flex items-center justify-between gap-2">
                 {r.soort === "dagprijs" ? (
