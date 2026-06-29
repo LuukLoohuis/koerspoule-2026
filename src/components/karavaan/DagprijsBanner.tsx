@@ -38,7 +38,8 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
 
   if (!data) return null;
 
-  const logo = data.sponsor_logo_url || data.afbeelding_url;
+  // Gebruik het sponsorLOGO (niet de brede prijsafbeelding/banner).
+  const logo = data.sponsor_logo_url;
   const titel = data.titel?.trim() || "Dagprijs van vandaag";
   const waarde = data.prijs_label?.trim();
 
