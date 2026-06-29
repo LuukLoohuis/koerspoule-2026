@@ -1588,25 +1588,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
               </div>
             )}
 
-            {!directorAnalysis ? (
+            {!directorAnalysis && (
               <p className="text-sm text-muted-foreground">Stel eerst een team samen — dan praat de directeur graag.</p>
-            ) : (
-              <>
-                <div className="flex flex-wrap gap-2">
-                  {directorAnalysis.labels.map((l) => (
-                    <Badge key={l} variant="secondary" className="font-display">
-                      {l}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="space-y-2">
-                  {directorAnalysis.lines.map((l, i) => (
-                    <p key={i} className="font-serif italic text-foreground/90 border-l-2 border-primary/60 pl-3">
-                      "{l}"
-                    </p>
-                  ))}
-                </div>
-              </>
             )}
           </CardContent>
         </Card>
