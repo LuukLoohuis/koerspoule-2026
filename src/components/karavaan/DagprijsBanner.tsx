@@ -25,48 +25,46 @@ const DEF_SPONSOR_LABEL = "Trotse sponsor van Koerspoule";
 function RennersIllustratie() {
   return (
     <svg
-      viewBox="0 0 280 130"
-      className="hidden md:block h-[120px] w-auto select-none"
+      viewBox="0 0 170 80"
+      className="hidden md:block h-[72px] w-auto select-none"
       aria-hidden
       role="presentation"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g stroke="#2a2520" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round">
-        {/* Bergen */}
-        <path d="M150 60 L185 18 L210 44 L230 26 L272 70 L272 92 L150 92 Z" fill="#2a2520" fillOpacity="0.06" />
-        <path d="M150 60 L185 18 L210 44 L230 26 L272 70" />
-        <path d="M178 26 L172 36 M188 26 L194 36 M222 33 L228 42" strokeOpacity="0.5" />
-        {/* Weg */}
-        <path d="M150 110 L200 86 L272 96" stroke="#2a2520" strokeOpacity="0.4" strokeDasharray="2 4" />
-        {/* Col du Tourmalet-bord */}
-        <g>
-          <rect x="244" y="40" width="30" height="20" rx="2" fill="#fbf7eb" />
-          <rect x="244" y="40" width="30" height="20" rx="2" />
-          <line x1="248" y1="60" x2="248" y2="78" strokeWidth="1.6" />
-          <text x="259" y="48" textAnchor="middle" fontSize="5" fontWeight="700" fill="#2a2520" stroke="none">COL DU</text>
-          <text x="259" y="56" textAnchor="middle" fontSize="6.5" fontWeight="800" fill="#2a2520" stroke="none">2115</text>
-        </g>
-        {/* Renner voor (groot) */}
-        <g transform="translate(176,70)">
-          <circle cx="14" cy="44" r="13" fill="#fbf7eb" />
-          <circle cx="50" cy="44" r="13" fill="#fbf7eb" />
-          <circle cx="14" cy="44" r="13" />
-          <circle cx="50" cy="44" r="13" />
-          <path d="M14 44 L30 30 L46 40 L50 44 M30 30 L24 18 M24 18 L33 16" />
-          <circle cx="35" cy="13" r="4.5" fill="#e0ac2d" stroke="#2a2520" />
-          <path d="M30 30 L18 22 M30 30 L40 24" />
-        </g>
-        {/* Renners achter (klein, vager) */}
-        <g transform="translate(150,82) scale(0.7)" strokeOpacity="0.55">
-          <circle cx="10" cy="40" r="10" fill="#fbf7eb" />
-          <circle cx="40" cy="40" r="10" fill="#fbf7eb" />
-          <circle cx="10" cy="40" r="10" />
-          <circle cx="40" cy="40" r="10" />
-          <path d="M10 40 L24 28 L38 38 M24 28 L20 18 M20 18 L28 17" />
-          <circle cx="29" cy="14" r="3.5" stroke="#2a2520" fill="none" />
-        </g>
+      {/* Zachte bergen achter */}
+      <path d="M70 52 L96 18 L114 40 L130 24 L164 56 L164 64 L70 64 Z" fill="#2a2520" fillOpacity="0.08" />
+      <path d="M70 52 L96 18 L114 40 L130 24 L164 56" stroke="#2a2520" strokeOpacity="0.35" strokeWidth="1.3" strokeLinejoin="round" />
+      {/* Col-bord */}
+      <g>
+        <rect x="140" y="32" width="24" height="15" rx="2" fill="#fbf7eb" stroke="#2a2520" strokeWidth="1.2" />
+        <line x1="144" y1="47" x2="144" y2="64" stroke="#2a2520" strokeWidth="1.4" />
+        <text x="152" y="39" textAnchor="middle" fontSize="4.2" fontWeight="700" fill="#2a2520">COL DU</text>
+        <text x="152" y="45" textAnchor="middle" fontSize="5.4" fontWeight="800" fill="#2a2520">2115</text>
       </g>
+      {/* Wielen */}
+      <g stroke="#2a2520" strokeWidth="2.4">
+        <circle cx="40" cy="58" r="15" fill="#fbf7eb" />
+        <circle cx="92" cy="58" r="15" fill="#fbf7eb" />
+      </g>
+      <g stroke="#c58c19" strokeWidth="1.1" strokeOpacity="0.9">
+        <circle cx="40" cy="58" r="15" fill="none" />
+        <circle cx="92" cy="58" r="15" fill="none" />
+      </g>
+      <circle cx="40" cy="58" r="2.4" fill="#c58c19" />
+      <circle cx="92" cy="58" r="2.4" fill="#c58c19" />
+      {/* Frame + renner — gevuld silhouet, leest scherp op klein formaat */}
+      <path
+        d="M40 58 L62 40 L92 58 L72 58 Z"
+        fill="#2a2520"
+      />
+      <path
+        d="M62 40 L55 24 L70 22 L66 30 L78 36 L70 40 Z"
+        fill="#2a2520"
+      />
+      <circle cx="62" cy="17" r="6.5" fill="#2a2520" />
+      <path d="M56 14 q7 -7 14 -1" stroke="#e0ac2d" strokeWidth="2.6" strokeLinecap="round" fill="none" />
+      <line x1="40" y1="58" x2="55" y2="24" stroke="#2a2520" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -107,36 +105,36 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
   const logo = data.sponsor_logo_url;
 
   const logoBlok = (
-    <div className="flex flex-col items-center gap-2.5">
+    <div className="flex flex-col items-center gap-2">
       {logo ? (
         <img
           src={logo}
           alt={data.sponsor_naam ?? "sponsor"}
-          className="w-[170px] max-h-[78px] object-contain rounded-md bg-black"
+          className="w-[150px] max-h-[56px] object-contain rounded-md bg-black"
           loading="lazy"
         />
       ) : (
-        <div className="w-[170px] h-[78px] rounded-md bg-black flex items-center justify-center">
-          <span className="text-3xl">🎁</span>
+        <div className="w-[150px] h-[56px] rounded-md bg-black flex items-center justify-center">
+          <span className="text-2xl">🎁</span>
         </div>
       )}
-      <span className="inline-flex items-center justify-center rounded-full bg-[#e0ac2d] px-3.5 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#171717] text-center leading-tight">
+      <span className="inline-flex items-center justify-center rounded-full bg-[#e0ac2d] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#171717] text-center leading-tight">
         {sponsorLabel}
       </span>
     </div>
   );
 
   return (
-    <div className="relative grid grid-cols-1 md:grid-cols-[220px_1fr_auto] items-center gap-5 md:gap-6 overflow-hidden rounded-xl border-2 border-[#d7a84a] bg-[#fbf7eb] px-6 pb-6 pt-8 md:px-8 md:pb-7 md:pt-9 shadow-[0_8px_22px_rgba(0,0,0,0.08)]">
+    <div className="relative grid grid-cols-1 md:grid-cols-[190px_1fr_auto] items-center gap-4 md:gap-6 overflow-hidden rounded-xl border-2 border-[#d7a84a] bg-[#fbf7eb] px-5 pb-4 pt-6 md:px-7 md:pb-4 md:pt-5 shadow-[0_8px_22px_rgba(0,0,0,0.08)]">
       {/* Rode stippellijn bovenrand */}
       <div
-        className="pointer-events-none absolute left-4 right-4 top-2.5 h-2"
+        className="pointer-events-none absolute left-4 right-4 top-2 h-2"
         style={{ backgroundImage: "radial-gradient(#cf3b35 3px, transparent 3px)", backgroundSize: "16px 8px", backgroundRepeat: "repeat-x" }}
         aria-hidden
       />
 
       {/* LINKS — sponsorlogo + label (logo linkt naar sponsor indien bekend) */}
-      <div className="flex justify-center md:block md:pr-6 md:border-r md:border-[rgba(180,130,40,0.45)]">
+      <div className="flex justify-center md:block md:pr-5 md:border-r md:border-[rgba(180,130,40,0.45)]">
         {data.sponsor_url ? (
           <a
             href={data.sponsor_url}
@@ -154,35 +152,35 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
 
       {/* MIDDEN — kicker + titel + waarde + subline */}
       <div className="min-w-0 text-center md:text-left">
-        <p className="mb-1.5 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#b98319]">{kicker}</p>
-        <div className="flex items-center justify-center md:justify-start gap-3.5 flex-wrap">
-          <h3 className="m-0 font-display font-black leading-none tracking-[-0.03em] text-[#191919] text-[clamp(24px,3vw,42px)]">
+        <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#b98319]">{kicker}</p>
+        <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap">
+          <h3 className="m-0 font-display font-black leading-[0.95] tracking-[-0.03em] text-[#191919] text-[clamp(20px,2.4vw,32px)]">
             {titel}
           </h3>
           {waarde && (
             <span
-              className="inline-flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full border-[3px] border-[#9c6d10] text-[22px] font-black text-[#111]"
-              style={{ background: "linear-gradient(145deg,#e7b83f,#c58c19)", boxShadow: "0 4px 0 #8f620f" }}
+              className="inline-flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full border-[3px] border-[#9c6d10] text-[17px] font-black text-[#111]"
+              style={{ background: "linear-gradient(145deg,#e7b83f,#c58c19)", boxShadow: "0 3px 0 #8f620f" }}
             >
               {waarde}
             </span>
           )}
         </div>
         {data.sponsor_naam && (
-          <p className="mt-2.5 text-[14px] text-[#6d6b7e]">
+          <p className="mt-1.5 text-[13px] text-[#6d6b7e]">
             aangeboden door <strong className="font-bold text-[#b98319]">{data.sponsor_naam}</strong>
           </p>
         )}
       </div>
 
       {/* RECHTS — vaste illustratie + knop */}
-      <div className="flex flex-col items-center md:items-end gap-3">
+      <div className="flex flex-col items-center md:items-end gap-2.5">
         <RennersIllustratie />
         <Link
           to="/prijzen"
           aria-label="Bekijk alle prijzen"
-          className="inline-flex w-full md:w-auto items-center justify-center gap-2 rounded-lg border-2 border-[#9c6d10] bg-[#e0ac2d] px-5 py-3.5 text-[13px] font-black uppercase tracking-[0.08em] text-[#171717] whitespace-nowrap transition-transform hover:translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d7a84a]"
-          style={{ boxShadow: "0 4px 0 #8f620f" }}
+          className="inline-flex w-full md:w-auto items-center justify-center gap-1.5 rounded-lg border-2 border-[#9c6d10] bg-[#e0ac2d] px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.08em] text-[#171717] whitespace-nowrap transition-transform hover:translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d7a84a]"
+          style={{ boxShadow: "0 3px 0 #8f620f" }}
         >
           Alle prijzen <ChevronRight className="h-4 w-4" aria-hidden />
         </Link>
