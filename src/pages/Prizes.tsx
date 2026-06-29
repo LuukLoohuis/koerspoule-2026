@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Award, Gift, Lock, Shirt, Medal, Users, ExternalLink } from "lucide-react";
+import { Trophy, Award, Gift, Lock, Shirt, ExternalLink } from "lucide-react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { usePrizes, type Prize } from "@/hooks/usePrizes";
 import { cn } from "@/lib/utils";
@@ -238,6 +238,18 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
   );
 }
 
+// Eyebrow/fallback/badge per prijssoort — zodat één gemengde lijst toch per
+// kaart de juiste context toont (plek, dagprijs, subpoule).
+function kaartProps(p: Prize): { eyebrow: string; fallback: string; badge: { top: string; bottom: string } } {
+  if (p.soort === "ereplaats") {
+    return { eyebrow: `${p.rang}e plek`, fallback: `${p.rang}e plek`, badge: { top: `${p.rang}e`, bottom: "Plek" } };
+  }
+  if (p.soort === "dagprijs") {
+    return { eyebrow: "Dagprijs", fallback: "Dagprijs", badge: { top: "Vandaag", bottom: "Prijs" } };
+  }
+  return { eyebrow: "Grootste subpoule", fallback: "Grootste subpoule", badge: { top: "Win", bottom: "Samen" } };
+}
+
 function GeslotenKast() {
   return (
     <Card className="ornate-frame retro-border bg-card">
@@ -265,11 +277,13 @@ export default function Prizes() {
   const podium1 = prizes.find((p) => p.soort === "podium_1");
   const podium2 = prizes.find((p) => p.soort === "podium_2");
   const podium3 = prizes.find((p) => p.soort === "podium_3");
-  const ereplaatsen = prizes
-    .filter((p) => p.soort === "ereplaats" && p.rang != null)
+  // Alle niet-podium-prijzen (ereplaats, dagprijs, grootste subpoule) in ÉÉN
+  // gezamenlijke lijst, globaal op Volgorde (sort_order) gesorteerd ongeacht soort.
+  const overige = prizes
+    .filter((p) =>
+      p.soort === "ereplaats" ? p.rang != null : p.soort === "dagprijs" || p.soort === "grootste_subpoule",
+    )
     .sort(bySort);
-  const dagprijzen = prizes.filter((p) => p.soort === "dagprijs").sort(bySort);
-  const grootsteSubpoule = prizes.filter((p) => p.soort === "grootste_subpoule").sort(bySort);
   const hasPodium = Boolean(podium1 || podium2 || podium3);
   const hasAny = prizes.length > 0;
 
@@ -331,54 +345,19 @@ export default function Prizes() {
               </section>
             )}
 
-            {/* Ereplaatsen 4 t/m 10 — compact, ondergeschikt aan het podium */}
-            {ereplaatsen.length > 0 && (
+            {/* Overige prijzen — één gezamenlijke lijst, globaal op Volgorde */}
+            {overige.length > 0 && (
               <>
                 {hasPodium && <div className="vintage-divider" aria-hidden />}
                 <section>
                   <h2 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
-                    <Medal className="h-5 w-5" style={{ color: GOLD }} /> Ereplaatsen
+                    <Gift className="h-5 w-5 text-primary" /> Meer te winnen
                   </h2>
                   <div className="grid grid-cols-1 gap-4">
-                    {ereplaatsen.map((p) => (
-                      <PrijsKaart key={p.id} p={p} eyebrow={`${p.rang}e plek`} fallback={`${p.rang}e plek`} badge={{ top: `${p.rang}e`, bottom: "Plek" }} />
-                    ))}
-                  </div>
-                </section>
-              </>
-            )}
-
-            {/* Gouden scheidingslijn */}
-            {(hasPodium || ereplaatsen.length > 0) && dagprijzen.length > 0 && (
-              <div className="vintage-divider" aria-hidden />
-            )}
-
-            {/* Dagprijzen */}
-            {dagprijzen.length > 0 && (
-              <section>
-                <h2 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
-                  <Gift className="h-5 w-5 text-primary" /> Dagprijzen
-                </h2>
-                <div className="grid grid-cols-1 gap-4">
-                  {dagprijzen.map((p) => (
-                    <PrijsKaart key={p.id} p={p} eyebrow="Dagprijs" fallback="Dagprijs" badge={{ top: "Vandaag", bottom: "Prijs" }} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Grootste subpoule */}
-            {grootsteSubpoule.length > 0 && (
-              <>
-                {(hasPodium || ereplaatsen.length > 0 || dagprijzen.length > 0) && <div className="vintage-divider" aria-hidden />}
-                <section>
-                  <h2 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
-                    <Users className="h-5 w-5" style={{ color: GOLD }} /> Grootste subpoule
-                  </h2>
-                  <div className="grid grid-cols-1 gap-4">
-                    {grootsteSubpoule.map((p) => (
-                      <PrijsKaart key={p.id} p={p} eyebrow="Grootste subpoule" fallback="Grootste subpoule" badge={{ top: "Win", bottom: "Samen" }} />
-                    ))}
+                    {overige.map((p) => {
+                      const k = kaartProps(p);
+                      return <PrijsKaart key={p.id} p={p} eyebrow={k.eyebrow} fallback={k.fallback} badge={k.badge} />;
+                    })}
                   </div>
                 </section>
               </>
