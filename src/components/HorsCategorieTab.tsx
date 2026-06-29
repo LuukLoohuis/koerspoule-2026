@@ -1690,24 +1690,33 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                       <p className="font-serif italic text-sm text-muted-foreground mt-0.5">
                         per categorie de top-scorende renners
                       </p>
-                      <div className="mt-3 flex items-baseline gap-2 flex-wrap">
-                        <span className="font-display font-black text-4xl md:text-6xl tabular-nums text-[hsl(var(--vintage-gold))] leading-none">
-                          {emiratesData.total}
-                        </span>
-                        <span className="font-serif italic text-sm text-muted-foreground">
-                          punten over {emiratesData.stagesCount} etappe
-                          {emiratesData.stagesCount === 1 ? "" : "s"}
-                        </span>
-                      </div>
                       {(() => {
                         const me = emiratesData.ranking.find((r) => r.isMe);
-                        if (!me || emiratesData.total <= 0) return null;
-                        const pct = Math.round((me.points / emiratesData.total) * 100);
+                        const pct =
+                          me && emiratesData.total > 0
+                            ? Math.round((me.points / emiratesData.total) * 100)
+                            : null;
                         return (
-                          <div className="mt-2 text-sm font-serif text-foreground/80">
-                            Jouw ploeg: <strong className="font-display tabular-nums">{me.points} pt</strong>
-                            <span className="mx-1.5 text-muted-foreground">·</span>
-                            <strong className="font-display tabular-nums text-[hsl(var(--vintage-gold))]">{pct}%</strong> van de droomploeg
+                          <div className="mt-3">
+                            <div className="flex items-baseline gap-x-3 gap-y-1 flex-wrap">
+                              <span className="font-display font-black text-4xl md:text-6xl tabular-nums text-[hsl(var(--vintage-gold))] leading-none">
+                                {emiratesData.total}
+                                <span className="ml-1 text-base md:text-xl font-serif italic text-muted-foreground">pt</span>
+                              </span>
+                              {pct !== null && (
+                                <>
+                                  <span aria-hidden className="font-display text-3xl md:text-5xl text-muted-foreground/45 leading-none">·</span>
+                                  <span className="font-display font-black text-4xl md:text-6xl tabular-nums text-[hsl(var(--vintage-gold))] leading-none">
+                                    {pct}%
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            <p className="mt-1.5 text-sm font-serif italic text-muted-foreground">
+                              maximaal haalbaar over {emiratesData.stagesCount} etappe
+                              {emiratesData.stagesCount === 1 ? "" : "s"}
+                              {pct !== null ? ` · jouw ploeg ${me!.points} pt` : ""}
+                            </p>
                           </div>
                         );
                       })()}
