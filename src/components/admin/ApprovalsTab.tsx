@@ -207,12 +207,15 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   const [bannerMap, setBannerMap] = useState<Record<string, boolean>>({});
   // Admin-only testmodus (per game): admin ziet alles ongeacht status. Geen effect op deelnemers.
   const [testmodus, setTestmodus] = useState(false);
+  // Master-schakelaar: hele Radio Koerspoule-rubriek aan/uit voor deelnemers.
+  const [radioEnabled, setRadioEnabled] = useState(true);
 
   useEffect(() => {
     if (!supabase || !activeGameId) return;
     (async () => {
-      const { data } = await supabase.from("games").select("admin_testmodus").eq("id", activeGameId).maybeSingle();
+      const { data } = await supabase.from("games").select("admin_testmodus, radio_koerspoule_enabled").eq("id", activeGameId).maybeSingle();
       setTestmodus(Boolean(data?.admin_testmodus));
+      setRadioEnabled(data?.radio_koerspoule_enabled !== false);
     })();
   }, [activeGameId]);
 
@@ -222,6 +225,14 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
     setTestmodus(next);
     toast.success(next ? "Testmodus AAN — je ziet als admin alles ongeacht de status" : "Testmodus uit — je ziet de game zoals de status hoort");
+  }
+
+  async function toggleRadio(next: boolean) {
+    if (!supabase || !activeGameId) return;
+    const { error } = await supabase.from("games").update({ radio_koerspoule_enabled: next }).eq("id", activeGameId);
+    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
+    setRadioEnabled(next);
+    toast.success(next ? "Radio Koerspoule AAN voor deelnemers" : "Radio Koerspoule volledig verborgen");
   }
 
   // Wist alle Lefevère-rapporten van deze game → elke deelnemer krijgt een vers
@@ -365,6 +376,23 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
           </div>
           <Button size="sm" variant={testmodus ? "default" : "outline"} className="shrink-0" disabled={!activeGameId} onClick={() => toggleTestmodus(!testmodus)}>
             {testmodus ? "Zet uit" : "Zet aan"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Master-schakelaar Radio Koerspoule — verbergt de hele rubriek in één klik. */}
+      <Card>
+        <CardContent className="flex items-center justify-between gap-3 p-4">
+          <div className="min-w-0">
+            <p className="font-display font-bold flex items-center gap-2">
+              <Mic className="w-4 h-4" /> Radio Koerspoule {radioEnabled ? "zichtbaar" : "verborgen"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Master-schakelaar: zet dit uit om de <strong>hele</strong> Radio Koerspoule-rubriek voor deelnemers te verbergen, ongeacht de per-etappe-zichtbaarheid.
+            </p>
+          </div>
+          <Button size="sm" variant={radioEnabled ? "outline" : "default"} className="shrink-0" disabled={!activeGameId} onClick={() => toggleRadio(!radioEnabled)}>
+            {radioEnabled ? "Verberg alles" : "Toon weer"}
           </Button>
         </CardContent>
       </Card>

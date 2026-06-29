@@ -14,6 +14,13 @@ export default function RadioKoerspoule({ gameId }: { gameId?: string }) {
     staleTime: 60 * 1000,
     queryFn: async (): Promise<{ tekst: string; stage_number: number } | null> => {
       if (!supabase || !gameId) return null;
+      // Master-schakelaar: hele rubriek uit → niets tonen, ongeacht per-etappe.
+      const { data: g } = await (supabase as any)
+        .from("games")
+        .select("radio_koerspoule_enabled")
+        .eq("id", gameId)
+        .maybeSingle();
+      if (g && g.radio_koerspoule_enabled === false) return null;
       // Eerstvolgende rit = de nog-niet-gefiatteerde etappe met de vroegste datum.
       // Zo toont 'ie 's ochtends de rit van vandaag en 's avonds (na fiat) die van morgen.
       const { data: stages } = await (supabase as any)
