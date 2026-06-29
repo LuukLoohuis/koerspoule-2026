@@ -1,6 +1,7 @@
+import { Fragment } from "react";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Award, Gift, Lock, Shirt, ExternalLink } from "lucide-react";
+import { Trophy, Award, Gift, Lock, Shirt, Medal, ExternalLink } from "lucide-react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { usePrizes, type Prize } from "@/hooks/usePrizes";
 import { cn } from "@/lib/utils";
@@ -354,10 +355,25 @@ export default function Prizes() {
                     <Gift className="h-5 w-5 text-primary" /> Meer te winnen
                   </h2>
                   <div className="grid grid-cols-1 gap-4">
-                    {overige.map((p) => {
-                      const k = kaartProps(p);
-                      return <PrijsKaart key={p.id} p={p} eyebrow={k.eyebrow} fallback={k.fallback} badge={k.badge} />;
-                    })}
+                    {(() => {
+                      let ereKopGetoond = false;
+                      return overige.map((p) => {
+                        const k = kaartProps(p);
+                        // "Ereplaatsen"-subkop één keer, vóór de eerste ereplaats-kaart.
+                        const toonEreKop = p.soort === "ereplaats" && !ereKopGetoond;
+                        if (toonEreKop) ereKopGetoond = true;
+                        return (
+                          <Fragment key={p.id}>
+                            {toonEreKop && (
+                              <h3 className="font-display text-lg font-bold flex items-center gap-2 mt-2">
+                                <Medal className="h-5 w-5" style={{ color: GOLD }} /> Ereplaatsen
+                              </h3>
+                            )}
+                            <PrijsKaart p={p} eyebrow={k.eyebrow} fallback={k.fallback} badge={k.badge} />
+                          </Fragment>
+                        );
+                      });
+                    })()}
                   </div>
                 </section>
               </>
