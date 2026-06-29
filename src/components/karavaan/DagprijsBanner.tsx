@@ -43,13 +43,18 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
   const titel = data.titel?.trim() || "Dagprijs van vandaag";
   const waarde = data.prijs_label?.trim();
 
-  const logoEl = (
-    <div className="h-14 w-20 shrink-0 rounded-lg border border-[hsl(var(--vintage-gold)/0.45)] bg-card overflow-hidden flex items-center justify-center">
-      {logo ? (
-        <img src={logo} alt={data.sponsor_naam ?? "sponsor"} className="h-full w-full object-contain" loading="lazy" />
-      ) : (
-        <span className="text-[hsl(var(--vintage-gold))] text-xl">🎁</span>
-      )}
+  const logoEl = logo ? (
+    // Vaste hoogte, auto breedte → een breed wordmark-logo wordt niet platgedrukt
+    // of klein in een vierkant kadertje, maar staat netjes op ware verhouding.
+    <img
+      src={logo}
+      alt={data.sponsor_naam ?? "sponsor"}
+      className="h-9 md:h-10 w-auto max-w-[200px] object-contain shrink-0 rounded-md"
+      loading="lazy"
+    />
+  ) : (
+    <div className="h-12 w-12 shrink-0 rounded-lg border border-[hsl(var(--vintage-gold)/0.45)] bg-card flex items-center justify-center">
+      <span className="text-[hsl(var(--vintage-gold))] text-xl">🎁</span>
     </div>
   );
 
