@@ -1657,7 +1657,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   <div className="relative flex items-start gap-4 md:gap-5">
                     <div className="shrink-0 flex flex-col items-center">
                       <Crown className="h-9 w-9 md:h-11 md:w-11 text-[hsl(var(--vintage-gold))]" strokeWidth={2.2} />
-                      <span className="font-display text-[9px] md:text-[10px] uppercase tracking-[0.06em] leading-tight text-muted-foreground mt-1.5 text-center max-w-[72px] break-words">
+                      <span className="font-display text-[9px] md:text-[10px] uppercase tracking-[0.04em] leading-tight text-muted-foreground mt-1.5 text-center whitespace-nowrap">
                         De
                         <br />
                         Droomploeg
@@ -1682,6 +1682,18 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                           {emiratesData.stagesCount === 1 ? "" : "s"}
                         </span>
                       </div>
+                      {(() => {
+                        const me = emiratesData.ranking.find((r) => r.isMe);
+                        if (!me || emiratesData.total <= 0) return null;
+                        const pct = Math.round((me.points / emiratesData.total) * 100);
+                        return (
+                          <div className="mt-2 text-sm font-serif text-foreground/80">
+                            Jouw ploeg: <strong className="font-display tabular-nums">{me.points} pt</strong>
+                            <span className="mx-1.5 text-muted-foreground">·</span>
+                            <strong className="font-display tabular-nums text-[hsl(var(--vintage-gold))]">{pct}%</strong> van de droomploeg
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
