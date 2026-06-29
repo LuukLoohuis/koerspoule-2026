@@ -442,7 +442,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   </Button>
                 </div>
                 <StageBreakdown stageId={r.stage_id} />
-                <VoorbeschouwingActie stageId={r.stage_id} />
+                {radioEnabled && <VoorbeschouwingActie stageId={r.stage_id} />}
               </div>
             ))
           )}
@@ -461,7 +461,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                 <span>Etappe {r.stage_number}</span>
                 {r.stage_name && <span className="text-muted-foreground">— {r.stage_name}</span>}
               </div>
-              <VoorbeschouwingActie stageId={r.stage_id} />
+              {radioEnabled && <VoorbeschouwingActie stageId={r.stage_id} />}
             </div>
           ))}
         </CardContent>
@@ -548,7 +548,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                 </Button>
               </div>
               <StageBreakdown stageId={r.stage_id} />
-              <VoorbeschouwingActie stageId={r.stage_id} />
+              {radioEnabled && <VoorbeschouwingActie stageId={r.stage_id} />}
             </div>
           ))}
         </CardContent>
