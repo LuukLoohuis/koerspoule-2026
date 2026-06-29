@@ -256,14 +256,20 @@ export default function Prizes() {
   const { data: game } = useCurrentGame();
   const { data: prizes = [], isLoading } = usePrizes(game?.prizes_visible ? game?.id : undefined);
 
+  // Niet-podium-secties volgen het admin-veld "Volgorde" (sort_order), niet de
+  // rang. Podium staat altijd los bovenaan (vaste plek 1/2/3). created_at als
+  // tiebreaker bij gelijke volgorde.
+  const bySort = (a: Prize, b: Prize) =>
+    (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.created_at < b.created_at ? -1 : 1);
+
   const podium1 = prizes.find((p) => p.soort === "podium_1");
   const podium2 = prizes.find((p) => p.soort === "podium_2");
   const podium3 = prizes.find((p) => p.soort === "podium_3");
   const ereplaatsen = prizes
     .filter((p) => p.soort === "ereplaats" && p.rang != null)
-    .sort((a, b) => (a.rang ?? 0) - (b.rang ?? 0));
-  const dagprijzen = prizes.filter((p) => p.soort === "dagprijs");
-  const grootsteSubpoule = prizes.filter((p) => p.soort === "grootste_subpoule");
+    .sort(bySort);
+  const dagprijzen = prizes.filter((p) => p.soort === "dagprijs").sort(bySort);
+  const grootsteSubpoule = prizes.filter((p) => p.soort === "grootste_subpoule").sort(bySort);
   const hasPodium = Boolean(podium1 || podium2 || podium3);
   const hasAny = prizes.length > 0;
 
