@@ -833,7 +833,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // ── Lefevere directeursanalyse (LLM) — gedeelde input via useHorsCategorieSummary,
   //    zodat de tekst 1-op-1 identiek is aan die in de Gazetta-feed. ──
-  const horsSummary = useHorsCategorieSummary(gameIdProp ? { id: gameIdProp, status: gameStatus } : undefined);
+  const horsSummary = useHorsCategorieSummary(gameIdProp ? { id: gameIdProp, status: gameStatus, adminTestmodus } : { adminTestmodus });
   const lefevere = useLefevereReport(horsSummary.lefevereInput, {
     entryId: horsSummary.entryId,
     stageCount: horsSummary.stageCount,
