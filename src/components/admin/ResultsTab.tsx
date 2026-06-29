@@ -222,7 +222,15 @@ export default function ResultsTab({
           game_id: activeGameId,
         },
       });
-      if (error) throw error;
+      if (error) {
+        // supabase-js verbergt de echte reden achter "non-2xx"; lees 'm uit de body.
+        let detail = error.message;
+        const ctx = (error as { context?: Response }).context;
+        if (ctx && typeof ctx.text === "function") {
+          try { const body = await ctx.text(); const j = JSON.parse(body); detail = j.error || body; } catch { /* fallback */ }
+        }
+        throw new Error(detail);
+      }
       if (!data?.success) throw new Error(data?.error || "Onbekende fout");
       setImportPreview({
         source_url: data.source_url,
