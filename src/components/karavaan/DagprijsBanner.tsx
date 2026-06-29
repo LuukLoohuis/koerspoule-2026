@@ -77,16 +77,16 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
         <img
           src={logo}
           alt={data.sponsor_naam ?? "sponsor"}
-          className="w-[270px] max-h-[84px] object-contain rounded-lg bg-black p-2"
+          className="w-[300px] max-h-[104px] object-contain rounded-lg bg-black p-2.5"
           loading="lazy"
         />
       ) : (
-        <div className="w-[270px] h-[84px] rounded-lg bg-black flex items-center justify-center">
-          <span className="text-4xl">🎁</span>
+        <div className="w-[300px] h-[104px] rounded-lg bg-black flex items-center justify-center">
+          <span className="text-5xl">🎁</span>
         </div>
       )}
       <span
-        className="inline-flex items-center justify-center rounded-full px-5 py-2 text-[12px] font-black uppercase tracking-[0.1em] text-center leading-tight max-w-[270px] transition-all duration-200 group-hover:bg-[#c79a24] group-hover:shadow-[0_3px_10px_rgba(155,106,18,0.35)] group-hover:-translate-y-px motion-reduce:transform-none"
+        className="inline-flex items-center justify-center rounded-full px-3 py-1 text-[9.5px] font-black uppercase tracking-[0.08em] text-center leading-tight max-w-[200px] transition-all duration-200 group-hover:bg-[#c79a24] group-hover:shadow-[0_3px_10px_rgba(155,106,18,0.35)] group-hover:-translate-y-px motion-reduce:transform-none"
         style={{ background: GOUD, color: INKT }}
       >
         {sponsorLabel}
