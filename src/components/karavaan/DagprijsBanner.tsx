@@ -96,7 +96,7 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
 
   return (
     <div
-      className="relative grid grid-cols-1 md:grid-cols-[310px_1fr] items-center gap-4 md:gap-7 overflow-hidden rounded-xl px-4 pb-3 pt-5 md:px-6 md:pb-4 md:pt-5 text-center md:text-left"
+      className="relative grid grid-cols-1 md:grid-cols-[340px_1fr] items-center gap-4 md:gap-8 overflow-hidden rounded-xl px-4 pb-3 pt-5 md:pl-12 md:pr-6 md:pb-4 md:pt-5 text-center md:text-left"
       style={{ background: CREME, border: `2px solid ${GOUD}`, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
     >
       {/* Vaste renners-achtergrond (rechts), alleen desktop */}
