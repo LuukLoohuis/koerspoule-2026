@@ -19,8 +19,8 @@ export default function SponsorStrip() {
         </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4 md:gap-6">
           <div className="text-center md:text-left shrink-0">
-            <p className="text-[10px] font-sans uppercase tracking-[0.22em] text-muted-foreground/80">Mede mogelijk gemaakt door</p>
-            <p className="vintage-heading text-lg font-bold leading-tight">Onze sponsors</p>
+            <p className="font-sans text-[12px] font-medium uppercase tracking-[0.16em] text-foreground/55 mb-1">Mede mogelijk gemaakt door</p>
+            <h2 className="font-sans text-2xl font-semibold leading-tight text-foreground">Onze sponsors</h2>
           </div>
           <ul className="flex flex-wrap items-stretch justify-center gap-3 list-none p-0 m-0">
             {sponsors.map((s) => (
