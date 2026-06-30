@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useThema } from "@/contexts/ThemaContext";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useVisibleSponsors } from "@/hooks/useSponsors";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -27,6 +28,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, role } = useAuth();
   const { thema } = useThema();
+  const { data: sponsors = [] } = useVisibleSponsors();
   const { data: currentGame } = useCurrentGame();
   const isLoggedIn = Boolean(user);
 
@@ -214,6 +216,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <span>·</span>
                 </>
               )}
+              {sponsors.map((s) => (
+                <span key={s.id} className="inline-flex items-center gap-3">
+                  {s.link_url ? (
+                    <a href={s.link_url} target="_blank" rel="noopener noreferrer nofollow sponsored" className="underline hover:text-foreground transition-colors">{s.naam}</a>
+                  ) : (
+                    <span>{s.naam}</span>
+                  )}
+                  <span>·</span>
+                </span>
+              ))}
               <span>© 2026 Koerspoule</span>
             </div>
           </div>
