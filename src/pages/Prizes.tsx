@@ -54,7 +54,7 @@ function sponsorNamen(p: Prize): string | null {
 }
 
 // Sfeerachtergrond achter het podium (zelf geplaatst in public/img/).
-const PODIUM_BG = "/img/prijzen-achtergrond.png";
+const PODIUM_BG = "/img/prijzen-achtergrond.jpg";
 // Nieuwe achtergrond is al goed gecomponeerd (tafereel laag, lege lucht boven) →
 // neutraal: cover, gecentreerd, geen zoom. Hier bijstellen indien nodig.
 const BG_ZOOM = 1;
