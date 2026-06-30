@@ -647,6 +647,9 @@ export default function TeamBuilder() {
               Categorie {idx + 1} / {categories.length}
             </div>
             <h2 className="font-display text-xl font-bold leading-tight">{category.name}</h2>
+            {category.short_name && category.short_name !== category.name && (
+              <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground/80 leading-tight">{category.short_name}</p>
+            )}
             <p className="text-xs text-muted-foreground">{max > 1 ? `Kies ${max} renners` : "Kies 1 renner"}</p>
           </div>
           <div className="text-right shrink-0">
