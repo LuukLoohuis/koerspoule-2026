@@ -207,31 +207,41 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verstuur
+    // Verstuur in BATCHES met een korte pauze. Alles tegelijk afvuren liep tegen
+    // de rate-limit van de mail-worker/provider aan (de meeste mails faalden met
+    // HTTP 429 — slechts ~30 kwamen door). Batchen respecteert de limiet.
+    const BATCH_SIZE = 20;       // max gelijktijdige mails per batch
+    const PAUSE_MS = 1100;       // pauze tussen batches (≈ <20/sec)
     let sent = 0;
     const errors: string[] = [];
 
-    await Promise.allSettled(
-      recipients.map(async (email) => {
-        try {
-          const token = await getOrCreateToken(admin, email);
-          const unsubUrl = `${BASE_URL}/uitschrijven?token=${token}`;
-          const res = await fetch(MAIL_WORKER, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Worker-Secret": Deno.env.get("MAIL_WORKER_SECRET") ?? "" },
-            body: JSON.stringify({
-              to: email,
-              subject: subject ?? "Bericht van Koerspoule",
-              html: buildHtml(body ?? "", unsubUrl, tColor, tSize),
-            }),
-          });
-          if (res.ok) sent++;
-          else errors.push(`${email}: HTTP ${res.status}`);
-        } catch (e) {
-          errors.push(`${email}: ${e instanceof Error ? e.message : String(e)}`);
-        }
-      })
-    );
+    const sendOne = async (email: string) => {
+      try {
+        const token = await getOrCreateToken(admin, email);
+        const unsubUrl = `${BASE_URL}/uitschrijven?token=${token}`;
+        const res = await fetch(MAIL_WORKER, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Worker-Secret": Deno.env.get("MAIL_WORKER_SECRET") ?? "" },
+          body: JSON.stringify({
+            to: email,
+            subject: subject ?? "Bericht van Koerspoule",
+            html: buildHtml(body ?? "", unsubUrl, tColor, tSize),
+          }),
+        });
+        if (res.ok) sent++;
+        else errors.push(`${email}: HTTP ${res.status}`);
+      } catch (e) {
+        errors.push(`${email}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    };
+
+    for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+      const slice = recipients.slice(i, i + BATCH_SIZE);
+      await Promise.allSettled(slice.map(sendOne));
+      if (i + BATCH_SIZE < recipients.length) {
+        await new Promise((r) => setTimeout(r, PAUSE_MS));
+      }
+    }
 
     return new Response(
       JSON.stringify({ sent, total: recipients.length, suppressed: suppressedCount, errors: errors.slice(0, 10) }),
