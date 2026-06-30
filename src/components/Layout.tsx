@@ -216,16 +216,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <span>·</span>
                 </>
               )}
-              {sponsors.map((s) => (
-                <span key={s.id} className="inline-flex items-center gap-3">
-                  {s.link_url ? (
-                    <a href={s.link_url} target="_blank" rel="noopener noreferrer nofollow sponsored" className="underline hover:text-foreground transition-colors">{s.naam}</a>
-                  ) : (
-                    <span>{s.naam}</span>
-                  )}
-                  <span>·</span>
-                </span>
-              ))}
+              {sponsors.map((s) => {
+                const inhoud = s.logo_url ? (
+                  <img src={s.logo_url} alt={s.naam} loading="lazy" className="h-5 w-auto max-w-[96px] object-contain align-middle" />
+                ) : (
+                  <span className="underline hover:text-foreground transition-colors">{s.naam}</span>
+                );
+                return (
+                  <span key={s.id} className="inline-flex items-center gap-3">
+                    {s.link_url ? (
+                      <a href={s.link_url} target="_blank" rel="noopener noreferrer nofollow sponsored" aria-label={`Bezoek de website van ${s.naam}`} className="inline-flex items-center hover:opacity-80 transition-opacity">{inhoud}</a>
+                    ) : (
+                      inhoud
+                    )}
+                    <span>·</span>
+                  </span>
+                );
+              })}
               <span>© 2026 Koerspoule</span>
             </div>
           </div>
