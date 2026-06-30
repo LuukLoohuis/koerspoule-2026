@@ -31,6 +31,7 @@ import RubriekBlock from "@/components/RubriekBlock";
 import { Bike, BookOpen, Trophy, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import DeelnemersTeller from "@/components/DeelnemersTeller";
 import CountdownBanner from "@/components/CountdownBanner";
 import WervingStrook from "@/components/WervingStrook";
 import KoerspouleLogo, { type RaceKey } from "@/components/KoerspouleLogo";
@@ -490,6 +491,9 @@ export default function Index() {
                   Gratis &amp; Uit Liefde voor de koers ✿
                 </span>
               </div>
+
+              {/* Sociaal bewijs — subtiele teller (alleen >= drempel, via veilige RPC) */}
+              <DeelnemersTeller className="mt-4" />
 
             </div>
 
