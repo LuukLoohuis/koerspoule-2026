@@ -31,6 +31,7 @@ import { useSwipeHint } from "@/hooks/useSwipeHint";
 import SwipeDots from "@/components/SwipeDots";
 import { SteunBanner } from "@/components/SteunKopgroep";
 import { useSupportBanner } from "@/hooks/useSupportBanner";
+import { useFallenRidersCount } from "@/hooks/useFallenRidersCount";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import Stamp from "@/components/retro/Stamp";
 import JerseyBadge from "@/components/retro/JerseyBadge";
@@ -127,6 +128,8 @@ export default function MijnPeloton() {
     }
   }, [visibleGames, selectedGame]);
   const selectedGameObj = allGames.find((g) => g.id === selectedGame) ?? null;
+  // Telbordje: aantal gekozen renners dat vóór de koers is vervallen (vervanger nodig).
+  const { data: fallenCount = 0 } = useFallenRidersCount(selectedGameObj?.id, selectedGameObj?.status);
   // Handmatige "Steun Koerspoule"-banner: alleen aan als de admin 'm ergens aanzette.
   const supportBanner = useSupportBanner(selectedGameObj?.id);
   const isDraft = isAdminOnlyStatus(selectedGameObj?.status);
@@ -1217,6 +1220,20 @@ export default function MijnPeloton() {
               { key: "hors",      label: "Hors Catégorie", Icon: Mountain },
             ]}
           />
+
+          {/* Telbordje: vervanger(s) nodig → klik gaat naar de Volgwagen */}
+          {fallenCount > 0 && gameTab !== "team" && (
+            <button
+              type="button"
+              onClick={() => setGameTab("team")}
+              aria-label={`${fallenCount} renner${fallenCount === 1 ? "" : "s"} vervangen nodig — ga naar de Volgwagen`}
+              className="mt-3 w-full inline-flex items-center gap-2 rounded-md retro-border bg-[hsl(var(--vintage-gold))/0.12] px-3 py-2 text-sm font-bold hover:bg-[hsl(var(--vintage-gold))/0.2] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
+            >
+              <Car className="w-4 h-4 text-[hsl(var(--vintage-gold))]" aria-hidden />
+              <span>{fallenCount} renner{fallenCount === 1 ? "" : "s"} vervangen nodig</span>
+              <span aria-hidden className="ml-auto">→</span>
+            </button>
+          )}
 
           {/* ── TAB: De Karavaan (landing — feed-overzicht) ──
               L'Équipe is óók in de sneak preview ('open') volledig zichtbaar voor

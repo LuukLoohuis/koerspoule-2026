@@ -26,7 +26,7 @@ import { useRiderEntryTotals } from "@/hooks/useRiderEntryTotals";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { isGameLocked } from "@/lib/gameStatus";
+import { isGameLocked, canRegister, isPreviewStatus } from "@/lib/gameStatus";
 import { Check, Pencil, X, Target, Crown, ClipboardList, Flag, Shirt, Trophy, type LucideIcon } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
@@ -164,7 +164,7 @@ function useRiders(ids: string[]) {
       if (!supabase || sorted.length === 0) return [];
       const { data, error } = await supabase
         .from("riders")
-        .select("id, name, team, country_code, start_number, is_dnf")
+        .select("id, name, team, country_code, start_number, is_dnf, is_vervallen")
         .in("id", sorted);
       if (error) throw error;
       return data ?? [];
@@ -430,6 +430,28 @@ export default function MyTeamPanel({
     () => Object.fromEntries(riders.map((r) => [r.id, r])),
     [riders]
   );
+
+  // ── Gekozen renner uitgevallen vóór de koers (is_vervallen) ──────────────────
+  // Wisselen mag zolang de inschrijving open is (open_inschrijving) of in 'open'
+  // sneak preview voor wie al een ploeg heeft (deze sectie rendert alleen mét
+  // ploeg). Bij gesloten/live/afgerond → geen "kies vervanger"-melding hier.
+  const mayReplace = canRegister(game?.status) || isPreviewStatus(game?.status);
+  const fallenRiders = useMemo(() => {
+    if (!mayReplace) return [] as Array<{ categoryId: string; categoryName: string; riderId: string; name: string }>;
+    const catName = new Map(categories.map((c) => [c.id, c.name]));
+    const out: Array<{ categoryId: string; categoryName: string; riderId: string; name: string }> = [];
+    const seen = new Set<string>();
+    for (const [catId, ids] of picksByCategory.entries()) {
+      for (const rid of ids) {
+        const r = ridersById[rid] as { is_vervallen?: boolean | null; name?: string } | undefined;
+        if (r?.is_vervallen && !seen.has(rid)) {
+          seen.add(rid);
+          out.push({ categoryId: catId, categoryName: catName.get(catId) ?? "", riderId: rid, name: r.name ?? "Renner" });
+        }
+      }
+    }
+    return out;
+  }, [mayReplace, picksByCategory, ridersById, categories]);
 
   // ── Terugspoelen: kies een etappe → het hele dashboard toont de stand t/m
   //    die rit (afsnijpunt N = stage_number van de geselecteerde rit). ──
@@ -755,6 +777,39 @@ export default function MyTeamPanel({
 
   return (
     <div className="space-y-3 pb-4">
+      {/* Rustige melding: gekozen renner(s) niet gestart — wisselen mag nog */}
+      {fallenRiders.length > 0 && (
+        <div className="ornate-frame retro-border bg-[hsl(var(--vintage-gold))/0.12] border-[hsl(var(--vintage-gold))/0.5] p-4">
+          <p className="overline-stamp mb-1 text-[hsl(var(--vintage-gold))]">Even je ploeg bijwerken</p>
+          {fallenRiders.length === 1 ? (
+            <p className="font-display font-bold text-base md:text-lg leading-snug">
+              <strong>{fallenRiders[0].name}</strong> is niet gestart.
+            </p>
+          ) : (
+            <p className="font-display font-bold text-base md:text-lg leading-snug">
+              {fallenRiders.map((f) => f.name).slice(0, -1).join(", ")} en {fallenRiders[fallenRiders.length - 1].name} zijn niet gestart.
+            </p>
+          )}
+          <p className="text-sm text-muted-foreground font-serif italic mt-0.5">
+            Je kunt nog een vervanger kiezen zolang de inschrijving open is. Pas je ploeg aan voordat de inschrijving sluit.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {fallenRiders.map((f) => (
+              <Link
+                key={f.riderId}
+                to={`/team-samenstellen?category=${f.categoryId}`}
+                aria-label={`Kies een vervanger voor ${f.name}`}
+                className="inline-flex items-center gap-1.5 rounded-md retro-border bg-card px-3 py-2 text-sm font-bold hover:bg-[hsl(var(--vintage-gold))/0.15] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
+              >
+                {fallenRiders.length > 1 && <span className="line-through opacity-70">{f.name}</span>}
+                <span>Kies een vervanger</span>
+                <span aria-hidden>→</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ═══ LA SALLE DE COURSE — retro cockpit-dashboard ═══
           Donker ham-radio-paneel met warm-witte instrumentenkaarten. Chrome
           (schroeven, grille, FM-schaal, knoppen, oscilloscoop) is CSS/SVG —
@@ -1414,7 +1469,9 @@ export default function MyTeamPanel({
               name: r.name,
               startNumber: r.start_number,
               category,
-              status: dnfZichtbaar && (r as { is_dnf?: boolean | null }).is_dnf ? "DNF" : "active",
+              status: mayReplace && (r as { is_vervallen?: boolean | null }).is_vervallen
+                ? "NIET_GESTART"
+                : dnfZichtbaar && (r as { is_dnf?: boolean | null }).is_dnf ? "DNF" : "active",
               team: r.team,
             });
           }
@@ -1427,7 +1484,9 @@ export default function MyTeamPanel({
             name: r.name,
             startNumber: r.start_number,
             category: "JOKER",
-            status: dnfZichtbaar && (r as { is_dnf?: boolean | null }).is_dnf ? "DNF" : "active",
+            status: mayReplace && (r as { is_vervallen?: boolean | null }).is_vervallen
+              ? "NIET_GESTART"
+              : dnfZichtbaar && (r as { is_dnf?: boolean | null }).is_dnf ? "DNF" : "active",
             team: r.team,
           });
         }

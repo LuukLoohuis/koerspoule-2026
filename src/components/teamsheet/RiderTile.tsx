@@ -40,6 +40,30 @@ function DnfBadge({ size = "default" }: { size?: "default" | "small" }) {
   );
 }
 
+/** Rustige "Niet gestart"-chip (vóór de koers vervallen): goud/sepia i.p.v. rood,
+ *  behulpzaam i.p.v. alarmerend. */
+function NietGestartBadge({ size = "default" }: { size?: "default" | "small" }) {
+  const isSmall = size === "small";
+  return (
+    <span
+      className="inline-flex items-center font-mono font-black uppercase rounded"
+      style={{
+        background: "hsl(var(--vintage-gold) / 0.16)",
+        color: "#7A5A0E",
+        border: "1px solid hsl(var(--vintage-gold) / 0.6)",
+        letterSpacing: "0.06em",
+        fontSize: isSmall ? "8.5px" : "9.5px",
+        padding: isSmall ? "1px 4px" : "1.5px 5px",
+        lineHeight: 1,
+        whiteSpace: "nowrap",
+      }}
+      aria-label="Niet gestart"
+    >
+      Niet gestart
+    </span>
+  );
+}
+
 /** Volle ink-sepia met opacity — naam blijft scherp leesbaar, strikethrough in
  *  rood + DNF-chip doen het werk als "uitgevallen"-marker. */
 const DNF_NAME_COLOR = "var(--ink-sepia)";
@@ -109,6 +133,9 @@ export default function RiderTile({
   const cyclistCategory = cyclistOverride ?? rider.category;
   const isHero = size === "hero";
   const dnf = rider.status === "DNF";
+  const nietGestart = rider.status === "NIET_GESTART";
+  const faded = dnf || nietGestart; // beide: gedimd + doorgestreept
+  const lineColor = dnf ? "#C0392B" : "hsl(var(--vintage-gold))";
   const tone = categoryTone(rider.category);
   const handleClick = onClick ? () => onClick(rider.id) : undefined;
   const Component: "button" | "div" = onClick ? "button" : "div";
@@ -140,10 +167,10 @@ export default function RiderTile({
               fontWeight: 700,
               fontSize: "13.5px",
               color: DNF_NAME_COLOR,
-              opacity: dnf ? DNF_NAME_OPACITY : 1,
-              textDecoration: dnf ? "line-through" : undefined,
-              textDecorationColor: dnf ? "#C0392B" : undefined,
-              textDecorationThickness: dnf ? "1.5px" : undefined,
+              opacity: faded ? DNF_NAME_OPACITY : 1,
+              textDecoration: faded ? "line-through" : undefined,
+              textDecorationColor: faded ? lineColor : undefined,
+              textDecorationThickness: faded ? "1.5px" : undefined,
               lineHeight: 1.15,
               display: "-webkit-box",
               WebkitLineClamp: 2,
@@ -162,9 +189,14 @@ export default function RiderTile({
               <DnfBadge />
             </div>
           )}
+          {nietGestart && (
+            <div className="mt-1 flex justify-center">
+              <NietGestartBadge />
+            </div>
+          )}
         </div>
 
-        <Cyclist category={cyclistCategory} faded={dnf} width={108} height={82} />
+        <Cyclist category={cyclistCategory} faded={faded} width={108} height={82} />
 
         {/* Chevron-affordance: signaleert dat de hero-renner uitklapbaar is */}
         {ariaExpanded !== undefined && (
@@ -202,7 +234,7 @@ export default function RiderTile({
       }}
       onMouseEnter={(e) => {
         if (selected) return;
-        e.currentTarget.style.background = dnf ? "rgba(58,42,26,0.04)" : tone.tint;
+        e.currentTarget.style.background = faded ? "rgba(58,42,26,0.04)" : tone.tint;
         e.currentTarget.style.transform = "translateX(2px)";
       }}
       onMouseLeave={(e) => {
@@ -212,7 +244,7 @@ export default function RiderTile({
       }}
       title={rider.name}
     >
-      <Cyclist category={cyclistCategory} faded={dnf} width={44} height={34} />
+      <Cyclist category={cyclistCategory} faded={faded} width={44} height={34} />
       <div className="flex-1 min-w-0">
         {/* Volledige naam — mag wrappen naar 2 regels zodat 'ie altijd
             zichtbaar is (geen afkapping). */}
@@ -223,10 +255,10 @@ export default function RiderTile({
             fontWeight: 600,
             fontSize: "13px",
             color: DNF_NAME_COLOR,
-            opacity: dnf ? DNF_NAME_OPACITY : 1,
-            textDecoration: dnf ? "line-through" : undefined,
-            textDecorationColor: dnf ? "#C0392B" : undefined,
-            textDecorationThickness: dnf ? "1.5px" : undefined,
+            opacity: faded ? DNF_NAME_OPACITY : 1,
+            textDecoration: faded ? "line-through" : undefined,
+            textDecorationColor: faded ? lineColor : undefined,
+            textDecorationThickness: faded ? "1.5px" : undefined,
             lineHeight: 1.2,
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -241,6 +273,7 @@ export default function RiderTile({
       {/* Rechts: totaal behaalde punten (startnummer verwijderd). DNF-renners
           tonen daarnaast nog de DNF-badge. */}
       {dnf && <DnfBadge size="small" />}
+      {nietGestart && <NietGestartBadge size="small" />}
       <PointsChip value={totalPoints} tint={tone.tint} ink={tone.ink} jersey={tone.jersey} />
       {/* Chevron-affordance: alleen tonen wanneer de tile een uitklap-dropdown
           aanstuurt (ariaExpanded gedefinieerd). Roteert bij openen, en is

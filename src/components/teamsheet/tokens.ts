@@ -24,7 +24,9 @@ export type RiderCategory =
   | "JOKER"
   | "OVERIG";
 
-export type RiderStatus = "active" | "DNF" | "SUP";
+// NIET_GESTART = vóór de koers vervallen renner (officiële lijst); rustig
+// gemarkeerd, niet alarmerend als DNF.
+export type RiderStatus = "active" | "DNF" | "SUP" | "NIET_GESTART";
 
 export type CategoryTone = {
   /** Effen truikleur in het silhouet. */
