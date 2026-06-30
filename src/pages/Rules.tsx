@@ -212,6 +212,18 @@ export default function Rules() {
             truien). Het klassement wordt automatisch bijgewerkt na elke verwerkte etappe. De stand na de laatste etappe
             is de definitieve eindstand.
           </p>
+
+          <h3 className="font-display text-lg font-bold mb-2 mt-3">Puntentelling ploegentijdrit (1e etappe)</h3>
+          <p className="text-sm text-muted-foreground mb-3 font-sans">
+            Tijdens de ploegentijdrit wordt de uitslag van de etappe bepaald door de uitslag van de individuele renners,
+            en dus op het klassement na dag 1. Het is dus niet zeker dat alle 8 renners van de winnende ploeg plek 1 tot
+            en met 8 in de uitslag vormen. Als renners eerder afhaken telt hun persoonlijke tijd.
+          </p>
+
+          <h3 className="font-display text-lg font-bold mb-2">Dagprijs</h3>
+          <p className="text-sm text-muted-foreground font-sans">
+            Bij meerdere dagprijswinnaars met een gelijk aantal punten loten we tussen de winnaars wie de dagprijs wint.
+          </p>
         </section>
 
         {/* Categories overview */}
