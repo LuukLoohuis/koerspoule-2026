@@ -7,7 +7,8 @@ export type ParsedStartlistTeam = {
   name: string;
   riders: Array<{
     name: string;
-    start_number: number;
+    // null = voorlopige lijst zonder rugnummers (regels als ".. NAAM").
+    start_number: number | null;
   }>;
 };
 
@@ -169,6 +170,9 @@ export function parseProCyclingStatsStartlist(rawText: string): ParsedStartlistT
   let pendingTeamIndex: number | null = null;
 
   const riderRe = /^(\d{1,3})\.\s+([A-ZÀ-ÖØ-Þ][^\d].*)$/;
+  // Voorlopige lijst: geen rugnummer, regels als ".. POGACAR Tadej" (één of meer
+  // punten als placeholder). Naam moet met een hoofdletter beginnen.
+  const noNumberRiderRe = /^\.+\s+([A-ZÀ-ÖØ-Þ][^\d].*)$/;
   const teamHeaderRe = /^(\d{1,2})\s+([A-Za-zÀ-ÿ].+)$/;
   const standaloneTeamIndexRe = /^(\d{1,2})$/;
 
@@ -214,6 +218,14 @@ export function parseProCyclingStatsStartlist(rawText: string): ParsedStartlistT
       const name = normalizeRiderName(riderMatch[2]);
       if (!name) continue;
       current.riders.push({ name, start_number: num });
+      continue;
+    }
+
+    // Voorlopige lijst zonder rugnummers (".. NAAM").
+    const noNumMatch = line.match(noNumberRiderRe);
+    if (noNumMatch && current) {
+      const name = normalizeRiderName(noNumMatch[1]);
+      if (name) current.riders.push({ name, start_number: null });
       continue;
     }
 
