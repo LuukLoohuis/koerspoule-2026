@@ -26,10 +26,12 @@ function buildHtml(
   _titleSize = 11
 ): string {
   // Compact: lege regel = alinea (nette marge), enkele regelovergang = <br>.
+  // Markdown-bold: **tekst** → vetgedrukt (spiegelt NotifyTab/buildEmailHtml).
+  const mdBold = (s: string) => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   const bodyHtml = body
     .trim()
     .split(/\n\s*\n+/)
-    .map((p) => `<p style="margin:0 0 11px 0;">${p.replace(/\r\n|\r|\n/g, "<br>")}</p>`)
+    .map((p) => `<p style="margin:0 0 11px 0;">${mdBold(p.replace(/\r\n|\r|\n/g, "<br>"))}</p>`)
     .join("");
   return `<!doctype html>
 <html lang="nl" xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Koerspoule Communiqué</title></head>

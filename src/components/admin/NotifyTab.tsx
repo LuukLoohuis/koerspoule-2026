@@ -36,10 +36,12 @@ export function buildEmailHtml(
 ): string {
   // Spiegelt send-announcement/buildHtml() 1-op-1 (preview = verzonden mail).
   // Compact: lege regel = alinea (nette marge), enkele regelovergang = <br>.
+  // Markdown-bold: **tekst** → vetgedrukt (handig bij plakken zonder HTML).
+  const mdBold = (s: string) => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   const bodyHtml = body
     .trim()
     .split(/\n\s*\n+/)
-    .map((p) => `<p style="margin:0 0 11px 0;">${p.replace(/\r\n|\r|\n/g, "<br>")}</p>`)
+    .map((p) => `<p style="margin:0 0 11px 0;">${mdBold(p.replace(/\r\n|\r|\n/g, "<br>"))}</p>`)
     .join("");
   return `<!doctype html>
 <html lang="nl"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Koerspoule Communiqué</title></head>
