@@ -210,26 +210,34 @@ Deno.serve(async (req) => {
     // Verstuur in BATCHES met een korte pauze. Alles tegelijk afvuren liep tegen
     // de rate-limit van de mail-worker/provider aan (de meeste mails faalden met
     // HTTP 429 — slechts ~30 kwamen door). Batchen respecteert de limiet.
-    const BATCH_SIZE = 20;       // max gelijktijdige mails per batch
-    const PAUSE_MS = 1100;       // pauze tussen batches (≈ <20/sec)
+    const BATCH_SIZE = 12;       // max gelijktijdige mails per batch
+    const PAUSE_MS = 1200;       // pauze tussen batches
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     let sent = 0;
+    let rateLimited = 0;         // hoeveel keer 429 geraakt (na alle retries opgegeven)
     const errors: string[] = [];
 
+    // Eén mail versturen mét retry-op-429 (rate-limit): backoff 1.5s/3s/6s.
     const sendOne = async (email: string) => {
       try {
         const token = await getOrCreateToken(admin, email);
         const unsubUrl = `${BASE_URL}/uitschrijven?token=${token}`;
-        const res = await fetch(MAIL_WORKER, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "X-Worker-Secret": Deno.env.get("MAIL_WORKER_SECRET") ?? "" },
-          body: JSON.stringify({
-            to: email,
-            subject: subject ?? "Bericht van Koerspoule",
-            html: buildHtml(body ?? "", unsubUrl, tColor, tSize),
-          }),
+        const payload = JSON.stringify({
+          to: email,
+          subject: subject ?? "Bericht van Koerspoule",
+          html: buildHtml(body ?? "", unsubUrl, tColor, tSize),
         });
-        if (res.ok) sent++;
-        else errors.push(`${email}: HTTP ${res.status}`);
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          const res = await fetch(MAIL_WORKER, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Worker-Secret": Deno.env.get("MAIL_WORKER_SECRET") ?? "" },
+            body: payload,
+          });
+          if (res.ok) { sent++; return; }
+          if (res.status === 429 && attempt < 3) { await sleep(1500 * (attempt + 1)); continue; }
+          if (res.status === 429) { rateLimited++; errors.push(`${email}: 429 (rate-limit na retries)`); return; }
+          errors.push(`${email}: HTTP ${res.status}`); return;
+        }
       } catch (e) {
         errors.push(`${email}: ${e instanceof Error ? e.message : String(e)}`);
       }
@@ -238,13 +246,18 @@ Deno.serve(async (req) => {
     for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
       const slice = recipients.slice(i, i + BATCH_SIZE);
       await Promise.allSettled(slice.map(sendOne));
-      if (i + BATCH_SIZE < recipients.length) {
-        await new Promise((r) => setTimeout(r, PAUSE_MS));
-      }
+      if (i + BATCH_SIZE < recipients.length) await sleep(PAUSE_MS);
     }
 
     return new Response(
-      JSON.stringify({ sent, total: recipients.length, suppressed: suppressedCount, errors: errors.slice(0, 10) }),
+      JSON.stringify({
+        sent,
+        total: recipients.length,
+        failed: recipients.length - sent,
+        rate_limited: rateLimited,
+        suppressed: suppressedCount,
+        errors: errors.slice(0, 10),
+      }),
       { headers: { ...CORS, "Content-Type": "application/json" } }
     );
   } catch (err: unknown) {

@@ -175,8 +175,16 @@ export default function NotifyTab() {
     setSending(false);
     setConfirmOpen(false);
     if (error) { toast.error(`Verzenden mislukt: ${error.message}`); return; }
-    const r = data as { sent: number; total: number };
-    toast.success(`${r?.sent ?? 0} van ${r?.total ?? 0} mails verstuurd`);
+    const r = data as { sent: number; total: number; failed?: number; rate_limited?: number };
+    const failed = r?.failed ?? Math.max(0, (r?.total ?? 0) - (r?.sent ?? 0));
+    if (failed > 0) {
+      toast.warning(
+        `${r?.sent ?? 0} van ${r?.total ?? 0} verstuurd — ${failed} mislukt` +
+          (r?.rate_limited ? ` (${r.rate_limited}× rate-limit)` : ""),
+      );
+    } else {
+      toast.success(`${r?.sent ?? 0} van ${r?.total ?? 0} mails verstuurd`);
+    }
   }
 
   const selectedGameName = gameId === "all"
