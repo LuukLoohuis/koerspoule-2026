@@ -33,16 +33,25 @@ export default function RiderSearchSelect({
   const menuRef = useRef<HTMLDivElement>(null);
   // Positie van het dropdown-menu (fixed, in een portal → nooit afgekapt door een
   // overflow-ouder zoals het jokerpaneel of de pronostiek-sectie eronder).
-  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  // Klapt omhoog als er onderaan te weinig ruimte is (bv. truikaarten onderin).
+  const [pos, setPos] = useState<{ left: number; width: number; maxHeight: number; top?: number; bottom?: number } | null>(null);
 
   const place = useCallback(() => {
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
     const width = Math.max(r.width, 288);
-    // Binnen het scherm houden (rechts niet over de rand).
     const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8));
-    setPos({ top: r.bottom + 4, left, width });
+    const spaceBelow = window.innerHeight - r.bottom - 8;
+    const spaceAbove = r.top - 8;
+    // Omhoog openen als er onder weinig past én boven meer ruimte is.
+    const openUp = spaceBelow < 240 && spaceAbove > spaceBelow;
+    const maxHeight = Math.min(288, Math.max(140, openUp ? spaceAbove : spaceBelow));
+    setPos(
+      openUp
+        ? { left, width, maxHeight, bottom: window.innerHeight - r.top + 4 }
+        : { left, width, maxHeight, top: r.bottom + 4 },
+    );
   }, []);
 
   useLayoutEffect(() => {
@@ -136,10 +145,10 @@ export default function RiderSearchSelect({
           <div
             ref={menuRef}
             className="fixed z-[60] rounded-md border bg-popover shadow-lg"
-            style={{ top: pos.top, left: pos.left, width: pos.width }}
+            style={{ top: pos.top, bottom: pos.bottom, left: pos.left, width: pos.width }}
           >
             {showList && (
-              <div className="max-h-72 overflow-y-auto">
+              <div className="overflow-y-auto" style={{ maxHeight: pos.maxHeight }}>
                 {results.map((r) => {
                   const used = excludeSet.has(r.id);
                   return (
