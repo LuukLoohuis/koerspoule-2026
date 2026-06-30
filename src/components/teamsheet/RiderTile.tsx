@@ -165,7 +165,7 @@ export default function RiderTile({
             style={{
               fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
               fontWeight: 700,
-              fontSize: "13.5px",
+              fontSize: "12px",
               color: DNF_NAME_COLOR,
               opacity: faded ? DNF_NAME_OPACITY : 1,
               textDecoration: faded ? "line-through" : undefined,
@@ -196,7 +196,7 @@ export default function RiderTile({
           )}
         </div>
 
-        <Cyclist category={cyclistCategory} faded={faded} width={108} height={82} />
+        <Cyclist category={cyclistCategory} faded={faded} width={76} height={58} />
 
         {/* Chevron-affordance: signaleert dat de hero-renner uitklapbaar is */}
         {ariaExpanded !== undefined && (

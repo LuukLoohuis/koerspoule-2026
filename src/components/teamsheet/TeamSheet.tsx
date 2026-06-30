@@ -177,10 +177,10 @@ export default function TeamSheet({
             }}
             aria-label="Top klassement"
           >
-            <div className="flex items-stretch gap-6 px-6 py-4 relative min-h-[180px]">
-              <div className="flex items-center gap-4 shrink-0">
+            <div className="flex items-stretch gap-4 px-5 py-3 relative min-h-[140px]">
+              <div className="flex items-center gap-3 shrink-0">
                 <Crown
-                  size={56}
+                  size={48}
                   strokeWidth={2.2}
                   style={{ color: "var(--ink-sepia)", filter: "drop-shadow(1px 1px 0 rgba(255,255,255,0.5))" }}
                 />
@@ -201,14 +201,11 @@ export default function TeamSheet({
                 </div>
               </div>
 
-              <div
-                className="flex-1 flex items-end gap-4 overflow-x-auto pb-1"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-              >
+              <div className="flex-1 flex flex-wrap items-end gap-x-2 gap-y-1 pb-1">
                 {heroRiders.map((r, i) => {
                   const isOpen = expandedRiderId === r.id;
                   return (
-                    <div key={r.id} className="shrink-0">
+                    <div key={r.id} className="shrink-0 w-[92px]">
                       <RiderTile
                         rider={r}
                         size="hero"
