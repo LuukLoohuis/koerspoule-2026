@@ -446,10 +446,7 @@ export default function Index() {
 
 
               <p className="font-serif italic text-foreground/80 md:text-xl max-w-[480px] mt-6 leading-relaxed text-lg my-[2px] text-center">
-                Het gratis wielerspel voor de Tour de France, Giro &amp; Vuelta 2026 —
-                stel je ploeg samen en speel met vrienden in je eigen poule.
-                <br />
-                Denk jij de koers beter te lezen dan de ploegleider? Dit is je moment.
+                Het gratis Tour de France 2026-spel. Stel je ploeg samen en speel in je eigen subpoule. ⭐
               </p>
 
               {/* Sociale teller — drijft FOMO. Pas tonen vanaf 5 ploegen,
