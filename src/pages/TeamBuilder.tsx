@@ -637,7 +637,7 @@ export default function TeamBuilder() {
     const complete = selected.length === max;
     const isLast = idx === categories.length - 1;
     const next = categories[idx + 1];
-    const nextLabel = isLast ? "Naar overzicht" : `Volgende: ${next.short_name ?? next.name}`;
+    const nextLabel = isLast ? "Naar overzicht" : `Volgende: ${next.name}`;
     return (
       <div className="space-y-3">
         {/* Slanke voortgangskop */}
@@ -646,7 +646,7 @@ export default function TeamBuilder() {
             <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
               Categorie {idx + 1} / {categories.length}
             </div>
-            <h2 className="font-display text-xl font-bold leading-tight">{category.short_name ?? category.name}</h2>
+            <h2 className="font-display text-xl font-bold leading-tight">{category.name}</h2>
             <p className="text-xs text-muted-foreground">{max > 1 ? `Kies ${max} renners` : "Kies 1 renner"}</p>
           </div>
           <div className="text-right shrink-0">
