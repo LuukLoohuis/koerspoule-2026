@@ -23,8 +23,12 @@ import RiderStageBreakdown from "./RiderStageBreakdown";
 import {
   type RiderCategory,
   type SheetRider,
-  uniqueCategoriesInOrder,
 } from "./tokens";
+
+// De gele hero-balk groepeert Alien + GC1-4 (door MyTeamPanel gemerkt met deze key).
+const HERO_KEY = "JACHT_OP_GEEL";
+
+type SheetGroup = { key: string; title: string; category: RiderCategory; order: number; riders: SheetRider[] };
 
 type Props = {
   riders: SheetRider[];
@@ -43,8 +47,6 @@ type Props = {
    *  "0" i.p.v. "–". */
   riderTotalsReady?: boolean;
 };
-
-const HERO_CATEGORIES: RiderCategory[] = ["ALIEN", "GC"];
 
 /** Resolve het te tonen totaal: undefined zolang niet geladen (toont "–"),
  *  anders het getal (0 als de renner niet in de map zit). */
@@ -69,27 +71,23 @@ export default function TeamSheet({
   riderTotals,
   riderTotalsReady,
 }: Props) {
-  const { activeByCat, otherActiveCats, total } = useMemo(() => {
-    // Alle renners per categorie. Binnen elk panel: actieve eerst, DNF onderaan
-    // (RiderTile rendert DNF met doorgestreepte naam + rood kruis door het
-    // silhouet — zo blijven de uitvallers benoemd zichtbaar).
-    const byCat = new Map<RiderCategory, SheetRider[]>();
+  const { groups, total } = useMemo(() => {
+    // Groepeer op de échte teambuilder-categorie (catKey), niet op de grove
+    // tone-categorie. Binnen elk blok: actieve eerst, DNF onderaan.
+    const map = new Map<string, SheetGroup>();
     for (const r of riders) {
-      const list = byCat.get(r.category) ?? [];
-      list.push(r);
-      byCat.set(r.category, list);
+      let g = map.get(r.catKey);
+      if (!g) {
+        g = { key: r.catKey, title: r.catTitle, category: r.category, order: r.catOrder, riders: [] };
+        map.set(r.catKey, g);
+      }
+      g.riders.push(r);
     }
-    for (const [k, list] of byCat) {
-      list.sort((a, b) => {
-        const da = a.status === "DNF" ? 1 : 0;
-        const db = b.status === "DNF" ? 1 : 0;
-        return da - db;
-      });
-      byCat.set(k, list);
+    for (const g of map.values()) {
+      g.riders.sort((a, b) => (a.status === "DNF" ? 1 : 0) - (b.status === "DNF" ? 1 : 0));
     }
-    const present = uniqueCategoriesInOrder(riders);
-    const others = present.filter((c) => !HERO_CATEGORIES.includes(c));
-    return { activeByCat: byCat, otherActiveCats: others, total: riders.length };
+    const ordered = [...map.values()].sort((a, b) => a.order - b.order);
+    return { groups: ordered, total: riders.length };
   }, [riders]);
 
   if (loading) return <TeamSheetSkeleton />;
@@ -106,7 +104,9 @@ export default function TeamSheet({
     );
   }
 
-  const heroRiders: SheetRider[] = HERO_CATEGORIES.flatMap((c) => activeByCat.get(c) ?? []);
+  const heroGroup = groups.find((g) => g.key === HERO_KEY) ?? null;
+  const otherGroups = groups.filter((g) => g.key !== HERO_KEY);
+  const heroRiders: SheetRider[] = heroGroup?.riders ?? [];
   const expandedHeroRider = heroRiders.find((r) => r.id === expandedRiderId) ?? null;
 
   return (
@@ -147,13 +147,13 @@ export default function TeamSheet({
          zodat ALIEN/GC visueel consistent zijn met de overige categorieën. */}
       {heroRiders.length > 0 && (
         <>
-          {/* Mobiel — render ALIEN/GC als gewone CategoryPanels */}
+          {/* Mobiel — Jacht op geel als gewoon CategoryPanel */}
           <div className="md:hidden space-y-3">
-            {HERO_CATEGORIES.filter((c) => (activeByCat.get(c)?.length ?? 0) > 0).map((c) => (
+            {heroGroup && (
               <CategoryPanel
-                key={c}
-                category={c}
-                riders={activeByCat.get(c) ?? []}
+                category={heroGroup.category}
+                title={heroGroup.title}
+                riders={heroGroup.riders}
                 selectedRiderId={selectedRiderId ?? null}
                 onRiderClick={onRiderClick}
                 expandedRiderId={expandedRiderId ?? null}
@@ -163,7 +163,7 @@ export default function TeamSheet({
                 riderTotals={riderTotals}
                 riderTotalsReady={riderTotalsReady}
               />
-            ))}
+            )}
           </div>
 
           {/* Desktop — gele hero-banner met kroon + leidersstrip */}
@@ -241,19 +241,20 @@ export default function TeamSheet({
 
 
 
-      {/* 3. CATEGORY grid — panels in 1 rij op desktop, max 5 kolommen */}
-      {otherActiveCats.length > 0 && (
+      {/* 3. CATEGORY grid — elk teambuilder-categorieblok met volledige naam */}
+      {otherGroups.length > 0 && (
         <div
           className="grid gap-3 md:gap-4 relative"
           style={{
             gridTemplateColumns: `repeat(auto-fit, minmax(220px, 1fr))`,
           }}
         >
-          {otherActiveCats.map((c) => (
+          {otherGroups.map((g) => (
             <CategoryPanel
-              key={c}
-              category={c}
-              riders={activeByCat.get(c) ?? []}
+              key={g.key}
+              category={g.category}
+              title={g.title}
+              riders={g.riders}
               selectedRiderId={selectedRiderId ?? null}
               onRiderClick={onRiderClick}
               expandedRiderId={expandedRiderId ?? null}

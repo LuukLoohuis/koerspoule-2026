@@ -10,6 +10,8 @@ import { categoryTone, type RiderCategory, type SheetRider } from "./tokens";
 
 type Props = {
   category: RiderCategory;
+  /** Volledige bloktitel (teambuilder-naam). Valt terug op het korte tone-label. */
+  title?: string;
   /** Alle renners van deze categorie. DNF wordt door RiderTile zelf doorgestreept
    *  en met rood kruis getoond — geen aparte samenvattingsrij. */
   riders: SheetRider[];
@@ -26,6 +28,7 @@ type Props = {
 
 export default function CategoryPanel({
   category,
+  title,
   riders,
   selectedRiderId,
   onRiderClick,
@@ -38,6 +41,8 @@ export default function CategoryPanel({
 }: Props) {
   if (riders.length === 0) return null;
   const tone = categoryTone(category);
+  const heading = title ?? tone.label;
+  const headingId = `cat-${heading.toLowerCase().replace(/\W+/g, "-")}`;
 
   // Sorteer: actieve renners eerst, DNF onderaan met vintage divider ertussen.
   const activeRiders = riders.filter((r) => r.status !== "DNF");
@@ -82,7 +87,7 @@ export default function CategoryPanel({
         borderLeftColor: tone.jersey,
         boxShadow: "0 2px 0 rgba(58,42,26,0.10), 0 4px 14px -8px rgba(58,42,26,0.25)",
       }}
-      aria-labelledby={`cat-${category}`}
+      aria-labelledby={headingId}
     >
       {/* Kop */}
       <header className="flex items-center gap-3 px-3.5 pt-3.5 pb-2.5 relative">
@@ -98,7 +103,7 @@ export default function CategoryPanel({
           <CategoryBadgeIcon category={category} size={32} />
         </div>
         <h3
-          id={`cat-${category}`}
+          id={headingId}
           className="shrink-0"
           style={{
             color: tone.ink,
@@ -109,7 +114,7 @@ export default function CategoryPanel({
             textTransform: "uppercase",
           }}
         >
-          {tone.label}
+          {heading}
         </h3>
         <div className="flex-1" />
         <span

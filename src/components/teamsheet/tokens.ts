@@ -124,12 +124,20 @@ export function sortByPelotonOrder<T extends { category: RiderCategory }>(items:
   return [...items].sort((a, b) => categoryRank(a.category) - categoryRank(b.category));
 }
 
-/** Genormaliseerde renner-shape voor TeamSheet. */
+/** Genormaliseerde renner-shape voor TeamSheet.
+ *  - category : grove RiderCategory → bepaalt KLEUR/icoon (tone).
+ *  - catKey   : groeperingssleutel (de échte teambuilder-categorie, of
+ *               "JACHT_OP_GEEL" / "SPRINT" voor de samengevoegde groepen).
+ *  - catTitle : volledige bloktitel zoals in de teambuilder.
+ *  - catOrder : weergavevolgorde van de blokken. */
 export type SheetRider = {
   id: string;
   name: string;
   startNumber: number | null;
   category: RiderCategory;
+  catKey: string;
+  catTitle: string;
+  catOrder: number;
   status: RiderStatus;
   team?: string | null;
 };

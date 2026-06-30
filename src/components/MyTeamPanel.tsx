@@ -1457,10 +1457,23 @@ export default function MyTeamPanel({
           in src/components/teamsheet/. Lijst eronder blijft voor snel scannen. */}
       {(() => {
         const sheet: SheetRiderT[] = [];
-        for (const cat of categories) {
+        // Groepering = EXACT de teambuilder-categorieën. Alleen Alien+GC1-4 →
+        // "Jacht op geel" (gele balk) en SPR1-3 → "Sprint" worden samengevoegd;
+        // alle overige categorieën krijgen een eigen blok met hun volledige naam.
+        const GEEL = new Set(["ALIEN", "GC1", "GC2", "GC3", "GC4"]);
+        const SPRINTS = new Set(["SPR1", "SPR2", "SPR3"]);
+        const groupFor = (cat: { id: string; name: string; short_name?: string | null }, idx: number) => {
+          const sn = (cat.short_name ?? "").toUpperCase().replace(/\s+/g, "");
+          if (GEEL.has(sn)) return { catKey: "JACHT_OP_GEEL", catTitle: "Jacht op geel", catOrder: 0, category: "GC" as const };
+          if (SPRINTS.has(sn)) return { catKey: "SPRINT", catTitle: "Sprint", catOrder: 1, category: "SPRINT" as const };
+          return { catKey: cat.id, catTitle: cat.name, catOrder: 2 + idx, category: detectCategoryT(`${cat.name} ${cat.short_name ?? ""}`) };
+        };
+        const riderStatus = (r: { is_vervallen?: boolean | null; is_dnf?: boolean | null }) =>
+          mayReplace && r.is_vervallen ? "NIET_GESTART" : dnfZichtbaar && r.is_dnf ? "DNF" : "active";
+
+        categories.forEach((cat, idx) => {
           const ids = picksByCategory.get(cat.id) ?? [];
-          const detectName = `${cat.name} ${cat.short_name ?? ""}`;
-          const category = detectCategoryT(detectName);
+          const grp = groupFor(cat, idx);
           for (const rid of ids) {
             const r = ridersById[rid];
             if (!r) continue;
@@ -1468,14 +1481,12 @@ export default function MyTeamPanel({
               id: r.id,
               name: r.name,
               startNumber: r.start_number,
-              category,
-              status: mayReplace && (r as { is_vervallen?: boolean | null }).is_vervallen
-                ? "NIET_GESTART"
-                : dnfZichtbaar && (r as { is_dnf?: boolean | null }).is_dnf ? "DNF" : "active",
+              ...grp,
+              status: riderStatus(r as { is_vervallen?: boolean | null; is_dnf?: boolean | null }),
               team: r.team,
             });
           }
-        }
+        });
         for (const jid of standaloneJokerIds) {
           const r = ridersById[jid];
           if (!r) continue;
@@ -1484,9 +1495,10 @@ export default function MyTeamPanel({
             name: r.name,
             startNumber: r.start_number,
             category: "JOKER",
-            status: mayReplace && (r as { is_vervallen?: boolean | null }).is_vervallen
-              ? "NIET_GESTART"
-              : dnfZichtbaar && (r as { is_dnf?: boolean | null }).is_dnf ? "DNF" : "active",
+            catKey: "JOKER",
+            catTitle: "Jokers",
+            catOrder: 9000,
+            status: riderStatus(r as { is_vervallen?: boolean | null; is_dnf?: boolean | null }),
             team: r.team,
           });
         }
