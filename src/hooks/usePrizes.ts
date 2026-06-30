@@ -12,6 +12,8 @@ export type Prize = {
   sponsor_naam: string | null;
   sponsor_logo_url: string | null;
   sponsor_url: string | null;
+  sponsor_naam_2: string | null;
+  sponsor_url_2: string | null;
   afbeelding_url: string | null;
   prijs_label: string | null;
   badge_top: string | null;

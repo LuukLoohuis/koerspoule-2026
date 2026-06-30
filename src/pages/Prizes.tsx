@@ -13,15 +13,15 @@ const GOLD = "hsl(var(--vintage-gold))";
  * de sponsor doorlinkt in een nieuw tabblad. Geen url → niets (geen layout-sprong:
  * de knop hoort onderaan bij de overige kaartinhoud). Identiek op mobiel + web.
  */
-function SponsorButton({ p, className }: { p?: Prize; className?: string }) {
-  if (!p?.sponsor_url) return null;
-  const label = p.sponsor_naam ? `Bekijk ${p.sponsor_naam}` : "Bezoek website";
+function SponsorButton({ url, naam, className }: { url?: string | null; naam?: string | null; className?: string }) {
+  if (!url) return null;
+  const label = naam ? `Bekijk ${naam}` : "Bezoek website";
   return (
     <a
-      href={p.sponsor_url}
+      href={url}
       target="_blank"
       rel="noopener noreferrer nofollow sponsored"
-      aria-label={`Bezoek de website van ${p.sponsor_naam || "de sponsor"}`}
+      aria-label={`Bezoek de website van ${naam || "de sponsor"}`}
       className={cn(
         "inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 rounded-md border text-xs font-black uppercase tracking-wider",
         "bg-[#111] hover:bg-[#1d1710] text-[#f5b51b] hover:text-[#ffc94a] border-[#f5b51b]/60",
@@ -35,6 +35,22 @@ function SponsorButton({ p, className }: { p?: Prize; className?: string }) {
       <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden />
     </a>
   );
+}
+
+/** Eén of twee sponsorknoppen (2e sponsor optioneel). */
+function SponsorButtons({ p, className, stack }: { p: Prize; className?: string; stack?: boolean }) {
+  if (!p.sponsor_url && !p.sponsor_url_2) return null;
+  return (
+    <div className={cn("flex gap-2", stack ? "flex-col" : "flex-col sm:flex-row sm:flex-wrap", className)}>
+      <SponsorButton url={p.sponsor_url} naam={p.sponsor_naam} />
+      <SponsorButton url={p.sponsor_url_2} naam={p.sponsor_naam_2} />
+    </div>
+  );
+}
+
+/** "Sponsor A & Sponsor B" — beide gevernamen samengevoegd. */
+function sponsorNamen(p: Prize): string | null {
+  return [p.sponsor_naam, p.sponsor_naam_2].map((s) => s?.trim()).filter(Boolean).join(" & ") || null;
 }
 
 // Sfeerachtergrond achter het podium (zelf geplaatst in public/img/).
@@ -72,9 +88,9 @@ function SponsorLine({ p }: { p: Prize }) {
       {p.sponsor_logo_url && (
         <img src={p.sponsor_logo_url} alt={p.sponsor_naam ?? "sponsor"} className="h-6 w-auto max-w-[88px] object-contain rounded-sm" loading="lazy" />
       )}
-      {p.sponsor_naam && (
+      {sponsorNamen(p) && (
         <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-          aangeboden door {p.sponsor_naam}
+          aangeboden door {sponsorNamen(p)}
         </span>
       )}
     </div>
@@ -149,16 +165,16 @@ function PrijsKaart({
             <p className="mt-3 max-w-[90%] text-[15px] font-semibold leading-[1.5] text-[#626477]">{p.omschrijving}</p>
           )}
 
-          {p.sponsor_naam && (
+          {sponsorNamen(p) && (
             <div className="mt-2 pt-4 border-t border-[rgba(145,115,55,0.25)]">
               <span className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#74758a]">Aangeboden door</span>
-              <strong className="block text-sm font-extrabold uppercase tracking-[0.05em] text-[#22222c]">{p.sponsor_naam}</strong>
+              <strong className="block text-sm font-extrabold uppercase tracking-[0.05em] text-[#22222c]">{sponsorNamen(p)}</strong>
             </div>
           )}
 
-          {p.sponsor_url && (
+          {(p.sponsor_url || p.sponsor_url_2) && (
             <div className="mt-auto pt-4">
-              <SponsorButton p={p} />
+              <SponsorButtons p={p} />
             </div>
           )}
         </div>
@@ -225,7 +241,7 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
               <h3 className={`font-display font-bold leading-tight ${isWinner ? "text-lg" : "text-sm"}`}>{p.titel || fallback}</h3>
               {p.omschrijving && <p className="text-sm text-muted-foreground font-serif mt-1 leading-snug">{p.omschrijving}</p>}
               <div className="flex justify-center"><SponsorLine p={p} /></div>
-              <SponsorButton p={p} className="w-full mt-3" />
+              <SponsorButtons p={p} stack className="mt-3" />
             </>
           ) : (
             <div className="py-4 flex flex-col items-center gap-1.5 text-muted-foreground">

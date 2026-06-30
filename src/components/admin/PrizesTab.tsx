@@ -18,6 +18,8 @@ type Row = {
   sponsor_naam: string | null;
   sponsor_logo_url: string | null;
   sponsor_url: string | null;
+  sponsor_naam_2: string | null;
+  sponsor_url_2: string | null;
   afbeelding_url: string | null;
   prijs_label: string | null;
   badge_top: string | null;
@@ -90,7 +92,7 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
     await load();
   }
 
-  async function saveSponsorUrl(id: string, value: string, current: string | null) {
+  async function saveSponsorUrl(id: string, value: string, current: string | null, field: "sponsor_url" | "sponsor_url_2" = "sponsor_url") {
     const v = value.trim();
     const next = v || null;
     if (next === current) return;
@@ -98,7 +100,7 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
       toast.error("Sponsor-link moet met http:// of https:// beginnen.");
       return;
     }
-    await saveField(id, { sponsor_url: next });
+    await saveField(id, { [field]: next } as Partial<Row>);
   }
 
   // Max één "dagprijs van vandaag" per game: bij aanzetten eerst de rest uit.
@@ -297,6 +299,23 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
                   placeholder="https://www.viking.nl/…"
                   inputMode="url"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 rounded-md border border-dashed p-2">
+                <div>
+                  <Label className="text-[11px]">2e sponsor / gever — optioneel</Label>
+                  <Input defaultValue={r.sponsor_naam_2 ?? ""} onBlur={(e) => (e.target.value || null) !== r.sponsor_naam_2 && saveField(r.id, { sponsor_naam_2: e.target.value || null })} className="h-8 text-sm" placeholder="bv. Wij Geven Licht" />
+                </div>
+                <div>
+                  <Label className="text-[11px]">2e sponsor-link (URL) — optioneel</Label>
+                  <Input
+                    defaultValue={r.sponsor_url_2 ?? ""}
+                    onBlur={(e) => saveSponsorUrl(r.id, e.target.value, r.sponsor_url_2, "sponsor_url_2")}
+                    className="h-8 text-sm"
+                    placeholder="https://wijgevenlicht.nl/…"
+                    inputMode="url"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
