@@ -15,6 +15,15 @@ import { Badge } from "@/components/ui/badge";
 import { Star, ArrowUp, ArrowDown, Minus, Crown, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// ── Gedeelde stijl voor "zelfde keuze"-rijen in álle head-to-head/benchmark-
+//    weergaven (TeamComparison is de enige vergelijkingscomponent; CompareSetup
+//    en SubpouleStandings gebruiken 'm beide). Zachte retro-gold rij + donkere
+//    leesbare tekst; het label blijft als licht doorschijnend pilletje. ──────────
+const SAME_ROW_CLASS = "bg-[hsl(var(--vintage-gold)/0.18)]";
+const SAME_TEXT = "text-[#4a3c0e]"; // donker goud-bruin, leesbaar op de gele rij
+const SAME_BADGE_CLASS =
+  "bg-white/70 text-[#4a3c0e] border-[hsl(var(--vintage-gold)/0.55)]";
+
 type Props = {
   opponentUserId: string;
   opponentName: string;
@@ -195,19 +204,19 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
             const localDiff = myPoints - oppPoints;
 
             return (
-              <div key={cat.id} className="px-3 py-2.5">
+              <div key={cat.id} className={cn("px-3 py-2.5", same && SAME_ROW_CLASS)}>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                  <span className={cn("text-[11px] uppercase tracking-wider font-medium", same ? SAME_TEXT : "text-muted-foreground")}>
                     {cat.short_name || cat.name}
                   </span>
                   {same && (
-                    <Badge variant="outline" className="text-[10px] gap-1 h-4 px-1.5">
+                    <Badge variant="outline" className={cn("text-[10px] gap-1 h-4 px-1.5", SAME_BADGE_CLASS)}>
                       <Star className="h-2.5 w-2.5" /> zelfde keuze
                     </Badge>
                   )}
                 </div>
                 <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-                  <div className={cn("text-right", same && "text-primary")}>
+                  <div className="text-right">
                     {myRiderIds.length === 0 ? (
                       <p className="text-sm font-medium text-muted-foreground">—</p>
                     ) : myRiderIds.map((id) => {
@@ -235,14 +244,14 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                         "text-[10px] font-mono font-bold",
                         localDiff > 0 && "text-primary",
                         localDiff < 0 && "text-destructive",
-                        localDiff === 0 && "text-muted-foreground"
+                        localDiff === 0 && (same ? SAME_TEXT : "text-muted-foreground")
                       )}
                     >
                       {localDiff > 0 ? "+" : ""}{localDiff}
                     </span>
                   </div>
 
-                  <div className={cn(same && "text-primary")}>
+                  <div>
                     {oppRiderIds.length === 0 ? (
                       <p className="text-sm font-medium text-muted-foreground">—</p>
                     ) : oppRiderIds.map((id) => {
