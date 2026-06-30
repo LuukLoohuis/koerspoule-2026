@@ -181,8 +181,8 @@ function PrijsKaart({
 
         {/* Foto rechts (desktop) / boven (mobiel) — ongewijzigd, object-cover */}
         {p.afbeelding_url && (
-          <div className={cn("aspect-[3/2] md:aspect-auto overflow-hidden bg-secondary/30 shrink-0", CARD_PHOTO_W)}>
-            <img src={p.afbeelding_url} alt={p.titel} className="w-full h-full object-cover" loading="lazy" />
+          <div className={cn("aspect-[16/10] md:aspect-auto overflow-hidden bg-[#0d0d0d] shrink-0", CARD_PHOTO_W)}>
+            <img src={p.afbeelding_url} alt={p.titel} className="w-full h-full object-contain" loading="lazy" />
           </div>
         )}
       </div>
