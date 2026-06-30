@@ -117,19 +117,6 @@ export default function CategoryPanel({
           {heading}
         </h3>
         <div className="flex-1" />
-        <span
-          className="font-mono tabular-nums shrink-0 px-2 py-0.5 rounded-full"
-          style={{
-            background: tone.tint,
-            color: tone.ink,
-            border: `1px solid ${tone.jersey}`,
-            fontSize: "10.5px",
-            fontWeight: 800,
-            letterSpacing: "0.08em",
-          }}
-        >
-          {riders.length}
-        </span>
         {/* Subtiel gradient-onderlijntje in jersey-kleur */}
         <div
           aria-hidden
