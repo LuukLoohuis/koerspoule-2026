@@ -740,46 +740,47 @@ export default function TeamBuilder() {
             const disabled = Boolean(isLocked) || (!isSel && reached && max > 1);
             const team = riderTeam.get(rid);
             return (
-              <div
+              <button
                 key={row.rider_id}
+                type="button"
+                disabled={disabled}
+                onClick={() => handlePickToggle(category.id, rid)}
+                aria-pressed={isSel}
+                aria-label={`${isSel ? "Deselecteer" : "Kies"} ${row.riders.name}`}
                 className={cn(
-                  "w-full flex items-center gap-3 rounded-lg border-2 p-3 transition-all",
+                  "w-full flex items-center gap-3 rounded-lg border-2 p-3 transition-all text-left",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
                   isSel
                     ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.12] shadow-[inset_3px_0_0_hsl(var(--vintage-gold))]"
                     : "border-border bg-card",
-                  disabled && "opacity-50"
+                  disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
                 )}
               >
-                <button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => handlePickToggle(category.id, rid)}
-                  className={cn("flex flex-1 items-center gap-3 min-w-0 text-left", disabled && "cursor-not-allowed")}
+                <span
+                  className={cn(
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-mono font-bold border-2",
+                    isSel
+                      ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))] text-foreground"
+                      : "border-border bg-secondary text-muted-foreground"
+                  )}
+                  aria-hidden
                 >
-                  <span
-                    className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-mono font-bold border-2",
-                      isSel
-                        ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))] text-foreground"
-                        : "border-border bg-secondary text-muted-foreground"
-                    )}
-                  >
-                    {row.riders.start_number ?? "—"}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-display font-bold leading-tight truncate">{row.riders.name}</span>
-                    {team && <span className="block text-xs text-muted-foreground truncate">{team}</span>}
-                  </span>
-                </button>
+                  {row.riders.start_number ?? "—"}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display font-bold leading-tight truncate">{row.riders.name}</span>
+                  {team && <span className="block text-xs text-muted-foreground truncate">{team}</span>}
+                </span>
                 <span
                   className={cn(
                     "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2",
                     isSel ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))] text-foreground" : "border-border"
                   )}
+                  aria-hidden
                 >
                   {isSel && <Check className="h-4 w-4" strokeWidth={3} />}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -1206,14 +1207,18 @@ export default function TeamBuilder() {
                           return (
                             <button
                               key={row.rider_id}
+                              type="button"
                               disabled={disabled}
                               onClick={() => handlePickToggle(category.id, row.riders!.id)}
+                              aria-pressed={isSelected}
+                              aria-label={`${isSelected ? "Deselecteer" : "Kies"} ${row.riders.name}`}
                               className={cn(
                                 "group w-full flex items-center justify-between p-2.5 rounded-md border-2 transition-all text-left relative overflow-hidden",
+                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                 isSelected
                                   ? "border-primary bg-primary/10 shadow-[inset_3px_0_0_hsl(var(--primary))]"
                                   : "border-border hover:border-primary/50 hover:bg-secondary hover:-translate-y-px",
-                                disabled && "opacity-50 cursor-not-allowed hover:translate-y-0"
+                                disabled ? "opacity-50 cursor-not-allowed hover:translate-y-0" : "cursor-pointer"
                               )}
                             >
                               <div className="flex items-center gap-3 min-w-0">
