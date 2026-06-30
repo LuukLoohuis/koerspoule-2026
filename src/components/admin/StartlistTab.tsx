@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Upload, FileText } from "lucide-react";
+import { Trash2, Upload, FileText, UserMinus, RotateCcw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { extractPdfText, parseProCyclingStatsStartlist, type ParsedStartlistTeam } from "@/lib/startlistImport";
@@ -20,8 +20,46 @@ export type Rider = {
   team_name?: string | null;
   is_youth_eligible?: boolean;
   is_dnf?: boolean;
+  is_vervallen?: boolean;
   firstcycling_id?: number | null;
 };
+
+// ── Normalisatie- en matchregels (officiële startlijst koppelen) ──────────────
+// Renners worden gematcht op een STABIELE sleutel: genormaliseerde NAAM + PLOEG,
+// niet op rugnummer (dat ontbreekt in de voorlopige lijst). Normalisatie:
+//   1. unicode NFD + diacrieten strippen (José → jose, Pogačar → pogacar)
+//   2. lowercase
+//   3. alle niet-alfanumerieke tekens → spatie (punten/streepjes/komma's weg)
+//   4. losse tokens alfabetisch sorteren → volgorde voornaam/achternaam maakt
+//      niet uit ("Tadej Pogacar" == "Pogacar Tadej")
+//   5. spaties samenvoegen + trimmen
+function normNaam(s: string): string {
+  return (s ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .sort()
+    .join(" ");
+}
+
+// Ploegnaam normaliseren (geen token-sortering; ploegnamen zijn vrije tekst).
+function normPloeg(s: string | null | undefined): string {
+  return (s ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+// Stabiele matchsleutel: naam + ploeg.
+function matchKey(naam: string, ploeg: string | null | undefined): string {
+  return `${normNaam(naam)}|${normPloeg(ploeg)}`;
+}
 
 export type Team = {
   id: string;
@@ -55,6 +93,9 @@ export default function StartlistTab({
   const [importPreview, setImportPreview] = useState<ParsedStartlistTeam[]>([]);
   const [importing, setImporting] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
+  // Officiële-lijst-modus: markeer renners die NIET in de import staan als uitvaller.
+  const [markUitvallers, setMarkUitvallers] = useState(false);
+  const [uitvallerReport, setUitvallerReport] = useState<Array<{ name: string; team: string; picks: number }>>([]);
 
   async function createTeam() {
     if (!supabase || !newTeamName.trim()) return;
@@ -73,6 +114,10 @@ export default function StartlistTab({
 
   async function createRider() {
     if (!supabase || !riderName.trim()) return;
+    // Lichte validatie: dubbele naam+ploeg binnen deze game signaleren.
+    const teamNaam = teams.find((t) => t.id === riderTeamId)?.name ?? null;
+    const dubbel = riders.find((r) => matchKey(r.name, r.team_name) === matchKey(riderName, teamNaam));
+    if (dubbel && !confirm(`"${riderName.trim()}" bestaat al in deze ploeg. Toch toevoegen?`)) return;
     const { error } = await supabase.from("riders").insert({
       game_id: activeGameId,
       name: riderName.trim(),
@@ -90,15 +135,37 @@ export default function StartlistTab({
     await reload();
   }
 
-  async function deleteRider(id: string) {
+  // Veilig verwijderen: eerst tellen of deelnemers deze renner gekozen hebben.
+  // Zo ja → expliciet waarschuwen (hun keuze gaat verloren door ON DELETE CASCADE)
+  // en pas na bevestiging verwijderen. Renners zonder keuzes mogen direct weg.
+  async function deleteRider(id: string, name: string) {
     if (!supabase) return;
-    if (!confirm("Renner uit startlijst verwijderen?")) return;
+    const { count, error: cErr } = await supabase
+      .from("entry_picks")
+      .select("id", { count: "exact", head: true })
+      .eq("rider_id", id);
+    if (cErr) { toast.error(`Controle mislukt: ${cErr.message}`); return; }
+    const picks = count ?? 0;
+    const vraag = picks > 0
+      ? `LET OP: ${picks} deelnemer(s) hebben "${name}" gekozen — hun ploeg raakt deze renner kwijt.\n\nKlik OK om TOCH definitief te verwijderen, of Annuleer en gebruik liever "Markeer als vervallen" (behoudt de keuze).`
+      : `Renner "${name}" uit startlijst verwijderen?`;
+    if (!confirm(vraag)) return;
     const { error } = await supabase.from("riders").delete().eq("id", id);
     if (error) {
       toast.error(`Verwijderen mislukt: ${error.message}`);
       return;
     }
     toast.success("Verwijderd");
+    await reload();
+  }
+
+  // Veiliger alternatief voor verwijderen: markeer als vervallen (behoudt rider-ID
+  // en dus alle teamkeuzes). Toggle aan/uit.
+  async function setVervallen(id: string, next: boolean) {
+    if (!supabase) return;
+    const { error } = await supabase.from("riders").update({ is_vervallen: next }).eq("id", id);
+    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
+    toast.success(next ? "Gemarkeerd als vervallen" : "Weer actief");
     await reload();
   }
 
@@ -157,26 +224,35 @@ export default function StartlistTab({
         for (const it of inserted ?? []) teamIdByName.set(it.name, it.id);
       }
 
-      // 2) Renners op NAAM verzoenen i.p.v. op startnummer. De PCS-startlijst
-      //    bevat vaak geen startnummers; met onConflict op (game_id,start_number)
-      //    botsen NULL-nummers niet, waardoor her-import dubbele renners maakte.
-      //    Nu: bestaat de renner (genormaliseerde naam) al in deze game → updaten
-      //    (team koppelen, nummer bijwerken). Anders → invoegen.
-      const existingRiderByName = new Map<string, string>(riders.map((r) => [norm(r.name), r.id]));
+      // 2) Renners matchen op STABIELE sleutel (genormaliseerde NAAM + PLOEG), niet
+      //    op rugnummer (dat ontbreekt in de voorlopige lijst). Bestaat de renner al
+      //    → UPDATE (rugnummer koppelen, team, is_vervallen weer uit), rider-ID blijft
+      //    behouden (teamkeuzes verwijzen daar naar — NOOIT delete-and-recreate).
+      //    Niet gevonden op naam+ploeg → secundair op naam-only (voorkomt duplicaat
+      //    bij lichte ploegnaam-afwijking). Echt nieuw → INSERT.
+      const existingByKey = new Map<string, Rider>();
+      const existingByNameOnly = new Map<string, Rider>();
+      for (const r of riders) {
+        existingByKey.set(matchKey(r.name, r.team_name), r);
+        if (!existingByNameOnly.has(normNaam(r.name))) existingByNameOnly.set(normNaam(r.name), r);
+      }
+
       const seen = new Set<string>();
-      const riderInserts: Array<{ game_id: string; team_id: string | null; name: string; start_number: number | null }> = [];
+      const matchedIds = new Set<string>();
+      const riderInserts: Array<{ game_id: string; team_id: string | null; name: string; start_number: number | null; is_vervallen: boolean }> = [];
       const riderUpdates: Array<{ id: string; team_id: string | null; start_number: number | null }> = [];
       for (const t of importPreview) {
         const teamId = teamIdByName.get(t.name) ?? null;
         for (const r of t.riders) {
-          const key = norm(r.name);
+          const key = matchKey(r.name, t.name);
           if (seen.has(key)) continue; // dubbel in de PDF zelf overslaan
           seen.add(key);
-          const existingId = existingRiderByName.get(key);
-          if (existingId) {
-            riderUpdates.push({ id: existingId, team_id: teamId, start_number: r.start_number });
+          const existing = existingByKey.get(key) ?? existingByNameOnly.get(normNaam(r.name));
+          if (existing) {
+            matchedIds.add(existing.id);
+            riderUpdates.push({ id: existing.id, team_id: teamId, start_number: r.start_number });
           } else {
-            riderInserts.push({ game_id: activeGameId, team_id: teamId, name: r.name, start_number: r.start_number });
+            riderInserts.push({ game_id: activeGameId, team_id: teamId, name: r.name, start_number: r.start_number, is_vervallen: false });
           }
         }
       }
@@ -189,10 +265,11 @@ export default function StartlistTab({
       // Updates per renner. start_number alleen overschrijven als de PDF er één
       // geeft (anders bestaand nummer behouden) — voorkomt botsing op de unieke
       // (game_id,start_number)-index en wissen van handmatig gezette nummers.
+      // is_vervallen weer uit: een gematchte renner staat (weer) op de lijst.
       let updateFails = 0;
       const updateResults = await Promise.allSettled(
         riderUpdates.map((u) => {
-          const patch: { team_id: string | null; start_number?: number | null } = { team_id: u.team_id };
+          const patch: { team_id: string | null; is_vervallen: boolean; start_number?: number | null } = { team_id: u.team_id, is_vervallen: false };
           if (u.start_number != null) patch.start_number = u.start_number;
           return supabase!
             .from("riders")
@@ -205,10 +282,29 @@ export default function StartlistTab({
       );
       updateFails = updateResults.filter((r) => r.status === "rejected").length;
 
+      // 3) Uitvallers: renners die wél in de game stonden maar NIET in deze import.
+      //    Alleen verwerken als admin aangeeft dat dit de VOLLEDIGE officiële lijst is
+      //    (anders zou een deel-PDF iedereen onterecht als uitvaller markeren).
+      //    NOOIT verwijderen — markeren als is_vervallen + melden, mét aantal keuzes.
+      const uitvallers = riders.filter((r) => !matchedIds.has(r.id) && !r.is_vervallen);
+      let report: Array<{ name: string; team: string; picks: number }> = [];
+      if (markUitvallers && uitvallers.length > 0) {
+        const ids = uitvallers.map((r) => r.id);
+        const { data: picks } = await supabase.from("entry_picks").select("rider_id").in("rider_id", ids);
+        const pickCount = new Map<string, number>();
+        for (const p of (picks ?? []) as Array<{ rider_id: string }>) pickCount.set(p.rider_id, (pickCount.get(p.rider_id) ?? 0) + 1);
+        await supabase.from("riders").update({ is_vervallen: true }).in("id", ids);
+        report = uitvallers
+          .map((r) => ({ name: r.name, team: r.team_name ?? "—", picks: pickCount.get(r.id) ?? 0 }))
+          .sort((a, b) => b.picks - a.picks || a.name.localeCompare(b.name));
+      }
+      setUitvallerReport(report);
+
       const totalRiders = riderInserts.length + riderUpdates.length;
+      const gekozenUitvallers = report.filter((u) => u.picks > 0).length;
       toast.success(
-        `${totalRiders} renners verwerkt (${riderInserts.length} nieuw, ${riderUpdates.length} bijgewerkt` +
-          `${updateFails ? `, ${updateFails} mislukt` : ""}) in ${importPreview.length} teams`,
+        `${totalRiders} renners verwerkt (${riderInserts.length} nieuw, ${riderUpdates.length} bijgewerkt${updateFails ? `, ${updateFails} mislukt` : ""})` +
+          (markUitvallers ? ` · ${report.length} uitvaller(s)${gekozenUitvallers ? `, waarvan ${gekozenUitvallers} al gekozen` : ""}` : ""),
       );
       await reload();
       setImportPreview([]);
@@ -244,10 +340,28 @@ export default function StartlistTab({
               {importing ? "Importeren..." : `Importeer (${importPreview.reduce((s, t) => s + t.riders.length, 0)} renners)`}
             </Button>
           </div>
+          <label className="flex items-start gap-2 text-sm rounded-md border border-dashed p-2 cursor-pointer">
+            <Checkbox checked={markUitvallers} onCheckedChange={(v) => setMarkUitvallers(Boolean(v))} className="mt-0.5" />
+            <span>
+              <span className="font-medium">Dit is de volledige officiële lijst</span>
+              <span className="block text-xs text-muted-foreground">Renners die nu in de startlijst staan maar niet in deze import → gemarkeerd als <b>uitvaller</b> (niet verwijderd, keuzes blijven). Laat uit bij een deel-import.</span>
+            </span>
+          </label>
           {importPreview.length > 0 && (
             <div className="text-xs text-muted-foreground border rounded-md p-2 max-h-40 overflow-auto">
               {importPreview.map((t) => (
                 <div key={t.name}><b>{t.name}</b> — {t.riders.length} renners</div>
+              ))}
+            </div>
+          )}
+          {uitvallerReport.length > 0 && (
+            <div className="text-xs border border-amber-500/40 bg-amber-50/60 rounded-md p-2 max-h-48 overflow-auto">
+              <p className="font-bold text-amber-700 mb-1">{uitvallerReport.length} uitvaller(s) gemarkeerd:</p>
+              {uitvallerReport.map((u, i) => (
+                <div key={i} className={u.picks > 0 ? "font-semibold text-destructive" : "text-muted-foreground"}>
+                  {u.name} <span className="opacity-70">· {u.team}</span>
+                  {u.picks > 0 && <span> — ⚠ {u.picks} deelnemer(s) hebben deze renner gekozen</span>}
+                </div>
               ))}
             </div>
           )}
@@ -338,7 +452,8 @@ export default function StartlistTab({
                     teams={teams}
                     activeGameId={activeGameId}
                     onSaved={reload}
-                    onDelete={() => deleteRider(r.id)}
+                    onDelete={() => deleteRider(r.id, r.name)}
+                    onToggleVervallen={(next) => setVervallen(r.id, next)}
                     dnfZichtbaar={dnfZichtbaar}
                     dnfBewerkbaar={dnfBewerkbaar}
                   />
@@ -497,6 +612,7 @@ function RiderRow({
   activeGameId,
   onSaved,
   onDelete,
+  onToggleVervallen,
   dnfZichtbaar,
   dnfBewerkbaar,
 }: {
@@ -505,6 +621,7 @@ function RiderRow({
   activeGameId: string;
   onSaved: () => Promise<void> | void;
   onDelete: () => void;
+  onToggleVervallen: (next: boolean) => void;
   dnfZichtbaar: boolean;
   dnfBewerkbaar: boolean;
 }) {
@@ -514,7 +631,7 @@ function RiderRow({
   const [draftFcId, setDraftFcId] = useState(String(rider.firstcycling_id ?? ""));
   const [savingTeam, setSavingTeam] = useState(false);
 
-  async function saveField(patch: Partial<{ name: string; start_number: number | null; team_id: string | null; is_youth_eligible: boolean; is_dnf: boolean }>) {
+  async function saveField(patch: Partial<{ name: string; start_number: number | null; team_id: string | null; is_youth_eligible: boolean; is_dnf: boolean; firstcycling_id: number | null }>) {
     if (!supabase) return;
     const { error } = await supabase.from("riders").update(patch).eq("id", rider.id);
     if (error) {
@@ -566,7 +683,7 @@ function RiderRow({
   }
 
   return (
-    <TableRow>
+    <TableRow className={rider.is_vervallen ? "opacity-55 bg-destructive/5" : undefined}>
       <TableCell className="font-mono text-xs">
         {editingField === "number" ? (
           <Input
@@ -619,6 +736,9 @@ function RiderRow({
             onClick={() => setEditingField("name")}
           >
             {rider.name}
+            {rider.is_vervallen && (
+              <span className="ml-2 inline-block rounded-sm bg-destructive/15 text-destructive text-[10px] font-bold uppercase px-1.5 py-0.5 align-middle">Vervallen</span>
+            )}
           </button>
         )}
       </TableCell>
@@ -653,7 +773,7 @@ function RiderRow({
             onBlur={async () => {
               const val = draftFcId.trim() ? Number(draftFcId) : null;
               if (val !== (rider.firstcycling_id ?? null)) {
-                const ok = await saveField({ firstcycling_id: val } as any);
+                const ok = await saveField({ firstcycling_id: val });
                 if (!ok) setDraftFcId(String(rider.firstcycling_id ?? ""));
               }
               setEditingField(null);
@@ -699,9 +819,19 @@ function RiderRow({
         </TableCell>
       )}
       <TableCell>
-        <Button variant="ghost" size="sm" onClick={onDelete}>
-          <Trash2 className="w-4 h-4 text-destructive" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onToggleVervallen(!rider.is_vervallen)}
+            title={rider.is_vervallen ? "Weer actief maken" : "Markeer als vervallen (behoudt keuzes)"}
+          >
+            {rider.is_vervallen ? <RotateCcw className="w-4 h-4 text-muted-foreground" /> : <UserMinus className="w-4 h-4 text-amber-600" />}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onDelete} title="Definitief verwijderen">
+            <Trash2 className="w-4 h-4 text-destructive" />
+          </Button>
+        </div>
       </TableCell>
     </TableRow>
   );
