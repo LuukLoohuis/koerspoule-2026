@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useLayoutEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Plus, X } from "lucide-react";
 
@@ -29,10 +30,38 @@ export default function RiderSearchSelect({
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  // Positie van het dropdown-menu (fixed, in een portal → nooit afgekapt door een
+  // overflow-ouder zoals het jokerpaneel of de pronostiek-sectie eronder).
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  const place = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const width = Math.max(r.width, 288);
+    // Binnen het scherm houden (rechts niet over de rand).
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8));
+    setPos({ top: r.bottom + 4, left, width });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    place();
+    const onScrollResize = () => place();
+    window.addEventListener("scroll", onScrollResize, true);
+    window.addEventListener("resize", onScrollResize);
+    return () => {
+      window.removeEventListener("scroll", onScrollResize, true);
+      window.removeEventListener("resize", onScrollResize);
+    };
+  }, [open, place]);
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (ref.current?.contains(t) || menuRef.current?.contains(t)) return;
+      setOpen(false);
     }
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -87,8 +116,11 @@ export default function RiderSearchSelect({
     );
   }
 
+  const showList = open && results.length > 0;
+  const showEmpty = open && Boolean(search.trim()) && results.length === 0;
+
   return (
-    <div ref={ref} className={open ? "relative z-40" : "relative"}>
+    <div ref={ref} className="relative">
       <Input
         placeholder={placeholder}
         value={search}
@@ -99,49 +131,57 @@ export default function RiderSearchSelect({
         onFocus={() => setOpen(true)}
         disabled={disabled}
       />
-      {open && results.length > 0 && (
-        <div className="absolute z-50 mt-1 left-0 w-[max(100%,18rem)] sm:w-[max(100%,22rem)] rounded-md border bg-popover shadow-md max-h-72 overflow-y-auto">
-          {results.map((r) => {
-            const used = excludeSet.has(r.id);
-            return (
-              <button
-                key={r.id}
-                type="button"
-                disabled={used}
-                onClick={() => {
-                  if (used) return;
-                  onChange(r.id);
-                  setSearch("");
-                  setOpen(false);
-                }}
-                className={
-                  used
-                    ? "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs opacity-40 cursor-not-allowed"
-                    : "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-accent"
-                }
-                title={used ? "Staat al ergens in deze uitslag" : undefined}
-              >
-                <Plus className="h-3 w-3 text-foreground shrink-0" />
-                <span className="text-[11px] text-foreground tabular-nums w-7 text-right shrink-0">
-                  #{r.start_number ?? "—"}
-                </span>
-                <span className="font-medium text-foreground truncate flex-1 min-w-0">{r.name}</span>
-                {used && (
-                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground shrink-0">al gekozen</span>
-                )}
-                {!used && r.teamName && (
-                  <span className="text-[10px] text-foreground truncate max-w-[45%] shrink-0">{r.teamName}</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-      {open && search.trim() && results.length === 0 && (
-        <div className="absolute z-50 mt-1 left-0 w-[max(100%,18rem)] rounded-md border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
-          Geen renners gevonden.
-        </div>
-      )}
+      {(showList || showEmpty) && pos &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className="fixed z-[60] rounded-md border bg-popover shadow-lg"
+            style={{ top: pos.top, left: pos.left, width: pos.width }}
+          >
+            {showList && (
+              <div className="max-h-72 overflow-y-auto">
+                {results.map((r) => {
+                  const used = excludeSet.has(r.id);
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      disabled={used}
+                      onClick={() => {
+                        if (used) return;
+                        onChange(r.id);
+                        setSearch("");
+                        setOpen(false);
+                      }}
+                      className={
+                        used
+                          ? "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs opacity-40 cursor-not-allowed"
+                          : "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-accent"
+                      }
+                      title={used ? "Staat al ergens in deze uitslag" : undefined}
+                    >
+                      <Plus className="h-3 w-3 text-foreground shrink-0" />
+                      <span className="text-[11px] text-foreground tabular-nums w-7 text-right shrink-0">
+                        #{r.start_number ?? "—"}
+                      </span>
+                      <span className="font-medium text-foreground truncate flex-1 min-w-0">{r.name}</span>
+                      {used && (
+                        <span className="text-[9px] uppercase tracking-wider text-muted-foreground shrink-0">al gekozen</span>
+                      )}
+                      {!used && r.teamName && (
+                        <span className="text-[10px] text-foreground truncate max-w-[45%] shrink-0">{r.teamName}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {showEmpty && (
+              <div className="px-3 py-2 text-sm text-muted-foreground">Geen renners gevonden.</div>
+            )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
