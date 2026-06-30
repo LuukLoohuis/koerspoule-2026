@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useThema } from "@/contexts/ThemaContext";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useVisibleSponsors } from "@/hooks/useSponsors";
+import SponsorStrip from "@/components/SponsorStrip";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -28,7 +28,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, role } = useAuth();
   const { thema } = useThema();
-  const { data: sponsors = [] } = useVisibleSponsors();
   const { data: currentGame } = useCurrentGame();
   const isLoggedIn = Boolean(user);
 
@@ -186,6 +185,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </main>
       <BottomNav />
 
+      {/* Sponsorstrook — subtiel, boven de footerbalk (alleen bij zichtbare sponsoren) */}
+      <SponsorStrip />
+
       {/* Footer */}
       <footer className="gradient-border-top bg-card py-5 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-5">
         <div className="container mx-auto px-5">
@@ -216,23 +218,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <span>·</span>
                 </>
               )}
-              {sponsors.map((s) => {
-                const inhoud = s.logo_url ? (
-                  <img src={s.logo_url} alt={s.naam} loading="lazy" className="h-5 w-auto max-w-[96px] object-contain align-middle" />
-                ) : (
-                  <span className="underline hover:text-foreground transition-colors">{s.naam}</span>
-                );
-                return (
-                  <span key={s.id} className="inline-flex items-center gap-3">
-                    {s.link_url ? (
-                      <a href={s.link_url} target="_blank" rel="noopener noreferrer nofollow sponsored" aria-label={`Bezoek de website van ${s.naam}`} className="inline-flex items-center hover:opacity-80 transition-opacity">{inhoud}</a>
-                    ) : (
-                      inhoud
-                    )}
-                    <span>·</span>
-                  </span>
-                );
-              })}
               <span>© 2026 Koerspoule</span>
             </div>
           </div>

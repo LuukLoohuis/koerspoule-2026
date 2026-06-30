@@ -5,6 +5,8 @@ export type Sponsor = {
   id: string;
   naam: string;
   logo_url: string | null;
+  label: string | null;
+  weergavenaam: string | null;
   link_url: string | null;
   zichtbaar: boolean;
   sort_order: number;
@@ -24,7 +26,7 @@ export function useVisibleSponsors() {
       if (!supabase) return [];
       const { data, error } = await supabase
         .from("sponsors")
-        .select("id, naam, logo_url, link_url, zichtbaar, sort_order, created_at")
+        .select("id, naam, logo_url, label, weergavenaam, link_url, zichtbaar, sort_order, created_at")
         .eq("zichtbaar", true)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true });

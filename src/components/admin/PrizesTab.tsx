@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Upload, Trash2, Plus, Eye, EyeOff, CalendarDays } from "lucide-react";
+import { Trophy, Upload, Trash2, Plus, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import type { PrijsSoort } from "@/hooks/usePrizes";
 
@@ -101,19 +101,6 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
       return;
     }
     await saveField(id, { [field]: next } as Partial<Row>);
-  }
-
-  // Max één "dagprijs van vandaag" per game: bij aanzetten eerst de rest uit.
-  async function toggleDagprijsVandaag(id: string, next: boolean) {
-    if (!supabase) return;
-    if (next) {
-      const { error: clearErr } = await supabase.from("prizes").update({ is_dagprijs_vandaag: false } as never).eq("game_id", activeGameId);
-      if (clearErr) { toast.error(`Opslaan mislukt: ${clearErr.message}`); return; }
-    }
-    const { error } = await supabase.from("prizes").update({ is_dagprijs_vandaag: next } as never).eq("id", id);
-    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, is_dagprijs_vandaag: next } : next ? { ...r, is_dagprijs_vandaag: false } : r)));
-    toast.success(next ? "Dagprijs van vandaag in L'Équipe" : "Dagprijs-banner uit");
   }
 
   async function saveField(id: string, patch: Partial<Row>) {
@@ -334,43 +321,12 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
               </div>
 
               {(r.soort === "dagprijs" || r.soort === "sponsor") && (
-                <div className="rounded-md border border-[hsl(var(--vintage-gold)/0.5)] bg-[hsl(var(--vintage-gold)/0.06)] p-2.5 space-y-2">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--vintage-gold))]">Banner-teksten (L'Équipe)</p>
-                  <div>
-                    <Label className="text-[11px]">Grote titel (banner)</Label>
-                    <Input key={`bt-${r.id}-${r.titel}`} defaultValue={r.titel} onBlur={(e) => e.target.value !== r.titel && saveField(r.id, { titel: e.target.value })} className="h-8 text-sm" placeholder="bv. Bol.com waardebon" />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <div>
-                      <Label className="text-[11px]">Kicker</Label>
-                      <Input defaultValue={r.banner_kicker ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.banner_kicker && saveField(r.id, { banner_kicker: e.target.value.trim() || null })} className="h-8 text-sm" placeholder="Dagprijs van vandaag" />
-                    </div>
-                    <div>
-                      <Label className="text-[11px]">Sponsor-label</Label>
-                      <Input defaultValue={r.banner_sponsor_label ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.banner_sponsor_label && saveField(r.id, { banner_sponsor_label: e.target.value.trim() || null })} className="h-8 text-sm" placeholder="Trotse sponsor van Koerspoule" />
-                    </div>
-                    <div>
-                      <Label className="text-[11px]">Waarde (gouden badge)</Label>
-                      <Input defaultValue={r.banner_waarde ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.banner_waarde && saveField(r.id, { banner_waarde: e.target.value.trim() || null })} className="h-8 text-sm" placeholder="€10" />
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">Titel + sponsornaam + logo hierboven. Lege velden → nette defaults.</p>
-                </div>
+                <p className="text-[11px] text-muted-foreground italic">
+                  De L'Équipe-banner (teksten + "Banner tonen") beheer je nu in het tabje <strong>Sponsoren</strong>.
+                </p>
               )}
 
-              <div className="flex items-center justify-between gap-2">
-                {(r.soort === "dagprijs" || r.soort === "sponsor") ? (
-                  <Button
-                    size="sm"
-                    variant={r.is_dagprijs_vandaag ? "default" : "outline"}
-                    className="h-7 text-xs"
-                    onClick={() => toggleDagprijsVandaag(r.id, !r.is_dagprijs_vandaag)}
-                    title="Toon deze sponsor/dagprijs als banner bovenaan L'Équipe (max. één per game)"
-                  >
-                    <CalendarDays className="w-3.5 h-3.5 mr-1" />
-                    Banner tonen {r.is_dagprijs_vandaag ? "aan" : "uit"}
-                  </Button>
-                ) : <span />}
+              <div className="flex items-center justify-end gap-2">
                 <Button size="sm" variant="ghost" className="h-7 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => removePrize(r.id)}>
                   <Trash2 className="w-3.5 h-3.5 mr-1" /> Verwijder
                 </Button>

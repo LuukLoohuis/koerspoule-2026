@@ -244,7 +244,7 @@ export default function AdminV3() {
         </TabsContent>
 
         <TabsContent value="sponsors">
-          <SponsorsTab />
+          <SponsorsTab activeGameId={activeGameId} />
         </TabsContent>
 
         <TabsContent value="notify">

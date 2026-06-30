@@ -1,54 +1,52 @@
 import { useVisibleSponsors, type Sponsor } from "@/hooks/useSponsors";
 
 /**
- * Subtiele "mede mogelijk gemaakt door"-logo-strook onderaan landingspagina's.
- * Klein, rustig (grijswaarden → kleur op hover), ruime witruimte. Geen zichtbare
- * sponsoren → niets tonen (geen lege staat). Sponsors met link_url linken extern.
+ * Subtiele sponsorstrook boven de footerbalk (Layout): decoratieve stippellijn +
+ * ornament, links het kopje, daarnaast de zichtbare sponsoren elk in een net wit
+ * kaderkaartje (logo OF label + weergavenaam). Geen zichtbare sponsoren → niets
+ * tonen. Sponsor met link_url → kaartje linkt extern.
  */
 export default function SponsorStrip() {
   const { data: sponsors = [] } = useVisibleSponsors();
   if (sponsors.length === 0) return null;
 
   return (
-    <section className="text-center py-6" aria-label="Sponsoren">
-      <p className="text-[11px] font-serif uppercase tracking-[0.22em] text-muted-foreground/80 mb-4">
-        Mede mogelijk gemaakt door
-      </p>
-      <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-5 list-none p-0 m-0">
-        {sponsors.map((s) => (
-          <li key={s.id}>
-            <SponsorLogo s={s} />
-          </li>
-        ))}
-      </ul>
+    <section className="border-t border-border/60 bg-card/40" aria-label="Sponsoren">
+      <div className="container mx-auto px-5 py-6">
+        <div className="bolletjes-rule max-w-xs mx-auto mb-3" aria-hidden />
+        <div className="vintage-ornament max-w-sm mx-auto mb-4" aria-hidden>
+          <span className="vintage-ornament-symbol">✦</span>
+        </div>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4 md:gap-6">
+          <div className="text-center md:text-left shrink-0">
+            <p className="text-[10px] font-sans uppercase tracking-[0.22em] text-muted-foreground/80">Mede mogelijk gemaakt door</p>
+            <p className="vintage-heading text-lg font-bold leading-tight">Onze sponsors</p>
+          </div>
+          <ul className="flex flex-wrap items-stretch justify-center gap-3 list-none p-0 m-0">
+            {sponsors.map((s) => (
+              <li key={s.id}>
+                <SponsorKaart s={s} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </section>
   );
 }
 
-function SponsorLogo({ s }: { s: Sponsor }) {
-  if (!s.logo_url) {
-    // Geen logo → nette tekstuele terugval (zelfde subtiele stijl).
-    return s.link_url ? (
-      <a
-        href={s.link_url}
-        target="_blank"
-        rel="noopener noreferrer nofollow sponsored"
-        className="text-sm font-semibold text-muted-foreground/80 hover:text-foreground transition-colors"
-      >
-        {s.naam}
-      </a>
-    ) : (
-      <span className="text-sm font-semibold text-muted-foreground/70">{s.naam}</span>
-    );
-  }
-
-  const img = (
-    <img
-      src={s.logo_url}
-      alt={s.naam}
-      loading="lazy"
-      className="h-10 md:h-11 w-auto max-w-[140px] object-contain opacity-70 grayscale transition-[filter,opacity] duration-300 hover:opacity-100 hover:grayscale-0 motion-reduce:transition-none"
-    />
+function SponsorKaart({ s }: { s: Sponsor }) {
+  const inner = (
+    <div className="flex h-full min-h-[56px] min-w-[120px] items-center justify-center gap-2 rounded-lg border border-border/70 bg-white px-4 py-2.5 shadow-sm transition-shadow hover:shadow-md">
+      {s.logo_url ? (
+        <img src={s.logo_url} alt={s.naam} loading="lazy" className="h-9 w-auto max-w-[130px] object-contain" />
+      ) : (
+        <span className="text-center leading-tight">
+          {s.label && <span className="block text-[9px] font-sans uppercase tracking-[0.16em] text-muted-foreground">{s.label}</span>}
+          <span className="block font-display font-black uppercase tracking-tight text-foreground text-lg">{s.weergavenaam || s.naam}</span>
+        </span>
+      )}
+    </div>
   );
 
   return s.link_url ? (
@@ -57,11 +55,11 @@ function SponsorLogo({ s }: { s: Sponsor }) {
       target="_blank"
       rel="noopener noreferrer nofollow sponsored"
       aria-label={`Bezoek de website van ${s.naam}`}
-      className="inline-block focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] rounded"
+      className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] rounded-lg transition-transform hover:-translate-y-px motion-reduce:transform-none"
     >
-      {img}
+      {inner}
     </a>
   ) : (
-    img
+    inner
   );
 }

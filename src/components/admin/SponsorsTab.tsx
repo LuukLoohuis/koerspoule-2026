@@ -6,11 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Handshake, Upload, Trash2, Plus, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import DagprijsBannerSectie from "@/components/admin/DagprijsBannerSectie";
 
 type Row = {
   id: string;
   naam: string;
   logo_url: string | null;
+  label: string | null;
+  weergavenaam: string | null;
   link_url: string | null;
   zichtbaar: boolean;
   sort_order: number;
@@ -19,8 +22,8 @@ type Row = {
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 const MAX_BYTES = 5 * 1024 * 1024;
 
-/** Platform-sponsoren beheren (losstaand van games). Voedt de landingspagina-strook. */
-export default function SponsorsTab() {
+/** Platform-sponsoren beheren (losstaand van games) + L'Équipe-banner-beheer. */
+export default function SponsorsTab({ activeGameId }: { activeGameId: string }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -121,6 +124,7 @@ export default function SponsorsTab() {
   }
 
   return (
+    <div className="space-y-4">
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="font-display text-base flex items-center gap-2">
@@ -147,6 +151,18 @@ export default function SponsorsTab() {
                   <Label className="text-[11px]">Volgorde</Label>
                   <Input type="number" defaultValue={r.sort_order} onBlur={(e) => Number(e.target.value) !== r.sort_order && saveField(r.id, { sort_order: Number(e.target.value) })} className="h-8 text-sm" />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 rounded-md border border-dashed p-2">
+                <div>
+                  <Label className="text-[11px]">Label (klein) — optioneel</Label>
+                  <Input defaultValue={r.label ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.label && saveField(r.id, { label: e.target.value.trim() || null })} className="h-8 text-sm" placeholder="bv. Wij geven" />
+                </div>
+                <div>
+                  <Label className="text-[11px]">Weergavenaam (groot) — optioneel</Label>
+                  <Input defaultValue={r.weergavenaam ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.weergavenaam && saveField(r.id, { weergavenaam: e.target.value.trim() || null })} className="h-8 text-sm" placeholder="bv. LICHT" />
+                </div>
+                <p className="md:col-span-2 text-[10px] text-muted-foreground">Gebruik label + weergavenaam als je geen logo uploadt (tekst-kaartje).</p>
               </div>
 
               <div>
@@ -182,5 +198,8 @@ export default function SponsorsTab() {
         )}
       </CardContent>
     </Card>
+
+      <DagprijsBannerSectie activeGameId={activeGameId} />
+    </div>
   );
 }
