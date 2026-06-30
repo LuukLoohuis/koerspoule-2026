@@ -207,11 +207,30 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verstuur in BATCHES met een korte pauze. Alles tegelijk afvuren liep tegen
-    // de rate-limit van de mail-worker/provider aan (de meeste mails faalden met
-    // HTTP 429 — slechts ~30 kwamen door). Batchen respecteert de limiet.
-    const BATCH_SIZE = 12;       // max gelijktijdige mails per batch
-    const PAUSE_MS = 1200;       // pauze tussen batches
+    // Uitschrijftokens VOORAF in bulk ophalen/aanmaken — scheelt een DB-roundtrip
+    // per mail (was de grootste vertraging bij honderden ontvangers).
+    const tokenByEmail = new Map<string, string>();
+    for (let i = 0; i < recipients.length; i += 200) {
+      const chunk = recipients.slice(i, i + 200);
+      const { data: rows } = await admin.from("email_unsubscribe_tokens").select("email, token").in("email", chunk);
+      for (const r of (rows ?? []) as Array<{ email: string; token: string }>) tokenByEmail.set(r.email, r.token);
+    }
+    const toCreate: Array<{ token: string; email: string }> = [];
+    for (const email of recipients) {
+      if (!tokenByEmail.has(email)) {
+        const token = crypto.randomUUID().replace(/-/g, "");
+        tokenByEmail.set(email, token);
+        toCreate.push({ token, email });
+      }
+    }
+    for (let i = 0; i < toCreate.length; i += 500) {
+      await admin.from("email_unsubscribe_tokens").insert(toCreate.slice(i, i + 500));
+    }
+
+    // Verstuur in BATCHES onder de Resend req/s-limiet (Pro ≈ 10/s → we mikken op
+    // ~8/s). Retry-op-429 vangt incidentele rate-limit-hikken op.
+    const BATCH_SIZE = 10;       // gelijktijdige mails per batch (Resend Pro ≈ 10/s)
+    const PAUSE_MS = 800;        // ≈ 8-9 mails/sec na batch-latency
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     let sent = 0;
     let rateLimited = 0;         // hoeveel keer 429 geraakt (na alle retries opgegeven)
@@ -220,7 +239,7 @@ Deno.serve(async (req) => {
     // Eén mail versturen mét retry-op-429 (rate-limit): backoff 1.5s/3s/6s.
     const sendOne = async (email: string) => {
       try {
-        const token = await getOrCreateToken(admin, email);
+        const token = tokenByEmail.get(email) ?? (await getOrCreateToken(admin, email));
         const unsubUrl = `${BASE_URL}/uitschrijven?token=${token}`;
         const payload = JSON.stringify({
           to: email,
