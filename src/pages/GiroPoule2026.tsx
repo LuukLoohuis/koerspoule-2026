@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import SponsorStrip from "@/components/SponsorStrip";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Trophy, Users, Zap, Mountain, Flag, Sparkles } from "lucide-react";
 
@@ -229,6 +230,8 @@ export default function GiroPoule2026() {
             <Link to="/login">🚴‍♂️ Maak nu je gratis poule</Link>
           </Button>
         </section>
+
+        <SponsorStrip />
       </article>
     </div>
   );

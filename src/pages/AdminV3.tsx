@@ -6,11 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LayoutDashboard, Trophy, Tag, Users, Users2, ListChecks, Calendar, Calculator, Shield, Inbox, Mail, ShieldCheck, Instagram, Newspaper, Gift } from "lucide-react";
+import { LayoutDashboard, Trophy, Tag, Users, Users2, ListChecks, Calendar, Calculator, Shield, Inbox, Mail, ShieldCheck, Instagram, Newspaper, Gift, Handshake } from "lucide-react";
 import NotifyTab from "@/components/admin/NotifyTab";
 import ApprovalsTab from "@/components/admin/ApprovalsTab";
 import SubpoulesTab from "@/components/admin/SubpoulesTab";
 import PrizesTab from "@/components/admin/PrizesTab";
+import SponsorsTab from "@/components/admin/SponsorsTab";
 
 import GamesTab, { type Game } from "@/components/admin/GamesTab";
 import CategoriesTab, { type Category } from "@/components/admin/CategoriesTab";
@@ -191,6 +192,7 @@ export default function AdminV3() {
           <TabsTrigger value="entries" disabled={!activeGameId} data-testid="tab-entries"><Inbox className="w-4 h-4 mr-2" />Inzendingen</TabsTrigger>
           <TabsTrigger value="subpoules" disabled={!activeGameId} data-testid="tab-subpoules"><Users2 className="w-4 h-4 mr-2" />Subpoules</TabsTrigger>
           <TabsTrigger value="prizes" disabled={!activeGameId} data-testid="tab-prizes"><Gift className="w-4 h-4 mr-2" />Prijzen</TabsTrigger>
+          <TabsTrigger value="sponsors" data-testid="tab-sponsors"><Handshake className="w-4 h-4 mr-2" />Sponsoren</TabsTrigger>
           <TabsTrigger value="notify" data-testid="tab-notify"><Mail className="w-4 h-4 mr-2" />Notify</TabsTrigger>
           <TabsTrigger value="users" data-testid="tab-users"><Shield className="w-4 h-4 mr-2" />Gebruikers</TabsTrigger>
           <TabsTrigger value="instagram" disabled={!activeGameId} data-testid="tab-instagram"><Instagram className="w-4 h-4 mr-2" />Instagram</TabsTrigger>
@@ -239,6 +241,10 @@ export default function AdminV3() {
 
         <TabsContent value="prizes">
           <PrizesTab activeGameId={activeGameId} />
+        </TabsContent>
+
+        <TabsContent value="sponsors">
+          <SponsorsTab />
         </TabsContent>
 
         <TabsContent value="notify">
