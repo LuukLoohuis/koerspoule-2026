@@ -269,8 +269,22 @@ export default function TeamBuilder() {
     if (!isAuthed) return requireAuth("je team in te dienen");
     if (!entry) return;
     try {
+      // Flush voorspellingen + jokers (auto-save staat uit zodra ingediend, dus
+      // een wijziging op een al-ingediende ploeg wordt hier pas bewaard).
+      const list: Array<{ classification: "gc" | "points" | "kom" | "youth"; position: number; rider_id: string }> = [];
+      gcPodium.forEach((rid, i) => { if (rid) list.push({ classification: "gc", position: i + 1, rider_id: rid }); });
+      if (pointsJersey) list.push({ classification: "points", position: 1, rider_id: pointsJersey });
+      if (mountainJersey) list.push({ classification: "kom", position: 1, rider_id: mountainJersey });
+      if (youthJersey) list.push({ classification: "youth", position: 1, rider_id: youthJersey });
+      await savePredictions.mutateAsync({ entryId: entry.id, predictions: list });
+      if (
+        jokerDraft1 && jokerDraft2 && jokerDraft1 !== jokerDraft2 &&
+        !selectedPickRiderIds.has(jokerDraft1) && !selectedPickRiderIds.has(jokerDraft2)
+      ) {
+        await saveJoker.mutateAsync({ entryId: entry.id, riderIds: [jokerDraft1, jokerDraft2] });
+      }
       await submitEntry.mutateAsync({ entryId: entry.id });
-      toast({ title: "Team definitief ingediend" });
+      toast({ title: isSubmitted ? "Wijziging ingediend ✓" : "Team definitief ingediend" });
     } catch (error) {
       toast({
         title: "Indienen mislukt",
@@ -322,6 +336,36 @@ export default function TeamBuilder() {
     missing.push(`Truitjes voorspellen — punten, berg & jongeren (${jerseysFilled}/3)`);
   }
   const teamComplete = missing.length === 0;
+
+  // ── Wijzigingsdetectie op een AL INGEDIENDE ploeg ──────────────────────────
+  // Auto-save is uit zodra de ploeg is ingediend; een trui-/joker-/podiumwijziging
+  // blijft dan lokaal staan. Vergelijk de huidige selectie met de ingediende
+  // (persisted) staat → is er verschil dan is de ploeg "dirty" en mag opnieuw
+  // ingediend worden.
+  const currentPredList = [
+    ...gcPodium.map((rid, i) => (rid ? { classification: "gc", position: i + 1, rider_id: rid } : null)),
+    pointsJersey ? { classification: "points", position: 1, rider_id: pointsJersey } : null,
+    mountainJersey ? { classification: "kom", position: 1, rider_id: mountainJersey } : null,
+    youthJersey ? { classification: "youth", position: 1, rider_id: youthJersey } : null,
+  ].filter(Boolean) as Array<{ classification: string; position: number; rider_id: string }>;
+  const predKey = (l: Array<{ classification: string; position: number; rider_id: string }>) =>
+    l.map((p) => `${p.classification}:${p.position}:${p.rider_id}`).sort().join("|");
+  const jokerKey = (a: string[]) => [...a].filter(Boolean).sort().join("|");
+  const currentJokers = [jokerDraft1, jokerDraft2].filter(Boolean);
+  const isDirty =
+    isSubmitted &&
+    (predKey(currentPredList) !== predKey(predictions) || jokerKey(currentJokers) !== jokerKey(jokerIds));
+
+  const submitBusy = submitEntry.isPending || savePredictions.isPending || saveJoker.isPending;
+  const submitLabel = !isSubmitted
+    ? "✅ Team definitief indienen"
+    : isDirty
+      ? (teamComplete ? "✅ Wijziging indienen" : "Vul je ploeg eerst compleet")
+      : "✅ Reeds ingediend";
+  // Niet-ingediend: indienen mag zodra niet vergrendeld. Ingediend: alleen als er
+  // een (geldige, complete) wijziging is.
+  const submitDisabled = Boolean(isLocked || submitBusy || (isSubmitted ? !isDirty || !teamComplete : false));
+  const submitActive = !isLocked && teamComplete && (!isSubmitted || isDirty);
 
   // Lookup map for rider name preview (jokers/podium)
   const riderById = useMemo(() => {
@@ -829,7 +873,21 @@ export default function TeamBuilder() {
         </div>
       ) : isSubmitted ? (
         <div className="retro-border bg-emerald-500/10 border-emerald-500/40 p-3 text-sm space-y-2">
-          <p>✅ <strong>Team ingediend.</strong> Wil je nog iets aanpassen? Klik op "Wijzigen" — vergeet daarna opnieuw in te dienen.</p>
+          <p>
+            {isDirty
+              ? <>✏️ <strong>Niet-opgeslagen wijziging.</strong> Klik op "Wijziging indienen" om je nieuwe keuze te bewaren.</>
+              : <>✅ <strong>Team ingediend.</strong> Wil je nog iets aanpassen? Pas het aan en dien opnieuw in.</>}
+          </p>
+          {isDirty && !teamComplete && (
+            <p className="text-xs text-amber-700">Je ploeg is nog niet compleet — vul eerst alles in voordat je opnieuw indient.</p>
+          )}
+          <Button
+            onClick={handleSubmit}
+            disabled={submitDisabled}
+            className={cn("w-full retro-border-primary font-bold", submitActive && "animate-pulse")}
+          >
+            {submitLabel}
+          </Button>
           <Button variant="outline" onClick={handleRevert} disabled={revertEntry.isPending} className="w-full">
             ✏️ Wijzigen
           </Button>
@@ -849,13 +907,10 @@ export default function TeamBuilder() {
           )}
           <Button
             onClick={handleSubmit}
-            disabled={Boolean(isLocked || isSubmitted || submitEntry.isPending)}
-            className={cn(
-              "w-full retro-border-primary font-bold",
-              teamComplete && !isSubmitted && !isLocked && "animate-pulse"
-            )}
+            disabled={submitDisabled}
+            className={cn("w-full retro-border-primary font-bold", submitActive && "animate-pulse")}
           >
-            ✅ Team definitief indienen
+            {submitLabel}
           </Button>
         </>
       )}
@@ -1226,13 +1281,11 @@ export default function TeamBuilder() {
                 )}
                 <Button
                   onClick={handleSubmit}
-                  disabled={Boolean(isLocked || isSubmitted || submitEntry.isPending)}
-                  className={cn(
-                    "retro-border-primary font-bold",
-                    teamComplete && !isSubmitted && !isLocked && "animate-pulse"
-                  )}
+                  disabled={submitDisabled}
+                  className={cn("retro-border-primary font-bold", submitActive && "animate-pulse")}
+                  title={isSubmitted && isDirty && !teamComplete ? "Vul eerst je hele ploeg in" : undefined}
                 >
-                  {isSubmitted ? "✅ Reeds ingediend" : "✅ Team definitief indienen"}
+                  {submitLabel}
                 </Button>
               </div>
               </div>
