@@ -206,9 +206,9 @@ export default function NotifyTab() {
                 <SelectValue placeholder="Kies een koers…" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle deelnemers (alle koersen)</SelectItem>
+                <SelectItem value="all">Alle geregistreerde gebruikers</SelectItem>
                 {games.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>{g.name}{g.year ? ` (${g.year})` : ""}</SelectItem>
+                  <SelectItem key={g.id} value={g.id}>Deelnemers — {g.name}{g.year ? ` (${g.year})` : ""}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

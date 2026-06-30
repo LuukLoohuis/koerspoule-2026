@@ -169,24 +169,29 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ sent: 1, total: 1 }), { headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
-    // Haal deelnemers op (uniek per user_id)
-    let entriesQuery = admin.from("entries").select("user_id").not("user_id", "is", null);
-    if (gameId) entriesQuery = entriesQuery.eq("game_id", gameId);
-    const { data: entries, error: entriesErr } = await entriesQuery;
-    if (entriesErr) throw entriesErr;
-
-    const userIds = [...new Set((entries ?? []).map((e: { user_id: string }) => e.user_id).filter(Boolean))];
-
-    // Haal emails op via auth.users
-    const { data: { users }, error: usersErr } = await admin.auth.admin.listUsers({ perPage: 1000 });
-    if (usersErr) throw usersErr;
-
+    // Alle gebruikers + emails ophalen (gepagineerd, zodat >1000 accounts werkt).
     const emailMap = new Map<string, string>();
-    for (const u of users ?? []) {
-      if (u.email) emailMap.set(u.id, u.email);
+    for (let page = 1; ; page += 1) {
+      const { data: { users }, error: usersErr } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+      if (usersErr) throw usersErr;
+      for (const u of users ?? []) {
+        if (u.email) emailMap.set(u.id, u.email);
+      }
+      if (!users || users.length < 1000) break;
     }
 
-    const allEmails = userIds.map((id) => emailMap.get(id)).filter(Boolean) as string[];
+    let allEmails: string[];
+    if (gameId) {
+      // Specifieke koers → deelnemers met een inzending in die koers.
+      const { data: entries, error: entriesErr } = await admin
+        .from("entries").select("user_id").not("user_id", "is", null).eq("game_id", gameId);
+      if (entriesErr) throw entriesErr;
+      const userIds = [...new Set((entries ?? []).map((e: { user_id: string }) => e.user_id).filter(Boolean))];
+      allEmails = userIds.map((id) => emailMap.get(id)).filter(Boolean) as string[];
+    } else {
+      // "Alle deelnemers" → ALLE geregistreerde accounts met een e-mailadres.
+      allEmails = [...emailMap.values()];
+    }
 
     // Haal uitgeschreven adressen op
     const { data: suppressed } = await admin.from("suppressed_emails").select("email");
