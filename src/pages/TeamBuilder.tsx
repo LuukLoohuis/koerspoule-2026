@@ -269,8 +269,12 @@ export default function TeamBuilder() {
     if (!isAuthed) return requireAuth("je team in te dienen");
     if (!entry) return;
     try {
-      // Flush voorspellingen + jokers (auto-save staat uit zodra ingediend, dus
-      // een wijziging op een al-ingediende ploeg wordt hier pas bewaard).
+      // Een al-ingediende ploeg is server-side vergrendeld (save-RPC's weigeren
+      // met "Entry already submitted"). Zet 'm daarom eerst terug naar concept,
+      // bewaar de wijziging (predictions + jokers) en dien opnieuw in.
+      if (isSubmitted) {
+        await revertEntry.mutateAsync({ entryId: entry.id });
+      }
       const list: Array<{ classification: "gc" | "points" | "kom" | "youth"; position: number; rider_id: string }> = [];
       gcPodium.forEach((rid, i) => { if (rid) list.push({ classification: "gc", position: i + 1, rider_id: rid }); });
       if (pointsJersey) list.push({ classification: "points", position: 1, rider_id: pointsJersey });
