@@ -37,9 +37,10 @@ export default function SponsorStrip() {
 
 function SponsorKaart({ s }: { s: Sponsor }) {
   const inner = (
-    <div className="flex h-full min-h-[56px] min-w-[120px] items-center justify-center gap-2 rounded-lg border border-border/70 bg-white px-4 py-2.5 shadow-sm transition-shadow hover:shadow-md">
+    <div className="flex h-full min-h-[76px] min-w-[132px] items-center justify-center gap-2 rounded-lg border border-border/70 bg-white px-5 py-3 shadow-sm transition-shadow hover:shadow-md">
       {s.logo_url ? (
-        <img src={s.logo_url} alt={s.naam} loading="lazy" className="h-9 w-auto max-w-[130px] object-contain" />
+        // Logo-maat: makkelijk aanpasbaar via de hoogte/breedte hieronder.
+        <img src={s.logo_url} alt={s.naam} loading="lazy" className="h-14 w-auto max-w-[180px] object-contain" />
       ) : (
         <span className="text-center leading-tight">
           {s.label && <span className="block text-[9px] font-sans uppercase tracking-[0.16em] text-muted-foreground">{s.label}</span>}
