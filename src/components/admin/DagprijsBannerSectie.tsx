@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Megaphone, Upload, Trash2, CalendarDays } from "lucide-react";
+import { Megaphone, Upload, Trash2, CalendarDays, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 type Row = {
@@ -12,6 +12,7 @@ type Row = {
   soort: string;
   titel: string;
   sponsor_naam: string | null;
+  sponsor_url: string | null;
   sponsor_logo_url: string | null;
   banner_kicker: string | null;
   banner_sponsor_label: string | null;
@@ -40,7 +41,7 @@ export default function DagprijsBannerSectie({ activeGameId }: { activeGameId: s
     try {
       const { data, error } = await supabase
         .from("prizes")
-        .select("id, soort, titel, sponsor_naam, sponsor_logo_url, banner_kicker, banner_sponsor_label, banner_waarde, is_dagprijs_vandaag")
+        .select("id, soort, titel, sponsor_naam, sponsor_url, sponsor_logo_url, banner_kicker, banner_sponsor_label, banner_waarde, is_dagprijs_vandaag")
         .eq("game_id", activeGameId)
         .in("soort", ["dagprijs", "sponsor"])
         .order("sort_order")
@@ -61,6 +62,30 @@ export default function DagprijsBannerSectie({ activeGameId }: { activeGameId: s
     const { error } = await supabase.from("prizes").update(patch as never).eq("id", id);
     if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  }
+
+  async function saveSponsorUrl(id: string, value: string, current: string | null) {
+    const v = value.trim();
+    const next = v || null;
+    if (next === current) return;
+    if (next && !/^https?:\/\//i.test(next)) { toast.error("Sponsor-link moet met http:// of https:// beginnen."); return; }
+    await saveField(id, { sponsor_url: next });
+  }
+
+  // Nieuwe banner (soort 'sponsor' → verschijnt niet als prijs op de prijzenpagina).
+  async function createBanner() {
+    if (!supabase || !activeGameId) return;
+    const { error } = await supabase.from("prizes").insert({ game_id: activeGameId, soort: "sponsor", titel: "", omschrijving: "" } as never);
+    if (error) { toast.error(`Aanmaken mislukt: ${error.message}`); return; }
+    await load();
+  }
+
+  async function removeBanner(id: string) {
+    if (!supabase || !confirm("Deze banner verwijderen?")) return;
+    const { error } = await supabase.from("prizes").delete().eq("id", id);
+    if (error) { toast.error(`Verwijderen mislukt: ${error.message}`); return; }
+    toast.success("Banner verwijderd");
+    await load();
   }
 
   // Max één banner per game: bij aanzetten eerst alle andere uit.
@@ -127,25 +152,33 @@ export default function DagprijsBannerSectie({ activeGameId }: { activeGameId: s
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-xs text-muted-foreground">Beheer hier de banner bovenaan L'Équipe. De banner blijft inhoudelijk de dagprijs; zet 'm aan met "Banner tonen" (max. één per game). De prijs zelf bewerk je in het Prijzen-tab.</p>
+        <p className="text-xs text-muted-foreground">Maak en beheer hier de banner(s) bovenaan L'Équipe — volledig vanuit dit tabje. Zet één op "Banner tonen" (terugval), of plan ze per etappe in (onderaan). Banners verschijnen niet op de prijzenpagina.</p>
+        <Button size="sm" variant="outline" onClick={createBanner} disabled={loading} className="h-8">
+          <Plus className="w-4 h-4 mr-1" /> Nieuwe banner
+        </Button>
 
         {rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">{loading ? "Laden…" : "Geen dagprijs/sponsor-prijzen in deze game. Maak er één in het Prijzen-tab."}</p>
+          <p className="text-sm text-muted-foreground italic">{loading ? "Laden…" : "Nog geen banners. Klik op “Nieuwe banner”."}</p>
         ) : (
           rows.map((r) => (
             <div key={r.id} className="border rounded-md p-3 space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{r.soort === "sponsor" ? "Sponsor / banner" : "Dagprijs"}</span>
-                <Button
-                  size="sm"
-                  variant={r.is_dagprijs_vandaag ? "default" : "outline"}
-                  className="h-7 text-xs"
-                  onClick={() => toggleBanner(r.id, !r.is_dagprijs_vandaag)}
-                  title="Toon deze als banner bovenaan L'Équipe (max. één per game)"
-                >
-                  <CalendarDays className="w-3.5 h-3.5 mr-1" />
-                  Banner tonen {r.is_dagprijs_vandaag ? "aan" : "uit"}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant={r.is_dagprijs_vandaag ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    onClick={() => toggleBanner(r.id, !r.is_dagprijs_vandaag)}
+                    title="Toon deze als banner bovenaan L'Équipe (terugval; max. één per game)"
+                  >
+                    <CalendarDays className="w-3.5 h-3.5 mr-1" />
+                    Banner tonen {r.is_dagprijs_vandaag ? "aan" : "uit"}
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => removeBanner(r.id)} title="Banner verwijderen">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
 
               <div>
@@ -173,7 +206,11 @@ export default function DagprijsBannerSectie({ activeGameId }: { activeGameId: s
                   <Label className="text-[11px]">Sponsor / gever (banner)</Label>
                   <Input defaultValue={r.sponsor_naam ?? ""} onBlur={(e) => (e.target.value || null) !== r.sponsor_naam && saveField(r.id, { sponsor_naam: e.target.value || null })} className="h-8 text-sm" placeholder="bv. De Digitale Basis" />
                 </div>
-                <div className="flex items-center gap-2">
+                <div>
+                  <Label className="text-[11px]">Sponsor-link (URL)</Label>
+                  <Input defaultValue={r.sponsor_url ?? ""} onBlur={(e) => saveSponsorUrl(r.id, e.target.value, r.sponsor_url)} className="h-8 text-sm" placeholder="https://…" inputMode="url" />
+                </div>
+                <div className="flex items-center gap-2 md:col-span-2">
                   {r.sponsor_logo_url && <img src={r.sponsor_logo_url} alt="logo" className="h-8 w-12 object-contain rounded border bg-black/5" />}
                   <input ref={(el) => (logoRefs.current[r.id] = el)} type="file" accept={ALLOWED.join(",")} className="hidden" onChange={(e) => uploadLogo(r.id, e.target.files?.[0])} />
                   <button type="button" className="text-xs underline text-primary inline-flex items-center gap-1" disabled={busyId === r.id} onClick={() => logoRefs.current[r.id]?.click()}>
