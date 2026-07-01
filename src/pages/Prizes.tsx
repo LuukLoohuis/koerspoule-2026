@@ -162,7 +162,7 @@ function PrijsKaart({
           )}
 
           {p.omschrijving && (
-            <p className="mt-3 max-w-[90%] text-[15px] font-semibold leading-[1.5] text-[#626477]">{p.omschrijving}</p>
+            <p className="mt-3 max-w-[90%] text-[15px] font-semibold leading-[1.5] text-[#626477] whitespace-pre-line">{p.omschrijving}</p>
           )}
 
           {sponsorNamen(p) && (
@@ -239,7 +239,7 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
                 </div>
               )}
               <h3 className={`font-display font-bold leading-tight ${isWinner ? "text-lg" : "text-sm"}`}>{p.titel || fallback}</h3>
-              {p.omschrijving && <p className="text-sm text-muted-foreground font-serif mt-1 leading-snug">{p.omschrijving}</p>}
+              {p.omschrijving && <p className="text-sm text-muted-foreground font-serif mt-1 leading-snug whitespace-pre-line">{p.omschrijving}</p>}
               <div className="flex justify-center"><SponsorLine p={p} /></div>
               <SponsorButtons p={p} stack className="mt-3" />
             </>
