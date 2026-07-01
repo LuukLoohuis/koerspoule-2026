@@ -26,6 +26,7 @@ interface Props {
   onDelete: (id: string) => Promise<void>;
   onToggleReaction: (id: string, emoji: string) => Promise<void>;
   onVotePoll: (pollId: string, optionIndex: number) => Promise<void>;
+  onRequestEditPoll?: (poll: ChatPollRow) => void;
 }
 
 function renderBody(body: string, profileNames: Record<string, string>) {
@@ -52,7 +53,7 @@ function renderBody(body: string, profileNames: Record<string, string>) {
 
 export default function ChatMessage({
   msg, myUserId, isAdmin, profileNames, reactions, poll, pollVotes,
-  onEdit, onDelete, onToggleReaction, onVotePoll,
+  onEdit, onDelete, onToggleReaction, onVotePoll, onRequestEditPoll,
 }: Props) {
   const isMe = msg.user_id === myUserId;
   const canManage = isMe || isAdmin;
@@ -134,12 +135,12 @@ export default function ChatMessage({
               </Button>
             </div>
           ) : (
-            <p className="text-sm font-sans mt-0.5 text-foreground/90 whitespace-pre-wrap break-words">
+            <p className="text-sm font-sans mt-0.5 text-foreground whitespace-pre-wrap break-words">
               {renderBody(msg.body, profileNames)}
             </p>
           )}
 
-          {!msg.deleted_at && !poll && (
+          {!msg.deleted_at && !poll && !editing && (
             <MessageReactions
               messageId={msg.id}
               reactions={reactions}
@@ -150,18 +151,23 @@ export default function ChatMessage({
           )}
         </div>
 
-        {canManage && !msg.deleted_at && !editing && !poll && (
+        {canManage && !msg.deleted_at && !editing && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted-foreground hover:text-foreground p-1 transition-opacity"
+                className="md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 text-muted-foreground hover:text-foreground p-1 transition-opacity"
                 aria-label="Meer"
               >
                 <MoreVertical className="h-4 w-4" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-36">
-              {isMe && (
+              {isMe && poll && onRequestEditPoll && (
+                <DropdownMenuItem onClick={() => onRequestEditPoll(poll)}>
+                  <Pencil className="h-3.5 w-3.5 mr-2" /> Bewerken
+                </DropdownMenuItem>
+              )}
+              {isMe && !poll && (
                 <DropdownMenuItem onClick={() => { setDraft(msg.body); setEditing(true); }}>
                   <Pencil className="h-3.5 w-3.5 mr-2" /> Bewerken
                 </DropdownMenuItem>

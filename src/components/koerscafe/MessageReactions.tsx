@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Smile } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,19 @@ interface Props {
 }
 
 export default function MessageReactions({ messageId, reactions, myUserId, profileNames, onToggle }: Props) {
+  // Klik-toggle (geen hover) → op mobiel blijft de picker niet "hangen" over de
+  // tekst; sluit bij klik erbuiten of na een keuze.
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setPickerOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [pickerOpen]);
+
   const my = reactions.filter((r) => r.message_id === messageId);
   const grouped = useMemo(() => {
     const map = new Map<string, ChatReactionRow[]>();
@@ -53,24 +66,30 @@ export default function MessageReactions({ messageId, reactions, myUserId, profi
           </Tooltip>
         );
       })}
-      <div className="group relative">
+      <div className="relative" ref={pickerRef}>
         <button
-          className="inline-flex items-center justify-center rounded-full p-1 text-muted-foreground hover:text-foreground hover:bg-secondary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+          type="button"
+          onClick={() => setPickerOpen((o) => !o)}
           aria-label="Reactie toevoegen"
+          aria-expanded={pickerOpen}
+          className="inline-flex items-center justify-center rounded-full p-1 text-muted-foreground hover:text-foreground hover:bg-secondary md:opacity-60 md:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
         >
           <Smile className="h-3.5 w-3.5" />
         </button>
-        <div className="absolute bottom-full left-0 mb-1 hidden group-focus-within:flex group-hover:flex bg-popover border border-border rounded-full shadow-lg p-1 gap-0.5 z-10">
-          {QUICK_REACTIONS.map((e) => (
-            <button
-              key={e}
-              onClick={() => onToggle(e)}
-              className="hover:bg-secondary rounded-full w-7 h-7 flex items-center justify-center text-base"
-            >
-              {e}
-            </button>
-          ))}
-        </div>
+        {pickerOpen && (
+          <div className="absolute bottom-full left-0 mb-1 flex bg-popover border border-border rounded-full shadow-lg p-1 gap-0.5 z-30">
+            {QUICK_REACTIONS.map((e) => (
+              <button
+                key={e}
+                type="button"
+                onClick={() => { onToggle(e); setPickerOpen(false); }}
+                className="hover:bg-secondary rounded-full w-8 h-8 flex items-center justify-center text-base"
+              >
+                {e}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

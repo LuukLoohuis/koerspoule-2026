@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useToast } from "@/hooks/use-toast";
-import { useChatRealtime } from "@/hooks/useChatRealtime";
+import { useChatRealtime, type ChatPollRow } from "@/hooks/useChatRealtime";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import ChatMessage from "@/components/koerscafe/ChatMessage";
 import ChatInput from "@/components/koerscafe/ChatInput";
@@ -34,6 +34,7 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
   const [lastReadAt, setLastReadAt] = useState<string | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
   const [showPollComposer, setShowPollComposer] = useState(false);
+  const [editingPoll, setEditingPoll] = useState<ChatPollRow | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -179,6 +180,17 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
     if (error) toast({ title: "Poll plaatsen mislukt", description: error.message, variant: "destructive" });
   };
 
+  const editPoll = async (pollId: string, question: string, options: string[], deadline: string | null) => {
+    if (!supabase) return;
+    const { error } = await supabase.rpc("edit_chat_poll", {
+      p_poll_id: pollId,
+      p_question: question,
+      p_options: options,
+      p_deadline: deadline,
+    });
+    if (error) toast({ title: "Poll bewerken mislukt", description: error.message, variant: "destructive" });
+  };
+
   if (!subpoolId) {
     return (
       <Card className="retro-border">
@@ -233,6 +245,7 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
                   onDelete={deleteMsg}
                   onToggleReaction={toggleReaction}
                   onVotePoll={votePoll}
+                  onRequestEditPoll={(p) => { setShowPollComposer(false); setEditingPoll(p); }}
                 />
               </div>
             ))
@@ -250,8 +263,15 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
           )}
         </div>
 
-        {showPollComposer && (
+        {showPollComposer && !editingPoll && (
           <PollComposer onCreate={createPoll} onClose={() => setShowPollComposer(false)} />
+        )}
+        {editingPoll && (
+          <PollComposer
+            initial={{ question: editingPoll.question, options: editingPoll.options, deadline: editingPoll.deadline }}
+            onCreate={(q, o, d) => editPoll(editingPoll.id, q, o, d)}
+            onClose={() => setEditingPoll(null)}
+          />
         )}
 
         <ChatInput

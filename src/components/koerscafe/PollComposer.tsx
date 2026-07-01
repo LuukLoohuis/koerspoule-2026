@@ -9,13 +9,24 @@ import { useToast } from "@/hooks/use-toast";
 interface Props {
   onCreate: (question: string, options: string[], deadline: string | null) => Promise<void>;
   onClose: () => void;
+  /** Aanwezig = bewerk-modus: velden voorgevuld, knop "Opslaan" i.p.v. "Plaatsen". */
+  initial?: { question: string; options: string[]; deadline: string | null };
 }
 
-export default function PollComposer({ onCreate, onClose }: Props) {
+// ISO/UTC → waarde voor <input type="datetime-local"> (lokale tijd, geen tz-suffix).
+function toLocalInput(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+export default function PollComposer({ onCreate, onClose, initial }: Props) {
   const { toast } = useToast();
-  const [question, setQuestion] = useState("");
-  const [options, setOptions] = useState<string[]>(["", ""]);
-  const [deadline, setDeadline] = useState("");
+  const isEdit = Boolean(initial);
+  const [question, setQuestion] = useState(initial?.question ?? "");
+  const [options, setOptions] = useState<string[]>(initial?.options?.length ? initial.options : ["", ""]);
+  const [deadline, setDeadline] = useState(toLocalInput(initial?.deadline ?? null));
   const [submitting, setSubmitting] = useState(false);
 
   const updateOption = (i: number, v: string) => {
@@ -54,7 +65,7 @@ export default function PollComposer({ onCreate, onClose }: Props) {
   return (
     <div className="border-t-2 border-foreground bg-secondary/40 p-3 space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="font-display font-bold text-sm">📊 Nieuwe poll</h4>
+        <h4 className="font-display font-bold text-sm">📊 {isEdit ? "Poll bewerken" : "Nieuwe poll"}</h4>
         <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
           <X className="h-4 w-4" />
         </button>
@@ -112,7 +123,7 @@ export default function PollComposer({ onCreate, onClose }: Props) {
       </div>
       <div className="flex justify-end gap-2">
         <Button size="sm" variant="ghost" onClick={onClose} disabled={submitting}>Annuleren</Button>
-        <Button size="sm" onClick={submit} disabled={submitting}>Plaatsen</Button>
+        <Button size="sm" onClick={submit} disabled={submitting}>{isEdit ? "Opslaan" : "Plaatsen"}</Button>
       </div>
     </div>
   );
