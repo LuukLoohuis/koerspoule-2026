@@ -49,15 +49,12 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Dagprijs | null> => {
       if (!supabase || !gameId) return null;
-      const { data, error } = await supabase
-        .from("prizes")
-        .select("titel, sponsor_naam, sponsor_logo_url, sponsor_url, banner_kicker, banner_sponsor_label, banner_waarde")
-        .eq("game_id", gameId)
-        .eq("is_dagprijs_vandaag", true)
-        .limit(1)
-        .maybeSingle();
+      // RPC bepaalt welke banner: ingepland voor de etappe-van-vandaag, anders
+      // terugval op is_dagprijs_vandaag, anders niets.
+      const { data, error } = await supabase.rpc("get_dagprijs_banner", { p_game_id: gameId });
       if (error) return null;
-      return (data as Dagprijs) ?? null;
+      const row = Array.isArray(data) ? data[0] : data;
+      return (row as Dagprijs) ?? null;
     },
   });
 
