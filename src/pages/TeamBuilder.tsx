@@ -611,6 +611,7 @@ export default function TeamBuilder() {
                     excludeIds={otherPodium}
                     placeholder="Zoek…"
                     disabled={Boolean(isLocked)}
+                    compact
                   />
                 </div>
               </div>
@@ -677,6 +678,7 @@ export default function TeamBuilder() {
                 onChange={setter}
                 placeholder="Zoek renner…"
                 disabled={Boolean(isLocked)}
+                compact
               />
               {hint && (
                 <p className="text-[10px] italic" style={{ color: "var(--ink-faded)", fontFamily: "'Special Elite','Courier Prime',serif" }}>

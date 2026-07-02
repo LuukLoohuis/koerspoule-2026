@@ -17,6 +17,9 @@ type Props = {
   excludeIds?: string[];
   placeholder?: string;
   disabled?: boolean;
+  /** Smalle slots (podium/trui-kaarten): selected toont alleen naam + ×.
+   *  Rugnummer en ploeg blijven zichtbaar in de zoeklijst zelf. */
+  compact?: boolean;
 };
 
 export default function RiderSearchSelect({
@@ -26,6 +29,7 @@ export default function RiderSearchSelect({
   excludeIds = [],
   placeholder = "Zoek renner op naam of startnummer...",
   disabled,
+  compact = false,
 }: Props) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -102,6 +106,25 @@ export default function RiderSearchSelect({
   }, [search, riders, value, excludeSet]);
 
   if (selected) {
+    // Compact (smalle podium/trui-slots): alleen naam + × — rugnummer en ploeg
+    // kappen daar toch maar af en de naam staat al groot op de kaart erboven.
+    if (compact) {
+      return (
+        <div className="flex items-center gap-1.5 rounded-md border bg-background px-2 py-2 text-sm">
+          <span className="font-medium truncate flex-1 min-w-0 text-slate-800">{selected.name}</span>
+          {!disabled && (
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="shrink-0 text-muted-foreground hover:text-destructive"
+              aria-label="Verwijder selectie"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      );
+    }
     return (
       <div className="flex items-center gap-2 rounded-md border bg-background px-2 py-2 text-sm">
         <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
