@@ -113,80 +113,6 @@ function StageBreakdown({ stageId }: { stageId: string }) {
   );
 }
 
-// Radio Koerspoule — voorbeschouwing per etappe genereren (Ome Gerrit). Cachet
-// per stage; admin-gestuurd, niet automatisch. force = opnieuw genereren.
-function VoorbeschouwingActie({ stageId }: { stageId: string }) {
-  const [tekst, setTekst] = useState<string | null>(null);
-  const [zichtbaar, setZichtbaar] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      if (!supabase) return;
-      const { data } = await supabase
-        .from("etappe_voorbeschouwingen")
-        .select("tekst, zichtbaar")
-        .eq("stage_id", stageId)
-        .maybeSingle();
-      if (alive) { setTekst(data?.tekst ?? null); setZichtbaar(Boolean(data?.zichtbaar)); setLoaded(true); }
-    })();
-    return () => { alive = false; };
-  }, [stageId]);
-
-  async function toggleZichtbaar(next: boolean) {
-    if (!supabase) return;
-    const { error } = await supabase.from("etappe_voorbeschouwingen").update({ zichtbaar: next }).eq("stage_id", stageId);
-    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
-    setZichtbaar(next);
-    toast.success(next ? "Radio Koerspoule zichtbaar voor deelnemers" : "Radio Koerspoule verborgen");
-  }
-
-  async function genereer(force: boolean) {
-    if (!supabase || busy) return;
-    setBusy(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-etappe-voorbeschouwing", {
-        body: { stage_id: stageId, force },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setTekst(data?.tekst ?? null);
-      toast.success(data?.cached ? "Bestaande voorbeschouwing geladen" : "Voorbeschouwing gegenereerd");
-    } catch (e) {
-      toast.error(`Genereren mislukt: ${(e as Error).message}`);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="mt-2 rounded-md border border-border bg-secondary/20 p-2.5">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground inline-flex items-center gap-1.5">
-          <Mic className="w-3.5 h-3.5" /> Radio Koerspoule — voorbeschouwing
-        </span>
-        <div className="flex items-center gap-2 shrink-0">
-          {tekst && (
-            <Button size="sm" variant={zichtbaar ? "default" : "outline"} className="h-7 text-xs" disabled={!loaded} onClick={() => toggleZichtbaar(!zichtbaar)} title="Toon de voorbeschouwing aan deelnemers in L'Équipe">
-              {zichtbaar ? "Zichtbaar voor deelnemers" : "Verborgen"}
-            </Button>
-          )}
-          <Button size="sm" variant="outline" className="h-7 text-xs" disabled={busy || !loaded} onClick={() => genereer(Boolean(tekst))}>
-            {busy ? "Bezig…" : tekst ? "Opnieuw genereren" : "Voorbeschouwing genereren"}
-          </Button>
-        </div>
-      </div>
-      {tekst && (
-        <p className="mt-2 text-sm font-serif italic text-foreground/90 whitespace-pre-line leading-snug">
-          {tekst}
-        </p>
-      )}
-    </div>
-  );
-}
-
 type Row = {
   stage_id: string;
   stage_number: number;
@@ -207,15 +133,12 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   const [bannerMap, setBannerMap] = useState<Record<string, boolean>>({});
   // Admin-only testmodus (per game): admin ziet alles ongeacht status. Geen effect op deelnemers.
   const [testmodus, setTestmodus] = useState(false);
-  // Master-schakelaar: hele Radio Koerspoule-rubriek aan/uit voor deelnemers.
-  const [radioEnabled, setRadioEnabled] = useState(true);
 
   useEffect(() => {
     if (!supabase || !activeGameId) return;
     (async () => {
-      const { data } = await supabase.from("games").select("admin_testmodus, radio_koerspoule_enabled").eq("id", activeGameId).maybeSingle();
+      const { data } = await supabase.from("games").select("admin_testmodus").eq("id", activeGameId).maybeSingle();
       setTestmodus(Boolean(data?.admin_testmodus));
-      setRadioEnabled(data?.radio_koerspoule_enabled !== false);
     })();
   }, [activeGameId]);
 
@@ -225,14 +148,6 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
     setTestmodus(next);
     toast.success(next ? "Testmodus AAN — je ziet als admin alles ongeacht de status" : "Testmodus uit — je ziet de game zoals de status hoort");
-  }
-
-  async function toggleRadio(next: boolean) {
-    if (!supabase || !activeGameId) return;
-    const { error } = await supabase.from("games").update({ radio_koerspoule_enabled: next }).eq("id", activeGameId);
-    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
-    setRadioEnabled(next);
-    toast.success(next ? "Radio Koerspoule AAN voor deelnemers" : "Radio Koerspoule volledig verborgen");
   }
 
   // Wist alle Lefevère-rapporten van deze game → elke deelnemer krijgt een vers
@@ -380,23 +295,6 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
         </CardContent>
       </Card>
 
-      {/* Master-schakelaar Radio Koerspoule — verbergt de hele rubriek in één klik. */}
-      <Card>
-        <CardContent className="flex items-center justify-between gap-3 p-4">
-          <div className="min-w-0">
-            <p className="font-display font-bold flex items-center gap-2">
-              <Mic className="w-4 h-4" /> Radio Koerspoule {radioEnabled ? "zichtbaar" : "verborgen"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Master-schakelaar: zet dit uit om de <strong>hele</strong> Radio Koerspoule-rubriek voor deelnemers te verbergen, ongeacht de per-etappe-zichtbaarheid.
-            </p>
-          </div>
-          <Button size="sm" variant={radioEnabled ? "outline" : "default"} className="shrink-0" disabled={!activeGameId} onClick={() => toggleRadio(!radioEnabled)}>
-            {radioEnabled ? "Verberg alles" : "Toon weer"}
-          </Button>
-        </CardContent>
-      </Card>
-
       <Card className="border-orange-300">
         <CardHeader>
           <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -442,7 +340,6 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   </Button>
                 </div>
                 <StageBreakdown stageId={r.stage_id} />
-                {radioEnabled && <VoorbeschouwingActie stageId={r.stage_id} />}
               </div>
             ))
           )}
@@ -461,7 +358,6 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                 <span>Etappe {r.stage_number}</span>
                 {r.stage_name && <span className="text-muted-foreground">— {r.stage_name}</span>}
               </div>
-              {radioEnabled && <VoorbeschouwingActie stageId={r.stage_id} />}
             </div>
           ))}
         </CardContent>
@@ -548,7 +444,6 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                 </Button>
               </div>
               <StageBreakdown stageId={r.stage_id} />
-              {radioEnabled && <VoorbeschouwingActie stageId={r.stage_id} />}
             </div>
           ))}
         </CardContent>

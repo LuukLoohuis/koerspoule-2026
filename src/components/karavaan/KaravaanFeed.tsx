@@ -10,7 +10,6 @@ import { useSubpoules } from "@/hooks/useSubpoules";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
 import MiniStrip, { type HorsTabKey } from "@/components/karavaan/MiniStrip";
 import Voorbeschouwing from "@/components/karavaan/Voorbeschouwing";
-import RadioKoerspoule from "@/components/karavaan/RadioKoerspoule";
 import DagprijsBanner from "@/components/karavaan/DagprijsBanner";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
@@ -205,9 +204,6 @@ export default function KaravaanFeed({
 
       {/* De Voorbeschouwing — vooruitblik op de eerstvolgende etappe */}
       <Voorbeschouwing gameId={game?.id} />
-
-      {/* Radio Koerspoule — voorbeschouwing in de stem van Ome Gerrit */}
-      <RadioKoerspoule gameId={game?.id} />
 
 
       {/* Feed */}
