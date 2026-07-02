@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useDeadline } from "@/hooks/useDeadline";
 import { Clock, Lock, CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,17 @@ function TimeUnit({ value, label }: { value: number; label: string }) {
 
 export default function CountdownBanner({ className }: { className?: string }) {
   const { phase, days, hours, minutes, seconds, label, closeDate, openDate } = useDeadline();
+
+  // Hydration-gate: de homepage wordt geprerenderd (SSG) en deze banner toont
+  // tikkende tijd — de server-HTML bevat de bouwtijd-stand, de client een andere
+  // → React #418/#423 (hele root valt terug op client-render). Daarom renderen
+  // server én eerste client-render dezelfde neutrale skeleton; de echte cijfers
+  // verschijnen pas na mount.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) {
+    return <div className={cn("retro-border bg-card p-3 md:p-5 min-h-[118px] md:min-h-[132px]", className)} aria-hidden />;
+  }
 
   const fmt = (d: Date) =>
     d.toLocaleString("nl-NL", {
