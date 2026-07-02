@@ -14,6 +14,9 @@ type Props = { subpouleId: string };
 // second, then green, navy, red, etc. — a vintage jersey-poster palette.
 const CATEGORY_HUES = [330, 46, 142, 220, 358, 280, 25, 175, 305, 195, 110, 245, 0, 90, 250, 15, 200, 335, 60, 165, 75];
 
+// Max. aantal initialen-dots per cel; daarboven één "+N"-pill (grote subpoules).
+const MAX_DOTS = 5;
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -140,7 +143,7 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
                 uniek
               </span>
               <span aria-hidden>·</span>
-              <span>donker = zeldzamer · klik op een deelnemer om in/uit te zetten</span>
+              <span>donker = zeldzamer · licht = vaker gekozen · klik op een deelnemer om in/uit te zetten</span>
             </p>
           </div>
           <div className="flex items-center gap-1.5">
@@ -216,15 +219,32 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
                 >
                   {/* Y-axis label — sticky-feeling vertical band with the category's hue */}
                   <div
-                    className="border-r-2 border-foreground/15 px-3 py-3 flex items-center gap-2"
+                    className="border-r-2 border-foreground/15 px-3 py-3"
                     style={{ backgroundColor: `hsl(${hueBg} 50% 92%)` }}
                   >
-                    <span
-                      className="h-3 w-3 rounded-full shrink-0 ring-1 ring-foreground/25"
-                      style={{ backgroundColor: `hsl(${hueBg} 65% 45%)` }}
-                      aria-hidden
-                    />
-                    <h3 className="vintage-heading text-[11px] font-bold leading-tight">{cat.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="h-3 w-3 rounded-full shrink-0 ring-1 ring-foreground/25"
+                        style={{ backgroundColor: `hsl(${hueBg} 65% 45%)` }}
+                        aria-hidden
+                      />
+                      <h3 className="vintage-heading text-[11px] font-bold leading-tight">{cat.name}</h3>
+                    </div>
+                    {/* ▲ meest gekozen / ▼ zeldzaamst — cells is zeldzaamst-eerst gesorteerd */}
+                    {cells.length >= 2 && (() => {
+                      const top = cells[cells.length - 1];
+                      const rare = cells[0];
+                      return (
+                        <div className="mt-1 space-y-0.5 text-[10px] leading-tight">
+                          <p className="font-semibold truncate" title={top.riderName}>
+                            ▲ {top.riderName} <span className="tabular-nums opacity-75">{top.count}/{totalEnabled}</span>
+                          </p>
+                          <p className="text-muted-foreground truncate" title={rare.riderName}>
+                            ▼ {rare.riderName} <span className="tabular-nums">{rare.count}/{totalEnabled}</span>
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* X-axis: rider cells, rarest-first */}
@@ -232,7 +252,7 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
                     {cells.map((cell) => {
                       // Per-category hue, with rareness driving both saturation and darkness.
                       // Rarer → more saturated and darker → screams for attention.
-                      const lightness = 90 - cell.rareness * 68; // 22..90
+                      const lightness = 86 - cell.rareness * 64; // 22..86 — plafond 86: populaire (lichte) cellen vallen niet weg
                       const saturation = 30 + cell.rareness * 45; // 30..75
                       const textLight = lightness < 58;
                       const dotOutline = textLight
@@ -250,6 +270,8 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
                               style={{
                                 backgroundColor: `hsl(${hueBg} ${saturation}% ${lightness}%)`,
                                 color: textLight ? "hsl(44 55% 95%)" : "hsl(var(--foreground))",
+                                // Hairline: bleke cellen blijven afgekaderd tegen de kaart.
+                                border: "1px solid hsl(30 25% 25% / 0.15)",
                               }}
                             >
                               <div className="flex items-start justify-between gap-1.5">
@@ -270,7 +292,7 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
                               </div>
                               <div className="mt-1.5 flex items-center justify-between gap-1.5">
                                 <div className="flex flex-wrap gap-0.5">
-                                  {cell.pickedBy.map((uid) => (
+                                  {cell.pickedBy.slice(0, MAX_DOTS).map((uid) => (
                                     <span
                                       key={uid}
                                       className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold bg-white text-black"
@@ -280,6 +302,18 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
                                       {initials(playerNameById.get(uid) ?? "?")}
                                     </span>
                                   ))}
+                                  {cell.count > MAX_DOTS && (
+                                    <span
+                                      className="inline-flex h-5 items-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums"
+                                      style={{
+                                        boxShadow: dotOutline,
+                                        background: textLight ? "hsl(44 55% 95% / 0.25)" : "hsl(30 35% 22% / 0.10)",
+                                        color: "inherit",
+                                      }}
+                                    >
+                                      +{cell.count - MAX_DOTS}
+                                    </span>
+                                  )}
                                 </div>
                                 <span className="text-[10px] tabular-nums font-semibold opacity-85 shrink-0">
                                   {cell.count}/{totalEnabled}
