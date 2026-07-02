@@ -326,20 +326,41 @@ export default function TeamBuilder() {
   const progressPct = totalRequired > 0 ? Math.round((completedPicks / totalRequired) * 100) : 0;
   const podiumFilled = gcPodium.filter(Boolean).length;
   const jerseysFilled = [pointsJersey, mountainJersey, youthJersey].filter(Boolean).length;
-  const missing: string[] = [];
+  // "Nog te doen"-items zijn klikbaar: target bepaalt waar de klik heen springt
+  // (desktop: scroll naar sectie; mobiel: pager-stap).
+  type MissingTarget = "categories" | "jokers" | "predictions";
+  const missing: Array<{ label: string; target: MissingTarget }> = [];
   if (completedPicks < totalRequired) {
-    missing.push(`Nog ${totalRequired - completedPicks} renner${totalRequired - completedPicks === 1 ? "" : "s"} kiezen in je categorieën`);
+    missing.push({ label: `Nog ${totalRequired - completedPicks} renner${totalRequired - completedPicks === 1 ? "" : "s"} kiezen in je categorieën`, target: "categories" });
   }
   if (jokerIds.length < 2) {
-    missing.push(`Nog ${2 - jokerIds.length} joker${2 - jokerIds.length === 1 ? "" : "s"} aanduiden`);
+    missing.push({ label: `Nog ${2 - jokerIds.length} joker${2 - jokerIds.length === 1 ? "" : "s"} aanduiden`, target: "jokers" });
   }
   if (podiumFilled < 3) {
-    missing.push(`Eindpodium voorspellen (${podiumFilled}/3)`);
+    missing.push({ label: `Eindpodium voorspellen (${podiumFilled}/3)`, target: "predictions" });
   }
   if (jerseysFilled < 3) {
-    missing.push(`Truitjes voorspellen — punten, berg & jongeren (${jerseysFilled}/3)`);
+    missing.push({ label: `Truitjes voorspellen — punten, berg & jongeren (${jerseysFilled}/3)`, target: "predictions" });
   }
   const teamComplete = missing.length === 0;
+
+  // Eerste categorie die nog niet vol zit (voor "Ga verder" + missing-kliks).
+  const firstIncompleteCatId =
+    categories.find((c) => (validPicksByCategory.get(c.id) ?? []).length < (c.max_picks ?? 1))?.id ?? null;
+
+  // Mobiel: spring naar de plek waar dit item in te vullen is.
+  const gotoMissingMobile = (target: MissingTarget) => {
+    if (target === "categories" && firstIncompleteCatId) jumpToCat(firstIncompleteCatId);
+    else jumpToCat("overview"); // jokers + voorspellingen staan op het overzicht
+  };
+
+  // Desktop: scroll naar de betreffende sectie (respecteert reduced motion).
+  const scrollToSectie = (target: MissingTarget) => {
+    const id = target === "categories" ? "sectie-categorieen" : target === "jokers" ? "sectie-jokers" : "sectie-voorspellingen";
+    const el = document.getElementById(id);
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  };
 
   // ── Wijzigingsdetectie op een AL INGEDIENDE ploeg ──────────────────────────
   // Auto-save is uit zodra de ploeg is ingediend; een trui-/joker-/podiumwijziging
@@ -412,7 +433,7 @@ export default function TeamBuilder() {
 
   // Gedeeld tussen desktop-layout en het mobiele overzicht-scherm.
   const jokersBlock = (
-    <div className="ornate-frame retro-border p-4 relative bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
+    <div id="sectie-jokers" className="ornate-frame retro-border p-4 relative bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))] scroll-mt-24">
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[hsl(var(--vintage-gold))] via-primary to-[hsl(var(--vintage-gold))]" />
       <div className="flex items-center gap-3 mb-1">
         <span className="text-2xl">🃏</span>
@@ -474,7 +495,7 @@ export default function TeamBuilder() {
   );
 
   const predictionsSection = (
-    <section className="vintage-paper vintage-frame p-4 md:p-6 relative overflow-hidden">
+    <section id="sectie-voorspellingen" className="vintage-paper vintage-frame p-4 md:p-6 relative overflow-hidden scroll-mt-24">
       {/* Affiche-koptekst */}
       <div className="text-center mb-4 md:mb-5 relative">
         <div className="vintage-stamp text-[10px] md:text-[11px] mb-1.5">
@@ -785,12 +806,19 @@ export default function TeamBuilder() {
           })}
         </div>
 
-        {/* Volgende-knop */}
+        {/* Volgende-knop — kleurt goud zodra de categorie vol is (bevestiging,
+            geen auto-doorschuiven: de gebruiker houdt de controle). */}
         <Button
           onClick={() => jumpToCat(isLast ? "overview" : next.id)}
-          className="w-full retro-border-primary font-bold justify-center gap-1.5"
+          variant={complete ? "outline" : "default"}
+          className={cn(
+            "w-full font-bold justify-center gap-1.5",
+            complete
+              ? "border-2 border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.15] text-[hsl(var(--vintage-gold))] hover:bg-[hsl(var(--vintage-gold))/0.25] hover:text-[hsl(var(--vintage-gold))]"
+              : "retro-border-primary",
+          )}
         >
-          {nextLabel} <ChevronRight className="h-4 w-4" />
+          {complete ? `✓ ${nextLabel}` : nextLabel} <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
     );
@@ -905,7 +933,11 @@ export default function TeamBuilder() {
               <p className="font-display font-bold mb-1">Nog niet voltallig</p>
               <ul className="list-disc pl-5 space-y-0.5 text-muted-foreground">
                 {missing.map((m) => (
-                  <li key={m}>{m}</li>
+                  <li key={m.label}>
+                    <button type="button" onClick={() => gotoMissingMobile(m.target)} className="text-left hover:underline hover:text-foreground">
+                      {m.label}
+                    </button>
+                  </li>
                 ))}
               </ul>
             </div>
@@ -1094,9 +1126,11 @@ export default function TeamBuilder() {
                   {!gameLocked && !isSubmitted && missing.length > 0 && (
                     <ul className="mt-3 pt-3 border-t border-border/60 flex flex-wrap gap-x-4 gap-y-1.5 text-[12px] text-muted-foreground">
                       {missing.map((m) => (
-                        <li key={m} className="flex items-center gap-1.5">
-                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500/70 shrink-0" />
-                          {m}
+                        <li key={m.label}>
+                          <button type="button" onClick={() => scrollToSectie(m.target)} className="flex items-center gap-1.5 hover:underline hover:text-foreground">
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500/70 shrink-0" />
+                            {m.label}
+                          </button>
                         </li>
                       ))}
                     </ul>
@@ -1134,7 +1168,7 @@ export default function TeamBuilder() {
 
 
               {/* Categories */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div id="sectie-categorieen" className="grid grid-cols-1 lg:grid-cols-2 gap-4 scroll-mt-24">
                 {categories.map((category, idx) => {
                   const selected = validPicksByCategory.get(category.id) ?? [];
                   const max = category.max_picks ?? 1;
@@ -1263,7 +1297,11 @@ export default function TeamBuilder() {
                   </p>
                   <ul className="list-disc pl-5 space-y-1">
                     {missing.map((m) => (
-                      <li key={m}>{m}</li>
+                      <li key={m.label}>
+                        <button type="button" onClick={() => scrollToSectie(m.target)} className="text-left hover:underline hover:text-foreground">
+                          {m.label}
+                        </button>
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -1298,6 +1336,60 @@ export default function TeamBuilder() {
                 </Button>
               </div>
               </div>
+
+              {/* ── MOBIEL: sticky onderbalk — voortgang + slimme CTA. Boven de
+                  BottomNav geplaatst (die is fixed bottom-0 z-50, anders valt
+                  deze balk erachter). Container heeft pb-32 → geen overlap. ── */}
+              {!gameLocked && (
+                <div
+                  className="fixed inset-x-0 z-40 md:hidden border-t border-border bg-card/95 backdrop-blur px-3 pt-2 pb-2"
+                  style={{ bottom: "calc(3.65rem + env(safe-area-inset-bottom))" }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-mono tabular-nums text-muted-foreground truncate">
+                        Renners {completedPicks}/{totalRequired} · 🃏 {jokerIds.length}/2
+                      </p>
+                      <div className="h-1.5 rounded-full bg-secondary overflow-hidden mt-1">
+                        <div
+                          className="h-full bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
+                          style={{ width: `${progressPct}%` }}
+                        />
+                      </div>
+                    </div>
+                    {!isAuthed ? (
+                      <Button size="sm" onClick={() => navigate("/login")} className="shrink-0 retro-border-primary font-bold">
+                        Account
+                      </Button>
+                    ) : !teamComplete ? (
+                      <Button
+                        size="sm"
+                        onClick={() => (firstIncompleteCatId ? jumpToCat(firstIncompleteCatId) : jumpToCat("overview"))}
+                        className="shrink-0 retro-border-primary font-bold"
+                      >
+                        Ga verder
+                      </Button>
+                    ) : !isSubmitted || isDirty ? (
+                      <Button
+                        size="sm"
+                        onClick={handleSubmit}
+                        disabled={submitDisabled}
+                        className={cn("shrink-0 retro-border-primary font-bold", submitActive && "animate-pulse")}
+                      >
+                        {submitLabel}
+                      </Button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => jumpToCat("overview")}
+                        className="shrink-0 jersey-badge bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40"
+                      >
+                        ✅ Ingediend
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
               </>
               )}
             </TabsContent>
