@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase, Coffee } from "lucide-react";
+import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 
 type BreakdownRow = {
@@ -129,8 +129,6 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [lefBusy, setLefBusy] = useState(false);
-  // Per-etappe "Steun Koerspoule"-banner-staat (100% handmatig; nooit auto).
-  const [bannerMap, setBannerMap] = useState<Record<string, boolean>>({});
 
   // Wist alle Lefevère-rapporten van deze game → elke deelnemer krijgt een vers
   // rapport bij de volgende weergave (nu via het nieuwe model / verbeterde prompt).
@@ -169,32 +167,6 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
       return;
     }
     setRows((data ?? []) as Row[]);
-
-    // Banner-staat per etappe (faalt stil als de migratie nog niet draaide).
-    const { data: bdata } = await supabase
-      .from("stages")
-      .select("id, support_banner_visible")
-      .eq("game_id", activeGameId);
-    const m: Record<string, boolean> = {};
-    for (const s of (bdata ?? []) as Array<{ id: string; support_banner_visible: boolean }>) {
-      m[s.id] = !!s.support_banner_visible;
-    }
-    setBannerMap(m);
-  }
-
-  // Handmatige toggle — de ENIGE manier waarop de banner aan/uit gaat.
-  async function toggleBanner(stageId: string, next: boolean) {
-    if (!supabase) return;
-    const { error } = await supabase
-      .from("stages")
-      .update({ support_banner_visible: next, support_banner_updated_at: new Date().toISOString() })
-      .eq("id", stageId);
-    if (error) {
-      toast.error(`Banner togglen faalde: ${error.message}`);
-      return;
-    }
-    setBannerMap((prev) => ({ ...prev, [stageId]: next }));
-    toast.success(next ? "☕ Steun-banner AAN voor deze etappe" : "Steun-banner uit");
   }
 
   useEffect(() => {
@@ -392,20 +364,6 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   }}
                 >
                   <Undo2 className="w-3 h-3 mr-1" />Intrekken
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className={
-                    bannerMap[r.stage_id]
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground"
-                  }
-                  title="Toon de 'Steun Koerspoule'-banner in Mijn Peloton voor deze game. 100% handmatig — gaat nooit vanzelf aan."
-                  onClick={() => toggleBanner(r.stage_id, !bannerMap[r.stage_id])}
-                >
-                  <Coffee className="w-3 h-3 mr-1" />
-                  Steun-banner: {bannerMap[r.stage_id] ? "AAN" : "uit"}
                 </Button>
               </div>
               <StageBreakdown stageId={r.stage_id} />

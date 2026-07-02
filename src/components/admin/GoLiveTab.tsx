@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Rocket } from "lucide-react";
+import { Eye, Rocket, Coffee } from "lucide-react";
 import { toast } from "sonner";
 import { isPreviewStatus } from "@/lib/gameStatus";
 
@@ -21,13 +21,15 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: string; gameStatus?: string | null }) {
   const [testmodus, setTestmodus] = useState(false);
+  const [banner, setBanner] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!supabase || !activeGameId) return;
     (async () => {
-      const { data } = await supabase.from("games").select("admin_testmodus").eq("id", activeGameId).maybeSingle();
+      const { data } = await supabase.from("games").select("admin_testmodus, support_banner_visible, support_banner_updated_at").eq("id", activeGameId).maybeSingle();
       setTestmodus(Boolean(data?.admin_testmodus));
+      setBanner(Boolean(data?.support_banner_visible));
       setLoaded(true);
     })();
   }, [activeGameId]);
@@ -38,6 +40,16 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
     if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
     setTestmodus(next);
     toast.success(next ? "Testmodus AAN — je ziet als admin alles ongeacht de status" : "Testmodus uit — je ziet de game zoals de status hoort");
+  }
+
+  async function toggleBanner(next: boolean) {
+    if (!supabase || !activeGameId) return;
+    const { error } = await supabase.from("games")
+      .update({ support_banner_visible: next, support_banner_updated_at: new Date().toISOString() })
+      .eq("id", activeGameId);
+    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
+    setBanner(next);
+    toast.success(next ? "Steun-banner AAN voor deze game" : "Steun-banner uit");
   }
 
   const preview = isPreviewStatus(gameStatus);
@@ -60,6 +72,22 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
           </div>
           <Button size="sm" variant={testmodus ? "default" : "outline"} className="shrink-0" disabled={!activeGameId || !loaded} onClick={() => toggleTestmodus(!testmodus)}>
             {testmodus ? "Zet uit" : "Zet aan"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className={banner ? "border-[hsl(var(--vintage-gold))]" : ""}>
+        <CardContent className="flex items-center justify-between gap-3 p-4">
+          <div className="min-w-0">
+            <p className="font-display font-bold flex items-center gap-2">
+              <Coffee className="w-4 h-4" /> Steun Koerspoule-banner {banner ? "AAN" : "uit"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Toont de Steun Koerspoule-banner in Mijn Peloton voor alle deelnemers van deze game. Handmatig, gaat nooit vanzelf aan.
+            </p>
+          </div>
+          <Button size="sm" variant={banner ? "default" : "outline"} className="shrink-0" disabled={!activeGameId || !loaded} onClick={() => toggleBanner(!banner)}>
+            {banner ? "Zet uit" : "Zet aan"}
           </Button>
         </CardContent>
       </Card>
