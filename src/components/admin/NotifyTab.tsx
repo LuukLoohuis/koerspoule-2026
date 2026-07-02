@@ -123,13 +123,63 @@ export default function NotifyTab() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  // Voortgang van de lopende campagne (mail-wachtrij): gepolld uit mail_queue.
+  const [campaignId, setCampaignId] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ total: number; sent: number; failed: number; pending: number } | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
     supabase.from("games").select("id, name, year").order("year", { ascending: false }).then(({ data }) => {
       setGames((data ?? []) as Game[]);
     });
+    // Loopt er nog een campagne (bv. na pagina-herlaad)? Pak 'm op voor de voortgang.
+    supabase
+      .from("mail_campaigns")
+      .select("id")
+      .eq("status", "sending")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setCampaignId((data as { id: string }).id);
+      });
   }, []);
+
+  // Voortgang pollen zolang er een campagne loopt (elke 3s, stopt zodra klaar).
+  useEffect(() => {
+    if (!supabase || !campaignId) return;
+    let stop = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const tick = async () => {
+      if (!supabase || stop) return;
+      const [tot, sent, failed, pending] = await Promise.all([
+        supabase.from("mail_queue").select("id", { count: "exact", head: true }).eq("campaign_id", campaignId),
+        supabase.from("mail_queue").select("id", { count: "exact", head: true }).eq("campaign_id", campaignId).eq("status", "sent"),
+        supabase.from("mail_queue").select("id", { count: "exact", head: true }).eq("campaign_id", campaignId).eq("status", "failed"),
+        supabase.from("mail_queue").select("id", { count: "exact", head: true }).eq("campaign_id", campaignId).in("status", ["pending", "processing"]),
+      ]);
+      if (stop) return;
+      const next = {
+        total: tot.count ?? 0,
+        sent: sent.count ?? 0,
+        failed: failed.count ?? 0,
+        pending: pending.count ?? 0,
+      };
+      setProgress(next);
+      // Nog werk over (of nog niets ingeladen)? → opnieuw pollen.
+      if (next.total === 0 || next.pending > 0) timer = setTimeout(tick, 3000);
+    };
+    tick();
+    return () => { stop = true; if (timer) clearTimeout(timer); };
+  }, [campaignId]);
+
+  // Hervat: trapt de verwerker opnieuw aan (bv. als de keten ooit stokte).
+  async function resumeQueue() {
+    if (!supabase) return;
+    const { error } = await supabase.functions.invoke("process-mail-queue", { body: {} });
+    if (error) toast.error(`Hervatten mislukt: ${error.message}`);
+    else toast.success("Verwerker gestart — voortgang loopt hieronder bij");
+  }
 
   useEffect(() => {
     if (showPreview && iframeRef.current) {
@@ -175,16 +225,10 @@ export default function NotifyTab() {
     setSending(false);
     setConfirmOpen(false);
     if (error) { toast.error(`Verzenden mislukt: ${error.message}`); return; }
-    const r = data as { sent: number; total: number; failed?: number; rate_limited?: number };
-    const failed = r?.failed ?? Math.max(0, (r?.total ?? 0) - (r?.sent ?? 0));
-    if (failed > 0) {
-      toast.warning(
-        `${r?.sent ?? 0} van ${r?.total ?? 0} verstuurd — ${failed} mislukt` +
-          (r?.rate_limited ? ` (${r.rate_limited}× rate-limit)` : ""),
-      );
-    } else {
-      toast.success(`${r?.sent ?? 0} van ${r?.total ?? 0} mails verstuurd`);
-    }
+    const r = data as { enqueued: number; campaign_id: string };
+    setProgress(null);
+    setCampaignId(r?.campaign_id ?? null);
+    toast.success(`${r?.enqueued ?? 0} mails klaargezet — verzending loopt op de achtergrond`);
   }
 
   const selectedGameName = gameId === "all"
@@ -329,6 +373,37 @@ export default function NotifyTab() {
             {sending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
             Versturen naar {selectedGameName}…
           </Button>
+
+          {/* Voortgang van de lopende/laatste campagne (mail-wachtrij) */}
+          {campaignId && progress && progress.total > 0 && (
+            <div className="rounded-md border p-3 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">
+                  {progress.pending > 0 ? "Verzending loopt…" : "Verzending afgerond"}
+                </span>
+                <span className="font-mono tabular-nums text-muted-foreground">
+                  {progress.sent} / {progress.total} verzonden
+                  {progress.failed > 0 && <span className="text-destructive"> · {progress.failed} mislukt</span>}
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-500"
+                  style={{ width: `${Math.round((progress.sent / Math.max(1, progress.total)) * 100)}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">
+                  Loopt op de achtergrond door — je mag deze pagina sluiten. Per ontvanger wordt afgevinkt: nooit dubbel.
+                </p>
+                {progress.pending > 0 && (
+                  <Button size="sm" variant="outline" className="h-7 text-xs shrink-0" onClick={resumeQueue}>
+                    Hervat verwerking
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
 
         </CardContent>
       </Card>

@@ -1,107 +1,15 @@
 // Stuurt een aangepast bericht naar alle deelnemers van een koers (of alle koersen).
 // Admin-only. Filtert uitgeschreven adressen. Voegt persoonlijke uitschrijflink toe.
+// Grote mailings gaan via de mail-wachtrij: deze functie zet ontvangers klaar in
+// mail_queue en start process-mail-queue (zelf-herhalend) — zo is 10.000+ mails
+// geen probleem met de edge-tijdslimiet en is alles hervatbaar.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { buildHtml, MAIL_WORKER, BASE_URL } from "../_shared/email.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const MAIL_WORKER = "https://koerspoule-mail.luuk-loohuis.workers.dev";
-const BASE_URL = "https://koerspoule.nl";
-// ?v= cache-bust: na opnieuw uploaden onder dezelfde naam serveert de CDN/mailclient
-// anders het oude plaatje. Bump dit nummer bij elke nieuwe upload.
-const IMG_V = "4";
-const HEADER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_header_afbeelding.png?v=${IMG_V}`;
-const FOOTER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_footer_strip.png?v=${IMG_V}`;
-// Frame-kleuren afgestemd op de header/footer-art zodat body naadloos doorloopt.
-const FRAME_EDGE = "#F5D9A7";   // tan rand buiten de gouden lijn (= cap-randen)
-const FRAME_GOLD = "#DC9E29";   // gouden kaderlijn
-const FRAME_CREAM = "#F5E9D5";  // = crème onderaan de header-PNG → naadloze overloop
-
-function buildHtml(
-  body: string,
-  unsubscribeUrl: string,
-  _titleColor = "#1a1a1a",
-  _titleSize = 11
-): string {
-  // Compact: lege regel = alinea (nette marge), enkele regelovergang = <br>.
-  // Markdown-bold: **tekst** → vetgedrukt (spiegelt NotifyTab/buildEmailHtml).
-  const mdBold = (s: string) => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  const bodyHtml = body
-    .trim()
-    .split(/\n\s*\n+/)
-    .map((p) => `<p style="margin:0 0 11px 0;">${mdBold(p.replace(/\r\n|\r|\n/g, "<br>"))}</p>`)
-    .join("");
-  return `<!doctype html>
-<html lang="nl" xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Koerspoule Communiqué</title></head>
-<body style="margin:0;padding:0;background-color:#e9e3d6;">
-  <center style="width:100%;background-color:#e9e3d6;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;background-color:#e9e3d6;margin:0;padding:0;">
-      <tr><td align="center" style="padding:24px 12px;">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;border-collapse:collapse;margin:0 auto;background-color:${FRAME_EDGE};">
-          <!-- Header-afbeelding (cap met afgeronde onderkant) -->
-          <tr><td style="padding:0;line-height:0;font-size:0;background-color:${FRAME_EDGE};">
-            <img src="${HEADER_IMG}" alt="Koerspoule header" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0;" />
-          </td></tr>
-
-          <!-- Content: tan-rand → gouden kaderlijn → crème binnenvlak, zodat het
-               kader van de header naadloos doorloopt naar de footer. -->
-          <tr><td align="center" style="padding:0;background-color:${FRAME_EDGE};">
-            <table role="presentation" width="574" cellspacing="0" cellpadding="0" border="0" style="width:574px;max-width:574px;border-collapse:collapse;background-color:${FRAME_CREAM};border-left:2px solid ${FRAME_GOLD};border-right:2px solid ${FRAME_GOLD};">
-              <tr><td style="padding:16px 28px 20px 28px;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
-                <div style="margin:0 0 10px 0;font-size:28px;line-height:34px;font-weight:bold;color:#211d19;">
-                  Beste deelnemer,
-                </div>
-                <div style="margin:0 0 10px 0;font-size:17px;line-height:24px;color:#3d362e;">
-                  ${bodyHtml}
-                </div>
-                <div style="text-align:center;margin:20px 0 22px 0;">
-                  <a href="${BASE_URL}" target="_blank" style="display:inline-block;padding:13px 26px;background-color:#d4a62b;color:#1d1916;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;border-radius:6px;">
-                    Ga naar Koerspoule
-                  </a>
-                </div>
-                <div style="margin:0;font-size:18px;line-height:30px;color:#3d362e;">
-                  Veel koersplezier,<br>
-                  <strong>Het Koerspoule team</strong>
-                </div>
-                <div style="margin-top:20px;padding-top:16px;border-top:1px solid #d8c89d;text-align:center;">
-                  <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;letter-spacing:2px;text-transform:uppercase;color:#8a6d2b;margin-bottom:10px;">
-                    Volg Koerspoule
-                  </div>
-                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
-                    <tr>
-                      <td align="center" bgcolor="#1A1612" style="border-radius:10px;border:1px solid #E1A33A;">
-                        <a href="https://www.instagram.com/koerspoule" target="_blank" style="display:inline-block;padding:12px 24px;font-family:Georgia,'Times New Roman',serif;font-size:15px;font-weight:bold;color:#F5EDE0;text-decoration:none;border-radius:10px;">
-                          <span style="color:#E1A33A;font-size:17px;">&#9673;</span>&nbsp;&nbsp;@koerspoule&nbsp;op Instagram
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                  <div style="margin-top:10px;font-size:15px;line-height:24px;color:#655847;">
-                    Blijf op de hoogte van updates, standen en koerssfeer.
-                  </div>
-                  <div style="margin-top:14px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:18px;color:#9a8f7c;">
-                    <a href="${BASE_URL}" style="color:#9a8f7c;text-decoration:none;">koerspoule.nl</a>
-                    &nbsp;·&nbsp;
-                    <a href="${unsubscribeUrl}" style="color:#9a8f7c;text-decoration:underline;">uitschrijven</a>
-                  </div>
-                </div>
-              </td></tr>
-            </table>
-          </td></tr>
-
-          <!-- Footer-afbeelding (cap met afgeronde bovenkant + icoonstrip) -->
-          <tr><td style="padding:0;line-height:0;font-size:0;background-color:${FRAME_EDGE};">
-            <img src="${FOOTER_IMG}" alt="Koerspoule footer" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0;" />
-          </td></tr>
-        </table>
-      </td></tr>
-    </table>
-  </center>
-</body></html>`;
-}
-
 async function getOrCreateToken(admin: ReturnType<typeof createClient>, email: string): Promise<string> {
   const { data: existing } = await admin
     .from("email_unsubscribe_tokens")
@@ -227,56 +135,43 @@ Deno.serve(async (req) => {
       await admin.from("email_unsubscribe_tokens").insert(toCreate.slice(i, i + 500));
     }
 
-    // Verstuur in BATCHES onder de Resend req/s-limiet (Pro ≈ 10/s → we mikken op
-    // ~8/s). Retry-op-429 vangt incidentele rate-limit-hikken op.
-    const BATCH_SIZE = 10;       // gelijktijdige mails per batch (Resend Pro ≈ 10/s)
-    const PAUSE_MS = 800;        // ≈ 8-9 mails/sec na batch-latency
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-    let sent = 0;
-    let rateLimited = 0;         // hoeveel keer 429 geraakt (na alle retries opgegeven)
-    const errors: string[] = [];
+    // WACHTRIJ: campagne + ontvangers klaarzetten en de verwerker starten.
+    // De verwerker (process-mail-queue) verstuurt in chunks en herhaalt zichzelf
+    // tot alles verzonden is — geen edge-time-out, hervatbaar, nooit dubbel.
+    const { data: campaign, error: campErr } = await admin
+      .from("mail_campaigns")
+      .insert({
+        subject: subject ?? "Bericht van Koerspoule",
+        body: body ?? "",
+        title_color: tColor,
+        title_size: tSize,
+        total: recipients.length,
+        created_by: user.id,
+      } as never)
+      .select("id")
+      .single();
+    if (campErr) throw campErr;
+    const campaignId = (campaign as { id: string }).id;
 
-    // Eén mail versturen mét retry-op-429 (rate-limit): backoff 1.5s/3s/6s.
-    const sendOne = async (email: string) => {
-      try {
-        const token = tokenByEmail.get(email) ?? (await getOrCreateToken(admin, email));
-        const unsubUrl = `${BASE_URL}/uitschrijven?token=${token}`;
-        const payload = JSON.stringify({
-          to: email,
-          subject: subject ?? "Bericht van Koerspoule",
-          html: buildHtml(body ?? "", unsubUrl, tColor, tSize),
-        });
-        for (let attempt = 0; attempt < 4; attempt += 1) {
-          const res = await fetch(MAIL_WORKER, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Worker-Secret": Deno.env.get("MAIL_WORKER_SECRET") ?? "" },
-            body: payload,
-          });
-          if (res.ok) { sent++; return; }
-          if (res.status === 429 && attempt < 3) { await sleep(1500 * (attempt + 1)); continue; }
-          if (res.status === 429) { rateLimited++; errors.push(`${email}: 429 (rate-limit na retries)`); return; }
-          errors.push(`${email}: HTTP ${res.status}`); return;
-        }
-      } catch (e) {
-        errors.push(`${email}: ${e instanceof Error ? e.message : String(e)}`);
-      }
-    };
-
-    for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-      const slice = recipients.slice(i, i + BATCH_SIZE);
-      await Promise.allSettled(slice.map(sendOne));
-      if (i + BATCH_SIZE < recipients.length) await sleep(PAUSE_MS);
+    const queueRows = recipients.map((email) => ({
+      campaign_id: campaignId,
+      email,
+      unsub_token: tokenByEmail.get(email)!,
+    }));
+    for (let i = 0; i < queueRows.length; i += 500) {
+      const { error: qErr } = await admin.from("mail_queue").insert(queueRows.slice(i, i + 500) as never);
+      if (qErr) throw qErr;
     }
 
+    // Verwerker starten (fire-and-forget; keten houdt zichzelf in leven).
+    fetch(`${supabaseUrl}/functions/v1/process-mail-queue`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+      body: "{}",
+    }).catch(() => undefined);
+
     return new Response(
-      JSON.stringify({
-        sent,
-        total: recipients.length,
-        failed: recipients.length - sent,
-        rate_limited: rateLimited,
-        suppressed: suppressedCount,
-        errors: errors.slice(0, 10),
-      }),
+      JSON.stringify({ enqueued: recipients.length, campaign_id: campaignId, suppressed: suppressedCount }),
       { headers: { ...CORS, "Content-Type": "application/json" } }
     );
   } catch (err: unknown) {
