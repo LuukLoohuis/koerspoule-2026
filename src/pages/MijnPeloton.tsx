@@ -1075,9 +1075,10 @@ export default function MijnPeloton() {
         <div className="double-rule mt-2 md:mt-3 mx-auto max-w-md" />
       </div>
 
-      {/* Handmatige steun-banner (alleen als de admin 'm aanzette voor deze game). */}
+      {/* Handmatige steun-banner (alleen als de admin 'm aanzette voor deze game).
+          Zelfde breedte als de tabbalk-container (max-w-5xl). */}
       {supportBanner.data?.active && (
-        <SteunBanner revKey={supportBanner.data.updatedAt} className="mb-3" />
+        <SteunBanner revKey={supportBanner.data.updatedAt} className="mb-3 max-w-5xl mx-auto" />
       )}
 
       {/* 3. Ploegnaam-nudge — alleen tonen als er nog géén ploegnaam is.
