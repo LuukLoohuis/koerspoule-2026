@@ -9,7 +9,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, MapPin } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -76,15 +77,32 @@ export default function SubpouleEvolutionChart({
   const { data: members = [] } = useSubpouleMembers(subpouleId);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stages = [] } = useStages(game?.id);
-  // Alleen de stage_points van de subpouleleden (schaalt naar veel deelnemers).
+  // Woonplaats-filter (grote subpoules): "all" | "none" (zonder woonplaats) | plaats.
+  const [woonplaatsFilter, setWoonplaatsFilter] = useState<string>("all");
+  const woonplaatsen = useMemo(() => {
+    const s = new Set<string>();
+    for (const m of members) { const w = m.woonplaats?.trim(); if (w) s.add(w); }
+    return [...s].sort((a, b) => a.localeCompare(b, "nl"));
+  }, [members]);
+  const zonderWoonplaatsCount = useMemo(
+    () => members.filter((m) => !m.woonplaats?.trim()).length,
+    [members],
+  );
+  const filteredMembers = useMemo(() => {
+    if (woonplaatsFilter === "all") return members;
+    if (woonplaatsFilter === "none") return members.filter((m) => !m.woonplaats?.trim());
+    return members.filter((m) => m.woonplaats?.trim() === woonplaatsFilter);
+  }, [members, woonplaatsFilter]);
+
+  // Alleen de stage_points van de (gefilterde) subpouleleden (schaalt naar veel deelnemers).
   const memberEntryIds = useMemo(() => {
-    const memberUserIds = new Set(members.map((m) => m.user_id));
+    const memberUserIds = new Set(filteredMembers.map((m) => m.user_id));
     return entries.filter((e) => memberUserIds.has(e.user_id)).map((e) => e.id);
-  }, [members, entries]);
+  }, [filteredMembers, entries]);
   const { data: stagePoints = [] } = useStagePointsForEntries(game?.id, memberEntryIds);
 
   const memberRows = useMemo(() => {
-    return members
+    return filteredMembers
       .map((m) => {
         const entry = entries.find((e) => e.user_id === m.user_id);
         return {
@@ -96,11 +114,19 @@ export default function SubpouleEvolutionChart({
         };
       })
       .sort((a, b) => b.total_points - a.total_points);
-  }, [members, entries]);
+  }, [filteredMembers, entries]);
 
   const [highlightId, setHighlightId] = useState<string | null>(null);
   useEffect(() => {
     if (highlightId) return;
+    const me = memberRows.find((m) => m.user_id === user?.id);
+    setHighlightId(me?.user_id ?? memberRows[0]?.user_id ?? null);
+  }, [memberRows, user?.id, highlightId]);
+  // Filterwissel: valt de gemarkeerde deelnemer buiten het woonplaats-filter,
+  // markeer dan (net als hierboven) jezelf of de eerste zichtbare deelnemer.
+  useEffect(() => {
+    if (!highlightId || memberRows.length === 0) return;
+    if (memberRows.some((m) => m.user_id === highlightId)) return;
     const me = memberRows.find((m) => m.user_id === user?.id);
     setHighlightId(me?.user_id ?? memberRows[0]?.user_id ?? null);
   }, [memberRows, user?.id, highlightId]);
@@ -256,6 +282,31 @@ export default function SubpouleEvolutionChart({
             </div>
           )}
         </div>
+
+        {/* Woonplaats-filter — alleen bij subpoules met 2+ woonplaatsen */}
+        {woonplaatsen.length >= 2 && (
+          <div className="flex items-center gap-2 mt-3">
+            <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground/70 shrink-0">
+              <MapPin className="h-3 w-3" /> Woonplaats
+            </span>
+            <Select value={woonplaatsFilter} onValueChange={setWoonplaatsFilter}>
+              <SelectTrigger className="h-8 w-auto min-w-[180px] max-w-full text-xs">
+                <SelectValue placeholder={`Alle woonplaatsen (${members.length})`} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">Alle woonplaatsen ({members.length})</SelectItem>
+                {woonplaatsen.map((plaats) => (
+                  <SelectItem key={plaats} value={plaats} className="text-xs">
+                    {plaats} ({members.filter((m) => m.woonplaats?.trim() === plaats).length})
+                  </SelectItem>
+                ))}
+                {zonderWoonplaatsCount > 0 && (
+                  <SelectItem value="none" className="text-xs">Zonder woonplaats ({zonderWoonplaatsCount})</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {/* Legend pills */}
         {memberRows.length > 0 && (
