@@ -12,7 +12,7 @@ import {
 } from "@/hooks/useSubpouleEntries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, ArrowUp, ArrowDown, Minus, Crown, Trophy } from "lucide-react";
+import { Star, ArrowUp, ArrowDown, Crown, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Gedeelde stijl voor "zelfde keuze"-rijen in álle head-to-head/benchmark-
@@ -179,17 +179,35 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        {/* Header row */}
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 px-3 py-3 border-b-2 border-foreground bg-muted/30">
-          <div className="text-right">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Jij</p>
-            <p className="font-display font-bold text-lg tabular-nums">{myTotal} pt</p>
+        {/* Scorebord-kop met balansbalk */}
+        <div className="px-3 py-3 border-b-2 border-foreground bg-muted/30">
+          <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+            <div className="text-right">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Jij</p>
+              <p className="text-2xl font-display font-bold tabular-nums">{myTotal} <span className="text-[10px] font-normal text-muted-foreground">pt</span></p>
+            </div>
+            <div className="h-8 w-8 rounded-full border-2 border-foreground bg-card flex items-center justify-center text-[10px] font-bold">VS</div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{opponentName}</p>
+              <p className="text-2xl font-display font-bold tabular-nums">{oppTotal} <span className="text-[10px] font-normal text-muted-foreground">pt</span></p>
+            </div>
           </div>
-          <div className="text-center text-xs text-muted-foreground self-center">vs</div>
-          <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{opponentName}</p>
-            <p className="font-display font-bold text-lg tabular-nums">{oppTotal} pt</p>
-          </div>
+          {(() => {
+            const sum = myTotal + oppTotal;
+            const myShare = sum > 0 ? (myTotal / sum) * 100 : 50;
+            return (
+              <>
+                <div className="relative mt-2.5 h-2.5 rounded-full overflow-hidden border border-foreground/30 flex">
+                  <div style={{ width: `${myShare}%` }} className="bg-primary" />
+                  <div style={{ width: `${100 - myShare}%` }} className="bg-foreground/20" />
+                  <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-card" />
+                </div>
+                <div className="mt-1 flex justify-between text-[10px] tabular-nums text-muted-foreground">
+                  <span>{myShare.toFixed(1)}%</span><span>{(100 - myShare).toFixed(1)}%</span>
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* Category rows */}
@@ -228,28 +246,26 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                         </p>
                       );
                     })}
-                    <p className="text-xs font-display font-bold tabular-nums">{myPoints} pt</p>
+                    <p className="text-base font-display font-bold tabular-nums">{myPoints} <span className="text-[10px] font-normal text-muted-foreground">pt</span></p>
                   </div>
 
-                  <div className="text-xs flex flex-col items-center justify-center min-w-[36px]">
-                    {localDiff > 0 ? (
-                      <ArrowUp className="h-3 w-3 text-primary" />
-                    ) : localDiff < 0 ? (
-                      <ArrowDown className="h-3 w-3 text-destructive" />
-                    ) : (
-                      <Minus className="h-3 w-3 text-muted-foreground" />
+                  <span
+                    className={cn(
+                      "inline-flex items-center justify-center gap-0.5 rounded-full border-[1.5px]",
+                      "px-2.5 py-0.5 text-[13px] font-mono font-bold tabular-nums min-w-[52px] shrink-0 self-center",
+                      same
+                        ? "border-[hsl(var(--vintage-gold))] bg-white/70 " + SAME_TEXT
+                        : localDiff > 0
+                          ? "border-emerald-600/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                          : localDiff < 0
+                            ? "border-destructive/60 bg-destructive/10 text-destructive"
+                            : "border-border bg-secondary/50 text-muted-foreground"
                     )}
-                    <span
-                      className={cn(
-                        "text-[10px] font-mono font-bold",
-                        localDiff > 0 && "text-primary",
-                        localDiff < 0 && "text-destructive",
-                        localDiff === 0 && (same ? SAME_TEXT : "text-muted-foreground")
-                      )}
-                    >
-                      {localDiff > 0 ? "+" : ""}{localDiff}
-                    </span>
-                  </div>
+                  >
+                    {localDiff > 0 && <ArrowUp className="h-3 w-3" />}
+                    {localDiff < 0 && <ArrowDown className="h-3 w-3" />}
+                    {localDiff > 0 ? "+" : ""}{localDiff}
+                  </span>
 
                   <div>
                     {oppRiderIds.length === 0 ? (
@@ -263,9 +279,29 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                         </p>
                       );
                     })}
-                    <p className="text-xs font-display font-bold tabular-nums">{oppPoints} pt</p>
+                    <p className="text-base font-display font-bold tabular-nums">{oppPoints} <span className="text-[10px] font-normal text-muted-foreground">pt</span></p>
                   </div>
                 </div>
+                {/* Divergerende balk: links jij, rechts tegenstander (winnaar in kleur) */}
+                {(() => {
+                  const maxPts = Math.max(myPoints, oppPoints, 1);
+                  return (
+                    <div className="mt-1.5 grid grid-cols-2 gap-0.5">
+                      <div className="flex justify-end">
+                        <div
+                          className={cn("h-1.5 rounded-l-full", same ? "bg-[hsl(var(--vintage-gold))]" : myPoints >= oppPoints ? "bg-primary" : "bg-foreground/20")}
+                          style={{ width: `${(myPoints / maxPts) * 100}%` }}
+                        />
+                      </div>
+                      <div>
+                        <div
+                          className={cn("h-1.5 rounded-r-full", same ? "bg-[hsl(var(--vintage-gold))]" : oppPoints >= myPoints ? "bg-primary" : "bg-foreground/20")}
+                          style={{ width: `${(oppPoints / maxPts) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -291,9 +327,28 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                   );
                 })
               )}
-              <p className="text-xs font-display font-bold tabular-nums">{myJokerPoints} pt</p>
+              <p className="text-base font-display font-bold tabular-nums">{myJokerPoints} <span className="text-[10px] font-normal text-muted-foreground">pt</span></p>
             </div>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground min-w-[36px] text-center">Joker</span>
+            {(() => {
+              const jDiff = myJokerPoints - oppJokerPoints;
+              return (
+                <span
+                  className={cn(
+                    "inline-flex items-center justify-center gap-0.5 rounded-full border-[1.5px]",
+                    "px-2.5 py-0.5 text-[13px] font-mono font-bold tabular-nums min-w-[52px] shrink-0 self-center",
+                    jDiff > 0
+                      ? "border-emerald-600/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                      : jDiff < 0
+                        ? "border-destructive/60 bg-destructive/10 text-destructive"
+                        : "border-border bg-secondary/50 text-muted-foreground"
+                  )}
+                >
+                  {jDiff > 0 && <ArrowUp className="h-3 w-3" />}
+                  {jDiff < 0 && <ArrowDown className="h-3 w-3" />}
+                  {jDiff > 0 ? "+" : ""}{jDiff}
+                </span>
+              );
+            })()}
             <div className="space-y-0.5">
               {oppJokerIds.length === 0 ? (
                 <p className="text-sm text-muted-foreground">—</p>
@@ -307,9 +362,29 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                   );
                 })
               )}
-              <p className="text-xs font-display font-bold tabular-nums">{oppJokerPoints} pt</p>
+              <p className="text-base font-display font-bold tabular-nums">{oppJokerPoints} <span className="text-[10px] font-normal text-muted-foreground">pt</span></p>
             </div>
           </div>
+          {/* Divergerende balk voor de jokerpunten */}
+          {(() => {
+            const maxPts = Math.max(myJokerPoints, oppJokerPoints, 1);
+            return (
+              <div className="px-3 pb-2.5 -mt-1 grid grid-cols-2 gap-0.5">
+                <div className="flex justify-end">
+                  <div
+                    className={cn("h-1.5 rounded-l-full", myJokerPoints >= oppJokerPoints ? "bg-primary" : "bg-foreground/20")}
+                    style={{ width: `${(myJokerPoints / maxPts) * 100}%` }}
+                  />
+                </div>
+                <div>
+                  <div
+                    className={cn("h-1.5 rounded-r-full", oppJokerPoints >= myJokerPoints ? "bg-primary" : "bg-foreground/20")}
+                    style={{ width: `${(oppJokerPoints / maxPts) * 100}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Predictions section: GC podium + jersey winners */}
