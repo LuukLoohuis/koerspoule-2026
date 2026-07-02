@@ -201,6 +201,12 @@ export default function TeamBuilder() {
     if (!isAuthed) return requireAuth("een renner te kiezen");
     if (!entry) return;
     try {
+      // Eén-knops wijzigflow: op een ingediend team eerst automatisch terug naar
+      // concept (anders weigert de pick-RPC), daarna gewoon de pick uitvoeren.
+      if (isSubmitted) {
+        await revertEntry.mutateAsync({ entryId: entry.id });
+        toast({ title: "Team weer bewerkbaar — dien opnieuw in als je klaar bent" });
+      }
       await togglePick.mutateAsync({ entryId: entry.id, categoryId, riderId });
     } catch (error) {
       toast({
@@ -292,20 +298,6 @@ export default function TeamBuilder() {
     } catch (error) {
       toast({
         title: "Indienen mislukt",
-        description: entryErrorMessage(error),
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleRevert = async () => {
-    if (!entry) return;
-    try {
-      await revertEntry.mutateAsync({ entryId: entry.id });
-      toast({ title: "Team weer bewerkbaar — vergeet niet opnieuw in te dienen" });
-    } catch (error) {
-      toast({
-        title: "Wijzigen mislukt",
         description: entryErrorMessage(error),
         variant: "destructive",
       });
@@ -921,9 +913,6 @@ export default function TeamBuilder() {
           >
             {submitLabel}
           </Button>
-          <Button variant="outline" onClick={handleRevert} disabled={revertEntry.isPending} className="w-full">
-            ✏️ Wijzigen
-          </Button>
           <SteunMoment storageKey="kp_steun_ingezonden" text="Steun Koerspoule met een koffie" />
         </div>
       ) : (
@@ -1156,11 +1145,8 @@ export default function TeamBuilder() {
               )}
               {!gameLocked && isSubmitted && (
                 <div className="space-y-2">
-                  <div className="retro-border bg-emerald-500/10 border-emerald-500/40 p-3 text-sm flex items-center justify-between gap-3">
-                    <span>✅ <strong>Team ingediend.</strong> Wil je nog iets aanpassen? Klik op "Wijzigen" — vergeet daarna opnieuw in te dienen.</span>
-                    <Button size="sm" variant="outline" onClick={handleRevert} disabled={revertEntry.isPending}>
-                      ✏️ Wijzigen
-                    </Button>
+                  <div className="retro-border bg-emerald-500/10 border-emerald-500/40 p-3 text-sm">
+                    ✅ <strong>Team ingediend.</strong> Wil je nog iets aanpassen? Pas het aan en dien opnieuw in.
                   </div>
                   <SteunMoment storageKey="kp_steun_ingezonden" text="Steun Koerspoule met een koffie" />
                 </div>
@@ -1316,11 +1302,6 @@ export default function TeamBuilder() {
 
               {/* Desktop action row */}
               <div className="hidden md:flex flex-col sm:flex-row gap-2 justify-end items-stretch sm:items-center">
-                {!gameLocked && isSubmitted && (
-                  <Button variant="outline" onClick={handleRevert} disabled={revertEntry.isPending}>
-                    ✏️ Wijzigen
-                  </Button>
-                )}
                 {!isLocked && !isSubmitted && (
                   <Button variant="outline" onClick={handleSaveDraft} disabled={savePredictions.isPending || saveJoker.isPending}>
                     💾 Tussentijds opslaan
