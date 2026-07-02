@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
-import { Mountain, CalendarDays } from "lucide-react";
+import { Mountain, CalendarDays, ExternalLink, Map as MapIcon } from "lucide-react";
 
 type UpcomingStage = {
   id: string;
@@ -13,6 +14,9 @@ type UpcomingStage = {
   results_status: string | null;
   profile_image_url: string | null;
 };
+
+// Interactief 3D-etappeprofiel (tourview). Lazy: iframe pas na klik laden.
+const TOURVIEW_BASE = "https://tourview.pages.dev/tdf2026/stage-";
 
 const TYPE_LABEL: Record<string, string> = {
   vlak: "Vlakke rit",
@@ -51,6 +55,7 @@ function dateBadge(date: string | null): string | null {
 
 export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
   const { thema } = useThema();
+  const [showProfiel, setShowProfiel] = useState(false);
 
   // Sectie staat default uit; admin zet 'm per game aan in Etappes.
   const { data: enabled } = useQuery({
@@ -88,6 +93,12 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
   // Geen realtime-subscription: `stages` staat niet in de realtime-publicatie, dus
   // een postgres_changes-channel ving toch niks. De query ververst bij focus/remount
   // (staleTime), zodat de voorbeschouwing na een fiat bij de volgende load doorschuift.
+
+  // Nieuwe etappe → profiel weer inklappen (anders blijft de iframe van de
+  // vorige etappe hangen).
+  useEffect(() => {
+    setShowProfiel(false);
+  }, [stage?.stage_number]);
 
   if (!enabled || !stage) return null;
 
@@ -129,6 +140,43 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
             </>
           )}
         </div>
+
+        {/* Interactief 3D-profiel (tourview) — lazy: iframe pas na klik, met
+            open-op-tourview-link als terugval mocht embedden ooit blokkeren. */}
+        {stage.stage_number != null && (
+          <div className="mt-3">
+            {!showProfiel ? (
+              <button
+                type="button"
+                onClick={() => setShowProfiel(true)}
+                className="inline-flex items-center gap-1 text-xs font-display font-semibold text-[hsl(var(--vintage-gold))] hover:underline"
+              >
+                <MapIcon className="w-3.5 h-3.5" /> Toon 3D-profiel
+              </button>
+            ) : (
+              <div className="space-y-1">
+                <div className="relative w-full overflow-hidden rounded-lg border border-[hsl(var(--vintage-sepia)/0.4)]" style={{ height: 240 }}>
+                  <iframe
+                    src={`${TOURVIEW_BASE}${stage.stage_number}`}
+                    title={`3D-profiel etappe ${stage.stage_number}`}
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    className="absolute inset-0 w-full h-full"
+                    style={{ border: 0 }}
+                  />
+                </div>
+                <a
+                  href={`${TOURVIEW_BASE}${stage.stage_number}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:underline"
+                >
+                  Werkt het profiel niet? Open op tourview <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Hoogteprofiel van de etappe */}
         {stage.profile_image_url && (
