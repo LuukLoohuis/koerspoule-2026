@@ -6,12 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LayoutDashboard, Trophy, Tag, Users, Users2, ListChecks, Calendar, Calculator, Shield, Inbox, Mail, ShieldCheck, Instagram, Newspaper, Gift, Handshake } from "lucide-react";
+import { LayoutDashboard, Trophy, Tag, Users, Users2, ListChecks, Calendar, Calculator, Shield, Inbox, Mail, ShieldCheck, Instagram, Newspaper, Gift, Handshake, Rocket } from "lucide-react";
 import NotifyTab from "@/components/admin/NotifyTab";
 import ApprovalsTab from "@/components/admin/ApprovalsTab";
 import SubpoulesTab from "@/components/admin/SubpoulesTab";
 import PrizesTab from "@/components/admin/PrizesTab";
 import SponsorsTab from "@/components/admin/SponsorsTab";
+import GoLiveTab from "@/components/admin/GoLiveTab";
 
 import GamesTab, { type Game } from "@/components/admin/GamesTab";
 import CategoriesTab, { type Category } from "@/components/admin/CategoriesTab";
@@ -190,6 +191,7 @@ export default function AdminV3() {
           <TabsTrigger value="stages" disabled={!activeGameId} data-testid="tab-stages"><Calendar className="w-4 h-4 mr-2" />Etappes</TabsTrigger>
           <TabsTrigger value="results" disabled={!activeGameId} data-testid="tab-results"><ListChecks className="w-4 h-4 mr-2" />Uitslagen</TabsTrigger>
           <TabsTrigger value="calc" disabled={!activeGameId} data-testid="tab-calc"><Calculator className="w-4 h-4 mr-2" />Berekening</TabsTrigger>
+          <TabsTrigger value="golive" disabled={!activeGameId} data-testid="tab-golive"><Rocket className="w-4 h-4 mr-2" />Go-live</TabsTrigger>
           <TabsTrigger value="approvals" disabled={!activeGameId} data-testid="tab-approvals"><ShieldCheck className="w-4 h-4 mr-2" />Fiatteren</TabsTrigger>
           <TabsTrigger value="entries" disabled={!activeGameId} data-testid="tab-entries"><Inbox className="w-4 h-4 mr-2" />Inzendingen</TabsTrigger>
           <TabsTrigger value="subpoules" disabled={!activeGameId} data-testid="tab-subpoules"><Users2 className="w-4 h-4 mr-2" />Subpoules</TabsTrigger>
@@ -223,6 +225,10 @@ export default function AdminV3() {
 
         <TabsContent value="results">
           <ResultsTab activeGameId={activeGameId} stages={stages} riders={riders} gameType={activeGame?.game_type ?? null} gameYear={activeGame?.year ?? null} />
+        </TabsContent>
+
+        <TabsContent value="golive">
+          <GoLiveTab activeGameId={activeGameId} gameStatus={activeGame?.status} />
         </TabsContent>
 
         <TabsContent value="approvals">
