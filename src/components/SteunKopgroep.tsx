@@ -147,7 +147,7 @@ export function SteunBanner({ revKey, className }: { revKey?: string | null; cla
         <div className="min-w-0 flex-1">
           <p className="font-display font-bold leading-tight">Steun Koerspoule ☕</p>
           <p className="text-xs text-muted-foreground font-serif italic">
-            Plezier aan Koerspoule? Trakteer ons op een koffie — dat houdt de poule draaiende.
+            Bevalt Koerspoule? ☕ Met een kop koffie help je Koerspoule draaiende te houden.
           </p>
         </div>
         <a
