@@ -37,12 +37,12 @@ const SOORT_LABEL: Record<PrijsSoort, string> = {
   podium_2: "Podium 2 — beker",
   podium_3: "Podium 3 — beker",
   dagprijs: "Dagprijs",
-  ereplaats: "Ereplaats (4 t/m 10)",
+  ereplaats: "Ereplaats (4 t/m 20)",
   grootste_subpoule: "Grootste subpoule",
   sponsor: "Sponsor / banner (geen prijs)",
 };
 const SOORTEN: PrijsSoort[] = ["podium_1", "podium_2", "podium_3", "dagprijs", "ereplaats", "grootste_subpoule", "sponsor"];
-const RANGEN = [4, 5, 6, 7, 8, 9, 10];
+const RANGEN = Array.from({ length: 17 }, (_, i) => i + 4); // 4 t/m 20 (podium = 1-3)
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -110,7 +110,7 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
 
-  // Vrije rang 4..10 binnen deze game (geen dubbele ereplaats-rang).
+  // Vrije rang 4..20 binnen deze game (geen dubbele ereplaats-rang).
   function vrijeRangen(exclId?: string) {
     const bezet = new Set(rows.filter((r) => r.soort === "ereplaats" && r.id !== exclId && r.rang != null).map((r) => r.rang));
     return RANGEN.filter((n) => !bezet.has(n));
@@ -119,7 +119,7 @@ export default function PrizesTab({ activeGameId }: { activeGameId: string }) {
   async function changeSoort(id: string, soort: PrijsSoort) {
     if (soort === "ereplaats") {
       const vrij = vrijeRangen(id);
-      if (vrij.length === 0) { toast.error("Alle ereplaatsen 4 t/m 10 zijn al gebruikt."); return; }
+      if (vrij.length === 0) { toast.error("Alle ereplaatsen 4 t/m 20 zijn al gebruikt."); return; }
       await saveField(id, { soort, rang: vrij[0] });
     } else {
       await saveField(id, { soort, rang: null });
