@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
-import { Mountain, CalendarDays, ExternalLink, Map as MapIcon } from "lucide-react";
+import { Mountain, CalendarDays, ExternalLink, Map as MapIcon, ChevronDown, ChevronUp } from "lucide-react";
 
 type UpcomingStage = {
   id: string;
@@ -148,12 +148,31 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
               <button
                 type="button"
                 onClick={() => setShowProfiel(true)}
-                className="inline-flex items-center gap-1 text-xs font-display font-semibold text-[hsl(var(--vintage-gold))] hover:underline"
+                aria-expanded={false}
+                className="w-full flex items-center justify-between gap-2 rounded-lg border-2 border-dashed border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.06] px-3 py-2.5 text-left transition-colors hover:bg-[hsl(var(--vintage-gold))/0.12]"
               >
-                <MapIcon className="w-3.5 h-3.5" /> Toon 3D-profiel
+                <span className="flex items-center gap-2 min-w-0">
+                  <MapIcon className="w-4 h-4 shrink-0 text-[hsl(var(--vintage-gold))]" />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-display font-semibold text-[hsl(var(--vintage-gold))]">Bekijk het 3D-profiel</span>
+                    <span className="block text-[11px] text-muted-foreground">Interactieve kaart met hoogteprofiel</span>
+                  </span>
+                </span>
+                <ChevronDown className="w-4 h-4 shrink-0 text-[hsl(var(--vintage-gold))]" />
               </button>
             ) : (
               <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => setShowProfiel(false)}
+                  aria-expanded={true}
+                  className="w-full flex items-center justify-between gap-2 rounded-lg border-2 border-dashed border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.06] px-3 py-1.5 text-left transition-colors hover:bg-[hsl(var(--vintage-gold))/0.12]"
+                >
+                  <span className="flex items-center gap-2 text-sm font-display font-semibold text-[hsl(var(--vintage-gold))]">
+                    <MapIcon className="w-4 h-4 shrink-0" /> 3D-profiel
+                  </span>
+                  <ChevronUp className="w-4 h-4 shrink-0 text-[hsl(var(--vintage-gold))]" />
+                </button>
                 <div className="relative w-full overflow-hidden rounded-lg border border-[hsl(var(--vintage-sepia)/0.4)]" style={{ height: 240 }}>
                   <iframe
                     src={`${TOURVIEW_BASE}${stage.stage_number}`}
