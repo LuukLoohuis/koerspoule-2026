@@ -34,17 +34,27 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
   async function load() {
     if (!supabase || !activeGameId) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("admin_entries_overview")
-      .select("*")
-      .eq("game_id", activeGameId)
-      .order("total_points", { ascending: false, nullsFirst: false });
-    if (error) {
-      toast.error(`Inzendingen laden mislukt: ${error.message}`);
-      setLoading(false);
-      return;
+    // Gepagineerd: Supabase kapt een select standaard op 1000 rijen, waardoor
+    // de lijst bleef steken op 1000 inzendingen.
+    const PAGE = 1000;
+    const all: Entry[] = [];
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await supabase
+        .from("admin_entries_overview")
+        .select("*")
+        .eq("game_id", activeGameId)
+        .order("total_points", { ascending: false, nullsFirst: false })
+        .range(from, from + PAGE - 1);
+      if (error) {
+        toast.error(`Inzendingen laden mislukt: ${error.message}`);
+        setLoading(false);
+        return;
+      }
+      const rows = (data ?? []) as Entry[];
+      all.push(...rows);
+      if (rows.length < PAGE) break;
     }
-    setEntries((data ?? []) as Entry[]);
+    setEntries(all);
     setLoading(false);
   }
 
