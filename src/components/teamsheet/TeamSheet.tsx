@@ -312,20 +312,17 @@ export default function TeamSheet({
         </div>
       )}
 
-      {/* 4. Colofon */}
-      <footer
-        className="flex items-center justify-between gap-2 pt-1.5"
-        style={{ borderTop: "1px solid rgba(58,42,26,0.35)" }}
-      >
-        <span className="italic" style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: "11px", color: "var(--ink-faded)" }}>
-          Gedrukt in de Ploegleiderswagen
-        </span>
-        {gameName && (
+      {/* 4. Colofon — alleen de gamenaam (indien meegegeven) */}
+      {gameName && (
+        <footer
+          className="flex items-center justify-end gap-2 pt-1.5"
+          style={{ borderTop: "1px solid rgba(58,42,26,0.35)" }}
+        >
           <span className="uppercase" style={{ fontSize: "10px", letterSpacing: "0.14em", fontWeight: 700, color: "var(--ink-faded)" }}>
             {gameName}
           </span>
-        )}
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }
