@@ -132,20 +132,31 @@ export default function MonkeyExplainerModal({ monkeyCount = 5000, variant = "ic
 
           <div className="space-y-3 text-[13.5px]" style={{ fontFamily: "'Source Serif 4',Georgia,serif", lineHeight: 1.55 }}>
             <p>
-              <strong>Centrale vraag:</strong> ben jij beter dan blinde gok? Een aap kiest zijn
-              ploeg willekeurig — wij simuleren dat heel vaak en kijken of jij het beter doet.
+              Het voelt alsof je de beste renners moet voorspellen. Maar wielrennen is onzeker:
+              valpartijen, vorm van de dag, weer en teamtactiek bepalen mee wie er wint. Niemand
+              heeft dat in de hand.
+            </p>
+
+            <p
+              className="pl-3"
+              style={{ borderLeft: "3px solid hsl(var(--vintage-gold))", color: "var(--ink-sepia)" }}
+            >
+              De aap met de dartpijl maakt dat zichtbaar. Hij gooit in elke categorie blind een
+              dartpijl en kiest zo willekeurig een renner. Zo'n gok pakt soms verrassend goed uit,
+              niet omdat de aap er verstand van heeft, maar omdat toeval in het wielrennen een
+              grote rol speelt.
             </p>
 
             <div>
               <h4 className="text-[12px] mt-1 mb-1" style={{ fontFamily: "'Oswald',sans-serif", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ink-faded)" }}>
-                Hoe werkt het?
+                Wat de simulatie doet
               </h4>
-              <ol className="list-decimal pl-5 space-y-1">
-                <li>Een denkbeeldige aap gooit dartpijlen op de startlijst en kiest zo zijn renners.</li>
-                <li>Dat herhalen we {monkeyCount.toLocaleString("nl-NL")} keer, met exact dezelfde puntentelling als jij.</li>
-                <li>We tellen het percentage apen dat <em>minder</em> punten heeft dan jij.</li>
-                <li>Dat is jouw <strong>percentile</strong>: "Je verslaat X% van de apen".</li>
-              </ol>
+              <p>
+                We laten {monkeyCount.toLocaleString("nl-NL")} apen zo'n willekeurig team samenstellen
+                en rekenen elk team af met exact jouw puntentelling. Jouw score leggen we naast die{" "}
+                {monkeyCount.toLocaleString("nl-NL")} apenscores. Dat is je percentiel: je verslaat X%
+                van de apen.
+              </p>
             </div>
 
             <div>
@@ -161,9 +172,10 @@ export default function MonkeyExplainerModal({ monkeyCount = 5000, variant = "ic
             </div>
 
             <p style={{ color: "var(--ink-faded)", fontSize: "12px" }}>
-              Eén Tour is een korte steekproef — variance is hoog. Hoe meer etappes en hoe
-              scherper jouw keuzes, hoe meer betekenis het percentage krijgt. {monkeyCount.toLocaleString("nl-NL")} simulaties houden
-              de schatting kalm, niet meer dan dat.
+              Zelfs met perfecte kennis blijven er veel mogelijke uitkomsten. Eén grote ronde is
+              slechts een momentopname, waardoor geluk een grotere rol speelt dan je misschien
+              denkt. Bekijk de resultaten daarom vooral als een leuke indicatie, niet als een
+              absolute waarheid.
             </p>
           </div>
         </div>
