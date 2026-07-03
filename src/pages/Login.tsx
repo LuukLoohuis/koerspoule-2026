@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Trophy, Mountain, Medal, Shirt, Star, Bike } from "lucide-react";
+import { Trophy, Mountain, Medal, Shirt, Star, Bike, Eye, EyeOff } from "lucide-react";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useThema } from "@/contexts/ThemaContext";
 import TruiBadge from "@/components/retro/TruiBadge";
@@ -73,6 +73,7 @@ export default function Login() {
   const [isRegister, setIsRegister] = useState(() => searchParams.get("register") === "1");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
@@ -426,16 +427,27 @@ export default function Login() {
                 <Label htmlFor="password" className="font-serif">
                   Wachtwoord
                 </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="mt-1"
-                  required
-                  minLength={6}
-                />
+                <div className="relative mt-1">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="pr-10"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Verberg wachtwoord" : "Toon wachtwoord"}
+                    aria-pressed={showPassword}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] rounded-r-md"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
