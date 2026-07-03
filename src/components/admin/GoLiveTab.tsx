@@ -4,9 +4,14 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Rocket, Coffee } from "lucide-react";
+import { Eye, Rocket, Coffee, Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { isPreviewStatus } from "@/lib/gameStatus";
+import { fetchAllRows } from "@/lib/fetchAll";
+
+// Drafts met minstens zoveel renner-keuzes tellen mee als "serieus" en kunnen
+// in bulk ingediend worden (RPC submit_drafts_met_keuzes gebruikt dezelfde grens).
+const MIN_PICKS = 11;
 
 const STATUS_LABEL: Record<string, string> = {
   open: "Sneak preview",
@@ -23,6 +28,28 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
   const [testmodus, setTestmodus] = useState(false);
   const [banner, setBanner] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  // Aantal concepten met >= MIN_PICKS keuzes (kandidaten voor bulk-indienen).
+  const [draftKandidaten, setDraftKandidaten] = useState<number | null>(null);
+  const [submittingDrafts, setSubmittingDrafts] = useState(false);
+
+  async function loadDraftKandidaten() {
+    if (!supabase || !activeGameId) return;
+    try {
+      const drafts = await fetchAllRows((from, to) =>
+        supabase.from("entries").select("id").eq("game_id", activeGameId).eq("status", "draft").range(from, to),
+      );
+      const ids = drafts.map((d) => d.id);
+      if (ids.length === 0) { setDraftKandidaten(0); return; }
+      const picks = await fetchAllRows((from, to) =>
+        supabase.from("entry_picks").select("entry_id").in("entry_id", ids).range(from, to),
+      );
+      const perEntry = new Map();
+      for (const p of picks) perEntry.set(p.entry_id, (perEntry.get(p.entry_id) ?? 0) + 1);
+      setDraftKandidaten(ids.filter((id) => (perEntry.get(id) ?? 0) >= MIN_PICKS).length);
+    } catch {
+      setDraftKandidaten(null);
+    }
+  }
 
   useEffect(() => {
     if (!supabase || !activeGameId) return;
@@ -32,7 +59,27 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
       setBanner(Boolean(data?.support_banner_visible));
       setLoaded(true);
     })();
+    loadDraftKandidaten();
   }, [activeGameId]);
+
+  async function submitDrafts() {
+    if (!supabase || !activeGameId || !draftKandidaten) return;
+    if (!confirm(`${draftKandidaten} concept(en) met ${MIN_PICKS}+ keuzes definitief indienen? Ze tellen daarna mee in alle klassementen.`)) return;
+    setSubmittingDrafts(true);
+    try {
+      const { data, error } = await supabase.rpc("submit_drafts_met_keuzes", {
+        p_game_id: activeGameId,
+        p_min_picks: MIN_PICKS,
+      });
+      if (error) throw error;
+      toast.success(`${data ?? 0} concept(en) ingediend — ze tellen nu mee`);
+      await loadDraftKandidaten();
+    } catch (e) {
+      toast.error(`Indienen mislukt: ${e.message ?? e}`);
+    } finally {
+      setSubmittingDrafts(false);
+    }
+  }
 
   async function toggleTestmodus(next: boolean) {
     if (!supabase || !activeGameId) return;
@@ -88,6 +135,29 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
           </div>
           <Button size="sm" variant={banner ? "default" : "outline"} className="shrink-0" disabled={!activeGameId || !loaded} onClick={() => toggleBanner(!banner)}>
             {banner ? "Zet uit" : "Zet aan"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="flex items-center justify-between gap-3 p-4">
+          <div className="min-w-0">
+            <p className="font-display font-bold flex items-center gap-2">
+              <Inbox className="w-4 h-4" /> Concepten met {MIN_PICKS}+ keuzes
+              <Badge variant="secondary" className="tabular-nums">{draftKandidaten ?? "–"}</Badge>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Niet-ingediende ploegen tellen <strong>niet</strong> mee in de klassementen. Dien hier vóór de start alle
+              serieuze concepten (≥ {MIN_PICKS} renner-keuzes) in bulk in, zodat die spelers toch meedoen.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="shrink-0"
+            disabled={!activeGameId || submittingDrafts || !draftKandidaten}
+            onClick={submitDrafts}
+          >
+            {submittingDrafts ? "Bezig…" : `Dien ${draftKandidaten ?? 0} in`}
           </Button>
         </CardContent>
       </Card>

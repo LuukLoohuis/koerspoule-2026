@@ -162,18 +162,20 @@ export default function TeamBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gcPodium, pointsJersey, mountainJersey, youthJersey]);
 
-  // Auto-save jokers
+  // Auto-save jokers — ook één losse joker wordt direct bewaard (voorheen pas
+  // zodra beide gekozen waren, waardoor een halve keuze verloren kon gaan).
   useEffect(() => {
     if (!entry || !hydratedRef.current || isSubmitted) return;
-    if (!jokerDraft1 || !jokerDraft2) return;
-    if (jokerDraft1 === jokerDraft2) return;
-    if (selectedPickRiderIds.has(jokerDraft1) || selectedPickRiderIds.has(jokerDraft2)) return;
+    const drafts = [jokerDraft1, jokerDraft2].filter(Boolean);
+    if (drafts.length === 0) return;
+    if (drafts.length === 2 && jokerDraft1 === jokerDraft2) return;
+    if (drafts.some((d) => selectedPickRiderIds.has(d))) return;
     // Skip if already saved identically
     const current = [...jokerIds].sort().join(",");
-    const next = [jokerDraft1, jokerDraft2].sort().join(",");
+    const next = [...drafts].sort().join(",");
     if (current === next) return;
     const timer = setTimeout(() => {
-      saveJoker.mutate({ entryId: entry.id, riderIds: [jokerDraft1, jokerDraft2] });
+      saveJoker.mutate({ entryId: entry.id, riderIds: drafts });
     }, 700);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
