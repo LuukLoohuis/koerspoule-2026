@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
+import { fetchAllRows } from "@/lib/fetchAll";
 import {
   useEntries,
   useStages,
@@ -85,18 +86,21 @@ export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnP
     staleTime: 5 * 60_000,
     queryFn: async () => {
       if (!supabase || !allRiderIds.length) return [];
-      const { data } = await supabase
-        .from("stage_results")
-        .select("rider_id, finish_position, stage_id, riders(name)")
-        .in("rider_id", allRiderIds)
-        .not("finish_position", "is", null)
-        .range(0, 199999); // anders 1000-rijen cap → late etappes missen
-      return (data ?? []) as Array<{
+      // Gepagineerd: één grote range kapt alsnog op de Max rows-serverlimiet.
+      return fetchAllRows<{
         rider_id: string;
         finish_position: number;
         stage_id: string;
         riders: { name: string } | null;
-      }>;
+      }>((from, to) =>
+        supabase!
+          .from("stage_results")
+          .select("rider_id, finish_position, stage_id, riders(name)")
+          .in("rider_id", allRiderIds)
+          .not("finish_position", "is", null)
+          .order("stage_id")
+          .range(from, to) as never,
+      );
     },
   });
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { fetchAllRows } from "@/lib/fetchAll";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -111,16 +112,14 @@ export function useKaravaanFeed(params: {
       // bron als Uitslagen). Belangrijk: directe `from("entries").select()` is
       // beperkt door RLS en geeft alleen de eigen entry terug — die kant kan
       // dus niet gebruikt worden voor poule-brede rankings.
-      const { data: standingsRows } = await (supabase as any).rpc("game_entries_standings", {
-        p_game_id: gameId,
-      });
-      const standings = ((standingsRows ?? []) as Array<{
+      // Gepagineerd: ook RPC's kapt PostgREST op de Max rows-limiet (1000+).
+      const standings = await fetchAllRows<{
         id: string;
         user_id: string;
         team_name: string | null;
         display_name: string | null;
         total_points: number;
-      }>);
+      }>((from, to) => (supabase as any).rpc("game_entries_standings", { p_game_id: gameId }).range(from, to));
       const allEntries = standings.map((s) => ({
         id: s.id,
         user_id: s.user_id,
@@ -152,11 +151,14 @@ export function useKaravaanFeed(params: {
       // Stage_points kan eveneens RLS-beperkt zijn; bij gebrek aan een RPC werken
       // we hier best-effort. Voor de FINAL ranking gebruiken we hoe dan ook
       // de RPC-totalen, dus de eindstand klopt sowieso.
-      const { data: spRows } = await supabase
-        .from("stage_points")
-        .select("entry_id, stage_id, points")
-        .in("stage_id", stageIds);
-      const stagePoints = (spRows ?? []) as Array<{ entry_id: string; stage_id: string; points: number }>;
+      const stagePoints = await fetchAllRows<{ entry_id: string; stage_id: string; points: number }>((from, to) =>
+        supabase!
+          .from("stage_points")
+          .select("entry_id, stage_id, points")
+          .in("stage_id", stageIds)
+          .order("entry_id")
+          .range(from, to),
+      );
 
       // Cumulatieve totalen per entry, per stage — terugrekenen vanuit de
       // officiële totalen (RPC = zelfde bron als Uitslagen). Voor de laatste

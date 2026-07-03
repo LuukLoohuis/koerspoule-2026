@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, ArrowUp, ArrowDown, Crown, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fetchAllRows } from "@/lib/fetchAll";
 
 // ── Gedeelde stijl voor "zelfde keuze"-rijen in álle head-to-head/benchmark-
 //    weergaven (TeamComparison is de enige vergelijkingscomponent; CompareSetup
@@ -67,11 +68,22 @@ function useRiderBasePoints(gameId: string | undefined) {
       const stageIds = (stages ?? []).map((s) => s.id);
       if (stageIds.length === 0) return new Map();
 
-      const { data: results } = await supabase
-        .from("stage_results")
-        .select("rider_id, finish_position, gc_position, mountain_position, points_position, youth_position")
-        .in("stage_id", stageIds)
-        .range(0, 199999); // anders 1000-rijen cap → late etappes missen
+      // Gepagineerd: één grote range kapt alsnog op de Max rows-serverlimiet.
+      const results = await fetchAllRows<{
+        rider_id: string;
+        finish_position: number | null;
+        gc_position: number | null;
+        mountain_position: number | null;
+        points_position: number | null;
+        youth_position: number | null;
+      }>((from, to) =>
+        supabase!
+          .from("stage_results")
+          .select("rider_id, finish_position, gc_position, mountain_position, points_position, youth_position")
+          .in("stage_id", stageIds)
+          .order("rider_id")
+          .range(from, to),
+      );
 
       const { data: schema } = await supabase
         .from("points_schema")
@@ -84,14 +96,7 @@ function useRiderBasePoints(gameId: string | undefined) {
       const lookup = (cls: string, pos: number | null) => (pos ? schemaMap.get(`${cls}:${pos}`) ?? 0 : 0);
 
       const totals = new Map<string, number>();
-      for (const r of (results ?? []) as Array<{
-        rider_id: string;
-        finish_position: number | null;
-        gc_position: number | null;
-        mountain_position: number | null;
-        points_position: number | null;
-        youth_position: number | null;
-      }>) {
+      for (const r of results) {
         const base =
           lookup("stage", r.finish_position) +
           lookup("gc", r.gc_position) +

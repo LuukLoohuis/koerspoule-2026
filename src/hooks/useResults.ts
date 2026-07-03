@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchAllRows } from "@/lib/fetchAll";
 
 /** Wacht tot auth-state geresolved is (anon óf ingelogd). Voorkomt RPC-storm
  *  tijdens de auth-race bij mount en blokkeert queries terwijl loading=true. */
@@ -272,14 +273,18 @@ export function useStagePointsForEntries(gameId?: string, entryIds?: string[]) {
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<StagePointsRow[]> => {
       if (!supabase || !gameId || ids.length === 0) return [];
-      const { data, error } = await supabase
-        .from("stage_points")
-        .select("entry_id, stage_id, points, stages!inner(game_id)")
-        .eq("stages.game_id", gameId)
-        .in("entry_id", ids)
-        .range(0, 199999);
-      if (error) throw error;
-      return (data ?? []).map((r: { entry_id: string; stage_id: string; points: number }) => ({
+      // Gepagineerd: één grote range wordt alsnog door de Max rows-serverlimiet
+      // afgekapt; grote subpoules × 21 etappes overschrijden 1000 rijen.
+      const rows = await fetchAllRows<{ entry_id: string; stage_id: string; points: number }>((from, to) =>
+        supabase!
+          .from("stage_points")
+          .select("entry_id, stage_id, points, stages!inner(game_id)")
+          .eq("stages.game_id", gameId)
+          .in("entry_id", ids)
+          .order("entry_id")
+          .range(from, to),
+      );
+      return rows.map((r) => ({
         entry_id: r.entry_id,
         stage_id: r.stage_id,
         points: r.points,
@@ -295,16 +300,17 @@ export function useStagePoints(gameId?: string) {
     enabled: authReady && Boolean(gameId),
     queryFn: async (): Promise<StagePointsRow[]> => {
       if (!supabase || !gameId) return [];
-      const { data, error } = await supabase
-        .from("stage_points")
-        .select("entry_id, stage_id, points, stages!inner(game_id)")
-        .eq("stages.game_id", gameId)
-        // Zonder expliciete range kapt PostgREST af op 1000 rijen. stage_points =
-        // deelnemers × etappes, dus bij ~50+ deelnemers × 21 etappes worden de
-        // laatste etappes (o.a. rit 21) afgekapt en tellen niet mee.
-        .range(0, 199999);
-      if (error) throw error;
-      return (data ?? []).map((r: { entry_id: string; stage_id: string; points: number }) => ({
+      // Gepagineerd: stage_points = deelnemers × etappes; met 1000+ deelnemers
+      // kapt zelfs een grote range af op de Max rows-serverlimiet.
+      const rows = await fetchAllRows<{ entry_id: string; stage_id: string; points: number }>((from, to) =>
+        supabase!
+          .from("stage_points")
+          .select("entry_id, stage_id, points, stages!inner(game_id)")
+          .eq("stages.game_id", gameId)
+          .order("entry_id")
+          .range(from, to),
+      );
+      return rows.map((r) => ({
         entry_id: r.entry_id,
         stage_id: r.stage_id,
         points: r.points,
@@ -329,11 +335,11 @@ export function useEntries(gameId?: string) {
     enabled: authReady && Boolean(gameId),
     queryFn: async (): Promise<EntryStanding[]> => {
       if (!supabase || !gameId) return [];
-      const { data, error } = await (supabase as any).rpc("game_entries_standings", {
-        p_game_id: gameId,
-      });
-      if (error) throw error;
-      const rows = (data ?? []) as Array<{ id: string; user_id: string; team_name: string | null; total_points: number; display_name: string | null }>;
+      // Gepagineerd: ook set-returning RPC's kapt PostgREST op de Max rows-
+      // limiet (default 1000) — bij 1000+ deelnemers miste het klassement rijen.
+      const rows = await fetchAllRows<{ id: string; user_id: string; team_name: string | null; total_points: number; display_name: string | null }>(
+        (from, to) => (supabase as any).rpc("game_entries_standings", { p_game_id: gameId }).range(from, to),
+      );
       return rows.map((r) => ({
         id: r.id,
         user_id: r.user_id,

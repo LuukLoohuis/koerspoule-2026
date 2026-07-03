@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { fetchAllRows } from "@/lib/fetchAll";
 
 export type PredictionEntry = {
   classification: string; // 'gc' | 'points' | 'kom' | 'youth'
@@ -116,12 +117,10 @@ export function useGameEntries(gameId?: string) {
     queryFn: async (): Promise<SubpouleEntriesData> => {
       if (!supabase || !gameId) return { entries: [], ridersById: new Map() };
 
-      const { data: rowsData, error } = await (supabase as any).rpc("game_entries_detail", {
-        p_game_id: gameId,
-      });
-      if (error) throw error;
-
-      const rows = (rowsData ?? []) as SubpouleEntryDetailRow[];
+      // Gepagineerd: ook RPC's kapt PostgREST op de Max rows-limiet (1000+).
+      const rows = await fetchAllRows<SubpouleEntryDetailRow>((from, to) =>
+        (supabase as any).rpc("game_entries_detail", { p_game_id: gameId }).range(from, to),
+      );
       if (rows.length === 0) return { entries: [], ridersById: new Map() };
 
       const entries: SubpouleEntry[] = rows.map((r) => {

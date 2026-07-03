@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { fetchAllRows } from "@/lib/fetchAll";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,10 +34,17 @@ function StageBreakdown({ stageId }: { stageId: string }) {
   async function load() {
     if (!supabase) return;
     setLoading(true);
-    const { data, error } = await supabase.rpc("admin_stage_points_breakdown", { p_stage_id: stageId });
-    setLoading(false);
-    if (error) { toast.error(error.message); return; }
-    setRows((data ?? []) as BreakdownRow[]);
+    try {
+      // Gepagineerd: ook RPC's kapt PostgREST op de Max rows-limiet (1000+ deelnemers).
+      const all = await fetchAllRows<BreakdownRow>((from, to) =>
+        supabase!.rpc("admin_stage_points_breakdown", { p_stage_id: stageId }).range(from, to),
+      );
+      setRows(all);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function onToggle(o: boolean) {
