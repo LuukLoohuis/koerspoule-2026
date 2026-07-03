@@ -52,15 +52,34 @@ export default function CalculationTab({
     try {
       const stageIds = regularStages.map((s) => s.id);
       if (stageIds.length === 0) { setOverview([]); return; }
-      const [resultsRes, pointsRes, stagesRes] = await Promise.all([
-        supabase.from("stage_results").select("stage_id").in("stage_id", stageIds).range(0, 199999),
-        supabase.from("stage_points").select("stage_id, points, created_at").in("stage_id", stageIds).range(0, 199999),
+      // Gepagineerd ophalen: PostgREST kapt op de "Max rows"-serverlimiet
+      // (default 1000) — óók bij een grote .range(). Met 1000+ deelnemers per
+      // etappe zouden de tellingen anders blijven steken op 1000.
+      const PAGE = 1000;
+      const fetchAll = async <T,>(
+        build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+      ): Promise<T[]> => {
+        const all: T[] = [];
+        for (let from = 0; ; from += PAGE) {
+          const { data, error } = await build(from, from + PAGE - 1);
+          if (error) throw error;
+          const rows = data ?? [];
+          all.push(...rows);
+          if (rows.length < PAGE) break;
+        }
+        return all;
+      };
+      const [resultsRows, pointsRows, stagesRes] = await Promise.all([
+        fetchAll<{ stage_id: string }>((from, to) =>
+          supabase!.from("stage_results").select("stage_id").in("stage_id", stageIds).range(from, to)),
+        fetchAll<{ stage_id: string; points: number | null; created_at: string | null }>((from, to) =>
+          supabase!.from("stage_points").select("stage_id, points, created_at").in("stage_id", stageIds).order("created_at").range(from, to)),
         supabase.from("stages").select("id, results_status").in("id", stageIds),
       ]);
       const rCount = new Map<string, number>();
-      (resultsRes.data ?? []).forEach((r: any) => rCount.set(r.stage_id, (rCount.get(r.stage_id) ?? 0) + 1));
+      resultsRows.forEach((r) => rCount.set(r.stage_id, (rCount.get(r.stage_id) ?? 0) + 1));
       const pAgg = new Map<string, { count: number; sum: number; last: string | null }>();
-      (pointsRes.data ?? []).forEach((p: any) => {
+      pointsRows.forEach((p) => {
         const cur = pAgg.get(p.stage_id) ?? { count: 0, sum: 0, last: null };
         cur.count += 1;
         cur.sum += Number(p.points ?? 0);
