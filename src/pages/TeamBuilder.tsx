@@ -889,7 +889,7 @@ export default function TeamBuilder() {
       {gameLocked ? (
         <div className="retro-border bg-secondary/50 p-3 text-sm">
           🔒 De koers staat op <strong>{game?.status}</strong> — wijzigen niet meer mogelijk.
-          {!isSubmitted && " Je huidige selectie telt als jouw inzending."}
+          {!isSubmitted && " Ploegen met minstens 11 gekozen renners doen automatisch mee."}
         </div>
       ) : !isAuthed ? (
         <div className="ornate-frame retro-border bg-primary/10 border-primary/40 p-4 space-y-3 text-center">
@@ -1134,7 +1134,7 @@ export default function TeamBuilder() {
               {gameLocked && (
                 <div className="retro-border bg-secondary/50 p-3 text-sm">
                   🔒 De koers staat op <strong>{game.status}</strong> — wijzigen niet meer mogelijk.
-                  {!isSubmitted && " Je huidige selectie telt als jouw inzending."}
+                  {!isSubmitted && " Ploegen met minstens 11 gekozen renners doen automatisch mee."}
                 </div>
               )}
               {!isAuthed && !gameLocked && (
@@ -1300,7 +1300,7 @@ export default function TeamBuilder() {
               {!gameLocked && !isSubmitted && teamComplete && (
                 <div className="retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
                   ⚠️ <strong>Let op:</strong> je ploeg is compleet maar nog <strong>niet ingediend</strong>. Druk op <em>"Team definitief indienen"</em> om je inzending te bevestigen.
-                  Als de admin de koers op <strong>deadline</strong> of <strong>live</strong> zet zonder dat je hebt ingediend, telt je huidige selectie automatisch als jouw team.
+                  Ploegen met minstens <strong>11 gekozen renners</strong> doen bij de start automatisch mee, ook als je niet indient — maar zelf indienen blijft de zekerste weg.
                 </div>
               )}
 
