@@ -212,9 +212,13 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
           throw new Error(detail);
         }
         const generated = (data as { generated?: number })?.generated ?? 0;
+        const remaining = (data as { remaining?: number })?.remaining ?? 0;
         const errors = (data as { errors?: Array<{ error: string }> })?.errors ?? [];
         if (generated > 0) {
-          toast.success(`🎙️ Commentaar gegenereerd voor ${generated} subpoule${generated === 1 ? "" : "s"}`);
+          toast.success(
+            `🎙️ Commentaar gegenereerd voor ${generated} subpoule${generated === 1 ? "" : "s"}` +
+              (remaining > 0 ? ` — ${remaining} volgen op de achtergrond` : ""),
+          );
         }
         if (errors.length > 0) {
           toast.error(`Per-subpoule fouten: ${errors[0].error}${errors.length > 1 ? ` (en ${errors.length - 1} meer)` : ""}`);

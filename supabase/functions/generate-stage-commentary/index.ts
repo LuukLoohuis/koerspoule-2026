@@ -546,18 +546,27 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
 
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData?.user) return json({ error: "Unauthorized" }, 401);
-
-    const callerUserId = userData.user.id;
-    const { data: isAdmin, error: roleErr } = await userClient.rpc("has_role", {
-      _user_id: callerUserId,
-      _role: "admin",
-    });
-    if (roleErr || !isAdmin) return json({ error: "Forbidden — admin only" }, 403);
+    // Auth: admin-gebruiker óf de service-role (zelf-keten bij veel subpoules).
+    const jwtRole = (() => {
+      try {
+        const payload = JSON.parse(atob(authHeader.slice(7).split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+        return payload.role ?? "";
+      } catch { return ""; }
+    })();
+    let callerUserId: string | null = null;
+    if (jwtRole !== "service_role") {
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: userData, error: userErr } = await userClient.auth.getUser();
+      if (userErr || !userData?.user) return json({ error: "Unauthorized" }, 401);
+      callerUserId = userData.user.id;
+      const { data: isAdmin, error: roleErr } = await userClient.rpc("has_role", {
+        _user_id: callerUserId,
+        _role: "admin",
+      });
+      if (roleErr || !isAdmin) return json({ error: "Forbidden — admin only" }, 403);
+    }
 
     const body = await req.json() as { stage_id?: string; subpoule_id?: string; force?: boolean };
     const stageId = body.stage_id;
@@ -605,9 +614,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Skip subpoules die al een commentaar hebben (tenzij force)
-    let existing = new Set<string>();
-    if (!body.force) {
+    // force = alles opnieuw: wis bestaande commentaren éérst (één delete) en
+    // werk daarna als niet-force. Zo is de skip-set hieronder de natuurlijke
+    // cursor voor de zelf-keten en overschrijft een vervolg-run niets dubbel.
+    if (body.force) {
+      let del = admin.from("etappe_commentaren").delete().eq("stage_id", stageId);
+      if (body.subpoule_id) del = del.eq("subpoule_id", body.subpoule_id);
+      await del;
+    }
+
+    // Skip subpoules die al een commentaar hebben (de "cursor" van de keten).
+    const existing = new Set<string>();
+    {
       const { data: existRows } = await admin
         .from("etappe_commentaren")
         .select("subpoule_id")
@@ -616,12 +634,18 @@ Deno.serve(async (req) => {
       for (const r of (existRows ?? []) as any[]) existing.add(r.subpoule_id);
     }
 
+    // Max. aantal subpoules per aanroep: elke subpoule = een OpenAI-call van
+    // 5-15s; alles in één run overschrijdt bij veel subpoules de edge-limiet
+    // van 150s (IDLE_TIMEOUT). De rest gaat via een zelf-aanroep verder.
+    const BATCH = 8;
+    const pending = (subpoules as Array<{ id: string; name: string }>).filter((sp) => !existing.has(sp.id));
+    const batch = pending.slice(0, BATCH);
+
     let generated = 0;
-    let skipped = 0;
+    let skipped = existing.size;
     const errors: Array<{ subpoule_id: string; error: string }> = [];
 
-    for (const sp of subpoules as Array<{ id: string; name: string }>) {
-      if (existing.has(sp.id)) { skipped++; continue; }
+    for (const sp of batch) {
       try {
         const members = await fetchSubpouleContext(admin, stageId, stage.game_id, stage.stage_number, sp.id);
         if (members.length === 0) { skipped++; continue; }
@@ -663,7 +687,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ ok: true, subpoules: subpoules.length, generated, skipped, errors });
+    // Nog subpoules over? → zichzelf opnieuw aanroepen (fire-and-forget keten,
+    // met service-role; force is hierboven al afgehandeld via de delete).
+    const remaining = pending.length - batch.length;
+    if (remaining > 0) {
+      fetch(`${SUPABASE_URL}/functions/v1/generate-stage-commentary`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_KEY}` },
+        body: JSON.stringify({ stage_id: stageId }),
+      }).catch(() => undefined);
+    }
+
+    return json({ ok: true, subpoules: subpoules.length, generated, skipped, remaining, errors });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }

@@ -264,7 +264,7 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
                           <TooltipTrigger asChild>
                             <div
                               className={cn(
-                                "rounded-md px-2.5 py-2 cursor-default transition-transform hover:scale-[1.02] hover:z-10 relative",
+                                "rounded-md px-2.5 py-2 cursor-default relative",
                                 cell.isUnique && "ring-2 ring-[hsl(var(--vintage-gold))] ring-offset-1 ring-offset-card shadow-[2px_2px_0_hsl(var(--vintage-gold)/0.5)]",
                               )}
                               style={{
