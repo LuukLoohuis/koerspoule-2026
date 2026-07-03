@@ -21,6 +21,9 @@ const ADMIN_ONLY: string[] = [];
 const REGISTRATION = "open_inschrijving";
 // Sneak preview: 'open' + legacy draft/concept.
 const PREVIEW = ["open", "draft", "concept"];
+// Resultaten-inhoud (uitslagen/klassementen/commentaar) verborgen voor
+// deelnemers: preview-statussen ÉN open_inschrijving — pas vanaf 'live' open.
+const RESULTS_HIDDEN = [...PREVIEW, REGISTRATION];
 const LOCKED = ["live", "locked", "finished", "closed"];
 
 const s = (status?: string | null) => String(status ?? "");
@@ -49,29 +52,31 @@ export function isPreviewStatus(status?: string | null): boolean {
  * Mag de HUIDIGE viewer de ECHTE, gevulde game-inhoud zien (uitslagen, ranking,
  * klassementen, commentaar)?
  *
- * DEELNEMER-zicht hangt PUUR aan de status: alleen de sneak preview ('open')
- * verbergt de echte inhoud (preview-schil). ADMIN-volledig-zicht is LOSGEKOPPELD
- * van de status en hangt aan de admin-only TESTMODUS (games.admin_testmodus):
- * staat die aan, dan ziet de admin alles ongeacht de status; staat 'ie uit, dan
- * ziet de admin de game precies zoals een deelnemer (handig om de preview te
- * controleren). Beheer/fiatteren staat hier los van (eigen admin-gating).
+ * DEELNEMER-zicht hangt PUUR aan de status: resultaten-inhoud is verborgen tot
+ * 'live'; tijdens 'open_inschrijving' is alleen het INSCHRIJVEN open. ADMIN-
+ * volledig-zicht is LOSGEKOPPELD van de status en hangt aan de admin-only
+ * TESTMODUS (games.admin_testmodus): staat die aan, dan ziet de admin alles
+ * ongeacht de status (volledig proefdraaien: fiatteren, commentaar, intrekken);
+ * staat 'ie uit, dan ziet de admin de game precies zoals een deelnemer.
+ * Beheer/fiatteren staat hier los van (eigen admin-gating).
  *
  * Waarheidstabel (deelnemer = niet-admin):
- *   concept/draft       → game sowieso verborgen (isVisibleToUser)
- *   open                → deelnemer: FALSE · admin: alleen true bij testmodus
- *   open_inschrijving   → iedereen: true
- *   live / locked       → iedereen: true
- *   finished / closed   → iedereen: true
- *
- * Voeg NOOIT een aparte status-check toe die in open_inschrijving/live nog iets
- * verbergt voor deelnemers — alleen 'open' kent een afscherming.
+ *   open                → deelnemer FALSE · admin alleen bij testmodus
+ *   open_inschrijving   → deelnemer FALSE (wel inschrijven) · admin bij testmodus
+ *   live/locked/finished → iedereen TRUE
  */
 export function maySeeLiveContent(
   status: string | null | undefined,
   isAdmin: boolean,
   adminTestmodus = false,
 ): boolean {
-  return !isPreviewStatus(status) || (isAdmin && adminTestmodus);
+  return !RESULTS_HIDDEN.includes(s(status)) || (isAdmin && adminTestmodus);
+}
+
+/** Is de resultaten-inhoud voor deelnemers (nog) verborgen bij deze status?
+ *  Voor UI-copy ("verborgen tot Live") — los van de admin-testmodus. */
+export function resultsHiddenForUsers(status?: string | null): boolean {
+  return RESULTS_HIDDEN.includes(s(status));
 }
 
 /** Definitief op slot (na de deadline): live/locked/finished/closed. */

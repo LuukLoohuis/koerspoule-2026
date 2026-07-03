@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Rocket, Coffee, Inbox } from "lucide-react";
 import { toast } from "sonner";
-import { isPreviewStatus } from "@/lib/gameStatus";
+import { resultsHiddenForUsers } from "@/lib/gameStatus";
 import { fetchAllRows } from "@/lib/fetchAll";
 
 // Drafts met minstens zoveel renner-keuzes tellen mee als "serieus" en kunnen
@@ -99,9 +99,14 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
     toast.success(next ? "Steun-banner AAN voor deze game" : "Steun-banner uit");
   }
 
-  const preview = isPreviewStatus(gameStatus);
+  const preview = resultsHiddenForUsers(gameStatus);
+  const isInschrijving = String(gameStatus ?? "") === "open_inschrijving";
   const statusLabel = STATUS_LABEL[String(gameStatus ?? "")] ?? String(gameStatus ?? "onbekend");
-  const deelnemerZiet = preview ? "de preview-schil (nog geen echte inhoud)" : "de volledige live-inhoud";
+  const deelnemerZiet = isInschrijving
+    ? "inschrijven staat open; uitslagen, klassementen en commentaar zijn nog verborgen tot Live"
+    : preview
+      ? "de preview-schil (nog geen echte inhoud)"
+      : "de volledige live-inhoud";
   const adminZiet = testmodus ? "alles: de volledige live-weergave, ongeacht de status" : "de game zoals de status hoort, net als een deelnemer";
 
   return (
