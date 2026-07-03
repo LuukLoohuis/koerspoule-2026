@@ -472,8 +472,11 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           )}
           <div className="shrink-0 min-w-[2.5rem] md:min-w-[3rem] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Pts</div>
           <div className="shrink-0 min-w-[48px] md:min-w-[64px] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title="Punten in de geselecteerde rit">Dag</div>
-          {/* Spacer matcht de vaste-breedte compare-slot op de rijen. */}
-          <div className="shrink-0 w-5 md:w-[104px]" />
+          {/* Kolomkop boven het compare-slot (desktop); mobiele spacer houdt de uitlijning. */}
+          <div className="shrink-0 w-5 md:w-[104px] hidden md:flex items-center justify-end gap-1 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title="Klik op een rij om te benchmarken">
+            <Swords className="h-3 w-3" /> VS
+          </div>
+          <div className="shrink-0 w-5 md:hidden" />
         </div>
 
         <div className="max-h-[600px] overflow-y-auto">
@@ -661,7 +664,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                           "transition-all duration-150",
                           isComparing
                             ? "opacity-100 translate-x-0 bg-primary/10 border-primary text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.5)]"
-                            : "opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 focus-visible:opacity-100 focus-visible:translate-x-0 border-border bg-card hover:bg-accent/20 text-muted-foreground",
+                            : "opacity-60 border-border bg-card text-muted-foreground group-hover:opacity-100 group-hover:border-primary/60 group-hover:text-primary group-hover:bg-primary/5 focus-visible:opacity-100",
                         )}
                         aria-label={isComparing ? "Vergelijking sluiten" : `Benchmark tegen ${m.team_name ?? m.display_name ?? "dit team"}`}
                         title={isComparing ? "Vergelijking sluiten" : "Benchmark jouw ploeg tegen dit team"}
@@ -675,7 +678,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                           "md:hidden inline-flex",
                           isComparing
                             ? "text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]"
-                            : "text-muted-foreground/40",
+                            : "text-muted-foreground/60",
                         )}
                       >
                         <Swords className="h-3.5 w-3.5" strokeWidth={isComparing ? 2.5 : 2} />
