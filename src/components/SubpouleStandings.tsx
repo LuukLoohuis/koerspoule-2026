@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
+import { maySeeLiveContent } from "@/lib/gameStatus";
 import TeamComparison from "@/components/TeamComparison";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import StageBar from "@/components/stages/StageBar";
@@ -33,13 +34,20 @@ type Props = {
 };
 
 export default function SubpouleStandings({ subpouleId, subpouleName, gameId, gameStatus, showEvolution = true, requiresWoonplaats = false }: Props) {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const queryClient = useQueryClient();
   const { data: curGame } = useCurrentGame();
+  const isAdmin = role === "admin";
+  // Testmodus hangt aan de actieve game; bij een aparte (afgeronde) game is de
+  // status sowieso 'live-achtig' zodat maySeeLive dan al true is.
+  const adminTestmodus = Boolean((curGame as { admin_testmodus?: boolean } | undefined)?.admin_testmodus);
   // De subpoule hoort bij een specifieke game (bv. een afgeronde Giro). Gebruik
   // die i.p.v. de huidige live game, anders laden we de verkeerde entries/punten
   // en staat alles op 0 / "geen team".
   const game = gameId ? { id: gameId, status: gameStatus } : curGame;
+  // Resultaten-inhoud (dus ook de benchmark) is verborgen tot 'live'; een admin
+  // met testmodus mag hem tijdens open_inschrijving al zien (proefdraaien).
+  const maySeeLive = maySeeLiveContent(game?.status, isAdmin, adminTestmodus);
   const { data: members = [], isLoading: membersLoading } = useSubpouleMembers(subpouleId);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stages = [] } = useStages(game?.id);
@@ -290,8 +298,6 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
     }
   };
 
-  const compareMember = memberRows.find((m) => m.user_id === compareId);
-
   if (membersLoading) {
     return <StandingsSkeleton />;
   }
@@ -520,8 +526,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
             };
 
             return (
+              <Fragment key={m.user_id}>
               <div
-                key={m.user_id}
                 role={canCompare ? "button" : undefined}
                 tabIndex={canCompare ? 0 : undefined}
                 aria-pressed={canCompare ? isComparing : undefined}
@@ -687,23 +693,29 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   )}
                 </div>
               </div>
+
+              {/* Head-to-head — inline, direct onder de aangeklikte rij. Verborgen
+                  tot 'live'; admin+testmodus mag proefdraaien. */}
+              {isComparing && (maySeeLive || isAdmin) && (
+                <div
+                  ref={compareRef}
+                  style={{ scrollMarginTop: 12 }}
+                  className="border-y border-[hsl(var(--vintage-gold))/0.4] bg-[hsl(var(--vintage-gold))/0.06]"
+                >
+                  <TeamComparison
+                    opponentUserId={m.user_id}
+                    opponentName={m.display_name}
+                    subpouleId={subpouleId}
+                    gameId={game?.id}
+                  />
+                </div>
+              )}
+              </Fragment>
             );
           })}
         </div>
 
       </div>
-
-      {/* Head-to-head comparison */}
-      {compareMember && ["live", "locked", "finished", "closed"].includes(String(game?.status ?? "")) && (
-        <div ref={compareRef} style={{ scrollMarginTop: 12 }}>
-          <TeamComparison
-            opponentUserId={compareMember.user_id}
-            opponentName={compareMember.display_name}
-            subpouleId={subpouleId}
-            gameId={game?.id}
-          />
-        </div>
-      )}
 
       {/* Cumulative evolution chart — alleen als de parent 'm niet zelf rendert. */}
       {showEvolution && <SubpouleEvolutionChart subpouleId={subpouleId} gameId={game?.id} />}

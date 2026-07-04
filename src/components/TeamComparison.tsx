@@ -220,8 +220,12 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
           {sortedCategories.map((cat) => {
             const myRiderIds = me.picks.get(cat.id) ?? [];
             const oppRiderIds = opp.picks.get(cat.id) ?? [];
-            const shared = myRiderIds.filter((id) => oppRiderIds.includes(id));
-            const same = shared.length > 0;
+            // "Zelfde keuze" (goud) alleen bij VOLLEDIG gelijke set — een
+            // gedeeltelijke overlap moet groen/rood kleuren, niet goud.
+            const same =
+              myRiderIds.length > 0 &&
+              myRiderIds.length === oppRiderIds.length &&
+              myRiderIds.every((id) => oppRiderIds.includes(id));
             const myPoints = myRiderIds.reduce((sum, id) => sum + pointFor(id, me.jokers), 0);
             const oppPoints = oppRiderIds.reduce((sum, id) => sum + pointFor(id, opp.jokers), 0);
             const localDiff = myPoints - oppPoints;
@@ -259,12 +263,12 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                       "inline-flex items-center justify-center gap-0.5 rounded-full border-[1.5px]",
                       "px-2.5 py-0.5 text-[13px] font-mono font-bold tabular-nums min-w-[52px] shrink-0 self-center",
                       same
-                        ? "border-[hsl(var(--vintage-gold))] bg-white/70 " + SAME_TEXT
+                        ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.18] " + SAME_TEXT
                         : localDiff > 0
-                          ? "border-emerald-600/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                          ? "border-emerald-600 bg-emerald-500/25 text-emerald-800 dark:text-emerald-300"
                           : localDiff < 0
-                            ? "border-destructive/60 bg-destructive/10 text-destructive"
-                            : "border-border bg-secondary/50 text-muted-foreground"
+                            ? "border-red-600 bg-red-500/25 text-red-800 dark:text-red-300"
+                            : "border-border bg-secondary/60 text-muted-foreground"
                     )}
                   >
                     {localDiff > 0 && <ArrowUp className="h-3 w-3" />}
@@ -294,13 +298,13 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                     <div className="mt-1.5 grid grid-cols-2 gap-0.5">
                       <div className="flex justify-end">
                         <div
-                          className={cn("h-1.5 rounded-l-full", same ? "bg-[hsl(var(--vintage-gold))]" : myPoints >= oppPoints ? "bg-primary" : "bg-foreground/20")}
+                          className={cn("h-1.5 rounded-l-full", same ? "bg-[hsl(var(--vintage-gold))]" : myPoints > oppPoints ? "bg-emerald-600" : myPoints < oppPoints ? "bg-foreground/20" : "bg-secondary")}
                           style={{ width: `${(myPoints / maxPts) * 100}%` }}
                         />
                       </div>
                       <div>
                         <div
-                          className={cn("h-1.5 rounded-r-full", same ? "bg-[hsl(var(--vintage-gold))]" : oppPoints >= myPoints ? "bg-primary" : "bg-foreground/20")}
+                          className={cn("h-1.5 rounded-r-full", same ? "bg-[hsl(var(--vintage-gold))]" : oppPoints > myPoints ? "bg-emerald-600" : oppPoints < myPoints ? "bg-foreground/20" : "bg-secondary")}
                           style={{ width: `${(oppPoints / maxPts) * 100}%` }}
                         />
                       </div>
@@ -336,16 +340,23 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
             </div>
             {(() => {
               const jDiff = myJokerPoints - oppJokerPoints;
+              // Zelfde jokers (goud) alleen bij volledig gelijke set.
+              const jokerSame =
+                myJokerIds.length > 0 &&
+                myJokerIds.length === oppJokerIds.length &&
+                myJokerIds.every((id) => opp.jokers.has(id));
               return (
                 <span
                   className={cn(
                     "inline-flex items-center justify-center gap-0.5 rounded-full border-[1.5px]",
                     "px-2.5 py-0.5 text-[13px] font-mono font-bold tabular-nums min-w-[52px] shrink-0 self-center",
-                    jDiff > 0
-                      ? "border-emerald-600/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                      : jDiff < 0
-                        ? "border-destructive/60 bg-destructive/10 text-destructive"
-                        : "border-border bg-secondary/50 text-muted-foreground"
+                    jokerSame
+                      ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.18] " + SAME_TEXT
+                      : jDiff > 0
+                        ? "border-emerald-600 bg-emerald-500/25 text-emerald-800 dark:text-emerald-300"
+                        : jDiff < 0
+                          ? "border-red-600 bg-red-500/25 text-red-800 dark:text-red-300"
+                          : "border-border bg-secondary/60 text-muted-foreground"
                   )}
                 >
                   {jDiff > 0 && <ArrowUp className="h-3 w-3" />}
