@@ -5,7 +5,9 @@ import { Flame, Star, Eye, EyeOff } from "lucide-react";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
 import { useSubpouleEntries, type SubpouleEntry } from "@/hooks/useSubpouleEntries";
+import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import { HeatmapSkeleton } from "@/components/skeletons/SubpouleSkeletons";
+import { useWoonplaatsFilter, WoonplaatsFilterSelect } from "@/context/WoonplaatsFilterContext";
 import { cn } from "@/lib/utils";
 
 type Props = { subpouleId: string };
@@ -37,13 +39,29 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
   const { data: game } = useCurrentGame();
   const { data: categories = [] } = useCategories(game?.id);
   const { data, isLoading } = useSubpouleEntries(subpouleId, game?.id);
+  const { data: members = [] } = useSubpouleMembers(subpouleId);
 
+  // Gedeeld woonplaats-filter (context): "all" | "none" | exacte plaats.
+  const { value: woonplaatsFilter } = useWoonplaatsFilter();
+  const woonplaatsByUser = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const mem of members) { const w = mem.woonplaats?.trim(); if (w) m.set(mem.user_id, w); }
+    return m;
+  }, [members]);
+
+  // allPlayers gefilterd op woonplaats; cellsPerCategory volgt via de enabledSet.
   const allPlayers: SubpouleEntry[] = useMemo(() => {
     if (!data) return [];
-    return [...data.entries].sort(
-      (a, b) => b.total_points - a.total_points || a.display_name.localeCompare(b.display_name),
-    );
-  }, [data]);
+    const matches = (userId: string) => {
+      if (woonplaatsFilter === "all") return true;
+      const w = woonplaatsByUser.get(userId);
+      if (woonplaatsFilter === "none") return !w;
+      return w === woonplaatsFilter;
+    };
+    return [...data.entries]
+      .filter((e) => matches(e.user_id))
+      .sort((a, b) => b.total_points - a.total_points || a.display_name.localeCompare(b.display_name));
+  }, [data, woonplaatsFilter, woonplaatsByUser]);
 
   const [disabled, setDisabled] = useState<Set<string>>(() => new Set());
 
@@ -195,6 +213,9 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
       </CardHeader>
 
       <CardContent className="p-0">
+        <div className="px-3 pb-1">
+          <WoonplaatsFilterSelect members={members} />
+        </div>
         {totalEnabled === 0 ? (
           <div className="p-6 text-center text-sm text-muted-foreground font-serif italic">
             Geen deelnemers geselecteerd — klik op een naam hierboven om iemand toe te voegen.

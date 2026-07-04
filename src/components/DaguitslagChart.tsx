@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import DaguitslagCelebration from "@/components/DaguitslagCelebration";
 import { useDaguitslagCelebration } from "@/hooks/useDaguitslagCelebration";
 import { SteunMoment } from "@/components/SteunKopgroep";
+import { useWoonplaatsFilter, WoonplaatsFilterSelect } from "@/context/WoonplaatsFilterContext";
 
 type Props = {
   subpouleId: string;
@@ -30,6 +31,14 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
   const { data: members = [], isLoading: membersLoading } = useSubpouleMembers(subpouleId);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stages = [], isLoading: stagesLoading } = useStages(game?.id);
+
+  // Gedeeld woonplaats-filter (context): "all" | "none" | exacte plaats.
+  const { value: woonplaatsFilter } = useWoonplaatsFilter();
+  const filteredMembers = useMemo(() => {
+    if (woonplaatsFilter === "all") return members;
+    if (woonplaatsFilter === "none") return members.filter((m) => !m.woonplaats?.trim());
+    return members.filter((m) => m.woonplaats?.trim() === woonplaatsFilter);
+  }, [members, woonplaatsFilter]);
 
   const memberEntryIds = useMemo(() => {
     const memberUserIds = new Set(members.map((m) => m.user_id));
@@ -65,7 +74,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
       .filter((sp) => sp.stage_id === selectedStage.id)
       .forEach((sp) => pts.set(sp.entry_id, (pts.get(sp.entry_id) ?? 0) + sp.points));
 
-    return members
+    return filteredMembers
       .map((m) => {
         const entry = entries.find((e) => e.user_id === m.user_id);
         return {
@@ -76,7 +85,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
         };
       })
       .sort((a, b) => b.points - a.points);
-  }, [members, entries, stagePoints, selectedStage?.id]);
+  }, [filteredMembers, entries, stagePoints, selectedStage?.id]);
 
   const scorers = rows.filter((r) => r.points > 0);
   const zeros = rows.filter((r) => r.points === 0);
@@ -181,6 +190,9 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
 
       {/* Bars — korte fade bij ritwissel (key op rit-id), geen layout-sprong. */}
       <CardContent className="p-3 sm:p-4">
+        <div className="mb-2">
+          <WoonplaatsFilterSelect members={members} />
+        </div>
         <div key={selectedStage.id}>
         {scorers.length === 0 ? (
           <p className="text-sm text-muted-foreground italic text-center py-4">

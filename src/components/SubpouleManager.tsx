@@ -45,6 +45,7 @@ import SubpouleHeatmap from "@/components/SubpouleHeatmap";
 import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, ChevronsUpDown, MessageCircle, TrendingUp, Flame, Share2, BarChart3, Trophy, X, MapPin, type LucideIcon } from "lucide-react";
 import StreekKlassement from "@/components/StreekKlassement";
 import WoonplaatsBeheer from "@/components/WoonplaatsBeheer";
+import { WoonplaatsFilterProvider } from "@/context/WoonplaatsFilterContext";
 import { cn } from "@/lib/utils";
 
 // Mobiele subpoule-tabs (zoals Hors Categorie). Eén paneel tegelijk.
@@ -487,6 +488,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       : deelnemersSection;
 
     return (
+      <WoonplaatsFilterProvider subpouleId={active.id}>
       <div className="space-y-4">
         <DaguitslagCelebration celebration={dagCelebration} onClose={closeDagCelebration} />
 
@@ -681,6 +683,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
           </SheetContent>
         </Sheet>
       </div>
+      </WoonplaatsFilterProvider>
     );
   }
 
