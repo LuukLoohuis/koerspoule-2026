@@ -57,7 +57,7 @@ function predictionsByClass(list: PredictionEntry[]) {
  * stage_results + points_schema. Joker × 2 wordt per speler toegepast, zodat
  * dit ook voor de tegenstander klopt (entry_picks zelf is RLS-afgeschermd).
  */
-function useRiderBasePoints(gameId: string | undefined) {
+export function useRiderBasePoints(gameId: string | undefined) {
   return useQuery({
     queryKey: ["rider-base-points", gameId],
     enabled: Boolean(supabase && gameId),
