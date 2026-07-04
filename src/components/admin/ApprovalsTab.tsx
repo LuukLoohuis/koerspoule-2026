@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { fetchAllRows } from "@/lib/fetchAll";
+import { runLefevereBatch, fetchLefevereCount, type LefevereCount } from "@/lib/lefevereBatch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -137,6 +138,30 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [lefBusy, setLefBusy] = useState(false);
+  // Lefevère-batch: voortgangsteller (per huidige stand) + generatie-status.
+  const [lefCount, setLefCount] = useState<LefevereCount | null>(null);
+  const [lefGenBusy, setLefGenBusy] = useState(false);
+  const [lefFailed, setLefFailed] = useState<Array<{ entry_id: string; error: string }>>([]);
+
+  // Genereert Lefevère-rapporten voor ALLE inzendingen voor de huidige stand
+  // (client-driven batch). Idempotent; toont voortgang + ververst de teller.
+  async function generateAllLefevere() {
+    if (!supabase || !activeGameId || lefGenBusy) return;
+    setLefGenBusy(true);
+    try {
+      const res = await runLefevereBatch(supabase, activeGameId);
+      setLefFailed(res.failed);
+      const c = await fetchLefevereCount(supabase, activeGameId);
+      setLefCount(c);
+      toast.success(`🖋️ ${res.generated} gegenereerd, ${c.metRapport}/${c.totaal} deelnemers`);
+      if (res.timedOut) toast.info("Tijd verstreken — klik nogmaals om door te gaan.");
+      if (res.failed.length > 0) toast.error(`${res.failed.length} mislukt — zie de lijst.`);
+    } catch (e) {
+      toast.error(`Lefevère-batch faalde: ${(e as Error).message}`);
+    } finally {
+      setLefGenBusy(false);
+    }
+  }
   // Per etappe: subpoules die na de laatste commentaar-run nog leeg zijn (+reden).
   const [emptyByStage, setEmptyByStage] = useState<Record<string, Array<{ id: string; name: string; reason: string }>>>({});
   const [commBusy, setCommBusy] = useState<string | null>(null);
@@ -242,6 +267,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     const stageRows = (data ?? []) as Row[];
     setRows(stageRows);
     loadCommCounts(stageRows);
+    fetchLefevereCount(supabase, activeGameId).then(setLefCount).catch(() => setLefCount(null));
   }
 
   useEffect(() => {
@@ -350,6 +376,63 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
       <Card>
         <CardHeader><CardTitle className="font-display text-base">Goedgekeurd ({approved.length})</CardTitle></CardHeader>
         <CardContent className="space-y-1 text-sm">
+          {/* Game-level Lefevère-batch — genereert rapporten voor ALLE deelnemers
+              voor de huidige stand. Niet automatisch bij fiatteren. */}
+          {approved.length > 0 && (
+            <div className="mb-3 rounded-md border border-border/60 p-3 space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  size="sm"
+                  className="bg-[hsl(var(--vintage-gold))] text-black hover:brightness-95"
+                  disabled={lefGenBusy || !activeGameId}
+                  onClick={generateAllLefevere}
+                >
+                  <Briefcase className={`w-3 h-3 mr-1 ${lefGenBusy ? "animate-pulse" : ""}`} />
+                  {lefGenBusy ? "Bezig…" : "Genereer Lefevère (alle deelnemers)"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={lefBusy || !activeGameId}
+                  title="Wist alle Lefevère-rapporten van deze game; ze regenereren pas bij de volgende weergave of via de generatie-knop."
+                  onClick={regenerateLefevere}
+                >
+                  <Undo2 className={`w-3 h-3 mr-1 ${lefBusy ? "animate-pulse" : ""}`} />Wis Lefevère-cache
+                </Button>
+              </div>
+              {lefCount && (() => {
+                const done = lefCount.totaal > 0 && lefCount.metRapport === lefCount.totaal;
+                const pct = lefCount.totaal > 0 ? Math.round((lefCount.metRapport / lefCount.totaal) * 100) : 0;
+                return (
+                  <div className="max-w-xs">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className={done ? "text-green-600 font-medium" : "text-muted-foreground"}>
+                        Lefevère: {lefCount.metRapport}/{lefCount.totaal} deelnemers
+                      </span>
+                      {done && <span className="text-green-600">✓</span>}
+                    </div>
+                    <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <div className={`h-full ${done ? "bg-green-600" : "bg-muted-foreground/50"}`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })()}
+              {lefFailed.length > 0 && (
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-xs text-orange-600">
+                      <ChevronRight className="w-3 h-3 mr-1" />{lefFailed.length} mislukt
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <ul className="text-xs text-muted-foreground pl-6 py-1 space-y-0.5">
+                      {lefFailed.map((f) => (<li key={f.entry_id}>{f.entry_id.slice(0, 8)}… — {f.error}</li>))}
+                    </ul>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+            </div>
+          )}
           {approved.length === 0 ? (
             <p className="text-muted-foreground italic">Nog niets gefiatteerd.</p>
           ) : approved.slice(0, 30).map((r) => (
@@ -384,16 +467,6 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   }}
                 >
                   <RefreshCw className={`w-3 h-3 mr-1 ${commBusy === r.stage_id ? "animate-pulse" : ""}`} />Regenereer Michel &amp; José
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-[hsl(var(--vintage-gold))] text-[hsl(var(--vintage-gold))]"
-                  disabled={lefBusy || !activeGameId}
-                  title="Wist alle Lefevère-rapporten van deze game; ze regenereren bij de volgende weergave."
-                  onClick={regenerateLefevere}
-                >
-                  <Briefcase className={`w-3 h-3 mr-1 ${lefBusy ? "animate-pulse" : ""}`} />Regenereer Lefevère
                 </Button>
                 <Button
                   size="sm"
