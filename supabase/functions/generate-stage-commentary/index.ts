@@ -75,14 +75,21 @@ nieuwe zinsbouw aangepast aan de poule-situatie.
 
 — MICHEL (extase via herhaling, literair naast plat Vlaams, beeldspraak):
 "Tommeke! Tommeke! Tommeke! Wat doe je nu?" · "Museeuw rijdt hier weg bij God en klein Pierke." ·
-"Met de klap erover!" · "Delirium! Delirium!" · "Ram, bam, bam!" · "Hij is scheuten." (definitief weg) ·
+"Op en over God en klein Pierke!" · "Met de klap erover!" · "Ram, bam, bam!" · "Hij is scheuten." (definitief weg) ·
 "Hij gaat nog zijn peren zien." · "Hier trekt die Duvel z'n Moortgat open." · "Verschroeiende versnelling." ·
 "Hij rijdt iedereen op een hoopje." · "De rek is eruit." · "Hij kraakt." · "Dit is de dood of de gladiolen." ·
-"Hij rijdt met een grote plateau op overschot." · "Het mes zit tussen de tanden." ·
-"De maitrise over zijn tuig." · "Het is om duimen en vingers van af te likken." ·
+"Hij rijdt met een grote plateau op overschot." · "Het mes zit tussen de tanden." · "Wat een schone zondag." ·
+"De maitrise over zijn tuig." · "Het is om duimen en vingers van af te likken." · "Dit is een orgelpunt in zijn carrière." ·
+"Wat een dash!" (aanval met kracht én souplesse) · "Zarrabeitia gaat niet op de foto staan." (renner die zich wegsteekt) ·
 "Het bos heeft een muisje gebaard." (aangekondigd maar mager) · "Ze rijden dik." (zwaar, niet soepel) ·
 "Ze hebben streepjes op de carrosserie." (valpartijen) · "Het kaf van het koren scheiden." ·
+"Koers is de schoonste sport die er is." (slotgevoel) ·
 Tot publiek: "Niet meer weglopen dames en heren — als u een whisky bij de hand hebt, neem nog een slokje."
+
+— MICHEL SIGNATUUR-TRIOMFKRETEN (iconisch; ALLEEN bij een dominante dagzege / eindzege, hooguit ÉÉN per commentaar,
+nooit twee etappes op rij dezelfde — anders klinkt het als een truukje):
+"Delirium! Delirium! Delirium!" · "Tsjakka!" · "Ram, bam, bam!" · "Tommeke, Tommeke, Tommeke!" (naam invullen: "Pijke, Pijke, Pijke!") ·
+"Viva [naam]!" · "Moeder, we zijn nog niet thuis!" · "Je rijdt ze allemaal naar de vaantjes!" · "Halleluja!"
 
 — JOSÉ (droog, beschouwend, woordspeling, understatement met punch):
 "Dat zou zomaar eens kunnen, Michel." · "Ja maar… ge weet dat niet hé." · "Da's nen taaie." ·
@@ -138,11 +145,13 @@ SPELREGELS PER BERICHT (HARD)
 10. ANTI-HERHALING: in de user-prompt staan de OPENERS van de vorige 2-3 etappes (per stem). Begin NIET met dezelfde opener en hergebruik NIET dezelfde uitdrukking als die vorige etappes. Kies bewust een ander type opening.
 11. Laat de SITUATIE-labels uit de user-prompt leiden welke frasencategorie je kiest (nieuwe leider / stijger / kraker / dominante winnaar).
 
-VARIATIE — Michel-openingen om af te wisselen:
-"X pakt de dagzege!" · "Wat een machtsontplooiing!" · "Ohoho, daar zijn we!" · "X heeft de klap erover!" · "Na N etappes breekt X eindelijk de ban!" · "X slaat zijn slag in etappe N!" · "Aiaiai, wat zien we hier..."
+12. SIGNATUUR-KRETEN met mate: de iconische triomfkreten ("Delirium! Delirium! Delirium!", "Tsjakka!", "Ram, bam, bam!", "Viva X!", "Moeder, we zijn nog niet thuis!") zijn krachtig maar SLIJTEN snel. Gebruik er hooguit ÉÉN per commentaar, ALLEEN bij een echt dominante dagzege of eindzege, en NOOIT dezelfde kreet als in de vorige 2-3 etappes. Een routine-etappe krijgt géén signatuurkreet. Kies bij twijfel voor beeldspraak in plaats van een kreet.
+
+VARIATIE — Michel-openingen om af te wisselen (put breed, herhaal niet):
+"X pakt de dagzege!" · "Wat een machtsontplooiing!" · "Ohoho, daar zijn we!" · "X heeft de klap erover!" · "Na N etappes breekt X eindelijk de ban!" · "X slaat zijn slag in etappe N!" · "Aiaiai, wat zien we hier..." · "Op en over God en klein Pierke — X pakt de rit!" · "X rijdt ze allemaal naar de vaantjes!" · "Delirium! Delirium! Delirium! X met overmacht!" · "Tsjakka! Daar is de dagzege van X!" · "Viva X — wat een nummer!" · "Handen in de lucht voor X!" · "Een dash uit het niets, en X is weg!" · "Wat een schone dag voor X!"
 
 VARIATIE — José-openingen om af te wisselen:
-"Tiens Michel, ..." · "Allez, ..." · "Bám, ..." · "Nochtans, ..." · "Als je naar de cijfers kijkt..." · "Och, ..." · "X zou wel eens een belangrijke man kunnen worden..."
+"Tiens Michel, ..." · "Allez, ..." · "Bám, ..." · "Nochtans, ..." · "Als je naar de cijfers kijkt..." · "Och, ..." · "X zou wel eens een belangrijke man kunnen worden..." · "Lang verhaal kort, ..." · "Da's koers hé Michel, ..." · "Ge moogt dat niet onderschatten: ..." · "The best of the rest, ..."
 
 ═══════════════════════════════════════════════════════════════
 VOORBEELDEN (toon, lengte, registers)
@@ -164,7 +173,13 @@ Voorbeeld 5 — Openingsetappe (geen voor-klassement):
 {"michelWuyts":"En de openingsetappe is van Koen! Met een sublieme keuze voor Philipsen en Pedersen heeft hij meteen panache getoond. Pijke en Bart kijken toe vanuit plek 4 en 5 — pertinent geen sikkepit hebben ze er kunnen inbrengen.","joseDeCauwer":"Eerste klassement is een feit, Michel: Koen aan kop met 96 punten, Johannes volgt op vier puntjes, Pijke maakt het podium compleet. Och, lang verhaal kort — alles is nog open, maar Koen heeft de eerste schermutseling gewonnen."}
 
 Voorbeeld 6 — Stijger uit de achtergrond + rustige José-relativering (andere opening):
-{"michelWuyts":"Die komt van ver, maar hij is er wel — Bart komt uit de achtergrond aanzetten en grijpt de dagzege! Met Vingegaard, Almeida en jokertje Healy reed hij zich pertinent in de kijker. Pijke en Emma volgen op plek 2 en 3 — ze hebben hem niet zien komen.","joseDeCauwer":"Tiens Michel, kijk eens wie er uit het niets komt aanzetten: Bart springt van plek 7 naar plek 3, da's straf. Koen blijft leider met 18 punten marge, maar nochtans — voorsprongen smelten als sneeuw voor de zon. Rustig blijven, de Tour win je niet op één dag."}`;
+{"michelWuyts":"Die komt van ver, maar hij is er wel — Bart komt uit de achtergrond aanzetten en grijpt de dagzege! Met Vingegaard, Almeida en jokertje Healy reed hij zich pertinent in de kijker. Pijke en Emma volgen op plek 2 en 3 — ze hebben hem niet zien komen.","joseDeCauwer":"Tiens Michel, kijk eens wie er uit het niets komt aanzetten: Bart springt van plek 7 naar plek 3, da's straf. Koen blijft leider met 18 punten marge, maar nochtans — voorsprongen smelten als sneeuw voor de zon. Rustig blijven, de Tour win je niet op één dag."}
+
+Voorbeeld 7 — Koninginnenrit, dominante dagzege → precies HIER mag één signatuurkreet (Delirium×3):
+{"michelWuyts":"Delirium! Delirium! Delirium! Pijke walst met overmacht over de koninginnenrit! Met Pogačar, Vingegaard, Almeida én jokertje Healy in de top 10 had hij pertinent de maitrise over zijn tuig — van geen kanten een maat op. Koen en Emma likken hun peren op plek 2 en 3.","joseDeCauwer":"Allez Michel, dat is straf hé. Pijke loopt in één klap 41 punten uit en heeft nu 58 punten marge — dat is een voorschot op de eindzege. Koen zakt naar plek 2, Emma wipt het podium op. Ge moogt dat niet onderschatten, maar met nog vier ritten te gaan is de kous nog niet af."}
+
+Voorbeeld 8 — Verrassende sprintzege → andere signatuurkreet (Tsjakka!), niet twee keer Delirium:
+{"michelWuyts":"Tsjakka! Roel knalt uit het niets naar de dagzege in de massasprint! Met Milan, Merlier en jokertje Girmay reed hij op en over God en klein Pierke — wat een dash in de laatste tweehonderd meter! Johannes en Bart moeten tevreden zijn met zilver en brons.","joseDeCauwer":"Bám, en dan schuift het klassement: Roel pakt 44 punten en springt van plek 6 naar plek 2. Koen blijft nipt leider, het gat bedraagt nog maar 7 punten — nagelbijten wordt dat. Nochtans, één slechte dag en het staat weer op zijn kop."}`;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -538,6 +553,8 @@ async function fetchRecentOpeners(
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const startedAt = Date.now();
+
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -615,8 +632,8 @@ Deno.serve(async (req) => {
     }
 
     // force = alles opnieuw: wis bestaande commentaren éérst (één delete) en
-    // werk daarna als niet-force. Zo is de skip-set hieronder de natuurlijke
-    // cursor voor de zelf-keten en overschrijft een vervolg-run niets dubbel.
+    // werk daarna als niet-force. De bestaande rijen zijn de "cursor": een
+    // tweede klik na een timeout maakt zo enkel de nog-lege subpoules af.
     if (body.force) {
       let del = admin.from("etappe_commentaren").delete().eq("stage_id", stageId);
       if (body.subpoule_id) del = del.eq("subpoule_id", body.subpoule_id);
@@ -634,71 +651,99 @@ Deno.serve(async (req) => {
       for (const r of (existRows ?? []) as any[]) existing.add(r.subpoule_id);
     }
 
-    // Max. aantal subpoules per aanroep: elke subpoule = een OpenAI-call van
-    // 5-15s; alles in één run overschrijdt bij veel subpoules de edge-limiet
-    // van 150s (IDLE_TIMEOUT). De rest gaat via een zelf-aanroep verder.
-    const BATCH = 8;
     const pending = (subpoules as Array<{ id: string; name: string }>).filter((sp) => !existing.has(sp.id));
-    const batch = pending.slice(0, BATCH);
+
+    // Eén subpoule verwerken. Gooit bij een OpenAI-/DB-fout (→ door
+    // Promise.allSettled als "fout" geteld); geeft "geen leden" terug wanneer de
+    // subpoule geen leden met een ploeg heeft (gemarkeerd i.p.v. stil geskipt).
+    type SubpouleRef = { id: string; name: string };
+    async function generateOne(sp: SubpouleRef): Promise<"generated" | "geen leden"> {
+      const members = await fetchSubpouleContext(admin, stageId, stage.game_id, stage.stage_number, sp.id);
+      if (members.length === 0) return "geen leden";
+
+      const recentOpeners = await fetchRecentOpeners(admin, stage.game_id, stage.stage_number, sp.id);
+      const userPrompt = buildUserPrompt({
+        subpouleNaam: sp.name,
+        stageNumber: stage.stage_number,
+        stageName: stage.name ?? null,
+        stageType: (stage as any).stage_type ?? null,
+        isFirstStage,
+        isLastStage,
+        members,
+        recentMichelOpeners: recentOpeners.michel,
+        recentJoseOpeners: recentOpeners.jose,
+      });
+      const result = await callOpenAI(userPrompt);
+
+      const { error: upErr } = await admin
+        .from("etappe_commentaren")
+        .upsert(
+          {
+            stage_id: stageId,
+            subpoule_id: sp.id,
+            michel_tekst: result.michelWuyts,
+            jose_tekst: result.joseDeCauwer,
+            model: MODEL,
+            generated_by: callerUserId,
+            generated_at: new Date().toISOString(),
+          },
+          { onConflict: "stage_id,subpoule_id" },
+        );
+      if (upErr) throw upErr;
+      return "generated";
+    }
+
+    // Begrensde parallelle verwerking: chunks van 5 tegelijk (5 OpenAI-calls
+    // parallel), doorgaan tot alles klaar is of het tijdbudget (130s, ruim onder
+    // de 150s edge-limiet) op is. Bij een timeout maakt een tweede klik de rest
+    // af — idempotent dankzij de skip-op-bestaande-rij hierboven.
+    const CONCURRENCY = 5;
+    const TIME_BUDGET_MS = 130_000;
 
     let generated = 0;
-    let skipped = existing.size;
+    let skipped = existing.size; // hadden al een rij (overgeslagen)
     const errors: Array<{ subpoule_id: string; error: string }> = [];
+    const outcome = new Map<string, "generated" | "geen leden" | "fout">();
+    let processed = 0;
+    let timedOut = false;
 
-    for (const sp of batch) {
-      try {
-        const members = await fetchSubpouleContext(admin, stageId, stage.game_id, stage.stage_number, sp.id);
-        if (members.length === 0) { skipped++; continue; }
-
-        const recentOpeners = await fetchRecentOpeners(admin, stage.game_id, stage.stage_number, sp.id);
-
-        const userPrompt = buildUserPrompt({
-          subpouleNaam: sp.name,
-          stageNumber: stage.stage_number,
-          stageName: stage.name ?? null,
-          stageType: (stage as any).stage_type ?? null,
-          isFirstStage,
-          isLastStage,
-          members,
-          recentMichelOpeners: recentOpeners.michel,
-          recentJoseOpeners: recentOpeners.jose,
-        });
-
-        const result = await callOpenAI(userPrompt);
-
-        const { error: upErr } = await admin
-          .from("etappe_commentaren")
-          .upsert(
-            {
-              stage_id: stageId,
-              subpoule_id: sp.id,
-              michel_tekst: result.michelWuyts,
-              jose_tekst: result.joseDeCauwer,
-              model: MODEL,
-              generated_by: callerUserId,
-              generated_at: new Date().toISOString(),
-            },
-            { onConflict: "stage_id,subpoule_id" },
-          );
-        if (upErr) throw upErr;
-        generated++;
-      } catch (e) {
-        errors.push({ subpoule_id: sp.id, error: (e as Error).message });
-      }
+    for (let i = 0; i < pending.length; i += CONCURRENCY) {
+      const chunk = pending.slice(i, i + CONCURRENCY);
+      const settled = await Promise.allSettled(chunk.map((sp) => generateOne(sp)));
+      settled.forEach((s, idx) => {
+        const sp = chunk[idx];
+        processed++;
+        if (s.status === "fulfilled") {
+          outcome.set(sp.id, s.value);
+          if (s.value === "generated") generated++;
+          else skipped++; // "geen leden"
+        } else {
+          outcome.set(sp.id, "fout");
+          errors.push({ subpoule_id: sp.id, error: (s.reason as Error)?.message ?? String(s.reason) });
+        }
+      });
+      if (Date.now() - startedAt > TIME_BUDGET_MS) { timedOut = true; break; }
     }
 
-    // Nog subpoules over? → zichzelf opnieuw aanroepen (fire-and-forget keten,
-    // met service-role; force is hierboven al afgehandeld via de delete).
-    const remaining = pending.length - batch.length;
-    if (remaining > 0) {
-      fetch(`${SUPABASE_URL}/functions/v1/generate-stage-commentary`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_KEY}` },
-        body: JSON.stringify({ stage_id: stageId }),
-      }).catch(() => undefined);
-    }
+    const remaining = pending.length - processed;
 
-    return json({ ok: true, subpoules: subpoules.length, generated, skipped, remaining, errors });
+    // Restlijst: elke subpoule die ná deze run nog geen rij heeft, met reden.
+    const reason = (st: string | undefined): string =>
+      st === "geen leden" ? "geen leden" : st === "fout" ? "OpenAI-fout" : "nog niet verwerkt";
+    const emptySubpoules = pending
+      .filter((sp) => outcome.get(sp.id) !== "generated")
+      .map((sp) => ({ id: sp.id, name: sp.name, reason: reason(outcome.get(sp.id)) }));
+
+    return json({
+      ok: true,
+      subpoules: subpoules.length,
+      generated,
+      skipped,
+      remaining,
+      timedOut,
+      errors,
+      emptySubpoules,
+    });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }

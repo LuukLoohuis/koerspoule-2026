@@ -137,6 +137,40 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [lefBusy, setLefBusy] = useState(false);
+  // Per etappe: subpoules die na de laatste commentaar-run nog leeg zijn (+reden).
+  const [emptyByStage, setEmptyByStage] = useState<Record<string, Array<{ id: string; name: string; reason: string }>>>({});
+  const [commBusy, setCommBusy] = useState<string | null>(null);
+
+  // Roept de commentaargenerator aan en toont een samenvattende toast +
+  // bewaart de restlijst (lege subpoules met reden) voor deze etappe.
+  async function runCommentary(stageId: string, force: boolean) {
+    setCommBusy(stageId);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-stage-commentary", {
+        body: { stage_id: stageId, force },
+      });
+      if (error) {
+        let detail = error.message;
+        const ctx = (error as { context?: Response }).context;
+        if (ctx && typeof ctx.text === "function") {
+          try { const body = await ctx.text(); if (body) detail = body; } catch { /* keep fallback */ }
+        }
+        throw new Error(detail);
+      }
+      const generated = (data as { generated?: number })?.generated ?? 0;
+      const timedOut = Boolean((data as { timedOut?: boolean })?.timedOut);
+      const empty = ((data as { emptySubpoules?: Array<{ id: string; name: string; reason: string }> })?.emptySubpoules) ?? [];
+      setEmptyByStage((prev) => ({ ...prev, [stageId]: empty }));
+      toast.success(`🎙️ ${generated} gegenereerd, ${empty.length} nog leeg`);
+      if (timedOut) toast.info("Tijd verstreken — klik nogmaals om de rest af te maken.");
+      return { generated, empty, timedOut };
+    } catch (e) {
+      toast.error(`Commentaargenerator faalde: ${(e as Error).message}`);
+      return null;
+    } finally {
+      setCommBusy(null);
+    }
+  }
 
   // Wist alle Lefevère-rapporten van deze game → elke deelnemer krijgt een vers
   // rapport bij de volgende weergave (nu via het nieuwe model / verbeterde prompt).
@@ -193,40 +227,8 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     }
     toast.success("Uitslag gefiatteerd");
     load();
-    // Trigger Wuyts/De Cauwer-commentaargenerator (async, niet-blokkerend)
-    void (async () => {
-      try {
-        const { data, error: ge } = await supabase.functions.invoke("generate-stage-commentary", {
-          body: { stage_id: stageId, force: false },
-        });
-        if (ge) {
-          // Lees echte response body uit FunctionsHttpError.context
-          let detail = ge.message;
-          const ctx = (ge as { context?: Response }).context;
-          if (ctx && typeof ctx.text === "function") {
-            try {
-              const body = await ctx.text();
-              if (body) detail = body;
-            } catch { /* keep fallback */ }
-          }
-          throw new Error(detail);
-        }
-        const generated = (data as { generated?: number })?.generated ?? 0;
-        const remaining = (data as { remaining?: number })?.remaining ?? 0;
-        const errors = (data as { errors?: Array<{ error: string }> })?.errors ?? [];
-        if (generated > 0) {
-          toast.success(
-            `🎙️ Commentaar gegenereerd voor ${generated} subpoule${generated === 1 ? "" : "s"}` +
-              (remaining > 0 ? ` — ${remaining} volgen op de achtergrond` : ""),
-          );
-        }
-        if (errors.length > 0) {
-          toast.error(`Per-subpoule fouten: ${errors[0].error}${errors.length > 1 ? ` (en ${errors.length - 1} meer)` : ""}`);
-        }
-      } catch (e) {
-        toast.error(`Commentaargenerator faalde: ${(e as Error).message}`);
-      }
-    })();
+    // Trigger Wuyts/De Cauwer-commentaargenerator (async, niet-blokkerend).
+    void runCommentary(stageId, false);
   }
 
   const pending = rows.filter((r) => r.results_status === "pending");
@@ -332,28 +334,23 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   size="sm"
                   variant="outline"
                   className="border-[hsl(var(--vintage-gold))] text-[hsl(var(--vintage-gold))]"
+                  disabled={commBusy === r.stage_id}
+                  title="Vult alleen de subpoules aan die nog geen commentaar hebben (idempotent). Klik nogmaals na een timeout om de rest af te maken."
+                  onClick={() => runCommentary(r.stage_id, false)}
+                >
+                  <Mic className={`w-3 h-3 mr-1 ${commBusy === r.stage_id ? "animate-pulse" : ""}`} />Vul ontbrekend commentaar aan
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-[hsl(var(--vintage-gold))] text-[hsl(var(--vintage-gold))]"
+                  disabled={commBusy === r.stage_id}
                   onClick={async () => {
                     if (!confirm("Commentaar regenereren voor alle subpoules? Overschrijft bestaand commentaar voor deze etappe.")) return;
-                    try {
-                      const { data, error } = await supabase.functions.invoke("generate-stage-commentary", {
-                        body: { stage_id: r.stage_id, force: true },
-                      });
-                      if (error) {
-                        let detail = error.message;
-                        const ctx = (error as { context?: Response }).context;
-                        if (ctx && typeof ctx.text === "function") {
-                          try { const body = await ctx.text(); if (body) detail = body; } catch { /* keep fallback */ }
-                        }
-                        throw new Error(detail);
-                      }
-                      const generated = (data as { generated?: number })?.generated ?? 0;
-                      toast.success(`🎙️ Commentaar gegenereerd voor ${generated} subpoule${generated === 1 ? "" : "s"}`);
-                    } catch (e) {
-                      toast.error(`Faalde: ${(e as Error).message}`);
-                    }
+                    await runCommentary(r.stage_id, true);
                   }}
                 >
-                  <Mic className="w-3 h-3 mr-1" />Regenereer Michel &amp; José
+                  <RefreshCw className={`w-3 h-3 mr-1 ${commBusy === r.stage_id ? "animate-pulse" : ""}`} />Regenereer Michel &amp; José
                 </Button>
                 <Button
                   size="sm"
@@ -378,6 +375,25 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   <Undo2 className="w-3 h-3 mr-1" />Intrekken
                 </Button>
               </div>
+              {emptyByStage[r.stage_id] && emptyByStage[r.stage_id].length > 0 && (
+                <Collapsible className="mt-1">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-xs text-orange-600">
+                      <ChevronRight className="w-3 h-3 mr-1" />
+                      {emptyByStage[r.stage_id].length} subpoule{emptyByStage[r.stage_id].length === 1 ? "" : "s"} zonder commentaar
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <ul className="text-xs text-muted-foreground pl-6 py-1 space-y-0.5">
+                      {emptyByStage[r.stage_id].map((s) => (
+                        <li key={s.id}>
+                          <span className="font-medium">{s.name}</span> — {s.reason}
+                        </li>
+                      ))}
+                    </ul>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
               <StageBreakdown stageId={r.stage_id} />
             </div>
           ))}
