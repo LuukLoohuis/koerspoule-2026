@@ -31,11 +31,6 @@ const FONT_SANS = "'Inter','DM Sans',sans-serif";
 const FONT_SERIF = "'Source Serif 4',Georgia,serif";
 const FONT_MONO = "'JetBrains Mono',monospace";
 
-function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined" || !window.matchMedia) return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 function niceCeil(v: number): number {
   if (v <= 10) return 10;
   const mag = 10 ** Math.floor(Math.log10(v));
@@ -65,11 +60,9 @@ export default function AapscoreDistributie({
   monkeyCount = 5000,
   className,
 }: Props) {
-  const reduce = prefersReducedMotion();
+  // Geen grow-/fade-in-animatie meer (bewust): alles staat direct in eindstand.
   const wrapRef = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(0);
-  // Geen grow-/fade-in-animatie meer (bewust): alles staat direct in eindstand.
-  const mounted = true;
 
   useEffect(() => {
     if (!wrapRef.current) return;
@@ -135,8 +128,6 @@ export default function AapscoreDistributie({
             height: isMobile ? 140 : 180,
             width: "auto",
             filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.18))",
-            opacity: mounted ? 1 : 0,
-            transition: reduce ? undefined : "opacity 200ms ease-out 200ms",
             zIndex: 2,
           }}
         />
@@ -286,7 +277,7 @@ export default function AapscoreDistributie({
             className="absolute inset-y-0 flex items-end"
             style={{ left: yGutter, right: 0, gap: 1 }}
           >
-            {dist.map((b, i) => {
+            {dist.map((b) => {
               const hPct = (b.count / yMax) * 100;
               const isUser = b.bucket === userBin;
               return (
@@ -303,9 +294,6 @@ export default function AapscoreDistributie({
                     borderTop: isUser ? undefined : `1px solid ${BAR_TOP}`,
                     borderTopLeftRadius: 2,
                     borderTopRightRadius: 2,
-                    transformOrigin: "bottom",
-                    transform: mounted ? "scaleY(1)" : "scaleY(0)",
-                    transition: reduce ? undefined : `transform 380ms ease-out ${i * 8}ms`,
                   }}
                 />
               );
@@ -359,8 +347,6 @@ export default function AapscoreDistributie({
                       : 0,
                 right: balloonAlign === "right" ? 0 : "auto",
                 transform: balloonAlign === "center" ? "translateX(-50%)" : undefined,
-                opacity: mounted ? 1 : 0,
-                transition: reduce ? undefined : "opacity 160ms ease-out 380ms",
               }}
             >
               <div

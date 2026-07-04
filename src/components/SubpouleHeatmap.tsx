@@ -178,7 +178,7 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
                 aria-pressed={isOn}
                 title={isOn ? `Verberg ${p.display_name}` : `Toon ${p.display_name}`}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-0.5 text-xs border-2 border-foreground transition-all",
+                  "inline-flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-0.5 text-xs border-2 border-foreground transition-colors",
                   isOn
                     ? "bg-card text-foreground"
                     : "bg-secondary/40 text-muted-foreground opacity-55 hover:opacity-85 line-through decoration-1",

@@ -41,13 +41,12 @@ const CELL_HAIRLINE = "1px solid color-mix(in srgb, var(--ink-sepia) 20%, transp
 
 function StatCard({
   label,
-  delay,
   isEmpty,
   index,
   children,
 }: {
   label: string;
-  delay: number;
+  delay?: number;
   isEmpty: boolean;
   /** Positie in het 2×2 raster: bepaalt de interne hairlines + goud-anker. */
   index: number;
@@ -55,7 +54,7 @@ function StatCard({
 }) {
   return (
     <div
-      className="flex flex-col gap-1.5 p-3 opacity-0 min-h-[80px]"
+      className="flex flex-col gap-1.5 p-3 min-h-[80px]"
       style={{
         // Kolom 2 krijgt een hairline links, rij 2 een hairline boven.
         // Cel 1 (linksboven) krijgt het gouden anker-randje.
@@ -66,7 +65,6 @@ function StatCard({
               ? CELL_HAIRLINE
               : undefined,
         borderTop: index >= 2 ? CELL_HAIRLINE : undefined,
-        animation: `ploegStatsFadeIn 0.45s ease-out ${delay}ms forwards`,
       }}
     >
       <span

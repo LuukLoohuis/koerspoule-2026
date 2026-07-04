@@ -36,8 +36,8 @@ export const CHART_VISUAL = {
   tooltipCursor: { stroke: "rgba(0,0,0,0.15)", strokeWidth: 1, strokeDasharray: "3 4" } as const,
   tooltipClass: "rounded-xl border border-border bg-card/95 shadow-lg text-xs text-foreground/90 overflow-hidden",
   activeDotStroke: "hsl(var(--bg-wielerdirecteur))",
-  toggleBtnClass: "text-[11px] font-medium px-3 py-1.5 rounded-full border border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:border-foreground/20 transition-all",
-  pillBase: "group flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border transition-all",
+  toggleBtnClass: "text-[11px] font-medium px-3 py-1.5 rounded-full border border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:border-foreground/20 transition-colors",
+  pillBase: "group flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border transition-colors",
   pillVisible: "border-border bg-secondary/50 text-foreground/90 hover:bg-secondary hover:border-foreground/20",
   pillHidden: "border-border/30 bg-secondary/20 text-muted-foreground/40 hover:text-muted-foreground",
   pillHighlighted: "ring-1 ring-foreground/20 bg-secondary",
@@ -253,7 +253,7 @@ export default function SubpouleEvolutionChart({
                       key={k}
                       onClick={() => setOthersMode(k)}
                       className={cn(
-                        "px-2.5 py-1 rounded-full transition-all",
+                        "px-2.5 py-1 rounded-full transition-colors",
                         othersMode === k
                           ? "bg-card text-foreground shadow-sm"
                           : "text-muted-foreground hover:text-foreground"
@@ -268,7 +268,7 @@ export default function SubpouleEvolutionChart({
                 onClick={() => setShowNames((v) => !v)}
                 aria-pressed={showNames}
                 className={cn(
-                  "px-2.5 py-1 rounded-full border text-[11px] font-medium transition-all",
+                  "px-2.5 py-1 rounded-full border text-[11px] font-medium transition-colors",
                   showNames
                     ? "bg-primary text-primary-foreground border-foreground shadow-sm"
                     : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
@@ -331,7 +331,7 @@ export default function SubpouleEvolutionChart({
                   title={visible ? "Dubbelklik om te verbergen" : "Klik om te tonen"}
                 >
                   <span
-                    className="h-2 w-2 rounded-full transition-all"
+                    className="h-2 w-2 rounded-full transition-colors"
                     style={{
                       backgroundColor: visible ? color : "transparent",
                       border: visible ? "none" : `1.5px solid ${color}`,
@@ -527,8 +527,7 @@ export default function SubpouleEvolutionChart({
                           stroke: CHART_VISUAL.activeDotStroke,
                           fill: color,
                         }}
-                        animationDuration={700}
-                        animationEasing="ease-out"
+                        isAnimationActive={false}
                         connectNulls
                         label={(lp: any) => {
                           const { x, y, index } = lp;

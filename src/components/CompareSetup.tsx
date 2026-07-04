@@ -135,7 +135,7 @@ export default function CompareSetup({
                   key={o.user_id}
                   onClick={() => setSelectedId(o.user_id)}
                   className={cn(
-                    "shrink-0 flex items-center gap-2 rounded-full border px-3 py-1.5 transition-all",
+                    "shrink-0 flex items-center gap-2 rounded-full border px-3 py-1.5 transition-colors",
                     active
                       ? "border-primary bg-primary/10 text-primary shadow-sm"
                       : "border-border bg-secondary/40 text-foreground/80 hover:bg-secondary hover:border-foreground/20"

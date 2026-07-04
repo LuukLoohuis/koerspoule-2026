@@ -532,7 +532,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
           </div>
           <button
             onClick={() => shareInvite(active.name, active.code, active.slug)}
-            className="inline-flex items-center gap-2 shrink-0 px-4 py-2 rounded-md bg-primary text-primary-foreground font-bold text-sm border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] hover:brightness-105 active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
+            className="inline-flex items-center gap-2 shrink-0 px-4 py-2 rounded-md bg-primary text-primary-foreground font-bold text-sm border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] hover:brightness-105 transition-colors"
           >
             <Share2 className="h-4 w-4" />
             Daag je vrienden uit
@@ -656,7 +656,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
           type="button"
           onClick={() => setChatOpen(true)}
           aria-label="Open koerscafé-chat"
-          className="md:hidden fixed right-4 bottom-[72px] z-40 inline-flex items-center justify-center h-14 w-14 rounded-full bg-primary text-primary-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
+          className="md:hidden fixed right-4 bottom-[72px] z-40 inline-flex items-center justify-center h-14 w-14 rounded-full bg-primary text-primary-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] transition-colors"
         >
           <MessageCircle className="h-6 w-6" />
           {/* TODO: ongelezen-badge zodra PelotonChat/chat-hook een unread-count

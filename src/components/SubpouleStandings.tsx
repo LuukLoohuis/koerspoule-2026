@@ -534,7 +534,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   }
                 } : undefined}
                 className={cn(
-                  "group flex items-center gap-2 md:gap-3 px-3 border-b border-border/40 transition-all duration-120 select-none",
+                  "group flex items-center gap-2 md:gap-3 px-3 border-b border-border/40 transition-colors duration-120 select-none",
                   rowAccentCls,
                   isMe && "bg-primary/[0.08] ring-1 ring-inset ring-primary/30",
                   isComparing && "bg-accent/15 ring-1 ring-inset ring-accent/50",
@@ -661,9 +661,9 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                         className={cn(
                           "hidden md:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1",
                           "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
-                          "transition-all duration-150",
+                          "transition-colors duration-150",
                           isComparing
-                            ? "opacity-100 translate-x-0 bg-primary/10 border-primary text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.5)]"
+                            ? "opacity-100 bg-primary/10 border-primary text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.5)]"
                             : "opacity-60 border-border bg-card text-muted-foreground group-hover:opacity-100 group-hover:border-primary/60 group-hover:text-primary group-hover:bg-primary/5 focus-visible:opacity-100",
                         )}
                         aria-label={isComparing ? "Vergelijking sluiten" : `Benchmark tegen ${m.team_name ?? m.display_name ?? "dit team"}`}

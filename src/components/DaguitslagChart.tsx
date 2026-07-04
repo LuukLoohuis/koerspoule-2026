@@ -181,7 +181,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
 
       {/* Bars — korte fade bij ritwissel (key op rit-id), geen layout-sprong. */}
       <CardContent className="p-3 sm:p-4">
-        <div key={selectedStage.id} className="animate-in fade-in duration-200 motion-reduce:animate-none">
+        <div key={selectedStage.id}>
         {scorers.length === 0 ? (
           <p className="text-sm text-muted-foreground italic text-center py-4">
             Niemand scoorde punten in deze rit.
@@ -238,7 +238,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
                     <div className="flex-1 h-5 sm:h-6 bg-secondary/40 border border-border/60 rounded-sm overflow-hidden relative">
                       <div
                         className={cn(
-                          "h-full border-r-2 motion-safe:transition-[width] motion-safe:duration-[400ms] motion-safe:ease-out",
+                          "h-full border-r-2",
                           isWinner
                             ? "bg-primary/80 border-primary"
                             : "bg-[hsl(var(--vintage-paper-dark,30_25%_55%))] border-foreground/40",

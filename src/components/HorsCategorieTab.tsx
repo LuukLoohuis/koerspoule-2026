@@ -1041,7 +1041,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                             <div
                               key={p.rider_id}
                               className={cn(
-                                "rounded-md p-2 transition-all",
+                                "rounded-md p-2 transition-colors",
                                 mine
                                   ? "ring-2 ring-primary shadow-[0_0_12px_hsl(var(--primary)/0.35)] bg-primary/5 border border-primary/40"
                                   : "border border-transparent",
@@ -1060,7 +1060,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                               </div>
                               <div className="mt-1 h-2 rounded-full bg-secondary overflow-hidden">
                                 <div
-                                  className="h-full transition-all duration-500"
+                                  className="h-full"
                                   style={{ width: `${Math.max(6, pct)}%`, background: ownershipColor(pct) }}
                                 />
                               </div>
@@ -1167,7 +1167,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                               <div
                                 key={`${p.rider_id}-${p.position}`}
                                 className={cn(
-                                  "rounded-md p-2 transition-all",
+                                  "rounded-md p-2 transition-colors",
                                   mine
                                     ? "ring-2 ring-primary bg-primary/5 border border-primary/40"
                                     : "border border-transparent bg-card/40",
@@ -1191,7 +1191,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                                 </div>
                                 <div className="mt-1 h-1.5 rounded-full bg-secondary overflow-hidden">
                                   <div
-                                    className="h-full transition-all duration-500"
+                                    className="h-full"
                                     style={{ width: `${Math.max(4, pct)}%`, background: ownershipColor(pct) }}
                                   />
                                 </div>
@@ -1494,7 +1494,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                             <div className="text-muted-foreground text-[11px] mt-1">{sub}</div>
                           </div>
                           <div className="flex-1 h-3 rounded-full bg-secondary/80 overflow-hidden ring-1 ring-inset ring-border/50">
-                            <div className={cn("h-full rounded-full transition-[width] duration-700", barCls)} style={{ width: `${Math.round(pct * 100)}%` }} />
+                            <div className={cn("h-full rounded-full", barCls)} style={{ width: `${Math.round(pct * 100)}%` }} />
                           </div>
                           <span className={cn("shrink-0 inline-flex items-baseline gap-0.5 rounded-md border px-2 py-1 font-mono font-bold tabular-nums text-lg", chipCls)}>
                             {val.toFixed(1)}<span className="text-[10px] font-normal opacity-60">/10</span>

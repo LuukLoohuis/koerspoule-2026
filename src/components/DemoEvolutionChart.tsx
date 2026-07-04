@@ -212,8 +212,7 @@ export default function DemoEvolutionChart() {
                     filter={isHighlighted ? `url(#demo-glow-${m.user_id})` : undefined}
                     dot={false}
                     activeDot={{ r: isHighlighted ? 6 : 4, strokeWidth: 2, stroke: CHART_VISUAL.activeDotStroke, fill: color }}
-                    animationDuration={700}
-                    animationEasing="ease-out"
+                    isAnimationActive={false}
                     connectNulls
                   />
                 );
