@@ -163,10 +163,35 @@ export function useGameStandings(gameId?: string, uptoStageNumber?: number) {
     queryFn: async (): Promise<GameStandingRow[]> => {
       if (!supabase || !gameId || typeof uptoStageNumber !== "number") return [];
       // Gepagineerd: ook set-returning RPC's kapt PostgREST op de Max rows-limiet
-      // (default 1000) — bij 1000+ deelnemers miste het klassement de rest.
-      return fetchAllRows<GameStandingRow>((from, to) =>
-        (supabase as any).rpc("game_standings", { p_game_id: gameId, p_upto: uptoStageNumber }).range(from, to),
-      );
+      // (default 1000) — bij 1000+ deelnemers miste het klassement de rest. Mocht
+      // Range op deze RPC niet werken, val dan terug op één gewone call (max 1000)
+      // zodat het klassement nooit helemaal leeg is.
+      const PAGE = 1000;
+      const all: GameStandingRow[] = [];
+      const seen = new Set<string>();
+      for (let from = 0; from < 100_000; from += PAGE) {
+        const { data, error } = await (supabase as any)
+          .rpc("game_standings", { p_game_id: gameId, p_upto: uptoStageNumber })
+          .range(from, from + PAGE - 1);
+        if (error) {
+          if (from === 0) {
+            const { data: d2, error: e2 } = await (supabase as any)
+              .rpc("game_standings", { p_game_id: gameId, p_upto: uptoStageNumber });
+            if (e2) throw e2;
+            return (d2 ?? []) as GameStandingRow[];
+          }
+          break; // latere pagina faalt → gebruik wat we hebben
+        }
+        const rows = (data ?? []) as GameStandingRow[];
+        // No-progress-guard: als Range genegeerd wordt komt dezelfde pagina terug
+        // → alleen nieuwe entries toevoegen en stoppen zodra er niets bijkomt.
+        let added = 0;
+        for (const r of rows) {
+          if (!seen.has(r.entry_id)) { seen.add(r.entry_id); all.push(r); added++; }
+        }
+        if (rows.length < PAGE || added === 0) break;
+      }
+      return all;
     },
   });
 }
