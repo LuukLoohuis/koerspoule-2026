@@ -228,7 +228,7 @@
     transition: transform 220ms ease, box-shadow 220ms ease;
   }
   .retro-border:hover {
-    transform: translate(-1px, -1px) rotate(-0.3deg);
+    transform: translate(-1px, -1px);
     box-shadow: 5px 5px 0 hsl(var(--foreground));
   }
   /* Grote lees-/leespanelen (bv. Koerscafé) mogen NIET wiebelen bij hover —
@@ -245,7 +245,7 @@
     transition: transform 220ms ease, box-shadow 220ms ease;
   }
   .retro-border-primary:hover {
-    transform: translate(-1px, -1px) rotate(-0.3deg);
+    transform: translate(-1px, -1px);
     box-shadow: 5px 5px 0 hsl(var(--primary) / 0.6);
   }
 
