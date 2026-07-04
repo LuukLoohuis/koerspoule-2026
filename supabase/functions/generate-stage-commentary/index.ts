@@ -199,6 +199,11 @@ type CommentaryResult = { michelWuyts: string; joseDeCauwer: string };
 // ─── OpenAI call (Chat Completions, JSON-mode) ──────────────────────────────
 // Het lange SYSTEM_PROMPT wordt door OpenAI automatisch gecachet (>1024 tokens).
 
+// Onthoudt binnen deze invocatie of het model sampling-params accepteert. Zodra
+// er één 400 op een sampling-param komt, slaan alle volgende calls de sampling
+// meteen over (geen verspilde 400 per subpoule).
+let samplingSupported = true;
+
 // Eén Chat-Completions-call. Geeft tekst, finish_reason en token-usage terug,
 // zodat de aanroeper truncatie ("length") kan detecteren i.p.v. stil te falen.
 async function openaiChat(
@@ -209,11 +214,11 @@ async function openaiChat(
   if (!apiKey) throw new Error("OPENAI_API_KEY niet ingesteld in env");
 
   // Sampling-parameters voor méér lexicale spreiding zonder de stijlgids los te
-  // laten. temperature 1.0 = de default voor reasoning-modellen (dus altijd
-  // veilig); presence_penalty duwt weg van al gebruikte woorden. Wordt het
-  // penalty-veld door dit model niet ondersteund, dan valt de call terug op een
-  // versie zónder (zie de retry hieronder).
-  const post = (withPenalty: boolean) =>
+  // laten. Reasoning-modellen (gpt-5.x) accepteren temperature/presence_penalty
+  // NIET altijd → bij een 400 over een sampling-param valt de call terug op een
+  // versie ZONDER élke sampling-param (dus ook zonder temperature). Zo werkt de
+  // generator altijd, met of zonder de extra spreiding.
+  const post = (withSampling: boolean) =>
     fetch(OPENAI_URL, {
       method: "POST",
       headers: {
@@ -224,8 +229,7 @@ async function openaiChat(
         model: MODEL,
         max_completion_tokens: opts.maxTokens,
         reasoning_effort: opts.reasoning,
-        temperature: 1.0,
-        ...(withPenalty ? { presence_penalty: 0.4 } : {}),
+        ...(withSampling ? { temperature: 1.0, presence_penalty: 0.4 } : {}),
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
@@ -234,12 +238,14 @@ async function openaiChat(
       }),
     });
 
-  let res = await post(true);
-  // Model ondersteunt presence_penalty (of temperature) niet → retry zonder penalty.
-  if (res.status === 400) {
+  let res = await post(samplingSupported);
+  // 400 over een sampling-param → retry helemaal zonder sampling-params en
+  // onthoud het voor de rest van deze run.
+  if (res.status === 400 && samplingSupported) {
     const errText = await res.clone().text();
-    if (/presence_penalty|temperature|unsupported|not supported/i.test(errText)) {
-      console.warn("[commentary] sampling-param niet ondersteund → retry zonder presence_penalty");
+    if (/presence_penalty|temperature|top_p|sampling|unsupported|not supported|does not support/i.test(errText)) {
+      console.warn(`[commentary] sampling-param geweigerd → retry zonder sampling. err=${errText.slice(0, 160)}`);
+      samplingSupported = false;
       res = await post(false);
     }
   }
