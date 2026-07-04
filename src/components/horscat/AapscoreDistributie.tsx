@@ -68,7 +68,8 @@ export default function AapscoreDistributie({
   const reduce = prefersReducedMotion();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(0);
-  const [mounted, setMounted] = useState(reduce);
+  // Geen grow-/fade-in-animatie meer (bewust): alles staat direct in eindstand.
+  const mounted = true;
 
   useEffect(() => {
     if (!wrapRef.current) return;
@@ -79,12 +80,6 @@ export default function AapscoreDistributie({
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
-
-  useEffect(() => {
-    if (reduce) return;
-    const id = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, [reduce]);
 
   if (!dist.length) return null;
 
@@ -133,7 +128,7 @@ export default function AapscoreDistributie({
           src={aapDartpijl}
           alt=""
           aria-hidden
-          className="animate-monkey-idle pointer-events-none select-none absolute"
+          className="pointer-events-none select-none absolute"
           style={{
             top: isMobile ? 8 : 12,
             right: isMobile ? 12 : 24,
@@ -146,33 +141,9 @@ export default function AapscoreDistributie({
           }}
         />
 
-        {/* Titel-blok */}
-        <div style={{ paddingRight: isMobile ? 140 : 200 }}>
-          <div
-            style={{
-              fontFamily: FONT_MONO,
-              fontSize: 11,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "hsl(var(--foreground))",
-              fontWeight: 700,
-            }}
-          >
-            Verdeling simulaties
-          </div>
-          <p
-            style={{
-              fontFamily: FONT_SANS,
-              fontSize: isMobile ? 13 : 15,
-              color: "var(--ink-faded)",
-              marginTop: 6,
-              lineHeight: 1.45,
-            }}
-          >
-            Verdeling van {monkeyCount.toLocaleString("nl-NL")} gesimuleerde apenteams,
-            zelfde puntentelling als jouw ploeg.
-          </p>
-        </div>
+        {/* Titel-blok verwijderd (was "Verdeling simulaties" + subtitel); spacer
+            houdt de mascotte-clearance boven de KPI-tegels intact. */}
+        <div style={{ paddingRight: isMobile ? 140 : 200, minHeight: isMobile ? 44 : 24 }} />
 
         <p className="sr-only">
           Jij verslaat {Math.round((beatPct / 100) * monkeyCount).toLocaleString("nl-NL")}{" "}

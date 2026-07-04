@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
@@ -11,34 +10,9 @@ import { ArrowUp, ArrowDown } from "lucide-react";
 
 // ── Animation hook ────────────────────────────────────────────────────────────
 
-function useCountUp(target: number, duration = 650, delay = 0) {
-  const [val, setVal] = useState(0);
-  const raf = useRef<number>();
-  const triggered = useRef(false);
-
-  useEffect(() => {
-    if (target <= 0 || triggered.current) return;
-    triggered.current = true;
-    const t0 = setTimeout(() => {
-      const start = performance.now();
-      const tick = (now: number) => {
-        const p = Math.min((now - start) / duration, 1);
-        const eased = 1 - Math.pow(1 - p, 3); // cubic ease-out
-        setVal(Math.round(target * eased));
-        if (p < 1) raf.current = requestAnimationFrame(tick);
-        else setVal(target);
-      };
-      raf.current = requestAnimationFrame(tick);
-    }, delay);
-    return () => {
-      clearTimeout(t0);
-      if (raf.current) cancelAnimationFrame(raf.current);
-    };
-  // target > 0 triggers once when data arrives; after that the ref blocks re-runs
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target > 0]);
-
-  return val;
+// Geen count-up-animatie meer (bewust): toont direct de eindwaarde.
+function useCountUp(target: number, _duration = 650, _delay = 0) {
+  return target;
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────

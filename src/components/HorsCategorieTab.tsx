@@ -22,6 +22,7 @@ import { pointsTable } from "@/data/riders";
 import { useCategories } from "@/hooks/useCategories";
 import PercentileVerdict from "@/components/horscat/PercentileVerdict";
 import AapscoreDistributie from "@/components/horscat/AapscoreDistributie";
+import MonkeyExplainerModal from "@/components/horscat/MonkeyExplainerModal";
 import { useStages, useGameStandings, useStagePointsForEntries, useStageAverages } from "@/hooks/useResults";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -173,11 +174,6 @@ function PercentileGauge({ pct }: { pct: number }) {
     cy = 62,
     sw = 9;
   const circ = Math.PI * r;
-  const [animated, setAnimated] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setAnimated(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
   const offset = circ * (1 - Math.min(100, Math.max(0, pct)) / 100);
   const color = pct >= 50 ? "#34d399" : "#f43f5e";
   return (
@@ -196,8 +192,7 @@ function PercentileGauge({ pct }: { pct: number }) {
         strokeWidth={sw}
         strokeLinecap="round"
         strokeDasharray={`${circ}`}
-        strokeDashoffset={`${animated ? offset : circ}`}
-        style={{ transition: "stroke-dashoffset 1.4s cubic-bezier(0.34,1.56,0.64,1)" }}
+        strokeDashoffset={`${offset}`}
       />
       <text x={cx - r} y={cy + 13} fontSize="8" fill="#888" textAnchor="middle">
         0%
@@ -942,6 +937,9 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
             />
           ) : (
             <>
+              {/* Uitleg-accordion "Hoe werkt dit?" — de aap met de dartpijl. */}
+              <MonkeyExplainerModal monkeyCount={5000} variant="text" />
+
               {/* ── Monkey IQ-hero: percentile + verdict + Jij-vs-aap ──
                   Alle uitleg-/titel-lagen en de Prestatieklasse-banner zijn
                   bewust verwijderd: de hero vertelt het hele verhaal. */}

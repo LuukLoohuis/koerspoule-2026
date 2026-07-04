@@ -10,7 +10,6 @@
  * Alle cijfers via props; niets hardcoded.
  */
 
-import { useEffect, useRef, useState } from "react";
 import { pickVerdict } from "./verdictConfig";
 
 type Props = {
@@ -25,34 +24,9 @@ type Props = {
   className?: string;
 };
 
-/** Telt 0 → target in ~1.2s bij mount. Respecteert prefers-reduced-motion. */
-function useCountUp(target: number, durationMs = 1200): number {
-  const reduce =
-    typeof window !== "undefined" &&
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  const [value, setValue] = useState(reduce ? target : 0);
-  const rafRef = useRef<number>();
-
-  useEffect(() => {
-    if (reduce) {
-      setValue(target);
-      return;
-    }
-    let startTs: number | null = null;
-    const tick = (ts: number) => {
-      if (startTs === null) startTs = ts;
-      const t = Math.min(1, (ts - startTs) / durationMs);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setValue(Math.round(eased * target));
-      if (t < 1) rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [target, durationMs, reduce]);
-
-  return value;
+/** Geen count-up meer (bewust): toont direct de eindwaarde, niets telt op. */
+function useCountUp(target: number): number {
+  return target;
 }
 
 export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, illustrationSrc, className }: Props) {

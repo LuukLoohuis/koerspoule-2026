@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Flag, Medal } from "lucide-react";
@@ -86,17 +86,8 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
   // het ook op subpoule-tabs zónder deze chart (bv. Ranking) afgaat.
   const { celebration, closeCelebration, celebratedWin } = useDaguitslagCelebration(subpouleId, gameId, gameStatus);
 
-  // Animatie: bars groeien van 0 → eindwaarde bij mount/refresh.
-  const [animate, setAnimate] = useState(false);
-  const animKey = `${subpouleId}:${selectedStage?.id ?? "none"}`;
-  const prevKey = useRef<string>("");
-  useEffect(() => {
-    if (prevKey.current === animKey) return;
-    prevKey.current = animKey;
-    setAnimate(false);
-    const t = requestAnimationFrame(() => setAnimate(true));
-    return () => cancelAnimationFrame(t);
-  }, [animKey]);
+  // Geen groei-animatie meer (bewust): bars staan direct op eindbreedte.
+  const animate = true;
 
   const loading = membersLoading || stagesLoading || pointsLoading;
 
