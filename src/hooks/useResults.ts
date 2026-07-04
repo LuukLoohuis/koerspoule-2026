@@ -162,12 +162,11 @@ export function useGameStandings(gameId?: string, uptoStageNumber?: number) {
     retry: 0, // RPC ontbreekt? meteen terugvallen op client-berekening
     queryFn: async (): Promise<GameStandingRow[]> => {
       if (!supabase || !gameId || typeof uptoStageNumber !== "number") return [];
-      const { data, error } = await (supabase as any).rpc("game_standings", {
-        p_game_id: gameId,
-        p_upto: uptoStageNumber,
-      });
-      if (error) throw error;
-      return (data ?? []) as GameStandingRow[];
+      // Gepagineerd: ook set-returning RPC's kapt PostgREST op de Max rows-limiet
+      // (default 1000) — bij 1000+ deelnemers miste het klassement de rest.
+      return fetchAllRows<GameStandingRow>((from, to) =>
+        (supabase as any).rpc("game_standings", { p_game_id: gameId, p_upto: uptoStageNumber }).range(from, to),
+      );
     },
   });
 }
