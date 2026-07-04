@@ -720,13 +720,16 @@ type RaceGeo = {
   ritColor: string;                                  // kleur van "RIT N" op de donkere balk
 };
 
-// Tour (geel) — afgemeten: klass rij1-top ≈ 0.448, daguitslag rij1-top ≈ 0.522.
+// Tour (geel) — daguitslag afgemeten op de NIEUWE PNG (1254², overlay in 1080²,
+// factor ≈0.861): donkere balk y474-602, "RIT XX" geel x838-1100, nummerboxjes
+// eindigen x206, rijscheidingen 700→1117 (10 rijen ~42px), "PT" op x1099-1153,
+// traject-placeholder ("PLAATS START – PLAATS FINISH") y≈665-695.
 const GEO_TOUR: RaceGeo = {
   klasRows: { top: 484, bottom: 96, left: 150, right: 150 },
   klasRit: { top: 440, height: 40 },
-  dagRows: { top: 565, bottom: 108, left: 235, right: 205 },
-  dagRit: { top: 392, left: 712, width: 268, height: 88 },
-  dagTraject: { top: 520, height: 42, width: 560 },
+  dagRows: { top: 603, bottom: 118, left: 188, right: 158 },
+  dagRit: { top: 408, left: 706, width: 262, height: 110 },
+  dagTraject: { top: 572, height: 36, width: 620 },
   ritColor: "#E0A411",
 };
 
@@ -740,9 +743,14 @@ const GEO_VUELTA: RaceGeo = {
   ritColor: "#FFFFFF",
 };
 
-// Giro (roze) — kop/rijen vrijwel gelijk aan Tour; RIT N is wit op zwarte vlag.
+// Giro (roze) — eigen (ongewijzigd) sjabloon. Bewust NIET meer via spread van
+// GEO_TOUR: die dag-geometrie is opnieuw afgemeten op de nieuwe Tour-PNG. Dit
+// zijn de oude, voor het Giro-sjabloon geldende waarden. RIT N is wit op zwarte vlag.
 const GEO_GIRO: RaceGeo = {
-  ...GEO_TOUR,
+  klasRows: { top: 484, bottom: 96, left: 150, right: 150 },
+  klasRit: { top: 440, height: 40 },
+  dagRows: { top: 565, bottom: 108, left: 235, right: 205 },
+  dagRit: { top: 392, left: 712, width: 268, height: 88 },
   dagTraject: { top: 524, height: 42, width: 620 },
   ritColor: "#FFFFFF",
 };
