@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,8 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import { maySeeLiveContent } from "@/lib/gameStatus";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import TeamComparison from "@/components/TeamComparison";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import StageBar from "@/components/stages/StageBar";
@@ -58,18 +60,9 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   }, [members, entries]);
   const { data: stagePoints = [] } = useStagePointsForEntries(game?.id, memberEntryIds);
 
+  const isMobile = useIsMobile();
   const [compareId, setCompareId] = useState<string | null>(null);
   const [etappeIdx, setEtappeIdx] = useState<number>(0);
-  // Auto-scroll naar de benchmark zodra een team gekozen is — de vergelijking
-  // rendert onder de tabel en viel anders buiten beeld (gemiste feedback).
-  const compareRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!compareId || !compareRef.current) return;
-    const id = window.setTimeout(() => {
-      compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 120); // korte delay zodat de vergelijking eerst rendert
-    return () => window.clearTimeout(id);
-  }, [compareId]);
   const [showTapHint, setShowTapHint] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return sessionStorage.getItem("subpoule-tap-hint-dismissed") !== "1";
@@ -277,6 +270,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
     () => (woonFilter === ALL ? memberRows : memberRows.filter((r) => woonplaatsByUser.get(r.user_id) === woonFilter)),
     [memberRows, woonFilter, woonplaatsByUser],
   );
+  // Gekozen tegenstander voor het gedockte duelpaneel/sheet.
+  const compareMember = memberRows.find((m) => m.user_id === compareId);
 
   // Eigen woonplaats nog niet ingevuld? Eénmalige, niet-blokkerende prompt.
   const ownWoonplaats = user ? woonplaatsByUser.get(user.id) : undefined;
@@ -363,6 +358,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
       })()}
 
       {/* Cumulative standings up to the selected stage */}
+      <div className="md:grid md:grid-cols-[minmax(0,1fr)_340px] md:gap-4 md:items-start">
+      {/* Kolom 1 — de ranglijst-kaart (ongewijzigd) */}
       <div className="retro-border no-hover-lift bg-card overflow-hidden">
         <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
 
@@ -526,8 +523,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
             };
 
             return (
-              <Fragment key={m.user_id}>
               <div
+                key={m.user_id}
                 role={canCompare ? "button" : undefined}
                 tabIndex={canCompare ? 0 : undefined}
                 aria-pressed={canCompare ? isComparing : undefined}
@@ -693,29 +690,78 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   )}
                 </div>
               </div>
-
-              {/* Head-to-head — inline, direct onder de aangeklikte rij. Verborgen
-                  tot 'live'; admin+testmodus mag proefdraaien. */}
-              {isComparing && (maySeeLive || isAdmin) && (
-                <div
-                  ref={compareRef}
-                  style={{ scrollMarginTop: 12 }}
-                  className="border-y border-[hsl(var(--vintage-gold))/0.4] bg-[hsl(var(--vintage-gold))/0.06]"
-                >
-                  <TeamComparison
-                    opponentUserId={m.user_id}
-                    opponentName={m.display_name}
-                    subpouleId={subpouleId}
-                    gameId={game?.id}
-                  />
-                </div>
-              )}
-              </Fragment>
             );
           })}
         </div>
 
       </div>
+
+      {/* Kolom 2 — sticky desktop-duelpaneel (nooit samen met de mobiele Drawer) */}
+      {!isMobile && (
+        <div className="hidden md:block sticky top-4 self-start retro-border no-hover-lift bg-card overflow-hidden">
+          <div className="flex items-center justify-between gap-2 px-3 py-2 border-b-2 border-foreground bg-secondary/30">
+            <span className="flex items-center gap-2 font-display text-sm font-bold">
+              <Swords className="h-4 w-4 text-primary" /> Duel
+            </span>
+            {compareMember && (
+              <button
+                type="button"
+                onClick={() => setCompareId(null)}
+                aria-label="Duel sluiten"
+                className="inline-flex items-center justify-center h-6 w-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {compareMember && (maySeeLive || isAdmin) ? (
+            <TeamComparison
+              opponentUserId={compareMember.user_id}
+              opponentName={compareMember.display_name}
+              subpouleId={subpouleId}
+              gameId={game?.id}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-2 px-4 py-10 text-center text-sm text-muted-foreground">
+              <Swords className="h-8 w-8 text-muted-foreground/40" />
+              Kies een team in de ranglijst om te vergelijken.
+            </div>
+          )}
+        </div>
+      )}
+      </div>
+
+      {/* Mobiele bottom sheet — nooit samen met het desktop-paneel */}
+      {isMobile && (
+        <Drawer
+          open={!!compareMember && (maySeeLive || isAdmin)}
+          onOpenChange={(o) => { if (!o) setCompareId(null); }}
+        >
+          <DrawerContent className="max-h-[85vh]">
+            <DrawerHeader className="flex items-center justify-between py-3">
+              <DrawerTitle className="flex items-center gap-2">
+                <Swords className="h-4 w-4 text-primary" /> Duel
+              </DrawerTitle>
+              <DrawerClose
+                aria-label="Duel sluiten"
+                className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </DrawerClose>
+            </DrawerHeader>
+            <div className="overflow-y-auto px-3 pb-6">
+              {compareMember && (
+                <TeamComparison
+                  opponentUserId={compareMember.user_id}
+                  opponentName={compareMember.display_name}
+                  subpouleId={subpouleId}
+                  gameId={game?.id}
+                />
+              )}
+            </div>
+          </DrawerContent>
+        </Drawer>
+      )}
 
       {/* Cumulative evolution chart — alleen als de parent 'm niet zelf rendert. */}
       {showEvolution && <SubpouleEvolutionChart subpouleId={subpouleId} gameId={game?.id} />}
