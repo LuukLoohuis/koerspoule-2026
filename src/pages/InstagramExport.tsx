@@ -727,7 +727,7 @@ type RaceGeo = {
 const GEO_TOUR: RaceGeo = {
   klasRows: { top: 484, bottom: 96, left: 150, right: 150 },
   klasRit: { top: 440, height: 40 },
-  dagRows: { top: 603, bottom: 118, left: 188, right: 158 },
+  dagRows: { top: 616, bottom: 105, left: 188, right: 158 },
   dagRit: { top: 408, left: 706, width: 262, height: 110 },
   dagTraject: { top: 572, height: 36, width: 620 },
   ritColor: "#E0A411",
