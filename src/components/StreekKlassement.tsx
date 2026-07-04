@@ -147,31 +147,14 @@ export default function StreekKlassement({ subpouleId, gameId, gameStatus, stree
               </p>
             )}
 
-            {/* Onder de drempel — apart, rustiger */}
+            {/* Onder de drempel — één rustige meldingsregel i.p.v. de lijst */}
             {onder.length > 0 && (
-              <div className="border-t border-dashed border-border">
-                <p className="px-3 pt-2.5 pb-1 text-[10px] font-mono font-bold uppercase tracking-[0.15em] text-muted-foreground/70">
-                  Nog te weinig deelnemers
+              <div className="border-t border-dashed border-border px-3 py-3">
+                <p className="text-[12px] text-muted-foreground italic">
+                  Staat jouw woonplaats hier niet in het klassement? Dan zijn er nog te
+                  weinig deelnemers uit die plaats. Een woonplaats telt mee vanaf {min}
+                  deelnemers.
                 </p>
-                <ul>
-                  {onder.map((p) => {
-                    const isOwn = p.naam === ownWoonplaats;
-                    return (
-                      <li key={p.naam} className={cn("flex items-center gap-3 px-3 py-1.5 text-muted-foreground", isOwn && "text-primary")}>
-                        <span className="flex-1 min-w-0 flex items-center gap-1.5">
-                          <span className="font-sans text-sm truncate">{p.naam}</span>
-                          {isOwn && <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 rounded px-1 py-px leading-4">jouw plaats</span>}
-                        </span>
-                        <span className="shrink-0 text-[11px] font-mono tabular-nums" title="Deelnemers / drempel">
-                          {p.aantal}/{min}
-                        </span>
-                        <span className="shrink-0 text-right min-w-[3.5rem] text-[13px] font-mono tabular-nums opacity-70">
-                          {p.gemiddelde.toFixed(1)} gem
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
               </div>
             )}
           </div>
