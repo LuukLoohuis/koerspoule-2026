@@ -308,12 +308,15 @@ export async function fetchLefevereCount(supabase: SupabaseClient, gameId: strin
   const { count: totaal } = await supabase
     .from("entries").select("id", { count: "exact", head: true }).eq("game_id", gameId).eq("status", "submitted");
   if (stageCount === 0) return { metRapport: 0, totaal: totaal ?? 0, stageCount };
-  const entryRows = await fetchAllRows<{ id: string }>((from, to) =>
-    supabase.from("entries").select("id").eq("game_id", gameId).eq("status", "submitted").range(from, to));
-  const ids = entryRows.map((e) => e.id);
-  if (ids.length === 0) return { metRapport: 0, totaal: totaal ?? 0, stageCount };
+  // Via de FK-join (entry → game) i.p.v. een enorme .in(entry_ids), die anders de
+  // URL-lengte overschrijdt en de query laat falen (→ teller bleef leeg).
   const repRows = await fetchAllRows<{ entry_id: string }>((from, to) =>
-    supabase.from("lefevere_rapporten").select("entry_id").eq("stage_count", stageCount).in("entry_id", ids).range(from, to));
+    supabase.from("lefevere_rapporten")
+      .select("entry_id, entries!inner(game_id, status)")
+      .eq("entries.game_id", gameId)
+      .eq("entries.status", "submitted")
+      .eq("stage_count", stageCount)
+      .range(from, to) as never);
   return { metRapport: new Set(repRows.map((r) => r.entry_id)).size, totaal: totaal ?? 0, stageCount };
 }
 
@@ -351,16 +354,25 @@ export async function runLefevereBatch(
   const allIds = ctx.entries.map((e) => e.id);
   const total = allIds.length;
 
-  // force: wis eerst de rijen voor deze stage_count.
+  // force: wis eerst de rijen voor deze stage_count. Gechunkt zodat de .in()-URL
+  // niet te lang wordt bij duizenden inzendingen.
   if (opts.force && allIds.length > 0) {
-    await supabase.from("lefevere_rapporten").delete().eq("stage_count", ctx.stageCount).in("entry_id", allIds);
+    for (let i = 0; i < allIds.length; i += 300) {
+      await supabase.from("lefevere_rapporten").delete().eq("stage_count", ctx.stageCount).in("entry_id", allIds.slice(i, i + 300));
+    }
   }
 
-  // Bepaal welke entries nog geen rij hebben (cursor).
+  // Bepaal welke entries nog geen rij hebben (cursor) — via de FK-join i.p.v. een
+  // enorme .in(entry_ids) die de URL-lengte overschrijdt.
   const existing = new Set<string>();
   if (allIds.length > 0) {
     const rows = await fetchAllRows<{ entry_id: string }>((from, to) =>
-      supabase.from("lefevere_rapporten").select("entry_id").eq("stage_count", ctx.stageCount).in("entry_id", allIds).range(from, to));
+      supabase.from("lefevere_rapporten")
+        .select("entry_id, entries!inner(game_id, status)")
+        .eq("entries.game_id", gameId)
+        .eq("entries.status", "submitted")
+        .eq("stage_count", ctx.stageCount)
+        .range(from, to) as never);
     for (const r of rows) existing.add(r.entry_id);
   }
   const pending = ctx.entries.filter((e) => !existing.has(e.id));
