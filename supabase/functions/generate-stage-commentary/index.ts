@@ -723,9 +723,10 @@ Deno.serve(async (req) => {
     // Promise.allSettled als "fout" geteld); geeft "geen leden" terug wanneer de
     // subpoule geen leden met een ploeg heeft (gemarkeerd i.p.v. stil geskipt).
     type SubpouleRef = { id: string; name: string };
-    async function generateOne(sp: SubpouleRef): Promise<"generated" | "geen leden"> {
+    async function generateOne(sp: SubpouleRef): Promise<"generated" | "te weinig deelnemers"> {
       const members = await fetchSubpouleContext(admin, stageId, stage.game_id, stage.stage_number, sp.id);
-      if (members.length === 0) return "geen leden";
+      // Commentaar heeft pas zin vanaf 2 deelnemers (onderlinge strijd/klassement).
+      if (members.length < 2) return "te weinig deelnemers";
 
       const recentOpeners = await fetchRecentOpeners(admin, stage.game_id, stage.stage_number, sp.id);
       const userPrompt = buildUserPrompt({
@@ -770,7 +771,7 @@ Deno.serve(async (req) => {
     let generated = 0;
     let skipped = existing.size; // hadden al een rij (overgeslagen)
     const errors: Array<{ subpoule_id: string; error: string }> = [];
-    const outcome = new Map<string, "generated" | "geen leden" | "fout">();
+    const outcome = new Map<string, "generated" | "te weinig deelnemers" | "fout">();
     let processed = 0;
     let timedOut = false;
 
@@ -783,7 +784,7 @@ Deno.serve(async (req) => {
         if (s.status === "fulfilled") {
           outcome.set(sp.id, s.value);
           if (s.value === "generated") generated++;
-          else skipped++; // "geen leden"
+          else skipped++; // "te weinig deelnemers"
         } else {
           outcome.set(sp.id, "fout");
           errors.push({ subpoule_id: sp.id, error: (s.reason as Error)?.message ?? String(s.reason) });
@@ -796,7 +797,9 @@ Deno.serve(async (req) => {
 
     // Restlijst: elke subpoule die ná deze run nog geen rij heeft, met reden.
     const reason = (st: string | undefined): string =>
-      st === "geen leden" ? "geen leden" : st === "fout" ? "OpenAI-fout" : "nog niet verwerkt";
+      st === "te weinig deelnemers" ? "te weinig deelnemers (min. 2)"
+      : st === "fout" ? "OpenAI-fout"
+      : "nog niet verwerkt";
     const emptySubpoules = pending
       .filter((sp) => outcome.get(sp.id) !== "generated")
       .map((sp) => ({ id: sp.id, name: sp.name, reason: reason(outcome.get(sp.id)) }));

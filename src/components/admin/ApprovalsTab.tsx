@@ -140,6 +140,36 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   // Per etappe: subpoules die na de laatste commentaar-run nog leeg zijn (+reden).
   const [emptyByStage, setEmptyByStage] = useState<Record<string, Array<{ id: string; name: string; reason: string }>>>({});
   const [commBusy, setCommBusy] = useState<string | null>(null);
+  // Per etappe: hoeveel subpoules commentaar hebben t.o.v. het totaal in de game.
+  const [commCounts, setCommCounts] = useState<Record<string, { met: number; totaal: number }>>({});
+
+  // Telt per stage het aantal subpoules mét een etappe_commentaren-rij, en het
+  // totaal aantal subpoules in de game. Gepagineerd (Max rows-limiet).
+  async function fetchCommCount(stageId: string): Promise<{ met: number; totaal: number }> {
+    const { count: totaal } = await supabase
+      .from("subpoules")
+      .select("id", { count: "exact", head: true })
+      .eq("game_id", activeGameId);
+    const rows = await fetchAllRows<{ subpoule_id: string }>((from, to) =>
+      supabase!.from("etappe_commentaren").select("subpoule_id").eq("stage_id", stageId).range(from, to),
+    );
+    const met = new Set(rows.map((r) => r.subpoule_id)).size;
+    return { met, totaal: totaal ?? 0 };
+  }
+
+  async function refreshCommCount(stageId: string): Promise<{ met: number; totaal: number }> {
+    const c = await fetchCommCount(stageId);
+    setCommCounts((prev) => ({ ...prev, [stageId]: c }));
+    return c;
+  }
+
+  // Vult de tellers voor alle gefiatteerde etappes (bij laden).
+  async function loadCommCounts(stageRows: Row[]) {
+    if (!supabase || !activeGameId) return;
+    const approved = stageRows.filter((r) => r.results_status === "approved").map((r) => r.stage_id);
+    const entries = await Promise.all(approved.map(async (sid) => [sid, await fetchCommCount(sid)] as const));
+    setCommCounts(Object.fromEntries(entries));
+  }
 
   // Roept de commentaargenerator aan en toont een samenvattende toast +
   // bewaart de restlijst (lege subpoules met reden) voor deze etappe.
@@ -161,8 +191,9 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
       const timedOut = Boolean((data as { timedOut?: boolean })?.timedOut);
       const empty = ((data as { emptySubpoules?: Array<{ id: string; name: string; reason: string }> })?.emptySubpoules) ?? [];
       setEmptyByStage((prev) => ({ ...prev, [stageId]: empty }));
-      toast.success(`🎙️ ${generated} gegenereerd, ${empty.length} nog leeg`);
-      if (timedOut) toast.info("Tijd verstreken — klik nogmaals om de rest af te maken.");
+      const c = await refreshCommCount(stageId);
+      toast.success(`🎙️ ${generated} gegenereerd, ${c.met}/${c.totaal} subpoules voorzien`);
+      if (timedOut) toast.info("Tijd verstreken — klik nogmaals om door te gaan.");
       return { generated, empty, timedOut };
     } catch (e) {
       toast.error(`Commentaargenerator faalde: ${(e as Error).message}`);
@@ -208,7 +239,9 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
       toast.error(error.message);
       return;
     }
-    setRows((data ?? []) as Row[]);
+    const stageRows = (data ?? []) as Row[];
+    setRows(stageRows);
+    loadCommCounts(stageRows);
   }
 
   useEffect(() => {
@@ -375,6 +408,34 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   <Undo2 className="w-3 h-3 mr-1" />Intrekken
                 </Button>
               </div>
+
+              {/* Blijvende voortgang: hoeveel subpoules hebben commentaar */}
+              {(() => {
+                const c = commCounts[r.stage_id];
+                if (!c) return null;
+                const done = c.totaal > 0 && c.met === c.totaal;
+                const pct = c.totaal > 0 ? Math.round((c.met / c.totaal) * 100) : 0;
+                return (
+                  <div className="mt-2 max-w-xs">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className={done ? "text-green-600 font-medium" : "text-muted-foreground"}>
+                        Commentaar: {c.met}/{c.totaal} subpoules
+                      </span>
+                      {done && <span className="text-green-600">✓</span>}
+                    </div>
+                    <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className={`h-full ${done ? "bg-green-600" : "bg-muted-foreground/50"}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Commentaar wordt geschreven vanaf 2 deelnemers per subpoule.
+              </p>
+
               {emptyByStage[r.stage_id] && emptyByStage[r.stage_id].length > 0 && (
                 <Collapsible className="mt-1">
                   <CollapsibleTrigger asChild>
