@@ -228,8 +228,8 @@
     transition: transform 220ms ease, box-shadow 220ms ease;
   }
   .retro-border:hover {
-    transform: translate(-1px, -1px);
-    box-shadow: 5px 5px 0 hsl(var(--foreground));
+    transform: none;
+    box-shadow: 3px 3px 0 hsl(var(--foreground));
   }
   /* Grote lees-/leespanelen (bv. Koerscafé) mogen NIET wiebelen bij hover —
      de kantel maakt de tekst onrustig. Opt-out: blijf stil staan. */
@@ -245,8 +245,8 @@
     transition: transform 220ms ease, box-shadow 220ms ease;
   }
   .retro-border-primary:hover {
-    transform: translate(-1px, -1px);
-    box-shadow: 5px 5px 0 hsl(var(--primary) / 0.6);
+    transform: none;
+    box-shadow: 3px 3px 0 hsl(var(--primary) / 0.5);
   }
 
   /* ── Ornamental dividers ── */
