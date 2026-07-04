@@ -180,7 +180,7 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-0.5 text-xs border-2 border-foreground transition-all",
                   isOn
-                    ? "bg-card text-foreground hover:scale-105"
+                    ? "bg-card text-foreground"
                     : "bg-secondary/40 text-muted-foreground opacity-55 hover:opacity-85 line-through decoration-1",
                 )}
               >

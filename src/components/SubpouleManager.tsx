@@ -594,7 +594,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                 aria-pressed={deskChatOpen}
                 title="Open of sluit het Koerscafé"
                 className={cn(
-                  "shrink-0 inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl border-2 border-foreground font-display text-xs font-semibold uppercase tracking-wider shadow-[3px_3px_0_hsl(var(--foreground))] transition-all hover:-translate-y-0.5 active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))]",
+                  "shrink-0 inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl border-2 border-foreground font-display text-xs font-semibold uppercase tracking-wider shadow-[3px_3px_0_hsl(var(--foreground))] transition-colors",
                   deskChatOpen ? "bg-primary text-primary-foreground" : "bg-card text-foreground",
                 )}
               >

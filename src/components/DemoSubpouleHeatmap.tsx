@@ -143,7 +143,7 @@ export default function DemoSubpouleHeatmap() {
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-0.5 text-xs border-2 border-foreground transition-all",
                   isOn
-                    ? "bg-card text-foreground hover:scale-105"
+                    ? "bg-card text-foreground"
                     : "bg-secondary/40 text-muted-foreground opacity-55 hover:opacity-85 line-through decoration-1",
                 )}
               >
@@ -190,7 +190,7 @@ export default function DemoSubpouleHeatmap() {
                           <TooltipTrigger asChild>
                             <div
                               className={cn(
-                                "rounded-md px-2.5 py-2 cursor-default transition-transform hover:scale-[1.02] hover:z-10 relative",
+                                "rounded-md px-2.5 py-2 cursor-default relative",
                                 cell.isUnique && "ring-2 ring-[hsl(var(--vintage-gold))] ring-offset-1 ring-offset-card shadow-[2px_2px_0_hsl(var(--vintage-gold)/0.5)]",
                               )}
                               style={{

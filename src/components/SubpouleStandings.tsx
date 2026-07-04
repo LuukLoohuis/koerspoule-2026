@@ -538,7 +538,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   rowAccentCls,
                   isMe && "bg-primary/[0.08] ring-1 ring-inset ring-primary/30",
                   isComparing && "bg-accent/15 ring-1 ring-inset ring-accent/50",
-                  canCompare && "cursor-pointer hover:bg-accent/10 active:bg-accent/20 active:scale-[0.997] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                  canCompare && "cursor-pointer hover:bg-accent/10 active:bg-accent/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                 )}
                 style={{ minHeight: "44px" }}
               >
