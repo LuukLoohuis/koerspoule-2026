@@ -149,7 +149,11 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     if (!supabase || !activeGameId || lefGenBusy) return;
     setLefGenBusy(true);
     try {
-      const res = await runLefevereBatch(supabase, activeGameId);
+      const res = await runLefevereBatch(supabase, activeGameId, {
+        // Live teller: elke chunk werkt de balk bij, zodat het niet lijkt te hangen.
+        onProgress: (done, total) =>
+          setLefCount((prev) => ({ metRapport: done, totaal: total, stageCount: prev?.stageCount ?? 0 })),
+      });
       setLefFailed(res.failed);
       const c = await fetchLefevereCount(supabase, activeGameId);
       setLefCount(c);
@@ -388,7 +392,9 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   onClick={generateAllLefevere}
                 >
                   <Briefcase className={`w-3 h-3 mr-1 ${lefGenBusy ? "animate-pulse" : ""}`} />
-                  {lefGenBusy ? "Bezig…" : "Genereer Lefevère (alle deelnemers)"}
+                  {lefGenBusy
+                    ? `Bezig… ${lefCount ? `${lefCount.metRapport}/${lefCount.totaal}` : ""}`
+                    : "Genereer Lefevère (alle deelnemers)"}
                 </Button>
                 <Button
                   size="sm"

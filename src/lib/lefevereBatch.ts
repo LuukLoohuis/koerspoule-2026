@@ -340,16 +340,19 @@ export type BatchResult = {
 export async function runLefevereBatch(
   supabase: SupabaseClient,
   gameId: string,
-  opts: { force?: boolean } = {},
+  opts: { force?: boolean; onProgress?: (done: number, total: number) => void } = {},
 ): Promise<BatchResult> {
-  const startedAt = Date.now();
-  const TIME_BUDGET_MS = 130_000;
-  const CONCURRENCY = 5;
+  // In de browser is er geen 150s edge-limiet: ruim budget zodat één klik veel
+  // afwerkt. De ctx-opbouw (zware fetches) telt bewust NIET mee — die start het
+  // budget pas erna, anders zou ze bij grote games het hele venster opeten.
+  const TIME_BUDGET_MS = 15 * 60_000; // 15 min per klik
+  const CONCURRENCY = 8;
 
   const ctx = await buildBatchCtx(supabase, gameId);
   if (ctx.stageCount === 0) {
     return { ok: true, total: 0, generated: 0, skipped: 0, remaining: 0, timedOut: false, failed: [] };
   }
+  const startedAt = Date.now();
 
   const allIds = ctx.entries.map((e) => e.id);
   const total = allIds.length;
@@ -435,6 +438,8 @@ export async function runLefevereBatch(
         failed.push({ entry_id: chunk[idx].id, error: (s.reason as Error)?.message ?? String(s.reason) });
       }
     });
+    // Live voortgang: al voorziene entries = die al een rij hadden + nu gegenereerd.
+    opts.onProgress?.(existing.size + generated, total);
     if (Date.now() - startedAt > TIME_BUDGET_MS) { timedOut = true; break; }
   }
 
