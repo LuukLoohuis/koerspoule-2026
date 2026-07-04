@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { Link } from "react-router-dom";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useStages, useStageResults, useStagePointsForEntries, useMyStageRanks, useEntries, useGameStandings, type StageRow, type EntryStanding } from "@/hooks/useResults";
@@ -788,12 +789,14 @@ type StandingNode = { key: string; rank: number; isMe: boolean; searchText: stri
 
 function StandingsList({
   items,
-  topN = 10,
   maxHeightClass = "max-h-[480px]",
   placeholder = "Zoek op naam of team…",
   emptyMessage = "Geen resultaten.",
 }: {
   items: StandingNode[];
+  /** Niet meer gebruikt sinds virtualisatie (top-N + pin vervangen door de
+   *  volledige gevirtualiseerde lijst + "Spring naar mijn team"). Blijft optioneel
+   *  zodat bestaande call-sites niet breken. */
   topN?: number;
   maxHeightClass?: string;
   placeholder?: string;
@@ -802,39 +805,26 @@ function StandingsList({
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
 
-  let body: React.ReactNode;
-  if (items.length === 0) {
-    body = <div className="p-4 text-sm text-muted-foreground italic text-center">{emptyMessage}</div>;
-  } else if (query) {
-    const filtered = items.filter((i) => i.searchText.toLowerCase().includes(query));
-    body = filtered.length === 0
-      ? <div className="p-4 text-sm text-muted-foreground italic text-center">Geen match voor "{q}".</div>
-      : filtered.map((i) => <div key={i.key}>{i.node}</div>);
-  } else {
-    const top = items.slice(0, topN);
-    const rest = items.slice(topN);
-    const me = items.find((i) => i.isMe);
-    const showPin = me && me.rank > topN;
-    body = (
-      <>
-        {top.map((i) => <div key={i.key}>{i.node}</div>)}
-        {showPin && (
-          <div className="border-y border-dashed border-primary/40 bg-primary/[0.04]">
-            <div className="px-3 pt-1.5 text-center text-[10px] uppercase tracking-widest text-primary/70 font-display">
-              Jouw positie
-            </div>
-            {me!.node}
-          </div>
-        )}
-        {rest.map((i) => <div key={i.key}>{i.node}</div>)}
-      </>
-    );
-  }
+  // Virtualiseer de reeds gefilterde/gesorteerde lijst — schaalt naar 2500+ rijen.
+  const rendered = useMemo(
+    () => (query ? items.filter((i) => i.searchText.toLowerCase().includes(query)) : items),
+    [items, query],
+  );
+  const meIndex = useMemo(() => (query ? -1 : rendered.findIndex((i) => i.isMe)), [rendered, query]);
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: rendered.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 64,
+    overscan: 8,
+    getItemKey: (index) => rendered[index]?.key ?? index,
+  });
 
   return (
-    <div className={cn("overflow-y-auto", maxHeightClass)}>
-      {/* Zoekbalk blijft plakken bovenaan tijdens scrollen */}
-      <div className="sticky top-0 z-10 p-2 border-b border-border bg-card">
+    <div>
+      {/* Zoekbalk buiten de scrollcontainer (niet mee-virtualiseren) */}
+      <div className="p-2 border-b border-border bg-card">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <input
@@ -846,7 +836,38 @@ function StandingsList({
           />
         </div>
       </div>
-      {body}
+
+      {items.length === 0 ? (
+        <div className="p-4 text-sm text-muted-foreground italic text-center">{emptyMessage}</div>
+      ) : rendered.length === 0 ? (
+        <div className="p-4 text-sm text-muted-foreground italic text-center">Geen match voor "{q}".</div>
+      ) : (
+        <div ref={parentRef} className={cn("overflow-y-auto relative", maxHeightClass)}>
+          <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: "relative" }}>
+            {rowVirtualizer.getVirtualItems().map((vi) => (
+              <div
+                key={vi.key}
+                data-index={vi.index}
+                ref={rowVirtualizer.measureElement}
+                style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${vi.start}px)` }}
+              >
+                {rendered[vi.index].node}
+              </div>
+            ))}
+          </div>
+
+          {/* Spring naar mijn team — werkt ook bij 2500+ deelnemers. */}
+          {meIndex >= 0 && (
+            <button
+              type="button"
+              onClick={() => rowVirtualizer.scrollToIndex(meIndex, { align: "center" })}
+              className="sticky bottom-2 float-right mr-2 inline-flex items-center gap-1.5 rounded-full border-2 border-foreground bg-primary text-primary-foreground px-3 py-1.5 text-xs font-bold shadow-[2px_2px_0_hsl(var(--foreground))] hover:brightness-105 z-10"
+            >
+              <Flag className="h-3.5 w-3.5" /> Spring naar mijn team
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
