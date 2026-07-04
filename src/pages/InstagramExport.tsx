@@ -725,7 +725,7 @@ type RaceGeo = {
 // eindigen x206, rijscheidingen 700→1117 (10 rijen ~42px), "PT" op x1099-1153,
 // traject-placeholder ("PLAATS START – PLAATS FINISH") y≈665-695.
 const GEO_TOUR: RaceGeo = {
-  klasRows: { top: 484, bottom: 96, left: 150, right: 150 },
+  klasRows: { top: 497, bottom: 83, left: 150, right: 150 },
   klasRit: { top: 440, height: 40 },
   dagRows: { top: 616, bottom: 105, left: 188, right: 158 },
   dagRit: { top: 408, left: 706, width: 262, height: 110 },
