@@ -56,6 +56,7 @@ export type BatchCtx = {
   jokersByEntry: Map<string, string[]>;    // entry → riderIds
   entryTotal: Map<string, number>;         // entry → som ALLE stage_points
   entryApprovedTotal: Map<string, number>; // entry → som stage_points op approved etappes
+  recentByEntry: Map<string, Array<{ analyse: string; karakter: string; stage_count: number }>>; // variatie-guard
   entries: EntryRow[];
   gameId: string;
 };
@@ -143,13 +144,18 @@ export async function buildBatchCtx(supabase: SupabaseClient, gameId: string): P
     supabase.from("entries").select("id, user_id, team_name").eq("game_id", gameId).eq("status", "submitted").range(from, to));
   const entryIds = entries.map((e) => e.id);
 
+  // Picks/jokers/stage_points via de FK-join op de game i.p.v. .in([1936 ids])
+  // — een grote id-lijst maakt de URL te lang → "Failed to fetch".
   const picksByEntry = new Map<string, Map<string, string[]>>();
   const jokersByEntry = new Map<string, string[]>();
   const entryTotal = new Map<string, number>();
   const entryApprovedTotal = new Map<string, number>();
+  const recentByEntry = new Map<string, Array<{ analyse: string; karakter: string; stage_count: number }>>();
   if (entryIds.length > 0) {
     const pickRows = await fetchAllRows<{ entry_id: string; category_id: string; rider_id: string }>((from, to) =>
-      supabase.from("entry_picks").select("entry_id, category_id, rider_id").in("entry_id", entryIds).range(from, to));
+      supabase.from("entry_picks")
+        .select("entry_id, category_id, rider_id, entries!inner(game_id, status)")
+        .eq("entries.game_id", gameId).eq("entries.status", "submitted").range(from, to) as never);
     for (const p of pickRows) {
       let m = picksByEntry.get(p.entry_id);
       if (!m) { m = new Map(); picksByEntry.set(p.entry_id, m); }
@@ -158,26 +164,41 @@ export async function buildBatchCtx(supabase: SupabaseClient, gameId: string): P
       m.set(p.category_id, arr);
     }
     const jokerRows = await fetchAllRows<{ entry_id: string; rider_id: string }>((from, to) =>
-      supabase.from("entry_jokers").select("entry_id, rider_id").in("entry_id", entryIds).range(from, to));
+      supabase.from("entry_jokers")
+        .select("entry_id, rider_id, entries!inner(game_id, status)")
+        .eq("entries.game_id", gameId).eq("entries.status", "submitted").range(from, to) as never);
     for (const j of jokerRows) {
       const arr = jokersByEntry.get(j.entry_id) ?? [];
       arr.push(j.rider_id);
       jokersByEntry.set(j.entry_id, arr);
     }
     const spRows = await fetchAllRows<{ entry_id: string; stage_id: string; points: number }>((from, to) =>
-      supabase.from("stage_points").select("entry_id, stage_id, points").in("entry_id", entryIds).order("entry_id").range(from, to));
+      supabase.from("stage_points")
+        .select("entry_id, stage_id, points, entries!inner(game_id, status)")
+        .eq("entries.game_id", gameId).eq("entries.status", "submitted").order("entry_id").range(from, to) as never);
     for (const sp of spRows) {
       entryTotal.set(sp.entry_id, (entryTotal.get(sp.entry_id) ?? 0) + (sp.points ?? 0));
       if (approvedStageIds.has(sp.stage_id)) {
         entryApprovedTotal.set(sp.entry_id, (entryApprovedTotal.get(sp.entry_id) ?? 0) + (sp.points ?? 0));
       }
     }
+    // Recente eigen rapporten (variatie-guard) — één bulk-query i.p.v. per entry.
+    const recentRows = await fetchAllRows<{ entry_id: string; directeurs_analyse: string; ploeg_karakterisering: string; stage_count: number }>((from, to) =>
+      supabase.from("lefevere_rapporten")
+        .select("entry_id, directeurs_analyse, ploeg_karakterisering, stage_count, entries!inner(game_id)")
+        .eq("entries.game_id", gameId).lt("stage_count", stageCount)
+        .order("stage_count", { ascending: false }).range(from, to) as never);
+    for (const r of recentRows) {
+      const arr = recentByEntry.get(r.entry_id) ?? [];
+      if (arr.length < 5) arr.push({ analyse: r.directeurs_analyse, karakter: r.ploeg_karakterisering, stage_count: r.stage_count });
+      recentByEntry.set(r.entry_id, arr);
+    }
   }
 
   return {
     stageCount, approvedStageIds, categories, ridersById, pickStats, totals, randomScores,
     riderTotals, dreamTotal, catRiderIds, bestJokerPts, picksByEntry, jokersByEntry,
-    entryTotal, entryApprovedTotal, entries, gameId,
+    entryTotal, entryApprovedTotal, recentByEntry, entries, gameId,
   };
 }
 
@@ -346,7 +367,7 @@ export async function runLefevereBatch(
   // afwerkt. De ctx-opbouw (zware fetches) telt bewust NIET mee — die start het
   // budget pas erna, anders zou ze bij grote games het hele venster opeten.
   const TIME_BUDGET_MS = 15 * 60_000; // 15 min per klik
-  const CONCURRENCY = 8;
+  const CONCURRENCY = 12;
 
   const ctx = await buildBatchCtx(supabase, gameId);
   if (ctx.stageCount === 0) {
@@ -389,18 +410,13 @@ export async function runLefevereBatch(
   const one = async (entry: EntryRow): Promise<void> => {
     const input = buildEntryInput(entry.id, ctx);
     if (!input) { skipped++; return; }
-    // Variatie-guard: laatste paar eigen rapporten meegeven.
-    const recent = await fetchAllRows<{ directeurs_analyse: string; ploeg_karakterisering: string; stage_count: number }>((from, to) =>
-      supabase.from("lefevere_rapporten")
-        .select("directeurs_analyse, ploeg_karakterisering, stage_count")
-        .eq("entry_id", entry.id).lt("stage_count", ctx.stageCount)
-        .order("stage_count", { ascending: false }).range(from, to));
-    const recente = recent.slice(0, 5);
+    // Variatie-guard uit de bulk-map (geen query per entry → sneller).
+    const recente = ctx.recentByEntry.get(entry.id) ?? [];
     const { data, error } = await supabase.functions.invoke("generate-lefevere-report", {
       body: {
         ...input,
-        recenteAnalyses: recente.map((r) => r.directeurs_analyse).filter(Boolean),
-        recenteKarakteriseringen: recente.map((r) => r.ploeg_karakterisering).filter(Boolean),
+        recenteAnalyses: recente.map((r) => r.analyse).filter(Boolean),
+        recenteKarakteriseringen: recente.map((r) => r.karakter).filter(Boolean),
       },
     });
     if (error) {
