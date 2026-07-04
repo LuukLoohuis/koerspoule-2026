@@ -177,7 +177,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   const { data: serverStandings = [] } = useGameStandings(gameId, klassementStage?.stage_number);
 
   const overallStandings = useMemo(() => {
-    return serverStandings.map((r) => ({
+    const mapped = serverStandings.map((r) => ({
       id: r.entry_id,
       user_id: r.user_id,
       team_name: r.team_name,
@@ -188,6 +188,19 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
       rank: r.rank,
       delta: r.delta,
     }));
+    // De RPC rangschikt ALTIJD op (cum_points + GC-voorspelbonus). In een niet-GC-
+    // tussenstand mag die bonus niet meetellen (zie comment hierboven), anders
+    // staat een team met veel bonus maar weinig etappepunten te hoog. Her-
+    // rangschik daarom op de getoonde punten en herbereken de rang (ties gelijk).
+    if (isGcKlassement) return mapped;
+    const sorted = [...mapped].sort((a, b) => b.total_points - a.total_points);
+    let lastPts: number | null = null;
+    let lastRank = 0;
+    sorted.forEach((row, i) => {
+      if (lastPts === null || row.total_points < lastPts) { lastRank = i + 1; lastPts = row.total_points; }
+      row.rank = lastRank;
+    });
+    return sorted;
   }, [serverStandings, isGcKlassement]);
 
   // Dagklassering per team voor de geselecteerde klassement-rit (uit de RPC).
