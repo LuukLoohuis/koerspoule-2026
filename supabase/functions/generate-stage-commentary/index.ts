@@ -208,23 +208,41 @@ async function openaiChat(
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) throw new Error("OPENAI_API_KEY niet ingesteld in env");
 
-  const res = await fetch(OPENAI_URL, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_completion_tokens: opts.maxTokens,
-      reasoning_effort: opts.reasoning,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userPrompt },
-      ],
-    }),
-  });
+  // Sampling-parameters voor méér lexicale spreiding zonder de stijlgids los te
+  // laten. temperature 1.0 = de default voor reasoning-modellen (dus altijd
+  // veilig); presence_penalty duwt weg van al gebruikte woorden. Wordt het
+  // penalty-veld door dit model niet ondersteund, dan valt de call terug op een
+  // versie zónder (zie de retry hieronder).
+  const post = (withPenalty: boolean) =>
+    fetch(OPENAI_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_completion_tokens: opts.maxTokens,
+        reasoning_effort: opts.reasoning,
+        temperature: 1.0,
+        ...(withPenalty ? { presence_penalty: 0.4 } : {}),
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    });
+
+  let res = await post(true);
+  // Model ondersteunt presence_penalty (of temperature) niet → retry zonder penalty.
+  if (res.status === 400) {
+    const errText = await res.clone().text();
+    if (/presence_penalty|temperature|unsupported|not supported/i.test(errText)) {
+      console.warn("[commentary] sampling-param niet ondersteund → retry zonder presence_penalty");
+      res = await post(false);
+    }
+  }
 
   if (!res.ok) {
     const text = await res.text();
@@ -296,8 +314,9 @@ function buildUserPrompt(opts: {
   members: SubpouleMember[];
   recentMichelOpeners: string[];
   recentJoseOpeners: string[];
+  recentPhrases: string[];
 }): string {
-  const { subpouleNaam, stageNumber, stageName, stageType, isFirstStage, isLastStage, members, recentMichelOpeners, recentJoseOpeners } = opts;
+  const { subpouleNaam, stageNumber, stageName, stageType, isFirstStage, isLastStage, members, recentMichelOpeners, recentJoseOpeners, recentPhrases } = opts;
 
   // Daguitslag (sort by stagePoints desc), klassement voor en na
   const dag = [...members].sort((a, b) => b.stagePoints - a.stagePoints);
@@ -363,6 +382,15 @@ function buildUserPrompt(opts: {
        (tweedeDag.stagePoints > 0 && winnaar.stagePoints >= 1.5 * tweedeDag.stagePoints))) {
     situatie.push(`dominante_winnaar: ${winnaar.display_name} (${winnaar.stagePoints} pt, groot verschil met nr. 2)`);
   }
+  // kop-aan-kop aan de top (klein verschil leider ↔ nummer 2)
+  if (!isFirstStage && topGap !== null && topGap < 10) {
+    situatie.push(`kop_aan_kop: ${leider.display_name} en ${tweede.display_name} scheelt nog maar ${topGap} pt`);
+  }
+  // uitvaller-drama: spelers met 0 punten vandaag (off-day / zwarte dag)
+  const nulScorers = dag.filter((m) => m.stagePoints === 0).map((m) => m.display_name || "?");
+  if (!isFirstStage && nulScorers.length > 0) {
+    situatie.push(`uitvaller_drama: ${nulScorers.length} speler(s) met 0 punten vandaag — ${nulScorers.slice(0, 3).join(", ")}`);
+  }
 
   const contextRegels: string[] = [];
   if (isFirstStage) contextRegels.push("Dit is de OPENINGSETAPPE — er is geen klassement van vóór deze etappe.");
@@ -375,7 +403,9 @@ Etappe ${stageNumber}${stageName ? ` — ${stageName}` : ""}${stageType ? ` (${s
 ${contextRegels.length > 0 ? "Context: " + contextRegels.join(" ") + "\n\n" : ""}SITUATIE VAN VANDAAG (kies hierop je frasencategorie):
 ${situatie.join("\n")}
 
-${recentMichelOpeners.length > 0 ? `VORIGE MICHEL-OPENERS (NIET herhalen): ${recentMichelOpeners.map((o) => `"${o}…"`).join(" · ")}\n` : ""}${recentJoseOpeners.length > 0 ? `VORIGE JOSÉ-OPENERS (NIET herhalen): ${recentJoseOpeners.map((o) => `"${o}…"`).join(" · ")}\n` : ""}${recentMichelOpeners.length > 0 || recentJoseOpeners.length > 0 ? "\n" : ""}DAGUITSLAG (deze subpoule):
+FRASE-OPDRACHT: Michel kiest precies ÉÉN frase uit de MICHEL-categorie die past bij het/de situatie-label(s) hierboven; José kiest precies ÉÉN frase uit de bijbehorende JOSÉ-categorie. Kies elke etappe een ANDERE frase dan de vorige keer — varieer de beeldspraak, stapel niet.
+
+${recentMichelOpeners.length > 0 ? `VORIGE MICHEL-OPENERS (NIET herhalen): ${recentMichelOpeners.map((o) => `"${o}…"`).join(" · ")}\n` : ""}${recentJoseOpeners.length > 0 ? `VORIGE JOSÉ-OPENERS (NIET herhalen): ${recentJoseOpeners.map((o) => `"${o}…"`).join(" · ")}\n` : ""}${recentPhrases.length > 0 ? `VERMIJD deze recent gebruikte uitdrukkingen (kies andere): ${recentPhrases.join(" · ")}\n` : ""}${recentMichelOpeners.length > 0 || recentJoseOpeners.length > 0 || recentPhrases.length > 0 ? "\n" : ""}DAGUITSLAG (deze subpoule):
 ${dagLines}
 
 ${isFirstStage ? "" : `KLASSEMENT VOOR DEZE ETAPPE:\n${voorLines}\n\n`}KLASSEMENT NA DEZE ETAPPE:
@@ -519,14 +549,31 @@ async function fetchSubpouleContext(
   });
 }
 
-// ─── Anti-herhaling: openers van de vorige 2-3 etappes (één lichte query) ─────
+// ─── Anti-herhaling: openers + kernuitdrukkingen van de vorige 2-3 etappes ────
+
+// Vaste, herkenbare uitdrukkingen uit de referentiebibliotheek. Match
+// case-insensitive als substring in recente commentaren → geef ze mee als
+// "vermijden" zodat niet alleen de opener maar ook de beeldspraak roulert.
+const PHRASE_LIBRARY: string[] = [
+  // Michel
+  "God en klein Pierke", "met de klap erover", "Ram, bam, bam", "Delirium", "Tsjakka",
+  "peren", "Duvel", "Moortgat", "maitrise", "machtsontplooiing", "bok op een haverkist",
+  "stervende zwanen", "muisje gebaard", "kaf van het koren", "duimen en vingers", "orgelpunt",
+  "dash", "scheuten", "Viva", "Moeder, we zijn nog niet thuis", "naar de vaantjes", "sikkepit",
+  "pertinent", "panache", "grinta", "schoonste sport", "handen in de lucht", "schone zondag",
+  "Zarrabeitia", "verschroeiende versnelling", "op een hoopje",
+  // José
+  "criterium van Aalst", "the best of the rest", "kan hij inpakken", "sneeuw voor de zon",
+  "nagelbij", "Morzine", "belangrijke man", "koers lezen", "ge moogt", "da's straf",
+  "nochtans", "tiens", "allez", "lang verhaal kort",
+];
 
 async function fetchRecentOpeners(
   admin: ReturnType<typeof createClient>,
   gameId: string,
   stageNumber: number,
   subpouleId: string,
-): Promise<{ michel: string[]; jose: string[] }> {
+): Promise<{ michel: string[]; jose: string[]; phrases: string[] }> {
   try {
     const { data } = await admin
       .from("etappe_commentaren")
@@ -536,15 +583,28 @@ async function fetchRecentOpeners(
       .lt("stages.stage_number", stageNumber);
     const opener = (t?: string | null) => (t ?? "").trim().split(/\s+/).slice(0, 6).join(" ");
     const rows = ((data ?? []) as any[])
-      .map((r) => ({ m: opener(r.michel_tekst), j: opener(r.jose_tekst), n: r.stages?.stage_number ?? 0 }))
+      .map((r) => ({
+        m: opener(r.michel_tekst),
+        j: opener(r.jose_tekst),
+        full: `${r.michel_tekst ?? ""} ${r.jose_tekst ?? ""}`.toLowerCase(),
+        n: r.stages?.stage_number ?? 0,
+      }))
       .sort((a, b) => b.n - a.n)
       .slice(0, 3);
+    // Kernuitdrukkingen die in de laatste 3 commentaren voorkwamen.
+    const used = new Set<string>();
+    for (const row of rows) {
+      for (const phrase of PHRASE_LIBRARY) {
+        if (row.full.includes(phrase.toLowerCase())) used.add(phrase);
+      }
+    }
     return {
       michel: rows.map((r) => r.m).filter(Boolean),
       jose: rows.map((r) => r.j).filter(Boolean),
+      phrases: [...used],
     };
   } catch {
-    return { michel: [], jose: [] };
+    return { michel: [], jose: [], phrases: [] };
   }
 }
 
@@ -672,6 +732,7 @@ Deno.serve(async (req) => {
         members,
         recentMichelOpeners: recentOpeners.michel,
         recentJoseOpeners: recentOpeners.jose,
+        recentPhrases: recentOpeners.phrases,
       });
       const result = await callOpenAI(userPrompt);
 
