@@ -223,6 +223,25 @@ export default function AapscoreDistributie({
           className="relative"
           style={{ height: chartH, marginTop: 10, paddingLeft: yGutter }}
         >
+          {/* Mobiel: mascotte rechtsboven IN de grafiek (lage staafjes daar, dekt
+              geen data) — op desktop staat 'ie in de kaartkop. */}
+          {isMobile && (
+            <img
+              src={aapDartpijl}
+              alt=""
+              aria-hidden
+              className="pointer-events-none select-none absolute"
+              style={{
+                top: 2,
+                right: 4,
+                height: 92,
+                width: "auto",
+                zIndex: 3,
+                filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.18))",
+              }}
+            />
+          )}
+
           {/* gridlines + y-labels */}
           {gridFracs.map((f) => {
             const isBaseline = f === 0;
