@@ -16,10 +16,10 @@ const GROUPS: Group[] = [
         to: "/mijn-peloton?tab=team&sub=ploeg",
         bullets: [
           "Bovenaan de gouden strip \"Jacht op geel\" met je klassementsrenners.",
-          "Daaronder je overige categorieën, elk met je gekozen renner(s).",
-          "Achter elke renner zie je zijn punten; een joker is gemarkeerd met ♛.",
+          "Daaronder je overige categorieën, elk met je gekozen renner(s); je jokers staan in een eigen categorie (✨).",
+          "Achter elke renner zie je zijn punten.",
           "Een uitgevallen renner is doorgestreept met ☠.",
-          "Klik op een renner voor zijn resultaten per etappe.",
+          "Klik op een renner voor zijn resultaten per etappe, inclusief een eventuele jokerbonus.",
         ],
       },
       { title: "Pronostiek", intro: "Je voorspellingen voor de eindklassementen en truien.", to: "/mijn-peloton?tab=team&sub=prono" },
