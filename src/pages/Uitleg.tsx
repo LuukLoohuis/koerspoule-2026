@@ -32,7 +32,7 @@ const GROUPS: Group[] = [
     cards: [
       { title: "Klassement", intro: "De stand binnen je subpoule, met duel om teams te vergelijken.", to: "/mijn-peloton?tab=subpoules&sub=klassement" },
       { title: "Stijgers & Dalers", intro: "Wie klimt en wie zakt over de etappes heen.", to: "/mijn-peloton?tab=subpoules&sub=verloop" },
-      { title: "Daguitslag", intro: "De opbrengst per deelnemer van de laatste etappe, filterbaar op woonplaats.", to: "/mijn-peloton?tab=subpoules&sub=daguitslag" },
+      { title: "Daguitslag", intro: "De daguitslag per deelnemer van de laatste etappe. Filteren op woonplaats kan, mits je die hebt ingevuld.", to: "/mijn-peloton?tab=subpoules&sub=daguitslag" },
       { title: "Heatmap", intro: "Per categorie wie populair koos en wie een buitenbeentje pakte.", to: "/mijn-peloton?tab=subpoules&sub=heatmap" },
       { title: "Streek", intro: "In subpoules met woonplaatsen strijden plaatsen onderling. Alleen zichtbaar als er een streekklassement is — dus wanneer je je woonplaats hebt ingevuld.", to: "/mijn-peloton?tab=subpoules&sub=streek" },
     ],
