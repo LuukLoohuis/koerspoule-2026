@@ -148,20 +148,30 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   async function generateAllLefevere() {
     if (!supabase || !activeGameId || lefGenBusy) return;
     setLefGenBusy(true);
+    const toastId = "lef-batch";
+    const MAX_ROUNDS = 20;
+    const onProgress = (done: number, total: number) =>
+      setLefCount((prev) => ({ metRapport: done, totaal: total, stageCount: prev?.stageCount ?? 0 }));
     try {
-      const res = await runLefevereBatch(supabase, activeGameId, {
-        // Live teller: elke chunk werkt de balk bij, zodat het niet lijkt te hangen.
-        onProgress: (done, total) =>
-          setLefCount((prev) => ({ metRapport: done, totaal: total, stageCount: prev?.stageCount ?? 0 })),
-      });
-      setLefFailed(res.failed);
+      let allFailed: Array<{ entry_id: string; error: string }> = [];
+      let prevMet = -1;
+      for (let round = 1; round <= MAX_ROUNDS; round++) {
+        const res = await runLefevereBatch(supabase, activeGameId, { onProgress });
+        allFailed = res.failed;
+        const c = await fetchLefevereCount(supabase, activeGameId);
+        setLefCount(c);
+        toast.loading(`🖋️ bezig… ${c.metRapport}/${c.totaal} deelnemers`, { id: toastId });
+        if (!res.timedOut) break;
+        if (res.generated === 0 && c.metRapport <= prevMet) break;
+        prevMet = c.metRapport;
+      }
+      setLefFailed(allFailed);
       const c = await fetchLefevereCount(supabase, activeGameId);
       setLefCount(c);
-      toast.success(`🖋️ ${res.generated} gegenereerd, ${c.metRapport}/${c.totaal} deelnemers`);
-      if (res.timedOut) toast.info("Tijd verstreken — klik nogmaals om door te gaan.");
-      if (res.failed.length > 0) toast.error(`${res.failed.length} mislukt — zie de lijst.`);
+      toast.success(`🖋️ klaar: ${c.metRapport}/${c.totaal} deelnemers voorzien`, { id: toastId });
+      if (allFailed.length > 0) toast.error(`${allFailed.length} mislukt — zie de lijst.`);
     } catch (e) {
-      toast.error(`Lefevère-batch faalde: ${(e as Error).message}`);
+      toast.error(`Lefevère-batch faalde: ${(e as Error).message}`, { id: toastId });
     } finally {
       setLefGenBusy(false);
     }
@@ -200,32 +210,48 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     setCommCounts(Object.fromEntries(entries));
   }
 
-  // Roept de commentaargenerator aan en toont een samenvattende toast +
-  // bewaart de restlijst (lege subpoules met reden) voor deze etappe.
+  // Genereert commentaar met ÉÉN klik: blijft de edge-functie aanroepen zolang
+  // die timedOut=true teruggeeft (elke ronde verwerkt een deel binnen de 130s
+  // edge-limiet). Idempotent — na ronde 1 altijd force=false, zodat al
+  // gegenereerde subpoules niet opnieuw gedaan worden.
   async function runCommentary(stageId: string, force: boolean) {
     setCommBusy(stageId);
+    const toastId = `comm-${stageId}`;
+    const MAX_ROUNDS = 20;
+    let totalGenerated = 0;
+    let prevMet = -1;
+    let empty: Array<{ id: string; name: string; reason: string }> = [];
     try {
-      const { data, error } = await supabase.functions.invoke("generate-stage-commentary", {
-        body: { stage_id: stageId, force },
-      });
-      if (error) {
-        let detail = error.message;
-        const ctx = (error as { context?: Response }).context;
-        if (ctx && typeof ctx.text === "function") {
-          try { const body = await ctx.text(); if (body) detail = body; } catch { /* keep fallback */ }
+      for (let round = 1; round <= MAX_ROUNDS; round++) {
+        const { data, error } = await supabase.functions.invoke("generate-stage-commentary", {
+          body: { stage_id: stageId, force: round === 1 ? force : false },
+        });
+        if (error) {
+          let detail = error.message;
+          const ctx = (error as { context?: Response }).context;
+          if (ctx && typeof ctx.text === "function") {
+            try { const body = await ctx.text(); if (body) detail = body; } catch { /* keep fallback */ }
+          }
+          throw new Error(detail);
         }
-        throw new Error(detail);
+        const generated = (data as { generated?: number })?.generated ?? 0;
+        const timedOut = Boolean((data as { timedOut?: boolean })?.timedOut);
+        empty = ((data as { emptySubpoules?: Array<{ id: string; name: string; reason: string }> })?.emptySubpoules) ?? [];
+        totalGenerated += generated;
+        const c = await refreshCommCount(stageId);
+        toast.loading(`🎙️ bezig… ${c.met}/${c.totaal} subpoules`, { id: toastId });
+        // Klaar zodra de functie alles binnen de tijd afwerkte, of geen voortgang
+        // meer boekt (voorkomt een oneindige lus als er iets blijft hangen).
+        if (!timedOut) break;
+        if (generated === 0 && c.met <= prevMet) break;
+        prevMet = c.met;
       }
-      const generated = (data as { generated?: number })?.generated ?? 0;
-      const timedOut = Boolean((data as { timedOut?: boolean })?.timedOut);
-      const empty = ((data as { emptySubpoules?: Array<{ id: string; name: string; reason: string }> })?.emptySubpoules) ?? [];
       setEmptyByStage((prev) => ({ ...prev, [stageId]: empty }));
       const c = await refreshCommCount(stageId);
-      toast.success(`🎙️ ${generated} gegenereerd, ${c.met}/${c.totaal} subpoules voorzien`);
-      if (timedOut) toast.info("Tijd verstreken — klik nogmaals om door te gaan.");
-      return { generated, empty, timedOut };
+      toast.success(`🎙️ klaar: ${c.met}/${c.totaal} subpoules voorzien`, { id: toastId });
+      return { generated: totalGenerated, empty, timedOut: false };
     } catch (e) {
-      toast.error(`Commentaargenerator faalde: ${(e as Error).message}`);
+      toast.error(`Commentaargenerator faalde: ${(e as Error).message}`, { id: toastId });
       return null;
     } finally {
       setCommBusy(null);
@@ -457,7 +483,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   variant="outline"
                   className="border-[hsl(var(--vintage-gold))] text-[hsl(var(--vintage-gold))]"
                   disabled={commBusy === r.stage_id}
-                  title="Vult alleen de subpoules aan die nog geen commentaar hebben (idempotent). Klik nogmaals na een timeout om de rest af te maken."
+                  title="Vult alleen de subpoules aan die nog geen commentaar hebben (idempotent). Eén klik draait door tot alles voorzien is."
                   onClick={() => runCommentary(r.stage_id, false)}
                 >
                   <Mic className={`w-3 h-3 mr-1 ${commBusy === r.stage_id ? "animate-pulse" : ""}`} />Vul ontbrekend commentaar aan
