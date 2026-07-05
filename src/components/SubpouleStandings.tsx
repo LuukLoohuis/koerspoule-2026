@@ -13,10 +13,9 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import { maySeeLiveContent } from "@/lib/gameStatus";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useMinWidth } from "@/hooks/use-mobile";
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import TeamComparison from "@/components/TeamComparison";
-import { DuelSummaryPanel } from "@/components/DuelSummary";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import StageBar from "@/components/stages/StageBar";
 import { buildStageBarData } from "@/components/stages/stageBarData";
@@ -34,9 +33,14 @@ type Props = {
   showEvolution?: boolean;
   /** Premium per-subpoule: woonplaats-filter + labels in de ranking. */
   requiresWoonplaats?: boolean;
+  /** Gecontroleerde duel-selectie (opgetild naar SubpouleManager voor het
+   *  desktop-zijpaneel). Zonder deze props valt het component terug op eigen
+   *  lokale state (standalone gebruik). */
+  compareId?: string | null;
+  onCompare?: (userId: string | null) => void;
 };
 
-export default function SubpouleStandings({ subpouleId, subpouleName, gameId, gameStatus, showEvolution = true, requiresWoonplaats = false }: Props) {
+export default function SubpouleStandings({ subpouleId, subpouleName, gameId, gameStatus, showEvolution = true, requiresWoonplaats = false, compareId: compareIdProp, onCompare }: Props) {
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
   const { data: curGame } = useCurrentGame();
@@ -61,11 +65,13 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   }, [members, entries]);
   const { data: stagePoints = [] } = useStagePointsForEntries(game?.id, memberEntryIds);
 
-  const isMobile = useIsMobile();
-  const [compareId, setCompareId] = useState<string | null>(null);
-  // "Volledig duel" — opent de bottom sheet met het complete TeamComparison,
-  // op desktop vanuit de popover, op mobiel direct vanuit de rij.
-  const [fullDuelOpen, setFullDuelOpen] = useState(false);
+  // Duel toont SubpouleManager als rechter zijpaneel vanaf lg (≥1024); daaronder
+  // (en mobiel) rendert dít component de bottom sheet. Zo geen gat 768-1024.
+  const lgUp = useMinWidth(1024);
+  // Gecontroleerd via props als SubpouleManager ze meegeeft; anders lokale state.
+  const [localCompareId, setLocalCompareId] = useState<string | null>(null);
+  const compareId = onCompare ? (compareIdProp ?? null) : localCompareId;
+  const setCompareId = (v: string | null) => (onCompare ? onCompare(v) : setLocalCompareId(v));
   const [etappeIdx, setEtappeIdx] = useState<number>(0);
   const [showTapHint, setShowTapHint] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -660,63 +666,38 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                     Mobiel: subtiel zwaard-icoon. */}
                 <div className="shrink-0 flex items-center justify-end w-5 md:w-[104px]">
                   {canCompare && (
-                    <Popover
-                      open={isComparing && !isMobile && (maySeeLive || isAdmin) && !fullDuelOpen}
-                      onOpenChange={(o) => setCompareId(o ? m.user_id : null)}
-                    >
-                      <PopoverTrigger asChild>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setCompareId(isComparing ? null : m.user_id); }}
-                          className={cn(
-                            "hidden md:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1",
-                            "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
-                            "transition-colors duration-150",
-                            isComparing
-                              ? "opacity-100 bg-primary/10 border-primary text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.5)]"
-                              : "opacity-60 border-border bg-card text-muted-foreground group-hover:opacity-100 group-hover:border-primary/60 group-hover:text-primary group-hover:bg-primary/5 focus-visible:opacity-100",
-                          )}
-                          aria-label={isComparing ? "Vergelijking sluiten" : `Benchmark tegen ${m.team_name ?? m.display_name ?? "dit team"}`}
-                          title={isComparing ? "Vergelijking sluiten" : "Benchmark jouw ploeg tegen dit team"}
-                        >
-                          <Swords className="h-3 w-3" strokeWidth={isComparing ? 2.5 : 2} />
-                          {isComparing ? "Sluit" : "Vergelijk"}
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent align="end" side="bottom" className="w-[300px] p-0">
-                        <div className="flex justify-end p-1 pb-0">
-                          <button
-                            type="button"
-                            onClick={() => setCompareId(null)}
-                            aria-label="Sluiten"
-                            className="inline-flex items-center justify-center h-6 w-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                        <DuelSummaryPanel
-                          subpouleId={subpouleId}
-                          gameId={game?.id}
-                          myUserId={user?.id}
-                          opponentUserId={m.user_id}
-                          opponentName={m.display_name}
-                          onOpenFull={() => setFullDuelOpen(true)}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                  {/* Mobiel: geen popover, subtiel zwaard-icoon (rij opent de sheet) */}
-                  {canCompare && (
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "md:hidden inline-flex",
-                        isComparing
-                          ? "text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]"
-                          : "text-muted-foreground/60",
-                      )}
-                    >
-                      <Swords className="h-3.5 w-3.5" strokeWidth={isComparing ? 2.5 : 2} />
-                    </span>
+                    <>
+                      {/* Desktop: "⚔ Vergelijk"-pill; zet de selectie (SubpouleManager
+                          toont het duel als zijpaneel). */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setCompareId(isComparing ? null : m.user_id); }}
+                        className={cn(
+                          "hidden md:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1",
+                          "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                          "transition-colors duration-150",
+                          isComparing
+                            ? "opacity-100 bg-primary/10 border-primary text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.5)]"
+                            : "opacity-60 border-border bg-card text-muted-foreground group-hover:opacity-100 group-hover:border-primary/60 group-hover:text-primary group-hover:bg-primary/5 focus-visible:opacity-100",
+                        )}
+                        aria-label={isComparing ? "Vergelijking sluiten" : `Benchmark tegen ${m.team_name ?? m.display_name ?? "dit team"}`}
+                        title={isComparing ? "Vergelijking sluiten" : "Benchmark jouw ploeg tegen dit team"}
+                      >
+                        <Swords className="h-3 w-3" strokeWidth={isComparing ? 2.5 : 2} />
+                        {isComparing ? "Sluit" : "Vergelijk"}
+                      </button>
+                      {/* Mobiel: subtiel zwaard-icoon (rij opent de sheet) */}
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "md:hidden inline-flex",
+                          isComparing
+                            ? "text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]"
+                            : "text-muted-foreground/60",
+                        )}
+                      >
+                        <Swords className="h-3.5 w-3.5" strokeWidth={isComparing ? 2.5 : 2} />
+                      </span>
+                    </>
                   )}
                 </div>
               </div>
@@ -726,13 +707,12 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
 
       </div>
 
-      {/* Bottom sheet met het VOLLEDIGE TeamComparison — mobiel direct vanuit de
-          rij, desktop via "Volledig duel" in de popover. */}
+      {/* Bottom sheet met het VOLLEDIGE TeamComparison — onder lg (mobiel +
+          tablet). Vanaf lg toont SubpouleManager het duel als rechter zijpaneel,
+          dus dan rendert dit component het duel NIET. */}
       <Drawer
-        open={!!compareMember && (maySeeLive || isAdmin) && (isMobile || fullDuelOpen)}
-        onOpenChange={(o) => {
-          if (!o) { setFullDuelOpen(false); setCompareId(null); }
-        }}
+        open={!lgUp && !!compareMember && (maySeeLive || isAdmin)}
+        onOpenChange={(o) => { if (!o) setCompareId(null); }}
       >
         <DrawerContent className="max-h-[85vh]">
           <DrawerHeader className="flex items-center justify-between py-3">

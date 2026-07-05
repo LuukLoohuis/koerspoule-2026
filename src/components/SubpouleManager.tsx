@@ -34,15 +34,17 @@ import SwipeCarousel from "@/components/SwipeCarousel";
 import SwipeDots from "@/components/SwipeDots";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
+import { useMinWidth } from "@/hooks/use-mobile";
 import PelotonChat from "@/components/PelotonChat";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
 import SubpouleStandings from "@/components/SubpouleStandings";
+import TeamComparison from "@/components/TeamComparison";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import DaguitslagChart from "@/components/DaguitslagChart";
 import DaguitslagCelebration from "@/components/DaguitslagCelebration";
 import { useDaguitslagCelebration } from "@/hooks/useDaguitslagCelebration";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, ChevronsUpDown, MessageCircle, TrendingUp, Flame, Share2, BarChart3, Trophy, X, MapPin, type LucideIcon } from "lucide-react";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, ChevronsUpDown, MessageCircle, TrendingUp, Flame, Share2, BarChart3, Trophy, X, MapPin, Swords, type LucideIcon } from "lucide-react";
 import StreekKlassement from "@/components/StreekKlassement";
 import WoonplaatsBeheer from "@/components/WoonplaatsBeheer";
 import { WoonplaatsFilterProvider } from "@/context/WoonplaatsFilterContext";
@@ -60,7 +62,9 @@ const SUB_TABS: SubTab[] = [
 
 export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange, presetJoinCode, maySeeLive = true }: Props = {}) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isAdmin = role === "admin";
+  const lgUp = useMinWidth(1024);
   const { data: currentGame } = useCurrentGame();
   const effectiveGameId = gameId ?? currentGame?.id;
   const effectiveStatus = gameStatus ?? currentGame?.status;
@@ -81,6 +85,9 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   // Desktop: chat als rechter zijpaneel (los van de tabrij). Eigen staat zodat
   // de mobiele Sheet niet meeopent op desktop.
   const [deskChatOpen, setDeskChatOpen] = useState(false);
+  // Desktop: geselecteerde tegenstander → duel als rechter zijpaneel. Wederzijds
+  // uitsluitend met Koerscafé (één rechterpaneel tegelijk).
+  const [duelUserId, setDuelUserId] = useState<string | null>(null);
   // Mobiel: tab-gebaseerde subpoule-weergave (zoals Hors Categorie).
   const [mobileTab, setMobileTab] = useState<string>("klassement");
   const mobileHint = useSwipeHint("subpoule");
@@ -175,6 +182,9 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
     onActiveBannerChange(show ? { url: active.banner_url, name: active.name } : null);
     return () => onActiveBannerChange(null);
   }, [active, onActiveBannerChange]);
+
+  // Duel-selectie resetten zodra van subpoule gewisseld wordt.
+  useEffect(() => { setDuelUserId(null); }, [active?.id]);
 
   // Ritzege/podium-feestje voor de actieve subpoule — top-level zodat het op elke
   // tab afgaat (je landt eerst op Ranking, niet op de Daguitslag).
@@ -424,7 +434,16 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
     // Sneak preview (gewone gebruiker): de data-panels tonen de schil i.p.v. echte
     // (test)standen/commentaar; admins zien de echte data (maySeeLive=true).
     const standingsPanel = maySeeLive ? (
-      <SubpouleStandings subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} showEvolution={false} requiresWoonplaats={active.requires_woonplaats} />
+      <SubpouleStandings
+        subpouleId={active.id}
+        subpouleName={active.name}
+        gameId={effectiveGameId}
+        gameStatus={gameStatus}
+        showEvolution={false}
+        requiresWoonplaats={active.requires_woonplaats}
+        compareId={duelUserId}
+        onCompare={(userId) => { setDuelUserId(userId); if (userId) setDeskChatOpen(false); }}
+      />
     ) : (
       <SneakPreviewLock title="Klassement binnenkort" note="De stand van deze subpoule verschijnt zodra de koers losbarst." />
     );
@@ -592,7 +611,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
               </div>
               <button
                 type="button"
-                onClick={() => setDeskChatOpen((v) => !v)}
+                onClick={() => setDeskChatOpen((v) => { const next = !v; if (next) setDuelUserId(null); return next; })}
                 aria-pressed={deskChatOpen}
                 title="Open of sluit het Koerscafé"
                 className={cn(
@@ -635,6 +654,37 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                     </div>
                     <div className="p-3">
                       {maySeeLive ? <PelotonChat subpoolName={active.name} subpoolId={active.id} /> : <SneakPreviewLock title="Koerscafé binnenkort open" note="Het commentaar van je subpoule verschijnt zodra de koers losbarst." />}
+                    </div>
+                  </div>
+                </aside>
+              )}
+
+              {/* Duel-zijpaneel — vanaf lg (≥1024); daaronder valt het duel terug
+                  op de bottom sheet in SubpouleStandings. Sluit Koerscafé uit. */}
+              {lgUp && duelUserId && (maySeeLive || isAdmin) && (
+                <aside className="w-[360px] shrink-0">
+                  <div className="retro-border no-hover-lift bg-card overflow-hidden sticky top-4">
+                    <div className="flex items-center justify-between border-b-2 border-foreground bg-secondary/30 px-3 py-2">
+                      <span className="font-display font-bold flex items-center gap-2">
+                        <Swords className="h-4 w-4 text-primary" />
+                        Duel
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setDuelUserId(null)}
+                        aria-label="Sluit duel"
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="p-3">
+                      <TeamComparison
+                        opponentUserId={duelUserId}
+                        opponentName={members.find((m) => m.user_id === duelUserId)?.display_name ?? "Tegenstander"}
+                        subpouleId={active.id}
+                        gameId={effectiveGameId}
+                      />
                     </div>
                   </div>
                 </aside>
