@@ -367,7 +367,9 @@ export async function runLefevereBatch(
   // afwerkt. De ctx-opbouw (zware fetches) telt bewust NIET mee — die start het
   // budget pas erna, anders zou ze bij grote games het hele venster opeten.
   const TIME_BUDGET_MS = 15 * 60_000; // 15 min per klik
-  const CONCURRENCY = 12;
+  // Max 5 tegelijk: belast de edge-functie en OpenAI niet te zwaar. Met het
+  // lagere token-budget in de functie zijn de calls sneller, dus 5 volstaat.
+  const CONCURRENCY = 5;
 
   const ctx = await buildBatchCtx(supabase, gameId);
   if (ctx.stageCount === 0) {

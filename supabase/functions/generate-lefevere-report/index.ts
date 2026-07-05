@@ -16,7 +16,9 @@ const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 // max_completion_tokens. Laag houden → budget gaat naar het echte rapport.
 // Ondersteund: none | low | medium | high | xhigh.
 const REASONING_EFFORT = Deno.env.get("OPENAI_REASONING_EFFORT") || "low";
-const MAX_TOKENS = Number(Deno.env.get("OPENAI_MAX_TOKENS") || "6000");
+// Klein rapport (3-4 zinnen) → laag budget bespaart het meest, want reasoning-
+// tokens tellen mee in max_completion_tokens. De retry gebruikt 2× dit budget.
+const MAX_TOKENS = Number(Deno.env.get("OPENAI_MAX_TOKENS") || "1200");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -113,7 +115,7 @@ TOON-LADDER per cijfer
 SPELREGELS (hard)
 ═══════════════════════════════════════════════════════════════
 1. Output: STRIKT één JSON-object met exact { "directeursAnalyse": "...", "ploegKarakterisering": "..." }. Geen markdown, geen code fences.
-2. directeursAnalyse: 5–6 zinnen, max 750 tekens. Begint met het cijfer in tekst ("Vijf komma één.", "Zeven en een half.", "Acht komma twee."). Bevat minstens 2 Lefevere-woorden uit de woordenschat. Bevat meerdere concrete observaties uit de input (renner-namen, percentages, joker-resultaat, trend) — benut de ruimte om streng en onderbouwd te oordelen. Spreekt deelnemer aan in 2e persoon ("ge"/"uw"). Max 1 uitroepteken. Bevat minstens twee QUOTABELE boutades, en de slotzin is een mokerslag (zie PUNCH & HUMOR) — geen brave afronding. Toon: ambetant, streng, droog-grappig.
+2. directeursAnalyse: 3–4 zinnen, max 500 tekens. Begint met het cijfer in tekst ("Vijf komma één.", "Zeven en een half.", "Acht komma twee."). Bevat minstens 1 Lefevere-woord uit de woordenschat. Bevat concrete observaties uit de input (renner-namen, percentages, joker-resultaat, trend). Spreekt deelnemer aan in 2e persoon ("ge"/"uw"). Max 1 uitroepteken. Bevat minstens één QUOTABELE boutade, en de slotzin is een mokerslag (zie PUNCH & HUMOR) — geen brave afronding. Toon: ambetant, streng, droog-grappig.
 3. ploegKarakterisering: 1 zin, max 80 tekens, format \`"Je ploeg [werkwoord]: [kort karakter]."\`. Evocatief werkwoord (ademt, fluistert, schreeuwt, gokt, klimt, dwingt, verzuipt, schittert, domineert, twijfelt, slaapt, consolideert). Geen herhaling van directeursAnalyse.
 4. Geen verzonnen renners — alleen namen die in de input staan.
 5. Geen vergelijkingen met andere deelnemers bij naam (privacy). Wel "de pool", "de apen", "andere ploegen".
@@ -326,7 +328,7 @@ function buildUserPrompt(input: any): string {
   }
 
   lines.push("");
-  lines.push("Schrijf nu een directeursanalyse (5-6 zinnen, ambetant/streng/droog-grappig, met minstens twee quotabele boutades en een mokerslag-slotzin) en een ploeg-karakterisering (1 zin met \"Je ploeg [werkwoord]:\"-format) als JSON.");
+  lines.push("Schrijf nu een directeursanalyse (3-4 zinnen, ambetant/streng/droog-grappig, met minstens één quotabele boutade en een mokerslag-slotzin) en een ploeg-karakterisering (1 zin met \"Je ploeg [werkwoord]:\"-format) als JSON.");
 
   return lines.join("\n");
 }
