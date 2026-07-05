@@ -2,7 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Newspaper, Car, Users, Flag, Bike, ArrowRight, type LucideIcon } from "lucide-react";
 
-type Card = { title: string; intro: string; to: string };
+type Card = { title: string; intro: string; to: string; bullets?: string[] };
 type Group = { heading: string; Icon: LucideIcon; cards: Card[] };
 
 const GROUPS: Group[] = [
@@ -10,7 +10,18 @@ const GROUPS: Group[] = [
     heading: "Volgwagen — Mijn Ploeg",
     Icon: Car,
     cards: [
-      { title: "Mijn Ploeg", intro: "Je volledige ploeg als programma. Klik een renner voor punten per etappe.", to: "/mijn-peloton?tab=team&sub=ploeg" },
+      {
+        title: "Mijn Ploeg",
+        intro: "Je volledige ploeg als programma, gegroepeerd zoals je 'm koos.",
+        to: "/mijn-peloton?tab=team&sub=ploeg",
+        bullets: [
+          "Bovenaan de gouden strip \"Jacht op geel\" met je klassementsrenners.",
+          "Daaronder je overige categorieën, elk met je gekozen renner(s).",
+          "Achter elke renner zie je zijn punten; een joker is gemarkeerd met ♛.",
+          "Een uitgevallen renner is doorgestreept met ☠.",
+          "Klik op een renner voor zijn resultaten per etappe.",
+        ],
+      },
       { title: "Pronostiek", intro: "Je voorspellingen voor de eindklassementen en truien.", to: "/mijn-peloton?tab=team&sub=prono" },
       { title: "Palmares", intro: "Je erelijst en behaalde resultaten in deze poule.", to: "/mijn-peloton?tab=team&sub=palmares" },
     ],
@@ -58,14 +69,19 @@ function GoLink({ to }: { to: string }) {
   );
 }
 
-function FeatureCard({ Icon, title, intro, to }: Card & { Icon: LucideIcon }) {
+function FeatureCard({ Icon, title, intro, to, bullets }: Card & { Icon: LucideIcon }) {
   return (
     <div className="retro-border bg-card p-4 flex flex-col">
       <div className="flex items-center gap-2 mb-1.5">
         <Icon className="h-5 w-5 text-primary shrink-0" />
         <h3 className="font-display font-bold text-base">{title}</h3>
       </div>
-      <p className="text-sm text-muted-foreground font-sans flex-1">{intro}</p>
+      <p className="text-sm text-muted-foreground font-sans">{intro}</p>
+      {bullets && bullets.length > 0 && (
+        <ul className="mt-2 space-y-1 text-sm text-muted-foreground font-sans list-disc pl-5 flex-1">
+          {bullets.map((b) => <li key={b}>{b}</li>)}
+        </ul>
+      )}
       <GoLink to={to} />
     </div>
   );
