@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Link } from "react-router-dom";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 import { useStages, useStageResults, useStagePointsForEntries, useMyStageRanks, useEntries, useGameStandings, type StageRow, type EntryStanding } from "@/hooks/useResults";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
 import { useAuth } from "@/hooks/useAuth";
@@ -233,6 +234,11 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
       }))
       .sort((a, b) => a.position - b.position);
   }, [myEntryRiders, results]);
+
+  // Joker-multiplier van DEZE game (kan afwijken van de default; de admin stelt
+  // 'm in het Berekening-tab in). Deze per-renner-weergave moet dezelfde waarde
+  // gebruiken i.p.v. een hardcoded ×2, anders staan joker-punten dubbel.
+  const jokerMult = useJokerMultiplier(gameId);
 
   // Render
 
@@ -481,7 +487,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                     <div className="divide-y divide-border">
                       {myStageScorers.map((r) => {
                         const basePts = stagePtsTable.get(r.position) ?? 0;
-                        const finalPts = r.is_joker ? basePts * 2 : basePts;
+                        const finalPts = r.is_joker ? basePts * jokerMult : basePts;
                         return (
                           <div key={r.rider_id} className="flex items-center justify-between px-3 py-2 text-sm">
                             <div className="flex items-center gap-2 min-w-0">

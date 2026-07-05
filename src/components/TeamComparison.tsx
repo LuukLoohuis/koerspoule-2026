@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, ArrowUp, ArrowDown, Crown, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchAllRows } from "@/lib/fetchAll";
+import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 
 // ── Gedeelde stijl voor "zelfde keuze"-rijen in álle head-to-head/benchmark-
 //    weergaven (TeamComparison is de enige vergelijkingscomponent; CompareSetup
@@ -124,6 +125,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
   const isLoading = subpouleId ? subpouleLoading : gameLoading;
 
   const { data: basePts } = useRiderBasePoints(game?.id);
+  const jokerMult = useJokerMultiplier(game?.id);
 
   const me = useMemo<SubpouleEntry | null>(
     () => detail?.entries.find((e) => e.user_id === user?.id) ?? null,
@@ -158,7 +160,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
   }
 
   const ridersById = detail!.ridersById;
-  const pointFor = (id: string, jokers: Set<string>) => (basePts?.get(id) ?? 0) * (jokers.has(id) ? 2 : 1);
+  const pointFor = (id: string, jokers: Set<string>) => (basePts?.get(id) ?? 0) * (jokers.has(id) ? jokerMult : 1);
 
   const myTotal = me.total_points;
   const oppTotal = opp.total_points;

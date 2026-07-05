@@ -14,6 +14,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 import { useEntry } from "@/hooks/useEntry";
 import { fetchAllRows } from "@/lib/fetchAll";
 import {
@@ -54,6 +55,7 @@ function rankInMap(
 export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnPloegStatsData {
   const { user } = useAuth();
   const { data: game } = useCurrentGame();
+  const jokerMult = useJokerMultiplier(game?.id);
   const { entry, jokerIds, picksByCategory } = useEntry(game?.id);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stages = [] } = useStages(game?.id);
@@ -194,7 +196,7 @@ export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnP
     for (const r of ridersAllResults) {
       const base = ptsTable.get(r.finish_position) ?? 0;
       if (base === 0) continue;
-      const pts = jokerSet.has(r.rider_id) ? base * 2 : base;
+      const pts = jokerSet.has(r.rider_id) ? base * jokerMult : base;
       const name = (r.riders as { name: string } | null)?.name ?? "—";
       const cur = riderTotals.get(r.rider_id);
       riderTotals.set(r.rider_id, { pts: (cur?.pts ?? 0) + pts, name: cur?.name ?? name });
@@ -205,7 +207,7 @@ export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnP
       if (!best || info.pts > best.pts) best = info;
     }
     return best?.pts ? { name: best.name, points: best.pts } : null;
-  }, [schema, ridersAllResults, jokerIds]);
+  }, [schema, ridersAllResults, jokerIds, jokerMult]);
 
   return { bestStageRank, overall, subpoule, topscorer, myStageRanks: myStageRanks ?? null };
 }

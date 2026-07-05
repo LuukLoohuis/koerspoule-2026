@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useCategories } from "@/hooks/useCategories";
 import { useSubpouleEntries, useGameEntries } from "@/hooks/useSubpouleEntries";
 import { useRiderBasePoints } from "@/components/TeamComparison";
+import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 
 export type DuelRow = { label: string; diff: number; same: boolean };
 export type DuelSummaryData = {
@@ -31,6 +32,7 @@ export function useDuelSummary(
   const detail = subpouleId ? subpouleData : gameData;
   const isLoading = subpouleId ? subLoading : gameLoading;
   const { data: basePts } = useRiderBasePoints(gameId);
+  const jokerMult = useJokerMultiplier(gameId);
 
   return useMemo<DuelSummaryData>(() => {
     const me = detail?.entries.find((e) => e.user_id === myUserId) ?? null;
@@ -38,7 +40,7 @@ export function useDuelSummary(
     if (!me?.entry_id || !opp?.entry_id) {
       return { ready: false, isLoading, hasTeams: false, myTotal: 0, oppTotal: 0, rows: [] };
     }
-    const pointFor = (id: string, jokers: Set<string>) => (basePts?.get(id) ?? 0) * (jokers.has(id) ? 2 : 1);
+    const pointFor = (id: string, jokers: Set<string>) => (basePts?.get(id) ?? 0) * (jokers.has(id) ? jokerMult : 1);
     const sorted = [...categories].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
     const rows: DuelRow[] = sorted.map((cat) => {
       const myIds = me.picks.get(cat.id) ?? [];
@@ -50,5 +52,5 @@ export function useDuelSummary(
       return { label: cat.short_name || cat.name, diff: myPts - oppPts, same };
     });
     return { ready: true, isLoading, hasTeams: true, myTotal: me.total_points, oppTotal: opp.total_points, rows };
-  }, [detail, categories, basePts, myUserId, opponentUserId, isLoading]);
+  }, [detail, categories, basePts, jokerMult, myUserId, opponentUserId, isLoading]);
 }
