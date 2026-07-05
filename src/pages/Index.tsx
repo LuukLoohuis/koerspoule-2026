@@ -277,7 +277,10 @@ export default function Index() {
 
   const hasStageData = approvedStages.length > 0 && allEntries.length > 0;
   const showRealData = Boolean(user) && hasStageData;
-  const showRealSparkline = Boolean(user) && myEntry !== undefined && myRankProgression.length >= 2;
+  // Echte data zodra de ingelogde deelnemer een team heeft én er ≥1 etappe
+  // gefiatteerd is. (De MOCK blijft enkel voor uitgelogde bezoekers/geen data —
+  // een marketing-preview op de homepage, niet voor een echte deelnemer.)
+  const showRealSparkline = Boolean(user) && myEntry !== undefined && myRankProgression.length >= 1;
 
   const JERSEY_COLORS = [
     "hsl(var(--primary))",
@@ -346,6 +349,19 @@ export default function Index() {
     const n = myRankProgression.length;
     const total = allEntries.length || 1;
     const W = 280, H = 120;
+    // Eén etappe → nog geen verloop: platte lijn op de huidige rang (eerlijk,
+    // niet leeg). from === to zodat de kop "Nu op plek X" toont.
+    if (n === 1) {
+      const rank = myRankProgression[0];
+      const t = total > 1 ? (rank - 1) / (total - 1) : 0;
+      const y = (20 + t * 80).toFixed(1);
+      return {
+        from: rank,
+        to: rank,
+        pointsPolygon: `0,${y} ${W},${y} ${W},${H} 0,${H}`,
+        pointsLine: `0,${y} ${W},${y}`,
+      };
+    }
     const pts = myRankProgression.map((rank, i) => {
       const x = n === 1 ? W / 2 : (i / (n - 1)) * W;
       const t = total > 1 ? (rank - 1) / (total - 1) : 0;
@@ -372,9 +388,12 @@ export default function Index() {
   }, [showRealSparkline, myRankProgression, allEntries.length]);
 
   const rankChangeText = useMemo(() => {
-    if (!showRealSparkline || myRankProgression.length < 2) return "+6 in 4 etappes 🔥";
-    const change = myRankProgression[0] - myRankProgression[myRankProgression.length - 1];
+    // Uitgelogd/geen data → marketing-preview. Echte deelnemer met 1 etappe →
+    // nog geen verloop, dus geen (verzonnen) sprong tonen.
+    if (!showRealSparkline) return "+6 in 4 etappes 🔥";
     const n = myRankProgression.length;
+    if (n < 2) return "na etappe 1";
+    const change = myRankProgression[0] - myRankProgression[n - 1];
     if (change > 0) return `+${change} in ${n} etappes 🔥`;
     if (change < 0) return `${change} in ${n} etappes 📉`;
     return `stabiel in ${n} etappes`;
@@ -600,8 +619,11 @@ export default function Index() {
           <div className="py-5 md:px-6 md:border-r border-[hsl(var(--vintage-gold))/0.25] relative">
             <div className="overline-stamp mb-1">Jouw koers</div>
             <div className="font-display font-bold text-2xl leading-tight">
-              Van plek {myProgress.from} naar plek{" "}
-              <span className="text-primary">{myProgress.to}</span>
+              {myProgress.from === myProgress.to ? (
+                <>Nu op plek <span className="text-primary">{myProgress.to}</span></>
+              ) : (
+                <>Van plek {myProgress.from} naar plek <span className="text-primary">{myProgress.to}</span></>
+              )}
             </div>
             <div className="mt-3 relative h-[130px]">
               <svg viewBox="0 0 280 120" className="w-full h-full">
