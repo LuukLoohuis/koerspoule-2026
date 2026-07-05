@@ -28,7 +28,7 @@
 import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import RubriekBlock from "@/components/RubriekBlock";
-import { Bike, BookOpen, Trophy, Users } from "lucide-react";
+import { Bike, BookOpen, Trophy, Users, Instagram } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import DeelnemersTeller from "@/components/DeelnemersTeller";
@@ -58,6 +58,8 @@ type RaceCopy = {
   jersey: string;
   startToFinish: string; // bv. "9–31 mei 2026"
 };
+
+const INSTAGRAM_URL = "https://www.instagram.com/koerspoule/";
 
 const THEMA_TO_RACE: Record<ThemaKey, RaceKey> = {
   roze: "giro",
@@ -769,6 +771,25 @@ export default function Index() {
           Schrijf je in →
         </Button>
       </section>
+
+      <footer className="container mx-auto px-5 pb-10">
+        <div className="border-t-2 border-foreground pt-4 flex items-center justify-between flex-wrap gap-3">
+          <span className="font-serif italic text-sm text-muted-foreground">
+            Koerspoule · editie Tour de France 2026
+          </span>
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="retro-border no-hover-lift inline-flex items-center gap-2 rounded-full bg-card px-3 py-1.5 text-sm font-semibold hover:bg-secondary/40 transition-colors"
+            aria-label="Volg Koerspoule op Instagram"
+          >
+            <Instagram className="h-4 w-4 text-primary" />
+            Volg ons op Instagram
+            <span className="font-mono text-xs text-muted-foreground">@koerspoule</span>
+          </a>
+        </div>
+      </footer>
 
     </div>
   );

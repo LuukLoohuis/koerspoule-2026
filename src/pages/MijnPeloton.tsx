@@ -50,7 +50,9 @@ import { Input } from "@/components/ui/input";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useAuth } from "@/hooks/useAuth";
 import OnboardingCard from "@/components/OnboardingCard";
-import { Wrench, Share2 } from "lucide-react";
+import { Wrench, Share2, Instagram } from "lucide-react";
+
+const INSTAGRAM_URL = "https://www.instagram.com/koerspoule/";
 import {
   ChartContainer,
   ChartTooltip,
@@ -295,9 +297,21 @@ export default function MijnPeloton() {
               </button>
             </div>
           </div>
-          <span className="text-sm text-muted-foreground font-sans">
-            {activePool.standings.length} deelnemers
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground font-sans">
+              {activePool.standings.length} deelnemers
+            </span>
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-primary transition-colors"
+              aria-label="Volg Koerspoule op Instagram"
+              title="Volg ons op Instagram"
+            >
+              <Instagram className="h-4 w-4" />
+            </a>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
