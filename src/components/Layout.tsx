@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Instagram } from "lucide-react";
 import { SteunKopgroepPill } from "@/components/SteunKopgroep";
 import CookieBanner from "@/components/CookieBanner";
 import RouteSeo from "@/components/RouteSeo";
@@ -13,6 +13,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useThema } from "@/contexts/ThemaContext";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import SponsorStrip from "@/components/SponsorStrip";
+
+const INSTAGRAM_URL = "https://www.instagram.com/koerspoule/";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -70,37 +72,52 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <SteunKopgroepPill />
             </div>
 
-            {/* Desktop auth */}
-            <div className="hidden md:flex items-center gap-2">
-              {isLoggedIn ? (
-                <button
-                  data-testid="logout-btn-desktop"
-                  onClick={handleLogout}
-                  className="px-3 py-1.5 text-xs font-medium border border-foreground/30 rounded hover:bg-secondary transition-colors"
-                >
-                  Uitloggen
-                </button>
-              ) : (
-                <Link
-                  data-testid="login-link-desktop"
-                  to="/login"
-                  className="px-3 py-1.5 text-xs font-medium border border-foreground/30 rounded hover:bg-secondary transition-colors"
-                >
-                  Inloggen
-                </Link>
-              )}
-            </div>
+            {/* Rechter-groep: Instagram (altijd zichtbaar) + auth (desktop) /
+                hamburger (mobiel) */}
+            <div className="flex items-center gap-2">
+              <a
+                href={INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Volg Koerspoule op Instagram"
+                title="Volg ons op Instagram"
+                className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-foreground/30 hover:bg-secondary transition-colors"
+              >
+                <Instagram className="h-[18px] w-[18px] text-foreground" />
+              </a>
 
-            {/* Mobile hamburger */}
-            <button
-              className="md:hidden p-1.5 -mr-1"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label={mobileOpen ? "Menu sluiten" : "Menu openen"}
-              aria-expanded={mobileOpen}
-              aria-controls="mobile-nav"
-            >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+              {/* Desktop auth */}
+              <div className="hidden md:flex items-center gap-2">
+                {isLoggedIn ? (
+                  <button
+                    data-testid="logout-btn-desktop"
+                    onClick={handleLogout}
+                    className="px-3 py-1.5 text-xs font-medium border border-foreground/30 rounded hover:bg-secondary transition-colors"
+                  >
+                    Uitloggen
+                  </button>
+                ) : (
+                  <Link
+                    data-testid="login-link-desktop"
+                    to="/login"
+                    className="px-3 py-1.5 text-xs font-medium border border-foreground/30 rounded hover:bg-secondary transition-colors"
+                  >
+                    Inloggen
+                  </Link>
+                )}
+              </div>
+
+              {/* Mobile hamburger */}
+              <button
+                className="md:hidden p-1.5 -mr-1"
+                onClick={() => setMobileOpen(!mobileOpen)}
+                aria-label={mobileOpen ? "Menu sluiten" : "Menu openen"}
+                aria-expanded={mobileOpen}
+                aria-controls="mobile-nav"
+              >
+                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
         </div>
 
