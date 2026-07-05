@@ -116,25 +116,29 @@ export default function AapscoreDistributie({
           padding: isMobile ? 20 : 40,
         }}
       >
-        {/* Mascotte — klein, rechtsboven, niet over de chart */}
-        <img
-          src={aapDartpijl}
-          alt=""
-          aria-hidden
-          className="pointer-events-none select-none absolute"
-          style={{
-            top: isMobile ? 8 : 12,
-            right: isMobile ? 12 : 24,
-            height: isMobile ? 140 : 180,
-            width: "auto",
-            filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.18))",
-            zIndex: 2,
-          }}
-        />
+        {/* Mascotte — klein, rechtsboven, niet over de chart. Op mobiel verborgen:
+            hij overlapte de derde KPI-tegel, en de kaartkop heeft al een grote aap. */}
+        {!isMobile && (
+          <img
+            src={aapDartpijl}
+            alt=""
+            aria-hidden
+            className="pointer-events-none select-none absolute"
+            style={{
+              top: 12,
+              right: 24,
+              height: 180,
+              width: "auto",
+              filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.18))",
+              zIndex: 2,
+            }}
+          />
+        )}
 
-        {/* Titel-blok verwijderd (was "Verdeling simulaties" + subtitel); spacer
-            houdt de mascotte-clearance boven de KPI-tegels intact. */}
-        <div style={{ paddingRight: isMobile ? 140 : 200, minHeight: isMobile ? 44 : 24 }} />
+        {/* Titel-blok verwijderd (was "Verdeling simulaties" + subtitel). Op
+            desktop houdt de spacer de mascotte-clearance boven de KPI-tegels; op
+            mobiel is er geen mascotte, dus minimaal. */}
+        <div style={{ paddingRight: isMobile ? 0 : 200, minHeight: isMobile ? 4 : 24 }} />
 
         <p className="sr-only">
           Jij verslaat {Math.round((beatPct / 100) * monkeyCount).toLocaleString("nl-NL")}{" "}
