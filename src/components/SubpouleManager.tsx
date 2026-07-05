@@ -10,6 +10,9 @@ type Props = {
   presetJoinCode?: string;
   /** False = sneak preview voor een gewone gebruiker → data-panels tonen de schil. */
   maySeeLive?: boolean;
+  /** Deep-link: open direct op deze subtab (valt terug op 'klassement' als de
+   *  gevraagde subtab onder gating wegvalt). */
+  initialTab?: "klassement" | "verloop" | "daguitslag" | "heatmap" | "streek";
 };
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,7 +63,7 @@ const SUB_TABS: SubTab[] = [
   { key: "deelnemers", label: "Deelnemers", Icon: Users },
 ];
 
-export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange, presetJoinCode, maySeeLive = true }: Props = {}) {
+export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange, presetJoinCode, maySeeLive = true, initialTab }: Props = {}) {
   const { toast } = useToast();
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
@@ -79,7 +82,11 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   const [activeId, setActiveId] = useState<string | null>(null);
   const [subpouleSearchOpen, setSubpouleSearchOpen] = useState(false);
   // Desktop: 5 dossard-tabs (gelijk aan mobiel). Chat is een apart zijpaneel.
-  const [activeTab, setActiveTab] = useState("klassement");
+  // Deep-link: initialTab respecteert de gating (heatmap pas als unlocked; streek
+  // wordt na subpoule-selectie gevalideerd via het effect hieronder).
+  const [activeTab, setActiveTab] = useState(() =>
+    initialTab === "heatmap" && !heatmapUnlocked ? "klassement" : (initialTab ?? "klassement"),
+  );
   // Mobiel: chat opent als floating bottom-sheet i.p.v. een tab.
   const [chatOpen, setChatOpen] = useState(false);
   // Desktop: chat als rechter zijpaneel (los van de tabrij). Eigen staat zodat
@@ -172,6 +179,13 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
     [subpoules, activeId]
   );
   const { data: members = [] } = useSubpouleMembers(active?.id);
+
+  // Deep-link-gating: valt de geopende subtab onder de gating weg, val terug op
+  // klassement (heatmap tot de koers live is; streek alleen bij woonplaats-poule).
+  useEffect(() => {
+    if (activeTab === "heatmap" && !heatmapUnlocked) setActiveTab("klassement");
+    else if (activeTab === "streek" && active && !active.requires_woonplaats) setActiveTab("klassement");
+  }, [activeTab, heatmapUnlocked, active]);
 
   // Banner van de geopende subpoule omhoog rapporteren (paginakop toont 'm als
   // korte strip). null wanneer geen subpoule open of geen/uitgeschakelde banner.

@@ -147,11 +147,22 @@ export default function MijnPeloton() {
   const location = useLocation();
   // Default landing = karavaan (de gazetta), tenzij ?tab= expliciet gezet is.
   const [gameTab, setGameTab] = useState(() => searchParams.get("tab") ?? "karavaan");
-  useEffect(() => {
-    const t = searchParams.get("tab");
-    setGameTab(t ?? "karavaan");
-  }, [searchParams]);
   const [teamSubTab, setTeamSubTab] = useState("ploeg");
+  // Deep-links vanaf /uitleg dragen naast ?tab= ook ?sub= / ?view= mee → de
+  // juiste subtab openen, ook als de gebruiker al op /mijn-peloton stond.
+  useEffect(() => {
+    const t = searchParams.get("tab") ?? "karavaan";
+    const sub = searchParams.get("sub");
+    const view = searchParams.get("view");
+    setGameTab(t);
+    if (t === "team" && sub && ["ploeg", "prono", "palmares"].includes(sub)) setTeamSubTab(sub);
+    if (t === "hors" && sub && ["dartpijl", "pelotonkeuzes", "wielerdirecteur", "superteam", "benchmark"].includes(sub)) {
+      setHorsTab(sub as "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark");
+    }
+    if (t === "uitslagen" && view && ["klassement", "etappes"].includes(view)) {
+      setUitslagenTarget({ view: view as "klassement" | "etappes" });
+    }
+  }, [searchParams]);
   // Bump om de ploegnaam-editor in MyTeamPanel te openen + te focussen.
   const [focusNameSeq, setFocusNameSeq] = useState(0);
   const goEditTeamName = () => {
@@ -1334,13 +1345,31 @@ export default function MijnPeloton() {
             {/* Wervingsstrook (admin-gestuurd, wegklikbaar) — ook hier zodat leden
                 een promote-subpoule kunnen vinden; "Doe mee" vult de code voor. */}
             <WervingStrook className="mb-3" />
-            <SubpouleManager gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} gameStatus={selectedGameObj?.status} onActiveBannerChange={setSubpouleBanner} presetJoinCode={searchParams.get("join") ?? undefined} maySeeLive />
+            {(() => {
+              const sub = searchParams.get("sub");
+              const initialTab = (["klassement", "verloop", "daguitslag", "heatmap", "streek"].includes(sub ?? "")
+                ? sub : undefined) as "klassement" | "verloop" | "daguitslag" | "heatmap" | "streek" | undefined;
+              // Key op de deep-link-subtab forceert herinitialisatie zodat een link
+              // vanaf /uitleg de juiste subtab opent, ook als je al op Subpoules stond.
+              return (
+                <SubpouleManager
+                  key={`sub-${initialTab ?? "def"}`}
+                  initialTab={initialTab}
+                  gameId={selectedGameObj?.id}
+                  gameName={selectedGameObj?.name}
+                  gameStatus={selectedGameObj?.status}
+                  onActiveBannerChange={setSubpouleBanner}
+                  presetJoinCode={searchParams.get("join") ?? undefined}
+                  maySeeLive
+                />
+              );
+            })()}
           </TabsContent>
 
           {/* ── TAB: Uitslagen ── */}
           <TabsContent value="uitslagen" className="mt-3">
             {maySeeLive ? (
-              <MyResultsPanel gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} initialView={uitslagenTarget?.view} initialStageNumber={uitslagenTarget?.stageNumber} />
+              <MyResultsPanel key={`uitslagen-${uitslagenTarget?.view ?? "def"}`} gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} initialView={uitslagenTarget?.view} initialStageNumber={uitslagenTarget?.stageNumber} />
             ) : (
               <SneakPreviewLock
                 title="Uitslagen volgen binnenkort"

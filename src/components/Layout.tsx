@@ -21,6 +21,7 @@ const navItems = [
   { to: "/team-samenstellen", label: "Stel je team samen" },
   { to: "/uitslagen", label: "Uitslagen" },
   { to: "/mijn-peloton", label: "Mijn Peloton" },
+  { to: "/uitleg", label: "Uitleg" },
   { to: "/regels", label: "Koersreglement" },
 ];
 

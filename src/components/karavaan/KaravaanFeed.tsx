@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, ChevronsUpDown, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles, ClipboardList } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronsUpDown, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles, ClipboardList, ArrowRight, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -18,6 +19,7 @@ import { useThema } from "@/contexts/ThemaContext";
 import { cn } from "@/lib/utils";
 
 const LAST_SUBPOULE_KEY = "karavaan:lastSubpouleId";
+const UITLEG_DISMISS_KEY = "karavaan:uitlegDismissed";
 
 export default function KaravaanFeed({
   onGoToPloeg,
@@ -42,7 +44,16 @@ export default function KaravaanFeed({
   const subpoulesQuery = useSubpoules(game?.id);
   const subpoules = subpoulesQuery.subpoules;
 
+  const navigate = useNavigate();
   const [selectedSubpouleId, setSelectedSubpouleId] = useState<string | null>(null);
+  // Verwijsbutton naar /uitleg — eenmalig wegklikbaar (localStorage).
+  const [uitlegDismissed, setUitlegDismissed] = useState<boolean>(
+    () => (typeof window !== "undefined" ? localStorage.getItem(UITLEG_DISMISS_KEY) === "1" : true),
+  );
+  const dismissUitleg = () => {
+    setUitlegDismissed(true);
+    try { localStorage.setItem(UITLEG_DISMISS_KEY, "1"); } catch { /* ignore */ }
+  };
 
   // Default: laatst-bekeken subpoule uit localStorage, anders eerste alfabetisch
   useEffect(() => {
@@ -114,6 +125,28 @@ export default function KaravaanFeed({
 
   return (
     <div className="space-y-4">
+      {/* Verwijsbutton naar de uitleg-hub — wegklikbaar, blijft weg na herladen */}
+      {!uitlegDismissed && (
+        <div className="retro-border no-hover-lift bg-card flex items-center gap-2 px-3 py-2">
+          <button
+            type="button"
+            onClick={() => navigate("/uitleg")}
+            className="flex-1 inline-flex items-center gap-1.5 text-sm font-semibold text-left hover:text-primary transition-colors"
+          >
+            Nieuw hier? Ontdek wat je allemaal kunt.
+            <ArrowRight className="h-4 w-4 shrink-0" />
+          </button>
+          <button
+            type="button"
+            onClick={dismissUitleg}
+            aria-label="Verberg deze tip"
+            className="shrink-0 inline-flex items-center justify-center h-6 w-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* Dagprijs van vandaag — compacte strook bovenaan (admin-gestuurd) */}
       <DagprijsBanner gameId={game?.id} />
 

@@ -15,6 +15,7 @@ import Results from "./pages/Results";
 import MijnPeloton from "./pages/MijnPeloton";
 import SubpouleBySlug from "./pages/SubpouleBySlug";
 import Rules from "./pages/Rules";
+import Uitleg from "./pages/Uitleg";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -70,6 +71,7 @@ const App = () => (
               <Route path="/subpoule/:slug" element={<SubpouleBySlug />} />
               <Route path="/karavaan" element={<MijnPeloton />} />
               <Route path="/regels" element={<Rules />} />
+              <Route path="/uitleg" element={<Uitleg />} />
               <Route path="/login" element={<Login />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/juridisch" element={<Legal />} />
