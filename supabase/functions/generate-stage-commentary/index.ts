@@ -762,11 +762,14 @@ Deno.serve(async (req) => {
     }
 
     // Begrensde parallelle verwerking: chunks van 5 tegelijk (5 OpenAI-calls
-    // parallel), doorgaan tot alles klaar is of het tijdbudget (130s, ruim onder
-    // de 150s edge-limiet) op is. Bij een timeout maakt een tweede klik de rest
-    // af — idempotent dankzij de skip-op-bestaande-rij hierboven.
+    // parallel), doorgaan tot alles klaar is of het tijdbudget op is. Het budget
+    // (90s) wordt VÓÓR elke chunk gecheckt: er start nooit een chunk die de
+    // functie voorbij de platform-wall-clock (150s) duwt, dus de frontend krijgt
+    // altijd een geldig JSON-antwoord met timedOut:true i.p.v. een gedode
+    // functie. Een volgende ronde vanuit de UI maakt de rest af — idempotent
+    // dankzij de skip-op-bestaande-rij hierboven.
     const CONCURRENCY = 5;
-    const TIME_BUDGET_MS = 130_000;
+    const TIME_BUDGET_MS = 90_000;
 
     let generated = 0;
     let skipped = existing.size; // hadden al een rij (overgeslagen)
@@ -776,6 +779,7 @@ Deno.serve(async (req) => {
     let timedOut = false;
 
     for (let i = 0; i < pending.length; i += CONCURRENCY) {
+      if (Date.now() - startedAt > TIME_BUDGET_MS) { timedOut = true; break; }
       const chunk = pending.slice(i, i + CONCURRENCY);
       const settled = await Promise.allSettled(chunk.map((sp) => generateOne(sp)));
       settled.forEach((s, idx) => {
@@ -790,7 +794,6 @@ Deno.serve(async (req) => {
           errors.push({ subpoule_id: sp.id, error: (s.reason as Error)?.message ?? String(s.reason) });
         }
       });
-      if (Date.now() - startedAt > TIME_BUDGET_MS) { timedOut = true; break; }
     }
 
     const remaining = pending.length - processed;

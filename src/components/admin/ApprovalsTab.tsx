@@ -211,8 +211,9 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   }
 
   // Genereert commentaar met ÉÉN klik: blijft de edge-functie aanroepen zolang
-  // die timedOut=true teruggeeft (elke ronde verwerkt een deel binnen de 130s
-  // edge-limiet). Idempotent — na ronde 1 altijd force=false, zodat al
+  // die timedOut=true teruggeeft (elke ronde verwerkt een deel binnen het 90s-
+  // budget van de functie). Transiënte fouten worden per ronde tot 3× opnieuw
+  // geprobeerd (3s pauze). Idempotent — na ronde 1 altijd force=false, zodat al
   // gegenereerde subpoules niet opnieuw gedaan worden.
   async function runCommentary(stageId: string, force: boolean) {
     setCommBusy(stageId);
@@ -220,31 +221,42 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     const MAX_ROUNDS = 20;
     let totalGenerated = 0;
     let prevMet = -1;
+    let retryCount = 0;
     let empty: Array<{ id: string; name: string; reason: string }> = [];
     try {
-      for (let round = 1; round <= MAX_ROUNDS; round++) {
+      let round = 1;
+      while (round <= MAX_ROUNDS) {
         const { data, error } = await supabase.functions.invoke("generate-stage-commentary", {
           body: { stage_id: stageId, force: round === 1 ? force : false },
         });
         if (error) {
+          // Transiënte fout (netwerkhik, edge-restart): zelfde ronde opnieuw,
+          // max 3 pogingen met 3s pauze. Pas daarna echt stoppen.
           let detail = error.message;
           const ctx = (error as { context?: Response }).context;
           if (ctx && typeof ctx.text === "function") {
             try { const body = await ctx.text(); if (body) detail = body; } catch { /* keep fallback */ }
           }
-          throw new Error(detail);
+          retryCount++;
+          if (retryCount >= 3) throw new Error(detail);
+          toast.loading(`🎙️ ronde herstart na fout (${retryCount}/3)…`, { id: toastId });
+          await new Promise((r) => setTimeout(r, 3000));
+          continue; // zelfde ronde opnieuw
         }
+        retryCount = 0;
         const generated = (data as { generated?: number })?.generated ?? 0;
         const timedOut = Boolean((data as { timedOut?: boolean })?.timedOut);
         empty = ((data as { emptySubpoules?: Array<{ id: string; name: string; reason: string }> })?.emptySubpoules) ?? [];
         totalGenerated += generated;
         const c = await refreshCommCount(stageId);
         toast.loading(`🎙️ bezig… ${c.met}/${c.totaal} subpoules`, { id: toastId });
-        // Klaar zodra de functie alles binnen de tijd afwerkte, of geen voortgang
-        // meer boekt (voorkomt een oneindige lus als er iets blijft hangen).
+        // Klaar zodra de functie alles binnen de tijd afwerkte. De geen-voortgang-
+        // guard geldt pas vanaf ronde 3, zodat een trage eerste ronde met alleen
+        // skips de lus niet voortijdig stopt.
         if (!timedOut) break;
-        if (generated === 0 && c.met <= prevMet) break;
+        if (round >= 3 && generated === 0 && c.met <= prevMet) break;
         prevMet = c.met;
+        round++;
       }
       setEmptyByStage((prev) => ({ ...prev, [stageId]: empty }));
       const c = await refreshCommCount(stageId);
