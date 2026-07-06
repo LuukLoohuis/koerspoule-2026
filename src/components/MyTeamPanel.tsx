@@ -367,14 +367,17 @@ export default function MyTeamPanel({
   const [nameDraft, setNameDraft] = useState("");
   const nameInputRef = useRef<HTMLInputElement>(null);
 
-  // Externe trigger (balk op Mijn Peloton): open de editor zodra er nog geen
-  // naam is en de entry bestaat.
+  // Externe trigger (naam-balk op Mijn Peloton of ?edit=naam-deep-link): open
+  // de editor ALTIJD — ook als er al een naam staat (die staat dan als draft
+  // klaar). Ref-guard zodat één signaal maar één keer afvuurt; zolang de entry
+  // nog laadt wachten we (het effect herdraait dan vanzelf).
+  const handledNameSignal = useRef(0);
   useEffect(() => {
-    if (!focusNameSignal) return;
-    if (entry?.id && !teamName?.trim()) {
-      setNameDraft(teamName ?? "");
-      setEditingName(true);
-    }
+    if (!focusNameSignal || focusNameSignal === handledNameSignal.current) return;
+    if (!entry?.id) return;
+    handledNameSignal.current = focusNameSignal;
+    setNameDraft(teamName ?? "");
+    setEditingName(true);
   }, [focusNameSignal, entry?.id, teamName]);
 
   // Focus het tekstveld zodra de editor opent (betrouwbaarder dan autoFocus
