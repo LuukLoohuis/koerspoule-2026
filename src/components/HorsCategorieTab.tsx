@@ -1289,12 +1289,21 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2 flex items-center gap-1.5">
                       <Mic className="h-3 w-3 text-[hsl(var(--vintage-gold))]" /> Patrick Lefevere
                     </div>
-                    <p className="text-foreground text-sm font-serif italic leading-relaxed">
-                      "{lefevere.data?.directeursAnalyse ?? directorScore.analysis}"
-                    </p>
-                    {lefevere.isFetching && (
-                      <p className="text-[10px] text-muted-foreground/60 mt-1 font-sans">
-                        Lefevere schrijft zijn rapport…
+                    {lefevere.isFetching && !lefevere.data ? (
+                      /* On-demand generatie loopt: loading-weergave i.p.v. de
+                         statische fallback (die flitste anders even voorbij). */
+                      <div>
+                        <p className="text-muted-foreground text-sm font-serif italic leading-relaxed animate-pulse">
+                          "Patlef zit achter zijn typmachine. Uw rapport komt eraan — en hij is niet mals…"
+                        </p>
+                        <div className="mt-2 space-y-1.5" aria-hidden>
+                          <div className="h-2 rounded-full bg-foreground/10 animate-pulse w-[88%]" />
+                          <div className="h-2 rounded-full bg-foreground/10 animate-pulse w-[70%]" />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-foreground text-sm font-serif italic leading-relaxed">
+                        "{lefevere.data?.directeursAnalyse ?? directorScore.analysis}"
                       </p>
                     )}
                   </div>

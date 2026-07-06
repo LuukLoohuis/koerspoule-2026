@@ -255,6 +255,7 @@ export default function KaravaanFeed({
                 showLefevere={i === 0}
                 lefevereTekst={i === 0 ? lefevere.data?.directeursAnalyse ?? null : null}
                 lefevereLaden={i === 0 && lefevere.isFetching}
+                commentaarLaden={i === 0 && !et.michel_tekst && !et.jose_tekst && et.subpouleStandings.length >= 2}
                 onOpenHors={onOpenHors}
               />
             </div>
@@ -352,6 +353,7 @@ function EtappeBlok({
   showLefevere,
   lefevereTekst,
   lefevereLaden,
+  commentaarLaden,
   onOpenHors,
 }: {
   etappe: KaravaanEtappe;
@@ -359,6 +361,8 @@ function EtappeBlok({
   showLefevere?: boolean;
   lefevereTekst?: string | null;
   lefevereLaden?: boolean;
+  /** On-demand generatie loopt (nieuwste etappe zonder commentaar, ≥2 leden). */
+  commentaarLaden?: boolean;
   onOpenHors?: (tab: HorsTabKey) => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -404,6 +408,25 @@ function EtappeBlok({
                 <CommentaarKaart speaker="José De Cauwer" text={etappe.jose_tekst} accent="gold" />
               )}
             </div>
+          ) : commentaarLaden ? (
+            /* On-demand generatie loopt: retro loading-kaart i.p.v. leeg blok.
+               De realtime-subscriptie ververst de feed zodra de rij er staat. */
+            <div className="rounded-lg border border-border bg-secondary/20 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Mic className="h-4 w-4 text-[hsl(var(--vintage-gold))] shrink-0" />
+                <span className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+                  Michel Wuyts en José De Cauwer
+                </span>
+              </div>
+              <p className="font-serif italic text-sm text-muted-foreground animate-pulse">
+                De commentaarcabine zit vol — Michel en José spreken hun analyse in…
+              </p>
+              <div className="mt-2 space-y-1.5" aria-hidden>
+                <div className="h-2 rounded-full bg-foreground/10 animate-pulse w-[92%]" />
+                <div className="h-2 rounded-full bg-foreground/10 animate-pulse w-[78%]" />
+                <div className="h-2 rounded-full bg-foreground/10 animate-pulse w-[85%]" />
+              </div>
+            </div>
           ) : (
             <p className="text-xs text-muted-foreground font-serif italic">
               Geen commentaar beschikbaar voor deze etappe.
@@ -426,9 +449,15 @@ function EtappeBlok({
                 {lefevereTekst ? (
                   <p className="font-serif italic text-sm text-foreground/90 leading-snug">"{lefevereTekst}"</p>
                 ) : lefevereLaden ? (
-                  <p className="font-serif italic text-sm text-muted-foreground/70 leading-snug">
-                    Lefevere schrijft je rapport…
-                  </p>
+                  <div>
+                    <p className="font-serif italic text-sm text-muted-foreground leading-snug animate-pulse">
+                      "Patlef zit achter zijn typmachine. Uw rapport komt eraan — en hij is niet mals…"
+                    </p>
+                    <div className="mt-2 space-y-1.5" aria-hidden>
+                      <div className="h-2 rounded-full bg-foreground/10 animate-pulse w-[88%]" />
+                      <div className="h-2 rounded-full bg-foreground/10 animate-pulse w-[70%]" />
+                    </div>
+                  </div>
                 ) : (
                   <p className="font-serif italic text-sm text-foreground/85 leading-snug">
                     Je directeursrapport staat klaar — lees wat de baas ervan vindt.
