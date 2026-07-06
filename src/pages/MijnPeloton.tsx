@@ -156,6 +156,8 @@ export default function MijnPeloton() {
     const view = searchParams.get("view");
     setGameTab(t);
     if (t === "team" && sub && ["ploeg", "prono", "palmares"].includes(sub)) setTeamSubTab(sub);
+    // ?edit=naam → open + focus de ploegnaam-editor (het potloodje) in Mijn Ploeg.
+    if (t === "team" && searchParams.get("edit") === "naam") setFocusNameSeq((s) => s + 1);
     if (t === "hors" && sub && ["dartpijl", "pelotonkeuzes", "wielerdirecteur", "superteam", "benchmark"].includes(sub)) {
       setHorsTab(sub as "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark");
     }

@@ -79,8 +79,8 @@ const FAQS: Faq[] = [
   },
   {
     q: "Hoe verander ik mijn teamnaam?",
-    a: "Open de Ploegleiderswagen en pas je ploegnaam aan. De naam wordt direct opgeslagen en is zichtbaar in alle klassementen.",
-    to: "/team-samenstellen",
+    a: "In de Volgwagen, op het tabblad Mijn Ploeg: klik op het potloodje ✏️ naast je ploegnaam. De naam wordt direct opgeslagen en is zichtbaar in alle klassementen.",
+    to: "/mijn-peloton?tab=team&sub=ploeg&edit=naam",
   },
   {
     q: "Tot wanneer kan ik mijn ploeg indienen?",
