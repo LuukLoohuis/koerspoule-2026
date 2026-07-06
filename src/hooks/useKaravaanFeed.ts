@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { fetchAllRows } from "@/lib/fetchAll";
@@ -289,6 +289,38 @@ export function useKaravaanFeed(params: {
       return { etappes, ministrip, myEntryId, lastVisited };
     },
   });
+
+  // On-demand commentaar: mist de NIEUWSTE gefiatteerde etappe nog commentaar
+  // voor deze subpoule, genereer 'm dan éénmalig (fire-and-forget). Alleen de
+  // nieuwste — oudere gaten blijven voor de admin-knop (geen stortvloed).
+  // De-dupe per sessie via ref; concurrerende deelnemers vangt de edge-functie
+  // server-side af (genereert alleen als er nog geen rij bestaat, en alleen
+  // voor leden van de subpoule). Bij < 2 leden genereert de functie toch niet,
+  // dus dan slaan we de call helemaal over.
+  const onDemandTriggered = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!supabase || !subpouleId) return;
+    const etappes = query.data?.etappes ?? [];
+    if (etappes.length === 0) return;
+    const nieuwste = etappes[0]; // lijst staat nieuwste-eerst
+    if (nieuwste.michel_tekst) return;
+    if (nieuwste.subpouleStandings.length < 2) return;
+    const key = `${nieuwste.stage_id}:${subpouleId}`;
+    if (onDemandTriggered.current.has(key)) return;
+    onDemandTriggered.current.add(key);
+    void supabase.functions
+      .invoke("generate-stage-commentary", {
+        body: { stage_id: nieuwste.stage_id, subpoule_id: subpouleId },
+      })
+      .then(({ data }) => {
+        // Nieuw commentaar? Feed verversen zodat het zonder herladen verschijnt
+        // (naast de realtime-subscriptie hieronder, als extra zekerheid).
+        if ((data as { generated?: number } | null)?.generated) {
+          qc.invalidateQueries({ queryKey: ["karavaan-feed", gameId, subpouleId, userId] });
+        }
+      })
+      .catch(() => undefined);
+  }, [query.data, gameId, subpouleId, userId, qc]);
 
   // Realtime: vernieuw bij nieuwe commentaren of stage_points
   useEffect(() => {

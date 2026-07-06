@@ -328,8 +328,9 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     }
     toast.success("Uitslag gefiatteerd");
     load();
-    // Trigger Wuyts/De Cauwer-commentaargenerator (async, niet-blokkerend).
-    void runCommentary(stageId, false);
+    // Bewust GEEN automatische commentaargeneratie meer bij fiatteren: het
+    // commentaar wordt on-demand per subpoule gegenereerd zodra een deelnemer
+    // 'm opent (of via de handmatige knoppen hieronder).
   }
 
   const pending = rows.filter((r) => r.results_status === "pending");

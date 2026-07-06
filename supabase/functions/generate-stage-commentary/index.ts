@@ -646,7 +646,19 @@ Deno.serve(async (req) => {
         return payload.role ?? "";
       } catch { return ""; }
     })();
+    const body = await req.json() as { stage_id?: string; subpoule_id?: string; force?: boolean };
+    const stageId = body.stage_id;
+    if (!stageId || typeof stageId !== "string") return json({ error: "stage_id required" }, 400);
+
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    // Auth: admin/service-role mag alles (batch, force). Een gewone deelnemer mag
+    // ALLEEN on-demand genereren voor één (stage, subpoule): subpoule_id verplicht,
+    // force verboden, en het lidmaatschap wordt server-side geverifieerd (nooit
+    // een client-claim vertrouwen). memberOnDemand=true beperkt verderop tot
+    // "alleen genereren als er nog geen rij bestaat".
     let callerUserId: string | null = null;
+    let memberOnDemand = false;
     if (jwtRole !== "service_role") {
       const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         global: { headers: { Authorization: authHeader } },
@@ -658,14 +670,20 @@ Deno.serve(async (req) => {
         _user_id: callerUserId,
         _role: "admin",
       });
-      if (roleErr || !isAdmin) return json({ error: "Forbidden — admin only" }, 403);
+      if (roleErr || !isAdmin) {
+        if (!body.subpoule_id || typeof body.subpoule_id !== "string" || body.force) {
+          return json({ error: "Forbidden — admin only" }, 403);
+        }
+        const { data: membership } = await admin
+          .from("subpoule_members")
+          .select("user_id")
+          .eq("subpoule_id", body.subpoule_id)
+          .eq("user_id", callerUserId)
+          .maybeSingle();
+        if (!membership) return json({ error: "Forbidden — geen lid van deze subpoule" }, 403);
+        memberOnDemand = true;
+      }
     }
-
-    const body = await req.json() as { stage_id?: string; subpoule_id?: string; force?: boolean };
-    const stageId = body.stage_id;
-    if (!stageId || typeof stageId !== "string") return json({ error: "stage_id required" }, 400);
-
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
     // Etappe info
     const { data: stage, error: stageErr } = await admin
@@ -676,6 +694,22 @@ Deno.serve(async (req) => {
     if (stageErr || !stage) return json({ error: "stage not found" }, 404);
     if (stage.results_status !== "approved") {
       return json({ error: "stage not approved yet" }, 400);
+    }
+
+    // Member-on-demand: bestaat er al een rij voor (stage, subpoule), dan direct
+    // klaar zonder OpenAI-call — een deelnemer kan nooit overschrijven of
+    // herhaald genereren. (Concurrerende deelnemers vallen zo ook samen op één
+    // generatie: de tweede ziet de rij van de eerste.)
+    if (memberOnDemand) {
+      const { data: existsRow } = await admin
+        .from("etappe_commentaren")
+        .select("id")
+        .eq("stage_id", stageId)
+        .eq("subpoule_id", body.subpoule_id!)
+        .maybeSingle();
+      if (existsRow) {
+        return json({ ok: true, skipped: "exists", generated: 0, remaining: 0, timedOut: false, errors: [], emptySubpoules: [] });
+      }
     }
 
     // Bepaal of het de eerste of laatste etappe is
