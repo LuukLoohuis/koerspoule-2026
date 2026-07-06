@@ -761,31 +761,31 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     const analysisMap: Array<[number, string]> = [
       [
         9.0,
-        "Koningsklasse prestatie — jouw peloton rijdt vooraan. De simulatieapen trillen in hun startblokken en je klassement spreekt boekdelen. Ik had je zelf kunnen samenstellen.",
+        "Chapeau. Uw peloton rijdt op kop en de simulatie-apen zien enkel uw achterwiel. Zo doet ge dat. Ik had het zelf niet beter geregeld.",
       ],
       [
         8.0,
-        "Uitstekend directeurswerk dit seizoen. Je klassement loopt voor op het peloton en de dartpijlaap zit in de volgauto. Met wat meer differentiëlen pak je de overwinning.",
+        "Straf gereden. Ge loopt voor op het pak en de dartpijl-aap zit in de volgwagen. Durf nog een tikkeltje meer en ge pakt de zege.",
       ],
       [
         7.0,
-        "Solide Giro tot dusver. Je scoort boven de mediaan, je renners rijden hun loon bij elkaar. We zien ons op de Zoncolan.",
+        "Deugdelijk werk tot hiertoe. Ge scoort boven de mediaan, uw renners rijden hun loon bijeen. We spreken elkaar in de bergen.",
       ],
       [
         6.0,
-        "Respectabele prestatie — de directeur knikt, maar kijkt scherp. Je ploeg levert, al is de marge dunner dan de bandjes van Tadej op de Col de la Loze.",
+        "'t Is respectabel, maar ik kijk scherp. Uw ploeg levert, alleen is de marge dun. Geen reden om te blinken, wel om door te trappen.",
       ],
       [
         5.0,
-        "Midveld, en dat is eerlijk gezegd precies wat het voelt. De apen rijden mee op jouw wiel — niet verloren, maar ook geen sprint voor de zege.",
+        "Middenmoot, en eerlijk gezegd voelt het ook zo. De apen rijden mee op uw wiel. Niet verloren, maar sprinten om de zege doet ge nog niet.",
       ],
       [
         4.0,
-        "Moeilijk parcours voor jouw ploeg dit seizoen. De simulatieapen presteren vergelijkbaar en je klassering staat onder druk. Herbezin je voor de volgende editie.",
+        "Lastig parcours voor uw ploeg. De apen doen het even goed en uw klassering staat onder druk. Rechtzitten en herpakken, allez.",
       ],
       [
         0.0,
-        "Zwaar seizoen. De cijfers liegen niet, en ik evenmin. Je ploeg verliest op alle fronten. De bezemwagen wacht — maar Rome werd ook niet in één dag gebouwd.",
+        "Zware koers. De cijfers liegen niet, en ik nog minder. Ge verliest op alle fronten. De bezemwagen rijdt achter u, maar opgeven staat niet in mijn woordenboek.",
       ],
     ];
     const analysis = analysisMap.find(([t]) => score >= t)?.[1] ?? analysisMap[analysisMap.length - 1][1];
