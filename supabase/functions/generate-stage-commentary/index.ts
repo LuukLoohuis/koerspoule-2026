@@ -250,6 +250,16 @@ async function openaiChat(
     }
   }
 
+  // Rate-limit (429) of tijdelijke serverfout (5xx): backoff en opnieuw — bij 5
+  // parallelle calls over veel subpoules is een 429-golf anders fataal voor de
+  // hele chunk. Max 2 retries (2s, 8s) blijft ruim binnen het 90s-budget.
+  for (const waitMs of [2000, 8000]) {
+    if (res.status !== 429 && res.status < 500) break;
+    console.warn(`[commentary] OpenAI ${res.status} → retry over ${waitMs}ms`);
+    await new Promise((r) => setTimeout(r, waitMs));
+    res = await post(samplingSupported);
+  }
+
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`OpenAI API ${res.status}: ${text}`);
@@ -799,13 +809,16 @@ Deno.serve(async (req) => {
     const remaining = pending.length - processed;
 
     // Restlijst: elke subpoule die ná deze run nog geen rij heeft, met reden.
-    const reason = (st: string | undefined): string =>
+    // Bij een fout nemen we de échte foutmelding (ingekort) mee, zodat de admin
+    // in de UI ziet WAT er misging (429/quota/parse…) i.p.v. alleen "OpenAI-fout".
+    const errBysubpoule = new Map(errors.map((e) => [e.subpoule_id, e.error]));
+    const reason = (spId: string, st: string | undefined): string =>
       st === "te weinig deelnemers" ? "te weinig deelnemers (min. 2)"
-      : st === "fout" ? "OpenAI-fout"
+      : st === "fout" ? `OpenAI-fout: ${(errBysubpoule.get(spId) ?? "").slice(0, 140)}`
       : "nog niet verwerkt";
     const emptySubpoules = pending
       .filter((sp) => outcome.get(sp.id) !== "generated")
-      .map((sp) => ({ id: sp.id, name: sp.name, reason: reason(outcome.get(sp.id)) }));
+      .map((sp) => ({ id: sp.id, name: sp.name, reason: reason(sp.id, outcome.get(sp.id)) }));
 
     return json({
       ok: true,
