@@ -92,24 +92,80 @@ export function useLefevereReport(
     queryFn: async (): Promise<LefevereReportResult> => {
       if (!supabase || !input || !entryId || typeof stageCount !== "number") throw new Error("no input");
 
-      // ALLEEN uit de DB-cache lezen. Genereren gebeurt uitsluitend via de
-      // admin-knop "Genereer Lefevère (alle deelnemers)" in het Fiatteren-tabje
-      // (bewust: geen automatische/per-bezoeker OpenAI-calls meer — dat liet de
-      // teller "vanzelf" oplopen en kost per bezoeker geld). Geen rij voor deze
-      // stand → nette fout; de caller toont zijn fallback ("rapport volgt").
+      // 1) Probeer uit de DB-cache te lezen — geen LLM-call nodig als 't er staat
+      //    én het opgeslagen cijfer overeenkomt met het huidige (zelf-herstel:
+      //    een rij die tijdens het laden met een fout cijfer is opgeslagen wordt
+      //    zo opnieuw gegenereerd en overschreven).
       const { data: cached } = await (supabase as any)
         .from("lefevere_rapporten")
-        .select("directeurs_analyse, ploeg_karakterisering")
+        .select("directeurs_analyse, ploeg_karakterisering, score")
         .eq("entry_id", entryId)
         .eq("stage_count", stageCount)
         .maybeSingle();
-      if (cached?.directeurs_analyse) {
+      const cachedScoreMatches =
+        cached && cached.score != null &&
+        Math.round(Number(cached.score) * 10) === Math.round(input.score * 10);
+      if (cached?.directeurs_analyse && cachedScoreMatches) {
         return {
           directeursAnalyse: cached.directeurs_analyse as string,
           ploegKarakterisering: (cached.ploeg_karakterisering as string) ?? "",
         };
       }
-      throw new Error("Rapport is nog niet gegenereerd — de organisatie maakt het na de etappe aan.");
+
+      // 2) Niet in cache → genereer via de edge function. Eerst de laatste paar
+      //    eigen rapporten ophalen (lagere stage_count) zodat de generator
+      //    herhaling van openingen/boutades kan vermijden (variatie-guard).
+      let recenteAnalyses: string[] = [];
+      let recenteKarakteriseringen: string[] = [];
+      const { data: recent } = await (supabase as any)
+        .from("lefevere_rapporten")
+        .select("directeurs_analyse, ploeg_karakterisering, stage_count")
+        .eq("entry_id", entryId)
+        .lt("stage_count", stageCount)
+        .order("stage_count", { ascending: false })
+        .limit(5);
+      if (Array.isArray(recent)) {
+        recenteAnalyses = recent.map((r: any) => r.directeurs_analyse).filter(Boolean);
+        recenteKarakteriseringen = recent.map((r: any) => r.ploeg_karakterisering).filter(Boolean);
+      }
+
+      const { data, error } = await supabase.functions.invoke("generate-lefevere-report", {
+        body: { ...input, recenteAnalyses, recenteKarakteriseringen },
+      });
+      if (error) {
+        let detail = error.message;
+        const ctx = (error as { context?: Response }).context;
+        if (ctx && typeof ctx.text === "function") {
+          try { const body = await ctx.text(); if (body) detail = body; } catch { /* keep */ }
+        }
+        throw new Error(detail);
+      }
+      const result = data as { directeursAnalyse?: string; ploegKarakterisering?: string; model?: string };
+      if (typeof result?.directeursAnalyse !== "string" || typeof result?.ploegKarakterisering !== "string") {
+        throw new Error("Onverwacht antwoord van generator");
+      }
+
+      // 3) Sla op in de DB-cache; overschrijf een bestaande (mogelijk foute) rij
+      //    op dezelfde (entry, stage_count)-sleutel.
+      await (supabase as any)
+        .from("lefevere_rapporten")
+        .upsert(
+          {
+            entry_id: entryId,
+            stage_count: stageCount,
+            directeurs_analyse: result.directeursAnalyse,
+            ploeg_karakterisering: result.ploegKarakterisering,
+            score: input.score,
+            model: result.model ?? null,
+            generated_at: new Date().toISOString(),
+          },
+          { onConflict: "entry_id,stage_count" },
+        );
+
+      return {
+        directeursAnalyse: result.directeursAnalyse,
+        ploegKarakterisering: result.ploegKarakterisering,
+      };
     },
   });
 }
