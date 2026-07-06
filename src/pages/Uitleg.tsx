@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Newspaper, Car, Users, Flag, Bike, ArrowRight, type LucideIcon } from "lucide-react";
+import { Newspaper, Car, Users, Flag, Bike, ArrowRight, HelpCircle, type LucideIcon } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 type Card = { title: string; intro: string; to: string; bullets?: string[] };
 type Group = { heading: string; Icon: LucideIcon; cards: Card[] };
@@ -55,6 +56,56 @@ const GROUPS: Group[] = [
       { title: "The Emirates", intro: "De droomploeg achteraf: de best mogelijke selectie van de dag.", to: "/mijn-peloton?tab=hors&sub=superteam" },
       { title: "Benchmark", intro: "Vergelijk twee ploegen categorie voor categorie.", to: "/mijn-peloton?tab=hors&sub=benchmark" },
     ],
+  },
+];
+
+type Faq = { q: string; a: string; to?: string };
+
+const FAQS: Faq[] = [
+  {
+    q: "Hoe maak ik een subpoule aan?",
+    a: "Ga naar de Subpoule-tab en klik op Subpoule aanmaken. Kies een naam en deel daarna de uitnodigingscode met je vrienden. Aanmaken kan zolang de koers niet is afgerond.",
+    to: "/mijn-peloton?tab=subpoules",
+  },
+  {
+    q: "Hoe join ik een subpoule?",
+    a: "Vraag de uitnodigingscode aan de maker van de subpoule. Ga naar de Subpoule-tab, kies Joinen en vul de code in. Heb je een uitnodigingslink gekregen, dan staat de code al voor je klaar.",
+    to: "/mijn-peloton?tab=subpoules",
+  },
+  {
+    q: "Kan ik in meerdere subpoules tegelijk zitten?",
+    a: "Ja. Je hebt één ploeg, en die telt automatisch mee in elke subpoule waar je lid van bent.",
+    to: "/mijn-peloton?tab=subpoules",
+  },
+  {
+    q: "Hoe verander ik mijn teamnaam?",
+    a: "Open de Ploegleiderswagen en pas je ploegnaam aan. De naam wordt direct opgeslagen en is zichtbaar in alle klassementen.",
+    to: "/team-samenstellen",
+  },
+  {
+    q: "Tot wanneer kan ik mijn ploeg indienen?",
+    a: "Tot de start van de eerste etappe. Heb je wijzigingen niet opnieuw ingediend, dan telt op dat moment automatisch je huidige selectie.",
+    to: "/team-samenstellen",
+  },
+  {
+    q: "Kan ik mijn team nog wijzigen na indienen?",
+    a: "Ja, tot de start van de eerste etappe. Pas je ploeg aan en dien opnieuw in om te bevestigen.",
+    to: "/team-samenstellen",
+  },
+  {
+    q: "Waarom zie ik nog geen commentaar in mijn subpoule?",
+    a: "Het commentaar verschijnt zodra de uitslag van de etappe is ingevoerd, en wordt geschreven vanaf 2 deelnemers per subpoule.",
+    to: "/mijn-peloton?tab=karavaan",
+  },
+  {
+    q: "Wat gebeurt er als een renner uitvalt?",
+    a: "Uitvallers blijven doorgestreept in je ploeg staan. De punten die ze al pakten, behoud je.",
+    to: "/mijn-peloton?tab=team&sub=ploeg",
+  },
+  {
+    q: "Waar zie ik de uitslagen van alle deelnemers?",
+    a: "In Uitslagen: het klassement en de daguitslag per etappe, van alle deelnemers en niet alleen je subpoule.",
+    to: "/mijn-peloton?tab=uitslagen&view=klassement",
   },
 ];
 
@@ -143,6 +194,29 @@ export default function Uitleg() {
             </div>
           </section>
         ))}
+
+        {/* Veelgestelde vragen */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <HelpCircle className="h-5 w-5 text-primary" />
+            <h2 className="font-display text-xl font-bold">Veelgestelde vragen</h2>
+          </div>
+          <div className="retro-border no-hover-lift bg-card px-4">
+            <Accordion type="single" collapsible>
+              {FAQS.map((f) => (
+                <AccordionItem key={f.q} value={f.q}>
+                  <AccordionTrigger className="text-left font-display font-bold text-sm hover:no-underline">
+                    {f.q}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground font-sans">{f.a}</p>
+                    {f.to && <GoLink to={f.to} />}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </section>
       </div>
     </div>
   );
