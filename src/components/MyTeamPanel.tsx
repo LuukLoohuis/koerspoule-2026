@@ -511,16 +511,6 @@ export default function MyTeamPanel({
     [stagePoints]
   );
 
-  const bestStage = useMemo(() => {
-    const inRange = stagePoints.filter(
-      (sp) => (stageNumById.get(sp.stage_id) ?? Number.POSITIVE_INFINITY) <= cutoffN,
-    );
-    if (inRange.length === 0) return null;
-    const top = inRange.reduce((a, b) => (a.points >= b.points ? a : b));
-    const stage = stages.find((s) => s.id === top.stage_id);
-    return stage ? { stage, points: top.points } : null;
-  }, [stagePoints, stages, stageNumById, cutoffN]);
-
   const standaloneJokerIds = useMemo(() => {
     const picked = new Set<string>();
     for (const arr of picksByCategory.values()) for (const id of arr) picked.add(id);
@@ -829,6 +819,13 @@ export default function MyTeamPanel({
         // Label voor de seizoensstand volgt de GESELECTEERDE rit (terugspoelen).
         const shownStage = selectedStage;
         const ritLabel = shownStage ? `punten t/m rit ${shownStage.stage_number}` : "nog geen uitslagen";
+        // Etappepunten: som van de punten van ENKEL de getoonde rit (i.t.t.
+        // totalPoints, dat cumulatief t/m de rit optelt).
+        const stageDayPoints = shownStage
+          ? stagePoints
+              .filter((sp) => sp.stage_id === shownStage.id)
+              .reduce((s, sp) => s + sp.points, 0)
+          : 0;
 
         // "—" zolang waardes null zijn (expliciete null-check, loading-proof).
         const dash = (v: number | null | undefined, fmt: (n: number) => string) =>
@@ -1031,7 +1028,7 @@ export default function MyTeamPanel({
                       {/* Seizoensstand als split-flap teller */}
                       <div className="shrink-0 md:text-right md:pl-4 md:border-l" style={{ borderColor: "rgba(26,22,18,0.18)" }}>
                         <div className="font-mono text-[10px] tracking-[0.22em] uppercase font-bold mb-1.5" style={{ color: "rgba(26,22,18,0.55)" }}>
-                          Seizoensstand
+                          Totaalpunten
                         </div>
                         <FlipClock value={totalPoints} suffix="PT" size={52} />
                         <div className="font-mono text-[10px] mt-1.5" style={{ color: "rgba(26,22,18,0.55)" }}>
@@ -1081,7 +1078,11 @@ export default function MyTeamPanel({
                         onClick={onOpenUitslagen}
                         hint="Open de daguitslag van de hele poule"
                       />
-                      <Dial label="Seizoensstand" value={totalPoints} sub={ritLabel} />
+                      <Dial
+                        label="Etappepunten"
+                        value={stageDayPoints}
+                        sub={shownStage ? `alleen rit ${shownStage.stage_number}` : "nog geen uitslagen"}
+                      />
                       {/* Status-bewuste accentranden: de rand kleurt mee met de
                           waarde (boven/onder de drempel), in SPEC-kleuren. */}
                       <Dial
@@ -1142,11 +1143,15 @@ export default function MyTeamPanel({
                   <div className="p-3.5 md:p-4">
                     <div className="text-center mb-2.5"><Stamp>— Détails —</Stamp></div>
                     {(() => {
-                      // Mijn dagklassering op mijn best-scorende rit (zelfde rit).
-                      const bestStageRankNum =
-                        bestStage?.stage && ploegStats.myStageRanks
-                          ? ploegStats.myStageRanks.get(bestStage.stage.id) ?? null
-                          : null;
+                      // Beste etappe = mijn BESTE dagklassering in de hele poule
+                      // (laagste rang over alle ritten), met de punten van die rit
+                      // klein eronder.
+                      const bestRank = ploegStats.bestStageRank;
+                      const bestRankPoints = bestRank?.stage
+                        ? stagePoints
+                            .filter((sp) => sp.stage_id === bestRank.stage!.id)
+                            .reduce((s, sp) => s + sp.points, 0)
+                        : null;
                       // Topscorer-naam over twee regels (voor- + achternaam).
                       const tsName = ploegStats.topscorer?.name ?? "";
                       const tsParts = tsName.split(" ").filter(Boolean);
@@ -1173,19 +1178,17 @@ export default function MyTeamPanel({
                           Icon: Flag,
                           flagLeft: true,
                           nowrap: true,
-                          value: bestStage ? (
+                          value: bestRank ? (
                             <>
-                              {bestStage.points}
-                              <span style={{ fontSize: "0.42em", fontWeight: 700, marginLeft: 3, color: "rgba(26,22,18,0.55)" }}>PT</span>
+                              {bestRank.rank}
+                              <span style={{ fontSize: "0.42em", fontWeight: 700, marginLeft: 2, color: "rgba(26,22,18,0.55)" }}>e</span>
                             </>
                           ) : "—",
-                          sub: bestStage?.stage
-                            ? bestStageRankNum
-                              ? `${bestStageRankNum}e in daguitslag · rit ${bestStage.stage.stage_number}`
-                              : `rit ${bestStage.stage.stage_number}`
+                          sub: bestRank?.stage
+                            ? `${bestRankPoints} pt · rit ${bestRank.stage.stage_number}`
                             : undefined,
-                          onClick: bestStage?.stage && onOpenStageResult
-                            ? () => onOpenStageResult(bestStage.stage.stage_number)
+                          onClick: bestRank?.stage && onOpenStageResult
+                            ? () => onOpenStageResult(bestRank.stage!.stage_number)
                             : undefined,
                           hint: "Open de uitslag van deze rit",
                         },
