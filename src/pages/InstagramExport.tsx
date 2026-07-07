@@ -718,6 +718,12 @@ type RaceGeo = {
   dagRit: { top: number; left: number; width: number; height: number };  // "RIT N"-cover (donkere balk)
   dagTraject: { top: number; height: number; width: number };            // traject-cover (gecentreerd)
   ritColor: string;                                  // kleur van "RIT N" op de donkere balk
+  // Exacte y-posities van de 11 tabellijnen (gemeten op de PNG) wanneer de
+  // rijen NIET gelijk verdeeld zijn (met de hand getekende sjablonen). Rij-
+  // centers = midden tussen twee opeenvolgende lijnen. Ontbreekt de array,
+  // dan valt de renderer terug op 10 gelijke rijen tussen top/bottom.
+  klasLines?: number[];
+  dagLines?: number[];
 };
 
 // Tour (geel) — daguitslag afgemeten op de NIEUWE PNG (1254², overlay in 1080²,
@@ -735,6 +741,10 @@ const GEO_TOUR: RaceGeo = {
   // Cover 570–602 → bedekt de regel zonder rij 1 of de lijn te raken.
   dagTraject: { top: 570, height: 32, width: 620 },
   ritColor: "#E0A411",
+  // Gemeten tabellijnen (1080²): het klassement-sjabloon heeft ONgelijke rijen
+  // (boven ~58px, onder ~46px), de daguitslag is vrijwel uniform (~36px).
+  klasLines: [479.7, 537.8, 593.4, 647.7, 698.5, 745.0, 792.3, 840.6, 888.4, 935.3, 981.8],
+  dagLines: [603.7, 640.8, 676.9, 712.2, 748.4, 784.6, 819.9, 856.1, 891.4, 927.6, 965.5],
 };
 
 // Vuelta (rood) — kop is hoger, dus rijen zitten lager dan bij Tour.
@@ -765,99 +775,181 @@ const RACE_GEO: Record<"roze" | "geel" | "rood", RaceGeo> = {
   roze: GEO_GIRO,
 };
 
-// 10 gelijke rijen over de rij-band. BELANGRIJK: geen flexbox-centrering —
-// html2canvas rendert flex `align-items:center` onbetrouwbaar (tekst zakt naar
-// de rij-onderkant in de export). Daarom per rij absoluut gepositioneerd en
-// verticaal gecentreerd via line-height = rijhoogte (door html2canvas wél correct
-// gerenderd). Naam links (ellipsis), punten rechts-uitgelijnd op de right-inset.
-function OverlayRows({ rows, band, containerH, valueFmt }: {
+// ── Canvas-export voor de race-templates ─────────────────────────────────────
+// html2canvas bleek onbetrouwbaar voor deze pixel-precieze overlays (tekst zakt
+// per element nét anders). Daarom tekenen we de kaart DIRECT op een 2D-canvas:
+// template-PNG + fillText met textBaseline "middle" — deterministisch, en de
+// preview toont exact dezelfde pixels als de download.
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = reject;
+    im.src = src;
+  });
+}
+
+function ellipsizeCanvas(ctx: CanvasRenderingContext2D, text: string, maxW: number): string {
+  if (ctx.measureText(text).width <= maxW) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(`${t}…`).width > maxW) t = t.slice(0, -1);
+  return `${t}…`;
+}
+
+const EXPORT_SCALE = 2; // 1080 → 2160: scherp op Instagram
+
+async function renderRaceCanvas(
+  kind: "dag" | "klas",
+  theme: RaceTheme,
+  geo: RaceGeo,
+  opts: { stageNumber: number; traject?: string; rows: Array<{ rank: number; name: string; pts: number }> },
+): Promise<HTMLCanvasElement> {
+  const W = 1080, H = 1080;
+  const canvas = document.createElement("canvas");
+  canvas.width = W * EXPORT_SCALE;
+  canvas.height = H * EXPORT_SCALE;
+  const ctx = canvas.getContext("2d")!;
+  ctx.scale(EXPORT_SCALE, EXPORT_SCALE);
+
+  // Oswald moet geladen zijn vóór measureText/fillText.
+  try { await document.fonts.load("700 32px Oswald"); await document.fonts.ready; } catch { /* system-fallback */ }
+  const bg = await loadImage(kind === "dag" ? theme.daguitslagBg : theme.klassementBg);
+  ctx.drawImage(bg, 0, 0, W, H);
+  ctx.textBaseline = "middle";
+
+  if (kind === "dag") {
+    // RIT N — donkere balk over de ingebakken "RIT XX".
+    ctx.fillStyle = R_INK;
+    ctx.fillRect(geo.dagRit.left, geo.dagRit.top, geo.dagRit.width, geo.dagRit.height);
+    ctx.fillStyle = geo.ritColor;
+    ctx.font = "700 56px Oswald, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`RIT ${opts.stageNumber}`, geo.dagRit.left + geo.dagRit.width / 2, geo.dagRit.top + geo.dagRit.height / 2 + 2);
+
+    // Traject-cover over de ingebakken plaatsnamen-regel.
+    const tr = geo.dagTraject;
+    ctx.font = "600 24px Oswald, sans-serif";
+    const label = ellipsizeCanvas(ctx, (opts.traject ?? "—").toUpperCase(), 780);
+    const tw = Math.min(820, Math.max(tr.width, ctx.measureText(label).width + 40));
+    ctx.fillStyle = R_PAPER;
+    ctx.fillRect(W / 2 - tw / 2, tr.top, tw, tr.height);
+    ctx.fillStyle = R_INK;
+    ctx.fillText(label, W / 2, tr.top + tr.height / 2 + 1);
+  } else {
+    // NA RIT N — paper-badge over de ingebakken "NA RIT XX".
+    const kr = geo.klasRit;
+    ctx.font = "700 30px Oswald, sans-serif";
+    const label = `NA RIT ${opts.stageNumber}`;
+    const kw = Math.max(250, ctx.measureText(label).width + 44);
+    ctx.fillStyle = R_PAPER;
+    ctx.fillRect(W / 2 - kw / 2, kr.top, kw, kr.height);
+    ctx.fillStyle = R_INK;
+    ctx.textAlign = "center";
+    ctx.fillText(label, W / 2, kr.top + kr.height / 2 + 1);
+  }
+
+  // Top-10-rijen: naam links, punten rechts, exact op het rij-midden. Bij
+  // gemeten lijnposities (ongelijke, met de hand getekende rijen) is het
+  // rij-center het midden tussen twee opeenvolgende lijnen; anders 10 gelijke
+  // rijen tussen top/bottom.
+  const band = kind === "dag" ? geo.dagRows : geo.klasRows;
+  const lines = kind === "dag" ? geo.dagLines : geo.klasLines;
+  const centers: number[] = [];
+  let minRowH: number;
+  if (lines && lines.length === 11) {
+    for (let i = 0; i < 10; i++) centers.push((lines[i] + lines[i + 1]) / 2);
+    minRowH = Math.min(...lines.slice(1).map((v, i) => v - lines[i]));
+  } else {
+    const rowH = (H - band.top - band.bottom) / 10;
+    for (let i = 0; i < 10; i++) centers.push(band.top + i * rowH + rowH / 2);
+    minRowH = rowH;
+  }
+  const fontSize = Math.min(30, Math.round(minRowH * 0.62));
+  ctx.font = `700 ${fontSize}px Oswald, sans-serif`;
+  ctx.fillStyle = R_INK;
+  const valuePrefix = kind === "dag" ? "+" : "";
+  for (let i = 0; i < 10; i++) {
+    const s = opts.rows[i];
+    if (!s) continue;
+    const cy = centers[i] + 1;
+    const nameMax = W - band.left - band.right - 170;
+    ctx.textAlign = "left";
+    ctx.fillText(ellipsizeCanvas(ctx, s.name.toUpperCase(), nameMax), band.left, cy);
+    ctx.textAlign = "right";
+    ctx.fillText(`${valuePrefix}${s.pts}`, W - band.right, cy);
+  }
+  return canvas;
+}
+
+// Preview + download/copy voor één race-kaart. De <img> IS de export (dataURL
+// van hetzelfde canvas), dus wat je ziet is wat je downloadt.
+function RaceCanvasCard({ kind, theme, geo, stageNumber, traject, rows, filename }: {
+  kind: "dag" | "klas";
+  theme: RaceTheme;
+  geo: RaceGeo;
+  stageNumber: number;
+  traject?: string;
   rows: Array<{ rank: number; name: string; pts: number }>;
-  band: { top: number; bottom: number; left: number; right: number };
-  containerH: number;
-  valueFmt: (pts: number) => string;
+  filename: string;
 }) {
-  const rowH = (containerH - band.top - band.bottom) / 10;
-  // Fontgrootte meeschalen met de rijhoogte: bij de smalle daguitslag-rijen
-  // (rowH ~36) klemde 32px tegen de scheidingslijnen; bij het ruimere klassement
-  // (rowH ~50) blijft 't op 32 gecapt.
-  const fontSize = Math.min(32, Math.round(rowH * 0.7));
-  // html2canvas zet single-line tekst ~8px lager dan de browser; corrigeer omhoog
-  // zodat de export (niet alleen de preview) op de ingebakken rangnummers valt.
-  const H2C_NUDGE = 8;
-  return (
-    <>
-      {Array.from({ length: 10 }, (_, i) => {
-        const s = rows[i];
-        if (!s) return null;
-        const top = band.top + i * rowH - H2C_NUDGE;
-        return (
-          <div key={i} style={{ position: "absolute", left: band.left, right: band.right, top, height: rowH }}>
-            <span style={{ position: "absolute", left: 0, right: 170, top: 0, height: rowH, lineHeight: `${rowH}px`, fontFamily: R_OSWALD, fontWeight: 700, fontSize, color: R_INK, textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {s.name}
-            </span>
-            <span style={{ position: "absolute", right: 0, top: 0, height: rowH, lineHeight: `${rowH}px`, fontFamily: R_OSWALD, fontWeight: 700, fontSize, color: R_INK, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
-              {valueFmt(s.pts)}
-            </span>
-          </div>
-        );
-      })}
-    </>
-  );
-}
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rowsKey = JSON.stringify(rows.slice(0, 10));
 
-function TemplateBg({ src, w, h, children }: { src: string; w: number; h: number; children: React.ReactNode }) {
+  useEffect(() => {
+    let alive = true;
+    setUrl(null);
+    (async () => {
+      try {
+        const c = await renderRaceCanvas(kind, theme, geo, { stageNumber, traject, rows: JSON.parse(rowsKey) });
+        if (!alive) return;
+        canvasRef.current = c;
+        setUrl(c.toDataURL("image/png"));
+      } catch (e) {
+        console.error("renderRaceCanvas:", e);
+        if (alive) toast.error("Kaart renderen mislukt — staat de template-PNG klaar?");
+      }
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind, theme, geo, stageNumber, traject, rowsKey]);
+
+  const download = () => {
+    if (!url) return;
+    const a = document.createElement("a");
+    a.download = filename;
+    a.href = url;
+    a.click();
+    toast.success("Afbeelding gedownload!");
+  };
+
+  const copy = async () => {
+    const c = canvasRef.current;
+    if (!c) return;
+    setLoading(true);
+    try {
+      const blob = await new Promise<Blob | null>((r) => c.toBlob((b) => r(b), "image/png"));
+      if (!blob) throw new Error("geen blob");
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      toast.success("Afbeelding gekopieerd!");
+    } catch {
+      toast.error("Kopiëren mislukt — probeer downloaden.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div style={{
-      width: w, height: h, position: "relative", overflow: "hidden",
-      backgroundColor: R_PAPER,
-      backgroundImage: `url("${src}")`, backgroundSize: "100% 100%",
-      backgroundRepeat: "no-repeat", backgroundPosition: "center",
-    }}>
-      {children}
+    <div className="flex flex-col items-center gap-3">
+      {url ? (
+        <img src={url} alt="Instagram-kaart preview" style={{ width: 460, height: 460 }} className="rounded-xl border border-foreground/10 shadow-md" />
+      ) : (
+        <div style={{ width: 460, height: 460 }} className="rounded-xl border border-foreground/10 bg-secondary/40 animate-pulse" />
+      )}
+      <ExportButtons onDownload={download} onCopy={() => void copy()} loading={loading || !url} />
     </div>
-  );
-}
-
-function RaceDaguitslagTemplate({ theme, geo, stageNumber, stageName, stageType, standings }: {
-  theme: RaceTheme; geo: RaceGeo; stageNumber: number; stageName?: string; stageType?: string; standings: Array<{ rank: number; name: string; pts: number }>;
-}) {
-  const rows = standings.slice(0, 10);
-  const traject = stageName ?? "—";
-  return (
-    <TemplateBg src={theme.daguitslagBg} w={DAG_W} h={DAG_H}>
-      {/* RIT N — over de "RIT XX" in de donkere balk */}
-      <div style={{ position: "absolute", top: geo.dagRit.top, left: geo.dagRit.left, width: geo.dagRit.width, height: geo.dagRit.height, background: R_INK, textAlign: "center" }}>
-        <span style={{ display: "inline-block", lineHeight: `${geo.dagRit.height}px`, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 56, letterSpacing: 1, color: geo.ritColor, textTransform: "uppercase" }}>RIT {stageNumber}</span>
-      </div>
-      {/* Traject — over "PLAATS START – PLAATS FINISH" */}
-      {/* Verticale centrering via lineHeight (geen flex) — html2canvas rendert
-          flex-centrering onbetrouwbaar, net als bij OverlayRows. */}
-      <div style={{ position: "absolute", top: geo.dagTraject.top, left: "50%", transform: "translateX(-50%)", height: geo.dagTraject.height, minWidth: geo.dagTraject.width, maxWidth: 820, background: R_PAPER, textAlign: "center", padding: "0 16px" }}>
-        <span style={{ display: "inline-block", lineHeight: `${geo.dagTraject.height}px`, fontFamily: R_OSWALD, fontWeight: 600, fontSize: Math.min(26, geo.dagTraject.height - 8), letterSpacing: 2, color: R_INK, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
-          {traject}{stageType ? ` · ${TYPE_LABEL[stageType] ?? stageType.toUpperCase()}` : ""}
-        </span>
-      </div>
-      {/* Top 10 — naam + punten */}
-      <OverlayRows rows={rows} band={geo.dagRows} containerH={DAG_H} valueFmt={(p) => `+${p}`} />
-    </TemplateBg>
-  );
-}
-
-function RaceKlassementTemplate({ theme, geo, gameName, stageNumber, standings }: {
-  theme: RaceTheme; geo: RaceGeo; gameName: string; stageNumber: number; standings: Array<{ rank: number; name: string; pts: number }>;
-}) {
-  const rows = standings.slice(0, 10);
-  return (
-    <TemplateBg src={theme.klassementBg} w={KLAS_W} h={KLAS_H}>
-      {/* NA RIT N — over de "NA RIT XX" in het sjabloon */}
-      <div style={{ position: "absolute", top: geo.klasRit.top, left: "50%", transform: "translateX(-50%)", height: geo.klasRit.height, minWidth: 250, background: R_PAPER, textAlign: "center", padding: "0 18px" }}>
-        <span style={{ display: "inline-block", lineHeight: `${geo.klasRit.height}px`, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 30, letterSpacing: 3, color: R_INK, textTransform: "uppercase" }}>NA RIT {stageNumber}</span>
-      </div>
-      {/* Top 10 — naam + punten */}
-      <OverlayRows rows={rows} band={geo.klasRows} containerH={KLAS_H} valueFmt={(p) => `${p}`} />
-      {/* gameName meegenomen t.b.v. data-context (niet zichtbaar; staat in PNG) */}
-      <span style={{ display: "none" }}>{gameName}</span>
-    </TemplateBg>
   );
 }
 
@@ -988,22 +1080,14 @@ export default function InstagramExport({ gameId: propGameId }: { gameId?: strin
             value={klassementStageId}
             onChange={setKlassementStageId}
           />
-          <div className="flex flex-col items-center gap-3">
-            <PreviewWrapper refObj={ref1}>
-              <RaceKlassementTemplate
-                theme={raceTheme}
-                geo={raceGeo}
-                gameName={gameName}
-                stageNumber={klassementStage?.stage_number ?? 0}
-                standings={klassementStandings}
-              />
-            </PreviewWrapper>
-            <ExportButtons
-              onDownload={() => doDownload(ref1, `klassement-rit${klassementStage?.stage_number ?? 0}.png`, setLoading)}
-              onCopy={() => doCopy(ref1, setLoading)}
-              loading={loading}
-            />
-          </div>
+          <RaceCanvasCard
+            kind="klas"
+            theme={raceTheme}
+            geo={raceGeo}
+            stageNumber={klassementStage?.stage_number ?? 0}
+            rows={klassementStandings.slice(0, 10)}
+            filename={`klassement-rit${klassementStage?.stage_number ?? 0}.png`}
+          />
         </div>
       )}
 
@@ -1016,23 +1100,15 @@ export default function InstagramExport({ gameId: propGameId }: { gameId?: strin
             value={dagscoreStageId}
             onChange={setDagscoreStageId}
           />
-          <div className="flex flex-col items-center gap-3">
-            <PreviewWrapper refObj={ref2} w={DAG_W} h={DAG_H}>
-              <RaceDaguitslagTemplate
-                theme={raceTheme}
-                geo={raceGeo}
-                stageNumber={dagscoreStage?.stage_number ?? 0}
-                stageName={dagscoreStage?.name ?? undefined}
-                stageType={dagscoreStage?.stage_type ?? undefined}
-                standings={dagscoreStandings}
-              />
-            </PreviewWrapper>
-            <ExportButtons
-              onDownload={() => doDownload(ref2, `daguitslag-rit${dagscoreStage?.stage_number ?? 0}.png`, setLoading, DAG_W, DAG_H)}
-              onCopy={() => doCopy(ref2, setLoading, DAG_W, DAG_H)}
-              loading={loading}
-            />
-          </div>
+          <RaceCanvasCard
+            kind="dag"
+            theme={raceTheme}
+            geo={raceGeo}
+            stageNumber={dagscoreStage?.stage_number ?? 0}
+            traject={`${dagscoreStage?.name ?? "—"}${dagscoreStage?.stage_type ? ` · ${TYPE_LABEL[dagscoreStage.stage_type] ?? dagscoreStage.stage_type.toUpperCase()}` : ""}`}
+            rows={dagscoreStandings.slice(0, 10)}
+            filename={`daguitslag-rit${dagscoreStage?.stage_number ?? 0}.png`}
+          />
         </div>
       )}
 
