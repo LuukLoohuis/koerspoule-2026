@@ -1,5 +1,5 @@
 /**
- * Eén bron voor de "Steun Koerspoule" (Buy Me a Coffee)-donatie.
+ * Eén bron voor de "Steun Koerspoule" (Ko-fi)-donatie.
  *
  *  - STEUN_URL: de gedeelde donatie-URL (header, Rules, steun-momenten).
  *  - <SteunKopgroepPill>: de warme, retro header-knop. Zichtbaar + tikbaar op
@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { Coffee, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const STEUN_URL = "https://www.buymeacoffee.com/luukloohuis";
+export const STEUN_URL = "https://ko-fi.com/koerspoule";
 
 export function SteunKopgroepPill({ className }: { className?: string }) {
   return (
@@ -22,7 +22,7 @@ export function SteunKopgroepPill({ className }: { className?: string }) {
       target="_blank"
       rel="noopener noreferrer"
       title="Steun Koerspoule"
-      aria-label="Steun Koerspoule via Buy Me a Coffee"
+      aria-label="Steun Koerspoule via Ko-fi"
       className={cn(
         "group inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10",
         "min-h-[36px] px-2.5 py-1 text-primary text-[11px] font-serif italic",
