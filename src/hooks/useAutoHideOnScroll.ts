@@ -7,6 +7,7 @@
  * prefers-reduced-motion → altijd zichtbaar (geen verbergen).
  */
 import { useEffect, useRef, useState } from "react";
+import { isProgrammaticScroll } from "@/lib/scrollLock";
 
 export function useAutoHideOnScroll(threshold = 12): boolean {
   const [visible, setVisible] = useState(true);
@@ -22,6 +23,9 @@ export function useAutoHideOnScroll(threshold = 12): boolean {
     lastY.current = window.scrollY;
 
     const onScroll = () => {
+      // Tabwissel-scroll (carrousel) telt niet als gebruikersscroll: negeer de
+      // event volledig, lastY blijft staan zodat er geen valse dy-sprong ontstaat.
+      if (isProgrammaticScroll()) return;
       if (ticking.current) return;
       ticking.current = true;
       requestAnimationFrame(() => {

@@ -22,6 +22,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { cn } from "@/lib/utils";
+import { markProgrammaticScroll, isProgrammaticScroll } from "@/lib/scrollLock";
 
 const H_LOCK_PX = 10; // horizontaal commit zodra |dx| dit haalt … (bewuste commit)
 const H_DOMINANCE = 1.2; // … én |dx| > |dy| * 1.2 (lichte horizontale bias-eis)
@@ -96,6 +97,10 @@ export default function SwipeCarousel({
     // momentum stopt.
     let lastScrollT = 0;
     const onScroll = () => {
+      // Onze eigen scrollToBegin (tabwissel) mag de cooldown niet verlengen —
+      // anders wordt de eerstvolgende swipe genegeerd. Alleen échte
+      // gebruikers-/momentumscroll telt.
+      if (isProgrammaticScroll()) return;
       lastScrollT = performance.now();
     };
 
@@ -117,6 +122,8 @@ export default function SwipeCarousel({
       requestAnimationFrame(() =>
         requestAnimationFrame(() => {
           const top = vp.getBoundingClientRect().top + window.scrollY - TOP_OFFSET;
+          // 600ms dekt de smooth-scroll: die scroll telt niet als user-scroll.
+          markProgrammaticScroll(600);
           window.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
         }),
       );
@@ -176,6 +183,9 @@ export default function SwipeCarousel({
       if (s.axis !== "h") return;
 
       e.preventDefault(); // horizontaal gelockt → geen verticale page-scroll
+      // Houd de programmatic-scroll-vlag warm zolang de h-drag loopt: verticale
+      // ruis van het veeggebaar mag de auto-hide-balk niet laten klapperen.
+      markProgrammaticScroll(300);
       if (s.reduce) return; // geen vinger-volgen bij reduced-motion
 
       const toward = (dx < 0 ? 1 : -1) === s.dir && neighborIdx(s.dir) >= 0;
