@@ -727,7 +727,9 @@ type RaceGeo = {
 const GEO_TOUR: RaceGeo = {
   klasRows: { top: 497, bottom: 83, left: 150, right: 150 },
   klasRit: { top: 440, height: 40 },
-  dagRows: { top: 616, bottom: 105, left: 188, right: 158 },
+  // Rij-band opnieuw afgemeten op de Tour-daguitslag-PNG (grid 603.7→965.5 bij
+  // 1080²): band lag ~12px te laag → tekst zakte op de scheidingslijnen.
+  dagRows: { top: 604, bottom: 114, left: 188, right: 158 },
   dagRit: { top: 408, left: 706, width: 262, height: 110 },
   dagTraject: { top: 572, height: 36, width: 620 },
   ritColor: "#E0A411",
@@ -773,6 +775,10 @@ function OverlayRows({ rows, band, containerH, valueFmt }: {
   valueFmt: (pts: number) => string;
 }) {
   const rowH = (containerH - band.top - band.bottom) / 10;
+  // Fontgrootte meeschalen met de rijhoogte: bij de smalle daguitslag-rijen
+  // (rowH ~36) klemde 32px tegen de scheidingslijnen; bij het ruimere klassement
+  // (rowH ~50) blijft 't op 32 gecapt.
+  const fontSize = Math.min(32, Math.round(rowH * 0.7));
   // html2canvas zet single-line tekst ~8px lager dan de browser; corrigeer omhoog
   // zodat de export (niet alleen de preview) op de ingebakken rangnummers valt.
   const H2C_NUDGE = 8;
@@ -784,10 +790,10 @@ function OverlayRows({ rows, band, containerH, valueFmt }: {
         const top = band.top + i * rowH - H2C_NUDGE;
         return (
           <div key={i} style={{ position: "absolute", left: band.left, right: band.right, top, height: rowH }}>
-            <span style={{ position: "absolute", left: 0, right: 170, top: 0, height: rowH, lineHeight: `${rowH}px`, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 32, color: R_INK, textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ position: "absolute", left: 0, right: 170, top: 0, height: rowH, lineHeight: `${rowH}px`, fontFamily: R_OSWALD, fontWeight: 700, fontSize, color: R_INK, textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {s.name}
             </span>
-            <span style={{ position: "absolute", right: 0, top: 0, height: rowH, lineHeight: `${rowH}px`, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 32, color: R_INK, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+            <span style={{ position: "absolute", right: 0, top: 0, height: rowH, lineHeight: `${rowH}px`, fontFamily: R_OSWALD, fontWeight: 700, fontSize, color: R_INK, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
               {valueFmt(s.pts)}
             </span>
           </div>
