@@ -731,7 +731,9 @@ const GEO_TOUR: RaceGeo = {
   // 1080²): band lag ~12px te laag → tekst zakte op de scheidingslijnen.
   dagRows: { top: 604, bottom: 114, left: 188, right: 158 },
   dagRit: { top: 408, left: 706, width: 262, height: 110 },
-  dagTraject: { top: 572, height: 36, width: 620 },
+  // Ingebakken plaatsnamen-regel gemeten op y 574–590; eerste tabellijn op 604.
+  // Cover 570–602 → bedekt de regel zonder rij 1 of de lijn te raken.
+  dagTraject: { top: 570, height: 32, width: 620 },
   ritColor: "#E0A411",
 };
 
@@ -824,12 +826,14 @@ function RaceDaguitslagTemplate({ theme, geo, stageNumber, stageName, stageType,
   return (
     <TemplateBg src={theme.daguitslagBg} w={DAG_W} h={DAG_H}>
       {/* RIT N — over de "RIT XX" in de donkere balk */}
-      <div style={{ position: "absolute", top: geo.dagRit.top, left: geo.dagRit.left, width: geo.dagRit.width, height: geo.dagRit.height, background: R_INK, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 56, letterSpacing: 1, color: geo.ritColor, textTransform: "uppercase" }}>RIT {stageNumber}</span>
+      <div style={{ position: "absolute", top: geo.dagRit.top, left: geo.dagRit.left, width: geo.dagRit.width, height: geo.dagRit.height, background: R_INK, textAlign: "center" }}>
+        <span style={{ display: "inline-block", lineHeight: `${geo.dagRit.height}px`, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 56, letterSpacing: 1, color: geo.ritColor, textTransform: "uppercase" }}>RIT {stageNumber}</span>
       </div>
       {/* Traject — over "PLAATS START – PLAATS FINISH" */}
-      <div style={{ position: "absolute", top: geo.dagTraject.top, left: "50%", transform: "translateX(-50%)", height: geo.dagTraject.height, minWidth: geo.dagTraject.width, maxWidth: 820, background: R_PAPER, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
-        <span style={{ fontFamily: R_OSWALD, fontWeight: 600, fontSize: 28, letterSpacing: 2, color: R_INK, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+      {/* Verticale centrering via lineHeight (geen flex) — html2canvas rendert
+          flex-centrering onbetrouwbaar, net als bij OverlayRows. */}
+      <div style={{ position: "absolute", top: geo.dagTraject.top, left: "50%", transform: "translateX(-50%)", height: geo.dagTraject.height, minWidth: geo.dagTraject.width, maxWidth: 820, background: R_PAPER, textAlign: "center", padding: "0 16px" }}>
+        <span style={{ display: "inline-block", lineHeight: `${geo.dagTraject.height}px`, fontFamily: R_OSWALD, fontWeight: 600, fontSize: Math.min(26, geo.dagTraject.height - 8), letterSpacing: 2, color: R_INK, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
           {traject}{stageType ? ` · ${TYPE_LABEL[stageType] ?? stageType.toUpperCase()}` : ""}
         </span>
       </div>
@@ -846,8 +850,8 @@ function RaceKlassementTemplate({ theme, geo, gameName, stageNumber, standings }
   return (
     <TemplateBg src={theme.klassementBg} w={KLAS_W} h={KLAS_H}>
       {/* NA RIT N — over de "NA RIT XX" in het sjabloon */}
-      <div style={{ position: "absolute", top: geo.klasRit.top, left: "50%", transform: "translateX(-50%)", height: geo.klasRit.height, minWidth: 250, background: R_PAPER, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 18px" }}>
-        <span style={{ fontFamily: R_OSWALD, fontWeight: 700, fontSize: 30, letterSpacing: 3, color: R_INK, textTransform: "uppercase" }}>NA RIT {stageNumber}</span>
+      <div style={{ position: "absolute", top: geo.klasRit.top, left: "50%", transform: "translateX(-50%)", height: geo.klasRit.height, minWidth: 250, background: R_PAPER, textAlign: "center", padding: "0 18px" }}>
+        <span style={{ display: "inline-block", lineHeight: `${geo.klasRit.height}px`, fontFamily: R_OSWALD, fontWeight: 700, fontSize: 30, letterSpacing: 3, color: R_INK, textTransform: "uppercase" }}>NA RIT {stageNumber}</span>
       </div>
       {/* Top 10 — naam + punten */}
       <OverlayRows rows={rows} band={geo.klasRows} containerH={KLAS_H} valueFmt={(p) => `${p}`} />
