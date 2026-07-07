@@ -36,3 +36,6 @@ bun.lockb
 package-lock.json
 
 supabase/.temp
+
+# PostHog wizard-rapport (lokaal)
+posthog-setup-report.md

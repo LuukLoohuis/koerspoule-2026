@@ -2,8 +2,11 @@ import { createRoot, hydrateRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
+import { initPostHog } from "@/lib/posthog";
 import "./index.css";
 import "./styles/salle-de-course.css";
+
+initPostHog();
 
 const container = document.getElementById("root")!;
 

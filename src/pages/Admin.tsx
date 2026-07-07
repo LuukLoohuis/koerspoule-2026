@@ -16,6 +16,7 @@ import {
   parseProCyclingStatsStartlist,
   type ParsedStartlistTeam,
 } from "@/lib/startlistImport";
+import { captureEvent, captureException } from "@/lib/posthog";
 
 type Stage = {
   id: string;
@@ -329,10 +330,19 @@ export default function Admin() {
         if (data) setGames(data);
       }
 
+      captureEvent("admin_game_created", {
+        game_id: inserted?.id,
+        game_year: year,
+        game_status: newGameStatus,
+      });
       appendLog("Game aangemaakt.");
       setNewGameName("");
       toast({ title: "Game aangemaakt", description: `${year} - ${name}` });
     } catch (error) {
+      captureException(error, {
+        area: "admin",
+        action: "create_game",
+      });
       const message = error instanceof Error ? error.message : "Onbekende fout bij game aanmaken.";
       appendLog(message);
       toast({ title: "Game niet aangemaakt", description: message, variant: "destructive" });
@@ -555,9 +565,19 @@ export default function Admin() {
       const { error } = await supabase.from("stage_results").insert(payload);
       if (error) throw error;
 
+      captureEvent("admin_results_saved", {
+        stage_id: selectedStageId,
+        row_count: payload.length,
+        overwrite_existing: overwriteExisting,
+      });
       setStatusMessage("Stage saved successfully");
       appendLog("Stage saved successfully");
     } catch (error) {
+      captureException(error, {
+        area: "admin",
+        action: "save_results",
+        stage_id: selectedStageId,
+      });
       const message =
         error instanceof Error ? error.message : "Opslaan mislukt.";
       setStatusMessage(message);
@@ -581,9 +601,17 @@ export default function Admin() {
       });
       if (error) throw error;
 
+      captureEvent("admin_scores_calculated", {
+        stage_id: selectedStageId,
+      });
       setStatusMessage("Scores calculated");
       appendLog("Scores calculated");
     } catch (error) {
+      captureException(error, {
+        area: "admin",
+        action: "calculate_scores",
+        stage_id: selectedStageId,
+      });
       const message =
         error instanceof Error ? error.message : "Scoreberekening mislukt.";
       setStatusMessage(message);

@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { captureEvent, captureException } from "@/lib/posthog";
 
 type Status = "loading" | "success" | "invalid" | "error";
 
@@ -16,9 +17,18 @@ export default function Uitschrijven() {
     if (!token || !supabase) { setStatus("invalid"); return; }
 
     supabase.rpc("public_unsubscribe", { p_token: token }).then(({ data, error }) => {
-      if (error) { setStatus("error"); return; }
+      if (error) {
+        captureException(error, {
+          area: "unsubscribe",
+        });
+        setStatus("error");
+        return;
+      }
       const result = data as { success: boolean; email?: string; error?: string };
       if (result.success) {
+        captureEvent("unsubscribe_completed", {
+          unsubscribe_status: "success",
+        });
         setEmail(result.email ?? null);
         setStatus("success");
       } else {

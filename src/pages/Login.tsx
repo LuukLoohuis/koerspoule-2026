@@ -11,6 +11,7 @@ import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useThema } from "@/contexts/ThemaContext";
 import TruiBadge from "@/components/retro/TruiBadge";
 import { supabase } from "@/lib/supabase";
+import { captureEvent, captureException, identifyUser } from "@/lib/posthog";
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -135,6 +136,10 @@ export default function Login() {
         15000,
       );
       if (error) throw error;
+      captureEvent("password_reset_requested", {
+        has_email_input: true,
+        reset_origin,
+      });
       toast({
         title: "Resetlink verstuurd 📬",
         description: `Check de inbox van ${target} (ook spam) voor de link om je wachtwoord opnieuw in te stellen.`,
@@ -182,6 +187,15 @@ export default function Login() {
         if (error) throw error;
 
         if (data.user) {
+          identifyUser(data.user.id, {
+            email,
+            display_name: name.trim() || email,
+          });
+          captureEvent("user_signed_up", {
+            signup_method: "email",
+            has_session: Boolean(data.session),
+            return_to: rt,
+          });
           supabase
             .from("profiles")
             .upsert(
@@ -217,6 +231,13 @@ export default function Login() {
           return;
         }
 
+        identifyUser(data.user.id, {
+          email,
+        });
+        captureEvent("user_logged_in", {
+          login_method: "email",
+          return_to: safeReturnTo(searchParams.get("returnTo")),
+        });
         toast({
           title: "Ingelogd! 🚴",
           description: "Welkom terug bij Koerspoule.",
@@ -224,6 +245,10 @@ export default function Login() {
         navigate(safeReturnTo(searchParams.get("returnTo")), { replace: true });
       }
     } catch (error) {
+      captureException(error, {
+        area: "login",
+        mode: isRegister ? "register" : "login",
+      });
       toast({
         title: "Actie mislukt",
         description: formatError(error),

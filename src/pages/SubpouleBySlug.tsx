@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/slugify";
 import { Trophy, UserPlus, LogIn } from "lucide-react";
+import { captureEvent, captureException } from "@/lib/posthog";
 
 export default function SubpouleBySlug() {
   const { slug } = useParams<{ slug: string }>();
@@ -40,6 +41,11 @@ export default function SubpouleBySlug() {
         const row = (Array.isArray(data) ? data[0] : data) as
           | { id: string; name: string; code: string; game_id: string } | undefined;
         if (error || !row) { setNotFound(true); return; }
+        captureEvent("subpoule_join_redirected", {
+          subpoule_id: row.id,
+          game_id: row.game_id,
+          slug: norm,
+        });
         const params = new URLSearchParams({ tab: "subpoules" });
         if (row.code) params.set("join", row.code);
         navigate(`/mijn-peloton?${params.toString()}`, { replace: true });
@@ -51,8 +57,20 @@ export default function SubpouleBySlug() {
       if (cancelled) return;
       const row = (Array.isArray(data) ? data[0] : data) as { id: string; name: string } | undefined;
       if (error || !row) { setNotFound(true); return; }
+      captureEvent("subpoule_invite_opened", {
+        subpoule_id: row.id,
+        slug: norm,
+      });
       setInvite(row);
-    })();
+    })().catch((error) => {
+      if (!cancelled) {
+        captureException(error, {
+          area: "subpoule_invite",
+          slug: norm,
+        });
+        setNotFound(true);
+      }
+    });
 
     return () => { cancelled = true; };
   }, [norm, user, loading, navigate]);

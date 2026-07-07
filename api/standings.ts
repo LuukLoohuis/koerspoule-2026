@@ -8,6 +8,7 @@
 //
 // NB: alleen actief op Vercel. Op Lovable bestaat dit endpoint niet; de
 // frontend-hook valt dan automatisch terug op de directe RPC.
+import { captureServerEvent, captureServerException } from "./posthog";
 
 export const config = { runtime: "edge" };
 
@@ -25,6 +26,8 @@ export default async function handler(req: Request): Promise<Response> {
 
   if (!game) return json({ error: "missing game" }, 400);
 
+  const distinctId = req.headers.get("x-posthog-distinct-id") ?? `leaderboard:${game}`;
+
   const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
   const SUPABASE_URL = env.SUPABASE_URL ?? env.VITE_SUPABASE_URL;
   const KEY = env.SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_ANON_KEY ?? env.VITE_SUPABASE_ANON_KEY;
@@ -41,6 +44,22 @@ export default async function handler(req: Request): Promise<Response> {
   });
 
   const body = await r.text();
+
+  if (r.ok) {
+    captureServerEvent({
+      distinctId,
+      event: "leaderboard_api_requested",
+      properties: {
+        game_id: game,
+        response_status: r.status,
+      },
+    });
+  } else {
+    captureServerException(new Error(`Leaderboard API failed with status ${r.status}`), distinctId, {
+      game_id: game,
+      response_status: r.status,
+    });
+  }
   return new Response(body, {
     status: r.status,
     headers: {

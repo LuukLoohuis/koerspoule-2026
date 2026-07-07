@@ -23,6 +23,7 @@ import RiderSearchSelect from "@/components/RiderSearchSelect";
 import { SteunMoment } from "@/components/SteunKopgroep";
 import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
+import { captureEvent, captureException } from "@/lib/posthog";
 
 // Pick a thematic icon for each category based on its name/short_name
 function getCategoryIcon(name: string): ReactNode {
@@ -267,8 +268,20 @@ export default function TeamBuilder() {
       ) {
         await saveJoker.mutateAsync({ entryId: entry.id, riderIds: [jokerDraft1, jokerDraft2] });
       }
+      captureEvent("team_draft_saved", {
+        game_id: game?.id,
+        game_status: status,
+        picks_completed: completedPicks,
+        picks_required: totalRequired,
+        jokers_selected: [jokerDraft1, jokerDraft2].filter(Boolean).length,
+      });
       toast({ title: "Tussentijds opgeslagen ✓", description: "Je kunt later verder waar je gebleven was." });
     } catch (error) {
+      captureException(error, {
+        area: "team_builder",
+        action: "save_draft",
+        game_id: game?.id,
+      });
       toast({ title: "Opslaan mislukt", description: entryErrorMessage(error), variant: "destructive" });
     }
   };
@@ -296,8 +309,20 @@ export default function TeamBuilder() {
         await saveJoker.mutateAsync({ entryId: entry.id, riderIds: [jokerDraft1, jokerDraft2] });
       }
       await submitEntry.mutateAsync({ entryId: entry.id });
+      captureEvent("team_submitted", {
+        game_id: game?.id,
+        game_status: status,
+        was_resubmission: isSubmitted,
+        picks_completed: completedPicks,
+        picks_required: totalRequired,
+      });
       toast({ title: isSubmitted ? "Wijziging ingediend ✓" : "Team definitief ingediend" });
     } catch (error) {
+      captureException(error, {
+        area: "team_builder",
+        action: "submit_team",
+        game_id: game?.id,
+      });
       toast({
         title: "Indienen mislukt",
         description: entryErrorMessage(error),
