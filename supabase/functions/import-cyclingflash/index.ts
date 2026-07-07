@@ -53,7 +53,9 @@ function nameKeys(s: string): string[] {
   return Array.from(new Set([norm, sorted].filter(Boolean)));
 }
 
-async function fetchHtml(url: string): Promise<string | null> {
+type FetchResult = { ok: boolean; status: number; html: string | null; bytes: number };
+
+async function fetchHtml(url: string): Promise<FetchResult> {
   try {
     const resp = await fetch(url, {
       headers: {
@@ -64,12 +66,13 @@ async function fetchHtml(url: string): Promise<string | null> {
     });
     if (!resp.ok) {
       console.error(`fetch ${url} -> ${resp.status}`);
-      return null;
+      return { ok: false, status: resp.status, html: null, bytes: 0 };
     }
-    return await resp.text();
+    const html = await resp.text();
+    return { ok: true, status: resp.status, html, bytes: html.length };
   } catch (e) {
     console.error(`fetch error ${url}:`, (e as Error).message);
-    return null;
+    return { ok: false, status: 0, html: null, bytes: 0 };
   }
 }
 
@@ -78,61 +81,96 @@ type RawRow = { position: number; bib: number | null; name: string };
 function parseResultsTable(html: string | null): RawRow[] {
   if (!html) return [];
   try {
-    // Find the "currently selected" tab block
-    const curM = html.match(/<li class="cur"\s+data-id="(\d+)"/);
+    // (a) Actief tabblad: <li class="cur"> — "cur" als woord in de class, in
+    //     willekeurige volgorde en met eventuele extra attributen ervoor. We
+    //     halen data-id uit hetzelfde <li>, ongeacht attribuutvolgorde.
+    const curM = html.match(/<li\b[^>]*\bclass="[^"]*\bcur\b[^"]*"[^>]*>/);
     let block = "";
     if (curM) {
-      const did = curM[1];
-      const start = html.indexOf(`<div class="resTab " data-id="${did}">`);
-      if (start >= 0) {
-        const next = html.indexOf('<div class="resTab ', start + 10);
-        block = html.slice(start, next > 0 ? next : start + 300000);
+      const didM = curM[0].match(/data-id="(\d+)"/);
+      const did = didM ? didM[1] : null;
+      // (b) resTab-div: variabele spaties/extra classes toegestaan. Zoek de div
+      //     met het bijbehorende data-id; val anders terug op de eerste resTab.
+      const resTabRe = did
+        ? new RegExp(`<div\\b[^>]*\\bclass="[^"]*\\bresTab\\b[^"]*"[^>]*\\bdata-id="${did}"[^>]*>`)
+        : /<div\b[^>]*\bclass="[^"]*\bresTab\b[^"]*"[^>]*>/;
+      const startM = html.match(resTabRe);
+      if (startM && startM.index !== undefined) {
+        const start = startM.index;
+        const nextRe = /<div\b[^>]*\bclass="[^"]*\bresTab\b[^"]*"[^>]*>/g;
+        nextRe.lastIndex = start + startM[0].length;
+        const nm = nextRe.exec(html);
+        block = html.slice(start, nm ? nm.index : start + 300000);
       }
+    } else {
+      console.warn("parse: geen cur-tab gevonden → val terug op resultsCont");
     }
     if (!block) {
-      // Fallback: take the entire resultsCont area
+      // Fallback: hele resultsCont-gebied.
       const i = html.indexOf('id="resultsCont"');
       if (i >= 0) block = html.slice(i, i + 300000);
     }
-    if (!block) return [];
+    if (!block) { console.warn("parse: geen resTab en geen resultsCont"); return []; }
 
-    const tblM = block.match(/<table[^>]*class="results[^"]*"[^>]*>([\s\S]*?)<\/table>/);
-    if (!tblM) return [];
+    // (c) Tabel: "results" mag ergens in de classlijst staan, niet per se vooraan.
+    const tblM = block.match(/<table\b[^>]*\bclass="[^"]*\bresults\b[^"]*"[^>]*>([\s\S]*?)<\/table>/);
+    if (!tblM) { console.warn("parse: geen results-tabel in blok"); return []; }
     const tbl = tblM[1];
 
+    // (d) Kolomdetectie: eerst via data-code; ontbreekt dat, val terug op positie
+    //     (kol 0 = rang, rider/-link = naam, puur-numerieke cel = bib).
     const headers = Array.from(tbl.matchAll(/data-code="([^"]+)"/g)).map((m) => m[1]);
     const bibIdx = headers.indexOf("bib");
     const nameIdx = headers.indexOf("ridername");
-    if (nameIdx < 0) return [];
+    const hasDataCode = nameIdx >= 0;
+    if (!hasDataCode) {
+      console.warn("parse: geen data-code-kolommen → positie-fallback");
+    }
 
     const rows: RawRow[] = [];
-    const trRe = /<tr>([\s\S]*?)<\/tr>/g;
+    const trRe = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
     let rm: RegExpExecArray | null;
-    let pos = 0;
+    let sawName = false;
     while ((rm = trRe.exec(tbl)) !== null) {
       const tds = Array.from(rm[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)).map((m) => m[1]);
       if (tds.length === 0) continue;
       const rnkRaw = tds[0].replace(/<[^>]+>/g, " ").trim();
       const rnk = parseInt(rnkRaw, 10);
       if (!Number.isFinite(rnk)) continue;
-      pos = rnk;
+      const pos = rnk;
+
+      // Naam: bij data-code de vaste kolom; anders zoek de rider-link in de rij.
+      let nameCell = hasDataCode ? (tds[nameIdx] ?? "") : "";
+      if (!hasDataCode) {
+        const withLink = tds.find((td) => /<a\b[^>]*href="rider\//.test(td));
+        nameCell = withLink ?? "";
+      }
+      const aM = nameCell.match(/<a\b[^>]*href="rider\/[^"]+"[^>]*>([\s\S]*?)<\/a>/);
+      let name = "";
+      if (aM) {
+        name = aM[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      } else if (hasDataCode) {
+        name = nameCell.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      }
+      if (!name) continue;
+      sawName = true;
+
+      // Bib: data-code-kolom indien aanwezig; anders eerste puur-numerieke cel
+      // ná de rang (kol 0 is de rang zelf, die slaan we over).
       let bib: number | null = null;
       if (bibIdx >= 0 && tds[bibIdx] !== undefined) {
         const b = parseInt(tds[bibIdx].replace(/<[^>]+>/g, " ").trim(), 10);
         bib = Number.isFinite(b) ? b : null;
+      } else if (!hasDataCode) {
+        for (let i = 1; i < tds.length; i++) {
+          const cell = tds[i].replace(/<[^>]+>/g, " ").trim();
+          if (/^\d+$/.test(cell)) { bib = parseInt(cell, 10); break; }
+        }
       }
-      const nameCell = tds[nameIdx] ?? "";
-      const aM = nameCell.match(/<a [^>]*href="rider\/([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
-      let name = "";
-      if (aM) {
-        name = aM[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-      } else {
-        name = nameCell.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-      }
-      if (!name) continue;
       rows.push({ position: pos, bib, name });
       if (rows.length >= 30) break;
     }
+    if (!sawName && rows.length === 0) console.warn("parse: geen naamkolom herkend in rijen");
     return rows;
   } catch (e) {
     console.error("parseResultsTable error:", (e as Error).message);
@@ -201,17 +239,46 @@ Deno.serve(async (req) => {
       stage: [], gc: [], points: [], mountain: [], youth: [],
     };
 
+    // Per-classification diagnostiek: status + bytes + rows. Zo is een blokkade
+    // (403/429), een lege pagina (weinig bytes) en een parserbreuk (veel bytes,
+    // 0 rijen) uit elkaar te houden.
+    const diag: Record<Classification, { status: number; bytes: number; rows: number }> = {
+      stage: { status: 0, bytes: 0, rows: 0 }, gc: { status: 0, bytes: 0, rows: 0 },
+      points: { status: 0, bytes: 0, rows: 0 }, mountain: { status: 0, bytes: 0, rows: 0 },
+      youth: { status: 0, bytes: 0, rows: 0 },
+    };
+    let blocked = 0;
+    let blockedStatus = 0;
+
     for (const c of classifications) {
       const url = `${baseUrl}${URL_SUFFIX[c]}`;
-      const html = await fetchHtml(url);
-      const rows = parseResultsTable(html);
+      const res = await fetchHtml(url);
+      const rows = parseResultsTable(res.html);
       raw[c] = rows;
-      console.log(`PCS ${c} (${url}): ${rows.length} rows`);
+      diag[c] = { status: res.status, bytes: res.bytes, rows: rows.length };
+      if (res.status === 403 || res.status === 429) { blocked++; blockedStatus = res.status; }
+      console.log(`PCS ${c} (${url}): status=${res.status} bytes=${res.bytes} rows=${rows.length}`);
+    }
+
+    // Randgeval: PCS blokkeert/rate-limit → expliciete 502 (ligt aan de bron,
+    // niet aan de etappe), niet de generieke 404.
+    if (blocked > 0 && raw.stage.length === 0 && raw.gc.length === 0) {
+      return new Response(JSON.stringify({
+        error: `ProCyclingStats blokkeerde de aanvraag (status ${blockedStatus})`,
+        source_url: sourceUrl,
+        diagnostics: diag,
+      }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (raw.stage.length === 0 && raw.gc.length === 0) {
       return new Response(JSON.stringify({
         error: `Geen uitslag gevonden op ${sourceUrl} — etappe nog niet verreden of bron onbereikbaar?`,
+        source_url: sourceUrl,
+        // status/bytes/rows per classification → oorzaak zichtbaar (blokkade vs
+        // lege pagina vs parserfout).
+        diagnostics: diag,
       }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
