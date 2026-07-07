@@ -3,6 +3,8 @@ import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Menu, X, Instagram } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import LanguageToggle from "@/components/LanguageToggle";
 import { SteunKopgroepPill } from "@/components/SteunKopgroep";
 import CookieBanner from "@/components/CookieBanner";
 import RouteSeo from "@/components/RouteSeo";
@@ -16,13 +18,14 @@ import SponsorStrip from "@/components/SponsorStrip";
 
 const INSTAGRAM_URL = "https://www.instagram.com/koerspoule/";
 
+// Labels als i18n-sleutels; t() in de component (nav.<key>).
 const navItems = [
-  { to: "/", label: "Home" },
-  { to: "/team-samenstellen", label: "Stel je team samen" },
-  { to: "/uitslagen", label: "Uitslagen" },
-  { to: "/mijn-peloton", label: "Mijn Peloton" },
-  { to: "/uitleg", label: "Uitleg" },
-  { to: "/regels", label: "Koersreglement" },
+  { to: "/", key: "nav.home" },
+  { to: "/team-samenstellen", key: "nav.buildTeam" },
+  { to: "/uitslagen", key: "nav.results" },
+  { to: "/mijn-peloton", key: "nav.myPeloton" },
+  { to: "/uitleg", key: "nav.explain" },
+  { to: "/regels", key: "nav.rules" },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -32,11 +35,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, role } = useAuth();
   const { thema } = useThema();
   const { data: currentGame } = useCurrentGame();
+  const { t } = useTranslation();
   const isLoggedIn = Boolean(user);
 
   // "Prijzen" alleen in de nav als de actieve game 'm zichtbaar heeft gezet.
   const visibleNav = currentGame?.prizes_visible
-    ? [...navItems.slice(0, 4), { to: "/prijzen", label: "Prijzen" }, ...navItems.slice(4)]
+    ? [...navItems.slice(0, 4), { to: "/prijzen", key: "nav.prizes" }, ...navItems.slice(4)]
     : navItems;
 
   // Kleur-tokens worden nu door ThemaProvider gezet (vervangt useAccentColor).
@@ -73,9 +77,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <SteunKopgroepPill />
             </div>
 
-            {/* Rechter-groep: Instagram (altijd zichtbaar) + auth (desktop) /
-                hamburger (mobiel) */}
+            {/* Rechter-groep: taal + Instagram (altijd zichtbaar) + auth
+                (desktop) / hamburger (mobiel) */}
             <div className="flex items-center gap-2">
+              <LanguageToggle />
               <a
                 href={INSTAGRAM_URL}
                 target="_blank"
@@ -95,7 +100,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     onClick={handleLogout}
                     className="px-3 py-1.5 text-xs font-medium border border-foreground/30 rounded hover:bg-secondary transition-colors"
                   >
-                    Uitloggen
+                    {t("shell.logout")}
                   </button>
                 ) : (
                   <Link
@@ -103,7 +108,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     to="/login"
                     className="px-3 py-1.5 text-xs font-medium border border-foreground/30 rounded hover:bg-secondary transition-colors"
                   >
-                    Inloggen
+                    {t("shell.login")}
                   </Link>
                 )}
               </div>
@@ -112,7 +117,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <button
                 className="md:hidden p-1.5 -mr-1"
                 onClick={() => setMobileOpen(!mobileOpen)}
-                aria-label={mobileOpen ? "Menu sluiten" : "Menu openen"}
+                aria-label={mobileOpen ? t("shell.menuClose") : t("shell.menuOpen")}
                 aria-expanded={mobileOpen}
                 aria-controls="mobile-nav"
               >
@@ -149,7 +154,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       isActive && "active"
                     )}
                   >
-                    {item.label}
+                    {t(item.key)}
                   </Link>
                 );
               })}
@@ -167,7 +172,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 onClick={() => setMobileOpen(false)}
                 className={cn("nav-link-editorial", location.pathname === item.to && "active")}
               >
-                {item.label}
+                {t(item.key)}
               </Link>
             ))}
             <div className="w-full border-t border-border/40 pt-2 mt-1 flex">
@@ -176,7 +181,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   onClick={handleLogout}
                   className="nav-link-editorial"
                 >
-                  Uitloggen
+                  {t("shell.logout")}
                 </button>
               ) : (
                 <Link
@@ -184,7 +189,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   onClick={() => setMobileOpen(false)}
                   className="nav-link-editorial"
                 >
-                  Inloggen
+                  {t("shell.login")}
                 </Link>
               )}
             </div>

@@ -27,6 +27,7 @@
 
 import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import RubriekBlock from "@/components/RubriekBlock";
 import { Bike, BookOpen, Trophy, Users, Instagram } from "lucide-react";
 
@@ -110,27 +111,12 @@ const RACE_COPY: Record<RaceKey, RaceCopy> = {
 // Spelregels (uit de oude Index.tsx — onveranderd)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const features = [
-  {
-    icon: Bike,
-    title: "Stel je ploeg samen",
-    desc: "Kies uit 21 categorieën jouw droomrenners en voeg 2 jokers toe.",
-  },
-  {
-    icon: Users,
-    title: "Daag je vrienden uit",
-    desc: "Maak een subpoule aan en strijd tegen je vrienden om de eer.",
-  },
-  {
-    icon: Trophy,
-    title: "Scoor punten",
-    desc: "Verdien punten per etappe en met klassementsvoorspellingen.",
-  },
-  {
-    icon: BookOpen,
-    title: "Helder reglement",
-    desc: "De jury heeft altijd gelijk. Zo niet, dan toch.",
-  },
+// Iconen + i18n-sleutels; t() gebeurt in de component (taal kan wisselen).
+const FEATURE_DEFS = [
+  { icon: Bike, titleKey: "landing.feature1Title", descKey: "landing.feature1Desc", rulesLink: false },
+  { icon: Users, titleKey: "landing.feature2Title", descKey: "landing.feature2Desc", rulesLink: false },
+  { icon: Trophy, titleKey: "landing.feature3Title", descKey: "landing.feature3Desc", rulesLink: false },
+  { icon: BookOpen, titleKey: "landing.feature4Title", descKey: "landing.feature4Desc", rulesLink: true },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -170,6 +156,7 @@ const MOCK_MY_PROGRESS = {
 
 export default function Index() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data: currentGame } = useCurrentGame();
   const { thema, key: themaKey, ready: themaReady } = useThema();
 
@@ -310,7 +297,7 @@ export default function Index() {
               .join(" ");
       return {
         p: i + 1,
-        name: entry.display_name ?? entry.team_name ?? "Deelnemer",
+        name: entry.display_name ?? entry.team_name ?? t("landing.participantFallback"),
         team: entry.team_name ?? "",
         pts: dayPointsByEntry.get(entry.id) ?? 0,
         jersey: JERSEY_COLORS[i] ?? null,
@@ -319,7 +306,7 @@ export default function Index() {
       };
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showRealData, daySortedEntries, dayPointsByEntry, cumulativeByEntry, maxCumulative, user?.id]);
+  }, [showRealData, daySortedEntries, dayPointsByEntry, cumulativeByEntry, maxCumulative, user?.id, t]);
 
   const myRowOutsideTop5: TopFiveRow | null = useMemo(() => {
     if (!showRealData || !myEntry || !myDayRank || myDayRank <= 5) return null;
@@ -337,14 +324,14 @@ export default function Index() {
             .join(" ");
     return {
       p: myDayRank,
-      name: myEntry.display_name ?? myEntry.team_name ?? "Jij",
+      name: myEntry.display_name ?? myEntry.team_name ?? t("landing.youFallback"),
       team: myEntry.team_name ?? "",
       pts: dayPointsByEntry.get(myEntry.id) ?? 0,
       jersey: null,
       you: true,
       spark,
     };
-  }, [showRealData, myEntry, myDayRank, dayPointsByEntry, cumulativeByEntry, maxCumulative]);
+  }, [showRealData, myEntry, myDayRank, dayPointsByEntry, cumulativeByEntry, maxCumulative, t]);
 
   const myProgress = useMemo(() => {
     if (!showRealSparkline) return MOCK_MY_PROGRESS;
@@ -392,14 +379,14 @@ export default function Index() {
   const rankChangeText = useMemo(() => {
     // Uitgelogd/geen data → marketing-preview. Echte deelnemer met 1 etappe →
     // nog geen verloop, dus geen (verzonnen) sprong tonen.
-    if (!showRealSparkline) return "+6 in 4 etappes 🔥";
+    if (!showRealSparkline) return t("landing.rankChangeMock");
     const n = myRankProgression.length;
-    if (n < 2) return "na etappe 1";
+    if (n < 2) return t("landing.afterStageOne");
     const change = myRankProgression[0] - myRankProgression[n - 1];
-    if (change > 0) return `+${change} in ${n} etappes 🔥`;
-    if (change < 0) return `${change} in ${n} etappes 📉`;
-    return `stabiel in ${n} etappes`;
-  }, [showRealSparkline, myRankProgression]);
+    if (change > 0) return t("landing.rankUp", { change, count: n });
+    if (change < 0) return t("landing.rankDown", { change, count: n });
+    return t("landing.rankStable", { count: n });
+  }, [showRealSparkline, myRankProgression, t]);
 
   const totalEntries = allEntries.length || 11;
   const midRankLabel = `P${Math.round(1 + (totalEntries - 1) * 0.5)}`;
@@ -429,7 +416,7 @@ export default function Index() {
             {/* Linker kolom — koers + CTAs + stats */}
             <div className="relative">
               <Stamp tone="thema" rotation={-2} className="mb-3">
-                {themaReady ? thema.homepage_subtitel : "Uit liefde voor de koers"}
+                {themaReady ? thema.homepage_subtitel : t("landing.subtitleFallback")}
               </Stamp>
               <br className="hidden md:block" />
               {themaReady ? (
@@ -467,7 +454,7 @@ export default function Index() {
 
 
               <p className="font-serif italic text-foreground/80 md:text-xl max-w-[480px] mt-6 leading-relaxed text-lg my-[2px] text-center">
-                Het gratis Tour de France 2026-spel. Stel je ploeg samen en speel in je eigen subpoule. ⭐
+                {t("landing.tagline")}
               </p>
 
               {/* Sociale teller — drijft FOMO. Pas tonen vanaf 5 ploegen,
@@ -477,23 +464,23 @@ export default function Index() {
                   className="retro-border-primary font-bold"
                   onClick={() => navigate("/team-samenstellen")}
                 >
-                  🚴 Stel je ploeg samen
+                  {t("landing.ctaBuildTeam")}
                 </Button>
                 <Button
                   className="retro-border-primary font-bold"
                   onClick={() => navigate("/login?register=1")}
                 >
-                  Schrijf je in →
+                  {t("landing.ctaRegister")}
                 </Button>
                 <Button
                   variant="outline"
                   className="retro-border"
                   onClick={() => navigate("/uitslagen")}
                 >
-                  Bekijk uitslagen
+                  {t("landing.ctaResults")}
                 </Button>
                 <span className="margin-note tilt-l hidden md:inline-block ml-3 text-lg">
-                  Gratis &amp; Uit Liefde voor de koers ✿
+                  {t("landing.marginFree")}
                 </span>
               </div>
 
@@ -559,15 +546,15 @@ export default function Index() {
       <section className="container mx-auto px-5 pt-6">
         <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
           <div className="text-center md:text-right shrink-0">
-            <span className="overline-stamp">— De start nadert —</span>
-            <h2 className="heading-oswald text-xl md:text-2xl leading-tight">Klaar om te koersen?</h2>
+            <span className="overline-stamp">{t("landing.countdownEyebrow")}</span>
+            <h2 className="heading-oswald text-xl md:text-2xl leading-tight">{t("landing.readyToRace")}</h2>
           </div>
           <CountdownBanner className="w-full md:w-auto md:max-w-xl shrink-0" />
           <Button
             className="retro-border-primary font-bold shrink-0 w-full md:w-auto"
             onClick={() => navigate("/login?register=1")}
           >
-            Schrijf je in →
+            {t("landing.ctaRegister")}
           </Button>
         </div>
       </section>
@@ -584,7 +571,7 @@ export default function Index() {
             className="font-mono uppercase"
             style={{ fontSize: 10.5, letterSpacing: "0.22em" }}
           >
-            DE COURANT — VANDAAG
+            {t("landing.courantHeader")}
           </span>
           <span className="text-xs text-muted-foreground">{"\n"}</span>
         </div>
@@ -592,9 +579,9 @@ export default function Index() {
         <div className="grid grid-cols-1 md:grid-cols-3 border-b-2 border-[hsl(var(--vintage-gold))/0.3]">
           {/* Top 5 */}
           <div className="py-5 md:pr-6 md:border-r border-[hsl(var(--vintage-gold))/0.25]">
-            <div className="overline-stamp mb-1">Daguitslag</div>
+            <div className="overline-stamp mb-1">{t("landing.dayResult")}</div>
             <div className="font-display font-bold text-2xl leading-tight">
-              De top vijf{lastStage ? ` van etappe ${lastStage.stage_number}` : ""}
+              {lastStage ? t("landing.topFiveOfStage", { stage: lastStage.stage_number }) : t("landing.topFive")}
             </div>
             <div className="mt-3">
               {(showRealData ? realTopFive : MOCK_TOP_FIVE).map((row) => (
@@ -613,18 +600,18 @@ export default function Index() {
               to="/uitslagen"
               className="inline-block mt-3 text-xs text-primary font-semibold"
             >
-              Hele daguitslag →
+              {t("landing.fullDayResult")}
             </Link>
           </div>
 
           {/* Sparkline */}
           <div className="py-5 md:px-6 md:border-r border-[hsl(var(--vintage-gold))/0.25] relative">
-            <div className="overline-stamp mb-1">Jouw koers</div>
+            <div className="overline-stamp mb-1">{t("landing.yourRace")}</div>
             <div className="font-display font-bold text-2xl leading-tight">
               {myProgress.from === myProgress.to ? (
-                <>Nu op plek <span className="text-primary">{myProgress.to}</span></>
+                <Trans i18nKey="landing.nowAtRank" values={{ rank: myProgress.to }} components={{ 1: <span className="text-primary" /> }} />
               ) : (
-                <>Van plek {myProgress.from} naar plek <span className="text-primary">{myProgress.to}</span></>
+                <Trans i18nKey="landing.fromToRank" values={{ from: myProgress.from, to: myProgress.to }} components={{ 1: <span className="text-primary" /> }} />
               )}
             </div>
             <div className="mt-3 relative h-[130px]">
@@ -704,16 +691,16 @@ export default function Index() {
         id="stel-je-ploeg-samen"
         className="container mx-auto px-5 py-12 md:py-16 vintage-texture text-center scroll-mt-16"
       >
-        <span className="overline-stamp text-sm md:text-base">— Spelregels in vier alinea's —</span>
-        <h2 className="heading-oswald text-3xl md:text-4xl mt-3">Hoe werkt het?</h2>
+        <span className="overline-stamp text-sm md:text-base">{t("landing.rulesEyebrow")}</span>
+        <h2 className="heading-oswald text-3xl md:text-4xl mt-3">{t("landing.howItWorks")}</h2>
         <div className="vintage-ornament max-w-[200px] mx-auto mt-3.5 mb-7">
           <span className="vintage-ornament-symbol">✦</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
-          {features.map((f, i) => (
+          {FEATURE_DEFS.map((f, i) => (
             <div
-              key={f.title}
+              key={f.titleKey}
               className="ornate-frame retro-border bg-card p-6 animate-fade-in"
               style={{ animationDelay: `${0.1 * i}s` }}
             >
@@ -729,16 +716,16 @@ export default function Index() {
                   <f.icon className="h-5 w-5 text-primary-foreground" />
                 </div>
               </div>
-              <h3 className="font-display text-lg font-bold mb-2">{f.title}</h3>
-              <p className="text-sm text-muted-foreground m-0">{f.desc}</p>
-              {f.title === "Helder reglement" && (
+              <h3 className="font-display text-lg font-bold mb-2">{t(f.titleKey)}</h3>
+              <p className="text-sm text-muted-foreground m-0">{t(f.descKey)}</p>
+              {f.rulesLink && (
                 <Button
                   size="sm"
                   variant="outline"
                   className="mt-3 text-xs retro-border"
                   onClick={() => navigate("/regels")}
                 >
-                  Koersreglement →
+                  {t("landing.rulesButton")}
                 </Button>
               )}
             </div>
@@ -750,7 +737,7 @@ export default function Index() {
             className="retro-border-primary font-bold"
             onClick={() => navigate("/preview")}
           >
-            Preview
+            {t("landing.previewButton")}
           </Button>
         </div>
       </section>
@@ -760,32 +747,32 @@ export default function Index() {
         <div className="vintage-ornament max-w-xs mx-auto mb-5">
           <span className="vintage-ornament-symbol">❧</span>
         </div>
-        <h2 className="heading-oswald text-3xl md:text-4xl mb-3">Klaar om te koersen?</h2>
+        <h2 className="heading-oswald text-3xl md:text-4xl mb-3">{t("landing.readyToRace")}</h2>
         <p className="text-muted-foreground font-serif italic max-w-md mx-auto mb-5">
-          De afteller staat bovenaan — pak je startbewijs voor de inschrijving sluit.
+          {t("landing.ctaClosing")}
         </p>
         <Button
           className="retro-border-primary font-bold"
           onClick={() => navigate("/login?register=1")}
         >
-          Schrijf je in →
+          {t("landing.ctaRegister")}
         </Button>
       </section>
 
       <footer className="container mx-auto px-5 pb-10">
         <div className="border-t-2 border-foreground pt-4 flex items-center justify-between flex-wrap gap-3">
           <span className="font-serif italic text-sm text-muted-foreground">
-            Koerspoule · editie Tour de France 2026
+            {t("landing.footerEdition")}
           </span>
           <a
             href={INSTAGRAM_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="retro-border no-hover-lift inline-flex items-center gap-2 rounded-full bg-card px-3 py-1.5 text-sm font-semibold hover:bg-secondary/40 transition-colors"
-            aria-label="Volg Koerspoule op Instagram"
+            aria-label={t("landing.followInstagramAria")}
           >
             <Instagram className="h-4 w-4 text-primary" />
-            Volg ons op Instagram
+            {t("landing.followInstagram")}
             <span className="font-mono text-xs text-muted-foreground">@koerspoule</span>
           </a>
         </div>
@@ -811,6 +798,7 @@ function Stat({ value, label, last }: { value: string; label: string; last?: boo
 }
 
 function TopFiveRow({ row }: { row: TopFiveRow }) {
+  const { t } = useTranslation();
   const lineColor =
     row.p === 1
       ? "hsl(var(--primary))"
@@ -839,7 +827,7 @@ function TopFiveRow({ row }: { row: TopFiveRow }) {
           )}
           {row.name}
           {row.you && (
-            <span className="margin-note tilt-l text-base ml-1">← jij!</span>
+            <span className="margin-note tilt-l text-base ml-1">{t("landing.youMarker")}</span>
           )}
         </div>
         <div className="text-[11px] text-muted-foreground">{row.team}</div>

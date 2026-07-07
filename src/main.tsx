@@ -1,3 +1,4 @@
+import "./i18n"; // synchroon vóór de render — init hard op nl (SSR/hydration)
 import { createRoot, hydrateRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";

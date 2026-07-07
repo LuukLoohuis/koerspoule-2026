@@ -1,4 +1,5 @@
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { applyStoredLanguage } from "@/i18n";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -53,7 +54,14 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
+const App = () => {
+  // Hydration-veilige taal: eerste render is altijd nl (gelijk aan de
+  // geprerenderde HTML); pas ná mount de opgeslagen voorkeur activeren.
+  useEffect(() => {
+    applyStoredLanguage();
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -136,6 +144,7 @@ const App = () => (
         </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
