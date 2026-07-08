@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useTranslation, Trans } from "react-i18next";
+import type { TFunction } from "i18next";
 import { sendEmail, registratieHtml } from "@/lib/sendEmail";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -24,30 +26,30 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-function formatError(error: unknown): string {
-  if (!(error instanceof Error)) return "Onbekende fout.";
+function formatError(error: unknown, t: TFunction): string {
+  if (!(error instanceof Error)) return t("auth.login.errorUnknown");
   const msg = error.message;
 
   if (msg.startsWith("TIMEOUT"))
-    return "Server reageert niet. Ga naar supabase.com/dashboard en controleer of je project actief is (niet gepauzeerd).";
+    return t("auth.login.errorTimeout");
 
   if (msg.toLowerCase().includes("email rate limit"))
-    return "Te veel e-mails verstuurd. Wacht een paar minuten en probeer opnieuw.";
+    return t("auth.login.errorRateLimit");
 
   if (msg.toLowerCase().includes("invalid login credentials"))
-    return "Onjuist e-mailadres of wachtwoord.";
+    return t("auth.login.errorInvalidCredentials");
 
   if (msg.toLowerCase().includes("email not confirmed"))
-    return "E-mail nog niet bevestigd. Check je inbox (en spam) voor de bevestigingsmail.";
+    return t("auth.login.errorEmailNotConfirmed");
 
   if (msg.toLowerCase().includes("user already registered"))
-    return "Er bestaat al een account met dit e-mailadres. Probeer in te loggen.";
+    return t("auth.login.errorUserExists");
 
   if (msg.toLowerCase().includes("signup is disabled"))
-    return "Registratie is uitgeschakeld in Supabase. Schakel het in via Authentication → Settings.";
+    return t("auth.login.errorSignupDisabled");
 
   if (msg.toLowerCase().includes("password") && msg.toLowerCase().includes("characters"))
-    return "Wachtwoord moet minimaal 6 tekens zijn.";
+    return t("auth.login.errorPasswordLength");
 
   return msg;
 }
@@ -67,6 +69,7 @@ function safeReturnTo(rt: string | null): string {
 }
 
 export default function Login() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { thema } = useThema();
@@ -100,10 +103,10 @@ export default function Login() {
         15000,
       );
       if (error) throw error;
-      toast({ title: "Mail opnieuw verstuurd 📬", description: `Check de inbox van ${signupEmail} (ook spam).` });
+      toast({ title: t("auth.login.resendSuccessTitle"), description: t("auth.login.resendSuccessDesc", { email: signupEmail }) });
       setResendCooldown(30);
     } catch (error) {
-      toast({ title: "Versturen mislukt", description: formatError(error), variant: "destructive" });
+      toast({ title: t("auth.login.sendFailedTitle"), description: formatError(error, t), variant: "destructive" });
     } finally {
       setIsResending(false);
     }
@@ -114,8 +117,8 @@ export default function Login() {
     const target = email.trim();
     if (!target) {
       toast({
-        title: "Vul je e-mailadres in",
-        description: "Type bovenin het e-mailadres waarvoor je een resetlink wilt ontvangen.",
+        title: t("auth.login.fillEmailTitle"),
+        description: t("auth.login.fillEmailDesc"),
         variant: "destructive",
       });
       return;
@@ -138,16 +141,16 @@ export default function Login() {
       if (error) throw error;
       captureEvent("password_reset_requested", {
         has_email_input: true,
-        reset_origin,
+        reset_origin: resetOrigin,
       });
       toast({
-        title: "Resetlink verstuurd 📬",
-        description: `Check de inbox van ${target} (ook spam) voor de link om je wachtwoord opnieuw in te stellen.`,
+        title: t("auth.login.resetSentTitle"),
+        description: t("auth.login.resetSentDesc", { email: target }),
       });
     } catch (error) {
       toast({
-        title: "Versturen mislukt",
-        description: formatError(error),
+        title: t("auth.login.sendFailedTitle"),
+        description: formatError(error, t),
         variant: "destructive",
       });
     } finally {
@@ -160,16 +163,15 @@ export default function Login() {
 
     if (!supabase) {
       toast({
-        title: "Supabase niet geconfigureerd",
-        description:
-          "Stel VITE_SUPABASE_URL en VITE_SUPABASE_ANON_KEY in als environment variables.",
+        title: t("auth.login.supabaseMissingTitle"),
+        description: t("auth.login.supabaseMissingDesc"),
         variant: "destructive",
       });
       return;
     }
 
     setIsSubmitting(true);
-    setStatusMsg(isRegister ? "Account aanmaken..." : "Inloggen...");
+    setStatusMsg(isRegister ? t("auth.login.statusRegistering") : t("auth.login.statusLoggingIn"));
 
     try {
       if (isRegister) {
@@ -209,7 +211,7 @@ export default function Login() {
 
         if (data.session) {
           // E-mailbevestiging staat uit → meteen ingelogd.
-          toast({ title: "Account aangemaakt! 🎉", description: "Je bent ingelogd." });
+          toast({ title: t("auth.login.accountCreatedTitle"), description: t("auth.login.accountCreatedDesc") });
           navigate(safeReturnTo(searchParams.get("returnTo")), { replace: true });
         } else {
           // Bevestiging vereist → eigen check-email-scherm, geen redirect/toast.
@@ -224,8 +226,8 @@ export default function Login() {
 
         if (!data.session) {
           toast({
-            title: "E-mail nog niet bevestigd",
-            description: "Controleer je inbox (en spam) voor de bevestigingslink.",
+            title: t("auth.login.confirmNeededTitle"),
+            description: t("auth.login.confirmNeededDesc"),
             variant: "destructive",
           });
           return;
@@ -239,8 +241,8 @@ export default function Login() {
           return_to: safeReturnTo(searchParams.get("returnTo")),
         });
         toast({
-          title: "Ingelogd! 🚴",
-          description: "Welkom terug bij Koerspoule.",
+          title: t("auth.login.loggedInTitle"),
+          description: t("auth.login.loggedInDesc"),
         });
         navigate(safeReturnTo(searchParams.get("returnTo")), { replace: true });
       }
@@ -250,8 +252,8 @@ export default function Login() {
         mode: isRegister ? "register" : "login",
       });
       toast({
-        title: "Actie mislukt",
-        description: formatError(error),
+        title: t("auth.login.actionFailedTitle"),
+        description: formatError(error, t),
         variant: "destructive",
       });
     } finally {
@@ -307,7 +309,7 @@ export default function Login() {
         >
           <img
             src={koerspouleLogo}
-            alt="Koerspoule logo"
+            alt={t("auth.login.logoAlt")}
             className="h-20 mx-auto mb-2 drop-shadow-lg"
           />
 
@@ -327,15 +329,15 @@ export default function Login() {
             >
               <h1 className="font-display text-3xl font-bold mb-1 tracking-tight">
                 {signupEmail
-                  ? "Bijna binnen! Bevestig je e-mail"
+                  ? t("auth.login.checkEmailTitle")
                   : isRegister ? thema.login_meedoen : thema.login_welkom}
               </h1>
               <p className="text-muted-foreground font-serif italic text-sm">
                 {signupEmail
-                  ? "Nog één stapje — check je inbox."
+                  ? t("auth.login.checkEmailSubtitle")
                   : isRegister
-                    ? "Schrijf je in en stel je droomploeg samen."
-                    : "Log in en bekijk je peloton."}
+                    ? t("auth.login.registerSubtitle")
+                    : t("auth.login.loginSubtitle")}
               </p>
             </motion.div>
           </AnimatePresence>
@@ -372,12 +374,11 @@ export default function Login() {
           {signupEmail ? (
             <div className="space-y-4 text-center">
               <p className="font-serif text-sm text-muted-foreground">
-                We stuurden een bevestigingslink naar:
+                {t("auth.login.sentLinkTo")}
               </p>
               <p className="font-display font-bold text-base break-all">{signupEmail}</p>
               <p className="text-sm text-muted-foreground font-sans leading-relaxed">
-                Open de mail en klik op de link om je account te bevestigen. Geen mail?
-                Check ook je <strong>spam-/ongewenst</strong>-map.
+                <Trans i18nKey="auth.login.confirmInstruction" />
               </p>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
@@ -388,10 +389,10 @@ export default function Login() {
                   className="w-full retro-border font-bold h-11"
                 >
                   {resendCooldown > 0
-                    ? `Opnieuw versturen (${resendCooldown}s)`
+                    ? t("auth.login.resendCountdown", { seconds: resendCooldown })
                     : isResending
-                      ? "Versturen…"
-                      : "Mail niet ontvangen? Opnieuw versturen"}
+                      ? t("auth.login.resending")
+                      : t("auth.login.resendButton")}
                 </Button>
               </motion.div>
               <button
@@ -399,7 +400,7 @@ export default function Login() {
                 onClick={() => { setSignupEmail(null); setIsRegister(false); }}
                 className="text-accent font-bold hover:underline transition-colors text-sm"
               >
-                ← Terug naar inloggen
+                {t("auth.login.backToLogin")}
               </button>
             </div>
           ) : (
@@ -422,13 +423,13 @@ export default function Login() {
                   transition={{ duration: 0.25 }}
                 >
                   <Label htmlFor="name" className="font-serif">
-                    Ploegnaam
+                    {t("auth.login.teamNameLabel")}
                   </Label>
                   <Input
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Jouw naam"
+                    placeholder={t("auth.login.teamNamePlaceholder")}
                     className="mt-1"
                     required
                   />
@@ -436,21 +437,21 @@ export default function Login() {
               )}
               <div>
                 <Label htmlFor="email" className="font-serif">
-                  E-mailadres
+                  {t("auth.login.emailLabel")}
                 </Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="jouw@email.nl"
+                  placeholder={t("auth.login.emailPlaceholder")}
                   className="mt-1"
                   required
                 />
               </div>
               <div>
                 <Label htmlFor="password" className="font-serif">
-                  Wachtwoord
+                  {t("auth.login.passwordLabel")}
                 </Label>
                 <div className="relative mt-1">
                   <Input
@@ -466,7 +467,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? "Verberg wachtwoord" : "Toon wachtwoord"}
+                    aria-label={showPassword ? t("auth.login.hidePassword") : t("auth.login.showPassword")}
                     aria-pressed={showPassword}
                     className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] rounded-r-md"
                   >
@@ -482,10 +483,10 @@ export default function Login() {
                   className="w-full retro-border-primary font-bold text-base h-11 tracking-wide"
                 >
                   {isSubmitting
-                    ? statusMsg || "Bezig..."
+                    ? statusMsg || t("auth.login.busy")
                     : isRegister
-                      ? "🚴 Account aanmaken"
-                      : "🏁 Inloggen"}
+                      ? t("auth.login.registerButton")
+                      : t("auth.login.loginButton")}
                 </Button>
               </motion.div>
             </motion.form>
@@ -499,7 +500,7 @@ export default function Login() {
                 disabled={isSendingReset}
                 className="text-xs text-muted-foreground hover:text-accent hover:underline transition-colors font-sans disabled:opacity-50"
               >
-                {isSendingReset ? "Resetlink versturen..." : "Wachtwoord vergeten? →"}
+                {isSendingReset ? t("auth.login.sendingReset") : t("auth.login.forgotPassword")}
               </button>
             </div>
           )}
@@ -507,12 +508,12 @@ export default function Login() {
           <div className="vintage-divider my-4" />
 
           <p className="text-center text-sm text-muted-foreground font-sans">
-            {isRegister ? "Al een account?" : "Nog geen account?"}{" "}
+            {isRegister ? t("auth.login.haveAccount") : t("auth.login.noAccount")}{" "}
             <button
               onClick={() => setIsRegister(!isRegister)}
               className="text-accent font-bold hover:underline transition-colors"
             >
-              {isRegister ? "Log in →" : "Schrijf je in →"}
+              {isRegister ? t("auth.login.switchToLogin") : t("auth.login.switchToRegister")}
             </button>
           </p>
           </>
@@ -529,7 +530,7 @@ export default function Login() {
             to="/regels"
             className="hover:underline hover:text-foreground transition-colors"
           >
-            📜 Bekijk de spelregels →
+            {t("auth.login.viewRules")}
           </Link>
         </motion.p>
       </div>

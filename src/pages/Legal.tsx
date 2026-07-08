@@ -1,49 +1,51 @@
+import { useTranslation, Trans } from "react-i18next";
+
 export default function Legal() {
+  const { t } = useTranslation();
+
+  const mailLink = (
+    <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors" />
+  );
+
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl">
       <h1 className="font-serif text-4xl md:text-5xl font-bold mb-8 text-foreground">
-        Privacy &amp; voorwaarden
+        {t("common.legal.title")}
       </h1>
 
       <div className="space-y-12 font-sans text-foreground/90 leading-relaxed">
         {/* Privacyverklaring */}
         <section>
           <h2 className="font-serif text-2xl font-bold mb-4 text-foreground" id="privacy">
-            🔒 Privacyverklaring
+            {t("common.legal.privacyHeading")}
           </h2>
           <div className="space-y-3 text-sm">
             <p>
-              Koerspoule respecteert de privacy van alle gebruikers en draagt er zorg voor dat
-              de persoonlijke informatie die je ons verschaft vertrouwelijk wordt behandeld.
+              {t("common.legal.privacyIntro")}
             </p>
-            <p><strong>Welke gegevens verzamelen wij?</strong></p>
+            <p><strong>{t("common.legal.privacyCollectTitle")}</strong></p>
             <ul className="list-disc pl-6 space-y-1">
-              <li>Naam en e-mailadres (bij registratie)</li>
-              <li>Ploegnaam en teamkeuzes</li>
+              <li>{t("common.legal.privacyCollect1")}</li>
+              <li>{t("common.legal.privacyCollect2")}</li>
               <li>
-                Woonplaats — <strong>optioneel</strong>. Bij sommige subpoules kun je je woonplaats
-                opgeven voor het streekklassement. Dit is niet verplicht en je woonplaats is alleen
-                zichtbaar binnen die subpoule.
+                <Trans i18nKey="common.legal.privacyCollect3" />
               </li>
-              <li>Technische gegevens zoals IP-adres en browsertype (voor statistieken)</li>
+              <li>{t("common.legal.privacyCollect4")}</li>
             </ul>
-            <p><strong>Waarvoor gebruiken wij deze gegevens?</strong></p>
+            <p><strong>{t("common.legal.privacyUseTitle")}</strong></p>
             <ul className="list-disc pl-6 space-y-1">
-              <li>Het aanbieden en verbeteren van de Koerspoule-dienst</li>
-              <li>Communicatie over je account en het spel</li>
-              <li>Het bijhouden van scores en klassementen</li>
+              <li>{t("common.legal.privacyUse1")}</li>
+              <li>{t("common.legal.privacyUse2")}</li>
+              <li>{t("common.legal.privacyUse3")}</li>
             </ul>
             <p>
-              Wij verkopen jouw gegevens niet en delen ze niet met derden voor hun eigen doeleinden.
-              Wel maken wij gebruik van externe diensten (verwerkers) die namens ons gegevens
-              verwerken om de site te laten draaien — zie het kopje{" "}
-              <a href="#verwerkers" className="underline hover:text-foreground transition-colors">Externe diensten</a>.
-              Daarnaast delen wij gegevens alleen wanneer dit wettelijk verplicht is.
-              Je hebt te allen tijde het recht om je gegevens in te zien, te corrigeren of te
-              laten verwijderen. Neem hiervoor contact op via{" "}
-              <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors">
-                koerspoule@gmail.com
-              </a>.
+              <Trans
+                i18nKey="common.legal.privacyShare"
+                components={{
+                  anchor: <a href="#verwerkers" className="underline hover:text-foreground transition-colors" />,
+                  mail: mailLink,
+                }}
+              />
             </p>
           </div>
         </section>
@@ -53,35 +55,26 @@ export default function Legal() {
         {/* Cookiebeleid */}
         <section>
           <h2 className="font-serif text-2xl font-bold mb-4 text-foreground" id="cookies">
-            🍪 Cookiebeleid
+            {t("common.legal.cookiesHeading")}
           </h2>
           <div className="space-y-3 text-sm">
             <p>
-              Koerspoule maakt gebruik van cookies om de website goed te laten functioneren
-              en om je ervaring te verbeteren.
+              {t("common.legal.cookiesIntro")}
             </p>
-            <p><strong>Welke cookies gebruiken wij?</strong></p>
+            <p><strong>{t("common.legal.cookiesWhichTitle")}</strong></p>
             <ul className="list-disc pl-6 space-y-1">
               <li>
-                <strong>Functionele cookies:</strong> noodzakelijk voor de werking van de site
-                (bijv. inlogstatus, sessie-informatie).
+                <Trans i18nKey="common.legal.cookiesFunctional" />
               </li>
               <li>
-                <strong>Analytische cookies:</strong> om anoniem inzicht te krijgen in het
-                gebruik van de website (bijv. paginabezoeken).
+                <Trans i18nKey="common.legal.cookiesAnalytics" />
               </li>
               <li>
-                <strong>Advertentiecookies (Google AdSense):</strong> wij tonen advertenties via
-                Google AdSense. Je toestemming hiervoor wordt afgehandeld door Google's
-                gecertificeerde toestemmingsvenster (Funding Choices / Privacy &amp; messaging),
-                dat <strong>gepersonaliseerde advertentiecookies pas plaatst nadat je
-                toestemming geeft</strong>.
+                <Trans i18nKey="common.legal.cookiesAds" />
               </li>
             </ul>
             <p>
-              Functionele cookies zijn altijd actief; advertentiecookies alleen met jouw
-              toestemming via het Google-venster. Je kunt cookies blokkeren via je
-              browserinstellingen, maar dit kan de werking van de site beïnvloeden.
+              {t("common.legal.cookiesClosing")}
             </p>
           </div>
         </section>
@@ -91,32 +84,27 @@ export default function Legal() {
         {/* Externe diensten / verwerkers */}
         <section>
           <h2 className="font-serif text-2xl font-bold mb-4 text-foreground" id="verwerkers">
-            🤝 Externe diensten (verwerkers)
+            {t("common.legal.verwerkersHeading")}
           </h2>
           <div className="space-y-3 text-sm">
             <p>
-              Om Koerspoule te laten functioneren maken wij gebruik van een aantal externe
-              diensten die namens ons gegevens verwerken. Met deze partijen worden alleen de
-              gegevens gedeeld die nodig zijn voor de betreffende functie:
+              {t("common.legal.verwerkersIntro")}
             </p>
             <ul className="list-disc pl-6 space-y-1">
               <li>
-                <strong>Supabase</strong> — database, accounts/inloggen en opslag van je
-                spelgegevens.
+                <strong>Supabase</strong> — {t("common.legal.verwerkersSupabase")}
               </li>
               <li>
-                <strong>Vercel</strong> — hosting van de website.
+                <strong>Vercel</strong> — {t("common.legal.verwerkersVercel")}
               </li>
               <li>
-                <strong>Cloudflare</strong> — verzending van e-mails (bevestigings- en
-                notificatiemails).
+                <strong>Cloudflare</strong> — {t("common.legal.verwerkersCloudflare")}
               </li>
               <li>
-                <strong>OpenAI</strong> — het automatisch genereren van redactionele teksten
-                (etappecommentaar en voorbeschouwingen).
+                <strong>OpenAI</strong> — {t("common.legal.verwerkersOpenai")}
               </li>
               <li>
-                <strong>Google AdSense</strong> — het tonen van advertenties (zie het cookiebeleid).
+                <strong>Google AdSense</strong> — {t("common.legal.verwerkersAdsense")}
               </li>
             </ul>
           </div>
@@ -127,33 +115,18 @@ export default function Legal() {
         {/* Algemene Voorwaarden */}
         <section>
           <h2 className="font-serif text-2xl font-bold mb-4 text-foreground" id="voorwaarden">
-            📜 Algemene Voorwaarden
+            {t("common.legal.voorwaardenHeading")}
           </h2>
           <div className="space-y-3 text-sm">
             <p>
-              Door deel te nemen aan Koerspoule ga je akkoord met de volgende voorwaarden:
+              {t("common.legal.voorwaardenIntro")}
             </p>
             <ol className="list-decimal pl-6 space-y-2">
-              <li>
-                Koerspoule is een gratis spel zonder winstoogmerk. Er zijn geen financiële
-                verplichtingen verbonden aan deelname.
-              </li>
-              <li>
-                Deelnemers zijn zelf verantwoordelijk voor het samenstellen van hun team
-                vóór de aangegeven deadline.
-              </li>
-              <li>
-                De organisatie behoudt zich het recht voor om spelregels aan te passen
-                gedurende het seizoen, mits dit tijdig wordt gecommuniceerd.
-              </li>
-              <li>
-                Koerspoule is niet aansprakelijk voor eventuele technische storingen of
-                het verlies van gegevens.
-              </li>
-              <li>
-                Ongepast gedrag in de chat of richting andere deelnemers kan leiden tot
-                uitsluiting.
-              </li>
+              <li>{t("common.legal.voorwaarden1")}</li>
+              <li>{t("common.legal.voorwaarden2")}</li>
+              <li>{t("common.legal.voorwaarden3")}</li>
+              <li>{t("common.legal.voorwaarden4")}</li>
+              <li>{t("common.legal.voorwaarden5")}</li>
             </ol>
           </div>
         </section>
@@ -163,32 +136,21 @@ export default function Legal() {
         {/* AVG / GDPR */}
         <section>
           <h2 className="font-serif text-2xl font-bold mb-4 text-foreground" id="avg">
-            🇪🇺 AVG / GDPR
+            {t("common.legal.avgHeading")}
           </h2>
           <div className="space-y-3 text-sm">
             <p>
-              Koerspoule handelt in overeenstemming met de Algemene Verordening
-              Gegevensbescherming (AVG/GDPR). Dit betekent:
+              {t("common.legal.avgIntro")}
             </p>
             <ul className="list-disc pl-6 space-y-1">
-              <li>Wij verwerken alleen gegevens die noodzakelijk zijn voor het spel.</li>
-              <li>Je gegevens worden veilig opgeslagen en niet langer bewaard dan nodig.</li>
-              <li>
-                Je hebt recht op inzage, correctie, overdracht en verwijdering van je
-                persoonsgegevens.
-              </li>
-              <li>Formulieren verzamelen enkel de minimaal benodigde informatie.</li>
-              <li>
-                Advertenties tonen we via Google AdSense; de bijbehorende advertentiecookies
-                worden alleen geplaatst nadat je daarvoor toestemming geeft.
-              </li>
+              <li>{t("common.legal.avg1")}</li>
+              <li>{t("common.legal.avg2")}</li>
+              <li>{t("common.legal.avg3")}</li>
+              <li>{t("common.legal.avg4")}</li>
+              <li>{t("common.legal.avg5")}</li>
             </ul>
             <p>
-              Voor vragen of verzoeken met betrekking tot je gegevens kun je contact opnemen
-              via{" "}
-              <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors">
-                koerspoule@gmail.com
-              </a>.
+              <Trans i18nKey="common.legal.avgContact" components={{ mail: mailLink }} />
             </p>
           </div>
         </section>
@@ -196,7 +158,7 @@ export default function Legal() {
 
       <div className="vintage-divider mt-12 mb-6" />
       <p className="text-xs text-muted-foreground text-center font-sans">
-        Laatst bijgewerkt: juni 2026
+        {t("common.legal.lastUpdated")}
       </p>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
@@ -8,6 +9,7 @@ import { captureEvent, captureException } from "@/lib/posthog";
 type Status = "loading" | "success" | "invalid" | "error";
 
 export default function Uitschrijven() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<Status>("loading");
   const [email, setEmail] = useState<string | null>(null);
@@ -47,26 +49,26 @@ export default function Uitschrijven() {
         {status === "loading" && (
           <div className="space-y-3">
             <Loader2 className="w-10 h-10 animate-spin text-muted-foreground mx-auto" />
-            <p className="text-muted-foreground">Bezig met uitschrijven…</p>
+            <p className="text-muted-foreground">{t("auth.unsubscribe.loading")}</p>
           </div>
         )}
 
         {status === "success" && (
           <div className="space-y-4">
             <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto" />
-            <h1 className="font-display text-2xl font-bold">Uitgeschreven</h1>
+            <h1 className="font-display text-2xl font-bold">{t("auth.unsubscribe.successTitle")}</h1>
             <p className="text-muted-foreground">
               {email ? (
-                <>Het adres <strong>{email}</strong> ontvangt geen mailings meer van Koerspoule.</>
+                <Trans i18nKey="auth.unsubscribe.successWithEmail" values={{ email }} />
               ) : (
-                <>Je bent uitgeschreven en ontvangt geen mailings meer van Koerspoule.</>
+                t("auth.unsubscribe.successNoEmail")
               )}
             </p>
             <p className="text-sm text-muted-foreground">
-              Je kunt je account gewoon blijven gebruiken — alleen e-mails worden niet meer verstuurd.
+              {t("auth.unsubscribe.keepUsing")}
             </p>
             <Button asChild variant="outline">
-              <Link to="/">Terug naar Koerspoule →</Link>
+              <Link to="/">{t("auth.unsubscribe.backHome")}</Link>
             </Button>
           </div>
         )}
@@ -74,12 +76,12 @@ export default function Uitschrijven() {
         {status === "invalid" && (
           <div className="space-y-4">
             <XCircle className="w-12 h-12 text-destructive mx-auto" />
-            <h1 className="font-display text-2xl font-bold">Ongeldige link</h1>
+            <h1 className="font-display text-2xl font-bold">{t("auth.unsubscribe.invalidTitle")}</h1>
             <p className="text-muted-foreground">
-              Deze uitschrijflink is ongeldig of al eerder gebruikt.
+              {t("auth.unsubscribe.invalidDesc")}
             </p>
             <Button asChild variant="outline">
-              <Link to="/">Terug naar Koerspoule →</Link>
+              <Link to="/">{t("auth.unsubscribe.backHome")}</Link>
             </Button>
           </div>
         )}
@@ -87,12 +89,15 @@ export default function Uitschrijven() {
         {status === "error" && (
           <div className="space-y-4">
             <XCircle className="w-12 h-12 text-destructive mx-auto" />
-            <h1 className="font-display text-2xl font-bold">Er ging iets mis</h1>
+            <h1 className="font-display text-2xl font-bold">{t("auth.unsubscribe.errorTitle")}</h1>
             <p className="text-muted-foreground">
-              Probeer het later opnieuw of neem contact op via <a href="mailto:info@koerspoule.nl" className="underline">info@koerspoule.nl</a>.
+              <Trans
+                i18nKey="auth.unsubscribe.errorDesc"
+                components={{ mail: <a href="mailto:info@koerspoule.nl" className="underline" /> }}
+              />
             </p>
             <Button asChild variant="outline">
-              <Link to="/">Terug naar Koerspoule →</Link>
+              <Link to="/">{t("auth.unsubscribe.backHome")}</Link>
             </Button>
           </div>
         )}

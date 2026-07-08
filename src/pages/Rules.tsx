@@ -1,55 +1,46 @@
 import { useEffect, useMemo } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import { Helmet } from "react-helmet-async";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
 import { STEUN_URL } from "@/components/SteunKopgroep";
 
-const FAQ_JSONLD = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "Hoe speel je mee met Koerspoule?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Maak gratis een account met je ploegnaam, stel je ploeg samen door per categorie 1 renner te kiezen plus 2 jokers, voorspel het GC-podium en de truien, en daag je vrienden uit via een subpoule-code.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Hoe verdien je punten in de koerspoule?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Alleen renners uit jouw selectie die in de top 20 van een etappe finishen leveren etappepunten op. Jokers tellen dubbel. Daarnaast verdien je punten voor een correct GC-podium (max 150) en voor het juist voorspellen van de groene, berg- en jongerentrui (25 punten per trui).",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Wanneer moet mijn inschrijving binnen zijn?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "De inschrijving dient binnen te zijn vóór de start van de eerste etappe. Wijzigingen daarna zijn niet meer mogelijk.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Wat gebeurt er als een renner uit de koers stapt?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Als een renner uit jouw selectie uitvalt (DNS/DNF) krijgt die 0 punten en kun je hem niet vervangen. Pech voor jou — dat hoort bij de koers.",
-      },
-    },
-  ],
-};
-
 export default function Rules() {
+  const { t } = useTranslation();
+
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const { data: game, isLoading: gameLoading } = useCurrentGame();
   const { data: categories = [], isLoading: catsLoading } = useCategories(game?.id);
   const { data: schema = [], isLoading: schemaLoading } = usePointsSchema(game?.id);
+
+  const faqJsonLd = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: t("common.rules.jsonldQ1"),
+        acceptedAnswer: { "@type": "Answer", text: t("common.rules.jsonldA1") },
+      },
+      {
+        "@type": "Question",
+        name: t("common.rules.jsonldQ2"),
+        acceptedAnswer: { "@type": "Answer", text: t("common.rules.jsonldA2") },
+      },
+      {
+        "@type": "Question",
+        name: t("common.rules.jsonldQ3"),
+        acceptedAnswer: { "@type": "Answer", text: t("common.rules.jsonldA3") },
+      },
+      {
+        "@type": "Question",
+        name: t("common.rules.jsonldQ4"),
+        acceptedAnswer: { "@type": "Answer", text: t("common.rules.jsonldA4") },
+      },
+    ],
+  }), [t]);
 
   const stagePoints = useMemo(
     () => schema.filter((s) => s.classification === "stage").sort((a, b) => a.position - b.position),
@@ -60,20 +51,28 @@ export default function Rules() {
 
   const sortedCategories = useMemo(() => [...categories].sort((a, b) => a.sort_order - b.sort_order), [categories]);
 
+  const rules = [
+    t("common.rules.rule1"),
+    t("common.rules.rule2"),
+    t("common.rules.rule3"),
+    t("common.rules.rule4"),
+    t("common.rules.rule5"),
+  ];
+
   return (
     <div className="container mx-auto px-5 py-6 md:py-8">
       <Helmet>
-        <script type="application/ld+json">{JSON.stringify(FAQ_JSONLD)}</script>
+        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </Helmet>
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-5">
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Speluitleg & Reglement</h1>
+          <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">{t("common.rules.title")}</h1>
           <p className="text-muted-foreground font-serif italic">
-            "De jury, bestaande uit Patrick Lefairplay, heeft gelijk. Zo niet, dan toch."
+            {t("common.rules.quote")}
           </p>
           {game && (
             <p className="text-xs text-muted-foreground mt-2 font-sans uppercase tracking-wider">
-              Actieve koers: <span className="font-bold">{game.name}</span>
+              {t("common.rules.activeRace")} <span className="font-bold">{game.name}</span>
             </p>
           )}
           <div className="vintage-divider max-w-xs mx-auto mt-4" />
@@ -81,15 +80,9 @@ export default function Rules() {
 
         {/* Rules */}
         <section className="retro-border bg-card p-4 mb-4">
-          <h2 className="font-display text-2xl font-bold mb-3">📜 Het Reglement</h2>
+          <h2 className="font-display text-2xl font-bold mb-3">{t("common.rules.reglementHeading")}</h2>
           <ol className="space-y-3 font-sans text-sm">
-            {[
-              "De jury, bestaande uit Patrick Lefairplay, heeft gelijk.",
-              "Zo niet, dan toch.",
-              "De inschrijving dient binnen te zijn vóór de start van de eerste etappe.",
-              "Stel je droomploeg samen in de Team Samenstellen-pagina en zet je beste renners aan de start.",
-              "Als iemand uit de koers stapt, pech voor jou :(",
-            ].map((rule, i) => (
+            {rules.map((rule, i) => (
               <li key={i} className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
                   {i + 1}
@@ -102,38 +95,38 @@ export default function Rules() {
 
         {/* How to play */}
         <section className="retro-border bg-card p-4 mb-4">
-          <h2 className="font-display text-2xl font-bold mb-3">🚴 Hoe speel je mee?</h2>
+          <h2 className="font-display text-2xl font-bold mb-3">{t("common.rules.howToPlayHeading")}</h2>
           <div className="space-y-4 font-sans text-sm">
             <div className="p-4 bg-secondary/50 rounded-md">
-              <h3 className="font-bold mb-1">Stap 1 — Maak een account aan</h3>
-              <p className="text-muted-foreground">Registreer je met een e-mailadres en kies een ploegnaam.</p>
+              <h3 className="font-bold mb-1">{t("common.rules.step1Title")}</h3>
+              <p className="text-muted-foreground">{t("common.rules.step1Desc")}</p>
             </div>
             <div className="p-4 bg-secondary/50 rounded-md">
-              <h3 className="font-bold mb-1">Stap 2 — Stel je ploeg samen</h3>
+              <h3 className="font-bold mb-1">{t("common.rules.step2Title")}</h3>
               <p className="text-muted-foreground">
                 {catsLoading || gameLoading ? (
-                  "Categorieën worden geladen..."
+                  t("common.rules.step2Loading")
                 ) : sortedCategories.length > 0 ? (
-                  <>
-                    Kies uit <span className="font-bold">{sortedCategories.length}</span> categorieën telkens 1 renner.
-                    Voeg 2 Jokers toe (vrije keuze buiten de categorieën). Jokers moeten unieke renners zijn en mogen
-                    niet voorkomen in de gekozen categorie-renners.
-                  </>
+                  <Trans
+                    i18nKey="common.rules.step2Body"
+                    values={{ n: sortedCategories.length }}
+                    components={{ bold: <span className="font-bold" /> }}
+                  />
                 ) : (
-                  "Categorieën worden binnenkort beschikbaar gesteld door de admin."
+                  t("common.rules.step2Empty")
                 )}
               </p>
             </div>
             <div className="p-4 bg-secondary/50 rounded-md">
-              <h3 className="font-bold mb-1">Stap 3 — Voorspel de klassementen</h3>
+              <h3 className="font-bold mb-1">{t("common.rules.step3Title")}</h3>
               <p className="text-muted-foreground">
-                Voorspel het podium van het eindklassement + winnaar puntentrui, bergtrui en jongerentrui.
+                {t("common.rules.step3Desc")}
               </p>
             </div>
             <div className="p-4 bg-secondary/50 rounded-md">
-              <h3 className="font-bold mb-1">Stap 4 — Daag je vrienden uit</h3>
+              <h3 className="font-bold mb-1">{t("common.rules.step4Title")}</h3>
               <p className="text-muted-foreground">
-                Maak een subpoule aan of voer een code in om een bestaande poule te joinen.
+                {t("common.rules.step4Desc")}
               </p>
             </div>
           </div>
@@ -141,17 +134,16 @@ export default function Rules() {
 
         {/* Points */}
         <section className="retro-border bg-card p-4 mb-4">
-          <h2 className="font-display text-2xl font-bold mb-3">📊 Puntentelling</h2>
+          <h2 className="font-display text-2xl font-bold mb-3">{t("common.rules.pointsHeading")}</h2>
 
-          <h3 className="font-display text-lg font-bold mb-2">Per etappe (top 20)</h3>
+          <h3 className="font-display text-lg font-bold mb-2">{t("common.rules.perStageHeading")}</h3>
           <p className="text-sm text-muted-foreground mb-3 font-sans">
-            Alleen renners die in jouw selectie zitten en bij de finish in de top 20 eindigen leveren punten op. Renners
-            die niet finishen (DNS / DNF) krijgen 0 punten.
+            {t("common.rules.perStageDesc")}
           </p>
           {schemaLoading ? (
-            <p className="text-sm text-muted-foreground italic mb-6">Puntenschema laden...</p>
+            <p className="text-sm text-muted-foreground italic mb-6">{t("common.rules.schemaLoading")}</p>
           ) : stagePoints.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic mb-6">Nog geen puntenschema ingesteld door de admin.</p>
+            <p className="text-sm text-muted-foreground italic mb-6">{t("common.rules.schemaEmpty")}</p>
           ) : (
             <div className="retro-border bg-background p-4 mb-6">
               <div className="grid grid-cols-4 md:grid-cols-5 gap-2 text-sm font-sans">
@@ -165,79 +157,74 @@ export default function Rules() {
             </div>
           )}
 
-          <h3 className="font-display text-lg font-bold mb-2">Podium algemeen klassement</h3>
+          <h3 className="font-display text-lg font-bold mb-2">{t("common.rules.podiumHeading")}</h3>
           <div className="space-y-2 font-sans text-sm mb-3">
             <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-              <span>Juiste renner op de juiste plek (1, 2 of 3)</span>
-              <span className="font-bold text-accent">50 pt</span>
+              <span>{t("common.rules.podiumRow1")}</span>
+              <span className="font-bold text-accent">{t("common.rules.pts", { points: 50 })}</span>
             </div>
             <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-              <span>Juiste renner in top 3, maar verkeerde plek</span>
-              <span className="font-bold text-accent">25 pt</span>
+              <span>{t("common.rules.podiumRow2")}</span>
+              <span className="font-bold text-accent">{t("common.rules.pts", { points: 25 })}</span>
             </div>
             <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-              <span>Renner niet in top 3</span>
-              <span className="font-bold text-muted-foreground">0 pt</span>
+              <span>{t("common.rules.podiumRow3")}</span>
+              <span className="font-bold text-muted-foreground">{t("common.rules.pts", { points: 0 })}</span>
             </div>
             <p className="text-xs text-muted-foreground italic">
-              Elke positie wordt apart beoordeeld. Een renner kan maximaal één keer punten opleveren. Maximaal 150
-              punten in totaal voor het GC-podium.
+              {t("common.rules.podiumNote")}
             </p>
           </div>
 
-          <h3 className="font-display text-lg font-bold mb-2">Truien (groen, berg, wit)</h3>
+          <h3 className="font-display text-lg font-bold mb-2">{t("common.rules.jerseysHeading")}</h3>
           <div className="space-y-2 font-sans text-sm mb-3">
             <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-              <span>Juiste winnaar puntentrui (groen)</span>
-              <span className="font-bold text-accent">25 pt</span>
+              <span>{t("common.rules.jerseyGreen")}</span>
+              <span className="font-bold text-accent">{t("common.rules.pts", { points: 25 })}</span>
             </div>
             <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-              <span>Juiste winnaar bergtrui</span>
-              <span className="font-bold text-accent">25 pt</span>
+              <span>{t("common.rules.jerseyMountain")}</span>
+              <span className="font-bold text-accent">{t("common.rules.pts", { points: 25 })}</span>
             </div>
             <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-              <span>Juiste winnaar jongerentrui (wit)</span>
-              <span className="font-bold text-accent">25 pt</span>
+              <span>{t("common.rules.jerseyYoung")}</span>
+              <span className="font-bold text-accent">{t("common.rules.pts", { points: 25 })}</span>
             </div>
           </div>
 
-          <h3 className="font-display text-lg font-bold mb-2">Jokers</h3>
+          <h3 className="font-display text-lg font-bold mb-2">{t("common.rules.jokersHeading")}</h3>
           <p className="text-sm text-muted-foreground mb-3 font-sans">
-            Kies twee Jokers uit de overige renners die niet in de categorieën worden vermeld.
+            {t("common.rules.jokersDesc")}
           </p>
 
-          <h3 className="font-display text-lg font-bold mb-2">Totaalklassement</h3>
+          <h3 className="font-display text-lg font-bold mb-2">{t("common.rules.totalHeading")}</h3>
           <p className="text-sm text-muted-foreground font-sans">
-            Het totaal van een speler is de som van alle etappepunten plus de behaalde voorspellingspunten (podium +
-            truien). Het klassement wordt automatisch bijgewerkt na elke verwerkte etappe. De stand na de laatste etappe
-            is de definitieve eindstand.
+            {t("common.rules.totalDesc")}
           </p>
 
-          <h3 className="font-display text-lg font-bold mb-2 mt-3">Puntentelling ploegentijdrit (1e etappe)</h3>
+          <h3 className="font-display text-lg font-bold mb-2 mt-3">{t("common.rules.tttHeading")}</h3>
           <p className="text-sm text-muted-foreground mb-3 font-sans">
-            Tijdens de ploegentijdrit wordt de uitslag van de etappe bepaald door de uitslag van de individuele renners,
-            en dus op het klassement na dag 1. Het is dus niet zeker dat alle 8 renners van de winnende ploeg plek 1 tot
-            en met 8 in de uitslag vormen. Als renners eerder afhaken telt hun persoonlijke tijd.
+            {t("common.rules.tttDesc")}
           </p>
 
-          <h3 className="font-display text-lg font-bold mb-2">Dagprijs</h3>
+          <h3 className="font-display text-lg font-bold mb-2">{t("common.rules.dayPrizeHeading")}</h3>
           <p className="text-sm text-muted-foreground font-sans">
-            Bij meerdere dagprijswinnaars met een gelijk aantal punten loten we tussen de winnaars wie de dagprijs wint.
+            {t("common.rules.dayPrizeDesc")}
           </p>
         </section>
 
         {/* Categories overview */}
         <section className="retro-border bg-card p-4">
-          <h2 className="font-display text-2xl font-bold mb-3">📋 Categorieën</h2>
-          <p className="text-sm text-muted-foreground mb-4 font-sans">Kies 1 renner per categorie + 2 vrije Jokers.</p>
+          <h2 className="font-display text-2xl font-bold mb-3">{t("common.rules.categoriesHeading")}</h2>
+          <p className="text-sm text-muted-foreground mb-4 font-sans">{t("common.rules.categoriesIntro")}</p>
 
           {catsLoading || gameLoading ? (
-            <p className="text-sm text-muted-foreground italic">Categorieën laden...</p>
+            <p className="text-sm text-muted-foreground italic">{t("common.rules.categoriesLoading")}</p>
           ) : sortedCategories.length === 0 ? (
             <div className="p-6 text-center bg-secondary/30 rounded-md">
-              <p className="text-sm text-muted-foreground">Nog geen categorieën ingesteld voor deze koers.</p>
+              <p className="text-sm text-muted-foreground">{t("common.rules.categoriesEmpty")}</p>
               <p className="text-xs text-muted-foreground mt-1 italic">
-                De admin stelt deze in voor de start van de koers.
+                {t("common.rules.categoriesEmptyNote")}
               </p>
             </div>
           ) : (
@@ -250,7 +237,7 @@ export default function Rules() {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {cat.category_riders.length === 0 ? (
-                      <em>Nog geen renners toegewezen</em>
+                      <em>{t("common.rules.noRiders")}</em>
                     ) : (
                       cat.category_riders
                         .map((cr) => cr.riders?.name)
@@ -266,16 +253,16 @@ export default function Rules() {
 
         {/* Tot slot */}
         <section className="retro-border bg-card p-4 mt-4">
-          <h2 className="font-display text-2xl font-bold mb-3">🏁 Tot slot</h2>
+          <h2 className="font-display text-2xl font-bold mb-3">{t("common.rules.finallyHeading")}</h2>
           <div className="space-y-3 font-sans text-sm text-muted-foreground">
             <p>
-              Deze koerspoule is met zorg en enthousiasme ontwikkeld. Het doel is simpel: samen
-              meer plezier beleven aan het volgen van de koers 🚴
+              {t("common.rules.finallyP1")}
             </p>
             <p>
-              Wil je ons helpen om deze koerspoule te blijven verbeteren en draaiende te houden? Dat kan via de knop{" "}
-              <span className="font-bold text-foreground">"Steun Koerspoule"</span>. Alle steun wordt enorm
-              gewaardeerd!
+              <Trans
+                i18nKey="common.rules.finallyP2"
+                components={{ supportBtn: <span className="font-bold text-foreground" /> }}
+              />
             </p>
           </div>
           <div className="vintage-divider max-w-xs mx-auto my-5" />
@@ -288,7 +275,7 @@ export default function Rules() {
               style={{ backgroundColor: "hsl(var(--vintage-gold))", fontFamily: "Arial, sans-serif", border: "1px solid hsl(var(--foreground))" }}
             >
               <span>🚴</span>
-              <span>Steun Koerspoule</span>
+              <span>{t("common.rules.supportButton")}</span>
             </a>
           </div>
         </section>

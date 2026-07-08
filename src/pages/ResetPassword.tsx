@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { KeyRound } from "lucide-react";
 
 export default function ResetPassword() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [password, setPassword] = useState("");
@@ -31,9 +33,9 @@ export default function ResetPassword() {
     const errDesc = params.get("error_description");
     if (errCode || errDesc) {
       if (errCode === "otp_expired") {
-        setLinkError("De resetlink is verlopen. Vraag hieronder een nieuwe aan.");
+        setLinkError(t("auth.reset.linkExpired"));
       } else {
-        setLinkError(decodeURIComponent((errDesc || errCode || "Ongeldige link").replace(/\+/g, " ")));
+        setLinkError(decodeURIComponent((errDesc || errCode || t("auth.reset.invalidLink")).replace(/\+/g, " ")));
       }
     }
 
@@ -47,14 +49,14 @@ export default function ResetPassword() {
       if (data.session) setHasRecoverySession(true);
     });
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [t]);
 
   const handleResend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) return;
     const target = resendEmail.trim();
     if (!target) {
-      toast({ title: "Vul je e-mailadres in", variant: "destructive" });
+      toast({ title: t("auth.reset.fillEmailTitle"), variant: "destructive" });
       return;
     }
     setIsResending(true);
@@ -64,13 +66,13 @@ export default function ResetPassword() {
       });
       if (error) throw error;
       toast({
-        title: "Nieuwe resetlink verstuurd 📬",
-        description: `Check de inbox van ${target}. De link is 1 uur geldig.`,
+        title: t("auth.reset.sentTitle"),
+        description: t("auth.reset.sentDesc", { email: target }),
       });
     } catch (err) {
       toast({
-        title: "Versturen mislukt",
-        description: err instanceof Error ? err.message : "Onbekende fout",
+        title: t("auth.reset.sendFailedTitle"),
+        description: err instanceof Error ? err.message : t("auth.reset.unknownError"),
         variant: "destructive",
       });
     } finally {
@@ -82,23 +84,23 @@ export default function ResetPassword() {
     e.preventDefault();
     if (!supabase) return;
     if (password.length < 6) {
-      toast({ title: "Wachtwoord te kort", description: "Minimaal 6 tekens.", variant: "destructive" });
+      toast({ title: t("auth.reset.tooShortTitle"), description: t("auth.reset.tooShortDesc"), variant: "destructive" });
       return;
     }
     if (password !== confirm) {
-      toast({ title: "Wachtwoorden komen niet overeen", variant: "destructive" });
+      toast({ title: t("auth.reset.mismatchTitle"), variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      toast({ title: "Wachtwoord bijgewerkt 🎉", description: "Je bent nu ingelogd." });
+      toast({ title: t("auth.reset.updatedTitle"), description: t("auth.reset.updatedDesc") });
       navigate("/", { replace: true });
     } catch (err) {
       toast({
-        title: "Bijwerken mislukt",
-        description: err instanceof Error ? err.message : "Onbekende fout",
+        title: t("auth.reset.updateFailedTitle"),
+        description: err instanceof Error ? err.message : t("auth.reset.unknownError"),
         variant: "destructive",
       });
     } finally {
@@ -116,25 +118,25 @@ export default function ResetPassword() {
         <div className="absolute -top-3 -left-3 bg-primary text-primary-foreground rounded-full p-1.5 shadow-md">
           <KeyRound size={14} />
         </div>
-        <h1 className="font-display text-2xl font-bold mb-1 text-center">Nieuw wachtwoord</h1>
+        <h1 className="font-display text-2xl font-bold mb-1 text-center">{t("auth.reset.title")}</h1>
         <p className="text-muted-foreground font-serif italic text-sm text-center mb-5">
-          Kies een nieuw wachtwoord voor je Koerspoule-account.
+          {t("auth.reset.subtitle")}
         </p>
 
         {!hasRecoverySession ? (
           <div className="space-y-4">
             <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive text-center">
-              {linkError ?? "Open deze pagina via de resetlink uit je e-mail. Geen geldige sessie gevonden."}
+              {linkError ?? t("auth.reset.noSession")}
             </div>
             <form onSubmit={handleResend} className="space-y-3">
               <div>
-                <Label htmlFor="resend-email" className="font-serif">E-mailadres</Label>
+                <Label htmlFor="resend-email" className="font-serif">{t("auth.reset.emailLabel")}</Label>
                 <Input
                   id="resend-email"
                   type="email"
                   value={resendEmail}
                   onChange={(e) => setResendEmail(e.target.value)}
-                  placeholder="jouw@email.nl"
+                  placeholder={t("auth.reset.emailPlaceholder")}
                   className="mt-1"
                   required
                 />
@@ -144,17 +146,17 @@ export default function ResetPassword() {
                 disabled={isResending}
                 className="w-full retro-border-primary font-bold text-base h-11 tracking-wide"
               >
-                {isResending ? "Versturen..." : "📬 Stuur nieuwe resetlink"}
+                {isResending ? t("auth.reset.sending") : t("auth.reset.sendNewLink")}
               </Button>
               <p className="text-xs text-muted-foreground text-center">
-                Open de nieuwe link binnen 1 uur en gebruik dezelfde browser.
+                {t("auth.reset.openWithinHour")}
               </p>
             </form>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="password" className="font-serif">Nieuw wachtwoord</Label>
+              <Label htmlFor="password" className="font-serif">{t("auth.reset.newPasswordLabel")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -167,7 +169,7 @@ export default function ResetPassword() {
               />
             </div>
             <div>
-              <Label htmlFor="confirm" className="font-serif">Bevestig wachtwoord</Label>
+              <Label htmlFor="confirm" className="font-serif">{t("auth.reset.confirmPasswordLabel")}</Label>
               <Input
                 id="confirm"
                 type="password"
@@ -184,7 +186,7 @@ export default function ResetPassword() {
               disabled={isSubmitting}
               className="w-full retro-border-primary font-bold text-base h-11 tracking-wide"
             >
-              {isSubmitting ? "Bezig..." : "🔒 Wachtwoord opslaan"}
+              {isSubmitting ? t("auth.reset.busy") : t("auth.reset.saveButton")}
             </Button>
           </form>
         )}

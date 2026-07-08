@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Newspaper, Car, Users, Flag, Bike, ArrowRight, HelpCircle, type LucideIcon } from "lucide-react";
@@ -6,116 +8,16 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 type Card = { title: string; intro: string; to: string; bullets?: string[] };
 type Group = { heading: string; Icon: LucideIcon; cards: Card[] };
 
-const GROUPS: Group[] = [
-  {
-    heading: "Volgwagen — Mijn Ploeg",
-    Icon: Car,
-    cards: [
-      {
-        title: "Mijn Ploeg",
-        intro: "Je volledige ploeg als programma, gegroepeerd zoals je 'm koos.",
-        to: "/mijn-peloton?tab=team&sub=ploeg",
-        bullets: [
-          "Bovenaan de gouden strip \"Jacht op geel\" met je klassementsrenners.",
-          "Daaronder je overige categorieën, elk met je gekozen renner(s); je jokers staan in een eigen categorie (✨).",
-          "Achter elke renner zie je zijn punten.",
-          "Een uitgevallen renner is doorgestreept met ☠.",
-          "Klik op een renner voor zijn resultaten per etappe, inclusief een eventuele jokerbonus.",
-        ],
-      },
-      { title: "Pronostiek", intro: "Je voorspellingen voor de eindklassementen en truien.", to: "/mijn-peloton?tab=team&sub=prono" },
-      { title: "Palmares", intro: "Je erelijst en behaalde resultaten in deze poule.", to: "/mijn-peloton?tab=team&sub=palmares" },
-    ],
-  },
-  {
-    heading: "Subpoule",
-    Icon: Users,
-    cards: [
-      { title: "Klassement", intro: "De stand binnen je subpoule, met duel om teams te vergelijken.", to: "/mijn-peloton?tab=subpoules&sub=klassement" },
-      { title: "Stijgers & Dalers", intro: "Wie klimt en wie zakt over de etappes heen.", to: "/mijn-peloton?tab=subpoules&sub=verloop" },
-      { title: "Daguitslag", intro: "De daguitslag per deelnemer van de laatste etappe. Filteren op woonplaats kan, mits je die hebt ingevuld.", to: "/mijn-peloton?tab=subpoules&sub=daguitslag" },
-      { title: "Heatmap", intro: "Per categorie wie populair koos en wie een buitenbeentje pakte.", to: "/mijn-peloton?tab=subpoules&sub=heatmap" },
-      { title: "Streek", intro: "In subpoules met woonplaatsen strijden plaatsen onderling. Alleen zichtbaar als er een streekklassement is — dus wanneer je je woonplaats hebt ingevuld.", to: "/mijn-peloton?tab=subpoules&sub=streek" },
-    ],
-  },
-  {
-    heading: "Uitslagen",
-    Icon: Flag,
-    cards: [
-      { title: "Klassement", intro: "Het eindklassement van alle deelnemers, niet alleen je subpoule.", to: "/mijn-peloton?tab=uitslagen&view=klassement" },
-      { title: "Etappes", intro: "De daguitslag per etappe van alle deelnemers.", to: "/mijn-peloton?tab=uitslagen&view=etappes" },
-    ],
-  },
-  {
-    heading: "Hors Catégorie",
-    Icon: Bike,
-    cards: [
-      { title: "Dartpijl", intro: "Toeval telt: 5.000 apen prikken een team, jouw score wordt daartegen afgezet. Lees de volledige uitleg via de infoknop daar.", to: "/mijn-peloton?tab=hors&sub=dartpijl" },
-      { title: "Pelotonkeuzes", intro: "Zie per categorie wie populair is en wie durfde af te wijken.", to: "/mijn-peloton?tab=hors&sub=pelotonkeuzes" },
-      { title: "De Wielerdirecteur", intro: "Een directeur sportif beoordeelt je ploeg in een kort rapport.", to: "/mijn-peloton?tab=hors&sub=wielerdirecteur" },
-      { title: "The Emirates", intro: "De droomploeg achteraf: de best mogelijke selectie van de dag.", to: "/mijn-peloton?tab=hors&sub=superteam" },
-      { title: "Benchmark", intro: "Vergelijk twee ploegen categorie voor categorie.", to: "/mijn-peloton?tab=hors&sub=benchmark" },
-    ],
-  },
-];
-
 type Faq = { q: string; a: string; to?: string };
 
-const FAQS: Faq[] = [
-  {
-    q: "Hoe maak ik een subpoule aan?",
-    a: "Ga naar de Subpoule-tab en klik op Subpoule aanmaken. Kies een naam en deel daarna de uitnodigingscode met je vrienden. Aanmaken kan zolang de koers niet is afgerond.",
-    to: "/mijn-peloton?tab=subpoules",
-  },
-  {
-    q: "Hoe join ik een subpoule?",
-    a: "Vraag de uitnodigingscode aan de maker van de subpoule. Ga naar de Subpoule-tab, kies Joinen en vul de code in. Heb je een uitnodigingslink gekregen, dan staat de code al voor je klaar.",
-    to: "/mijn-peloton?tab=subpoules",
-  },
-  {
-    q: "Kan ik in meerdere subpoules tegelijk zitten?",
-    a: "Ja. Je hebt één ploeg, en die telt automatisch mee in elke subpoule waar je lid van bent.",
-    to: "/mijn-peloton?tab=subpoules",
-  },
-  {
-    q: "Hoe verander ik mijn teamnaam?",
-    a: "In de Volgwagen, op het tabblad Mijn Ploeg: klik op het potloodje ✏️ naast je ploegnaam. De naam wordt direct opgeslagen en is zichtbaar in alle klassementen.",
-    to: "/mijn-peloton?tab=team&sub=ploeg&edit=naam",
-  },
-  {
-    q: "Tot wanneer kan ik mijn ploeg indienen?",
-    a: "Tot de start van de eerste etappe. Heb je wijzigingen niet opnieuw ingediend, dan telt op dat moment automatisch je huidige selectie.",
-    to: "/team-samenstellen",
-  },
-  {
-    q: "Kan ik mijn team nog wijzigen na indienen?",
-    a: "Ja, tot de start van de eerste etappe. Pas je ploeg aan en dien opnieuw in om te bevestigen.",
-    to: "/team-samenstellen",
-  },
-  {
-    q: "Waarom zie ik nog geen commentaar in mijn subpoule?",
-    a: "Het commentaar verschijnt zodra de uitslag van de etappe is ingevoerd, en wordt geschreven vanaf 2 deelnemers per subpoule.",
-    to: "/mijn-peloton?tab=karavaan",
-  },
-  {
-    q: "Wat gebeurt er als een renner uitvalt?",
-    a: "Uitvallers blijven doorgestreept in je ploeg staan. De punten die ze al pakten, behoud je.",
-    to: "/mijn-peloton?tab=team&sub=ploeg",
-  },
-  {
-    q: "Waar zie ik de uitslagen van alle deelnemers?",
-    a: "In Uitslagen: het klassement en de daguitslag per etappe, van alle deelnemers en niet alleen je subpoule.",
-    to: "/mijn-peloton?tab=uitslagen&view=klassement",
-  },
-];
-
 function GoLink({ to }: { to: string }) {
+  const { t } = useTranslation();
   return (
     <Link
       to={to}
       className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
     >
-      Ga ernaartoe <ArrowRight className="h-4 w-4" />
+      {t("common.uitleg.goThere")} <ArrowRight className="h-4 w-4" />
     </Link>
   );
 }
@@ -139,18 +41,85 @@ function FeatureCard({ Icon, title, intro, to, bullets }: Card & { Icon: LucideI
 }
 
 export default function Uitleg() {
+  const { t } = useTranslation();
+
+  const groups = useMemo<Group[]>(() => [
+    {
+      heading: t("common.uitleg.groupVolgwagenHeading"),
+      Icon: Car,
+      cards: [
+        {
+          title: t("common.uitleg.cardPloegTitle"),
+          intro: t("common.uitleg.cardPloegIntro"),
+          to: "/mijn-peloton?tab=team&sub=ploeg",
+          bullets: [
+            t("common.uitleg.cardPloegBullet1"),
+            t("common.uitleg.cardPloegBullet2"),
+            t("common.uitleg.cardPloegBullet3"),
+            t("common.uitleg.cardPloegBullet4"),
+            t("common.uitleg.cardPloegBullet5"),
+          ],
+        },
+        { title: t("common.uitleg.cardPronoTitle"), intro: t("common.uitleg.cardPronoIntro"), to: "/mijn-peloton?tab=team&sub=prono" },
+        { title: t("common.uitleg.cardPalmaresTitle"), intro: t("common.uitleg.cardPalmaresIntro"), to: "/mijn-peloton?tab=team&sub=palmares" },
+      ],
+    },
+    {
+      heading: t("common.uitleg.groupSubpouleHeading"),
+      Icon: Users,
+      cards: [
+        { title: t("common.uitleg.cardSubKlassementTitle"), intro: t("common.uitleg.cardSubKlassementIntro"), to: "/mijn-peloton?tab=subpoules&sub=klassement" },
+        { title: t("common.uitleg.cardVerloopTitle"), intro: t("common.uitleg.cardVerloopIntro"), to: "/mijn-peloton?tab=subpoules&sub=verloop" },
+        { title: t("common.uitleg.cardDaguitslagTitle"), intro: t("common.uitleg.cardDaguitslagIntro"), to: "/mijn-peloton?tab=subpoules&sub=daguitslag" },
+        { title: t("common.uitleg.cardHeatmapTitle"), intro: t("common.uitleg.cardHeatmapIntro"), to: "/mijn-peloton?tab=subpoules&sub=heatmap" },
+        { title: t("common.uitleg.cardStreekTitle"), intro: t("common.uitleg.cardStreekIntro"), to: "/mijn-peloton?tab=subpoules&sub=streek" },
+      ],
+    },
+    {
+      heading: t("common.uitleg.groupUitslagenHeading"),
+      Icon: Flag,
+      cards: [
+        { title: t("common.uitleg.cardUitKlassementTitle"), intro: t("common.uitleg.cardUitKlassementIntro"), to: "/mijn-peloton?tab=uitslagen&view=klassement" },
+        { title: t("common.uitleg.cardEtappesTitle"), intro: t("common.uitleg.cardEtappesIntro"), to: "/mijn-peloton?tab=uitslagen&view=etappes" },
+      ],
+    },
+    {
+      heading: t("common.uitleg.groupHorsHeading"),
+      Icon: Bike,
+      cards: [
+        { title: t("common.uitleg.cardDartpijlTitle"), intro: t("common.uitleg.cardDartpijlIntro"), to: "/mijn-peloton?tab=hors&sub=dartpijl" },
+        { title: t("common.uitleg.cardPelotonkeuzesTitle"), intro: t("common.uitleg.cardPelotonkeuzesIntro"), to: "/mijn-peloton?tab=hors&sub=pelotonkeuzes" },
+        { title: t("common.uitleg.cardWielerdirecteurTitle"), intro: t("common.uitleg.cardWielerdirecteurIntro"), to: "/mijn-peloton?tab=hors&sub=wielerdirecteur" },
+        { title: t("common.uitleg.cardEmiratesTitle"), intro: t("common.uitleg.cardEmiratesIntro"), to: "/mijn-peloton?tab=hors&sub=superteam" },
+        { title: t("common.uitleg.cardBenchmarkTitle"), intro: t("common.uitleg.cardBenchmarkIntro"), to: "/mijn-peloton?tab=hors&sub=benchmark" },
+      ],
+    },
+  ], [t]);
+
+  const faqs = useMemo<Faq[]>(() => [
+    { q: t("common.uitleg.faq1Q"), a: t("common.uitleg.faq1A"), to: "/mijn-peloton?tab=subpoules" },
+    { q: t("common.uitleg.faq2Q"), a: t("common.uitleg.faq2A"), to: "/mijn-peloton?tab=subpoules" },
+    { q: t("common.uitleg.faq3Q"), a: t("common.uitleg.faq3A"), to: "/mijn-peloton?tab=subpoules" },
+    { q: t("common.uitleg.faq4Q"), a: t("common.uitleg.faq4A"), to: "/mijn-peloton?tab=team&sub=ploeg&edit=naam" },
+    { q: t("common.uitleg.faq5Q"), a: t("common.uitleg.faq5A"), to: "/team-samenstellen" },
+    { q: t("common.uitleg.faq6Q"), a: t("common.uitleg.faq6A"), to: "/team-samenstellen" },
+    { q: t("common.uitleg.faq7Q"), a: t("common.uitleg.faq7A"), to: "/mijn-peloton?tab=karavaan" },
+    { q: t("common.uitleg.faq8Q"), a: t("common.uitleg.faq8A"), to: "/mijn-peloton?tab=team&sub=ploeg" },
+    { q: t("common.uitleg.faq9Q"), a: t("common.uitleg.faq9A"), to: "/mijn-peloton?tab=uitslagen&view=klassement" },
+  ], [t]);
+
   return (
     <div className="container mx-auto px-5 py-6 md:py-8">
       <Helmet>
-        <title>Uitleg · Koerspoule</title>
-        <meta name="description" content="Ontdek wat je allemaal kunt in Koerspoule: L'Équipe, Volgwagen, Subpoule, Uitslagen en Hors Catégorie — kort uitgelegd, met directe links." />
+        <title>{t("common.uitleg.metaTitle")}</title>
+        <meta name="description" content={t("common.uitleg.metaDescription")} />
       </Helmet>
 
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-6">
-          <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Uitleg</h1>
+          <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">{t("common.uitleg.title")}</h1>
           <p className="text-muted-foreground font-sans max-w-2xl mx-auto">
-            Alles wat je in Koerspoule kunt doen, kort uitgelegd. Klik een kaart om er direct naartoe te gaan.
+            {t("common.uitleg.intro")}
           </p>
           <div className="vintage-divider max-w-xs mx-auto mt-4" />
         </div>
@@ -159,29 +128,29 @@ export default function Uitleg() {
         <section className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <Newspaper className="h-5 w-5 text-primary" />
-            <h2 className="font-display text-xl font-bold">L'Équipe</h2>
+            <h2 className="font-display text-xl font-bold">{t("common.uitleg.lequipeHeading")}</h2>
           </div>
           <div className="retro-border bg-card p-4">
-            <h3 className="font-display font-bold text-base">L'Équipe — je dagelijkse voorpagina</h3>
+            <h3 className="font-display font-bold text-base">{t("common.uitleg.lequipeTitle")}</h3>
             <p className="text-sm text-muted-foreground font-sans mt-1">
-              Alles over de laatste etappe op één plek, elke dag ververst.
+              {t("common.uitleg.lequipeIntro")}
             </p>
             <ul className="mt-3 space-y-1.5 text-sm font-sans list-disc pl-5">
-              <li>Het commentaar van Michel Wuyts en José De Cauwer over de uitslag in jouw subpoule.</li>
-              <li>Het rapport van je Wielerdirecteur (Patrick Lefevère) over jouw ploeg.</li>
-              <li>De daguitslag van je subpoule, met de opbrengst per deelnemer.</li>
-              <li>De voorbeschouwing van de volgende etappe: profiel, route, type en afstand.</li>
-              <li>Een snelkoppeling naar het klassement met de uitslagen van alle deelnemers.</li>
+              <li>{t("common.uitleg.lequipeBullet1")}</li>
+              <li>{t("common.uitleg.lequipeBullet2")}</li>
+              <li>{t("common.uitleg.lequipeBullet3")}</li>
+              <li>{t("common.uitleg.lequipeBullet4")}</li>
+              <li>{t("common.uitleg.lequipeBullet5")}</li>
             </ul>
             <p className="mt-3 text-xs text-muted-foreground/80 italic">
-              Het commentaar en het rapport verschijnen zodra de uitslag van de etappe is ingevoerd. Tot die tijd zie je hier de voorbeschouwing van de komende etappe.
+              {t("common.uitleg.lequipeNote")}
             </p>
             <GoLink to="/mijn-peloton?tab=karavaan" />
           </div>
         </section>
 
         {/* Overige groepen — kaartraster */}
-        {GROUPS.map((g) => (
+        {groups.map((g) => (
           <section key={g.heading} className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <g.Icon className="h-5 w-5 text-primary" />
@@ -199,11 +168,11 @@ export default function Uitleg() {
         <section className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <HelpCircle className="h-5 w-5 text-primary" />
-            <h2 className="font-display text-xl font-bold">Veelgestelde vragen</h2>
+            <h2 className="font-display text-xl font-bold">{t("common.uitleg.faqHeading")}</h2>
           </div>
           <div className="retro-border no-hover-lift bg-card px-4">
             <Accordion type="single" collapsible>
-              {FAQS.map((f) => (
+              {faqs.map((f) => (
                 <AccordionItem key={f.q} value={f.q}>
                   <AccordionTrigger className="text-left font-display font-bold text-sm hover:no-underline">
                     {f.q}
