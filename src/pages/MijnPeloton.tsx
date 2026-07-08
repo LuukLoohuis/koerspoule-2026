@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import LeCoupTactique from "@/components/LeCoupTactique";
 import FlagIcon from "@/components/FlagIcon";
@@ -102,6 +103,7 @@ const MEMBER_COLORS = [
 
 
 export default function MijnPeloton() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { thema } = useThema();
   const { data: profile } = useProfile();
@@ -1276,9 +1278,9 @@ export default function MijnPeloton() {
               >
                 <MobielTabBalk
                   tabs={[
-                    { key: "ploeg",    label: "Mijn Ploeg", icon: Users  },
-                    { key: "prono",    label: "Pronostiek", icon: Target },
-                    { key: "palmares", label: "Palmares",   icon: Trophy },
+                    { key: "ploeg",    label: t("team.tabs.myTeam"),   icon: Users  },
+                    { key: "prono",    label: t("team.tabs.prono"),    icon: Target },
+                    { key: "palmares", label: t("team.tabs.palmares"), icon: Trophy },
                   ]}
                   active={teamSubTab}
                   onChange={(k) => setTeamSubTab(k as typeof teamSubTab)}
@@ -1290,20 +1292,20 @@ export default function MijnPeloton() {
               <SwipeDots
                 count={3}
                 activeIndex={["ploeg", "prono", "palmares"].indexOf(teamSubTab)}
-                activeLabel={({ ploeg: "Mijn Ploeg", prono: "Pronostiek", palmares: "Palmares" } as Record<string, string>)[teamSubTab]}
+                activeLabel={({ ploeg: t("team.tabs.myTeam"), prono: t("team.tabs.prono"), palmares: t("team.tabs.palmares") } as Record<string, string>)[teamSubTab]}
                 className="mb-2"
               />
 
               {/* Desktop sub-tab nav — retro dossard-tabbalk */}
               <RetroTabs
                 className="hidden md:flex mb-3"
-                aria-label="Volgwagen-onderdelen"
+                aria-label={t("team.tabs.volgwagenSectionsAria")}
                 active={teamSubTab}
                 onChange={setTeamSubTab}
                 tabs={[
-                  { key: "ploeg",    label: "Mijn Ploeg", Icon: Users  },
-                  { key: "prono",    label: "Pronostiek", Icon: Target },
-                  { key: "palmares", label: "Palmares",   Icon: Trophy },
+                  { key: "ploeg",    label: t("team.tabs.myTeam"),   Icon: Users  },
+                  { key: "prono",    label: t("team.tabs.prono"),    Icon: Target },
+                  { key: "palmares", label: t("team.tabs.palmares"), Icon: Trophy },
                 ]}
               />
               {/* Vinger-volgende carrousel tussen de Volgwagen-onderdelen. */}
@@ -1332,9 +1334,9 @@ export default function MijnPeloton() {
               {/* Mobiel: één consistente zwevende schakelaar (3 onderdelen). */}
               <FloatingTabSwitcher
                 tabs={[
-                  { key: "ploeg",    label: "Mijn Ploeg", icon: Users  },
-                  { key: "prono",    label: "Pronostiek", icon: Target },
-                  { key: "palmares", label: "Palmares",   icon: Trophy },
+                  { key: "ploeg",    label: t("team.tabs.myTeam"),   icon: Users  },
+                  { key: "prono",    label: t("team.tabs.prono"),    icon: Target },
+                  { key: "palmares", label: t("team.tabs.palmares"), icon: Trophy },
                 ]}
                 active={teamSubTab}
                 onChange={(k) => setTeamSubTab(k)}

@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { isGameLocked, canRegister, isPreviewStatus } from "@/lib/gameStatus";
 import { Check, Pencil, X, Target, Crown, ClipboardList, Flag, Shirt, Trophy, type LucideIcon } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
+import { Trans, useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 
 
@@ -315,11 +316,11 @@ function CyclistFigure({
   );
 }
 
-const JERSEY_META: Record<string, { label: string; emoji: string; ring: string; bg: string }> = {
-  gc:     { label: "Eindklassement", emoji: "🌹", ring: "border-[hsl(var(--jersey-pink))]",   bg: "bg-[hsl(var(--jersey-pink))/0.1]"   },
-  points: { label: "Puntentrui",     emoji: "🟣", ring: "border-[hsl(var(--jersey-purple))]", bg: "bg-[hsl(var(--jersey-purple))/0.1]" },
-  kom:    { label: "Bergtrui",       emoji: "🔵", ring: "border-[hsl(var(--jersey-blue))]",   bg: "bg-[hsl(var(--jersey-blue))/0.1]"   },
-  youth:  { label: "Jongerentrui",   emoji: "⚪", ring: "border-foreground/30",               bg: "bg-secondary/40"                    },
+const JERSEY_META: Record<string, { labelKey: string; emoji: string; ring: string; bg: string }> = {
+  gc:     { labelKey: "team.panel.jerseyGc",     emoji: "🌹", ring: "border-[hsl(var(--jersey-pink))]",   bg: "bg-[hsl(var(--jersey-pink))/0.1]"   },
+  points: { labelKey: "team.panel.jerseyPoints", emoji: "🟣", ring: "border-[hsl(var(--jersey-purple))]", bg: "bg-[hsl(var(--jersey-purple))/0.1]" },
+  kom:    { labelKey: "team.panel.jerseyKom",    emoji: "🔵", ring: "border-[hsl(var(--jersey-blue))]",   bg: "bg-[hsl(var(--jersey-blue))/0.1]"   },
+  youth:  { labelKey: "team.panel.jerseyYouth",  emoji: "⚪", ring: "border-foreground/30",               bg: "bg-secondary/40"                    },
 };
 
 export default function MyTeamPanel({
@@ -355,6 +356,7 @@ export default function MyTeamPanel({
    *  (bv. vanuit de "Stel je ploegnaam in"-balk op Mijn Peloton). */
   focusNameSignal?: number;
 }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data: curGame } = useCurrentGame();
   // Optioneel een specifieke (bv. afgeronde) game tonen i.p.v. de live game.
@@ -449,7 +451,7 @@ export default function MyTeamPanel({
         const r = ridersById[rid] as { is_vervallen?: boolean | null; name?: string } | undefined;
         if (r?.is_vervallen && !seen.has(rid)) {
           seen.add(rid);
-          out.push({ categoryId: catId, categoryName: catName.get(catId) ?? "", riderId: rid, name: r.name ?? "Renner" });
+          out.push({ categoryId: catId, categoryName: catName.get(catId) ?? "", riderId: rid, name: r.name ?? t("team.panel.riderFallback") });
         }
       }
     }
@@ -518,21 +520,21 @@ export default function MyTeamPanel({
   }, [picksByCategory, jokerIds]);
 
   if (!user) {
-    return <div className="ornate-frame retro-border bg-card p-6 text-muted-foreground">Log in om je team te bekijken.</div>;
+    return <div className="ornate-frame retro-border bg-card p-6 text-muted-foreground">{t("team.panel.loginToView")}</div>;
   }
   if (isLoading) {
-    return <div className="ornate-frame retro-border bg-card p-6">Team laden…</div>;
+    return <div className="ornate-frame retro-border bg-card p-6">{t("team.panel.loadingTeam")}</div>;
   }
   if (!game) {
-    return <div className="ornate-frame retro-border bg-card p-6 text-muted-foreground">Geen actieve koers gevonden.</div>;
+    return <div className="ornate-frame retro-border bg-card p-6 text-muted-foreground">{t("team.panel.noActiveRace")}</div>;
   }
   if (!entry || picksByCategory.size === 0) {
     return (
       <Card className="ornate-frame retro-border">
         <CardContent className="p-4 text-center space-y-3">
           <div className="text-5xl mb-2">🚴‍♂️</div>
-          <p className="font-display text-xl font-bold">Nog geen ploeg in de bus</p>
-          <p className="text-sm text-muted-foreground font-serif italic">Stel je team samen vóór de flamme rouge.</p>
+          <p className="font-display text-xl font-bold">{t("team.panel.noTeamYet")}</p>
+          <p className="text-sm text-muted-foreground font-serif italic">{t("team.panel.buildBeforeFlamme")}</p>
 
           {/* Ploegnaam kan al vóór het samenstellen worden gezet (en later altijd
               aanpasbaar). */}
@@ -543,7 +545,7 @@ export default function MyTeamPanel({
                   ref={nameInputRef}
                   value={nameDraft}
                   onChange={(e) => setNameDraft(e.target.value)}
-                  placeholder="bv. Team Bidon"
+                  placeholder={t("team.panel.teamNamePlaceholder")}
                   className="h-8 w-48"
                   maxLength={40}
                   autoFocus
@@ -554,10 +556,10 @@ export default function MyTeamPanel({
                   onClick={async () => {
                     try {
                       await saveTeamName.mutateAsync({ entryId: entry?.id, teamName: nameDraft });
-                      toast({ title: "Ploegnaam opgeslagen" });
+                      toast({ title: t("team.panel.teamNameSaved") });
                       setEditingName(false);
                     } catch (e) {
-                      toast({ title: "Opslaan mislukt", description: entryErrorMessage(e), variant: "destructive" });
+                      toast({ title: t("team.panel.saveFailed"), description: entryErrorMessage(e), variant: "destructive" });
                     }
                   }}
                 >
@@ -569,20 +571,20 @@ export default function MyTeamPanel({
               </>
             ) : teamName?.trim() ? (
               <>
-                <span className="text-sm">Ploegnaam: <span className="font-display font-bold">{teamName}</span></span>
+                <span className="text-sm">{t("team.panel.teamNameLabel")} <span className="font-display font-bold">{teamName}</span></span>
                 <Button size="sm" variant="outline" onClick={() => { setNameDraft(teamName ?? ""); setEditingName(true); }}>
-                  <Pencil className="h-3.5 w-3.5 mr-1" /> Wijzig
+                  <Pencil className="h-3.5 w-3.5 mr-1" /> {t("team.panel.editButton")}
                 </Button>
               </>
             ) : (
               <Button size="sm" variant="outline" onClick={() => { setNameDraft(""); setEditingName(true); }}>
-                <Pencil className="h-3.5 w-3.5 mr-1" /> Stel je ploegnaam in
+                <Pencil className="h-3.5 w-3.5 mr-1" /> {t("team.panel.setTeamName")}
               </Button>
             )}
           </div>
 
           <Button asChild className="retro-border-primary mt-2">
-            <Link to="/team-samenstellen">Naar de teambuilder</Link>
+            <Link to="/team-samenstellen">{t("team.panel.toTeamBuilder")}</Link>
           </Button>
         </CardContent>
       </Card>
@@ -636,14 +638,14 @@ export default function MyTeamPanel({
                     textDecoration: isDnf ? "line-through" : undefined }}>{rider.name}</span>
                 {isDnf ? (
                   <span className="font-mono text-[9px] block" style={{ color: "#C0392B" }}>
-                    Uitgevallen · geen punten
+                    {t("team.panel.dnfNoPoints")}
                   </span>
                 ) : rider.team ? (
                   <span className="font-mono text-[9px] block truncate" style={{ color: "#8B7355" }}>{rider.team}</span>
                 ) : null}
               </>
             ) : (
-              <em className="font-serif text-sm text-muted-foreground">Geen keuze</em>
+              <em className="font-serif text-sm text-muted-foreground">{t("team.panel.noChoice")}</em>
             )}
           </div>
           <div className="shrink-0 px-2 py-1">
@@ -688,7 +690,7 @@ export default function MyTeamPanel({
       <div className="pb-4">
         {predictions.length === 0 ? (
           <p className="text-sm text-muted-foreground italic py-6 text-center">
-            Nog geen klassementsvoorspellingen ingevuld.
+            {t("team.panel.noPredictions")}
           </p>
         ) : (
           <div className="overflow-hidden rounded-lg border-2" style={{ borderColor: "#C8A020", background: "#FAF7F2" }}>
@@ -699,28 +701,28 @@ export default function MyTeamPanel({
               <div>
                 <div className="text-[9px] tracking-[0.4em] uppercase font-mono mb-0.5"
                   style={{ color: "#C8A020", opacity: 0.75 }}>
-                  Pronostiek · {game.name}
+                  {t("team.panel.pronoHeader", { name: game.name })}
                 </div>
                 <h2 className="font-display text-xl font-black tracking-tight leading-none text-white">
-                  Eindklassement Prognose
+                  {t("team.panel.pronoTitle")}
                 </h2>
               </div>
               <div className="text-right">
                 <div className="font-mono text-[9px] uppercase tracking-widest" style={{ color: "#C8A020", opacity: 0.6 }}>
-                  keuzes
+                  {t("team.panel.choicesLabel")}
                 </div>
                 <div className="font-display text-2xl font-black tabular-nums" style={{ color: "#C8A020" }}>
                   {predictions.length}
                 </div>
                 <div className="font-mono text-[9px]" style={{ color: "#C8A020", opacity: 0.5 }}>
-                  voorspeld
+                  {t("team.panel.predictedLabel")}
                 </div>
               </div>
             </div>
 
             {/* GC Top 3 — thema-trui (leider) als section-icoon i.p.v. roos */}
             {podium.some(Boolean) && (
-              <PronoSection icon={<TruiBadge type="algemeen" formaat="klein" />} label="Algemeen Klassement — Top 3" badge={jerseyBadge.gc}>
+              <PronoSection icon={<TruiBadge type="algemeen" formaat="klein" />} label={t("team.panel.gcTop3")} badge={jerseyBadge.gc}>
                 {podium.map((p, idx) => {
                   const r = p ? ridersById[p.rider_id] : null;
                   return (
@@ -747,7 +749,7 @@ export default function MyTeamPanel({
               const truiType: TruiType = cls === "points" ? "punten" : cls === "kom" ? "berg" : "jongeren";
               const trui = <TruiBadge type={truiType} formaat="klein" />;
               return (
-                <PronoSection key={cls} icon={trui} label={meta.label} badge={badge}>
+                <PronoSection key={cls} icon={trui} label={t(meta.labelKey)} badge={badge}>
                   <PronoRow
                     pos={1}
                     icon={medals[0]}
@@ -773,29 +775,32 @@ export default function MyTeamPanel({
       {/* Rustige melding: gekozen renner(s) niet gestart — wisselen mag nog */}
       {fallenRiders.length > 0 && (
         <div className="ornate-frame retro-border bg-[hsl(var(--vintage-gold))/0.12] border-[hsl(var(--vintage-gold))/0.5] p-4">
-          <p className="overline-stamp mb-1 text-[hsl(var(--vintage-gold))]">Even je ploeg bijwerken</p>
+          <p className="overline-stamp mb-1 text-[hsl(var(--vintage-gold))]">{t("team.panel.updateTeamStamp")}</p>
           {fallenRiders.length === 1 ? (
             <p className="font-display font-bold text-base md:text-lg leading-snug">
-              <strong>{fallenRiders[0].name}</strong> is niet gestart.
+              <Trans i18nKey="team.panel.notStartedOne" values={{ name: fallenRiders[0].name }} components={{ strong: <strong /> }} />
             </p>
           ) : (
             <p className="font-display font-bold text-base md:text-lg leading-snug">
-              {fallenRiders.map((f) => f.name).slice(0, -1).join(", ")} en {fallenRiders[fallenRiders.length - 1].name} zijn niet gestart.
+              {t("team.panel.notStartedMany", {
+                names: fallenRiders.map((f) => f.name).slice(0, -1).join(", "),
+                last: fallenRiders[fallenRiders.length - 1].name,
+              })}
             </p>
           )}
           <p className="text-sm text-muted-foreground font-serif italic mt-0.5">
-            Je kunt nog een vervanger kiezen zolang de inschrijving open is. Pas je ploeg aan voordat de inschrijving sluit.
+            {t("team.panel.replaceNote")}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {fallenRiders.map((f) => (
               <Link
                 key={f.riderId}
                 to={`/team-samenstellen?category=${f.categoryId}`}
-                aria-label={`Kies een vervanger voor ${f.name}`}
+                aria-label={t("team.panel.chooseReplacementFor", { name: f.name })}
                 className="inline-flex items-center gap-1.5 rounded-md retro-border bg-card px-3 py-2 text-sm font-bold hover:bg-[hsl(var(--vintage-gold))/0.15] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
               >
                 {fallenRiders.length > 1 && <span className="line-through opacity-70">{f.name}</span>}
-                <span>Kies een vervanger</span>
+                <span>{t("team.panel.chooseReplacement")}</span>
                 <span aria-hidden>→</span>
               </Link>
             ))}
@@ -814,11 +819,11 @@ export default function MyTeamPanel({
         const hairline = "1px solid rgba(26,22,18,0.18)";
 
         const hasName = Boolean(entry.team_name?.trim());
-        const shownName = entry.team_name ?? user.user_metadata?.team_name ?? "Mijn ploeg";
+        const shownName = entry.team_name ?? user.user_metadata?.team_name ?? t("team.panel.myTeamFallback");
 
         // Label voor de seizoensstand volgt de GESELECTEERDE rit (terugspoelen).
         const shownStage = selectedStage;
-        const ritLabel = shownStage ? `punten t/m rit ${shownStage.stage_number}` : "nog geen uitslagen";
+        const ritLabel = shownStage ? t("team.panel.pointsThroughStage", { stage: shownStage.stage_number }) : t("team.panel.noResultsYet");
         // Etappepunten: som van de punten van ENKEL de getoonde rit (i.t.t.
         // totalPoints, dat cumulatief t/m de rit optelt).
         const stageDayPoints = shownStage
@@ -965,14 +970,14 @@ export default function MyTeamPanel({
                               size="sm" variant="ghost" className="h-7 px-2 shrink-0"
                               disabled={!entry?.id}
                               onClick={() => { setNameDraft(teamName ?? ""); setEditingName(true); }}
-                              title="Ploegnaam wijzigen"
+                              title={t("team.panel.editTeamNameTitle")}
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
                           )}
                         </h2>
                         <p className="font-serif italic text-xs mt-1.5" style={{ color: "rgba(26,22,18,0.65)" }}>
-                          Directeur sportif: {user.user_metadata?.display_name ?? user.email}
+                          {t("team.panel.directeurSportif", { name: user.user_metadata?.display_name ?? user.email })}
                         </p>
 
                         {/* Ploegnaam-nudge (alleen zonder naam of tijdens edit) */}
@@ -984,7 +989,7 @@ export default function MyTeamPanel({
                                   ref={nameInputRef}
                                   value={nameDraft}
                                   onChange={(e) => setNameDraft(e.target.value)}
-                                  placeholder="bv. Team Bidon"
+                                  placeholder={t("team.panel.teamNamePlaceholder")}
                                   className="h-8 w-48"
                                   maxLength={40}
                                   autoFocus
@@ -996,10 +1001,10 @@ export default function MyTeamPanel({
                                     if (!entry?.id) return;
                                     try {
                                       await saveTeamName.mutateAsync({ entryId: entry.id, teamName: nameDraft });
-                                      toast({ title: "Ploegnaam opgeslagen" });
+                                      toast({ title: t("team.panel.teamNameSaved") });
                                       setEditingName(false);
                                     } catch (e) {
-                                      toast({ title: "Opslaan mislukt", description: entryErrorMessage(e), variant: "destructive" });
+                                      toast({ title: t("team.panel.saveFailed"), description: entryErrorMessage(e), variant: "destructive" });
                                     }
                                   }}
                                 >
@@ -1018,7 +1023,7 @@ export default function MyTeamPanel({
                                 onClick={() => { setNameDraft(teamName ?? ""); setEditingName(true); }}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
-                                <span className="font-serif italic">Stel je ploegnaam in</span>
+                                <span className="font-serif italic">{t("team.panel.setTeamName")}</span>
                               </button>
                             )}
                           </div>
@@ -1028,7 +1033,7 @@ export default function MyTeamPanel({
                       {/* Seizoensstand als split-flap teller */}
                       <div className="shrink-0 md:text-right md:pl-4 md:border-l" style={{ borderColor: "rgba(26,22,18,0.18)" }}>
                         <div className="font-mono text-[10px] tracking-[0.22em] uppercase font-bold mb-1.5" style={{ color: "rgba(26,22,18,0.55)" }}>
-                          Totaalpunten
+                          {t("team.panel.totalPoints")}
                         </div>
                         <FlipClock value={totalPoints} suffix="PT" size={52} />
                         <div className="font-mono text-[10px] mt-1.5" style={{ color: "rgba(26,22,18,0.55)" }}>
@@ -1047,7 +1052,7 @@ export default function MyTeamPanel({
                       {subpoules.length > 1 && (
                         <Select value={activeSubpouleId} onValueChange={setSelectedSubpouleId}>
                           <SelectTrigger
-                            aria-label="Kies subpoule"
+                            aria-label={t("team.panel.chooseSubpouleAria")}
                             className="h-7 w-auto min-w-[140px] max-w-[200px] gap-1.5 rounded-md border-0 px-2.5 font-mono text-[10px] tracking-[0.14em] uppercase font-bold focus:ring-2 focus:ring-[#D49A1A]"
                             style={{ background: "rgba(26,22,18,0.06)", color: "#0F0F10", borderRadius: 6, boxShadow: "inset 0 0 0 1px rgba(26,22,18,0.22)" }}
                           >
@@ -1067,21 +1072,21 @@ export default function MyTeamPanel({
                       <Dial
                         label="Subpoule" accent={AMBER}
                         value={<Rank rank={ploegStats.subpoule?.rank ?? null} delta={ploegStats.subpoule?.delta ?? null} />}
-                        sub={ploegStats.subpoule ? `van ${ploegStats.subpoule.total} · ${ploegStats.subpoule.name}` : undefined}
+                        sub={ploegStats.subpoule ? t("team.panel.ofTotalName", { total: ploegStats.subpoule.total, name: ploegStats.subpoule.name }) : undefined}
                         onClick={activeSubpouleId && onOpenSubpoule ? () => onOpenSubpoule(activeSubpouleId) : undefined}
-                        hint="Open de subpoule-daguitslag"
+                        hint={t("team.panel.hintSubpoule")}
                       />
                       <Dial
                         label="Classement Général"
                         value={<Rank rank={ploegStats.overall?.rank ?? null} delta={ploegStats.overall?.delta ?? null} />}
-                        sub={ploegStats.overall ? `van ${ploegStats.overall.total} deelnemers` : undefined}
+                        sub={ploegStats.overall ? t("team.panel.ofTotalParticipants", { total: ploegStats.overall.total }) : undefined}
                         onClick={onOpenUitslagen}
-                        hint="Open de daguitslag van de hele poule"
+                        hint={t("team.panel.hintOverall")}
                       />
                       <Dial
-                        label="Etappepunten"
+                        label={t("team.panel.stagePointsDial")}
                         value={stageDayPoints}
-                        sub={shownStage ? `alleen rit ${shownStage.stage_number}` : "nog geen uitslagen"}
+                        sub={shownStage ? t("team.panel.onlyStage", { stage: shownStage.stage_number }) : t("team.panel.noResultsYet")}
                       />
                       {/* Status-bewuste accentranden: de rand kleurt mee met de
                           waarde (boven/onder de drempel), in SPEC-kleuren. */}
@@ -1097,9 +1102,9 @@ export default function MyTeamPanel({
                         Icon={Target}
                         value={dash(hors.monkeyBeatPct, (n) => `${Math.round(n)}%`)}
                         valueColor={hors.monkeyBeatPct === null ? undefined : "#D49A1A"}
-                        sub="apen verslagen"
+                        sub={t("team.panel.monkeysBeaten")}
                         onClick={onOpenHors ? () => onOpenHors("dartpijl") : undefined}
-                        hint="Open de Dartpijl-analyse"
+                        hint={t("team.panel.hintDartpijl")}
                       />
                       <Dial
                         label="Emirates"
@@ -1108,9 +1113,9 @@ export default function MyTeamPanel({
                         }
                         Icon={Crown}
                         value={dash(hors.emiratesPct, (n) => `${Math.round(n)}%`)}
-                        sub="van droomploeg"
+                        sub={t("team.panel.ofDreamTeam")}
                         onClick={onOpenHors ? () => onOpenHors("superteam") : undefined}
-                        hint="Open The Emirates"
+                        hint={t("team.panel.hintEmirates")}
                       />
                       {(() => {
                         // Rapportkleur (SPEC): >=7 olive, >=5 amber, <5 rood —
@@ -1130,9 +1135,9 @@ export default function MyTeamPanel({
                             Icon={ClipboardList}
                             value={dash(hors.directorScore, (n) => n.toFixed(1))}
                             valueColor={dirColor}
-                            sub="rapport"
+                            sub={t("team.panel.reportLabel")}
                             onClick={onOpenHors ? () => onOpenHors("wielerdirecteur") : undefined}
-                            hint="Open het Directeur Sportif-rapport"
+                            hint={t("team.panel.hintDirector")}
                           />
                         );
                       })()}
@@ -1174,7 +1179,7 @@ export default function MyTeamPanel({
                         hint?: string;
                       }> = [
                         {
-                          label: "Beste etappe",
+                          label: t("team.panel.bestStage"),
                           Icon: Flag,
                           flagLeft: true,
                           nowrap: true,
@@ -1185,28 +1190,28 @@ export default function MyTeamPanel({
                             </>
                           ) : "—",
                           sub: bestRank?.stage
-                            ? `${bestRankPoints} pt · rit ${bestRank.stage.stage_number}`
+                            ? t("team.panel.ptStage", { points: bestRankPoints, stage: bestRank.stage.stage_number })
                             : undefined,
                           onClick: bestRank?.stage && onOpenStageResult
                             ? () => onOpenStageResult(bestRank.stage!.stage_number)
                             : undefined,
-                          hint: "Open de uitslag van deze rit",
+                          hint: t("team.panel.hintStageResult"),
                         },
                         {
-                          label: "Overall poule",
+                          label: t("team.panel.overallPoule"),
                           value: ploegStats.overall ? <Rank rank={ploegStats.overall.rank} delta={ploegStats.overall.delta} /> : "—",
                           onClick: ploegStats.overall ? onOpenUitslagen : undefined,
-                          hint: "Bekijk het poule-klassement",
+                          hint: t("team.panel.hintPouleStandings"),
                         },
                         {
                           label: "Subpoule",
                           value: ploegStats.subpoule ? <Rank rank={ploegStats.subpoule.rank} delta={ploegStats.subpoule.delta} /> : "—",
                           sub: ploegStats.subpoule?.name,
                           onClick: activeSubpouleId && onOpenSubpoule ? () => onOpenSubpoule(activeSubpouleId) : undefined,
-                          hint: "Bekijk het subpoule-klassement",
+                          hint: t("team.panel.hintSubpouleStandings"),
                         },
                         {
-                          label: "Topscorer",
+                          label: t("team.panel.topscorer"),
                           Icon: Shirt,
                           stack: true,
                           subStrong: true,
@@ -1216,7 +1221,7 @@ export default function MyTeamPanel({
                               {tsLast && <span>{tsLast}</span>}
                             </span>
                           ) : "—",
-                          sub: ploegStats.topscorer ? `${ploegStats.topscorer.points} PT` : undefined,
+                          sub: ploegStats.topscorer ? t("team.panel.ptUpper", { points: ploegStats.topscorer.points }) : undefined,
                         },
                       ];
                       return (
@@ -1328,10 +1333,10 @@ export default function MyTeamPanel({
                 >
                   <div className="flex items-center justify-between gap-2 mb-1.5 px-1">
                     <span className="font-mono text-[9px] tracking-[0.2em] uppercase" style={{ color: "rgba(237,227,204,0.55)" }}>
-                      — Spoel terug —
+                      {t("team.panel.rewindStamp")}
                     </span>
                     <span className="font-mono text-[9px] tracking-[0.12em] uppercase" style={{ color: "rgba(237,227,204,0.4)" }}>
-                      {rewound ? `t/m rit ${cutoffN}` : "actuele stand"}
+                      {rewound ? t("team.panel.throughStage", { stage: cutoffN }) : t("team.panel.currentStanding")}
                     </span>
                   </div>
 
@@ -1340,7 +1345,7 @@ export default function MyTeamPanel({
                   <div
                     ref={stageSelectorRef}
                     role="listbox"
-                    aria-label="Kies etappe om naar terug te spoelen"
+                    aria-label={t("team.panel.rewindAria")}
                     tabIndex={0}
                     onKeyDown={(e) => {
                       if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
@@ -1365,7 +1370,7 @@ export default function MyTeamPanel({
                           onClick={() => setSelectedStageId(s.id)}
                           aria-pressed={sel}
                           aria-selected={sel}
-                          title={s.name ?? `Rit ${s.stage_number}`}
+                          title={s.name ?? t("team.panel.stageTitle", { stage: s.stage_number })}
                           className="relative shrink-0 flex flex-col items-center justify-end gap-0.5 rounded transition-all"
                           style={{
                             scrollSnapAlign: "center",
@@ -1389,7 +1394,7 @@ export default function MyTeamPanel({
                           </span>
                           {isNow && (
                             <span className="font-mono uppercase tracking-wider leading-none" style={{ fontSize: 7, color: sel ? "#F4C84B" : "rgba(237,227,204,0.5)" }}>
-                              nu
+                              {t("team.panel.nowLabel")}
                             </span>
                           )}
                         </button>
@@ -1401,7 +1406,7 @@ export default function MyTeamPanel({
                   {rewound && (
                     <div className="mt-2 flex items-center justify-between gap-2 px-1">
                       <span className="font-mono text-[9px] leading-snug" style={{ color: "rgba(237,227,204,0.6)" }}>
-                        Teruggespoeld t/m rit {cutoffN}
+                        {t("team.panel.rewoundThrough", { stage: cutoffN })}
                       </span>
                       <button
                         type="button"
@@ -1409,7 +1414,7 @@ export default function MyTeamPanel({
                         className="font-mono text-[9px] tracking-[0.12em] uppercase font-bold px-2 py-0.5 rounded inline-flex items-center gap-1 shrink-0"
                         style={{ color: "#1A1612", background: AMBER }}
                       >
-                        Terug naar nu →
+                        {t("team.panel.backToNow")}
                       </button>
                     </div>
                   )}
@@ -1429,15 +1434,15 @@ export default function MyTeamPanel({
         )}>
           <div className="text-sm">
             {isSubmitted ? (
-              <>✅ <strong>Team ingediend.</strong> Je kunt nog wijzigen tot de admin de koers op deadline zet.</>
+              <Trans i18nKey="team.panel.submittedCta" components={{ strong: <strong /> }} />
             ) : (
-              <>🚴‍♂️ <strong>Je peloton staat nog niet aan de start.</strong> Bevestig je inzending in de teambuilder.</>
+              <Trans i18nKey="team.panel.notSubmittedCta" components={{ strong: <strong /> }} />
             )}
           </div>
           <Button asChild size="sm" variant={isSubmitted ? "outline" : "default"} className="w-full sm:w-auto">
             <Link to="/team-samenstellen">
               <Pencil className="h-4 w-4 mr-2" />
-              {isSubmitted ? "Wijzigen" : "Naar teambuilder"}
+              {isSubmitted ? t("team.panel.editShort") : t("team.panel.toBuilderShort")}
             </Link>
           </Button>
         </div>
@@ -1451,7 +1456,7 @@ export default function MyTeamPanel({
         >
           <Trophy className="h-5 w-5 text-[hsl(var(--vintage-gold))] shrink-0" />
           <span className="flex-1 min-w-0 text-sm font-serif">
-            Er valt wat te winnen — <span className="font-display font-bold">bekijk de prijzen</span>
+            <Trans i18nKey="team.panel.prizesLink" components={{ bold: <span className="font-display font-bold" /> }} />
           </span>
           <span aria-hidden className="text-muted-foreground group-hover:translate-x-0.5 transition-transform">→</span>
         </Link>
@@ -1470,7 +1475,7 @@ export default function MyTeamPanel({
         const SPRINTS = new Set(["SPR1", "SPR2", "SPR3"]);
         const groupFor = (cat: { id: string; name: string; short_name?: string | null }, idx: number) => {
           const sn = (cat.short_name ?? "").toUpperCase().replace(/\s+/g, "");
-          if (GEEL.has(sn)) return { catKey: "JACHT_OP_GEEL", catTitle: "Jacht op geel", catOrder: 0, category: "GC" as const };
+          if (GEEL.has(sn)) return { catKey: "JACHT_OP_GEEL", catTitle: t("team.sheet.huntForYellow"), catOrder: 0, category: "GC" as const };
           if (SPRINTS.has(sn)) return { catKey: "SPRINT", catTitle: "Sprint", catOrder: 1, category: "SPRINT" as const };
           return { catKey: cat.id, catTitle: cat.name, catOrder: 2 + idx, category: detectCategoryT(`${cat.name} ${cat.short_name ?? ""}`) };
         };

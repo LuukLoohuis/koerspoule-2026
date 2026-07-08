@@ -23,6 +23,7 @@ import RiderSearchSelect from "@/components/RiderSearchSelect";
 import { SteunMoment } from "@/components/SteunKopgroep";
 import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { captureEvent, captureException } from "@/lib/posthog";
 
 // Pick a thematic icon for each category based on its name/short_name
@@ -43,6 +44,7 @@ function getCategoryIcon(name: string): ReactNode {
 }
 
 export default function TeamBuilder() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, role } = useAuth();
@@ -55,8 +57,8 @@ export default function TeamBuilder() {
 
   const requireAuth = (action: string) => {
     toast({
-      title: "Maak een account aan",
-      description: `Je moet ingelogd zijn om ${action}.`,
+      title: t("team.builder.authRequiredTitle"),
+      description: t("team.builder.authRequiredDesc", { action }),
     });
     navigate("/login");
   };
@@ -201,19 +203,19 @@ export default function TeamBuilder() {
   }, [validPicksByCategory]);
 
   const handlePickToggle = async (categoryId: string, riderId: string) => {
-    if (!isAuthed) return requireAuth("een renner te kiezen");
+    if (!isAuthed) return requireAuth(t("team.builder.authActionPickRider"));
     if (!entry) return;
     try {
       // Eén-knops wijzigflow: op een ingediend team eerst automatisch terug naar
       // concept (anders weigert de pick-RPC), daarna gewoon de pick uitvoeren.
       if (isSubmitted) {
         await revertEntry.mutateAsync({ entryId: entry.id });
-        toast({ title: "Team weer bewerkbaar — dien opnieuw in als je klaar bent" });
+        toast({ title: t("team.builder.editableAgainToast") });
       }
       await togglePick.mutateAsync({ entryId: entry.id, categoryId, riderId });
     } catch (error) {
       toast({
-        title: "Opslaan mislukt",
+        title: t("team.builder.saveFailed"),
         description: entryErrorMessage(error),
         variant: "destructive",
       });
@@ -223,27 +225,27 @@ export default function TeamBuilder() {
   const handleSaveJokers = async () => {
     if (!entry) return;
     if (!jokerDraft1 || !jokerDraft2) {
-      toast({ title: "Kies twee jokers", variant: "destructive" });
+      toast({ title: t("team.builder.chooseTwoJokers"), variant: "destructive" });
       return;
     }
     if (jokerDraft1 === jokerDraft2) {
-      toast({ title: "Jokers moeten uniek zijn", variant: "destructive" });
+      toast({ title: t("team.builder.jokersUnique"), variant: "destructive" });
       return;
     }
     if (selectedPickRiderIds.has(jokerDraft1) || selectedPickRiderIds.has(jokerDraft2)) {
       toast({
-        title: "Joker overlap",
-        description: "Jokers mogen niet in categorie-picks zitten.",
+        title: t("team.builder.jokerOverlapTitle"),
+        description: t("team.builder.jokerOverlapDesc"),
         variant: "destructive",
       });
       return;
     }
     try {
       await saveJoker.mutateAsync({ entryId: entry.id, riderIds: [jokerDraft1, jokerDraft2] });
-      toast({ title: "Jokers opgeslagen" });
+      toast({ title: t("team.builder.jokersSaved") });
     } catch (error) {
       toast({
-        title: "Jokers opslaan mislukt",
+        title: t("team.builder.jokersSaveFailed"),
         description: entryErrorMessage(error),
         variant: "destructive",
       });
@@ -253,7 +255,7 @@ export default function TeamBuilder() {
   // Tussentijds opslaan: picks worden al direct opgeslagen; deze knop flusht
   // bovendien de voorspellingen + jokers en bevestigt dat alles bewaard is.
   const handleSaveDraft = async () => {
-    if (!isAuthed) return requireAuth("je team op te slaan");
+    if (!isAuthed) return requireAuth(t("team.builder.authActionSaveTeam"));
     if (!entry) return;
     try {
       const list: Array<{ classification: "gc" | "points" | "kom" | "youth"; position: number; rider_id: string }> = [];
@@ -275,19 +277,19 @@ export default function TeamBuilder() {
         picks_required: totalRequired,
         jokers_selected: [jokerDraft1, jokerDraft2].filter(Boolean).length,
       });
-      toast({ title: "Tussentijds opgeslagen ✓", description: "Je kunt later verder waar je gebleven was." });
+      toast({ title: t("team.builder.draftSavedTitle"), description: t("team.builder.draftSavedDesc") });
     } catch (error) {
       captureException(error, {
         area: "team_builder",
         action: "save_draft",
         game_id: game?.id,
       });
-      toast({ title: "Opslaan mislukt", description: entryErrorMessage(error), variant: "destructive" });
+      toast({ title: t("team.builder.saveFailed"), description: entryErrorMessage(error), variant: "destructive" });
     }
   };
 
   const handleSubmit = async () => {
-    if (!isAuthed) return requireAuth("je team in te dienen");
+    if (!isAuthed) return requireAuth(t("team.builder.authActionSubmitTeam"));
     if (!entry) return;
     try {
       // Een al-ingediende ploeg is server-side vergrendeld (save-RPC's weigeren
@@ -316,7 +318,7 @@ export default function TeamBuilder() {
         picks_completed: completedPicks,
         picks_required: totalRequired,
       });
-      toast({ title: isSubmitted ? "Wijziging ingediend ✓" : "Team definitief ingediend" });
+      toast({ title: isSubmitted ? t("team.builder.changeSubmitted") : t("team.builder.teamSubmitted") });
     } catch (error) {
       captureException(error, {
         area: "team_builder",
@@ -324,7 +326,7 @@ export default function TeamBuilder() {
         game_id: game?.id,
       });
       toast({
-        title: "Indienen mislukt",
+        title: t("team.builder.submitFailed"),
         description: entryErrorMessage(error),
         variant: "destructive",
       });
@@ -350,16 +352,16 @@ export default function TeamBuilder() {
   type MissingTarget = "categories" | "jokers" | "predictions";
   const missing: Array<{ label: string; target: MissingTarget }> = [];
   if (completedPicks < totalRequired) {
-    missing.push({ label: `Nog ${totalRequired - completedPicks} renner${totalRequired - completedPicks === 1 ? "" : "s"} kiezen in je categorieën`, target: "categories" });
+    missing.push({ label: t("team.builder.missingRiders", { count: totalRequired - completedPicks }), target: "categories" });
   }
   if (jokerIds.length < 2) {
-    missing.push({ label: `Nog ${2 - jokerIds.length} joker${2 - jokerIds.length === 1 ? "" : "s"} aanduiden`, target: "jokers" });
+    missing.push({ label: t("team.builder.missingJokers", { count: 2 - jokerIds.length }), target: "jokers" });
   }
   if (podiumFilled < 3) {
-    missing.push({ label: `Eindpodium voorspellen (${podiumFilled}/3)`, target: "predictions" });
+    missing.push({ label: t("team.builder.missingPodium", { filled: podiumFilled }), target: "predictions" });
   }
   if (jerseysFilled < 3) {
-    missing.push({ label: `Truitjes voorspellen — punten, berg & jongeren (${jerseysFilled}/3)`, target: "predictions" });
+    missing.push({ label: t("team.builder.missingJerseys", { filled: jerseysFilled }), target: "predictions" });
   }
   const teamComplete = missing.length === 0;
 
@@ -402,10 +404,10 @@ export default function TeamBuilder() {
 
   const submitBusy = submitEntry.isPending || savePredictions.isPending || saveJoker.isPending;
   const submitLabel = !isSubmitted
-    ? "✅ Team definitief indienen"
+    ? t("team.builder.submitFinal")
     : isDirty
-      ? (teamComplete ? "✅ Wijziging indienen" : "Vul je ploeg eerst compleet")
-      : "✅ Reeds ingediend";
+      ? (teamComplete ? t("team.builder.submitChange") : t("team.builder.completeTeamFirst"))
+      : t("team.builder.alreadySubmitted");
   // Niet-ingediend: indienen mag zodra niet vergrendeld. Ingediend: alleen als er
   // een (geldige, complete) wijziging is.
   const submitDisabled = Boolean(isLocked || submitBusy || (isSubmitted ? !isDirty || !teamComplete : false));
@@ -456,16 +458,16 @@ export default function TeamBuilder() {
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[hsl(var(--vintage-gold))] via-primary to-[hsl(var(--vintage-gold))]" />
       <div className="flex items-center gap-3 mb-1">
         <span className="text-2xl">🃏</span>
-        <h2 className="font-display text-xl font-bold">Jokers</h2>
+        <h2 className="font-display text-xl font-bold">{t("team.builder.jokersHeading")}</h2>
       </div>
       <p className="text-sm opacity-80 mb-3 font-serif italic">
-        Twee outsiders uit de overige renners. Niet uit een categorie. {jokerPool.length} beschikbaar.
+        {t("team.builder.jokersIntro", { count: jokerPool.length })}
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
         {[
-          { draft: jokerDraft1, set: setJokerDraft1, exclude: jokerDraft2, label: "Joker 1" },
-          { draft: jokerDraft2, set: setJokerDraft2, exclude: jokerDraft1, label: "Joker 2" },
+          { draft: jokerDraft1, set: setJokerDraft1, exclude: jokerDraft2, label: t("team.builder.jokerSlot", { num: 1 }) },
+          { draft: jokerDraft2, set: setJokerDraft2, exclude: jokerDraft1, label: t("team.builder.jokerSlot", { num: 2 }) },
         ].map((slot, i) => {
           const picked = slot.draft ? riderById.get(slot.draft) : null;
           return (
@@ -491,14 +493,14 @@ export default function TeamBuilder() {
               {picked ? (
                 <div className="font-display text-lg font-bold mb-2">{picked.name}</div>
               ) : (
-                <div className="font-display text-base italic opacity-50 mb-2">Geen keuze</div>
+                <div className="font-display text-base italic opacity-50 mb-2">{t("team.builder.noChoice")}</div>
               )}
               <RiderSearchSelect
                 riders={jokerPool}
                 value={slot.draft}
                 onChange={slot.set}
                 excludeIds={slot.exclude ? [slot.exclude] : []}
-                placeholder="Zoek renner..."
+                placeholder={t("team.builder.searchRider")}
                 disabled={Boolean(isLocked)}
               />
             </div>
@@ -507,8 +509,8 @@ export default function TeamBuilder() {
       </div>
 
       <div className="flex items-center justify-between flex-wrap gap-2 text-xs opacity-70">
-        <span>Opgeslagen jokers: <strong>{jokerIds.length}/2</strong></span>
-        <span className="italic font-serif">Auto-opslaan tijdens kiezen</span>
+        <span>{t("team.builder.savedJokers")} <strong>{jokerIds.length}/2</strong></span>
+        <span className="italic font-serif">{t("team.builder.autoSaveWhileChoosing")}</span>
       </div>
     </div>
   );
@@ -518,13 +520,13 @@ export default function TeamBuilder() {
       {/* Affiche-koptekst */}
       <div className="text-center mb-4 md:mb-5 relative">
         <div className="vintage-stamp text-[10px] md:text-[11px] mb-1.5">
-          ✦ Pronostiek · Le palmarès final ✦
+          {t("team.builder.pronoStamp")}
         </div>
         <h2 className="vintage-numeral text-2xl md:text-4xl mb-1" style={{ letterSpacing: "0.04em" }}>
-          KLASSEMENTSVOORSPELLINGEN
+          {t("team.builder.predictionsHeading")}
         </h2>
         <p className="text-xs md:text-sm font-serif italic" style={{ color: "var(--ink-faded)" }}>
-          Voorspel de eindstand — auto-opslaan tijdens typen.
+          {t("team.builder.predictionsSubtitle")}
         </p>
         {/* Dubbele inktstreep onder de kop */}
         <div className="mx-auto mt-3 w-44 md:w-56 h-[2px]" style={{ background: "var(--ink-sepia)" }} />
@@ -534,7 +536,7 @@ export default function TeamBuilder() {
       {/* ── Podium ─────────────────────────────────────────────── */}
       <div className="mb-7 md:mb-8 relative">
         <div className="vintage-stamp text-center text-[10px] md:text-[11px] mb-4">
-          — Eindklassement Podium —
+          {t("team.builder.podiumStamp")}
         </div>
 
         <div className="grid grid-cols-3 gap-2 md:gap-4 items-end relative">
@@ -620,7 +622,7 @@ export default function TeamBuilder() {
                     </span>
                   ) : (
                     <span className="text-[10px] md:text-xs italic" style={{ color: "var(--ink-sepia)", opacity: 0.7, fontFamily: "'Special Elite','Courier Prime',serif" }}>
-                      nog in te vullen
+                      {t("team.builder.toBeFilled")}
                     </span>
                   )}
                 </div>
@@ -636,7 +638,7 @@ export default function TeamBuilder() {
                       setGcPodium(next);
                     }}
                     excludeIds={otherPodium}
-                    placeholder="Zoek…"
+                    placeholder={t("team.builder.searchShort")}
                     disabled={Boolean(isLocked)}
                     compact
                   />
@@ -650,16 +652,16 @@ export default function TeamBuilder() {
       {/* Sectie-scheiding affichestijl */}
       <div className="flex items-center gap-3 my-5">
         <div className="flex-1 h-[1.5px]" style={{ background: "var(--ink-sepia)" }} />
-        <span className="vintage-stamp text-[10px]">Trui-winnaars</span>
+        <span className="vintage-stamp text-[10px]">{t("team.builder.jerseyWinnersStamp")}</span>
         <div className="flex-1 h-[1.5px]" style={{ background: "var(--ink-sepia)" }} />
       </div>
 
       {/* ── Trui-kaarten (emaille-bordjes) ─────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {([
-          { label: "Maillot à pois",  sub: "Bergtrui",     trui: "berg"     as const, accent: "berg",     value: mountainJersey, setter: setMountainJersey, riders: allStartlistRiders, hint: undefined as string | undefined },
-          { label: "Maillot vert",    sub: "Puntentrui",   trui: "punten"   as const, accent: "punten",   value: pointsJersey,   setter: setPointsJersey,   riders: allStartlistRiders, hint: undefined },
-          { label: "Maillot blanc",   sub: "Jongerentrui", trui: "jongeren" as const, accent: "jongeren", value: youthJersey,    setter: setYouthJersey,    riders: youthEligibleRiders, hint: `Alleen jongerenklassement-renners (${youthEligibleRiders.length})` },
+          { label: "Maillot à pois",  sub: t("team.builder.mountainJersey"), trui: "berg"     as const, accent: "berg",     value: mountainJersey, setter: setMountainJersey, riders: allStartlistRiders, hint: undefined as string | undefined },
+          { label: "Maillot vert",    sub: t("team.builder.pointsJersey"),   trui: "punten"   as const, accent: "punten",   value: pointsJersey,   setter: setPointsJersey,   riders: allStartlistRiders, hint: undefined },
+          { label: "Maillot blanc",   sub: t("team.builder.youthJersey"),    trui: "jongeren" as const, accent: "jongeren", value: youthJersey,    setter: setYouthJersey,    riders: youthEligibleRiders, hint: t("team.builder.youthHint", { count: youthEligibleRiders.length }) },
         ]).map(({ label, sub, trui, accent, value, setter, riders: jerseyRiders, hint }) => {
           const picked = value ? riderById.get(value) : null;
           return (
@@ -694,7 +696,7 @@ export default function TeamBuilder() {
                 </div>
               ) : (
                 <div className="vintage-empty rounded-md px-2 py-1.5 text-xs text-center">
-                  nog in te vullen
+                  {t("team.builder.toBeFilled")}
                 </div>
               )}
 
@@ -703,7 +705,7 @@ export default function TeamBuilder() {
                 riders={jerseyRiders}
                 value={value}
                 onChange={setter}
-                placeholder="Zoek renner…"
+                placeholder={t("team.builder.searchRider")}
                 disabled={Boolean(isLocked)}
                 compact
               />
@@ -727,26 +729,26 @@ export default function TeamBuilder() {
     const complete = selected.length === max;
     const isLast = idx === categories.length - 1;
     const next = categories[idx + 1];
-    const nextLabel = isLast ? "Naar overzicht" : `Volgende: ${next.name}`;
+    const nextLabel = isLast ? t("team.builder.toOverview") : t("team.builder.nextCategory", { name: next.name });
     return (
       <div className="space-y-3">
         {/* Slanke voortgangskop */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-              Categorie {idx + 1} / {categories.length}
+              {t("team.builder.categoryProgress", { current: idx + 1, total: categories.length })}
             </div>
             <h2 className="font-display text-xl font-bold leading-tight">{category.name}</h2>
             {category.short_name && category.short_name !== category.name && (
               <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground/80 leading-tight">{category.short_name}</p>
             )}
-            <p className="text-xs text-muted-foreground">{max > 1 ? `Kies ${max} renners` : "Kies 1 renner"}</p>
+            <p className="text-xs text-muted-foreground">{t("team.builder.pickRiders", { count: max })}</p>
           </div>
           <div className="text-right shrink-0">
             <div className="font-mono text-sm font-bold">
               {completedPicks}<span className="text-muted-foreground">/{totalRequired}</span>
             </div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">renners</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("team.builder.ridersLabel")}</div>
           </div>
         </div>
         <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
@@ -764,11 +766,11 @@ export default function TeamBuilder() {
                 : "border-border text-muted-foreground"
             )}
           >
-            {selected.length}/{max} gekozen
+            {t("team.builder.chosenCount", { selected: selected.length, max })}
           </span>
           {complete && (
             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[hsl(var(--vintage-gold))]">
-              <Check className="h-3.5 w-3.5" /> Compleet
+              <Check className="h-3.5 w-3.5" /> {t("team.builder.complete")}
             </span>
           )}
         </div>
@@ -788,7 +790,7 @@ export default function TeamBuilder() {
                 disabled={disabled}
                 onClick={() => handlePickToggle(category.id, rid)}
                 aria-pressed={isSel}
-                aria-label={`${isSel ? "Deselecteer" : "Kies"} ${row.riders.name}`}
+                aria-label={isSel ? t("team.builder.ariaDeselect", { name: row.riders.name }) : t("team.builder.ariaPick", { name: row.riders.name })}
                 className={cn(
                   "w-full flex items-center gap-3 rounded-lg border-2 p-3 transition-all text-left",
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
@@ -850,14 +852,14 @@ export default function TeamBuilder() {
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Laatste stap</div>
-          <h2 className="font-display text-2xl font-bold leading-tight">Overzicht &amp; inzenden</h2>
+          <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{t("team.builder.lastStep")}</div>
+          <h2 className="font-display text-2xl font-bold leading-tight">{t("team.builder.overviewSubmitHeading")}</h2>
         </div>
         <div className="text-right shrink-0">
           <div className="font-mono text-sm font-bold">
             {completedPicks}<span className="text-muted-foreground">/{totalRequired}</span>
           </div>
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">renners</div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("team.builder.ridersLabel")}</div>
         </div>
       </div>
       <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
@@ -890,10 +892,10 @@ export default function TeamBuilder() {
                 {getCategoryIcon(`${cat.name} ${cat.short_name ?? ""}`)}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Cat. {idx + 1}</span>
+                <span className="block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{t("team.builder.catShort", { num: idx + 1 })}</span>
                 <span className="block font-display font-bold leading-tight truncate">{cat.short_name ?? cat.name}</span>
                 <span className="block text-xs text-muted-foreground truncate">
-                  {names.length ? names.join(", ") : "Nog niemand gekozen"}
+                  {names.length ? names.join(", ") : t("team.builder.nobodyChosen")}
                 </span>
               </span>
               {complete ? (
@@ -913,27 +915,27 @@ export default function TeamBuilder() {
       {/* Status + inzenden */}
       {gameLocked ? (
         <div className="retro-border bg-secondary/50 p-3 text-sm">
-          🔒 De koers staat op <strong>{game?.status}</strong> — wijzigen niet meer mogelijk.
-          {!isSubmitted && " Ploegen met minstens 11 gekozen renners doen automatisch mee."}
+          <Trans i18nKey="team.builder.lockedMessage" values={{ status: game?.status }} components={{ strong: <strong /> }} />
+          {!isSubmitted && <> {t("team.builder.autoEnrollNote")}</>}
         </div>
       ) : !isAuthed ? (
         <div className="ornate-frame retro-border bg-primary/10 border-primary/40 p-4 space-y-3 text-center">
           <p className="text-sm">
-            👀 Je bent aan het rondkijken. <strong>Maak een account aan</strong> om je ploeg in te dienen.
+            <Trans i18nKey="team.builder.browsingSubmitNote" components={{ strong: <strong /> }} />
           </p>
           <Button onClick={() => navigate("/login")} className="w-full retro-border-primary font-bold">
-            Account aanmaken
+            {t("team.builder.createAccount")}
           </Button>
         </div>
       ) : isSubmitted ? (
         <div className="retro-border bg-emerald-500/10 border-emerald-500/40 p-3 text-sm space-y-2">
           <p>
             {isDirty
-              ? <>✏️ <strong>Niet-opgeslagen wijziging.</strong> Klik op "Wijziging indienen" om je nieuwe keuze te bewaren.</>
-              : <>✅ <strong>Team ingediend.</strong> Wil je nog iets aanpassen? Pas het aan en dien opnieuw in.</>}
+              ? <Trans i18nKey="team.builder.unsavedChange" components={{ strong: <strong /> }} />
+              : <Trans i18nKey="team.builder.submittedNote" components={{ strong: <strong /> }} />}
           </p>
           {isDirty && !teamComplete && (
-            <p className="text-xs text-amber-700">Je ploeg is nog niet compleet — vul eerst alles in voordat je opnieuw indient.</p>
+            <p className="text-xs text-amber-700">{t("team.builder.incompleteBeforeResubmit")}</p>
           )}
           <Button
             onClick={handleSubmit}
@@ -942,13 +944,13 @@ export default function TeamBuilder() {
           >
             {submitLabel}
           </Button>
-          <SteunMoment storageKey="kp_steun_ingezonden" text="Steun Koerspoule met een koffie" />
+          <SteunMoment storageKey="kp_steun_ingezonden" text={t("team.builder.supportCoffee")} />
         </div>
       ) : (
         <>
           {!teamComplete && (
             <div className="retro-border bg-amber-500/10 border-amber-500/40 p-3 text-sm">
-              <p className="font-display font-bold mb-1">Nog niet voltallig</p>
+              <p className="font-display font-bold mb-1">{t("team.builder.notCompleteTitle")}</p>
               <ul className="list-disc pl-5 space-y-0.5 text-muted-foreground">
                 {missing.map((m) => (
                   <li key={m.label}>
@@ -995,22 +997,22 @@ export default function TeamBuilder() {
               De Ploegleiderswagen
             </h1>
             <p className="text-muted-foreground font-serif italic">
-              Kies wijs — één keer per Grand Tour
+              {t("team.builder.heroTagline")}
           </p>
           <div className="vintage-divider mt-4 max-w-md mx-auto" />
         </div>
 
-        {!gameReady && <div className="ornate-frame retro-border bg-card p-6 text-center">Laden...</div>}
+        {!gameReady && <div className="ornate-frame retro-border bg-card p-6 text-center">{t("team.builder.loading")}</div>}
         {gameReady && !game && (
           <div className="ornate-frame retro-border bg-card p-6 text-center text-muted-foreground">
-            Geen actieve game gevonden.
+            {t("team.builder.noActiveGame")}
           </div>
         )}
         {gameReady && game && (
           <Tabs defaultValue="builder" className="space-y-4">
             <TabsList className="w-full">
-              <TabsTrigger value="builder" className="flex-1">Ploeg samenstellen</TabsTrigger>
-              <TabsTrigger value="startlist" className="flex-1">Startlijst</TabsTrigger>
+              <TabsTrigger value="builder" className="flex-1">{t("team.builder.tabBuilder")}</TabsTrigger>
+              <TabsTrigger value="startlist" className="flex-1">{t("team.builder.tabStartlist")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="builder" className="space-y-5">
@@ -1018,7 +1020,7 @@ export default function TeamBuilder() {
                 <div className="ornate-frame retro-border bg-card p-6 text-center space-y-3">
                   <div className="text-4xl">🚧</div>
                   <p className="text-muted-foreground font-serif italic max-w-md mx-auto">
-                    Inschrijving voorlopig gesloten. Opent zodra de officiële startlijst beschikbaar is.
+                    {t("team.builder.registrationClosedNote")}
                   </p>
                 </div>
               ) : (
@@ -1028,11 +1030,9 @@ export default function TeamBuilder() {
                 <div className="ornate-frame retro-border bg-[hsl(var(--vintage-gold))/0.12] border-[hsl(var(--vintage-gold))/0.5] p-4 flex items-start gap-3">
                   <Lock className="h-5 w-5 shrink-0 text-[hsl(var(--vintage-gold))] mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-display font-bold mb-0.5">Inschrijving nog gesloten</p>
+                    <p className="font-display font-bold mb-0.5">{t("team.builder.previewTitle")}</p>
                     <p className="text-muted-foreground font-serif italic">
-                      Tot nader order is de inschrijving gesloten. Zodra de officiële startlijst
-                      definitief is, kun je je ploeg samenstellen. Je kunt nu al een ploegnaam kiezen,
-                      een subpoule starten en vrienden uitnodigen.
+                      {t("team.builder.previewBody")}
                     </p>
                   </div>
                 </div>
@@ -1042,13 +1042,13 @@ export default function TeamBuilder() {
               <div className="md:hidden" ref={pagerRef}>
                 {gameLocked && (
                   <div className="retro-border bg-secondary/50 p-2.5 text-xs mb-2">
-                    🔒 De koers staat op <strong>{game.status}</strong> — wijzigen niet meer mogelijk.
+                    <Trans i18nKey="team.builder.lockedMessage" values={{ status: game.status }} components={{ strong: <strong /> }} />
                   </div>
                 )}
                 {!isAuthed && !gameLocked && (
                   <div className="retro-border bg-primary/10 border-primary/40 p-2.5 text-xs mb-2 flex items-center justify-between gap-2">
-                    <span>👀 Rondkijken — account nodig om in te dienen.</span>
-                    <Button size="sm" onClick={() => navigate("/login")} className="shrink-0 h-7 px-2 text-xs">Account</Button>
+                    <span>{t("team.builder.browsingShort")}</span>
+                    <Button size="sm" onClick={() => navigate("/login")} className="shrink-0 h-7 px-2 text-xs">{t("team.builder.accountShort")}</Button>
                   </div>
                 )}
                 <SwipeHintBar visible={mobileHint.visible} onClose={mobileHint.dismiss} className="mx-auto w-fit mb-2" />
@@ -1066,7 +1066,7 @@ export default function TeamBuilder() {
                         key={k}
                         type="button"
                         onClick={() => jumpToCat(k)}
-                        aria-label={isOverview ? "Overzicht" : cat?.short_name ?? cat?.name ?? "Categorie"}
+                        aria-label={isOverview ? t("team.builder.overviewAria") : cat?.short_name ?? cat?.name ?? t("team.builder.categoryFallback")}
                         aria-current={isActive ? "true" : undefined}
                         className={cn(
                           "h-2.5 rounded-full transition-all",
@@ -1099,7 +1099,7 @@ export default function TeamBuilder() {
                     <div className="flex-1 min-w-[180px]">
                       <div className="flex items-baseline justify-between mb-1">
                         <span className="text-xs uppercase tracking-wider text-muted-foreground font-serif">
-                          Renners
+                          {t("team.builder.ridersHeading")}
                         </span>
                         <span className="text-sm font-mono font-bold">
                           {completedPicks}<span className="text-muted-foreground">/{totalRequired}</span>
@@ -1117,24 +1117,24 @@ export default function TeamBuilder() {
                       <span className="font-mono font-bold">
                         {jokerIds.length}<span className="text-muted-foreground">/2</span>
                       </span>
-                      <span className="text-xs text-muted-foreground hidden md:inline">Jokers</span>
+                      <span className="text-xs text-muted-foreground hidden md:inline">{t("team.builder.jokersLabel")}</span>
                     </div>
                     <div>
                       {gameLocked ? (
                         <span className="jersey-badge bg-muted text-muted-foreground border border-border">
-                          <Lock className="h-3 w-3" /> Vergrendeld
+                          <Lock className="h-3 w-3" /> {t("team.builder.lockedBadge")}
                         </span>
                       ) : isSubmitted ? (
                         <span className="jersey-badge bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40">
-                          <Check className="h-3 w-3" /> Ingediend
+                          <Check className="h-3 w-3" /> {t("team.builder.submittedBadge")}
                         </span>
                       ) : teamComplete ? (
                         <span className="jersey-badge bg-[hsl(var(--vintage-gold))/0.15] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold))/0.5]">
-                          <Sparkles className="h-3 w-3" /> Klaar om in te dienen
+                          <Sparkles className="h-3 w-3" /> {t("team.builder.readyBadge")}
                         </span>
                       ) : (
                         <span className="jersey-badge bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/40">
-                          🚴‍♂️ Team incompleet
+                          {t("team.builder.incompleteBadge")}
                         </span>
                       )}
                     </div>
@@ -1158,26 +1158,26 @@ export default function TeamBuilder() {
 
               {gameLocked && (
                 <div className="retro-border bg-secondary/50 p-3 text-sm">
-                  🔒 De koers staat op <strong>{game.status}</strong> — wijzigen niet meer mogelijk.
-                  {!isSubmitted && " Ploegen met minstens 11 gekozen renners doen automatisch mee."}
+                  <Trans i18nKey="team.builder.lockedMessage" values={{ status: game.status }} components={{ strong: <strong /> }} />
+                  {!isSubmitted && <> {t("team.builder.autoEnrollNote")}</>}
                 </div>
               )}
               {!isAuthed && !gameLocked && (
                 <div className="ornate-frame retro-border bg-primary/10 border-primary/40 p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                   <div className="text-sm">
-                    👀 Je bent aan het rondkijken. <strong>Maak een account aan</strong> om je ploeg samen te stellen en officieel in te dienen.
+                    <Trans i18nKey="team.builder.browsingBuildNote" components={{ strong: <strong /> }} />
                   </div>
                   <Button onClick={() => navigate("/login")} className="retro-border-primary font-bold">
-                    Account aanmaken
+                    {t("team.builder.createAccount")}
                   </Button>
                 </div>
               )}
               {!gameLocked && isSubmitted && (
                 <div className="space-y-2">
                   <div className="retro-border bg-emerald-500/10 border-emerald-500/40 p-3 text-sm">
-                    ✅ <strong>Team ingediend.</strong> Wil je nog iets aanpassen? Pas het aan en dien opnieuw in.
+                    <Trans i18nKey="team.builder.submittedNote" components={{ strong: <strong /> }} />
                   </div>
-                  <SteunMoment storageKey="kp_steun_ingezonden" text="Steun Koerspoule met een koffie" />
+                  <SteunMoment storageKey="kp_steun_ingezonden" text={t("team.builder.supportCoffee")} />
                 </div>
               )}
 
@@ -1203,7 +1203,7 @@ export default function TeamBuilder() {
                       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary opacity-70" />
                       {complete && (
                         <span className="absolute top-2 right-2 jersey-badge bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/50">
-                          <Check className="h-3 w-3" /> Compleet
+                          <Check className="h-3 w-3" /> {t("team.builder.complete")}
                         </span>
                       )}
 
@@ -1226,7 +1226,7 @@ export default function TeamBuilder() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                              Cat. {idx + 1}
+                              {t("team.builder.catShort", { num: idx + 1 })}
                             </span>
                             <span
                               className={cn(
@@ -1260,7 +1260,7 @@ export default function TeamBuilder() {
                               disabled={disabled}
                               onClick={() => handlePickToggle(category.id, row.riders!.id)}
                               aria-pressed={isSelected}
-                              aria-label={`${isSelected ? "Deselecteer" : "Kies"} ${row.riders.name}`}
+                              aria-label={isSelected ? t("team.builder.ariaDeselect", { name: row.riders.name }) : t("team.builder.ariaPick", { name: row.riders.name })}
                               className={cn(
                                 "group w-full flex items-center justify-between p-2.5 rounded-md border-2 transition-all text-left relative overflow-hidden",
                                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
@@ -1305,10 +1305,10 @@ export default function TeamBuilder() {
                 <div className="ornate-frame retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">🚴‍♂️💨</span>
-                    <strong className="font-display text-base">Je Team is nog niet voltallig</strong>
+                    <strong className="font-display text-base">{t("team.builder.notCompleteHeading")}</strong>
                   </div>
                   <p className="text-muted-foreground mb-2 font-serif italic">
-                    Een paar renners hangen nog achter de bezemwagen — vul de gaten op vóór de flamme rouge:
+                    {t("team.builder.notCompleteBody")}
                   </p>
                   <ul className="list-disc pl-5 space-y-1">
                     {missing.map((m) => (
@@ -1324,8 +1324,7 @@ export default function TeamBuilder() {
 
               {!gameLocked && !isSubmitted && teamComplete && (
                 <div className="retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
-                  ⚠️ <strong>Let op:</strong> je ploeg is compleet maar nog <strong>niet ingediend</strong>. Druk op <em>"Team definitief indienen"</em> om je inzending te bevestigen.
-                  Ploegen met minstens <strong>11 gekozen renners</strong> doen bij de start automatisch mee, ook als je niet indient — maar zelf indienen blijft de zekerste weg.
+                  <Trans i18nKey="team.builder.completeNotSubmitted" components={{ strong: <strong />, em: <em /> }} />
                 </div>
               )}
 
@@ -1333,14 +1332,14 @@ export default function TeamBuilder() {
               <div className="hidden md:flex flex-col sm:flex-row gap-2 justify-end items-stretch sm:items-center">
                 {!isLocked && !isSubmitted && (
                   <Button variant="outline" onClick={handleSaveDraft} disabled={savePredictions.isPending || saveJoker.isPending}>
-                    💾 Tussentijds opslaan
+                    {t("team.builder.saveDraft")}
                   </Button>
                 )}
                 <Button
                   onClick={handleSubmit}
                   disabled={submitDisabled}
                   className={cn("retro-border-primary font-bold", submitActive && "animate-pulse")}
-                  title={isSubmitted && isDirty && !teamComplete ? "Vul eerst je hele ploeg in" : undefined}
+                  title={isSubmitted && isDirty && !teamComplete ? t("team.builder.fillTeamFirst") : undefined}
                 >
                   {submitLabel}
                 </Button>
@@ -1358,7 +1357,7 @@ export default function TeamBuilder() {
                   <div className="flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-mono tabular-nums text-muted-foreground truncate">
-                        Renners {completedPicks}/{totalRequired} · 🃏 {jokerIds.length}/2
+                        {t("team.builder.bottomProgress", { completed: completedPicks, total: totalRequired, jokers: jokerIds.length })}
                       </p>
                       <div className="h-1.5 rounded-full bg-secondary overflow-hidden mt-1">
                         <div
@@ -1369,7 +1368,7 @@ export default function TeamBuilder() {
                     </div>
                     {!isAuthed ? (
                       <Button size="sm" onClick={() => navigate("/login")} className="shrink-0 retro-border-primary font-bold">
-                        Account
+                        {t("team.builder.accountShort")}
                       </Button>
                     ) : !teamComplete ? (
                       <Button
@@ -1377,7 +1376,7 @@ export default function TeamBuilder() {
                         onClick={() => (firstIncompleteCatId ? jumpToCat(firstIncompleteCatId) : jumpToCat("overview"))}
                         className="shrink-0 retro-border-primary font-bold"
                       >
-                        Ga verder
+                        {t("team.builder.continueButton")}
                       </Button>
                     ) : !isSubmitted || isDirty ? (
                       <Button
@@ -1394,7 +1393,7 @@ export default function TeamBuilder() {
                         onClick={() => jumpToCat("overview")}
                         className="shrink-0 jersey-badge bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40"
                       >
-                        ✅ Ingediend
+                        {t("team.builder.submittedCta")}
                       </button>
                     )}
                   </div>
@@ -1410,14 +1409,14 @@ export default function TeamBuilder() {
                   <Input
                     value={startlistSearch}
                     onChange={(e) => setStartlistSearch(e.target.value)}
-                    placeholder="Zoek op renner..."
+                    placeholder={t("team.builder.searchByRider")}
                   />
                   <Select value={startlistTeamFilter} onValueChange={setStartlistTeamFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Filter op team" />
+                      <SelectValue placeholder={t("team.builder.filterByTeam")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Alle teams</SelectItem>
+                      <SelectItem value="all">{t("team.builder.allTeams")}</SelectItem>
                       {allTeams.map((team) => (
                         <SelectItem key={team.id} value={team.id}>
                           {team.name}

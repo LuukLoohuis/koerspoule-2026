@@ -13,6 +13,7 @@
  */
 
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Crown, ChevronDown } from "lucide-react";
 import CategoryPanel, { MedalDot } from "./CategoryPanel";
 import RiderStageBreakdown from "./RiderStageBreakdown";
@@ -69,6 +70,7 @@ export default function TeamSheet({
   riderTotalsReady,
   gameName,
 }: Props) {
+  const { t } = useTranslation();
   const { groups, total } = useMemo(() => {
     // Groepeer op de échte teambuilder-categorie (catKey), niet op de grove
     // tone-categorie. Binnen elk blok: actieve eerst, DNF onderaan.
@@ -114,7 +116,7 @@ export default function TeamSheet({
         style={{ border: "1px solid var(--ink-sepia)" }}
       >
         <p className="vintage-stamp text-[11px]" style={{ color: "var(--ink-faded)" }}>
-          Nog geen renners gekozen.
+          {t("team.sheet.noRidersChosen")}
         </p>
       </div>
     );
@@ -156,21 +158,21 @@ export default function TeamSheet({
             paddingLeft: "0.42em", // compenseer letterspacing voor optisch centreren
           }}
         >
-          Mijn Ploeg
+          {t("team.sheet.title")}
         </h2>
         <p
           className="mt-0.5 italic"
           style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: "12.5px", color: "var(--ink-faded)" }}
         >
-          Klik op een renner voor zijn resultaten per etappe
+          {t("team.sheet.clickRiderHint")}
         </p>
         <p
           className="mt-1 font-mono uppercase tabular-nums"
           style={{ fontSize: "11px", letterSpacing: "0.12em", color: "var(--ink-sepia)" }}
         >
-          {total} renners <span aria-hidden style={{ color: "hsl(var(--vintage-gold))" }}>◆</span>{" "}
-          {teamTotal === undefined ? "–" : teamTotal} pt <span aria-hidden style={{ color: "hsl(var(--vintage-gold))" }}>◆</span>{" "}
-          {dnfCount} uitvallers
+          {t("team.sheet.ridersCount", { count: total })} <span aria-hidden style={{ color: "hsl(var(--vintage-gold))" }}>◆</span>{" "}
+          {teamTotal === undefined ? "–" : t("team.sheet.pt", { points: teamTotal })} <span aria-hidden style={{ color: "hsl(var(--vintage-gold))" }}>◆</span>{" "}
+          {t("team.sheet.dnfCount", { count: dnfCount })}
         </p>
         <div className="flex items-center gap-3 mt-2">{inkLine}<span aria-hidden className="text-[10px]" style={{ color: "var(--ink-sepia)" }}>✦</span>{inkLine}</div>
       </header>
@@ -178,7 +180,7 @@ export default function TeamSheet({
       {/* 2. Gouden leidersstrip — één variant voor alle breekpunten */}
       {heroRiders.length > 0 && (
         <section
-          aria-label="Jacht op geel"
+          aria-label={t("team.sheet.huntForYellow")}
           className="relative rounded-lg overflow-hidden"
           style={{ background: "var(--vintage-yellow)", border: "1.5px solid var(--ink-sepia)" }}
         >
@@ -197,7 +199,7 @@ export default function TeamSheet({
                   color: "var(--ink-sepia)",
                 }}
               >
-                Jacht op geel
+                {t("team.sheet.huntForYellow")}
               </h3>
               <span
                 className="shrink-0 rounded-full px-2 py-0.5 tabular-nums"
@@ -209,7 +211,7 @@ export default function TeamSheet({
                   border: "1px solid var(--ink-sepia)",
                 }}
               >
-                {heroTotal === undefined ? "–" : `${heroTotal} pt`}
+                {heroTotal === undefined ? "–" : t("team.sheet.pt", { points: heroTotal })}
               </span>
             </div>
 

@@ -5,6 +5,7 @@
  * 'm voorgoed weg. reduced-motion → geen icoon-animatie (.kp-swipe-nudge).
  */
 import { ChevronLeft, ChevronRight, Hand, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 export default function SwipeHintBar({
@@ -16,6 +17,7 @@ export default function SwipeHintBar({
   onClose: () => void;
   className?: string;
 }) {
+  const { t } = useTranslation();
   if (!visible) return null;
   return (
     <div
@@ -32,15 +34,15 @@ export default function SwipeHintBar({
         <ChevronRight className="absolute right-0 h-4 w-4 opacity-70" />
       </span>
       <span className="min-w-0 flex-1 text-[13px] leading-tight">
-        <span className="block font-display font-bold text-foreground">Veeg of tik om te wisselen</span>
+        <span className="block font-display font-bold text-foreground">{t("team.swipeHint.title")}</span>
         <span className="block text-[11px] font-serif italic text-muted-foreground">
-          tussen de onderdelen van deze sectie
+          {t("team.swipeHint.subtitle")}
         </span>
       </span>
       <button
         type="button"
         onClick={onClose}
-        aria-label="Uitleg sluiten"
+        aria-label={t("team.swipeHint.closeAria")}
         className="-mr-1 shrink-0 self-start p-1 text-muted-foreground/70 hover:text-foreground"
       >
         <X className="h-4 w-4" />

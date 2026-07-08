@@ -6,6 +6,7 @@
  */
 
 import { ChevronDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import CategoryBadgeIcon from "./icons";
 import RiderStageBreakdown from "./RiderStageBreakdown";
 import { categoryTone, type RiderCategory, type SheetRider } from "./tokens";
@@ -36,9 +37,10 @@ const MEDAL_BG: Record<1 | 2 | 3, string> = {
 };
 
 export function MedalDot({ rank }: { rank: 1 | 2 | 3 }) {
+  const { t } = useTranslation();
   return (
     <span
-      aria-label={`teambreed nr. ${rank}`}
+      aria-label={t("team.catPanel.medalAria", { rank })}
       className="inline-flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full text-[8px] font-bold tabular-nums"
       style={{ background: MEDAL_BG[rank], border: "1px solid var(--ink-sepia)", color: "var(--ink-sepia)" }}
     >
@@ -60,6 +62,7 @@ export default function CategoryPanel({
   riderTotalsReady,
   medalIds,
 }: Props) {
+  const { t } = useTranslation();
   if (riders.length === 0) return null;
   const tone = categoryTone(category);
   const heading = title ?? tone.label;
@@ -113,7 +116,7 @@ export default function CategoryPanel({
           />
           {medal && <MedalDot rank={medal} />}
           {dnf && (
-            <span aria-label="uitgevallen" className="shrink-0 text-[10px]" style={{ color: "#C0392B" }}>
+            <span aria-label={t("team.catPanel.dnfAria")} className="shrink-0 text-[10px]" style={{ color: "#C0392B" }}>
               ☠
             </span>
           )}
@@ -165,7 +168,7 @@ export default function CategoryPanel({
           {heading}
         </h3>
         <span className="shrink-0 tabular-nums" style={{ fontSize: "11px", fontWeight: 700, color: tone.ink }}>
-          {sectionTotal === undefined ? "–" : `${sectionTotal} pt`}
+          {sectionTotal === undefined ? "–" : t("team.sheet.pt", { points: sectionTotal })}
         </span>
       </header>
 
@@ -175,7 +178,7 @@ export default function CategoryPanel({
         <div className="flex items-center gap-2 px-1 pt-1.5 pb-0.5 select-none" aria-hidden>
           <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(192,57,43,0.35), transparent)" }} />
           <span className="font-mono uppercase shrink-0" style={{ color: "#C0392B", fontSize: "9px", letterSpacing: "0.22em", fontWeight: 700 }}>
-            ✦ Uitgevallen ({dnfRiders.length}) ✦
+            {t("team.catPanel.dnfDivider", { count: dnfRiders.length })}
           </span>
           <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(192,57,43,0.35), transparent)" }} />
         </div>

@@ -8,6 +8,7 @@
  */
 
 import { ChevronDown, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import Cyclist from "./Cyclist";
 import { categoryTone, type RiderCategory, type SheetRider } from "./tokens";
 
@@ -43,6 +44,7 @@ function DnfBadge({ size = "default" }: { size?: "default" | "small" }) {
 /** Rustige "Niet gestart"-chip (vóór de koers vervallen): goud/sepia i.p.v. rood,
  *  behulpzaam i.p.v. alarmerend. */
 function NietGestartBadge({ size = "default" }: { size?: "default" | "small" }) {
+  const { t } = useTranslation();
   const isSmall = size === "small";
   return (
     <span
@@ -57,9 +59,9 @@ function NietGestartBadge({ size = "default" }: { size?: "default" | "small" }) 
         lineHeight: 1,
         whiteSpace: "nowrap",
       }}
-      aria-label="Niet gestart"
+      aria-label={t("team.riderTile.notStarted")}
     >
-      Niet gestart
+      {t("team.riderTile.notStarted")}
     </span>
   );
 }
@@ -81,6 +83,7 @@ function PointsChip({
   ink: string;
   jersey: string;
 }) {
+  const { t } = useTranslation();
   const known = typeof value === "number";
   return (
     <span
@@ -95,7 +98,7 @@ function PointsChip({
         minWidth: "34px",
         justifyContent: "center",
       }}
-      title="Totaal behaalde punten t/m laatst gefiatteerde etappe"
+      title={t("team.riderTile.pointsChipTitle")}
     >
       {known ? value : "–"}
       <span style={{ fontSize: "8px", fontWeight: 700, opacity: 0.7 }}>pt</span>

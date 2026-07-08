@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StageTypeIcon, type StageType } from "@/components/stages/StageIcons";
 import { categoryTone, type RiderCategory } from "./tokens";
@@ -65,6 +66,7 @@ export default function RiderStageBreakdown({
   labelledById,
   panelId,
 }: Props) {
+  const { t } = useTranslation();
   const tone = categoryTone(category);
   const reduce = prefersReducedMotion();
 
@@ -99,7 +101,7 @@ export default function RiderStageBreakdown({
     <div
       id={panelId}
       role="region"
-      aria-label={labelledById ? undefined : `Punten per etappe — ${riderName}`}
+      aria-label={labelledById ? undefined : t("team.breakdown.ariaLabel", { name: riderName })}
       aria-labelledby={labelledById}
       style={{
         overflow: "hidden",
@@ -133,7 +135,7 @@ export default function RiderStageBreakdown({
             fontWeight: 700,
           }}
         >
-          Punten per etappe
+          {t("team.breakdown.heading")}
         </div>
 
         {isLoading ? (
@@ -150,14 +152,14 @@ export default function RiderStageBreakdown({
             className="italic"
             style={{ fontSize: "12px", color: "#C0392B", fontWeight: 600 }}
           >
-            Kon punten niet laden — probeer later opnieuw.
+            {t("team.breakdown.loadError")}
           </p>
         ) : scored.length === 0 ? (
           <p
             className="italic"
             style={{ fontSize: "12.5px", color: "var(--ink-sepia)", opacity: 0.7 }}
           >
-            Nog geen punten gescoord in goedgekeurde etappes.
+            {t("team.breakdown.noPoints")}
           </p>
         ) : (
           <>
@@ -177,7 +179,7 @@ export default function RiderStageBreakdown({
                       <StageTypeIcon type={mapStageType(r.stage_type)} size={14} />
                     </span>
                     <span className="min-w-0 flex-1 truncate" title={r.stage_name ?? undefined}>
-                      <span className="font-semibold">Rit {r.stage_number}</span>
+                      <span className="font-semibold">{t("team.breakdown.stage", { stage: r.stage_number })}</span>
                       {r.stage_name ? (
                         <span style={{ color: "#9A8A74" }}> · {r.stage_name}</span>
                       ) : null}
@@ -193,7 +195,7 @@ export default function RiderStageBreakdown({
                           border: `1px solid ${tone.jersey}`,
                           fontWeight: 700,
                         }}
-                        title={`Joker ×${r.multiplier}`}
+                        title={t("team.breakdown.jokerMultiplier", { multiplier: r.multiplier })}
                       >
                         ×{r.multiplier}
                       </span>
@@ -224,7 +226,7 @@ export default function RiderStageBreakdown({
                 className="font-mono uppercase"
                 style={{ fontSize: "10px", letterSpacing: "0.12em", color: "#9A8A74", fontWeight: 700 }}
               >
-                Totaal
+                {t("team.breakdown.total")}
               </span>
               <span
                 className="tabular-nums"
@@ -235,7 +237,7 @@ export default function RiderStageBreakdown({
                   color: tone.ink,
                 }}
               >
-                {total} pt
+                {t("team.sheet.pt", { points: total })}
               </span>
             </div>
           </>
