@@ -1,4 +1,5 @@
 import { CheckCircle2, Clock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLastApprovedStage } from "@/hooks/useResults";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +10,7 @@ export default function ResultsUpdatedBadge({
   gameId?: string;
   className?: string;
 }) {
+  const { t, i18n } = useTranslation();
   const { data: last, isLoading } = useLastApprovedStage(gameId);
 
   if (isLoading) return null;
@@ -20,23 +22,27 @@ export default function ResultsUpdatedBadge({
     return (
       <div className={cn(base, "text-muted-foreground", className)}>
         <Clock className="w-3.5 h-3.5" />
-        <span>Nog geen uitslagen bijgewerkt.</span>
+        <span>{t("results.updatedBadge.none")}</span>
       </div>
     );
   }
 
   const datum = last.approved_at
-    ? new Date(last.approved_at).toLocaleDateString("nl-NL", {
-        day: "numeric",
-        month: "short",
-      })
+    ? new Date(last.approved_at).toLocaleDateString(
+        i18n.language === "en" ? "en-GB" : "nl-NL",
+        {
+          day: "numeric",
+          month: "short",
+        },
+      )
     : null;
 
   return (
     <div className={cn(base, className)}>
       <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
       <span>
-        Bijgewerkt t/m <strong>etappe {last.stage_number}</strong>
+        {t("results.updatedBadge.prefix")}{" "}
+        <strong>{t("results.updatedBadge.stage", { number: last.stage_number })}</strong>
         {last.name ? ` — ${last.name}` : ""}
         {datum ? ` (${datum})` : ""}
       </span>

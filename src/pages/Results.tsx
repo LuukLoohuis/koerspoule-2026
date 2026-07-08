@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import ResultsView from "@/components/ResultsView";
 import GameSwitcher from "@/components/GameSwitcher";
 import { useAllGames } from "@/hooks/useAllGames";
@@ -7,6 +8,7 @@ import { isVisibleToUser, maySeeLiveContent } from "@/lib/gameStatus";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
 
 export default function Results() {
+  const { t } = useTranslation();
   const { data: allGames = [] } = useAllGames();
   const { role } = useAuth();
   const isAdmin = role === "admin";
@@ -50,8 +52,8 @@ export default function Results() {
         <ResultsView showHeader gameId={selectedGame?.id} gameName={selectedGame?.name} />
       ) : (
         <SneakPreviewLock
-          title="Uitslagen volgen binnenkort"
-          note="Deze koers staat in de sneak preview. Zodra de inschrijving opengaat verschijnen hier het klassement en de daguitslagen."
+          title={t("results.page.sneakPreviewTitle")}
+          note={t("results.page.sneakPreviewNote")}
         />
       )}
     </div>

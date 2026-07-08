@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Link } from "react-router-dom";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -27,13 +29,13 @@ import SwipeHintBar from "@/components/SwipeHintBar";
 import { RetroTabs } from "@/components/RetroTabs";
 import { buildStageBarData } from "@/components/stages/stageBarData";
 
-const STAGE_TYPE_META: Record<string, { label: string; color: string; icon: JSX.Element }> = {
-  vlak: { label: "Vlak", color: "bg-emerald-500", icon: <Activity className="w-4 h-4" /> },
-  heuvelachtig: { label: "Heuvelachtig", color: "bg-amber-500", icon: <Mountain className="w-4 h-4" /> },
-  bergop: { label: "Bergop", color: "bg-rose-600", icon: <Mountain className="w-4 h-4" /> },
-  tijdrit: { label: "Tijdrit", color: "bg-sky-500", icon: <Clock className="w-4 h-4" /> },
-  ploegentijdrit: { label: "Ploegentijdrit", color: "bg-violet-500", icon: <Clock className="w-4 h-4" /> },
-};
+const stageTypeMeta = (t: TFunction): Record<string, { label: string; color: string; icon: JSX.Element }> => ({
+  vlak: { label: t("results.stageType.vlak"), color: "bg-emerald-500", icon: <Activity className="w-4 h-4" /> },
+  heuvelachtig: { label: t("results.stageType.heuvelachtig"), color: "bg-amber-500", icon: <Mountain className="w-4 h-4" /> },
+  bergop: { label: t("results.stageType.bergop"), color: "bg-rose-600", icon: <Mountain className="w-4 h-4" /> },
+  tijdrit: { label: t("results.stageType.tijdrit"), color: "bg-sky-500", icon: <Clock className="w-4 h-4" /> },
+  ploegentijdrit: { label: t("results.stageType.ploegentijdrit"), color: "bg-violet-500", icon: <Clock className="w-4 h-4" /> },
+});
 
 function rankBadge(rank: number) {
   const cls =
@@ -80,6 +82,8 @@ type ResultsViewProps = {
 };
 
 export default function ResultsView({ showHeader = true, gameId: gameIdProp, gameName: gameNameProp, initialView, initialStageNumber }: ResultsViewProps) {
+  const { t, i18n } = useTranslation();
+  const STAGE_TYPE_META = useMemo(() => stageTypeMeta(t), [t]);
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const { data: curGame } = useCurrentGame();
@@ -245,7 +249,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   if (!gameId && !stagesLoading) {
     return (
       <div className="py-8 text-center">
-        <p className="text-muted-foreground italic">Er is nog geen actieve koers ingesteld.</p>
+        <p className="text-muted-foreground italic">{t("results.view.noActiveRace")}</p>
       </div>
     );
   }
@@ -256,7 +260,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         <div className="relative mb-5 md:mb-6">
           <div className="flex flex-col items-center text-center gap-2">
             <span className="overline-stamp">— Bulletin Officiel —</span>
-            <h1 className="heading-oswald text-4xl md:text-5xl">Uitslagen &amp; Klassement</h1>
+            <h1 className="heading-oswald text-4xl md:text-5xl">{t("results.view.headerTitle")}</h1>
             {gameName && (
               <p className="text-muted-foreground font-serif italic">{gameName}</p>
             )}
@@ -272,12 +276,12 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         {/* Desktop — retro dossard-tabbalk */}
         <RetroTabs
           className="hidden md:flex"
-          aria-label="Uitslagen-weergave"
+          aria-label={t("results.view.tabsAriaLabel")}
           active={view}
           onChange={(v) => setView(v as "etappes" | "klassement")}
           tabs={[
-            { key: "klassement", label: "Klassement", Icon: Trophy },
-            { key: "etappes",    label: "Etappes",    Icon: ClipboardList },
+            { key: "klassement", label: t("results.view.klassementTab"), Icon: Trophy },
+            { key: "etappes",    label: t("results.view.etappesTab"),    Icon: ClipboardList },
           ]}
         />
         {/* Mobiel — bestaande swipe/auto-hide tabbalk (ongewijzigd). */}
@@ -294,21 +298,21 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
             className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-foreground/10"
           >
             <Trophy className="h-3.5 w-3.5 shrink-0" />
-            <span>Klassement</span>
+            <span>{t("results.view.klassementTab")}</span>
           </TabsTrigger>
           <TabsTrigger
             value="etappes"
             className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-foreground/10"
           >
             <ClipboardList className="h-3.5 w-3.5 shrink-0" />
-            <span>Etappes</span>
+            <span>{t("results.view.etappesTab")}</span>
           </TabsTrigger>
         </TabsList>
         </div>
 
         {/* Swipe-hint + stippen-indicator (mobiel). */}
         <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mx-auto w-fit mt-2" />
-        <SwipeDots count={2} activeIndex={view === "klassement" ? 0 : 1} activeLabel={view === "klassement" ? "Klassement" : "Etappes"} />
+        <SwipeDots count={2} activeIndex={view === "klassement" ? 0 : 1} activeLabel={view === "klassement" ? t("results.view.klassementTab") : t("results.view.etappesTab")} />
 
         {/* Vinger-volgende carrousel: alleen het content-vlak beweegt. */}
         <SwipeCarousel
@@ -321,9 +325,9 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         {/* ── ETAPPES TAB ── */}
         {k === "etappes" && (<>
           {stagesLoading ? (
-            <p className="text-center text-muted-foreground py-8">Etappes laden...</p>
+            <p className="text-center text-muted-foreground py-8">{t("results.view.stagesLoading")}</p>
           ) : stages.length === 0 ? (
-            <EmptyState message="Nog geen etappes aangemaakt voor deze koers." />
+            <EmptyState message={t("results.view.noStages")} />
           ) : (
             <>
               {/* Premium vertical bar visualizer — StageBar (PNG-asset variant) */}
@@ -349,12 +353,12 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                         if (idx >= 0) setSelectedStageIdx(idx);
                       }}
                       gcSelected={selectedStage?.is_gc === true}
-                      title="ETAPPE-OVERZICHT"
-                      subtitle={gameName ? `Komende ${gameName}` : "Etappes"}
+                      title={t("results.view.stageBarTitle")}
+                      subtitle={gameName ? t("results.view.stageBarSubtitleGame", { game: gameName }) : t("results.view.etappesTab")}
                       rangeLabel={
                         selectedStage
-                          ? `Rit ${selectedStage.stage_number}${selectedStage.name ? ` — ${selectedStage.name}` : ""}`
-                          : `${stages.filter((s) => !s.is_gc).length} ritten`
+                          ? `${t("results.view.stageLabel", { number: selectedStage.stage_number })}${selectedStage.name ? ` — ${selectedStage.name}` : ""}`
+                          : t("results.view.stageCount", { count: stages.filter((s) => !s.is_gc).length })
                       }
                     />
                   </div>
@@ -372,7 +376,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                       {STAGE_TYPE_META[selectedStage.stage_type ?? "vlak"]?.icon}
                     </div>
                     <div>
-                      <span className="font-display font-bold">Rit {selectedStage.stage_number}</span>
+                      <span className="font-display font-bold">{t("results.view.stageLabel", { number: selectedStage.stage_number })}</span>
                       <span className="text-muted-foreground ml-2 text-xs">
                         {STAGE_TYPE_META[selectedStage.stage_type ?? "vlak"]?.label}
                       </span>
@@ -391,7 +395,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                   {selectedStage.date && (
                     <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5" />
-                      {new Date(selectedStage.date).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "long" })}
+                      {new Date(selectedStage.date).toLocaleDateString(i18n.language === "en" ? "en-GB" : "nl-NL", { weekday: "short", day: "numeric", month: "long" })}
                     </span>
                   )}
                 </div>
@@ -403,14 +407,14 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                     <Trophy className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="font-display text-base font-bold">Eindklassement (GC)</div>
-                    <div className="text-xs text-muted-foreground">Algemeen klassement, truienwinnaars en jouw GC-bonus</div>
+                    <div className="font-display text-base font-bold">{t("results.view.gcBannerTitle")}</div>
+                    <div className="text-xs text-muted-foreground">{t("results.view.gcBannerSubtitle")}</div>
                   </div>
                 </div>
               )}
 
               {selectedStage?.is_gc ? (
-                <GcDetail stages={stages} myEntry={myEntry} />
+                <GcDetail stages={stages} myEntry={myEntry} t={t} />
               ) : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Kolom 1: Koerspoule-uitslag van de rit (eerst tonen) */}
@@ -418,10 +422,10 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                   <div className="p-4 border-b-2 border-foreground bg-secondary/50">
                     <h2 className="font-display text-base font-bold flex items-center gap-2">
                       <Users className="h-5 w-5 text-primary" />
-                      Tussenstand rit
+                      {t("results.view.stageStandingsTitle")}
                     </h2>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {entries.length} {entries.length === 1 ? "deelnemer" : "deelnemers"}
+                      {t("results.view.participantCount", { count: entries.length })}
                     </p>
                   </div>
                   {stageStandings.length === 0 ? (
@@ -430,14 +434,14 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                         <Flag className="h-6 w-6 text-muted-foreground/50" />
                       </div>
                       <p className="text-sm text-muted-foreground max-w-xs">
-                        Nog geen punten voor deze rit — de dagstand verschijnt zodra de jury de uitslag fiatteert.
+                        {t("results.view.stageStandingsEmpty")}
                       </p>
                     </div>
                   ) : (
                     <StandingsList
                       topN={isMobile ? 5 : 10}
                       maxHeightClass={isMobile ? "max-h-[460px]" : "max-h-[620px]"}
-                      placeholder="Zoek op teamnaam of naam…"
+                      placeholder={t("results.view.searchPlaceholder")}
                       items={stageStandings.map((s) => {
                         const isMe = s.user_id === user?.id;
                         return {
@@ -458,7 +462,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                                 {s.team_name ?? s.display_name ?? "—"}
                               </span>
                             </div>
-                            <span className="font-bold text-xs">{s.stagePts} pt</span>
+                            <span className="font-bold text-xs">{t("results.view.points", { count: s.stagePts })}</span>
                           </div>
                           ),
                         };
@@ -471,17 +475,17 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                 <div className="retro-border bg-card h-fit">
                   <div className="p-4 border-b-2 border-foreground bg-primary/10">
                     <h2 className="font-display text-base font-bold flex items-center justify-between">
-                      <span className="flex items-center gap-2"><User className="h-5 w-5 text-primary" />Jouw team</span>
-                      <span className="font-display text-xl text-primary">{myStagePoints} pt</span>
+                      <span className="flex items-center gap-2"><User className="h-5 w-5 text-primary" />{t("results.view.yourTeam")}</span>
+                      <span className="font-display text-xl text-primary">{t("results.view.points", { count: myStagePoints })}</span>
                     </h2>
                   </div>
                   {!myEntry ? (
                     <div className="p-4 text-center text-muted-foreground text-sm">
-                      Je hebt nog geen team ingestuurd voor deze koers.
+                      {t("results.view.noTeamSubmitted")}
                     </div>
                   ) : myStageScorers.length === 0 ? (
                     <div className="p-4 text-center text-muted-foreground text-sm">
-                      Geen van jouw renners scoorde punten in deze rit.
+                      {t("results.view.noRidersScored")}
                     </div>
                   ) : (
                     <div className="divide-y divide-border">
@@ -496,10 +500,10 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                               </span>
                               <span className="font-sans font-medium truncate">{r.name}</span>
                               {r.is_joker && (
-                                <span className="text-[9px] uppercase font-bold text-accent">Joker</span>
+                                <span className="text-[9px] uppercase font-bold text-accent">{t("results.view.joker")}</span>
                               )}
                             </div>
-                            <span className="font-bold text-primary text-sm">{finalPts} pt</span>
+                            <span className="font-bold text-primary text-sm">{t("results.view.points", { count: finalPts })}</span>
                           </div>
                         );
                       })}
@@ -512,14 +516,14 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                   <div className="p-4 border-b-2 border-foreground bg-secondary/50">
                     <h2 className="font-display text-base font-bold flex items-center gap-2">
                       <Medal className="h-5 w-5 text-accent" />
-                      Etappe-uitslag
+                      {t("results.view.stageResultTitle")}
                     </h2>
                   </div>
                   {resultsLoading ? (
                     <RowsSkeleton rows={6} />
                   ) : results.filter((r) => r.finish_position != null).length === 0 ? (
                     <div className="p-4 text-sm text-muted-foreground italic text-center">
-                      Nog geen uitslag voor deze rit.
+                      {t("results.view.stageResultEmpty")}
                     </div>
                   ) : (
                     <div className="divide-y divide-border">
@@ -544,7 +548,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                                   {r.riders?.name ?? r.rider_name ?? "—"}
                                 </span>
                               </div>
-                              <span className="font-bold text-accent text-xs whitespace-nowrap">{pts} pt</span>
+                              <span className="font-bold text-accent text-xs whitespace-nowrap">{t("results.view.points", { count: pts })}</span>
                             </div>
                           );
                         })}
@@ -582,12 +586,12 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                     if (idx >= 0) setKlassementStageIdx(idx);
                   }}
                   gcSelected={klassementStage?.is_gc === true}
-                  title="TUSSENSTAND SELECTEREN"
-                  subtitle={`Komende ${gameName ?? "koers"}`}
+                  title={t("results.view.klassementBarTitle")}
+                  subtitle={t("results.view.stageBarSubtitleGame", { game: gameName ?? t("results.view.raceFallback") })}
                   rangeLabel={
                     klassementStage
-                      ? `T/m rit ${klassementStage.stage_number}${klassementStage.name ? ` — ${klassementStage.name}` : ""}`
-                      : "Kies een rit"
+                      ? `${t("results.view.untilStageLabel", { number: klassementStage.stage_number })}${klassementStage.name ? ` — ${klassementStage.name}` : ""}`
+                      : t("results.view.chooseStage")
                   }
                 />
               </div>
@@ -601,10 +605,10 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
               <div className="sticky top-0 z-20 p-4 border-b-2 border-foreground bg-secondary backdrop-blur-sm flex items-center justify-between">
                 <h2 className="heading-oswald text-xl flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-[hsl(var(--vintage-gold))]" />
-                  Algemeen klassement
+                  {t("results.view.overallStandingsTitle")}
                 </h2>
                 <span className="text-[11px] text-muted-foreground font-mono">
-                  {overallStandings.length} {overallStandings.length === 1 ? "deelnemer" : "deelnemers"}
+                  {t("results.view.participantCount", { count: overallStandings.length })}
                 </span>
               </div>
               {overallStandings.length === 0 ? (
@@ -613,18 +617,18 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                     <Trophy className="h-7 w-7 text-muted-foreground/50" />
                   </div>
                   <div>
-                    <p className="font-display font-bold text-foreground">Nog geen klassement</p>
+                    <p className="font-display font-bold text-foreground">{t("results.view.emptyStandingsTitle")}</p>
                     <p className="text-sm text-muted-foreground mt-0.5 max-w-xs">
                       {user
-                        ? "Zodra de eerste ploegen zijn ingediend en de jury een rit fiatteert, verschijnt de stand hier."
-                        : "Maak gratis een account, stel je ploeg samen en strijd mee om de trui — de stand verschijnt hier zodra de koers begint."}
+                        ? t("results.view.emptyStandingsUser")
+                        : t("results.view.emptyStandingsGuest")}
                     </p>
                   </div>
                   <Link
                     to={user ? "/team-samenstellen" : "/login"}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground font-bold text-sm border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] hover:brightness-105 active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all"
                   >
-                    {user ? "🚴 Stel je ploeg samen" : "🚴 Doe gratis mee"}
+                    {user ? t("results.view.ctaBuildTeam") : t("results.view.ctaJoinFree")}
                   </Link>
                 </div>
               ) : (
@@ -639,8 +643,8 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                 />
                 <StandingsList
                   maxHeightClass="max-h-[600px]"
-                  placeholder="Zoek op teamnaam of naam…"
-                  emptyMessage="Nog geen ingestuurde teams."
+                  placeholder={t("results.view.searchPlaceholder")}
+                  emptyMessage={t("results.view.noSubmittedTeams")}
                   items={overallStandings.map((s) => {
                     const isMe = s.user_id === user?.id;
                     const dagRank = klassementStageStandings.get(s.id);
@@ -700,7 +704,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                             </span>
                             {isMe && (
                               <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 rounded px-1 py-px leading-4">
-                                jij
+                                {t("results.view.youBadge")}
                               </span>
                             )}
                           </div>
@@ -735,11 +739,11 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                             )}>
                               {s.cumPts}
                             </span>
-                            <span className="text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
+                            <span className="text-[9px] text-muted-foreground font-mono ml-0.5">{t("results.view.ptUnit")}</span>
                           </div>
                           {s.predBonus > 0 && (
-                            <div className="text-[9px] text-emerald-600 font-mono leading-none mt-0.5" title="Bonus uit eindklassement-/truivoorspellingen">
-                              +{s.predBonus} vk
+                            <div className="text-[9px] text-emerald-600 font-mono leading-none mt-0.5" title={t("results.view.predBonusTitle")}>
+                              {t("results.view.predBonus", { count: s.predBonus })}
                             </div>
                           )}
                         </div>
@@ -796,8 +800,8 @@ type StandingNode = { key: string; rank: number; isMe: boolean; searchText: stri
 function StandingsList({
   items,
   maxHeightClass = "max-h-[480px]",
-  placeholder = "Zoek op naam of team…",
-  emptyMessage = "Geen resultaten.",
+  placeholder,
+  emptyMessage,
 }: {
   items: StandingNode[];
   /** Niet meer gebruikt sinds virtualisatie (top-N + pin vervangen door de
@@ -808,6 +812,7 @@ function StandingsList({
   placeholder?: string;
   emptyMessage?: string;
 }) {
+  const { t } = useTranslation();
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
 
@@ -837,16 +842,16 @@ function StandingsList({
             type="text"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder={placeholder}
+            placeholder={placeholder ?? t("results.list.searchPlaceholderDefault")}
             className="w-full h-10 pl-9 pr-3 text-base rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
           />
         </div>
       </div>
 
       {items.length === 0 ? (
-        <div className="p-4 text-sm text-muted-foreground italic text-center">{emptyMessage}</div>
+        <div className="p-4 text-sm text-muted-foreground italic text-center">{emptyMessage ?? t("results.list.emptyDefault")}</div>
       ) : rendered.length === 0 ? (
-        <div className="p-4 text-sm text-muted-foreground italic text-center">Geen match voor "{q}".</div>
+        <div className="p-4 text-sm text-muted-foreground italic text-center">{t("results.list.noMatch", { query: q })}</div>
       ) : (
         <div ref={parentRef} className={cn("overflow-y-auto relative", maxHeightClass)}>
           <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: "relative" }}>
@@ -869,7 +874,7 @@ function StandingsList({
               onClick={() => rowVirtualizer.scrollToIndex(meIndex, { align: "center" })}
               className="sticky bottom-2 float-right mr-2 inline-flex items-center gap-1.5 rounded-full border-2 border-foreground bg-primary text-primary-foreground px-3 py-1.5 text-xs font-bold shadow-[2px_2px_0_hsl(var(--foreground))] hover:brightness-105 z-10"
             >
-              <Flag className="h-3.5 w-3.5" /> Spring naar mijn team
+              <Flag className="h-3.5 w-3.5" /> {t("results.list.jumpToMyTeam")}
             </button>
           )}
         </div>
@@ -898,6 +903,7 @@ function useMyEntryRiders(entryId?: string, gameId?: string) {
 }
 
 function RaceClassifications({ stageId }: { stageId: string | undefined }) {
+  const { t } = useTranslation();
   const { data: results = [], isLoading } = useStageResults(stageId);
 
   const buildList = (key: "gc_position" | "points_position" | "mountain_position" | "youth_position") =>
@@ -907,10 +913,10 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
       .slice(0, 20);
 
   const tabs = [
-    { id: "gc", label: "Algemeen", trui: "algemeen" as const, rows: buildList("gc_position") },
-    { id: "points", label: "Punten", trui: "punten" as const, rows: buildList("points_position") },
-    { id: "kom", label: "Berg", trui: "berg" as const, rows: buildList("mountain_position") },
-    { id: "youth", label: "Jongeren", trui: "jongeren" as const, rows: buildList("youth_position") },
+    { id: "gc", label: t("results.classifications.gc"), trui: "algemeen" as const, rows: buildList("gc_position") },
+    { id: "points", label: t("results.classifications.points"), trui: "punten" as const, rows: buildList("points_position") },
+    { id: "kom", label: t("results.classifications.mountain"), trui: "berg" as const, rows: buildList("mountain_position") },
+    { id: "youth", label: t("results.classifications.youth"), trui: "jongeren" as const, rows: buildList("youth_position") },
   ];
 
   return (
@@ -918,46 +924,46 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
       <div className="sticky top-0 z-20 p-4 border-b-2 border-foreground bg-secondary backdrop-blur-sm">
         <h2 className="heading-oswald text-xl flex items-center gap-2">
           <Medal className="h-5 w-5 text-accent" />
-          Klassementen koers
+          {t("results.classifications.title")}
         </h2>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Stand na laatst geüploade rit
+          {t("results.classifications.subtitle")}
         </p>
       </div>
 
       {!stageId ? (
         <div className="p-4 text-sm text-muted-foreground italic text-center">
-          Selecteer een rit om de klassementen te zien.
+          {t("results.classifications.selectStage")}
         </div>
       ) : isLoading ? (
         <RowsSkeleton />
       ) : (
         <Tabs defaultValue="gc">
           <TabsList className="flex w-full justify-start gap-1.5 overflow-x-auto no-scrollbar rounded-none border-b border-border/60 bg-secondary/30 p-2 h-auto">
-            {tabs.map((t) => (
+            {tabs.map((tab) => (
               <TabsTrigger
-                key={t.id}
-                value={t.id}
+                key={tab.id}
+                value={tab.id}
                 className="shrink-0 flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-primary/60 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm"
               >
-                <TruiBadge type={t.trui} formaat="klein" />
-                <span className="whitespace-nowrap">{t.label}</span>
+                <TruiBadge type={tab.trui} formaat="klein" />
+                <span className="whitespace-nowrap">{tab.label}</span>
               </TabsTrigger>
             ))}
           </TabsList>
-          {tabs.map((t) => (
-            <TabsContent key={t.id} value={t.id} className="mt-0">
-              {t.rows.length === 0 ? (
+          {tabs.map((tab) => (
+            <TabsContent key={tab.id} value={tab.id} className="mt-0">
+              {tab.rows.length === 0 ? (
                 <div className="p-4 text-sm text-muted-foreground italic text-center">
-                  Nog geen {t.label.toLowerCase()}klassement ingevuld voor deze rit.
+                  {t(`results.classifications.empty.${tab.id}`)}
                 </div>
               ) : (
                 <div className="divide-y divide-border max-h-[500px] overflow-y-auto">
-                  {t.rows.map((r) => {
+                  {tab.rows.map((r) => {
                     const pos =
-                      t.id === "gc" ? r.gc_position
-                      : t.id === "points" ? r.points_position
-                      : t.id === "kom" ? r.mountain_position
+                      tab.id === "gc" ? r.gc_position
+                      : tab.id === "points" ? r.points_position
+                      : tab.id === "kom" ? r.mountain_position
                       : r.youth_position;
                     return (
                       <div key={r.id} className={cn("flex items-center justify-between px-3 py-2 text-sm", pos === 1 && "maillot-leader-row")}>
@@ -985,9 +991,11 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
 function GcDetail({
   stages,
   myEntry,
+  t,
 }: {
   stages: StageRow[];
   myEntry: EntryStanding | undefined;
+  t: TFunction;
 }) {
   // Eind-truien + GC-top20 komen van de GC-rit, waar de admin de officiële
   // eindklassementen uploadt (zelfde bron als het klassement-tabje met de
@@ -1027,9 +1035,9 @@ function GcDetail({
     return (
       <div className="retro-border bg-card p-6 text-center">
         <Lock className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
-        <h3 className="font-display text-lg font-bold mb-1">Eindklassement nog vergrendeld</h3>
+        <h3 className="font-display text-lg font-bold mb-1">{t("results.gc.lockedTitle")}</h3>
         <p className="text-sm text-muted-foreground">
-          De GC-weergave wordt zichtbaar zodra etappe 21 is gefiatteerd.
+          {t("results.gc.lockedNote")}
         </p>
       </div>
     );
@@ -1041,9 +1049,9 @@ function GcDetail({
     .slice(0, 20);
 
   const jerseyDefs = [
-    { key: "points_position" as const, trui: "punten" as const, label: "Punten" },
-    { key: "mountain_position" as const, trui: "berg" as const, label: "Berg" },
-    { key: "youth_position" as const, trui: "jongeren" as const, label: "Jongeren" },
+    { key: "points_position" as const, trui: "punten" as const, label: t("results.classifications.points") },
+    { key: "mountain_position" as const, trui: "berg" as const, label: t("results.classifications.mountain") },
+    { key: "youth_position" as const, trui: "jongeren" as const, label: t("results.classifications.youth") },
   ];
 
   return (
@@ -1053,13 +1061,13 @@ function GcDetail({
         <div className="p-4 border-b-2 border-foreground bg-amber-500/20">
           <h2 className="font-display text-base font-bold flex items-center gap-2">
             <Trophy className="h-5 w-5 text-amber-600" />
-            Algemeen klassement
+            {t("results.gc.overallTitle")}
           </h2>
         </div>
         {isLoading ? (
           <RowsSkeleton rows={10} />
         ) : gcRows.length === 0 ? (
-          <div className="p-4 text-sm text-muted-foreground italic text-center">Nog geen GC-uitslag.</div>
+          <div className="p-4 text-sm text-muted-foreground italic text-center">{t("results.gc.overallEmpty")}</div>
         ) : (
           <div className="divide-y divide-border max-h-[600px] overflow-y-auto">
             {gcRows.map((r) => (
@@ -1079,7 +1087,7 @@ function GcDetail({
         <div className="p-4 border-b-2 border-foreground bg-secondary/50">
           <h2 className="font-display text-base font-bold flex items-center gap-2">
             <Medal className="h-5 w-5 text-accent" />
-            Truienwinnaars
+            {t("results.gc.jerseyWinnersTitle")}
           </h2>
         </div>
         <div className="p-2.5 space-y-2.5">
@@ -1104,18 +1112,18 @@ function GcDetail({
       <div className="retro-border bg-card lg:col-span-1">
         <div className="p-4 border-b-2 border-foreground bg-primary/10">
           <h2 className="font-display text-base font-bold flex items-center justify-between">
-            <span className="flex items-center gap-2"><User className="h-5 w-5 text-primary" />Jouw GC-bonus</span>
-            <span className="font-display text-xl text-primary tabular-nums">{predictionPts} pt</span>
+            <span className="flex items-center gap-2"><User className="h-5 w-5 text-primary" />{t("results.gc.yourBonusTitle")}</span>
+            <span className="font-display text-xl text-primary tabular-nums">{t("results.view.points", { count: predictionPts })}</span>
           </h2>
         </div>
         <div className="p-3 text-sm text-muted-foreground space-y-2">
           <p>
-            Bonuspunten uit jouw voorspellingen voor het eindklassement en de truien.
-            Wordt door de admin berekend met <strong>"Eindklassementen berekenen"</strong>.
+            {t("results.gc.bonusExplainPre")}{" "}
+            <strong>{t("results.gc.bonusExplainButton")}</strong>{t("results.gc.bonusExplainPost")}
           </p>
           <ul className="text-xs space-y-1 list-disc pl-5">
-            <li>GC-podium: 50 / 25 / 25 (max 150)</li>
-            <li>Truien: 25 per juiste winnaar</li>
+            <li>{t("results.gc.bonusPodium")}</li>
+            <li>{t("results.gc.bonusJerseys")}</li>
           </ul>
         </div>
       </div>

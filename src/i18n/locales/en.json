@@ -625,7 +625,102 @@
       }
     }
   },
-  "results": {},
+  "results": {
+    "page": {
+      "sneakPreviewTitle": "Results coming soon",
+      "sneakPreviewNote": "This race is in sneak preview. As soon as sign-ups open, the standings and daily results will show up here."
+    },
+    "updatedBadge": {
+      "none": "No results updated yet.",
+      "prefix": "Updated through",
+      "stage": "stage {{number}}"
+    },
+    "stageType": {
+      "vlak": "Flat",
+      "heuvelachtig": "Hilly",
+      "bergop": "Uphill",
+      "tijdrit": "Time trial",
+      "ploegentijdrit": "Team time trial"
+    },
+    "view": {
+      "noActiveRace": "No active race has been set up yet.",
+      "headerTitle": "Results & Standings",
+      "tabsAriaLabel": "Results view",
+      "klassementTab": "Standings",
+      "etappesTab": "Stages",
+      "stagesLoading": "Loading stages...",
+      "noStages": "No stages created for this race yet.",
+      "stageBarTitle": "STAGE OVERVIEW",
+      "stageBarSubtitleGame": "Upcoming {{game}}",
+      "klassementBarTitle": "PICK A STANDING",
+      "raceFallback": "race",
+      "stageLabel": "Stage {{number}}",
+      "untilStageLabel": "Through stage {{number}}",
+      "chooseStage": "Pick a stage",
+      "stageCount_one": "{{count}} stage",
+      "stageCount_other": "{{count}} stages",
+      "gcBannerTitle": "Final standings (GC)",
+      "gcBannerSubtitle": "General classification, jersey winners and your GC bonus",
+      "stageStandingsTitle": "Stage standings",
+      "participantCount_one": "{{count}} rider",
+      "participantCount_other": "{{count}} riders",
+      "stageStandingsEmpty": "No points for this stage yet — the daily standing shows up once the jury confirms the result.",
+      "searchPlaceholder": "Search by team or name…",
+      "yourTeam": "Your team",
+      "points_one": "{{count}} pt",
+      "points_other": "{{count}} pts",
+      "ptUnit": "pt",
+      "noTeamSubmitted": "You haven't submitted a team for this race yet.",
+      "noRidersScored": "None of your riders scored points in this stage.",
+      "joker": "Joker",
+      "stageResultTitle": "Stage result",
+      "stageResultEmpty": "No result for this stage yet.",
+      "overallStandingsTitle": "General classification",
+      "emptyStandingsTitle": "No standings yet",
+      "emptyStandingsUser": "Once the first teams are in and the jury confirms a stage, the standing shows up here.",
+      "emptyStandingsGuest": "Create a free account, build your team and battle for the jersey — the standing shows up here once the race starts.",
+      "ctaBuildTeam": "🚴 Build your team",
+      "ctaJoinFree": "🚴 Join for free",
+      "noSubmittedTeams": "No teams submitted yet.",
+      "youBadge": "you",
+      "predBonus": "+{{count}} pr",
+      "predBonusTitle": "Bonus from final-standings/jersey predictions"
+    },
+    "list": {
+      "searchPlaceholderDefault": "Search by name or team…",
+      "emptyDefault": "No results.",
+      "noMatch": "No match for \"{{query}}\".",
+      "jumpToMyTeam": "Jump to my team"
+    },
+    "classifications": {
+      "title": "Race classifications",
+      "subtitle": "Standing after the latest uploaded stage",
+      "selectStage": "Pick a stage to see the classifications.",
+      "gc": "General",
+      "points": "Points",
+      "mountain": "Mountain",
+      "youth": "Youth",
+      "empty": {
+        "gc": "No general classification filled in for this stage yet.",
+        "points": "No points classification filled in for this stage yet.",
+        "kom": "No mountain classification filled in for this stage yet.",
+        "youth": "No youth classification filled in for this stage yet."
+      }
+    },
+    "gc": {
+      "lockedTitle": "Final standings still locked",
+      "lockedNote": "The GC view becomes visible once stage 21 is confirmed.",
+      "overallTitle": "General classification",
+      "overallEmpty": "No GC result yet.",
+      "jerseyWinnersTitle": "Jersey winners",
+      "yourBonusTitle": "Your GC bonus",
+      "bonusExplainPre": "Bonus points from your predictions for the final standings and the jerseys. Calculated by the admin with",
+      "bonusExplainButton": "\"Eindklassementen berekenen\"",
+      "bonusExplainPost": ".",
+      "bonusPodium": "GC podium: 50 / 25 / 25 (max 150)",
+      "bonusJerseys": "Jerseys: 25 per correct winner"
+    }
+  },
   "hors": {},
   "karavaan": {},
   "common": {

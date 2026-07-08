@@ -625,7 +625,102 @@
       }
     }
   },
-  "results": {},
+  "results": {
+    "page": {
+      "sneakPreviewTitle": "Uitslagen volgen binnenkort",
+      "sneakPreviewNote": "Deze koers staat in de sneak preview. Zodra de inschrijving opengaat verschijnen hier het klassement en de daguitslagen."
+    },
+    "updatedBadge": {
+      "none": "Nog geen uitslagen bijgewerkt.",
+      "prefix": "Bijgewerkt t/m",
+      "stage": "etappe {{number}}"
+    },
+    "stageType": {
+      "vlak": "Vlak",
+      "heuvelachtig": "Heuvelachtig",
+      "bergop": "Bergop",
+      "tijdrit": "Tijdrit",
+      "ploegentijdrit": "Ploegentijdrit"
+    },
+    "view": {
+      "noActiveRace": "Er is nog geen actieve koers ingesteld.",
+      "headerTitle": "Uitslagen & Klassement",
+      "tabsAriaLabel": "Uitslagen-weergave",
+      "klassementTab": "Klassement",
+      "etappesTab": "Etappes",
+      "stagesLoading": "Etappes laden...",
+      "noStages": "Nog geen etappes aangemaakt voor deze koers.",
+      "stageBarTitle": "ETAPPE-OVERZICHT",
+      "stageBarSubtitleGame": "Komende {{game}}",
+      "klassementBarTitle": "TUSSENSTAND SELECTEREN",
+      "raceFallback": "koers",
+      "stageLabel": "Rit {{number}}",
+      "untilStageLabel": "T/m rit {{number}}",
+      "chooseStage": "Kies een rit",
+      "stageCount_one": "{{count}} rit",
+      "stageCount_other": "{{count}} ritten",
+      "gcBannerTitle": "Eindklassement (GC)",
+      "gcBannerSubtitle": "Algemeen klassement, truienwinnaars en jouw GC-bonus",
+      "stageStandingsTitle": "Tussenstand rit",
+      "participantCount_one": "{{count}} deelnemer",
+      "participantCount_other": "{{count}} deelnemers",
+      "stageStandingsEmpty": "Nog geen punten voor deze rit — de dagstand verschijnt zodra de jury de uitslag fiatteert.",
+      "searchPlaceholder": "Zoek op teamnaam of naam…",
+      "yourTeam": "Jouw team",
+      "points_one": "{{count}} pt",
+      "points_other": "{{count}} pt",
+      "ptUnit": "pt",
+      "noTeamSubmitted": "Je hebt nog geen team ingestuurd voor deze koers.",
+      "noRidersScored": "Geen van jouw renners scoorde punten in deze rit.",
+      "joker": "Joker",
+      "stageResultTitle": "Etappe-uitslag",
+      "stageResultEmpty": "Nog geen uitslag voor deze rit.",
+      "overallStandingsTitle": "Algemeen klassement",
+      "emptyStandingsTitle": "Nog geen klassement",
+      "emptyStandingsUser": "Zodra de eerste ploegen zijn ingediend en de jury een rit fiatteert, verschijnt de stand hier.",
+      "emptyStandingsGuest": "Maak gratis een account, stel je ploeg samen en strijd mee om de trui — de stand verschijnt hier zodra de koers begint.",
+      "ctaBuildTeam": "🚴 Stel je ploeg samen",
+      "ctaJoinFree": "🚴 Doe gratis mee",
+      "noSubmittedTeams": "Nog geen ingestuurde teams.",
+      "youBadge": "jij",
+      "predBonus": "+{{count}} vk",
+      "predBonusTitle": "Bonus uit eindklassement-/truivoorspellingen"
+    },
+    "list": {
+      "searchPlaceholderDefault": "Zoek op naam of team…",
+      "emptyDefault": "Geen resultaten.",
+      "noMatch": "Geen match voor \"{{query}}\".",
+      "jumpToMyTeam": "Spring naar mijn team"
+    },
+    "classifications": {
+      "title": "Klassementen koers",
+      "subtitle": "Stand na laatst geüploade rit",
+      "selectStage": "Selecteer een rit om de klassementen te zien.",
+      "gc": "Algemeen",
+      "points": "Punten",
+      "mountain": "Berg",
+      "youth": "Jongeren",
+      "empty": {
+        "gc": "Nog geen algemeen klassement ingevuld voor deze rit.",
+        "points": "Nog geen puntenklassement ingevuld voor deze rit.",
+        "kom": "Nog geen bergklassement ingevuld voor deze rit.",
+        "youth": "Nog geen jongerenklassement ingevuld voor deze rit."
+      }
+    },
+    "gc": {
+      "lockedTitle": "Eindklassement nog vergrendeld",
+      "lockedNote": "De GC-weergave wordt zichtbaar zodra etappe 21 is gefiatteerd.",
+      "overallTitle": "Algemeen klassement",
+      "overallEmpty": "Nog geen GC-uitslag.",
+      "jerseyWinnersTitle": "Truienwinnaars",
+      "yourBonusTitle": "Jouw GC-bonus",
+      "bonusExplainPre": "Bonuspunten uit jouw voorspellingen voor het eindklassement en de truien. Wordt door de admin berekend met",
+      "bonusExplainButton": "\"Eindklassementen berekenen\"",
+      "bonusExplainPost": ".",
+      "bonusPodium": "GC-podium: 50 / 25 / 25 (max 150)",
+      "bonusJerseys": "Truien: 25 per juiste winnaar"
+    }
+  },
   "hors": {},
   "karavaan": {},
   "common": {
