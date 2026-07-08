@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,7 @@ type Props = {
 };
 
 export default function SubpouleStandings({ subpouleId, subpouleName, gameId, gameStatus, showEvolution = true, requiresWoonplaats = false, compareId: compareIdProp, onCompare }: Props) {
+  const { t } = useTranslation();
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
   const { data: curGame } = useCurrentGame();
@@ -310,7 +312,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
     return (
       <Card className="retro-border">
         <CardContent className="p-4 text-sm text-muted-foreground">
-          Nog geen leden in deze subpoule.
+          {t("subpoule.standings.noMembers")}
         </CardContent>
       </Card>
     );
@@ -355,12 +357,14 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                 if (idx >= 0) setEtappeIdx(idx);
               }}
               gcSelected={selectedEtappe?.is_gc === true}
-              title="TUSSENSTAND SELECTEREN"
+              title={t("subpoule.standings.selectStandingTitle")}
               subtitle={subpouleName}
               rangeLabel={
                 selectedEtappe
-                  ? `T/m rit ${selectedEtappe.stage_number}${selectedEtappe.name ? ` — ${selectedEtappe.name}` : ""}`
-                  : "Kies een rit"
+                  ? (selectedEtappe.name
+                      ? t("subpoule.standings.throughStageNamed", { stage: selectedEtappe.stage_number, name: selectedEtappe.name })
+                      : t("subpoule.standings.throughStage", { stage: selectedEtappe.stage_number }))
+                  : t("subpoule.standings.pickStage")
               }
             />
           </div>
@@ -378,8 +382,9 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           </h2>
           {selectedEtappe && (
             <span className="text-[11px] text-muted-foreground font-mono uppercase tracking-wider">
-              T/m rit {selectedEtappe.stage_number}
-              {selectedEtappe.name ? ` — ${selectedEtappe.name}` : ""}
+              {selectedEtappe.name
+                ? t("subpoule.standings.throughStageNamed", { stage: selectedEtappe.stage_number, name: selectedEtappe.name })
+                : t("subpoule.standings.throughStage", { stage: selectedEtappe.stage_number })}
             </span>
           )}
         </div>
@@ -390,24 +395,24 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           <div className="px-3 py-2.5 border-b border-border bg-[hsl(var(--vintage-gold))/0.08] flex flex-col sm:flex-row sm:items-center gap-2">
             <span className="text-xs text-muted-foreground font-sans flex items-center gap-1.5 shrink-0">
               <MapPin className="w-3.5 h-3.5 text-[hsl(var(--vintage-gold))]" />
-              Woonplaats toevoegen — doe mee aan het streekklassement:
+              {t("subpoule.standings.addWoonplaats")}
             </span>
             <div className="flex items-center gap-2 flex-1">
               <Input
                 value={woonInput}
                 onChange={(e) => setWoonInput(e.target.value)}
-                placeholder="bv. Enschede"
+                placeholder={t("subpoule.manager.woonplaatsPlaceholder")}
                 className="h-8 text-sm"
               />
               <Button size="sm" className="h-8 shrink-0" disabled={savingWoon || !woonInput.trim()} onClick={saveOwnWoonplaats}>
-                {savingWoon ? "Opslaan…" : "Opslaan"}
+                {savingWoon ? t("subpoule.standings.saving") : t("subpoule.standings.save")}
               </Button>
               <button
                 type="button"
                 onClick={() => setWoonPromptDismissed(true)}
                 className="shrink-0 text-muted-foreground/60 hover:text-foreground"
-                aria-label="Sluiten"
-                title="Sluiten"
+                aria-label={t("subpoule.standings.close")}
+                title={t("subpoule.standings.close")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -425,21 +430,21 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   variant="outline"
                   role="combobox"
                   aria-expanded={woonOpen}
-                  aria-label="Filter op woonplaats"
+                  aria-label={t("subpoule.standings.filterByWoonplaats")}
                   className="h-9 w-full sm:w-56 justify-between font-normal text-sm"
                 >
-                  {woonFilter === ALL ? "Alle woonplaatsen" : woonFilter}
+                  {woonFilter === ALL ? t("subpoule.standings.allWoonplaatsen") : woonFilter}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 <Command>
-                  <CommandInput placeholder="Zoek woonplaats…" />
+                  <CommandInput placeholder={t("subpoule.standings.searchWoonplaats")} />
                   <CommandList>
-                    <CommandEmpty>Geen woonplaats gevonden.</CommandEmpty>
+                    <CommandEmpty>{t("subpoule.standings.noWoonplaatsFound")}</CommandEmpty>
                     <CommandGroup>
                       <CommandItem value="Alle woonplaatsen" onSelect={() => { setWoonFilter(ALL); setWoonOpen(false); }}>
-                        Alle woonplaatsen
+                        {t("subpoule.standings.allWoonplaatsen")}
                       </CommandItem>
                       {woonplaatsen.map((w) => (
                         <CommandItem key={w} value={w} onSelect={() => { setWoonFilter(w); setWoonOpen(false); }}>
@@ -452,7 +457,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
               </PopoverContent>
             </Popover>
             {woonFilter !== ALL && (
-              <span className="text-[11px] text-muted-foreground font-mono shrink-0">{displayedRows.length} in {woonFilter}</span>
+              <span className="text-[11px] text-muted-foreground font-mono shrink-0">{t("subpoule.standings.countInPlace", { count: displayedRows.length, place: woonFilter })}</span>
             )}
           </div>
         )}
@@ -462,12 +467,12 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           <div className="md:hidden px-3 py-1.5 border-b border-border bg-secondary/30 text-[10px] text-muted-foreground font-sans italic flex items-center justify-between gap-2">
             <span className="inline-flex items-center gap-1.5">
               <ArrowLeftRight className="w-3 h-3 shrink-0" />
-              Tik op een speler om te vergelijken
+              {t("subpoule.standings.tapToCompare")}
             </span>
             <button
               onClick={dismissTapHint}
               className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 hover:text-foreground px-1"
-              aria-label="Hint sluiten"
+              aria-label={t("subpoule.standings.closeHint")}
             >
               ×
             </button>
@@ -477,14 +482,14 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
         {/* Column headers */}
         <div className="flex items-center gap-2 md:gap-3 px-3 py-1.5 border-b border-border bg-secondary/40">
           <div className="shrink-0 w-9" />
-          <div className="flex-1 min-w-0 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Naam</div>
+          <div className="flex-1 min-w-0 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">{t("subpoule.standings.colName")}</div>
           {stages.length > 0 && (
-            <div className="hidden md:block shrink-0 w-8 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground text-center">Rit</div>
+            <div className="hidden md:block shrink-0 w-8 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground text-center">{t("subpoule.standings.colStage")}</div>
           )}
-          <div className="shrink-0 min-w-[2.5rem] md:min-w-[3rem] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">Pts</div>
-          <div className="shrink-0 min-w-[48px] md:min-w-[64px] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title="Punten in de geselecteerde rit">Dag</div>
+          <div className="shrink-0 min-w-[2.5rem] md:min-w-[3rem] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">{t("subpoule.standings.colPts")}</div>
+          <div className="shrink-0 min-w-[48px] md:min-w-[64px] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title={t("subpoule.standings.colPtsTitle")}>{t("subpoule.standings.colDay")}</div>
           {/* Kolomkop boven het compare-slot (desktop); mobiele spacer houdt de uitlijning. */}
-          <div className="shrink-0 w-5 md:w-[104px] hidden md:flex items-center justify-end gap-1 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title="Klik op een rij om te benchmarken">
+          <div className="shrink-0 w-5 md:w-[104px] hidden md:flex items-center justify-end gap-1 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title={t("subpoule.standings.colVsTitle")}>
             <Swords className="h-3 w-3" /> VS
           </div>
           <div className="shrink-0 w-5 md:hidden" />
@@ -536,7 +541,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                 role={canCompare ? "button" : undefined}
                 tabIndex={canCompare ? 0 : undefined}
                 aria-pressed={canCompare ? isComparing : undefined}
-                aria-label={canCompare ? `Vergelijk met ${m.team_name ?? m.display_name ?? "speler"}` : undefined}
+                aria-label={canCompare ? t("subpoule.standings.compareWith", { name: m.team_name ?? m.display_name ?? t("subpoule.standings.playerFallback") }) : undefined}
                 onClick={canCompare ? handleRowToggle : undefined}
                 onKeyDown={canCompare ? (e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -564,7 +569,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                         "inline-flex items-center text-[9px] font-bold tabular-nums leading-none mt-0.5",
                         m.delta > 0 ? "text-emerald-500" : "text-rose-500",
                       )}
-                      title={`${m.delta > 0 ? "Gestegen" : "Gedaald"} ${Math.abs(m.delta)} plek t.o.v. vorige rit`}
+                      title={t("subpoule.standings.deltaTitle", { direction: m.delta > 0 ? t("subpoule.standings.risen") : t("subpoule.standings.fallen"), count: Math.abs(m.delta) })}
                     >
                       {m.delta > 0 ? <ArrowUp className="w-2 h-2" /> : <ArrowDown className="w-2 h-2" />}
                       {Math.abs(m.delta)}
@@ -582,17 +587,17 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   </span>
                   {isMe && (
                     <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 rounded px-1 py-px leading-4">
-                      jij
+                      {t("subpoule.standings.you")}
                     </span>
                   )}
                   {isComparing && (
                     <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider bg-accent/30 text-accent-foreground border border-accent/60 rounded px-1 py-px leading-4">
                       <ArrowLeftRight className="w-2.5 h-2.5" />
-                      vs jij
+                      {t("subpoule.standings.vsYou")}
                     </span>
                   )}
                   {!m.entry_id && (
-                    <Badge variant="secondary" className="text-xs shrink-0">geen team</Badge>
+                    <Badge variant="secondary" className="text-xs shrink-0">{t("subpoule.standings.noTeam")}</Badge>
                   )}
                   </div>
                   {/* Woonplaats-label + positie binnen de gekozen plaats. */}
@@ -604,7 +609,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                       </span>
                       {regioPosByUser.get(m.user_id) != null && (
                         <span className="text-[10px] font-bold text-[hsl(var(--vintage-gold))] tabular-nums">
-                          {regioPosByUser.get(m.user_id)}e in {woonFilter}
+                          {t("subpoule.standings.positionInPlace", { pos: regioPosByUser.get(m.user_id), place: woonFilter })}
                         </span>
                       )}
                     </div>
@@ -633,13 +638,13 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                     <span className="hidden md:inline text-[9px] text-muted-foreground font-mono ml-0.5">pt</span>
                   </div>
                   {m.pred_bonus > 0 && (
-                    <div className="text-[9px] text-emerald-600 font-mono leading-none mt-0.5" title="Bonus uit eindklassement-/truivoorspellingen">
-                      +{m.pred_bonus} vk
+                    <div className="text-[9px] text-emerald-600 font-mono leading-none mt-0.5" title={t("subpoule.standings.predBonusTitle")}>
+                      +{m.pred_bonus} {t("subpoule.standings.predBonusSuffix")}
                     </div>
                   )}
                 </div>
 
-                <div className="shrink-0 text-right min-w-[48px] md:min-w-[64px]" title="Punten in deze rit">
+                <div className="shrink-0 text-right min-w-[48px] md:min-w-[64px]" title={t("subpoule.standings.stagePtsTitle")}>
                   {m.stage_points > 0 ? (
                     <>
                       <span className={cn(
@@ -679,11 +684,11 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                             ? "opacity-100 bg-primary/10 border-primary text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.5)]"
                             : "opacity-60 border-border bg-card text-muted-foreground group-hover:opacity-100 group-hover:border-primary/60 group-hover:text-primary group-hover:bg-primary/5 focus-visible:opacity-100",
                         )}
-                        aria-label={isComparing ? "Vergelijking sluiten" : `Benchmark tegen ${m.team_name ?? m.display_name ?? "dit team"}`}
-                        title={isComparing ? "Vergelijking sluiten" : "Benchmark jouw ploeg tegen dit team"}
+                        aria-label={isComparing ? t("subpoule.standings.closeComparison") : t("subpoule.standings.benchmarkAgainst", { name: m.team_name ?? m.display_name ?? t("subpoule.standings.thisTeamFallback") })}
+                        title={isComparing ? t("subpoule.standings.closeComparison") : t("subpoule.standings.benchmarkTitle")}
                       >
                         <Swords className="h-3 w-3" strokeWidth={isComparing ? 2.5 : 2} />
-                        {isComparing ? "Sluit" : "Vergelijk"}
+                        {isComparing ? t("subpoule.standings.compareClose") : t("subpoule.standings.compare")}
                       </button>
                       {/* Mobiel: subtiel zwaard-icoon (rij opent de sheet) */}
                       <span
@@ -717,10 +722,10 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
         <DrawerContent className="max-h-[85vh]">
           <DrawerHeader className="flex items-center justify-between py-3">
             <DrawerTitle className="flex items-center gap-2">
-              <Swords className="h-4 w-4 text-primary" /> Duel
+              <Swords className="h-4 w-4 text-primary" /> {t("subpoule.standings.duel")}
             </DrawerTitle>
             <DrawerClose
-              aria-label="Duel sluiten"
+              aria-label={t("subpoule.standings.closeDuel")}
               className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
               <X className="h-4 w-4" />

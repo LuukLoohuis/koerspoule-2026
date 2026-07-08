@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Users, Flag } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +19,7 @@ type Props = {
 type Plaats = { naam: string; aantal: number; totaal: number; gemiddelde: number };
 
 export default function StreekKlassement({ subpouleId, gameId, gameStatus, streekMin }: Props) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data: curGame } = useCurrentGame();
   const game = gameId ? { id: gameId, status: gameStatus } : curGame;
@@ -84,8 +86,10 @@ export default function StreekKlassement({ subpouleId, gameId, gameStatus, stree
         <div className="retro-border bg-[hsl(var(--vintage-gold))/0.10] p-3 flex items-center gap-2">
           <MapPin className="h-4 w-4 text-[hsl(var(--vintage-gold))] shrink-0" />
           <span className="text-sm font-sans">
-            Jouw positie in <strong>{ownRegio.plaats}</strong>:{" "}
-            <span className="font-display font-bold">{ownRegio.pos}e van {ownRegio.total}</span>
+            <Trans i18nKey="subpoule.streek.yourPositionIn" values={{ place: ownRegio.plaats }}>
+              Jouw positie in <strong>{ownRegio.plaats}</strong>:{" "}
+            </Trans>
+            <span className="font-display font-bold">{t("subpoule.streek.positionOf", { pos: ownRegio.pos, total: ownRegio.total })}</span>
           </span>
         </div>
       )}
@@ -94,16 +98,16 @@ export default function StreekKlassement({ subpouleId, gameId, gameStatus, stree
         <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <div className="p-4 border-b-2 border-foreground bg-secondary/50">
           <h2 className="font-display text-lg font-bold flex items-center gap-2">
-            <Flag className="h-5 w-5 text-[hsl(var(--vintage-gold))]" /> Streekklassement
+            <Flag className="h-5 w-5 text-[hsl(var(--vintage-gold))]" /> {t("subpoule.streek.title")}
           </h2>
           <p className="text-[11px] text-muted-foreground font-mono uppercase tracking-wider mt-0.5">
-            Woonplaatsen op gemiddelde punten per deelnemer
+            {t("subpoule.streek.subtitle")}
           </p>
         </div>
 
         {totalPoints === 0 ? (
           <CardContent className="p-5 text-center text-sm text-muted-foreground italic">
-            Nog geen uitslagen — het streekklassement vult zich zodra er punten gescoord zijn.
+            {t("subpoule.streek.emptyState")}
           </CardContent>
         ) : (
           <div>
@@ -128,14 +132,14 @@ export default function StreekKlassement({ subpouleId, gameId, gameStatus, stree
                       <span className={cn("shrink-0 w-7 text-center font-display font-black tabular-nums", rankCls, i <= 2 ? "text-xl" : "text-sm")}>{i + 1}</span>
                       <span className="flex-1 min-w-0 flex items-center gap-1.5">
                         <span className={cn("font-sans truncate", isOwn ? "font-bold text-primary" : "font-medium")}>{p.naam}</span>
-                        {isOwn && <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 rounded px-1 py-px leading-4">jouw plaats</span>}
+                        {isOwn && <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 rounded px-1 py-px leading-4">{t("subpoule.streek.yourPlace")}</span>}
                       </span>
-                      <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-muted-foreground font-mono" title="Aantal deelnemers">
+                      <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-muted-foreground font-mono" title={t("subpoule.streek.membersTitle")}>
                         <Users className="h-3 w-3" /> {p.aantal}
                       </span>
                       <span className="shrink-0 text-right min-w-[3.5rem]">
                         <span className="font-display font-bold tabular-nums text-base">{p.gemiddelde.toFixed(1)}</span>
-                        <span className="text-[9px] text-muted-foreground font-mono ml-0.5">gem</span>
+                        <span className="text-[9px] text-muted-foreground font-mono ml-0.5">{t("subpoule.streek.avg")}</span>
                       </span>
                     </li>
                   );
@@ -143,7 +147,7 @@ export default function StreekKlassement({ subpouleId, gameId, gameStatus, stree
               </ol>
             ) : (
               <p className="px-4 py-3 text-sm text-muted-foreground italic">
-                Nog geen enkele woonplaats haalt de drempel van {min} deelnemers.
+                {t("subpoule.streek.noPlaceReachesThreshold", { count: min })}
               </p>
             )}
 
@@ -151,9 +155,7 @@ export default function StreekKlassement({ subpouleId, gameId, gameStatus, stree
             {onder.length > 0 && (
               <div className="border-t border-dashed border-border px-3 py-3">
                 <p className="text-[12px] text-muted-foreground italic">
-                  Staat jouw woonplaats hier niet in het klassement? Dan zijn er nog te
-                  weinig deelnemers uit die plaats. Een woonplaats telt mee vanaf {min}
-                  deelnemers.
+                  {t("subpoule.streek.belowThreshold", { count: min })}
                 </p>
               </div>
             )}

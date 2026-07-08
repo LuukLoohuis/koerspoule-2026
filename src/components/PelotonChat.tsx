@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, MessageCircle } from "lucide-react";
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export default function PelotonChat({ subpoolName, subpoolId }: Props) {
+  const { t } = useTranslation();
   const { user, role } = useAuth();
   const { data: game } = useCurrentGame();
   const { toast } = useToast();
@@ -138,7 +140,7 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
       mentions,
     });
     if (error) {
-      toast({ title: "Versturen mislukt", description: error.message, variant: "destructive" });
+      toast({ title: t("subpoule.koerscafe.sendFailed"), description: error.message, variant: "destructive" });
     } else {
       setAutoScroll(true);
     }
@@ -147,25 +149,25 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
   const editMsg = async (id: string, body: string) => {
     if (!supabase) return;
     const { error } = await supabase.rpc("edit_chat_message", { p_message_id: id, p_body: body });
-    if (error) toast({ title: "Bewerken mislukt", description: error.message, variant: "destructive" });
+    if (error) toast({ title: t("subpoule.koerscafe.editFailed"), description: error.message, variant: "destructive" });
   };
 
   const deleteMsg = async (id: string) => {
     if (!supabase) return;
     const { error } = await supabase.rpc("soft_delete_chat_message", { p_message_id: id });
-    if (error) toast({ title: "Verwijderen mislukt", description: error.message, variant: "destructive" });
+    if (error) toast({ title: t("subpoule.koerscafe.deleteFailed"), description: error.message, variant: "destructive" });
   };
 
   const toggleReaction = async (id: string, emoji: string) => {
     if (!supabase) return;
     const { error } = await supabase.rpc("toggle_chat_reaction", { p_message_id: id, p_emoji: emoji });
-    if (error) toast({ title: "Reactie mislukt", description: error.message, variant: "destructive" });
+    if (error) toast({ title: t("subpoule.koerscafe.reactionFailed"), description: error.message, variant: "destructive" });
   };
 
   const votePoll = async (pollId: string, idx: number) => {
     if (!supabase) return;
     const { error } = await supabase.rpc("cast_chat_poll_vote", { p_poll_id: pollId, p_option_index: idx });
-    if (error) toast({ title: "Stemmen mislukt", description: error.message, variant: "destructive" });
+    if (error) toast({ title: t("subpoule.koerscafe.voteFailed"), description: error.message, variant: "destructive" });
   };
 
   const createPoll = async (question: string, options: string[], deadline: string | null) => {
@@ -177,7 +179,7 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
       p_options: options,
       p_deadline: deadline,
     });
-    if (error) toast({ title: "Poll plaatsen mislukt", description: error.message, variant: "destructive" });
+    if (error) toast({ title: t("subpoule.koerscafe.pollFailed"), description: error.message, variant: "destructive" });
   };
 
   const editPoll = async (pollId: string, question: string, options: string[], deadline: string | null) => {
@@ -188,14 +190,14 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
       p_options: options,
       p_deadline: deadline,
     });
-    if (error) toast({ title: "Poll bewerken mislukt", description: error.message, variant: "destructive" });
+    if (error) toast({ title: t("subpoule.koerscafe.pollEditFailed"), description: error.message, variant: "destructive" });
   };
 
   if (!subpoolId) {
     return (
       <Card className="retro-border">
         <CardContent className="p-6 text-sm text-muted-foreground">
-          Selecteer een subpoule om het Koerscafé te openen.
+          {t("subpoule.koerscafe.selectSubpoule")}
         </CardContent>
       </Card>
     );
@@ -220,13 +222,13 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
           className="relative h-[60vh] max-h-[520px] overflow-y-auto divide-y divide-border/60 bg-background"
         >
           {loading ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">Berichten laden…</div>
+            <div className="p-8 text-center text-muted-foreground text-sm">{t("subpoule.koerscafe.loadingMessages")}</div>
           ) : visibleMessages.length === 0 ? (
             <div className="p-8 text-center space-y-1.5">
               <p className="text-3xl" aria-hidden>🎙️</p>
-              <p className="font-display font-bold text-foreground">Stilte voor de storm…</p>
+              <p className="font-display font-bold text-foreground">{t("subpoule.koerscafe.emptyTitle")}</p>
               <p className="text-sm text-muted-foreground font-serif italic max-w-xs mx-auto">
-                "Awel, hier valt nog niets te beleven, hé." Gooi de eerste boodschap in de groep en zet de toon.
+                {t("subpoule.koerscafe.emptyBody")}
               </p>
             </div>
           ) : (
@@ -258,7 +260,7 @@ export default function PelotonChat({ subpoolName, subpoolId }: Props) {
               className="absolute bottom-3 right-3 h-8 rounded-full shadow-lg gap-1"
               onClick={() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); setAutoScroll(true); }}
             >
-              <ChevronDown className="h-3.5 w-3.5" /> Nieuwste
+              <ChevronDown className="h-3.5 w-3.5" /> {t("subpoule.koerscafe.newest")}
             </Button>
           )}
         </div>

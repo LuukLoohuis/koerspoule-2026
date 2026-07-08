@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Flag, Medal } from "lucide-react";
@@ -24,6 +25,7 @@ type Props = {
  * de meest recent gefiatteerde (results_status='approved') rit. Retro krant-stijl.
  */
 export default function DaguitslagChart({ subpouleId, subpouleName, gameId, gameStatus }: Props) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data: curGame } = useCurrentGame();
   const game = gameId ? { id: gameId, status: gameStatus } : curGame;
@@ -121,9 +123,9 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
         <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <CardContent className="p-5 text-center space-y-2">
           <Flag className="h-7 w-7 text-muted-foreground/50 mx-auto" />
-          <p className="font-display font-bold">Nog geen daguitslag</p>
+          <p className="font-display font-bold">{t("subpoule.daguitslag.emptyTitle")}</p>
           <p className="text-sm text-muted-foreground">
-            De eerste rit moet nog gefiatteerd worden.
+            {t("subpoule.daguitslag.emptyBody")}
           </p>
         </CardContent>
       </Card>
@@ -139,11 +141,11 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
       {/* Header */}
       <div className="p-4 border-b-2 border-foreground bg-secondary/50">
         <div className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-muted-foreground">
-          — Daguitslag —
+          {t("subpoule.daguitslag.header")}
         </div>
         <div className="flex items-baseline justify-between gap-3 mt-1">
           <h2 className="font-display text-lg font-bold leading-tight">
-            Rit {selectedStage.stage_number}
+            {t("subpoule.daguitslag.stage", { stage: selectedStage.stage_number })}
             {selectedStage.name ? <span className="text-muted-foreground"> — {selectedStage.name}</span> : null}
           </h2>
           <span className="shrink-0 text-[11px] font-mono uppercase tracking-wider text-muted-foreground truncate">
@@ -158,7 +160,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
               disabled={stageIdx <= 0}
               className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 border border-border rounded disabled:opacity-30 hover:bg-secondary"
             >
-              ← vorige
+              {t("subpoule.daguitslag.prev")}
             </button>
             <button
               type="button"
@@ -166,20 +168,20 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
               disabled={stageIdx >= approvedStages.length - 1}
               className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 border border-border rounded disabled:opacity-30 hover:bg-secondary"
             >
-              volgende →
+              {t("subpoule.daguitslag.next")}
             </button>
             {/* Directe sprong naar een rit — compacte dropdown, in sync met stageIdx. */}
             <Select value={stageIdx >= 0 ? String(stageIdx) : undefined} onValueChange={(v) => setStageIdx(Number(v))}>
               <SelectTrigger
-                aria-label="Spring naar rit"
+                aria-label={t("subpoule.daguitslag.jumpToStage")}
                 className="h-6 w-auto min-w-[64px] gap-1 px-2 text-[10px] font-mono uppercase tracking-wider"
               >
-                <SelectValue placeholder="Rit" />
+                <SelectValue placeholder={t("subpoule.daguitslag.stagePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {approvedStages.map((s, i) => (
                   <SelectItem key={s.id} value={String(i)} className="text-xs">
-                    Rit {s.stage_number}
+                    {t("subpoule.daguitslag.stage", { stage: s.stage_number })}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -196,7 +198,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
         <div key={selectedStage.id}>
         {scorers.length === 0 ? (
           <p className="text-sm text-muted-foreground italic text-center py-4">
-            Niemand scoorde punten in deze rit.
+            {t("subpoule.daguitslag.nobodyScored")}
           </p>
         ) : (
           <ul className="space-y-1.5">
@@ -240,7 +242,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
                     </span>
                     {isMe && (
                       <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 rounded px-1 py-px leading-4">
-                        jij
+                        {t("subpoule.daguitslag.you")}
                       </span>
                     )}
                   </div>
@@ -272,7 +274,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
                       "shrink-0 font-display font-bold tabular-nums text-[13px] min-w-[3.25rem] text-right",
                       isWinner ? "text-primary" : "text-foreground",
                     )}>
-                      +{r.points} pt
+                      {t("subpoule.daguitslag.pt", { points: r.points })}
                     </span>
                   </div>
                 </li>
@@ -283,7 +285,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
 
         {zeros.length > 0 && (
           <p className="mt-3 pt-3 border-t border-dashed border-border text-[11px] font-mono text-muted-foreground/70 italic">
-            <span className="uppercase tracking-wider not-italic font-bold mr-1">Geen punten:</span>
+            <span className="uppercase tracking-wider not-italic font-bold mr-1">{t("subpoule.daguitslag.noPointsLabel")}</span>
             {zeros.map((z) => z.team_name ?? z.display_name).join(", ")}
           </p>
         )}

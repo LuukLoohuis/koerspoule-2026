@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react";
+import { Trans, useTranslation } from "react-i18next";
 type SubpouleBanner = { url: string; name: string };
 type Props = {
   gameId?: string;
@@ -55,15 +56,16 @@ import { cn } from "@/lib/utils";
 
 // Mobiele subpoule-tabs (zoals Hors Categorie). Eén paneel tegelijk.
 type SubTab = { key: string; label: string; Icon: LucideIcon };
-const SUB_TABS: SubTab[] = [
-  { key: "klassement", label: "Ranking", Icon: Trophy },
-  { key: "verloop", label: "Stijgers & Dalers", Icon: TrendingUp },
-  { key: "daguitslag", label: "Daguitslag", Icon: BarChart3 },
-  { key: "heatmap", label: "Heatmap", Icon: Flame },
-  { key: "deelnemers", label: "Deelnemers", Icon: Users },
-];
 
 export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange, presetJoinCode, maySeeLive = true, initialTab }: Props = {}) {
+  const { t } = useTranslation();
+  const SUB_TABS: SubTab[] = [
+    { key: "klassement", label: t("subpoule.manager.tabRanking"), Icon: Trophy },
+    { key: "verloop", label: t("subpoule.manager.tabRisersFallers"), Icon: TrendingUp },
+    { key: "daguitslag", label: t("subpoule.manager.tabDaguitslag"), Icon: BarChart3 },
+    { key: "heatmap", label: t("subpoule.manager.tabHeatmap"), Icon: Flame },
+    { key: "deelnemers", label: t("subpoule.manager.tabMembers"), Icon: Users },
+  ];
   const { toast } = useToast();
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
@@ -160,7 +162,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
         { code: pendingOpen.code },
         {
           onError: (e) => {
-            toast({ title: "Joinen mislukt", description: e instanceof Error ? e.message : "", variant: "destructive" });
+            toast({ title: t("subpoule.manager.joinFailed"), description: e instanceof Error ? e.message : "", variant: "destructive" });
             setPendingOpen(null);
           },
           // onSuccess: lijst invalideert → dit effect draait opnieuw → match → openen.
@@ -207,20 +209,20 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
 
   const handleCreate = async () => {
     if (!effectiveGameId) {
-      toast({ title: "Geen koers geselecteerd", description: "Kies eerst een koers in Mijn Peloton.", variant: "destructive" });
+      toast({ title: t("subpoule.manager.noRaceSelectedTitle"), description: t("subpoule.manager.noRaceSelectedDesc"), variant: "destructive" });
       return;
     }
     if (createName.trim().length < 2) {
-      toast({ title: "Naam te kort", description: "Minimaal 2 tekens.", variant: "destructive" });
+      toast({ title: t("subpoule.manager.nameTooShortTitle"), description: t("subpoule.manager.nameTooShortDesc"), variant: "destructive" });
       return;
     }
     if (createCode.trim().length < 4) {
-      toast({ title: "Code te kort", description: "Minimaal 4 tekens.", variant: "destructive" });
+      toast({ title: t("subpoule.manager.codeTooShortTitle"), description: t("subpoule.manager.codeTooShortDesc"), variant: "destructive" });
       return;
     }
     try {
       const id = await create.mutateAsync({ name: createName.trim(), code: createCode.trim() });
-      toast({ title: "Subpoule aangemaakt", description: createName });
+      toast({ title: t("subpoule.manager.createdTitle"), description: createName });
       setCreateName(""); setCreateCode("");
       setActiveId(id);
     } catch (e: unknown) {
@@ -231,8 +233,8 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
         err?.error_description ||
         err?.details ||
         err?.hint ||
-        "Onbekende fout. Probeer een andere naam of code.";
-      toast({ title: "Aanmaken mislukt", description: msg, variant: "destructive" });
+        t("subpoule.manager.unknownCreateError");
+      toast({ title: t("subpoule.manager.createFailed"), description: msg, variant: "destructive" });
     }
   };
 
@@ -244,7 +246,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
         // Veld is onthuld → woonplaats is nu optioneel; leeg mag door.
         allowEmpty: joinNeedsWoonplaats,
       });
-      toast({ title: "Welkom in de subpoule!" });
+      toast({ title: t("subpoule.manager.welcomeTitle") });
       setJoinCode(""); setJoinWoonplaats(""); setJoinNeedsWoonplaats(false);
       setActiveId(id);
     } catch (e) {
@@ -252,42 +254,42 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       const msg = (e as { message?: string })?.message ?? (e instanceof Error ? e.message : "") ?? "";
       if (msg.includes("WOONPLAATS_REQUIRED")) {
         setJoinNeedsWoonplaats(true);
-        toast({ title: "Woonplaats (optioneel)", description: "Deze subpoule heeft een streekklassement. Vul je plaats in om mee te doen — of laat leeg en join zonder." });
+        toast({ title: t("subpoule.manager.woonplaatsOptionalTitle"), description: t("subpoule.manager.woonplaatsOptionalDesc") });
         return;
       }
-      toast({ title: "Joinen mislukt", description: msg, variant: "destructive" });
+      toast({ title: t("subpoule.manager.joinFailed"), description: msg, variant: "destructive" });
     }
   };
 
   const handleLeave = async (id: string) => {
-    if (!confirm("Subpoule verlaten?")) return;
+    if (!confirm(t("subpoule.manager.confirmLeave"))) return;
     try {
       await leave.mutateAsync({ subpouleId: id });
-      toast({ title: "Subpoule verlaten" });
+      toast({ title: t("subpoule.manager.leftTitle") });
       if (activeId === id) setActiveId(null);
     } catch (e) {
-      toast({ title: "Verlaten mislukt", description: e instanceof Error ? e.message : "", variant: "destructive" });
+      toast({ title: t("subpoule.manager.leaveFailed"), description: e instanceof Error ? e.message : "", variant: "destructive" });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Subpoule definitief verwijderen? Dit kan niet ongedaan worden.")) return;
+    if (!confirm(t("subpoule.manager.confirmDelete"))) return;
     try {
       await remove.mutateAsync({ subpouleId: id });
-      toast({ title: "Subpoule verwijderd" });
+      toast({ title: t("subpoule.manager.deletedTitle") });
       if (activeId === id) setActiveId(null);
     } catch (e) {
-      toast({ title: "Verwijderen mislukt", description: e instanceof Error ? e.message : "", variant: "destructive" });
+      toast({ title: t("subpoule.manager.deleteFailed"), description: e instanceof Error ? e.message : "", variant: "destructive" });
     }
   };
 
   const handleRemoveMember = async (subpouleId: string, userId: string, name: string) => {
-    if (!confirm(`${name} verwijderen uit de subpoule?`)) return;
+    if (!confirm(t("subpoule.manager.confirmRemoveMember", { name }))) return;
     try {
       await removeMember.mutateAsync({ subpouleId, userId });
-      toast({ title: "Lid verwijderd" });
+      toast({ title: t("subpoule.manager.memberRemovedTitle") });
     } catch (e) {
-      toast({ title: "Verwijderen mislukt", description: e instanceof Error ? e.message : "", variant: "destructive" });
+      toast({ title: t("subpoule.manager.removeFailed"), description: e instanceof Error ? e.message : "", variant: "destructive" });
     }
   };
 
@@ -296,9 +298,9 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
     const { subpouleId, userId, name } = transferTarget;
     try {
       await transferOwnership.mutateAsync({ subpouleId, newOwnerId: userId });
-      toast({ title: "Eigenaarschap overgedragen", description: `Aan ${name}` });
+      toast({ title: t("subpoule.manager.ownershipTransferredTitle"), description: t("subpoule.manager.ownershipTransferredDesc", { name }) });
     } catch (e) {
-      toast({ title: "Overdragen mislukt", description: e instanceof Error ? e.message : "", variant: "destructive" });
+      toast({ title: t("subpoule.manager.transferFailed"), description: e instanceof Error ? e.message : "", variant: "destructive" });
     } finally {
       setTransferTarget(null);
     }
@@ -306,7 +308,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast({ title: "Code gekopieerd", description: code });
+    toast({ title: t("subpoule.manager.codeCopiedTitle"), description: code });
   };
 
   // "Roep je kopgroep" — deel een uitnodiging via het systeem-deelvenster
@@ -318,15 +320,12 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
     const url = slug
       ? `https://koerspoule.nl/${slug}`
       : "https://koerspoule.nl/mijn-peloton?tab=subpoules";
-    const text =
-      `🚴 Doe mee met mijn Koerspoule "${name}"!\n` +
-      `Toegangscode: ${code}\n` +
-      `Maak gratis een account en sluit aan: ${url}`;
+    const text = t("subpoule.manager.inviteText", { name, code, url });
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
         // Geen aparte `url` meegeven: WhatsApp plakt die achter de tekst, en de
         // link staat al in `text` → anders tweemaal dezelfde site.
-        await navigator.share({ title: `Koerspoule — ${name}`, text });
+        await navigator.share({ title: t("subpoule.manager.inviteShareTitle", { name }), text });
         return;
       }
     } catch {
@@ -335,17 +334,17 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
     }
     try {
       await navigator.clipboard.writeText(text);
-      toast({ title: "Uitnodiging gekopieerd", description: "Plak 'm in je groepsapp." });
+      toast({ title: t("subpoule.manager.inviteCopiedTitle"), description: t("subpoule.manager.inviteCopiedDesc") });
     } catch {
-      toast({ title: "Kopiëren mislukt", description: text, variant: "destructive" });
+      toast({ title: t("subpoule.manager.copyFailedTitle"), description: text, variant: "destructive" });
     }
   };
 
   if (!user) {
-    return <div className="retro-border bg-card p-6 text-muted-foreground">Log in om subpoules te beheren.</div>;
+    return <div className="retro-border bg-card p-6 text-muted-foreground">{t("subpoule.manager.loginToManage")}</div>;
   }
   if (!game) {
-    return <div className="retro-border bg-card p-6 text-muted-foreground">Geen actieve koers gevonden.</div>;
+    return <div className="retro-border bg-card p-6 text-muted-foreground">{t("subpoule.manager.noActiveRace")}</div>;
   }
 
   // Drilldown view: when a subpoule is selected, show only its detail tab
@@ -359,19 +358,19 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
           <CardTitle className="font-display flex items-center justify-between gap-2 flex-wrap">
             <span className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              Deelnemers
+              {t("subpoule.manager.members")}
               {active.is_owner && (
                 <Badge variant="secondary" className="text-xs gap-1">
-                  <Crown className="h-3 w-3" /> Eigenaar
+                  <Crown className="h-3 w-3" /> {t("subpoule.manager.owner")}
                 </Badge>
               )}
             </span>
             <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-              Code: {active.code}
+              {t("subpoule.manager.code", { code: active.code })}
               <button
                 onClick={() => copyCode(active.code)}
                 className="hover:text-foreground"
-                title="Kopieer code"
+                title={t("subpoule.manager.copyCode")}
               >
                 <Copy className="h-3 w-3" />
               </button>
@@ -388,11 +387,11 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                     <span className="font-medium truncate">{m.display_name}</span>
                     {m.user_id === active.owner_user_id && (
                       <Badge variant="secondary" className="text-xs gap-1 shrink-0">
-                        <Crown className="h-3 w-3" /> Eigenaar
+                        <Crown className="h-3 w-3" /> {t("subpoule.manager.owner")}
                       </Badge>
                     )}
                     {m.user_id === user.id && (
-                      <Badge variant="outline" className="text-xs shrink-0">jij</Badge>
+                      <Badge variant="outline" className="text-xs shrink-0">{t("subpoule.manager.you")}</Badge>
                     )}
                   </div>
                   <span className="text-sm text-muted-foreground truncate" title={m.team_name ?? undefined}>
@@ -405,7 +404,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                       variant="ghost" size="sm"
                       onClick={() => setTransferTarget({ subpouleId: active.id, userId: m.user_id, name: m.display_name })}
                       className="text-amber-600 hover:text-amber-600"
-                      title="Maak eigenaar"
+                      title={t("subpoule.manager.makeOwner")}
                     >
                       <Crown className="h-4 w-4" />
                     </Button>
@@ -413,7 +412,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                       variant="ghost" size="sm"
                       onClick={() => handleRemoveMember(active.id, m.user_id, m.display_name)}
                       className="text-destructive hover:text-destructive"
-                      title="Verwijder lid"
+                      title={t("subpoule.manager.removeMember")}
                     >
                       <UserMinus className="h-4 w-4" />
                     </Button>
@@ -428,15 +427,15 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       <AlertDialog open={transferTarget !== null} onOpenChange={(o) => !o && setTransferTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Eigenaarschap overdragen aan {transferTarget?.name}?</AlertDialogTitle>
+            <AlertDialogTitle>{t("subpoule.manager.transferConfirmTitle", { name: transferTarget?.name })}</AlertDialogTitle>
             <AlertDialogDescription>
-              Jij wordt daarna gewoon deelnemer en kunt dit niet zelf terugdraaien.
+              {t("subpoule.manager.transferConfirmDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogCancel>{t("subpoule.manager.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleTransfer} disabled={transferOwnership.isPending}>
-              {transferOwnership.isPending ? "Bezig…" : "Overdragen"}
+              {transferOwnership.isPending ? t("subpoule.manager.transferring") : t("subpoule.manager.transfer")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -459,17 +458,17 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
         onCompare={(userId) => { setDuelUserId(userId); if (userId) setDeskChatOpen(false); }}
       />
     ) : (
-      <SneakPreviewLock title="Klassement binnenkort" note="De stand van deze subpoule verschijnt zodra de koers losbarst." />
+      <SneakPreviewLock title={t("subpoule.manager.standingsSoonTitle")} note={t("subpoule.manager.standingsSoonNote")} />
     );
     const evolutionPanel = maySeeLive ? (
-      <SubpouleEvolutionChart subpouleId={active.id} gameId={effectiveGameId} title="Stijgers & Dalers" />
+      <SubpouleEvolutionChart subpouleId={active.id} gameId={effectiveGameId} title={t("subpoule.manager.evolutionTitle")} />
     ) : (
-      <SneakPreviewLock title="Stijgers & Dalers binnenkort" note="Het verloop verschijnt zodra er etappes verreden zijn." />
+      <SneakPreviewLock title={t("subpoule.manager.evolutionSoonTitle")} note={t("subpoule.manager.evolutionSoonNote")} />
     );
     const daguitslagPanel = maySeeLive ? (
       <DaguitslagChart subpouleId={active.id} subpouleName={active.name} gameId={effectiveGameId} gameStatus={gameStatus} />
     ) : (
-      <SneakPreviewLock title="Daguitslag binnenkort" note="De daguitslagen verschijnen zodra de eerste etappe verreden is." />
+      <SneakPreviewLock title={t("subpoule.manager.daguitslagSoonTitle")} note={t("subpoule.manager.daguitslagSoonNote")} />
     );
 
     const heatmapPanel = (
@@ -480,8 +479,8 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
           <Card className="retro-border">
             <CardContent className="p-4 text-sm text-muted-foreground text-center space-y-2">
               <Flame className="h-8 w-8 text-muted-foreground/50 mx-auto" />
-              <p className="font-display font-bold text-foreground">Heatmap nog vergrendeld</p>
-              <p>De heatmap gaat open zodra de admin de inschrijving sluit en de koers live zet.</p>
+              <p className="font-display font-bold text-foreground">{t("subpoule.manager.heatmapLockedTitle")}</p>
+              <p>{t("subpoule.manager.heatmapLockedNote")}</p>
             </CardContent>
           </Card>
         )}
@@ -490,7 +489,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
 
     // Streekklassement — alleen voor subpoules die woonplaats vragen.
     const streekPanel = !maySeeLive ? (
-      <SneakPreviewLock title="Streekklassement binnenkort" note="Het streekklassement verschijnt zodra er punten gescoord zijn." />
+      <SneakPreviewLock title={t("subpoule.manager.streekSoonTitle")} note={t("subpoule.manager.streekSoonNote")} />
     ) : (
       <div className="space-y-4">
         <WoonplaatsBeheer subpouleId={active.id} />
@@ -506,7 +505,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
 
     // Dynamische tab-set: "Streek" alleen bij requires_woonplaats.
     const dynTabs = active.requires_woonplaats
-      ? [...SUB_TABS, { key: "streek", label: "Streek", Icon: MapPin }]
+      ? [...SUB_TABS, { key: "streek", label: t("subpoule.manager.tabStreek"), Icon: MapPin }]
       : SUB_TABS;
     const dynTabKeys = dynTabs.map((t) => t.key);
     const dynTabItems = dynTabs.map((t) => ({ key: t.key, label: t.label, icon: t.Icon }));
@@ -529,7 +528,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
             strip onder de titel). Zie MijnPeloton + onActiveBannerChange. */}
         <div className="flex items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => setActiveId(null)} className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Terug naar subpoules
+            <ArrowLeft className="h-4 w-4" /> {t("subpoule.manager.backToSubpoules")}
           </Button>
           <div className="flex items-center gap-2">
             {active.is_owner ? (
@@ -538,7 +537,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                 onClick={() => handleDelete(active.id)}
                 className="text-destructive hover:text-destructive gap-1"
               >
-                <Trash2 className="h-4 w-4" /> Verwijderen
+                <Trash2 className="h-4 w-4" /> {t("subpoule.manager.delete")}
               </Button>
             ) : (
               <Button
@@ -546,7 +545,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                 onClick={() => handleLeave(active.id)}
                 className="gap-1"
               >
-                <LogOut className="h-4 w-4" /> Verlaten
+                <LogOut className="h-4 w-4" /> {t("subpoule.manager.leave")}
               </Button>
             )}
           </div>
@@ -558,11 +557,13 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
           <div className="flex-1 min-w-[180px]">
             <p className="font-display font-bold text-sm">🚴 {active.name}</p>
             <p className="text-xs text-muted-foreground">
-              Hoe meer renners, hoe mooier de strijd. Nodig vrienden uit met code{" "}
-              <button onClick={() => copyCode(active.code)} className="font-mono font-bold text-foreground underline decoration-dotted underline-offset-2" title="Kopieer code">
-                {active.code}
-              </button>
-              .
+              <Trans
+                i18nKey="subpoule.manager.inviteLead"
+                values={{ code: active.code }}
+                components={[
+                  <button key="code" onClick={() => copyCode(active.code)} className="font-mono font-bold text-foreground underline decoration-dotted underline-offset-2" title={t("subpoule.manager.copyCode")} />,
+                ]}
+              />
             </p>
           </div>
           <button
@@ -570,7 +571,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
             className="inline-flex items-center gap-2 shrink-0 px-4 py-2 rounded-md bg-primary text-primary-foreground font-bold text-sm border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] hover:brightness-105 transition-colors"
           >
             <Share2 className="h-4 w-4" />
-            Daag je vrienden uit
+            {t("subpoule.manager.inviteFriends")}
           </button>
         </div>
 
@@ -610,16 +611,16 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
             <div className="flex items-center gap-3 mb-3">
               <div className="min-w-0 flex-1">
                 <RetroTabs
-                  aria-label="Subpoule-onderdelen"
+                  aria-label={t("subpoule.manager.subpouleSectionsAria")}
                   active={activeTab}
                   onChange={setActiveTab}
                   tabs={[
-                    { key: "klassement", label: "Ranking",          Icon: Trophy },
-                    { key: "verloop",    label: "Stijgers & Dalers", Icon: TrendingUp },
-                    { key: "daguitslag", label: "Daguitslag",        Icon: BarChart3 },
-                    { key: "heatmap",    label: "Heatmap",           Icon: Flame, disabled: !heatmapUnlocked, title: !heatmapUnlocked ? "Beschikbaar zodra de inschrijving sluit en de koers live is" : undefined },
-                    { key: "deelnemers", label: "Deelnemers",        Icon: Users },
-                    ...(active.requires_woonplaats ? [{ key: "streek", label: "Streek", Icon: MapPin }] : []),
+                    { key: "klassement", label: t("subpoule.manager.tabRanking"),       Icon: Trophy },
+                    { key: "verloop",    label: t("subpoule.manager.tabRisersFallers"), Icon: TrendingUp },
+                    { key: "daguitslag", label: t("subpoule.manager.tabDaguitslag"),    Icon: BarChart3 },
+                    { key: "heatmap",    label: t("subpoule.manager.tabHeatmap"),       Icon: Flame, disabled: !heatmapUnlocked, title: !heatmapUnlocked ? t("subpoule.manager.heatmapLockedTabTitle") : undefined },
+                    { key: "deelnemers", label: t("subpoule.manager.tabMembers"),       Icon: Users },
+                    ...(active.requires_woonplaats ? [{ key: "streek", label: t("subpoule.manager.tabStreek"), Icon: MapPin }] : []),
                   ]}
                 />
               </div>
@@ -627,7 +628,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                 type="button"
                 onClick={() => setDeskChatOpen((v) => { const next = !v; if (next) setDuelUserId(null); return next; })}
                 aria-pressed={deskChatOpen}
-                title="Open of sluit het Koerscafé"
+                title={t("subpoule.manager.koerscafeToggleTitle")}
                 className={cn(
                   "shrink-0 inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl border-2 border-foreground font-display text-xs font-semibold uppercase tracking-wider shadow-[3px_3px_0_hsl(var(--foreground))] transition-colors",
                   deskChatOpen ? "bg-primary text-primary-foreground" : "bg-card text-foreground",
@@ -660,14 +661,14 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                       <button
                         type="button"
                         onClick={() => setDeskChatOpen(false)}
-                        aria-label="Sluit Koerscafé"
+                        aria-label={t("subpoule.manager.closeKoerscafe")}
                         className="text-muted-foreground hover:text-foreground"
                       >
                         <X className="h-4 w-4" />
                       </button>
                     </div>
                     <div className="p-3">
-                      {maySeeLive ? <PelotonChat subpoolName={active.name} subpoolId={active.id} /> : <SneakPreviewLock title="Koerscafé binnenkort open" note="Het commentaar van je subpoule verschijnt zodra de koers losbarst." />}
+                      {maySeeLive ? <PelotonChat subpoolName={active.name} subpoolId={active.id} /> : <SneakPreviewLock title={t("subpoule.manager.koerscafeSoonTitle")} note={t("subpoule.manager.koerscafeSoonNote")} />}
                     </div>
                   </div>
                 </aside>
@@ -681,12 +682,12 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                     <div className="flex items-center justify-between border-b-2 border-foreground bg-secondary/30 px-3 py-2">
                       <span className="font-display font-bold flex items-center gap-2">
                         <Swords className="h-4 w-4 text-primary" />
-                        Duel
+                        {t("subpoule.manager.duel")}
                       </span>
                       <button
                         type="button"
                         onClick={() => setDuelUserId(null)}
-                        aria-label="Sluit duel"
+                        aria-label={t("subpoule.manager.closeDuel")}
                         className="text-muted-foreground hover:text-foreground"
                       >
                         <X className="h-4 w-4" />
@@ -695,7 +696,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                     <div className="p-3">
                       <TeamComparison
                         opponentUserId={duelUserId}
-                        opponentName={members.find((m) => m.user_id === duelUserId)?.display_name ?? "Tegenstander"}
+                        opponentName={members.find((m) => m.user_id === duelUserId)?.display_name ?? t("subpoule.manager.opponentFallback")}
                         subpouleId={active.id}
                         gameId={effectiveGameId}
                       />
@@ -721,7 +722,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
         <button
           type="button"
           onClick={() => setChatOpen(true)}
-          aria-label="Open koerscafé-chat"
+          aria-label={t("subpoule.manager.openKoerscafeChat")}
           className="md:hidden fixed right-4 bottom-[72px] z-40 inline-flex items-center justify-center h-14 w-14 rounded-full bg-primary text-primary-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] transition-colors"
         >
           <MessageCircle className="h-6 w-6" />
@@ -738,7 +739,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
             <SheetHeader className="px-4 py-3 border-b-2 border-foreground bg-secondary/30 text-left shrink-0">
               <SheetTitle className="font-display flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-primary" />
-                Koerscafé — {active.name}
+                {t("subpoule.manager.koerscafeWith", { name: active.name })}
               </SheetTitle>
             </SheetHeader>
             <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
@@ -757,17 +758,17 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       <Card className="retro-border">
         <CardHeader className="border-b-2 border-foreground bg-secondary/30">
           <CardTitle className="font-display flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" /> Mijn subpoules
+            <Users className="h-5 w-5 text-primary" /> {t("subpoule.manager.mySubpoules")}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-4 text-sm text-muted-foreground">Laden…</div>
+            <div className="p-4 text-sm text-muted-foreground">{t("subpoule.manager.loading")}</div>
           ) : subpoules.length === 0 ? (
             <EmptyState
               icon={Share2}
-              title="Roep je kopgroep! 🚴"
-              message="Een koers is pas écht leuk met je vrienden erbij. Start hieronder een eigen subpoule of sluit aan met een code."
+              title={t("subpoule.manager.emptyTitle")}
+              message={t("subpoule.manager.emptyMessage")}
               className="border-0 shadow-none"
             />
           ) : subpoules.length > 8 ? (
@@ -782,15 +783,15 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                     aria-expanded={subpouleSearchOpen}
                     className="w-full justify-between font-normal"
                   >
-                    Kies een subpoule… ({subpoules.length})
+                    {t("subpoule.manager.pickSubpoule", { count: subpoules.length })}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Zoek op naam of code…" />
+                    <CommandInput placeholder={t("subpoule.manager.searchByNameOrCode")} />
                     <CommandList>
-                      <CommandEmpty>Geen subpoule gevonden.</CommandEmpty>
+                      <CommandEmpty>{t("subpoule.manager.noSubpouleFound")}</CommandEmpty>
                       <CommandGroup>
                         {subpoules.map((sp) => (
                           <CommandItem
@@ -802,7 +803,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                             }}
                           >
                             <span className="flex-1 truncate font-medium">{sp.name}</span>
-                            <span className="ml-2 shrink-0 text-xs text-muted-foreground">{sp.member_count} leden</span>
+                            <span className="ml-2 shrink-0 text-xs text-muted-foreground">{t("subpoule.manager.membersCount", { count: sp.member_count })}</span>
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -810,7 +811,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                   </Command>
                 </PopoverContent>
               </Popover>
-              <p className="text-xs text-muted-foreground">{subpoules.length} subpoules</p>
+              <p className="text-xs text-muted-foreground">{t("subpoule.manager.subpoulesCount", { count: subpoules.length })}</p>
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -825,13 +826,13 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                       <span className="font-display font-bold">{sp.name}</span>
                       {sp.is_owner && (
                         <Badge variant="secondary" className="text-xs gap-1">
-                          <Crown className="h-3 w-3" /> Eigenaar
+                          <Crown className="h-3 w-3" /> {t("subpoule.manager.owner")}
                         </Badge>
                       )}
-                      <Badge variant="outline" className="text-xs">{sp.member_count} leden</Badge>
+                      <Badge variant="outline" className="text-xs">{t("subpoule.manager.membersCount", { count: sp.member_count })}</Badge>
                     </div>
                     <div className="text-xs text-muted-foreground font-mono mt-0.5">
-                      Code: {sp.code}
+                      {t("subpoule.manager.code", { code: sp.code })}
                     </div>
                   </div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -845,10 +846,9 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       {subpoulesLocked ? (
         <Card className="retro-border">
           <CardContent className="p-4 text-center space-y-1">
-            <p className="font-display font-bold text-foreground">Koers afgerond</p>
+            <p className="font-display font-bold text-foreground">{t("subpoule.manager.raceFinishedTitle")}</p>
             <p className="text-sm text-muted-foreground">
-              Deze koers is voorbij — een nieuwe subpoule aanmaken of joinen kan niet meer.
-              Bekijk de eindstand van je bestaande subpoules hierboven.
+              {t("subpoule.manager.raceFinishedDesc")}
             </p>
           </CardContent>
         </Card>
@@ -857,43 +857,43 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
         <CardContent className="p-4">
           <Tabs value={subTab} onValueChange={(v) => setSubTab(v as "create" | "join")}>
             <TabsList className="w-full">
-              <TabsTrigger value="create" className="flex-1">Nieuwe subpoule</TabsTrigger>
-              <TabsTrigger value="join" className="flex-1">Joinen via code</TabsTrigger>
+              <TabsTrigger value="create" className="flex-1">{t("subpoule.manager.newSubpoule")}</TabsTrigger>
+              <TabsTrigger value="join" className="flex-1">{t("subpoule.manager.joinViaCode")}</TabsTrigger>
             </TabsList>
             <TabsContent value="create" className="space-y-3 pt-3">
               <div>
-                <Label htmlFor="sp-name">Naam</Label>
-                <Input id="sp-name" value={createName} onChange={(e) => setCreateName(e.target.value)} placeholder="Bijv. Vrienden van Jan" />
+                <Label htmlFor="sp-name">{t("subpoule.manager.nameLabel")}</Label>
+                <Input id="sp-name" value={createName} onChange={(e) => setCreateName(e.target.value)} placeholder={t("subpoule.manager.namePlaceholder")} />
               </div>
               <div>
-                <Label htmlFor="sp-code">Toegangscode</Label>
-                <Input id="sp-code" value={createCode} onChange={(e) => setCreateCode(e.target.value)} placeholder="Min. 4 tekens" />
+                <Label htmlFor="sp-code">{t("subpoule.manager.accessCode")}</Label>
+                <Input id="sp-code" value={createCode} onChange={(e) => setCreateCode(e.target.value)} placeholder={t("subpoule.manager.accessCodePlaceholderCreate")} />
               </div>
               <Button onClick={handleCreate} disabled={create.isPending || !createName.trim() || !createCode.trim()} className="w-full">
-                Subpoule aanmaken
+                {t("subpoule.manager.createSubpoule")}
               </Button>
             </TabsContent>
             <TabsContent value="join" className="space-y-3 pt-3">
               <div>
-                <Label htmlFor="join-code">Toegangscode</Label>
-                <Input id="join-code" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="Vraag de eigenaar om de code" />
+                <Label htmlFor="join-code">{t("subpoule.manager.accessCode")}</Label>
+                <Input id="join-code" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder={t("subpoule.manager.joinCodePlaceholder")} />
               </div>
               {joinNeedsWoonplaats && (
                 <div>
-                  <Label htmlFor="join-woonplaats">Woonplaats (optioneel)</Label>
+                  <Label htmlFor="join-woonplaats">{t("subpoule.manager.woonplaatsOptionalLabel")}</Label>
                   <Input
                     id="join-woonplaats"
                     value={joinWoonplaats}
                     onChange={(e) => setJoinWoonplaats(e.target.value)}
-                    placeholder="bv. Enschede"
+                    placeholder={t("subpoule.manager.woonplaatsPlaceholder")}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Zo doe je mee aan het streekklassement; alleen je plaats, geen adres. Leeg laten mag — je kunt 'm later toevoegen.
+                    {t("subpoule.manager.woonplaatsHint")}
                   </p>
                 </div>
               )}
               <Button onClick={handleJoin} disabled={join.isPending || !joinCode.trim()} className="w-full">
-                Joinen
+                {t("subpoule.manager.join")}
               </Button>
             </TabsContent>
           </Tabs>

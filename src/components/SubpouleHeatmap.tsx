@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Flame, Star, Eye, EyeOff } from "lucide-react";
@@ -36,6 +37,7 @@ type RiderCell = {
 };
 
 export default function SubpouleHeatmap({ subpouleId }: Props) {
+  const { t } = useTranslation();
   const { data: game } = useCurrentGame();
   const { data: categories = [] } = useCategories(game?.id);
   const { data, isLoading } = useSubpouleEntries(subpouleId, game?.id);
@@ -137,7 +139,7 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
   if (allPlayers.length === 0) {
     return (
       <Card className="retro-border">
-        <CardContent className="p-6 text-sm text-muted-foreground">Nog geen teams in deze subpoule.</CardContent>
+        <CardContent className="p-6 text-sm text-muted-foreground">{t("subpoule.heatmap.noTeams")}</CardContent>
       </Card>
     );
   }
@@ -153,15 +155,15 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
           <div>
             <CardTitle className="font-display flex items-center gap-2 text-base">
               <Flame className="h-5 w-5 text-primary" />
-              Het Pelotonbeeld — HEAT per categorie
+              {t("subpoule.heatmap.title")}
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
               <span className="inline-flex items-center gap-1">
                 <Star className="h-3 w-3 fill-[hsl(var(--vintage-gold))] text-[hsl(var(--vintage-gold))]" />
-                uniek
+                {t("subpoule.heatmap.unique")}
               </span>
               <span aria-hidden>·</span>
-              <span>donker = zeldzamer · licht = vaker gekozen · klik op een deelnemer om in/uit te zetten</span>
+              <span>{t("subpoule.heatmap.legend")}</span>
             </p>
           </div>
           <div className="flex items-center gap-1.5">
@@ -171,7 +173,7 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
               className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider px-2 py-1 border-2 border-foreground rounded-md hover:bg-primary hover:text-primary-foreground transition-colors"
             >
               <Eye className="h-3 w-3" />
-              Alles
+              {t("subpoule.heatmap.showAll")}
             </button>
             <button
               type="button"
@@ -179,7 +181,7 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
               className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider px-2 py-1 border-2 border-foreground rounded-md hover:bg-secondary transition-colors"
             >
               <EyeOff className="h-3 w-3" />
-              Geen
+              {t("subpoule.heatmap.showNone")}
             </button>
           </div>
         </div>
@@ -194,7 +196,7 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
                 type="button"
                 onClick={() => togglePlayer(p.user_id)}
                 aria-pressed={isOn}
-                title={isOn ? `Verberg ${p.display_name}` : `Toon ${p.display_name}`}
+                title={isOn ? t("subpoule.heatmap.hidePlayer", { name: p.display_name }) : t("subpoule.heatmap.showPlayer", { name: p.display_name })}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-0.5 text-xs border-2 border-foreground transition-colors",
                   isOn
@@ -218,11 +220,11 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
         </div>
         {totalEnabled === 0 ? (
           <div className="p-6 text-center text-sm text-muted-foreground font-serif italic">
-            Geen deelnemers geselecteerd — klik op een naam hierboven om iemand toe te voegen.
+            {t("subpoule.heatmap.noneSelected")}
           </div>
         ) : visibleCats.length === 0 ? (
           <div className="p-6 text-center text-sm text-muted-foreground font-serif italic">
-            Geen keuzes om te tonen voor deze selectie.
+            {t("subpoule.heatmap.noChoices")}
           </div>
         ) : (
           <div>
@@ -307,7 +309,7 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
                                 {cell.isUnique && (
                                   <Star
                                     className="h-3.5 w-3.5 shrink-0 fill-[hsl(var(--vintage-gold))] text-[hsl(var(--vintage-gold))]"
-                                    aria-label="unieke keuze"
+                                    aria-label={t("subpoule.heatmap.uniqueChoice")}
                                   />
                                 )}
                               </div>
@@ -345,11 +347,11 @@ export default function SubpouleHeatmap({ subpouleId }: Props) {
                           <TooltipContent side="top" className="text-xs max-w-xs">
                             <p className="font-display font-bold">{cell.riderName}</p>
                             <p className="text-muted-foreground">
-                              {cell.count} van {totalEnabled} ({Math.round((cell.count / totalEnabled) * 100)}%)
-                              {cell.isUnique && " · unieke keuze"}
+                              {t("subpoule.heatmap.countOfTotal", { count: cell.count, total: totalEnabled, pct: Math.round((cell.count / totalEnabled) * 100) })}
+                              {cell.isUnique && ` ${t("subpoule.heatmap.uniqueChoiceSuffix")}`}
                             </p>
                             <p className="mt-1">
-                              <span className="text-muted-foreground">Gekozen door: </span>
+                              <span className="text-muted-foreground">{t("subpoule.heatmap.pickedBy")}</span>
                               {cell.pickedBy.map((uid) => playerNameById.get(uid) ?? "?").join(", ")}
                             </p>
                           </TooltipContent>

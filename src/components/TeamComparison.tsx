@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -34,12 +35,6 @@ type Props = {
   gameId?: string;
 };
 
-const CLASSIFICATION_LABELS: Record<string, string> = {
-  gc: "Eindpodium",
-  points: "Puntentrui",
-  kom: "Bergtrui",
-  youth: "Jongerentrui",
-};
 const CLASSIFICATION_ORDER = ["gc", "points", "kom", "youth"] as const;
 
 function predictionsByClass(list: PredictionEntry[]) {
@@ -112,6 +107,13 @@ export function useRiderBasePoints(gameId: string | undefined) {
 }
 
 export default function TeamComparison({ opponentUserId, opponentName, subpouleId, gameId }: Props) {
+  const { t } = useTranslation();
+  const CLASSIFICATION_LABELS: Record<string, string> = {
+    gc: t("subpoule.comparison.gc"),
+    points: t("subpoule.comparison.points"),
+    kom: t("subpoule.comparison.kom"),
+    youth: t("subpoule.comparison.youth"),
+  };
   const { user } = useAuth();
   const { data: curGame } = useCurrentGame();
   const game = gameId ? { id: gameId } : curGame;
@@ -144,7 +146,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
   if (isLoading) {
     return (
       <Card className="retro-border">
-        <CardContent className="p-4 text-sm text-muted-foreground">Vergelijking laden…</CardContent>
+        <CardContent className="p-4 text-sm text-muted-foreground">{t("subpoule.comparison.loading")}</CardContent>
       </Card>
     );
   }
@@ -153,7 +155,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
     return (
       <Card className="retro-border">
         <CardContent className="p-4 text-sm text-muted-foreground">
-          {!me?.entry_id ? "Jij hebt nog geen team in deze koers." : `${opponentName} heeft nog geen team ingediend.`}
+          {!me?.entry_id ? t("subpoule.comparison.noOwnTeam") : t("subpoule.comparison.opponentNoTeam", { name: opponentName })}
         </CardContent>
       </Card>
     );
@@ -179,7 +181,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
     <Card className="retro-border">
       <CardHeader className="border-b-2 border-foreground bg-secondary/30 py-3">
         <CardTitle className="font-display text-base flex items-center justify-between gap-2">
-          <span>Head-to-head</span>
+          <span>{t("subpoule.comparison.headToHead")}</span>
           <Badge variant={diff >= 0 ? "default" : "destructive"} className="font-mono">
             {diff >= 0 ? "+" : ""}{diff} pt
           </Badge>
@@ -190,13 +192,13 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
         <div className="px-3 py-3 border-b-2 border-foreground bg-muted/30">
           <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
             <div className="text-right">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Jij</p>
-              <p className="text-2xl font-display font-bold tabular-nums">{myTotal} <span className="text-[10px] font-normal text-muted-foreground">pt</span></p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("subpoule.comparison.you")}</p>
+              <p className="text-2xl font-display font-bold tabular-nums">{myTotal} <span className="text-[10px] font-normal text-muted-foreground">{t("subpoule.comparison.pt")}</span></p>
             </div>
             <div className="h-8 w-8 rounded-full border-2 border-foreground bg-card flex items-center justify-center text-[10px] font-bold">VS</div>
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{opponentName}</p>
-              <p className="text-2xl font-display font-bold tabular-nums">{oppTotal} <span className="text-[10px] font-normal text-muted-foreground">pt</span></p>
+              <p className="text-2xl font-display font-bold tabular-nums">{oppTotal} <span className="text-[10px] font-normal text-muted-foreground">{t("subpoule.comparison.pt")}</span></p>
             </div>
           </div>
           {(() => {
@@ -240,7 +242,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                   </span>
                   {same && (
                     <Badge variant="outline" className={cn("text-[10px] gap-1 h-4 px-1.5", SAME_BADGE_CLASS)}>
-                      <Star className="h-2.5 w-2.5" /> zelfde keuze
+                      <Star className="h-2.5 w-2.5" /> {t("subpoule.comparison.sameChoice")}
                     </Badge>
                   )}
                 </div>
@@ -257,7 +259,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                         </p>
                       );
                     })}
-                    <p className="text-base font-display font-bold tabular-nums">{myPoints} <span className="text-[10px] font-normal text-muted-foreground">pt</span></p>
+                    <p className="text-base font-display font-bold tabular-nums">{myPoints} <span className="text-[10px] font-normal text-muted-foreground">{t("subpoule.comparison.pt")}</span></p>
                   </div>
 
                   <span
@@ -290,7 +292,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                         </p>
                       );
                     })}
-                    <p className="text-base font-display font-bold tabular-nums">{oppPoints} <span className="text-[10px] font-normal text-muted-foreground">pt</span></p>
+                    <p className="text-base font-display font-bold tabular-nums">{oppPoints} <span className="text-[10px] font-normal text-muted-foreground">{t("subpoule.comparison.pt")}</span></p>
                   </div>
                 </div>
                 {/* Divergerende balk: links jij, rechts tegenstander (winnaar in kleur) */}
@@ -322,7 +324,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
         <div className="border-t-2 border-foreground bg-muted/10">
           <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
             <Crown className="h-4 w-4 text-primary" />
-            <span className="font-display text-sm font-bold">Jokers</span>
+            <span className="font-display text-sm font-bold">{t("subpoule.comparison.jokers")}</span>
           </div>
           <div className="grid grid-cols-[1fr_auto_1fr] gap-2 px-3 py-2.5 items-center">
             <div className="text-right space-y-0.5">
@@ -338,7 +340,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                   );
                 })
               )}
-              <p className="text-base font-display font-bold tabular-nums">{myJokerPoints} <span className="text-[10px] font-normal text-muted-foreground">pt</span></p>
+              <p className="text-base font-display font-bold tabular-nums">{myJokerPoints} <span className="text-[10px] font-normal text-muted-foreground">{t("subpoule.comparison.pt")}</span></p>
             </div>
             {(() => {
               const jDiff = myJokerPoints - oppJokerPoints;
@@ -380,7 +382,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                   );
                 })
               )}
-              <p className="text-base font-display font-bold tabular-nums">{oppJokerPoints} <span className="text-[10px] font-normal text-muted-foreground">pt</span></p>
+              <p className="text-base font-display font-bold tabular-nums">{oppJokerPoints} <span className="text-[10px] font-normal text-muted-foreground">{t("subpoule.comparison.pt")}</span></p>
             </div>
           </div>
           {/* Divergerende balk voor de jokerpunten */}
@@ -410,7 +412,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
           <div className="border-t-2 border-foreground bg-muted/10">
             <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
               <Trophy className="h-4 w-4 text-primary" />
-              <span className="font-display text-sm font-bold">Truien & eindklassementen</span>
+              <span className="font-display text-sm font-bold">{t("subpoule.comparison.jerseysAndClassifications")}</span>
             </div>
             <div className="divide-y divide-border">
               {CLASSIFICATION_ORDER.map((cls) => {

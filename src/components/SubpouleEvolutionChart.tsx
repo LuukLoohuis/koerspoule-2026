@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   CartesianGrid,
   ComposedChart,
@@ -66,10 +67,13 @@ export default function SubpouleEvolutionChart({
   subpouleId,
   gameId,
   compact = false,
-  title = "Positieverloop per etappe",
-  subtitle = "Positie in de subpoule · klik op een naam om te markeren",
+  title: titleProp,
+  subtitle: subtitleProp,
   className,
 }: Props) {
+  const { t } = useTranslation();
+  const title = titleProp ?? t("subpoule.evolution.title");
+  const subtitle = subtitleProp ?? t("subpoule.evolution.subtitle");
   const isMobile = useIsMobile();
   const { user } = useAuth();
   const { data: curGame } = useCurrentGame();
@@ -216,7 +220,7 @@ export default function SubpouleEvolutionChart({
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_2px_rgba(52,211,153,0.4)]" />
-              Live performance
+              {t("subpoule.evolution.livePerformance")}
             </div>
             <h3
               className={cn(
@@ -233,12 +237,12 @@ export default function SubpouleEvolutionChart({
             <div className="flex items-center gap-2 flex-wrap justify-end">
               {/* Andere spelers: fel / gedimd / helemaal uit */}
               <div className="inline-flex items-center gap-1">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-0.5">Anderen</span>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-0.5">{t("subpoule.evolution.othersLabel")}</span>
                 <div className="inline-flex rounded-full border border-border bg-secondary/40 p-0.5 text-[11px] font-medium">
                   {([
-                    { k: "fel", label: "Fel" },
-                    { k: "dim", label: "Gedimd" },
-                    { k: "uit", label: "Uit" },
+                    { k: "fel", label: t("subpoule.evolution.modeBright") },
+                    { k: "dim", label: t("subpoule.evolution.modeDimmed") },
+                    { k: "uit", label: t("subpoule.evolution.modeOff") },
                   ] as const).map(({ k, label }) => (
                     <button
                       key={k}
@@ -265,10 +269,10 @@ export default function SubpouleEvolutionChart({
                     : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
                 )}
               >
-                Namen {showNames ? "aan" : "uit"}
+                {showNames ? t("subpoule.evolution.namesOn") : t("subpoule.evolution.namesOff")}
               </button>
               <button onClick={toggleAll} className={CHART_VISUAL.toggleBtnClass}>
-                {allHidden ? "Toon alles" : "Verberg alles"}
+                {allHidden ? t("subpoule.evolution.showAll") : t("subpoule.evolution.hideAll")}
               </button>
             </div>
           )}
@@ -297,7 +301,7 @@ export default function SubpouleEvolutionChart({
                     visible ? CHART_VISUAL.pillVisible : CHART_VISUAL.pillHidden,
                     isHighlighted && visible && CHART_VISUAL.pillHighlighted
                   )}
-                  title={visible ? "Dubbelklik om te verbergen" : "Klik om te tonen"}
+                  title={visible ? t("subpoule.evolution.doubleClickToHide") : t("subpoule.evolution.clickToShow")}
                 >
                   <span
                     className="h-2 w-2 rounded-full transition-colors"
@@ -326,7 +330,7 @@ export default function SubpouleEvolutionChart({
               className="flex items-center justify-center text-sm text-muted-foreground italic"
               style={{ height: chartHeight }}
             >
-              Nog geen etappes beschikbaar.
+              {t("subpoule.evolution.noStagesYet")}
             </div>
           ) : (
             <div className="w-full" style={{ height: chartHeight }}>
@@ -383,7 +387,7 @@ export default function SubpouleEvolutionChart({
                       strokeDasharray="3 4"
                       strokeOpacity={0.6}
                       label={{
-                        value: "NU",
+                        value: t("subpoule.evolution.now"),
                         position: "top",
                         fill: "hsl(var(--primary))",
                         fontSize: 9,
@@ -410,7 +414,7 @@ export default function SubpouleEvolutionChart({
                         >
                           <div className="font-display font-semibold text-sm mb-2 text-foreground flex items-baseline gap-1.5">
                             <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                              Etappe
+                              {t("subpoule.evolution.stage")}
                             </span>
                             <span>{String(label).replace("E", "")}</span>
                             {stageName && (
@@ -540,7 +544,7 @@ export default function SubpouleEvolutionChart({
 
         <div className={CHART_VISUAL.footerText}>
           <span className={CHART_VISUAL.footerLine} />
-          <span>Positie in de subpoule per etappe</span>
+          <span>{t("subpoule.evolution.footer")}</span>
           <span className={CHART_VISUAL.footerLine} />
         </div>
       </div>
