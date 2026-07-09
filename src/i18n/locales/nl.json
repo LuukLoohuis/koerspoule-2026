@@ -953,7 +953,100 @@
       "unnamedTeam": "Naamloze ploeg"
     }
   },
-  "karavaan": {},
+  "karavaan": {
+    "feed": {
+      "referralText": "Nieuw hier? Ontdek wat je allemaal kunt.",
+      "referralHide": "Verberg deze tip",
+      "noSubpouleTitle": "Je zit nog niet in een subpoule",
+      "noSubpouleBody": "De {{krant}} rolt mee met je subpoules. Maak er een aan of word lid via de Subpoules-tab.",
+      "hcAriaOpen": "Open de Hors Catégorie statistieken",
+      "hcMobileLabel": "Statistieken — Hors Catégorie",
+      "hcCol": "Col",
+      "hcHorsCat": "Hors Cat.",
+      "hcStatistieken": "Statistieken",
+      "hcClimb": "21 km à 8 %",
+      "hcQuotePre": "« De grupetto rolt naar de finish. De cijferfetishisten klimmen door — naar de ",
+      "hcQuotePost": ". »"
+    },
+    "switcher": {
+      "labelInline": "Subpoule:",
+      "label": "Subpoule",
+      "placeholder": "Kies een subpoule…",
+      "searchPlaceholder": "Zoek subpoule…",
+      "empty": "Geen subpoule gevonden."
+    },
+    "etappe": {
+      "stage": "Etappe {{number}}",
+      "commentaarSpeakers": "Michel Wuyts en José De Cauwer",
+      "commentaarLoading": "De commentaarcabine zit vol — Michel en José spreken hun analyse in…",
+      "commentaarNone": "Geen commentaar beschikbaar voor deze etappe.",
+      "lefevereTitle": "Patrick Lefevere · jouw rapport",
+      "lefevereLoading": "Patlef zit achter zijn typmachine. Uw rapport komt eraan — en hij is niet mals…",
+      "lefevereReady": "Je directeursrapport staat klaar — lees wat de baas ervan vindt.",
+      "lefevereCta": "→ bekijk je volledige rapport"
+    },
+    "flash": {
+      "leider": "Je bent klassementsleider!",
+      "podium": "Je beklimt het podium — nu {{rank}}ᵉ",
+      "offPodium": "Van het podium af — nu {{rank}}ᵉ",
+      "stijging": "Gestegen naar plek {{rank}} (▲{{delta}})",
+      "daling": "Gezakt naar plek {{rank}} (▼{{delta}})",
+      "beweging": "Beweging in het klassement"
+    },
+    "marker": {
+      "nieuw": "★ Nieuw sinds je laatste bezoek ★"
+    },
+    "empty": {
+      "title": "De {{krant}} gaat zo de pers in…",
+      "body": "De eerste etappe-updates verschijnen hier zodra de jury de uitslagen heeft gefiatteerd."
+    },
+    "ministrip": {
+      "labelSubpoule": "subpoule",
+      "labelOverall": "overall",
+      "labelPunten": "punten",
+      "ariaSubpoule": "Open je subpoule (grafiek)",
+      "ariaOverall": "Open het algemeen klassement",
+      "ariaPunten": "Bekijk je volledige ploeg",
+      "monkeyTitle": "Monkey IQ",
+      "monkeyLabel": "apen verslagen",
+      "monkeyAria": "Open Dartpijl (Monkey IQ)",
+      "emiratesTitle": "Emirates",
+      "emiratesLabel": "van droomploeg",
+      "emiratesAria": "Open The Emirates (droomploeg)",
+      "wielerdirTitle": "Wielerdir.",
+      "wielerdirLabel": "rapport",
+      "wielerdirAria": "Open De Wielerdirecteur (rapport)",
+      "volledigePloeg": "Bekijk je volledige ploeg"
+    },
+    "voorbeschouwing": {
+      "typeVlak": "Vlakke rit",
+      "typeHeuvel": "Heuvelrit",
+      "typeTijdrit": "Tijdrit",
+      "typeBergop": "Bergrit",
+      "typePloegentijdrit": "Ploegentijdrit",
+      "typeDefault": "Etappe",
+      "vandaag": "Vandaag",
+      "morgen": "Morgen",
+      "kop": "De Voorbeschouwing",
+      "stage": "Etappe {{number}}",
+      "profielOpen": "Bekijk het 3D-profiel",
+      "profielSub": "Interactieve kaart met hoogteprofiel",
+      "profielTitle": "3D-profiel",
+      "profielIframeTitle": "3D-profiel etappe {{number}}",
+      "profielFallback": "Werkt het profiel niet? Open op tourview"
+    },
+    "dagprijs": {
+      "defKicker": "Dagprijs van vandaag",
+      "defSponsorLabel": "Trotse sponsor van Koerspoule",
+      "defTitel": "Win een dagprijs",
+      "sponsorAlt": "sponsor",
+      "sponsorAria": "Bezoek de website van {{naam}}",
+      "sponsorAriaFallback": "de sponsor",
+      "aangebodenDoor": "aangeboden door",
+      "allePrijzen": "Alle prijzen",
+      "allePrijzenAria": "Bekijk alle prijzen"
+    }
+  },
   "common": {
     "notFound": {
       "message": "Oeps! Pagina niet gevonden",

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/lib/supabase";
 import { ChevronRight } from "lucide-react";
 
@@ -26,12 +27,6 @@ const CREME = "#fbf7eb";
 // Aanbevolen export: ~1600×360px, renners rechter ⅓, links uitgefade naar crème.
 const BANNER_BG = "/img/dagprijs-banner-bg.png";
 
-// Nette defaults voor lege admin-tekstvelden. De grote titel valt NIET terug
-// op de kicker-tekst (anders dubbel "Dagprijs van vandaag").
-const DEF_KICKER = "Dagprijs van vandaag";
-const DEF_SPONSOR_LABEL = "Trotse sponsor van Koerspoule";
-const DEF_TITEL = "Win een dagprijs";
-
 /**
  * Rijke retro sponsor-dagprijs-banner bovenaan L'Équipe. Toont de dagprijs met
  * is_dagprijs_vandaag=true van de actieve game (max. één). Geen actieve dagprijs
@@ -43,6 +38,7 @@ const DEF_TITEL = "Win een dagprijs";
  * Mobiel: geen achtergrond, gestapeld en gecentreerd.
  */
 export default function DagprijsBanner({ gameId }: { gameId?: string }) {
+  const { t } = useTranslation();
   const { data } = useQuery({
     queryKey: ["dagprijs-vandaag", gameId],
     enabled: Boolean(supabase && gameId),
@@ -60,9 +56,9 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
 
   if (!data) return null;
 
-  const kicker = data.banner_kicker?.trim() || DEF_KICKER;
-  const sponsorLabel = data.banner_sponsor_label?.trim() || DEF_SPONSOR_LABEL;
-  const titel = data.titel?.trim() || DEF_TITEL;
+  const kicker = data.banner_kicker?.trim() || t("karavaan.dagprijs.defKicker");
+  const sponsorLabel = data.banner_sponsor_label?.trim() || t("karavaan.dagprijs.defSponsorLabel");
+  const titel = data.titel?.trim() || t("karavaan.dagprijs.defTitel");
   const waarde = data.banner_waarde?.trim();
   const logo = data.sponsor_logo_url;
 
@@ -73,7 +69,7 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
       {logo ? (
         <img
           src={logo}
-          alt={data.sponsor_naam ?? "sponsor"}
+          alt={data.sponsor_naam ?? t("karavaan.dagprijs.sponsorAlt")}
           className="w-[300px] max-h-[104px] object-contain rounded-lg bg-black p-2.5"
           loading="lazy"
         />
@@ -126,7 +122,7 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
             href={data.sponsor_url}
             target="_blank"
             rel="noopener noreferrer nofollow sponsored"
-            aria-label={`Bezoek de website van ${data.sponsor_naam || "de sponsor"}`}
+            aria-label={t("karavaan.dagprijs.sponsorAria", { naam: data.sponsor_naam || t("karavaan.dagprijs.sponsorAriaFallback") })}
             className="group w-full transition-transform hover:-translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2 rounded-lg"
             style={{ outlineColor: GOUD }}
           >
@@ -158,16 +154,16 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
         <div className="mt-1.5 flex items-center justify-center md:justify-start gap-3 flex-wrap">
           {data.sponsor_naam && (
             <p className="text-[13px]" style={{ color: "#6f6b7d" }}>
-              aangeboden door <strong className="font-bold" style={{ color: "#b7831d" }}>{data.sponsor_naam}</strong>
+              {t("karavaan.dagprijs.aangebodenDoor")} <strong className="font-bold" style={{ color: "#b7831d" }}>{data.sponsor_naam}</strong>
             </p>
           )}
           <Link
             to="/prijzen"
-            aria-label="Bekijk alle prijzen"
+            aria-label={t("karavaan.dagprijs.allePrijzenAria")}
             className="inline-flex items-center justify-center gap-1.5 rounded-md px-4 py-2 text-[12px] font-black uppercase tracking-[0.08em] whitespace-nowrap transition-transform hover:translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2"
             style={{ background: GOUD, color: INKT, border: `2px solid ${GOUD_DONKER}`, boxShadow: `0 3px 0 ${GOUD_SCHADUW}`, outlineColor: GOUD }}
           >
-            Alle prijzen <ChevronRight className="h-4 w-4" aria-hidden />
+            {t("karavaan.dagprijs.allePrijzen")} <ChevronRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>
       </div>

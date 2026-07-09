@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { ChevronDown, ChevronRight, ChevronsUpDown, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles, ClipboardList, ArrowRight, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -36,6 +38,7 @@ export default function KaravaanFeed({
   gameId?: string;
   gameStatus?: string;
 }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { thema } = useThema();
   const { data: curGame } = useCurrentGame();
@@ -112,9 +115,9 @@ export default function KaravaanFeed({
     return (
       <div className="rounded-xl border-2 border-dashed border-foreground/20 bg-card p-6 text-center space-y-3">
         <Newspaper className="h-10 w-10 text-muted-foreground/50 mx-auto" />
-        <p className="font-display font-bold text-lg">Je zit nog niet in een subpoule</p>
+        <p className="font-display font-bold text-lg">{t("karavaan.feed.noSubpouleTitle")}</p>
         <p className="text-sm text-muted-foreground font-serif italic max-w-md mx-auto">
-          De {thema.krant} rolt mee met je subpoules. Maak er een aan of word lid via de Subpoules-tab.
+          {t("karavaan.feed.noSubpouleBody", { krant: thema.krant })}
         </p>
       </div>
     );
@@ -133,13 +136,13 @@ export default function KaravaanFeed({
             onClick={() => navigate("/uitleg")}
             className="flex-1 inline-flex items-center gap-1.5 text-sm font-semibold text-left hover:text-primary transition-colors"
           >
-            Nieuw hier? Ontdek wat je allemaal kunt.
+            {t("karavaan.feed.referralText")}
             <ArrowRight className="h-4 w-4 shrink-0" />
           </button>
           <button
             type="button"
             onClick={dismissUitleg}
-            aria-label="Verberg deze tip"
+            aria-label={t("karavaan.feed.referralHide")}
             className="shrink-0 inline-flex items-center justify-center h-6 w-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
           >
             <X className="h-4 w-4" />
@@ -188,7 +191,7 @@ export default function KaravaanFeed({
         type="button"
         onClick={() => onOpenHors?.("dartpijl")}
         className="group block w-full text-left"
-        aria-label="Open de Hors Catégorie statistieken"
+        aria-label={t("karavaan.feed.hcAriaOpen")}
       >
         {/* Mobiel: slim 52px banner */}
         <div className="md:hidden relative retro-border bg-card flex items-center gap-2.5 px-3 h-[52px] transition-shadow group-hover:shadow-[3px_3px_0_hsl(var(--foreground))]">
@@ -196,7 +199,7 @@ export default function KaravaanFeed({
             HC
           </div>
           <span className="font-display font-bold text-[13px] truncate flex-1">
-            Statistieken — Hors&nbsp;Catégorie
+            {t("karavaan.feed.hcMobileLabel")}
           </span>
           <span aria-hidden className="shrink-0 text-base text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all">
             →
@@ -214,21 +217,21 @@ export default function KaravaanFeed({
                 backgroundSize: "10px 10px",
               }}
             />
-            <span className="relative font-display text-[10px] uppercase tracking-[0.25em] opacity-75 leading-none">Col</span>
+            <span className="relative font-display text-[10px] uppercase tracking-[0.25em] opacity-75 leading-none">{t("karavaan.feed.hcCol")}</span>
             <span className="relative font-display font-black text-5xl leading-none mt-1.5 tracking-tighter">HC</span>
-            <span className="relative font-display text-[10px] uppercase tracking-[0.25em] opacity-75 leading-none mt-1.5">Hors&nbsp;Cat.</span>
+            <span className="relative font-display text-[10px] uppercase tracking-[0.25em] opacity-75 leading-none mt-1.5">{t("karavaan.feed.hcHorsCat")}</span>
           </div>
           <div className="flex-1 px-5 py-4 relative">
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="vintage-heading text-lg font-bold tracking-wider">Statistieken</span>
-              <span className="font-serif italic text-sm text-muted-foreground">21&nbsp;km à 8&nbsp;%</span>
+              <span className="vintage-heading text-lg font-bold tracking-wider">{t("karavaan.feed.hcStatistieken")}</span>
+              <span className="font-serif italic text-sm text-muted-foreground">{t("karavaan.feed.hcClimb")}</span>
             </div>
             <p className="font-serif italic text-[0.95rem] mt-1 leading-snug pr-10 text-foreground/85">
-              « De grupetto rolt naar de finish. De cijferfetishisten klimmen door — naar de{" "}
+              {t("karavaan.feed.hcQuotePre")}
               <span className="not-italic font-display font-bold text-foreground underline decoration-[hsl(var(--vintage-gold))] decoration-2 underline-offset-2">
                 Hors&nbsp;Catégorie
               </span>
-              . »
+              {t("karavaan.feed.hcQuotePost")}
             </p>
             <span aria-hidden className="absolute right-4 top-1/2 -translate-y-1/2 font-display text-2xl text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all">→</span>
           </div>
@@ -278,12 +281,13 @@ function SubpouleSwitcher({
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   if (subpoules.length === 0) return null;
   if (subpoules.length === 1) {
     return (
       <div className="flex items-center gap-2 text-xs font-display uppercase tracking-widest text-muted-foreground">
-        <span>Subpoule:</span>
+        <span>{t("karavaan.switcher.labelInline")}</span>
         <span className="font-bold text-foreground">{subpoules[0].name}</span>
       </div>
     );
@@ -294,19 +298,19 @@ function SubpouleSwitcher({
     const selected = subpoules.find((s) => s.id === selectedId);
     return (
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="overline-stamp">Subpoule</span>
+        <span className="overline-stamp">{t("karavaan.switcher.label")}</span>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" role="combobox" aria-expanded={open} className="justify-between font-normal min-w-[220px]">
-              <span className="truncate">{selected?.name ?? "Kies een subpoule…"}</span>
+              <span className="truncate">{selected?.name ?? t("karavaan.switcher.placeholder")}</span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
             <Command>
-              <CommandInput placeholder="Zoek subpoule…" />
+              <CommandInput placeholder={t("karavaan.switcher.searchPlaceholder")} />
               <CommandList>
-                <CommandEmpty>Geen subpoule gevonden.</CommandEmpty>
+                <CommandEmpty>{t("karavaan.switcher.empty")}</CommandEmpty>
                 <CommandGroup>
                   {subpoules.map((s) => (
                     <CommandItem key={s.id} value={s.name} onSelect={() => { onSelect(s.id); setOpen(false); }}>
@@ -323,7 +327,7 @@ function SubpouleSwitcher({
   }
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="overline-stamp">Subpoule</span>
+      <span className="overline-stamp">{t("karavaan.switcher.label")}</span>
       <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 flex-wrap">
         {subpoules.map((s) => (
           <button
@@ -365,11 +369,15 @@ function EtappeBlok({
   commentaarLaden?: boolean;
   onOpenHors?: (tab: HorsTabKey) => void;
 }) {
+  const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(defaultOpen);
-  const datum = new Date(etappe.approved_at).toLocaleDateString("nl-NL", {
-    day: "numeric",
-    month: "short",
-  });
+  const datum = new Date(etappe.approved_at).toLocaleDateString(
+    i18n.language === "en" ? "en-GB" : "nl-NL",
+    {
+      day: "numeric",
+      month: "short",
+    },
+  );
 
   return (
     <div className="retro-border bg-card overflow-hidden">
@@ -382,7 +390,7 @@ function EtappeBlok({
         {open ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
         <div className="flex-1 min-w-0 text-left">
           <span className="font-display font-bold text-sm md:text-base uppercase tracking-wider">
-            Etappe {etappe.stage_number}
+            {t("karavaan.etappe.stage", { number: etappe.stage_number })}
           </span>
           {etappe.stage_name && (
             <span className="font-serif italic text-sm text-muted-foreground ml-2">
@@ -415,11 +423,11 @@ function EtappeBlok({
               <div className="flex items-center gap-2 mb-2">
                 <Mic className="h-4 w-4 text-[hsl(var(--vintage-gold))] shrink-0" />
                 <span className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-                  Michel Wuyts en José De Cauwer
+                  {t("karavaan.etappe.commentaarSpeakers")}
                 </span>
               </div>
               <p className="font-serif italic text-sm text-muted-foreground animate-pulse">
-                De commentaarcabine zit vol — Michel en José spreken hun analyse in…
+                {t("karavaan.etappe.commentaarLoading")}
               </p>
               <div className="mt-2 space-y-1.5" aria-hidden>
                 <div className="h-2 rounded-full bg-foreground/10 animate-pulse w-[92%]" />
@@ -429,7 +437,7 @@ function EtappeBlok({
             </div>
           ) : (
             <p className="text-xs text-muted-foreground font-serif italic">
-              Geen commentaar beschikbaar voor deze etappe.
+              {t("karavaan.etappe.commentaarNone")}
             </p>
           )}
 
@@ -444,14 +452,14 @@ function EtappeBlok({
               <ClipboardList className="h-5 w-5 text-[hsl(var(--vintage-gold))] shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
                 <div className="font-display text-[10px] uppercase tracking-[0.2em] text-[hsl(var(--vintage-gold))] font-bold mb-0.5">
-                  Patrick Lefevere · jouw rapport
+                  {t("karavaan.etappe.lefevereTitle")}
                 </div>
                 {lefevereTekst ? (
                   <p className="font-serif italic text-sm text-foreground/90 leading-snug">"{lefevereTekst}"</p>
                 ) : lefevereLaden ? (
                   <div>
                     <p className="font-serif italic text-sm text-muted-foreground leading-snug animate-pulse">
-                      "Patlef zit achter zijn typmachine. Uw rapport komt eraan — en hij is niet mals…"
+                      "{t("karavaan.etappe.lefevereLoading")}"
                     </p>
                     <div className="mt-2 space-y-1.5" aria-hidden>
                       <div className="h-2 rounded-full bg-foreground/10 animate-pulse w-[88%]" />
@@ -460,11 +468,11 @@ function EtappeBlok({
                   </div>
                 ) : (
                   <p className="font-serif italic text-sm text-foreground/85 leading-snug">
-                    Je directeursrapport staat klaar — lees wat de baas ervan vindt.
+                    {t("karavaan.etappe.lefevereReady")}
                   </p>
                 )}
                 <span className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1 inline-block">
-                  → bekijk je volledige rapport
+                  {t("karavaan.etappe.lefevereCta")}
                 </span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
@@ -521,7 +529,8 @@ function CommentaarKaart({
 // ─── Persoonlijke flash ─────────────────────────────────────────────────────
 
 function PersoonlijkeFlash({ flash }: { flash: PersonalFlash }) {
-  const meta = flashMeta(flash);
+  const { t } = useTranslation();
+  const meta = flashMeta(flash, t);
   return (
     <div className={cn("rounded-md border-2 px-3 py-2 flex items-center gap-2", meta.border, meta.bg)}>
       <meta.Icon className={cn("h-4 w-4 shrink-0", meta.color)} />
@@ -530,7 +539,7 @@ function PersoonlijkeFlash({ flash }: { flash: PersonalFlash }) {
   );
 }
 
-function flashMeta(flash: PersonalFlash) {
+function flashMeta(flash: PersonalFlash, t: TFunction) {
   switch (flash.kind) {
     case "leider":
       return {
@@ -538,7 +547,7 @@ function flashMeta(flash: PersonalFlash) {
         color: "text-[hsl(var(--maillot-jaune-dark))]",
         border: "border-[hsl(var(--maillot-jaune))/0.7]",
         bg: "bg-[hsl(var(--maillot-jaune))/0.12]",
-        text: "Je bent klassementsleider!",
+        text: t("karavaan.flash.leider"),
       };
     case "podium":
       return {
@@ -546,7 +555,7 @@ function flashMeta(flash: PersonalFlash) {
         color: "text-[hsl(var(--maillot-jaune-dark))]",
         border: "border-[hsl(var(--maillot-jaune))/0.7]",
         bg: "bg-[hsl(var(--maillot-jaune))/0.10]",
-        text: `Je beklimt het podium — nu ${flash.rank}ᵉ`,
+        text: t("karavaan.flash.podium", { rank: flash.rank }),
       };
     case "off-podium":
       return {
@@ -554,7 +563,7 @@ function flashMeta(flash: PersonalFlash) {
         color: "text-[hsl(var(--bolletjes-bright))]",
         border: "border-[hsl(var(--bolletjes-bright))/0.5]",
         bg: "bg-[hsl(var(--bolletjes-bright))/0.06]",
-        text: `Van het podium af — nu ${flash.rank}ᵉ`,
+        text: t("karavaan.flash.offPodium", { rank: flash.rank }),
       };
     case "stijging":
       return {
@@ -562,7 +571,7 @@ function flashMeta(flash: PersonalFlash) {
         color: "text-[hsl(var(--maillot-groen))]",
         border: "border-[hsl(var(--maillot-groen))/0.4]",
         bg: "bg-[hsl(var(--maillot-groen))/0.08]",
-        text: `Gestegen naar plek ${flash.rank} (▲${flash.delta})`,
+        text: t("karavaan.flash.stijging", { rank: flash.rank, delta: flash.delta }),
       };
     case "daling":
       return {
@@ -570,7 +579,7 @@ function flashMeta(flash: PersonalFlash) {
         color: "text-[hsl(var(--bolletjes-bright))]",
         border: "border-[hsl(var(--bolletjes-bright))/0.4]",
         bg: "bg-[hsl(var(--bolletjes-bright))/0.06]",
-        text: `Gezakt naar plek ${flash.rank} (▼${Math.abs(flash.delta)})`,
+        text: t("karavaan.flash.daling", { rank: flash.rank, delta: Math.abs(flash.delta) }),
       };
     default:
       return {
@@ -578,7 +587,7 @@ function flashMeta(flash: PersonalFlash) {
         color: "text-muted-foreground",
         border: "border-foreground/15",
         bg: "bg-muted/30",
-        text: "Beweging in het klassement",
+        text: t("karavaan.flash.beweging"),
       };
   }
 }
@@ -586,23 +595,25 @@ function flashMeta(flash: PersonalFlash) {
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function NieuwMarker() {
+  const { t } = useTranslation();
   return (
     <div className="vintage-ornament my-3">
       <span className="overline-stamp text-[hsl(var(--bolletjes-bright))]">
-        ★ Nieuw sinds je laatste bezoek ★
+        {t("karavaan.marker.nieuw")}
       </span>
     </div>
   );
 }
 
 function EmptyFeed() {
+  const { t } = useTranslation();
   const { thema } = useThema();
   return (
     <div className="rounded-xl border-2 border-dashed border-foreground/20 bg-card p-6 text-center space-y-3">
       <Newspaper className="h-10 w-10 text-muted-foreground/50 mx-auto" />
-      <p className="font-display font-bold text-lg">De {thema.krant} gaat zo de pers in…</p>
+      <p className="font-display font-bold text-lg">{t("karavaan.empty.title", { krant: thema.krant })}</p>
       <p className="text-sm text-muted-foreground font-serif italic max-w-md mx-auto">
-        De eerste etappe-updates verschijnen hier zodra de jury de uitslagen heeft gefiatteerd.
+        {t("karavaan.empty.body")}
       </p>
     </div>
   );

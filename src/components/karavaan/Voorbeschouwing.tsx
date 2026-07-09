@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
 import { Mountain, CalendarDays, ExternalLink, Map as MapIcon, ChevronDown, ChevronUp } from "lucide-react";
@@ -17,12 +19,12 @@ type UpcomingStage = {
 // Interactief 3D-etappeprofiel (tourview). Lazy: iframe pas na klik laden.
 const TOURVIEW_BASE = "https://tourview.pages.dev/tdf2026/stage-";
 
-const TYPE_LABEL: Record<string, string> = {
-  vlak: "Vlakke rit",
-  heuvelachtig: "Heuvelrit",
-  tijdrit: "Tijdrit",
-  bergop: "Bergrit",
-  ploegentijdrit: "Ploegentijdrit",
+const TYPE_LABEL_KEY: Record<string, string> = {
+  vlak: "karavaan.voorbeschouwing.typeVlak",
+  heuvelachtig: "karavaan.voorbeschouwing.typeHeuvel",
+  tijdrit: "karavaan.voorbeschouwing.typeTijdrit",
+  bergop: "karavaan.voorbeschouwing.typeBergop",
+  ploegentijdrit: "karavaan.voorbeschouwing.typePloegentijdrit",
 };
 
 function ymdLocal(d: Date): string {
@@ -39,20 +41,21 @@ function pickUpcoming(stages: UpcomingStage[]): UpcomingStage | null {
   return sorted.find((s) => String(s.results_status) !== "approved") ?? null;
 }
 
-function dateBadge(date: string | null): string | null {
+function dateBadge(date: string | null, t: TFunction, locale: string): string | null {
   if (!date) return null;
   const today = ymdLocal(new Date());
   const tomorrow = ymdLocal(new Date(Date.now() + 86400000));
-  if (date === today) return "Vandaag";
-  if (date === tomorrow) return "Morgen";
+  if (date === today) return t("karavaan.voorbeschouwing.vandaag");
+  if (date === tomorrow) return t("karavaan.voorbeschouwing.morgen");
   try {
-    return new Date(date + "T00:00:00").toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
+    return new Date(date + "T00:00:00").toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" });
   } catch {
     return date;
   }
 }
 
 export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
+  const { t, i18n } = useTranslation();
   const { thema } = useThema();
   const [showProfiel, setShowProfiel] = useState(false);
 
@@ -101,8 +104,10 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
 
   if (!enabled || !stage) return null;
 
-  const typeLabel = TYPE_LABEL[String(stage.stage_type)] ?? "Etappe";
-  const wanneer = dateBadge(stage.date);
+  const locale = i18n.language === "en" ? "en-GB" : "nl-NL";
+  const typeLabelKey = TYPE_LABEL_KEY[String(stage.stage_type)];
+  const typeLabel = typeLabelKey ? t(typeLabelKey) : t("karavaan.voorbeschouwing.typeDefault");
+  const wanneer = dateBadge(stage.date, t, locale);
 
   return (
     <div className="rounded-xl border-2 border-foreground/15 bg-card overflow-hidden shadow-sm">
@@ -112,7 +117,7 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
       <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2 border-b border-border/50">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-4 w-4 text-primary" />
-          <span className="overline-stamp text-primary">De Voorbeschouwing</span>
+          <span className="overline-stamp text-primary">{t("karavaan.voorbeschouwing.kop")}</span>
         </div>
         {wanneer && (
           <span className="text-[10px] font-mono uppercase tracking-wider bg-primary/10 text-primary rounded px-2 py-0.5">
@@ -126,7 +131,7 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
           {thema.etappe} {stage.stage_number}
         </p>
         <h3 className="font-display font-bold text-lg leading-tight">
-          {stage.name?.trim() || `Etappe ${stage.stage_number}`}
+          {stage.name?.trim() || t("karavaan.voorbeschouwing.stage", { number: stage.stage_number })}
         </h3>
         <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
@@ -154,8 +159,8 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
                 <span className="flex items-center gap-2 min-w-0">
                   <MapIcon className="w-4 h-4 shrink-0 text-[hsl(var(--vintage-gold))]" />
                   <span className="min-w-0">
-                    <span className="block text-sm font-display font-semibold text-[hsl(var(--vintage-gold))]">Bekijk het 3D-profiel</span>
-                    <span className="block text-[11px] text-muted-foreground">Interactieve kaart met hoogteprofiel</span>
+                    <span className="block text-sm font-display font-semibold text-[hsl(var(--vintage-gold))]">{t("karavaan.voorbeschouwing.profielOpen")}</span>
+                    <span className="block text-[11px] text-muted-foreground">{t("karavaan.voorbeschouwing.profielSub")}</span>
                   </span>
                 </span>
                 <ChevronDown className="w-4 h-4 shrink-0 text-[hsl(var(--vintage-gold))]" />
@@ -169,14 +174,14 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
                   className="w-full flex items-center justify-between gap-2 rounded-lg border-2 border-dashed border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.06] px-3 py-1.5 text-left transition-colors hover:bg-[hsl(var(--vintage-gold))/0.12]"
                 >
                   <span className="flex items-center gap-2 text-sm font-display font-semibold text-[hsl(var(--vintage-gold))]">
-                    <MapIcon className="w-4 h-4 shrink-0" /> 3D-profiel
+                    <MapIcon className="w-4 h-4 shrink-0" /> {t("karavaan.voorbeschouwing.profielTitle")}
                   </span>
                   <ChevronUp className="w-4 h-4 shrink-0 text-[hsl(var(--vintage-gold))]" />
                 </button>
                 <div className="relative w-full overflow-hidden rounded-lg border border-[hsl(var(--vintage-sepia)/0.4)]" style={{ height: 240 }}>
                   <iframe
                     src={`${TOURVIEW_BASE}${stage.stage_number}`}
-                    title={`3D-profiel etappe ${stage.stage_number}`}
+                    title={t("karavaan.voorbeschouwing.profielIframeTitle", { number: stage.stage_number })}
                     loading="lazy"
                     referrerPolicy="no-referrer"
                     className="absolute inset-0 w-full h-full"
@@ -189,7 +194,7 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:underline"
                 >
-                  Werkt het profiel niet? Open op tourview <ExternalLink className="w-3 h-3" />
+                  {t("karavaan.voorbeschouwing.profielFallback")} <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
             )}

@@ -953,7 +953,100 @@
       "unnamedTeam": "Unnamed team"
     }
   },
-  "karavaan": {},
+  "karavaan": {
+    "feed": {
+      "referralText": "New here? Discover everything you can do.",
+      "referralHide": "Hide this tip",
+      "noSubpouleTitle": "You're not in a subpoule yet",
+      "noSubpouleBody": "The {{krant}} rolls along with your subpoules. Create one or join via the Subpoules tab.",
+      "hcAriaOpen": "Open the Hors Catégorie stats",
+      "hcMobileLabel": "Statistics — Hors Catégorie",
+      "hcCol": "Col",
+      "hcHorsCat": "Hors Cat.",
+      "hcStatistieken": "Statistics",
+      "hcClimb": "21 km at 8 %",
+      "hcQuotePre": "« The gruppetto rolls to the finish. The number crunchers keep climbing — up to the ",
+      "hcQuotePost": ". »"
+    },
+    "switcher": {
+      "labelInline": "Subpoule:",
+      "label": "Subpoule",
+      "placeholder": "Pick a subpoule…",
+      "searchPlaceholder": "Search subpoule…",
+      "empty": "No subpoule found."
+    },
+    "etappe": {
+      "stage": "Stage {{number}}",
+      "commentaarSpeakers": "Michel Wuyts and José De Cauwer",
+      "commentaarLoading": "The commentary booth is packed — Michel and José are recording their analysis…",
+      "commentaarNone": "No commentary available for this stage.",
+      "lefevereTitle": "Patrick Lefevere · your report",
+      "lefevereLoading": "Patlef is at his typewriter. Your report is coming — and he pulls no punches…",
+      "lefevereReady": "Your director's report is ready — read what the boss makes of it.",
+      "lefevereCta": "→ view your full report"
+    },
+    "flash": {
+      "leider": "You're the overall leader!",
+      "podium": "You're climbing the podium — now {{rank}}th",
+      "offPodium": "Off the podium — now {{rank}}th",
+      "stijging": "Up to place {{rank}} (▲{{delta}})",
+      "daling": "Down to place {{rank}} (▼{{delta}})",
+      "beweging": "Movement in the standings"
+    },
+    "marker": {
+      "nieuw": "★ New since your last visit ★"
+    },
+    "empty": {
+      "title": "The {{krant}} is about to go to press…",
+      "body": "The first stage updates appear here as soon as the jury approves the results."
+    },
+    "ministrip": {
+      "labelSubpoule": "subpoule",
+      "labelOverall": "overall",
+      "labelPunten": "points",
+      "ariaSubpoule": "Open your subpoule (chart)",
+      "ariaOverall": "Open the overall standings",
+      "ariaPunten": "View your full team",
+      "monkeyTitle": "Monkey IQ",
+      "monkeyLabel": "monkeys beaten",
+      "monkeyAria": "Open Dartboard (Monkey IQ)",
+      "emiratesTitle": "Emirates",
+      "emiratesLabel": "of dream team",
+      "emiratesAria": "Open The Emirates (dream team)",
+      "wielerdirTitle": "Director",
+      "wielerdirLabel": "report",
+      "wielerdirAria": "Open The Cycling Director (report)",
+      "volledigePloeg": "View your full team"
+    },
+    "voorbeschouwing": {
+      "typeVlak": "Flat stage",
+      "typeHeuvel": "Hilly stage",
+      "typeTijdrit": "Time trial",
+      "typeBergop": "Mountain stage",
+      "typePloegentijdrit": "Team time trial",
+      "typeDefault": "Stage",
+      "vandaag": "Today",
+      "morgen": "Tomorrow",
+      "kop": "The Preview",
+      "stage": "Stage {{number}}",
+      "profielOpen": "View the 3D profile",
+      "profielSub": "Interactive map with elevation profile",
+      "profielTitle": "3D profile",
+      "profielIframeTitle": "3D profile stage {{number}}",
+      "profielFallback": "Profile not working? Open on tourview"
+    },
+    "dagprijs": {
+      "defKicker": "Prize of the day",
+      "defSponsorLabel": "Proud sponsor of Koerspoule",
+      "defTitel": "Win a daily prize",
+      "sponsorAlt": "sponsor",
+      "sponsorAria": "Visit the website of {{naam}}",
+      "sponsorAriaFallback": "the sponsor",
+      "aangebodenDoor": "brought to you by",
+      "allePrijzen": "All prizes",
+      "allePrijzenAria": "View all prizes"
+    }
+  },
   "common": {
     "notFound": {
       "message": "Oops! Page not found",

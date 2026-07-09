@@ -1,4 +1,5 @@
 import { ArrowUp, ArrowDown, Minus, Target, Crown, ClipboardList, ChevronRight, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { MiniStripData } from "@/hooks/useKaravaanFeed";
 
@@ -32,39 +33,40 @@ export default function MiniStrip({
   onClickOverall?: () => void;
   onOpenHors?: (tab: HorsTabKey) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="retro-border bg-card overflow-hidden">
       <div className="grid grid-cols-3 md:grid-cols-6">
         {/* Categorie 1 — positie & punten */}
-        <DataCell value={data.subpoule.rank == null ? "—" : `${data.subpoule.rank}ᵉ`} label="subpoule" delta={data.subpoule.rank == null ? undefined : data.subpoule.delta} onClick={onClickSubpoule ?? onClickProfile} ariaLabel="Open je subpoule (grafiek)" />
-        <DataCell value={data.overall.rank == null ? "—" : `${data.overall.rank}ᵉ`} label="overall" delta={data.overall.rank == null ? undefined : data.overall.delta} onClick={onClickOverall ?? onClickProfile} ariaLabel="Open het algemeen klassement" />
-        <DataCell value={data.points ?? "—"} label="punten" onClick={onClickProfile} ariaLabel="Bekijk je volledige ploeg" />
+        <DataCell value={data.subpoule.rank == null ? "—" : `${data.subpoule.rank}ᵉ`} label={t("karavaan.ministrip.labelSubpoule")} delta={data.subpoule.rank == null ? undefined : data.subpoule.delta} onClick={onClickSubpoule ?? onClickProfile} ariaLabel={t("karavaan.ministrip.ariaSubpoule")} />
+        <DataCell value={data.overall.rank == null ? "—" : `${data.overall.rank}ᵉ`} label={t("karavaan.ministrip.labelOverall")} delta={data.overall.rank == null ? undefined : data.overall.delta} onClick={onClickOverall ?? onClickProfile} ariaLabel={t("karavaan.ministrip.ariaOverall")} />
+        <DataCell value={data.points ?? "—"} label={t("karavaan.ministrip.labelPunten")} onClick={onClickProfile} ariaLabel={t("karavaan.ministrip.ariaPunten")} />
 
         {/* Categorie 2 — Hors Catégorie shortcuts (dikke scheiding op desktop) */}
         <HorsCell
           Icon={Target}
-          title="Monkey IQ"
+          title={t("karavaan.ministrip.monkeyTitle")}
           value={hors?.monkeyBeatPct == null ? null : `${hors.monkeyBeatPct}%`}
-          label="apen verslagen"
+          label={t("karavaan.ministrip.monkeyLabel")}
           onClick={() => onOpenHors?.("dartpijl")}
-          ariaLabel="Open Dartpijl (Monkey IQ)"
+          ariaLabel={t("karavaan.ministrip.monkeyAria")}
           thickLeftBorder
         />
         <HorsCell
           Icon={Crown}
-          title="Emirates"
+          title={t("karavaan.ministrip.emiratesTitle")}
           value={hors?.emiratesPct == null ? null : `${hors.emiratesPct}%`}
-          label="van droomploeg"
+          label={t("karavaan.ministrip.emiratesLabel")}
           onClick={() => onOpenHors?.("superteam")}
-          ariaLabel="Open The Emirates (droomploeg)"
+          ariaLabel={t("karavaan.ministrip.emiratesAria")}
         />
         <HorsCell
           Icon={ClipboardList}
-          title="Wielerdir."
+          title={t("karavaan.ministrip.wielerdirTitle")}
           value={hors?.directorScore == null ? null : hors.directorScore.toFixed(1)}
-          label="rapport"
+          label={t("karavaan.ministrip.wielerdirLabel")}
           onClick={() => onOpenHors?.("wielerdirecteur")}
-          ariaLabel="Open De Wielerdirecteur (rapport)"
+          ariaLabel={t("karavaan.ministrip.wielerdirAria")}
         />
       </div>
 
@@ -78,7 +80,7 @@ export default function MiniStrip({
             <Users className="h-4 w-4" strokeWidth={2} />
           </span>
           <span className="font-display text-sm font-bold uppercase tracking-[0.15em] text-foreground">
-            Bekijk je volledige ploeg
+            {t("karavaan.ministrip.volledigePloeg")}
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
         </button>
