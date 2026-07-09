@@ -10,6 +10,7 @@
  * Alle cijfers via props; niets hardcoded.
  */
 
+import { Trans, useTranslation } from "react-i18next";
 import { pickVerdict } from "./verdictConfig";
 
 type Props = {
@@ -30,6 +31,8 @@ function useCountUp(target: number): number {
 }
 
 export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, illustrationSrc, className }: Props) {
+  const { t, i18n } = useTranslation();
+  const numLocale = i18n.language === "en" ? "en-GB" : "nl-NL";
   const v = pickVerdict(percentile);
   const shown = useCountUp(percentile);
 
@@ -38,10 +41,10 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, i
   const apeLeads = diff > 0;
   const youLead = diff < 0;
   const cue = apeLeads
-    ? `🐒 De aap staat ${diff} pt voor`
+    ? t("hors.dartpijl.cueApeLeads", { diff })
     : youLead
-      ? `🚴 Jij staat ${Math.abs(diff)} pt voor`
-      : "📸 Foto-finish — exact gelijk";
+      ? t("hors.dartpijl.cueYouLead", { diff: Math.abs(diff) })
+      : t("hors.dartpijl.cueTie");
 
   const GOLD = "var(--medal-gold)";
   const INK = "var(--ink-sepia)";
@@ -72,7 +75,7 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, i
           textShadow: leads ? "1px 1px 0 rgba(58,42,26,0.12)" : undefined,
         }}
       >
-        {points.toLocaleString("nl-NL")}
+        {points.toLocaleString(numLocale)}
         <span style={{ fontSize: "0.4em", fontWeight: 700, marginLeft: 4, color: FADED }}>pt</span>
       </div>
     </div>
@@ -94,7 +97,7 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, i
             className="vintage-stamp uppercase"
             style={{ color: FADED, fontSize: "11px", letterSpacing: "0.32em" }}
           >
-            Monkey IQ
+            {t("hors.dartpijl.monkeyIq")}
           </div>
           <div
             className="mt-1 leading-none tabular-nums"
@@ -105,7 +108,7 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, i
               fontSize: "clamp(56px, 11vw, 92px)",
               textShadow: "3px 3px 0 rgba(58,42,26,0.10)",
             }}
-            aria-label={`Monkey IQ ${percentile} procent — je verslaat ${percentile} procent van de apen`}
+            aria-label={t("hors.dartpijl.monkeyIqAria", { percentile })}
           >
             {shown}%
           </div>
@@ -118,7 +121,7 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, i
               fontSize: "14px",
             }}
           >
-            Je verslaat <strong>{percentile}%</strong> van de apen
+            <Trans i18nKey="hors.dartpijl.youBeat" values={{ percentile }} components={{ strong: <strong /> }} />
           </p>
         </div>
 
@@ -131,10 +134,10 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, i
             boxShadow: "0 2px 0 rgba(58,42,26,0.12)",
           }}
           role="group"
-          aria-label={`Jij ${userPoints} punten tegenover gemiddelde aap ${monkeyAvg} punten`}
+          aria-label={t("hors.dartpijl.compareAria", { userPoints, monkeyAvg })}
         >
           <div className="flex items-stretch">
-            <Side label="Jij" points={userPoints} leads={youLead} />
+            <Side label={t("hors.dartpijl.you")} points={userPoints} leads={youLead} />
             <div
               className="self-stretch flex items-center px-1"
               style={{
@@ -151,10 +154,10 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, i
                   padding: "0 6px",
                 }}
               >
-                vs
+                {t("hors.dartpijl.vs")}
               </span>
             </div>
-            <Side label="Gem. aap" points={monkeyAvg} leads={apeLeads} />
+            <Side label={t("hors.dartpijl.monkeyAvg")} points={monkeyAvg} leads={apeLeads} />
           </div>
           {/* Voorsprong-cue */}
           <div
@@ -185,7 +188,7 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, i
         }}
       >
         <span aria-hidden style={{ fontSize: "20px" }}>{v.emoji}</span>
-        <span>{v.label}</span>
+        <span>{t(`hors.dartpijl.verdict.${v.key}.label`)}</span>
       </p>
 
       {/* Commentator-quote */}
@@ -214,7 +217,7 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, i
         >
           “
         </span>
-        Awel, de Tour, dat is een loterij, hé…
+        {t("hors.dartpijl.quote")}
       </p>
         </div>
         {illustrationSrc && (

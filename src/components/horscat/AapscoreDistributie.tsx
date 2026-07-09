@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import aapDartpijl from "@/assets/horscat/aap-dartpijl.png";
 
 export type DistBin = { bucket: number; count: number };
@@ -60,6 +61,8 @@ export default function AapscoreDistributie({
   monkeyCount = 5000,
   className,
 }: Props) {
+  const { t, i18n } = useTranslation();
+  const numLocale = i18n.language === "en" ? "en-GB" : "nl-NL";
   // Geen grow-/fade-in-animatie meer (bewust): alles staat direct in eindstand.
   const wrapRef = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(0);
@@ -141,9 +144,11 @@ export default function AapscoreDistributie({
         <div style={{ paddingRight: isMobile ? 0 : 200, minHeight: isMobile ? 4 : 24 }} />
 
         <p className="sr-only">
-          Jij verslaat {Math.round((beatPct / 100) * monkeyCount).toLocaleString("nl-NL")}{" "}
-          van de {monkeyCount.toLocaleString("nl-NL")} apen; gemiddelde aap scoort{" "}
-          {Math.round(mean)} punten.
+          {t("hors.dartpijl.dist.srSummary", {
+            beaten: Math.round((beatPct / 100) * monkeyCount).toLocaleString(numLocale),
+            total: monkeyCount.toLocaleString(numLocale),
+            mean: Math.round(mean),
+          })}
         </p>
 
         {/* ── KPI-header: drie tegels boven de grafiek ── */}
@@ -176,19 +181,19 @@ export default function AapscoreDistributie({
             >
               <div className="pr-3">
                 <div className={big} style={{ color: "hsl(var(--primary))" }}>
-                  {beaten.toLocaleString("nl-NL")}
+                  {beaten.toLocaleString(numLocale)}
                   <span className="text-xl font-medium text-muted-foreground">
-                    {" / "}{monkeyCount.toLocaleString("nl-NL")}
+                    {" / "}{monkeyCount.toLocaleString(numLocale)}
                   </span>
                 </div>
-                <Label>Apen verslagen</Label>
+                <Label>{t("hors.dartpijl.dist.kpiBeaten")}</Label>
               </div>
               <div className="px-3" style={{ borderLeft: "1px solid hsl(var(--border))" }}>
                 <div className={big} style={{ color: "hsl(var(--foreground))" }}>
-                  {avg.toLocaleString("nl-NL")}
-                  <span className="text-xl font-medium text-muted-foreground"> pt</span>
+                  {avg.toLocaleString(numLocale)}
+                  <span className="text-xl font-medium text-muted-foreground"> {t("hors.dartpijl.dist.pt")}</span>
                 </div>
-                <Label>Gem. score aap</Label>
+                <Label>{t("hors.dartpijl.dist.kpiAvg")}</Label>
               </div>
               <div className="pl-3" style={{ borderLeft: "1px solid hsl(var(--border))" }}>
                 <div
@@ -196,10 +201,10 @@ export default function AapscoreDistributie({
                   style={{ color: delta > 0 ? "#059669" : delta < 0 ? "#E11D48" : "var(--ink-faded)" }}
                 >
                   {delta > 0 ? "+" : delta < 0 ? "−" : "±"}
-                  {Math.abs(delta).toLocaleString("nl-NL")}
-                  <span className="text-xl font-medium text-muted-foreground"> pt</span>
+                  {Math.abs(delta).toLocaleString(numLocale)}
+                  <span className="text-xl font-medium text-muted-foreground"> {t("hors.dartpijl.dist.pt")}</span>
                 </div>
-                <Label>{delta >= 0 ? "Boven gem. aap" : "Onder gem. aap"}</Label>
+                <Label>{delta >= 0 ? t("hors.dartpijl.dist.kpiAboveAvg") : t("hors.dartpijl.dist.kpiBelowAvg")}</Label>
               </div>
             </div>
           );
@@ -215,7 +220,7 @@ export default function AapscoreDistributie({
             paddingLeft: yGutter,
           }}
         >
-          Aantal apenteams
+          {t("hors.dartpijl.dist.yAxis")}
         </div>
 
         {/* PLOT-AREA */}
@@ -279,7 +284,7 @@ export default function AapscoreDistributie({
                     color: "var(--ink-faded)",
                   }}
                 >
-                  {Math.round(yMax * f).toLocaleString("nl-NL")}
+                  {Math.round(yMax * f).toLocaleString(numLocale)}
                 </span>
               </div>
             );
@@ -392,7 +397,7 @@ export default function AapscoreDistributie({
                     color: "hsl(var(--foreground))",
                   }}
                 >
-                  Jouw team
+                  {t("hors.dartpijl.dist.yourTeam")}
                 </div>
                 <div
                   className="tabular-nums"
@@ -407,7 +412,7 @@ export default function AapscoreDistributie({
                 >
                   {userActual}
                   <span style={{ fontSize: isMobile ? 14 : 16, marginLeft: 4, fontWeight: 500 }}>
-                    pt
+                    {t("hors.dartpijl.dist.pt")}
                   </span>
                 </div>
                 <div
@@ -419,7 +424,7 @@ export default function AapscoreDistributie({
                     marginTop: 4,
                   }}
                 >
-                  beter dan {Math.round(beatPct)}% van de apen
+                  {t("hors.dartpijl.dist.betterThan", { pct: Math.round(beatPct) })}
                 </div>
               </div>
             </div>
@@ -432,12 +437,12 @@ export default function AapscoreDistributie({
           style={{ height: 20, marginTop: 6, paddingLeft: yGutter }}
         >
           <div className="relative h-full">
-            {ticks.map((t) => (
+            {ticks.map((tick) => (
               <span
-                key={t}
+                key={tick}
                 className="absolute tabular-nums"
                 style={{
-                  left: `${fracOf(t) * 100}%`,
+                  left: `${fracOf(tick) * 100}%`,
                   transform: "translateX(-50%)",
                   top: 0,
                   fontFamily: FONT_MONO,
@@ -446,7 +451,7 @@ export default function AapscoreDistributie({
                   whiteSpace: "nowrap",
                 }}
               >
-                {t.toLocaleString("nl-NL")}
+                {tick.toLocaleString(numLocale)}
               </span>
             ))}
           </div>
@@ -463,7 +468,7 @@ export default function AapscoreDistributie({
             color: "var(--ink-faded)",
           }}
         >
-          Score (punten)
+          {t("hors.dartpijl.dist.xAxis")}
         </div>
 
         {/* Bron */}
@@ -475,7 +480,7 @@ export default function AapscoreDistributie({
             marginTop: 18,
           }}
         >
-          Bron: {monkeyCount.toLocaleString("nl-NL")} Monte Carlo-simulaties · Koerspoule
+          {t("hors.dartpijl.dist.source", { count: monkeyCount.toLocaleString(numLocale) })}
         </p>
       </div>
     </div>

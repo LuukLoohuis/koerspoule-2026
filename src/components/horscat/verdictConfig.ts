@@ -8,18 +8,18 @@
 export type VerdictBand = {
   /** Inclusief minimum percentile (≥). */
   min: number;
-  label: string;
-  hint: string;
+  /** i18n-sleutel-suffix onder hors.dartpijl.verdict.<key>.{label,hint}. */
+  key: string;
   emoji: string;
   /** Kleur-token of CSS-kleur voor de headline. */
   color: string;
 };
 
 export const VERDICT_BANDS: VerdictBand[] = [
-  { min: 85, label: "Kopman van het peloton — de aap lost in de eerste klim.", hint: "Pure koerskennis: jij stuurt, de dartpijl ziet enkel je achterwiel.", emoji: "🏆", color: "#2E6A4F" },
-  { min: 60, label: "Mee in de kopgroep, vóór de apen.",                       hint: "Boven het toeval — geen meeval, gewoon ploegleidersinzicht.",       emoji: "💪", color: "#2E6A4F" },
-  { min: 40, label: "Schouder aan schouder met de aap in het peloton.",        hint: "5.000 willekeurige ploegen, en jij rijdt er middenin. Skill ≈ geluk deze ronde.", emoji: "🐒", color: "#C2691C" },
-  { min: 0,  label: "De aap met de dartpijl rijdt jou uit het wiel.",          hint: "Een blind geprikte ploeg scoort beter — tijd voor een tactische heroverweging.", emoji: "🍌", color: "#C0395B" },
+  { min: 85, key: "kopman", emoji: "🏆", color: "#2E6A4F" },
+  { min: 60, key: "kopgroep", emoji: "💪", color: "#2E6A4F" },
+  { min: 40, key: "schouder", emoji: "🐒", color: "#C2691C" },
+  { min: 0,  key: "gelost", emoji: "🍌", color: "#C0395B" },
 ];
 
 export function pickVerdict(percentile: number): VerdictBand {

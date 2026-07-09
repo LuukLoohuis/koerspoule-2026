@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import CompareSetup from "@/components/CompareSetup";
 import { useSubpoules } from "@/hooks/useSubpoules";
@@ -7,6 +8,7 @@ import { cn } from "@/lib/utils";
 type Props = { gameId?: string };
 
 export default function BenchmarkTab({ gameId }: Props) {
+  const { t } = useTranslation();
   // Scope: undefined = hele koers; anders alleen leden van deze subpoule.
   const [scopeSubpouleId, setScopeSubpouleId] = useState<string | undefined>(undefined);
   const { subpoules } = useSubpoules(gameId);
@@ -15,14 +17,14 @@ export default function BenchmarkTab({ gameId }: Props) {
     return (
       <Card className="retro-border">
         <CardContent className="p-6 text-sm text-muted-foreground text-center">
-          Kies eerst een actieve koers.
+          {t("hors.benchmark.pickGame")}
         </CardContent>
       </Card>
     );
   }
 
   const chips: Array<{ id: string | undefined; label: string }> = [
-    { id: undefined, label: "Alle deelnemers" },
+    { id: undefined, label: t("hors.benchmark.allParticipants") },
     ...subpoules.map((s) => ({ id: s.id, label: s.name })),
   ];
 

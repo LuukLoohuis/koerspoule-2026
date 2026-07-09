@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Info, ChevronDown } from "lucide-react";
 
 type Props = {
@@ -17,6 +18,8 @@ type Props = {
 };
 
 export default function MonkeyExplainerModal({ monkeyCount = 5000, variant = "icon" }: Props) {
+  const { t, i18n } = useTranslation();
+  const monkeyCountStr = monkeyCount.toLocaleString(i18n.language === "en" ? "en-GB" : "nl-NL");
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const [maxH, setMaxH] = useState<number>(0);
@@ -74,13 +77,13 @@ export default function MonkeyExplainerModal({ monkeyCount = 5000, variant = "ic
                 textTransform: "uppercase",
               }
         }
-        aria-label="Hoe werkt dit?"
-        title="Hoe werkt dit?"
+        aria-label={t("hors.dartpijl.explainer.trigger")}
+        title={t("hors.dartpijl.explainer.trigger")}
       >
         <Info size={variant === "icon" ? 14 : 13} strokeWidth={2.4} />
         {variant === "text" && (
           <>
-            <span>Hoe werkt dit?</span>
+            <span>{t("hors.dartpijl.explainer.trigger")}</span>
             <ChevronDown
               size={13}
               strokeWidth={2.4}
@@ -97,7 +100,7 @@ export default function MonkeyExplainerModal({ monkeyCount = 5000, variant = "ic
       <div
         id="monkey-explainer-panel"
         role="region"
-        aria-label="Uitleg Aap met de dartpijl"
+        aria-label={t("hors.dartpijl.explainer.regionLabel")}
         style={{
           overflow: "hidden",
           maxHeight: `${maxH}px`,
@@ -127,55 +130,40 @@ export default function MonkeyExplainerModal({ monkeyCount = 5000, variant = "ic
             }}
           >
             <span aria-hidden style={{ fontSize: 18 }}>🐒</span>
-            De aap met de dartpijl — uitleg
+            {t("hors.dartpijl.explainer.title")}
           </h3>
 
           <div className="space-y-3 text-[13.5px]" style={{ fontFamily: "'Source Serif 4',Georgia,serif", lineHeight: 1.55 }}>
-            <p>
-              Het voelt alsof je de beste renners moet voorspellen. Maar wielrennen is onzeker:
-              valpartijen, vorm van de dag, weer en teamtactiek bepalen mee wie er wint. Niemand
-              heeft dat in de hand.
-            </p>
+            <p>{t("hors.dartpijl.explainer.p1")}</p>
 
             <p
               className="pl-3"
               style={{ borderLeft: "3px solid hsl(var(--vintage-gold))", color: "var(--ink-sepia)" }}
             >
-              De aap met de dartpijl maakt dat zichtbaar. Hij gooit in elke categorie blind een
-              dartpijl en kiest zo willekeurig een renner. Zo'n gok pakt soms verrassend goed uit,
-              niet omdat de aap er verstand van heeft, maar omdat toeval in het wielrennen een
-              grote rol speelt.
+              {t("hors.dartpijl.explainer.p2")}
             </p>
 
             <div>
               <h4 className="text-[12px] mt-1 mb-1" style={{ fontFamily: "'Oswald',sans-serif", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ink-faded)" }}>
-                Wat de simulatie doet
+                {t("hors.dartpijl.explainer.whatSimHead")}
               </h4>
-              <p>
-                We laten {monkeyCount.toLocaleString("nl-NL")} apen zo'n willekeurig team samenstellen
-                en rekenen elk team af met exact jouw puntentelling. Jouw score leggen we naast die{" "}
-                {monkeyCount.toLocaleString("nl-NL")} apenscores. Dat is je percentiel: je verslaat X%
-                van de apen.
-              </p>
+              <p>{t("hors.dartpijl.explainer.whatSimBody", { count: monkeyCountStr })}</p>
             </div>
 
             <div>
               <h4 className="text-[12px] mt-1 mb-1" style={{ fontFamily: "'Oswald',sans-serif", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ink-faded)" }}>
-                Wat betekent het?
+                {t("hors.dartpijl.explainer.meaningHead")}
               </h4>
               <ul className="list-disc pl-5 space-y-1">
-                <li><strong>≥ 85%</strong>: petje af — dit is duidelijk skill, geen toeval.</li>
-                <li><strong>60–84%</strong>: netjes — je zit boven het gemiddelde van het toeval.</li>
-                <li><strong>40–59%</strong>: gelijkspel — skill en kans houden elkaar in balans.</li>
-                <li><strong>&lt; 40%</strong>: de aap had het beter gedaan; bananen voor jou.</li>
+                <li><Trans i18nKey="hors.dartpijl.explainer.band1" components={{ strong: <strong /> }} /></li>
+                <li><Trans i18nKey="hors.dartpijl.explainer.band2" components={{ strong: <strong /> }} /></li>
+                <li><Trans i18nKey="hors.dartpijl.explainer.band3" components={{ strong: <strong /> }} /></li>
+                <li><Trans i18nKey="hors.dartpijl.explainer.band4" components={{ strong: <strong /> }} /></li>
               </ul>
             </div>
 
             <p style={{ color: "var(--ink-faded)", fontSize: "12px" }}>
-              Zelfs met perfecte kennis blijven er veel mogelijke uitkomsten. Eén grote ronde is
-              slechts een momentopname, waardoor geluk een grotere rol speelt dan je misschien
-              denkt. Bekijk de resultaten daarom vooral als een leuke indicatie, niet als een
-              absolute waarheid.
+              {t("hors.dartpijl.explainer.outro")}
             </p>
           </div>
         </div>

@@ -721,7 +721,238 @@
       "bonusJerseys": "Truien: 25 per juiste winnaar"
     }
   },
-  "hors": {},
+  "hors": {
+    "dartpijl": {
+      "monkeyIq": "Monkey IQ",
+      "monkeyIqAria": "Monkey IQ {{percentile}} procent — je verslaat {{percentile}} procent van de apen",
+      "youBeat": "Je verslaat <strong>{{percentile}}%</strong> van de apen",
+      "you": "Jij",
+      "monkeyAvg": "Gem. aap",
+      "vs": "vs",
+      "compareAria": "Jij {{userPoints}} punten tegenover gemiddelde aap {{monkeyAvg}} punten",
+      "cueApeLeads": "🐒 De aap staat {{diff}} pt voor",
+      "cueYouLead": "🚴 Jij staat {{diff}} pt voor",
+      "cueTie": "📸 Foto-finish — exact gelijk",
+      "quote": "Awel, de Tour, dat is een loterij, hé…",
+      "verdict": {
+        "kopman": {
+          "label": "Kopman van het peloton — de aap lost in de eerste klim."
+        },
+        "kopgroep": {
+          "label": "Mee in de kopgroep, vóór de apen."
+        },
+        "schouder": {
+          "label": "Schouder aan schouder met de aap in het peloton."
+        },
+        "gelost": {
+          "label": "De aap met de dartpijl rijdt jou uit het wiel."
+        }
+      },
+      "dist": {
+        "srSummary": "Jij verslaat {{beaten}} van de {{total}} apen; gemiddelde aap scoort {{mean}} punten.",
+        "kpiBeaten": "Apen verslagen",
+        "kpiAvg": "Gem. score aap",
+        "kpiAboveAvg": "Boven gem. aap",
+        "kpiBelowAvg": "Onder gem. aap",
+        "pt": "pt",
+        "yAxis": "Aantal apenteams",
+        "xAxis": "Score (punten)",
+        "yourTeam": "Jouw team",
+        "betterThan": "beter dan {{pct}}% van de apen",
+        "source": "Bron: {{count}} Monte Carlo-simulaties · Koerspoule"
+      },
+      "explainer": {
+        "trigger": "Hoe werkt dit?",
+        "regionLabel": "Uitleg Aap met de dartpijl",
+        "title": "De aap met de dartpijl — uitleg",
+        "p1": "Het voelt alsof je de beste renners moet voorspellen. Maar wielrennen is onzeker: valpartijen, vorm van de dag, weer en teamtactiek bepalen mee wie er wint. Niemand heeft dat in de hand.",
+        "p2": "De aap met de dartpijl maakt dat zichtbaar. Hij gooit in elke categorie blind een dartpijl en kiest zo willekeurig een renner. Zo'n gok pakt soms verrassend goed uit, niet omdat de aap er verstand van heeft, maar omdat toeval in het wielrennen een grote rol speelt.",
+        "whatSimHead": "Wat de simulatie doet",
+        "whatSimBody": "We laten {{count}} apen zo'n willekeurig team samenstellen en rekenen elk team af met exact jouw puntentelling. Jouw score leggen we naast die {{count}} apenscores. Dat is je percentiel: je verslaat X% van de apen.",
+        "meaningHead": "Wat betekent het?",
+        "band1": "<strong>≥ 85%</strong>: petje af — dit is duidelijk skill, geen toeval.",
+        "band2": "<strong>60–84%</strong>: netjes — je zit boven het gemiddelde van het toeval.",
+        "band3": "<strong>40–59%</strong>: gelijkspel — skill en kans houden elkaar in balans.",
+        "band4": "<strong>&lt; 40%</strong>: de aap had het beter gedaan; bananen voor jou.",
+        "outro": "Zelfs met perfecte kennis blijven er veel mogelijke uitkomsten. Eén grote ronde is slechts een momentopname, waardoor geluk een grotere rol speelt dan je misschien denkt. Bekijk de resultaten daarom vooral als een leuke indicatie, niet als een absolute waarheid."
+      },
+      "emptyTitle": "De apen warmen nog op 🐒",
+      "emptyMessage": "Zodra de eerste etappe-uitslag binnen is, gooien de apen hun dartpijlen en zie je hoe jij het tegen ze doet.",
+      "top10Commentary": "\"Top 10% van de apen — die dartpijl van jou heeft visie.\" 🔥"
+    },
+    "benchmark": {
+      "pickGame": "Kies eerst een actieve koers.",
+      "allParticipants": "Alle deelnemers"
+    },
+    "tabs": {
+      "dartpijl": "Dartpijl",
+      "pelotonkeuzes": "Pelotonkeuzes",
+      "wielerdirecteur": "De Wielerdirecteur",
+      "superteam": "The Emirates",
+      "benchmark": "Benchmark"
+    },
+    "tabsAria": "Hors Catégorie-onderdelen",
+    "locked": {
+      "title": "Hors Catégorie nog vergrendeld",
+      "body": "De data cave gaat open zodra de koers in de sneak preview verschijnt."
+    },
+    "demo": {
+      "bannerLead": "Gesimuleerde voorbeelddata.",
+      "bannerBody": "Dit is een voorproefje op ~5 nepdeelnemers. Zodra de inschrijving opent, zie je hier de échte cijfers.",
+      "badge": "🎲 Demo · gesimuleerde data"
+    },
+    "common": {
+      "unknownRider": "Onbekend"
+    },
+    "peloton": {
+      "title": "Pelotonkeuzes",
+      "subtitle": "Volg ik hier het peloton of wijk ik juist af? Donker = zeldzame keuze, licht = pelotonlieveling.",
+      "legendRare": "Zeldzaam",
+      "legendAverage": "Gemiddeld",
+      "legendFavourite": "Pelotonlieveling",
+      "yourPick": "Jouw keuze",
+      "noTeams": "Nog geen ingediende ploegen.",
+      "badgeEveryone": "Iedereen-en-z'n-moeder",
+      "badgeFavourite": "Pelotonlieveling",
+      "badgeHiddenGem": "Verborgen parel",
+      "badgeDifferential": "Differentieel",
+      "mostChosenJokers": "🃏 Meest gekozen jokers",
+      "predictionsHeader": "Voorspellingen · Eindklassement & truien",
+      "noPredictions": "Nog geen voorspellingen ingediend.",
+      "finalWinner": "Eindwinnaar",
+      "position13": "positie 1–3",
+      "labelConsensus": "Consensus",
+      "labelOutsider": "Outsider",
+      "labelDifferential": "Differentieel"
+    },
+    "directorAnalysis": {
+      "labelChaos": "Pure chaos",
+      "labelPeloton": "Pelotonkoers",
+      "labelAttacking": "Aanvallende ploeg",
+      "lineSafe": "Je peloton kiest wat iedereen kiest. Een veilige bidon, geen spektakel.",
+      "lineRisky": "Met deze differentiëlen mik je óf op het podium óf op de bezemwagen.",
+      "lineUniques": "{{count}} renners die nauwelijks iemand koos. Lef of waanzin?",
+      "quote0": "Vandaag zou jouw ploeg waarschijnlijk lossen op de eerste col.",
+      "quote1": "Je ploeg ademt: all-in op chaos.",
+      "quote2": "Vier sprinters meenemen naar deze bergen? Ambitieuze tactiek.",
+      "quote3": "Het peloton vertrouwt op Pogačar. Jij vertrouwt op hoop.",
+      "quote4": "Deze ploeg heeft de organisatie van een vroege vlucht in een regenrit."
+    },
+    "wielerdirecteur": {
+      "rankLabel": "Rang #{{rank}} van {{total}}",
+      "beatLabel": "{{pct}}% apen verslagen",
+      "noJokers": "Geen jokers",
+      "jokerCount_one": "{{count}} joker",
+      "jokerCount_other": "{{count}} jokers",
+      "noScoringPicks": "Nog geen scorende picks",
+      "diffLabel": "{{count}} scorende picks · gem. {{pct}}% gekozen",
+      "fallback": {
+        "s90": "Chapeau. Uw peloton rijdt op kop en de simulatie-apen zien enkel uw achterwiel. Zo doet ge dat. Ik had het zelf niet beter geregeld.",
+        "s80": "Straf gereden. Ge loopt voor op het pak en de dartpijl-aap zit in de volgwagen. Durf nog een tikkeltje meer en ge pakt de zege.",
+        "s70": "Deugdelijk werk tot hiertoe. Ge scoort boven de mediaan, uw renners rijden hun loon bijeen. We spreken elkaar in de bergen.",
+        "s60": "'t Is respectabel, maar ik kijk scherp. Uw ploeg levert, alleen is de marge dun. Geen reden om te blinken, wel om door te trappen.",
+        "s50": "Middenmoot, en eerlijk gezegd voelt het ook zo. De apen rijden mee op uw wiel. Niet verloren, maar sprinten om de zege doet ge nog niet.",
+        "s40": "Lastig parcours voor uw ploeg. De apen doen het even goed en uw klassering staat onder druk. Rechtzitten en herpakken, allez.",
+        "s00": "Zware koers. De cijfers liegen niet, en ik nog minder. Ge verliest op alle fronten. De bezemwagen rijdt achter u, maar opgeven staat niet in mijn woordenboek."
+      },
+      "title": "De Wielerdirecteur",
+      "previewHeader": "Patlef's voorbeschouwing — een voorproefje tot de koers begint",
+      "previewError": "Patlef houdt z'n kruit nog even droog.",
+      "previewLoading": "Patlef schrijft z'n voorbeschouwing…",
+      "reportEyebrow": "Directeur Sportif Rapport",
+      "outOf10": "van de 10",
+      "reportLoading": "\"Patlef zit achter zijn typmachine. Uw rapport komt eraan — en hij is niet mals…\"",
+      "scoreBreakdown": "Score opbouw",
+      "close": "Sluiten",
+      "howWorks": "Hoe werkt dit?",
+      "clickOpen": "Klik een onderdeel open voor de berekening.",
+      "emptyTeam": "Stel eerst een team samen — dan praat de directeur graag.",
+      "info": {
+        "title": "Hoe wordt de score berekend?",
+        "intro": "De rapportscore loopt van <mono>1.0</mono> tot <mono>10.0</mono> (minimum 3.0) en is opgebouwd uit vier gewogen onderdelen.",
+        "poolHead": "Pool Ranking · 45%",
+        "poolBody": "Jouw positie in de pool ten opzichte van alle andere deelnemers. Rang 1 geeft de maximale bijdrage, de laatste plek de minimale.",
+        "monkeyHead": "Monkey Vergelijking · 25%",
+        "monkeyBody": "Het percentage van 5.000 willekeurige simulatieploegen dat jij verslaat.",
+        "jokerHead": "Joker Prestatie · 20%",
+        "jokerBody": "Rendement van je jokers: hoeveel punten ze scoorden ten opzichte van de best mogelijke jokers in het veld. Jokers die niets opleveren drukken de deelscore.",
+        "diffHead": "Differentiaal · 10%",
+        "diffBody": "Durf dat loont. Je krijgt punten voor renners die <bold>én</bold> punten scoorden <bold>én</bold> door weinig anderen gekozen zijn. Per scorende renner telt zijn punten mee, gewogen met <mono>(1 − gekozen%)</mono>: een renner die door 10% gekozen is weegt 0.9×, eentje die door 80% gekozen is maar 0.2×. Het gemiddelde hiervan (punten-gewogen) is je deelscore. Veel punten met weinig-gekozen renners → richting 10. Alleen maar populaire favorieten → lager."
+      },
+      "calc": {
+        "show": "Berekening",
+        "hide": "Verberg formules",
+        "exactFormulas": "Exacte formules",
+        "poolSection": "Pool Ranking (50%)",
+        "poolFormula": "poolScore = (N − rang) / (N − 1)",
+        "poolNote": "N = aantal deelnemers · rang = jouw positie",
+        "monkeySection": "Monkey Vergelijking (25%)",
+        "monkeyNote1": "De app simuleert 5.000 willekeurige ploegen (\"apen\" die lukraak renners kiezen) en telt hoeveel daarvan minder punten halen dan jij. beatPct = dat percentage.",
+        "monkeyNote2": "Puntentoewijzing: 0% verslagen → 0.0 · 50% → 0.5 · 100% → 1.0. Deze deelscore weegt 25% mee. Voorbeeld: 72% apen verslagen → monkeyScore 0.72 → deelcijfer (0.72×9+1)=7.5/10.",
+        "jokerSection": "Joker Prestatie (20%) — rendement",
+        "jokerFormula1": "rendement = jouwJokerPunten / besteJokerPunten",
+        "jokerFormula2": "jokerScore = 0.3 + rendement × 0.7",
+        "jokerNote": "besteJokerPunten = 2 best scorende niet-categorie-renners · geen jokers → 0.5",
+        "diffSection": "Differentiaal (10%)",
+        "diffFormula1": "bijdrage(renner) = punten × (1 − gekozen%)",
+        "diffFormula2": "diffScore = Σ bijdrage / Σ punten",
+        "diffNote1": "Alleen renners die punten scoorden tellen mee. \"gekozen%\" = aandeel deelnemers dat die renner koos. Weinig gekozen → telt zwaarder. Geen scorende picks → 0.5.",
+        "diffNote2": "Voorbeeld: renner A 40 pt, 10% gekozen → bijdrage 40×0.9=36. Renner B 30 pt, 70% gekozen → 30×0.3=9. diffScore = (36+9)/(40+30) = 45/70 = 0.64 → deelcijfer 6.8/10.",
+        "finalSection": "Eindscore",
+        "finalNote": "Schaal 1.0 – 10.0 · minimum 3.0",
+        "exampleTitle": "Rekenvoorbeeld",
+        "exampleGiven": "#8 van 50 · 72% apen · jokers 64/100 pt · diff 0.55"
+      },
+      "detail": {
+        "pool": "N = aantal deelnemers ({{total}}), rang = jouw positie (#{{rank}}). Hoe hoger je staat, hoe hoger de deelscore.",
+        "monkey": "Je verslaat {{pct}}% van 5.000 willekeurige simulatieploegen (\"apen\" die lukraak renners kiezen).",
+        "noJokers": "Geen jokers gekozen → neutrale deelscore 0.5.",
+        "yourJoker": "Jouw joker",
+        "points": "Punten",
+        "jokerNote": "besteJokerPunten = de 2 best scorende renners die in géén categorie zitten.",
+        "diffIntro": "Per scorende renner: <mono>bijdrage = punten × (1 − gekozen%)</mono>. Weinig gekozen telt zwaarder. <green>groen</green> ≤25% · <red>rood</red> ≥60%.",
+        "rider": "Renner",
+        "chosen": "Gekozen",
+        "contribution": "Bijdrage",
+        "noScoringPicks": "Nog geen scorende picks.",
+        "moreRows": "+ {{count}} meer (top 5 getoond)",
+        "subGradeFormula": "deelcijfer = ({{pct}} × 9 + 1) = {{val}} / 10",
+        "subGradeNote": "De deelscore (0–1) wordt omgerekend naar de schaal 1–10 met ×9+1, daarom is 0.63 → 6.7 en niet 6.3.",
+        "subGrade": "Deelcijfer ({{pct}}%)"
+      }
+    },
+    "emirates": {
+      "whatIsThis": "Wat zie je hier?",
+      "explain1": "De droomploeg bestaat uit de best scorende renners per categorie. Etappepunten worden toegekend van 50 punten voor plek 1, 40 voor plek 2, aflopend tot 1 punt voor plek 20.",
+      "explain2": "Daarbovenop komen twee jokers: de twee beste overgebleven renners.",
+      "emptyTitle": "Nog geen etappe bijgewerkt",
+      "emptyBody": "Zodra de jury de eerste etappe-uitslag bijwerkt, ontvouwt zich hier de droomploeg.",
+      "upToStage": "T/m etappe {{number}}",
+      "dreamTeam": "De Droomploeg",
+      "dreamTeamShort": "Droomploeg",
+      "maxAchievable": "Maximaal haalbaar",
+      "whatToPick": "Wat je had moeten kiezen",
+      "topPerCategory": "per categorie de top-scorende renners",
+      "pt": "pt",
+      "ptUpper": "pt",
+      "ptValue": "{{value}} pt",
+      "maxOverStages_one": "maximaal haalbaar over {{count}} etappe",
+      "maxOverStages_other": "maximaal haalbaar over {{count}} etappes",
+      "yourTeamSuffix": " · jouw ploeg {{points}} pt",
+      "currentLeader": "Huidige leider",
+      "yourScore": "Jouw score",
+      "pctOfDreamTeam": "{{pct}}% van de droomploeg",
+      "selection": "De Selectie",
+      "picks_one": "{{count}} pick",
+      "picks_other": "{{count}} picks",
+      "nobodyScoredCat": "Nog niemand in deze categorie heeft gescoord.",
+      "jokers": "Jokers",
+      "jokersPicks": "2 picks · ×1",
+      "totalDreamTeam": "Totaal droomploeg",
+      "selectionLoading": "Selectiegegevens worden geladen…",
+      "unnamedTeam": "Naamloze ploeg"
+    }
+  },
   "karavaan": {},
   "common": {
     "notFound": {

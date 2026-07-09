@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState, type ComponentType } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
@@ -233,6 +234,7 @@ const HORS_TABS: { key: HorsTabKey; label: string; Icon: ComponentType<{ classNa
 ];
 
 export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameStatus, adminTestmodus = false }: { initialTab?: HorsTabKey; gameId?: string; gameStatus?: string; adminTestmodus?: boolean } = {}) {
+  const { t } = useTranslation();
   const { thema } = useThema();
   const { role } = useAuth();
   const { data: curGame } = useCurrentGame();
@@ -599,7 +601,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     const ranking = standRows
       .map((r) => ({
         entryId: r.entry_id,
-        teamName: r.team_name?.trim() || r.display_name?.trim() || "Naamloze ploeg",
+        teamName: r.team_name?.trim() || r.display_name?.trim() || t("hors.emirates.unnamedTeam"),
         points: r.cum_points,
         isMe: entry?.id === r.entry_id,
       }))
@@ -614,7 +616,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       lastStage: { number: last.stage_number, name: last.name },
       stagesCount: approvedStages.length,
     };
-  }, [stages, categories, allStageResults, standRows, entry?.id, allGameRiders]);
+  }, [stages, categories, allStageResults, standRows, entry?.id, allGameRiders, t]);
 
   // ── Derived display values ──────────────────────────────────────────────────
   const diffPct = monte && monte.mean > 0 ? ((monte.userActual - monte.mean) / monte.mean) * 100 : 0;
@@ -650,23 +652,23 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     const avgOwn = myOwnerships.length ? myOwnerships.reduce((a, b) => a + b, 0) / myOwnerships.length : 0;
     const uniques = myOwnerships.filter((o) => o < 0.15).length;
     const labels: string[] = [];
-    if (uniques >= 4) labels.push("Pure chaos");
-    if (avgOwn > 0.45) labels.push("Pelotonkoers");
-    if (avgOwn < 0.25) labels.push("Aanvallende ploeg");
+    if (uniques >= 4) labels.push(t("hors.directorAnalysis.labelChaos"));
+    if (avgOwn > 0.45) labels.push(t("hors.directorAnalysis.labelPeloton"));
+    if (avgOwn < 0.25) labels.push(t("hors.directorAnalysis.labelAttacking"));
     const lines: string[] = [];
-    if (avgOwn > 0.5) lines.push("Je peloton kiest wat iedereen kiest. Een veilige bidon, geen spektakel.");
-    else if (avgOwn < 0.2) lines.push("Met deze differentiëlen mik je óf op het podium óf op de bezemwagen.");
-    if (uniques >= 3) lines.push(`${uniques} renners die nauwelijks iemand koos. Lef of waanzin?`);
+    if (avgOwn > 0.5) lines.push(t("hors.directorAnalysis.lineSafe"));
+    else if (avgOwn < 0.2) lines.push(t("hors.directorAnalysis.lineRisky"));
+    if (uniques >= 3) lines.push(t("hors.directorAnalysis.lineUniques", { count: uniques }));
     const day = new Date().getDate();
     const quotes = [
-      "Vandaag zou jouw ploeg waarschijnlijk lossen op de eerste col.",
-      "Je ploeg ademt: all-in op chaos.",
-      "Vier sprinters meenemen naar deze bergen? Ambitieuze tactiek.",
-      "Het peloton vertrouwt op Pogačar. Jij vertrouwt op hoop.",
-      "Deze ploeg heeft de organisatie van een vroege vlucht in een regenrit.",
+      t("hors.directorAnalysis.quote0"),
+      t("hors.directorAnalysis.quote1"),
+      t("hors.directorAnalysis.quote2"),
+      t("hors.directorAnalysis.quote3"),
+      t("hors.directorAnalysis.quote4"),
     ];
     return { labels, lines, quote: quotes[day % quotes.length] };
-  }, [hasResults, entry, picksByCategory, pickStats]);
+  }, [hasResults, entry, picksByCategory, pickStats, t]);
 
   // ── Director Report Score ────────────────────────────────────────────────────
   const directorScore = useMemo(() => {
@@ -759,36 +761,15 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     const toSub = (v: number) => Math.max(1.0, Math.round((v * 9 + 1) * 10) / 10);
 
     const analysisMap: Array<[number, string]> = [
-      [
-        9.0,
-        "Chapeau. Uw peloton rijdt op kop en de simulatie-apen zien enkel uw achterwiel. Zo doet ge dat. Ik had het zelf niet beter geregeld.",
-      ],
-      [
-        8.0,
-        "Straf gereden. Ge loopt voor op het pak en de dartpijl-aap zit in de volgwagen. Durf nog een tikkeltje meer en ge pakt de zege.",
-      ],
-      [
-        7.0,
-        "Deugdelijk werk tot hiertoe. Ge scoort boven de mediaan, uw renners rijden hun loon bijeen. We spreken elkaar in de bergen.",
-      ],
-      [
-        6.0,
-        "'t Is respectabel, maar ik kijk scherp. Uw ploeg levert, alleen is de marge dun. Geen reden om te blinken, wel om door te trappen.",
-      ],
-      [
-        5.0,
-        "Middenmoot, en eerlijk gezegd voelt het ook zo. De apen rijden mee op uw wiel. Niet verloren, maar sprinten om de zege doet ge nog niet.",
-      ],
-      [
-        4.0,
-        "Lastig parcours voor uw ploeg. De apen doen het even goed en uw klassering staat onder druk. Rechtzitten en herpakken, allez.",
-      ],
-      [
-        0.0,
-        "Zware koers. De cijfers liegen niet, en ik nog minder. Ge verliest op alle fronten. De bezemwagen rijdt achter u, maar opgeven staat niet in mijn woordenboek.",
-      ],
+      [9.0, t("hors.wielerdirecteur.fallback.s90")],
+      [8.0, t("hors.wielerdirecteur.fallback.s80")],
+      [7.0, t("hors.wielerdirecteur.fallback.s70")],
+      [6.0, t("hors.wielerdirecteur.fallback.s60")],
+      [5.0, t("hors.wielerdirecteur.fallback.s50")],
+      [4.0, t("hors.wielerdirecteur.fallback.s40")],
+      [0.0, t("hors.wielerdirecteur.fallback.s00")],
     ];
-    const analysis = analysisMap.find(([t]) => score >= t)?.[1] ?? analysisMap[analysisMap.length - 1][1];
+    const analysis = analysisMap.find(([threshold]) => score >= threshold)?.[1] ?? analysisMap[analysisMap.length - 1][1];
 
     return {
       score,
@@ -805,14 +786,14 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       totaal: n,
       beatPct: monte.beatPct,
       aantalJokers: jokerIds.length,
-      rankLabel: `Rang #${myRank} van ${n}`,
-      beatLabel: `${monte.beatPct.toFixed(0)}% apen verslagen`,
-      jokerLabel: jokerIds.length === 0 ? "Geen jokers" : `${jokerIds.length} joker${jokerIds.length > 1 ? "s" : ""}`,
-      diffLabel: diffDetail.scorers === 0 ? "Nog geen scorende picks" : `${diffDetail.scorers} scorende picks · gem. ${diffDetail.avgOwnPct}% gekozen`,
+      rankLabel: t("hors.wielerdirecteur.rankLabel", { rank: myRank, total: n }),
+      beatLabel: t("hors.wielerdirecteur.beatLabel", { pct: monte.beatPct.toFixed(0) }),
+      jokerLabel: jokerIds.length === 0 ? t("hors.wielerdirecteur.noJokers") : t("hors.wielerdirecteur.jokerCount", { count: jokerIds.length }),
+      diffLabel: diffDetail.scorers === 0 ? t("hors.wielerdirecteur.noScoringPicks") : t("hors.wielerdirecteur.diffLabel", { count: diffDetail.scorers, pct: diffDetail.avgOwnPct }),
       diffDetail,
       jokerDetail,
     };
-  }, [hasResults, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats]);
+  }, [hasResults, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats, t]);
 
   // ── Sub-tab state (must be declared before any early return to keep hook order stable) ──
   const [activeTab, setActiveTab] = useState<HorsTabKey>(initialTab ?? "dartpijl");
@@ -838,15 +819,18 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   // Sneak preview: éénmalig, gedeeld Patlef-voorproefje (geen echte stand).
   const lefeverePreview = useLefeverePreview(game?.id, isDemo && activeTab === "wielerdirecteur");
 
+  // Tab-labels via t() (HORS_TABS zelf staat op module-niveau; label daar is fallback).
+  const tabLabel = (key: HorsTabKey): string => t(`hors.tabs.${key}`);
+
   // ── Locked state ─────────────────────────────────────────────────────────────
   if (!isVisible) {
     return (
       <Card className="ornate-frame retro-border">
         <CardContent className="p-8 text-center space-y-3">
           <Lock className="h-10 w-10 text-muted-foreground/60 mx-auto" />
-          <p className="font-display text-xl font-bold">Hors Catégorie nog vergrendeld</p>
+          <p className="font-display text-xl font-bold">{t("hors.locked.title")}</p>
           <p className="text-sm text-muted-foreground font-serif italic">
-            De data cave gaat open zodra de koers in de sneak preview verschijnt.
+            {t("hors.locked.body")}
           </p>
         </CardContent>
       </Card>
@@ -861,8 +845,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         <div className="retro-border bg-[hsl(var(--vintage-gold))/0.08] px-4 py-3 flex items-start gap-2.5">
           <span className="text-lg leading-none shrink-0" aria-hidden>🎲</span>
           <p className="text-sm font-serif italic text-foreground/90 leading-snug">
-            <span className="font-display font-bold uppercase tracking-wide not-italic">Gesimuleerde voorbeelddata.</span>{" "}
-            Dit is een voorproefje op ~5 nepdeelnemers. Zodra de inschrijving opent, zie je hier de échte cijfers.
+            <span className="font-display font-bold uppercase tracking-wide not-italic">{t("hors.demo.bannerLead")}</span>{" "}
+            {t("hors.demo.bannerBody")}
           </p>
         </div>
       )}
@@ -880,11 +864,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         {/* Tabbalk staat stil; de carrousel-content volgt de vinger. */}
         <MobielTabBalk
           tabs={[
-            { key: "dartpijl", label: "Dartpijl", icon: Activity },
-            { key: "pelotonkeuzes", label: "Pelotonkeuzes", icon: BarChart3 },
-            { key: "wielerdirecteur", label: "De Wielerdirecteur", icon: DirectorIcon },
-            { key: "superteam", label: "The Emirates", icon: Crown },
-            { key: "benchmark", label: "Benchmark", icon: Swords },
+            { key: "dartpijl", label: tabLabel("dartpijl"), icon: Activity },
+            { key: "pelotonkeuzes", label: tabLabel("pelotonkeuzes"), icon: BarChart3 },
+            { key: "wielerdirecteur", label: tabLabel("wielerdirecteur"), icon: DirectorIcon },
+            { key: "superteam", label: tabLabel("superteam"), icon: Crown },
+            { key: "benchmark", label: tabLabel("benchmark"), icon: Swords },
           ]}
           active={activeTab}
           onChange={(k) => setActiveTab(k as typeof activeTab)}
@@ -893,20 +877,20 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
       {/* Swipe-hint (eenmalig, wegklikbaar) + stippen-indicator (mobiel). */}
       <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mx-auto w-fit" />
-      <SwipeDots count={HORS_TABS.length} activeIndex={HORS_TABS.findIndex((t) => t.key === activeTab)} activeLabel={HORS_TABS.find((t) => t.key === activeTab)?.label} />
+      <SwipeDots count={HORS_TABS.length} activeIndex={HORS_TABS.findIndex((tab) => tab.key === activeTab)} activeLabel={tabLabel(activeTab)} />
 
       {/* Desktop — retro dossard-tabbalk */}
       <RetroTabs
         className="hidden md:flex"
-        aria-label="Hors Catégorie-onderdelen"
+        aria-label={t("hors.tabsAria")}
         active={activeTab}
         onChange={(k) => setActiveTab(k as typeof activeTab)}
         tabs={[
-          { key: "dartpijl",        label: "Dartpijl",          Icon: Activity },
-          { key: "pelotonkeuzes",   label: "Pelotonkeuzes",     Icon: BarChart3 },
-          { key: "wielerdirecteur", label: "De Wielerdirecteur", Icon: DirectorIcon },
-          { key: "superteam",       label: "The Emirates",      Icon: Crown },
-          { key: "benchmark",       label: "Benchmark",         Icon: Swords },
+          { key: "dartpijl",        label: tabLabel("dartpijl"),        Icon: Activity },
+          { key: "pelotonkeuzes",   label: tabLabel("pelotonkeuzes"),   Icon: BarChart3 },
+          { key: "wielerdirecteur", label: tabLabel("wielerdirecteur"), Icon: DirectorIcon },
+          { key: "superteam",       label: tabLabel("superteam"),       Icon: Crown },
+          { key: "benchmark",       label: tabLabel("benchmark"),       Icon: Swords },
         ]}
       />
 
@@ -926,14 +910,14 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         <div className="space-y-5">
           {isDemo && (
             <div className="inline-flex items-center gap-1.5 rounded-full bg-[hsl(var(--vintage-gold))/0.16] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold))/0.45] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
-              🎲 Demo · gesimuleerde data
+              {t("hors.demo.badge")}
             </div>
           )}
           {!dartMonte ? (
             <EmptyState
               illustration={aapFietser}
-              title="De apen warmen nog op 🐒"
-              message="Zodra de eerste etappe-uitslag binnen is, gooien de apen hun dartpijlen en zie je hoe jij het tegen ze doet."
+              title={t("hors.dartpijl.emptyTitle")}
+              message={t("hors.dartpijl.emptyMessage")}
             />
           ) : (
             <>
@@ -969,7 +953,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     "border-emerald-300 bg-emerald-50 text-emerald-700",
                   )}
                 >
-                  <span>"Top 10% van de apen — die dartpijl van jou heeft visie." 🔥</span>
+                  <span>{t("hors.dartpijl.top10Commentary")}</span>
                 </div>
               )}
             </>
@@ -983,34 +967,34 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
           <CardHeader className="border-b-2 border-foreground bg-secondary/30">
             <CardTitle className="font-display flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" /> Pelotonkeuzes
+              <BarChart3 className="h-5 w-5 text-primary" /> {t("hors.peloton.title")}
             </CardTitle>
             <p className="text-xs text-muted-foreground font-serif italic">
-              Volg ik hier het peloton of wijk ik juist af? Donker = zeldzame keuze, licht = pelotonlieveling.
+              {t("hors.peloton.subtitle")}
             </p>
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-5">
             <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-widest font-serif text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <span className="inline-block h-3 w-8 rounded" style={{ background: ownershipColor(5) }} /> Zeldzaam
+                <span className="inline-block h-3 w-8 rounded" style={{ background: ownershipColor(5) }} /> {t("hors.peloton.legendRare")}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block h-3 w-8 rounded" style={{ background: ownershipColor(50) }} /> Gemiddeld
+                <span className="inline-block h-3 w-8 rounded" style={{ background: ownershipColor(50) }} /> {t("hors.peloton.legendAverage")}
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-3 w-8 rounded" style={{ background: ownershipColor(95) }} />{" "}
-                Pelotonlieveling
+                {t("hors.peloton.legendFavourite")}
               </span>
               <span className="flex items-center gap-1.5 ml-auto">
                 <span className="inline-flex items-center justify-center h-3 w-3 rounded-full bg-primary text-primary-foreground text-[8px] font-bold">
                   ★
                 </span>
-                Jouw keuze
+                {t("hors.peloton.yourPick")}
               </span>
             </div>
 
             {pickStats.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nog geen ingediende ploegen.</p>
+              <p className="text-sm text-muted-foreground">{t("hors.peloton.noTeams")}</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {categories.map((cat) => {
@@ -1029,13 +1013,13 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                           const mine = myPickedRiderIds.has(p.rider_id);
                           const badge =
                             pct >= 70
-                              ? "Iedereen-en-z'n-moeder"
+                              ? t("hors.peloton.badgeEveryone")
                               : pct >= 40
-                                ? "Pelotonlieveling"
+                                ? t("hors.peloton.badgeFavourite")
                                 : pct <= 10
-                                  ? "Verborgen parel"
+                                  ? t("hors.peloton.badgeHiddenGem")
                                   : pct <= 25
-                                    ? "Differentieel"
+                                    ? t("hors.peloton.badgeDifferential")
                                     : null;
                           return (
                             <div
@@ -1054,7 +1038,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                                       ★
                                     </span>
                                   )}
-                                  {rider?.name ?? "Onbekend"}
+                                  {rider?.name ?? t("hors.common.unknownRider")}
                                 </span>
                                 <span className="font-mono text-xs tabular-nums shrink-0">{pct.toFixed(0)}%</span>
                               </div>
@@ -1072,7 +1056,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                                 )}
                                 {mine && (
                                   <Badge className="text-[10px] bg-primary/15 text-primary border border-primary/40 hover:bg-primary/20">
-                                    Jouw keuze
+                                    {t("hors.peloton.yourPick")}
                                   </Badge>
                                 )}
                               </div>
@@ -1087,7 +1071,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 {jokerStats.length > 0 && (
                   <div className="rounded-lg border-2 border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.08] p-3 md:col-span-2">
                     <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">
-                      🃏 Meest gekozen jokers
+                      {t("hors.peloton.mostChosenJokers")}
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {[...jokerStats]
@@ -1113,7 +1097,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                                     ★
                                   </span>
                                 )}
-                                {rider?.name ?? "Onbekend"}
+                                {rider?.name ?? t("hors.common.unknownRider")}
                               </span>
                               <span className="font-mono text-xs tabular-nums">{pct.toFixed(0)}%</span>
                             </div>
@@ -1130,11 +1114,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="h-4 w-4 text-[hsl(var(--vintage-gold))]" />
                 <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
-                  Voorspellingen · Eindklassement &amp; truien
+                  {t("hors.peloton.predictionsHeader")}
                 </p>
               </div>
               {predictionStats.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nog geen voorspellingen ingediend.</p>
+                <p className="text-sm text-muted-foreground">{t("hors.peloton.noPredictions")}</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {CLASSIFICATION_META.map((meta) => {
@@ -1150,10 +1134,10 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                             <TruiBadge type={meta.trui} formaat="klein" />
-                            {meta.key === "gc" ? "Eindwinnaar" : thema.truien[meta.trui].naam}
+                            {meta.key === "gc" ? t("hors.peloton.finalWinner") : thema.truien[meta.trui].naam}
                           </p>
                           {meta.key === "gc" && (
-                            <span className="text-[9px] font-mono text-muted-foreground">positie 1–3</span>
+                            <span className="text-[9px] font-mono text-muted-foreground">{t("hors.peloton.position13")}</span>
                           )}
                         </div>
                         <div className="space-y-1.5">
@@ -1162,7 +1146,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                             const rider = ridersById[p.rider_id];
                             const mine = myPredictionMap.get(`${meta.key}:${p.position}`) === p.rider_id;
                             const label =
-                              pct >= 60 ? "Consensus" : pct <= 8 ? "Outsider" : pct <= 20 ? "Differentieel" : null;
+                              pct >= 60 ? t("hors.peloton.labelConsensus") : pct <= 8 ? t("hors.peloton.labelOutsider") : pct <= 20 ? t("hors.peloton.labelDifferential") : null;
                             return (
                               <div
                                 key={`${p.rider_id}-${p.position}`}
@@ -1185,7 +1169,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                                         ★
                                       </span>
                                     )}
-                                    <span className="truncate">{rider?.name ?? "Onbekend"}</span>
+                                    <span className="truncate">{rider?.name ?? t("hors.common.unknownRider")}</span>
                                   </span>
                                   <span className="font-mono text-xs tabular-nums shrink-0">{pct.toFixed(0)}%</span>
                                 </div>
@@ -1203,7 +1187,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                                   )}
                                   {mine && (
                                     <Badge className="text-[10px] bg-primary/15 text-primary border border-primary/40 hover:bg-primary/20">
-                                      Jouw keuze
+                                      {t("hors.peloton.yourPick")}
                                     </Badge>
                                   )}
                                 </div>
@@ -1230,7 +1214,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
           <CardHeader className="border-b-2 border-foreground bg-secondary/30">
             <CardTitle className="font-display flex items-center gap-2">
-              <DirectorIcon className="h-5 w-5 text-primary" /> De Wielerdirecteur
+              <DirectorIcon className="h-5 w-5 text-primary" /> {t("hors.wielerdirecteur.title")}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-4">
@@ -1240,7 +1224,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 <div className="flex items-center gap-2 mb-2">
                   <Mic className="h-4 w-4 text-[hsl(var(--vintage-gold))]" />
                   <span className="font-display text-[11px] uppercase tracking-[0.25em] text-[hsl(var(--vintage-gold))] font-bold">
-                    Patlef's voorbeschouwing — een voorproefje tot de koers begint
+                    {t("hors.wielerdirecteur.previewHeader")}
                   </span>
                 </div>
                 {lefeverePreview.data?.directeursAnalyse ? (
@@ -1256,7 +1240,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground/70 font-serif italic">
-                    {lefeverePreview.isError ? "Patlef houdt z'n kruit nog even droog." : "Patlef schrijft z'n voorbeschouwing…"}
+                    {lefeverePreview.isError ? t("hors.wielerdirecteur.previewError") : t("hors.wielerdirecteur.previewLoading")}
                   </p>
                 )}
               </div>
@@ -1268,7 +1252,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 {/* Grade + analysis */}
                 <div className="relative flex flex-col md:flex-row items-start gap-5">
                   <div className="shrink-0">
-                    <div className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-1">Directeur Sportif Rapport</div>
+                    <div className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-1">{t("hors.wielerdirecteur.reportEyebrow")}</div>
                     <div
                       className={cn(
                         "font-display text-8xl md:text-9xl font-black tabular-nums leading-none",
@@ -1283,7 +1267,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     >
                       {directorScore.score.toFixed(1)}
                     </div>
-                    <div className="text-muted-foreground/70 text-sm mt-1 font-mono">van de 10</div>
+                    <div className="text-muted-foreground/70 text-sm mt-1 font-mono">{t("hors.wielerdirecteur.outOf10")}</div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2 flex items-center gap-1.5">
@@ -1294,7 +1278,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                          statische fallback (die flitste anders even voorbij). */
                       <div>
                         <p className="text-muted-foreground text-sm font-serif italic leading-relaxed animate-pulse">
-                          "Patlef zit achter zijn typmachine. Uw rapport komt eraan — en hij is niet mals…"
+                          {t("hors.wielerdirecteur.reportLoading")}
                         </p>
                         <div className="mt-2 space-y-1.5" aria-hidden>
                           <div className="h-2 rounded-full bg-foreground/10 animate-pulse w-[88%]" />
@@ -1311,7 +1295,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 {/* Metric breakdown */}
                 <div className="relative mt-5 space-y-3">
                   <div className="flex items-center justify-between mb-1">
-                    <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">Score opbouw</div>
+                    <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">{t("hors.wielerdirecteur.scoreBreakdown")}</div>
                     <button
                       type="button"
                       onClick={() => setShowScoreInfo((v) => !v)}
@@ -1323,60 +1307,45 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                       )}
                     >
                       {showScoreInfo ? <X className="h-3 w-3" /> : <Info className="h-3 w-3" />}
-                      {showScoreInfo ? "Sluiten" : "Hoe werkt dit?"}
+                      {showScoreInfo ? t("hors.wielerdirecteur.close") : t("hors.wielerdirecteur.howWorks")}
                     </button>
                   </div>
 
                   {/* Explanation panel */}
                   {showScoreInfo && (
                     <div className="rounded-xl border border-border bg-secondary/40 p-4 space-y-3 text-[11px] text-foreground/70 leading-relaxed">
-                      <p className="text-foreground font-semibold text-xs">Hoe wordt de score berekend?</p>
+                      <p className="text-foreground font-semibold text-xs">{t("hors.wielerdirecteur.info.title")}</p>
                       <p>
-                        De rapportscore loopt van <span className="text-foreground font-mono">1.0</span> tot{" "}
-                        <span className="text-foreground font-mono">10.0</span> (minimum 3.0) en is opgebouwd uit vier
-                        gewogen onderdelen.
+                        <Trans i18nKey="hors.wielerdirecteur.info.intro" components={{ mono: <span className="text-foreground font-mono" /> }} />
                       </p>
                       <div className="space-y-2.5">
                         <div className="flex gap-2">
                           <span className="shrink-0">🏆</span>
                           <div>
-                            <span className="text-foreground font-semibold">Pool Ranking · 45%</span>
-                            <p className="mt-0.5">
-                              Jouw positie in de pool ten opzichte van alle andere deelnemers. Rang 1 geeft de maximale
-                              bijdrage, de laatste plek de minimale.
-                            </p>
+                            <span className="text-foreground font-semibold">{t("hors.wielerdirecteur.info.poolHead")}</span>
+                            <p className="mt-0.5">{t("hors.wielerdirecteur.info.poolBody")}</p>
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <span className="shrink-0">🐒</span>
                           <div>
-                            <span className="text-foreground font-semibold">Monkey Vergelijking · 25%</span>
-                            <p className="mt-0.5">
-                              Het percentage van 5.000 willekeurige simulatieploegen dat jij verslaat.
-                            </p>
+                            <span className="text-foreground font-semibold">{t("hors.wielerdirecteur.info.monkeyHead")}</span>
+                            <p className="mt-0.5">{t("hors.wielerdirecteur.info.monkeyBody")}</p>
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <span className="shrink-0">🃏</span>
                           <div>
-                            <span className="text-foreground font-semibold">Joker Prestatie · 20%</span>
-                            <p className="mt-0.5">
-                              Rendement van je jokers: hoeveel punten ze scoorden ten opzichte van de best mogelijke
-                              jokers in het veld. Jokers die niets opleveren drukken de deelscore.
-                            </p>
+                            <span className="text-foreground font-semibold">{t("hors.wielerdirecteur.info.jokerHead")}</span>
+                            <p className="mt-0.5">{t("hors.wielerdirecteur.info.jokerBody")}</p>
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <span className="shrink-0">🎯</span>
                           <div>
-                            <span className="text-foreground font-semibold">Differentiaal · 10%</span>
+                            <span className="text-foreground font-semibold">{t("hors.wielerdirecteur.info.diffHead")}</span>
                             <p className="mt-0.5">
-                              Durf dat loont. Je krijgt punten voor renners die <span className="text-foreground font-semibold">én</span>
-                              {" "}punten scoorden <span className="text-foreground font-semibold">én</span> door weinig anderen
-                              gekozen zijn. Per scorende renner telt zijn punten mee, gewogen met <span className="font-mono">(1 − gekozen%)</span>:
-                              een renner die door 10% gekozen is weegt 0.9×, eentje die door 80% gekozen is maar 0.2×. Het
-                              gemiddelde hiervan (punten-gewogen) is je deelscore. Veel punten met weinig-gekozen renners → richting 10.
-                              Alleen maar populaire favorieten → lager.
+                              <Trans i18nKey="hors.wielerdirecteur.info.diffBody" components={{ bold: <span className="text-foreground font-semibold" />, mono: <span className="font-mono" /> }} />
                             </p>
                           </div>
                         </div>
@@ -1389,75 +1358,71 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                         className="mt-1 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold border border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
                       >
                         {showCalc ? <X className="h-3 w-3" /> : <Info className="h-3 w-3" />}
-                        {showCalc ? "Verberg formules" : "Berekening"}
+                        {showCalc ? t("hors.wielerdirecteur.calc.hide") : t("hors.wielerdirecteur.calc.show")}
                       </button>
 
                       {showCalc && (
                         <div className="rounded-lg border border-amber-200 bg-secondary/60 p-3 space-y-3 font-mono text-[10px] text-foreground/70 leading-relaxed">
-                          <p className="text-amber-700 font-semibold text-[11px] not-italic">Exacte formules</p>
+                          <p className="text-amber-700 font-semibold text-[11px] not-italic">{t("hors.wielerdirecteur.calc.exactFormulas")}</p>
 
                           <div className="space-y-1">
                             <p className="text-muted-foreground uppercase tracking-widest text-[9px]">
-                              Pool Ranking (50%)
+                              {t("hors.wielerdirecteur.calc.poolSection")}
                             </p>
-                            <p className="text-foreground">poolScore = (N − rang) / (N − 1)</p>
+                            <p className="text-foreground">{t("hors.wielerdirecteur.calc.poolFormula")}</p>
                             <p className="text-muted-foreground text-[9px]">
-                              N = aantal deelnemers · rang = jouw positie
+                              {t("hors.wielerdirecteur.calc.poolNote")}
                             </p>
                           </div>
 
                           <div className="space-y-1">
                             <p className="text-muted-foreground uppercase tracking-widest text-[9px]">
-                              Monkey Vergelijking (25%)
+                              {t("hors.wielerdirecteur.calc.monkeySection")}
                             </p>
                             <p className="text-foreground">monkeyScore = beatPct / 100</p>
                             <p className="text-muted-foreground text-[9px]">
-                              De app simuleert 5.000 willekeurige ploegen ("apen" die lukraak renners kiezen) en
-                              telt hoeveel daarvan minder punten halen dan jij. beatPct = dat percentage.
+                              {t("hors.wielerdirecteur.calc.monkeyNote1")}
                             </p>
                             <p className="text-muted-foreground text-[9px]">
-                              Puntentoewijzing: 0% verslagen → 0.0 · 50% → 0.5 · 100% → 1.0. Deze deelscore weegt
-                              25% mee. Voorbeeld: 72% apen verslagen → monkeyScore 0.72 → deelcijfer (0.72×9+1)=7.5/10.
+                              {t("hors.wielerdirecteur.calc.monkeyNote2")}
                             </p>
                           </div>
 
                           <div className="space-y-1">
                             <p className="text-muted-foreground uppercase tracking-widest text-[9px]">
-                              Joker Prestatie (20%) — rendement
+                              {t("hors.wielerdirecteur.calc.jokerSection")}
                             </p>
-                            <p className="text-foreground">rendement = jouwJokerPunten / besteJokerPunten</p>
-                            <p className="text-foreground">jokerScore = 0.3 + rendement × 0.7</p>
+                            <p className="text-foreground">{t("hors.wielerdirecteur.calc.jokerFormula1")}</p>
+                            <p className="text-foreground">{t("hors.wielerdirecteur.calc.jokerFormula2")}</p>
                             <p className="text-muted-foreground text-[9px]">
-                              besteJokerPunten = 2 best scorende niet-categorie-renners · geen jokers → 0.5
+                              {t("hors.wielerdirecteur.calc.jokerNote")}
                             </p>
                           </div>
 
                           <div className="space-y-1">
                             <p className="text-muted-foreground uppercase tracking-widest text-[9px]">
-                              Differentiaal (10%)
+                              {t("hors.wielerdirecteur.calc.diffSection")}
                             </p>
-                            <p className="text-foreground">bijdrage(renner) = punten × (1 − gekozen%)</p>
-                            <p className="text-foreground">diffScore = Σ bijdrage / Σ punten</p>
+                            <p className="text-foreground">{t("hors.wielerdirecteur.calc.diffFormula1")}</p>
+                            <p className="text-foreground">{t("hors.wielerdirecteur.calc.diffFormula2")}</p>
                             <p className="text-muted-foreground text-[9px]">
-                              Alleen renners die punten scoorden tellen mee. "gekozen%" = aandeel deelnemers dat die
-                              renner koos. Weinig gekozen → telt zwaarder. Geen scorende picks → 0.5.
+                              {t("hors.wielerdirecteur.calc.diffNote1")}
                             </p>
                             <p className="text-muted-foreground text-[9px]">
-                              Voorbeeld: renner A 40 pt, 10% gekozen → bijdrage 40×0.9=36. Renner B 30 pt, 70%
-                              gekozen → 30×0.3=9. diffScore = (36+9)/(40+30) = 45/70 = 0.64 → deelcijfer 6.8/10.
+                              {t("hors.wielerdirecteur.calc.diffNote2")}
                             </p>
                           </div>
 
                           <div className="border-t border-border pt-2 space-y-1">
-                            <p className="text-muted-foreground uppercase tracking-widest text-[9px]">Eindscore</p>
+                            <p className="text-muted-foreground uppercase tracking-widest text-[9px]">{t("hors.wielerdirecteur.calc.finalSection")}</p>
                             <p className="text-foreground">raw = pool×0.45 + monkey×0.25 + joker×0.20 + diff×0.10</p>
                             <p className="text-foreground">score = max(3.0, round((raw × 9 + 1) × 10) / 10)</p>
-                            <p className="text-muted-foreground text-[9px]">Schaal 1.0 – 10.0 · minimum 3.0</p>
+                            <p className="text-muted-foreground text-[9px]">{t("hors.wielerdirecteur.calc.finalNote")}</p>
                           </div>
 
                           <div className="border-t border-border pt-2 space-y-1">
-                            <p className="text-amber-700 font-semibold text-[10px] not-italic">Rekenvoorbeeld</p>
-                            <p className="text-muted-foreground text-[9px]">#8 van 50 · 72% apen · jokers 64/100 pt · diff 0.55</p>
+                            <p className="text-amber-700 font-semibold text-[10px] not-italic">{t("hors.wielerdirecteur.calc.exampleTitle")}</p>
+                            <p className="text-muted-foreground text-[9px]">{t("hors.wielerdirecteur.calc.exampleGiven")}</p>
                             <p className="text-foreground">pool = (50−8)/49 = 0.857</p>
                             <p className="text-foreground">joker = 0.3 + (64/100)×0.7 = 0.748</p>
                             <p className="text-foreground">raw = 0.45·0.857 + 0.25·0.72 + 0.20·0.748 + 0.10·0.55 = 0.770</p>
@@ -1468,7 +1433,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     </div>
                   )}
 
-                  <p className="text-[10px] text-muted-foreground/70 -mt-1">Klik een onderdeel open voor de berekening.</p>
+                  <p className="text-[10px] text-muted-foreground/70 -mt-1">{t("hors.wielerdirecteur.clickOpen")}</p>
 
                   {([
                     { key: "pool",   label: "Pool Ranking",        sub: directorScore.rankLabel,  pct: directorScore.poolScore,   val: directorScore.poolSubScore,   w: 45 },
@@ -1515,25 +1480,25 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                           <div className="mt-1 mb-2 rounded-lg border border-border bg-secondary/30 p-3 text-[11px] text-foreground/80 leading-relaxed space-y-2">
                             {key === "pool" && (
                               <>
-                                <p className="font-mono text-foreground">poolScore = (N − rang) / (N − 1)</p>
+                                <p className="font-mono text-foreground">{t("hors.wielerdirecteur.calc.poolFormula")}</p>
                                 <p className="font-mono text-foreground">= ({directorScore.totaal} − {directorScore.rang}) / ({directorScore.totaal} − 1) = {directorScore.poolScore.toFixed(2)}</p>
-                                <p className="text-muted-foreground">N = aantal deelnemers ({directorScore.totaal}), rang = jouw positie (#{directorScore.rang}). Hoe hoger je staat, hoe hoger de deelscore.</p>
+                                <p className="text-muted-foreground">{t("hors.wielerdirecteur.detail.pool", { total: directorScore.totaal, rank: directorScore.rang })}</p>
                               </>
                             )}
                             {key === "monkey" && (
                               <>
                                 <p className="font-mono text-foreground">monkeyScore = beatPct / 100 = {directorScore.beatPct.toFixed(0)} / 100 = {directorScore.monkeyScore.toFixed(2)}</p>
-                                <p className="text-muted-foreground">Je verslaat {directorScore.beatPct.toFixed(0)}% van 5.000 willekeurige simulatieploegen ("apen" die lukraak renners kiezen).</p>
+                                <p className="text-muted-foreground">{t("hors.wielerdirecteur.detail.monkey", { pct: directorScore.beatPct.toFixed(0) })}</p>
                               </>
                             )}
                             {key === "joker" && (
                               directorScore.aantalJokers === 0 ? (
-                                <p className="text-muted-foreground">Geen jokers gekozen → neutrale deelscore 0.5.</p>
+                                <p className="text-muted-foreground">{t("hors.wielerdirecteur.detail.noJokers")}</p>
                               ) : (
                                 <>
                                   <div className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-[10px]">
-                                    <span className="text-muted-foreground/70 uppercase tracking-wider">Jouw joker</span>
-                                    <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Punten</span>
+                                    <span className="text-muted-foreground/70 uppercase tracking-wider">{t("hors.wielerdirecteur.detail.yourJoker")}</span>
+                                    <span className="text-muted-foreground/70 uppercase tracking-wider text-right">{t("hors.wielerdirecteur.detail.points")}</span>
                                     {directorScore.jokerDetail.rows.map((r) => (
                                       <Fragment key={r.name}>
                                         <span className="truncate text-foreground">{r.name}</span>
@@ -1543,22 +1508,21 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                                   </div>
                                   <p className="font-mono text-foreground">rendement = {directorScore.jokerDetail.yourPts} / {directorScore.jokerDetail.bestPts} = {directorScore.jokerDetail.rendementPct}%</p>
                                   <p className="font-mono text-foreground">jokerScore = 0.3 + {(directorScore.jokerDetail.rendementPct / 100).toFixed(2)} × 0.7 = {directorScore.jokerScore.toFixed(2)}</p>
-                                  <p className="text-muted-foreground">besteJokerPunten = de 2 best scorende renners die in géén categorie zitten.</p>
+                                  <p className="text-muted-foreground">{t("hors.wielerdirecteur.detail.jokerNote")}</p>
                                 </>
                               )
                             )}
                             {key === "diff" && (
                               <>
                                 <p className="text-[10px] text-muted-foreground leading-snug">
-                                  Per scorende renner: <span className="font-mono text-foreground">bijdrage = punten × (1 − gekozen%)</span>. Weinig gekozen telt zwaarder.{" "}
-                                  <span className="text-emerald-600 font-semibold">groen</span> ≤25% · <span className="text-rose-500 font-semibold">rood</span> ≥60%.
+                                  <Trans i18nKey="hors.wielerdirecteur.detail.diffIntro" components={{ mono: <span className="font-mono text-foreground" />, green: <span className="text-emerald-600 font-semibold" />, red: <span className="text-rose-500 font-semibold" /> }} />
                                 </p>
                                 {directorScore.diffDetail.rows.length > 0 ? (
                                   <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-1 text-[10px]">
-                                    <span className="text-muted-foreground/70 uppercase tracking-wider">Renner</span>
-                                    <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Gekozen</span>
-                                    <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Punten</span>
-                                    <span className="text-muted-foreground/70 uppercase tracking-wider text-right">Bijdrage</span>
+                                    <span className="text-muted-foreground/70 uppercase tracking-wider">{t("hors.wielerdirecteur.detail.rider")}</span>
+                                    <span className="text-muted-foreground/70 uppercase tracking-wider text-right">{t("hors.wielerdirecteur.detail.chosen")}</span>
+                                    <span className="text-muted-foreground/70 uppercase tracking-wider text-right">{t("hors.wielerdirecteur.detail.points")}</span>
+                                    <span className="text-muted-foreground/70 uppercase tracking-wider text-right">{t("hors.wielerdirecteur.detail.contribution")}</span>
                                     {directorScore.diffDetail.rows.map((r) => (
                                       <Fragment key={r.name}>
                                         <span className="truncate text-foreground">{r.name}</span>
@@ -1569,22 +1533,22 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                                     ))}
                                   </div>
                                 ) : (
-                                  <p className="text-muted-foreground">Nog geen scorende picks.</p>
+                                  <p className="text-muted-foreground">{t("hors.wielerdirecteur.detail.noScoringPicks")}</p>
                                 )}
                                 {directorScore.diffDetail.scorers > directorScore.diffDetail.rows.length && (
-                                  <p className="text-[9px] text-muted-foreground/60">+ {directorScore.diffDetail.scorers - directorScore.diffDetail.rows.length} meer (top 5 getoond)</p>
+                                  <p className="text-[9px] text-muted-foreground/60">{t("hors.wielerdirecteur.detail.moreRows", { count: directorScore.diffDetail.scorers - directorScore.diffDetail.rows.length })}</p>
                                 )}
                                 <p className="font-mono text-foreground">diffScore = Σ bijdrage / Σ punten = {directorScore.diffScore.toFixed(2)}</p>
                               </>
                             )}
                             <p className="font-mono text-foreground pt-1">
-                              deelcijfer = ({pct.toFixed(2)} × 9 + 1) = {val.toFixed(1)} / 10
+                              {t("hors.wielerdirecteur.detail.subGradeFormula", { pct: pct.toFixed(2), val: val.toFixed(1) })}
                             </p>
                             <p className="text-[10px] text-muted-foreground">
-                              De deelscore (0–1) wordt omgerekend naar de schaal 1–10 met ×9+1, daarom is 0.63 → 6.7 en niet 6.3.
+                              {t("hors.wielerdirecteur.detail.subGradeNote")}
                             </p>
                             <div className="flex items-center justify-between rounded-md border border-border bg-secondary/60 px-3 py-2 mt-1">
-                              <span className="text-xs text-muted-foreground">Deelcijfer ({w}%)</span>
+                              <span className="text-xs text-muted-foreground">{t("hors.wielerdirecteur.detail.subGrade", { pct: w })}</span>
                               <span className="text-base font-mono font-bold text-foreground">{val.toFixed(1)}/10</span>
                             </div>
                           </div>
@@ -1597,7 +1561,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
             )}
 
             {!directorAnalysis && (
-              <p className="text-sm text-muted-foreground">Stel eerst een team samen — dan praat de directeur graag.</p>
+              <p className="text-sm text-muted-foreground">{t("hors.wielerdirecteur.emptyTeam")}</p>
             )}
           </CardContent>
         </Card>
@@ -1627,16 +1591,15 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 )}
               >
                 {showEmiratesInfo ? <X className="h-3.5 w-3.5" /> : <Info className="h-3.5 w-3.5" />}
-                Wat zie je hier?
+                {t("hors.emirates.whatIsThis")}
               </button>
               {showEmiratesInfo && (
                 <div className="mt-2 rounded-xl border border-foreground/15 bg-gradient-to-br from-[hsl(var(--vintage-gold))/0.10] to-card p-3 md:p-4 space-y-2">
                   <p className="font-serif text-sm text-foreground/85 leading-snug">
-                    De droomploeg bestaat uit de best scorende renners per categorie. Etappepunten worden toegekend van
-                    50 punten voor plek 1, 40 voor plek 2, aflopend tot 1 punt voor plek 20.
+                    {t("hors.emirates.explain1")}
                   </p>
                   <p className="font-serif text-sm text-foreground/85 leading-snug">
-                    Daarbovenop komen twee jokers: de twee beste overgebleven renners.
+                    {t("hors.emirates.explain2")}
                   </p>
                 </div>
               )}
@@ -1645,9 +1608,9 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
             {emiratesData.lastStage === null ? (
               <div className="text-center py-8 space-y-3">
                 <Lock className="h-10 w-10 text-muted-foreground/50 mx-auto" />
-                <p className="font-display text-lg font-bold">Nog geen etappe bijgewerkt</p>
+                <p className="font-display text-lg font-bold">{t("hors.emirates.emptyTitle")}</p>
                 <p className="text-sm text-muted-foreground font-serif italic max-w-md mx-auto">
-                  Zodra de jury de eerste etappe-uitslag bijwerkt, ontvouwt zich hier de droomploeg.
+                  {t("hors.emirates.emptyBody")}
                 </p>
               </div>
             ) : (
@@ -1656,7 +1619,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 <div className="vintage-ornament">
                   <span className="vintage-ornament-symbol">✦</span>
                   <span className="font-serif italic text-xs md:text-sm text-muted-foreground tracking-wide text-center">
-                    T/m etappe {emiratesData.lastStage.number}
+                    {t("hors.emirates.upToStage", { number: emiratesData.lastStage.number })}
                     {emiratesData.lastStage.name ? ` — ${emiratesData.lastStage.name}` : ""}
                   </span>
                   <span className="vintage-ornament-symbol">✦</span>
@@ -1680,24 +1643,24 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   />
                   {/* Blok-titel bovenin */}
                   <div className="relative font-display font-black uppercase tracking-[0.18em] text-sm md:text-base text-[hsl(var(--vintage-gold))] mb-3">
-                    De Droomploeg
+                    {t("hors.emirates.dreamTeam")}
                   </div>
                   <div className="relative flex items-start gap-4 md:gap-5">
                     <div className="shrink-0 flex flex-col items-center">
                       <Crown className="h-9 w-9 md:h-11 md:w-11 text-[hsl(var(--vintage-gold))]" strokeWidth={2.2} />
                       <span className="font-display text-[9px] md:text-[10px] uppercase tracking-[0.04em] leading-tight text-muted-foreground mt-1.5 text-center whitespace-nowrap">
-                        Droomploeg
+                        {t("hors.emirates.dreamTeamShort")}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-1 font-serif">
-                        Maximaal haalbaar
+                        {t("hors.emirates.maxAchievable")}
                       </div>
                       <h3 className="font-display font-black text-2xl md:text-4xl leading-tight">
-                        Wat je had moeten kiezen
+                        {t("hors.emirates.whatToPick")}
                       </h3>
                       <p className="font-serif italic text-sm text-muted-foreground mt-0.5">
-                        per categorie de top-scorende renners
+                        {t("hors.emirates.topPerCategory")}
                       </p>
                       {(() => {
                         const me = emiratesData.ranking.find((r) => r.isMe);
@@ -1710,7 +1673,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                             <div className="flex items-baseline gap-x-3 gap-y-1 flex-wrap">
                               <span className="font-display font-black text-4xl md:text-6xl tabular-nums text-[hsl(var(--vintage-gold))] leading-none">
                                 {emiratesData.total}
-                                <span className="ml-1 text-base md:text-xl font-serif italic text-muted-foreground">pt</span>
+                                <span className="ml-1 text-base md:text-xl font-serif italic text-muted-foreground">{t("hors.emirates.pt")}</span>
                               </span>
                               {pct !== null && (
                                 <>
@@ -1722,9 +1685,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                               )}
                             </div>
                             <p className="mt-1.5 text-sm font-serif italic text-muted-foreground">
-                              maximaal haalbaar over {emiratesData.stagesCount} etappe
-                              {emiratesData.stagesCount === 1 ? "" : "s"}
-                              {pct !== null ? ` · jouw ploeg ${me!.points} pt` : ""}
+                              {t("hors.emirates.maxOverStages", { count: emiratesData.stagesCount })}
+                              {pct !== null ? t("hors.emirates.yourTeamSuffix", { points: me!.points }) : ""}
                             </p>
                           </div>
                         );
@@ -1747,7 +1709,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                           <div className="flex items-center gap-1.5 mb-1">
                             <JerseyBadge color="yellow" size={14} />
                             <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-serif">
-                              Huidige leider
+                              {t("hors.emirates.currentLeader")}
                             </span>
                           </div>
                           <p className="font-display font-bold text-base md:text-lg leading-tight truncate">
@@ -1758,14 +1720,14 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                               {leader.points}
                             </span>
                             <span className="text-xs font-serif italic text-muted-foreground">
-                              {pct(leader.points)}% van de droomploeg
+                              {t("hors.emirates.pctOfDreamTeam", { pct: pct(leader.points) })}
                             </span>
                           </div>
                         </div>
                         {me && (
                           <div className="rounded-xl border-2 border-primary/40 bg-primary/5 p-3 md:p-4">
                             <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-serif mb-1">
-                              Jouw score
+                              {t("hors.emirates.yourScore")}
                             </div>
                             <p className="font-display font-bold text-base md:text-lg leading-tight truncate text-primary">
                               {me.teamName}
@@ -1775,7 +1737,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                                 {me.points}
                               </span>
                               <span className="text-xs font-serif italic text-muted-foreground">
-                                {pct(me.points)}% van de droomploeg
+                                {t("hors.emirates.pctOfDreamTeam", { pct: pct(me.points) })}
                               </span>
                             </div>
                           </div>
@@ -1790,7 +1752,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     <div className="vintage-ornament">
                       <span className="vintage-ornament-symbol">✦</span>
                       <span className="font-display text-xs uppercase tracking-[0.25em] text-muted-foreground">
-                        De Selectie
+                        {t("hors.emirates.selection")}
                       </span>
                       <span className="vintage-ornament-symbol">✦</span>
                     </div>
@@ -1803,17 +1765,17 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                                 {cat.categoryName}
                               </span>
                               <span className="text-[10px] font-serif italic text-muted-foreground shrink-0">
-                                {cat.maxPicks} pick{cat.maxPicks === 1 ? "" : "s"}
+                                {t("hors.emirates.picks", { count: cat.maxPicks })}
                               </span>
                             </div>
                             <span className="font-display font-black tabular-nums text-[hsl(var(--vintage-gold))] shrink-0">
-                              {cat.subtotal} pt
+                              {t("hors.emirates.ptValue", { value: cat.subtotal })}
                             </span>
                           </div>
                           <ol className="divide-y divide-border">
                             {cat.riders.length === 0 ? (
                               <li className="px-3 py-2 text-sm text-muted-foreground font-serif italic">
-                                Nog niemand in deze categorie heeft gescoord.
+                                {t("hors.emirates.nobodyScoredCat")}
                               </li>
                             ) : (
                               cat.riders.map((r, i) => (
@@ -1829,7 +1791,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                                   <span className="flex-1 truncate font-sans font-medium">{r.name}</span>
                                   <span className="font-display font-bold tabular-nums shrink-0">{r.points}</span>
                                   <span className="text-[10px] uppercase tracking-widest text-muted-foreground shrink-0">
-                                    pt
+                                    {t("hors.emirates.ptUpper")}
                                   </span>
                                 </li>
                               ))
@@ -1846,14 +1808,14 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                           <div className="flex items-baseline gap-2 min-w-0">
                             <Sparkles className="h-3.5 w-3.5 text-[hsl(var(--vintage-gold))] shrink-0 self-center" />
                             <span className="font-display font-bold text-sm uppercase tracking-wider truncate">
-                              Jokers
+                              {t("hors.emirates.jokers")}
                             </span>
                             <span className="text-[10px] font-serif italic text-muted-foreground shrink-0">
-                              2 picks · ×1
+                              {t("hors.emirates.jokersPicks")}
                             </span>
                           </div>
                           <span className="font-display font-black tabular-nums text-[hsl(var(--vintage-gold))] shrink-0">
-                            {emiratesData.jokerSubtotal} pt
+                            {t("hors.emirates.ptValue", { value: emiratesData.jokerSubtotal })}
                           </span>
                         </div>
                         <ol className="divide-y divide-border">
@@ -1870,7 +1832,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                               <span className="flex-1 truncate font-sans font-medium">{r.name}</span>
                               <span className="font-display font-bold tabular-nums shrink-0">{r.points}</span>
                               <span className="text-[10px] uppercase tracking-widest text-muted-foreground shrink-0">
-                                pt
+                                {t("hors.emirates.ptUpper")}
                               </span>
                             </li>
                           ))}
@@ -1881,27 +1843,26 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     {/* Totaal-rij */}
                     <div className="rounded-xl border-2 border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.08] px-3 py-2.5 flex items-center justify-between">
                       <span className="font-display font-black text-sm uppercase tracking-widest">
-                        Totaal droomploeg
+                        {t("hors.emirates.totalDreamTeam")}
                       </span>
                       <span className="font-display font-black text-lg tabular-nums text-[hsl(var(--vintage-gold))]">
-                        {emiratesData.total} pt
+                        {t("hors.emirates.ptValue", { value: emiratesData.total })}
                       </span>
                     </div>
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-sm text-muted-foreground font-serif italic">Selectiegegevens worden geladen…</p>
+                    <p className="text-sm text-muted-foreground font-serif italic">{t("hors.emirates.selectionLoading")}</p>
                   </div>
                 )}
 
                 {/* Footnote */}
                 <div className="mop-card p-3 -rotate-[0.3deg]">
                   <p className="font-serif italic text-xs md:text-sm leading-snug">
-                    De droomploeg bestaat uit de best scorende renners per categorie. Etappepunten worden toegekend van
-                    50 punten voor plek 1, 40 voor plek 2, aflopend tot 1 punt voor plek 20.
+                    {t("hors.emirates.explain1")}
                   </p>
                   <p className="font-serif italic text-xs md:text-sm leading-snug mt-2">
-                    Daarbovenop komen twee jokers: de twee beste overgebleven renners.
+                    {t("hors.emirates.explain2")}
                   </p>
                 </div>
               </>
@@ -1915,7 +1876,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
       {/* ── MOBIEL: één consistente zwevende schakelaar (menu-modus). ── */}
       <FloatingTabSwitcher
-        tabs={HORS_TABS.map((t) => ({ key: t.key, label: t.label, icon: t.Icon }))}
+        tabs={HORS_TABS.map((tab) => ({ key: tab.key, label: tabLabel(tab.key), icon: tab.Icon }))}
         active={activeTab}
         onChange={(k) => setActiveTab(k as HorsTabKey)}
       />
