@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
-    const { subject, body, gameId, testEmail, dryRun, titleColor, titleSize } = await req.json() as {
+    const { subject, body, gameId, testEmail, dryRun, titleColor, titleSize, includeSteun } = await req.json() as {
       subject?: string;
       body?: string;
       gameId?: string;
@@ -56,10 +56,12 @@ Deno.serve(async (req) => {
       dryRun?: boolean;
       titleColor?: string;
       titleSize?: number;
+      includeSteun?: boolean;
     };
 
     const tColor = titleColor ?? "#c8102e";
     const tSize = titleSize ?? 24;
+    const steun = includeSteun === true;
 
     // Test mail: stuur alleen naar testEmail, geen token/opt-out check
     if (testEmail) {
@@ -71,7 +73,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           to: testEmail,
           subject: `[TEST] ${subject ?? "Testmail Koerspoule"}`,
-          html: buildHtml(body ?? "<p>Testmail</p>", unsubUrl, tColor, tSize),
+          html: buildHtml(body ?? "<p>Testmail</p>", unsubUrl, tColor, tSize, steun),
         }),
       });
       return new Response(JSON.stringify({ sent: 1, total: 1 }), { headers: { ...CORS, "Content-Type": "application/json" } });
@@ -145,6 +147,7 @@ Deno.serve(async (req) => {
         body: body ?? "",
         title_color: tColor,
         title_size: tSize,
+        include_steun: steun,
         total: recipients.length,
         created_by: user.id,
       } as never)

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { Mail, Send, Loader2, Eye, EyeOff, Users, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -32,7 +33,7 @@ const DEFAULT_BODY = `Schrijf hier je bericht...`;
 export function buildEmailHtml(
   body: string,
   unsubscribeUrl: string,
-  opts: { titleColor: string; titleSize: number }
+  opts: { titleColor: string; titleSize: number; includeSteun?: boolean }
 ): string {
   // Spiegelt send-announcement/buildHtml() 1-op-1 (preview = verzonden mail).
   // Compact: lege regel = alinea (nette marge), enkele regelovergang = <br>.
@@ -66,7 +67,12 @@ export function buildEmailHtml(
                   <a href="https://koerspoule.nl" target="_blank" style="display:inline-block;padding:13px 26px;background-color:#d4a62b;color:#1d1916;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;border-radius:6px;">
                     Ga naar Koerspoule
                   </a>
-                </div>
+                </div>${opts.includeSteun ? `
+                <div style="text-align:center;margin:0 0 22px 0;">
+                  <a href="https://ko-fi.com/koerspoule" target="_blank" style="display:inline-block;padding:13px 26px;background-color:#1A1612;color:#F5EDE0;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;border-radius:6px;border:1px solid #E1A33A;">
+                    <span style="color:#E1A33A;">&#9749;</span>&nbsp; Steun Koerspoule
+                  </a>
+                </div>` : ""}
                 <div style="margin:0;font-size:18px;line-height:30px;color:#3d362e;">
                   Veel koersplezier,<br>
                   <strong>Het Koerspoule team</strong>
@@ -106,8 +112,8 @@ export function buildEmailHtml(
 </body></html>`;
 }
 
-function buildPreviewHtml(body: string, titleColor: string, titleSize: number) {
-  return buildEmailHtml(body, "#", { titleColor, titleSize });
+function buildPreviewHtml(body: string, titleColor: string, titleSize: number, includeSteun: boolean) {
+  return buildEmailHtml(body, "#", { titleColor, titleSize, includeSteun });
 }
 
 export default function NotifyTab() {
@@ -117,6 +123,7 @@ export default function NotifyTab() {
   const [body, setBody] = useState(DEFAULT_BODY);
   const [titleColor, setTitleColor] = useState("#c8102e");
   const [titleSize, setTitleSize] = useState(24);
+  const [includeSteun, setIncludeSteun] = useState(false);
   const [testEmail, setTestEmail] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [dryRunResult, setDryRunResult] = useState<{ recipients: number; suppressed: number } | null>(null);
@@ -186,11 +193,11 @@ export default function NotifyTab() {
       const doc = iframeRef.current.contentDocument;
       if (doc) {
         doc.open();
-        doc.write(buildPreviewHtml(body, titleColor, titleSize));
+        doc.write(buildPreviewHtml(body, titleColor, titleSize, includeSteun));
         doc.close();
       }
     }
-  }, [showPreview, body, titleColor, titleSize]);
+  }, [showPreview, body, titleColor, titleSize, includeSteun]);
 
   async function runDryRun() {
     if (!supabase) return;
@@ -209,7 +216,7 @@ export default function NotifyTab() {
     if (!supabase || !testEmail.trim()) return;
     setSending(true);
     const { error } = await supabase.functions.invoke("send-announcement", {
-      body: { subject, body, titleColor, titleSize, testEmail: testEmail.trim() },
+      body: { subject, body, titleColor, titleSize, includeSteun, testEmail: testEmail.trim() },
     });
     setSending(false);
     if (error) toast.error(`Testmail mislukt: ${error.message}`);
@@ -220,7 +227,7 @@ export default function NotifyTab() {
     if (!supabase) return;
     setSending(true);
     const { data, error } = await supabase.functions.invoke("send-announcement", {
-      body: { subject, body, titleColor, titleSize, gameId: gameId === "all" ? undefined : gameId },
+      body: { subject, body, titleColor, titleSize, includeSteun, gameId: gameId === "all" ? undefined : gameId },
     });
     setSending(false);
     setConfirmOpen(false);
@@ -313,6 +320,15 @@ export default function NotifyTab() {
               <div style={{ fontFamily: "'Brush Script MT','Segoe Script','Snell Roundhand',cursive", fontStyle: "italic", fontSize: 24, color: "#C0851A", lineHeight: 1.1, textAlign: "center" }}>
                 Uit liefde voor de koers
               </div>
+            </div>
+
+            {/* Steun Koerspoule-knop (Ko-fi) per mailing aan/uit */}
+            <div className="flex items-center justify-between gap-3 rounded border p-3">
+              <div className="min-w-0">
+                <Label htmlFor="include-steun" className="text-sm font-medium">Steun Koerspoule-knop</Label>
+                <p className="text-xs text-muted-foreground">Voegt een Ko-fi-knop toe aan deze mailing.</p>
+              </div>
+              <Switch id="include-steun" checked={includeSteun} onCheckedChange={setIncludeSteun} />
             </div>
           </div>
 
