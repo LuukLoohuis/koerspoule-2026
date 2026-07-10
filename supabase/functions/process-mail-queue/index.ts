@@ -89,10 +89,10 @@ Deno.serve(async (req) => {
     const campaignIds = [...new Set(rows.map((r) => r.campaign_id))];
     const { data: campaigns } = await admin
       .from("mail_campaigns")
-      .select("id, subject, body, title_color, title_size, include_steun")
+      .select("id, subject, body, title_color, title_size, include_steun, include_cta")
       .in("id", campaignIds);
     const campaignById = new Map(
-      ((campaigns ?? []) as Array<{ id: string; subject: string; body: string; title_color: string | null; title_size: number | null; include_steun: boolean | null }>).map((c) => [c.id, c]),
+      ((campaigns ?? []) as Array<{ id: string; subject: string; body: string; title_color: string | null; title_size: number | null; include_steun: boolean | null; include_cta: boolean | null }>).map((c) => [c.id, c]),
     );
 
     let sent = 0;
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       const payload = JSON.stringify({
         to: row.email,
         subject: c.subject,
-        html: buildHtml(c.body, unsubUrl, c.title_color ?? "#c8102e", c.title_size ?? 24, c.include_steun === true),
+        html: buildHtml(c.body, unsubUrl, c.title_color ?? "#c8102e", c.title_size ?? 24, c.include_steun === true, c.include_cta !== false),
       });
       let lastErr = "";
       for (let attempt = 0; attempt < 4; attempt += 1) {

@@ -19,6 +19,7 @@ export function buildHtml(
   _titleColor = "#1a1a1a",
   _titleSize = 11,
   includeSteun = false,
+  includeCta = true,
 ): string {
   // Compact: lege regel = alinea (nette marge), enkele regelovergang = <br>.
   // Markdown-bold: **tekst** → vetgedrukt (spiegelt NotifyTab/buildEmailHtml).
@@ -51,11 +52,11 @@ export function buildHtml(
                 <div style="margin:0 0 10px 0;font-size:17px;line-height:24px;color:#3d362e;">
                   ${bodyHtml}
                 </div>
-                <div style="text-align:center;margin:20px 0 22px 0;">
+                ${includeCta !== false ? `<div style="text-align:center;margin:20px 0 22px 0;">
                   <a href="${BASE_URL}" target="_blank" style="display:inline-block;padding:13px 26px;background-color:#d4a62b;color:#1d1916;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;border-radius:6px;">
                     Ga naar Koerspoule
                   </a>
-                </div>${includeSteun ? `
+                </div>` : ""}${includeSteun ? `
                 <div style="text-align:center;margin:0 0 22px 0;">
                   <a href="https://ko-fi.com/koerspoule" target="_blank" style="display:inline-block;padding:13px 26px;background-color:#1A1612;color:#F5EDE0;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;border-radius:6px;border:1px solid #E1A33A;">
                     <span style="color:#E1A33A;">&#9749;</span>&nbsp; Steun Koerspoule

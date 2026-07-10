@@ -33,7 +33,7 @@ const DEFAULT_BODY = `Schrijf hier je bericht...`;
 export function buildEmailHtml(
   body: string,
   unsubscribeUrl: string,
-  opts: { titleColor: string; titleSize: number; includeSteun?: boolean }
+  opts: { titleColor: string; titleSize: number; includeCta?: boolean; includeSteun?: boolean }
 ): string {
   // Spiegelt send-announcement/buildHtml() 1-op-1 (preview = verzonden mail).
   // Compact: lege regel = alinea (nette marge), enkele regelovergang = <br>.
@@ -63,11 +63,11 @@ export function buildEmailHtml(
                 <div style="margin:0 0 10px 0;font-size:17px;line-height:24px;color:#3d362e;">
                   ${bodyHtml}
                 </div>
-                <div style="text-align:center;margin:20px 0 22px 0;">
+                ${opts.includeCta !== false ? `<div style="text-align:center;margin:20px 0 22px 0;">
                   <a href="https://koerspoule.nl" target="_blank" style="display:inline-block;padding:13px 26px;background-color:#d4a62b;color:#1d1916;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;border-radius:6px;">
                     Ga naar Koerspoule
                   </a>
-                </div>${opts.includeSteun ? `
+                </div>` : ""}${opts.includeSteun ? `
                 <div style="text-align:center;margin:0 0 22px 0;">
                   <a href="https://ko-fi.com/koerspoule" target="_blank" style="display:inline-block;padding:13px 26px;background-color:#1A1612;color:#F5EDE0;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;border-radius:6px;border:1px solid #E1A33A;">
                     <span style="color:#E1A33A;">&#9749;</span>&nbsp; Steun Koerspoule
@@ -112,8 +112,8 @@ export function buildEmailHtml(
 </body></html>`;
 }
 
-function buildPreviewHtml(body: string, titleColor: string, titleSize: number, includeSteun: boolean) {
-  return buildEmailHtml(body, "#", { titleColor, titleSize, includeSteun });
+function buildPreviewHtml(body: string, titleColor: string, titleSize: number, includeCta: boolean, includeSteun: boolean) {
+  return buildEmailHtml(body, "#", { titleColor, titleSize, includeCta, includeSteun });
 }
 
 export default function NotifyTab() {
@@ -123,6 +123,7 @@ export default function NotifyTab() {
   const [body, setBody] = useState(DEFAULT_BODY);
   const [titleColor, setTitleColor] = useState("#c8102e");
   const [titleSize, setTitleSize] = useState(24);
+  const [includeCta, setIncludeCta] = useState(true);
   const [includeSteun, setIncludeSteun] = useState(false);
   const [testEmail, setTestEmail] = useState("");
   const [showPreview, setShowPreview] = useState(false);
@@ -193,17 +194,17 @@ export default function NotifyTab() {
       const doc = iframeRef.current.contentDocument;
       if (doc) {
         doc.open();
-        doc.write(buildPreviewHtml(body, titleColor, titleSize, includeSteun));
+        doc.write(buildPreviewHtml(body, titleColor, titleSize, includeCta, includeSteun));
         doc.close();
       }
     }
-  }, [showPreview, body, titleColor, titleSize, includeSteun]);
+  }, [showPreview, body, titleColor, titleSize, includeCta, includeSteun]);
 
   async function runDryRun() {
     if (!supabase) return;
     setSending(true);
     const { data, error } = await supabase.functions.invoke("send-announcement", {
-      body: { subject, body, gameId: gameId === "all" ? undefined : gameId, dryRun: true },
+      body: { subject, body, includeCta, includeSteun, gameId: gameId === "all" ? undefined : gameId, dryRun: true },
     });
     setSending(false);
     if (error) { toast.error(`Fout: ${error.message}`); return; }
@@ -216,7 +217,7 @@ export default function NotifyTab() {
     if (!supabase || !testEmail.trim()) return;
     setSending(true);
     const { error } = await supabase.functions.invoke("send-announcement", {
-      body: { subject, body, titleColor, titleSize, includeSteun, testEmail: testEmail.trim() },
+      body: { subject, body, titleColor, titleSize, includeCta, includeSteun, testEmail: testEmail.trim() },
     });
     setSending(false);
     if (error) toast.error(`Testmail mislukt: ${error.message}`);
@@ -227,7 +228,7 @@ export default function NotifyTab() {
     if (!supabase) return;
     setSending(true);
     const { data, error } = await supabase.functions.invoke("send-announcement", {
-      body: { subject, body, titleColor, titleSize, includeSteun, gameId: gameId === "all" ? undefined : gameId },
+      body: { subject, body, titleColor, titleSize, includeCta, includeSteun, gameId: gameId === "all" ? undefined : gameId },
     });
     setSending(false);
     setConfirmOpen(false);
@@ -322,11 +323,18 @@ export default function NotifyTab() {
               </div>
             </div>
 
-            {/* Steun Koerspoule-knop (Ko-fi) per mailing aan/uit */}
+            {/* Knoppen per mailing aan/uit */}
+            <div className="flex items-center justify-between gap-3 rounded border p-3">
+              <div className="min-w-0">
+                <Label htmlFor="include-cta" className="text-sm font-medium">Ga naar Koerspoule-knop</Label>
+                <p className="text-xs text-muted-foreground">Knop naar koerspoule.nl.</p>
+              </div>
+              <Switch id="include-cta" checked={includeCta} onCheckedChange={setIncludeCta} />
+            </div>
             <div className="flex items-center justify-between gap-3 rounded border p-3">
               <div className="min-w-0">
                 <Label htmlFor="include-steun" className="text-sm font-medium">Steun Koerspoule-knop</Label>
-                <p className="text-xs text-muted-foreground">Voegt een Ko-fi-knop toe aan deze mailing.</p>
+                <p className="text-xs text-muted-foreground">Ko-fi-knop voor donaties.</p>
               </div>
               <Switch id="include-steun" checked={includeSteun} onCheckedChange={setIncludeSteun} />
             </div>
