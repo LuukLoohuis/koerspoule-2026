@@ -1518,6 +1518,17 @@
       "mountain": "Bergkoning",
       "sprint": "Sprintklassement",
       "young": "Jongerentrui"
+    },
+    "etappes": {
+      "title": "Etappes",
+      "subtitle": "Alle etappes van de ronde.",
+      "empty": "Nog geen etappes beschikbaar.",
+      "stageLabel": "Etappe {{n}}",
+      "notFoundTitle": "Etappe niet gevonden",
+      "notFoundBody": "Deze etappe bestaat (nog) niet.",
+      "allStages": "← Alle etappes",
+      "elevationAlt": "Hoogteprofiel etappe {{n}}",
+      "climbs": "Klimmen"
     }
   }
 }

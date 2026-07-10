@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Mountain, MapPin, Ruler, TrendingUp, CalendarDays } from "lucide-react"
 import { useTourStage } from "@/hooks/useTourStages";
 
 export default function EtappeDetail() {
+  const { t } = useTranslation();
   const { stageNumber } = useParams<{ stageNumber: string }>();
   const n = Number(stageNumber);
   const { data: stage, isLoading, isError } = useTourStage(Number.isNaN(n) ? undefined : n);
@@ -25,9 +27,9 @@ export default function EtappeDetail() {
   if (isError || !stage) {
     return (
       <div className="container mx-auto px-5 py-8 text-center">
-        <p className="font-display text-xl font-bold mb-2">Etappe niet gevonden</p>
-        <p className="text-sm text-muted-foreground mb-4">Deze etappe bestaat (nog) niet.</p>
-        <Button asChild variant="outline"><Link to="/etappes">← Alle etappes</Link></Button>
+        <p className="font-display text-xl font-bold mb-2">{t("common.etappes.notFoundTitle")}</p>
+        <p className="text-sm text-muted-foreground mb-4">{t("common.etappes.notFoundBody")}</p>
+        <Button asChild variant="outline"><Link to="/etappes">{t("common.etappes.allStages")}</Link></Button>
       </div>
     );
   }
@@ -57,7 +59,7 @@ export default function EtappeDetail() {
         )}
 
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Etappe {stage.stage}</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{t("common.etappes.stageLabel", { n: stage.stage })}</p>
           <h1 className="font-display font-black text-3xl md:text-4xl leading-tight mt-1">{stage.title}</h1>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-sm text-muted-foreground">
@@ -77,7 +79,7 @@ export default function EtappeDetail() {
         {stage.profile_image_url && (
           <img
             src={stage.profile_image_url}
-            alt={`Hoogteprofiel etappe ${stage.stage}`}
+            alt={t("common.etappes.elevationAlt", { n: stage.stage })}
             className="block w-full h-auto rounded-lg border border-border"
             loading="lazy"
           />
@@ -88,7 +90,7 @@ export default function EtappeDetail() {
           <Card className="ornate-frame retro-border">
             <CardContent className="p-4">
               <h2 className="font-display text-lg font-bold mb-2 flex items-center gap-2">
-                <Mountain className="h-4 w-4 text-primary" /> Klimmen
+                <Mountain className="h-4 w-4 text-primary" /> {t("common.etappes.climbs")}
               </h2>
               <ul className="space-y-1.5">
                 {stage.climbs.map((c, i) => (
@@ -107,7 +109,7 @@ export default function EtappeDetail() {
           <p className="font-serif text-foreground/90 leading-relaxed">{stage.description}</p>
         )}
 
-        <Button asChild variant="outline"><Link to="/etappes">← Alle etappes</Link></Button>
+        <Button asChild variant="outline"><Link to="/etappes">{t("common.etappes.allStages")}</Link></Button>
       </article>
     </div>
   );

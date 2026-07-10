@@ -1518,6 +1518,17 @@
       "mountain": "King of the Mountains",
       "sprint": "Sprint classification",
       "young": "Young rider jersey"
+    },
+    "etappes": {
+      "title": "Stages",
+      "subtitle": "All stages of the race.",
+      "empty": "No stages available yet.",
+      "stageLabel": "Stage {{n}}",
+      "notFoundTitle": "Stage not found",
+      "notFoundBody": "This stage doesn't exist (yet).",
+      "allStages": "← All stages",
+      "elevationAlt": "Elevation profile stage {{n}}",
+      "climbs": "Climbs"
     }
   }
 }

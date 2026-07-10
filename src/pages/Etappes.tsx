@@ -1,24 +1,26 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Mountain, ChevronRight } from "lucide-react";
 import { useTourStages } from "@/hooks/useTourStages";
 
 export default function Etappes() {
+  const { t } = useTranslation();
   const { data: stages = [], isLoading } = useTourStages();
 
   return (
     <div className="container mx-auto px-5 py-6 md:py-8">
       <div className="max-w-3xl mx-auto">
-        <h1 className="font-display font-black text-3xl md:text-4xl mb-1">Etappes</h1>
-        <p className="text-muted-foreground font-serif italic mb-5">Alle etappes van de ronde.</p>
+        <h1 className="font-display font-black text-3xl md:text-4xl mb-1">{t("common.etappes.title")}</h1>
+        <p className="text-muted-foreground font-serif italic mb-5">{t("common.etappes.subtitle")}</p>
 
         {isLoading ? (
           <div className="space-y-3 animate-pulse motion-reduce:animate-none">
             {[0, 1, 2].map((i) => <div key={i} className="h-20 rounded-xl bg-foreground/10" />)}
           </div>
         ) : stages.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">Nog geen etappes beschikbaar.</p>
+          <p className="text-sm text-muted-foreground italic">{t("common.etappes.empty")}</p>
         ) : (
           <div className="space-y-3">
             {stages.map((s) => (
@@ -34,7 +36,7 @@ export default function Etappes() {
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Etappe {s.stage}</span>
+                        <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{t("common.etappes.stageLabel", { n: s.stage })}</span>
                         {s.stage_type && <Badge variant="outline" className="text-[10px]">{s.stage_type}</Badge>}
                       </div>
                       <p className="font-display font-bold truncate">{s.title}</p>
