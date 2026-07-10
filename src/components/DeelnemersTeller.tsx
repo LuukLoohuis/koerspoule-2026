@@ -2,33 +2,38 @@ import { useQuery } from "@tanstack/react-query";
 import { Users } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { supabase } from "@/lib/supabase";
-
-// Onder deze drempel tonen we de teller niet (lage beginstand schrikt af).
-// Makkelijk aanpasbaar.
-const MIN_DEELNEMERS_TONEN = 100;
+import { useCurrentGame } from "@/hooks/useCurrentGame";
 
 /**
- * Subtiel sociaal bewijs op de homepage (variant C): "Al <N> koersliefhebbers
- * doen mee". Getal komt via de veilige count_deelnemers()-RPC (alleen een
- * integer, geen persoonsdata). Toont niets tijdens laden of onder de drempel →
- * geen layout-sprong, geen afschrikkende lage stand.
+ * Subtiel sociaal bewijs op de homepage: "Al <N> koersliefhebbers doen mee".
+ *
+ * Per game: telt via count_deelnemers_game(game_id) de deelnemers van de
+ * ACTIEVE game (ingediend of concept-met-keuze), zodat het cijfer elke game
+ * opnieuw bij nul begint. Alleen zichtbaar als de admin de teller voor die game
+ * heeft aangezet (games.deelnemers_teller_visible) — gaat nooit vanzelf aan.
+ * Toont niets tijdens laden of bij 0 → geen layout-sprong, geen lege stand.
  */
 export default function DeelnemersTeller({ className }: { className?: string }) {
   const { i18n } = useTranslation();
   const nf = new Intl.NumberFormat(i18n.language === "en" ? "en-GB" : "nl-NL");
+  const { data: game } = useCurrentGame();
+  const gameId = game?.id;
+  const enabled = Boolean(game?.deelnemers_teller_visible);
+
   const { data } = useQuery({
-    queryKey: ["count-deelnemers"],
-    enabled: Boolean(supabase),
+    queryKey: ["count-deelnemers-game", gameId],
+    enabled: Boolean(supabase && gameId && enabled),
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<number> => {
-      if (!supabase) return 0;
-      const { data, error } = await supabase.rpc("count_deelnemers");
+      if (!supabase || !gameId) return 0;
+      const { data, error } = await supabase.rpc("count_deelnemers_game", { p_game_id: gameId });
       if (error) return 0;
       return typeof data === "number" ? data : 0;
     },
   });
 
-  if (!data || data < MIN_DEELNEMERS_TONEN) return null;
+  // Alleen tonen als de admin 'm aanzette én er echte deelnemers zijn.
+  if (!enabled || !data || data < 1) return null;
 
   return (
     <div

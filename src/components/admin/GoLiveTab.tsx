@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Rocket, Coffee, Inbox } from "lucide-react";
+import { Eye, Rocket, Coffee, Inbox, Users } from "lucide-react";
 import { toast } from "sonner";
 import { resultsHiddenForUsers } from "@/lib/gameStatus";
 import { fetchAllRows } from "@/lib/fetchAll";
@@ -27,6 +27,7 @@ const STATUS_LABEL: Record<string, string> = {
 export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: string; gameStatus?: string | null }) {
   const [testmodus, setTestmodus] = useState(false);
   const [banner, setBanner] = useState(false);
+  const [teller, setTeller] = useState(false);
   const [loaded, setLoaded] = useState(false);
   // Aantal concepten met >= MIN_PICKS keuzes (kandidaten voor bulk-indienen).
   const [draftKandidaten, setDraftKandidaten] = useState<number | null>(null);
@@ -54,9 +55,10 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
   useEffect(() => {
     if (!supabase || !activeGameId) return;
     (async () => {
-      const { data } = await supabase.from("games").select("admin_testmodus, support_banner_visible, support_banner_updated_at").eq("id", activeGameId).maybeSingle();
+      const { data } = await supabase.from("games").select("admin_testmodus, support_banner_visible, support_banner_updated_at, deelnemers_teller_visible").eq("id", activeGameId).maybeSingle();
       setTestmodus(Boolean(data?.admin_testmodus));
       setBanner(Boolean(data?.support_banner_visible));
+      setTeller(Boolean(data?.deelnemers_teller_visible));
       setLoaded(true);
     })();
     loadDraftKandidaten();
@@ -97,6 +99,14 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
     if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
     setBanner(next);
     toast.success(next ? "Steun-banner AAN voor deze game" : "Steun-banner uit");
+  }
+
+  async function toggleTeller(next: boolean) {
+    if (!supabase || !activeGameId) return;
+    const { error } = await supabase.from("games").update({ deelnemers_teller_visible: next }).eq("id", activeGameId);
+    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
+    setTeller(next);
+    toast.success(next ? "Deelnemersteller AAN op de homepage voor deze game" : "Deelnemersteller uit");
   }
 
   const preview = resultsHiddenForUsers(gameStatus);
@@ -140,6 +150,22 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
           </div>
           <Button size="sm" variant={banner ? "default" : "outline"} className="shrink-0" disabled={!activeGameId || !loaded} onClick={() => toggleBanner(!banner)}>
             {banner ? "Zet uit" : "Zet aan"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className={teller ? "border-[hsl(var(--vintage-gold))]" : ""}>
+        <CardContent className="flex items-center justify-between gap-3 p-4">
+          <div className="min-w-0">
+            <p className="font-display font-bold flex items-center gap-2">
+              <Users className="w-4 h-4" /> Deelnemersteller (homepage) {teller ? "AAN" : "uit"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Toont "Al N koersliefhebbers doen mee" op de homepage. Telt alléén de deelnemers van deze game (ingediend of concept-met-keuze) — begint elke game opnieuw bij nul. Handmatig, gaat nooit vanzelf aan.
+            </p>
+          </div>
+          <Button size="sm" variant={teller ? "default" : "outline"} className="shrink-0" disabled={!activeGameId || !loaded} onClick={() => toggleTeller(!teller)}>
+            {teller ? "Zet uit" : "Zet aan"}
           </Button>
         </CardContent>
       </Card>
