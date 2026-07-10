@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ function PoolRow({
   isMe: boolean;
   highlight?: boolean;
 }) {
+  const { t } = useTranslation();
   const value = valueKey === "stagePoints" ? participant.stagePoints : participant.totalPoints;
   return (
     <div className={cn(
@@ -51,7 +53,7 @@ function PoolRow({
         <RankBadge rank={participant.rank} size="sm" />
         <span className={cn("font-sans font-medium", isMe && "text-primary font-bold")}>
           {participant.userName}
-          {isMe && <span className="ml-1.5 text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">JIJ</span>}
+          {isMe && <span className="ml-1.5 text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">{t("common.poolStandings.you")}</span>}
         </span>
       </div>
       <span className={cn("font-bold text-xs", isMe ? "text-primary" : "text-accent")}>
@@ -74,6 +76,7 @@ export default function PoolStandingsList({
   unit: string;
   myName: string;
 }) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
 
   const searchResults = useMemo(() => {
@@ -91,7 +94,7 @@ export default function PoolStandingsList({
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Zoek deelnemer..."
+            placeholder={t("common.poolStandings.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8 h-8 text-sm"
@@ -108,7 +111,7 @@ export default function PoolStandingsList({
             ))
           ) : (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              Geen deelnemers gevonden voor "{search}"
+              {t("common.poolStandings.noResults", { query: search })}
             </div>
           )
         ) : (

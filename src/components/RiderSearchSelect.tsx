@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, useEffect, useLayoutEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Plus, X } from "lucide-react";
 
@@ -27,10 +28,12 @@ export default function RiderSearchSelect({
   value,
   onChange,
   excludeIds = [],
-  placeholder = "Zoek renner op naam of startnummer...",
+  placeholder,
   disabled,
   compact = false,
 }: Props) {
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder ?? t("common.riderSearch.placeholder");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -117,7 +120,7 @@ export default function RiderSearchSelect({
               type="button"
               onClick={() => onChange("")}
               className="shrink-0 text-muted-foreground hover:text-destructive"
-              aria-label="Verwijder selectie"
+              aria-label={t("common.riderSearch.removeSelection")}
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -139,7 +142,7 @@ export default function RiderSearchSelect({
             type="button"
             onClick={() => onChange("")}
             className="ml-auto text-muted-foreground hover:text-destructive"
-            aria-label="Verwijder selectie"
+            aria-label={t("common.riderSearch.removeSelection")}
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -154,7 +157,7 @@ export default function RiderSearchSelect({
   return (
     <div ref={ref} className="relative">
       <Input
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         value={search}
         onChange={(e) => {
           setSearch(e.target.value);
@@ -190,7 +193,7 @@ export default function RiderSearchSelect({
                           ? "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs opacity-40 cursor-not-allowed"
                           : "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-accent"
                       }
-                      title={used ? "Staat al ergens in deze uitslag" : undefined}
+                      title={used ? t("common.riderSearch.alreadyInResult") : undefined}
                     >
                       <Plus className="h-3 w-3 text-foreground shrink-0" />
                       <span className="text-[11px] text-foreground tabular-nums w-7 text-right shrink-0">
@@ -198,7 +201,7 @@ export default function RiderSearchSelect({
                       </span>
                       <span className="font-medium text-foreground truncate flex-1 min-w-0">{r.name}</span>
                       {used && (
-                        <span className="text-[9px] uppercase tracking-wider text-muted-foreground shrink-0">al gekozen</span>
+                        <span className="text-[9px] uppercase tracking-wider text-muted-foreground shrink-0">{t("common.riderSearch.alreadyPicked")}</span>
                       )}
                       {!used && r.teamName && (
                         <span className="text-[10px] text-foreground truncate max-w-[45%] shrink-0">{r.teamName}</span>
@@ -209,7 +212,7 @@ export default function RiderSearchSelect({
               </div>
             )}
             {showEmpty && (
-              <div className="px-3 py-2 text-sm text-muted-foreground">Geen renners gevonden.</div>
+              <div className="px-3 py-2 text-sm text-muted-foreground">{t("common.riderSearch.noRiders")}</div>
             )}
           </div>,
           document.body,

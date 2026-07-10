@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,12 +57,13 @@ function getCategoryShade(catIndex: number, ratio: number) {
   };
 }
 
-function getHeatLabel(ratio: number) {
-  if (ratio <= 1 / 20) return "Uniek";
-  if (ratio <= 0.15) return "Zeldzaam";
-  if (ratio <= 0.3) return "Gemiddeld";
-  if (ratio <= 0.5) return "Populair";
-  return "Heel populair";
+// Geeft een i18n-sleutel terug; de tekst wordt in de component via t() opgehaald.
+function getHeatLabelKey(ratio: number) {
+  if (ratio <= 1 / 20) return "common.tactique.heatUnique";
+  if (ratio <= 0.15) return "common.tactique.heatRare";
+  if (ratio <= 0.3) return "common.tactique.heatAverage";
+  if (ratio <= 0.5) return "common.tactique.heatPopular";
+  return "common.tactique.heatVeryPopular";
 }
 
 function StatCard({ label, value, sub, highlight = false }: {
@@ -80,6 +82,7 @@ function StatCard({ label, value, sub, highlight = false }: {
 }
 
 export default function LeCoupTactique({ standings, myUserName }: LeCoupTactiqueProps) {
+  const { t: translate } = useTranslation();
   const [visiblePlayers, setVisiblePlayers] = useState<Set<string>>(() => new Set(standings.map(t => t.id)));
   const [showOnlyUnique, setShowOnlyUnique] = useState(false);
   const [showOnlyDifferences, setShowOnlyDifferences] = useState(false);
@@ -184,42 +187,42 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
               Le Coup Tactique 🎯
             </CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
-              Uniek vs populair per categorie
+              {translate("common.tactique.subtitle")}
             </p>
           </div>
 
           {/* Summary cards */}
           <div className="mt-4 grid gap-2 grid-cols-2 xl:grid-cols-4">
             <StatCard
-              label="Koers Tacticus"
+              label={translate("common.tactique.tacticus")}
               value={mostTactical?.name ?? "—"}
-              sub={`${mostTactical?.uniqueCount ?? 0} uniek`}
+              sub={translate("common.tactique.uniqueCount", { n: mostTactical?.uniqueCount ?? 0 })}
             />
             <StatCard
-              label="Jij"
+              label={translate("common.tactique.you")}
               value={myUserName}
-              sub={`${currentStats?.uniqueCount ?? 0} uniek`}
+              sub={translate("common.tactique.uniqueCount", { n: currentStats?.uniqueCount ?? 0 })}
               highlight
             />
             <StatCard
-              label="Overlap"
+              label={translate("common.tactique.overlap")}
               value={`${averageOverlap}×`}
-              sub="gemiddeld"
+              sub={translate("common.tactique.average")}
             />
             <StatCard
-              label="Weergave"
-              value={showOnlyUnique ? "Solo's" : showOnlyDifferences ? "Verschillen" : "Peloton"}
-              sub="Koersmodus"
+              label={translate("common.tactique.view")}
+              value={showOnlyUnique ? translate("common.tactique.modeSolo") : showOnlyDifferences ? translate("common.tactique.modeDifferences") : translate("common.tactique.modePeloton")}
+              sub={translate("common.tactique.raceMode")}
             />
           </div>
 
           {/* Player toggles */}
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-medium tracking-wide text-muted-foreground">Vergelijk</span>
-              <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 rounded-full" onClick={showAll}>Alles</Button>
-              <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 rounded-full" onClick={showOnlyMe}>Alleen ik</Button>
-              <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 rounded-full" onClick={resetSelection}>Reset</Button>
+              <span className="text-[10px] font-medium tracking-wide text-muted-foreground">{translate("common.tactique.compare")}</span>
+              <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 rounded-full" onClick={showAll}>{translate("common.tactique.all")}</Button>
+              <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 rounded-full" onClick={showOnlyMe}>{translate("common.tactique.onlyMe")}</Button>
+              <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 rounded-full" onClick={resetSelection}>{translate("common.tactique.reset")}</Button>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {sortedTeams.map((team) => {
@@ -255,7 +258,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
               className="text-xs h-7 rounded-full"
               onClick={() => { setShowOnlyUnique(prev => !prev); setShowOnlyDifferences(false); }}
             >
-              🔥 Solo's
+              {translate("common.tactique.solos")}
             </Button>
             <Button
               variant={showOnlyDifferences ? "default" : "outline"}
@@ -263,7 +266,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
               className="text-xs h-7 rounded-full"
               onClick={() => { setShowOnlyDifferences(prev => !prev); setShowOnlyUnique(false); }}
             >
-              🚴 Verschillen
+              {translate("common.tactique.differences")}
             </Button>
             <div className="flex gap-0.5 border border-border rounded-full p-0.5">
               <Button
@@ -272,7 +275,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                 className="text-xs h-6 rounded-full"
                 onClick={() => setSortMode("standing")}
               >
-                🏁 Klassement
+                {translate("common.tactique.standing")}
               </Button>
               <Button
                 variant={sortMode === "panache" ? "default" : "ghost"}
@@ -280,7 +283,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                 className="text-xs h-6 rounded-full"
                 onClick={() => setSortMode("panache")}
               >
-                🦚 Panache
+                {translate("common.tactique.panache")}
               </Button>
             </div>
           </div>
@@ -289,11 +292,11 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
           <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1">
               <span className="h-2.5 w-5 rounded-sm" style={{ background: "linear-gradient(to right, hsl(0 80% 40%), hsl(0 30% 90%))" }} />
-              <span>Donker = uniek · Licht = populair</span>
+              <span>{translate("common.tactique.legendGradient")}</span>
             </div>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 font-medium text-primary">
               <span className="h-2.5 w-2.5 rounded-sm border-2 border-primary bg-card inline-block" />
-              Jouw team
+              {translate("common.tactique.yourTeam")}
             </div>
           </div>
         </CardHeader>
@@ -364,7 +367,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                     const shade = getCategoryShade(catIndex, ratio);
                     const isCurrent = isMe(team.userName);
                     const isUnique = count === 1;
-                    const label = getHeatLabel(ratio);
+                    const label = translate(getHeatLabelKey(ratio));
 
                     // "Verschillen" filter: hide if this pick matches the most common — but never hide my own team
                     const isDifference = pick ? pick.number !== mostCommonPick.get(cat.id) : false;
@@ -413,10 +416,10 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                           <p className="font-display font-bold">{pick?.name ?? "—"} <span className="text-muted-foreground font-sans">#{pick?.number}</span></p>
                           <p className="text-muted-foreground font-sans">
                             {count === 1
-                              ? "Unieke keuze! 🔥"
-                              : `${count - 1} ander${count - 1 > 1 ? "en" : ""} kozen ook deze renner`}
+                              ? translate("common.tactique.uniquePick")
+                              : translate("common.tactique.othersPick", { count: count - 1 })}
                           </p>
-                          <p className="font-sans text-muted-foreground">{count}/{totalPlayers} spelers ({Math.round(ratio * 100)}%)</p>
+                          <p className="font-sans text-muted-foreground">{translate("common.tactique.playersOf", { count, total: totalPlayers, pct: Math.round(ratio * 100) })}</p>
                         </TooltipContent>
                       </Tooltip>
                     );
@@ -443,7 +446,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                     const shade = getCategoryShade(categories.length + jokerIdx, ratio);
                     const isCurrent = isMe(team.userName);
                     const isUnique = count === 1;
-                    const label = getHeatLabel(ratio);
+                    const label = translate(getHeatLabelKey(ratio));
 
                     const shouldHide = (showOnlyUnique && !isUnique) || (showOnlyDifferences && false);
 
@@ -488,10 +491,10 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                           <p className="font-display font-bold">{joker?.name ?? "—"} <span className="text-muted-foreground font-sans">#{joker?.number}</span></p>
                           <p className="text-muted-foreground font-sans">
                             {count === 1
-                              ? "Unieke joker! 🔥"
-                              : `${count - 1} ander${count - 1 > 1 ? "en" : ""} kozen ook deze joker`}
+                              ? translate("common.tactique.uniqueJoker")
+                              : translate("common.tactique.othersJoker", { count: count - 1 })}
                           </p>
-                          <p className="font-sans text-muted-foreground">{count}/{totalPlayers} spelers ({Math.round(ratio * 100)}%)</p>
+                          <p className="font-sans text-muted-foreground">{translate("common.tactique.playersOf", { count, total: totalPlayers, pct: Math.round(ratio * 100) })}</p>
                         </TooltipContent>
                       </Tooltip>
                     );

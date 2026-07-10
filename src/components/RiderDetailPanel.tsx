@@ -1,5 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useRiderStats } from "@/hooks/useRiderStats";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { ExternalLink, Loader2 } from "lucide-react";
 
@@ -31,6 +32,7 @@ export default function RiderDetailPanel({
   rider: DetailRider | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const { data: stats, isLoading, isError } = useRiderStats(rider?.firstcycling_id);
 
   return (
@@ -43,7 +45,7 @@ export default function RiderDetailPanel({
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary opacity-80" />
               <SheetHeader className="space-y-0.5">
                 <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                  Rennersprofiel
+                  {t("common.riderDetail.profileLabel")}
                 </div>
                 <SheetTitle className="font-display text-xl leading-tight">
                   {stats?.rider_name || rider.name}
@@ -71,7 +73,7 @@ export default function RiderDetailPanel({
                   className="mt-3 inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-mono"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  Bekijk volledig profiel op FirstCycling
+                  {t("common.riderDetail.viewFull")}
                 </a>
               )}
             </div>
@@ -82,35 +84,35 @@ export default function RiderDetailPanel({
                 <div className="text-center py-12">
                   <div className="text-3xl mb-3">🔍</div>
                   <p className="text-sm text-muted-foreground font-serif italic">
-                    Geen FirstCycling-koppeling gevonden.
+                    {t("common.riderDetail.noLink")}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Een admin kan dit instellen in de startlijst.
+                    {t("common.riderDetail.noLinkHint")}
                   </p>
                 </div>
               ) : isLoading ? (
                 <div className="flex items-center justify-center py-12 gap-2 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm font-serif italic">Uitslagen laden...</span>
+                  <span className="text-sm font-serif italic">{t("common.riderDetail.loading")}</span>
                 </div>
               ) : isError ? (
                 <div className="text-center py-12 text-sm text-muted-foreground font-serif italic">
-                  Uitslagen tijdelijk niet beschikbaar.
+                  {t("common.riderDetail.unavailable")}
                 </div>
               ) : !stats || stats.results.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-sm text-muted-foreground font-serif italic">
-                    Geen uitslagen gevonden voor 2026.
+                    {t("common.riderDetail.noResults")}
                   </p>
                 </div>
               ) : (
                 <>
                   <div className="flex items-baseline gap-2 mb-3">
                     <h3 className="font-display text-sm font-bold uppercase tracking-wider">
-                      Seizoen 2026
+                      {t("common.riderDetail.season")}
                     </h3>
                     <span className="text-xs text-muted-foreground font-mono">
-                      {stats.results.length} koersen
+                      {t("common.riderDetail.racesCount", { count: stats.results.length })}
                     </span>
                   </div>
 
@@ -119,19 +121,19 @@ export default function RiderDetailPanel({
                       <thead>
                         <tr className="bg-muted/60 border-b border-border">
                           <th className="text-left px-2.5 py-1.5 font-mono uppercase tracking-wide text-[10px] text-muted-foreground w-12">
-                            Datum
+                            {t("common.riderDetail.colDate")}
                           </th>
                           <th className="text-left px-2.5 py-1.5 font-mono uppercase tracking-wide text-[10px] text-muted-foreground">
-                            Koers
+                            {t("common.riderDetail.colRace")}
                           </th>
                           <th className="text-left px-2.5 py-1.5 font-mono uppercase tracking-wide text-[10px] text-muted-foreground w-10 hidden sm:table-cell">
-                            Cat.
+                            {t("common.riderDetail.colCat")}
                           </th>
                           <th className="text-left px-2.5 py-1.5 font-mono uppercase tracking-wide text-[10px] text-muted-foreground w-8 hidden sm:table-cell">
-                            Et.
+                            {t("common.riderDetail.colStage")}
                           </th>
                           <th className="text-right px-2.5 py-1.5 font-mono uppercase tracking-wide text-[10px] text-muted-foreground w-10">
-                            Pos.
+                            {t("common.riderDetail.colPos")}
                           </th>
                         </tr>
                       </thead>

@@ -4,6 +4,7 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { TrendingUp } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LINE_COLORS, CHART_VISUAL } from "@/components/SubpouleEvolutionChart";
@@ -54,6 +55,7 @@ function buildChartData() {
 const CHART_DATA = buildChartData();
 
 export default function DemoEvolutionChart() {
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [highlightId, setHighlightId] = useState("u1");
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
@@ -75,16 +77,16 @@ export default function DemoEvolutionChart() {
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_2px_rgba(52,211,153,0.4)]" />
-              Live performance
+              {t("common.demoChart.livePerformance")}
             </div>
             <h3 className="mt-1 font-display text-foreground text-base sm:text-lg flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" />
-              Jouw subpoule
+              {t("common.demoChart.yourSubpoule")}
             </h3>
-            <p className="text-xs text-muted-foreground mt-1">Etappe-evolutie · klik op een naam om te markeren</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("common.demoChart.caption")}</p>
           </div>
           <button onClick={toggleAll} className={CHART_VISUAL.toggleBtnClass}>
-            {allHidden ? "Toon alles" : "Verberg alles"}
+            {allHidden ? t("common.demoChart.showAll") : t("common.demoChart.hideAll")}
           </button>
         </div>
 
@@ -104,7 +106,7 @@ export default function DemoEvolutionChart() {
                   visible ? CHART_VISUAL.pillVisible : CHART_VISUAL.pillHidden,
                   isHighlighted && visible && CHART_VISUAL.pillHighlighted
                 )}
-                title={visible ? "Dubbelklik om te verbergen" : "Klik om te tonen"}
+                title={visible ? t("common.demoChart.dblToHide") : t("common.demoChart.clickToShow")}
               >
                 <span
                   className="h-2 w-2 rounded-full transition-all"
@@ -156,7 +158,7 @@ export default function DemoEvolutionChart() {
                 strokeWidth={1}
                 strokeDasharray="3 4"
                 strokeOpacity={0.6}
-                label={{ value: "NU", position: "top", fill: "hsl(var(--primary))", fontSize: 9, fontWeight: 700, letterSpacing: 1 }}
+                label={{ value: t("common.demoChart.now"), position: "top", fill: "hsl(var(--primary))", fontSize: 9, fontWeight: 700, letterSpacing: 1 }}
               />
               <Tooltip
                 cursor={CHART_VISUAL.tooltipCursor}
@@ -169,7 +171,7 @@ export default function DemoEvolutionChart() {
                   return (
                     <div className={CHART_VISUAL.tooltipClass} style={{ padding: "10px 12px", maxWidth: 240 }}>
                       <div className="font-display font-semibold text-sm mb-2 text-foreground flex items-baseline gap-1.5">
-                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Etappe</span>
+                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("common.demoChart.stage")}</span>
                         <span>{String(label).replace("E", "")}</span>
                       </div>
                       <div className="space-y-1">
@@ -224,7 +226,7 @@ export default function DemoEvolutionChart() {
         {/* Footer */}
         <div className={CHART_VISUAL.footerText}>
           <span className={CHART_VISUAL.footerLine} />
-          <span>Cumulatieve punten</span>
+          <span>{t("common.demoChart.cumulative")}</span>
           <span className={CHART_VISUAL.footerLine} />
         </div>
       </div>

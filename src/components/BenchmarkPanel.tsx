@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Swords, ArrowRight, Trophy, Layers, Flag, Star, Crown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import type { BenchmarkData } from "@/hooks/useSubpouleBenchmark";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ function diffBg(d: number) {
 }
 
 export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOpponentsHint }: Props) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [opponentId, setOpponentId] = useState<string | null>(null);
@@ -91,7 +93,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
   if (isLoading) {
     return (
       <Card className="retro-border">
-        <CardContent className="p-6 text-sm text-muted-foreground">Laden…</CardContent>
+        <CardContent className="p-6 text-sm text-muted-foreground">{t("common.benchmark.loading")}</CardContent>
       </Card>
     );
   }
@@ -99,7 +101,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
     return (
       <Card className="retro-border">
         <CardContent className="p-6 text-sm text-muted-foreground">
-          Je hebt nog geen team in deze koers. Maak eerst een team aan om te kunnen vergelijken.
+          {t("common.benchmark.noTeam")}
         </CardContent>
       </Card>
     );
@@ -121,7 +123,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
 
   const renderRiderList = (riders: { name: string; joker: boolean }[]) => {
     if (!riders || riders.length === 0)
-      return <span className="text-[11px] italic text-muted-foreground/60">geen keuzes</span>;
+      return <span className="text-[11px] italic text-muted-foreground/60">{t("common.benchmark.noChoices")}</span>;
     return (
       <div className="flex flex-wrap gap-1">
         {riders.map((r, i) => (
@@ -158,7 +160,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Zoek op deelnemernaam of teamnaam..."
+              placeholder={t("common.benchmark.searchPlaceholder")}
               className="pl-9"
             />
           </div>
@@ -166,7 +168,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
           <div className="max-h-72 overflow-y-auto divide-y divide-border border border-border rounded-md bg-background/50">
             {filtered.length === 0 ? (
               <div className="p-4 text-sm text-muted-foreground text-center">
-                {query ? "Geen resultaten" : (emptyOpponentsHint ?? "Geen andere deelnemers gevonden.")}
+                {query ? t("common.benchmark.noResults") : (emptyOpponentsHint ?? t("common.benchmark.noOthers"))}
               </div>
             ) : (
               filtered.slice(0, 100).map((e, idx) => (
@@ -189,7 +191,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-display font-bold tabular-nums text-foreground">{e.total_points}</div>
-                    <div className="text-[10px] text-muted-foreground">pt totaal</div>
+                    <div className="text-[10px] text-muted-foreground">{t("common.benchmark.ptTotal")}</div>
                   </div>
                 </button>
               ))
@@ -206,12 +208,12 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
               <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
                 <div className="text-center min-w-0">
                   <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-[10px] uppercase tracking-wider text-primary font-bold">
-                    <Crown className="h-3 w-3" /> Jij
+                    <Crown className="h-3 w-3" /> {t("common.benchmark.you")}
                   </div>
                   <div className="font-display font-bold text-foreground truncate mt-2">{me.display_name}</div>
                   {me.team_name && <div className="text-xs text-muted-foreground truncate italic">{me.team_name}</div>}
                   <div className="font-display text-3xl font-bold tabular-nums text-foreground mt-2">{myStageTotal}</div>
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">pt gefiatteerd</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("common.benchmark.ptApproved")}</div>
                 </div>
                 <div className="flex flex-col items-center gap-1.5">
                   <div className={cn("rounded-full border-2 px-4 py-2 backdrop-blur-sm", diffBg(totalDiff))}>
@@ -219,21 +221,23 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
                       {fmtDiff(totalDiff)}
                     </div>
                   </div>
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">verschil</span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("common.benchmark.diff")}</span>
                 </div>
                 <div className="text-center min-w-0">
                   <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
-                    Tegenstander
+                    {t("common.benchmark.opponent")}
                   </div>
                   <div className="font-display font-bold text-foreground truncate mt-2">{opponent.display_name}</div>
                   {opponent.team_name && <div className="text-xs text-muted-foreground truncate italic">{opponent.team_name}</div>}
                   <div className="font-display text-3xl font-bold tabular-nums text-foreground mt-2">{oppStageTotal}</div>
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">pt gefiatteerd</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("common.benchmark.ptApproved")}</div>
                 </div>
               </div>
               <p className="text-[11px] text-muted-foreground text-center mt-3">
-                Berekend tot en met de laatste gefiatteerde etappe
-                {stages.length > 0 ? ` (etappe ${stages[stages.length - 1].stage_number})` : ""}.
+                {t("common.benchmark.calculatedUpTo")}
+                {stages.length > 0
+                  ? t("common.benchmark.calculatedStage", { n: stages[stages.length - 1].stage_number })
+                  : t("common.benchmark.calculatedNoStage")}
               </p>
             </div>
           </Card>
@@ -242,12 +246,12 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
           <Card className="retro-border">
             <CardHeader className="border-b-2 border-foreground bg-secondary/30 py-3">
               <CardTitle className="font-display flex items-center gap-2 text-base">
-                <Layers className="h-5 w-5 text-primary" /> Per categorie
+                <Layers className="h-5 w-5 text-primary" /> {t("common.benchmark.perCategory")}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0 divide-y divide-border">
               {categories.length === 0 && (
-                <div className="p-4 text-sm text-muted-foreground text-center">Geen categorieën gevonden.</div>
+                <div className="p-4 text-sm text-muted-foreground text-center">{t("common.benchmark.noCategories")}</div>
               )}
               {categories.map((c) => {
                 const myP = myCatPts.get(c.id) ?? 0;
@@ -275,15 +279,15 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div className="rounded-md border border-border bg-background/40 p-2">
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Jouw keuzes</span>
-                          <span className="font-display font-bold tabular-nums text-foreground text-sm">{myP} pt</span>
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("common.benchmark.yourChoices")}</span>
+                          <span className="font-display font-bold tabular-nums text-foreground text-sm">{t("common.benchmark.pt", { n: myP })}</span>
                         </div>
                         {renderRiderList(myR)}
                       </div>
                       <div className="rounded-md border border-border bg-background/40 p-2">
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Hun keuzes</span>
-                          <span className="font-display font-bold tabular-nums text-foreground text-sm">{oppP} pt</span>
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("common.benchmark.theirChoices")}</span>
+                          <span className="font-display font-bold tabular-nums text-foreground text-sm">{t("common.benchmark.pt", { n: oppP })}</span>
                         </div>
                         {renderRiderList(oppR)}
                       </div>
@@ -298,22 +302,22 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
           <Card className="retro-border">
             <CardHeader className="border-b-2 border-foreground bg-secondary/30 py-3">
               <CardTitle className="font-display flex items-center gap-2 text-base">
-                <Flag className="h-5 w-5 text-primary" /> Per etappe
+                <Flag className="h-5 w-5 text-primary" /> {t("common.benchmark.perStage")}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {stages.length === 0 ? (
                 <div className="p-4 text-sm text-muted-foreground text-center">
-                  Nog geen gefiatteerde etappes beschikbaar.
+                  {t("common.benchmark.noStages")}
                 </div>
               ) : (
                 <>
                   <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-2 px-3 py-2 border-b border-border bg-muted/30 text-[10px] uppercase tracking-wider text-muted-foreground">
                     <span className="w-8 text-center">#</span>
-                    <span>Etappe</span>
-                    <span className="text-right w-12">Jij</span>
+                    <span>{t("common.benchmark.colStage")}</span>
+                    <span className="text-right w-12">{t("common.benchmark.colYou")}</span>
                     <span className="text-center w-14">Δ</span>
-                    <span className="text-right w-12">Tegen</span>
+                    <span className="text-right w-12">{t("common.benchmark.colAgainst")}</span>
                   </div>
                   <div className="divide-y divide-border">
                     {stages.map((s) => {
@@ -328,7 +332,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
                           <div className="w-8 text-center font-display font-bold text-muted-foreground">
                             {s.stage_number}
                           </div>
-                          <div className="truncate text-foreground">{s.name ?? `Etappe ${s.stage_number}`}</div>
+                          <div className="truncate text-foreground">{s.name ?? t("common.benchmark.stageName", { n: s.stage_number })}</div>
                           <div className="text-right w-12 font-display font-bold tabular-nums text-foreground">{myP}</div>
                           <div className={cn("text-center w-14 font-mono text-xs tabular-nums", diffTone(diff))}>
                             {fmtDiff(diff)}
@@ -341,7 +345,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
                       <div className="w-8 text-center">
                         <Trophy className="h-4 w-4 text-primary mx-auto" />
                       </div>
-                      <div className="font-display font-bold text-foreground">Totaal</div>
+                      <div className="font-display font-bold text-foreground">{t("common.benchmark.total")}</div>
                       <div className="text-right w-12 font-display font-bold tabular-nums text-foreground">{myStageTotal}</div>
                       <div className={cn("text-center w-14 font-display font-bold tabular-nums", diffTone(totalDiff))}>
                         {fmtDiff(totalDiff)}
@@ -360,7 +364,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
         <Card className="retro-border border-dashed">
           <CardContent className="p-6 text-sm text-muted-foreground text-center flex flex-col items-center gap-2">
             <ArrowRight className="h-5 w-5 text-muted-foreground/60" />
-            Selecteer hierboven een deelnemer om de benchmark te starten.
+            {t("common.benchmark.selectPrompt")}
           </CardContent>
         </Card>
       )}

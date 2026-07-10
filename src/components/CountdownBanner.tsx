@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useDeadline } from "@/hooks/useDeadline";
 import { Clock, Lock, CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,7 +18,17 @@ function TimeUnit({ value, label }: { value: number; label: string }) {
 }
 
 export default function CountdownBanner({ className }: { className?: string }) {
-  const { phase, days, hours, minutes, seconds, label, closeDate, openDate } = useDeadline();
+  const { t, i18n } = useTranslation();
+  const { phase, days, hours, minutes, seconds, closeDate, openDate } = useDeadline();
+
+  // De hook levert een NL label; hier vertalen we op basis van de fase zodat
+  // de tekst de actieve taal volgt (de hook zelf blijft ongemoeid).
+  const label =
+    phase === "before_open"
+      ? t("shell.countdown.beforeOpenLabel")
+      : phase === "open"
+        ? t("shell.countdown.openLabel")
+        : t("shell.countdown.closedLabel");
 
   // Hydration-gate: de homepage wordt geprerenderd (SSG) en deze banner toont
   // tikkende tijd — de server-HTML bevat de bouwtijd-stand, de client een andere
@@ -31,7 +42,7 @@ export default function CountdownBanner({ className }: { className?: string }) {
   }
 
   const fmt = (d: Date) =>
-    d.toLocaleString("nl-NL", {
+    d.toLocaleString(i18n.language === "en" ? "en-GB" : "nl-NL", {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -47,16 +58,16 @@ export default function CountdownBanner({ className }: { className?: string }) {
           <span className="text-sm font-medium font-sans">{label}</span>
         </div>
         <div className="flex items-center justify-center gap-3 md:gap-4">
-          <TimeUnit value={days} label="dagen" />
+          <TimeUnit value={days} label={t("shell.countdown.days")} />
           <span className="font-display text-xl text-muted-foreground">:</span>
-          <TimeUnit value={hours} label="uur" />
+          <TimeUnit value={hours} label={t("shell.countdown.hours")} />
           <span className="font-display text-xl text-muted-foreground">:</span>
-          <TimeUnit value={minutes} label="min" />
+          <TimeUnit value={minutes} label={t("shell.countdown.minutes")} />
           <span className="font-display text-xl text-muted-foreground">:</span>
-          <TimeUnit value={seconds} label="sec" />
+          <TimeUnit value={seconds} label={t("shell.countdown.seconds")} />
         </div>
         <p className="text-xs text-muted-foreground mt-2 font-sans">
-          De inschrijving opent op {fmt(openDate)}.
+          {t("shell.countdown.opensOn", { date: fmt(openDate) })}
         </p>
       </div>
     );
@@ -70,16 +81,16 @@ export default function CountdownBanner({ className }: { className?: string }) {
           <span className="text-sm font-bold font-sans">{label}</span>
         </div>
         <div className="flex items-center justify-center gap-3 md:gap-4">
-          <TimeUnit value={days} label="dagen" />
+          <TimeUnit value={days} label={t("shell.countdown.days")} />
           <span className="font-display text-xl text-muted-foreground">:</span>
-          <TimeUnit value={hours} label="uur" />
+          <TimeUnit value={hours} label={t("shell.countdown.hours")} />
           <span className="font-display text-xl text-muted-foreground">:</span>
-          <TimeUnit value={minutes} label="min" />
+          <TimeUnit value={minutes} label={t("shell.countdown.minutes")} />
           <span className="font-display text-xl text-muted-foreground">:</span>
-          <TimeUnit value={seconds} label="sec" />
+          <TimeUnit value={seconds} label={t("shell.countdown.seconds")} />
         </div>
         <p className="text-xs text-muted-foreground mt-2 font-sans">
-          Deadline: {fmt(closeDate)} — daarna kun je je selectie niet meer wijzigen.
+          {t("shell.countdown.deadline", { date: fmt(closeDate) })}
         </p>
       </div>
     );
@@ -93,7 +104,7 @@ export default function CountdownBanner({ className }: { className?: string }) {
         <span className="text-sm font-medium font-sans">{label}</span>
       </div>
       <p className="text-xs text-muted-foreground mt-1 font-sans">
-        De Giro is begonnen. Selecties zijn definitief.
+        {t("shell.countdown.started")}
       </p>
     </div>
   );

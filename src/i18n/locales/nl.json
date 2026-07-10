@@ -4,7 +4,75 @@
     "logout": "Uitloggen",
     "menuOpen": "Menu openen",
     "menuClose": "Menu sluiten",
-    "languageToggle": "Taal wisselen"
+    "languageToggle": "Taal wisselen",
+    "instagramAria": "Volg Koerspoule op Instagram",
+    "instagramTitle": "Volg ons op Instagram",
+    "footer": {
+      "tagline": "\"{{subtitle}}\" — Koerspoule, uit liefde voor de koers.",
+      "mechanicalIssue": "Materiaalpech? Mail naar",
+      "tdfLink": "Tour de France wielerspel 2026",
+      "privacy": "Privacybeleid",
+      "actievoorwaarden": "Actievoorwaarden",
+      "admin": "Admin",
+      "copyright": "© 2026 Koerspoule"
+    },
+    "steun": {
+      "title": "Steun Koerspoule",
+      "aria": "Steun Koerspoule via Ko-fi",
+      "coffeeTip": "Vond je dit leuk? Steun Koerspoule met een koffie",
+      "tipClose": "Steun-tip sluiten",
+      "bannerTitle": "Steun Koerspoule ☕",
+      "bannerBody": "Bevalt Koerspoule? ☕ Met een kop koffie help je Koerspoule draaiende te houden.",
+      "treat": "Trakteer",
+      "bannerClose": "Banner sluiten"
+    },
+    "sponsors": {
+      "sectionAria": "Sponsoren",
+      "madePossible": "Mede mogelijk gemaakt door",
+      "heading": "Onze sponsors",
+      "visitAria": "Bezoek de website van {{name}}"
+    },
+    "cookie": {
+      "title": "Koers Cookies 🍪",
+      "body": "Voor de werking van de site gebruiken we <strong>functionele cookies</strong>. We tonen ook advertenties via <strong>Google AdSense</strong>; je toestemming voor advertentiecookies regel je in het aparte Google-venster. Meer info in ons <cookieLink>cookiebeleid</cookieLink>.",
+      "accept": "Begrepen!"
+    },
+    "countdown": {
+      "days": "dagen",
+      "hours": "uur",
+      "minutes": "min",
+      "seconds": "sec",
+      "beforeOpenLabel": "Inschrijving opent over",
+      "openLabel": "Inschrijving sluit over",
+      "closedLabel": "Inschrijving gesloten",
+      "opensOn": "De inschrijving opent op {{date}}.",
+      "deadline": "Deadline: {{date}} — daarna kun je je selectie niet meer wijzigen.",
+      "started": "De koers is begonnen. Selecties zijn definitief."
+    },
+    "teller": {
+      "count_one": "Al <strong>{{count}}</strong> koersliefhebber doet mee",
+      "count_other": "Al <strong>{{count}}</strong> koersliefhebbers doen mee"
+    },
+    "werving": {
+      "close": "Wervingsactie sluiten",
+      "defaultText": "Doe mee met {{name}} en strijd mee om de gele trui!",
+      "code": "code:",
+      "join": "Doe mee →"
+    },
+    "bottomNav": {
+      "aria": "Mobiele navigatie"
+    },
+    "error": {
+      "title": "Er ging iets mis",
+      "body": "Dit onderdeel kon niet geladen worden. Probeer het opnieuw of ververs de pagina.",
+      "retry": "Opnieuw proberen",
+      "reload": "Pagina verversen"
+    },
+    "loading": "Laden...",
+    "tabSwitcher": {
+      "goToAria": "Ga naar onderdeel",
+      "goToHeading": "Ga naar"
+    }
   },
   "nav": {
     "home": "Home",
@@ -13,7 +81,8 @@
     "myPeloton": "Mijn Peloton",
     "explain": "Uitleg",
     "rules": "Koersreglement",
-    "prizes": "Prijzen"
+    "prizes": "Prijzen",
+    "resultsShort": "Uitslag."
   },
   "landing": {
     "subtitleFallback": "Uit liefde voor de koers",
@@ -1254,6 +1323,183 @@
       "s8Title": "8. Slotbepalingen",
       "s8Body": "Koerspoule behoudt zich het recht voor deze voorwaarden te wijzigen, en een actie te beëindigen of aan te passen, zonder opgaaf van reden. In gevallen waarin deze voorwaarden niet voorzien, beslist Koerspoule. Op deze voorwaarden is Nederlands recht van toepassing.",
       "contact": "Vragen over de prijzen of deze voorwaarden? Neem contact op via <mail>koerspoule@gmail.com</mail>."
+    },
+    "onboarding": {
+      "close": "Onboarding sluiten",
+      "welcome": "— Welkom in het peloton —",
+      "heading": "Zo ben je in 3 stappen weg",
+      "step1Label": "Stel je ploeg samen",
+      "step1Hint": "Kies je renners per categorie.",
+      "step1Cta": "Naar de ploeg",
+      "step2Label": "Daag je vrienden uit",
+      "step2Hint": "Start een eigen subpoule.",
+      "step2Cta": "Maak een subpoule",
+      "step3Label": "Volg je punten live",
+      "step3Hint": "Vanaf de eerste etappe.",
+      "step3Cta": "Bekijk uitslagen"
+    },
+    "featurePreview": {
+      "eyebrow": "Wat krijg je?",
+      "heading": "Wielerdata zoals in de ploegleiderswagen",
+      "sub": "Subpoule-verloop, race-intensiteit en categorieën — een sport-dashboard voor jouw Giro 2026.",
+      "cat1Title": "Klassement 1",
+      "cat1Sub": "Hoofdrolspelers voor het algemeen klassement",
+      "cat2Title": "Sprinters 1",
+      "cat2Sub": "Etappekanonnen, baroudeurs en chronospecialisten",
+      "ctaTitleLoggedIn": "Klaar voor de volgende etappe?",
+      "ctaTitleGuest": "Verken vrij — speel mee met een account",
+      "ctaBodyLoggedIn": "Stel je ploeg samen of bekijk de uitslagen.",
+      "ctaBodyGuest": "Categorieën, regels en uitslagen zijn openbaar. Inzenden vraagt een gratis account.",
+      "viewResults": "Bekijk uitslagen",
+      "viewRules": "Bekijk reglement",
+      "buildTeam": "Stel je ploeg samen",
+      "makeAccount": "Maak account & doe mee",
+      "catLabel": "Giro 2026 · categorie"
+    },
+    "compare": {
+      "loading": "Laden…",
+      "noOthersSubpoule": "Nog geen andere deelnemers in deze subpoule om mee te vergelijken.",
+      "noOthersRace": "Nog geen andere deelnemers in deze koers om mee te vergelijken.",
+      "heading": "Vergelijk je team",
+      "sub": "Kies een tegenstander — team, jokers én voorspellingen naast elkaar.",
+      "searchPlaceholder": "Zoek een deelnemer…",
+      "noMatch": "Geen match.",
+      "pickPrompt": "Kies hierboven een tegenstander."
+    },
+    "benchmark": {
+      "loading": "Laden…",
+      "noTeam": "Je hebt nog geen team in deze koers. Maak eerst een team aan om te kunnen vergelijken.",
+      "noChoices": "geen keuzes",
+      "searchPlaceholder": "Zoek op deelnemernaam of teamnaam...",
+      "noResults": "Geen resultaten",
+      "noOthers": "Geen andere deelnemers gevonden.",
+      "ptTotal": "pt totaal",
+      "you": "Jij",
+      "ptApproved": "pt gefiatteerd",
+      "opponent": "Tegenstander",
+      "diff": "verschil",
+      "calculatedUpTo": "Berekend tot en met de laatste gefiatteerde etappe",
+      "calculatedStage": " (etappe {{n}}).",
+      "calculatedNoStage": ".",
+      "perCategory": "Per categorie",
+      "noCategories": "Geen categorieën gevonden.",
+      "yourChoices": "Jouw keuzes",
+      "theirChoices": "Hun keuzes",
+      "pt": "{{n}} pt",
+      "perStage": "Per etappe",
+      "noStages": "Nog geen gefiatteerde etappes beschikbaar.",
+      "colStage": "Etappe",
+      "colYou": "Jij",
+      "colAgainst": "Tegen",
+      "stageName": "Etappe {{n}}",
+      "total": "Totaal",
+      "selectPrompt": "Selecteer hierboven een deelnemer om de benchmark te starten."
+    },
+    "palmares": {
+      "empty": "Nog geen palmares",
+      "emptyHint": "Speel een koers mee om hier je erelijst te zien.",
+      "live": "🟢 Lopend",
+      "past": "Afgelopen",
+      "leader": "Leider",
+      "stageWins": "Dagzeges",
+      "podiums": "Podia",
+      "points": "Punten",
+      "poolStageWinsHeading": "Dagzeges · Poule",
+      "noStageWins": "Nog geen dagzeges — maar elke rit is een nieuwe kans.",
+      "stageLabel": "Rit {{n}}",
+      "of": "van {{total}}",
+      "hero": "🏆 PALMARES",
+      "heroSub": "Erelijst",
+      "bestRank": "Beste stand",
+      "subpouleWins": "Subpoule­wins",
+      "poolRanking": "Poule Klassement",
+      "races_one": "{{count}} koers",
+      "races_other": "{{count}} koersen",
+      "subpoules": "Subpoules",
+      "subpoulesCount_one": "{{count}} subpoule",
+      "subpoulesCount_other": "{{count}} subpoules",
+      "noSubpoules": "Word lid van een subpoule om hier je ranking te zien."
+    },
+    "riderSearch": {
+      "placeholder": "Zoek renner op naam of startnummer...",
+      "removeSelection": "Verwijder selectie",
+      "alreadyPicked": "al gekozen",
+      "alreadyInResult": "Staat al ergens in deze uitslag",
+      "noRiders": "Geen renners gevonden."
+    },
+    "riderDetail": {
+      "profileLabel": "Rennersprofiel",
+      "viewFull": "Bekijk volledig profiel op FirstCycling",
+      "noLink": "Geen FirstCycling-koppeling gevonden.",
+      "noLinkHint": "Een admin kan dit instellen in de startlijst.",
+      "loading": "Uitslagen laden...",
+      "unavailable": "Uitslagen tijdelijk niet beschikbaar.",
+      "noResults": "Geen uitslagen gevonden voor 2026.",
+      "season": "Seizoen 2026",
+      "racesCount": "{{count}} koersen",
+      "colDate": "Datum",
+      "colRace": "Koers",
+      "colCat": "Cat.",
+      "colStage": "Et.",
+      "colPos": "Pos."
+    },
+    "poolStandings": {
+      "searchPlaceholder": "Zoek deelnemer...",
+      "you": "JIJ",
+      "noResults": "Geen deelnemers gevonden voor \"{{query}}\""
+    },
+    "demoChart": {
+      "livePerformance": "Live performance",
+      "yourSubpoule": "Jouw subpoule",
+      "caption": "Etappe-evolutie · klik op een naam om te markeren",
+      "showAll": "Toon alles",
+      "hideAll": "Verberg alles",
+      "dblToHide": "Dubbelklik om te verbergen",
+      "clickToShow": "Klik om te tonen",
+      "now": "NU",
+      "stage": "Etappe",
+      "cumulative": "Cumulatieve punten"
+    },
+    "tactique": {
+      "subtitle": "Uniek vs populair per categorie",
+      "tacticus": "Koers Tacticus",
+      "you": "Jij",
+      "overlap": "Overlap",
+      "average": "gemiddeld",
+      "view": "Weergave",
+      "modeSolo": "Solo's",
+      "modeDifferences": "Verschillen",
+      "modePeloton": "Peloton",
+      "raceMode": "Koersmodus",
+      "uniqueCount": "{{n}} uniek",
+      "compare": "Vergelijk",
+      "all": "Alles",
+      "onlyMe": "Alleen ik",
+      "reset": "Reset",
+      "solos": "🔥 Solo's",
+      "differences": "🚴 Verschillen",
+      "standing": "🏁 Klassement",
+      "panache": "🦚 Panache",
+      "legendGradient": "Donker = uniek · Licht = populair",
+      "yourTeam": "Jouw team",
+      "heatUnique": "Uniek",
+      "heatRare": "Zeldzaam",
+      "heatAverage": "Gemiddeld",
+      "heatPopular": "Populair",
+      "heatVeryPopular": "Heel populair",
+      "uniquePick": "Unieke keuze! 🔥",
+      "uniqueJoker": "Unieke joker! 🔥",
+      "othersPick_one": "{{count}} ander koos ook deze renner",
+      "othersPick_other": "{{count}} anderen kozen ook deze renner",
+      "othersJoker_one": "{{count}} ander koos ook deze joker",
+      "othersJoker_other": "{{count}} anderen kozen ook deze joker",
+      "playersOf": "{{count}}/{{total}} spelers ({{pct}}%)"
+    },
+    "jersey": {
+      "leader": "Leiderstrui",
+      "mountain": "Bergkoning",
+      "sprint": "Sprintklassement",
+      "young": "Jongerentrui"
     }
   }
 }

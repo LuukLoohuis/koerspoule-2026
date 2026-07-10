@@ -10,6 +10,7 @@
  */
 import { useState } from "react";
 import type { ComponentType } from "react";
+import { useTranslation } from "react-i18next";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ListTree, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ export default function FloatingTabSwitcher({
    *  override bv. naar "bottom-[136px]" als er nóg een zweefknop onder staat. */
   offsetClassName?: string;
 }) {
+  const { t: translate } = useTranslation();
   const [open, setOpen] = useState(false);
   const select = (key: string) => {
     onChange(key);
@@ -75,7 +77,7 @@ export default function FloatingTabSwitcher({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label="Ga naar onderdeel"
+          aria-label={translate("shell.tabSwitcher.goToAria")}
           className={cn("md:hidden fixed right-4 z-40 inline-flex items-center justify-center h-12 w-12 rounded-full bg-card text-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all", offsetClassName)}
         >
           <ListTree className="h-5 w-5" />
@@ -89,7 +91,7 @@ export default function FloatingTabSwitcher({
       >
         <div className="flex items-center gap-2 px-3 py-2 border-b-2 border-foreground bg-[hsl(var(--vintage-gold))] text-foreground font-mono uppercase tracking-[0.2em] text-[10px] font-bold">
           <ArrowUpDown className="h-3.5 w-3.5" />
-          Ga naar
+          {translate("shell.tabSwitcher.goToHeading")}
         </div>
         <div className="p-1">
           {tabs.map((t) => {

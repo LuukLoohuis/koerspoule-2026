@@ -1,12 +1,15 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Newspaper, Flag, Users, Bike, Car } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useThema } from "@/contexts/ThemaContext";
 
 type NavItem = {
   label: string;
+  labelKey?: string; // i18n-sleutel; wint van label wanneer gezet
   labelXs?: string;
+  labelXsKey?: string;
   icon: LucideIcon;
   to: string;
   tab?: string;
@@ -17,7 +20,7 @@ const NAV: NavItem[] = [
   { label: "Gazetta",        icon: Newspaper, to: "/karavaan", krant: true },
   { label: "Volgwagen",      icon: Car,       to: "/mijn-peloton", tab: "team" },
   { label: "Subpoule",       icon: Users,     to: "/mijn-peloton", tab: "subpoules" },
-  { label: "Uitslagen",      labelXs: "Uitslag.", icon: Flag, to: "/uitslagen" },
+  { label: "Uitslagen",      labelKey: "nav.results", labelXsKey: "nav.resultsShort", icon: Flag, to: "/uitslagen" },
   { label: "Hors Catégorie", labelXs: "Hors Cat.", icon: Bike, to: "/mijn-peloton", tab: "hors" },
 ];
 
@@ -25,20 +28,22 @@ export default function BottomNav() {
   const { pathname, search } = useLocation();
   const navigate = useNavigate();
   const { thema } = useThema();
+  const { t } = useTranslation();
   const tabParam = new URLSearchParams(search).get("tab");
 
   const isMijnPeloton = pathname.startsWith("/mijn-peloton");
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" aria-label="Mobiele navigatie">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" aria-label={t("shell.bottomNav.aria")}>
       {/* Accent gradient rule — volgt thema */}
       <div className="h-[2px] bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
 
       <div
         className="grid grid-cols-5 border-t border-border/60 bg-card pb-[env(safe-area-inset-bottom)]"
       >
-        {NAV.map(({ label, labelXs, icon: Icon, to, tab, krant }) => {
-          const shownLabel = krant ? thema.krant : label;
+        {NAV.map(({ label, labelKey, labelXs, labelXsKey, icon: Icon, to, tab, krant }) => {
+          const shownLabel = krant ? thema.krant : labelKey ? t(labelKey) : label;
+          const shownLabelXs = labelXsKey ? t(labelXsKey) : labelXs;
           let active = false;
           if (tab === "team") {
             // Volgwagen = /mijn-peloton zonder tab-param of met tab=team
@@ -84,10 +89,10 @@ export default function BottomNav() {
                 "text-[10px] font-bold uppercase tracking-[0.06em] leading-none relative z-10 whitespace-nowrap",
                 active && "text-primary",
               )}>
-                {labelXs ? (
+                {shownLabelXs ? (
                   <>
                     <span className="[@media(max-width:480px)]:hidden">{shownLabel}</span>
-                    <span className="hidden [@media(max-width:480px)]:inline">{labelXs}</span>
+                    <span className="hidden [@media(max-width:480px)]:inline">{shownLabelXs}</span>
                   </>
                 ) : (
                   shownLabel

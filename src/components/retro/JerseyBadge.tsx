@@ -1,28 +1,29 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 type JerseyColor = "yellow" | "polka" | "green" | "white";
 
-const PALETTE: Record<JerseyColor, { fill: string; stroke: string; pattern?: string; label: string }> = {
+const PALETTE: Record<JerseyColor, { fill: string; stroke: string; pattern?: string; labelKey: string }> = {
   yellow: {
     fill: "hsl(var(--maillot-jaune))",
     stroke: "hsl(var(--maillot-jaune-dark))",
-    label: "Leiderstrui",
+    labelKey: "common.jersey.leader",
   },
   polka: {
     fill: "hsl(var(--maillot-wit))",
     stroke: "hsl(var(--bolletjes-bright))",
     pattern: "polka",
-    label: "Bergkoning",
+    labelKey: "common.jersey.mountain",
   },
   green: {
     fill: "hsl(var(--maillot-groen))",
     stroke: "hsl(var(--maillot-groen) / 0.7)",
-    label: "Sprintklassement",
+    labelKey: "common.jersey.sprint",
   },
   white: {
     fill: "hsl(var(--maillot-wit))",
     stroke: "hsl(var(--ink) / 0.5)",
-    label: "Jongerentrui",
+    labelKey: "common.jersey.young",
   },
 };
 
@@ -43,7 +44,9 @@ export default function JerseyBadge({
   className?: string;
   title?: string;
 }) {
+  const { t } = useTranslation();
   const meta = PALETTE[color];
+  const label = title ?? t(meta.labelKey);
   const patternId = `jersey-${color}-${size}`;
 
   return (
@@ -52,10 +55,10 @@ export default function JerseyBadge({
       height={size}
       viewBox="0 0 24 24"
       role="img"
-      aria-label={title ?? meta.label}
+      aria-label={label}
       className={cn("inline-block shrink-0", className)}
     >
-      <title>{title ?? meta.label}</title>
+      <title>{label}</title>
       <defs>
         {meta.pattern === "polka" && (
           <pattern id={patternId} x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">

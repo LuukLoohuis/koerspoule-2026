@@ -1,4 +1,5 @@
 import { Mountain, Users, Crown, Star, Trophy } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import FlagIcon from "@/components/FlagIcon";
 import { usePalmares, type PalmaresGame, type PalmaresSubpoule, type StageDagzege } from "@/hooks/usePalmares";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,7 @@ function gameTypeToCountry(type: string | null): "IT" | "FR" | "ES" {
 // ── RankBadge ──────────────────────────────────────────────────
 
 function RankBadge({ rank, total }: { rank: number; total: number }) {
+  const { t } = useTranslation();
   const isFirst = rank === 1;
   const isSecond = rank === 2;
   const isThird = rank === 3;
@@ -47,7 +49,7 @@ function RankBadge({ rank, total }: { rank: number; total: number }) {
           #{rank}
         </span>
       </div>
-      <p className="text-[10px] text-muted-foreground/70 font-sans">van {total}</p>
+      <p className="text-[10px] text-muted-foreground/70 font-sans">{t("common.palmares.of", { total })}</p>
     </div>
   );
 }
@@ -55,6 +57,7 @@ function RankBadge({ rank, total }: { rank: number; total: number }) {
 // ── DagzegeRow ─────────────────────────────────────────────────
 
 function DagzegeRow({ dz }: { dz: StageDagzege }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
       <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-amber-500/15 border border-amber-500/30">
@@ -62,7 +65,7 @@ function DagzegeRow({ dz }: { dz: StageDagzege }) {
       </div>
       <div className="flex items-center gap-1.5 flex-1 min-w-0">
         <span className="font-display font-bold text-sm text-amber-700 shrink-0">
-          Rit {dz.stage_number}
+          {t("common.palmares.stageLabel", { n: dz.stage_number })}
         </span>
         {dz.stage_name && (
           <span className="text-xs text-muted-foreground truncate hidden sm:block">
@@ -81,6 +84,7 @@ function DagzegeRow({ dz }: { dz: StageDagzege }) {
 // ── GameSection ────────────────────────────────────────────────
 
 function GameSection({ g }: { g: PalmaresGame }) {
+  const { t } = useTranslation();
   const country = gameTypeToCountry(g.game_type);
   const isLive = ["active", "live", "open", "open_inschrijving", "locked"].includes(g.status);
 
@@ -92,12 +96,12 @@ function GameSection({ g }: { g: PalmaresGame }) {
         <div className="flex-1 min-w-0">
           <h3 className="font-display font-bold text-sm text-foreground truncate">{g.game_name}</h3>
           <p className="text-[10px] text-muted-foreground">
-            {isLive ? "🟢 Lopend" : g.year ? `${g.year}` : "Afgelopen"}
+            {isLive ? t("common.palmares.live") : g.year ? `${g.year}` : t("common.palmares.past")}
           </p>
         </div>
         {g.my_rank === 1 && (
           <span className="shrink-0 text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/30">
-            Leider
+            {t("common.palmares.leader")}
           </span>
         )}
       </div>
@@ -108,15 +112,15 @@ function GameSection({ g }: { g: PalmaresGame }) {
         <div className="flex-1 grid grid-cols-3 gap-2 pt-1">
           <div className="rounded-xl border border-border/70 bg-secondary/50 py-2.5 px-1 text-center">
             <p className="font-display text-xl font-black text-amber-600">{g.stage_wins}</p>
-            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Dagzeges</p>
+            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{t("common.palmares.stageWins")}</p>
           </div>
           <div className="rounded-xl border border-border/70 bg-secondary/50 py-2.5 px-1 text-center">
             <p className="font-display text-xl font-black text-foreground">{g.stage_podiums}</p>
-            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Podia</p>
+            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{t("common.palmares.podiums")}</p>
           </div>
           <div className="rounded-xl border border-border/70 bg-secondary/50 py-2.5 px-1 text-center">
             <p className="font-display text-xl font-black text-foreground">{g.approved_points}</p>
-            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Punten</p>
+            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{t("common.palmares.points")}</p>
           </div>
         </div>
       </div>
@@ -127,7 +131,7 @@ function GameSection({ g }: { g: PalmaresGame }) {
           <div className="flex items-center gap-2">
             <Trophy className="w-3.5 h-3.5 text-amber-500/70" />
             <span className="text-[10px] uppercase tracking-[0.2em] text-amber-500/60">
-              Dagzeges · Poule
+              {t("common.palmares.poolStageWinsHeading")}
             </span>
           </div>
           <div className="space-y-1.5">
@@ -138,7 +142,7 @@ function GameSection({ g }: { g: PalmaresGame }) {
         </div>
       ) : (
         <p className="text-xs text-muted-foreground/60 italic font-serif text-center py-1">
-          Nog geen dagzeges — maar elke rit is een nieuwe kans.
+          {t("common.palmares.noStageWins")}
         </p>
       )}
     </div>
@@ -148,6 +152,7 @@ function GameSection({ g }: { g: PalmaresGame }) {
 // ── SubpouleSection ────────────────────────────────────────────
 
 function SubpouleSection({ s }: { s: PalmaresSubpoule }) {
+  const { t } = useTranslation();
   const country = gameTypeToCountry(s.game_type);
   const medal =
     s.my_rank === 1 ? "🥇" : s.my_rank === 2 ? "🥈" : s.my_rank === 3 ? "🥉" : null;
@@ -186,11 +191,11 @@ function SubpouleSection({ s }: { s: PalmaresSubpoule }) {
       <div className="flex gap-2">
         <div className="flex-1 rounded-xl border border-border/70 bg-secondary/50 py-2 text-center">
           <p className="font-display font-bold text-amber-600">{s.stage_wins}</p>
-          <p className="text-[10px] text-muted-foreground">Dagzeges</p>
+          <p className="text-[10px] text-muted-foreground">{t("common.palmares.stageWins")}</p>
         </div>
         <div className="flex-1 rounded-xl border border-border/70 bg-secondary/50 py-2 text-center">
           <p className="font-display font-bold text-foreground">{s.stage_podiums}</p>
-          <p className="text-[10px] text-muted-foreground">Podia</p>
+          <p className="text-[10px] text-muted-foreground">{t("common.palmares.podiums")}</p>
         </div>
       </div>
     </div>
@@ -213,6 +218,7 @@ function PalmaresSkeleton() {
 // ── Main component ─────────────────────────────────────────────
 
 export default function PalmaresPanel() {
+  const { t } = useTranslation();
   const { data, isLoading } = usePalmares();
   const games = data?.games ?? [];
   const subpoules = data?.subpoules ?? [];
@@ -230,9 +236,9 @@ export default function PalmaresPanel() {
     return (
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center">
         <Trophy className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
-        <p className="font-display font-bold text-muted-foreground mb-1">Nog geen palmares</p>
+        <p className="font-display font-bold text-muted-foreground mb-1">{t("common.palmares.empty")}</p>
         <p className="text-sm text-muted-foreground/70 italic font-serif">
-          Speel een koers mee om hier je erelijst te zien.
+          {t("common.palmares.emptyHint")}
         </p>
       </div>
     );
@@ -246,33 +252,33 @@ export default function PalmaresPanel() {
         <div className="relative">
           <div className="flex items-baseline gap-2 mb-1">
             <h2 className="font-display font-black text-2xl md:text-3xl text-foreground tracking-wide uppercase">
-              🏆 PALMARES
+              {t("common.palmares.hero")}
             </h2>
           </div>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-6">Erelijst</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-6">{t("common.palmares.heroSub")}</p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* Total dagzeges */}
             <div className="text-center p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
               <p className="font-display font-black text-2xl text-amber-600">{totalDagzeges}</p>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">Dagzeges</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">{t("common.palmares.stageWins")}</p>
             </div>
             {/* Total podiums */}
             <div className="text-center p-3 rounded-xl bg-secondary/50 border border-border/70">
               <p className="font-display font-black text-2xl text-foreground">{totalPodiums}</p>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">Podia</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">{t("common.palmares.podiums")}</p>
             </div>
             {/* Best pool rank */}
             <div className="text-center p-3 rounded-xl bg-secondary/50 border border-border/70">
               <p className="font-display font-black text-2xl text-foreground">
                 {bestPoolRank ? `#${bestPoolRank}` : "—"}
               </p>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">Beste stand</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">{t("common.palmares.bestRank")}</p>
             </div>
             {/* Subpoule wins */}
             <div className="text-center p-3 rounded-xl bg-emerald-50 border border-emerald-500/20">
               <p className="font-display font-black text-2xl text-emerald-600">{subWins}</p>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">Subpoule­wins</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">{t("common.palmares.subpouleWins")}</p>
             </div>
           </div>
         </div>
@@ -283,10 +289,10 @@ export default function PalmaresPanel() {
         <div className="flex items-center gap-2 px-1">
           <Mountain className="w-3.5 h-3.5 text-muted-foreground" />
           <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            Poule Klassement
+            {t("common.palmares.poolRanking")}
           </span>
           <span className="ml-auto text-[10px] text-muted-foreground/60">
-            {games.length} koers{games.length === 1 ? "" : "en"}
+            {t("common.palmares.races", { count: games.length })}
           </span>
         </div>
         {games.map((g) => (
@@ -298,10 +304,10 @@ export default function PalmaresPanel() {
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-1">
           <Users className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Subpoules</span>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{t("common.palmares.subpoules")}</span>
           {subpoules.length > 0 && (
             <span className="ml-auto text-[10px] text-muted-foreground/60">
-              {subpoules.length} subpoule{subpoules.length === 1 ? "" : "s"}
+              {t("common.palmares.subpoulesCount", { count: subpoules.length })}
             </span>
           )}
         </div>
@@ -311,7 +317,7 @@ export default function PalmaresPanel() {
           <div className="relative overflow-hidden rounded-2xl border border-border bg-secondary/40 p-6 text-center">
             <Users className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
             <p className="text-xs text-muted-foreground/70 italic font-serif">
-              Word lid van een subpoule om hier je ranking te zien.
+              {t("common.palmares.noSubpoules")}
             </p>
           </div>
         )}

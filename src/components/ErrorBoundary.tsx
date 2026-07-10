@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import i18n from "@/i18n";
 
 type Props = { children: ReactNode };
 type State = { error: Error | null };
@@ -25,9 +26,9 @@ export default class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-[60vh] flex items-center justify-center p-6">
           <div className="retro-border bg-card max-w-md w-full p-6 text-center space-y-4">
-            <h2 className="font-display text-xl font-bold">Er ging iets mis</h2>
+            <h2 className="font-display text-xl font-bold">{i18n.t("shell.error.title")}</h2>
             <p className="text-sm text-muted-foreground">
-              Dit onderdeel kon niet geladen worden. Probeer het opnieuw of ververs de pagina.
+              {i18n.t("shell.error.body")}
             </p>
             <pre className="text-[10px] text-left text-rose-600 bg-rose-50 border border-rose-200 rounded p-2 overflow-auto max-h-32 whitespace-pre-wrap">
               {this.state.error.message}
@@ -37,13 +38,13 @@ export default class ErrorBoundary extends Component<Props, State> {
                 onClick={() => this.setState({ error: null })}
                 className="px-3 py-1.5 text-sm font-medium border border-foreground/30 rounded hover:bg-secondary transition-colors"
               >
-                Opnieuw proberen
+                {i18n.t("shell.error.retry")}
               </button>
               <button
                 onClick={() => window.location.reload()}
                 className="px-3 py-1.5 text-sm font-medium border border-foreground/30 rounded hover:bg-secondary transition-colors"
               >
-                Pagina verversen
+                {i18n.t("shell.error.reload")}
               </button>
             </div>
           </div>

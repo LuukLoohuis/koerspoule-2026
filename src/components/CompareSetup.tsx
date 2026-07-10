@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search, Swords, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntries } from "@/hooks/useResults";
@@ -25,6 +26,7 @@ export default function CompareSetup({
   gameId?: string;
   subpouleId?: string;
 }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data: entries = [], isLoading: entriesLoading } = useEntries(gameId);
   const { data: members = [] } = useSubpouleMembers(subpouleId);
@@ -80,7 +82,7 @@ export default function CompareSetup({
 
   if (entriesLoading) {
     return (
-      <div className="retro-border bg-card p-4 text-sm text-muted-foreground">Laden…</div>
+      <div className="retro-border bg-card p-4 text-sm text-muted-foreground">{t("common.compare.loading")}</div>
     );
   }
 
@@ -88,8 +90,8 @@ export default function CompareSetup({
     return (
       <div className="retro-border bg-card p-6 text-sm text-muted-foreground text-center">
         {subpouleId
-          ? "Nog geen andere deelnemers in deze subpoule om mee te vergelijken."
-          : "Nog geen andere deelnemers in deze koers om mee te vergelijken."}
+          ? t("common.compare.noOthersSubpoule")
+          : t("common.compare.noOthersRace")}
       </div>
     );
   }
@@ -102,9 +104,9 @@ export default function CompareSetup({
         <div className="p-4 border-b-2 border-foreground bg-secondary/50 flex items-center gap-2">
           <Swords className="h-5 w-5 text-primary" />
           <div className="min-w-0">
-            <h2 className="font-display text-lg font-bold leading-tight">Vergelijk je team</h2>
+            <h2 className="font-display text-lg font-bold leading-tight">{t("common.compare.heading")}</h2>
             <p className="text-[11px] text-muted-foreground">
-              Kies een tegenstander — team, jokers én voorspellingen naast elkaar.
+              {t("common.compare.sub")}
             </p>
           </div>
         </div>
@@ -117,7 +119,7 @@ export default function CompareSetup({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Zoek een deelnemer…"
+              placeholder={t("common.compare.searchPlaceholder")}
               className="w-full h-10 pl-9 pr-3 text-base rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
             />
           </div>
@@ -126,7 +128,7 @@ export default function CompareSetup({
         {/* Kandidatenlijst — horizontaal scrollende chips */}
         <div className="flex gap-1.5 overflow-x-auto p-2.5 no-scrollbar">
           {filtered.length === 0 ? (
-            <span className="text-sm text-muted-foreground italic px-1 py-1.5">Geen match.</span>
+            <span className="text-sm text-muted-foreground italic px-1 py-1.5">{t("common.compare.noMatch")}</span>
           ) : (
             filtered.map((o) => {
               const active = o.user_id === selectedId;
@@ -174,7 +176,7 @@ export default function CompareSetup({
         />
       ) : (
         <div className="retro-border bg-card p-6 text-sm text-muted-foreground text-center flex items-center justify-center gap-2">
-          <Users className="h-4 w-4" /> Kies hierboven een tegenstander.
+          <Users className="h-4 w-4" /> {t("common.compare.pickPrompt")}
         </div>
       )}
     </div>

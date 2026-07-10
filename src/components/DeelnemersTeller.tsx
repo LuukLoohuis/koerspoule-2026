@@ -1,12 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Users } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 import { supabase } from "@/lib/supabase";
 
 // Onder deze drempel tonen we de teller niet (lage beginstand schrikt af).
 // Makkelijk aanpasbaar.
 const MIN_DEELNEMERS_TONEN = 100;
-
-const nlFormat = new Intl.NumberFormat("nl-NL");
 
 /**
  * Subtiel sociaal bewijs op de homepage (variant C): "Al <N> koersliefhebbers
@@ -15,6 +14,8 @@ const nlFormat = new Intl.NumberFormat("nl-NL");
  * geen layout-sprong, geen afschrikkende lage stand.
  */
 export default function DeelnemersTeller({ className }: { className?: string }) {
+  const { i18n } = useTranslation();
+  const nf = new Intl.NumberFormat(i18n.language === "en" ? "en-GB" : "nl-NL");
   const { data } = useQuery({
     queryKey: ["count-deelnemers"],
     enabled: Boolean(supabase),
@@ -38,7 +39,12 @@ export default function DeelnemersTeller({ className }: { className?: string }) 
     >
       <Users className="h-4 w-4 text-[hsl(var(--vintage-gold))] shrink-0" aria-hidden />
       <span className="text-muted-foreground">
-        Al <strong className="font-display font-bold tabular-nums text-[hsl(var(--vintage-gold))]">{nlFormat.format(data)}</strong> koersliefhebbers doen mee
+        <Trans
+          i18nKey="shell.teller.count"
+          count={data}
+          values={{ count: nf.format(data) }}
+          components={{ strong: <strong className="font-display font-bold tabular-nums text-[hsl(var(--vintage-gold))]" /> }}
+        />
       </span>
     </div>
   );

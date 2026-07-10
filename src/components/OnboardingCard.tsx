@@ -6,6 +6,7 @@
  */
 import { useState } from "react";
 import { Check, X, Users, Share2, LineChart } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 const KEY = "kp_onboarding_dismissed";
@@ -27,6 +28,7 @@ export default function OnboardingCard({
   onSubpoule: () => void;
   onResults: () => void;
 }) {
+  const { t } = useTranslation();
   const [dismissed, setDismissed] = useState(() => {
     try { return localStorage.getItem(KEY) === "1"; } catch { return false; }
   });
@@ -40,9 +42,9 @@ export default function OnboardingCard({
   };
 
   const steps: Step[] = [
-    { label: "Stel je ploeg samen", hint: "Kies je renners per categorie.", done: hasTeam, cta: "Naar de ploeg", Icon: Users, onClick: onTeam },
-    { label: "Daag je vrienden uit", hint: "Start een eigen subpoule.", done: inSubpoule, cta: "Maak een subpoule", Icon: Share2, onClick: onSubpoule },
-    { label: "Volg je punten live", hint: "Vanaf de eerste etappe.", done: liveTracking, cta: "Bekijk uitslagen", Icon: LineChart, onClick: onResults },
+    { label: t("common.onboarding.step1Label"), hint: t("common.onboarding.step1Hint"), done: hasTeam, cta: t("common.onboarding.step1Cta"), Icon: Users, onClick: onTeam },
+    { label: t("common.onboarding.step2Label"), hint: t("common.onboarding.step2Hint"), done: inSubpoule, cta: t("common.onboarding.step2Cta"), Icon: Share2, onClick: onSubpoule },
+    { label: t("common.onboarding.step3Label"), hint: t("common.onboarding.step3Hint"), done: liveTracking, cta: t("common.onboarding.step3Cta"), Icon: LineChart, onClick: onResults },
   ];
 
   return (
@@ -50,13 +52,13 @@ export default function OnboardingCard({
       <button
         type="button"
         onClick={close}
-        aria-label="Onboarding sluiten"
+        aria-label={t("common.onboarding.close")}
         className="absolute top-2 right-2 p-1 text-muted-foreground/70 hover:text-foreground"
       >
         <X className="h-4 w-4" />
       </button>
-      <p className="overline-stamp mb-0.5">— Welkom in het peloton —</p>
-      <h2 className="font-display font-black text-lg md:text-xl mb-3">Zo ben je in 3 stappen weg</h2>
+      <p className="overline-stamp mb-0.5">{t("common.onboarding.welcome")}</p>
+      <h2 className="font-display font-black text-lg md:text-xl mb-3">{t("common.onboarding.heading")}</h2>
       <ol className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {steps.map((s, i) => (
           <li

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Megaphone, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePromotedSubpoules } from "@/hooks/usePromotedSubpoules";
@@ -13,6 +14,7 @@ import { usePromotedSubpoules } from "@/hooks/usePromotedSubpoules";
  */
 export default function WervingStrook({ className }: { className?: string }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data = [] } = usePromotedSubpoules();
   const promo = data[0];
   const dismissKey = promo ? `werving-dismissed:${promo.code}` : "";
@@ -22,7 +24,7 @@ export default function WervingStrook({ className }: { className?: string }) {
 
   if (!promo || dismissed) return null;
 
-  const tekst = promo.promote_text?.trim() || `Doe mee met ${promo.name} en strijd mee om de gele trui!`;
+  const tekst = promo.promote_text?.trim() || t("shell.werving.defaultText", { name: promo.name });
 
   const close = () => {
     try { sessionStorage.setItem(dismissKey, "1"); } catch { /* sessie zonder storage */ }
@@ -34,7 +36,7 @@ export default function WervingStrook({ className }: { className?: string }) {
         <button
           type="button"
           onClick={close}
-          aria-label="Wervingsactie sluiten"
+          aria-label={t("shell.werving.close")}
           className="absolute top-2 right-2 text-muted-foreground/60 hover:text-foreground"
         >
           <X className="w-4 h-4" />
@@ -46,7 +48,7 @@ export default function WervingStrook({ className }: { className?: string }) {
             <p className="font-display font-bold leading-tight">{promo.name}</p>
             <p className="text-sm text-muted-foreground font-serif leading-snug">{tekst}</p>
             <p className="mt-1 text-xs font-mono uppercase tracking-wider text-muted-foreground">
-              code: <span className="font-bold text-foreground">{promo.code}</span>
+              {t("shell.werving.code")} <span className="font-bold text-foreground">{promo.code}</span>
             </p>
           </div>
         </div>
@@ -55,7 +57,7 @@ export default function WervingStrook({ className }: { className?: string }) {
           className="retro-border-primary font-bold shrink-0 w-full sm:w-auto"
           onClick={() => navigate(`/mijn-peloton?tab=subpoules&join=${encodeURIComponent(promo.code)}`)}
         >
-          Doe mee →
+          {t("shell.werving.join")}
         </Button>
     </div>
   );

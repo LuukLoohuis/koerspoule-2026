@@ -11,18 +11,20 @@
  */
 import { useEffect, useState } from "react";
 import { Coffee, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 export const STEUN_URL = "https://ko-fi.com/koerspoule";
 
 export function SteunKopgroepPill({ className }: { className?: string }) {
+  const { t } = useTranslation();
   return (
     <a
       href={STEUN_URL}
       target="_blank"
       rel="noopener noreferrer"
-      title="Steun Koerspoule"
-      aria-label="Steun Koerspoule via Ko-fi"
+      title={t("shell.steun.title")}
+      aria-label={t("shell.steun.aria")}
       className={cn(
         "group inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10",
         "min-h-[36px] px-2.5 py-1 text-primary text-[11px] font-serif italic",
@@ -31,21 +33,23 @@ export function SteunKopgroepPill({ className }: { className?: string }) {
       )}
     >
       <Coffee className="kp-coffee-steam h-5 w-5 sm:h-4 sm:w-4 shrink-0" />
-      {/* Label altijd zichtbaar (ook op mobiel). */}
-      <span className="whitespace-nowrap">Steun Koerspoule</span>
+      {/* Label altijd zichtbaar (ook op mobiel). Merknaam — identiek in beide talen. */}
+      <span className="whitespace-nowrap">{t("shell.steun.title")}</span>
     </a>
   );
 }
 
 export function SteunMoment({
   storageKey,
-  text = "Vond je dit leuk? Steun Koerspoule met een koffie",
+  text,
   className,
 }: {
   storageKey: string;
   text?: string;
   className?: string;
 }) {
+  const { t } = useTranslation();
+  const shownText = text ?? t("shell.steun.coffeeTip");
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
@@ -85,12 +89,12 @@ export function SteunMoment({
         rel="noopener noreferrer"
         className="min-w-0 flex-1 truncate text-primary not-italic font-sans font-semibold hover:underline"
       >
-        {text}
+        {shownText}
       </a>
       <button
         type="button"
         onClick={dismiss}
-        aria-label="Steun-tip sluiten"
+        aria-label={t("shell.steun.tipClose")}
         className="-mr-1 shrink-0 p-1 text-muted-foreground/60 hover:text-foreground"
       >
         <X className="h-3.5 w-3.5" />
@@ -107,6 +111,7 @@ export function SteunMoment({
  * Geen modal/overlay.
  */
 export function SteunBanner({ revKey, className }: { revKey?: string | null; className?: string }) {
+  const { t } = useTranslation();
   const storageKey = `kp_steun_banner_dismissed_v1:${revKey ?? "default"}`;
   const [hidden, setHidden] = useState(true);
 
@@ -145,9 +150,9 @@ export function SteunBanner({ revKey, className }: { revKey?: string | null; cla
           <Coffee className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-display font-bold leading-tight">Steun Koerspoule ☕</p>
+          <p className="font-display font-bold leading-tight">{t("shell.steun.bannerTitle")}</p>
           <p className="text-xs text-muted-foreground font-serif italic">
-            Bevalt Koerspoule? ☕ Met een kop koffie help je Koerspoule draaiende te houden.
+            {t("shell.steun.bannerBody")}
           </p>
         </div>
         <a
@@ -156,12 +161,12 @@ export function SteunBanner({ revKey, className }: { revKey?: string | null; cla
           rel="noopener noreferrer"
           className="shrink-0 inline-flex items-center gap-1.5 rounded-md border-2 border-foreground bg-primary px-3 py-1.5 text-xs font-display font-bold text-primary-foreground shadow-[2px_2px_0_hsl(var(--foreground))] transition-transform hover:-translate-y-0.5 active:translate-y-px"
         >
-          Trakteer
+          {t("shell.steun.treat")}
         </a>
         <button
           type="button"
           onClick={dismiss}
-          aria-label="Banner sluiten"
+          aria-label={t("shell.steun.bannerClose")}
           className="-mr-1 shrink-0 self-start p-1 text-muted-foreground/60 hover:text-foreground"
         >
           <X className="h-4 w-4" />

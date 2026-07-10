@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Lock, Mountain, Bike } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import DemoEvolutionChart from "@/components/DemoEvolutionChart";
 import DemoSubpouleHeatmap from "@/components/DemoSubpouleHeatmap";
@@ -22,6 +23,7 @@ const SPRINTERS_1_RIDERS: PreviewRider[] = [
 
 export default function FeaturePreview() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const isLoggedIn = Boolean(user);
 
@@ -40,15 +42,15 @@ export default function FeaturePreview() {
         <div className="vintage-ornament max-w-xs mx-auto mb-4">
           <span className="vintage-ornament-symbol">✦</span>
           <span className="text-xs tracking-[0.3em] uppercase text-muted-foreground font-serif">
-            Wat krijg je?
+            {t("common.featurePreview.eyebrow")}
           </span>
           <span className="vintage-ornament-symbol">✦</span>
         </div>
         <h2 className="vintage-heading text-2xl md:text-3xl font-bold mb-2">
-          Wielerdata zoals in de ploegleiderswagen
+          {t("common.featurePreview.heading")}
         </h2>
         <p className="text-muted-foreground font-serif italic">
-          Subpoule-verloop, race-intensiteit en categorieën — een sport-dashboard voor jouw Giro 2026.
+          {t("common.featurePreview.sub")}
         </p>
       </div>
 
@@ -61,14 +63,14 @@ export default function FeaturePreview() {
       {/* Two category blocks */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
         <RiderBlock
-          title="Klassement 1"
-          subtitle="Hoofdrolspelers voor het algemeen klassement"
+          title={t("common.featurePreview.cat1Title")}
+          subtitle={t("common.featurePreview.cat1Sub")}
           icon={<Mountain className="h-5 w-5 text-primary" />}
           riders={KLASSEMENT_1_RIDERS}
         />
         <RiderBlock
-          title="Sprinters 1"
-          subtitle="Etappekanonnen, baroudeurs en chronospecialisten"
+          title={t("common.featurePreview.cat2Title")}
+          subtitle={t("common.featurePreview.cat2Sub")}
           icon={<Bike className="h-5 w-5 text-primary" />}
           riders={SPRINTERS_1_RIDERS}
         />
@@ -78,12 +80,12 @@ export default function FeaturePreview() {
       <div className="ornate-frame retro-border bg-gradient-to-r from-card via-secondary/40 to-card p-4 flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="text-center md:text-left">
           <p className="font-display font-bold text-lg mb-1">
-            {isLoggedIn ? "Klaar voor de volgende etappe?" : "Verken vrij — speel mee met een account"}
+            {isLoggedIn ? t("common.featurePreview.ctaTitleLoggedIn") : t("common.featurePreview.ctaTitleGuest")}
           </p>
           <p className="text-sm text-muted-foreground font-serif italic">
             {isLoggedIn
-              ? "Stel je ploeg samen of bekijk de uitslagen."
-              : "Categorieën, regels en uitslagen zijn openbaar. Inzenden vraagt een gratis account."}
+              ? t("common.featurePreview.ctaBodyLoggedIn")
+              : t("common.featurePreview.ctaBodyGuest")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 justify-center">
@@ -92,13 +94,13 @@ export default function FeaturePreview() {
             onClick={handleResultsClick}
             className="px-4 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors inline-flex items-center gap-1.5"
           >
-            Bekijk uitslagen
+            {t("common.featurePreview.viewResults")}
           </a>
           <Link
             to="/regels"
             className="px-4 py-2 text-sm font-medium border-2 border-foreground rounded-md hover:bg-secondary transition-colors inline-flex items-center gap-1.5"
           >
-            Bekijk reglement
+            {t("common.featurePreview.viewRules")}
           </Link>
           <Link
             to={ctaPrimary}
@@ -108,9 +110,9 @@ export default function FeaturePreview() {
             )}
           >
             {isLoggedIn ? (
-              <>Stel je ploeg samen <ArrowRight className="h-4 w-4" /></>
+              <>{t("common.featurePreview.buildTeam")} <ArrowRight className="h-4 w-4" /></>
             ) : (
-              <><Lock className="h-3.5 w-3.5" /> Maak account &amp; doe mee</>
+              <><Lock className="h-3.5 w-3.5" /> {t("common.featurePreview.makeAccount")}</>
             )}
           </Link>
         </div>
@@ -132,6 +134,7 @@ function RiderBlock({
   icon: JSX.Element;
   riders: PreviewRider[];
 }) {
+  const { t } = useTranslation();
   if (riders.length === 0) return null;
   return (
     <article className="ornate-frame retro-border bg-card p-5 group hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden">
@@ -139,7 +142,7 @@ function RiderBlock({
       <div className="flex items-center gap-2 mb-1">
         {icon}
         <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-          Giro 2026 · categorie
+          {t("common.featurePreview.catLabel")}
         </span>
       </div>
       <h3 className="font-display text-lg font-bold mb-1">{title}</h3>

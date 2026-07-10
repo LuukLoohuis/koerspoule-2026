@@ -4,7 +4,75 @@
     "logout": "Log out",
     "menuOpen": "Open menu",
     "menuClose": "Close menu",
-    "languageToggle": "Switch language"
+    "languageToggle": "Switch language",
+    "instagramAria": "Follow Koerspoule on Instagram",
+    "instagramTitle": "Follow us on Instagram",
+    "footer": {
+      "tagline": "\"{{subtitle}}\" — Koerspoule, for the love of cycling.",
+      "mechanicalIssue": "Mechanical trouble? Email",
+      "tdfLink": "Tour de France cycling game 2026",
+      "privacy": "Privacy policy",
+      "actievoorwaarden": "Terms & conditions",
+      "admin": "Admin",
+      "copyright": "© 2026 Koerspoule"
+    },
+    "steun": {
+      "title": "Steun Koerspoule",
+      "aria": "Support Koerspoule via Ko-fi",
+      "coffeeTip": "Enjoyed this? Support Koerspoule with a coffee",
+      "tipClose": "Close support tip",
+      "bannerTitle": "Steun Koerspoule ☕",
+      "bannerBody": "Enjoying Koerspoule? ☕ A cup of coffee helps keep Koerspoule running.",
+      "treat": "Treat us",
+      "bannerClose": "Close banner"
+    },
+    "sponsors": {
+      "sectionAria": "Sponsors",
+      "madePossible": "Made possible by",
+      "heading": "Our sponsors",
+      "visitAria": "Visit {{name}}'s website"
+    },
+    "cookie": {
+      "title": "Race Cookies 🍪",
+      "body": "We use <strong>functional cookies</strong> to make the site work. We also show ads via <strong>Google AdSense</strong>; you manage your consent for advertising cookies in the separate Google dialog. More info in our <cookieLink>cookie policy</cookieLink>.",
+      "accept": "Got it!"
+    },
+    "countdown": {
+      "days": "days",
+      "hours": "hrs",
+      "minutes": "min",
+      "seconds": "sec",
+      "beforeOpenLabel": "Registration opens in",
+      "openLabel": "Registration closes in",
+      "closedLabel": "Registration closed",
+      "opensOn": "Registration opens on {{date}}.",
+      "deadline": "Deadline: {{date}} — after that you can no longer change your selection.",
+      "started": "The race has started. Selections are final."
+    },
+    "teller": {
+      "count_one": "Already <strong>{{count}}</strong> cycling fan taking part",
+      "count_other": "Already <strong>{{count}}</strong> cycling fans taking part"
+    },
+    "werving": {
+      "close": "Close promotion",
+      "defaultText": "Join {{name}} and fight for the yellow jersey!",
+      "code": "code:",
+      "join": "Join in →"
+    },
+    "bottomNav": {
+      "aria": "Mobile navigation"
+    },
+    "error": {
+      "title": "Something went wrong",
+      "body": "This section couldn't load. Try again or refresh the page.",
+      "retry": "Try again",
+      "reload": "Refresh page"
+    },
+    "loading": "Loading...",
+    "tabSwitcher": {
+      "goToAria": "Go to section",
+      "goToHeading": "Go to"
+    }
   },
   "nav": {
     "home": "Home",
@@ -13,7 +81,8 @@
     "myPeloton": "My Peloton",
     "explain": "How it works",
     "rules": "Race rules",
-    "prizes": "Prizes"
+    "prizes": "Prizes",
+    "resultsShort": "Results"
   },
   "landing": {
     "subtitleFallback": "For the love of the race",
@@ -1254,6 +1323,183 @@
       "s8Title": "8. Final provisions",
       "s8Body": "Koerspoule reserves the right to amend these terms, and to end or adjust a promotion, without stating reasons. In cases not covered by these terms, Koerspoule decides. These terms are governed by Dutch law.",
       "contact": "Questions about the prizes or these terms? Get in touch via <mail>koerspoule@gmail.com</mail>."
+    },
+    "onboarding": {
+      "close": "Close onboarding",
+      "welcome": "— Welcome to the peloton —",
+      "heading": "You're set in 3 steps",
+      "step1Label": "Build your team",
+      "step1Hint": "Pick your riders per category.",
+      "step1Cta": "Go to team",
+      "step2Label": "Challenge your friends",
+      "step2Hint": "Start your own subpoule.",
+      "step2Cta": "Create a subpoule",
+      "step3Label": "Track your points live",
+      "step3Hint": "From the first stage.",
+      "step3Cta": "View results"
+    },
+    "featurePreview": {
+      "eyebrow": "What do you get?",
+      "heading": "Cycling data like in the team car",
+      "sub": "Subpoule progress, race intensity and categories — a sports dashboard for your Giro 2026.",
+      "cat1Title": "GC 1",
+      "cat1Sub": "Main contenders for the general classification",
+      "cat2Title": "Sprinters 1",
+      "cat2Sub": "Stage bombers, breakaway riders and time-trial specialists",
+      "ctaTitleLoggedIn": "Ready for the next stage?",
+      "ctaTitleGuest": "Explore freely — play along with an account",
+      "ctaBodyLoggedIn": "Build your team or check the results.",
+      "ctaBodyGuest": "Categories, rules and results are public. Submitting needs a free account.",
+      "viewResults": "View results",
+      "viewRules": "View rules",
+      "buildTeam": "Build your team",
+      "makeAccount": "Create account & join",
+      "catLabel": "Giro 2026 · category"
+    },
+    "compare": {
+      "loading": "Loading…",
+      "noOthersSubpoule": "No other participants in this subpoule to compare with yet.",
+      "noOthersRace": "No other participants in this race to compare with yet.",
+      "heading": "Compare your team",
+      "sub": "Pick an opponent — team, jokers and predictions side by side.",
+      "searchPlaceholder": "Search for a participant…",
+      "noMatch": "No match.",
+      "pickPrompt": "Pick an opponent above."
+    },
+    "benchmark": {
+      "loading": "Loading…",
+      "noTeam": "You don't have a team in this race yet. Create a team first to compare.",
+      "noChoices": "no choices",
+      "searchPlaceholder": "Search by participant or team name...",
+      "noResults": "No results",
+      "noOthers": "No other participants found.",
+      "ptTotal": "pts total",
+      "you": "You",
+      "ptApproved": "pts approved",
+      "opponent": "Opponent",
+      "diff": "difference",
+      "calculatedUpTo": "Calculated up to the last approved stage",
+      "calculatedStage": " (stage {{n}}).",
+      "calculatedNoStage": ".",
+      "perCategory": "Per category",
+      "noCategories": "No categories found.",
+      "yourChoices": "Your choices",
+      "theirChoices": "Their choices",
+      "pt": "{{n}} pts",
+      "perStage": "Per stage",
+      "noStages": "No approved stages available yet.",
+      "colStage": "Stage",
+      "colYou": "You",
+      "colAgainst": "Against",
+      "stageName": "Stage {{n}}",
+      "total": "Total",
+      "selectPrompt": "Select a participant above to start the benchmark."
+    },
+    "palmares": {
+      "empty": "No palmarès yet",
+      "emptyHint": "Play a race to see your honours list here.",
+      "live": "🟢 Live",
+      "past": "Finished",
+      "leader": "Leader",
+      "stageWins": "Stage wins",
+      "podiums": "Podiums",
+      "points": "Points",
+      "poolStageWinsHeading": "Stage wins · Pool",
+      "noStageWins": "No stage wins yet — but every stage is a new chance.",
+      "stageLabel": "Stage {{n}}",
+      "of": "of {{total}}",
+      "hero": "🏆 PALMARÈS",
+      "heroSub": "Honours list",
+      "bestRank": "Best rank",
+      "subpouleWins": "Subpoule wins",
+      "poolRanking": "Pool Ranking",
+      "races_one": "{{count}} race",
+      "races_other": "{{count}} races",
+      "subpoules": "Subpoules",
+      "subpoulesCount_one": "{{count}} subpoule",
+      "subpoulesCount_other": "{{count}} subpoules",
+      "noSubpoules": "Join a subpoule to see your ranking here."
+    },
+    "riderSearch": {
+      "placeholder": "Search rider by name or number...",
+      "removeSelection": "Remove selection",
+      "alreadyPicked": "already picked",
+      "alreadyInResult": "Already somewhere in this result",
+      "noRiders": "No riders found."
+    },
+    "riderDetail": {
+      "profileLabel": "Rider profile",
+      "viewFull": "View full profile on FirstCycling",
+      "noLink": "No FirstCycling link found.",
+      "noLinkHint": "An admin can set this in the start list.",
+      "loading": "Loading results...",
+      "unavailable": "Results temporarily unavailable.",
+      "noResults": "No results found for 2026.",
+      "season": "2026 season",
+      "racesCount": "{{count}} races",
+      "colDate": "Date",
+      "colRace": "Race",
+      "colCat": "Cat.",
+      "colStage": "St.",
+      "colPos": "Pos."
+    },
+    "poolStandings": {
+      "searchPlaceholder": "Search participant...",
+      "you": "YOU",
+      "noResults": "No participants found for \"{{query}}\""
+    },
+    "demoChart": {
+      "livePerformance": "Live performance",
+      "yourSubpoule": "Your subpoule",
+      "caption": "Stage evolution · click a name to highlight",
+      "showAll": "Show all",
+      "hideAll": "Hide all",
+      "dblToHide": "Double-click to hide",
+      "clickToShow": "Click to show",
+      "now": "NOW",
+      "stage": "Stage",
+      "cumulative": "Cumulative points"
+    },
+    "tactique": {
+      "subtitle": "Unique vs popular per category",
+      "tacticus": "Race Tactician",
+      "you": "You",
+      "overlap": "Overlap",
+      "average": "average",
+      "view": "View",
+      "modeSolo": "Solos",
+      "modeDifferences": "Differences",
+      "modePeloton": "Peloton",
+      "raceMode": "Race mode",
+      "uniqueCount": "{{n}} unique",
+      "compare": "Compare",
+      "all": "All",
+      "onlyMe": "Only me",
+      "reset": "Reset",
+      "solos": "🔥 Solos",
+      "differences": "🚴 Differences",
+      "standing": "🏁 Standings",
+      "panache": "🦚 Panache",
+      "legendGradient": "Dark = unique · Light = popular",
+      "yourTeam": "Your team",
+      "heatUnique": "Unique",
+      "heatRare": "Rare",
+      "heatAverage": "Average",
+      "heatPopular": "Popular",
+      "heatVeryPopular": "Very popular",
+      "uniquePick": "Unique pick! 🔥",
+      "uniqueJoker": "Unique joker! 🔥",
+      "othersPick_one": "{{count}} other also picked this rider",
+      "othersPick_other": "{{count}} others also picked this rider",
+      "othersJoker_one": "{{count}} other also picked this joker",
+      "othersJoker_other": "{{count}} others also picked this joker",
+      "playersOf": "{{count}}/{{total}} players ({{pct}}%)"
+    },
+    "jersey": {
+      "leader": "Leader jersey",
+      "mountain": "King of the Mountains",
+      "sprint": "Sprint classification",
+      "young": "Young rider jersey"
     }
   }
 }

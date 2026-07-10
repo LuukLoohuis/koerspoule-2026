@@ -85,8 +85,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 href={INSTAGRAM_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Volg Koerspoule op Instagram"
-                title="Volg ons op Instagram"
+                aria-label={t("shell.instagramAria")}
+                title={t("shell.instagramTitle")}
                 className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-foreground/30 hover:bg-secondary transition-colors"
               >
                 <Instagram className="h-[18px] w-[18px] text-foreground" />
@@ -219,27 +219,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <span className="vintage-ornament-symbol">{thema.key === "geel" ? "✲" : thema.key === "rood" ? "☀" : "⚜"}</span>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-            <p className="font-serif italic">"{thema.homepage_subtitel}" — Koerspoule, uit liefde voor de koers.</p>
+            <p className="font-serif italic">{t("shell.footer.tagline", { subtitle: thema.homepage_subtitel })}</p>
             <p className="font-sans">
-              Materiaalpech? Mail naar{" "}
+              {t("shell.footer.mechanicalIssue")}{" "}
               <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors">
                 koerspoule@gmail.com
               </a>
             </p>
             <div className="flex items-center gap-3 font-sans flex-wrap justify-center">
-              <Link to="/tour-de-france-wielerspel-2026" className="underline hover:text-foreground transition-colors">Tour de France wielerspel 2026</Link>
+              <Link to="/tour-de-france-wielerspel-2026" className="underline hover:text-foreground transition-colors">{t("shell.footer.tdfLink")}</Link>
               <span>·</span>
-              <button onClick={() => navigate("/juridisch")} className="underline hover:text-foreground transition-colors">Privacybeleid</button>
+              <button onClick={() => navigate("/juridisch")} className="underline hover:text-foreground transition-colors">{t("shell.footer.privacy")}</button>
               <span>·</span>
-              <button onClick={() => navigate("/actievoorwaarden")} className="underline hover:text-foreground transition-colors">Actievoorwaarden</button>
+              <button onClick={() => navigate("/actievoorwaarden")} className="underline hover:text-foreground transition-colors">{t("shell.footer.actievoorwaarden")}</button>
               <span>·</span>
               {role === "admin" && (
                 <>
-                  <Link to="/admin" className="underline hover:text-foreground transition-colors">Admin</Link>
+                  <Link to="/admin" className="underline hover:text-foreground transition-colors">{t("shell.footer.admin")}</Link>
                   <span>·</span>
                 </>
               )}
-              <span>© 2026 Koerspoule</span>
+              <span>{t("shell.footer.copyright")}</span>
             </div>
           </div>
         </div>
