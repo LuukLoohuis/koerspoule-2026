@@ -356,7 +356,7 @@ export default function MijnPeloton() {
                           {idx + 1}
                         </span>
                         {idx === 0 && (
-                          <JerseyBadge color="yellow" size={14} title="Leider van de subpoule" />
+                          <JerseyBadge color="yellow" size={14} title={t("team.peloton.leaderOfSubpoule")} />
                         )}
                         <span className={cn("font-sans font-medium truncate text-slate-800", isMe && "text-primary font-bold")}>
                           {team.userName}
@@ -544,7 +544,7 @@ export default function MijnPeloton() {
               </CardHeader>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-sm text-muted-foreground font-sans">Vergelijk met:</span>
+                  <span className="text-sm text-muted-foreground font-sans">{t("team.peloton.compareWith")}</span>
                   <div className="flex gap-2 flex-wrap">
                     {activePool.standings.
                     filter((t) => t.id !== myTeam.id).
@@ -620,7 +620,7 @@ export default function MijnPeloton() {
                       <div className="grid grid-cols-2 gap-3 md:gap-4">
                         <Card className={cn("retro-border", myTotal >= otherTotal && "ring-2 ring-primary")}>
                           <CardContent className="p-4 text-center">
-                            <p className="text-xs text-muted-foreground font-sans mb-1">Jouw team</p>
+                            <p className="text-xs text-muted-foreground font-sans mb-1">{t("team.peloton.yourTeam")}</p>
                             <p className="font-display text-2xl md:text-3xl font-bold text-primary">{myTeam.userName}</p>
                             <p className="font-display text-3xl md:text-4xl font-bold text-accent mt-1">{myTotal} pt</p>
                             {myTotal > otherTotal && <span className="text-xs font-sans text-primary mt-1 inline-block">🏆 Winnaar</span>}
@@ -1003,7 +1003,7 @@ export default function MijnPeloton() {
                     </div>);
 
                 })() :
-                <p className="text-sm text-muted-foreground font-sans">Kies een speler om teams te vergelijken.</p>
+                <p className="text-sm text-muted-foreground font-sans">{t("team.peloton.pickPlayerToCompare")}</p>
                 }
               </CardContent>
             </Card>
@@ -1020,9 +1020,9 @@ export default function MijnPeloton() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border bg-secondary/30">
-                        <th className="text-left px-4 py-2 font-display">Speler</th>
+                        <th className="text-left px-4 py-2 font-display">{t("team.peloton.colPlayer")}</th>
                         <th className="text-center px-4 py-2 font-display">Punten</th>
-                        <th className="text-center px-4 py-2 font-display">Renners in Top 10</th>
+                        <th className="text-center px-4 py-2 font-display">{t("team.peloton.colRidersTop10")}</th>
                         <th className="text-center px-4 py-2 font-display">Beste etappe</th>
                         
                       </tr>
@@ -1109,9 +1109,9 @@ export default function MijnPeloton() {
             <Input
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
-              placeholder="Stel je ploegnaam in…"
+              placeholder={t("team.peloton.teamNamePlaceholder")}
               maxLength={40}
-              aria-label="Ploegnaam"
+              aria-label={t("team.peloton.teamNameLabel")}
               className="h-9 flex-1 min-w-0 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0 font-display font-bold"
             />
             <Button
@@ -1128,7 +1128,7 @@ export default function MijnPeloton() {
             type="button"
             onClick={goEditTeamName}
             className="w-full mb-3 retro-border bg-card px-3 py-2 flex items-center justify-between gap-3 text-left hover:bg-secondary/40 transition-colors"
-            aria-label="Stel je ploegnaam in in de Volgwagen"
+            aria-label={t("team.peloton.setTeamNameAria")}
           >
             <span className="flex items-center gap-2 min-w-0">
               <Pencil className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -1232,7 +1232,7 @@ export default function MijnPeloton() {
               { key: "karavaan",  label: thema.krant,      Icon: Newspaper },
               { key: "team",      label: "Volgwagen",      Icon: Car      },
               { key: "subpoules", label: "Subpoules",      Icon: Users    },
-              { key: "uitslagen", label: "Uitslagen",      Icon: Trophy   },
+              { key: "uitslagen", label: t("team.peloton.tabResults"), Icon: Trophy   },
               { key: "hors",      label: "Hors Catégorie", Icon: Mountain },
             ]}
           />
@@ -1376,7 +1376,7 @@ export default function MijnPeloton() {
               <MyResultsPanel key={`uitslagen-${uitslagenTarget?.view ?? "def"}`} gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} initialView={uitslagenTarget?.view} initialStageNumber={uitslagenTarget?.stageNumber} />
             ) : (
               <SneakPreviewLock
-                title="Uitslagen volgen binnenkort"
+                title={t("team.peloton.resultsSoon")}
                 note="De daguitslagen en het klassement verschijnen hier zodra de koers losbarst."
               />
             )}
@@ -1583,6 +1583,7 @@ function WatAlsTab({
 
 
 }: {getRiderPoints: (riderNumber: number) => number;myTeam: typeof mockTeams[0];getCategoryName: (catId: number) => string;}) {
+  const { t } = useTranslation();
   const [monkeyRoll, setMonkeyRoll] = useState(0);
 
   const bestTeam = useMemo(() => {
@@ -1766,11 +1767,11 @@ function WatAlsTab({
         </CardContent>
         <div className="border-t-2 border-foreground bg-secondary/30 p-4">
           <div className="flex justify-between text-sm font-display font-bold">
-            <span>Droomteam totaal:</span>
+            <span>{t("team.peloton.dreamTeamTotal")}</span>
             <span className="text-primary">{bestTotal} pt</span>
           </div>
           <div className="flex justify-between text-sm font-display mt-1">
-            <span>Jouw totaal:</span>
+            <span>{t("team.peloton.yourTotal")}</span>
             <span className="text-accent">{myTotal} pt</span>
           </div>
           <div className="mt-2 text-xs text-muted-foreground font-sans">
@@ -1928,9 +1929,9 @@ function WatAlsTab({
         <CardContent className="p-4">
           <ChartContainer
             config={{
-              Jij: { label: "Jij", color: "hsl(var(--primary))" },
-              Leider: { label: "Leider", color: "hsl(var(--accent))" },
-              Gemiddelde: { label: "Gemiddelde", color: "hsl(var(--muted-foreground))" }
+              Jij: { label: t("team.peloton.chartYou"), color: "hsl(var(--primary))" },
+              Leider: { label: t("team.peloton.leaderLabel"), color: "hsl(var(--accent))" },
+              Gemiddelde: { label: t("team.peloton.chartAverage"), color: "hsl(var(--muted-foreground))" }
             }}
             className="h-[220px] w-full">
             

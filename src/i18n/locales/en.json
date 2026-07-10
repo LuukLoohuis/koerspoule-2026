@@ -437,6 +437,24 @@
       "title": "Swipe or tap to switch",
       "subtitle": "between the parts of this section",
       "closeAria": "Dismiss hint"
+    },
+    "peloton": {
+      "leaderOfSubpoule": "Leader of the subpoule",
+      "compareWith": "Compare with:",
+      "yourTeam": "Your team",
+      "pickPlayerToCompare": "Pick a player to compare teams.",
+      "colPlayer": "Player",
+      "colRidersTop10": "Riders in Top 10",
+      "teamNamePlaceholder": "Set your team name…",
+      "teamNameLabel": "Team name",
+      "setTeamNameAria": "Set your team name in the Volgwagen",
+      "tabResults": "Results",
+      "resultsSoon": "Results coming soon",
+      "dreamTeamTotal": "Dream team total:",
+      "leaderLabel": "Leader",
+      "chartYou": "You",
+      "chartAverage": "Average",
+      "yourTotal": "Your total:"
     }
   },
   "subpoule": {

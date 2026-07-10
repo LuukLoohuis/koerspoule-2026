@@ -437,6 +437,24 @@
       "title": "Veeg of tik om te wisselen",
       "subtitle": "tussen de onderdelen van deze sectie",
       "closeAria": "Uitleg sluiten"
+    },
+    "peloton": {
+      "leaderOfSubpoule": "Leider van de subpoule",
+      "compareWith": "Vergelijk met:",
+      "yourTeam": "Jouw team",
+      "pickPlayerToCompare": "Kies een speler om teams te vergelijken.",
+      "colPlayer": "Speler",
+      "colRidersTop10": "Renners in Top 10",
+      "teamNamePlaceholder": "Stel je ploegnaam in…",
+      "teamNameLabel": "Ploegnaam",
+      "setTeamNameAria": "Stel je ploegnaam in in de Volgwagen",
+      "tabResults": "Uitslagen",
+      "resultsSoon": "Uitslagen volgen binnenkort",
+      "dreamTeamTotal": "Droomteam totaal:",
+      "leaderLabel": "Leider",
+      "chartYou": "Jij",
+      "chartAverage": "Gemiddelde",
+      "yourTotal": "Jouw totaal:"
     }
   },
   "subpoule": {
