@@ -50,8 +50,8 @@
       "started": "De koers is begonnen. Selecties zijn definitief."
     },
     "teller": {
-      "count_one": "Al <strong>{{count}}</strong> koersliefhebber doet mee",
-      "count_other": "Al <strong>{{count}}</strong> koersliefhebbers doen mee"
+      "count_one": "Al <strong>{{formatted}}</strong> koersliefhebber doet mee",
+      "count_other": "Al <strong>{{formatted}}</strong> koersliefhebbers doen mee"
     },
     "werving": {
       "close": "Wervingsactie sluiten",

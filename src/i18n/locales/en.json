@@ -50,8 +50,8 @@
       "started": "The race has started. Selections are final."
     },
     "teller": {
-      "count_one": "Already <strong>{{count}}</strong> cycling fan taking part",
-      "count_other": "Already <strong>{{count}}</strong> cycling fans taking part"
+      "count_one": "Already <strong>{{formatted}}</strong> cycling fan taking part",
+      "count_other": "Already <strong>{{formatted}}</strong> cycling fans taking part"
     },
     "werving": {
       "close": "Close promotion",

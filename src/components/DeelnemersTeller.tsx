@@ -42,7 +42,7 @@ export default function DeelnemersTeller({ className }: { className?: string }) 
         <Trans
           i18nKey="shell.teller.count"
           count={data}
-          values={{ count: nf.format(data) }}
+          values={{ formatted: nf.format(data) }}
           components={{ strong: <strong className="font-display font-bold tabular-nums text-[hsl(var(--vintage-gold))]" /> }}
         />
       </span>
