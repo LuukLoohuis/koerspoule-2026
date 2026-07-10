@@ -127,7 +127,9 @@
     "followInstagramAria": "Follow Koerspoule on Instagram",
     "rankUpDay": "+{{change}} in stage {{rit}} 🔥",
     "rankDownDay": "−{{change}} in stage {{rit}} 📉",
-    "rankStableDay": "held steady in stage {{rit}}"
+    "rankStableDay": "held steady in stage {{rit}}",
+    "rankBadge": "{{count}} places · stage {{rit}}",
+    "rankBadgeFlat": "held steady · stage {{rit}}"
   },
   "auth": {
     "login": {

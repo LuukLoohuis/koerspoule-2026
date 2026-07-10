@@ -150,6 +150,14 @@ const MOCK_MY_PROGRESS = {
   pointsLine:    "0,90 40,84 80,75 120,72 160,60 200,48 240,40 280,32",
 };
 
+// Richting-kleuren voor "Jouw koers" (dag-op-dag). Vaste hexes: leesbaar op de
+// crème/paper-achtergrond, los van het actieve thema-accent.
+const DIR_STYLE = {
+  up: { stroke: "#3B6D11", text: "#2C500A", bg: "rgba(59,109,17,0.12)", arrow: "▲" },
+  down: { stroke: "#A32D2D", text: "#791F1F", bg: "rgba(163,45,45,0.12)", arrow: "▼" },
+  flat: { stroke: "hsl(var(--muted-foreground))", text: "hsl(var(--muted-foreground))", bg: "hsl(var(--muted-foreground)/0.12)", arrow: "—" },
+} as const;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
@@ -366,6 +374,9 @@ export default function Index() {
       to: myRankProgression[n - 1],
       pointsPolygon: `${line} ${lastX.toFixed(1)},${H} 0,${H}`,
       pointsLine: line,
+      // Laatste segment apart, zodat het richting-gekleurd bovenop de neutrale
+      // goud-lijn kan (groen = gestegen, rood = gezakt).
+      lastSegment: n >= 2 ? `${pts[n - 2]} ${pts[n - 1]}` : null,
     };
   }, [showRealSparkline, myRankProgression, allEntries.length]);
 
@@ -390,6 +401,21 @@ export default function Index() {
     if (change < 0) return t("landing.rankDownDay", { change: Math.abs(change), rit: n });
     return t("landing.rankStableDay", { rit: n });
   }, [showRealSparkline, myRankProgression, t]);
+
+  // Richting van de laatste rit (dag-op-dag): stuurt de kleur van het laatste
+  // lijnsegment, het eindpunt, het kop-getal en de badge. null → geen echte
+  // data of pas 1 etappe (dan blijft de neutrale margin-note staan).
+  const progressDir = useMemo(() => {
+    if (!showRealSparkline) return null;
+    const n = myRankProgression.length;
+    if (n < 2) return null;
+    const change = myRankProgression[n - 2] - myRankProgression[n - 1]; // >0 = gestegen
+    return {
+      dir: (change > 0 ? "up" : change < 0 ? "down" : "flat") as "up" | "down" | "flat",
+      count: Math.abs(change),
+      rit: n,
+    };
+  }, [showRealSparkline, myRankProgression]);
 
   const totalEntries = allEntries.length || 11;
   const midRankLabel = `P${Math.round(1 + (totalEntries - 1) * 0.5)}`;
@@ -614,7 +640,11 @@ export default function Index() {
               {myProgress.from === myProgress.to ? (
                 <Trans i18nKey="landing.nowAtRank" values={{ rank: myProgress.to }} components={{ 1: <span className="text-primary" /> }} />
               ) : (
-                <Trans i18nKey="landing.fromToRank" values={{ from: myProgress.from, to: myProgress.to }} components={{ 1: <span className="text-primary" /> }} />
+                <Trans
+                  i18nKey="landing.fromToRank"
+                  values={{ from: myProgress.from, to: myProgress.to }}
+                  components={{ 1: <span style={progressDir ? { color: DIR_STYLE[progressDir.dir].text } : undefined} className={progressDir ? undefined : "text-primary"} /> }}
+                />
               )}
             </div>
             <div className="mt-3 relative h-[130px]">
@@ -646,7 +676,22 @@ export default function Index() {
                   stroke="hsl(var(--primary))"
                   strokeWidth="2"
                 />
-                <circle cx="280" cy={myProgressEndY} r="4" fill="hsl(var(--primary))" />
+                {/* Laatste rit richting-gekleurd bovenop de neutrale goud-lijn. */}
+                {progressDir && myProgress.lastSegment && (
+                  <polyline
+                    points={myProgress.lastSegment}
+                    fill="none"
+                    stroke={DIR_STYLE[progressDir.dir].stroke}
+                    strokeWidth="3.25"
+                    strokeLinecap="round"
+                  />
+                )}
+                <circle
+                  cx="280"
+                  cy={myProgressEndY}
+                  r="4.5"
+                  fill={progressDir ? DIR_STYLE[progressDir.dir].stroke : "hsl(var(--primary))"}
+                />
                 <text
                   x="278"
                   y="16"
@@ -678,9 +723,21 @@ export default function Index() {
                   {lastRankLabel}
                 </text>
               </svg>
-              <span className="margin-note tilt-l absolute right-2 -bottom-2 text-lg">
-                {rankChangeText}
-              </span>
+              {progressDir ? (
+                <span
+                  className="absolute right-2 -bottom-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs font-bold"
+                  style={{ background: DIR_STYLE[progressDir.dir].bg, color: DIR_STYLE[progressDir.dir].text }}
+                >
+                  <span aria-hidden>{DIR_STYLE[progressDir.dir].arrow}</span>
+                  {progressDir.dir === "flat"
+                    ? t("landing.rankBadgeFlat", { rit: progressDir.rit })
+                    : t("landing.rankBadge", { count: progressDir.count, rit: progressDir.rit })}
+                </span>
+              ) : (
+                <span className="margin-note tilt-l absolute right-2 -bottom-2 text-lg">
+                  {rankChangeText}
+                </span>
+              )}
             </div>
           </div>
 
