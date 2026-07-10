@@ -124,7 +124,10 @@
     "ctaClosing": "The countdown is at the top — grab your race number before registration closes.",
     "footerEdition": "Koerspoule · Tour de France 2026 edition",
     "followInstagram": "Follow us on Instagram",
-    "followInstagramAria": "Follow Koerspoule on Instagram"
+    "followInstagramAria": "Follow Koerspoule on Instagram",
+    "rankUpDay": "+{{change}} in stage {{rit}} 🔥",
+    "rankDownDay": "−{{change}} in stage {{rit}} 📉",
+    "rankStableDay": "held steady in stage {{rit}}"
   },
   "auth": {
     "login": {

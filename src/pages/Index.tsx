@@ -360,7 +360,9 @@ export default function Index() {
     const line = pts.join(" ");
     const lastX = n === 1 ? W / 2 : W;
     return {
-      from: myRankProgression[0],
+      // Kop = dag-op-dag: plek ná de vorige rit → plek ná de laatste rit. De
+      // lijn zelf toont wél het volledige verloop (meer context).
+      from: myRankProgression[n - 2],
       to: myRankProgression[n - 1],
       pointsPolygon: `${line} ${lastX.toFixed(1)},${H} 0,${H}`,
       pointsLine: line,
@@ -382,10 +384,11 @@ export default function Index() {
     if (!showRealSparkline) return t("landing.rankChangeMock");
     const n = myRankProgression.length;
     if (n < 2) return t("landing.afterStageOne");
-    const change = myRankProgression[0] - myRankProgression[n - 1];
-    if (change > 0) return t("landing.rankUp", { change, count: n });
-    if (change < 0) return t("landing.rankDown", { change, count: n });
-    return t("landing.rankStable", { count: n });
+    // Dag-op-dag: verschil tussen plek ná de vorige rit en ná de laatste rit.
+    const change = myRankProgression[n - 2] - myRankProgression[n - 1];
+    if (change > 0) return t("landing.rankUpDay", { change, rit: n });
+    if (change < 0) return t("landing.rankDownDay", { change: Math.abs(change), rit: n });
+    return t("landing.rankStableDay", { rit: n });
   }, [showRealSparkline, myRankProgression, t]);
 
   const totalEntries = allEntries.length || 11;

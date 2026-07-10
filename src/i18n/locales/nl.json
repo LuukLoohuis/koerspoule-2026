@@ -124,7 +124,10 @@
     "ctaClosing": "De afteller staat bovenaan — pak je startbewijs voor de inschrijving sluit.",
     "footerEdition": "Koerspoule · editie Tour de France 2026",
     "followInstagram": "Volg ons op Instagram",
-    "followInstagramAria": "Volg Koerspoule op Instagram"
+    "followInstagramAria": "Volg Koerspoule op Instagram",
+    "rankUpDay": "+{{change}} in rit {{rit}} 🔥",
+    "rankDownDay": "−{{change}} in rit {{rit}} 📉",
+    "rankStableDay": "gelijk gebleven in rit {{rit}}"
   },
   "auth": {
     "login": {
