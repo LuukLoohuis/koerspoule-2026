@@ -26,6 +26,7 @@ import GiroPoule2026 from "./pages/GiroPoule2026";
 import TourDeFrancePoule2026 from "./pages/TourDeFrancePoule2026";
 import VueltaPoule2026 from "./pages/VueltaPoule2026";
 import TourDeFranceFemmesPoule2026 from "./pages/TourDeFranceFemmesPoule2026";
+import TourDeFranceFemmesFantasy2026En from "./pages/TourDeFranceFemmesFantasy2026En";
 import Etappes from "./pages/Etappes";
 import EtappeDetail from "./pages/EtappeDetail";
 import Prizes from "./pages/Prizes";
@@ -88,6 +89,13 @@ const App = () => {
               <Route path="/tour-de-france-poule-2026" element={<TourDeFrancePoule2026 />} />
               <Route path="/vuelta-espana-poule-2026" element={<VueltaPoule2026 />} />
               <Route path="/tour-de-france-femmes-poule-2026" element={<TourDeFranceFemmesPoule2026 />} />
+              <Route path="/en/tour-de-france-femmes-fantasy-2026" element={<TourDeFranceFemmesFantasy2026En />} />
+              {[
+                "/en/tour-de-france-femmes-fantasy-league-2026",
+                "/en/tour-de-france-femmes-pool-2026",
+              ].map((p) => (
+                <Route key={p} path={p} element={<Navigate to="/en/tour-de-france-femmes-fantasy-2026" replace />} />
+              ))}
               <Route path="/etappes" element={<Etappes />} />
               <Route path="/etappes/:stageNumber" element={<EtappeDetail />} />
               <Route path="/prijzen" element={<Prizes />} />

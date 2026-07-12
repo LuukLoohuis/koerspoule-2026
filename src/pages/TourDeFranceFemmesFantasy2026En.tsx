@@ -4,64 +4,66 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Trophy, Users, Zap, Mountain, Flag, Sparkles, CalendarDays } from "lucide-react";
 
-const PAGE_URL = "https://koerspoule.nl/tour-de-france-femmes-poule-2026";
+// Engelse zusterpagina van /tour-de-france-femmes-poule-2026. Eigen geïndexeerde
+// URL + wederzijdse hreflang. Zelfde feiten (geverifieerd in de officiële
+// press kit / Wikipedia), geschreven in natuurlijke Engelse wielertermen.
 const PAGE_URL_EN = "https://koerspoule.nl/en/tour-de-france-femmes-fantasy-2026";
-const PAGE_TITLE = "Tour de France Femmes 2026 Wielerspel & Poule — Gratis | Koerspoule";
+const PAGE_URL_NL = "https://koerspoule.nl/tour-de-france-femmes-poule-2026";
+const PAGE_TITLE = "Tour de France Femmes 2026 Fantasy Cycling Game & Pool — Free | Koerspoule";
 const PAGE_DESCRIPTION =
-  "Gratis Tour de France Femmes 2026 wielerspel — een gratis alternatief voor Scorito. Speel de poule van de vrouwen-Tour met vrienden in eigen subpoules, kies vrij uit het peloton en strijd om de gele trui.";
+  "Free Tour de France Femmes 2026 fantasy cycling game & pool. Aug 1–9, Lausanne to Nice. Build your team and play a private pool with friends.";
 const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf-v2.jpg";
 const PAGE_KEYWORDS =
-  "tour de france femmes wielerspel 2026, tour de france femmes poule, wielerspel dames tour 2026, vrouwen tour poule, tour femmes poule 2026, gratis wielerspel dames, tdf femmes poule, dames wielerspel 2026, scorito alternatief dames, koerspoule, fantasy tour femmes, gele trui poule dames, tour de france femmes met vrienden";
+  "tour de france femmes fantasy 2026, tour de france femmes pool, women's tour de france fantasy game, tour femmes fantasy cycling, free fantasy cycling game, tour de france femmes 2026, women's cycling pool, yellow jersey fantasy, fantasy cycling with friends, koerspoule";
 const SITE_NAME = "Koerspoule";
+
+// App-CTA met ?lang=en → de i18n-detector selecteert Engels voor (De app zelf is
+// Nederlands tot de i18n-migratie live is; ?lang=en zet de voorkeur alvast).
+const APP_CTA = "/login?lang=en";
 
 const FAQS: { q: string; a: string }[] = [
   {
-    q: "Is het Tour de France Femmes wielerspel gratis?",
-    a: "Ja, Koerspoule is volledig gratis. Je stelt je eigen ploeg samen voor de Tour de France Femmes 2026, speelt in privé-poules met vrienden en strijdt om de gele trui — zonder inschrijfgeld.",
+    q: "When does the Tour de France Femmes 2026 start?",
+    a: "The Tour de France Femmes 2026 runs from 1 to 9 August 2026. It is the fifth edition, with the Grand Départ in Switzerland: stage 1 starts in Lausanne on 1 August. You can build your team and start your pool now, ready for the first stage.",
   },
   {
-    q: "Kan ik een poule met vrienden maken voor de Tour Femmes?",
-    a: "Zeker. Maak een gratis account op Koerspoule, start je eigen Tour de France Femmes poule en nodig vrienden, familie of collega's uit met een unieke toegangscode. Binnen een paar minuten ben je klaar.",
+    q: "How many stages does the Tour de France Femmes 2026 have?",
+    a: "Nine stages over 1,175 kilometres with 18,795 metres of climbing — a record-breaking course. Stage 4 is a 21 km individual time trial from Gevrey-Chambertin to Dijon, and stage 7 finishes on the summit of Mont Ventoux (1,910 m).",
   },
   {
-    q: "Hoe werkt de puntentelling?",
-    a: "Je verdient punten voor etappe-overwinningen, het eindklassement (gele trui), het bergklassement, het puntenklassement en speciale prestaties van de rensters in jouw ploeg.",
+    q: "Where does the Tour de France Femmes 2026 start?",
+    a: "In Switzerland. The Grand Départ has stage starts in Lausanne, Aigle and Geneva, with stage 1 setting off from Lausanne on 1 August 2026. The race finishes with a circuit around Nice on 9 August.",
   },
   {
-    q: "Wanneer begint de Tour de France Femmes 2026?",
-    a: "De Tour de France Femmes 2026 wordt verreden van 1 tot en met 9 augustus 2026. Het is de vijfde editie, met de Grand Départ in Zwitserland: etappe 1 start op 1 augustus in Lausanne. Je kunt nu al je ploeg samenstellen en je poule starten, zodat je klaar bent voor de eerste etappe.",
+    q: "Is the Tour de France Femmes fantasy game free?",
+    a: "Yes, Koerspoule is completely free. You build your own team for the Tour de France Femmes 2026, play in private pools with friends and compete for the yellow jersey — no entry fee.",
   },
   {
-    q: "Hoeveel etappes heeft de Tour de France Femmes 2026?",
-    a: "Negen etappes over 1.175 kilometer met 18.795 hoogtemeters — een recordparcours. Etappe 4 is een individuele tijdrit van Gevrey-Chambertin naar Dijon (21 km) en etappe 7 finisht op de top van de Mont Ventoux (1.910 m).",
+    q: "Can I create a pool with friends for the women's Tour?",
+    a: "Absolutely. Create a free Koerspoule account, start your own Tour de France Femmes pool and invite friends, family or colleagues with a unique access code. You are ready in a couple of minutes.",
   },
   {
-    q: "Waar start de Tour de France Femmes 2026?",
-    a: "In Zwitserland. De Grand Départ heeft etappestarts in Lausanne, Aigle en Genève, met etappe 1 vanuit Lausanne op 1 augustus 2026. De ronde eindigt met een circuit rond Nice op 9 augustus.",
+    q: "How does scoring work?",
+    a: "You earn points for stage wins, the general classification (yellow jersey), the mountains classification, the points classification and special performances by the riders in your team.",
   },
   {
-    q: "Wat is het alternatief voor Scorito bij de Tour Femmes?",
-    a: "Koerspoule is een gratis alternatief voor Scorito, ook voor de vrouwen-Tour. Speel de Tour de France Femmes in eigen privé-poules met je eigen vriendengroep — gratis en zonder budgetpuzzel.",
-  },
-  {
-    q: "Voor wie is het dames-wielerspel bedoeld?",
-    a: "Voor elke wielerfan — van beginner tot kenner. Of je nu elke koers volgt of vooral meedoet voor de gezelligheid: je stelt je ploeg samen op koersintuïtie en strijdt mee in je eigen poule.",
+    q: "What is the free alternative to Scorito for the women's Tour?",
+    a: "Koerspoule is a free alternative to Scorito, for the women's Tour too. Play the Tour de France Femmes in your own private pools with your own group of friends — free and without a budget puzzle.",
   },
 ];
 
-// Structured data — rendert in de HTML-bron via Helmet (prerender, geen JS nodig).
 const JSONLD = {
   "@context": "https://schema.org",
   "@graph": [
-    { "@type": "WebSite", "@id": "https://koerspoule.nl/#website", name: SITE_NAME, url: "https://koerspoule.nl/", inLanguage: "nl-NL" },
+    { "@type": "WebSite", "@id": "https://koerspoule.nl/#website", name: SITE_NAME, url: "https://koerspoule.nl/", inLanguage: "en" },
     { "@type": "Organization", "@id": "https://koerspoule.nl/#organization", name: SITE_NAME, url: "https://koerspoule.nl/", logo: "https://koerspoule.nl/favicon.png", email: "koerspoule@gmail.com" },
     {
       "@type": "WebPage",
-      "@id": `${PAGE_URL}#webpage`,
+      "@id": `${PAGE_URL_EN}#webpage`,
       name: PAGE_TITLE,
       description: PAGE_DESCRIPTION,
-      url: PAGE_URL,
-      inLanguage: "nl-NL",
+      url: PAGE_URL_EN,
+      inLanguage: "en",
       isPartOf: { "@id": "https://koerspoule.nl/#website" },
       primaryImageOfPage: { "@type": "ImageObject", url: PAGE_IMAGE },
       about: { "@type": "Thing", name: "Tour de France Femmes 2026" },
@@ -70,19 +72,19 @@ const JSONLD = {
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Home", item: "https://koerspoule.nl/" },
-        { "@type": "ListItem", position: 2, name: "Tour de France Femmes Poule 2026", item: PAGE_URL },
+        { "@type": "ListItem", position: 2, name: "Tour de France Femmes Fantasy 2026", item: PAGE_URL_EN },
       ],
     },
     {
       "@type": "Event",
       name: "Tour de France Femmes 2026",
-      description: "De vijfde editie van de Tour de France Femmes avec Zwift: negen etappes van 1 tot en met 9 augustus 2026, Grand Départ in Lausanne (Zwitserland), aankomst op de Mont Ventoux en een slotcircuit in Nice.",
+      description: "The fifth edition of the Tour de France Femmes avec Zwift: nine stages from 1 to 9 August 2026, Grand Départ in Lausanne (Switzerland), summit finish on Mont Ventoux, final circuit in Nice.",
       startDate: "2026-08-01",
       endDate: "2026-08-09",
       eventStatus: "https://schema.org/EventScheduled",
       eventAttendanceMode: "https://schema.org/MixedEventAttendanceMode",
-      inLanguage: "nl",
-      url: PAGE_URL,
+      inLanguage: "en",
+      url: PAGE_URL_EN,
       location: [
         { "@type": "Place", name: "Lausanne", address: { "@type": "PostalAddress", addressLocality: "Lausanne", addressCountry: "CH" } },
         { "@type": "Place", name: "Nice", address: { "@type": "PostalAddress", addressLocality: "Nice", addressCountry: "FR" } },
@@ -91,23 +93,23 @@ const JSONLD = {
     },
     {
       "@type": "Game",
-      name: "Koerspoule — Tour de France Femmes Wielerspel & Poule 2026",
+      name: "Koerspoule — Tour de France Femmes Fantasy Cycling Game & Pool 2026",
       description: PAGE_DESCRIPTION,
-      url: PAGE_URL,
+      url: PAGE_URL_EN,
       genre: "Fantasy Sports",
       gamePlatform: "Web",
-      inLanguage: "nl-NL",
+      inLanguage: "en",
       offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", availability: "https://schema.org/InStock" },
       publisher: { "@id": "https://koerspoule.nl/#organization" },
     },
   ],
 };
 
-export default function TourDeFranceFemmesPoule2026() {
+export default function TourDeFranceFemmesFantasy2026En() {
   const faqLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    inLanguage: "nl",
+    inLanguage: "en",
     mainEntity: FAQS.map((f) => ({
       "@type": "Question",
       name: f.q,
@@ -118,23 +120,23 @@ export default function TourDeFranceFemmesPoule2026() {
   return (
     <div className="container mx-auto px-5 py-6 md:py-8">
       <Helmet>
+        <html lang="en" />
         <title>{PAGE_TITLE}</title>
         <meta name="description" content={PAGE_DESCRIPTION} />
         <meta name="keywords" content={PAGE_KEYWORDS} />
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
-        <link rel="canonical" href={PAGE_URL} />
-        <link rel="alternate" hrefLang="nl" href={PAGE_URL} />
-        <link rel="alternate" hrefLang="nl-BE" href={PAGE_URL} />
+        <link rel="canonical" href={PAGE_URL_EN} />
+        <link rel="alternate" hrefLang="nl" href={PAGE_URL_NL} />
         <link rel="alternate" hrefLang="en" href={PAGE_URL_EN} />
-        <link rel="alternate" hrefLang="x-default" href={PAGE_URL} />
+        <link rel="alternate" hrefLang="x-default" href={PAGE_URL_NL} />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content={SITE_NAME} />
-        <meta property="og:locale" content="nl_NL" />
-        <meta property="og:url" content={PAGE_URL} />
+        <meta property="og:locale" content="en_GB" />
+        <meta property="og:url" content={PAGE_URL_EN} />
         <meta property="og:title" content={PAGE_TITLE} />
         <meta property="og:description" content={PAGE_DESCRIPTION} />
         <meta property="og:image" content={PAGE_IMAGE} />
-        <meta property="og:image:alt" content="Koerspoule — gratis Tour de France Femmes poule 2026" />
+        <meta property="og:image:alt" content="Koerspoule — free Tour de France Femmes 2026 fantasy pool" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -146,10 +148,10 @@ export default function TourDeFranceFemmesPoule2026() {
       </Helmet>
 
       <article className="max-w-4xl mx-auto space-y-7">
-        {/* Taalverwijzing → EN (versterkt de hreflang-relatie) */}
+        {/* Language link → NL */}
         <p className="text-center text-sm text-muted-foreground font-serif">
-          <Link to="/en/tour-de-france-femmes-fantasy-2026" className="underline font-bold text-primary" hrefLang="en">
-            Read this page in English
+          <Link to="/tour-de-france-femmes-poule-2026" className="underline font-bold text-primary" hrefLang="nl">
+            Lees deze pagina in het Nederlands
           </Link>
         </p>
 
@@ -163,38 +165,38 @@ export default function TourDeFranceFemmesPoule2026() {
             <span className="vintage-ornament-symbol">✦</span>
           </div>
           <h1 className="vintage-heading text-3xl md:text-4xl font-bold mb-3">
-            💛 Gratis Tour de France Femmes Wielerspel &amp; Poule 2026 — speel met vrienden
+            💛 Free Tour de France Femmes 2026 Fantasy Cycling Game &amp; Pool — play with friends
           </h1>
           <p className="text-lg text-muted-foreground font-serif italic max-w-2xl mx-auto">
-            Koerspoule is hét gratis <strong>Tour de France Femmes wielerspel 2026</strong>. De beste
-            rensters ter wereld strijden in de vrouweneditie van de Tour om de gele trui — maak het nog
-            spannender met je eigen poule: gratis, retro en samen met vrienden.
+            Koerspoule is the free <strong>Tour de France Femmes 2026 fantasy cycling game</strong>. The best
+            riders in the world battle for the yellow jersey in the women's Tour — make it even more exciting
+            with your own pool: free, retro and together with friends.
           </p>
           <div className="vintage-divider mt-4 max-w-md mx-auto" />
           <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg" className="retro-border-primary font-bold">
-              <Link to="/login">🚀 Start gratis je Tour Femmes-poule</Link>
+              <Link to={APP_CTA}>🚀 Start your free Tour Femmes pool</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link to="/regels">📖 Bekijk de regels</Link>
+              <Link to="/regels">📖 Read the rules</Link>
             </Button>
           </div>
         </header>
 
-        {/* De 2026-editie — geverifieerde feiten */}
+        {/* De 2026-editie — feiten */}
         <section className="ornate-frame retro-border bg-card p-4 md:p-6">
           <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-primary" /> De Tour de France Femmes 2026
+            <CalendarDays className="h-5 w-5 text-primary" /> The Tour de France Femmes 2026
           </h2>
           <ul className="space-y-2 font-sans">
             {[
-              "1 tot en met 9 augustus 2026 — de vijfde editie van de Tour de France Femmes avec Zwift (ASO).",
-              "Grand Départ in Zwitserland: etappe 1 start op 1 augustus in Lausanne, met etappestarts ook in Aigle en Genève.",
-              "Negen etappes over 1.175 kilometer met 18.795 hoogtemeters — een recordparcours.",
-              "Etappe 4 is een individuele tijdrit van Gevrey-Chambertin naar Dijon (21 km).",
-              "Etappe 7 finisht op de top van de Mont Ventoux (1.910 m), het hoogste punt van de ronde.",
-              "21 ploegen (14 UCI Women's WorldTeams + 7 ProTeams) van elk zeven rensters — 147 rensters in totaal.",
-              "De ronde eindigt met een circuit rond Nice op 9 augustus.",
+              "1 to 9 August 2026 — the fifth edition of the Tour de France Femmes avec Zwift (ASO).",
+              "Grand Départ in Switzerland: stage 1 starts in Lausanne on 1 August, with further stage starts in Aigle and Geneva.",
+              "Nine stages over 1,175 kilometres with 18,795 metres of climbing — a record-breaking route.",
+              "Stage 4 is a 21 km individual time trial from Gevrey-Chambertin to Dijon.",
+              "Stage 7 finishes on the summit of Mont Ventoux (1,910 m), the highest point of the race.",
+              "21 teams (14 UCI Women's WorldTeams + 7 ProTeams) of seven riders each — 147 riders in total.",
+              "The race finishes with a circuit around Nice on 9 August.",
             ].map((f) => (
               <li key={f} className="flex items-start gap-3">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -203,23 +205,23 @@ export default function TourDeFranceFemmesPoule2026() {
             ))}
           </ul>
           <p className="mt-3 text-sm text-muted-foreground font-serif">
-            Titelverdedigster: Pauline Ferrand-Prévot. Eerdere winnaressen: Annemiek van Vleuten (2022),
-            Demi Vollering (2023) en Kasia Niewiadoma (2024).
+            Defending champion: Pauline Ferrand-Prévot. Previous winners: Annemiek van Vleuten (2022),
+            Demi Vollering (2023) and Kasia Niewiadoma (2024).
           </p>
         </section>
 
-        {/* Hoe werkt het */}
+        {/* How it works */}
         <section className="ornate-frame retro-border bg-card p-4 md:p-6">
           <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
-            🚀 Hoe werkt de Tour de France Femmes poule?
+            🚀 How does the Tour de France Femmes pool work?
           </h2>
           <ol className="space-y-2.5">
             {[
-              "Maak een gratis Koerspoule-account aan",
-              "Start je eigen Tour de France Femmes poule",
-              "Nodig vrienden, familie of collega's uit met een toegangscode",
-              "Stel je ploeg samen uit de officiële startlijst van de vrouwen-Tour",
-              "Verdien punten per etappe en klim in het klassement",
+              "Create a free Koerspoule account",
+              "Start your own Tour de France Femmes pool",
+              "Invite friends, family or colleagues with an access code",
+              "Build your team from the official startlist of the women's Tour",
+              "Earn points every stage and climb the standings",
             ].map((step, i) => (
               <li key={i} className="flex items-start gap-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-mono font-bold text-sm">
@@ -230,24 +232,24 @@ export default function TourDeFranceFemmesPoule2026() {
             ))}
           </ol>
           <p className="mt-4 text-sm text-muted-foreground font-serif italic">
-            👉 Binnen een paar minuten ben je klaar voor de eerste etappe.
+            👉 You are ready for the first stage in a couple of minutes.
           </p>
         </section>
 
-        {/* Stel je team samen */}
+        {/* Build your team */}
         <section>
           <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
-            🧠 Stel je Tour Femmes-ploeg samen
+            🧠 Build your Tour Femmes team
           </h2>
           <p className="text-muted-foreground mb-3 font-serif">
-            Kies slim uit verschillende typen rensters — de juiste balans bepaalt of jij in het geel
-            eindigt of in de bezemwagen:
+            Pick smartly from different types of riders — the right balance decides whether you finish in
+            yellow or in the broom wagon:
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { icon: Trophy, emoji: "💛", title: "Klassementsrensters", desc: "Voor de gele trui — de rensters die meedoen om de eindwinst in de Tour Femmes." },
-              { icon: Zap, emoji: "💚", title: "Sprintsters", desc: "Voor de groene trui en de massasprints op de vlakke etappes." },
-              { icon: Mountain, emoji: "⛰️", title: "Klimsters", desc: "Voor de bergtrui — wie pakt de zware cols en de bergetappes?" },
+              { icon: Trophy, emoji: "💛", title: "General classification riders", desc: "For the yellow jersey — the riders going for the overall win in the Tour Femmes." },
+              { icon: Zap, emoji: "💚", title: "Sprinters", desc: "For the green jersey and the bunch sprints on the flat stages." },
+              { icon: Mountain, emoji: "⛰️", title: "Climbers", desc: "For the mountains jersey — who conquers the hard cols and the mountain stages?" },
             ].map(({ icon: Icon, emoji, title, desc }) => (
               <Card key={title} className="ornate-frame retro-border">
                 <CardContent className="p-4">
@@ -263,22 +265,22 @@ export default function TourDeFranceFemmesPoule2026() {
           </div>
         </section>
 
-        {/* Punten */}
+        {/* Points */}
         <section className="ornate-frame retro-border bg-card p-4 md:p-6">
           <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
-            📊 Hoe verdien je punten in de Tour Femmes-poule?
+            📊 How do you earn points in the Tour Femmes pool?
           </h2>
           <p className="text-muted-foreground mb-3 font-serif">
-            Gedurende de etappes van de vrouwen-Tour sprokkel je punten met:
+            Throughout the stages of the women's Tour you collect points with:
           </p>
           <ul className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {[
-              { icon: Flag, label: "Etappe-overwinningen" },
-              { icon: Trophy, label: "Eindklassement (geel)" },
-              { icon: Mountain, label: "Bergklassement" },
-              { icon: Zap, label: "Puntenklassement (groen)" },
-              { icon: Sparkles, label: "Jongerenklassement" },
-              { icon: Check, label: "Speciale prestaties & jokers" },
+              { icon: Flag, label: "Stage wins" },
+              { icon: Trophy, label: "General classification (yellow)" },
+              { icon: Mountain, label: "Mountains classification" },
+              { icon: Zap, label: "Points classification (green)" },
+              { icon: Sparkles, label: "Youth classification" },
+              { icon: Check, label: "Special performances & jokers" },
             ].map(({ icon: Icon, label }) => (
               <li key={label} className="flex items-center gap-3 p-3 rounded-md border-2 border-border bg-secondary/30">
                 <Icon className="h-5 w-5 text-primary shrink-0" />
@@ -288,21 +290,20 @@ export default function TourDeFranceFemmesPoule2026() {
           </ul>
         </section>
 
-        {/* Vrienden */}
+        {/* Friends */}
         <section>
           <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
-            🏁 Speel samen met vrienden — gratis alternatief voor Scorito
+            🏁 Play with friends — a free alternative to Scorito
           </h2>
           <p className="text-muted-foreground mb-3 font-serif">
-            Geen massapoule met duizenden onbekenden, maar een eigen privé-poule waar het écht om de
-            bragging rights gaat. Koerspoule is een gratis alternatief voor Scorito — ook voor de Tour
-            de France Femmes.
+            No mass pool with thousands of strangers, but your own private pool where it is really about the
+            bragging rights. Koerspoule is a free alternative to Scorito — for the Tour de France Femmes too.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { emoji: "🔒", title: "Eigen privé poule", desc: "Beveiligd met een unieke toegangscode." },
-              { emoji: "📈", title: "Live tussenstanden", desc: "Volg na elke etappe wie er aan kop staat." },
-              { emoji: "💬", title: "Koerscafé chat", desc: "Praat live mee tijdens de etappes." },
+              { emoji: "🔒", title: "Your own private pool", desc: "Secured with a unique access code." },
+              { emoji: "📈", title: "Live standings", desc: "See who leads after every stage." },
+              { emoji: "💬", title: "Race café chat", desc: "Chat live during the stages." },
             ].map(({ emoji, title, desc }) => (
               <Card key={title} className="ornate-frame retro-border bg-card">
                 <CardContent className="p-4">
@@ -315,33 +316,19 @@ export default function TourDeFranceFemmesPoule2026() {
           </div>
         </section>
 
-        {/* Gratis alternatief voor Scorito */}
-        <section className="ornate-frame retro-border bg-card p-4 md:p-6">
-          <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
-            🆓 Gratis alternatief voor Scorito
-          </h2>
-          <p className="text-muted-foreground font-serif">
-            Op zoek naar een wielerspel voor de Tour de France Femmes zonder inschrijfgeld of
-            budgetpuzzel? Koerspoule is een volwaardig, <strong>gratis alternatief voor Scorito</strong> —
-            speciaal leuk voor de vrouwen-Tour. Je kiest vrij uit het peloton op koersintuïtie, speelt in
-            je eigen subpoules en volgt live de stand. Geen verborgen kosten, geen ingewikkelde
-            budgetregels: gewoon koersplezier met je eigen vriendengroep.
-          </p>
-        </section>
-
-        {/* Waarom */}
+        {/* Why */}
         <section className="ornate-frame retro-border p-4 md:p-6 bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
           <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
-            🎯 Waarom de Koerspoule Tour Femmes-poule?
+            🎯 Why the Koerspoule Tour Femmes pool?
           </h2>
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              "100% gratis",
-              "Snel een poule starten",
-              "Live updates per etappe",
-              "Voor elke wielerfan — beginner of kenner",
-              "Speel in eigen privé-poule",
-              "Mooie statistieken & head-to-head",
+              "100% free",
+              "Start a pool in minutes",
+              "Live updates every stage",
+              "For every cycling fan — beginner or expert",
+              "Play in your own private pool",
+              "Great stats & head-to-head",
             ].map((item) => (
               <li key={item} className="flex items-center gap-3">
                 <Check className="h-5 w-5 text-[hsl(var(--vintage-gold))] shrink-0" />
@@ -351,10 +338,10 @@ export default function TourDeFranceFemmesPoule2026() {
           </ul>
         </section>
 
-        {/* Veelgestelde vragen — zichtbaar (matcht de FAQPage-structured-data) */}
+        {/* FAQ — visible, matches the FAQPage structured data */}
         <section>
           <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
-            ❓ Veelgestelde vragen over de Tour de France Femmes poule
+            ❓ Frequently asked questions about the Tour de France Femmes pool
           </h2>
           <div className="space-y-3">
             {FAQS.map((f) => (
@@ -369,24 +356,20 @@ export default function TourDeFranceFemmesPoule2026() {
           </div>
         </section>
 
-        {/* Interne links */}
+        {/* Internal links */}
         <section className="text-sm text-muted-foreground font-serif">
           <p>
-            Liever een andere ronde? Maak ook een{" "}
+            Prefer another race? Also play the{" "}
             <Link to="/tour-de-france-poule-2026" className="underline font-bold text-primary">
-              Tour de France poule 2026
+              Tour de France pool 2026
             </Link>
-            , een{" "}
+            , the{" "}
             <Link to="/giro-italia-poule-2026" className="underline font-bold text-primary">
-              Giro d'Italia poule 2026
+              Giro d'Italia pool 2026
             </Link>{" "}
-            of een{" "}
+            or the{" "}
             <Link to="/vuelta-espana-poule-2026" className="underline font-bold text-primary">
-              Vuelta a España poule 2026
-            </Link>
-            . Klaar om te beginnen? Ga naar{" "}
-            <Link to="/team-samenstellen" className="underline font-bold text-primary">
-              stel je team samen
+              Vuelta a España pool 2026
             </Link>
             .
           </p>
@@ -396,14 +379,14 @@ export default function TourDeFranceFemmesPoule2026() {
         <section className="text-center ornate-frame retro-border bg-card p-6">
           <Users className="h-8 w-8 mx-auto text-primary mb-2" />
           <h2 className="vintage-heading text-2xl font-bold mb-2">
-            👉 Start jouw Tour de France Femmes poule 2026
+            👉 Start your Tour de France Femmes pool 2026
           </h2>
           <p className="text-muted-foreground font-serif italic max-w-xl mx-auto mb-4">
-            De Tour Femmes komt eraan — wees er op tijd bij. Maak nu je gratis poule en daag je vrienden
-            uit voor de mooiste vrouwenkoers van het jaar.
+            The Tour Femmes is coming — be there in time. Create your free pool now and challenge your friends
+            to the finest women's race of the year.
           </p>
           <Button asChild size="lg" className="retro-border-primary font-bold animate-pulse">
-            <Link to="/login">🚴‍♀️ Maak nu je gratis Tour Femmes-poule</Link>
+            <Link to={APP_CTA}>🚴‍♀️ Create your free Tour Femmes pool</Link>
           </Button>
         </section>
       </article>

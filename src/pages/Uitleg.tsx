@@ -186,6 +186,13 @@ export default function Uitleg() {
             </Accordion>
           </div>
         </section>
+
+        {/* Interne verwijzing naar een seizoenspoule (merknaam-ankertekst) */}
+        <p className="text-center text-sm text-muted-foreground font-sans mt-6">
+          <Link to="/tour-de-france-femmes-poule-2026" className="underline font-semibold text-primary hover:no-underline">
+            Tour de France Femmes poule 2026
+          </Link>
+        </p>
       </div>
     </div>
   );

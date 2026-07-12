@@ -22,6 +22,7 @@ const ROUTES = [
   "/giro-italia-poule-2026",
   "/vuelta-espana-poule-2026",
   "/tour-de-france-femmes-poule-2026",
+  "/en/tour-de-france-femmes-fantasy-2026",
   "/regels",
   "/juridisch",
 ];
@@ -52,6 +53,12 @@ for (const route of ROUTES) {
       html = html.replace("</head>", `    ${head}\n  </head>`);
     }
     html = html.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
+    // De template heeft lang="nl". Engelse routes (/en/...) krijgen lang="en" in
+    // de geprerenderde HTML, anders serveert Google een Engelse pagina met een
+    // Nederlandse taaldeclaratie.
+    if (route.startsWith("/en/")) {
+      html = html.replace(/<html([^>]*)\slang="nl"/, '<html$1 lang="en"');
+    }
     const outFile = routeToFile(route);
     mkdirSync(dirname(outFile), { recursive: true });
     writeFileSync(outFile, html, "utf-8");

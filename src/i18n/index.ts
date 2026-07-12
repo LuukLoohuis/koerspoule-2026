@@ -56,6 +56,15 @@ i18n.on("languageChanged", (lng) => {
  */
 export function applyStoredLanguage(): void {
   try {
+    // ?lang=en/nl heeft voorrang (bv. vanaf de Engelse SEO-landingspagina) en
+    // wordt meteen als voorkeur bewaard. Anders localStorage, dan browsertaal.
+    const qp = new URLSearchParams(window.location.search).get("lang");
+    const fromQuery = qp === "en" || qp === "nl" ? qp : null;
+    if (fromQuery) {
+      window.localStorage.setItem(LANG_STORAGE_KEY, fromQuery);
+      if (fromQuery !== i18n.language) void i18n.changeLanguage(fromQuery);
+      return;
+    }
     const stored = window.localStorage.getItem(LANG_STORAGE_KEY);
     const preferred =
       stored === "en" || stored === "nl"

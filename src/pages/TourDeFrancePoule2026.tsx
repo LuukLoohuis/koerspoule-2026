@@ -356,12 +356,39 @@ export default function TourDeFrancePoule2026() {
           </div>
         </section>
 
+        {/* Ook meespelen met de Tour de France Femmes — prominente doorverwijzing */}
+        <section className="ornate-frame retro-border bg-card p-4 md:p-6">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl shrink-0">💛</span>
+            <div>
+              <h2 className="font-display text-xl font-bold mb-1">
+                Ook meespelen met de Tour de France Femmes?
+              </h2>
+              <p className="text-muted-foreground font-serif mb-3">
+                Van 1 tot en met 9 augustus 2026 strijden de beste rensters om de gele trui, van Lausanne
+                tot Nice. Stel gratis je ploeg samen en speel met vrienden in de{" "}
+                <Link to="/tour-de-france-femmes-poule-2026" className="underline font-bold text-primary">
+                  Tour de France Femmes poule 2026
+                </Link>
+                .
+              </p>
+              <Button asChild variant="outline" className="retro-border">
+                <Link to="/tour-de-france-femmes-poule-2026">Naar de Tour de France Femmes poule 2026 →</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
         {/* Interne links — andere koersen + uitslagen */}
         <section className="text-sm text-muted-foreground font-serif">
           <p>
             Liever een andere ronde? Maak ook een{" "}
             <Link to="/giro-italia-poule-2026" className="underline font-bold text-primary">
               Giro d'Italia poule 2026
+            </Link>
+            , een{" "}
+            <Link to="/tour-de-france-femmes-poule-2026" className="underline font-bold text-primary">
+              Tour de France Femmes poule 2026
             </Link>{" "}
             of bekijk de{" "}
             <Link to="/uitslagen" className="underline font-bold text-primary">

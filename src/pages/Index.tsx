@@ -836,6 +836,16 @@ export default function Index() {
             <span className="font-mono text-xs text-muted-foreground">@koerspoule</span>
           </a>
         </div>
+        {/* Colofon-links naar de poule-pagina's (interne linkwaarde + doorstroom) */}
+        <div className="mt-3 text-xs text-muted-foreground font-sans flex flex-wrap gap-x-2 gap-y-1">
+          <Link to="/tour-de-france-poule-2026" className="underline hover:text-foreground transition-colors">Tour de France poule 2026</Link>
+          <span aria-hidden>·</span>
+          <Link to="/tour-de-france-femmes-poule-2026" className="underline hover:text-foreground transition-colors">Tour de France Femmes poule 2026</Link>
+          <span aria-hidden>·</span>
+          <Link to="/giro-italia-poule-2026" className="underline hover:text-foreground transition-colors">Giro d'Italia poule 2026</Link>
+          <span aria-hidden>·</span>
+          <Link to="/vuelta-espana-poule-2026" className="underline hover:text-foreground transition-colors">Vuelta a España poule 2026</Link>
+        </div>
       </footer>
 
     </div>
