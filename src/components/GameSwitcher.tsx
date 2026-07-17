@@ -103,7 +103,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
                 aria-pressed={isActive}
                 aria-label={game.name}
                 className={cn(
-                  "group relative snap-start shrink-0 md:flex-1 md:max-w-[240px] md:min-w-0",
+                  "group relative snap-start shrink-0 md:flex-1 md:max-w-[240px] md:min-w-0 overflow-hidden",
                   "flex items-center gap-2.5 rounded-xl text-left transition-all duration-200",
                   "min-h-[58px] px-3 py-2",
                   isActive
@@ -115,17 +115,20 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
                 style={
                   isActive
                     ? {
-                        background: `linear-gradient(135deg, ${theme.colors[0]}, ${theme.colors[1]}, ${theme.colors[2]})`,
+                        // Donkere sluier ÓVER het thema-verloop → wit leest altijd,
+                        // ongeacht themakleur; thema blijft als 2px accent-rand.
+                        background: `linear-gradient(135deg, rgba(20,16,14,0.86), rgba(20,16,14,0.80)), linear-gradient(135deg, ${theme.colors[0]}, ${theme.colors[1]}, ${theme.colors[2]})`,
                         border: `2px solid ${theme.colors[0]}`,
                       }
                     : undefined
                 }
               >
-                {/* "Actief"-stempeltje op de bovenrand */}
+                {/* "Actief"-stempeltje — binnen de rechterbovenhoek (overflow-hidden
+                    op de kaart kapt niets af want het zit binnen de bounds). */}
                 {isActive && (
                   <span
                     aria-hidden
-                    className="absolute -top-2 right-3 -rotate-6 rounded-sm bg-[hsl(var(--foreground))] px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-widest text-[hsl(var(--background))] shadow-sm"
+                    className="absolute top-1 right-1.5 rotate-3 rounded-sm bg-white/90 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-widest text-[hsl(var(--foreground))] shadow-sm"
                   >
                     Actief
                   </span>
@@ -139,15 +142,16 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
                 <span className="min-w-0 flex-1">
                   <span
                     className="block font-display font-bold text-sm truncate"
-                    style={isActive ? { textShadow: "0 1px 2px rgba(0,0,0,0.45)" } : undefined}
+                    style={isActive ? { color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.5)" } : undefined}
                   >
                     {game.name}
                   </span>
                   <span
                     className={cn(
                       "block font-mono text-[10px] tracking-wider uppercase truncate",
-                      isActive ? "text-white/75" : "text-muted-foreground",
+                      isActive ? "text-white/[0.72]" : "text-muted-foreground",
                     )}
+                    style={isActive ? { textShadow: "0 1px 2px rgba(0,0,0,0.5)" } : undefined}
                   >
                     {sub}
                   </span>
@@ -159,7 +163,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
                     "shrink-0 inline-flex items-center gap-1 rounded-full leading-none",
                     "px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
                     isActive
-                      ? "bg-white/25 text-white"
+                      ? "bg-white/20 text-white border border-white/35"
                       : concept
                         ? "bg-[hsl(var(--vintage-gold)/0.16)] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold)/0.45)]"
                         : badge?.kind === "live"
@@ -177,7 +181,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
                     </>
                   ) : badge?.kind === "live" ? (
                     <>
-                      <span className={cn("w-1.5 h-1.5 rounded-full bg-current", !isActive && "animate-pulse")} /> Live
+                      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" /> Live
                     </>
                   ) : badge?.kind === "finished" ? (
                     <>Afgerond · bekijk</>
