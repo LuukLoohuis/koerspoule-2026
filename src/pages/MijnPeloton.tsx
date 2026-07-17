@@ -1080,7 +1080,7 @@ export default function MijnPeloton() {
         nameEntry?.id ? (
           <form
             onSubmit={handleInlineSaveName}
-            className="w-full mb-3 retro-border bg-card px-3 py-2 flex items-center gap-2"
+            className="w-full max-w-5xl mx-auto mb-3 retro-border bg-card px-3 py-2 flex items-center gap-2"
           >
             <Pencil className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <Input
@@ -1104,7 +1104,7 @@ export default function MijnPeloton() {
           <button
             type="button"
             onClick={goEditTeamName}
-            className="w-full mb-3 retro-border bg-card px-3 py-2 flex items-center justify-between gap-3 text-left hover:bg-secondary/40 transition-colors"
+            className="w-full max-w-5xl mx-auto mb-3 retro-border bg-card px-3 py-2 flex items-center justify-between gap-3 text-left hover:bg-secondary/40 transition-colors"
             aria-label={t("team.peloton.setTeamNameAria")}
           >
             <span className="flex items-center gap-2 min-w-0">
