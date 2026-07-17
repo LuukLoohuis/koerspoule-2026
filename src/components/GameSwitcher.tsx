@@ -1,12 +1,14 @@
 /**
- * GameSwitcher — "vertrekbord": kies de koers die je ploeg, subpoules en
- * uitslagen volgt. Gecentreerd in de contentkolom; op desktop vier startkaartjes
- * naast elkaar zonder scroll, op mobiel een horizontaal scrollbare snap-rij met
- * edge-fade + auto-center van de actieve kaart.
+ * GameSwitcher — compacte pill-rij om de koers te kiezen die je ploeg, subpoules
+ * en uitslagen volgt. Actieve pill draagt het vlag-verloop van de race (animeert
+ * in bij selectie); een accentlijn onder de rij kleurt mee als brug naar het
+ * paginathema. Micro-interacties (hover-lift, press, glans, pulserende live-stip)
+ * en volledige prefers-reduced-motion-ondersteuning via .kp-gs-*-klassen in
+ * index.css.
  *
- * Alleen renderen voor ingelogde deelnemers op app-pagina's (de aanroepende
- * pagina bepaalt dat) en alleen bij >1 zichtbare game. Het klik-thema
- * (gameTheme-achtergrond op de actieve kaart) blijft ongewijzigd.
+ * Alleen renderen voor ingelogde deelnemers op app-pagina's (aanroepende pagina
+ * bepaalt dat) en alleen bij >1 zichtbare game. Elke pill toont zijn EIGEN
+ * game.status. Geen subtitels (geen jaartal/dames-heren) — alleen naam + status.
  */
 import { useEffect, useRef } from "react";
 import { Wrench } from "lucide-react";
@@ -24,16 +26,10 @@ type Props = {
   className?: string;
 };
 
-function toRoman(n: number): string {
-  const map: [number, string][] = [
-    [1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"],
-    [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"],
-  ];
-  let r = "";
-  let x = n;
-  for (const [v, sym] of map) while (x >= v) { r += sym; x -= v; }
-  return r;
-}
+const raceGradient = (type: string | null | undefined) => {
+  const c = gameTheme(type).colors;
+  return `linear-gradient(135deg, ${c[0]}, ${c[1]}, ${c[2]})`;
+};
 
 export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = false, className }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -53,6 +49,9 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
   }, [selectedId]);
 
   if (ordered.length <= 1) return null;
+
+  const activeGame = ordered.find((g) => g.id === selectedId) ?? ordered[0];
+  const accentGradient = raceGradient(activeGame.game_type);
 
   return (
     <div className={cn("w-full", className)}>
@@ -91,8 +90,6 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
             const concept = isAdminOnlyStatus(game.status);
             const badge = statusBadge(game.status);
             const finished = badge?.kind === "finished";
-            const isFemmes = String(game.game_type).toLowerCase() === "femmes";
-            const sub = `${toRoman(game.year)}${isFemmes ? " · Dames" : ""}`;
 
             return (
               <button
@@ -101,99 +98,100 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
                 type="button"
                 onClick={() => onSelect(game.id)}
                 aria-pressed={isActive}
+                aria-current={isActive ? "true" : undefined}
                 aria-label={game.name}
                 className={cn(
-                  "group relative snap-start shrink-0 md:flex-1 md:max-w-[240px] md:min-w-0 overflow-hidden",
-                  "flex items-center gap-2.5 rounded-xl text-left transition-all duration-200",
-                  "min-h-[58px] px-3 py-2",
+                  "kp-gs-card group relative snap-start shrink-0 overflow-hidden rounded-full",
+                  "min-h-[42px] px-3 py-1.5 outline-none",
+                  "focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                   isActive
                     ? "text-white shadow-[2px_2px_0_hsl(var(--foreground))]"
                     : finished
-                      ? "bg-card border border-border text-foreground/70 opacity-[0.65] hover:opacity-100"
-                      : "bg-card border-[1.5px] border-border text-foreground/85 hover:border-foreground/30 hover:bg-secondary/50",
+                      ? "kp-gs-finished bg-card border border-border text-foreground/80"
+                      : "bg-card border-[1.5px] border-border text-foreground/85 hover:bg-secondary/40",
                 )}
-                style={
-                  isActive
-                    ? {
-                        // Donkere sluier ÓVER het thema-verloop → wit leest altijd,
-                        // ongeacht themakleur; thema blijft als 2px accent-rand.
-                        background: `linear-gradient(135deg, rgba(20,16,14,0.86), rgba(20,16,14,0.80)), linear-gradient(135deg, ${theme.colors[0]}, ${theme.colors[1]}, ${theme.colors[2]})`,
-                        border: `2px solid ${theme.colors[0]}`,
-                      }
-                    : undefined
-                }
+                style={{ ["--tw-ring-color" as string]: theme.colors[0] }}
               >
-                {/* "Actief"-stempeltje — binnen de rechterbovenhoek (overflow-hidden
-                    op de kaart kapt niets af want het zit binnen de bounds). */}
+                {/* Vlag-verloop-laag: fade + scale in bij activatie, uit bij deactivatie. */}
+                <span
+                  aria-hidden
+                  className="kp-gs-grad absolute inset-0 rounded-[inherit]"
+                  style={{
+                    background: raceGradient(game.game_type),
+                    opacity: isActive ? 1 : 0,
+                    transform: isActive ? "scale(1)" : "scale(0.96)",
+                  }}
+                />
+                {/* Glans die alleen over de actieve pill glijdt. */}
                 {isActive && (
                   <span
                     aria-hidden
-                    className="absolute top-1 right-1.5 rotate-3 rounded-sm bg-white/90 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-widest text-[hsl(var(--foreground))] shadow-sm"
-                  >
-                    Actief
-                  </span>
+                    className="kp-gs-shine absolute inset-y-0 -inset-x-1/4 pointer-events-none"
+                    style={{
+                      background:
+                        "linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.35) 50%, transparent 65%)",
+                    }}
+                  />
                 )}
 
-                <FlagIcon
-                  country={theme.country}
-                  className={cn("w-8 h-5", isActive ? "ring-1 ring-white/60 border-white/40" : "")}
-                />
-
-                <span className="min-w-0 flex-1">
+                {/* Inhoud boven de lagen. */}
+                <span className="relative z-10 flex items-center gap-2">
+                  <FlagIcon
+                    country={theme.country}
+                    className={cn("w-7 h-5", isActive ? "ring-1 ring-white/60 border-white/40" : "")}
+                  />
                   <span
-                    className="block font-display font-bold text-sm truncate"
-                    style={isActive ? { color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.5)" } : undefined}
+                    className={cn("font-display text-sm whitespace-nowrap", isActive ? "font-semibold" : "font-bold")}
+                    style={isActive ? { color: "#fff", textShadow: "0 1px 2px rgba(10,10,40,0.6)" } : undefined}
                   >
                     {game.name}
                   </span>
+
+                  {/* Status-pill — per kaart, op de eigen game.status. */}
                   <span
                     className={cn(
-                      "block font-mono text-[10px] tracking-wider uppercase truncate",
-                      isActive ? "text-white/[0.72]" : "text-muted-foreground",
+                      "shrink-0 inline-flex items-center gap-1 rounded-full leading-none",
+                      "px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+                      isActive
+                        ? "bg-white/20 text-white border border-white/40"
+                        : concept
+                          ? "bg-[hsl(var(--vintage-gold)/0.16)] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold)/0.45)]"
+                          : badge?.kind === "live"
+                            ? "bg-red-500/15 text-red-600 border border-red-500/40"
+                            : badge?.kind === "registration"
+                              ? "bg-emerald-500/15 text-emerald-700 border border-emerald-500/40"
+                              : badge?.kind === "preview"
+                                ? "bg-[hsl(var(--vintage-gold)/0.16)] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold)/0.45)]"
+                                : "bg-secondary text-muted-foreground border border-border",
                     )}
-                    style={isActive ? { textShadow: "0 1px 2px rgba(0,0,0,0.5)" } : undefined}
                   >
-                    {sub}
+                    {concept ? (
+                      <>
+                        <Wrench className="w-2.5 h-2.5" /> Concept
+                      </>
+                    ) : badge?.kind === "live" ? (
+                      <>
+                        <span className="kp-gs-livedot w-1.5 h-1.5 rounded-full bg-current" /> Live
+                      </>
+                    ) : badge?.kind === "finished" ? (
+                      <>Afgerond</>
+                    ) : (
+                      badge?.label
+                    )}
                   </span>
-                </span>
-
-                {/* Status-pill rechtsonder */}
-                <span
-                  className={cn(
-                    "shrink-0 inline-flex items-center gap-1 rounded-full leading-none",
-                    "px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
-                    isActive
-                      ? "bg-white/20 text-white border border-white/35"
-                      : concept
-                        ? "bg-[hsl(var(--vintage-gold)/0.16)] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold)/0.45)]"
-                        : badge?.kind === "live"
-                          ? "bg-red-500/15 text-red-600 border border-red-500/40"
-                          : badge?.kind === "registration"
-                            ? "bg-emerald-500/15 text-emerald-700 border border-emerald-500/40"
-                            : badge?.kind === "preview"
-                              ? "bg-[hsl(var(--vintage-gold)/0.16)] text-[hsl(var(--vintage-gold))] border border-[hsl(var(--vintage-gold)/0.45)]"
-                              : "bg-secondary text-muted-foreground border border-border",
-                  )}
-                >
-                  {concept ? (
-                    <>
-                      <Wrench className="w-2.5 h-2.5" /> Concept
-                    </>
-                  ) : badge?.kind === "live" ? (
-                    <>
-                      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" /> Live
-                    </>
-                  ) : badge?.kind === "finished" ? (
-                    <>Afgerond · bekijk</>
-                  ) : (
-                    badge?.label
-                  )}
                 </span>
               </button>
             );
           })}
         </div>
       </div>
+
+      {/* Accentlijn — kleurt mee met de actieve koers (brug naar het paginathema). */}
+      <div
+        aria-hidden
+        className="kp-gs-accent mx-auto mt-2 h-1 w-24 md:w-40 rounded-full"
+        style={{ background: accentGradient }}
+      />
 
       {/* Hint onder de rail */}
       <p className="mt-1.5 text-center font-mono text-[9px] md:text-[10px] tracking-[0.18em] uppercase text-muted-foreground/70">
