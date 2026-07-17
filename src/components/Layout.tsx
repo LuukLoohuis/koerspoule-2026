@@ -7,6 +7,9 @@ import { useTranslation } from "react-i18next";
 import LanguageToggle from "@/components/LanguageToggle";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSelectedGame, resolveDefaultGameId } from "@/context/SelectedGameContext";
+import { useAllGames } from "@/hooks/useAllGames";
+import { useMyEnteredGameIds } from "@/hooks/useMyEnteredGameIds";
+import InschrijfBanner from "@/components/InschrijfBanner";
 import { SteunKopgroepPill } from "@/components/SteunKopgroep";
 import CookieBanner from "@/components/CookieBanner";
 import RouteSeo from "@/components/RouteSeo";
@@ -203,6 +206,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="bolletjes-rule" aria-hidden />
       </header>
 
+      {/* In-app "inschrijving open"-banner (deelnemers). Homepage (/) doet dit
+          zelf via Index; hier voor ingelogde deelnemers op de app-pagina's, voor
+          games die 'ie nog niet heeft ingevuld. Wegklikbaar per game. */}
+      <InAppInschrijfBanners hidden={location.pathname === "/"} loggedIn={isLoggedIn} />
+
       {/* Main content — alle pagina's behalve de voorpagina krijgen één
           leesbaar font (Inter) via .content-font; de voorpagina (/) houdt
           haar eigen editorial typografie. */}
@@ -249,6 +257,32 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </footer>
 
       <CookieBanner />
+    </div>
+  );
+}
+
+/**
+ * In-app inschrijf-banners: voor ingelogde deelnemers, op app-pagina's (niet de
+ * homepage — die doet 't zelf), voor games met de vlag aan die op
+ * open_inschrijving staan én die de deelnemer nog niet heeft ingevuld.
+ * Wegklikbaar per game (localStorage).
+ */
+function InAppInschrijfBanners({ hidden, loggedIn }: { hidden: boolean; loggedIn: boolean }) {
+  const { data: allGames = [] } = useAllGames();
+  const { data: entered } = useMyEnteredGameIds();
+  if (hidden || !loggedIn) return null;
+  const games = allGames.filter(
+    (g) =>
+      g.inschrijf_banner_visible &&
+      String(g.status) === "open_inschrijving" &&
+      !(entered?.has(g.id) ?? false),
+  );
+  if (games.length === 0) return null;
+  return (
+    <div className="container mx-auto px-5 pt-3 space-y-3">
+      {games.map((g) => (
+        <InschrijfBanner key={g.id} game={g} dismissable />
+      ))}
     </div>
   );
 }

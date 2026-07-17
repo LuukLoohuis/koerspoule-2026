@@ -38,6 +38,8 @@ import WervingStrook from "@/components/WervingStrook";
 import KoerspouleLogo, { type RaceKey } from "@/components/KoerspouleLogo";
 import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useAllGames } from "@/hooks/useAllGames";
+import InschrijfBanner from "@/components/InschrijfBanner";
 import { useThema } from "@/contexts/ThemaContext";
 import Stamp from "@/components/retro/Stamp";
 import type { ThemaKey } from "@/lib/themas";
@@ -166,6 +168,12 @@ export default function Index() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { data: currentGame } = useCurrentGame();
+  const { data: allGames = [] } = useAllGames();
+  // Games met de admin-vlag aan én daadwerkelijk open_inschrijving → banner.
+  const inschrijfGames = useMemo(
+    () => allGames.filter((g) => g.inschrijf_banner_visible && String(g.status) === "open_inschrijving"),
+    [allGames],
+  );
   const { thema, key: themaKey, ready: themaReady } = useThema();
 
   // De hero volgt het actieve thema (admin-keuze), met game_type als fallback.
@@ -570,6 +578,15 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* ─── INSCHRIJF-BANNER(S) — per game met de vlag aan (direct onder hero) ── */}
+      {inschrijfGames.length > 0 && (
+        <section className="container mx-auto px-5 pt-6 space-y-3">
+          {inschrijfGames.map((g) => (
+            <InschrijfBanner key={g.id} game={g} />
+          ))}
+        </section>
+      )}
 
       {/* ─── AFTELLER-BAND (slank, direct onder de hero) ──────────────────── */}
       <section className="container mx-auto px-5 pt-6">

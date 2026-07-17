@@ -9,6 +9,8 @@ export type GameRow = {
   game_type: "giro" | "tour" | "tdf" | "vuelta" | "femmes" | string | null;
   prizes_visible?: boolean | null;
   admin_testmodus?: boolean | null;
+  /** "Inschrijving open"-banner voor deze game (admin, handmatig). */
+  inschrijf_banner_visible?: boolean | null;
 };
 
 export function useAllGames() {
@@ -20,13 +22,22 @@ export function useAllGames() {
     refetchOnReconnect: true,
     queryFn: async (): Promise<GameRow[]> => {
       if (!supabase) return [];
-      const { data, error } = await supabase
-        .from("games")
-        .select("id, name, year, status, game_type, prizes_visible, admin_testmodus")
-        .order("year", { ascending: false })
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      const rows = (data ?? []) as GameRow[];
+      const SELECT = "id, name, year, status, game_type, prizes_visible, admin_testmodus, inschrijf_banner_visible";
+      // Vóór de inschrijf_banner-migratie geeft de volle select een 42703
+      // (undefined column) → val terug op de kolomlijst zonder dat veld.
+      const SELECT_LEGACY = "id, name, year, status, game_type, prizes_visible, admin_testmodus";
+      const fetchWith = (select: string) =>
+        supabase!
+          .from("games")
+          .select(select)
+          .order("year", { ascending: false })
+          .order("created_at", { ascending: false });
+      let res = await fetchWith(SELECT);
+      if (res.error && (res.error as { code?: string }).code === "42703") {
+        res = await fetchWith(SELECT_LEGACY);
+      }
+      if (res.error) throw res.error;
+      const rows = (res.data ?? []) as unknown as GameRow[];
       const typeOrder = (t: string | null | undefined) => {
         const k = (t ?? "").toLowerCase();
         if (k === "giro") return 0;

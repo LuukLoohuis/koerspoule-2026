@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import { useAllGames, type GameRow } from "@/hooks/useAllGames";
 
 /**
@@ -64,6 +65,18 @@ export function SelectedGameProvider({ children }: { children: ReactNode }) {
       /* localStorage geblokkeerd → alleen in-memory */
     }
   };
+
+  // ?game=<id> in de URL (bv. vanaf de "Doe mee"-inschrijfbanner) selecteert die
+  // game direct, zodat de bezoeker meteen in de juiste inschrijving landt. Alleen
+  // als 'ie kiesbaar is en nog niet de huidige keuze.
+  const location = useLocation();
+  useEffect(() => {
+    const qp = new URLSearchParams(location.search).get("game");
+    if (qp && qp !== selectedGameId && games.some((g) => g.id === qp)) {
+      setSelectedGameId(qp);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search, games]);
 
   // Wijst de opgeslagen keuze naar een niet-(meer-)kiesbare game (verwijderd of
   // terug naar concept), reset dan naar null → useCurrentGame pakt de default.
