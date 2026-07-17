@@ -3,50 +3,47 @@ import { useLocation } from "react-router-dom";
 import { useAllGames, type GameRow } from "@/hooks/useAllGames";
 
 /**
- * SelectedGameContext — fase 1 multi-game.
+ * SelectedGameContext — één gedeelde game-keuze voor de hele deelnemer-app.
  *
- * Houdt de EXPLICIET gekozen game bij (gepersisteerd in localStorage), zodat er
- * meerdere games tegelijk actief kunnen zijn en een afgeronde game raadpleegbaar
- * blijft. useCurrentGame leest selectedGameId hieruit; is er (nog) geen keuze,
- * dan valt useCurrentGame terug op zijn bestaande default-logica — dus bestaande
- * gebruikers zonder keuze zien exact hetzelfde als voorheen.
+ * Vervangt de losse per-pagina game-state (MijnPeloton, Results) en de dubbele
+ * switchers. De keuze is gepersisteerd; de GameSwitcher-kaartenrij staat één keer
+ * in de app-shell (Layout). useCurrentGame en useDeadline volgen selectedGameId.
  *
- * "Kiesbare" games = alleen deelnemer-zichtbare statussen (concept/draft niet).
+ * De lijst is de VOLLE useAllGames (alle statussen). Zichtbaarheidsfiltering
+ * (concept/draft alleen voor admins) doet de GameSwitcher zelf via isAdmin.
  */
 const STORAGE_KEY = "koerspoule_selected_game";
 
-const SELECTABLE = new Set(["open", "open_inschrijving", "locked", "live", "finished"]);
 const ACTIVE = new Set(["open", "open_inschrijving", "locked", "live"]);
+const ADMIN_ONLY = new Set(["concept", "draft"]);
 
 type SelectedGameCtx = {
   selectedGameId: string | null;
   setSelectedGameId: (id: string | null) => void;
-  /** Kiesbare games, gesorteerd (year desc → type-volgorde via useAllGames). */
+  /** Volledige gamelijst (gesorteerd via useAllGames: year desc → type). */
   games: GameRow[];
+  /** De opgeloste gekozen game (keuze, of de default als er nog niets gekozen is). */
+  selectedGame: GameRow | null;
   loading: boolean;
 };
 
 const Ctx = createContext<SelectedGameCtx | null>(null);
 
 /**
- * Default-game wanneer nog niets gekozen is: de eerste ACTIEVE game (open/
- * open_inschrijving/locked/live) met de hoogste year; anders de meest recente
- * finished. Repliceert het oude useCurrentGame-gedrag. `games` is al gesorteerd.
+ * Default-game (verplaatst uit MijnPeloton): actieve game (open/open_inschrijving/
+ * locked/live) met de hoogste year, anders een concept/draft, anders de meest
+ * recente. `games` is al gesorteerd, dus .find pakt de hoogste year.
  */
 export function resolveDefaultGameId(games: GameRow[]): string | null {
-  const active = games.filter((g) => ACTIVE.has(String(g.status)));
-  if (active.length) return active[0].id; // reeds year desc gesorteerd
-  const finished = games.filter((g) => String(g.status) === "finished");
-  if (finished.length) return finished[0].id;
+  const active = games.find((g) => ACTIVE.has(String(g.status)));
+  if (active) return active.id;
+  const adminOnly = games.find((g) => ADMIN_ONLY.has(String(g.status)));
+  if (adminOnly) return adminOnly.id;
   return games[0]?.id ?? null;
 }
 
 export function SelectedGameProvider({ children }: { children: ReactNode }) {
-  const { data: allGames = [], isLoading } = useAllGames();
-  const games = useMemo(
-    () => allGames.filter((g) => SELECTABLE.has(String(g.status))),
-    [allGames],
-  );
+  const { data: games = [], isLoading } = useAllGames();
 
   const [selectedGameId, setSelectedGameIdState] = useState<string | null>(() => {
     try {
@@ -66,9 +63,7 @@ export function SelectedGameProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // ?game=<id> in de URL (bv. vanaf de "Doe mee"-inschrijfbanner) selecteert die
-  // game direct, zodat de bezoeker meteen in de juiste inschrijving landt. Alleen
-  // als 'ie kiesbaar is en nog niet de huidige keuze.
+  // ?game=<id> in de URL (inschrijfbanner "Doe mee") selecteert die game direct.
   const location = useLocation();
   useEffect(() => {
     const qp = new URLSearchParams(location.search).get("game");
@@ -78,8 +73,8 @@ export function SelectedGameProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search, games]);
 
-  // Wijst de opgeslagen keuze naar een niet-(meer-)kiesbare game (verwijderd of
-  // terug naar concept), reset dan naar null → useCurrentGame pakt de default.
+  // Wijst de opgeslagen keuze naar een niet-(meer-)bestaande game, reset dan naar
+  // null → de default (selectedGame hieronder) neemt het over.
   useEffect(() => {
     if (selectedGameId && games.length > 0 && !games.some((g) => g.id === selectedGameId)) {
       setSelectedGameId(null);
@@ -87,9 +82,18 @@ export function SelectedGameProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedGameId, games]);
 
+  // Opgeloste game: de keuze indien geldig, anders de default.
+  const selectedGame = useMemo<GameRow | null>(() => {
+    if (games.length === 0) return null;
+    const byChoice = selectedGameId ? games.find((g) => g.id === selectedGameId) : null;
+    if (byChoice) return byChoice;
+    const defId = resolveDefaultGameId(games);
+    return games.find((g) => g.id === defId) ?? null;
+  }, [games, selectedGameId]);
+
   const value = useMemo<SelectedGameCtx>(
-    () => ({ selectedGameId, setSelectedGameId, games, loading: isLoading }),
-    [selectedGameId, games, isLoading],
+    () => ({ selectedGameId, setSelectedGameId, games, selectedGame, loading: isLoading }),
+    [selectedGameId, games, selectedGame, isLoading],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -97,7 +101,8 @@ export function SelectedGameProvider({ children }: { children: ReactNode }) {
 
 export function useSelectedGame(): SelectedGameCtx {
   const ctx = useContext(Ctx);
-  // Veilige no-op buiten de provider (losse tests / vroege SSR-render).
-  if (!ctx) return { selectedGameId: null, setSelectedGameId: () => {}, games: [], loading: false };
+  if (!ctx) {
+    return { selectedGameId: null, setSelectedGameId: () => {}, games: [], selectedGame: null, loading: false };
+  }
   return ctx;
 }

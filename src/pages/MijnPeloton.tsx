@@ -42,9 +42,8 @@ import KaravaanFeed from "@/components/karavaan/KaravaanFeed";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useAllGames, gameTheme } from "@/hooks/useAllGames";
-import GameSwitcher from "@/components/GameSwitcher";
-import { isVisibleToUser, isAdminOnlyStatus, maySeeLiveContent } from "@/lib/gameStatus";
+import { useSelectedGame } from "@/context/SelectedGameContext";
+import { isAdminOnlyStatus, maySeeLiveContent } from "@/lib/gameStatus";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { Input } from "@/components/ui/input";
@@ -111,25 +110,10 @@ export default function MijnPeloton() {
   const { teamName, entry: nameEntry, saveTeamName } = useEntry(currentGame?.id);
   const myTeam = mockTeams[0];
   const displayName = (teamName?.trim() || profile?.display_name?.trim() || "José Bidon");
-  const { data: allGames = [] } = useAllGames();
   const { user: authUser, role } = useAuth();
   const isAdmin = role === "admin";
-  // concept/draft alleen voor admins; gewone gebruikers zien die game niet.
-  const visibleGames = useMemo(
-    () => allGames.filter((g) => isVisibleToUser(g.status, isAdmin)),
-    [allGames, isAdmin],
-  );
-  const [selectedGame, setSelectedGame] = useState<string | null>(null);
-  useEffect(() => {
-    if (!selectedGame && visibleGames.length > 0) {
-      const preferred =
-        visibleGames.find((g) => ["open_inschrijving", "open", "live", "locked"].includes(g.status)) ??
-        visibleGames.find((g) => isAdminOnlyStatus(g.status)) ??
-        visibleGames[0];
-      setSelectedGame(preferred.id);
-    }
-  }, [visibleGames, selectedGame]);
-  const selectedGameObj = allGames.find((g) => g.id === selectedGame) ?? null;
+  // Gedeelde game-keuze uit de shell-context (fase: één kiezer voor de hele app).
+  const { selectedGame: selectedGameObj } = useSelectedGame();
   // Telbordje: aantal gekozen renners dat vóór de koers is vervallen (vervanger nodig).
   const { data: fallenCount = 0 } = useFallenRidersCount(selectedGameObj?.id, selectedGameObj?.status);
   // Handmatige "Steun Koerspoule"-banner: alleen aan als de admin 'm ergens aanzette.
@@ -1065,14 +1049,7 @@ export default function MijnPeloton() {
   const hasTeamName = Boolean(teamName?.trim());
   return (
     <div className="container mx-auto px-5 pb-4 md:py-6">
-      {/* 1. GameSwitcher — sticky bovenaan, full-bleed op mobiel */}
-      <GameSwitcher
-        games={visibleGames}
-        selectedId={selectedGame}
-        onSelect={setSelectedGame}
-        isAdmin={isAdmin}
-        className="-mx-5 md:mx-0 mb-3 md:mb-5"
-      />
+      {/* Game-keuze staat nu in de app-shell (Layout); geen eigen switcher hier. */}
 
       {/* 2. Compact masthead */}
       <div className="relative mb-3 md:mb-6">

@@ -5,8 +5,9 @@ import { useState } from "react";
 import { Menu, X, Instagram } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "@/components/LanguageToggle";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSelectedGame, resolveDefaultGameId } from "@/context/SelectedGameContext";
+import GameSwitcher from "@/components/GameSwitcher";
+import { useSelectedGame } from "@/context/SelectedGameContext";
+import { isVisibleToUser } from "@/lib/gameStatus";
 import { useAllGames } from "@/hooks/useAllGames";
 import { useMyEnteredGameIds } from "@/hooks/useMyEnteredGameIds";
 import InschrijfBanner from "@/components/InschrijfBanner";
@@ -42,6 +43,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: currentGame } = useCurrentGame();
   const { t } = useTranslation();
   const isLoggedIn = Boolean(user);
+  const isAdmin = role === "admin";
+
+  // Gedeelde game-keuze (context). De kaartenrij-switcher staat één keer hier in
+  // de shell; pagina's houden geen eigen game-state meer bij.
+  const { games, selectedGame, setSelectedGameId } = useSelectedGame();
+  const switchableGames = games.filter((g) => isVisibleToUser(g.status, isAdmin));
 
   // "Prijzen" alleen in de nav als de actieve game 'm zichtbaar heeft gezet.
   const visibleNav = currentGame?.prizes_visible
@@ -82,10 +89,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <SteunKopgroepPill />
             </div>
 
-            {/* Rechter-groep: game-switcher (bij >1 game) + taal + Instagram
-                (altijd zichtbaar) + auth (desktop) / hamburger (mobiel) */}
+            {/* Rechter-groep: taal + Instagram (altijd zichtbaar) + auth
+                (desktop) / hamburger (mobiel). De game-switcher staat als eigen
+                rij onder de nav (niet hier). */}
             <div className="flex items-center gap-2">
-              <GameSwitcher />
               <LanguageToggle />
               <a
                 href={INSTAGRAM_URL}
@@ -206,6 +213,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="bolletjes-rule" aria-hidden />
       </header>
 
+      {/* Game-switcher — één keer in de shell, direct onder de nav. Alleen bij
+          >1 voor de deelnemer zichtbare game; bij één game verborgen. */}
+      {switchableGames.length > 1 && (
+        <GameSwitcher
+          games={switchableGames}
+          selectedId={selectedGame?.id ?? null}
+          onSelect={setSelectedGameId}
+          isAdmin={isAdmin}
+        />
+      )}
+
       {/* In-app "inschrijving open"-banner (deelnemers). Homepage (/) doet dit
           zelf via Index; hier voor ingelogde deelnemers op de app-pagina's, voor
           games die 'ie nog niet heeft ingevuld. Wegklikbaar per game. */}
@@ -287,43 +305,3 @@ function InAppInschrijfBanners({ hidden, loggedIn }: { hidden: boolean; loggedIn
   );
 }
 
-/**
- * Game-switcher in de masthead. Alleen zichtbaar bij >1 kiesbare game — bij één
- * game geen visuele ruis. Toont naam + jaar; een subtiel statuslabel bij
- * inschrijving-open/afgerond. Selectie zet de gekozen game (gepersisteerd).
- */
-function GameSwitcher() {
-  const { games, selectedGameId, setSelectedGameId } = useSelectedGame();
-  if (games.length <= 1) return null;
-
-  // Toon de effectieve game als er nog geen expliciete keuze is (= de default).
-  const active = selectedGameId ?? resolveDefaultGameId(games) ?? undefined;
-  const statusHint = (s: string) =>
-    s === "open_inschrijving" ? "inschrijving open" : s === "finished" ? "afgerond" : null;
-
-  return (
-    <Select value={active} onValueChange={(v) => setSelectedGameId(v)}>
-      <SelectTrigger
-        aria-label="Kies game"
-        className="h-9 w-auto max-w-[190px] gap-1.5 rounded-lg border border-foreground/30 px-2.5 text-xs font-medium"
-      >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {games.map((g) => {
-          const hint = statusHint(String(g.status));
-          return (
-            <SelectItem key={g.id} value={g.id} className="text-xs">
-              <span className="font-medium whitespace-nowrap">{g.name}</span>
-              {hint && (
-                <span className="ml-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                  · {hint}
-                </span>
-              )}
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
-  );
-}
