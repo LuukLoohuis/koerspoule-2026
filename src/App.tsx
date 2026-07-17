@@ -1,5 +1,6 @@
 import { Suspense, useEffect } from "react";
 import { applyStoredLanguage } from "@/i18n";
+import { SelectedGameProvider } from "@/context/SelectedGameContext";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -68,6 +69,7 @@ const App = () => {
       <Toaster />
       <Sonner />
         <ScrollToTop />
+        <SelectedGameProvider>
         <AuthProvider>
           <ThemaProvider>
           <Layout>
@@ -150,6 +152,7 @@ const App = () => {
           </Layout>
           </ThemaProvider>
         </AuthProvider>
+        </SelectedGameProvider>
     </TooltipProvider>
   </QueryClientProvider>
   );

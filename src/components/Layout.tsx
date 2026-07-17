@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Menu, X, Instagram } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "@/components/LanguageToggle";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSelectedGame, resolveDefaultGameId } from "@/context/SelectedGameContext";
 import { SteunKopgroepPill } from "@/components/SteunKopgroep";
 import CookieBanner from "@/components/CookieBanner";
 import RouteSeo from "@/components/RouteSeo";
@@ -77,9 +79,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <SteunKopgroepPill />
             </div>
 
-            {/* Rechter-groep: taal + Instagram (altijd zichtbaar) + auth
-                (desktop) / hamburger (mobiel) */}
+            {/* Rechter-groep: game-switcher (bij >1 game) + taal + Instagram
+                (altijd zichtbaar) + auth (desktop) / hamburger (mobiel) */}
             <div className="flex items-center gap-2">
+              <GameSwitcher />
               <LanguageToggle />
               <a
                 href={INSTAGRAM_URL}
@@ -247,5 +250,46 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <CookieBanner />
     </div>
+  );
+}
+
+/**
+ * Game-switcher in de masthead. Alleen zichtbaar bij >1 kiesbare game — bij één
+ * game geen visuele ruis. Toont naam + jaar; een subtiel statuslabel bij
+ * inschrijving-open/afgerond. Selectie zet de gekozen game (gepersisteerd).
+ */
+function GameSwitcher() {
+  const { games, selectedGameId, setSelectedGameId } = useSelectedGame();
+  if (games.length <= 1) return null;
+
+  // Toon de effectieve game als er nog geen expliciete keuze is (= de default).
+  const active = selectedGameId ?? resolveDefaultGameId(games) ?? undefined;
+  const statusHint = (s: string) =>
+    s === "open_inschrijving" ? "inschrijving open" : s === "finished" ? "afgerond" : null;
+
+  return (
+    <Select value={active} onValueChange={(v) => setSelectedGameId(v)}>
+      <SelectTrigger
+        aria-label="Kies game"
+        className="h-9 w-auto max-w-[190px] gap-1.5 rounded-lg border border-foreground/30 px-2.5 text-xs font-medium"
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {games.map((g) => {
+          const hint = statusHint(String(g.status));
+          return (
+            <SelectItem key={g.id} value={g.id} className="text-xs">
+              <span className="font-medium whitespace-nowrap">{g.name}</span>
+              {hint && (
+                <span className="ml-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  · {hint}
+                </span>
+              )}
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
   );
 }

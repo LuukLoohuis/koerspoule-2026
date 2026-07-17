@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useSelectedGame } from "@/context/SelectedGameContext";
 
 /**
  * Huidige game met focus-/interval-refresh: status-wissels (open→live→locked)
@@ -37,8 +38,13 @@ const SELECT_LEGACY =
   "id, name, year, status, game_type, homepage_quote, homepage_quote_author";
 
 export function useCurrentGame() {
+  // De EXPLICIET gekozen game (multi-game). Is er nog geen keuze, dan valt de
+  // queryFn hieronder terug op de bestaande default-logica.
+  const { selectedGameId } = useSelectedGame();
+
   return useQuery({
-    queryKey: ["current-game"],
+    // selectedGameId in de key → wisselen van game hertriggert alle verbruikers.
+    queryKey: ["current-game", selectedGameId],
     // Status-wissels (open→live→locked) snel oppikken, ook bij terugkeer naar de tab.
     staleTime: 15_000,
     refetchOnWindowFocus: true,
@@ -46,7 +52,24 @@ export function useCurrentGame() {
     queryFn: async (): Promise<Game | null> => {
       if (!supabase) return null;
 
+      // Expliciet gekozen game: haal precies die op. Bestaat 'ie niet (meer),
+      // val door naar de default-logica zodat er nooit een lege staat is.
+      const fetchById = async (select: string, id: string) => {
+        const { data, error } = await supabase!
+          .from("games")
+          .select(select)
+          .eq("id", id)
+          .maybeSingle();
+        if (error) throw error;
+        return (data as unknown as Game | null) ?? null;
+      };
+
       const fetchWith = async (select: string) => {
+        if (selectedGameId) {
+          const chosen = await fetchById(select, selectedGameId);
+          if (chosen) return chosen;
+        }
+
         // Prefer an actively running game
         const { data: live, error: liveErr } = await supabase!
           .from("games")
