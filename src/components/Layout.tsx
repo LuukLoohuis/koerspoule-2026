@@ -5,9 +5,6 @@ import { useState } from "react";
 import { Menu, X, Instagram } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "@/components/LanguageToggle";
-import GameSwitcher from "@/components/GameSwitcher";
-import { useSelectedGame } from "@/context/SelectedGameContext";
-import { isVisibleToUser } from "@/lib/gameStatus";
 import { useAllGames } from "@/hooks/useAllGames";
 import { useMyEnteredGameIds } from "@/hooks/useMyEnteredGameIds";
 import InschrijfBanner from "@/components/InschrijfBanner";
@@ -43,12 +40,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: currentGame } = useCurrentGame();
   const { t } = useTranslation();
   const isLoggedIn = Boolean(user);
-  const isAdmin = role === "admin";
-
-  // Gedeelde game-keuze (context). De kaartenrij-switcher staat één keer hier in
-  // de shell; pagina's houden geen eigen game-state meer bij.
-  const { games, selectedGame, setSelectedGameId } = useSelectedGame();
-  const switchableGames = games.filter((g) => isVisibleToUser(g.status, isAdmin));
 
   // "Prijzen" alleen in de nav als de actieve game 'm zichtbaar heeft gezet.
   const visibleNav = currentGame?.prizes_visible
@@ -213,16 +204,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="bolletjes-rule" aria-hidden />
       </header>
 
-      {/* Game-switcher — één keer in de shell, direct onder de nav. Alleen bij
-          >1 voor de deelnemer zichtbare game; bij één game verborgen. */}
-      {switchableGames.length > 1 && (
-        <GameSwitcher
-          games={switchableGames}
-          selectedId={selectedGame?.id ?? null}
-          onSelect={setSelectedGameId}
-          isAdmin={isAdmin}
-        />
-      )}
+      {/* Game-switcher staat niet in de shell maar op de app-pagina's zelf
+          (MijnPeloton, Uitslagen) — nooit op de homepage of bij uitgelogd. */}
 
       {/* In-app "inschrijving open"-banner (deelnemers). Homepage (/) doet dit
           zelf via Index; hier voor ingelogde deelnemers op de app-pagina's, voor

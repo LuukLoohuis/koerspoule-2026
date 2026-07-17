@@ -43,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSelectedGame } from "@/context/SelectedGameContext";
+import GameSwitcher from "@/components/GameSwitcher";
 import { isAdminOnlyStatus, maySeeLiveContent } from "@/lib/gameStatus";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
@@ -112,8 +113,8 @@ export default function MijnPeloton() {
   const displayName = (teamName?.trim() || profile?.display_name?.trim() || "José Bidon");
   const { user: authUser, role } = useAuth();
   const isAdmin = role === "admin";
-  // Gedeelde game-keuze uit de shell-context (fase: één kiezer voor de hele app).
-  const { selectedGame: selectedGameObj } = useSelectedGame();
+  // Gedeelde game-keuze uit de context (één bron voor de hele app).
+  const { games: allGamesCtx, selectedGame: selectedGameObj, setSelectedGameId } = useSelectedGame();
   // Telbordje: aantal gekozen renners dat vóór de koers is vervallen (vervanger nodig).
   const { data: fallenCount = 0 } = useFallenRidersCount(selectedGameObj?.id, selectedGameObj?.status);
   // Handmatige "Steun Koerspoule"-banner: alleen aan als de admin 'm ergens aanzette.
@@ -1049,7 +1050,17 @@ export default function MijnPeloton() {
   const hasTeamName = Boolean(teamName?.trim());
   return (
     <div className="container mx-auto px-5 pb-4 md:py-6">
-      {/* Game-keuze staat nu in de app-shell (Layout); geen eigen switcher hier. */}
+      {/* Game-switcher (vertrekbord) — alleen ingelogd + >1 zichtbare game.
+          Gecentreerd in de contentkolom, gelijk met de tabbalk eronder. */}
+      {authUser && (
+        <GameSwitcher
+          games={allGamesCtx}
+          selectedId={selectedGameObj?.id ?? null}
+          onSelect={setSelectedGameId}
+          isAdmin={isAdmin}
+          className="max-w-5xl mx-auto mb-4"
+        />
+      )}
 
       {/* 2. Compact masthead */}
       <div className="relative mb-3 md:mb-6">
