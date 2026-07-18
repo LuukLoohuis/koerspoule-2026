@@ -1053,7 +1053,11 @@
         "perfect": "Perfect",
         "perfectSub": "{{category}} — jij koos de droomrenner(s)",
         "biggestMiss": "grootste gemiste kans",
-        "legend": "links jouw keuze · rechts de droomrenner — goud = perfect, rood = gemiste punten"
+        "legend": "bovenste balk = de droomploeg (goud) · onderste balk = jouw keuze — even lang = perfect",
+        "dreamLabel": "Droom",
+        "youLabel": "Jij",
+        "perfectPill": "Perfect gekozen",
+        "missPoints": "−{{diff}} punten"
       }
     }
   },

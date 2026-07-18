@@ -111,49 +111,93 @@ export default function EmiratesBenchmark({ data }: { data: BenchmarkData }) {
           <div className="space-y-2">
             {data.rows.map((row) => {
               const isWorst = row.key === data.worstKey;
-              const totalForBar = Math.max(1, row.minePoints + row.dreamPoints);
-              return row.perfect ? (
+              const dreamPct = row.dreamPoints > 0 ? 100 : 0;
+              const minePct =
+                row.dreamPoints > 0 ? Math.min(100, (row.minePoints / row.dreamPoints) * 100) : 0;
+              return (
                 <div
                   key={row.key}
-                  className="rounded-lg border-2 p-2.5"
-                  style={{ borderColor: GOLD, background: "hsl(var(--vintage-gold)/0.10)" }}
+                  className={cn(
+                    "rounded-lg p-2.5",
+                    row.perfect
+                      ? "border-2"
+                      : isWorst
+                        ? "border-2 border-red-500/70 bg-red-500/5"
+                        : "border border-border bg-secondary/20"
+                  )}
+                  style={
+                    row.perfect
+                      ? { borderColor: GOLD, background: "hsl(var(--vintage-gold)/0.10)" }
+                      : undefined
+                  }
                 >
+                  {/* Kopregel: categorie links, pill rechts */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
-                    <span className="font-display text-sm font-bold truncate">
-                      {names(row.mine)} · {row.minePoints}
+                    <span className="min-w-0 truncate font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {row.categoryName}
                     </span>
-                    <span className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-[#1C1813]" style={{ background: GOLD }}>
-                      <Crown className="h-2.5 w-2.5" /> {t("hors.emirates.bench.perfect")}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground truncate">
-                    {t("hors.emirates.bench.perfectSub", { category: row.categoryName })}
-                  </p>
-                </div>
-              ) : (
-                <div key={row.key} className="rounded-lg border border-border bg-secondary/20 p-2.5">
-                  <div className="flex items-center justify-between gap-2 min-w-0">
-                    <span className="min-w-0 flex-1 font-sans text-xs md:text-sm truncate">
-                      {names(row.mine)} · <span className="font-bold tabular-nums">{row.minePoints}</span>
-                    </span>
-                    <span className="shrink-0 rounded-full bg-red-500/15 border border-red-500/40 px-2 py-0.5 font-mono text-[10px] font-bold text-red-600 tabular-nums">
-                      −{row.diff}
-                    </span>
-                    <span className="min-w-0 flex-1 text-right font-sans text-xs md:text-sm truncate">
-                      {names(row.dream)} · <span className="font-bold tabular-nums" style={{ color: GOLD }}>{row.dreamPoints}</span>
-                    </span>
-                  </div>
-                  {/* Tweezijdig balkje: mijn aandeel grijs, droom goud */}
-                  <div className="mt-1.5 flex h-1.5 overflow-hidden rounded-full bg-foreground/5">
-                    <div className="h-full bg-foreground/30" style={{ width: `${(row.minePoints / totalForBar) * 100}%` }} />
-                    <div className="h-full" style={{ width: `${(row.dreamPoints / totalForBar) * 100}%`, background: GOLD }} />
-                  </div>
-                  <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground truncate">
-                    {row.categoryName}
-                    {isWorst && (
-                      <span className="ml-1.5 text-red-600 font-bold">· {t("hors.emirates.bench.biggestMiss")}</span>
+                    {row.perfect ? (
+                      <span
+                        className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-[#1C1813]"
+                        style={{ background: GOLD }}
+                      >
+                        <Crown className="h-2.5 w-2.5" /> {t("hors.emirates.bench.perfectPill")}
+                      </span>
+                    ) : isWorst ? (
+                      <span className="shrink-0 rounded-full bg-red-600 px-2 py-0.5 font-mono text-[10px] font-bold text-white tabular-nums">
+                        {t("hors.emirates.bench.missPoints", { diff: row.diff })}
+                      </span>
+                    ) : (
+                      <span className="shrink-0 rounded-full bg-red-500/15 border border-red-500/40 px-2 py-0.5 font-mono text-[10px] font-bold text-red-600 tabular-nums">
+                        −{row.diff}
+                      </span>
                     )}
-                  </p>
+                  </div>
+
+                  {/* Twee gelabelde balken op dezelfde schaal: droom boven, jij onder */}
+                  <div className="mt-2 grid grid-cols-[64px_minmax(0,1fr)_fit-content(45%)] md:grid-cols-[92px_minmax(0,1fr)_fit-content(45%)] items-center gap-x-2 gap-y-1.5">
+                    <span
+                      className="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-wider"
+                      style={{ color: GOLD }}
+                    >
+                      <Crown className="h-3 w-3 shrink-0" /> {t("hors.emirates.bench.dreamLabel")}
+                    </span>
+                    <div className="h-[14px] overflow-hidden rounded-full border border-foreground/25 bg-foreground/5">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${dreamPct}%`,
+                          background:
+                            "linear-gradient(90deg, hsl(var(--vintage-gold)/0.7), hsl(var(--vintage-gold)))",
+                        }}
+                      />
+                    </div>
+                    <span className="min-w-0 font-sans text-xs">
+                      {names(row.dream)} ·{" "}
+                      <span className="font-bold tabular-nums" style={{ color: GOLD }}>
+                        {row.dreamPoints}
+                      </span>
+                    </span>
+
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-foreground">
+                      {t("hors.emirates.bench.youLabel")}
+                    </span>
+                    <div className="h-[14px] overflow-hidden rounded-full border border-foreground/25 bg-foreground/5">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${minePct}%`,
+                          background: row.perfect
+                            ? "linear-gradient(90deg, hsl(var(--vintage-gold)/0.7), hsl(var(--vintage-gold)))"
+                            : "hsl(210 45% 52%)",
+                        }}
+                      />
+                    </div>
+                    <span className="min-w-0 font-sans text-xs">
+                      {names(row.mine)} ·{" "}
+                      <span className="font-bold tabular-nums">{row.minePoints}</span>
+                    </span>
+                  </div>
                 </div>
               );
             })}

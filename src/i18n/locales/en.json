@@ -1053,7 +1053,11 @@
         "perfect": "Perfect",
         "perfectSub": "{{category}} — you picked the dream rider(s)",
         "biggestMiss": "biggest missed chance",
-        "legend": "left your pick · right the dream rider — gold = perfect, red = missed points"
+        "legend": "top bar = the dream team (gold) · bottom bar = your pick — equal length = perfect",
+        "dreamLabel": "Dream",
+        "youLabel": "You",
+        "perfectPill": "Perfect pick",
+        "missPoints": "−{{diff}} points"
       }
     }
   },
