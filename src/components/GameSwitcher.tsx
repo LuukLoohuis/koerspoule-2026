@@ -60,6 +60,9 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
     const el = activeRef.current;
     const box = scrollRef.current;
     if (!el || !box) return;
+    // Alleen centreren als de balk daadwerkelijk scrollt (mobiel); op desktop
+    // past alles en zou scrollen segmenten uit beeld schuiven.
+    if (box.scrollWidth <= box.clientWidth + 4) return;
     const left = el.offsetLeft - box.clientWidth / 2 + el.clientWidth / 2;
     box.scrollTo({ left, behavior: "smooth" });
   }, [selectedId]);
@@ -74,7 +77,10 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
       <div
         ref={scrollRef}
         className={cn(
+          // Mobiel: horizontale scroll met snap. Desktop (md+): GEEN scroll —
+          // alle segmenten passen altijd binnen de balk (shrink + truncate).
           "flex overflow-x-auto overflow-y-hidden rounded-xl border-2 border-foreground",
+          "md:overflow-x-hidden",
           "bg-secondary/40 shadow-[3px_3px_0_hsl(var(--foreground))] divide-x divide-foreground/25",
           "md:[mask-image:none]",
         )}
@@ -105,7 +111,10 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
               aria-current={isActive ? "true" : undefined}
               aria-label={game.name}
               className={cn(
-                "kp-gs-seg relative snap-start shrink-0 min-w-[150px] md:min-w-0 md:flex-1",
+                // Mobiel: vaste minimumbreedte + shrink-0 (scrollt). Desktop:
+                // mag krimpen (md:shrink) zodat vier segmenten ALTIJD passen —
+                // de naam trunceert dan i.p.v. dat de balk gaat scrollen.
+                "kp-gs-seg relative snap-start shrink-0 min-w-[150px] md:min-w-0 md:shrink md:flex-1",
                 "flex items-center justify-center gap-2 px-3 py-[13px] outline-none",
                 "focus-visible:ring-2 focus-visible:ring-inset",
                 isActive
