@@ -115,7 +115,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
                 // mag krimpen (md:shrink) zodat vier segmenten ALTIJD passen —
                 // de naam trunceert dan i.p.v. dat de balk gaat scrollen.
                 "kp-gs-seg relative snap-start shrink-0 min-w-[150px] md:min-w-0 md:shrink md:flex-1",
-                "flex items-center justify-center gap-2 px-3 py-[13px] outline-none",
+                "flex items-center justify-center px-3 pt-[11px] pb-3 outline-none",
                 "focus-visible:ring-2 focus-visible:ring-inset",
                 isActive
                   ? "md:flex-[1.15] text-white"
@@ -147,17 +147,20 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
                 />
               )}
 
-              {/* Inhoud boven de lagen. */}
-              <span className="relative z-10 flex items-center gap-2 min-w-0">
-                <FlagIcon
-                  country={theme.country}
-                  className={cn("w-6 h-[17px] shrink-0", isActive ? "ring-1 ring-white/60 border-white/40" : "")}
-                />
-                <span
-                  className={cn("font-display text-[13px] truncate", isActive ? "font-semibold" : "font-bold")}
-                  style={isActive ? { color: "#fff", textShadow: "0 1px 2px rgba(10,10,40,0.6)" } : undefined}
-                >
-                  {name}
+              {/* Inhoud boven de lagen: verticale stapel — vlag+naam boven, pill eronder. */}
+              <span className="relative z-10 flex flex-col items-center justify-center gap-[5px] min-w-0 max-w-full">
+                {/* Bovenste regel: vlag + racenaam op één lijn. */}
+                <span className="flex items-center gap-[7px] min-w-0 max-w-full">
+                  <FlagIcon
+                    country={theme.country}
+                    className={cn("w-6 h-[17px] shrink-0", isActive ? "ring-1 ring-white/60 border-white/40" : "")}
+                  />
+                  <span
+                    className={cn("font-display text-[13px] min-w-0 truncate whitespace-nowrap", isActive ? "font-semibold" : "font-bold")}
+                    style={isActive ? { color: "#fff", textShadow: "0 1px 2px rgba(10,10,40,0.6)" } : undefined}
+                  >
+                    {name}
+                  </span>
                 </span>
 
                 {/* Status-pill — per segment, op de eigen game.status. */}
