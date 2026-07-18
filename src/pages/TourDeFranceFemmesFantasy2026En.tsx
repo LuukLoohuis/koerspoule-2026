@@ -303,7 +303,7 @@ export default function TourDeFranceFemmesFantasy2026En() {
             {[
               { emoji: "🔒", title: "Your own private pool", desc: "Secured with a unique access code." },
               { emoji: "📈", title: "Live standings", desc: "See who leads after every stage." },
-              { emoji: "💬", title: "Race café chat", desc: "Chat live during the stages." },
+              { emoji: "📊", title: "Stats & head-to-head", desc: "Compare your team with your friends', category by category." },
             ].map(({ emoji, title, desc }) => (
               <Card key={title} className="ornate-frame retro-border bg-card">
                 <CardContent className="p-4">

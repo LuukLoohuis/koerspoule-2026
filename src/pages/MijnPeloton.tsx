@@ -16,7 +16,6 @@ import { RetroTabs } from "@/components/RetroTabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight, MoreHorizontal, Pencil, Newspaper, Car } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
-import PelotonChat from "@/components/PelotonChat";
 import SubpouleManager from "@/components/SubpouleManager";
 import WervingStrook from "@/components/WervingStrook";
 import MyTeamPanel from "@/components/MyTeamPanel";
@@ -1036,11 +1035,6 @@ export default function MijnPeloton() {
               myUserName={myTeam.userName}
             />
           )}
-
-          {/* Koerscafé – subpoule chat (echte subpoule-koppeling volgt in Mijn Peloton refactor) */}
-          <div className="lg:col-span-3">
-            <PelotonChat subpoolName={activePool.name} subpoolId={(activePool as { id?: string }).id} />
-          </div>
         </div>
       </div>);
 

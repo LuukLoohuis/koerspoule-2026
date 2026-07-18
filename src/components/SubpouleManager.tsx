@@ -27,7 +27,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import { RetroTabs } from "@/components/RetroTabs";
@@ -39,7 +38,6 @@ import SwipeDots from "@/components/SwipeDots";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useMinWidth } from "@/hooks/use-mobile";
-import PelotonChat from "@/components/PelotonChat";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
 import SubpouleStandings from "@/components/SubpouleStandings";
 import TeamComparison from "@/components/TeamComparison";
@@ -48,7 +46,7 @@ import DaguitslagChart from "@/components/DaguitslagChart";
 import DaguitslagCelebration from "@/components/DaguitslagCelebration";
 import { useDaguitslagCelebration } from "@/hooks/useDaguitslagCelebration";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
-import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, ChevronsUpDown, MessageCircle, TrendingUp, Flame, Share2, BarChart3, Trophy, X, MapPin, Swords, type LucideIcon } from "lucide-react";
+import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, ChevronsUpDown, TrendingUp, Flame, Share2, BarChart3, Trophy, X, MapPin, Swords, type LucideIcon } from "lucide-react";
 import StreekKlassement from "@/components/StreekKlassement";
 import WoonplaatsBeheer from "@/components/WoonplaatsBeheer";
 import { WoonplaatsFilterProvider } from "@/context/WoonplaatsFilterContext";
@@ -83,19 +81,13 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [subpouleSearchOpen, setSubpouleSearchOpen] = useState(false);
-  // Desktop: 5 dossard-tabs (gelijk aan mobiel). Chat is een apart zijpaneel.
+  // Desktop: 5 dossard-tabs (gelijk aan mobiel).
   // Deep-link: initialTab respecteert de gating (heatmap pas als unlocked; streek
   // wordt na subpoule-selectie gevalideerd via het effect hieronder).
   const [activeTab, setActiveTab] = useState(() =>
     initialTab === "heatmap" && !heatmapUnlocked ? "klassement" : (initialTab ?? "klassement"),
   );
-  // Mobiel: chat opent als floating bottom-sheet i.p.v. een tab.
-  const [chatOpen, setChatOpen] = useState(false);
-  // Desktop: chat als rechter zijpaneel (los van de tabrij). Eigen staat zodat
-  // de mobiele Sheet niet meeopent op desktop.
-  const [deskChatOpen, setDeskChatOpen] = useState(false);
-  // Desktop: geselecteerde tegenstander → duel als rechter zijpaneel. Wederzijds
-  // uitsluitend met Koerscafé (één rechterpaneel tegelijk).
+  // Desktop: geselecteerde tegenstander → duel als rechter zijpaneel.
   const [duelUserId, setDuelUserId] = useState<string | null>(null);
   // Mobiel: tab-gebaseerde subpoule-weergave (zoals Hors Categorie).
   const [mobileTab, setMobileTab] = useState<string>("klassement");
@@ -119,7 +111,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   const [joinWoonplaats, setJoinWoonplaats] = useState("");
   const [joinNeedsWoonplaats, setJoinNeedsWoonplaats] = useState(false);
 
-  // Deeplink: ?subpoule=<id>&code=<code>&view=koerscafe. De code komt mee via de
+  // Deeplink: ?subpoule=<id>&code=<code>. De code komt mee via de
   // /subpoule/<slug>-resolver zodat een niet-lid kan joinen. We onthouden het
   // doel en handelen het in een tweede effect af (zodat join → lijst-refresh →
   // openen netjes verloopt).
@@ -148,10 +140,6 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
     const match = subpoules.find((s) => s.id === pendingOpen.id);
     if (match) {
       setActiveId(match.id);
-      if (pendingOpen.view === "koerscafe") {
-        setChatOpen(true);     // mobiel bottom-sheet
-        setDeskChatOpen(true); // desktop zijpaneel
-      }
       setPendingOpen(null);
       return;
     }
@@ -455,7 +443,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
         showEvolution={false}
         requiresWoonplaats={active.requires_woonplaats}
         compareId={duelUserId}
-        onCompare={(userId) => { setDuelUserId(userId); if (userId) setDeskChatOpen(false); }}
+        onCompare={(userId) => setDuelUserId(userId)}
       />
     ) : (
       <SneakPreviewLock title={t("subpoule.manager.standingsSoonTitle")} note={t("subpoule.manager.standingsSoonNote")} />
@@ -603,43 +591,27 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
           />
         </div>
 
-        {/* ── DESKTOP: 5 dossard-tabs (gelijk aan mobiel), één paneel per tab.
-             Chat is een apart rechter zijpaneel, los van de tabrij. ── */}
+        {/* ── DESKTOP: 5 dossard-tabs (gelijk aan mobiel), één paneel per tab. ── */}
         <div className="hidden md:block w-full">
           <div className="mx-auto max-w-5xl">
-            {/* Tabbalk + Koerscafé-toggle */}
-            <div className="flex items-center gap-3 mb-3">
-              <div className="min-w-0 flex-1">
-                <RetroTabs
-                  aria-label={t("subpoule.manager.subpouleSectionsAria")}
-                  active={activeTab}
-                  onChange={setActiveTab}
-                  tabs={[
-                    { key: "klassement", label: t("subpoule.manager.tabRanking"),       Icon: Trophy },
-                    { key: "verloop",    label: t("subpoule.manager.tabRisersFallers"), Icon: TrendingUp },
-                    { key: "daguitslag", label: t("subpoule.manager.tabDaguitslag"),    Icon: BarChart3 },
-                    { key: "heatmap",    label: t("subpoule.manager.tabHeatmap"),       Icon: Flame, disabled: !heatmapUnlocked, title: !heatmapUnlocked ? t("subpoule.manager.heatmapLockedTabTitle") : undefined },
-                    { key: "deelnemers", label: t("subpoule.manager.tabMembers"),       Icon: Users },
-                    ...(active.requires_woonplaats ? [{ key: "streek", label: t("subpoule.manager.tabStreek"), Icon: MapPin }] : []),
-                  ]}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setDeskChatOpen((v) => { const next = !v; if (next) setDuelUserId(null); return next; })}
-                aria-pressed={deskChatOpen}
-                title={t("subpoule.manager.koerscafeToggleTitle")}
-                className={cn(
-                  "shrink-0 inline-flex items-center gap-2 px-4 min-h-[44px] rounded-xl border-2 border-foreground font-display text-xs font-semibold uppercase tracking-wider shadow-[3px_3px_0_hsl(var(--foreground))] transition-colors",
-                  deskChatOpen ? "bg-primary text-primary-foreground" : "bg-card text-foreground",
-                )}
-              >
-                <MessageCircle className="h-4 w-4" />
-                Koerscafé
-              </button>
+            {/* Tabbalk */}
+            <div className="mb-3">
+              <RetroTabs
+                aria-label={t("subpoule.manager.subpouleSectionsAria")}
+                active={activeTab}
+                onChange={setActiveTab}
+                tabs={[
+                  { key: "klassement", label: t("subpoule.manager.tabRanking"),       Icon: Trophy },
+                  { key: "verloop",    label: t("subpoule.manager.tabRisersFallers"), Icon: TrendingUp },
+                  { key: "daguitslag", label: t("subpoule.manager.tabDaguitslag"),    Icon: BarChart3 },
+                  { key: "heatmap",    label: t("subpoule.manager.tabHeatmap"),       Icon: Flame, disabled: !heatmapUnlocked, title: !heatmapUnlocked ? t("subpoule.manager.heatmapLockedTabTitle") : undefined },
+                  { key: "deelnemers", label: t("subpoule.manager.tabMembers"),       Icon: Users },
+                  ...(active.requires_woonplaats ? [{ key: "streek", label: t("subpoule.manager.tabStreek"), Icon: MapPin }] : []),
+                ]}
+              />
             </div>
 
-            {/* Content + chat-zijpaneel */}
+            {/* Content + duel-zijpaneel */}
             <div className="flex items-start gap-4">
               <div className="min-w-0 flex-1">
                 {activeTab === "klassement" ? standingsPanel
@@ -650,32 +622,8 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                   : deelnemersSection}
               </div>
 
-              {deskChatOpen && (
-                <aside className="w-[360px] shrink-0">
-                  <div className="retro-border no-hover-lift bg-card overflow-hidden sticky top-4">
-                    <div className="flex items-center justify-between border-b-2 border-foreground bg-secondary/30 px-3 py-2">
-                      <span className="font-display font-bold flex items-center gap-2">
-                        <MessageCircle className="h-4 w-4 text-primary" />
-                        Koerscafé
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setDeskChatOpen(false)}
-                        aria-label={t("subpoule.manager.closeKoerscafe")}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="p-3">
-                      {maySeeLive ? <PelotonChat subpoolName={active.name} subpoolId={active.id} /> : <SneakPreviewLock title={t("subpoule.manager.koerscafeSoonTitle")} note={t("subpoule.manager.koerscafeSoonNote")} />}
-                    </div>
-                  </div>
-                </aside>
-              )}
-
               {/* Duel-zijpaneel — vanaf lg (≥1024); daaronder valt het duel terug
-                  op de bottom sheet in SubpouleStandings. Sluit Koerscafé uit. */}
+                  op de bottom sheet in SubpouleStandings. */}
               {lgUp && duelUserId && (maySeeLive || isAdmin) && (
                 <aside className="w-[360px] shrink-0">
                   <div className="retro-border no-hover-lift bg-card overflow-hidden sticky top-4">
@@ -708,45 +656,13 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
           </div>
         </div>
 
-        {/* ── MOBIEL: "Ga naar"-bolletje (tab-schakelaar), net boven de chatknop. ── */}
+        {/* ── MOBIEL: "Ga naar"-bolletje (tab-schakelaar). ── */}
         <FloatingTabSwitcher
           tabs={dynTabItems}
           active={mobileTab}
           onChange={setMobileTab}
           offsetClassName="bottom-[136px]"
         />
-
-        {/* ── MOBIEL: floating chat-knop, net boven de globale BottomNav
-             (fixed bottom-0 z-50, ~60px). z-40 = onder de sheet-overlay (z-50)
-             maar boven content. ── */}
-        <button
-          type="button"
-          onClick={() => setChatOpen(true)}
-          aria-label={t("subpoule.manager.openKoerscafeChat")}
-          className="md:hidden fixed right-4 bottom-[72px] z-40 inline-flex items-center justify-center h-14 w-14 rounded-full bg-primary text-primary-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] transition-colors"
-        >
-          <MessageCircle className="h-6 w-6" />
-          {/* TODO: ongelezen-badge zodra PelotonChat/chat-hook een unread-count
-              naar buiten geeft. Nu geen badge (geen telling verzinnen). */}
-        </button>
-
-        {/* Chat bottom-sheet (mobiel). Hoog genoeg voor chat, eigen scroll. */}
-        <Sheet open={chatOpen} onOpenChange={setChatOpen}>
-          <SheetContent
-            side="bottom"
-            className="md:hidden h-[88vh] p-0 flex flex-col gap-0 rounded-t-2xl"
-          >
-            <SheetHeader className="px-4 py-3 border-b-2 border-foreground bg-secondary/30 text-left shrink-0">
-              <SheetTitle className="font-display flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-primary" />
-                {t("subpoule.manager.koerscafeWith", { name: active.name })}
-              </SheetTitle>
-            </SheetHeader>
-            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
-              <PelotonChat subpoolName={active.name} subpoolId={active.id} />
-            </div>
-          </SheetContent>
-        </Sheet>
       </div>
       </WoonplaatsFilterProvider>
     );

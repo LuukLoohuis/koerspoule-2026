@@ -267,7 +267,7 @@ export default function TourDeFrancePoule2026() {
             {[
               { emoji: "🔒", title: "Eigen privé poule", desc: "Beveiligd met een unieke toegangscode." },
               { emoji: "📈", title: "Live tussenstanden", desc: "Volg na elke etappe wie er aan kop staat." },
-              { emoji: "💬", title: "Koerscafé chat", desc: "Praat live mee tijdens de etappes." },
+              { emoji: "📊", title: "Statistieken & head-to-head", desc: "Vergelijk je ploeg met die van je vrienden, categorie voor categorie." },
             ].map(({ emoji, title, desc }) => (
               <Card key={title} className="ornate-frame retro-border bg-card">
                 <CardContent className="p-4">
