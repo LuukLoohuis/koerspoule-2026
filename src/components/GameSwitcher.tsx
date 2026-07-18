@@ -81,7 +81,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
       >
         <div
           ref={scrollRef}
-          className="flex gap-2.5 overflow-x-auto px-3 md:flex-wrap md:justify-center md:overflow-visible md:px-0"
+          className="flex flex-nowrap justify-center gap-2 overflow-x-auto px-3 md:px-0"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none", scrollSnapType: "x mandatory" }}
         >
           {ordered.map((game) => {
@@ -141,7 +141,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
                     className={cn("w-7 h-5", isActive ? "ring-1 ring-white/60 border-white/40" : "")}
                   />
                   <span
-                    className={cn("font-display text-sm whitespace-nowrap", isActive ? "font-semibold" : "font-bold")}
+                    className={cn("font-display text-[13px] whitespace-nowrap", isActive ? "font-semibold" : "font-bold")}
                     style={isActive ? { color: "#fff", textShadow: "0 1px 2px rgba(10,10,40,0.6)" } : undefined}
                   >
                     {game.name}
