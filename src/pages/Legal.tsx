@@ -6,6 +6,14 @@ export default function Legal() {
   const mailLink = (
     <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors" />
   );
+  const partnerLink = (
+    <a
+      href="https://policies.google.com/technologies/partner-sites"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline hover:text-foreground transition-colors"
+    />
+  );
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl">
@@ -75,6 +83,9 @@ export default function Legal() {
             </ul>
             <p>
               {t("common.legal.cookiesClosing")}
+            </p>
+            <p>
+              <Trans i18nKey="common.legal.adsGooglePartner" components={{ partner: partnerLink }} />
             </p>
           </div>
         </section>
