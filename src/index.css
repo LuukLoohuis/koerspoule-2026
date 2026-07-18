@@ -992,17 +992,23 @@
 }
 .kp-gs-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(58, 42, 26, 0.16); }
 .kp-gs-card:active { transform: scale(0.985); }
-.kp-gs-finished { opacity: 0.68; }
+.kp-gs-finished { opacity: 0.62; }
 .kp-gs-finished:hover { opacity: 1; }
 .kp-gs-grad { transition: opacity 0.45s ease, transform 0.45s ease; }
 .kp-gs-shine { animation: kp-gs-shine 2.8s ease-in-out infinite; }
 .kp-gs-livedot { animation: kp-gs-livepulse 1.6s ease-in-out infinite; }
 .kp-gs-accent { transition: background 0.45s ease; }
 
+/* Koersbalk-segmenten: vloeiende flex-grow (actief iets breder) + hover-bg. */
+.kp-gs-seg { transition: flex-grow 0.45s ease, background-color 0.18s ease, opacity 0.18s ease; }
+.kp-gs-seg:active { transform: scale(0.985); }
+
 @media (prefers-reduced-motion: reduce) {
   .kp-gs-card,
   .kp-gs-card:hover,
-  .kp-gs-card:active { transition: none; transform: none; box-shadow: none; }
+  .kp-gs-card:active,
+  .kp-gs-seg,
+  .kp-gs-seg:active { transition: none; transform: none; box-shadow: none; }
   .kp-gs-grad,
   .kp-gs-accent { transition: none; }
   .kp-gs-shine,

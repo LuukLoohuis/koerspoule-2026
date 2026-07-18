@@ -14,7 +14,6 @@ import { useAllGames, type GameRow } from "@/hooks/useAllGames";
  */
 const STORAGE_KEY = "koerspoule_selected_game";
 
-const ACTIVE = new Set(["open", "open_inschrijving", "locked", "live"]);
 const ADMIN_ONLY = new Set(["concept", "draft"]);
 
 type SelectedGameCtx = {
@@ -30,24 +29,34 @@ type SelectedGameCtx = {
 const Ctx = createContext<SelectedGameCtx | null>(null);
 
 /**
- * Default-game (verplaatst uit MijnPeloton): actieve game (open/open_inschrijving/
- * locked/live) met de hoogste year, anders een concept/draft, anders de meest
- * recente. `games` is al gesorteerd, dus .find pakt de hoogste year.
+ * Default-game — live-first: de LIVE game (of locked), anders open_inschrijving,
+ * anders open, anders concept/draft (admin), anders de meest recente afgeronde.
+ * `games` is al gesorteerd op year desc, dus .find pakt de hoogste year.
  */
 export function resolveDefaultGameId(games: GameRow[]): string | null {
-  const active = games.find((g) => ACTIVE.has(String(g.status)));
-  if (active) return active.id;
-  const adminOnly = games.find((g) => ADMIN_ONLY.has(String(g.status)));
-  if (adminOnly) return adminOnly.id;
-  return games[0]?.id ?? null;
+  const byStatus = (set: Set<string> | string) =>
+    games.find((g) =>
+      typeof set === "string" ? String(g.status) === set : set.has(String(g.status)),
+    )?.id ?? null;
+  return (
+    byStatus(new Set(["live", "locked"])) ??
+    byStatus("open_inschrijving") ??
+    byStatus("open") ??
+    byStatus(ADMIN_ONLY) ??
+    byStatus(new Set(["finished", "closed"])) ??
+    games[0]?.id ??
+    null
+  );
 }
 
 export function SelectedGameProvider({ children }: { children: ReactNode }) {
   const { data: games = [], isLoading } = useAllGames();
 
+  // Selectie geldt per SESSIE (sessionStorage): binnen dezelfde sessie blijft de
+  // keuze; een nieuw bezoek start weer op de live-first default.
   const [selectedGameId, setSelectedGameIdState] = useState<string | null>(() => {
     try {
-      return typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
+      return typeof window !== "undefined" ? window.sessionStorage.getItem(STORAGE_KEY) : null;
     } catch {
       return null;
     }
@@ -56,10 +65,10 @@ export function SelectedGameProvider({ children }: { children: ReactNode }) {
   const setSelectedGameId = (id: string | null) => {
     setSelectedGameIdState(id);
     try {
-      if (id) window.localStorage.setItem(STORAGE_KEY, id);
-      else window.localStorage.removeItem(STORAGE_KEY);
+      if (id) window.sessionStorage.setItem(STORAGE_KEY, id);
+      else window.sessionStorage.removeItem(STORAGE_KEY);
     } catch {
-      /* localStorage geblokkeerd → alleen in-memory */
+      /* sessionStorage geblokkeerd → alleen in-memory */
     }
   };
 
