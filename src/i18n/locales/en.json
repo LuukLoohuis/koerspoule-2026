@@ -1042,7 +1042,19 @@
       "jokersPicks": "2 picks · ×1",
       "totalDreamTeam": "Total dream team",
       "selectionLoading": "Loading selection data…",
-      "unnamedTeam": "Unnamed team"
+      "unnamedTeam": "Unnamed team",
+      "bench": {
+        "jokersRow": "Jokers",
+        "teaser": "Your return: {{pct}}% of the dream team",
+        "perfectCount": "{{count}} of {{total}} perfect",
+        "openCta": "View the comparison",
+        "close": "Close",
+        "totalLine": "{{mine}} of {{dream}} points of the dream team",
+        "perfect": "Perfect",
+        "perfectSub": "{{category}} — you picked the dream rider(s)",
+        "biggestMiss": "biggest missed chance",
+        "legend": "left your pick · right the dream rider — gold = perfect, red = missed points"
+      }
     }
   },
   "karavaan": {

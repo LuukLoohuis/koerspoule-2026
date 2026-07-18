@@ -24,6 +24,7 @@ import { useCategories } from "@/hooks/useCategories";
 import PercentileVerdict from "@/components/horscat/PercentileVerdict";
 import AapscoreDistributie from "@/components/horscat/AapscoreDistributie";
 import MonkeyExplainerModal from "@/components/horscat/MonkeyExplainerModal";
+import EmiratesBenchmark from "@/components/horscat/EmiratesBenchmark";
 import { useStages, useGameStandings, useStagePointsForEntries, useStageAverages } from "@/hooks/useResults";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -531,6 +532,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         ranking: [] as Array<{ entryId: string; teamName: string; points: number; isMe: boolean }>,
         lastStage: null as null | { number: number; name: string | null },
         stagesCount: 0,
+        riderTotals: new Map<string, number>(),
       };
     }
     const last = approvedStages[approvedStages.length - 1];
@@ -615,8 +617,90 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       ranking,
       lastStage: { number: last.stage_number, name: last.name },
       stagesCount: approvedStages.length,
+      riderTotals,
     };
   }, [stages, categories, allStageResults, standRows, entry?.id, allGameRiders, t]);
+
+  // ── Emirates-benchmark: eigen ploeg vs droomploeg, set-gewijs per categorie ──
+  // Zelfde scope als het ceiling-totaal: alle categorieën + de 2 jokers (×1),
+  // dezelfde riderTotals — teller en noemer kloppen dus per definitie.
+  const emiratesBenchmark = useMemo(() => {
+    if (!entry || picksByCategory.size === 0) return null;
+    if (emiratesData.lastStage === null || emiratesData.total <= 0) return null;
+    const { riderTotals } = emiratesData;
+    const nameById = new Map(allGameRiders.map((r) => [r.id, r.name]));
+
+    type BenchRow = {
+      key: string;
+      categoryName: string;
+      mine: Array<{ name: string; points: number }>;
+      dream: Array<{ name: string; points: number }>;
+      minePoints: number;
+      dreamPoints: number;
+      diff: number;
+      perfect: boolean;
+    };
+
+    const setEqual = (a: string[], b: string[]) =>
+      a.length === b.length && a.every((id) => b.includes(id));
+
+    const rows: BenchRow[] = emiratesData.picks.map((cat) => {
+      const mineIds = picksByCategory.get(cat.categoryId) ?? [];
+      const dreamIds = cat.riders.map((r) => r.riderId);
+      const mine = mineIds.map((id) => ({
+        name: nameById.get(id) ?? "?",
+        points: riderTotals.get(id) ?? 0,
+      }));
+      const minePoints = mine.reduce((s, r) => s + r.points, 0);
+      return {
+        key: cat.categoryId,
+        categoryName: cat.categoryName,
+        mine,
+        dream: cat.riders.map((r) => ({ name: r.name, points: r.points })),
+        minePoints,
+        dreamPoints: cat.subtotal,
+        diff: Math.max(0, cat.subtotal - minePoints),
+        perfect: setEqual(mineIds, dreamIds),
+      };
+    });
+
+    // Jokers als eigen rij — het ceiling-totaal telt ze mee (×1).
+    const dreamJokerIds = emiratesData.jokers.map((r) => r.riderId);
+    const myJokers = jokerIds.map((id) => ({
+      name: nameById.get(id) ?? "?",
+      points: riderTotals.get(id) ?? 0,
+    }));
+    const myJokerPoints = myJokers.reduce((s, r) => s + r.points, 0);
+    rows.push({
+      key: "__jokers",
+      categoryName: t("hors.emirates.bench.jokersRow"),
+      mine: myJokers,
+      dream: emiratesData.jokers.map((r) => ({ name: r.name, points: r.points })),
+      minePoints: myJokerPoints,
+      dreamPoints: emiratesData.jokerSubtotal,
+      diff: Math.max(0, emiratesData.jokerSubtotal - myJokerPoints),
+      perfect: setEqual(jokerIds, dreamJokerIds),
+    });
+
+    const mijnTotaal = rows.reduce((s, r) => s + r.minePoints, 0);
+    const droomTotaal = emiratesData.total;
+    const perfectCount = rows.filter((r) => r.perfect).length;
+    const sorted = [
+      ...rows.filter((r) => r.perfect),
+      ...rows.filter((r) => !r.perfect).sort((a, b) => b.diff - a.diff),
+    ];
+    const worstKey = sorted.find((r) => !r.perfect && r.diff > 0)?.key ?? null;
+
+    return {
+      rows: sorted,
+      mijnTotaal,
+      droomTotaal,
+      rendement: Math.round((mijnTotaal / droomTotaal) * 100),
+      perfectCount,
+      totalCats: rows.length,
+      worstKey,
+    };
+  }, [entry, picksByCategory, jokerIds, emiratesData, allGameRiders, t]);
 
   // ── Derived display values ──────────────────────────────────────────────────
   const diffPct = monte && monte.mean > 0 ? ((monte.userActual - monte.mean) / monte.mean) * 100 : 0;
@@ -1604,6 +1688,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 </div>
               )}
             </div>
+
+            {/* Benchmark: eigen ploeg vs droomploeg — teaser + uitklapbare
+                vergelijking. Alleen met ingediende ploeg én gefiatteerde etappe
+                (memo geeft anders null → niets, geen lege 0%). */}
+            {emiratesBenchmark && <EmiratesBenchmark data={emiratesBenchmark} />}
 
             {emiratesData.lastStage === null ? (
               <div className="text-center py-8 space-y-3">
