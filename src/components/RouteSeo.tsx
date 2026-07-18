@@ -16,21 +16,25 @@ const META: Record<string, Meta> = {
     title: "Stel je team samen | Koerspoule",
     description:
       "Bouw jouw Giro-ploeg: kies per categorie, voeg jokers toe en doe GC-voorspellingen voor extra punten.",
+    noindex: true,
   },
   "/uitslagen": {
     title: "Uitslagen & puntenverdeling | Koerspoule",
     description:
       "Bekijk etappe-uitslagen, puntenverdeling per ploeg en de heatmap van populaire renners in de Koerspoule.",
+    noindex: true,
   },
   "/mijn-peloton": {
     title: "Mijn Peloton — jouw team & subpoule | Koerspoule",
     description:
       "Persoonlijk dashboard met je team, palmares, subpoulestand en head-to-head vergelijking met vrienden.",
+    noindex: true,
   },
   "/karavaan": {
     title: "Karavaan — koersnieuws & sfeer | Koerspoule",
     description:
       "De Koerspoule-karavaan: koersnieuws, voorbeschouwingen en sfeer rond de Giro, Tour en Vuelta.",
+    noindex: true,
   },
   "/regels": {
     title: "Koersreglement & puntentelling | Koerspoule",
@@ -40,6 +44,7 @@ const META: Record<string, Meta> = {
   "/login": {
     title: "Inloggen of account aanmaken | Koerspoule",
     description: "Log in met je ploegnaam of maak gratis een nieuw Koerspoule-account aan.",
+    noindex: true,
   },
   "/reset-password": {
     title: "Wachtwoord herstellen | Koerspoule",
