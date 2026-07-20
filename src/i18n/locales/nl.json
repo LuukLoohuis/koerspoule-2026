@@ -1053,11 +1053,17 @@
         "perfect": "Perfect",
         "perfectSub": "{{category}} — jij koos de droomrenner(s)",
         "biggestMiss": "grootste gemiste kans",
-        "legend": "bovenste balk = de droomploeg (goud) · onderste balk = jouw keuze — even lang = perfect",
+        "legend": "goud = de droomploeg · blauw = jouw keuze — even lang is perfect",
         "dreamLabel": "Droom",
         "youLabel": "Jij",
         "perfectPill": "Perfect gekozen",
-        "missPoints": "−{{diff}} punten"
+        "missPoints": "−{{diff}} punten",
+        "teaserShort": "Jouw rendement: {{pct}}%",
+        "perfectShort": "{{count}}/{{total}} perfect",
+        "vsTitle": "Jouw ploeg vs The Emirates",
+        "rendementLabel": "Rendement",
+        "totalLineRich": "{{mine}} van <gold>{{dream}}</gold> punten",
+        "perfectCombined": "{{names}} · {{points}} — jij én de droomploeg"
       }
     }
   },

@@ -1,15 +1,16 @@
 /**
- * <EmiratesBenchmark> — eigen ploeg vs droomploeg in de superteam-tab.
+ * <EmiratesBenchmark> — eigen ploeg vs droomploeg als goud-op-navy dashboard.
  *
- * Standaard een compacte rendement-teaser (goud, retro-strip); na een klik klapt
- * op dezelfde plek de volledige categorie-vergelijking uit: perfecte keuzes
- * eerst (goud), daarna de missers aflopend op gemiste punten. Puur presentatie —
- * alle sommen komen uit de emiratesBenchmark-memo in HorsCategorieTab (zelfde
+ * Standaard een compacte donkere teaser-strip; na een klik klapt op dezelfde
+ * plek het volledige dashboard uit: hero met rendement, de grootste gemiste
+ * kans als uitgelichte rode kaart, daarna perfecte categorieën (goud) en de
+ * overige missers aflopend op gemiste punten. Puur presentatie — alle sommen
+ * komen uit de emiratesBenchmark-memo in HorsCategorieTab (zelfde
  * riderTotals/scope als het ceiling-totaal, dus teller en noemer kloppen).
  */
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Crown, ChevronDown, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import { Crown, ChevronDown, Flame, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type BenchmarkRow = {
@@ -33,24 +34,104 @@ export type BenchmarkData = {
   worstKey: string | null;
 };
 
-const GOLD = "hsl(var(--vintage-gold))";
+const NAVY_GRADIENT = "linear-gradient(160deg, hsl(222 42% 15%), hsl(222 38% 11%))";
+const NAVY_SHADOW = "3px 4px 0 hsl(222 40% 8%)";
+const GOLD_BORDER = "hsl(43 60% 38%)";
+const GOLD_TEXT = "hsl(43 65% 62%)";
+const GOLD_BAR = "linear-gradient(90deg, hsl(43 70% 50%), hsl(45 85% 62%))";
+const BLUE_BAR = "linear-gradient(90deg, hsl(210 55% 50%), hsl(210 60% 60%))";
+const BAR_HIGHLIGHT = "inset 0 1px 0 rgba(255,255,255,.4)";
+const TRACK_BG = "hsl(222 30% 22%)";
+const TEXT_LIGHT = "hsl(222 15% 82%)";
 
-/** Compacte naamweergave: "Merlier + Kooij". Kort af zonder de pill te breken. */
+/** Compacte naamweergave: "Merlier + Kooij". */
 const names = (list: Array<{ name: string }>) =>
   list.length === 0 ? "—" : list.map((r) => r.name).join(" + ");
 
-function GoldBar({ pct, tall = false }: { pct: number; tall?: boolean }) {
+function usePrefersReducedMotion() {
+  const [reduced] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+  return reduced;
+}
+
+/** Ingroeiende breedte: start op 0 en groeit naar pct; direct bij reduced motion. */
+function useGrownPct(pct: number) {
+  const reduced = usePrefersReducedMotion();
+  const [w, setW] = useState(reduced ? pct : 0);
+  useEffect(() => {
+    if (reduced) {
+      setW(pct);
+      return;
+    }
+    const id = requestAnimationFrame(() => setW(pct));
+    return () => cancelAnimationFrame(id);
+  }, [pct, reduced]);
+  return {
+    w,
+    transition: reduced ? undefined : "width 500ms ease-out, flex-basis 500ms ease-out",
+  };
+}
+
+/** Balk als flex-item (flex-basis = pct%), naam plakt er rechts naast. */
+function CatBar({ pct, fill }: { pct: number; fill: string | null }) {
+  const { w, transition } = useGrownPct(pct);
   return (
-    <div className={cn("relative flex-1 rounded-full bg-foreground/10 overflow-visible", tall ? "h-2.5" : "h-1.5")}>
-      <div
-        className="h-full rounded-full"
-        style={{ width: `${Math.min(100, Math.max(0, pct))}%`, background: GOLD }}
-      />
-      <Crown
-        className={cn("absolute -right-1 top-1/2 -translate-y-1/2", tall ? "h-4 w-4" : "h-3 w-3")}
-        style={{ color: GOLD }}
-        aria-hidden
-      />
+    <div
+      className="h-[13px] rounded-full"
+      style={{
+        flex: `0 1 ${w}%`,
+        minWidth: 18,
+        transition,
+        background: fill ?? "transparent",
+        border: fill ? "1px solid rgba(0,0,0,.25)" : "1px solid hsl(222 25% 40%)",
+        boxShadow: fill ? BAR_HIGHLIGHT : undefined,
+      }}
+    />
+  );
+}
+
+/** Twee-balken-grid: DROOM (goud, 100%) boven JIJ (blauw, pct). */
+function BarsGrid({ row }: { row: BenchmarkRow }) {
+  const { t } = useTranslation();
+  const dreamPct = row.dreamPoints > 0 ? 100 : 0;
+  const minePct =
+    row.dreamPoints > 0 ? Math.min(100, (row.minePoints / row.dreamPoints) * 100) : 0;
+  return (
+    <div className="grid grid-cols-[64px_minmax(0,1fr)] md:grid-cols-[74px_minmax(0,1fr)] items-center gap-x-2.5 gap-y-1.5">
+      <span
+        className="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-wider"
+        style={{ color: GOLD_TEXT }}
+      >
+        <Crown className="h-3 w-3 shrink-0" /> {t("hors.emirates.bench.dreamLabel")}
+      </span>
+      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:flex-nowrap">
+        <CatBar pct={dreamPct} fill={dreamPct > 0 ? GOLD_BAR : null} />
+        <span
+          className="w-full min-w-0 font-sans text-xs font-semibold md:w-auto md:max-w-[55%] md:shrink-0 md:text-sm"
+          style={{ color: GOLD_TEXT }}
+        >
+          {names(row.dream)} · <span className="tabular-nums">{row.dreamPoints}</span>
+        </span>
+      </div>
+
+      <span
+        className="font-mono text-[10px] font-bold uppercase tracking-wider"
+        style={{ color: TEXT_LIGHT }}
+      >
+        {t("hors.emirates.bench.youLabel")}
+      </span>
+      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:flex-nowrap">
+        <CatBar pct={minePct} fill={minePct > 0 ? BLUE_BAR : null} />
+        <span
+          className="w-full min-w-0 font-sans text-xs font-semibold md:w-auto md:max-w-[55%] md:shrink-0 md:text-sm"
+          style={{ color: TEXT_LIGHT }}
+        >
+          {names(row.mine)} · <span className="tabular-nums">{row.minePoints}</span>
+        </span>
+      </div>
     </div>
   );
 }
@@ -59,155 +140,245 @@ export default function EmiratesBenchmark({ data }: { data: BenchmarkData }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
+  const worst = data.rows.find((r) => r.key === data.worstKey) ?? null;
+  const rest = data.rows.filter((r) => r.key !== data.worstKey);
+
   return (
     <div className="space-y-3">
-      {/* Teaser-strip */}
-      <div className="retro-border no-hover-lift overflow-hidden rounded-xl bg-[hsl(var(--vintage-gold)/0.08)]">
-        <div className="flex flex-col gap-2 px-3 py-2.5 md:flex-row md:items-center md:gap-4">
-          <div className="flex items-center gap-2 min-w-0">
-            <Crown className="h-4 w-4 shrink-0" style={{ color: GOLD }} />
-            <span className="font-display text-sm font-bold truncate">
-              {t("hors.emirates.bench.teaser", { pct: data.rendement })}
-            </span>
-            <span className="shrink-0 rounded-full border border-[hsl(var(--vintage-gold)/0.5)] bg-[hsl(var(--vintage-gold)/0.14)] px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-foreground/80">
-              {t("hors.emirates.bench.perfectCount", { count: data.perfectCount, total: data.totalCats })}
-            </span>
+      {/* ── Teaser-strip ── */}
+      <div
+        className="overflow-hidden rounded-xl"
+        style={{ background: NAVY_GRADIENT, border: `2px solid ${GOLD_BORDER}`, boxShadow: NAVY_SHADOW }}
+      >
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5">
+          <Crown className="h-4 w-4 shrink-0" style={{ color: GOLD_TEXT }} />
+          <span className="font-display text-sm font-bold" style={{ color: "hsl(43 40% 92%)" }}>
+            {t("hors.emirates.bench.teaserShort", { pct: data.rendement })}
+          </span>
+          <div
+            className="relative h-2 w-24 overflow-hidden rounded-full"
+            style={{ background: TRACK_BG, border: `1px solid ${GOLD_BORDER}` }}
+          >
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${Math.min(100, Math.max(0, data.rendement))}%`, background: GOLD_BAR }}
+            />
           </div>
-          <div className="flex items-center gap-3 md:flex-1">
-            <GoldBar pct={data.rendement} />
-            <button
-              type="button"
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border-2 border-foreground bg-card px-3 py-1.5 font-display text-xs font-bold shadow-[2px_2px_0_hsl(var(--foreground))] transition-transform hover:-translate-y-0.5 active:translate-y-px"
-            >
-              {open ? <X className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              {open ? t("hors.emirates.bench.close") : t("hors.emirates.bench.openCta")}
-            </button>
-          </div>
+          <span
+            className="font-mono text-[10px] font-bold uppercase tracking-wider"
+            style={{ color: GOLD_TEXT }}
+          >
+            {t("hors.emirates.bench.perfectShort", { count: data.perfectCount, total: data.totalCats })}
+          </span>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-xs font-bold transition-colors hover:bg-[hsl(43_60%_45%/0.15)]"
+            style={{ border: `1.5px solid ${GOLD_BORDER}`, color: GOLD_TEXT }}
+          >
+            {open ? <X className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            {open ? t("hors.emirates.bench.close") : t("hors.emirates.bench.openCta")}
+          </button>
         </div>
       </div>
 
-      {/* Volledige vergelijking */}
+      {/* ── Dashboard ── */}
       {open && (
-        <div className="retro-border no-hover-lift rounded-xl bg-card p-3 md:p-4 space-y-3">
-          {/* Kop */}
-          <div className="text-center space-y-1.5">
-            <div className="font-display text-3xl font-black" style={{ color: GOLD }}>
-              {data.rendement}%
-            </div>
-            <p className="font-serif text-sm text-muted-foreground">
-              {t("hors.emirates.bench.totalLine", { mine: data.mijnTotaal, dream: data.droomTotaal })}
-            </p>
-            <div className="flex items-center gap-3 max-w-md mx-auto px-2">
-              <GoldBar pct={data.rendement} tall />
-            </div>
-            <span className="inline-flex rounded-full border border-[hsl(var(--vintage-gold)/0.5)] bg-[hsl(var(--vintage-gold)/0.14)] px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider">
-              {t("hors.emirates.bench.perfectCount", { count: data.perfectCount, total: data.totalCats })}
+        <div
+          className="overflow-hidden rounded-xl"
+          style={{ background: NAVY_GRADIENT, border: `2px solid ${GOLD_BORDER}`, boxShadow: NAVY_SHADOW }}
+        >
+          {/* 2a. Kopstrip */}
+          <div
+            className="flex items-center gap-2 px-4 py-2.5"
+            style={{
+              background: "hsl(43 60% 45% / 0.08)",
+              borderBottom: "1px solid hsl(43 60% 38% / 0.35)",
+            }}
+          >
+            <Crown className="h-4 w-4 shrink-0" style={{ color: GOLD_TEXT }} />
+            <span
+              className="font-mono text-[11px] font-bold uppercase"
+              style={{ color: GOLD_TEXT, letterSpacing: "0.22em" }}
+            >
+              {t("hors.emirates.bench.vsTitle")}
             </span>
           </div>
 
-          {/* Rijen: perfect eerst (goud), dan missers aflopend */}
-          <div className="space-y-2">
-            {data.rows.map((row) => {
-              const isWorst = row.key === data.worstKey;
-              const dreamPct = row.dreamPoints > 0 ? 100 : 0;
-              const minePct =
-                row.dreamPoints > 0 ? Math.min(100, (row.minePoints / row.dreamPoints) * 100) : 0;
-              return (
+          <div className="space-y-3 p-3 md:p-4">
+            {/* 2b. Hero */}
+            <div className="grid gap-3 md:grid-cols-[auto_1fr] md:items-center md:gap-6">
+              <div>
                 <div
-                  key={row.key}
-                  className={cn(
-                    "rounded-lg p-2.5",
-                    row.perfect
-                      ? "border-2"
-                      : isWorst
-                        ? "border-2 border-red-500/70 bg-red-500/5"
-                        : "border border-border bg-secondary/20"
-                  )}
-                  style={
-                    row.perfect
-                      ? { borderColor: GOLD, background: "hsl(var(--vintage-gold)/0.10)" }
-                      : undefined
-                  }
+                  className="font-display leading-none"
+                  style={{
+                    fontSize: 52,
+                    fontWeight: 800,
+                    background: "linear-gradient(180deg, hsl(45 90% 68%), hsl(40 75% 46%))",
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    color: "transparent",
+                  }}
                 >
-                  {/* Kopregel: categorie links, pill rechts */}
-                  <div className="flex items-center justify-between gap-2 min-w-0">
-                    <span className="min-w-0 truncate font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      {row.categoryName}
+                  {data.rendement}%
+                </div>
+                <div
+                  className="mt-1 font-mono text-[10px] font-bold uppercase tracking-[0.22em]"
+                  style={{ color: TEXT_LIGHT }}
+                >
+                  {t("hors.emirates.bench.rendementLabel")}
+                </div>
+              </div>
+              <div className="min-w-0 space-y-2">
+                <HeroBar pct={data.rendement} />
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-sans text-xs md:text-sm" style={{ color: TEXT_LIGHT }}>
+                    <Trans
+                      i18nKey="hors.emirates.bench.totalLineRich"
+                      values={{ mine: data.mijnTotaal, dream: data.droomTotaal }}
+                      components={{ gold: <span className="font-bold" style={{ color: GOLD_TEXT }} /> }}
+                    />
+                  </span>
+                  <span
+                    className="rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider"
+                    style={{
+                      border: `1px solid ${GOLD_BORDER}`,
+                      background: "hsl(43 60% 45% / 0.10)",
+                      color: GOLD_TEXT,
+                    }}
+                  >
+                    ★ {t("hors.emirates.bench.perfectShort", { count: data.perfectCount, total: data.totalCats })}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2c. Uitgelicht: grootste gemiste kans */}
+            {worst && (
+              <div
+                className="rounded-lg p-3"
+                style={{
+                  border: "1.5px solid hsl(0 65% 52% / 0.7)",
+                  background: "linear-gradient(160deg, hsl(0 45% 20%), hsl(222 35% 14%))",
+                }}
+              >
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <span className="inline-flex min-w-0 items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-red-400">
+                    <Flame className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">
+                      {t("hors.emirates.bench.biggestMiss")} · {worst.categoryName}
                     </span>
-                    {row.perfect ? (
+                  </span>
+                  <span className="shrink-0 rounded-full px-2.5 py-0.5 font-mono text-[11px] font-bold text-white tabular-nums" style={{ background: "hsl(0 65% 48%)" }}>
+                    −{worst.diff}
+                  </span>
+                </div>
+                <div className="mt-2.5">
+                  <BarsGrid row={worst} />
+                </div>
+              </div>
+            )}
+
+            {/* 2d. Overige categorieën: perfect eerst (goud), dan missers aflopend */}
+            <div className="space-y-2">
+              {rest.map((row) =>
+                row.perfect ? (
+                  <div
+                    key={row.key}
+                    className="rounded-lg p-3"
+                    style={{
+                      border: `1px solid ${GOLD_BORDER}`,
+                      background: "hsl(43 60% 45% / 0.10)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-2 min-w-0">
                       <span
-                        className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-[#1C1813]"
-                        style={{ background: GOLD }}
+                        className="min-w-0 truncate font-mono text-[11px] font-bold uppercase tracking-wider"
+                        style={{ color: GOLD_TEXT }}
                       >
-                        <Crown className="h-2.5 w-2.5" /> {t("hors.emirates.bench.perfectPill")}
+                        {row.categoryName}
                       </span>
-                    ) : isWorst ? (
-                      <span className="shrink-0 rounded-full bg-red-600 px-2 py-0.5 font-mono text-[10px] font-bold text-white tabular-nums">
-                        {t("hors.emirates.bench.missPoints", { diff: row.diff })}
+                      <span
+                        className="shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider"
+                        style={{
+                          border: `1px solid ${GOLD_BORDER}`,
+                          background: "hsl(43 60% 45% / 0.12)",
+                          color: GOLD_TEXT,
+                        }}
+                      >
+                        <Crown className="h-3 w-3" /> {t("hors.emirates.bench.perfect")}
                       </span>
-                    ) : (
-                      <span className="shrink-0 rounded-full bg-red-500/15 border border-red-500/40 px-2 py-0.5 font-mono text-[10px] font-bold text-red-600 tabular-nums">
+                    </div>
+                    {/* Eén gecombineerde regel: jij én de droomploeg zijn identiek */}
+                    <div className="mt-2.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:flex-nowrap">
+                      <CatBar pct={row.dreamPoints > 0 ? 100 : 0} fill={row.dreamPoints > 0 ? GOLD_BAR : null} />
+                      <span
+                        className="w-full min-w-0 font-sans text-xs font-semibold md:w-auto md:max-w-[60%] md:shrink-0 md:text-sm"
+                        style={{ color: GOLD_TEXT }}
+                      >
+                        {t("hors.emirates.bench.perfectCombined", {
+                          names: names(row.dream),
+                          points: row.dreamPoints,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    key={row.key}
+                    className="rounded-lg p-3"
+                    style={{ background: "hsl(222 30% 17%)", border: "1px solid hsl(222 25% 32%)" }}
+                  >
+                    <div className="flex items-center justify-between gap-2 min-w-0">
+                      <span
+                        className="min-w-0 truncate font-mono text-[11px] font-bold uppercase tracking-wider"
+                        style={{ color: TEXT_LIGHT }}
+                      >
+                        {row.categoryName}
+                      </span>
+                      <span className="shrink-0 rounded-full border border-red-500/50 bg-red-500/10 px-2.5 py-0.5 font-mono text-[11px] font-bold text-red-400 tabular-nums">
                         −{row.diff}
                       </span>
-                    )}
-                  </div>
-
-                  {/* Twee gelabelde balken op dezelfde schaal: droom boven, jij onder */}
-                  <div className="mt-2 grid grid-cols-[64px_minmax(0,1fr)_fit-content(45%)] md:grid-cols-[92px_minmax(0,1fr)_fit-content(45%)] items-center gap-x-2 gap-y-1.5">
-                    <span
-                      className="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-wider"
-                      style={{ color: GOLD }}
-                    >
-                      <Crown className="h-3 w-3 shrink-0" /> {t("hors.emirates.bench.dreamLabel")}
-                    </span>
-                    <div className="h-[14px] overflow-hidden rounded-full border border-foreground/25 bg-foreground/5">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${dreamPct}%`,
-                          background:
-                            "linear-gradient(90deg, hsl(var(--vintage-gold)/0.7), hsl(var(--vintage-gold)))",
-                        }}
-                      />
                     </div>
-                    <span className="min-w-0 font-sans text-xs">
-                      {names(row.dream)} ·{" "}
-                      <span className="font-bold tabular-nums" style={{ color: GOLD }}>
-                        {row.dreamPoints}
-                      </span>
-                    </span>
-
-                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-foreground">
-                      {t("hors.emirates.bench.youLabel")}
-                    </span>
-                    <div className="h-[14px] overflow-hidden rounded-full border border-foreground/25 bg-foreground/5">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${minePct}%`,
-                          background: row.perfect
-                            ? "linear-gradient(90deg, hsl(var(--vintage-gold)/0.7), hsl(var(--vintage-gold)))"
-                            : "hsl(210 45% 52%)",
-                        }}
-                      />
+                    <div className="mt-2.5">
+                      <BarsGrid row={row} />
                     </div>
-                    <span className="min-w-0 font-sans text-xs">
-                      {names(row.mine)} ·{" "}
-                      <span className="font-bold tabular-nums">{row.minePoints}</span>
-                    </span>
                   </div>
-                </div>
-              );
-            })}
+                ),
+              )}
+            </div>
+
+            {/* 2e. Legenda */}
+            <p
+              className="text-center font-mono text-[9px] md:text-[10px] uppercase tracking-[0.14em]"
+              style={{ color: "hsl(222 15% 60%)" }}
+            >
+              {t("hors.emirates.bench.legend")}
+            </p>
           </div>
-
-          <p className="text-center font-mono text-[9px] md:text-[10px] tracking-[0.14em] uppercase text-muted-foreground/70">
-            {t("hors.emirates.bench.legend")}
-          </p>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Hero-voortgangsbalk met kroontje op het 100%-uiteinde. */
+function HeroBar({ pct }: { pct: number }) {
+  const { w, transition } = useGrownPct(Math.min(100, Math.max(0, pct)));
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        className="relative h-3 flex-1 overflow-hidden rounded-full"
+        style={{ background: TRACK_BG, border: `1px solid ${GOLD_BORDER}` }}
+      >
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${w}%`, transition, background: GOLD_BAR, boxShadow: BAR_HIGHLIGHT }}
+        />
+      </div>
+      <Crown className="h-4 w-4 shrink-0" style={{ color: GOLD_TEXT }} aria-hidden />
     </div>
   );
 }

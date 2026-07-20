@@ -1053,11 +1053,17 @@
         "perfect": "Perfect",
         "perfectSub": "{{category}} — you picked the dream rider(s)",
         "biggestMiss": "biggest missed chance",
-        "legend": "top bar = the dream team (gold) · bottom bar = your pick — equal length = perfect",
+        "legend": "gold = the dream team · blue = your pick — equal length is perfect",
         "dreamLabel": "Dream",
         "youLabel": "You",
         "perfectPill": "Perfect pick",
-        "missPoints": "−{{diff}} points"
+        "missPoints": "−{{diff}} points",
+        "teaserShort": "Your return: {{pct}}%",
+        "perfectShort": "{{count}}/{{total}} perfect",
+        "vsTitle": "Your team vs The Emirates",
+        "rendementLabel": "Return",
+        "totalLineRich": "{{mine}} of <gold>{{dream}}</gold> points",
+        "perfectCombined": "{{names}} · {{points}} — you and the dream team"
       }
     }
   },
