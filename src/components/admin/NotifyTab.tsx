@@ -25,8 +25,8 @@ const FOOTER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/p
 const FRAME_EDGE = "#F5D9A7";
 const FRAME_GOLD = "#DC9E29";
 const FRAME_CREAM = "#F5E9D5"; // = crème onderaan de header-PNG → naadloze overloop
-const EMAIL_WIDTH = 850;
-const EMAIL_INNER_WIDTH = 824;
+const EMAIL_WIDTH = 950;
+const EMAIL_INNER_WIDTH = 924;
 
 // Alleen het BERICHT — de begroeting "Beste deelnemer," en de afsluiting
 // "Veel koersplezier, Het Koerspoule team" zitten al vast in de template.
