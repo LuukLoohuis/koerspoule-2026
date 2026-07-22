@@ -12,6 +12,8 @@ const FOOTER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/p
 const FRAME_EDGE = "#F5D9A7";   // tan rand buiten de gouden lijn (= cap-randen)
 const FRAME_GOLD = "#DC9E29";   // gouden kaderlijn
 const FRAME_CREAM = "#F5E9D5";  // = crème onderaan de header-PNG → naadloze overloop
+const EMAIL_WIDTH = 720;
+const EMAIL_INNER_WIDTH = 694;
 
 export function buildHtml(
   body: string,
@@ -35,16 +37,16 @@ export function buildHtml(
   <center style="width:100%;background-color:#e9e3d6;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;background-color:#e9e3d6;margin:0;padding:0;">
       <tr><td align="center" style="padding:24px 12px;">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;border-collapse:collapse;margin:0 auto;background-color:${FRAME_EDGE};">
+        <table role="presentation" width="${EMAIL_WIDTH}" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_WIDTH}px;border-collapse:collapse;margin:0 auto;background-color:${FRAME_EDGE};">
           <!-- Header-afbeelding (cap met afgeronde onderkant) -->
           <tr><td style="padding:0;line-height:0;font-size:0;background-color:${FRAME_EDGE};">
-            <img src="${HEADER_IMG}" alt="Koerspoule header" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0;" />
+            <img src="${HEADER_IMG}" alt="Koerspoule header" width="${EMAIL_WIDTH}" style="display:block;width:100%;max-width:${EMAIL_WIDTH}px;height:auto;border:0;margin:0;" />
           </td></tr>
 
           <!-- Content: tan-rand → gouden kaderlijn → crème binnenvlak, zodat het
                kader van de header naadloos doorloopt naar de footer. -->
-          <tr><td align="center" style="padding:0;background-color:${FRAME_EDGE};">
-            <table role="presentation" width="574" cellspacing="0" cellpadding="0" border="0" style="width:574px;max-width:574px;border-collapse:collapse;background-color:${FRAME_CREAM};border-left:2px solid ${FRAME_GOLD};border-right:2px solid ${FRAME_GOLD};">
+          <tr><td align="center" style="padding:0 13px;background-color:${FRAME_EDGE};">
+            <table role="presentation" width="${EMAIL_INNER_WIDTH}" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_INNER_WIDTH}px;border-collapse:collapse;background-color:${FRAME_CREAM};border-left:2px solid ${FRAME_GOLD};border-right:2px solid ${FRAME_GOLD};">
               <tr><td style="padding:16px 28px 20px 28px;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
                 <div style="margin:0 0 10px 0;font-size:28px;line-height:34px;font-weight:bold;color:#211d19;">
                   Beste deelnemer,
@@ -94,7 +96,7 @@ export function buildHtml(
 
           <!-- Footer-afbeelding (cap met afgeronde bovenkant + icoonstrip) -->
           <tr><td style="padding:0;line-height:0;font-size:0;background-color:${FRAME_EDGE};">
-            <img src="${FOOTER_IMG}" alt="Koerspoule footer" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0;" />
+            <img src="${FOOTER_IMG}" alt="Koerspoule footer" width="${EMAIL_WIDTH}" style="display:block;width:100%;max-width:${EMAIL_WIDTH}px;height:auto;border:0;margin:0;" />
           </td></tr>
         </table>
       </td></tr>

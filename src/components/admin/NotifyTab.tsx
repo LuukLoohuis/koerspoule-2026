@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Mail, Send, Loader2, Eye, EyeOff, Users, AlertTriangle } from "lucide-react";
+import { Mail, Send, Loader2, Eye, EyeOff, Users, AlertTriangle, Bold } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -25,6 +25,8 @@ const FOOTER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/p
 const FRAME_EDGE = "#F5D9A7";
 const FRAME_GOLD = "#DC9E29";
 const FRAME_CREAM = "#F5E9D5"; // = crème onderaan de header-PNG → naadloze overloop
+const EMAIL_WIDTH = 720;
+const EMAIL_INNER_WIDTH = 694;
 
 // Alleen het BERICHT — de begroeting "Beste deelnemer," en de afsluiting
 // "Veel koersplezier, Het Koerspoule team" zitten al vast in de template.
@@ -50,12 +52,12 @@ export function buildEmailHtml(
   <center style="width:100%;background-color:#e9e3d6;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;background-color:#e9e3d6;margin:0;padding:0;">
       <tr><td align="center" style="padding:24px 12px;">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;border-collapse:collapse;margin:0 auto;background-color:${FRAME_EDGE};">
+        <table role="presentation" width="${EMAIL_WIDTH}" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_WIDTH}px;border-collapse:collapse;margin:0 auto;background-color:${FRAME_EDGE};">
           <tr><td style="padding:0;line-height:0;font-size:0;background-color:${FRAME_EDGE};">
-            <img src="${HEADER_IMG}" alt="Koerspoule header" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0;" />
+            <img src="${HEADER_IMG}" alt="Koerspoule header" width="${EMAIL_WIDTH}" style="display:block;width:100%;max-width:${EMAIL_WIDTH}px;height:auto;border:0;margin:0;" />
           </td></tr>
-          <tr><td align="center" style="padding:0;background-color:${FRAME_EDGE};">
-            <table role="presentation" width="574" cellspacing="0" cellpadding="0" border="0" style="width:574px;max-width:574px;border-collapse:collapse;background-color:${FRAME_CREAM};border-left:2px solid ${FRAME_GOLD};border-right:2px solid ${FRAME_GOLD};">
+          <tr><td align="center" style="padding:0 13px;background-color:${FRAME_EDGE};">
+            <table role="presentation" width="${EMAIL_INNER_WIDTH}" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_INNER_WIDTH}px;border-collapse:collapse;background-color:${FRAME_CREAM};border-left:2px solid ${FRAME_GOLD};border-right:2px solid ${FRAME_GOLD};">
               <tr><td style="padding:16px 28px 20px 28px;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
                 <div style="margin:0 0 10px 0;font-size:28px;line-height:34px;font-weight:bold;color:#211d19;">
                   Beste deelnemer,
@@ -103,7 +105,7 @@ export function buildEmailHtml(
             </table>
           </td></tr>
           <tr><td style="padding:0;line-height:0;font-size:0;background-color:${FRAME_EDGE};">
-            <img src="${FOOTER_IMG}" alt="Koerspoule footer" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0;" />
+            <img src="${FOOTER_IMG}" alt="Koerspoule footer" width="${EMAIL_WIDTH}" style="display:block;width:100%;max-width:${EMAIL_WIDTH}px;height:auto;border:0;margin:0;" />
           </td></tr>
         </table>
       </td></tr>
@@ -131,6 +133,7 @@ export default function NotifyTab() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   // Voortgang van de lopende campagne (mail-wachtrij): gepolld uit mail_queue.
   const [campaignId, setCampaignId] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ total: number; sent: number; failed: number; pending: number } | null>(null);
@@ -239,6 +242,21 @@ export default function NotifyTab() {
     toast.success(`${r?.enqueued ?? 0} mails klaargezet — verzending loopt op de achtergrond`);
   }
 
+  function makeSelectionBold() {
+    const el = bodyRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = body.slice(start, end);
+    const replacement = selected ? `**${selected}**` : "****";
+    setBody(`${body.slice(0, start)}${replacement}${body.slice(end)}`);
+    requestAnimationFrame(() => {
+      el.focus();
+      const selectionStart = start + 2;
+      el.setSelectionRange(selectionStart, selectionStart + selected.length);
+    });
+  }
+
   const selectedGameName = gameId === "all"
     ? "Alle deelnemers"
     : games.find((g) => g.id === gameId)?.name ?? gameId;
@@ -342,19 +360,27 @@ export default function NotifyTab() {
 
           {/* Body */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Inhoud (HTML)</Label>
-              <Button variant="ghost" size="sm" onClick={() => setShowPreview((v) => !v)} className="text-xs h-7">
-                {showPreview ? <><EyeOff className="w-3 h-3 mr-1" />Bewerk</> : <><Eye className="w-3 h-3 mr-1" />Preview</>}
-              </Button>
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Inhoud</Label>
+              <div className="flex items-center gap-1">
+                {!showPreview && (
+                  <Button type="button" variant="outline" size="sm" onClick={makeSelectionBold} className="text-xs h-8" title="Maak geselecteerde tekst vet">
+                    <Bold className="w-3.5 h-3.5 mr-1" /> Vet
+                  </Button>
+                )}
+                <Button type="button" variant="ghost" size="sm" onClick={() => setShowPreview((v) => !v)} className="text-xs h-8">
+                  {showPreview ? <><EyeOff className="w-3 h-3 mr-1" />Bewerk</> : <><Eye className="w-3 h-3 mr-1" />Preview</>}
+                </Button>
+              </div>
             </div>
             {!showPreview ? (
               <Textarea
+                ref={bodyRef}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 rows={12}
-                className="font-mono text-xs"
-                placeholder="<p>Schrijf hier je bericht in HTML...</p>"
+                className="text-sm leading-relaxed"
+                placeholder="Schrijf hier je bericht…"
               />
             ) : (
               <div className="border rounded-md overflow-hidden">
@@ -367,7 +393,7 @@ export default function NotifyTab() {
               </div>
             )}
             <p className="text-xs text-muted-foreground">
-              Gebruik HTML-opmaak. Het logo, de header en uitschrijflink worden automatisch toegevoegd.
+              Selecteer tekst en klik op <strong>Vet</strong>, of gebruik <code>**dubbele sterretjes**</code>. Het logo, de header en uitschrijflink worden automatisch toegevoegd.
             </p>
           </div>
 
