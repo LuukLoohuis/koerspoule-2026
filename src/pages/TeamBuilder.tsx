@@ -49,7 +49,9 @@ export default function TeamBuilder() {
   const navigate = useNavigate();
   const { user, role } = useAuth();
   const isAuthed = Boolean(user);
-  const { data: game, isLoading: gameLoading } = useCurrentGame();
+  // Zodra een game op open_inschrijving staat, bouwt deze pagina altijd voor
+  // die game—ook als de deelnemer eerder een live of afgeronde koers bekeek.
+  const { data: game, isLoading: gameLoading } = useCurrentGame({ preferRegistration: true });
   const { data: profile } = useProfile();
   const isAdmin = role === "admin";
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(game?.id);

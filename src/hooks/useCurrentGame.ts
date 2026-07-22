@@ -37,17 +37,24 @@ const SELECT =
 const SELECT_LEGACY =
   "id, name, year, status, game_type, homepage_quote, homepage_quote_author";
 
-export function useCurrentGame({ ignoreSelectedGame = false }: { ignoreSelectedGame?: boolean } = {}) {
+export function useCurrentGame(
+  { ignoreSelectedGame = false, preferRegistration = false }:
+  { ignoreSelectedGame?: boolean; preferRegistration?: boolean } = {},
+) {
   // De EXPLICIET gekozen game (multi-game). Is er nog geen keuze, dan valt de
   // queryFn hieronder terug op de bestaande default-logica.
   const { selectedGameId } = useSelectedGame();
   // De publieke homepage moet altijd de live-first default tonen. Een historische
   // sessiekeuze uit Mijn Peloton mag daar niet de quote, status of teller bepalen.
-  const effectiveSelectedGameId = ignoreSelectedGame ? null : selectedGameId;
+  const effectiveSelectedGameId = ignoreSelectedGame || preferRegistration ? null : selectedGameId;
 
   return useQuery({
     // selectedGameId in de key → wisselen van game hertriggert alle verbruikers.
-    queryKey: ["current-game", effectiveSelectedGameId, ignoreSelectedGame ? "live-default" : "selected"],
+    queryKey: [
+      "current-game",
+      effectiveSelectedGameId,
+      preferRegistration ? "registration-first" : ignoreSelectedGame ? "live-default" : "selected",
+    ],
     // Status-wissels (open→live→locked) snel oppikken, ook bij terugkeer naar de tab.
     staleTime: 15_000,
     refetchOnWindowFocus: true,
@@ -68,6 +75,20 @@ export function useCurrentGame({ ignoreSelectedGame = false }: { ignoreSelectedG
       };
 
       const fetchWith = async (select: string) => {
+        // De teambouwer hoort altijd bij de koers waarvoor deelnemers zich nú
+        // kunnen inschrijven, onafhankelijk van een eerder gekozen live/archiefgame.
+        if (preferRegistration) {
+          const { data: registration, error: registrationErr } = await supabase!
+            .from("games")
+            .select(select)
+            .eq("status", "open_inschrijving")
+            .order("year", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (registrationErr) throw registrationErr;
+          if (registration) return registration as unknown as Game;
+        }
+
         if (effectiveSelectedGameId) {
           const chosen = await fetchById(select, effectiveSelectedGameId);
           if (chosen) return chosen;

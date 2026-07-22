@@ -107,8 +107,8 @@ export function statusBadge(status?: string | null): StatusBadge {
 export function statusOrderRank(status?: string | null): number {
   const v = s(status);
   if (v === REGISTRATION) return 0;
-  if (v === "open") return 1;
-  if (v === "live" || v === "locked") return 2;
+  if (v === "live" || v === "locked") return 1;
+  if (v === "open") return 2;
   if (ADMIN_ONLY.includes(v)) return 3;
   return 4; // finished/closed
 }
