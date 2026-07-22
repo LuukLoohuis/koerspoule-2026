@@ -399,19 +399,6 @@ export default function Index() {
     return 20 + t * 80;
   }, [showRealSparkline, myRankProgression, allEntries.length]);
 
-  const rankChangeText = useMemo(() => {
-    // Uitgelogd/geen data → marketing-preview. Echte deelnemer met 1 etappe →
-    // nog geen verloop, dus geen (verzonnen) sprong tonen.
-    if (!showRealSparkline) return t("landing.rankChangeMock");
-    const n = myRankProgression.length;
-    if (n < 2) return t("landing.afterStageOne");
-    // Dag-op-dag: verschil tussen plek ná de vorige rit en ná de laatste rit.
-    const change = myRankProgression[n - 2] - myRankProgression[n - 1];
-    if (change > 0) return t("landing.rankUpDay", { change, rit: n });
-    if (change < 0) return t("landing.rankDownDay", { change: Math.abs(change), rit: n });
-    return t("landing.rankStableDay", { rit: n });
-  }, [showRealSparkline, myRankProgression, t]);
-
   // Richting van de laatste rit (dag-op-dag): stuurt de kleur van het laatste
   // lijnsegment, het eindpunt, het kop-getal en de badge. null → geen echte
   // data of pas 1 etappe (dan blijft de neutrale margin-note staan).
@@ -431,9 +418,13 @@ export default function Index() {
   const midRankLabel = `P${Math.round(1 + (totalEntries - 1) * 0.5)}`;
   const lastRankLabel = `P${showRealData ? totalEntries : 11}`;
   const progressStageCount = showRealSparkline ? myRankProgression.length : 4;
-  const progressStartRank = showRealSparkline ? myRankProgression[0] : MOCK_MY_PROGRESS.from;
   const progressCurrentRank = myProgress.to;
-  const progressTotalGain = progressStartRank - progressCurrentRank;
+  const progressBestRank = showRealSparkline ? Math.min(...myRankProgression) : MOCK_MY_PROGRESS.to;
+  const recentStageCount = Math.min(3, Math.max(0, progressStageCount - 1));
+  const recentReferenceRank = showRealSparkline
+    ? myRankProgression[Math.max(0, myRankProgression.length - 1 - recentStageCount)]
+    : MOCK_MY_PROGRESS.from;
+  const recentRankGain = recentReferenceRank - progressCurrentRank;
   const progressXTicks = Array.from(new Set([
     1,
     Math.max(1, Math.round(progressStageCount / 3)),
@@ -637,20 +628,20 @@ export default function Index() {
           <span className="text-xs text-muted-foreground">{"\n"}</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-[minmax(210px,0.72fr)_minmax(420px,1.5fr)_minmax(260px,0.9fr)] border-b-2 border-[hsl(var(--vintage-gold))/0.3]">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(180px,0.58fr)_minmax(470px,1.75fr)_minmax(260px,0.9fr)] border-b-2 border-[hsl(var(--vintage-gold))/0.3]">
           {/* Top 5 */}
           <div className="order-2 py-5 md:order-1 md:pr-4 md:border-r border-[hsl(var(--vintage-gold))/0.25]">
             <div className="overline-stamp mb-1">{t("landing.dayResult")}</div>
             <div className="font-display font-bold text-xl leading-tight">
               {lastStage ? t("landing.topFiveOfStage", { stage: lastStage.stage_number }) : t("landing.topFive")}
             </div>
-            <div className="mt-3">
+            <div className="mt-2">
               {(showRealData ? realTopFive : MOCK_TOP_FIVE).map((row) => (
                 <TopFiveRow key={row.p} row={row} />
               ))}
               {myRowOutsideTop5 && (
                 <>
-                  <div className="py-1 text-center text-[10px] text-muted-foreground tracking-widest">
+                  <div className="py-0.5 text-center text-[10px] text-muted-foreground tracking-widest">
                     · · ·
                   </div>
                   <TopFiveRow row={myRowOutsideTop5} />
@@ -684,9 +675,9 @@ export default function Index() {
               </div>
 
               <div className="mt-3 grid grid-cols-3 gap-1.5">
-                <div className="rounded-lg border border-border/70 bg-background/55 px-2 py-1.5"><div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground">{t("landing.startRank")}</div><div className="mt-0.5 text-xs font-bold">#{progressStartRank}</div></div>
                 <div className="rounded-lg border border-border/70 bg-background/55 px-2 py-1.5"><div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground">{t("landing.thisStage")}</div><div className="mt-0.5 text-xs font-bold" style={progressDir ? { color: DIR_STYLE[progressDir.dir].text } : undefined}>{progressDir ? `${DIR_STYLE[progressDir.dir].arrow} ${progressDir.count}` : "—"}</div></div>
-                <div className="rounded-lg border border-border/70 bg-background/55 px-2 py-1.5"><div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground">{t("landing.sinceStart")}</div><div className="mt-0.5 text-xs font-bold" style={{ color: progressTotalGain > 0 ? DIR_STYLE.up.text : progressTotalGain < 0 ? DIR_STYLE.down.text : DIR_STYLE.flat.text }}>{progressTotalGain > 0 ? "▲" : progressTotalGain < 0 ? "▼" : "—"} {Math.abs(progressTotalGain)}</div></div>
+                <div className="rounded-lg border border-border/70 bg-background/55 px-2 py-1.5"><div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground">{t("landing.recentStages", { count: recentStageCount })}</div><div className="mt-0.5 text-xs font-bold" style={{ color: recentRankGain > 0 ? DIR_STYLE.up.text : recentRankGain < 0 ? DIR_STYLE.down.text : DIR_STYLE.flat.text }}>{recentRankGain > 0 ? "▲" : recentRankGain < 0 ? "▼" : "—"} {Math.abs(recentRankGain)}</div></div>
+                <div className="rounded-lg border border-border/70 bg-background/55 px-2 py-1.5"><div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground">{t("landing.bestRank")}</div><div className="mt-0.5 text-xs font-bold">#{progressBestRank}</div></div>
               </div>
 
               <div className="mt-2 relative h-[155px]">
@@ -755,21 +746,6 @@ export default function Index() {
                 {progressXTicks.map(({ stage, x }) => <text key={stage} x={x} y="126" textAnchor={stage === 1 ? "start" : stage === progressStageCount ? "end" : "middle"} fontFamily="JetBrains Mono" fontSize="8" fill="hsl(var(--muted-foreground))">{stage}</text>)}
                 <text x="174" y="141" textAnchor="middle" fontFamily="JetBrains Mono" fontSize="8" letterSpacing="1.2" fill="hsl(var(--muted-foreground))">{t("landing.stageAxis")}</text>
               </svg>
-              {progressDir ? (
-                <span
-                  className="absolute right-2 -bottom-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs font-bold"
-                  style={{ background: DIR_STYLE[progressDir.dir].bg, color: DIR_STYLE[progressDir.dir].text }}
-                >
-                  <span aria-hidden>{DIR_STYLE[progressDir.dir].arrow}</span>
-                  {progressDir.dir === "flat"
-                    ? t("landing.rankBadgeFlat", { rit: progressDir.rit })
-                    : t("landing.rankBadge", { count: progressDir.count, rit: progressDir.rit })}
-                </span>
-              ) : (
-                <span className="margin-note tilt-l absolute right-2 -bottom-2 text-lg">
-                  {rankChangeText}
-                </span>
-              )}
               </div>
               <div className="mt-1 flex items-center justify-between border-t border-border/60 pt-2 font-mono text-[9px] text-muted-foreground">
                 <span className="font-semibold text-foreground">↗ {t("landing.yourRaceSoFar")}</span>
@@ -908,16 +884,10 @@ function Stat({ value, label, last }: { value: string; label: string; last?: boo
 
 function TopFiveRow({ row }: { row: TopFiveRow }) {
   const { t } = useTranslation();
-  const lineColor =
-    row.p === 1
-      ? "hsl(var(--primary))"
-      : row.you
-        ? "hsl(var(--vintage-gold))"
-        : "hsl(var(--muted-foreground))";
   return (
     <div
-      className="grid items-center gap-2.5 py-2 border-b border-foreground/5"
-      style={{ gridTemplateColumns: "22px 1fr 70px 50px" }}
+      className="grid items-center gap-2 py-1.5 border-b border-foreground/5"
+      style={{ gridTemplateColumns: "22px minmax(0, 1fr) 42px" }}
     >
       <span
         className="font-display font-bold text-base"
@@ -941,15 +911,6 @@ function TopFiveRow({ row }: { row: TopFiveRow }) {
         </div>
         <div className="text-[11px] text-muted-foreground">{row.team}</div>
       </span>
-      <svg width="70" height="18" aria-hidden>
-        <polyline
-          points={row.spark}
-          stroke={lineColor}
-          strokeWidth="1.6"
-          fill="none"
-          strokeLinecap="round"
-        />
-      </svg>
       <span className="font-mono text-xs font-bold text-right">{row.pts}</span>
     </div>
   );

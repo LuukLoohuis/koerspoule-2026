@@ -134,6 +134,8 @@
     "startRank": "Start",
     "thisStage": "This stage",
     "sinceStart": "Since start",
+    "recentStages": "Last {{count}} stages",
+    "bestRank": "Best position",
     "stageAxis": "STAGE",
     "yourRaceSoFar": "Your race so far",
     "afterStage": "After stage {{stage}}",

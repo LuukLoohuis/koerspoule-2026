@@ -134,6 +134,8 @@
     "startRank": "Start",
     "thisStage": "Deze rit",
     "sinceStart": "Sinds start",
+    "recentStages": "Laatste {{count}} ritten",
+    "bestRank": "Beste positie",
     "stageAxis": "RIT",
     "yourRaceSoFar": "Jouw koers tot nu toe",
     "afterStage": "Na rit {{stage}}",
