@@ -12,8 +12,8 @@ const FOOTER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/p
 const FRAME_EDGE = "#F5D9A7";   // tan rand buiten de gouden lijn (= cap-randen)
 const FRAME_GOLD = "#DC9E29";   // gouden kaderlijn
 const FRAME_CREAM = "#F5E9D5";  // = crème onderaan de header-PNG → naadloze overloop
-const EMAIL_WIDTH = 800;
-const EMAIL_INNER_WIDTH = 774;
+const EMAIL_WIDTH = 900;
+const EMAIL_INNER_WIDTH = 874;
 
 export function buildHtml(
   body: string,
