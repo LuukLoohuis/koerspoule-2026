@@ -16,7 +16,7 @@ export type Game = {
   name: string;
   year: number;
   status: "draft" | "open" | "open_inschrijving" | "locked" | "live" | "finished";
-  game_type?: "giro" | "tdf" | "vuelta" | null;
+  game_type?: "giro" | "tdf" | "tour" | "femmes" | "vuelta" | null;
   homepage_quote?: string | null;
   homepage_quote_author?: string | null;
   /** Fontgrootte (px) van de hero-quote; null = frontend-default (34). */

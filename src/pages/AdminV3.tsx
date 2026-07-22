@@ -262,7 +262,7 @@ export default function AdminV3() {
         </TabsContent>
 
         <TabsContent value="instagram">
-          <InstagramExport gameId={activeGameId} />
+          <InstagramExport gameId={activeGameId} gameInfo={activeGame ?? null} />
         </TabsContent>
 
         <TabsContent value="rubriek">

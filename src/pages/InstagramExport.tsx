@@ -547,8 +547,8 @@ function EtappePreviewTemplate({
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RACE-TEMPLATES — vintage trading-card-stijl per thema (geel/roze/rood).
-// Auto-gevuld met etappe + daguitslag/tussenstand. Switcht mee met het thema.
+// RACE-TEMPLATES — vintage trading-card-stijl per koers. Tour en Tour Femmes
+// delen het gele sitethema, maar hebben hier ieder hun eigen PNG-sjablonen.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const R_PAPER = "#F1E7CE";
@@ -568,6 +568,8 @@ type RaceTheme = {
   klassementBg: string; // PNG-sjabloon (public/) voor klassement
   daguitslagBg: string; // PNG-sjabloon (public/) voor daguitslag
 };
+
+type RaceKey = "roze" | "geel" | "rood" | "femmes";
 
 function RaceBike({ size = 54, color = R_INK }: { size?: number; color?: string }) {
   return (
@@ -649,8 +651,9 @@ const VueltaTitle = (
   </div>
 );
 
-const RACE_THEMES: Record<"roze" | "geel" | "rood", RaceTheme> = {
+const RACE_THEMES: Record<RaceKey, RaceTheme> = {
   geel: { primary: "#E0A411", onPrimary: "#1C1813", race: "TOUR DE FRANCE 2026", title: TourTitle, klassementBg: "/ig/klassement-template.png", daguitslagBg: "/ig/daguitslag-template.png" },
+  femmes: { primary: "#E0A411", onPrimary: "#1C1813", race: "TOUR DE FRANCE FEMMES 2026", title: TourTitle, klassementBg: "/ig/klassement-template-femmes.png", daguitslagBg: "/ig/daguitslag-template-femmes.png" },
   roze: { primary: "#E8336D", onPrimary: "#FFFFFF", race: "GIRO D'ITALIA 2026", title: GiroTitle, klassementBg: "/ig/klassement-template-giro.png", daguitslagBg: "/ig/daguitslag-template-giro.png" },
   rood: { primary: "#CC0000", onPrimary: "#FFF4EC", race: "LA VUELTA 2026", title: VueltaTitle, klassementBg: "/ig/klassement-template-vuelta.png", daguitslagBg: "/ig/daguitslag-template-vuelta.png" },
 };
@@ -769,8 +772,23 @@ const GEO_GIRO: RaceGeo = {
   ritColor: "#FFFFFF",
 };
 
-const RACE_GEO: Record<"roze" | "geel" | "rood", RaceGeo> = {
+// Tour Femmes — afgemeten op de twee aangeleverde 1254×1254-sjablonen en
+// omgerekend naar de 1080×1080 canvasruimte. Beide tabellen hebben eigen,
+// handgetekende lijnposities; die gebruiken we voor exact gecentreerde tekst.
+const GEO_FEMMES: RaceGeo = {
+  klasRows: { top: 447, bottom: 127, left: 165, right: 150 },
+  klasRit: { top: 395, height: 38 },
+  dagRows: { top: 618, bottom: 108, left: 188, right: 145 },
+  dagRit: { top: 422, left: 730, width: 282, height: 116 },
+  dagTraject: { top: 586, height: 30, width: 620 },
+  ritColor: "#E0A411",
+  klasLines: [446.1, 506.3, 563.3, 617.5, 669.2, 716.4, 763.9, 810.5, 857.7, 904.3, 952.4],
+  dagLines: [617.5, 652.7, 688.0, 723.4, 758.8, 794.1, 829.5, 865.6, 900.0, 935.3, 971.4],
+};
+
+const RACE_GEO: Record<RaceKey, RaceGeo> = {
   geel: GEO_TOUR,
+  femmes: GEO_FEMMES,
   rood: GEO_VUELTA,
   roze: GEO_GIRO,
 };
@@ -953,13 +971,22 @@ function RaceCanvasCard({ kind, theme, geo, stageNumber, traject, rows, filename
   );
 }
 
-export default function InstagramExport({ gameId: propGameId }: { gameId?: string }) {
-  const { data: game } = useCurrentGame();
+export default function InstagramExport({ gameId: propGameId, gameInfo }: {
+  gameId?: string;
+  gameInfo?: { name: string; game_type?: string | null } | null;
+}) {
+  const { data: currentGame } = useCurrentGame();
+  // In Admin kan een andere game geselecteerd zijn dan de globale game-switcher.
+  // Gebruik dan expliciet de metadata van die adminselectie voor het sjabloon.
+  const game = gameInfo ?? currentGame;
   const gameId = propGameId ?? game?.id;
-  // Vintage race-templates per thema (geel=Tour, roze=Giro, rood=Vuelta).
+  // Tour en Tour Femmes hebben allebei het gele sitethema. Gebruik daarom voor
+  // de export ook het game_type/de naam, zodat Femmes haar eigen templates pakt.
   const { key: themaKey } = useThema();
-  const raceTheme = RACE_THEMES[themaKey];
-  const raceGeo = RACE_GEO[themaKey];
+  const isFemmes = game?.game_type === "femmes" || /femmes/i.test(game?.name ?? "");
+  const raceKey: RaceKey = isFemmes ? "femmes" : themaKey;
+  const raceTheme = RACE_THEMES[raceKey];
+  const raceGeo = RACE_GEO[raceKey];
 
   const { data: stages = [] } = useStages(gameId);
   const { data: pickStats = [] } = usePickStats(gameId);
