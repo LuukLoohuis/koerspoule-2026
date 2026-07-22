@@ -1031,7 +1031,7 @@ export default function InstagramExport({ gameId: propGameId, gameInfo }: {
 
   // Dagscore standings (één etappe) — game_standings stage_points voor die rit.
   const dagscoreStage = stages.find((s) => s.id === dagscoreStageId);
-  const { data: dagscoreRows = [] } = useGameStandings(gameId, dagscoreStage?.stage_number);
+  const { data: dagscoreRows = [] } = useGameStandings(gameId, dagscoreStage?.stage_number, false);
   const dagscoreStandings = useMemo(() => {
     return [...dagscoreRows]
       .map((r) => ({ name: r.team_name ?? r.display_name ?? "—", pts: r.stage_points }))

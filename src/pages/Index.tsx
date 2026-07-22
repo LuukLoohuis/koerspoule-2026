@@ -45,7 +45,7 @@ import Stamp from "@/components/retro/Stamp";
 import type { ThemaKey } from "@/lib/themas";
 import { useAuth } from "@/hooks/useAuth";
 import { useGameBenchmark } from "@/hooks/useSubpouleBenchmark";
-import type { EntryStanding } from "@/hooks/useResults";
+import { useGameStandings, type EntryStanding } from "@/hooks/useResults";
 import { smoothScrollTo, smoothScrollToTop } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -209,6 +209,9 @@ export default function Index() {
   const stagePoints = useMemo(() => benchmark?.stage_points ?? [], [benchmark]);
   // Last approved stage with results = last element of benchmark.stages
   const lastStage = approvedStages.length > 0 ? approvedStages[approvedStages.length - 1] : null;
+  // De algemene daguitslag sluit admins server-side uit. Subpoules gebruiken
+  // bewust hun eigen databron en blijven admins dus gewoon tonen.
+  const { data: overallDayRows = [] } = useGameStandings(gameId, lastStage?.stage_number, false);
 
   const sortedEntries = useMemo(
     () => [...allEntries].sort((a, b) => b.total_points - a.total_points),
@@ -225,27 +228,30 @@ export default function Index() {
 
   // ── Daguitslag: punten van de laatst gefiatteerde etappe per entry ──
   const dayPointsByEntry = useMemo(() => {
-    const m = new Map<string, number>();
-    if (!lastStage) return m;
-    for (const sp of stagePoints) {
-      if (sp.stage_id === lastStage.id) {
-        m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points);
-      }
-    }
-    return m;
-  }, [stagePoints, lastStage]);
+    return new Map(overallDayRows.map((row) => [row.entry_id, row.stage_points]));
+  }, [overallDayRows]);
 
   const daySortedEntries = useMemo(
     () =>
-      [...allEntries].sort(
-        (a, b) => (dayPointsByEntry.get(b.id) ?? 0) - (dayPointsByEntry.get(a.id) ?? 0),
-      ),
-    [allEntries, dayPointsByEntry],
+      [...overallDayRows]
+        .sort((a, b) => b.stage_points - a.stage_points)
+        .map((row) => ({
+          id: row.entry_id,
+          user_id: row.user_id,
+          team_name: row.team_name,
+          display_name: row.display_name,
+          total_points: row.total,
+        })),
+    [overallDayRows],
   );
 
+  const myDayEntry = useMemo(
+    () => (user ? daySortedEntries.find((entry) => entry.user_id === user.id) : undefined),
+    [daySortedEntries, user],
+  );
   const myDayRank = useMemo(
-    () => (myEntry ? daySortedEntries.findIndex((e) => e.id === myEntry.id) + 1 : null),
-    [daySortedEntries, myEntry],
+    () => (myDayEntry ? daySortedEntries.findIndex((e) => e.id === myDayEntry.id) + 1 : null),
+    [daySortedEntries, myDayEntry],
   );
 
   const cumulativeByEntry = useMemo(() => {
@@ -327,8 +333,8 @@ export default function Index() {
   }, [showRealData, daySortedEntries, dayPointsByEntry, cumulativeByEntry, maxCumulative, user?.id, t]);
 
   const myRowOutsideTop5: TopFiveRow | null = useMemo(() => {
-    if (!showRealData || !myEntry || !myDayRank || myDayRank <= 5) return null;
-    const cumulArr = cumulativeByEntry.get(myEntry.id) ?? [];
+    if (!showRealData || !myDayEntry || !myDayRank || myDayRank <= 5) return null;
+    const cumulArr = cumulativeByEntry.get(myDayEntry.id) ?? [];
     const n = cumulArr.length;
     const spark =
       n === 0
@@ -342,14 +348,14 @@ export default function Index() {
             .join(" ");
     return {
       p: myDayRank,
-      name: myEntry.display_name ?? myEntry.team_name ?? t("landing.youFallback"),
-      team: myEntry.team_name ?? "",
-      pts: dayPointsByEntry.get(myEntry.id) ?? 0,
+      name: myDayEntry.display_name ?? myDayEntry.team_name ?? t("landing.youFallback"),
+      team: myDayEntry.team_name ?? "",
+      pts: dayPointsByEntry.get(myDayEntry.id) ?? 0,
       jersey: null,
       you: true,
       spark,
     };
-  }, [showRealData, myEntry, myDayRank, dayPointsByEntry, cumulativeByEntry, maxCumulative, t]);
+  }, [showRealData, myDayEntry, myDayRank, dayPointsByEntry, cumulativeByEntry, maxCumulative, t]);
 
   const myProgress = useMemo(() => {
     if (!showRealSparkline) return MOCK_MY_PROGRESS;

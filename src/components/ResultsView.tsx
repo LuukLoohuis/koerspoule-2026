@@ -155,7 +155,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   }, [myStageRows]);
 
   // Etappe-uitslag (alle teams) van de geselecteerde rit — server-side.
-  const { data: stageStandingsRows = [] } = useGameStandings(gameId, selectedStage?.stage_number);
+  const { data: stageStandingsRows = [] } = useGameStandings(gameId, selectedStage?.stage_number, false);
   const stageStandings = useMemo(() => {
     return [...stageStandingsRows]
       .map((r) => ({
