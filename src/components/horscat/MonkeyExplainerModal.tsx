@@ -17,7 +17,7 @@ type Props = {
   variant?: "icon" | "text";
 };
 
-export default function MonkeyExplainerModal({ monkeyCount = 5000, variant = "icon" }: Props) {
+export default function MonkeyExplainerModal({ monkeyCount = 10_000, variant = "icon" }: Props) {
   const { t, i18n } = useTranslation();
   const monkeyCountStr = monkeyCount.toLocaleString(i18n.language === "en" ? "en-GB" : "nl-NL");
   const [open, setOpen] = useState(false);

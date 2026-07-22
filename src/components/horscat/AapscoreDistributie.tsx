@@ -1,7 +1,7 @@
 /**
  * <AapscoreDistributie>
  *
- * Premium, editorial verdelingsgrafiek: waar valt jouw team tussen ~5.000
+ * Premium, editorial verdelingsgrafiek: waar valt jouw team tussen ~10.000
  * willekeurige "apenteams". Div-based staven, ruime witruimte, full-width
  * y/x-as labels, gouden user-bin met balloon-annotatie.
  *
@@ -58,7 +58,7 @@ export default function AapscoreDistributie({
   userActual,
   mean,
   beatPct,
-  monkeyCount = 5000,
+  monkeyCount = 10_000,
   className,
 }: Props) {
   const { t, i18n } = useTranslation();

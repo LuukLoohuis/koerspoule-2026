@@ -8,6 +8,8 @@ import { useCategories } from "@/hooks/useCategories";
 import { useStages, useStagePointsForEntries, useGameStandings } from "@/hooks/useResults";
 import { pointsTable } from "@/data/riders";
 import type { LefevereReportInput } from "@/hooks/useLefevereReport";
+import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
+import { simulateMonkeyTeams } from "@/lib/monkeySimulation";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -119,26 +121,6 @@ function useAllGameRiders(gameId?: string) {
   });
 }
 
-// ─── Monte-Carlo helpers (unchanged copy from HorsCategorieTab) ──────────────
-
-function seededRandom(seed: number) {
-  let s = seed >>> 0;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 0xffffffff;
-  };
-}
-function pickN<T>(arr: T[], n: number, rng: () => number): T[] {
-  if (arr.length <= n) return [...arr];
-  const copy = [...arr];
-  const out: T[] = [];
-  for (let i = 0; i < n; i++) {
-    const idx = Math.floor(rng() * copy.length);
-    out.push(copy.splice(idx, 1)[0]);
-  }
-  return out;
-}
-
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
 /**
@@ -162,6 +144,7 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
   const gameId = isLive ? game?.id : undefined;
 
   const { entry, picksByCategory, jokerIds } = useEntry(game?.id);
+  const jokerMultiplier = useJokerMultiplier(game?.id);
   const { data: categories = [] } = useCategories(game?.id);
   const pickStatsQ = usePickStats(gameId);
   const jokerStatsQ = useJokerStats(gameId);
@@ -206,57 +189,22 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
 
   // ── Monte Carlo (exact dezelfde formule als HorsCategorieTab) ──────────────
   const monte = useMemo(() => {
-    const N = 5000;
-    if (categories.length === 0 || pickStats.length === 0) return null;
-    const meanTotal = totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : 0;
-    const byCat = new Map<string, PickStat[]>();
-    for (const p of pickStats) {
-      const arr = byCat.get(p.category_id) ?? [];
-      arr.push(p);
-      byCat.set(p.category_id, arr);
+    if (categories.length === 0 || allStageResults.length === 0) return null;
+    const riderPoints = new Map<string, number>();
+    for (const result of allStageResults) {
+      if (!result.rider_id) continue;
+      riderPoints.set(result.rider_id, (riderPoints.get(result.rider_id) ?? 0) + (pointsTable[result.finish_position] ?? 0));
     }
-    const totalSlots = categories.reduce((s, c) => s + (c.max_picks ?? 1), 0) || 1;
-    const baselinePerSlot = meanTotal / totalSlots;
-    const riderWeight = new Map<string, number>();
-    for (const [, list] of byCat) {
-      const max = Math.max(1, ...list.map((p) => p.pick_count));
-      for (const p of list) {
-        const r = p.pick_count / max;
-        riderWeight.set(p.rider_id, 0.4 + r * 1.2);
-      }
-    }
-    const rng = seededRandom(game?.id?.split("-").reduce((a, c) => a + c.charCodeAt(0), 0) ?? 42);
-    const scoreFromRiderIds = (riderIds: string[]) => {
-      let s = 0;
-      for (const rid of riderIds) {
-        const w = riderWeight.get(rid) ?? 0.7;
-        s += baselinePerSlot * w * (0.7 + rng() * 0.6);
-      }
-      return s;
-    };
-    const randomScores: number[] = [];
-    for (const _ of Array(N).fill(0)) {
-      const team: string[] = [];
-      for (const cat of categories) {
-        const pool = (byCat.get(cat.id) ?? []).map((p) => p.rider_id);
-        if (pool.length === 0) continue;
-        team.push(...pickN(pool, cat.max_picks ?? 1, rng));
-      }
-      randomScores.push(scoreFromRiderIds(team));
-    }
-    randomScores.sort((a, b) => a - b);
-    const userPicks: string[] = [];
-    for (const cat of categories) {
-      const arr = picksByCategory.get(cat.id) ?? [];
-      userPicks.push(...arr);
-    }
-    const userActual = userPicks.length ? myStageTotal : 0;
-    const beatPct =
-      randomScores.length === 0
-        ? 0
-        : (randomScores.filter((s) => userActual > s).length / randomScores.length) * 100;
-    return { beatPct };
-  }, [categories, pickStats, totals, picksByCategory, myStageTotal, game?.id]);
+    return simulateMonkeyTeams({
+      categories,
+      riders: allGameRiders,
+      riderPoints,
+      userScore: entry ? myStageTotal : 0,
+      jokerMultiplier,
+      simulations: 10_000,
+      seed: game?.id?.split("-").reduce((sum, char) => sum + char.charCodeAt(0), 0) ?? 42,
+    });
+  }, [categories, allStageResults, allGameRiders, entry, myStageTotal, jokerMultiplier, game?.id]);
 
   // ── Emirates (exact dezelfde formule als HorsCategorieTab) ─────────────────
   const emirates = useMemo<{ pct: number; dreamTotal: number; myPoints: number } | null>(() => {

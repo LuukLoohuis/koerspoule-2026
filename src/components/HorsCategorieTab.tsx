@@ -48,6 +48,8 @@ import { useAuth } from "@/hooks/useAuth";
 import type { TruiType } from "@/lib/themas";
 import { useLefevereReport, useLefeverePreview } from "@/hooks/useLefevereReport";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
+import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
+import { simulateMonkeyTeams } from "@/lib/monkeySimulation";
 import aapFietser from "@/assets/horscat/aap-fietser-transparant.png";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -152,17 +154,6 @@ function seededRandom(seed: number) {
     return s / 0xffffffff;
   };
 }
-function pickN<T>(arr: T[], n: number, rng: () => number): T[] {
-  if (arr.length <= n) return [...arr];
-  const copy = [...arr];
-  const out: T[] = [];
-  for (let i = 0; i < n; i++) {
-    const idx = Math.floor(rng() * copy.length);
-    out.push(copy.splice(idx, 1)[0]);
-  }
-  return out;
-}
-
 // ─── Visual helpers ───────────────────────────────────────────────────────────
 
 function snapToBucket(dist: Array<{ bucket: number }>, value: number): number {
@@ -260,6 +251,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   const { data: jokerStats = [] } = useJokerStats(hasResults ? game?.id : undefined);
   const { data: predictionStats = [] } = usePredictionStats(hasResults ? game?.id : undefined);
   const { data: myStageTotal = 0 } = useMyStagePointTotal(entry?.id);
+  const jokerMultiplier = useJokerMultiplier(game?.id);
   const hcGameId = hasResults ? game?.id : undefined;
 
   // Stage-by-stage timeline data
@@ -357,61 +349,25 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // ── Monte Carlo (logic unchanged) ──────────────────────────────────────────
   const monte = useMemo(() => {
-    const N = 5000;
-    if (categories.length === 0 || pickStats.length === 0) return null;
-    const meanTotal = totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : 0;
-    // Zonder goedgekeurde stand (meanTotal 0) degenereert de simulatie:
-    // alle 5.000 scores worden exact 0 → één bin → één bar. Dan liever de
-    // nette empty-state van de tab dan een nonsens-histogram.
-    if (meanTotal <= 0) return null;
-    const byCat = new Map<string, PickStat[]>();
-    for (const p of pickStats) {
-      const arr = byCat.get(p.category_id) ?? [];
-      arr.push(p);
-      byCat.set(p.category_id, arr);
+    if (categories.length === 0 || allStageResults.length === 0) return null;
+    const riderPoints = new Map<string, number>();
+    for (const result of allStageResults) {
+      if (!result.rider_id) continue;
+      riderPoints.set(result.rider_id, (riderPoints.get(result.rider_id) ?? 0) + (pointsTable[result.finish_position] ?? 0));
     }
-    const totalSlots = categories.reduce((s, c) => s + (c.max_picks ?? 1), 0) || 1;
-    const baselinePerSlot = meanTotal / totalSlots;
-    const riderWeight = new Map<string, number>();
-    for (const [, list] of byCat) {
-      const max = Math.max(1, ...list.map((p) => p.pick_count));
-      for (const p of list) {
-        const r = p.pick_count / max;
-        riderWeight.set(p.rider_id, 0.4 + r * 1.2);
-      }
-    }
-    const rng = seededRandom(game?.id?.split("-").reduce((a, c) => a + c.charCodeAt(0), 0) ?? 42);
-    const scoreFromRiderIds = (riderIds: string[]) => {
-      let s = 0;
-      for (const rid of riderIds) {
-        const w = riderWeight.get(rid) ?? 0.7;
-        s += baselinePerSlot * w * (0.7 + rng() * 0.6);
-      }
-      return s;
-    };
-    const randomScores: number[] = [];
-    for (let i = 0; i < N; i++) {
-      const team: string[] = [];
-      for (const cat of categories) {
-        const pool = (byCat.get(cat.id) ?? []).map((p) => p.rider_id);
-        if (pool.length === 0) continue;
-        team.push(...pickN(pool, cat.max_picks ?? 1, rng));
-      }
-      randomScores.push(scoreFromRiderIds(team));
-    }
-    randomScores.sort((a, b) => a - b);
-    const userPicks: string[] = [];
-    for (const cat of categories) {
-      const arr = picksByCategory.get(cat.id) ?? [];
-      userPicks.push(...arr);
-    }
-    const userActual = userPicks.length ? myStageTotal : 0;
-    const mean = randomScores.reduce((a, b) => a + b, 0) / randomScores.length;
-    const mid = Math.floor(randomScores.length / 2);
-    const median = randomScores.length % 2 === 0 ? (randomScores[mid - 1] + randomScores[mid]) / 2 : randomScores[mid];
+    const userActual = entry ? myStageTotal : 0;
+    const simulation = simulateMonkeyTeams({
+      categories,
+      riders: allGameRiders,
+      riderPoints,
+      userScore: userActual,
+      jokerMultiplier,
+      simulations: 10_000,
+      seed: game?.id?.split("-").reduce((sum, char) => sum + char.charCodeAt(0), 0) ?? 42,
+    });
+    if (!simulation || simulation.mean <= 0) return null;
+    const { scores: randomScores, mean, median, beatPct } = simulation;
     const top10cut = randomScores[Math.floor(randomScores.length * 0.9)];
-    const beatPct =
-      randomScores.length === 0 ? 0 : (randomScores.filter((s) => userActual > s).length / randomScores.length) * 100;
     const aboveMedian = userActual > median ? 100 : 0;
     const top10 = userActual > top10cut;
     const worseThanApe = beatPct < 50;
@@ -433,11 +389,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       console.log("[monte] bins:", dist);
     }
     return { mean, median, top10cut, beatPct, top10, worseThanApe, aboveMedian, userActual, dist };
-  }, [categories, pickStats, totals, picksByCategory, myStageTotal, game?.id]);
+  }, [categories, allStageResults, allGameRiders, entry, myStageTotal, jokerMultiplier, game?.id]);
 
   // ── Demo Monte Carlo (alleen sneak preview 'open') ───────────────────────────
   // Volledig client-side, deterministisch (vaste seed): ~5 gesimuleerde deelnemers
-  // → 5.000 "apen" + een voorbeeldscore, zodat de Aap met de Dartpijl + percentiel-
+  // → 10.000 "apen" + een voorbeeldscore, zodat de Aap met de Dartpijl + percentiel-
   // verdeling geloofwaardig oogt zonder echte data of DB-writes.
   const demoMonte = useMemo(() => {
     if (!isDemo) return null;
@@ -448,7 +404,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       while (v === 0) v = rng();
       return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
     };
-    const N = 5000, MEAN = 430, SD = 95;
+    const N = 10_000, MEAN = 430, SD = 95;
     const scores: number[] = [];
     for (let i = 0; i < N; i++) scores.push(Math.max(0, Math.round(MEAN + gauss() * SD)));
     scores.sort((a, b) => a - b);
@@ -1006,7 +962,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           ) : (
             <>
               {/* Uitleg-accordion "Hoe werkt dit?" — de aap met de dartpijl. */}
-              <MonkeyExplainerModal monkeyCount={5000} variant="text" />
+              <MonkeyExplainerModal monkeyCount={10_000} variant="text" />
 
               {/* ── Monkey IQ-hero: percentile + verdict + Jij-vs-aap ──
                   Alle uitleg-/titel-lagen en de Prestatieklasse-banner zijn
@@ -1024,7 +980,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 userActual={dartMonte.userActual}
                 mean={dartMonte.mean}
                 beatPct={dartMonte.beatPct}
-                monkeyCount={5000}
+                monkeyCount={10_000}
               />
 
 
