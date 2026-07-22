@@ -37,14 +37,17 @@ const SELECT =
 const SELECT_LEGACY =
   "id, name, year, status, game_type, homepage_quote, homepage_quote_author";
 
-export function useCurrentGame() {
+export function useCurrentGame({ ignoreSelectedGame = false }: { ignoreSelectedGame?: boolean } = {}) {
   // De EXPLICIET gekozen game (multi-game). Is er nog geen keuze, dan valt de
   // queryFn hieronder terug op de bestaande default-logica.
   const { selectedGameId } = useSelectedGame();
+  // De publieke homepage moet altijd de live-first default tonen. Een historische
+  // sessiekeuze uit Mijn Peloton mag daar niet de quote, status of teller bepalen.
+  const effectiveSelectedGameId = ignoreSelectedGame ? null : selectedGameId;
 
   return useQuery({
     // selectedGameId in de key → wisselen van game hertriggert alle verbruikers.
-    queryKey: ["current-game", selectedGameId],
+    queryKey: ["current-game", effectiveSelectedGameId, ignoreSelectedGame ? "live-default" : "selected"],
     // Status-wissels (open→live→locked) snel oppikken, ook bij terugkeer naar de tab.
     staleTime: 15_000,
     refetchOnWindowFocus: true,
@@ -65,8 +68,8 @@ export function useCurrentGame() {
       };
 
       const fetchWith = async (select: string) => {
-        if (selectedGameId) {
-          const chosen = await fetchById(select, selectedGameId);
+        if (effectiveSelectedGameId) {
+          const chosen = await fetchById(select, effectiveSelectedGameId);
           if (chosen) return chosen;
         }
 

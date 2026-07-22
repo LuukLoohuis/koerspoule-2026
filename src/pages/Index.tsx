@@ -167,7 +167,9 @@ const DIR_STYLE = {
 export default function Index() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { data: currentGame } = useCurrentGame();
+  // De homepage volgt altijd de actuele live-first game; een in dezelfde sessie
+  // bekeken historische koers mag de homepagegegevens niet overschrijven.
+  const { data: currentGame } = useCurrentGame({ ignoreSelectedGame: true });
   const { data: allGames = [] } = useAllGames();
   // Games met de admin-vlag aan én daadwerkelijk open_inschrijving → banner.
   const inschrijfGames = useMemo(

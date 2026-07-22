@@ -16,7 +16,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 export default function DeelnemersTeller({ className }: { className?: string }) {
   const { i18n } = useTranslation();
   const nf = new Intl.NumberFormat(i18n.language === "en" ? "en-GB" : "nl-NL");
-  const { data: game } = useCurrentGame();
+  const { data: game } = useCurrentGame({ ignoreSelectedGame: true });
   const gameId = game?.id;
   const enabled = Boolean(game?.deelnemers_teller_visible);
 
