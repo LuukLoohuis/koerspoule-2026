@@ -430,6 +430,19 @@ export default function Index() {
   const totalEntries = allEntries.length || 11;
   const midRankLabel = `P${Math.round(1 + (totalEntries - 1) * 0.5)}`;
   const lastRankLabel = `P${showRealData ? totalEntries : 11}`;
+  const progressStageCount = showRealSparkline ? myRankProgression.length : 4;
+  const progressStartRank = showRealSparkline ? myRankProgression[0] : MOCK_MY_PROGRESS.from;
+  const progressCurrentRank = myProgress.to;
+  const progressTotalGain = progressStartRank - progressCurrentRank;
+  const progressXTicks = Array.from(new Set([
+    1,
+    Math.max(1, Math.round(progressStageCount / 3)),
+    Math.max(1, Math.round((progressStageCount * 2) / 3)),
+    progressStageCount,
+  ])).map((stage) => ({
+    stage,
+    x: progressStageCount > 1 ? ((stage - 1) / (progressStageCount - 1)) * 280 + 34 : 174,
+  }));
 
   return (
     <div>
@@ -655,19 +668,29 @@ export default function Index() {
           {/* Sparkline */}
           <div className="py-5 md:px-6 md:border-r border-[hsl(var(--vintage-gold))/0.25] relative">
             <div className="overline-stamp mb-1">{t("landing.yourRace")}</div>
-            <div className="font-display font-bold text-2xl leading-tight">
-              {myProgress.from === myProgress.to ? (
-                <Trans i18nKey="landing.nowAtRank" values={{ rank: myProgress.to }} components={{ 1: <span className="text-primary" /> }} />
-              ) : (
-                <Trans
-                  i18nKey="landing.fromToRank"
-                  values={{ from: myProgress.from, to: myProgress.to }}
-                  components={{ 1: <span style={progressDir ? { color: DIR_STYLE[progressDir.dir].text } : undefined} className={progressDir ? undefined : "text-primary"} /> }}
-                />
-              )}
-            </div>
-            <div className="mt-3 relative h-[130px]">
-              <svg viewBox="0 0 280 120" className="w-full h-full">
+            <div className="relative mt-2 overflow-hidden rounded-2xl border border-[hsl(var(--vintage-gold))/0.35] bg-card/80 p-4 shadow-[0_14px_35px_hsl(var(--foreground)/0.07)] before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r before:from-primary before:via-[hsl(var(--jersey-giallo))] before:to-transparent">
+              <div className="flex items-start justify-between gap-3">
+                <div className="font-display font-bold text-xl leading-tight">
+                  {myProgress.from === myProgress.to ? (
+                    <Trans i18nKey="landing.nowAtRank" values={{ rank: myProgress.to }} components={{ 1: <span className="text-primary" /> }} />
+                  ) : (
+                    <Trans i18nKey="landing.fromToRank" values={{ from: myProgress.from, to: myProgress.to }} components={{ 1: <span style={progressDir ? { color: DIR_STYLE[progressDir.dir].text } : undefined} className={progressDir ? undefined : "text-primary"} /> }} />
+                  )}
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{t("landing.currentRank")}</div>
+                  <div className="font-display text-xl font-bold">#{progressCurrentRank}</div>
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-1.5">
+                <div className="rounded-lg border border-border/70 bg-background/55 px-2 py-1.5"><div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground">{t("landing.startRank")}</div><div className="mt-0.5 text-xs font-bold">#{progressStartRank}</div></div>
+                <div className="rounded-lg border border-border/70 bg-background/55 px-2 py-1.5"><div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground">{t("landing.thisStage")}</div><div className="mt-0.5 text-xs font-bold" style={progressDir ? { color: DIR_STYLE[progressDir.dir].text } : undefined}>{progressDir ? `${DIR_STYLE[progressDir.dir].arrow} ${progressDir.count}` : "—"}</div></div>
+                <div className="rounded-lg border border-border/70 bg-background/55 px-2 py-1.5"><div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground">{t("landing.sinceStart")}</div><div className="mt-0.5 text-xs font-bold" style={{ color: progressTotalGain > 0 ? DIR_STYLE.up.text : progressTotalGain < 0 ? DIR_STYLE.down.text : DIR_STYLE.flat.text }}>{progressTotalGain > 0 ? "▲" : progressTotalGain < 0 ? "▼" : "—"} {Math.abs(progressTotalGain)}</div></div>
+              </div>
+
+              <div className="mt-2 relative h-[155px]">
+              <svg viewBox="0 0 320 150" className="w-full h-full" role="img" aria-label={t("landing.progressChartAria", { rank: progressCurrentRank, stages: progressStageCount })}>
                 <defs>
                   <linearGradient id="kp-progress-grad" x1="0" x2="0" y1="0" y2="1">
                     <stop offset="0" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
@@ -677,43 +700,31 @@ export default function Index() {
                 {[20, 60, 100].map((y) => (
                   <line
                     key={y}
-                    x1="0"
+                    x1="34"
                     y1={y}
-                    x2="280"
+                    x2="314"
                     y2={y}
                     stroke="hsl(var(--foreground) / 0.1)"
                     strokeDasharray="2,4"
                   />
                 ))}
-                <polygon
-                  points={myProgress.pointsPolygon}
-                  fill="url(#kp-progress-grad)"
-                />
-                <polyline
-                  points={myProgress.pointsLine}
-                  fill="none"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="2"
-                />
-                {/* Laatste rit richting-gekleurd bovenop de neutrale goud-lijn. */}
-                {progressDir && myProgress.lastSegment && (
-                  <polyline
-                    points={myProgress.lastSegment}
-                    fill="none"
-                    stroke={DIR_STYLE[progressDir.dir].stroke}
-                    strokeWidth="3.25"
-                    strokeLinecap="round"
-                  />
-                )}
+                <g transform="translate(34 0)">
+                  <polygon points={myProgress.pointsPolygon} fill="url(#kp-progress-grad)" />
+                  <polyline points={myProgress.pointsLine} fill="none" stroke="hsl(var(--card))" strokeWidth="6" strokeLinejoin="round" strokeLinecap="round" />
+                  <polyline points={myProgress.pointsLine} fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+                  {progressDir && myProgress.lastSegment && <polyline points={myProgress.lastSegment} fill="none" stroke={DIR_STYLE[progressDir.dir].stroke} strokeWidth="3.25" strokeLinecap="round" />}
+                </g>
                 <circle
-                  cx="280"
+                  cx="314"
                   cy={myProgressEndY}
                   r="4.5"
                   fill={progressDir ? DIR_STYLE[progressDir.dir].stroke : "hsl(var(--primary))"}
+                  stroke="hsl(var(--card))"
+                  strokeWidth="2.5"
                 />
                 <text
-                  x="278"
-                  y="16"
+                  x="28"
+                  y="23"
                   textAnchor="end"
                   fontFamily="JetBrains Mono"
                   fontSize="9"
@@ -722,8 +733,8 @@ export default function Index() {
                   P1
                 </text>
                 <text
-                  x="278"
-                  y="56"
+                  x="28"
+                  y="63"
                   textAnchor="end"
                   fontFamily="JetBrains Mono"
                   fontSize="9"
@@ -732,8 +743,8 @@ export default function Index() {
                   {midRankLabel}
                 </text>
                 <text
-                  x="278"
-                  y="96"
+                  x="28"
+                  y="103"
                   textAnchor="end"
                   fontFamily="JetBrains Mono"
                   fontSize="9"
@@ -741,6 +752,8 @@ export default function Index() {
                 >
                   {lastRankLabel}
                 </text>
+                {progressXTicks.map(({ stage, x }) => <text key={stage} x={x} y="126" textAnchor={stage === 1 ? "start" : stage === progressStageCount ? "end" : "middle"} fontFamily="JetBrains Mono" fontSize="8" fill="hsl(var(--muted-foreground))">{stage}</text>)}
+                <text x="174" y="141" textAnchor="middle" fontFamily="JetBrains Mono" fontSize="8" letterSpacing="1.2" fill="hsl(var(--muted-foreground))">{t("landing.stageAxis")}</text>
               </svg>
               {progressDir ? (
                 <span
@@ -757,6 +770,11 @@ export default function Index() {
                   {rankChangeText}
                 </span>
               )}
+              </div>
+              <div className="mt-1 flex items-center justify-between border-t border-border/60 pt-2 font-mono text-[9px] text-muted-foreground">
+                <span className="font-semibold text-foreground">↗ {t("landing.yourRaceSoFar")}</span>
+                <span>{t("landing.afterStage", { stage: progressStageCount })}</span>
+              </div>
             </div>
           </div>
 

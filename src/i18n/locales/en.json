@@ -129,7 +129,15 @@
     "rankDownDay": "−{{change}} in stage {{rit}} 📉",
     "rankStableDay": "held steady in stage {{rit}}",
     "rankBadge": "{{count}} places · stage {{rit}}",
-    "rankBadgeFlat": "held steady · stage {{rit}}"
+    "rankBadgeFlat": "held steady · stage {{rit}}",
+    "currentRank": "Current rank",
+    "startRank": "Start",
+    "thisStage": "This stage",
+    "sinceStart": "Since start",
+    "stageAxis": "STAGE",
+    "yourRaceSoFar": "Your race so far",
+    "afterStage": "After stage {{stage}}",
+    "progressChartAria": "Ranking progress after {{stages}} stages, currently ranked {{rank}}"
   },
   "auth": {
     "login": {

@@ -129,7 +129,15 @@
     "rankDownDay": "−{{change}} in rit {{rit}} 📉",
     "rankStableDay": "gelijk gebleven in rit {{rit}}",
     "rankBadge": "{{count}} plaatsen · rit {{rit}}",
-    "rankBadgeFlat": "gelijk gebleven · rit {{rit}}"
+    "rankBadgeFlat": "gelijk gebleven · rit {{rit}}",
+    "currentRank": "Huidige plek",
+    "startRank": "Start",
+    "thisStage": "Deze rit",
+    "sinceStart": "Sinds start",
+    "stageAxis": "RIT",
+    "yourRaceSoFar": "Jouw koers tot nu toe",
+    "afterStage": "Na rit {{stage}}",
+    "progressChartAria": "Positieverloop na {{stages}} ritten, nu op plek {{rank}}"
   },
   "auth": {
     "login": {
