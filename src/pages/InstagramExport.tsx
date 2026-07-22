@@ -994,7 +994,7 @@ export default function InstagramExport({ gameId: propGameId }: { gameId?: strin
   // Klassement standings (cumulatief t/m gekozen etappe) — server-side via
   // game_standings (cum_points), i.p.v. alle stage_points naar de client.
   const klassementStage = stages.find((s) => s.id === klassementStageId);
-  const { data: klassementRows = [] } = useGameStandings(gameId, klassementStage?.stage_number);
+  const { data: klassementRows = [] } = useGameStandings(gameId, klassementStage?.stage_number, false);
   const klassementStandings = useMemo(() => {
     return [...klassementRows]
       .map((r) => ({ name: r.team_name ?? r.display_name ?? "—", pts: r.cum_points }))

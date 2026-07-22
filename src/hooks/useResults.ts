@@ -153,10 +153,10 @@ export type GameStandingRow = {
   stage_rank: number | null;
 };
 
-export function useGameStandings(gameId?: string, uptoStageNumber?: number) {
+export function useGameStandings(gameId?: string, uptoStageNumber?: number, includeAdmins = true) {
   const authReady = useAuthReady();
   return useQuery({
-    queryKey: ["game-standings", gameId, uptoStageNumber],
+    queryKey: ["game-standings", gameId, uptoStageNumber, includeAdmins],
     enabled: authReady && Boolean(supabase && gameId && typeof uptoStageNumber === "number"),
     staleTime: 5 * 60 * 1000,
     retry: 0, // RPC ontbreekt? meteen terugvallen op client-berekening
@@ -169,6 +169,7 @@ export function useGameStandings(gameId?: string, uptoStageNumber?: number) {
       const { data, error } = await (supabase as any).rpc("game_standings", {
         p_game_id: gameId,
         p_upto: uptoStageNumber,
+        p_include_admins: includeAdmins,
       });
       if (error) throw error;
       return (data ?? []) as GameStandingRow[];
