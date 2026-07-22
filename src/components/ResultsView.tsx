@@ -180,7 +180,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   // tussenstand per etappe. Dus alleen tonen wanneer de GC-rit geselecteerd is.
   const isGcKlassement = klassementStage?.is_gc === true;
 
-  const { data: serverStandings = [] } = useGameStandings(gameId, klassementStage?.stage_number);
+  const { data: serverStandings = [] } = useGameStandings(gameId, klassementStage?.stage_number, false);
 
   const overallStandings = useMemo(() => {
     const mapped = serverStandings.map((r) => ({
