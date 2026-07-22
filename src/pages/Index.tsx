@@ -637,11 +637,11 @@ export default function Index() {
           <span className="text-xs text-muted-foreground">{"\n"}</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 border-b-2 border-[hsl(var(--vintage-gold))/0.3]">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(210px,0.72fr)_minmax(420px,1.5fr)_minmax(260px,0.9fr)] border-b-2 border-[hsl(var(--vintage-gold))/0.3]">
           {/* Top 5 */}
-          <div className="py-5 md:pr-6 md:border-r border-[hsl(var(--vintage-gold))/0.25]">
+          <div className="order-2 py-5 md:order-1 md:pr-4 md:border-r border-[hsl(var(--vintage-gold))/0.25]">
             <div className="overline-stamp mb-1">{t("landing.dayResult")}</div>
-            <div className="font-display font-bold text-2xl leading-tight">
+            <div className="font-display font-bold text-xl leading-tight">
               {lastStage ? t("landing.topFiveOfStage", { stage: lastStage.stage_number }) : t("landing.topFive")}
             </div>
             <div className="mt-3">
@@ -666,7 +666,7 @@ export default function Index() {
           </div>
 
           {/* Sparkline */}
-          <div className="py-5 md:px-6 md:border-r border-[hsl(var(--vintage-gold))/0.25] relative">
+          <div className="order-1 py-5 md:order-2 md:px-5 md:border-r border-[hsl(var(--vintage-gold))/0.25] relative">
             <div className="overline-stamp mb-1">{t("landing.yourRace")}</div>
             <div className="relative mt-2 overflow-hidden rounded-2xl border border-[hsl(var(--vintage-gold))/0.35] bg-card/80 p-4 shadow-[0_14px_35px_hsl(var(--foreground)/0.07)] before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r before:from-primary before:via-[hsl(var(--jersey-giallo))] before:to-transparent">
               <div className="flex items-start justify-between gap-3">
@@ -779,7 +779,9 @@ export default function Index() {
           </div>
 
           {/* Rubriek */}
-          <RubriekBlock gameId={gameId} />
+          <div className="order-3 min-w-0">
+            <RubriekBlock gameId={gameId} />
+          </div>
         </div>
       </section>
 
