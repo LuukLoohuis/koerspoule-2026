@@ -148,8 +148,8 @@ const MOCK_TOP_FIVE: TopFiveRow[] = [
 const MOCK_MY_PROGRESS = {
   from: 11,
   to: 5,
-  pointsPolygon: "0,90 40,84 80,75 120,72 160,60 200,48 240,40 280,32 280,120 0,120",
-  pointsLine:    "0,90 40,84 80,75 120,72 160,60 200,48 240,40 280,32",
+  pointsPolygon: "0,90 80,84 160,75 240,72 320,60 400,48 480,40 560,32 560,120 0,120",
+  pointsLine:    "0,90 80,84 160,75 240,72 320,60 400,48 480,40 560,32",
 };
 
 // Richting-kleuren voor "Jouw koers" (dag-op-dag). Vaste hexes: leesbaar op de
@@ -355,7 +355,7 @@ export default function Index() {
     if (!showRealSparkline) return MOCK_MY_PROGRESS;
     const n = myRankProgression.length;
     const total = allEntries.length || 1;
-    const W = 280, H = 120;
+    const W = 560, H = 120;
     // Eén etappe → nog geen verloop: platte lijn op de huidige rang (eerlijk,
     // niet leeg). from === to zodat de kop "Nu op plek X" toont.
     if (n === 1) {
@@ -425,15 +425,7 @@ export default function Index() {
     ? myRankProgression[Math.max(0, myRankProgression.length - 1 - recentStageCount)]
     : MOCK_MY_PROGRESS.from;
   const recentRankGain = recentReferenceRank - progressCurrentRank;
-  const progressXTicks = Array.from(new Set([
-    1,
-    Math.max(1, Math.round(progressStageCount / 3)),
-    Math.max(1, Math.round((progressStageCount * 2) / 3)),
-    progressStageCount,
-  ])).map((stage) => ({
-    stage,
-    x: progressStageCount > 1 ? ((stage - 1) / (progressStageCount - 1)) * 280 + 34 : 174,
-  }));
+  const progressXTicks = Array.from({ length: progressStageCount }, (_, index) => index + 1);
 
   return (
     <div>
@@ -680,8 +672,8 @@ export default function Index() {
                 <div className="rounded-lg border border-border/70 bg-background/55 px-2 py-1.5"><div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground">{t("landing.bestRank")}</div><div className="mt-0.5 text-xs font-bold">#{progressBestRank}</div></div>
               </div>
 
-              <div className="mt-2 relative h-[155px]">
-              <svg viewBox="0 0 320 150" className="w-full h-full" role="img" aria-label={t("landing.progressChartAria", { rank: progressCurrentRank, stages: progressStageCount })}>
+              <div className="mt-2 relative">
+              <svg viewBox="0 0 600 120" className="block w-full h-auto" role="img" aria-label={t("landing.progressChartAria", { rank: progressCurrentRank, stages: progressStageCount })}>
                 <defs>
                   <linearGradient id="kp-progress-grad" x1="0" x2="0" y1="0" y2="1">
                     <stop offset="0" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
@@ -693,7 +685,7 @@ export default function Index() {
                     key={y}
                     x1="34"
                     y1={y}
-                    x2="314"
+                    x2="594"
                     y2={y}
                     stroke="hsl(var(--foreground) / 0.1)"
                     strokeDasharray="2,4"
@@ -706,7 +698,7 @@ export default function Index() {
                   {progressDir && myProgress.lastSegment && <polyline points={myProgress.lastSegment} fill="none" stroke={DIR_STYLE[progressDir.dir].stroke} strokeWidth="3.25" strokeLinecap="round" />}
                 </g>
                 <circle
-                  cx="314"
+                  cx="594"
                   cy={myProgressEndY}
                   r="4.5"
                   fill={progressDir ? DIR_STYLE[progressDir.dir].stroke : "hsl(var(--primary))"}
@@ -743,9 +735,11 @@ export default function Index() {
                 >
                   {lastRankLabel}
                 </text>
-                {progressXTicks.map(({ stage, x }) => <text key={stage} x={x} y="126" textAnchor={stage === 1 ? "start" : stage === progressStageCount ? "end" : "middle"} fontFamily="JetBrains Mono" fontSize="8" fill="hsl(var(--muted-foreground))">{stage}</text>)}
-                <text x="174" y="141" textAnchor="middle" fontFamily="JetBrains Mono" fontSize="8" letterSpacing="1.2" fill="hsl(var(--muted-foreground))">{t("landing.stageAxis")}</text>
               </svg>
+              <div className="ml-[5.7%] mt-1 grid font-mono text-[8px] text-muted-foreground" style={{ gridTemplateColumns: `repeat(${progressStageCount}, minmax(0, 1fr))` }} aria-hidden>
+                {progressXTicks.map((stage) => <span key={stage} className="text-center first:text-left last:text-right">{stage}</span>)}
+              </div>
+              <div className="mt-1 text-center font-mono text-[8px] tracking-[0.18em] text-muted-foreground">{t("landing.stageAxis")}</div>
               </div>
               <div className="mt-1 flex items-center justify-between border-t border-border/60 pt-2 font-mono text-[9px] text-muted-foreground">
                 <span className="font-semibold text-foreground">↗ {t("landing.yourRaceSoFar")}</span>
