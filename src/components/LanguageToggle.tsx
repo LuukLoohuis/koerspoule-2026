@@ -6,13 +6,28 @@
  * languageChanged-listener in src/i18n. Zichtbaar op mobiel én desktop.
  */
 import { useTranslation } from "react-i18next";
+import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const LANGS = ["nl", "en"] as const;
+const TOUR_FEMMES_NL = "/tour-de-france-femmes-poule-2026";
+const TOUR_FEMMES_EN = "/en/tour-de-france-femmes-fantasy-2026";
 
 export default function LanguageToggle({ className }: { className?: string }) {
   const { i18n, t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const active = i18n.language?.startsWith("en") ? "en" : "nl";
+
+  const selectLanguage = (lng: (typeof LANGS)[number]) => {
+    void i18n.changeLanguage(lng);
+
+    if (location.pathname === TOUR_FEMMES_NL && lng === "en") {
+      navigate(TOUR_FEMMES_EN);
+    } else if (location.pathname === TOUR_FEMMES_EN && lng === "nl") {
+      navigate(TOUR_FEMMES_NL);
+    }
+  };
 
   return (
     <div
@@ -27,7 +42,7 @@ export default function LanguageToggle({ className }: { className?: string }) {
         <button
           key={lng}
           type="button"
-          onClick={() => void i18n.changeLanguage(lng)}
+          onClick={() => selectLanguage(lng)}
           aria-pressed={active === lng}
           className={cn(
             "px-2 h-full font-mono text-[11px] font-bold uppercase tracking-wider transition-colors",
