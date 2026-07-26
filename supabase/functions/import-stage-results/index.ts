@@ -1,6 +1,7 @@
 // @ts-nocheck
 // Edge function: import-stage-results
-// Scrapes letour.fr / lavuelta.es for stage + classifications and returns parsed positions per rider (matched on start_number)
+// Imports the official ASO stage result + cumulative classifications and returns
+// parsed positions per rider (matched on start_number, with a safe name fallback).
 import { createClient } from "npm:@supabase/supabase-js@2.95.0";
 
 const corsHeaders = {
@@ -8,29 +9,30 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type RaceType = "tdf" | "vuelta";
+type RaceType = "tdf" | "femmes" | "vuelta";
 type Classification = "stage" | "gc" | "points" | "mountain" | "youth";
 
-// ASO ranking codes used by both letour.fr and lavuelta.es
-// ite = stage (individual time etappe), itg = general (gc),
-// ipe = points (per stage) → for cumulative use ipg, but ASO main page already shows cumulative under ipe label
-// ime = mountain, ije = youth
-// On the stage-N page, the *main* table (no ajax needed) is the stage result.
-// Other classifications must be fetched via the data-tabs-ajax URLs (with security hashes).
+// ASO ranking codes. The final "e" means the classification for this stage;
+// the final "g" is the cumulative classification after this stage.
+// The main table is the stage result (ite). All jersey standings must therefore
+// use their cumulative "...g" endpoint, not the stage "...e" endpoint.
 const TYPE_MAP: Record<Classification, string> = {
   stage: "ite",
   gc: "itg",
-  points: "ipe",
-  mountain: "ime",
-  youth: "ije",
+  points: "ipg",
+  mountain: "img",
+  youth: "ijg",
 };
 
 const BASE_URL: Record<RaceType, string> = {
   tdf: "https://www.letour.fr",
+  femmes: "https://www.letourfemmes.fr",
   vuelta: "https://www.lavuelta.es",
 };
 
 const UA = "Mozilla/5.0 (compatible; KoerspouleBot/1.0)";
+const FETCH_TIMEOUT_MS = 12_000;
+const MAX_FETCH_ATTEMPTS = 3;
 
 function normalizeName(s: string): string {
   return (s || "")
@@ -66,38 +68,93 @@ function parseRows(html: string): Array<{ position: number; bib: number | null; 
     const row = m[0];
     const posM = row.match(/rankingTables__row__position[^>]*><span>(\d+)<\/span>/);
     const bibM = row.match(/data-bib="#?(\d+)"/);
-    const nameM = row.match(/alt="([^"]+)"/);
+    const imageNameM = row.match(/rankingTables__row__profile--picture[\s\S]*?alt="([^"]+)"/);
+    const linkNameM = row.match(/rankingTables__row__profile--name[^>]*>([\s\S]*?)<\/a>/);
+    const name = imageNameM?.[1] || stripTags(linkNameM?.[1] || "");
     if (!posM) continue;
     out.push({
       position: parseInt(posM[1], 10),
       bib: bibM ? parseInt(bibM[1], 10) : null,
-      name: nameM ? nameM[1] : "",
+      name: decodeHtml(name).trim(),
     });
   }
   return out;
 }
 
+function decodeHtml(value: string): string {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&#0*39;|&apos;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ");
+}
+
+function stripTags(value: string): string {
+  return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+}
+
 function extractAjaxUrls(html: string): Record<string, string> {
-  // data-tabs-ajax="/en/ajax/ranking/1/ipe/HASH/subtab" data-type="ipe"
   const out: Record<string, string> = {};
+
+  // Stage-classification links are ordinary data attributes.
   const re = /data-tabs-ajax="([^"]+)"\s+data-type="([^"]+)"/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
-    out[m[2]] = m[1];
+    out[m[2]] = decodeHtml(m[1]);
+  }
+
+  // Cumulative classifications (itg/ipg/img/ijg) live in an HTML-encoded
+  // JSON object on the "General ranking" tab.
+  const stackRe = /data-ajax-stack\s*=\s*(?:"([^"]+)"|'([^']+)'|(\{[^>]+\}))/g;
+  while ((m = stackRe.exec(html)) !== null) {
+    const raw = decodeHtml(m[1] || m[2] || m[3] || "");
+    try {
+      const stack = JSON.parse(raw) as Record<string, unknown>;
+      for (const [code, path] of Object.entries(stack)) {
+        if (typeof path === "string") out[code] = path;
+      }
+    } catch (error) {
+      console.warn("Kon ASO data-ajax-stack niet lezen:", error);
+    }
   }
   return out;
 }
 
-async function fetchHtml(url: string): Promise<string> {
-  const resp = await fetch(url, {
-    headers: {
-      "User-Agent": UA,
-      "Accept": "text/html,application/xhtml+xml",
-      "X-Requested-With": "XMLHttpRequest",
-    },
-  });
-  if (!resp.ok) throw new Error(`Fetch failed ${resp.status} for ${url}`);
-  return await resp.text();
+async function fetchHtml(url: string): Promise<{ html: string; status: number; attempts: number }> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= MAX_FETCH_ATTEMPTS; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    try {
+      const resp = await fetch(url, {
+        headers: {
+          "User-Agent": UA,
+          "Accept": "text/html,application/xhtml+xml",
+          "Accept-Language": "en-US,en;q=0.9",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        signal: controller.signal,
+      });
+      const html = await resp.text();
+      if (resp.ok) return { html, status: resp.status, attempts: attempt };
+
+      lastError = new Error(`HTTP ${resp.status} voor ${url}`);
+      if (resp.status !== 429 && resp.status < 500) break;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (attempt < MAX_FETCH_ATTEMPTS) {
+      await new Promise((resolve) => setTimeout(resolve, 350 * 2 ** (attempt - 1)));
+    }
+  }
+
+  throw lastError ?? new Error(`Ophalen mislukt voor ${url}`);
 }
 
 Deno.serve(async (req) => {
@@ -137,8 +194,8 @@ Deno.serve(async (req) => {
     const stageNumber = Number(body.stage_number);
     const gameId = body.game_id as string;
 
-    if (!["tdf", "vuelta"].includes(raceType)) {
-      return new Response(JSON.stringify({ error: `Race type '${raceType}' niet ondersteund (alleen tdf/vuelta automatisch — Giro is alleen handmatig)` }), {
+    if (!["tdf", "femmes", "vuelta"].includes(raceType)) {
+      return new Response(JSON.stringify({ error: `Race type '${raceType}' niet ondersteund (Tour, Tour Femmes en Vuelta worden automatisch ondersteund)` }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -157,7 +214,8 @@ Deno.serve(async (req) => {
     const stageUrl = `${baseUrl}/en/rankings/stage-${stageNumber}`;
 
     // 1. Fetch main stage page
-    const mainHtml = await fetchHtml(stageUrl);
+    const mainResponse = await fetchHtml(stageUrl);
+    const mainHtml = mainResponse.html;
     const stageRows = parseRows(mainHtml);
     if (stageRows.length === 0) {
       return new Response(JSON.stringify({ error: `Geen uitslag gevonden op ${stageUrl} — etappe nog niet verreden?` }), {
@@ -173,20 +231,44 @@ Deno.serve(async (req) => {
       stage: stageRows,
       gc: [], points: [], mountain: [], youth: [],
     };
+    const diagnostics: Record<Classification, {
+      status: number;
+      rows: number;
+      attempts: number;
+      endpoint_found: boolean;
+    }> = {
+      stage: { status: mainResponse.status, rows: stageRows.length, attempts: mainResponse.attempts, endpoint_found: true },
+      gc: { status: 0, rows: 0, attempts: 0, endpoint_found: false },
+      points: { status: 0, rows: 0, attempts: 0, endpoint_found: false },
+      mountain: { status: 0, rows: 0, attempts: 0, endpoint_found: false },
+      youth: { status: 0, rows: 0, attempts: 0, endpoint_found: false },
+    };
+    const warnings: string[] = [];
 
     for (const c of classifications) {
       if (c === "stage") continue;
       const code = TYPE_MAP[c];
       const ajaxPath = ajaxUrls[code];
       if (!ajaxPath) {
-        // Not available (e.g. youth not present early in some races) — leave empty
+        warnings.push(`${c}: cumulatief ASO-endpoint (${code}) ontbreekt op de etappepagina.`);
         continue;
       }
+      diagnostics[c].endpoint_found = true;
       try {
-        const html = await fetchHtml(`${baseUrl}${ajaxPath}`);
-        results[c] = parseRows(html);
+        const response = await fetchHtml(new URL(ajaxPath, baseUrl).toString());
+        results[c] = parseRows(response.html);
+        diagnostics[c] = {
+          status: response.status,
+          rows: results[c].length,
+          attempts: response.attempts,
+          endpoint_found: true,
+        };
+        if (results[c].length === 0) {
+          warnings.push(`${c}: ASO antwoordde wel, maar bevatte geen herkenbare rijen.`);
+        }
       } catch (e) {
         console.error(`Failed to fetch ${c}:`, e);
+        warnings.push(`${c}: ${(e as Error).message}`);
       }
     }
 
@@ -258,7 +340,13 @@ Deno.serve(async (req) => {
       source_url: stageUrl,
       matched,
       unmatched,
-      counts: Object.fromEntries(classifications.map((c) => [c, { matched: matched[c].length, unmatched: unmatched[c].length }])),
+      diagnostics,
+      warnings,
+      counts: Object.fromEntries(classifications.map((c) => [c, {
+        matched: matched[c].length,
+        unmatched: unmatched[c].length,
+        total: results[c].length,
+      }])),
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

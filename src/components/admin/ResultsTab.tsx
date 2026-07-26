@@ -94,7 +94,7 @@ export default function ResultsTab({
   const [savingImport, setSavingImport] = useState(false);
 
   const selectedStageObj = useMemo(() => stages.find((s) => s.id === selectedStage), [stages, selectedStage]);
-  const canImport = gameType === "tdf" || gameType === "vuelta";
+  const canImport = gameType === "tdf" || gameType === "femmes" || gameType === "vuelta";
   const canImportPCS = !!gameType && !!gameYear;
 
   const riderById = useMemo(() => {
@@ -241,7 +241,7 @@ export default function ResultsTab({
       return;
     }
     if (!canImport) {
-      toast.error("Importeren is alleen beschikbaar voor Tour de France en Vuelta");
+      toast.error("Importeren is alleen beschikbaar voor Tour de France, Tour de France Femmes en Vuelta");
       return;
     }
     setImporting(true);
@@ -473,7 +473,13 @@ export default function ResultsTab({
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {canImport
-                    ? `Officiële bron: ${gameType === "tdf" ? "letour.fr" : "lavuelta.es"} — etappe + GC + Punten + Bergen + Jongeren, matcht op rugnummer.`
+                    ? `Officiële bron: ${
+                        gameType === "femmes"
+                          ? "letourfemmes.fr"
+                          : gameType === "tdf"
+                            ? "letour.fr"
+                            : "lavuelta.es"
+                      } — etappe + cumulatieve GC, Punten, Bergen en Jongeren; matcht op rugnummer.`
                     : gameType === "giro"
                       ? "Officiële Giro-site werkt niet automatisch — gebruik ProCyclingStats hieronder of vul handmatig in."
                       : "Selecteer eerst een race."}
@@ -623,7 +629,7 @@ export default function ResultsTab({
                         )}
                         {diagnostic && (
                           <Badge variant="secondary" className="font-mono text-[10px]">
-                            PCS {diagnostic.status} · {diagnostic.rows} rijen
+                            Bron {diagnostic.status} · {diagnostic.rows} rijen
                             {diagnostic.attempts > 1 ? ` · ${diagnostic.attempts} pogingen` : ""}
                           </Badge>
                         )}
