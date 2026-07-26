@@ -819,6 +819,13 @@
       "bonusExplainPre": "Bonus points from your predictions for the final standings and the jerseys. Calculated by the admin with",
       "bonusExplainButton": "\"Eindklassementen berekenen\"",
       "bonusExplainPost": ".",
+      "bonusBreakdownTitle": "How your bonus was calculated",
+      "bonusGcRow": "GC prediction · position {{position}}",
+      "bonusPointsJersey": "Points jersey winner correct",
+      "bonusMountainJersey": "Mountains jersey winner correct",
+      "bonusYouthJersey": "Youth jersey winner correct",
+      "bonusNone": "You did not earn bonus points from your final predictions.",
+      "bonusRulesTitle": "View the scoring rules",
       "bonusPodium": "GC podium: 50 / 25 / 25 (max 150)",
       "bonusJerseys": "Jerseys: 25 per correct winner"
     }

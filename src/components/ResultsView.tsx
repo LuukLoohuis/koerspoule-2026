@@ -1016,18 +1016,33 @@ function GcDetail({
     : undefined;
   const { data: results = [], isLoading } = useStageResults(sourceStageId);
 
-  // My GC bonus points from prediction points
-  const { data: predictionPts = 0 } = useQuery({
+  // Persoonlijke GC-bonus inclusief de onderliggende onderdelen, zodat niet
+  // alleen het totaal maar ook de herkomst van ieder punt zichtbaar is.
+  const { data: predictionBonus = { total: 0, rows: [] as Array<{ classification: string; position: number; points: number }> } } = useQuery({
     queryKey: ["gc-prediction-points", myEntry?.id],
     enabled: Boolean(myEntry?.id && supabase),
     queryFn: async () => {
-      if (!supabase || !myEntry?.id) return 0;
+      if (!supabase || !myEntry?.id) return { total: 0, rows: [] };
       const { data, error } = await supabase
         .from("entry_prediction_points")
-        .select("points")
+        .select("classification, position, points")
         .eq("entry_id", myEntry.id);
       if (error) throw error;
-      return (data ?? []).reduce((s: number, r: any) => s + Number(r.points ?? 0), 0);
+      const rows = (data ?? [])
+        .map((r: any) => ({
+          classification: String(r.classification),
+          position: Number(r.position),
+          points: Number(r.points ?? 0),
+        }))
+        .filter((r) => r.points > 0)
+        .sort((a, b) => {
+          const order = { gc: 0, points: 1, kom: 2, youth: 3 } as Record<string, number>;
+          return (order[a.classification] ?? 9) - (order[b.classification] ?? 9) || a.position - b.position;
+        });
+      return {
+        total: rows.reduce((sum, row) => sum + row.points, 0),
+        rows,
+      };
     },
   });
 
@@ -1113,18 +1128,42 @@ function GcDetail({
         <div className="p-4 border-b-2 border-foreground bg-primary/10">
           <h2 className="font-display text-base font-bold flex items-center justify-between">
             <span className="flex items-center gap-2"><User className="h-5 w-5 text-primary" />{t("results.gc.yourBonusTitle")}</span>
-            <span className="font-display text-xl text-primary tabular-nums">{t("results.view.points", { count: predictionPts })}</span>
+            <span className="font-display text-xl text-primary tabular-nums">{t("results.view.points", { count: predictionBonus.total })}</span>
           </h2>
         </div>
         <div className="p-3 text-sm text-muted-foreground space-y-2">
-          <p>
-            {t("results.gc.bonusExplainPre")}{" "}
-            <strong>{t("results.gc.bonusExplainButton")}</strong>{t("results.gc.bonusExplainPost")}
-          </p>
-          <ul className="text-xs space-y-1 list-disc pl-5">
-            <li>{t("results.gc.bonusPodium")}</li>
-            <li>{t("results.gc.bonusJerseys")}</li>
-          </ul>
+          <p className="font-medium text-foreground">{t("results.gc.bonusBreakdownTitle")}</p>
+          {predictionBonus.rows.length > 0 ? (
+            <div className="divide-y divide-border rounded-md border bg-background/50">
+              {predictionBonus.rows.map((row) => {
+                const label =
+                  row.classification === "gc"
+                    ? t("results.gc.bonusGcRow", { position: row.position })
+                    : row.classification === "points"
+                      ? t("results.gc.bonusPointsJersey")
+                      : row.classification === "kom"
+                        ? t("results.gc.bonusMountainJersey")
+                        : row.classification === "youth"
+                          ? t("results.gc.bonusYouthJersey")
+                          : row.classification;
+                return (
+                  <div key={`${row.classification}-${row.position}`} className="flex items-center justify-between gap-3 px-3 py-2">
+                    <span className="text-xs text-foreground">{label}</span>
+                    <span className="font-display font-bold text-emerald-700 tabular-nums">+{row.points} pt</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs italic">{t("results.gc.bonusNone")}</p>
+          )}
+          <details className="text-xs">
+            <summary className="cursor-pointer font-medium text-foreground">{t("results.gc.bonusRulesTitle")}</summary>
+            <ul className="mt-2 space-y-1 list-disc pl-5">
+              <li>{t("results.gc.bonusPodium")}</li>
+              <li>{t("results.gc.bonusJerseys")}</li>
+            </ul>
+          </details>
         </div>
       </div>
     </div>

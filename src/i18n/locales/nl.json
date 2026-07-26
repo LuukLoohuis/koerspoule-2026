@@ -819,6 +819,13 @@
       "bonusExplainPre": "Bonuspunten uit jouw voorspellingen voor het eindklassement en de truien. Wordt door de admin berekend met",
       "bonusExplainButton": "\"Eindklassementen berekenen\"",
       "bonusExplainPost": ".",
+      "bonusBreakdownTitle": "Zo is jouw bonus opgebouwd",
+      "bonusGcRow": "GC-voorspelling · plek {{position}}",
+      "bonusPointsJersey": "Winnaar puntentrui juist",
+      "bonusMountainJersey": "Winnaar bergtrui juist",
+      "bonusYouthJersey": "Winnaar jongerentrui juist",
+      "bonusNone": "Je hebt geen bonuspunten verdiend met je eindvoorspellingen.",
+      "bonusRulesTitle": "Bekijk het puntenschema",
       "bonusPodium": "GC-podium: 50 / 25 / 25 (max 150)",
       "bonusJerseys": "Truien: 25 per juiste winnaar"
     }
