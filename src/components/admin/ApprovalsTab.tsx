@@ -55,13 +55,23 @@ function StageBreakdown({ stageId }: { stageId: string }) {
           supabase!
             .from("entry_prediction_points")
             .select(
-              "entry_id, classification, position, points, entries!inner(team_name, game_id, status, profiles(display_name))",
+              "entry_id, classification, position, points, entries!inner(team_name, user_id, game_id, status)",
             )
             .eq("entries.game_id", stage.game_id)
             .eq("entries.status", "submitted")
             .order("points", { ascending: false })
             .range(from, to),
         );
+        // entries.user_id heeft in het huidige schema geen expliciete FK naar
+        // profiles; PostgREST kan die relatie dus niet nesten. Los ophalen
+        // voorkomt schema-cachefouten en houdt de puntenquery eenvoudig.
+        const profiles = await fetchAllRows<{ id: string; display_name: string | null }>((from, to) =>
+          supabase!
+            .from("profiles")
+            .select("id, display_name")
+            .range(from, to),
+        );
+        const displayNameByUser = new Map(profiles.map((p) => [p.id, p.display_name]));
 
         const grouped = new Map<string, BreakdownRow>();
         for (const row of predictionRows) {
@@ -69,7 +79,7 @@ function StageBreakdown({ stageId }: { stageId: string }) {
           const current = grouped.get(row.entry_id) ?? {
             entry_id: row.entry_id,
             team_name: entry?.team_name ?? null,
-            display_name: entry?.profiles?.display_name ?? "Onbekend",
+            display_name: displayNameByUser.get(entry?.user_id) ?? "Onbekend",
             total_stage_points: 0,
             breakdown: [],
           };
