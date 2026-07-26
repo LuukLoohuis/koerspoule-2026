@@ -16,13 +16,15 @@ type BreakdownRow = {
   display_name: string;
   total_stage_points: number;
   breakdown: Array<{
-    rider_id: string;
+    rider_id?: string;
     rider_name: string | null;
     finish_position: number | null;
     base_pts: number;
     is_joker: boolean;
     multiplier: number;
     total: number;
+    classification?: string;
+    position?: number;
   }>;
 };
 
@@ -31,11 +33,70 @@ function StageBreakdown({ stageId }: { stageId: string }) {
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState<BreakdownRow[] | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [isGcBreakdown, setIsGcBreakdown] = useState(false);
 
   async function load() {
     if (!supabase) return;
     setLoading(true);
     try {
+      const { data: stage, error: stageError } = await supabase
+        .from("stages")
+        .select("game_id, is_gc")
+        .eq("id", stageId)
+        .single();
+      if (stageError) throw stageError;
+      setIsGcBreakdown(Boolean(stage.is_gc));
+
+      // De GC-etappe heeft geen gewone etappepunten. Toon hier de reeds
+      // berekende GC-/truibonussen; dit is een lichte, geïndexeerde tabelquery
+      // en voorkomt de zware picks × deelnemers-berekening die eerder timeoutte.
+      if (stage.is_gc) {
+        const predictionRows = await fetchAllRows<any>((from, to) =>
+          supabase!
+            .from("entry_prediction_points")
+            .select(
+              "entry_id, classification, position, points, entries!inner(team_name, game_id, status, profiles(display_name))",
+            )
+            .eq("entries.game_id", stage.game_id)
+            .eq("entries.status", "submitted")
+            .order("points", { ascending: false })
+            .range(from, to),
+        );
+
+        const grouped = new Map<string, BreakdownRow>();
+        for (const row of predictionRows) {
+          const entry = row.entries;
+          const current = grouped.get(row.entry_id) ?? {
+            entry_id: row.entry_id,
+            team_name: entry?.team_name ?? null,
+            display_name: entry?.profiles?.display_name ?? "Onbekend",
+            total_stage_points: 0,
+            breakdown: [],
+          };
+          const points = Number(row.points ?? 0);
+          current.total_stage_points += points;
+          current.breakdown.push({
+            rider_name: null,
+            finish_position: null,
+            base_pts: points,
+            is_joker: false,
+            multiplier: 1,
+            total: points,
+            classification: row.classification,
+            position: row.position,
+          });
+          grouped.set(row.entry_id, current);
+        }
+        setRows(
+          [...grouped.values()].sort(
+            (a, b) =>
+              b.total_stage_points - a.total_stage_points ||
+              a.display_name.localeCompare(b.display_name),
+          ),
+        );
+        return;
+      }
+
       // Gepagineerd: ook RPC's kapt PostgREST op de Max rows-limiet (1000+ deelnemers).
       const all = await fetchAllRows<BreakdownRow>((from, to) =>
         supabase!.rpc("admin_stage_points_breakdown", { p_stage_id: stageId }).range(from, to),
@@ -65,12 +126,22 @@ function StageBreakdown({ stageId }: { stageId: string }) {
       <CollapsibleContent className="mt-2 border rounded-md p-2 bg-muted/30">
         {loading && <p className="text-xs text-muted-foreground italic">Berekening laden…</p>}
         {!loading && rows && rows.length === 0 && (
-          <p className="text-xs text-muted-foreground italic">Geen ingediende deelnemers gevonden.</p>
+          <p className="text-xs text-muted-foreground italic">
+            {isGcBreakdown
+              ? "Nog geen GC- of truibonussen berekend. Ga naar Berekening en kies ‘Bereken eindklassement (GC)’."
+              : "Geen ingediende deelnemers gevonden."}
+          </p>
         )}
         {!loading && rows && rows.length > 0 && (
           <div className="space-y-1 max-h-96 overflow-y-auto">
+            {isGcBreakdown && (
+              <p className="px-1 pb-1 text-[11px] text-muted-foreground">
+                Alleen deelnemers met toegekende GC- of truibonuspunten worden getoond.
+              </p>
+            )}
             {rows.map((r) => {
               const isOpen = expanded[r.entry_id] ?? false;
+              const isPrediction = r.breakdown.some((b) => b.classification);
               return (
                 <div key={r.entry_id} className="border-b last:border-0 pb-1">
                   <button
@@ -88,25 +159,53 @@ function StageBreakdown({ stageId }: { stageId: string }) {
                   {isOpen && (
                     <table className="w-full text-xs mt-1 mb-2">
                       <thead>
-                        <tr className="text-left text-muted-foreground">
-                          <th className="py-1 pr-2">Renner</th>
-                          <th className="py-1 pr-2">Finish</th>
-                          <th className="py-1 pr-2">Basis</th>
-                          <th className="py-1 pr-2">×</th>
-                          <th className="py-1 pr-2 text-right">Totaal</th>
-                        </tr>
+                        {isPrediction ? (
+                          <tr className="text-left text-muted-foreground">
+                            <th className="py-1 pr-2">Voorspelling</th>
+                            <th className="py-1 pr-2">Positie</th>
+                            <th className="py-1 pr-2 text-right">Bonus</th>
+                          </tr>
+                        ) : (
+                          <tr className="text-left text-muted-foreground">
+                            <th className="py-1 pr-2">Renner</th>
+                            <th className="py-1 pr-2">Finish</th>
+                            <th className="py-1 pr-2">Basis</th>
+                            <th className="py-1 pr-2">×</th>
+                            <th className="py-1 pr-2 text-right">Totaal</th>
+                          </tr>
+                        )}
                       </thead>
                       <tbody>
                         {r.breakdown.map((b, i) => (
-                          <tr key={`${b.rider_id}-${i}`} className="border-t border-muted">
-                            <td className="py-0.5 pr-2">
-                              {b.rider_name ?? "—"}
-                              {b.is_joker && <Badge className="ml-1 text-[10px] py-0" variant="outline">Joker</Badge>}
-                            </td>
-                            <td className="py-0.5 pr-2">{b.finish_position ?? "—"}</td>
-                            <td className="py-0.5 pr-2">{b.base_pts}</td>
-                            <td className="py-0.5 pr-2">{b.multiplier}</td>
-                            <td className="py-0.5 pr-2 text-right font-mono">{b.total}</td>
+                          <tr key={`${b.rider_id ?? b.classification}-${i}`} className="border-t border-muted">
+                            {isPrediction ? (
+                              <>
+                                <td className="py-0.5 pr-2">
+                                  {b.classification === "gc"
+                                    ? "GC-podium"
+                                    : b.classification === "points"
+                                      ? "Puntentrui"
+                                      : b.classification === "mountain"
+                                        ? "Bergtrui"
+                                        : b.classification === "youth"
+                                          ? "Jongerentrui"
+                                          : b.classification}
+                                </td>
+                                <td className="py-0.5 pr-2">{b.position ?? "—"}</td>
+                                <td className="py-0.5 pr-2 text-right font-mono">{b.total} pt</td>
+                              </>
+                            ) : (
+                              <>
+                                <td className="py-0.5 pr-2">
+                                  {b.rider_name ?? "—"}
+                                  {b.is_joker && <Badge className="ml-1 text-[10px] py-0" variant="outline">Joker</Badge>}
+                                </td>
+                                <td className="py-0.5 pr-2">{b.finish_position ?? "—"}</td>
+                                <td className="py-0.5 pr-2">{b.base_pts}</td>
+                                <td className="py-0.5 pr-2">{b.multiplier}</td>
+                                <td className="py-0.5 pr-2 text-right font-mono">{b.total}</td>
+                              </>
+                            )}
                           </tr>
                         ))}
                       </tbody>
