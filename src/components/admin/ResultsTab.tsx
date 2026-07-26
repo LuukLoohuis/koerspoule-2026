@@ -80,7 +80,7 @@ export default function ResultsTab({
   );
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [importingCF, setImportingCF] = useState(false);
+  const [importingPCS, setImportingPCS] = useState(false);
   const [importPreview, setImportPreview] = useState<null | {
     source_url: string;
     matched: Record<string, Array<{ position: number; rider_id: string; rider_name: string; start_number: number | null }>>;
@@ -95,7 +95,7 @@ export default function ResultsTab({
 
   const selectedStageObj = useMemo(() => stages.find((s) => s.id === selectedStage), [stages, selectedStage]);
   const canImport = gameType === "tdf" || gameType === "vuelta";
-  const canImportCF = !!gameType && !!gameYear;
+  const canImportPCS = !!gameType && !!gameYear;
 
   const riderById = useMemo(() => {
     const m = new Map<string, Rider>();
@@ -273,18 +273,18 @@ export default function ResultsTab({
     }
   }
 
-  async function startImportCF() {
+  async function startImportPCS() {
     if (!supabase || !selectedStage || !selectedStageObj) {
       toast.error("Selecteer eerst een etappe");
       return;
     }
-    if (!canImportCF) {
+    if (!canImportPCS) {
       toast.error("Race-type of jaar ontbreekt");
       return;
     }
-    setImportingCF(true);
+    setImportingPCS(true);
     try {
-      const { data, error } = await supabase.functions.invoke("import-cyclingflash", {
+      const { data, error } = await supabase.functions.invoke("import-procyclingstats", {
         body: {
           race_type: gameType,
           stage_number: selectedStageObj.stage_number,
@@ -306,10 +306,10 @@ export default function ResultsTab({
         warnings: data.warnings,
       });
     } catch (e) {
-      console.error("Cyclingflash import error:", e);
+      console.error("ProCyclingStats import error:", e);
       toast.error(`Importeren mislukt: ${(e as Error).message}`);
     } finally {
-      setImportingCF(false);
+      setImportingPCS(false);
     }
   }
 
@@ -475,7 +475,7 @@ export default function ResultsTab({
                   {canImport
                     ? `Officiële bron: ${gameType === "tdf" ? "letour.fr" : "lavuelta.es"} — etappe + GC + Punten + Bergen + Jongeren, matcht op rugnummer.`
                     : gameType === "giro"
-                      ? "Officiële Giro-site werkt niet automatisch — gebruik Cyclingflash hieronder of vul handmatig in."
+                      ? "Officiële Giro-site werkt niet automatisch — gebruik ProCyclingStats hieronder of vul handmatig in."
                       : "Selecteer eerst een race."}
                 </p>
               </div>
@@ -495,12 +495,12 @@ export default function ResultsTab({
               </div>
               <Button
                 variant="secondary"
-                onClick={startImportCF}
-                disabled={!canImportCF || importingCF}
+                onClick={startImportPCS}
+                disabled={!canImportPCS || importingPCS}
                 data-testid="import-cf-btn"
               >
                 <Download className="w-4 h-4 mr-2" />
-                {importingCF ? "Ophalen..." : `Auto-import (etappe ${selectedStageObj?.stage_number ?? ""})`}
+                {importingPCS ? "Ophalen..." : `ProCyclingStats (etappe ${selectedStageObj?.stage_number ?? ""})`}
               </Button>
             </div>
           </CardContent>

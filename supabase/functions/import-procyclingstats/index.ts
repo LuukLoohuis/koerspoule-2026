@@ -1,7 +1,6 @@
 // @ts-nocheck
-// Edge function: import-cyclingflash
-// Despite the name, this scrapes ProCyclingStats (much more reliable than cyclingflash.com,
-// which is Cloudflare-protected). Returns matched + unmatched riders per classification.
+// Edge function: import-procyclingstats
+// Scrapes ProCyclingStats and returns matched + unmatched riders per classification.
 // Matching: bib number first (most reliable), then normalized-name fallback.
 import { createClient } from "npm:@supabase/supabase-js@2.95.0";
 
