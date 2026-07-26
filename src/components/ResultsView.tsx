@@ -1028,12 +1028,18 @@ function GcDetail({
         .select("classification, position, points")
         .eq("entry_id", myEntry.id);
       if (error) throw error;
-      const rows = (data ?? [])
-        .map((r: any) => ({
-          classification: String(r.classification),
-          position: Number(r.position),
-          points: Number(r.points ?? 0),
-        }))
+      const uniqueRows = new Map<string, { classification: string; position: number; points: number }>();
+      for (const raw of data ?? []) {
+        const row = {
+          classification: String((raw as any).classification),
+          position: Number((raw as any).position),
+          points: Number((raw as any).points ?? 0),
+        };
+        const key = `${row.classification}:${row.position}`;
+        const previous = uniqueRows.get(key);
+        if (!previous || row.points > previous.points) uniqueRows.set(key, row);
+      }
+      const rows = [...uniqueRows.values()]
         .filter((r) => r.points > 0)
         .sort((a, b) => {
           const order = { gc: 0, points: 1, kom: 2, youth: 3 } as Record<string, number>;

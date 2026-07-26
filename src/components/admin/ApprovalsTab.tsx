@@ -84,8 +84,12 @@ function StageBreakdown({ stageId }: { stageId: string }) {
             breakdown: [],
           };
           const points = Number(row.points ?? 0);
-          current.total_stage_points += points;
-          current.breakdown.push({
+          const existingIndex = current.breakdown.findIndex(
+            (item) =>
+              item.classification === row.classification &&
+              item.position === row.position,
+          );
+          const detail = {
             rider_name: null,
             finish_position: null,
             base_pts: points,
@@ -94,7 +98,17 @@ function StageBreakdown({ stageId }: { stageId: string }) {
             total: points,
             classification: row.classification,
             position: row.position,
-          });
+          };
+          if (existingIndex >= 0) {
+            // Bestaande dubbele database-regels niet dubbel tonen/tellen.
+            current.breakdown[existingIndex] = detail;
+          } else {
+            current.breakdown.push(detail);
+          }
+          current.total_stage_points = current.breakdown.reduce(
+            (sum, item) => sum + Math.max(0, Number(item.total ?? 0)),
+            0,
+          );
           grouped.set(row.entry_id, current);
         }
         setRows(

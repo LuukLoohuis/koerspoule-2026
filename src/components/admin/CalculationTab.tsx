@@ -402,14 +402,35 @@ export default function CalculationTab({
         kom: winner("mountain_position"),
         youth: winner("youth_position"),
       };
-      const awarded: Array<{
+      const awardedBySlot = new Map<string, {
         entry_id: string;
         classification: string;
         position: number;
         points: number;
-      }> = [];
+      }>();
+      const predictionBySlot = new Map<string, any>();
 
+      // Oude/importdata kan dezelfde voorspelsleuf meermaals bevatten. Eén
+      // entry kan per klassement + positie maar één voorspelling hebben.
       for (const prediction of predictions) {
+        const key = `${prediction.entry_id}:${prediction.classification}:${prediction.position}`;
+        const existing = predictionBySlot.get(key);
+        if (
+          existing?.rider_id &&
+          prediction.rider_id &&
+          existing.rider_id !== prediction.rider_id
+        ) {
+          throw new Error(
+            `Inzending ${prediction.entry_id.slice(0, 8)} bevat meerdere renners voor ` +
+            `${prediction.classification} plek ${prediction.position}. Corrigeer deze inzending eerst.`,
+          );
+        }
+        if (!existing || (!existing.rider_id && prediction.rider_id)) {
+          predictionBySlot.set(key, prediction);
+        }
+      }
+
+      for (const prediction of predictionBySlot.values()) {
         if (!submittedIds.has(prediction.entry_id) || !prediction.rider_id) continue;
         let points = 0;
         if (prediction.classification === "gc" && prediction.position >= 1 && prediction.position <= 3) {
@@ -428,13 +449,27 @@ export default function CalculationTab({
           points = predScores.jersey;
         }
         if (points > 0) {
-          awarded.push({
+          const key = `${prediction.entry_id}:${prediction.classification}:${prediction.position}`;
+          awardedBySlot.set(key, {
             entry_id: prediction.entry_id,
             classification: prediction.classification,
             position: prediction.position,
             points,
           });
         }
+      }
+      const awarded = [...awardedBySlot.values()];
+      const awardedByEntry = new Map<string, number>();
+      for (const row of awarded) {
+        awardedByEntry.set(row.entry_id, (awardedByEntry.get(row.entry_id) ?? 0) + row.points);
+      }
+      const maximumBonus = predScores.exact * 3 + predScores.jersey * 3;
+      const impossible = [...awardedByEntry.entries()].find(([, total]) => total > maximumBonus);
+      if (impossible) {
+        throw new Error(
+          `Ongeldige bonus voor inzending ${impossible[0].slice(0, 8)}: ` +
+          `${impossible[1]} pt (maximum ${maximumBonus}). Er is niets opgeslagen.`,
+        );
       }
 
       toast.loading("Oude bonuspunten vervangen…", { id: progressToast });
