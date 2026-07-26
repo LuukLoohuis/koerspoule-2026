@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calculator, Sparkles, RotateCcw, Save, Trash2, RefreshCw, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import type { Stage } from "./StagesTab";
+import { fetchAllRows } from "@/lib/fetchAll";
 
 const DEFAULT_STAGE_POINTS = [50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
@@ -346,17 +347,120 @@ export default function CalculationTab({
   async function calcPredictions() {
     if (!supabase || !activeGameId) return;
     setBusy(true);
+    const progressToast = toast.loading("Eindklassement voorbereiden…");
     try {
-      await callRpc([
-        { name: "calculate_prediction_points", args: { p_game_id: activeGameId } },
+      // De oude calculate_prediction_points-RPC deed verwijderen + alle
+      // voorspellingen + alle nulpunten in één transactie. Bij duizenden
+      // deelnemers kon de databaseverbinding daardoor wegvallen. Verwerk het
+      // hier gepagineerd en schrijf uitsluitend werkelijk verdiende punten.
+      const finalStage = [...stages]
+        .filter((s: any) => s.is_gc && s.results_status === "approved")
+        .sort((a, b) => b.stage_number - a.stage_number)[0];
+      if (!finalStage) {
+        throw new Error("Fiatteer eerst de eindklassement-etappe.");
+      }
+
+      const { data: finalRows, error: finalError } = await supabase
+        .from("stage_results")
+        .select("rider_id, gc_position, points_position, mountain_position, youth_position")
+        .eq("stage_id", finalStage.id);
+      if (finalError) throw finalError;
+
+      const winner = (column: "gc_position" | "points_position" | "mountain_position" | "youth_position", position = 1) =>
+        finalRows?.find((r: any) => r[column] === position)?.rider_id ?? null;
+      const gcByPosition = new Map<number, string | null>([
+        [1, winner("gc_position", 1)],
+        [2, winner("gc_position", 2)],
+        [3, winner("gc_position", 3)],
       ]);
+      if (![1, 2, 3].every((p) => gcByPosition.get(p))) {
+        throw new Error("Het eindklassement mist één of meer renners in de GC-top 3.");
+      }
+
+      toast.loading("Deelnemers en voorspellingen laden…", { id: progressToast });
+      const allEntries = await fetchAllRows<any>((from, to) =>
+        supabase!
+          .from("entries")
+          .select("id, status")
+          .eq("game_id", activeGameId)
+          .range(from, to),
+      );
+      const submittedIds = new Set(
+        allEntries.filter((e: any) => e.status === "submitted").map((e: any) => e.id),
+      );
+      const predictions = await fetchAllRows<any>((from, to) =>
+        supabase!
+          .from("entry_predictions")
+          .select("entry_id, classification, position, rider_id, entries!inner(game_id, status)")
+          .eq("entries.game_id", activeGameId)
+          .eq("entries.status", "submitted")
+          .range(from, to),
+      );
+
+      const jerseyWinner: Record<string, string | null> = {
+        points: winner("points_position"),
+        kom: winner("mountain_position"),
+        youth: winner("youth_position"),
+      };
+      const awarded: Array<{
+        entry_id: string;
+        classification: string;
+        position: number;
+        points: number;
+      }> = [];
+
+      for (const prediction of predictions) {
+        if (!submittedIds.has(prediction.entry_id) || !prediction.rider_id) continue;
+        let points = 0;
+        if (prediction.classification === "gc" && prediction.position >= 1 && prediction.position <= 3) {
+          const exactWinner = gcByPosition.get(prediction.position);
+          const isOnPodium = [...gcByPosition.values()].includes(prediction.rider_id);
+          points = prediction.rider_id === exactWinner
+            ? predScores.exact
+            : isOnPodium
+              ? predScores.podium
+              : 0;
+        } else if (
+          ["points", "kom", "youth"].includes(prediction.classification) &&
+          prediction.position === 1 &&
+          prediction.rider_id === jerseyWinner[prediction.classification]
+        ) {
+          points = predScores.jersey;
+        }
+        if (points > 0) {
+          awarded.push({
+            entry_id: prediction.entry_id,
+            classification: prediction.classification,
+            position: prediction.position,
+            points,
+          });
+        }
+      }
+
+      toast.loading("Oude bonuspunten vervangen…", { id: progressToast });
+      const allEntryIds = allEntries.map((e: any) => e.id);
+      for (let i = 0; i < allEntryIds.length; i += 250) {
+        const { error } = await supabase
+          .from("entry_prediction_points")
+          .delete()
+          .in("entry_id", allEntryIds.slice(i, i + 250));
+        if (error) throw error;
+      }
+      for (let i = 0; i < awarded.length; i += 500) {
+        const { error } = await supabase
+          .from("entry_prediction_points")
+          .insert(awarded.slice(i, i + 500));
+        if (error) throw error;
+      }
+
+      toast.loading(`${awarded.length} bonussen opgeslagen; totaalstand bijwerken…`, { id: progressToast });
       await callRpc([
         { name: "update_total_ranking", args: { p_game_id: activeGameId } },
       ]);
-      toast.success("Voorspellingen herberekend en totaalstand bijgewerkt");
+      toast.success(`${awarded.length} bonussen berekend en totaalstand bijgewerkt`, { id: progressToast });
     } catch (e) {
       console.error("Predictions recalc error:", e);
-      toast.error((e as Error).message);
+      toast.error((e as Error).message, { id: progressToast });
     } finally {
       setBusy(false);
     }
