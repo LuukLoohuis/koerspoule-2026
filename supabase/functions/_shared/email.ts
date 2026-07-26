@@ -46,8 +46,11 @@ export function buildHtml(
           <!-- Content: tan-rand → gouden kaderlijn → crème binnenvlak, zodat het
                kader van de header naadloos doorloopt naar de footer. -->
           <tr><td align="center" style="padding:0 13px;background-color:${FRAME_EDGE};">
-            <table role="presentation" width="${EMAIL_INNER_WIDTH}" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_INNER_WIDTH}px;border-collapse:collapse;background-color:${FRAME_CREAM};border-left:2px solid ${FRAME_GOLD};border-right:2px solid ${FRAME_GOLD};">
-              <tr><td style="padding:16px 28px 20px 28px;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
+            <table role="presentation" width="${EMAIL_INNER_WIDTH}" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_INNER_WIDTH}px;border-collapse:separate;border-spacing:0;background-color:${FRAME_CREAM};border-left:2px solid ${FRAME_GOLD};border-right:2px solid ${FRAME_GOLD};border-radius:20px;overflow:hidden;">
+              <!-- De afgeronde lege regels laten de zijlijnen rustig uit de
+                   gebogen kaderlijnen van header en footer voortkomen. -->
+              <tr><td style="height:10px;line-height:10px;font-size:0;padding:0;background-color:${FRAME_CREAM};">&nbsp;</td></tr>
+              <tr><td style="padding:6px 28px 10px 28px;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
                 <div style="margin:0 0 10px 0;font-size:28px;line-height:34px;font-weight:bold;color:#211d19;">
                   Beste deelnemer,
                 </div>
@@ -91,6 +94,7 @@ export function buildHtml(
                   </div>
                 </div>
               </td></tr>
+              <tr><td style="height:10px;line-height:10px;font-size:0;padding:0;background-color:${FRAME_CREAM};">&nbsp;</td></tr>
             </table>
           </td></tr>
 
