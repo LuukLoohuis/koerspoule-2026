@@ -53,30 +53,96 @@ function nameKeys(s: string): string[] {
   return Array.from(new Set([norm, sorted].filter(Boolean)));
 }
 
-type FetchResult = { ok: boolean; status: number; html: string | null; bytes: number };
+type FetchResult = {
+  ok: boolean;
+  status: number;
+  html: string | null;
+  bytes: number;
+  attempts: number;
+};
+
+const FETCH_TIMEOUT_MS = 12_000;
+const MAX_FETCH_ATTEMPTS = 3;
+const REQUEST_PAUSE_MS = 450;
+const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function looksLikeBlockPage(html: string): boolean {
+  const head = html.slice(0, 20_000).toLowerCase();
+  return (
+    head.includes("cf-chl-") ||
+    head.includes("just a moment") ||
+    head.includes("attention required") ||
+    head.includes("captcha")
+  );
+}
 
 async function fetchHtml(url: string): Promise<FetchResult> {
-  try {
-    const resp = await fetch(url, {
-      headers: {
-        "User-Agent": UA,
-        Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
-      },
-    });
-    if (!resp.ok) {
-      console.error(`fetch ${url} -> ${resp.status}`);
-      return { ok: false, status: resp.status, html: null, bytes: 0 };
+  let lastStatus = 0;
+
+  for (let attempt = 1; attempt <= MAX_FETCH_ATTEMPTS; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    try {
+      const resp = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": UA,
+          Accept: "text/html,application/xhtml+xml",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+      });
+      lastStatus = resp.status;
+      const html = await resp.text();
+      const blocked = resp.ok && looksLikeBlockPage(html);
+
+      if (resp.ok && !blocked) {
+        return { ok: true, status: resp.status, html, bytes: html.length, attempts: attempt };
+      }
+
+      const effectiveStatus = blocked ? 403 : resp.status;
+      lastStatus = effectiveStatus;
+      console.error(`fetch ${url} -> ${effectiveStatus} (poging ${attempt}/${MAX_FETCH_ATTEMPTS})`);
+      if (!RETRYABLE_STATUS.has(effectiveStatus) || attempt === MAX_FETCH_ATTEMPTS) {
+        return { ok: false, status: effectiveStatus, html: null, bytes: html.length, attempts: attempt };
+      }
+    } catch (e) {
+      const isTimeout = controller.signal.aborted;
+      console.error(
+        `fetch ${url} ${isTimeout ? "timeout" : "error"} ` +
+        `(poging ${attempt}/${MAX_FETCH_ATTEMPTS}): ${(e as Error).message}`,
+      );
+      if (attempt === MAX_FETCH_ATTEMPTS) {
+        return { ok: false, status: lastStatus, html: null, bytes: 0, attempts: attempt };
+      }
+    } finally {
+      clearTimeout(timeout);
     }
-    const html = await resp.text();
-    return { ok: true, status: resp.status, html, bytes: html.length };
-  } catch (e) {
-    console.error(`fetch error ${url}:`, (e as Error).message);
-    return { ok: false, status: 0, html: null, bytes: 0 };
+
+    // Exponentiële back-off voorkomt dat een tijdelijke 429/5xx-blokkade door
+    // onze eigen retries wordt verergerd.
+    await sleep(500 * 2 ** (attempt - 1));
   }
+
+  return { ok: false, status: lastStatus, html: null, bytes: 0, attempts: MAX_FETCH_ATTEMPTS };
 }
 
 type RawRow = { position: number; bib: number | null; name: string };
+
+function decodeHtmlText(s: string): string {
+  const named: Record<string, string> = {
+    amp: "&", apos: "'", quot: '"', nbsp: " ", lt: "<", gt: ">",
+  };
+  return s
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&([a-z]+);/gi, (m, n) => named[n.toLowerCase()] ?? m)
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 function parseResultsTable(html: string | null): RawRow[] {
   if (!html) return [];
@@ -117,14 +183,22 @@ function parseResultsTable(html: string | null): RawRow[] {
     if (!tblM) { console.warn("parse: geen results-tabel in blok"); return []; }
     const tbl = tblM[1];
 
-    // (d) Kolomdetectie: eerst via data-code; ontbreekt dat, val terug op positie
-    //     (kol 0 = rang, rider/-link = naam, puur-numerieke cel = bib).
+    // (d) Kolomdetectie: eerst via data-code; ontbreekt dat, gebruik de
+    //     zichtbare kolomkoppen. Zonder betrouwbare bib-kolom matchen we alleen
+    //     op naam, zodat een GC-positie nooit per ongeluk als rugnummer geldt.
     const headers = Array.from(tbl.matchAll(/data-code="([^"]+)"/g)).map((m) => m[1]);
-    const bibIdx = headers.indexOf("bib");
-    const nameIdx = headers.indexOf("ridername");
-    const hasDataCode = nameIdx >= 0;
-    if (!hasDataCode) {
-      console.warn("parse: geen data-code-kolommen → positie-fallback");
+    const headerCells = Array.from(tbl.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)).map((m) =>
+      decodeHtmlText(m[1].replace(/<[^>]+>/g, " ")).toLowerCase()
+    );
+    const dataBibIdx = headers.indexOf("bib");
+    const dataNameIdx = headers.indexOf("ridername");
+    const textBibIdx = headerCells.findIndex((h) => h === "bib");
+    const textNameIdx = headerCells.findIndex((h) => h === "rider");
+    const bibIdx = dataBibIdx >= 0 ? dataBibIdx : textBibIdx;
+    const nameIdx = dataNameIdx >= 0 ? dataNameIdx : textNameIdx;
+    const hasKnownColumns = nameIdx >= 0;
+    if (dataNameIdx < 0) {
+      console.warn("parse: geen data-code-kolommen → tekstheader/link-fallback");
     }
 
     const rows: RawRow[] = [];
@@ -140,17 +214,17 @@ function parseResultsTable(html: string | null): RawRow[] {
       const pos = rnk;
 
       // Naam: bij data-code de vaste kolom; anders zoek de rider-link in de rij.
-      let nameCell = hasDataCode ? (tds[nameIdx] ?? "") : "";
-      if (!hasDataCode) {
+      let nameCell = hasKnownColumns ? (tds[nameIdx] ?? "") : "";
+      if (!hasKnownColumns) {
         const withLink = tds.find((td) => /<a\b[^>]*href="rider\//.test(td));
         nameCell = withLink ?? "";
       }
       const aM = nameCell.match(/<a\b[^>]*href="rider\/[^"]+"[^>]*>([\s\S]*?)<\/a>/);
       let name = "";
       if (aM) {
-        name = aM[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-      } else if (hasDataCode) {
-        name = nameCell.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+        name = decodeHtmlText(aM[1].replace(/<[^>]+>/g, " "));
+      } else if (hasKnownColumns) {
+        name = decodeHtmlText(nameCell.replace(/<[^>]+>/g, " "));
       }
       if (!name) continue;
       sawName = true;
@@ -161,11 +235,11 @@ function parseResultsTable(html: string | null): RawRow[] {
       if (bibIdx >= 0 && tds[bibIdx] !== undefined) {
         const b = parseInt(tds[bibIdx].replace(/<[^>]+>/g, " ").trim(), 10);
         bib = Number.isFinite(b) ? b : null;
-      } else if (!hasDataCode) {
-        for (let i = 1; i < tds.length; i++) {
-          const cell = tds[i].replace(/<[^>]+>/g, " ").trim();
-          if (/^\d+$/.test(cell)) { bib = parseInt(cell, 10); break; }
-        }
+      } else if (!hasKnownColumns) {
+        // Zonder herkenbare headers is een numerieke cel niet veilig als bib:
+        // de tweede kolom kan bijvoorbeeld de GC-positie zijn. Laat de
+        // naam-matcher het dan oplossen in plaats van verkeerd te koppelen.
+        bib = null;
       }
       rows.push({ position: pos, bib, name });
       if (rows.length >= 30) break;
@@ -242,20 +316,21 @@ Deno.serve(async (req) => {
     // Per-classification diagnostiek: status + bytes + rows. Zo is een blokkade
     // (403/429), een lege pagina (weinig bytes) en een parserbreuk (veel bytes,
     // 0 rijen) uit elkaar te houden.
-    const diag: Record<Classification, { status: number; bytes: number; rows: number }> = {
-      stage: { status: 0, bytes: 0, rows: 0 }, gc: { status: 0, bytes: 0, rows: 0 },
-      points: { status: 0, bytes: 0, rows: 0 }, mountain: { status: 0, bytes: 0, rows: 0 },
-      youth: { status: 0, bytes: 0, rows: 0 },
+    const diag: Record<Classification, { status: number; bytes: number; rows: number; attempts: number }> = {
+      stage: { status: 0, bytes: 0, rows: 0, attempts: 0 }, gc: { status: 0, bytes: 0, rows: 0, attempts: 0 },
+      points: { status: 0, bytes: 0, rows: 0, attempts: 0 }, mountain: { status: 0, bytes: 0, rows: 0, attempts: 0 },
+      youth: { status: 0, bytes: 0, rows: 0, attempts: 0 },
     };
     let blocked = 0;
     let blockedStatus = 0;
 
-    for (const c of classifications) {
+    for (const [index, c] of classifications.entries()) {
+      if (index > 0) await sleep(REQUEST_PAUSE_MS);
       const url = `${baseUrl}${URL_SUFFIX[c]}`;
       const res = await fetchHtml(url);
       const rows = parseResultsTable(res.html);
       raw[c] = rows;
-      diag[c] = { status: res.status, bytes: res.bytes, rows: rows.length };
+      diag[c] = { status: res.status, bytes: res.bytes, rows: rows.length, attempts: res.attempts };
       if (res.status === 403 || res.status === 429) { blocked++; blockedStatus = res.status; }
       console.log(`PCS ${c} (${url}): status=${res.status} bytes=${res.bytes} rows=${rows.length}`);
     }
@@ -292,11 +367,17 @@ Deno.serve(async (req) => {
     if (ridersErr) throw ridersErr;
 
     const byBib = new Map<number, { id: string; name: string; start_number: number | null }>();
-    const byName = new Map<string, { id: string; name: string; start_number: number | null }>();
+    const byName = new Map<string, { id: string; name: string; start_number: number | null } | null>();
     for (const r of ridersData ?? []) {
       if (r.start_number != null) byBib.set(Number(r.start_number), { id: r.id, name: r.name, start_number: r.start_number });
       for (const k of nameKeys(r.name)) {
-        if (!byName.has(k)) byName.set(k, { id: r.id, name: r.name, start_number: r.start_number });
+        const existing = byName.get(k);
+        if (existing && existing.id !== r.id) {
+          // Ambigue naam nooit stil aan de eerste renner koppelen.
+          byName.set(k, null);
+        } else if (!byName.has(k)) {
+          byName.set(k, { id: r.id, name: r.name, start_number: r.start_number });
+        }
       }
     }
 
@@ -351,11 +432,25 @@ Deno.serve(async (req) => {
       }
     }
 
+    const warnings: string[] = [];
+    for (const c of classifications) {
+      const total = raw[c].filter((r) => r.position >= 1 && r.position <= 20).length;
+      const found = matched[c].length;
+      if ((c === "stage" || c === "gc") && total < 10) {
+        warnings.push(`${c}: bron leverde slechts ${total} top-20-rijen`);
+      }
+      if (total >= 10 && found / total < 0.8) {
+        warnings.push(`${c}: slechts ${found} van ${total} renners automatisch gematcht`);
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       source_url: sourceUrl,
       matched,
       unmatched,
+      diagnostics: diag,
+      warnings,
       counts: Object.fromEntries(classifications.map((c) => [c, {
         matched: matched[c].length,
         unmatched: unmatched[c].length,

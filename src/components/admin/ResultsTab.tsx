@@ -32,6 +32,34 @@ const CLASSIFICATIONS: Classification[] = ["stage", "gc", "kom", "points", "yout
 
 type ResultRow = { position: number; rider_id: string };
 
+async function functionErrorMessage(error: unknown): Promise<string> {
+  const edgeError = error as { message?: string; context?: Response };
+  let detail = edgeError?.message || "Onbekende fout";
+  const ctx = edgeError?.context;
+  if (!ctx || typeof ctx.text !== "function") return detail;
+
+  try {
+    const body = await ctx.text();
+    const parsed = JSON.parse(body) as {
+      error?: string;
+      diagnostics?: Record<string, { status?: number; rows?: number; attempts?: number }>;
+    };
+    detail = parsed.error || body || detail;
+    if (parsed.diagnostics) {
+      const sourceState = Object.entries(parsed.diagnostics)
+        .map(([key, d]) =>
+          `${key}: HTTP ${d.status ?? 0}, ${d.rows ?? 0} rijen` +
+          ((d.attempts ?? 0) > 1 ? `, ${d.attempts} pogingen` : "")
+        )
+        .join(" · ");
+      if (sourceState) detail += ` — ${sourceState}`;
+    }
+  } catch {
+    // De standaardmelding van supabase-js blijft bruikbaar.
+  }
+  return detail;
+}
+
 export default function ResultsTab({
   activeGameId,
   stages,
@@ -57,6 +85,9 @@ export default function ResultsTab({
     source_url: string;
     matched: Record<string, Array<{ position: number; rider_id: string; rider_name: string; start_number: number | null }>>;
     unmatched: Record<string, Array<{ position: number; bib: number | null; name: string }>>;
+    diagnostics?: Record<string, { status: number; bytes: number; rows: number; attempts: number }>;
+    counts?: Record<string, { matched: number; unmatched: number; total: number }>;
+    warnings?: string[];
   }>(null);
   // Manual overrides for unmatched rows: key = `${importKey}-${position}` -> rider_id
   const [manualPicks, setManualPicks] = useState<Record<string, string>>({});
@@ -223,19 +254,16 @@ export default function ResultsTab({
         },
       });
       if (error) {
-        // supabase-js verbergt de echte reden achter "non-2xx"; lees 'm uit de body.
-        let detail = error.message;
-        const ctx = (error as { context?: Response }).context;
-        if (ctx && typeof ctx.text === "function") {
-          try { const body = await ctx.text(); const j = JSON.parse(body); detail = j.error || body; } catch { /* fallback */ }
-        }
-        throw new Error(detail);
+        throw new Error(await functionErrorMessage(error));
       }
       if (!data?.success) throw new Error(data?.error || "Onbekende fout");
       setImportPreview({
         source_url: data.source_url,
         matched: data.matched,
         unmatched: data.unmatched,
+        diagnostics: data.diagnostics,
+        counts: data.counts,
+        warnings: data.warnings,
       });
     } catch (e) {
       console.error("Import error:", e);
@@ -265,13 +293,7 @@ export default function ResultsTab({
         },
       });
       if (error) {
-        // supabase-js verbergt de echte reden achter "non-2xx"; lees 'm uit de body.
-        let detail = error.message;
-        const ctx = (error as { context?: Response }).context;
-        if (ctx && typeof ctx.text === "function") {
-          try { const body = await ctx.text(); const j = JSON.parse(body); detail = j.error || body; } catch { /* fallback */ }
-        }
-        throw new Error(detail);
+        throw new Error(await functionErrorMessage(error));
       }
       if (!data?.success) throw new Error(data?.error || "Onbekende fout");
       setManualPicks({});
@@ -279,6 +301,9 @@ export default function ResultsTab({
         source_url: data.source_url,
         matched: data.matched,
         unmatched: data.unmatched,
+        diagnostics: data.diagnostics,
+        counts: data.counts,
+        warnings: data.warnings,
       });
     } catch (e) {
       console.error("Cyclingflash import error:", e);
@@ -290,6 +315,33 @@ export default function ResultsTab({
 
   async function applyImport() {
     if (!supabase || !selectedStage || !importPreview) return;
+
+    // Een onvolledige stage/GC mag nooit stil de bestaande top-20 vervangen.
+    // Handmatige koppelingen tellen mee als opgelost.
+    for (const key of ["stage", "gc"] as const) {
+      const count = importPreview.counts?.[key];
+      if (!count || count.total < 10) continue;
+      const manualCount = (importPreview.unmatched[key] ?? []).filter(
+        (u) => manualPicks[`${key}-${u.position}`],
+      ).length;
+      const resolved = (importPreview.matched[key] ?? []).length + manualCount;
+      if (resolved / count.total < 0.8) {
+        toast.error(
+          `${key === "stage" ? "Etappe" : "GC"} is nog niet betrouwbaar: ` +
+          `${resolved} van ${count.total} renners gekoppeld. Los eerst de rode regels op.`,
+        );
+        return;
+      }
+    }
+
+    if (
+      importPreview.warnings?.length &&
+      !confirm(
+        `De import bevat ${importPreview.warnings.length} waarschuwing(en):\n\n` +
+        `${importPreview.warnings.join("\n")}\n\nToch als concept opslaan?`,
+      )
+    ) return;
+
     setSavingImport(true);
     try {
       const classifs: Classification[] = ["stage", "gc", "kom", "points", "youth"];
@@ -532,11 +584,26 @@ export default function ResultsTab({
 
           {importPreview && (
             <div className="space-y-4">
+              {importPreview.warnings && importPreview.warnings.length > 0 && (
+                <div className="rounded-md border border-amber-500/50 bg-amber-500/10 p-3">
+                  <div className="font-medium text-amber-800 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    Controleer deze import extra goed
+                  </div>
+                  <ul className="mt-2 list-disc pl-5 text-xs text-amber-900 space-y-1">
+                    {importPreview.warnings.map((warning) => (
+                      <li key={warning}>{warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {(["stage", "gc", "points", "mountain", "youth"] as const).map((c) => {
                 const labelKey = c === "mountain" ? "kom" : c;
                 const label = CLASSIFICATION_LABELS[labelKey as Classification];
                 const matched = importPreview.matched[c] ?? [];
                 const unmatched = importPreview.unmatched[c] ?? [];
+                const diagnostic = importPreview.diagnostics?.[c];
                 return (
                   <div key={c} className="border rounded-md p-3">
                     <div className="flex items-center justify-between mb-2">
@@ -552,6 +619,12 @@ export default function ResultsTab({
                           <Badge variant="destructive" className="gap-1">
                             <AlertTriangle className="w-3 h-3" />
                             {unmatched.length} niet gevonden
+                          </Badge>
+                        )}
+                        {diagnostic && (
+                          <Badge variant="secondary" className="font-mono text-[10px]">
+                            PCS {diagnostic.status} · {diagnostic.rows} rijen
+                            {diagnostic.attempts > 1 ? ` · ${diagnostic.attempts} pogingen` : ""}
                           </Badge>
                         )}
                       </div>
