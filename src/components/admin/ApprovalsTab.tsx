@@ -333,6 +333,18 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     // 'm opent (of via de handmatige knoppen hieronder).
   }
 
+  async function submitForApproval(stageId: string) {
+    setBusyId(stageId);
+    const { error } = await supabase.rpc("submit_stage_for_approval", { p_stage_id: stageId });
+    setBusyId(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Klaargezet voor controle");
+    load();
+  }
+
   const pending = rows.filter((r) => r.results_status === "pending");
   const drafts = rows.filter((r) => r.results_status === "draft");
   const approved = rows.filter((r) => r.results_status === "approved");
@@ -406,10 +418,20 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
             <p className="text-muted-foreground italic">Geen concepten.</p>
           ) : drafts.map((r) => (
             <div key={r.stage_id} className="border rounded-md p-2">
-              <div className="flex items-center gap-2">
-                <StatusBadge s={r.results_status} />
-                <span>Etappe {r.stage_number}</span>
-                {r.stage_name && <span className="text-muted-foreground">— {r.stage_name}</span>}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <StatusBadge s={r.results_status} />
+                  <span>Etappe {r.stage_number}</span>
+                  {r.stage_name && <span className="text-muted-foreground">— {r.stage_name}</span>}
+                </div>
+                <Button
+                  size="sm"
+                  disabled={busyId === r.stage_id}
+                  onClick={() => submitForApproval(r.stage_id)}
+                >
+                  <Clock className="w-4 h-4 mr-2" />
+                  {busyId === r.stage_id ? "Bezig…" : "Klaar voor controle"}
+                </Button>
               </div>
             </div>
           ))}
