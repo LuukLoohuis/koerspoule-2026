@@ -19,14 +19,15 @@ import {
 type Game = { id: string; name: string; year: number | null };
 
 // ?v= cache-bust gelijk aan send-announcement; bump bij nieuwe upload.
-const IMG_V = "4";
-const HEADER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_header_afbeelding.png?v=${IMG_V}`;
-const FOOTER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_footer_strip.png?v=${IMG_V}`;
+const IMG_V = "5";
+const HEADER_IMG = `https://koerspoule.nl/mailbanner/koerspoule_header_afbeelding.png?v=${IMG_V}`;
+const FOOTER_IMG = `https://koerspoule.nl/mailbanner/koerspoule_footer_strip.png?v=${IMG_V}`;
 const FRAME_EDGE = "#F5D9A7";
 const FRAME_GOLD = "#DC9E29";
 const FRAME_CREAM = "#F5E9D5"; // = crème onderaan de header-PNG → naadloze overloop
 const EMAIL_WIDTH = 950;
-const EMAIL_INNER_WIDTH = 924;
+const EMAIL_INNER_WIDTH = 906;
+const FRAME_INSET = 22;
 
 // Alleen het BERICHT — de begroeting "Beste deelnemer," en de afsluiting
 // "Veel koersplezier, Het Koerspoule team" zitten al vast in de template.
@@ -56,10 +57,9 @@ export function buildEmailHtml(
           <tr><td style="padding:0;line-height:0;font-size:0;background-color:${FRAME_EDGE};">
             <img src="${HEADER_IMG}" alt="Koerspoule header" width="${EMAIL_WIDTH}" style="display:block;width:100%;max-width:${EMAIL_WIDTH}px;height:auto;border:0;margin:0;" />
           </td></tr>
-          <tr><td align="center" style="padding:0 13px;background-color:${FRAME_EDGE};">
-            <table role="presentation" width="${EMAIL_INNER_WIDTH}" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_INNER_WIDTH}px;border-collapse:separate;border-spacing:0;background-color:${FRAME_CREAM};border-left:2px solid ${FRAME_GOLD};border-right:2px solid ${FRAME_GOLD};border-radius:20px;overflow:hidden;">
-              <tr><td style="height:10px;line-height:10px;font-size:0;padding:0;background-color:${FRAME_CREAM};">&nbsp;</td></tr>
-              <tr><td style="padding:6px 28px 10px 28px;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
+          <tr><td align="center" style="padding:0 ${FRAME_INSET}px;background-color:${FRAME_EDGE};">
+            <table role="presentation" width="${EMAIL_INNER_WIDTH}" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_INNER_WIDTH}px;border-collapse:collapse;background-color:${FRAME_CREAM};border-left:2px solid ${FRAME_GOLD};border-right:2px solid ${FRAME_GOLD};">
+              <tr><td style="padding:16px 28px 20px 28px;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
                 <div style="margin:0 0 10px 0;font-size:28px;line-height:34px;font-weight:bold;color:#211d19;">
                   Beste deelnemer,
                 </div>
@@ -103,7 +103,6 @@ export function buildEmailHtml(
                   </div>
                 </div>
               </td></tr>
-              <tr><td style="height:10px;line-height:10px;font-size:0;padding:0;background-color:${FRAME_CREAM};">&nbsp;</td></tr>
             </table>
           </td></tr>
           <tr><td style="padding:0;line-height:0;font-size:0;background-color:${FRAME_EDGE};">

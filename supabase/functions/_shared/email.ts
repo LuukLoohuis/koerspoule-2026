@@ -5,15 +5,18 @@ export const MAIL_WORKER = "https://koerspoule-mail.luuk-loohuis.workers.dev";
 export const BASE_URL = "https://koerspoule.nl";
 // ?v= cache-bust: na opnieuw uploaden onder dezelfde naam serveert de CDN/mailclient
 // anders het oude plaatje. Bump dit nummer bij elke nieuwe upload.
-const IMG_V = "4";
-const HEADER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_header_afbeelding.png?v=${IMG_V}`;
-const FOOTER_IMG = `https://uqjrzozttkbjrdvzeroc.supabase.co/storage/v1/object/public/mailbanner/koerspoule_footer_strip.png?v=${IMG_V}`;
+const IMG_V = "5";
+const HEADER_IMG = `${BASE_URL}/mailbanner/koerspoule_header_afbeelding.png?v=${IMG_V}`;
+const FOOTER_IMG = `${BASE_URL}/mailbanner/koerspoule_footer_strip.png?v=${IMG_V}`;
 // Frame-kleuren afgestemd op de header/footer-art zodat body naadloos doorloopt.
 const FRAME_EDGE = "#F5D9A7";   // tan rand buiten de gouden lijn (= cap-randen)
 const FRAME_GOLD = "#DC9E29";   // gouden kaderlijn
 const FRAME_CREAM = "#F5E9D5";  // = crème onderaan de header-PNG → naadloze overloop
 const EMAIL_WIDTH = 950;
-const EMAIL_INNER_WIDTH = 924;
+// De lijn in de afbeeldingen ligt op 24/1024 van de beeldrand. Op de
+// 950px-mailbreedte sluit een inset van 22px hier exact op aan.
+const EMAIL_INNER_WIDTH = 906;
+const FRAME_INSET = 22;
 
 export function buildHtml(
   body: string,
@@ -45,12 +48,9 @@ export function buildHtml(
 
           <!-- Content: tan-rand → gouden kaderlijn → crème binnenvlak, zodat het
                kader van de header naadloos doorloopt naar de footer. -->
-          <tr><td align="center" style="padding:0 13px;background-color:${FRAME_EDGE};">
-            <table role="presentation" width="${EMAIL_INNER_WIDTH}" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_INNER_WIDTH}px;border-collapse:separate;border-spacing:0;background-color:${FRAME_CREAM};border-left:2px solid ${FRAME_GOLD};border-right:2px solid ${FRAME_GOLD};border-radius:20px;overflow:hidden;">
-              <!-- De afgeronde lege regels laten de zijlijnen rustig uit de
-                   gebogen kaderlijnen van header en footer voortkomen. -->
-              <tr><td style="height:10px;line-height:10px;font-size:0;padding:0;background-color:${FRAME_CREAM};">&nbsp;</td></tr>
-              <tr><td style="padding:6px 28px 10px 28px;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
+          <tr><td align="center" style="padding:0 ${FRAME_INSET}px;background-color:${FRAME_EDGE};">
+            <table role="presentation" width="${EMAIL_INNER_WIDTH}" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_INNER_WIDTH}px;border-collapse:collapse;background-color:${FRAME_CREAM};border-left:2px solid ${FRAME_GOLD};border-right:2px solid ${FRAME_GOLD};">
+              <tr><td style="padding:16px 28px 20px 28px;font-family:Georgia,'Times New Roman',serif;color:#2f2a24;">
                 <div style="margin:0 0 10px 0;font-size:28px;line-height:34px;font-weight:bold;color:#211d19;">
                   Beste deelnemer,
                 </div>
@@ -94,7 +94,6 @@ export function buildHtml(
                   </div>
                 </div>
               </td></tr>
-              <tr><td style="height:10px;line-height:10px;font-size:0;padding:0;background-color:${FRAME_CREAM};">&nbsp;</td></tr>
             </table>
           </td></tr>
 
