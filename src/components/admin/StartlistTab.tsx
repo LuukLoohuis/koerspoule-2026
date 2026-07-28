@@ -504,25 +504,16 @@ function TeamRow({
     if (!supabase) return;
     setUploading(true);
     try {
-      const ext = (file.name.split(".").pop() || "png").toLowerCase();
-      const path = `${activeGameId}/${team.id}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("team-jerseys")
-        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
-      if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from("team-jerseys").getPublicUrl(path);
-      // Cache-buster zodat een vervangen trui meteen ververst in de UI.
-      const url = `${pub.publicUrl}?v=${Date.now()}`;
-      // .select() erbij: bevestigt dat de rij echt is bijgewerkt. Zonder dit zou
-      // een mislukte/geweigerde update (0 rijen) stil "lukken".
-      const { data: updated, error: updErr } = await supabase
-        .from("teams")
-        .update({ jersey_url: url })
-        .eq("id", team.id)
-        .select("id, jersey_url")
-        .maybeSingle();
-      if (updErr) throw updErr;
-      if (!updated) throw new Error("Geen rij bijgewerkt — trui niet opgeslagen (rechten of ontbrekende kolom?).");
+      const form = new FormData();
+      form.append("file", file);
+      form.append("teamId", team.id);
+      form.append("gameId", activeGameId);
+      const { data, error } = await supabase.functions.invoke("admin-upload-team-jersey", {
+        body: form,
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.jersey_url) throw new Error("Upload voltooid, maar er is geen trui-URL ontvangen.");
       toast.success("Trui geüpload");
       await onChanged();
     } catch (e) {
