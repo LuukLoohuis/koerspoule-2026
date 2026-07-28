@@ -26,6 +26,7 @@ const AdminV3 = lazyWithRetry(() => import("./pages/AdminV3"));
 import GiroPoule2026 from "./pages/GiroPoule2026";
 import TourDeFrancePoule2026 from "./pages/TourDeFrancePoule2026";
 import VueltaPoule2026 from "./pages/VueltaPoule2026";
+import VueltaEspanaFantasy2026En from "./pages/VueltaEspanaFantasy2026En";
 import TourDeFranceFemmesPoule2026 from "./pages/TourDeFranceFemmesPoule2026";
 import TourDeFranceFemmesFantasy2026En from "./pages/TourDeFranceFemmesFantasy2026En";
 import Etappes from "./pages/Etappes";
@@ -90,6 +91,7 @@ const App = () => {
               <Route path="/giro-italia-poule-2026" element={<GiroPoule2026 />} />
               <Route path="/tour-de-france-poule-2026" element={<TourDeFrancePoule2026 />} />
               <Route path="/vuelta-espana-poule-2026" element={<VueltaPoule2026 />} />
+              <Route path="/en/vuelta-espana-fantasy-2026" element={<VueltaEspanaFantasy2026En />} />
               <Route path="/tour-de-france-femmes-poule-2026" element={<TourDeFranceFemmesPoule2026 />} />
               <Route path="/en/tour-de-france-femmes-fantasy-2026" element={<TourDeFranceFemmesFantasy2026En />} />
               {[

@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Check, Trophy, Users, Zap, Mountain, Flag, Sparkles } from "lucide-react";
 
 const PAGE_URL = "https://koerspoule.nl/vuelta-espana-poule-2026";
+const PAGE_URL_EN = "https://koerspoule.nl/en/vuelta-espana-fantasy-2026";
 const PAGE_TITLE = "Vuelta a España 2026 Wielerspel & Poule — Gratis | Koerspoule";
 const PAGE_DESCRIPTION =
   "Gratis Vuelta a España wielerspel 2026 — een gratis alternatief voor Scorito. Speel de Vuelta-poule met vrienden in eigen subpoules, kies vrij uit het peloton en strijd om de rode trui (maillot rojo).";
@@ -99,6 +100,7 @@ export default function VueltaPoule2026() {
         <link rel="canonical" href={PAGE_URL} />
         <link rel="alternate" hrefLang="nl-NL" href={PAGE_URL} />
         <link rel="alternate" hrefLang="nl-BE" href={PAGE_URL} />
+        <link rel="alternate" hrefLang="en" href={PAGE_URL_EN} />
         <link rel="alternate" hrefLang="x-default" href={PAGE_URL} />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content={SITE_NAME} />

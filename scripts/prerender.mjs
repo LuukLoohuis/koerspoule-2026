@@ -21,6 +21,7 @@ const ROUTES = [
   "/tour-de-france-poule-2026",
   "/giro-italia-poule-2026",
   "/vuelta-espana-poule-2026",
+  "/en/vuelta-espana-fantasy-2026",
   "/tour-de-france-femmes-poule-2026",
   "/en/tour-de-france-femmes-fantasy-2026",
   "/regels",

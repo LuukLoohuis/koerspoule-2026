@@ -12,12 +12,20 @@ import { cn } from "@/lib/utils";
 const LANGS = ["nl", "en"] as const;
 const TOUR_FEMMES_NL = "/tour-de-france-femmes-poule-2026";
 const TOUR_FEMMES_EN = "/en/tour-de-france-femmes-fantasy-2026";
+const VUELTA_NL = "/vuelta-espana-poule-2026";
+const VUELTA_EN = "/en/vuelta-espana-fantasy-2026";
 
 export default function LanguageToggle({ className }: { className?: string }) {
   const { i18n, t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const active = i18n.language?.startsWith("en") ? "en" : "nl";
+  const pairedPageLanguage =
+    location.pathname === TOUR_FEMMES_EN || location.pathname === VUELTA_EN
+      ? "en"
+      : location.pathname === TOUR_FEMMES_NL || location.pathname === VUELTA_NL
+        ? "nl"
+        : null;
+  const active = pairedPageLanguage ?? (i18n.language?.startsWith("en") ? "en" : "nl");
 
   const selectLanguage = (lng: (typeof LANGS)[number]) => {
     void i18n.changeLanguage(lng);
@@ -26,6 +34,10 @@ export default function LanguageToggle({ className }: { className?: string }) {
       navigate(TOUR_FEMMES_EN);
     } else if (location.pathname === TOUR_FEMMES_EN && lng === "nl") {
       navigate(TOUR_FEMMES_NL);
+    } else if (location.pathname === VUELTA_NL && lng === "en") {
+      navigate(VUELTA_EN);
+    } else if (location.pathname === VUELTA_EN && lng === "nl") {
+      navigate(VUELTA_NL);
     }
   };
 
