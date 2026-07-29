@@ -16,7 +16,6 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useThema } from "@/contexts/ThemaContext";
-import { useCurrentGame } from "@/hooks/useCurrentGame";
 import SponsorStrip from "@/components/SponsorStrip";
 
 const INSTAGRAM_URL = "https://www.instagram.com/koerspoule/";
@@ -37,12 +36,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, role } = useAuth();
   const { thema } = useThema();
-  const { data: currentGame } = useCurrentGame();
+  const { data: allGames = [] } = useAllGames();
   const { t } = useTranslation();
   const isLoggedIn = Boolean(user);
 
-  // "Prijzen" alleen in de nav als de actieve game 'm zichtbaar heeft gezet.
-  const visibleNav = currentGame?.prizes_visible
+  // Zodra één game zijn prijzen heeft vrijgegeven, blijft de Prijzen-pagina
+  // bereikbaar. De status van die game speelt hierbij bewust geen rol.
+  const hasVisiblePrizes = allGames.some((game) => game.prizes_visible);
+  const visibleNav = hasVisiblePrizes
     ? [...navItems.slice(0, 4), { to: "/prijzen", key: "nav.prizes" }, ...navItems.slice(4)]
     : navItems;
 
@@ -287,4 +288,3 @@ function InAppInschrijfBanners({ hidden, loggedIn }: { hidden: boolean; loggedIn
     </div>
   );
 }
-

@@ -1,8 +1,9 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trophy, Award, Gift, Lock, Shirt, Medal, ExternalLink } from "lucide-react";
-import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useAllGames } from "@/hooks/useAllGames";
+import { useSelectedGame } from "@/context/SelectedGameContext";
 import { usePrizes, type Prize } from "@/hooks/usePrizes";
 import { cn } from "@/lib/utils";
 
@@ -282,7 +283,23 @@ function GeslotenKast() {
 }
 
 export default function Prizes() {
-  const { data: game } = useCurrentGame();
+  const { data: games = [], isLoading: gamesLoading } = useAllGames();
+  const { selectedGame } = useSelectedGame();
+  const [chosenPrizeGameId, setChosenPrizeGameId] = useState<string | null>(null);
+
+  // De admin-vlag is hier de enige toegangspoort. Concept, inschrijving open,
+  // live en afgerond mogen allemaal hun prijzen tonen zodra de vlag aanstaat.
+  const visiblePrizeGames = games.filter((candidate) => candidate.prizes_visible);
+  const chosenGame = chosenPrizeGameId
+    ? visiblePrizeGames.find((candidate) => candidate.id === chosenPrizeGameId)
+    : null;
+  const selectedVisibleGame = selectedGame?.prizes_visible
+    ? visiblePrizeGames.find((candidate) => candidate.id === selectedGame.id)
+    : null;
+  const upcomingVisibleGame = visiblePrizeGames.find(
+    (candidate) => !["finished", "closed"].includes(String(candidate.status)),
+  );
+  const game = chosenGame ?? selectedVisibleGame ?? upcomingVisibleGame ?? visiblePrizeGames[0];
   const { data: prizes = [], isLoading } = usePrizes(game?.prizes_visible ? game?.id : undefined);
 
   // Niet-podium-secties volgen het admin-veld "Volgorde" (sort_order), niet de
@@ -319,7 +336,31 @@ export default function Prizes() {
           <h1 className="vintage-heading text-3xl md:text-4xl font-bold">Prijzen{game?.name ? ` · ${game.name}` : ""}</h1>
         </header>
 
-        {isLoading ? (
+        {visiblePrizeGames.length > 1 && (
+          <nav
+            aria-label="Prijzen per koers"
+            className="flex flex-wrap justify-center gap-2 rounded-xl border border-border bg-card/70 p-2"
+          >
+            {visiblePrizeGames.map((candidate) => (
+              <button
+                key={candidate.id}
+                type="button"
+                onClick={() => setChosenPrizeGameId(candidate.id)}
+                aria-pressed={candidate.id === game?.id}
+                className={cn(
+                  "rounded-lg border px-4 py-2 text-sm font-bold transition-colors",
+                  candidate.id === game?.id
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background hover:border-primary/60 hover:bg-secondary",
+                )}
+              >
+                {candidate.name}
+              </button>
+            ))}
+          </nav>
+        )}
+
+        {gamesLoading || isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse motion-reduce:animate-none">
             {[0, 1, 2].map((i) => <div key={i} className="h-48 rounded-xl bg-secondary/60" />)}
           </div>
