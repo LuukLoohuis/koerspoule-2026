@@ -7,10 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Calculator, Sparkles, RotateCcw, Save, Trash2, RefreshCw, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { Calculator, Sparkles, RotateCcw, Save, Trash2, RefreshCw, AlertTriangle, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Stage } from "./StagesTab";
 import { fetchAllRows } from "@/lib/fetchAll";
+import { getCalculationProgress, isCalculationActive } from "@/lib/calculationProgress";
 
 const DEFAULT_STAGE_POINTS = [50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
@@ -35,6 +36,10 @@ export default function CalculationTab({
     points_count: number;
     points_sum: number;
     last_calc_at: string | null;
+    calculation_status: "idle" | "processing" | "finalizing" | "completed" | "failed";
+    processed_count: number;
+    total_count: number;
+    calculation_error: string | null;
   };
   const [overview, setOverview] = useState<StageOverview[]>([]);
   const [loadingOverview, setLoadingOverview] = useState(false);
@@ -75,7 +80,7 @@ export default function CalculationTab({
           supabase!.from("stage_results").select("stage_id").in("stage_id", stageIds).range(from, to)),
         fetchAll<{ stage_id: string; points: number | null; created_at: string | null }>((from, to) =>
           supabase!.from("stage_points").select("stage_id, points, created_at").in("stage_id", stageIds).order("created_at").range(from, to)),
-        supabase.from("stages").select("id, results_status").in("id", stageIds),
+        supabase.from("stages").select("id, results_status, calculation_status, calculation_processed_count, calculation_total_count, calculation_error").in("id", stageIds),
       ]);
       const rCount = new Map<string, number>();
       resultsRows.forEach((r) => rCount.set(r.stage_id, (rCount.get(r.stage_id) ?? 0) + 1));
@@ -87,8 +92,8 @@ export default function CalculationTab({
         if (!cur.last || (p.created_at && p.created_at > cur.last)) cur.last = p.created_at;
         pAgg.set(p.stage_id, cur);
       });
-      const statusMap = new Map<string, string>();
-      (stagesRes.data ?? []).forEach((s: any) => statusMap.set(s.id, s.results_status ?? "draft"));
+      const stageState = new Map<string, any>();
+      (stagesRes.data ?? []).forEach((s: any) => stageState.set(s.id, s));
       setOverview(
         regularStages.map((s) => {
           const p = pAgg.get(s.id) ?? { count: 0, sum: 0, last: null };
@@ -96,11 +101,15 @@ export default function CalculationTab({
             stage_id: s.id,
             stage_number: s.stage_number,
             stage_name: s.name,
-            results_status: (statusMap.get(s.id) ?? "draft") as StageOverview["results_status"],
+            results_status: (stageState.get(s.id)?.results_status ?? "draft") as StageOverview["results_status"],
             results_count: rCount.get(s.id) ?? 0,
             points_count: p.count,
             points_sum: p.sum,
             last_calc_at: p.last,
+            calculation_status: stageState.get(s.id)?.calculation_status ?? "idle",
+            processed_count: stageState.get(s.id)?.calculation_processed_count ?? 0,
+            total_count: stageState.get(s.id)?.calculation_total_count ?? 0,
+            calculation_error: stageState.get(s.id)?.calculation_error ?? null,
           };
         })
       );
@@ -111,19 +120,62 @@ export default function CalculationTab({
 
   useEffect(() => { loadOverview(); }, [loadOverview]);
 
-  async function calcOne(sid: string) {
-    if (!supabase) return;
+  async function calcOne(sid: string, currentResultsStatus: StageOverview["results_status"]) {
+    if (!supabase || stageBusy) return;
     setStageBusy(sid);
     try {
-      const { error } = await supabase.rpc("calculate_stage_scores", { p_stage_id: sid });
-      if (error) throw error;
+      const { data: beginData, error: beginError } = await supabase.rpc("begin_stage_score_calculation", { p_stage_id: sid });
+      if (beginError) throw beginError;
+      const begun = beginData?.[0] as { processed_count?: number; total_count?: number; calculation_status?: StageOverview["calculation_status"] } | undefined;
+      setOverview((current) => current.map((row) => row.stage_id === sid ? {
+        ...row,
+        calculation_status: begun?.calculation_status ?? "processing",
+        processed_count: begun?.processed_count ?? 0,
+        total_count: begun?.total_count ?? 0,
+        calculation_error: null,
+      } : row));
+      window.dispatchEvent(new CustomEvent("stage-calculation-changed", { detail: { stageId: sid } }));
+
+      let status = "processing";
+      while (status === "processing") {
+        const { data, error } = await supabase.rpc("calculate_stage_scores_batch", {
+          p_stage_id: sid,
+          p_batch_size: 100,
+        });
+        if (error) throw error;
+        const batch = data?.[0] as { processed_count?: number; total_count?: number; calculation_status?: StageOverview["calculation_status"] } | undefined;
+        status = batch?.calculation_status ?? "failed";
+        setOverview((current) => current.map((row) => row.stage_id === sid ? {
+          ...row,
+          calculation_status: batch?.calculation_status ?? "failed",
+          processed_count: batch?.processed_count ?? row.processed_count,
+          total_count: batch?.total_count ?? row.total_count,
+        } : row));
+        window.dispatchEvent(new CustomEvent("stage-calculation-changed", { detail: { stageId: sid } }));
+      }
+      if (status !== "finalizing") throw new Error("De berekening kon niet worden afgerond");
+
       try { await supabase.rpc("update_total_ranking", { p_game_id: activeGameId }); } catch { /* ignore */ }
+      const { error: completeError } = await supabase.rpc("complete_stage_score_calculation", { p_stage_id: sid });
+      if (completeError) throw completeError;
       // Auto-submit voor fiat zodra berekening klaar is (alleen als nog draft)
-      try { await supabase.rpc("submit_stage_for_approval", { p_stage_id: sid }); } catch { /* ignore – kan al pending/approved zijn */ }
-      toast.success("Etappe berekend — klaar voor fiat");
+      if (currentResultsStatus !== "approved") {
+        const { error: submitError } = await supabase.rpc("submit_stage_for_approval", { p_stage_id: sid });
+        if (submitError) throw submitError;
+        toast.success("Etappe berekend — klaar voor fiat");
+      } else {
+        toast.success("Goedgekeurde etappe herberekend");
+      }
       await loadOverview();
+      window.dispatchEvent(new CustomEvent("stage-calculation-changed", { detail: { stageId: sid } }));
     } catch (e) {
+      await supabase.rpc("fail_stage_score_calculation", {
+        p_stage_id: sid,
+        p_error: (e as Error).message,
+      }).catch(() => undefined);
       toast.error((e as Error).message);
+      await loadOverview();
+      window.dispatchEvent(new CustomEvent("stage-calculation-changed", { detail: { stageId: sid } }));
     } finally {
       setStageBusy(null);
     }
@@ -685,7 +737,9 @@ export default function CalculationTab({
                 <tbody>
                   {overview.map((o) => {
                     const hasResults = o.results_count > 0;
-                    const calculated = o.points_count > 0;
+                    const calculated = o.calculation_status === "completed";
+                    const calculating = isCalculationActive(o.calculation_status);
+                    const progress = getCalculationProgress(o.processed_count, o.total_count);
                     return (
                       <tr key={o.stage_id} className="border-b last:border-0 align-top">
                         <td className="py-2 pr-2">
@@ -714,7 +768,21 @@ export default function CalculationTab({
                           )}
                         </td>
                         <td className="py-2 pr-2">
-                          {calculated ? (
+                          {calculating ? (
+                            <div className="min-w-[180px] space-y-1" aria-live="polite">
+                              <span className="inline-flex items-center gap-1 text-xs">
+                                <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
+                                {o.calculation_status === "finalizing" ? "Afronden…" : `${o.processed_count}/${o.total_count} entries`}
+                              </span>
+                              {progress != null && (
+                                <div className="h-2 overflow-hidden rounded-full bg-secondary" role="progressbar" aria-label={`Voortgang etappe ${o.stage_number}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+                                  <div className="h-full bg-primary transition-[width] motion-reduce:transition-none" style={{ width: `${progress}%` }} />
+                                </div>
+                              )}
+                            </div>
+                          ) : o.calculation_status === "failed" ? (
+                            <span className="text-xs text-destructive" title={o.calculation_error ?? undefined}>Berekening mislukt</span>
+                          ) : calculated ? (
                             <span className="text-xs">
                               <strong>{o.points_count}</strong> entries · <strong>{o.points_sum}</strong> pt totaal
                             </span>
@@ -735,18 +803,18 @@ export default function CalculationTab({
                             <Button
                               size="sm"
                               variant="outline"
-                              disabled={!hasResults || stageBusy === o.stage_id}
-                              onClick={() => calcOne(o.stage_id)}
+                              disabled={!hasResults || stageBusy !== null || calculating}
+                              onClick={() => calcOne(o.stage_id, o.results_status)}
                               title={!hasResults ? "Upload eerst een uitslag" : undefined}
                             >
-                              <Calculator className="w-3.5 h-3.5 mr-1" />
-                              {calculated ? "Herbereken" : "Bereken"}
+                              {stageBusy === o.stage_id ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin motion-reduce:animate-none" /> : <Calculator className="w-3.5 h-3.5 mr-1" />}
+                              {stageBusy === o.stage_id ? "Berekenen…" : calculated ? "Herbereken" : o.calculation_status === "failed" ? "Opnieuw berekenen" : "Bereken"}
                             </Button>
                             <Button
                               size="sm"
                               variant="ghost"
                               className="text-destructive hover:text-destructive"
-                              disabled={!hasResults || stageBusy === o.stage_id}
+                              disabled={!hasResults || stageBusy !== null || calculating}
                               onClick={() => deleteResults(o.stage_id, o.stage_number)}
                             >
                               <Trash2 className="w-3.5 h-3.5 mr-1" />Wis uitslag

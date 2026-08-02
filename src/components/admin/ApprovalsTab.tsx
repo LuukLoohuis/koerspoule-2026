@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase } from "lucide-react";
+import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { getCalculationProgress, isCalculationActive, isFiatReady } from "@/lib/calculationProgress";
 
 type BreakdownRow = {
   entry_id: string;
@@ -254,11 +255,18 @@ type Row = {
   submitted_for_approval_at: string | null;
   approved_at: string | null;
   approved_by_name: string | null;
+  calculation_status: "idle" | "processing" | "finalizing" | "completed" | "failed";
+  processed_count: number;
+  total_count: number;
+  calculation_started_at: string | null;
+  calculation_completed_at: string | null;
+  calculation_error: string | null;
 };
 
 export default function ApprovalsTab({ activeGameId }: { activeGameId: string }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [lefBusy, setLefBusy] = useState(false);
   // Lefevère-batch: voortgangsteller (per huidige stand) + generatie-status.
@@ -420,25 +428,47 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     }
   }
 
-  async function load() {
+  async function load(silent = false) {
     if (!supabase || !activeGameId) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     const { data, error } = await supabase.rpc("admin_pending_approvals", { p_game_id: activeGameId });
-    setLoading(false);
+    if (!silent) setLoading(false);
     if (error) {
-      toast.error(error.message);
+      setLoadError(error.message);
+      if (!silent) toast.error(error.message);
       return;
     }
+    setLoadError(null);
     const stageRows = (data ?? []) as Row[];
     setRows(stageRows);
-    loadCommCounts(stageRows);
-    fetchLefevereCount(supabase, activeGameId).then(setLefCount).catch(() => setLefCount(null));
+    if (!silent) {
+      loadCommCounts(stageRows);
+      fetchLefevereCount(supabase, activeGameId).then(setLefCount).catch(() => setLefCount(null));
+    }
   }
 
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGameId]);
+
+  const hasActiveCalculation = rows.some((r) => isCalculationActive(r.calculation_status));
+
+  // Alleen pollen zolang werkelijk werk loopt. Het custom event zorgt dat een
+  // berekening uit de andere admintab direct zichtbaar wordt, zonder Herlaad.
+  useEffect(() => {
+    const refresh = () => { void load(true); };
+    window.addEventListener("stage-calculation-changed", refresh);
+    if (!hasActiveCalculation) {
+      return () => window.removeEventListener("stage-calculation-changed", refresh);
+    }
+    const timer = window.setInterval(refresh, 1500);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("stage-calculation-changed", refresh);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGameId, hasActiveCalculation]);
 
   async function approve(stageId: string) {
     if (!confirm("Uitslag fiatteren? Deelnemers zien dit pas zodra de game op Live staat. Met testmodus zie je zelf direct de volledige live-weergave.")) return;
@@ -469,7 +499,13 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   }
 
   const pending = rows.filter((r) => r.results_status === "pending");
-  const drafts = rows.filter((r) => r.results_status === "draft");
+  const calculationAttention = rows.filter((r) =>
+    r.results_status !== "approved" && ["processing", "finalizing", "failed"].includes(r.calculation_status)
+  );
+  const approvalQueue = [...calculationAttention, ...pending.filter((r) => !calculationAttention.some((a) => a.stage_id === r.stage_id))];
+  const drafts = rows.filter((r) =>
+    r.results_status === "draft" && !["processing", "finalizing", "failed"].includes(r.calculation_status)
+  );
   const approved = rows.filter((r) => r.results_status === "approved");
 
   function StatusBadge({ s }: { s: Row["results_status"] }) {
@@ -488,8 +524,8 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <CardTitle className="font-display flex items-center gap-2">
               <ShieldCheck className="w-5 h-5" />Te fiatteren
-              {pending.length > 0 && (
-                <Badge className="bg-orange-500 hover:bg-orange-500">{pending.length}</Badge>
+              {approvalQueue.length > 0 && (
+                <Badge className="bg-orange-500 hover:bg-orange-500">{approvalQueue.length}</Badge>
               )}
             </CardTitle>
             <Button variant="ghost" size="sm" onClick={load} disabled={loading}>
@@ -499,37 +535,86 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
           <p className="text-xs text-muted-foreground mt-1">
             Stap 3 — De punten zijn al berekend. Klap per etappe de puntenberekening uit om te controleren waarom een deelnemer een bepaald aantal punten heeft, en publiceer daarna naar de deelnemers.
           </p>
+          {loadError && (
+            <p className="text-xs text-destructive flex items-center gap-1" role="alert">
+              <AlertTriangle className="h-3.5 w-3.5" /> Status tijdelijk niet bereikbaar: {loadError}
+            </p>
+          )}
         </CardHeader>
         <CardContent className="space-y-2">
-          {pending.length === 0 ? (
+          {approvalQueue.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">Geen uitslagen wachten op goedkeuring.</p>
           ) : (
-            pending.map((r) => (
-              <div key={r.stage_id} className="border rounded-md p-3">
+            approvalQueue.map((r) => {
+              const calculating = r.calculation_status === "processing";
+              const finalizing = r.calculation_status === "finalizing";
+              const failed = r.calculation_status === "failed";
+              const ready = isFiatReady(r.results_status, r.calculation_status);
+              const progress = getCalculationProgress(r.processed_count, r.total_count);
+              return (
+              <div key={r.stage_id} className="min-w-0 border rounded-md p-3" aria-live="polite">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <div className="space-y-1">
+                  <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="font-display font-bold">Etappe {r.stage_number}</span>
                       {r.stage_name && <span className="text-sm text-muted-foreground">— {r.stage_name}</span>}
-                      <StatusBadge s={r.results_status} />
+                      {calculating || finalizing ? (
+                        <Badge variant="secondary" className="gap-1"><Loader2 className="h-3 w-3 animate-spin motion-reduce:animate-none" />{finalizing ? "Berekening afronden" : "Punten verwerken"}</Badge>
+                      ) : failed ? (
+                        <Badge variant="destructive" className="gap-1"><AlertTriangle className="h-3 w-3" />Berekening mislukt</Badge>
+                      ) : ready ? (
+                        <Badge className="bg-green-600 hover:bg-green-600 gap-1"><CheckCircle2 className="h-3 w-3" />Klaar voor fiat</Badge>
+                      ) : <StatusBadge s={r.results_status} />}
                     </div>
-                    {r.submitted_for_approval_at && (
+                    {(calculating || finalizing) && (
+                      <div className="max-w-md space-y-1.5">
+                        <div className="flex justify-between gap-3 text-xs text-muted-foreground">
+                          <span>{r.total_count > 0 ? `${r.processed_count} van ${r.total_count} deelnemers verwerkt` : "Voortgang wordt voorbereid"}</span>
+                          {progress != null && <span className="shrink-0 font-mono">{progress}%</span>}
+                        </div>
+                        {progress != null ? (
+                          <div className="h-2.5 overflow-hidden rounded-full bg-secondary" role="progressbar" aria-label={`Voortgang puntenberekening etappe ${r.stage_number}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+                            <div className="h-full bg-primary transition-[width] motion-reduce:transition-none" style={{ width: `${progress}%` }} />
+                          </div>
+                        ) : (
+                          <div className="h-2.5 overflow-hidden rounded-full bg-secondary" role="progressbar" aria-label={`Puntenberekening etappe ${r.stage_number} wordt voorbereid`}>
+                            <div className="h-full w-1/3 animate-pulse bg-primary motion-reduce:animate-none" />
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground">{finalizing ? "Controlestatus bijwerken…" : "De punten worden berekend. Deze pagina ververst automatisch."}</p>
+                      </div>
+                    )}
+                    {failed && (
+                      <p className="text-xs text-destructive" role="alert">{r.calculation_error ?? "Onbekende fout tijdens de berekening."}</p>
+                    )}
+                    {ready && r.calculation_completed_at && (
+                      <p className="text-xs text-muted-foreground">
+                        Berekening voltooid op {new Date(r.calculation_completed_at).toLocaleString("nl-NL")}
+                        {r.total_count > 0 ? ` · ${r.total_count} deelnemers verwerkt` : ""}
+                      </p>
+                    )}
+                    {ready && r.submitted_for_approval_at && (
                       <p className="text-xs text-muted-foreground">
                         Ingediend op {new Date(r.submitted_for_approval_at).toLocaleString("nl-NL")}
                       </p>
                     )}
                   </div>
-                  <Button
-                    onClick={() => approve(r.stage_id)}
-                    disabled={busyId === r.stage_id}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <ShieldCheck className="w-4 h-4 mr-2" />Fiatteren
-                  </Button>
+                  {ready ? (
+                    <Button onClick={() => approve(r.stage_id)} disabled={busyId !== null} className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
+                      {busyId === r.stage_id ? <Loader2 className="w-4 h-4 mr-2 animate-spin motion-reduce:animate-none" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                      {busyId === r.stage_id ? "Fiatteren…" : "Fiatteren"}
+                    </Button>
+                  ) : failed ? (
+                    <Button variant="outline" onClick={() => load()} className="w-full sm:w-auto"><RefreshCw className="h-4 w-4 mr-2" />Opnieuw controleren</Button>
+                  ) : (
+                    <Button disabled className="w-full sm:w-auto min-w-[180px]">
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin motion-reduce:animate-none" />Punten berekenen…
+                    </Button>
+                  )}
                 </div>
-                <StageBreakdown stageId={r.stage_id} />
+                {ready && <StageBreakdown stageId={r.stage_id} />}
               </div>
-            ))
+            );})
           )}
         </CardContent>
       </Card>

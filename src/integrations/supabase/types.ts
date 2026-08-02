@@ -1171,6 +1171,12 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          calculation_completed_at: string | null
+          calculation_error: string | null
+          calculation_processed_count: number
+          calculation_started_at: string | null
+          calculation_status: string
+          calculation_total_count: number
           created_at: string
           date: string | null
           distance_km: number | null
@@ -1189,6 +1195,12 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          calculation_completed_at?: string | null
+          calculation_error?: string | null
+          calculation_processed_count?: number
+          calculation_started_at?: string | null
+          calculation_status?: string
+          calculation_total_count?: number
           created_at?: string
           date?: string | null
           distance_km?: number | null
@@ -1207,6 +1219,12 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          calculation_completed_at?: string | null
+          calculation_error?: string | null
+          calculation_processed_count?: number
+          calculation_started_at?: string | null
+          calculation_status?: string
+          calculation_total_count?: number
           created_at?: string
           date?: string | null
           distance_km?: number | null
@@ -1535,12 +1553,18 @@ export type Database = {
           approved_at: string
           approved_by: string
           approved_by_name: string
+          calculation_completed_at: string
+          calculation_error: string
+          calculation_started_at: string
+          calculation_status: string
+          processed_count: number
           results_status: string
           stage_date: string
           stage_id: string
           stage_name: string
           stage_number: number
           submitted_for_approval_at: string
+          total_count: number
         }[]
       }
       admin_stage_points_breakdown: {
@@ -1581,6 +1605,30 @@ export type Database = {
       }
       calculate_stage_scores: {
         Args: { p_stage_id: string }
+        Returns: undefined
+      }
+      begin_stage_score_calculation: {
+        Args: { p_stage_id: string }
+        Returns: {
+          calculation_status: string
+          processed_count: number
+          total_count: number
+        }[]
+      }
+      calculate_stage_scores_batch: {
+        Args: { p_batch_size?: number; p_stage_id: string }
+        Returns: {
+          calculation_status: string
+          processed_count: number
+          total_count: number
+        }[]
+      }
+      complete_stage_score_calculation: {
+        Args: { p_stage_id: string }
+        Returns: undefined
+      }
+      fail_stage_score_calculation: {
+        Args: { p_error: string; p_stage_id: string }
         Returns: undefined
       }
       cast_chat_poll_vote: {
