@@ -14,6 +14,8 @@ const MAX_H = 140;   // matcht ongeveer header-hoogte
 const EMPTY_H = 14;  // dunne placeholder bij 0 (nul dagpunten)
 const BAR_W = 44;    // bredere capsule
 const BAR_GAP = 14;
+const COMPACT_STAGE_LIMIT = 12;
+const COMPACT_COL_W = 72;
 
 /** Pad onder public/ waar de PNG-assets staan. */
 const ASSET_BASE = "/assets/stage-bar";
@@ -205,8 +207,14 @@ export default function StageBar({
           <div className="sb-label-points">EARNED&nbsp;POINTS</div>
         </div>
 
-        <div className="sb-scroll" ref={scrollRef}>
-          {stages.map((stage) => {
+        <div
+          className={`sb-stage-cluster${stages.length <= COMPACT_STAGE_LIMIT ? " sb-stage-cluster--compact" : ""}`}
+          style={stages.length <= COMPACT_STAGE_LIMIT
+            ? { maxWidth: `${stages.length * COMPACT_COL_W + BAR_W + BAR_GAP}px` }
+            : undefined}
+        >
+          <div className="sb-scroll" ref={scrollRef}>
+            {stages.map((stage) => {
             // Subpoule-modus: hoogte volgt barFraction (relatieve dagprestatie).
             // Anders (Uitslagen-tab): hoogte schaalt op afstand (km).
             const usesFraction = stage.barFraction != null;
@@ -235,25 +243,26 @@ export default function StageBar({
                 <div className="sb-pts">{stage.earnedPoints}</div>
               </button>
             );
-          })}
-        </div>
-
-        <button
-          type="button"
-          className={`sb-col sb-col--gc${gcSelected ? " sb-col--selected" : ""}`}
-          onClick={() => onSelectGc?.()}
-          aria-pressed={gcSelected}
-          aria-label={`Eindklassement, ${gcTotal} punten`}
-          disabled={!onSelectGc}
-          style={onSelectGc ? undefined : { cursor: "default" }}
-        >
-          <div className="sb-bar-wrap" style={{ height: MAX_H }}>
-            <img className="sb-badge" src={BADGE_SRC.gc} alt="" aria-hidden="true" />
-            <Capsule type="gc" heightPx={MAX_H} />
+            })}
           </div>
-          <div className="sb-num sb-num--gc">GC</div>
-          <div className="sb-pts sb-pts--gc">{gcTotal}</div>
-        </button>
+
+          <button
+            type="button"
+            className={`sb-col sb-col--gc${gcSelected ? " sb-col--selected" : ""}`}
+            onClick={() => onSelectGc?.()}
+            aria-pressed={gcSelected}
+            aria-label={`Eindklassement, ${gcTotal} punten`}
+            disabled={!onSelectGc}
+            style={onSelectGc ? undefined : { cursor: "default" }}
+          >
+            <div className="sb-bar-wrap" style={{ height: MAX_H }}>
+              <img className="sb-badge" src={BADGE_SRC.gc} alt="" aria-hidden="true" />
+              <Capsule type="gc" heightPx={MAX_H} />
+            </div>
+            <div className="sb-num sb-num--gc">GC</div>
+            <div className="sb-pts sb-pts--gc">{gcTotal}</div>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -316,6 +325,18 @@ function Styles() {
   font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: #9A8A74; line-height: 22px;
 }
 .sb-label-stage { margin-bottom: 4px; }
+
+.sb-stage-cluster {
+  flex: 1 1 0; min-width: 0;
+  display: flex; align-items: flex-end; gap: ${BAR_GAP}px;
+}
+/* Korte rondes houden exact dezelfde balken en interactie, maar gebruiken een
+   vaste comfortabele kolomdichtheid in plaats van de volle breedte. */
+.sb-stage-cluster--compact {
+  flex: 0 1 auto;
+  width: 100%;
+  margin-inline: auto;
+}
 
 .sb-scroll {
   flex: 1 1 0; min-width: 0;
@@ -431,6 +452,10 @@ function Styles() {
 
   .sb-row { gap: 8px; padding-top: 2px; }
   .sb-labels { display: none; }
+  .sb-stage-cluster,
+  .sb-stage-cluster--compact {
+    flex: 1 1 0; width: auto; max-width: none !important; margin: 0; gap: 8px;
+  }
 
   .sb-scroll {
     gap: 8px;
