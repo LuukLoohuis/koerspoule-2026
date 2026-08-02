@@ -29,7 +29,7 @@ export default function BenchmarkTab({ gameId }: Props) {
   ];
 
   return (
-    <div className="max-w-3xl space-y-3">
+    <div className="max-w-3xl space-y-3" data-swipe-carousel-ignore>
       {/* Scope-chips: alleen tonen als de gebruiker in ≥1 subpoule zit. */}
       {subpoules.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>

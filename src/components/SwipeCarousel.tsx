@@ -39,6 +39,10 @@ const TOP_OFFSET = 12; // landen bij het begin van de tab-inhoud
 function startedInHorizontalScroller(target: EventTarget | null, root: HTMLElement): boolean {
   let el = target as HTMLElement | null;
   while (el && el !== root.parentElement) {
+    // Sommige interactieve panelen (zoals Benchmark) hebben zelf horizontale
+    // selectors en lange verticale inhoud. Daar mag een diagonale scroll nooit
+    // de bovenliggende tabcarrousel in beweging zetten.
+    if (el.dataset.swipeCarouselIgnore !== undefined) return true;
     const ox = window.getComputedStyle(el).overflowX;
     if ((ox === "auto" || ox === "scroll") && el.scrollWidth > el.clientWidth + 4) return true;
     el = el.parentElement;
@@ -143,8 +147,8 @@ export default function SwipeCarousel({
       s.startT = performance.now();
       s.axis = "none";
       s.dir = 0;
-      // Negeer: gebaar begint in een horizontale scroller (etappe-bar) OF vlak
-      // na een verticale scroll/momentum (cooldown).
+      // Negeer: gebaar begint in een uitgesloten interactief paneel, een
+      // horizontale scroller (etappe-bar), OF vlak na verticale scroll/momentum.
       s.ignore =
         startedInHorizontalScroller(e.target, vp) ||
         performance.now() - lastScrollT < SCROLL_COOLDOWN_MS;

@@ -178,7 +178,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
   const hasPredictions = me.predictions.length > 0 || opp.predictions.length > 0;
 
   return (
-    <Card className="retro-border">
+    <Card className="retro-border min-w-0 max-w-full overflow-hidden">
       <CardHeader className="border-b-2 border-foreground bg-secondary/30 py-3">
         <CardTitle className="font-display text-base flex items-center justify-between gap-2">
           <span>{t("subpoule.comparison.headToHead")}</span>
@@ -190,13 +190,13 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
       <CardContent className="p-0">
         {/* Scorebord-kop met balansbalk */}
         <div className="px-3 py-3 border-b-2 border-foreground bg-muted/30">
-          <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-            <div className="text-right">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 items-center">
+            <div className="min-w-0 text-right">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("subpoule.comparison.you")}</p>
               <p className="text-2xl font-display font-bold tabular-nums">{myTotal} <span className="text-[10px] font-normal text-muted-foreground">{t("subpoule.comparison.pt")}</span></p>
             </div>
             <div className="h-8 w-8 rounded-full border-2 border-foreground bg-card flex items-center justify-center text-[10px] font-bold">VS</div>
-            <div>
+            <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{opponentName}</p>
               <p className="text-2xl font-display font-bold tabular-nums">{oppTotal} <span className="text-[10px] font-normal text-muted-foreground">{t("subpoule.comparison.pt")}</span></p>
             </div>
@@ -246,8 +246,8 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                     </Badge>
                   )}
                 </div>
-                <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-                  <div className="text-right">
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 items-center">
+                  <div className="min-w-0 text-right">
                     {myRiderIds.length === 0 ? (
                       <p className="text-sm font-medium text-muted-foreground">—</p>
                     ) : myRiderIds.map((id) => {
@@ -280,7 +280,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                     {localDiff > 0 ? "+" : ""}{localDiff}
                   </span>
 
-                  <div>
+                  <div className="min-w-0">
                     {oppRiderIds.length === 0 ? (
                       <p className="text-sm font-medium text-muted-foreground">—</p>
                     ) : oppRiderIds.map((id) => {
@@ -326,8 +326,8 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
             <Crown className="h-4 w-4 text-primary" />
             <span className="font-display text-sm font-bold">{t("subpoule.comparison.jokers")}</span>
           </div>
-          <div className="grid grid-cols-[1fr_auto_1fr] gap-2 px-3 py-2.5 items-center">
-            <div className="text-right space-y-0.5">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 px-3 py-2.5 items-center">
+            <div className="min-w-0 text-right space-y-0.5">
               {myJokerIds.length === 0 ? (
                 <p className="text-sm text-muted-foreground">—</p>
               ) : (
@@ -369,7 +369,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                 </span>
               );
             })()}
-            <div className="space-y-0.5">
+            <div className="min-w-0 space-y-0.5">
               {oppJokerIds.length === 0 ? (
                 <p className="text-sm text-muted-foreground">—</p>
               ) : (
@@ -420,8 +420,8 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                 const oppList = oppPredMap.get(cls) ?? [];
                 if (myList.length === 0 && oppList.length === 0) return null;
                 return (
-                  <div key={cls} className="grid grid-cols-[1fr_auto_1fr] gap-2 px-3 py-2 text-sm items-center">
-                    <div className="text-right space-y-0.5">
+                  <div key={cls} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 px-3 py-2 text-sm items-center">
+                    <div className="min-w-0 text-right space-y-0.5">
                       {myList.length === 0 ? (
                         <span className="text-muted-foreground">—</span>
                       ) : (
@@ -438,7 +438,7 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
                     <span className="text-[10px] uppercase tracking-wider text-muted-foreground min-w-[80px] text-center">
                       {CLASSIFICATION_LABELS[cls]}
                     </span>
-                    <div className="space-y-0.5">
+                    <div className="min-w-0 space-y-0.5">
                       {oppList.length === 0 ? (
                         <span className="text-muted-foreground">—</span>
                       ) : (

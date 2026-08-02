@@ -716,10 +716,12 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           tablet). Vanaf lg toont SubpouleManager het duel als rechter zijpaneel,
           dus dan rendert dit component het duel NIET. */}
       <Drawer
+        handleOnly
+        shouldScaleBackground={false}
         open={!lgUp && !!compareMember && (maySeeLive || isAdmin)}
         onOpenChange={(o) => { if (!o) setCompareId(null); }}
       >
-        <DrawerContent className="max-h-[85vh]">
+        <DrawerContent className="max-h-[85vh] max-w-full overflow-x-hidden">
           <DrawerHeader className="flex items-center justify-between py-3">
             <DrawerTitle className="flex items-center gap-2">
               <Swords className="h-4 w-4 text-primary" /> {t("subpoule.standings.duel")}
@@ -731,7 +733,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
               <X className="h-4 w-4" />
             </DrawerClose>
           </DrawerHeader>
-          <div className="overflow-y-auto px-3 pb-6">
+          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-3 pb-6 [touch-action:pan-y]">
             {compareMember && (
               <TeamComparison
                 opponentUserId={compareMember.user_id}
