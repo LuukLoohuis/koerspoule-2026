@@ -6,11 +6,13 @@ import { runLefevereBatch, fetchLefevereCount, type LefevereCount } from "@/lib/
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase, Loader2, AlertTriangle, Trophy } from "lucide-react";
+import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase, Loader2, AlertTriangle, Trophy, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { getCalculationProgress, isCalculationActive, isFiatReady } from "@/lib/calculationProgress";
 import { useNavigate } from "react-router-dom";
+import { matchesParticipantSearch } from "@/lib/adminBreakdownSearch";
 
 type BreakdownRow = {
   entry_id: string;
@@ -36,6 +38,7 @@ function StageBreakdown({ stageId }: { stageId: string }) {
   const [rows, setRows] = useState<BreakdownRow[] | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [isGcBreakdown, setIsGcBreakdown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   async function load() {
     if (!supabase) return;
@@ -140,6 +143,8 @@ function StageBreakdown({ stageId }: { stageId: string }) {
     if (o && rows === null) load();
   }
 
+  const filteredRows = rows?.filter((row) => matchesParticipantSearch(row, searchQuery)) ?? [];
+
   return (
     <Collapsible open={open} onOpenChange={onToggle} className="mt-2">
       <CollapsibleTrigger asChild>
@@ -159,13 +164,45 @@ function StageBreakdown({ stageId }: { stageId: string }) {
           </p>
         )}
         {!loading && rows && rows.length > 0 && (
-          <div className="space-y-1 max-h-96 overflow-y-auto">
+          <div className="space-y-2">
             {isGcBreakdown && (
               <p className="px-1 pb-1 text-[11px] text-muted-foreground">
                 Alleen deelnemers met toegekende GC- of truibonuspunten worden getoond.
               </p>
             )}
-            {rows.map((r) => {
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Zoek op deelnemer of ploegnaam…"
+                aria-label="Zoek op deelnemer of ploegnaam"
+                className="h-9 pl-9 pr-9"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  aria-label="Zoekopdracht wissen"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            {searchQuery && (
+              <p className="px-1 text-[11px] text-muted-foreground">
+                {filteredRows.length} van {rows.length} deelnemers
+              </p>
+            )}
+            {filteredRows.length === 0 ? (
+              <p className="px-1 py-4 text-center text-xs text-muted-foreground italic">
+                Geen deelnemer of ploeg gevonden voor “{searchQuery}”.
+              </p>
+            ) : (
+            <div className="max-h-96 space-y-1 overflow-y-auto">
+            {filteredRows.map((r) => {
               const isOpen = expanded[r.entry_id] ?? false;
               const isPrediction = r.breakdown.some((b) => b.classification);
               return (
@@ -240,6 +277,8 @@ function StageBreakdown({ stageId }: { stageId: string }) {
                 </div>
               );
             })}
+            </div>
+            )}
           </div>
         )}
       </CollapsibleContent>
