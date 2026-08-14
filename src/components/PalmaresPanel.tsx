@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 function gameTypeToCountry(type: string | null): "IT" | "FR" | "ES" {
   const k = (type ?? "").toLowerCase();
-  if (k === "tour" || k === "tdf") return "FR";
+  if (k === "tour" || k === "tdf" || k === "femmes") return "FR";
   if (k === "vuelta" || k === "vta") return "ES";
   return "IT";
 }
