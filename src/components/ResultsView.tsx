@@ -8,14 +8,14 @@ import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 import { useStages, useStageResults, useStagePointsForEntries, useMyStageRanks, useEntries, useGameStandings, type StageRow, type EntryStanding } from "@/hooks/useResults";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
 import { useAuth } from "@/hooks/useAuth";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useMinWidth } from "@/hooks/use-mobile";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin, ArrowUp, ArrowDown, Minus, Calendar, Route, Lock, Flag, ClipboardList, Search } from "lucide-react";
+import { Trophy, Medal, User, Users, Mountain, Activity, Clock, MapPin, ArrowUp, ArrowDown, Minus, Calendar, Route, Lock, Flag, ClipboardList, Search, Swords, X } from "lucide-react";
 import ResultsUpdatedBadge from "@/components/ResultsUpdatedBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
 import Podium from "@/components/Podium";
@@ -28,6 +28,8 @@ import SwipeDots from "@/components/SwipeDots";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import { RetroTabs } from "@/components/RetroTabs";
 import { buildStageBarData } from "@/components/stages/stageBarData";
+import TeamComparison from "@/components/TeamComparison";
+import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 
 const stageTypeMeta = (t: TFunction): Record<string, { label: string; color: string; icon: JSX.Element }> => ({
   vlak: { label: t("results.stageType.vlak"), color: "bg-emerald-500", icon: <Activity className="w-4 h-4" /> },
@@ -86,9 +88,11 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   const STAGE_TYPE_META = useMemo(() => stageTypeMeta(t), [t]);
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const lgUp = useMinWidth(1024);
   const { data: curGame } = useCurrentGame();
   const gameId = gameIdProp ?? curGame?.id;
   const gameName = gameNameProp ?? curGame?.name;
+  const [compareUserId, setCompareUserId] = useState<string | null>(null);
 
   const { data: stages = [], isLoading: stagesLoading } = useStages(gameId);
   const { data: entries = [] } = useEntries(gameId);
@@ -100,6 +104,14 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
     [entries, user?.id]
   );
   const myEntryIds = useMemo(() => (myEntry ? [myEntry.id] : []), [myEntry]);
+  const compareOpponent = useMemo(() => {
+    const entry = entries.find((candidate) => candidate.user_id === compareUserId);
+    if (!entry) return null;
+    return {
+      userId: entry.user_id,
+      name: entry.team_name?.trim() || entry.display_name || t("subpoule.standings.playerFallback"),
+    };
+  }, [compareUserId, entries, t]);
 
   // Alleen mijn eigen stage_points + mijn dagklassering server-side (schaalt).
   const { data: myStageRows = [] } = useStagePointsForEntries(gameId, myEntryIds);
@@ -444,6 +456,9 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                       placeholder={t("results.view.searchPlaceholder")}
                       items={stageStandings.map((s) => {
                         const isMe = s.user_id === user?.id;
+                        const canCompare = Boolean(myEntry && !isMe);
+                        const isComparing = s.user_id === compareUserId;
+                        const opponentName = s.team_name ?? s.display_name ?? t("subpoule.standings.playerFallback");
                         return {
                           key: s.id,
                           rank: s.rank,
@@ -451,9 +466,22 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                           searchText: `${s.team_name ?? ""} ${s.display_name ?? ""}`,
                           node: (
                           <div
+                            role={canCompare ? "button" : undefined}
+                            tabIndex={canCompare ? 0 : undefined}
+                            aria-pressed={canCompare ? isComparing : undefined}
+                            aria-label={canCompare ? t("subpoule.standings.compareWith", { name: opponentName }) : undefined}
+                            onClick={canCompare ? () => setCompareUserId(isComparing ? null : s.user_id) : undefined}
+                            onKeyDown={canCompare ? (event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                setCompareUserId(isComparing ? null : s.user_id);
+                              }
+                            } : undefined}
                             className={cn(
-                              "flex items-center justify-between px-3 py-2 text-sm border-b border-border/40",
-                              isMe && "bg-primary/10"
+                              "group flex items-center justify-between gap-2 px-3 py-2 text-sm border-b border-border/40 transition-colors select-none",
+                              isMe && "bg-primary/10",
+                              isComparing && "bg-accent/15 ring-1 ring-inset ring-accent/50",
+                              canCompare && "cursor-pointer hover:bg-accent/10 active:bg-accent/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                             )}
                           >
                             <div className="flex items-center gap-2 min-w-0">
@@ -462,7 +490,20 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                                 {s.team_name ?? s.display_name ?? "—"}
                               </span>
                             </div>
-                            <span className="font-bold text-xs">{t("results.view.points", { count: s.stagePts })}</span>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="font-bold text-xs">{t("results.view.points", { count: s.stagePts })}</span>
+                              {canCompare && (
+                                <span
+                                  aria-hidden
+                                  className={cn(
+                                    "inline-flex text-muted-foreground/60 transition-colors group-hover:text-primary",
+                                    isComparing && "text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]",
+                                  )}
+                                >
+                                  <Swords className="h-3.5 w-3.5" strokeWidth={isComparing ? 2.5 : 2} />
+                                </span>
+                              )}
+                            </div>
                           </div>
                           ),
                         };
@@ -471,6 +512,15 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                   )}
                 </div>
 
+                {lgUp && compareOpponent ? (
+                  <div className="lg:col-span-2">
+                    <DesktopComparisonPanel
+                      gameId={gameId}
+                      opponent={compareOpponent}
+                      onClose={() => setCompareUserId(null)}
+                    />
+                  </div>
+                ) : (<>
                 {/* Kolom 2: Jouw team in deze rit */}
                 <div className="retro-border bg-card h-fit">
                   <div className="p-4 border-b-2 border-foreground bg-primary/10">
@@ -555,6 +605,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                     </div>
                   )}
                 </div>
+                </>)}
               </div>
               )}
             </>
@@ -647,6 +698,9 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                   emptyMessage={t("results.view.noSubmittedTeams")}
                   items={overallStandings.map((s) => {
                     const isMe = s.user_id === user?.id;
+                    const canCompare = Boolean(myEntry && !isMe);
+                    const isComparing = s.user_id === compareUserId;
+                    const opponentName = s.team_name ?? s.display_name ?? t("subpoule.standings.playerFallback");
                     const dagRank = klassementStageStandings.get(s.id);
 
                     const rankNumCls =
@@ -675,10 +729,23 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                       searchText: `${s.team_name ?? ""} ${s.display_name ?? ""}`,
                       node: (
                       <div
+                        role={canCompare ? "button" : undefined}
+                        tabIndex={canCompare ? 0 : undefined}
+                        aria-pressed={canCompare ? isComparing : undefined}
+                        aria-label={canCompare ? t("subpoule.standings.compareWith", { name: opponentName }) : undefined}
+                        onClick={canCompare ? () => setCompareUserId(isComparing ? null : s.user_id) : undefined}
+                        onKeyDown={canCompare ? (event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setCompareUserId(isComparing ? null : s.user_id);
+                          }
+                        } : undefined}
                         className={cn(
-                          "flex items-center gap-2.5 px-3 py-2.5 border-b border-border/40 transition-colors",
+                          "group flex items-center gap-2.5 px-3 py-2.5 border-b border-border/40 transition-colors select-none",
                           rowAccentCls,
-                          isMe && "bg-primary/[0.08] ring-1 ring-inset ring-primary/30"
+                          isMe && "bg-primary/[0.08] ring-1 ring-inset ring-primary/30",
+                          isComparing && "bg-accent/15 ring-1 ring-inset ring-accent/50",
+                          canCompare && "cursor-pointer hover:bg-accent/10 active:bg-accent/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                         )}
                       >
                         {/* Rank number — Oswald, klassementbord-stijl */}
@@ -747,6 +814,18 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                             </div>
                           )}
                         </div>
+
+                        {canCompare && (
+                          <span
+                            aria-hidden
+                            className={cn(
+                              "inline-flex shrink-0 text-muted-foreground/60 transition-colors group-hover:text-primary",
+                              isComparing && "text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]",
+                            )}
+                          >
+                            <Swords className="h-3.5 w-3.5" strokeWidth={isComparing ? 2.5 : 2} />
+                          </span>
+                        )}
                       </div>
                       ),
                     };
@@ -756,14 +835,54 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
               )}
             </div>
 
-            {/* Race classifications (4 jerseys) */}
-            <RaceClassifications stageId={klassementStage?.id} />
+            {/* Zelfde benchmarkcomponent als Hors Catégorie en Subpoules. */}
+            {lgUp && compareOpponent ? (
+              <DesktopComparisonPanel
+                gameId={gameId}
+                opponent={compareOpponent}
+                onClose={() => setCompareUserId(null)}
+              />
+            ) : (
+              <RaceClassifications stageId={klassementStage?.id} />
+            )}
           </div>
         </>)}
             </>
           )}
         />
       </Tabs>
+
+      {/* Onder lg exact dezelfde TeamComparison in dezelfde bottom sheet als
+          Subpoules; verticaal scrollen mag de pagina niet zijwaarts bewegen. */}
+      <Drawer
+        handleOnly
+        shouldScaleBackground={false}
+        open={!lgUp && Boolean(compareOpponent)}
+        onOpenChange={(open) => { if (!open) setCompareUserId(null); }}
+      >
+        <DrawerContent className="max-h-[85vh] max-w-full overflow-x-hidden">
+          <DrawerHeader className="flex items-center justify-between py-3">
+            <DrawerTitle className="flex items-center gap-2">
+              <Swords className="h-4 w-4 text-primary" /> {t("subpoule.standings.duel")}
+            </DrawerTitle>
+            <DrawerClose
+              aria-label={t("subpoule.standings.closeDuel")}
+              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </DrawerClose>
+          </DrawerHeader>
+          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-3 pb-6 [touch-action:pan-y]">
+            {compareOpponent && (
+              <TeamComparison
+                opponentUserId={compareOpponent.userId}
+                opponentName={compareOpponent.name}
+                gameId={gameId}
+              />
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       {/* Mobiel: tweedelig pill-toggle Klassement/Etappes (één tik wisselt). */}
       <FloatingTabSwitcher
@@ -785,6 +904,46 @@ function EmptyState({ message }: { message: string }) {
     <div className="text-center py-10 px-5">
       <p className="text-muted-foreground italic">{message}</p>
     </div>
+  );
+}
+
+function DesktopComparisonPanel({
+  gameId,
+  opponent,
+  onClose,
+}: {
+  gameId?: string;
+  opponent: { userId: string; name: string };
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <aside className="min-w-0">
+      <div className="retro-border no-hover-lift bg-card overflow-hidden sticky top-4">
+        <div className="flex items-center justify-between border-b-2 border-foreground bg-secondary/30 px-3 py-2">
+          <span className="font-display font-bold flex items-center gap-2">
+            <Swords className="h-4 w-4 text-primary" />
+            {t("subpoule.standings.duel")}
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("subpoule.standings.closeDuel")}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="p-3">
+          <TeamComparison
+            opponentUserId={opponent.userId}
+            opponentName={opponent.name}
+            gameId={gameId}
+          />
+        </div>
+      </div>
+    </aside>
   );
 }
 
