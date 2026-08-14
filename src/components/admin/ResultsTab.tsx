@@ -9,12 +9,17 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Save, RotateCcw, Download, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Save, RotateCcw, Download, AlertTriangle, CheckCircle2, ImageUp, Loader2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import type { Stage } from "./StagesTab";
 import type { Rider } from "./StartlistTab";
 import RiderSearchSelect, { type RiderOption } from "@/components/RiderSearchSelect";
 import StageApprovalCard from "./StageApprovalCard";
+import {
+  buildScreenshotImportPreview,
+  type ImportClassification,
+  type ScreenshotExtraction,
+} from "@/lib/screenshotResultImport";
 
 type GameType = "giro" | "tdf" | "vuelta" | "femmes" | null;
 
@@ -31,6 +36,32 @@ const CLASSIFICATION_LABELS: Record<Classification, { name: string; jersey: stri
 const CLASSIFICATIONS: Classification[] = ["stage", "gc", "kom", "points", "youth"];
 
 type ResultRow = { position: number; rider_id: string };
+
+type ImportPreview = {
+  source_url: string;
+  source_label?: string;
+  source_kind?: "url" | "screenshot";
+  source_title?: string;
+  detected_classification?: string;
+  detected_stage_number?: number | null;
+  matched: Record<string, Array<{
+    position: number;
+    rider_id: string;
+    rider_name: string;
+    start_number: number | null;
+    confidence?: number;
+  }>>;
+  unmatched: Record<string, Array<{
+    position: number;
+    bib: number | null;
+    name: string;
+    confidence?: number;
+  }>>;
+  diagnostics?: Record<string, { status: number; bytes: number; rows: number; attempts: number }>;
+  counts?: Record<string, { matched: number; unmatched: number; total: number }>;
+  warnings?: string[];
+  blocking_warnings?: string[];
+};
 
 async function functionErrorMessage(error: unknown): Promise<string> {
   const edgeError = error as { message?: string; context?: Response };
@@ -81,21 +112,27 @@ export default function ResultsTab({
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importingPCS, setImportingPCS] = useState(false);
-  const [importPreview, setImportPreview] = useState<null | {
-    source_url: string;
-    matched: Record<string, Array<{ position: number; rider_id: string; rider_name: string; start_number: number | null }>>;
-    unmatched: Record<string, Array<{ position: number; bib: number | null; name: string }>>;
-    diagnostics?: Record<string, { status: number; bytes: number; rows: number; attempts: number }>;
-    counts?: Record<string, { matched: number; unmatched: number; total: number }>;
-    warnings?: string[];
-  }>(null);
+  const [importingScreenshot, setImportingScreenshot] = useState(false);
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<{ url: string; name: string } | null>(null);
   // Manual overrides for unmatched rows: key = `${importKey}-${position}` -> rider_id
   const [manualPicks, setManualPicks] = useState<Record<string, string>>({});
   const [savingImport, setSavingImport] = useState(false);
 
+  useEffect(() => {
+    return () => {
+      if (screenshotPreview?.url) URL.revokeObjectURL(screenshotPreview.url);
+    };
+  }, [screenshotPreview?.url]);
+
   const selectedStageObj = useMemo(() => stages.find((s) => s.id === selectedStage), [stages, selectedStage]);
   const canImport = gameType === "tdf" || gameType === "femmes" || gameType === "vuelta";
   const canImportPCS = !!gameType && !!gameYear;
+
+  function closeImportPreview() {
+    setImportPreview(null);
+    setScreenshotPreview(null);
+  }
 
   const riderById = useMemo(() => {
     const m = new Map<string, Rider>();
@@ -259,6 +296,7 @@ export default function ResultsTab({
       if (!data?.success) throw new Error(data?.error || "Onbekende fout");
       setImportPreview({
         source_url: data.source_url,
+        source_kind: "url",
         matched: data.matched,
         unmatched: data.unmatched,
         diagnostics: data.diagnostics,
@@ -299,6 +337,7 @@ export default function ResultsTab({
       setManualPicks({});
       setImportPreview({
         source_url: data.source_url,
+        source_kind: "url",
         matched: data.matched,
         unmatched: data.unmatched,
         diagnostics: data.diagnostics,
@@ -313,8 +352,73 @@ export default function ResultsTab({
     }
   }
 
+  async function startImportScreenshot(file: File) {
+    if (!supabase || !selectedStageObj) {
+      toast.error("Selecteer eerst een etappe");
+      return;
+    }
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      toast.error("Gebruik een PNG-, JPG- of WebP-screenshot");
+      return;
+    }
+    if (file.size <= 0 || file.size > 8 * 1024 * 1024) {
+      toast.error("Screenshot mag maximaal 8 MB zijn");
+      return;
+    }
+
+    const importClassification: ImportClassification = classification === "kom" ? "mountain" : classification;
+    const form = new FormData();
+    form.append("file", file);
+    form.append("expected_classification", importClassification);
+    form.append("expected_stage_number", String(selectedStageObj.stage_number));
+
+    setImportingScreenshot(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("import-results-screenshot", { body: form });
+      if (error) throw new Error(await functionErrorMessage(error));
+      if (!data?.success || !data?.extraction) throw new Error(data?.error || "Geen uitslag herkend");
+
+      const preview = buildScreenshotImportPreview({
+        extraction: data.extraction as ScreenshotExtraction,
+        riders,
+        expectedClassification: importClassification,
+        expectedStageNumber: selectedStageObj.stage_number,
+        filename: file.name,
+      });
+      setManualPicks({});
+      setScreenshotPreview({ url: URL.createObjectURL(file), name: file.name });
+      setImportPreview(preview);
+    } catch (e) {
+      console.error("Screenshot import error:", e);
+      toast.error(`Screenshot uitlezen mislukt: ${(e as Error).message}`);
+    } finally {
+      setImportingScreenshot(false);
+    }
+  }
+
   async function applyImport() {
     if (!supabase || !selectedStage || !importPreview) return;
+
+    if (importPreview.blocking_warnings?.length) {
+      toast.error(importPreview.blocking_warnings[0]);
+      return;
+    }
+
+    if (importPreview.source_kind === "screenshot" && importPreview.detected_classification) {
+      const key = importPreview.detected_classification;
+      const count = importPreview.counts?.[key];
+      if (!count || count.total < 10) {
+        toast.error("De screenshot bevat te weinig herkenbare rijen om veilig op te slaan.");
+        return;
+      }
+      const unresolved = (importPreview.unmatched[key] ?? []).filter(
+        (row) => !manualPicks[`${key}-${row.position}`],
+      );
+      if (unresolved.length > 0) {
+        toast.error(`Koppel eerst de ${unresolved.length} rode regel(s) handmatig.`);
+        return;
+      }
+    }
 
     // Een onvolledige stage/GC mag nooit stil de bestaande top-20 vervangen.
     // Handmatige koppelingen tellen mee als opgelost.
@@ -413,8 +517,8 @@ export default function ResultsTab({
           totalSaved++;
         }
       }
-      toast.success(`${totalSaved} resultaten geïmporteerd uit ${importPreview.source_url}`);
-      setImportPreview(null);
+      toast.success(`${totalSaved} resultaten geïmporteerd uit ${importPreview.source_label ?? importPreview.source_url}`);
+      closeImportPreview();
       await loadExisting();
     } catch (e) {
       console.error("Apply import error:", e);
@@ -509,6 +613,40 @@ export default function ResultsTab({
                 {importingPCS ? "Ophalen..." : `ProCyclingStats (etappe ${selectedStageObj?.stage_number ?? ""})`}
               </Button>
             </div>
+
+            <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-primary/20">
+              <div>
+                <h3 className="font-display text-lg flex items-center gap-2">
+                  <ImageUp className="w-5 h-5" /> Screenshot import (AI)
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Upload een uitslag van PCS of een officiële site. De afbeelding wordt voor uitlezing naar OpenAI verzonden,
+                  niet door Koerspoule opgeslagen en altijd eerst als controlevoorbeeld getoond.
+                </p>
+              </div>
+              <Button
+                asChild
+                variant="outline"
+                className={importingScreenshot ? "pointer-events-none opacity-60" : "cursor-pointer"}
+                data-testid="import-screenshot-btn"
+              >
+                <label>
+                  {importingScreenshot ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ImageUp className="w-4 h-4 mr-2" />}
+                  {importingScreenshot ? "Uitlezen..." : "Upload screenshot"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    disabled={importingScreenshot}
+                    onChange={(event) => {
+                      const file = event.currentTarget.files?.[0];
+                      event.currentTarget.value = "";
+                      if (file) void startImportScreenshot(file);
+                    }}
+                  />
+                </label>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -576,20 +714,61 @@ export default function ResultsTab({
         </Card>
       )}
 
-      <Dialog open={!!importPreview} onOpenChange={(open) => !open && setImportPreview(null)}>
+      <Dialog open={!!importPreview} onOpenChange={(open) => !open && closeImportPreview()}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
               <Download className="w-5 h-5" /> Import voorbeeld
             </DialogTitle>
             <DialogDescription>
-              Bron: <a href={importPreview?.source_url} target="_blank" rel="noreferrer" className="underline">{importPreview?.source_url}</a>
+              Bron:{" "}
+              {importPreview?.source_kind === "screenshot" ? (
+                <span className="font-medium text-foreground">{importPreview.source_label}</span>
+              ) : (
+                <a href={importPreview?.source_url} target="_blank" rel="noreferrer" className="underline">{importPreview?.source_url}</a>
+              )}
               <br />Controleer de gevonden resultaten en bevestig om op te slaan. Bestaande klassementen voor deze etappe worden overschreven.
             </DialogDescription>
           </DialogHeader>
 
           {importPreview && (
             <div className="space-y-4">
+              {importPreview.source_kind === "screenshot" && screenshotPreview && (
+                <div className="grid gap-3 rounded-md border bg-muted/20 p-3 sm:grid-cols-[180px_1fr]">
+                  <img
+                    src={screenshotPreview.url}
+                    alt={`Geüploade uitslag ${screenshotPreview.name}`}
+                    className="max-h-52 w-full rounded border bg-white object-contain"
+                  />
+                  <div className="space-y-2 text-sm">
+                    <div className="font-medium">{importPreview.source_title || "Uitslag uit screenshot"}</div>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline">AI-uitlezing</Badge>
+                      {importPreview.detected_classification && (
+                        <Badge variant="secondary">{importPreview.detected_classification.toUpperCase()}</Badge>
+                      )}
+                      {importPreview.detected_stage_number != null && (
+                        <Badge variant="secondary">Etappe {importPreview.detected_stage_number}</Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      De afbeelding is naar OpenAI verzonden voor uitlezing. Koerspoule bewaart het bestand niet in Supabase Storage.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {importPreview.blocking_warnings && importPreview.blocking_warnings.length > 0 && (
+                <div className="rounded-md border border-destructive/60 bg-destructive/10 p-3">
+                  <div className="font-medium text-destructive flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4" /> Deze import kan niet worden opgeslagen
+                  </div>
+                  <ul className="mt-2 list-disc pl-5 text-xs text-destructive space-y-1">
+                    {importPreview.blocking_warnings.map((warning) => <li key={warning}>{warning}</li>)}
+                  </ul>
+                </div>
+              )}
+
               {importPreview.warnings && importPreview.warnings.length > 0 && (
                 <div className="rounded-md border border-amber-500/50 bg-amber-500/10 p-3">
                   <div className="font-medium text-amber-800 flex items-center gap-2">
@@ -604,7 +783,9 @@ export default function ResultsTab({
                 </div>
               )}
 
-              {(["stage", "gc", "points", "mountain", "youth"] as const).map((c) => {
+              {(["stage", "gc", "points", "mountain", "youth"] as const)
+                .filter((c) => importPreview.source_kind !== "screenshot" || (importPreview.counts?.[c]?.total ?? 0) > 0)
+                .map((c) => {
                 const labelKey = c === "mountain" ? "kom" : c;
                 const label = CLASSIFICATION_LABELS[labelKey as Classification];
                 const matched = importPreview.matched[c] ?? [];
@@ -638,7 +819,10 @@ export default function ResultsTab({
                     {matched.length > 0 && (
                       <div className="text-xs text-muted-foreground grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-1">
                         {matched.slice(0, 8).map((r) => (
-                          <span key={r.position}>{r.position}. #{r.start_number} {r.rider_name}</span>
+                          <span key={r.position}>
+                            {r.position}. #{r.start_number} {r.rider_name}
+                            {r.confidence != null ? ` · ${Math.round(r.confidence * 100)}%` : ""}
+                          </span>
                         ))}
                         {matched.length > 8 && <span className="italic">+{matched.length - 8} meer…</span>}
                       </div>
@@ -659,6 +843,9 @@ export default function ResultsTab({
                               <div className="font-bold">
                                 {u.position}.{u.bib != null ? ` #${u.bib}` : ""}
                                 <div className="text-muted-foreground font-normal truncate">{u.name}</div>
+                                {u.confidence != null && (
+                                  <div className="text-amber-700 font-normal">beeld {Math.round(u.confidence * 100)}%</div>
+                                )}
                               </div>
                               <RiderSearchSelect
                                 riders={riderOptions}
@@ -679,8 +866,12 @@ export default function ResultsTab({
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setImportPreview(null)}>Annuleren</Button>
-            <Button onClick={applyImport} disabled={savingImport} data-testid="apply-import-btn">
+            <Button variant="outline" onClick={closeImportPreview}>Annuleren</Button>
+            <Button
+              onClick={applyImport}
+              disabled={savingImport || !!importPreview?.blocking_warnings?.length}
+              data-testid="apply-import-btn"
+            >
               <Save className="w-4 h-4 mr-2" />
               {savingImport ? "Opslaan..." : "Bevestig en sla op"}
             </Button>

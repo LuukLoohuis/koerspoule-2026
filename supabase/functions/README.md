@@ -13,6 +13,7 @@ supabase db push
 
 ```bash
 supabase functions deploy import-stage-results
+supabase functions deploy import-results-screenshot
 supabase functions deploy recalculate-game
 supabase functions deploy reset-stage
 ```
@@ -20,6 +21,11 @@ supabase functions deploy reset-stage
 The functions use `SUPABASE_URL` and `SUPABASE_ANON_KEY`, which Supabase
 injects automatically. The caller's JWT is forwarded so RLS + the
 `is_admin()` check inside each RPC are enforced.
+
+`import-results-screenshot` gebruikt daarnaast `OPENAI_API_KEY`. Optioneel kan
+`OPENAI_VISION_MODEL` worden ingesteld; standaard wordt `gpt-4o` gebruikt. De
+functie verwerkt PNG, JPG en WebP tot 8 MB en slaat het afbeeldingsbestand niet
+op in Supabase Storage.
 
 ## 3. Promote yourself to admin (run once in SQL editor)
 
