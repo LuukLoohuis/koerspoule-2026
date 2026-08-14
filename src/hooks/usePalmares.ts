@@ -23,6 +23,7 @@ export type PalmaresGame = {
   total_participants: number;
   stage_wins: number;
   stage_podiums: number;
+  stages_count: number;
   dagzeges: StageDagzege[];
 };
 
@@ -158,6 +159,7 @@ export function usePalmares() {
             total_participants: bm.entries.length,
             stage_wins: wins,
             stage_podiums: podiums,
+            stages_count: bm.stages.length,
             dagzeges,
           };
         })
