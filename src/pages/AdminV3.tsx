@@ -87,7 +87,7 @@ export default function AdminV3() {
         .order("start_number", { nullsFirst: false }),
       supabase
         .from("stages")
-        .select("id, game_id, stage_number, name, date, status, stage_type, distance_km, profile_image_url, profile_data")
+        .select("id, game_id, stage_number, name, date, status, stage_type, distance_km, profile_image_url, profile_data, is_gc, results_status")
         .eq("game_id", gameId)
         .order("stage_number"),
     ]);

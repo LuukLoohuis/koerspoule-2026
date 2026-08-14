@@ -406,10 +406,10 @@ export default function CalculationTab({
       // deelnemers kon de databaseverbinding daardoor wegvallen. Verwerk het
       // hier gepagineerd en schrijf uitsluitend werkelijk verdiende punten.
       const finalStage = [...stages]
-        .filter((s: any) => s.is_gc && s.results_status === "approved")
+        .filter((s: any) => s.is_gc && ["pending", "approved"].includes(s.results_status))
         .sort((a, b) => b.stage_number - a.stage_number)[0];
       if (!finalStage) {
-        throw new Error("Fiatteer eerst de eindklassement-etappe.");
+        throw new Error("Zet het eindklassement eerst klaar voor controle in Fiatteren.");
       }
 
       const { data: finalRows, error: finalError } = await supabase
@@ -838,9 +838,10 @@ export default function CalculationTab({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Zodra de <strong>laatste etappe (rit 21)</strong> is ingeladen én goedgekeurd, zijn de
-            eindklassementen bekend. Bereken hier de <strong>GC-podium</strong>- en <strong>truienpunten</strong>
-            voor de voorspellingen. Het resultaat telt mee in het totaal; controleer en publiceer daarna in <strong>Fiatteren</strong>.
+            Zodra de <strong>laatste etappe</strong> is goedgekeurd en de officiële eindklassementen zijn
+            ingeladen, zet je de GC in <strong>Fiatteren</strong> klaar voor controle. De GC-podium- en
+            truienpunten worden dan automatisch berekend. Gebruik de knop hieronder alleen om een
+            pending of goedgekeurd eindklassement handmatig te herberekenen.
           </p>
 
           {/* Aanpasbaar puntenschema */}

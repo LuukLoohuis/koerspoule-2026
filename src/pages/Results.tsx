@@ -5,11 +5,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import { maySeeLiveContent } from "@/lib/gameStatus";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
+import { useLocation } from "react-router-dom";
 
 export default function Results() {
   const { t } = useTranslation();
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const initialView = params.get("view") === "etappes" ? "etappes" : "klassement";
+  const initialGc = params.get("stage") === "gc";
   // Gedeelde game-keuze uit de context (één kiezer voor de hele app).
   const { games, selectedGame, setSelectedGameId } = useSelectedGame();
 
@@ -27,7 +32,13 @@ export default function Results() {
       )}
 
       {maySeeLiveContent(selectedGame?.status, isAdmin, selectedGame?.admin_testmodus ?? false) ? (
-        <ResultsView showHeader gameId={selectedGame?.id} gameName={selectedGame?.name} />
+        <ResultsView
+          showHeader
+          gameId={selectedGame?.id}
+          gameName={selectedGame?.name}
+          initialView={initialView}
+          initialGc={initialGc}
+        />
       ) : (
         <SneakPreviewLock
           title={t("results.page.sneakPreviewTitle")}

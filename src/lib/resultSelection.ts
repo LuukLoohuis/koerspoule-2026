@@ -1,0 +1,19 @@
+type SelectableStage = {
+  is_gc?: boolean | null;
+  results_status?: string | null;
+};
+
+/** Kies de eind-GC voor een expliciete deep-link, anders de laatste gefiatteerde rit. */
+export function getInitialResultsStageIndex(stages: SelectableStage[], preferGc: boolean): number {
+  if (preferGc) {
+    const gcIndex = stages.findIndex(
+      (stage) => stage.is_gc === true && stage.results_status === "approved",
+    );
+    if (gcIndex >= 0) return gcIndex;
+  }
+
+  for (let index = stages.length - 1; index >= 0; index--) {
+    if (stages[index].results_status === "approved" && !stages[index].is_gc) return index;
+  }
+  return 0;
+}

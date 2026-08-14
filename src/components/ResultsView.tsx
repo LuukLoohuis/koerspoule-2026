@@ -30,6 +30,7 @@ import { RetroTabs } from "@/components/RetroTabs";
 import { buildStageBarData } from "@/components/stages/stageBarData";
 import TeamComparison from "@/components/TeamComparison";
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { getInitialResultsStageIndex } from "@/lib/resultSelection";
 
 const stageTypeMeta = (t: TFunction): Record<string, { label: string; color: string; icon: JSX.Element }> => ({
   vlak: { label: t("results.stageType.vlak"), color: "bg-emerald-500", icon: <Activity className="w-4 h-4" /> },
@@ -81,9 +82,11 @@ type ResultsViewProps = {
   initialView?: "etappes" | "klassement";
   /** Deep-link: selecteer dit ritnummer in de Etappe-view. */
   initialStageNumber?: number | null;
+  /** Deep-link: selecteer de goedgekeurde eind-GC in beide resultatenkiezers. */
+  initialGc?: boolean;
 };
 
-export default function ResultsView({ showHeader = true, gameId: gameIdProp, gameName: gameNameProp, initialView, initialStageNumber }: ResultsViewProps) {
+export default function ResultsView({ showHeader = true, gameId: gameIdProp, gameName: gameNameProp, initialView, initialStageNumber, initialGc = false }: ResultsViewProps) {
   const { t, i18n } = useTranslation();
   const STAGE_TYPE_META = useMemo(() => stageTypeMeta(t), [t]);
   const { user } = useAuth();
@@ -117,14 +120,12 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   const { data: myStageRows = [] } = useStagePointsForEntries(gameId, myEntryIds);
   const { data: myRankPerStage = new Map<string, number>() } = useMyStageRanks(gameId, user?.id);
 
-  // Eerste relevante etappe = laatste goedgekeurde (niet-GC) rit (geen fetch nodig).
-  const initialStageIdx = useMemo(() => {
-    let idx = 0;
-    for (let i = stages.length - 1; i >= 0; i--) {
-      if (stages[i].results_status === "approved" && !stages[i].is_gc) { idx = i; break; }
-    }
-    return idx;
-  }, [stages]);
+  // De fiat-deep-link kiest de goedgekeurde eind-GC; gewone bezoeken blijven
+  // openen op de laatste goedgekeurde reguliere rit.
+  const initialStageIdx = useMemo(
+    () => getInitialResultsStageIndex(stages, initialGc),
+    [stages, initialGc],
+  );
 
   const [selectedStageIdx, setSelectedStageIdx] = useState<number>(0);
   useEffect(() => {

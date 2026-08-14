@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase, Loader2, AlertTriangle } from "lucide-react";
+import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase, Loader2, AlertTriangle, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { getCalculationProgress, isCalculationActive, isFiatReady } from "@/lib/calculationProgress";
+import { useNavigate } from "react-router-dom";
 
 type BreakdownRow = {
   entry_id: string;
@@ -263,7 +264,144 @@ type Row = {
   calculation_error: string | null;
 };
 
+function GcClassificationSummary({ stageId }: { stageId: string }) {
+  type GcResultRow = {
+    gc_position: number | null;
+    points_position: number | null;
+    mountain_position: number | null;
+    youth_position: number | null;
+    rider_name: string | null;
+    riders: { name: string | null } | Array<{ name: string | null }> | null;
+  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [summary, setSummary] = useState<Array<{ label: string; note: string; winners: string[] }>>([]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadSummary() {
+      if (!supabase) return;
+      setLoading(true);
+      const { data, error: queryError } = await supabase
+        .from("stage_results")
+        .select("gc_position, points_position, mountain_position, youth_position, rider_name, riders(name)")
+        .eq("stage_id", stageId);
+      if (!active) return;
+      if (queryError) {
+        setError(queryError.message);
+        setLoading(false);
+        return;
+      }
+      const rows = (data ?? []) as GcResultRow[];
+      const riderName = (row: GcResultRow) => {
+        const rider = Array.isArray(row.riders) ? row.riders[0] : row.riders;
+        return rider?.name ?? row.rider_name ?? "Onbekende renner";
+      };
+      const podium = [1, 2, 3].map((position) => {
+        const row = rows.find((candidate) => candidate.gc_position === position);
+        return row ? `${position}  ${riderName(row)}` : `${position}  Niet ingevuld`;
+      });
+      const winner = (column: "points_position" | "mountain_position" | "youth_position") => {
+        const row = rows.find((candidate) => candidate[column] === 1);
+        return row ? riderName(row) : "Niet ingevuld";
+      };
+      setSummary([
+        { label: "Algemeen klassement", note: "Podium · eind-GC", winners: podium },
+        { label: "Puntenklassement", note: "Groene trui", winners: [winner("points_position")] },
+        { label: "Bergklassement", note: "Bergtrui", winners: [winner("mountain_position")] },
+        { label: "Jongerenklassement", note: "Witte trui", winners: [winner("youth_position")] },
+      ]);
+      setError(null);
+      setLoading(false);
+    }
+    void loadSummary();
+    return () => { active = false; };
+  }, [stageId]);
+
+  if (loading) return <p className="p-4 text-sm text-muted-foreground italic">Eindklassement laden…</p>;
+  if (error) return <p className="p-4 text-sm text-destructive">Eindklassement kon niet worden geladen: {error}</p>;
+
+  return (
+    <div className="divide-y">
+      {summary.map((classification) => (
+        <div key={classification.label} className="grid gap-2 px-4 py-3 sm:grid-cols-[minmax(150px,.8fr)_minmax(0,1.5fr)] sm:items-center">
+          <div>
+            <p className="text-sm font-semibold">{classification.label}</p>
+            <p className="text-xs text-muted-foreground">{classification.note}</p>
+          </div>
+          <div className="flex flex-wrap gap-1.5 sm:justify-end">
+            {classification.winners.map((winner) => (
+              <span key={winner} className="border border-border bg-secondary/50 px-2 py-1 text-xs">
+                {winner}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GcApprovalCard({
+  row,
+  busy,
+  onApprove,
+}: {
+  row: Row;
+  busy: boolean;
+  onApprove: () => void;
+}) {
+  return (
+    <div className="overflow-hidden border border-amber-400/70 bg-card shadow-sm" aria-live="polite">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b bg-amber-50/60 p-4 dark:bg-amber-950/15">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Trophy className="h-5 w-5 text-amber-600" />
+            <h3 className="font-display text-xl font-bold">Eindklassement fiatteren</h3>
+            <Badge className="gap-1 bg-green-600 hover:bg-green-600"><CheckCircle2 className="h-3 w-3" />Klaar voor fiat</Badge>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Controleer de officiële klassementen en publiceer daarna direct naar Uitslagen → Klassement → GC.
+          </p>
+        </div>
+        <span className="text-xs text-muted-foreground">Etappe {row.stage_number}{row.stage_name ? ` · ${row.stage_name}` : ""}</span>
+      </div>
+
+      <div className="grid md:grid-cols-[minmax(0,1.55fr)_minmax(240px,.72fr)]">
+        <div className="min-w-0 md:border-r">
+          <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+            <h4 className="font-display font-semibold">Officieel eindklassement</h4>
+            <span className="text-xs font-medium text-green-700 dark:text-green-400">4 klassementen</span>
+          </div>
+          <GcClassificationSummary stageId={row.stage_id} />
+          <div className="border-t px-2 py-1">
+            <StageBreakdown stageId={row.stage_id} />
+          </div>
+        </div>
+
+        <aside className="flex flex-col p-4">
+          <h4 className="font-display font-semibold">Publicatiecheck</h4>
+          <div className="mt-3 flex-1 space-y-3 text-sm">
+            <div className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /><span>Laatste etappe en einduitslag zijn ingevuld</span></div>
+            <div className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /><span>Voorspellingsbonussen zijn berekend</span></div>
+            <div className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /><span>{row.total_count || "Alle"} deelnemers verwerkt</span></div>
+            <div className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /><span>Totaalstand is bijgewerkt</span></div>
+          </div>
+          <p className="my-4 text-xs leading-relaxed text-muted-foreground">
+            Na fiatteren opent automatisch het definitieve eindklassement. Je controleert dus direct dezelfde GC-weergave als de deelnemers.
+          </p>
+          <Button onClick={onApprove} disabled={busy} className="w-full bg-amber-500 text-black hover:bg-amber-600">
+            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+            {busy ? "Fiatteren…" : "Fiatteer en bekijk eindklassement"}
+          </Button>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
 export default function ApprovalsTab({ activeGameId }: { activeGameId: string }) {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -273,6 +411,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   const [lefCount, setLefCount] = useState<LefevereCount | null>(null);
   const [lefGenBusy, setLefGenBusy] = useState(false);
   const [lefFailed, setLefFailed] = useState<Array<{ entry_id: string; error: string }>>([]);
+  const [gcStageIds, setGcStageIds] = useState<Set<string>>(new Set());
 
   // Genereert Lefevère-rapporten voor ALLE inzendingen voor de huidige stand
   // (client-driven batch). Idempotent; toont voortgang + ververst de teller.
@@ -431,14 +570,19 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   async function load(silent = false) {
     if (!supabase || !activeGameId) return;
     if (!silent) setLoading(true);
-    const { data, error } = await supabase.rpc("admin_pending_approvals", { p_game_id: activeGameId });
+    const [{ data, error }, { data: gcStages, error: gcError }] = await Promise.all([
+      supabase.rpc("admin_pending_approvals", { p_game_id: activeGameId }),
+      supabase.from("stages").select("id").eq("game_id", activeGameId).eq("is_gc", true),
+    ]);
     if (!silent) setLoading(false);
-    if (error) {
-      setLoadError(error.message);
-      if (!silent) toast.error(error.message);
+    if (error || gcError) {
+      const message = error?.message ?? gcError?.message ?? "Status laden mislukt";
+      setLoadError(message);
+      if (!silent) toast.error(message);
       return;
     }
     setLoadError(null);
+    setGcStageIds(new Set((gcStages ?? []).map((stage) => stage.id)));
     const stageRows = (data ?? []) as Row[];
     setRows(stageRows);
     if (!silent) {
@@ -471,7 +615,11 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   }, [activeGameId, hasActiveCalculation]);
 
   async function approve(stageId: string) {
-    if (!confirm("Uitslag fiatteren? Deelnemers zien dit pas zodra de game op Live staat. Met testmodus zie je zelf direct de volledige live-weergave.")) return;
+    const isGc = gcStageIds.has(stageId);
+    const question = isGc
+      ? "Eindklassement definitief fiatteren? De GC- en truibonussen tellen daarna mee in de totaalstand."
+      : "Uitslag fiatteren? Deelnemers zien dit pas zodra de game op Live staat. Met testmodus zie je zelf direct de volledige live-weergave.";
+    if (!confirm(question)) return;
     setBusyId(stageId);
     const { error } = await supabase.rpc("approve_stage_results", { p_stage_id: stageId });
     setBusyId(null);
@@ -479,8 +627,13 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
       toast.error(error.message);
       return;
     }
-    toast.success("Uitslag gefiatteerd");
-    load();
+    if (isGc) {
+      toast.success("Eindklassement gefiatteerd — definitieve stand geopend");
+      navigate(`/uitslagen?game=${encodeURIComponent(activeGameId)}&view=klassement&stage=gc`);
+    } else {
+      toast.success("Uitslag gefiatteerd");
+      load();
+    }
     // Bewust GEEN automatische commentaargeneratie meer bij fiatteren: het
     // commentaar wordt on-demand per subpoule gegenereerd zodra een deelnemer
     // 'm opent (of via de handmatige knoppen hieronder).
@@ -551,6 +704,16 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
               const failed = r.calculation_status === "failed";
               const ready = isFiatReady(r.results_status, r.calculation_status);
               const progress = getCalculationProgress(r.processed_count, r.total_count);
+              if (gcStageIds.has(r.stage_id) && ready) {
+                return (
+                  <GcApprovalCard
+                    key={r.stage_id}
+                    row={r}
+                    busy={busyId === r.stage_id}
+                    onApprove={() => approve(r.stage_id)}
+                  />
+                );
+              }
               return (
               <div key={r.stage_id} className="min-w-0 border rounded-md p-3" aria-live="polite">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -624,12 +787,14 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
         <CardContent className="space-y-2 text-sm">
           {drafts.length === 0 ? (
             <p className="text-muted-foreground italic">Geen concepten.</p>
-          ) : drafts.map((r) => (
-            <div key={r.stage_id} className="border rounded-md p-2">
+          ) : drafts.map((r) => {
+            const isGc = gcStageIds.has(r.stage_id);
+            return (
+            <div key={r.stage_id} className={`border rounded-md p-2 ${isGc ? "border-amber-400/70 bg-amber-50/40 dark:bg-amber-950/10" : ""}`}>
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
                   <StatusBadge s={r.results_status} />
-                  <span>Etappe {r.stage_number}</span>
+                  <span>{isGc ? "Eindklassement" : `Etappe ${r.stage_number}`}</span>
                   {r.stage_name && <span className="text-muted-foreground">— {r.stage_name}</span>}
                 </div>
                 <Button
@@ -637,12 +802,12 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   disabled={busyId === r.stage_id}
                   onClick={() => submitForApproval(r.stage_id)}
                 >
-                  <Clock className="w-4 h-4 mr-2" />
-                  {busyId === r.stage_id ? "Bezig…" : "Klaar voor controle"}
+                  {isGc ? <Trophy className="w-4 h-4 mr-2" /> : <Clock className="w-4 h-4 mr-2" />}
+                  {busyId === r.stage_id ? "Bezig…" : isGc ? "Bereken en zet klaar voor fiat" : "Klaar voor controle"}
                 </Button>
               </div>
             </div>
-          ))}
+          );})}
         </CardContent>
       </Card>
 
