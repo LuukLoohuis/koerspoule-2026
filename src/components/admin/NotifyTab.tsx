@@ -15,6 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import KoerspouleLogo from "@/components/KoerspouleLogo";
 
 type Game = { id: string; name: string; year: number | null };
 
@@ -336,7 +337,7 @@ export default function NotifyTab() {
             </div>
             {/* Live mini-preview of header */}
             <div className="border rounded bg-white p-3 text-center">
-              <img src="/koerspoule-logo-2026.png" alt="Koerspoule" width={150} className="mx-auto mb-1 rounded" />
+              <KoerspouleLogo alt="Koerspoule" width={150} className="mx-auto mb-1 rounded" />
               <div style={{ fontFamily: "'Brush Script MT','Segoe Script','Snell Roundhand',cursive", fontStyle: "italic", fontSize: 24, color: "#C0851A", lineHeight: 1.1, textAlign: "center" }}>
                 Uit liefde voor de koers
               </div>

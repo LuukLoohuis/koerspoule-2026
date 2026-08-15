@@ -26,6 +26,8 @@ export type ThemaKleuren = {
 
 export type Thema = {
   key: ThemaKey;
+  /** Race-specifiek Koerspoule-logo; volgt dezelfde actieve game als dit thema. */
+  logo: string;
   kleuren: ThemaKleuren;
   krant: string;
   koers: string;
@@ -58,7 +60,8 @@ const WIT_RAND = "#C8B89A";
 export const THEMAS: Record<ThemaKey, Thema> = {
   roze: {
     key: "roze",
-    kleuren: { primair: "#E8336D", secundair: "#C8A020", achtergrond: "#FAF7F2", kaart: "#FDF2F6", tekst: "#2C2416", accent: "#C8A020" },
+    logo: "/koerspoule-giro.svg",
+    kleuren: { primair: "#FF69B4", secundair: "#C8A020", achtergrond: "#FAF7F2", kaart: "#FDF2F6", tekst: "#2C2416", accent: "#C8A020" },
     krant: "Gazzetta",
     koers: "Giro d'Italia",
     etappe: "Tappa",
@@ -85,7 +88,8 @@ export const THEMAS: Record<ThemaKey, Thema> = {
   },
   geel: {
     key: "geel",
-    kleuren: { primair: "#E0A411", secundair: "#1a1a1a", achtergrond: "#FFFDF0", kaart: "#FFF8E6", tekst: "#1a1a1a", accent: "#C0851A" },
+    logo: "/koerspoule-tour.svg",
+    kleuren: { primair: "#FFC300", secundair: "#1a1a1a", achtergrond: "#FFFDF0", kaart: "#FFF8E6", tekst: "#1a1a1a", accent: "#C0851A" },
     krant: "L'Équipe",
     koers: "Tour de France",
     etappe: "Étape",
@@ -112,7 +116,8 @@ export const THEMAS: Record<ThemaKey, Thema> = {
   },
   rood: {
     key: "rood",
-    kleuren: { primair: "#CC0000", secundair: "#F5A623", achtergrond: "#FFF9F5", kaart: "#FFF1EC", tekst: "#2C1810", accent: "#F5A623" },
+    logo: "/koerspoule-vuelta.svg",
+    kleuren: { primair: "#E30613", secundair: "#F5A623", achtergrond: "#FFF9F5", kaart: "#FFF1EC", tekst: "#2C1810", accent: "#F5A623" },
     krant: "Marca",
     koers: "Vuelta a España",
     etappe: "Etapa",

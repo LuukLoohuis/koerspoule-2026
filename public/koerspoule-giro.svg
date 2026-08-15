@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320" role="img" aria-labelledby="title">
+  <title id="title">Koerspoule Giro d'Italia</title>
+  <defs>
+    <filter id="giro-accent" color-interpolation-filters="sRGB">
+      <!-- Geel/goud -> roze (#ff69b4); zwart, wit en neutraalgrijs blijven gelijk. -->
+      <feColorMatrix type="matrix" values="
+        1 0 0 0 0
+        0 .515 .485 0 0
+        .706 0 .294 0 0
+        0 0 0 1 0"/>
+    </filter>
+    <clipPath id="shield-flag">
+      <path d="M168 230H312L298 263Q271 285 240 296Q209 285 182 263Z"/>
+    </clipPath>
+    <linearGradient id="flag-shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".34"/>
+      <stop offset=".34" stop-color="#fff" stop-opacity=".06"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".18"/>
+    </linearGradient>
+  </defs>
+  <image href="koerspoule-logo-2026.png" width="480" height="320" filter="url(#giro-accent)"/>
+  <g clip-path="url(#shield-flag)">
+    <rect x="168" y="230" width="48" height="66" fill="#009246"/>
+    <rect x="216" y="230" width="48" height="66" fill="#fff"/>
+    <rect x="264" y="230" width="48" height="66" fill="#CE2B37"/>
+    <rect x="168" y="230" width="144" height="66" fill="url(#flag-shine)"/>
+  </g>
+</svg>

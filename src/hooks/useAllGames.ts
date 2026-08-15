@@ -7,6 +7,8 @@ export type GameRow = {
   year: number;
   status: "concept" | "draft" | "open" | "open_inschrijving" | "locked" | "live" | "finished" | string;
   game_type: "giro" | "tour" | "tdf" | "vuelta" | "femmes" | string | null;
+  /** Centrale themasleutel; game_type blijft de fallback voor oudere databases. */
+  theme?: "roze" | "geel" | "rood" | string | null;
   prizes_visible?: boolean | null;
   admin_testmodus?: boolean | null;
   /** "Inschrijving open"-banner voor deze game (admin, handmatig). */
@@ -22,7 +24,7 @@ export function useAllGames() {
     refetchOnReconnect: true,
     queryFn: async (): Promise<GameRow[]> => {
       if (!supabase) return [];
-      const SELECT = "id, name, year, status, game_type, prizes_visible, admin_testmodus, inschrijf_banner_visible";
+      const SELECT = "id, name, year, status, game_type, theme, prizes_visible, admin_testmodus, inschrijf_banner_visible";
       // Vóór de inschrijf_banner-migratie geeft de volle select een 42703
       // (undefined column) → val terug op de kolomlijst zonder dat veld.
       const SELECT_LEGACY = "id, name, year, status, game_type, prizes_visible, admin_testmodus";

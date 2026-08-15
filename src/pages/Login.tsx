@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Trophy, Mountain, Medal, Shirt, Star, Bike, Eye, EyeOff } from "lucide-react";
-import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
+import KoerspouleLogo from "@/components/KoerspouleLogo";
 import { useThema } from "@/contexts/ThemaContext";
 import TruiBadge from "@/components/retro/TruiBadge";
 import { supabase } from "@/lib/supabase";
@@ -307,8 +307,7 @@ export default function Login() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <img
-            src={koerspouleLogo}
+          <KoerspouleLogo
             alt={t("auth.login.logoAlt")}
             className="h-20 mx-auto mb-2 drop-shadow-lg"
           />
