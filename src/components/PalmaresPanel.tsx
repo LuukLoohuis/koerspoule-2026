@@ -2,6 +2,10 @@ import { BarChart3, Bike, ChevronDown, Crown, Medal, Share2, Trophy, Users } fro
 import type { CSSProperties, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import palmaresCyclingScene from "@/assets/palmares-cycling-scene-v2.png";
+import roundelGiro from "@/assets/palmares-roundel-giro.png";
+import roundelTour from "@/assets/palmares-roundel-tour.png";
+import roundelVuelta from "@/assets/palmares-roundel-vuelta.png";
 import truiGiroAlgemeen from "@/assets/trui-giro-algemeen.png";
 import truiTourAlgemeen from "@/assets/trui-tour-algemeen.png";
 import truiVueltaAlgemeen from "@/assets/trui-vuelta-algemeen.png";
@@ -23,6 +27,7 @@ type RaceTheme = {
   roundel: string;
   roundelInk: string;
   wordmark: string;
+  sceneFilter: string;
   profile: string;
 };
 type PalmaresThemeStyle = CSSProperties & {
@@ -33,19 +38,25 @@ type PalmaresThemeStyle = CSSProperties & {
   "--palmares-hero-end": string;
   "--palmares-roundel": string;
   "--palmares-roundel-ink": string;
+  "--palmares-scene-filter": string;
 };
 
 const RACE_THEMES: Record<RaceTheme["key"], RaceTheme> = {
-  tour: { key: "tour", accent: "#d8a514", accentStrong: "#9c6c05", accentSoft: "#fbf0c9", heroStart: "#fff7d8", heroEnd: "#ffd34f", roundel: "#ffd83f", roundelInk: "#21170c", wordmark: "TOUR", profile: "M0 42 14 31 25 37 42 18 55 34 69 25 82 39 100 22 118 42" },
-  giro: { key: "giro", accent: "#e94f8b", accentStrong: "#b72f65", accentSoft: "#fce2ec", heroStart: "#fde9f0", heroEnd: "#ef79a6", roundel: "#f5b0ca", roundelInk: "#321421", wordmark: "GIRO", profile: "M0 42 12 34 24 39 38 17 48 32 61 13 75 36 88 23 101 42 118 33" },
-  vuelta: { key: "vuelta", accent: "#df2c23", accentStrong: "#a81919", accentSoft: "#f9dfdc", heroStart: "#ffe2dd", heroEnd: "#df3026", roundel: "#d92b24", roundelInk: "#fffaf2", wordmark: "VUELTA", profile: "M0 42 14 27 29 36 42 22 56 39 72 17 87 31 99 24 118 42" },
-  neutral: { key: "neutral", accent: "#b48643", accentStrong: "#76522d", accentSoft: "#f1e7d5", heroStart: "#f8eedc", heroEnd: "#d9b477", roundel: "#b48643", roundelInk: "#fffaf2", wordmark: "RONDE", profile: "M0 42 18 30 34 36 52 21 68 37 85 28 101 36 118 42" },
+  tour: { key: "tour", accent: "#d8a514", accentStrong: "#9c6c05", accentSoft: "#fbf0c9", heroStart: "#fff7d8", heroEnd: "#ffd34f", roundel: "#ffd83f", roundelInk: "#21170c", wordmark: "TOUR", sceneFilter: "none", profile: "M0 42 14 31 25 37 42 18 55 34 69 25 82 39 100 22 118 42" },
+  giro: { key: "giro", accent: "#e94f8b", accentStrong: "#b72f65", accentSoft: "#fce2ec", heroStart: "#fde9f0", heroEnd: "#ef79a6", roundel: "#f5b0ca", roundelInk: "#321421", wordmark: "GIRO", sceneFilter: "hue-rotate(295deg) saturate(1.15)", profile: "M0 42 12 34 24 39 38 17 48 32 61 13 75 36 88 23 101 42 118 33" },
+  vuelta: { key: "vuelta", accent: "#df2c23", accentStrong: "#a81919", accentSoft: "#f9dfdc", heroStart: "#ffe2dd", heroEnd: "#df3026", roundel: "#d92b24", roundelInk: "#fffaf2", wordmark: "VUELTA", sceneFilter: "hue-rotate(320deg) saturate(1.25)", profile: "M0 42 14 27 29 36 42 22 56 39 72 17 87 31 99 24 118 42" },
+  neutral: { key: "neutral", accent: "#b48643", accentStrong: "#76522d", accentSoft: "#f1e7d5", heroStart: "#f8eedc", heroEnd: "#d9b477", roundel: "#b48643", roundelInk: "#fffaf2", wordmark: "RONDE", sceneFilter: "sepia(.2)", profile: "M0 42 18 30 34 36 52 21 68 37 85 28 101 36 118 42" },
 };
 const JERSEY_BY_THEME: Record<RaceTheme["key"], string> = {
   tour: truiTourAlgemeen,
   giro: truiGiroAlgemeen,
   vuelta: truiVueltaAlgemeen,
   neutral: truiTourAlgemeen,
+};
+const ROUNDEL_BY_THEME: Partial<Record<RaceTheme["key"], string>> = {
+  tour: roundelTour,
+  giro: roundelGiro,
+  vuelta: roundelVuelta,
 };
 
 function getRaceTheme(type: string | null): RaceTheme {
@@ -64,6 +75,7 @@ function raceThemeStyle(theme: RaceTheme): PalmaresThemeStyle {
     "--palmares-hero-end": theme.heroEnd,
     "--palmares-roundel": theme.roundel,
     "--palmares-roundel-ink": theme.roundelInk,
+    "--palmares-scene-filter": theme.sceneFilter,
   };
 }
 function gameTypeToCountry(type: string | null): "IT" | "FR" | "ES" {
@@ -108,33 +120,29 @@ function RaceProfileMark({ theme, className }: { theme: RaceTheme; className?: s
 }
 function HeaderCyclingScene() {
   return (
-    <svg viewBox="0 0 620 230" className="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[55%] text-[#5f513f] lg:block" fill="none" aria-hidden>
-      <path d="M25 192 148 100l70 53 90-92 88 97 93-60 131 94" fill="#8c806d" opacity=".055" />
-      <path d="M0 205 116 144l65 34 86-69 91 62 92-40 170 74" fill="#8c806d" opacity=".075" />
-      <path d="M407 224c32-20 39-31 74-38-24-8-11-19 18-25-20-7-14-16 20-22 24-4 35-11 50-24" stroke="var(--palmares-accent)" strokeWidth="2" opacity=".85" />
-      <g transform="translate(270 82)" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" opacity=".2">
-        <circle cx="28" cy="88" r="28" strokeWidth="5" /><circle cx="108" cy="88" r="28" strokeWidth="5" />
-        <path d="m28 88 31-46 22 46H28l20-29h45l15 29M59 42l-6-17m22 1h20" strokeWidth="6" />
-        <circle cx="55" cy="2" r="10" fill="currentColor" stroke="none" /><path d="m55 15 20 29 20-8M68 30 47 56M55 18 40 4M55 18 73 1" strokeWidth="8" />
-      </g>
-    </svg>
+    <img
+      src={palmaresCyclingScene}
+      alt=""
+      className="pointer-events-none absolute -bottom-8 right-0 hidden h-auto w-[62%] max-w-[760px] object-contain object-right-bottom opacity-[0.42] lg:block"
+      style={{ filter: "var(--palmares-scene-filter)" }}
+      aria-hidden
+    />
   );
 }
 function LaurelWreath() {
-  const leaves = [34, 58, 82, 106, 130];
+  const leaves = [30, 50, 70, 90, 110, 130, 150];
   return (
     <svg viewBox="0 0 340 210" className="absolute inset-0 h-full w-full text-[var(--palmares-accent)]" aria-hidden>
       <path d="M86 185C38 149 24 80 67 28M254 185c48-36 62-105 19-157" stroke="currentColor" strokeWidth="3" fill="none" opacity=".45" />
-      {leaves.map((y, index) => <g key={y} opacity={0.24 + index * 0.045}><ellipse cx={58 - index * 3} cy={y} rx="9" ry="20" transform={`rotate(${-42 + index * 5} ${58 - index * 3} ${y})`} fill="currentColor" /><ellipse cx={282 + index * 3} cy={y} rx="9" ry="20" transform={`rotate(${42 - index * 5} ${282 + index * 3} ${y})`} fill="currentColor" /></g>)}
+      {leaves.map((y, index) => <g key={y} opacity={0.22 + index * 0.035}><ellipse cx={64 - index * 2} cy={y} rx="7" ry="15" transform={`rotate(${-48 + index * 4} ${64 - index * 2} ${y})`} fill="currentColor" /><ellipse cx={276 + index * 2} cy={y} rx="7" ry="15" transform={`rotate(${48 - index * 4} ${276 + index * 2} ${y})`} fill="currentColor" /></g>)}
     </svg>
   );
 }
 function RaceRoundel({ theme }: { theme: RaceTheme }) {
+  const image = ROUNDEL_BY_THEME[theme.key];
   return (
-    <span className="relative flex h-14 w-14 shrink-0 flex-col items-center justify-center overflow-hidden rounded-full border border-[var(--palmares-accent)] bg-[var(--palmares-roundel)] text-[var(--palmares-roundel-ink)] shadow-[0_4px_10px_rgba(58,42,26,0.12)] sm:h-16 sm:w-16">
-      <Bike className="h-4 w-4" strokeWidth={2.3} aria-hidden />
-      <span className="mt-0.5 font-oswald text-[9px] font-black uppercase leading-none tracking-[-0.03em] sm:text-[10px]">{theme.wordmark}</span>
-      <span className="absolute inset-x-2 bottom-1 h-px bg-current opacity-30" aria-hidden />
+    <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--palmares-accent)] bg-[var(--palmares-roundel)] text-[var(--palmares-roundel-ink)] shadow-[0_3px_8px_rgba(58,42,26,0.1)] sm:h-14 sm:w-14">
+      {image ? <img src={image} alt="" className="h-full w-full rounded-full object-cover" /> : <><Bike className="h-4 w-4" strokeWidth={2.3} aria-hidden /><span className="ml-1 font-oswald text-[9px] font-black uppercase">{theme.wordmark}</span></>}
     </span>
   );
 }
@@ -150,9 +158,9 @@ function MiniLaurel() {
 function AchievementStat({ icon, value, label, className }: { icon: ReactNode; value: number; label: string; className?: string }) {
   const achieved = value > 0;
   return (
-    <div className={cn("flex min-h-[112px] items-center gap-3 px-4 py-5 sm:min-h-[124px] sm:justify-center sm:px-5", className)}>
-      <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-[#fffdf8] shadow-[0_4px_12px_rgba(58,42,26,0.08)] sm:h-14 sm:w-14", achieved ? "border-[var(--palmares-accent)] text-[var(--palmares-accent-strong)]" : "border-[#6b5640]/15 text-[#6b5640]/55")}>{icon}</span>
-      <span><strong className={cn("block font-oswald text-3xl font-black leading-none sm:text-4xl", achieved ? "text-[var(--palmares-accent-strong)]" : "text-[var(--ink-sepia)]")}>{value}</strong><span className="mt-1.5 block text-xs font-medium leading-tight text-[var(--ink-faded)] sm:text-sm">{label}</span><span className={cn("mt-2 block h-0.5 w-8", achieved ? "bg-[var(--palmares-accent)]" : "bg-[#6b5640]/18")} aria-hidden /></span>
+    <div className={cn("flex min-h-[88px] items-center gap-3 px-4 py-3.5 sm:min-h-[98px] sm:justify-center sm:px-5", className)}>
+      <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full border bg-[#fffdf8] shadow-[0_3px_9px_rgba(58,42,26,0.07)] sm:h-12 sm:w-12", achieved ? "border-[var(--palmares-accent)] text-[var(--palmares-accent-strong)]" : "border-[#6b5640]/15 text-[#6b5640]/55")}>{icon}</span>
+      <span><strong className={cn("block font-oswald text-3xl font-black leading-none", achieved ? "text-[var(--palmares-accent-strong)]" : "text-[var(--ink-sepia)]")}>{value}</strong><span className="mt-1 block text-xs font-medium leading-tight text-[var(--ink-faded)]">{label}</span><span className={cn("mt-1.5 block h-px w-8", achieved ? "bg-[var(--palmares-accent)]" : "bg-[#6b5640]/18")} aria-hidden /></span>
     </div>
   );
 }
@@ -168,11 +176,11 @@ function GameCard({ game, defaultOpen }: { game: PalmaresGame; defaultOpen: bool
   const theme = getRaceTheme(game.game_type);
   return (
     <Collapsible defaultOpen={defaultOpen} className="group" style={raceThemeStyle(theme)}>
-      <div className="overflow-hidden rounded-2xl border border-[#6b5640]/16 bg-[#fffdf8]/92 shadow-[0_4px_12px_rgba(58,42,26,0.065)]">
+      <div className="overflow-hidden rounded-xl border border-[#6b5640]/16 bg-[#fffdf8]/92 shadow-[0_3px_9px_rgba(58,42,26,0.055)]">
         <CollapsibleTrigger asChild>
-          <button type="button" className="grid w-full grid-cols-[56px_minmax(0,1fr)_auto_20px] items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-[var(--palmares-accent-soft)]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--palmares-accent)] sm:grid-cols-[64px_minmax(0,1fr)_auto_24px] sm:gap-4 sm:px-5 sm:py-3.5">
+          <button type="button" className="grid w-full grid-cols-[48px_minmax(0,1fr)_auto_20px] items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-[var(--palmares-accent-soft)]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--palmares-accent)] sm:grid-cols-[56px_minmax(0,1fr)_auto_24px] sm:gap-4 sm:px-4 sm:py-3">
             <RaceRoundel theme={theme} />
-            <span className="min-w-0"><span className="block truncate font-oswald text-base font-black uppercase text-[var(--ink-sepia)] sm:text-lg">{game.game_name}</span><span className={cn("mt-1 block truncate text-xs text-[var(--ink-faded)] sm:text-sm", live && "font-semibold text-[var(--vintage-green)]")}>{live ? "● " : ""}{live ? t("common.palmares.provisional") : t("common.palmares.finalStanding")}{game.stages_count > 0 ? ` · ${t("common.palmares.stages", { count: game.stages_count })}` : ""}</span></span>
+            <span className="min-w-0"><span className="block truncate font-oswald text-sm font-black uppercase text-[var(--ink-sepia)] sm:text-base">{game.game_name}</span><span className={cn("mt-1 block truncate text-[11px] text-[var(--ink-faded)] sm:text-xs", live && "font-semibold text-[var(--vintage-green)]")}>{live ? "● " : ""}{live ? t("common.palmares.provisional") : t("common.palmares.finalStanding")}{game.stages_count > 0 ? ` · ${t("common.palmares.stages", { count: game.stages_count })}` : ""}</span></span>
             <span className="text-right"><strong className={cn("block font-oswald text-xl font-black leading-none text-[var(--ink-sepia)] sm:text-2xl", topThree && "text-[var(--palmares-accent-strong)]")}>#{game.my_rank || "—"}</strong><span className="mt-1 block text-[11px] text-[var(--ink-faded)] sm:text-xs">{t("common.palmares.of", { total: game.total_participants.toLocaleString(i18n.language) })}</span></span>
             <ChevronDown className="h-5 w-5 text-[var(--ink-faded)] transition-transform duration-200 group-data-[state=open]:rotate-180" aria-hidden />
           </button>
@@ -239,24 +247,24 @@ export default function PalmaresPanel() {
     <section className="vintage-paper relative overflow-hidden rounded-[1.75rem] border border-[#6b5640]/18 p-4 text-[var(--ink-sepia)] shadow-[0_12px_34px_rgba(58,42,26,0.1)] sm:p-6 lg:p-8" style={raceThemeStyle(bestTheme)}>
       <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background:radial-gradient(circle_at_74%_7%,rgba(255,255,255,.9),transparent_31%),linear-gradient(120deg,transparent_0_68%,var(--palmares-accent-soft)_68%_70%,transparent_70%)]" aria-hidden />
       <div className="relative rounded-[1.4rem] border border-[#6b5640]/10 bg-[#fffaf0]/40 px-4 pb-5 pt-5 sm:px-6 sm:pb-7 sm:pt-6 lg:px-8 lg:pb-8 lg:pt-7">
-        <header className="relative min-h-[180px] pr-0 sm:min-h-[205px] lg:pr-[31%]">
+        <header className="relative min-h-[180px] overflow-hidden sm:min-h-[205px] lg:min-h-[220px]">
           <HeaderCyclingScene />
           <div className="relative z-10 flex items-center gap-3 font-oswald text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--palmares-accent-strong)] sm:text-xs"><span className="h-px w-8 bg-current sm:w-11" aria-hidden />{t("common.palmares.personalHonours")}<span className="hidden h-px w-8 bg-current sm:block sm:w-11" aria-hidden /><span className="text-lg leading-none" aria-hidden>❧</span></div>
-          <h2 className="relative z-10 mt-4 font-oswald text-[clamp(3.2rem,8vw,6.2rem)] font-black uppercase leading-[0.86] tracking-[-0.035em] text-[#24180e]">{t("common.palmares.hero")}</h2>
+          <h2 className="relative z-10 mt-4 font-oswald text-[clamp(3.2rem,6.4vw,5.8rem)] font-black uppercase leading-[0.88] tracking-[-0.035em] text-[#24180e] lg:whitespace-nowrap">{t("common.palmares.hero")}</h2>
           <p className="relative z-10 mt-4 font-serif text-base italic text-[var(--ink-faded)] sm:text-xl">{t("common.palmares.heroSub")}</p>
           <button type="button" onClick={sharePalmares} className="relative z-20 mt-5 inline-flex h-11 items-center gap-2 rounded-xl border border-[#4b3825]/70 bg-[#fffdf8]/80 px-4 font-sans text-sm font-bold text-[var(--ink-sepia)] shadow-[0_3px_8px_rgba(58,42,26,0.08)] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--palmares-accent)] sm:absolute sm:right-0 sm:top-0 sm:mt-0 sm:h-12 sm:px-5 sm:text-base"><Share2 className="h-4 w-4" aria-hidden />{t("common.palmares.share")}</button>
         </header>
 
         <article className="relative grid overflow-hidden rounded-[1.4rem] border border-[var(--palmares-accent)] bg-[#fffdf8]/88 shadow-[0_8px_22px_rgba(58,42,26,0.085)] lg:grid-cols-[39fr_61fr]">
-          <div className="relative flex min-h-[265px] items-center justify-center overflow-hidden [background:linear-gradient(145deg,var(--palmares-hero-start),var(--palmares-hero-end))] px-5 py-8 sm:min-h-[290px]">
+          <div className="relative flex min-h-[235px] items-center justify-center overflow-hidden [background:linear-gradient(145deg,var(--palmares-hero-start),var(--palmares-hero-end))] px-5 py-6 sm:min-h-[255px]">
             <div className="absolute inset-0 opacity-45 [background:radial-gradient(circle_at_50%_55%,rgba(255,255,255,.55),transparent_55%)]" aria-hidden /><LaurelWreath />
-            <div className="relative z-10 text-center"><span className="inline-flex rounded-lg border border-[var(--palmares-accent)] bg-[#fffaf0]/88 px-4 py-1.5 font-oswald text-[10px] font-bold uppercase tracking-[0.17em] text-[var(--palmares-accent-strong)] shadow-sm sm:text-xs">{t("common.palmares.bestFinalRank")}</span><strong className="mt-4 block font-oswald text-[clamp(4.7rem,10vw,7.2rem)] font-black leading-none tracking-[-0.055em] text-[#2a190b]">#{bestGame?.my_rank || "—"}</strong><span className="mx-auto mt-2 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--palmares-accent)] bg-[#fffdf8] shadow-[0_4px_12px_rgba(58,42,26,.14)]"><img src={JERSEY_BY_THEME[bestTheme.key]} alt="" className="h-11 w-auto object-contain" /></span></div>
+            <div className="relative z-10 text-center"><span className="inline-flex rounded-lg border border-[var(--palmares-accent)] bg-[#fffaf0]/88 px-4 py-1.5 font-oswald text-[10px] font-bold uppercase tracking-[0.17em] text-[var(--palmares-accent-strong)] shadow-sm sm:text-xs">{t("common.palmares.bestFinalRank")}</span><strong className="mt-3 block font-oswald text-[clamp(4.25rem,8vw,6rem)] font-black leading-none tracking-[-0.055em] text-[#2a190b]">#{bestGame?.my_rank || "—"}</strong><span className="mx-auto mt-1.5 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--palmares-accent)] bg-[#fffdf8] shadow-[0_3px_9px_rgba(58,42,26,.12)]"><img src={JERSEY_BY_THEME[bestTheme.key]} alt="" className="h-9 w-auto object-contain" /></span></div>
             <div className="pointer-events-none absolute -right-10 -top-4 hidden h-[calc(100%+2rem)] w-20 rounded-[50%] border-r-2 border-[var(--palmares-accent)] bg-[#fffdf8] lg:block" aria-hidden />
           </div>
-          <div className="relative flex min-h-[265px] flex-col justify-center px-6 py-8 sm:px-9 lg:pl-14 lg:pr-10">
+          <div className="relative flex min-h-[235px] flex-col justify-center px-6 py-6 sm:min-h-[255px] sm:px-9 lg:pl-12 lg:pr-9">
             <p className="font-oswald text-xs font-bold uppercase tracking-[0.18em] text-[var(--palmares-accent-strong)] sm:text-sm">{raceHeading(bestGame)}</p><h3 className="mt-3 font-oswald text-3xl font-black uppercase leading-[1.02] tracking-[-0.02em] text-[#281a0e] sm:text-4xl lg:text-[2.65rem]">{t("common.palmares.strongestGrandTour")}</h3>
-            <p className="mt-5 flex items-center gap-2 text-sm text-[var(--ink-faded)] sm:text-base"><Users className="h-5 w-5 text-[#8f7d62]/70" aria-hidden />{bestGame ? t("common.palmares.rankOf", { rank: bestGame.my_rank, total: bestGame.total_participants.toLocaleString(i18n.language) }) : "—"}</p>
-            {bestPercent !== null && <div className="mt-6 flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[#6b5640]/16 bg-[#fffdf8]/90 px-4 py-3 shadow-sm sm:w-fit"><BarChart3 className="h-5 w-5 shrink-0 text-[var(--palmares-accent)]" aria-hidden /><strong className="text-sm text-[var(--ink-sepia)] sm:text-base">{t("common.palmares.topPercent", { percent: bestPercent })}</strong><span className="text-xs text-[var(--ink-faded)] sm:text-sm">{t("common.palmares.ofField")}</span></div>}
+            <p className="mt-4 flex items-center gap-2 text-sm text-[var(--ink-faded)] sm:text-base"><Users className="h-5 w-5 text-[#8f7d62]/70" aria-hidden />{bestGame ? t("common.palmares.rankOf", { rank: bestGame.my_rank, total: bestGame.total_participants.toLocaleString(i18n.language) }) : "—"}</p>
+            {bestPercent !== null && <div className="mt-4 flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[#6b5640]/16 bg-[#fffdf8]/90 px-4 py-2.5 shadow-sm sm:w-fit"><BarChart3 className="h-5 w-5 shrink-0 text-[var(--palmares-accent)]" aria-hidden /><strong className="text-sm text-[var(--ink-sepia)] sm:text-base">{t("common.palmares.topPercent", { percent: bestPercent })}</strong><span className="text-xs text-[var(--ink-faded)] sm:text-sm">{t("common.palmares.ofField")}</span></div>}
           </div>
         </article>
 
@@ -267,7 +275,7 @@ export default function PalmaresPanel() {
         <Tabs defaultValue="races" className="mt-7">
           <div className="flex items-end justify-between gap-4 border-b border-[#6b5640]/18"><TabsList className="h-auto gap-1 rounded-none bg-transparent p-0"><TabsTrigger value="races" className="rounded-t-xl rounded-b-none border border-transparent px-4 py-3 font-sans text-sm font-bold text-[var(--ink-faded)] data-[state=active]:border-[#6b5640]/18 data-[state=active]:border-b-2 data-[state=active]:border-b-[var(--palmares-accent)] data-[state=active]:bg-[#fffdf8]/85 data-[state=active]:text-[var(--ink-sepia)] data-[state=active]:shadow-none sm:px-6">{t("common.palmares.racesTab")}</TabsTrigger><TabsTrigger value="subpoules" className="rounded-t-xl rounded-b-none border border-transparent px-4 py-3 font-sans text-sm font-bold text-[var(--ink-faded)] data-[state=active]:border-[#6b5640]/18 data-[state=active]:border-b-2 data-[state=active]:border-b-[var(--palmares-accent)] data-[state=active]:bg-[#fffdf8]/85 data-[state=active]:text-[var(--ink-sepia)] data-[state=active]:shadow-none sm:px-6">{t("common.palmares.subpoules")}</TabsTrigger></TabsList>{latestSeason && <span className="hidden pb-3 font-oswald text-xs font-bold uppercase tracking-[0.16em] text-[var(--ink-faded)] sm:block">{latestSeason.year ?? t("common.palmares.earlier")} · {t("common.palmares.chapters", { count: latestSeason.games.length })}</span>}</div>
           <TabsContent value="races" className="mt-5 space-y-7">
-            {seasons.map(({ year, games: seasonGames }, seasonIndex) => <section key={year ?? "past"}>{(seasons.length > 1 || seasonIndex > 0) && <div className="mb-3 flex items-center gap-4"><h3 className="font-oswald text-sm font-black uppercase tracking-[0.16em] text-[var(--ink-faded)]">{year ?? t("common.palmares.earlier")}</h3><span className="h-px flex-1 bg-[#6b5640]/16" aria-hidden /></div>}<div className="relative ml-2 space-y-3 border-l border-[#6b5640]/22 pl-5 sm:ml-0 sm:pl-8">{seasonGames.map((game) => <div key={game.game_id} className="relative"><span className="absolute -left-[1.78rem] top-7 h-3 w-3 rounded-full border-2 border-[#fffaf0] bg-[var(--palmares-accent)] shadow-[0_0_0_1px_var(--palmares-accent)] sm:-left-[2.32rem]" style={raceThemeStyle(getRaceTheme(game.game_type))} aria-hidden /><GameCard game={game} defaultOpen={game.game_id === bestGame?.game_id} /></div>)}</div></section>)}
+            {seasons.map(({ year, games: seasonGames }, seasonIndex) => <section key={year ?? "past"}>{(seasons.length > 1 || seasonIndex > 0) && <div className="mb-3 flex items-center gap-4"><h3 className="font-oswald text-sm font-black uppercase tracking-[0.16em] text-[var(--ink-faded)]">{year ?? t("common.palmares.earlier")}</h3><span className="h-px flex-1 bg-[#6b5640]/16" aria-hidden /></div>}<div className="relative ml-2 space-y-3 border-l border-[#6b5640]/22 pl-5 sm:ml-0 sm:pl-8">{seasonGames.map((game) => <div key={game.game_id} className="relative"><span className="absolute -left-[1.78rem] top-7 h-3 w-3 rounded-full border-2 border-[#fffaf0] bg-[var(--palmares-accent)] shadow-[0_0_0_1px_var(--palmares-accent)] sm:-left-[2.32rem]" style={raceThemeStyle(getRaceTheme(game.game_type))} aria-hidden /><GameCard game={game} defaultOpen={false} /></div>)}</div></section>)}
           </TabsContent>
           <TabsContent value="subpoules" className="mt-5">{subpoules.length > 0 ? <div className="grid gap-3 lg:grid-cols-2">{subpoules.map((subpoule) => <SubpouleCard key={subpoule.subpoule_id} subpoule={subpoule} />)}</div> : <div className="rounded-2xl border border-[#6b5640]/16 bg-[#fffdf8]/70 p-8 text-center"><Users className="mx-auto mb-3 h-9 w-9 text-[#6b5640]/50" aria-hidden /><p className="font-serif text-sm italic text-[var(--ink-faded)]">{t("common.palmares.noSubpoules")}</p></div>}</TabsContent>
         </Tabs>
