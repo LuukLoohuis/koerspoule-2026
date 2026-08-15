@@ -84,6 +84,20 @@ export function isGameLocked(status?: string | null): boolean {
   return LOCKED.includes(s(status));
 }
 
+export type RegistrationPhase = "preview" | "open" | "closed";
+
+/**
+ * Publieke inschrijffase zoals die in statusafhankelijke UI moet worden getoond.
+ * De gamestatus is hierbij leidend; registratie-datums zijn alleen een fallback
+ * zolang er nog geen herkenbare status geladen is.
+ */
+export function registrationPhaseForStatus(status?: string | null): RegistrationPhase | null {
+  if (isPreviewStatus(status)) return "preview";
+  if (canRegister(status)) return "open";
+  if (isGameLocked(status)) return "closed";
+  return null;
+}
+
 /** Afgerond/teruggekeken (finished of het oude closed). */
 export function isFinishedLike(status?: string | null): boolean {
   const v = s(status);

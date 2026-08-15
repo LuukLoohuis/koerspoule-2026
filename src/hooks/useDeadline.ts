@@ -2,12 +2,13 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { registrationPhaseForStatus } from "@/lib/gameStatus";
 
 // Fallback (Giro 2026) if admin hasn't set deadlines yet
 const FALLBACK_OPEN = new Date("2026-05-04T00:00:00+02:00");
 const FALLBACK_CLOSE = new Date("2026-05-08T11:00:00+02:00");
 
-export type DeadlinePhase = "before_open" | "open" | "closed";
+export type DeadlinePhase = "preview" | "before_open" | "open" | "closed";
 
 export interface DeadlineState {
   phase: DeadlinePhase;
@@ -22,12 +23,11 @@ export interface DeadlineState {
 }
 
 function useGameDeadlines() {
-  // Multi-game: de deadline volgt de GEKOZEN game (useCurrentGame leest de
-  // switcher-keuze uit fase 1), niet de tijdgewijs "meest relevante" game. Zo
-  // toont de countdown de deadline van de game die de deelnemer bekijkt.
-  const { data: game } = useCurrentGame();
+  // De homepage volgt altijd dezelfde actuele live-first game als Index zelf;
+  // een historische switcher-keuze mag de publieke banner niet overschrijven.
+  const { data: game } = useCurrentGame({ ignoreSelectedGame: true });
   const gameId = game?.id;
-  return useQuery({
+  const query = useQuery({
     queryKey: ["game-deadlines", gameId],
     enabled: !!supabase && !!gameId,
     queryFn: async () => {
@@ -42,11 +42,13 @@ function useGameDeadlines() {
     // Stopt met pollen zodra de query faalt (geen eindeloze 60s-rollback-loop).
     refetchInterval: (query) => (query.state.status === "error" ? false : 60000),
   });
+
+  return { ...query, gameStatus: game?.status };
 }
 
 export function useDeadline(): DeadlineState {
   const [now, setNow] = useState(() => new Date());
-  const { data: deadlines } = useGameDeadlines();
+  const { data: deadlines, gameStatus } = useGameDeadlines();
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -65,7 +67,18 @@ export function useDeadline(): DeadlineState {
     let countdownTarget: Date | null = null;
     let label = "";
 
-    if (now < openDate) {
+    const statusPhase = registrationPhaseForStatus(gameStatus);
+
+    if (statusPhase === "preview") {
+      phase = "preview";
+    } else if (statusPhase === "open") {
+      phase = "open";
+      countdownTarget = closeDate;
+      label = "Inschrijving sluit over";
+    } else if (statusPhase === "closed") {
+      phase = "closed";
+      label = "Inschrijving gesloten";
+    } else if (now < openDate) {
       phase = "before_open";
       countdownTarget = openDate;
       label = "Inschrijving opent over";
@@ -88,5 +101,5 @@ export function useDeadline(): DeadlineState {
     const seconds = Math.floor(diff / 1000);
 
     return { phase, countdownTarget, days, hours, minutes, seconds, label, openDate, closeDate };
-  }, [now, deadlines]);
+  }, [now, deadlines, gameStatus]);
 }

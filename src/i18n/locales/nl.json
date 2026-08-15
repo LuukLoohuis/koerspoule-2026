@@ -42,6 +42,8 @@
       "hours": "uur",
       "minutes": "min",
       "seconds": "sec",
+      "previewLabel": "Inschrijving nog niet geopend",
+      "previewBody": "De startlijst is nog niet definitief.",
       "beforeOpenLabel": "Inschrijving opent over",
       "openLabel": "Inschrijving sluit over",
       "closedLabel": "Inschrijving gesloten",

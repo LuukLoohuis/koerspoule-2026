@@ -42,6 +42,8 @@
       "hours": "hrs",
       "minutes": "min",
       "seconds": "sec",
+      "previewLabel": "Registration not open yet",
+      "previewBody": "The start list is not yet final.",
       "beforeOpenLabel": "Registration opens in",
       "openLabel": "Registration closes in",
       "closedLabel": "Registration closed",

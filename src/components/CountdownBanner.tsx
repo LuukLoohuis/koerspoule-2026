@@ -24,7 +24,9 @@ export default function CountdownBanner({ className }: { className?: string }) {
   // De hook levert een NL label; hier vertalen we op basis van de fase zodat
   // de tekst de actieve taal volgt (de hook zelf blijft ongemoeid).
   const label =
-    phase === "before_open"
+    phase === "preview"
+      ? t("shell.countdown.previewLabel")
+      : phase === "before_open"
       ? t("shell.countdown.beforeOpenLabel")
       : phase === "open"
         ? t("shell.countdown.openLabel")
@@ -49,6 +51,20 @@ export default function CountdownBanner({ className }: { className?: string }) {
       hour: "2-digit",
       minute: "2-digit",
     });
+
+  if (phase === "preview") {
+    return (
+      <div className={cn("retro-border bg-card p-4 text-center", className)}>
+        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+          <CalendarClock className="h-4 w-4" />
+          <span className="text-sm font-medium font-sans">{label}</span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1 font-sans">
+          {t("shell.countdown.previewBody")}
+        </p>
+      </div>
+    );
+  }
 
   if (phase === "before_open") {
     return (
