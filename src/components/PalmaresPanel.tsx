@@ -106,7 +106,10 @@ function rankTone(rank: number) {
 }
 function topPercentage(game?: PalmaresGame) {
   if (!game || game.my_rank <= 0 || game.total_participants <= 0) return null;
-  return Math.max(1, Math.min(100, Math.ceil((game.my_rank / game.total_participants) * 100)));
+  return Math.min(100, (game.my_rank / game.total_participants) * 100);
+}
+function formatPercentage(value: number, language: string) {
+  return value.toLocaleString(language, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 function raceHeading(game?: PalmaresGame) {
   if (!game) return "—";
@@ -173,6 +176,7 @@ function GameCard({ game, defaultOpen }: { game: PalmaresGame; defaultOpen: bool
   const { t, i18n } = useTranslation();
   const live = isLiveGame(game);
   const topThree = game.my_rank > 0 && game.my_rank <= 3;
+  const percentage = topPercentage(game);
   const theme = getRaceTheme(game.game_type);
   return (
     <Collapsible defaultOpen={defaultOpen} className="group" style={raceThemeStyle(theme)}>
@@ -181,7 +185,7 @@ function GameCard({ game, defaultOpen }: { game: PalmaresGame; defaultOpen: bool
           <button type="button" className="grid w-full grid-cols-[48px_minmax(0,1fr)_auto_20px] items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-[var(--palmares-accent-soft)]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--palmares-accent)] sm:grid-cols-[56px_minmax(0,1fr)_auto_24px] sm:gap-4 sm:px-4 sm:py-3">
             <RaceRoundel theme={theme} />
             <span className="min-w-0"><span className="block truncate font-oswald text-sm font-black uppercase text-[var(--ink-sepia)] sm:text-base">{game.game_name}</span><span className={cn("mt-1 block truncate text-[11px] text-[var(--ink-faded)] sm:text-xs", live && "font-semibold text-[var(--vintage-green)]")}>{live ? "● " : ""}{live ? t("common.palmares.provisional") : t("common.palmares.finalStanding")}{game.stages_count > 0 ? ` · ${t("common.palmares.stages", { count: game.stages_count })}` : ""}</span></span>
-            <span className="text-right"><strong className={cn("block font-oswald text-xl font-black leading-none text-[var(--ink-sepia)] sm:text-2xl", topThree && "text-[var(--palmares-accent-strong)]")}>#{game.my_rank || "—"}</strong><span className="mt-1 block text-[11px] text-[var(--ink-faded)] sm:text-xs">{t("common.palmares.of", { total: game.total_participants.toLocaleString(i18n.language) })}</span></span>
+            <span className="flex flex-col items-end text-right"><strong className={cn("block font-oswald text-xl font-black leading-none text-[var(--ink-sepia)] sm:text-2xl", topThree && "text-[var(--palmares-accent-strong)]")}>#{game.my_rank || "—"}</strong><span className="mt-1 block text-[11px] text-[var(--ink-faded)] sm:text-xs">{t("common.palmares.of", { total: game.total_participants.toLocaleString(i18n.language) })}</span>{percentage !== null && <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-[var(--palmares-accent)]/35 bg-[var(--palmares-accent-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--palmares-accent-strong)] sm:text-[11px]"><BarChart3 className="h-3 w-3" aria-hidden />{t("common.palmares.topPercent", { percent: formatPercentage(percentage, i18n.language) })}</span>}</span>
             <ChevronDown className="h-5 w-5 text-[var(--ink-faded)] transition-transform duration-200 group-data-[state=open]:rotate-180" aria-hidden />
           </button>
         </CollapsibleTrigger>
@@ -264,7 +268,7 @@ export default function PalmaresPanel() {
           <div className="relative flex min-h-[235px] flex-col justify-center px-6 py-6 sm:min-h-[255px] sm:px-9 lg:pl-12 lg:pr-9">
             <p className="font-oswald text-xs font-bold uppercase tracking-[0.18em] text-[var(--palmares-accent-strong)] sm:text-sm">{raceHeading(bestGame)}</p><h3 className="mt-3 font-oswald text-3xl font-black uppercase leading-[1.02] tracking-[-0.02em] text-[#281a0e] sm:text-4xl lg:text-[2.65rem]">{t("common.palmares.strongestGrandTour")}</h3>
             <p className="mt-4 flex items-center gap-2 text-sm text-[var(--ink-faded)] sm:text-base"><Users className="h-5 w-5 text-[#8f7d62]/70" aria-hidden />{bestGame ? t("common.palmares.rankOf", { rank: bestGame.my_rank, total: bestGame.total_participants.toLocaleString(i18n.language) }) : "—"}</p>
-            {bestPercent !== null && <div className="mt-4 flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[#6b5640]/16 bg-[#fffdf8]/90 px-4 py-2.5 shadow-sm sm:w-fit"><BarChart3 className="h-5 w-5 shrink-0 text-[var(--palmares-accent)]" aria-hidden /><strong className="text-sm text-[var(--ink-sepia)] sm:text-base">{t("common.palmares.topPercent", { percent: bestPercent })}</strong><span className="text-xs text-[var(--ink-faded)] sm:text-sm">{t("common.palmares.ofField")}</span></div>}
+            {bestPercent !== null && <div className="mt-4 flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[#6b5640]/16 bg-[#fffdf8]/90 px-4 py-2.5 shadow-sm sm:w-fit"><BarChart3 className="h-5 w-5 shrink-0 text-[var(--palmares-accent)]" aria-hidden /><strong className="text-sm text-[var(--ink-sepia)] sm:text-base">{t("common.palmares.topPercent", { percent: formatPercentage(bestPercent, i18n.language) })}</strong><span className="text-xs text-[var(--ink-faded)] sm:text-sm">{t("common.palmares.ofField")}</span></div>}
           </div>
         </article>
 

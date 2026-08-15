@@ -1481,8 +1481,8 @@
       "strongestGrandTour": "Your strongest Grand Tour",
       "topPercent": "Top {{percent}}%",
       "ofField": "of the participant field",
-      "chapters_one": "{{count}} chapter",
-      "chapters_other": "{{count}} chapters",
+      "chapters_one": "{{count}} race moment",
+      "chapters_other": "{{count}} race moments",
       "themeOutro": {
         "tour": {
           "title": "Every season. Every race. Every point.",

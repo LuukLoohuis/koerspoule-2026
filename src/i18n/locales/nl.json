@@ -1481,8 +1481,8 @@
       "strongestGrandTour": "Jouw sterkste grote ronde",
       "topPercent": "Top {{percent}}%",
       "ofField": "van het deelnemersveld",
-      "chapters_one": "{{count}} hoofdstuk",
-      "chapters_other": "{{count}} hoofdstukken",
+      "chapters_one": "{{count}} koersmoment",
+      "chapters_other": "{{count}} koersmomenten",
       "themeOutro": {
         "tour": {
           "title": "Elk seizoen. Elke koers. Elk punt.",
