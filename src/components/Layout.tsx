@@ -1,5 +1,4 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Menu, X, Instagram } from "lucide-react";
@@ -17,6 +16,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useThema } from "@/contexts/ThemaContext";
 import SponsorStrip from "@/components/SponsorStrip";
+import KoerspouleLogo from "@/components/KoerspouleLogo";
 
 const INSTAGRAM_URL = "https://www.instagram.com/koerspoule/";
 
@@ -69,13 +69,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3">
               <Link to="/" className="flex items-center gap-2 shrink-0">
-                <img
+                <KoerspouleLogo
                   alt="Koerspoule logo"
-                  width={256}
-                  height={170}
-                  decoding="async"
                   className="h-12 w-auto"
-                  src={koerspouleLogo}
                 />
               </Link>
               <SteunKopgroepPill />

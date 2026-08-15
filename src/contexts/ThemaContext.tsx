@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
 import { THEMAS, deriveThemaKey, hexToHsl, readableForeground, type Thema, type ThemaKey } from "@/lib/themas";
+import { useSelectedGame } from "@/context/SelectedGameContext";
 
 type ThemaContextValue = { thema: Thema; key: ThemaKey; ready: boolean };
 
@@ -45,6 +44,12 @@ function applyThemaTokens(key: ThemaKey) {
 
   root.setAttribute("data-thema", key);
 
+  // Favicon en homescreen-icon volgen dezelfde raceconfiguratie. De zichtbare
+  // app-logo's worden door KoerspouleLogo bijgewerkt.
+  document
+    .querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]')
+    .forEach((link) => { link.href = t.logo; });
+
   // Persisteer de toegepaste accent-tokens zodat het no-flash-script in
   // index.html ze bij een volgend bezoek vóór de eerste paint kan zetten.
   try {
@@ -81,51 +86,19 @@ function readCachedKey(): ThemaKey | null {
 }
 
 export function ThemaProvider({ children }: { children: React.ReactNode }) {
-  // Thema-bron: de nieuwste NIET-afgeronde game (concept/draft/open/locked/live)
-  // bepaalt de site-stijl. Een afgeronde game levert géén site-thema. Is er geen
-  // niet-afgeronde game, dan valt het terug op de meest recente (afgeronde) game.
-  const { data: activeGame, isFetched } = useQuery({
-    queryKey: ["actief-thema-game"],
-    queryFn: async () => {
-      if (!supabase) return null;
-      const pick = async (withTheme: boolean) => {
-        const cols = withTheme ? "id, game_type, theme" : "id, game_type";
-        // 1) Nieuwste niet-afgeronde game
-        const active = await (supabase as any)
-          .from("games")
-          .select(cols)
-          .neq("status", "finished")
-          .order("year", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (active.error) return { error: active.error };
-        if (active.data) return { data: active.data };
-        // 2) Fallback: meest recente game (incl. afgerond)
-        const any = await (supabase as any)
-          .from("games")
-          .select(cols)
-          .order("year", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        return { data: any.data ?? null, error: any.error };
-      };
-      const res = await pick(true);
-      if (res.error) {
-        // theme-kolom bestaat mogelijk nog niet → val terug op game_type
-        const fb = await pick(false);
-        return fb.data ? { ...fb.data, theme: null } : null;
-      }
-      return res.data as { id: string; game_type: string | null; theme: string | null } | null;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  // Eén bron voor de hele deelnemer-app: exact dezelfde opgeloste game als de
+  // GameSwitcher, useCurrentGame en de overige game-scoped schermen.
+  const { selectedGame: activeGame, loading } = useSelectedGame();
+  const isFetched = !loading;
 
   // Laatst-bekende thema uit localStorage → terugkerende bezoekers zien meteen
   // het juiste thema (geen flits). Eénmalig per mount gelezen.
   const cachedKey = useMemo(() => readCachedKey(), []);
 
   // Definitief thema zodra de bron geladen is; daarvóór de cache (indien er is).
-  const fetchedKey = isFetched ? deriveThemaKey(activeGame?.theme, activeGame?.game_type) : null;
+  const fetchedKey = isFetched
+    ? deriveThemaKey(activeGame?.theme, activeGame?.game_type)
+    : null;
   const resolvedKey: ThemaKey | null = fetchedKey ?? cachedKey;
   const key: ThemaKey = resolvedKey ?? "roze";
   // ready voor de hero: zodra we een betrouwbaar thema hebben (fetch of cache).
@@ -142,10 +115,6 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
       neutralizeAccent();
     }
   }, [isFetched, fetchedKey, cachedKey]);
-
-  // Geen realtime-subscription: `games` staat niet in de realtime-publicatie, dus
-  // een postgres_changes-channel ving toch niks. De thema-query ververst bij focus/
-  // remount; een admin-themawissel verschijnt zo bij de volgende load i.p.v. live.
 
   return <ThemaContext.Provider value={{ thema: THEMAS[key], key, ready }}>{children}</ThemaContext.Provider>;
 }

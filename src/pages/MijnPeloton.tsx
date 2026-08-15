@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import LeCoupTactique from "@/components/LeCoupTactique";
 import FlagIcon from "@/components/FlagIcon";
-import koerspouleLogo from "@/assets/koerspoule-logo.png";
 import { mockTeams, mockSubPools, mockStageResults, mockClassifications } from "@/data/mockData";
 import { subpoolTeams, expandedSubPool, computeUniqueness, computePickCounts } from "@/data/subpoolData";
 import { allPoolParticipants, getStagePoolStandings, getTruncatedStandings } from "@/data/poolStandings";

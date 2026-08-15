@@ -36,7 +36,6 @@ import DeelnemersTeller from "@/components/DeelnemersTeller";
 import CountdownBanner from "@/components/CountdownBanner";
 import WervingStrook from "@/components/WervingStrook";
 import KoerspouleLogo, { type RaceKey } from "@/components/KoerspouleLogo";
-import koerspouleLogo from "@/assets/koerspoule-logo-2026.png";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useAllGames } from "@/hooks/useAllGames";
 import InschrijfBanner from "@/components/InschrijfBanner";
@@ -572,8 +571,7 @@ export default function Index() {
             {/* Rechter kolom — logo */}
             <div className="relative flex flex-col items-center justify-center">
               <div className="relative w-full max-w-[315px] -rotate-[3deg] transition-transform duration-500 hover:rotate-0 hover:scale-105">
-                <img
-                  src={koerspouleLogo}
+                <KoerspouleLogo
                   alt="Koerspoule logo"
                   className="w-full h-auto block drop-shadow-xl"
                 />

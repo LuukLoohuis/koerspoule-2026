@@ -41,15 +41,17 @@ export function useCurrentGame(
   { ignoreSelectedGame = false, preferRegistration = false }:
   { ignoreSelectedGame?: boolean; preferRegistration?: boolean } = {},
 ) {
-  // De EXPLICIET gekozen game (multi-game). Is er nog geen keuze, dan valt de
-  // queryFn hieronder terug op de bestaande default-logica.
-  const { selectedGameId } = useSelectedGame();
+  // De gedeelde gamekeuze (expliciet of de centraal opgeloste default).
+  const { selectedGameId, selectedGame } = useSelectedGame();
   // De publieke homepage moet altijd de live-first default tonen. Een historische
   // sessiekeuze uit Mijn Peloton mag daar niet de quote, status of teller bepalen.
-  const effectiveSelectedGameId = ignoreSelectedGame || preferRegistration ? null : selectedGameId;
+  const effectiveSelectedGameId = ignoreSelectedGame || preferRegistration
+    ? null
+    : selectedGameId ?? selectedGame?.id ?? null;
 
   return useQuery({
-    // selectedGameId in de key → wisselen van game hertriggert alle verbruikers.
+    // De opgeloste game-id in de key → zowel de default als een expliciete
+    // gamewissel hertriggert alle verbruikers met exact dezelfde game.
     queryKey: [
       "current-game",
       effectiveSelectedGameId,
