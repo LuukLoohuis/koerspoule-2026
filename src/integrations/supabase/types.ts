@@ -1915,6 +1915,7 @@ export type Database = {
       }
       touch_karavaan_visit: { Args: never; Returns: undefined }
       update_total_ranking: { Args: { p_game_id: string }; Returns: undefined }
+      user_palmares_summary: { Args: never; Returns: Json }
     }
     Enums: {
       app_role: "user" | "admin"

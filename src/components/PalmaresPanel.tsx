@@ -2,7 +2,7 @@ import { BarChart3, Bike, ChevronDown, Crown, Medal, Share2, Trophy, Users } fro
 import type { CSSProperties, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import palmaresCyclingScene from "@/assets/palmares-cycling-scene-v2.png";
+import palmaresCyclingScene from "@/assets/palmares-cycling-scene-v2.avif";
 import roundelGiro from "@/assets/palmares-roundel-giro.png";
 import roundelTour from "@/assets/palmares-roundel-tour.png";
 import roundelVuelta from "@/assets/palmares-roundel-vuelta.png";
@@ -126,6 +126,8 @@ function HeaderCyclingScene() {
     <img
       src={palmaresCyclingScene}
       alt=""
+      decoding="async"
+      fetchPriority="low"
       className="pointer-events-none absolute -bottom-8 right-0 hidden h-auto w-[62%] max-w-[760px] object-contain object-right-bottom opacity-[0.42] lg:block"
       style={{ filter: "var(--palmares-scene-filter)" }}
       aria-hidden
