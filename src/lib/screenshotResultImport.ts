@@ -38,30 +38,57 @@ function emptyRecord<T>(): Record<ImportClassification, T[]> {
   return { stage: [], gc: [], points: [], mountain: [], youth: [] };
 }
 
-function normalizeName(value: string): string {
-  return (value || "")
-    .toLowerCase()
-    .normalize("NFD")
+const LATIN_LETTER_FOLDS: Record<string, string> = {
+  ł: "l",
+  ø: "o",
+  æ: "ae",
+  œ: "oe",
+  ß: "ss",
+  đ: "d",
+  ð: "d",
+  þ: "th",
+  ı: "i",
+  ħ: "h",
+  ŧ: "t",
+  ŋ: "n",
+  ĸ: "k",
+  ŀ: "l",
+  ƒ: "f",
+};
+
+const EXPANDED_LATIN_FOLDS: Record<string, string> = {
+  å: "aa",
+  ä: "ae",
+  ö: "oe",
+  ü: "ue",
+  ø: "oe",
+};
+
+function foldLatinName(value: string, expanded = false): string {
+  let lowered = (value || "").toLowerCase();
+  if (expanded) {
+    lowered = lowered.replace(/[åäöüø]/g, (letter) => EXPANDED_LATIN_FOLDS[letter] ?? letter);
+  }
+  return lowered
+    .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ø/g, "o")
-    .replace(/æ/g, "ae")
-    .replace(/ß/g, "ss")
-    .replace(/[^a-z]/g, "");
+    .replace(/[łøæœßđðþıħŧŋĸŀƒ]/g, (letter) => LATIN_LETTER_FOLDS[letter] ?? letter);
 }
 
 function nameKeys(value: string): string[] {
-  const normalized = normalizeName(value);
-  const sorted = (value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z\s-]/g, " ")
-    .split(/\s+/)
-    .map((token) => token.replace(/-/g, ""))
-    .filter(Boolean)
-    .sort()
-    .join("");
-  return Array.from(new Set([normalized, sorted].filter(Boolean)));
+  const foldedVariants = [foldLatinName(value), foldLatinName(value, true)];
+  const keys = foldedVariants.flatMap((folded) => {
+    const normalized = folded.replace(/[^a-z]/g, "");
+    const sorted = folded
+      .replace(/[^a-z\s-]/g, " ")
+      .split(/\s+/)
+      .map((token) => token.replace(/-/g, ""))
+      .filter(Boolean)
+      .sort()
+      .join("");
+    return [normalized, sorted];
+  });
+  return Array.from(new Set(keys.filter(Boolean)));
 }
 
 function namesAgree(left: string, right: string): boolean {

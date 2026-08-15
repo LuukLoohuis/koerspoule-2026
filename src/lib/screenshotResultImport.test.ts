@@ -5,6 +5,9 @@ const riders = [
   { id: "ayuso", name: "Juan Ayuso", start_number: 11 },
   { id: "roglic", name: "Primož Roglič", start_number: 21 },
   { id: "bernal", name: "Egan Bernal", start_number: 31 },
+  { id: "wlodarczyk", name: "Dominika Wlodarczyk", start_number: 41 },
+  { id: "waerenskjold", name: "Søren Wærenskjold", start_number: 51 },
+  { id: "grossschartner", name: "Felix Großschartner", start_number: 61 },
 ];
 
 function extraction(overrides: Partial<ScreenshotExtraction> = {}): ScreenshotExtraction {
@@ -35,6 +38,19 @@ describe("buildScreenshotImportPreview", () => {
   it("matcht rugnummers en accentloze namen", () => {
     const result = preview(extraction());
     expect(result.matched.stage.map((row) => row.rider_id)).toEqual(["ayuso", "roglic"]);
+    expect(result.unmatched.stage).toEqual([]);
+  });
+
+  it.each([
+    ["WŁODARCZYK Dominika", "wlodarczyk"],
+    ["WAERENSKJOLD Soeren", "waerenskjold"],
+    ["GROSSSCHARTNER Felix", "grossschartner"],
+  ])("matcht buitenlandse naamvarianten: %s", (name, riderId) => {
+    const result = preview(extraction({
+      rows: [{ position: 1, bib: null, name, confidence: 0.99 }],
+    }));
+
+    expect(result.matched.stage[0]?.rider_id).toBe(riderId);
     expect(result.unmatched.stage).toEqual([]);
   });
 

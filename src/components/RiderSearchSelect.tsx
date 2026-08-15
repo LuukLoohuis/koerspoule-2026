@@ -170,7 +170,7 @@ export default function RiderSearchSelect({
         createPortal(
           <div
             ref={menuRef}
-            className="fixed z-[60] rounded-md border bg-popover shadow-lg"
+            className="pointer-events-auto fixed z-[60] rounded-md border bg-popover shadow-lg"
             style={{ top: pos.top, bottom: pos.bottom, left: pos.left, width: pos.width }}
           >
             {showList && (
