@@ -31,6 +31,12 @@ describe("centrale game-branding", () => {
     expect(svg).toContain('width="480" height="320"');
   });
 
+  it.each(["tour", "giro", "vuelta"])("maakt het %s-logo zelfvoorzienend voor img-rendering", (race) => {
+    const svg = readFileSync(`${process.cwd()}/public/koerspoule-${race}.svg`, "utf8");
+    expect(svg).toContain('href="data:image/png;base64,');
+    expect(svg).not.toContain('href="koerspoule-logo-2026.png"');
+  });
+
   it("gebruikt voor Spanje rood-geel-rood met een dubbelbrede gele baan", () => {
     const svg = readFileSync(`${process.cwd()}/public/koerspoule-vuelta.svg`, "utf8");
     expect(svg).toContain('height="16.5" fill="#AA151B"');
