@@ -1,28 +1,14 @@
-import {
-  Bike,
-  ChevronDown,
-  Crown,
-  Medal,
-  Share2,
-  Trophy,
-  Users,
-} from "lucide-react";
+import { BarChart3, Bike, ChevronDown, Crown, Medal, Share2, Trophy, Users } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import truiGiroAlgemeen from "@/assets/trui-giro-algemeen.png";
+import truiTourAlgemeen from "@/assets/trui-tour-algemeen.png";
+import truiVueltaAlgemeen from "@/assets/trui-vuelta-algemeen.png";
 import FlagIcon from "@/components/FlagIcon";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  usePalmares,
-  type PalmaresGame,
-  type PalmaresSubpoule,
-  type StageDagzege,
-} from "@/hooks/usePalmares";
+import { usePalmares, type PalmaresGame, type PalmaresSubpoule, type StageDagzege } from "@/hooks/usePalmares";
 import { cn } from "@/lib/utils";
 
 const LIVE_STATUSES = new Set(["active", "live", "open", "open_inschrijving", "locked"]);
@@ -32,44 +18,34 @@ type RaceTheme = {
   accent: string;
   accentStrong: string;
   accentSoft: string;
+  heroStart: string;
+  heroEnd: string;
+  roundel: string;
+  roundelInk: string;
+  wordmark: string;
   profile: string;
 };
-
 type PalmaresThemeStyle = CSSProperties & {
   "--palmares-accent": string;
   "--palmares-accent-strong": string;
   "--palmares-accent-soft": string;
+  "--palmares-hero-start": string;
+  "--palmares-hero-end": string;
+  "--palmares-roundel": string;
+  "--palmares-roundel-ink": string;
 };
 
 const RACE_THEMES: Record<RaceTheme["key"], RaceTheme> = {
-  tour: {
-    key: "tour",
-    accent: "#d4a514",
-    accentStrong: "#946508",
-    accentSoft: "#f8efd0",
-    profile: "M0 42 14 31 25 37 42 18 55 34 69 25 82 39 100 22 118 42",
-  },
-  giro: {
-    key: "giro",
-    accent: "#ce6288",
-    accentStrong: "#963655",
-    accentSoft: "#f8e4eb",
-    profile: "M0 42 12 34 24 39 38 17 48 32 61 13 75 36 88 23 101 42 118 33",
-  },
-  vuelta: {
-    key: "vuelta",
-    accent: "#c64d45",
-    accentStrong: "#872d2c",
-    accentSoft: "#f7e1de",
-    profile: "M0 42 14 27 29 36 42 22 56 39 72 17 87 31 99 24 118 42",
-  },
-  neutral: {
-    key: "neutral",
-    accent: "#b48643",
-    accentStrong: "#76522d",
-    accentSoft: "#f1e7d5",
-    profile: "M0 42 18 30 34 36 52 21 68 37 85 28 101 36 118 42",
-  },
+  tour: { key: "tour", accent: "#d8a514", accentStrong: "#9c6c05", accentSoft: "#fbf0c9", heroStart: "#fff7d8", heroEnd: "#ffd34f", roundel: "#ffd83f", roundelInk: "#21170c", wordmark: "TOUR", profile: "M0 42 14 31 25 37 42 18 55 34 69 25 82 39 100 22 118 42" },
+  giro: { key: "giro", accent: "#e94f8b", accentStrong: "#b72f65", accentSoft: "#fce2ec", heroStart: "#fde9f0", heroEnd: "#ef79a6", roundel: "#f5b0ca", roundelInk: "#321421", wordmark: "GIRO", profile: "M0 42 12 34 24 39 38 17 48 32 61 13 75 36 88 23 101 42 118 33" },
+  vuelta: { key: "vuelta", accent: "#df2c23", accentStrong: "#a81919", accentSoft: "#f9dfdc", heroStart: "#ffe2dd", heroEnd: "#df3026", roundel: "#d92b24", roundelInk: "#fffaf2", wordmark: "VUELTA", profile: "M0 42 14 27 29 36 42 22 56 39 72 17 87 31 99 24 118 42" },
+  neutral: { key: "neutral", accent: "#b48643", accentStrong: "#76522d", accentSoft: "#f1e7d5", heroStart: "#f8eedc", heroEnd: "#d9b477", roundel: "#b48643", roundelInk: "#fffaf2", wordmark: "RONDE", profile: "M0 42 18 30 34 36 52 21 68 37 85 28 101 36 118 42" },
+};
+const JERSEY_BY_THEME: Record<RaceTheme["key"], string> = {
+  tour: truiTourAlgemeen,
+  giro: truiGiroAlgemeen,
+  vuelta: truiVueltaAlgemeen,
+  neutral: truiTourAlgemeen,
 };
 
 function getRaceTheme(type: string | null): RaceTheme {
@@ -79,245 +55,134 @@ function getRaceTheme(type: string | null): RaceTheme {
   if (key === "vuelta" || key === "vta") return RACE_THEMES.vuelta;
   return RACE_THEMES.neutral;
 }
-
 function raceThemeStyle(theme: RaceTheme): PalmaresThemeStyle {
   return {
     "--palmares-accent": theme.accent,
     "--palmares-accent-strong": theme.accentStrong,
     "--palmares-accent-soft": theme.accentSoft,
+    "--palmares-hero-start": theme.heroStart,
+    "--palmares-hero-end": theme.heroEnd,
+    "--palmares-roundel": theme.roundel,
+    "--palmares-roundel-ink": theme.roundelInk,
   };
 }
-
 function gameTypeToCountry(type: string | null): "IT" | "FR" | "ES" {
   const key = (type ?? "").toLowerCase();
   if (key === "tour" || key === "tdf" || key === "femmes") return "FR";
   if (key === "vuelta" || key === "vta") return "ES";
   return "IT";
 }
-
-function isLiveGame(game: PalmaresGame) {
-  return LIVE_STATUSES.has(game.status);
-}
-
+function isLiveGame(game: PalmaresGame) { return LIVE_STATUSES.has(game.status); }
 function getBestGame(games: PalmaresGame[]) {
-  const validGames = games.filter((game) => game.my_rank > 0 && game.total_participants > 0);
-  const completedGames = validGames.filter((game) => !isLiveGame(game));
-  const candidates = completedGames.length > 0 ? completedGames : validGames;
-
-  return [...candidates].sort(
-    (a, b) => a.my_rank - b.my_rank || b.total_participants - a.total_participants,
-  )[0];
+  const valid = games.filter((game) => game.my_rank > 0 && game.total_participants > 0);
+  const completed = valid.filter((game) => !isLiveGame(game));
+  return [...(completed.length > 0 ? completed : valid)].sort((a, b) => a.my_rank - b.my_rank || b.total_participants - a.total_participants)[0];
 }
-
 function groupGamesByYear(games: PalmaresGame[]) {
   const grouped = new Map<number | null, PalmaresGame[]>();
-  for (const game of games) {
-    const year = game.year ?? null;
-    grouped.set(year, [...(grouped.get(year) ?? []), game]);
-  }
-
-  return [...grouped.entries()]
-    .sort(([a], [b]) => (b ?? -1) - (a ?? -1))
-    .map(([year, yearGames]) => ({
-      year,
-      games: [...yearGames].sort(
-        (a, b) => Number(isLiveGame(b)) - Number(isLiveGame(a)) || a.game_name.localeCompare(b.game_name),
-      ),
-    }));
+  for (const game of games) grouped.set(game.year ?? null, [...(grouped.get(game.year ?? null) ?? []), game]);
+  return [...grouped.entries()].sort(([a], [b]) => (b ?? -1) - (a ?? -1)).map(([year, yearGames]) => ({
+    year,
+    games: [...yearGames].sort((a, b) => Number(isLiveGame(b)) - Number(isLiveGame(a)) || a.game_name.localeCompare(b.game_name)),
+  }));
 }
-
 function rankTone(rank: number) {
   if (rank === 1) return "border-[var(--medal-gold)] bg-[#f2c955] text-[var(--ink-sepia)]";
   if (rank === 2) return "border-[var(--medal-silver)] bg-[#d8d6d0] text-[var(--ink-sepia)]";
   if (rank === 3) return "border-[var(--medal-bronze)] bg-[#ca8a4b] text-white";
-  return "border-[#6b5640]/30 bg-[var(--paper-deep)] text-[var(--ink-sepia)]";
+  return "border-[#6b5640]/25 bg-[#fffdf7] text-[var(--ink-sepia)]";
+}
+function topPercentage(game?: PalmaresGame) {
+  if (!game || game.my_rank <= 0 || game.total_participants <= 0) return null;
+  return Math.max(1, Math.min(100, Math.ceil((game.my_rank / game.total_participants) * 100)));
+}
+function raceHeading(game?: PalmaresGame) {
+  if (!game) return "—";
+  if (!game.year) return game.game_name;
+  const nameWithoutYear = game.game_name.replace(new RegExp(`\\s*${game.year}$`), "");
+  return `${nameWithoutYear} · ${game.year}`;
 }
 
 function RaceProfileMark({ theme, className }: { theme: RaceTheme; className?: string }) {
+  return <svg viewBox="0 0 118 48" className={cn("overflow-visible", className)} fill="none" aria-hidden><path d={theme.profile} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M0 42H118" stroke="currentColor" strokeWidth="1" opacity=".28" /><circle cx="118" cy="42" r="3" fill="currentColor" /></svg>;
+}
+function HeaderCyclingScene() {
   return (
-    <svg
-      viewBox="0 0 118 48"
-      className={cn("overflow-visible", className)}
-      fill="none"
-      aria-hidden
-    >
-      <path d={theme.profile} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M0 42H118" stroke="currentColor" strokeWidth="1" opacity=".28" />
-      <circle cx="118" cy="42" r="3" fill="currentColor" />
+    <svg viewBox="0 0 620 230" className="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[55%] text-[#5f513f] lg:block" fill="none" aria-hidden>
+      <path d="M25 192 148 100l70 53 90-92 88 97 93-60 131 94" fill="#8c806d" opacity=".055" />
+      <path d="M0 205 116 144l65 34 86-69 91 62 92-40 170 74" fill="#8c806d" opacity=".075" />
+      <path d="M407 224c32-20 39-31 74-38-24-8-11-19 18-25-20-7-14-16 20-22 24-4 35-11 50-24" stroke="var(--palmares-accent)" strokeWidth="2" opacity=".85" />
+      <g transform="translate(270 82)" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" opacity=".2">
+        <circle cx="28" cy="88" r="28" strokeWidth="5" /><circle cx="108" cy="88" r="28" strokeWidth="5" />
+        <path d="m28 88 31-46 22 46H28l20-29h45l15 29M59 42l-6-17m22 1h20" strokeWidth="6" />
+        <circle cx="55" cy="2" r="10" fill="currentColor" stroke="none" /><path d="m55 15 20 29 20-8M68 30 47 56M55 18 40 4M55 18 73 1" strokeWidth="8" />
+      </g>
     </svg>
   );
 }
-
-function RankingDossard({ rank, theme }: { rank: number; theme: RaceTheme }) {
+function LaurelWreath() {
+  const leaves = [34, 58, 82, 106, 130];
   return (
-    <div className="relative flex min-h-[118px] min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-[var(--palmares-accent)] bg-[#fffdf7] px-3 shadow-[inset_0_0_0_4px_var(--palmares-accent-soft)] sm:min-h-[132px]">
-      <span className="absolute left-3 top-2 font-oswald text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--palmares-accent-strong)]">
-        Classement
-      </span>
-      <RaceProfileMark
-        theme={theme}
-        className="pointer-events-none absolute -bottom-1 left-2 right-2 h-12 w-[calc(100%-1rem)] text-[var(--palmares-accent)] opacity-25"
-      />
-      <span className="relative font-oswald text-[clamp(2.65rem,5.5vw,4.8rem)] font-black leading-none tracking-[-0.04em] text-[var(--ink-sepia)]">
-        #{rank || "—"}
-      </span>
-      <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-[var(--palmares-accent)] shadow-[0_0_0_4px_var(--palmares-accent-soft)]" aria-hidden />
-    </div>
+    <svg viewBox="0 0 340 210" className="absolute inset-0 h-full w-full text-[var(--palmares-accent)]" aria-hidden>
+      <path d="M86 185C38 149 24 80 67 28M254 185c48-36 62-105 19-157" stroke="currentColor" strokeWidth="3" fill="none" opacity=".45" />
+      {leaves.map((y, index) => <g key={y} opacity={0.24 + index * 0.045}><ellipse cx={58 - index * 3} cy={y} rx="9" ry="20" transform={`rotate(${-42 + index * 5} ${58 - index * 3} ${y})`} fill="currentColor" /><ellipse cx={282 + index * 3} cy={y} rx="9" ry="20" transform={`rotate(${42 - index * 5} ${282 + index * 3} ${y})`} fill="currentColor" /></g>)}
+    </svg>
+  );
+}
+function RaceRoundel({ theme }: { theme: RaceTheme }) {
+  return (
+    <span className="relative flex h-14 w-14 shrink-0 flex-col items-center justify-center overflow-hidden rounded-full border border-[var(--palmares-accent)] bg-[var(--palmares-roundel)] text-[var(--palmares-roundel-ink)] shadow-[0_4px_10px_rgba(58,42,26,0.12)] sm:h-16 sm:w-16">
+      <Bike className="h-4 w-4" strokeWidth={2.3} aria-hidden />
+      <span className="mt-0.5 font-oswald text-[9px] font-black uppercase leading-none tracking-[-0.03em] sm:text-[10px]">{theme.wordmark}</span>
+      <span className="absolute inset-x-2 bottom-1 h-px bg-current opacity-30" aria-hidden />
+    </span>
   );
 }
 
-function AchievementStat({
-  icon,
-  value,
-  label,
-  className,
-}: {
-  icon: ReactNode;
-  value: number;
-  label: string;
-  className?: string;
-}) {
+function MiniLaurel() {
+  return (
+    <svg viewBox="0 0 58 58" className="h-12 w-12 text-[var(--palmares-accent)]" fill="none" aria-hidden>
+      <path d="M23 48C11 40 7 26 14 11M35 48c12-8 16-22 9-37" stroke="currentColor" strokeWidth="2" />
+      {[16, 25, 34, 42].map((y, index) => <g key={y} fill="currentColor" opacity={0.48 + index * 0.1}><ellipse cx={13 - index} cy={y} rx="3" ry="7" transform={`rotate(-38 ${13 - index} ${y})`} /><ellipse cx={45 + index} cy={y} rx="3" ry="7" transform={`rotate(38 ${45 + index} ${y})`} /></g>)}
+    </svg>
+  );
+}
+function AchievementStat({ icon, value, label, className }: { icon: ReactNode; value: number; label: string; className?: string }) {
   const achieved = value > 0;
-
   return (
-    <div className={cn("relative flex min-h-[92px] flex-col items-center justify-center px-2 py-3 text-center sm:min-h-[108px]", className)}>
-      <span className={cn("mb-1.5", achieved ? "text-[var(--palmares-accent-strong)]" : "text-[#6b5640]/45")}>
-        {icon}
-      </span>
-      <strong className={cn("font-oswald text-3xl font-black leading-none", achieved ? "text-[var(--palmares-accent-strong)]" : "text-[#3a2a1a]/70")}>
-        {value}
-      </strong>
-      <span className="mt-1.5 text-[11px] font-medium leading-tight text-[var(--ink-faded)] sm:text-xs">
-        {label}
-      </span>
+    <div className={cn("flex min-h-[112px] items-center gap-3 px-4 py-5 sm:min-h-[124px] sm:justify-center sm:px-5", className)}>
+      <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-[#fffdf8] shadow-[0_4px_12px_rgba(58,42,26,0.08)] sm:h-14 sm:w-14", achieved ? "border-[var(--palmares-accent)] text-[var(--palmares-accent-strong)]" : "border-[#6b5640]/15 text-[#6b5640]/55")}>{icon}</span>
+      <span><strong className={cn("block font-oswald text-3xl font-black leading-none sm:text-4xl", achieved ? "text-[var(--palmares-accent-strong)]" : "text-[var(--ink-sepia)]")}>{value}</strong><span className="mt-1.5 block text-xs font-medium leading-tight text-[var(--ink-faded)] sm:text-sm">{label}</span><span className={cn("mt-2 block h-0.5 w-8", achieved ? "bg-[var(--palmares-accent)]" : "bg-[#6b5640]/18")} aria-hidden /></span>
     </div>
   );
 }
-
 function StageWinRow({ win }: { win: StageDagzege }) {
   const { t } = useTranslation();
-
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-[var(--palmares-accent)] bg-[var(--palmares-accent-soft)] px-3 py-2.5">
-      <Trophy className="h-4 w-4 shrink-0 text-[var(--palmares-accent-strong)]" aria-hidden />
-      <div className="min-w-0 flex-1">
-        <span className="font-oswald text-sm font-bold text-[var(--ink-sepia)]">
-          {t("common.palmares.stageLabel", { n: win.stage_number })}
-        </span>
-        {win.stage_name && (
-          <span className="ml-1.5 text-xs text-[var(--ink-faded)]">· {win.stage_name}</span>
-        )}
-      </div>
-      <span className="shrink-0 font-oswald text-sm font-bold text-[var(--palmares-accent-strong)]">
-        {t("common.palmares.pt", { n: win.points })}
-      </span>
-    </div>
-  );
+  return <div className="flex items-center gap-3 rounded-xl border border-[var(--palmares-accent)]/60 bg-[var(--palmares-accent-soft)] px-3 py-2.5"><Trophy className="h-4 w-4 shrink-0 text-[var(--palmares-accent-strong)]" aria-hidden /><div className="min-w-0 flex-1"><span className="font-oswald text-sm font-bold text-[var(--ink-sepia)]">{t("common.palmares.stageLabel", { n: win.stage_number })}</span>{win.stage_name && <span className="ml-1.5 text-xs text-[var(--ink-faded)]">· {win.stage_name}</span>}</div><span className="shrink-0 font-oswald text-sm font-bold text-[var(--palmares-accent-strong)]">{t("common.palmares.pt", { n: win.points })}</span></div>;
 }
 
 function GameCard({ game, defaultOpen }: { game: PalmaresGame; defaultOpen: boolean }) {
   const { t, i18n } = useTranslation();
-  const isLive = isLiveGame(game);
-  const isTopThree = game.my_rank > 0 && game.my_rank <= 3;
+  const live = isLiveGame(game);
+  const topThree = game.my_rank > 0 && game.my_rank <= 3;
   const theme = getRaceTheme(game.game_type);
-
   return (
     <Collapsible defaultOpen={defaultOpen} className="group" style={raceThemeStyle(theme)}>
-      <div className="relative overflow-hidden rounded-2xl border border-[#6b5640]/20 bg-[#fffdf7] shadow-[0_4px_14px_rgba(58,42,26,0.06)]">
-        <span className="absolute inset-y-0 left-0 z-10 w-1 bg-[var(--palmares-accent)]" aria-hidden />
+      <div className="overflow-hidden rounded-2xl border border-[#6b5640]/16 bg-[#fffdf8]/92 shadow-[0_4px_12px_rgba(58,42,26,0.065)]">
         <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            className="grid w-full grid-cols-[54px_minmax(0,1fr)_auto_20px] items-center gap-3 py-3.5 pl-4 pr-3 text-left transition-colors hover:bg-[#ede3cc]/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--palmares-accent)] md:grid-cols-[62px_minmax(0,1fr)_auto_24px] md:py-4 md:pl-5 md:pr-5"
-          >
-            <span className="relative flex h-11 w-[54px] items-end overflow-hidden rounded-lg bg-[var(--palmares-accent-soft)] px-1.5 pb-1 md:h-12 md:w-[62px]">
-              <RaceProfileMark theme={theme} className="h-8 w-full text-[var(--palmares-accent-strong)]" />
-              <FlagIcon
-                country={gameTypeToCountry(game.game_type)}
-                className="absolute right-1.5 top-1.5 h-3 w-[18px] rounded-sm border border-black/10 object-cover shadow-sm"
-              />
-            </span>
-
-            <span className="min-w-0">
-              <span className="block truncate font-oswald text-base font-black uppercase text-[var(--ink-sepia)] md:text-lg">
-                {game.game_name}
-              </span>
-              <span
-                className={cn(
-                  "mt-1 block truncate text-xs text-[var(--ink-faded)] md:text-sm",
-                  isLive && "font-bold text-[var(--vintage-green)]",
-                )}
-              >
-                {isLive ? "● " : ""}
-                {isLive
-                  ? t("common.palmares.provisional")
-                  : t("common.palmares.finalStanding")}
-                {game.stages_count > 0
-                  ? ` · ${t("common.palmares.stages", { count: game.stages_count })}`
-                  : ""}
-              </span>
-            </span>
-
-            <span className="flex items-center gap-2 text-right">
-              {isTopThree && <Medal className="hidden h-5 w-5 text-[var(--palmares-accent-strong)] sm:block" aria-hidden />}
-              <span>
-                <strong
-                  className={cn(
-                    "block font-oswald text-xl font-black leading-none text-[var(--ink-sepia)] md:text-2xl",
-                    isTopThree && "text-[var(--palmares-accent-strong)]",
-                  )}
-                >
-                  #{game.my_rank || "—"}
-                </strong>
-                <span className="mt-1 block text-[11px] text-[var(--ink-faded)]">
-                  {t("common.palmares.of", { total: game.total_participants })}
-                </span>
-              </span>
-            </span>
-
-            <ChevronDown
-              className="h-5 w-5 text-[var(--ink-faded)] transition-transform duration-200 group-data-[state=open]:rotate-180"
-              aria-hidden
-            />
+          <button type="button" className="grid w-full grid-cols-[56px_minmax(0,1fr)_auto_20px] items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-[var(--palmares-accent-soft)]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--palmares-accent)] sm:grid-cols-[64px_minmax(0,1fr)_auto_24px] sm:gap-4 sm:px-5 sm:py-3.5">
+            <RaceRoundel theme={theme} />
+            <span className="min-w-0"><span className="block truncate font-oswald text-base font-black uppercase text-[var(--ink-sepia)] sm:text-lg">{game.game_name}</span><span className={cn("mt-1 block truncate text-xs text-[var(--ink-faded)] sm:text-sm", live && "font-semibold text-[var(--vintage-green)]")}>{live ? "● " : ""}{live ? t("common.palmares.provisional") : t("common.palmares.finalStanding")}{game.stages_count > 0 ? ` · ${t("common.palmares.stages", { count: game.stages_count })}` : ""}</span></span>
+            <span className="text-right"><strong className={cn("block font-oswald text-xl font-black leading-none text-[var(--ink-sepia)] sm:text-2xl", topThree && "text-[var(--palmares-accent-strong)]")}>#{game.my_rank || "—"}</strong><span className="mt-1 block text-[11px] text-[var(--ink-faded)] sm:text-xs">{t("common.palmares.of", { total: game.total_participants.toLocaleString(i18n.language) })}</span></span>
+            <ChevronDown className="h-5 w-5 text-[var(--ink-faded)] transition-transform duration-200 group-data-[state=open]:rotate-180" aria-hidden />
           </button>
         </CollapsibleTrigger>
-
         <CollapsibleContent>
-          <div className="border-t border-[#6b5640]/15 px-3 pb-4 pt-3 md:px-5 md:pb-5 md:pt-4">
-            <div className="grid grid-cols-3 gap-2 md:gap-3">
-              <div className="rounded-xl bg-[#ede3cc]/70 px-2 py-3 md:px-4">
-                <strong className="font-oswald text-xl font-black text-[var(--palmares-accent-strong)] md:text-2xl">
-                  {game.stage_wins}
-                </strong>
-                <span className="mt-1 block text-[11px] leading-tight text-[var(--ink-faded)] md:text-xs">
-                  {t("common.palmares.stageWins")}
-                </span>
-              </div>
-              <div className="rounded-xl bg-[#ede3cc]/70 px-2 py-3 md:px-4">
-                <strong className="font-oswald text-xl font-black text-[var(--ink-sepia)] md:text-2xl">
-                  {game.stage_podiums}
-                </strong>
-                <span className="mt-1 block text-[11px] leading-tight text-[var(--ink-faded)] md:text-xs">
-                  {t("common.palmares.stagePodiums")}
-                </span>
-              </div>
-              <div className="rounded-xl bg-[#ede3cc]/70 px-2 py-3 md:px-4">
-                <strong className="font-oswald text-xl font-black text-[var(--ink-sepia)] md:text-2xl">
-                  {game.approved_points.toLocaleString(i18n.language)}
-                </strong>
-                <span className="mt-1 block text-[11px] leading-tight text-[var(--ink-faded)] md:text-xs">
-                  {t("common.palmares.points")}
-                </span>
-              </div>
+          <div className="border-t border-[#6b5640]/12 px-3 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              {[[game.stage_wins, t("common.palmares.stageWins")], [game.stage_podiums, t("common.palmares.stagePodiums")], [game.approved_points.toLocaleString(i18n.language), t("common.palmares.points")]].map(([value, label], index) => <div key={String(label)} className="rounded-xl bg-[#ede3cc]/60 px-3 py-3 sm:px-4"><strong className={cn("font-oswald text-xl font-black sm:text-2xl", index === 0 ? "text-[var(--palmares-accent-strong)]" : "text-[var(--ink-sepia)]")}>{value}</strong><span className="mt-1 block text-[11px] leading-tight text-[var(--ink-faded)] sm:text-xs">{label}</span></div>)}
             </div>
-
-            {game.dagzeges.length > 0 && (
-              <div className="mt-3 space-y-2">
-                {game.dagzeges.map((win) => (
-                  <StageWinRow key={win.stage_id} win={win} />
-                ))}
-              </div>
-            )}
+            {game.dagzeges.length > 0 && <div className="mt-3 space-y-2">{game.dagzeges.map((win) => <StageWinRow key={win.stage_id} win={win} />)}</div>}
           </div>
         </CollapsibleContent>
       </div>
@@ -326,93 +191,39 @@ function GameCard({ game, defaultOpen }: { game: PalmaresGame; defaultOpen: bool
 }
 
 function SubpouleCard({ subpoule }: { subpoule: PalmaresSubpoule }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const topThree = subpoule.my_rank > 0 && subpoule.my_rank <= 3;
   const theme = getRaceTheme(subpoule.game_type);
-
   return (
-    <article
-      className="relative grid grid-cols-[52px_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-2xl border border-[#6b5640]/20 bg-[#fffdf7] p-4 shadow-[0_4px_14px_rgba(58,42,26,0.06)]"
-      style={raceThemeStyle(theme)}
-    >
-      <span className="absolute inset-y-0 left-0 w-1 bg-[var(--palmares-accent)]" aria-hidden />
-      <RaceProfileMark
-        theme={theme}
-        className="pointer-events-none absolute bottom-0 right-16 h-12 w-32 text-[var(--palmares-accent)] opacity-[0.08]"
-      />
-      <div
-        className={cn(
-          "vintage-medal flex h-12 w-12 items-center justify-center rounded-full border-2 font-oswald text-lg font-black",
-          rankTone(subpoule.my_rank),
-        )}
-      >
-        #{subpoule.my_rank || "—"}
-      </div>
-      <div className="min-w-0">
-        <h3 className="truncate font-oswald text-base font-black uppercase text-[var(--ink-sepia)]">
-          {subpoule.subpoule_name}
-        </h3>
-        <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-[var(--ink-faded)]">
-          <FlagIcon
-            country={gameTypeToCountry(subpoule.game_type)}
-            className="h-3 w-4 rounded-sm object-cover"
-          />
-          <span className="truncate">{subpoule.game_name}</span>
-        </p>
-        <p className="mt-2 text-[11px] text-[var(--ink-faded)]">
-          {subpoule.stage_wins} {t("common.palmares.stageWins").toLowerCase()} · {subpoule.stage_podiums}{" "}
-          {t("common.palmares.stagePodiums").toLowerCase()}
-        </p>
-      </div>
-      <div className="text-right">
-        {topThree && <Medal className="mb-1 ml-auto h-4 w-4 text-[var(--palmares-accent-strong)]" aria-hidden />}
-        <strong className={cn("font-oswald text-xl font-black", topThree ? "text-[var(--palmares-accent-strong)]" : "text-[var(--ink-sepia)]")}>
-          #{subpoule.my_rank || "—"}
-        </strong>
-        <span className="block text-[11px] text-[var(--ink-faded)]">
-          {t("common.palmares.of", { total: subpoule.total_members })}
-        </span>
-      </div>
+    <article className="relative grid grid-cols-[52px_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-2xl border border-[#6b5640]/16 bg-[#fffdf8]/92 p-4 shadow-[0_4px_12px_rgba(58,42,26,0.065)]" style={raceThemeStyle(theme)}>
+      <span className="absolute inset-y-0 left-0 w-1 bg-[var(--palmares-accent)]" aria-hidden /><div className={cn("vintage-medal flex h-12 w-12 items-center justify-center rounded-full border-2 font-oswald text-lg font-black", rankTone(subpoule.my_rank))}>#{subpoule.my_rank || "—"}</div>
+      <div className="min-w-0"><h3 className="truncate font-oswald text-base font-black uppercase text-[var(--ink-sepia)]">{subpoule.subpoule_name}</h3><p className="mt-1 flex items-center gap-1.5 truncate text-xs text-[var(--ink-faded)]"><FlagIcon country={gameTypeToCountry(subpoule.game_type)} className="h-3 w-4 rounded-sm object-cover" /><span className="truncate">{subpoule.game_name}</span></p><p className="mt-2 text-[11px] text-[var(--ink-faded)]">{subpoule.stage_wins} {t("common.palmares.stageWins").toLowerCase()} · {subpoule.stage_podiums} {t("common.palmares.stagePodiums").toLowerCase()}</p></div>
+      <div className="text-right">{topThree && <Medal className="mb-1 ml-auto h-4 w-4 text-[var(--palmares-accent-strong)]" aria-hidden />}<strong className={cn("font-oswald text-xl font-black", topThree ? "text-[var(--palmares-accent-strong)]" : "text-[var(--ink-sepia)]")}>#{subpoule.my_rank || "—"}</strong><span className="block text-[11px] text-[var(--ink-faded)]">{t("common.palmares.of", { total: subpoule.total_members.toLocaleString(i18n.language) })}</span></div>
     </article>
   );
 }
 
-function PalmaresSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="h-72 animate-pulse rounded-3xl bg-secondary/50" />
-      <div className="h-40 animate-pulse rounded-2xl bg-secondary/50" />
-    </div>
-  );
-}
+function PalmaresSkeleton() { return <div className="space-y-4"><div className="h-[32rem] animate-pulse rounded-3xl bg-secondary/50" /><div className="h-40 animate-pulse rounded-2xl bg-secondary/50" /></div>; }
 
 export default function PalmaresPanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data, isLoading } = usePalmares();
   const games = data?.games ?? [];
   const subpoules = data?.subpoules ?? [];
-
   const totalStageWins = games.reduce((sum, game) => sum + game.stage_wins, 0);
   const totalStagePodiums = games.reduce((sum, game) => sum + game.stage_podiums, 0);
   const subpouleWins = subpoules.filter((subpoule) => subpoule.is_winner).length;
   const bestGame = getBestGame(games);
   const bestTheme = getRaceTheme(bestGame?.game_type ?? null);
   const seasons = groupGamesByYear(games);
+  const bestPercent = topPercentage(bestGame);
+  const latestSeason = seasons[0];
 
   const sharePalmares = async () => {
     const title = t("common.palmares.shareTitle");
-    const text = t("common.palmares.shareText", {
-      rank: bestGame?.my_rank ?? "—",
-      total: bestGame?.total_participants ?? 0,
-      game: bestGame?.game_name ?? t("common.palmares.hero"),
-      wins: totalStageWins,
-    });
-
+    const text = t("common.palmares.shareText", { rank: bestGame?.my_rank ?? "—", total: bestGame?.total_participants ?? 0, game: bestGame?.game_name ?? t("common.palmares.hero"), wins: totalStageWins });
     try {
-      if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({ title, text, url: window.location.href });
-        return;
-      }
+      if (typeof navigator !== "undefined" && navigator.share) { await navigator.share({ title, text, url: window.location.href }); return; }
       await navigator.clipboard.writeText(`${text}\n${window.location.href}`);
       toast.success(t("common.palmares.shareCopied"));
     } catch (error) {
@@ -422,162 +233,52 @@ export default function PalmaresPanel() {
   };
 
   if (isLoading) return <PalmaresSkeleton />;
-
-  if (games.length === 0) {
-    return (
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center">
-        <Trophy className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
-        <p className="mb-1 font-display font-bold text-muted-foreground">
-          {t("common.palmares.empty")}
-        </p>
-        <p className="font-serif text-sm italic text-muted-foreground/70">
-          {t("common.palmares.emptyHint")}
-        </p>
-      </div>
-    );
-  }
+  if (games.length === 0) return <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-8 text-center"><Trophy className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" /><p className="mb-1 font-display font-bold text-muted-foreground">{t("common.palmares.empty")}</p><p className="font-serif text-sm italic text-muted-foreground/70">{t("common.palmares.emptyHint")}</p></div>;
 
   return (
-    <section
-      className="vintage-paper relative overflow-hidden rounded-3xl border border-[#6b5640]/20 p-3 text-[var(--ink-sepia)] shadow-[0_10px_30px_rgba(58,42,26,0.1)] sm:p-5 md:p-6"
-      style={raceThemeStyle(bestTheme)}
-    >
-      <div
-        className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full border-[24px] border-[var(--palmares-accent-soft)]"
-        aria-hidden
-      />
-
-      <div className="relative">
-        <header className="overflow-hidden rounded-[1.5rem] border border-[#6b5640]/18 bg-[#fffaf0]/82 p-5 shadow-[0_4px_16px_rgba(58,42,26,0.055)] sm:p-6 md:p-7">
-          <div className="flex items-center gap-3 font-oswald text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--palmares-accent-strong)] md:text-[11px]">
-            <span className="h-px w-8 bg-current" aria-hidden />
-            {t("common.palmares.personalHonours")}
-            <span className="hidden h-px w-8 bg-current sm:block" aria-hidden />
-          </div>
-          <h2 className="mt-2.5 font-oswald text-4xl font-black uppercase leading-none tracking-tight text-[var(--ink-sepia)] sm:text-5xl md:text-[3.5rem]">
-            {t("common.palmares.hero")}
-          </h2>
-          <p className="mt-1.5 font-serif text-sm italic text-[var(--ink-faded)] sm:text-[15px]">
-            {t("common.palmares.heroSub")}
-          </p>
-
-          <div className="mt-5 grid gap-3 lg:grid-cols-[44fr_56fr]">
-            <article className="relative grid min-h-[154px] grid-cols-[minmax(120px,0.82fr)_minmax(0,1.18fr)] items-center gap-4 overflow-hidden rounded-2xl border border-[var(--palmares-accent)] bg-[var(--palmares-accent-soft)] p-3.5 sm:grid-cols-[minmax(145px,0.85fr)_minmax(0,1.15fr)] sm:p-4">
-              <RaceProfileMark
-                theme={bestTheme}
-                className="pointer-events-none absolute -right-5 -top-3 h-20 w-48 text-[var(--palmares-accent)] opacity-10"
-              />
-              <RankingDossard rank={bestGame?.my_rank ?? 0} theme={bestTheme} />
-              <div className="relative min-w-0 pr-1">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--palmares-accent-strong)] sm:text-[11px]">
-                  {t("common.palmares.bestPerformance")}
-                </p>
-                <h3 className="mt-2 font-oswald text-xl font-black uppercase leading-[1.08] text-[var(--ink-sepia)] sm:text-[1.65rem]">
-                  {bestGame?.game_name ?? "—"}
-                </h3>
-                <p className="mt-2.5 text-xs text-[var(--ink-faded)] sm:text-sm">
-                  {bestGame
-                    ? t("common.palmares.rankOf", { rank: bestGame.my_rank, total: bestGame.total_participants })
-                    : "—"}
-                </p>
-              </div>
-            </article>
-
-            <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-[#6b5640]/18 bg-[#fffdf7]/82 md:grid-cols-2 lg:grid-cols-4">
-              <AchievementStat
-                icon={<Trophy className="h-5 w-5" aria-hidden />}
-                value={totalStageWins}
-                label={t("common.palmares.stageWins")}
-                className="border-b border-r border-[#6b5640]/15 lg:border-b-0"
-              />
-              <AchievementStat
-                icon={<Medal className="h-5 w-5" aria-hidden />}
-                value={totalStagePodiums}
-                label={t("common.palmares.stagePodiums")}
-                className="border-b border-[#6b5640]/15 lg:border-b-0 lg:border-r"
-              />
-              <AchievementStat
-                icon={<Crown className="h-5 w-5" aria-hidden />}
-                value={subpouleWins}
-                label={t("common.palmares.subpouleWins")}
-                className="border-r border-[#6b5640]/15"
-              />
-              <AchievementStat
-                icon={<Bike className="h-5 w-5" aria-hidden />}
-                value={games.length}
-                label={t("common.palmares.racesPlayed")}
-              />
-            </div>
-          </div>
+    <section className="vintage-paper relative overflow-hidden rounded-[1.75rem] border border-[#6b5640]/18 p-4 text-[var(--ink-sepia)] shadow-[0_12px_34px_rgba(58,42,26,0.1)] sm:p-6 lg:p-8" style={raceThemeStyle(bestTheme)}>
+      <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background:radial-gradient(circle_at_74%_7%,rgba(255,255,255,.9),transparent_31%),linear-gradient(120deg,transparent_0_68%,var(--palmares-accent-soft)_68%_70%,transparent_70%)]" aria-hidden />
+      <div className="relative rounded-[1.4rem] border border-[#6b5640]/10 bg-[#fffaf0]/40 px-4 pb-5 pt-5 sm:px-6 sm:pb-7 sm:pt-6 lg:px-8 lg:pb-8 lg:pt-7">
+        <header className="relative min-h-[180px] pr-0 sm:min-h-[205px] lg:pr-[31%]">
+          <HeaderCyclingScene />
+          <div className="relative z-10 flex items-center gap-3 font-oswald text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--palmares-accent-strong)] sm:text-xs"><span className="h-px w-8 bg-current sm:w-11" aria-hidden />{t("common.palmares.personalHonours")}<span className="hidden h-px w-8 bg-current sm:block sm:w-11" aria-hidden /><span className="text-lg leading-none" aria-hidden>❧</span></div>
+          <h2 className="relative z-10 mt-4 font-oswald text-[clamp(3.2rem,8vw,6.2rem)] font-black uppercase leading-[0.86] tracking-[-0.035em] text-[#24180e]">{t("common.palmares.hero")}</h2>
+          <p className="relative z-10 mt-4 font-serif text-base italic text-[var(--ink-faded)] sm:text-xl">{t("common.palmares.heroSub")}</p>
+          <button type="button" onClick={sharePalmares} className="relative z-20 mt-5 inline-flex h-11 items-center gap-2 rounded-xl border border-[#4b3825]/70 bg-[#fffdf8]/80 px-4 font-sans text-sm font-bold text-[var(--ink-sepia)] shadow-[0_3px_8px_rgba(58,42,26,0.08)] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--palmares-accent)] sm:absolute sm:right-0 sm:top-0 sm:mt-0 sm:h-12 sm:px-5 sm:text-base"><Share2 className="h-4 w-4" aria-hidden />{t("common.palmares.share")}</button>
         </header>
 
-        <Tabs defaultValue="races" className="mt-4">
-          <div className="flex items-center justify-between gap-3">
-            <TabsList className="h-auto rounded-full border border-[#6b5640]/20 bg-[#fffdf7]/65 p-1">
-              <TabsTrigger
-                value="races"
-                className="rounded-full px-4 py-2 font-sans text-sm font-bold text-[var(--ink-faded)] data-[state=active]:bg-[#fffdf7] data-[state=active]:text-[var(--ink-sepia)]"
-              >
-                {t("common.palmares.racesTab")}
-              </TabsTrigger>
-              <TabsTrigger
-                value="subpoules"
-                className="rounded-full px-4 py-2 font-sans text-sm font-bold text-[var(--ink-faded)] data-[state=active]:bg-[#fffdf7] data-[state=active]:text-[var(--ink-sepia)]"
-              >
-                {t("common.palmares.subpoules")}
-              </TabsTrigger>
-            </TabsList>
-
-            <button
-              type="button"
-              onClick={sharePalmares}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#6b5640]/25 bg-[#fffdf7]/80 px-3 font-sans text-sm font-bold text-[var(--ink-sepia)] shadow-sm transition-colors hover:bg-[#fffdf7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--palmares-accent)] sm:px-4"
-            >
-              <Share2 className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">{t("common.palmares.share")}</span>
-              <span className="sr-only sm:hidden">{t("common.palmares.share")}</span>
-            </button>
+        <article className="relative grid overflow-hidden rounded-[1.4rem] border border-[var(--palmares-accent)] bg-[#fffdf8]/88 shadow-[0_8px_22px_rgba(58,42,26,0.085)] lg:grid-cols-[39fr_61fr]">
+          <div className="relative flex min-h-[265px] items-center justify-center overflow-hidden [background:linear-gradient(145deg,var(--palmares-hero-start),var(--palmares-hero-end))] px-5 py-8 sm:min-h-[290px]">
+            <div className="absolute inset-0 opacity-45 [background:radial-gradient(circle_at_50%_55%,rgba(255,255,255,.55),transparent_55%)]" aria-hidden /><LaurelWreath />
+            <div className="relative z-10 text-center"><span className="inline-flex rounded-lg border border-[var(--palmares-accent)] bg-[#fffaf0]/88 px-4 py-1.5 font-oswald text-[10px] font-bold uppercase tracking-[0.17em] text-[var(--palmares-accent-strong)] shadow-sm sm:text-xs">{t("common.palmares.bestFinalRank")}</span><strong className="mt-4 block font-oswald text-[clamp(4.7rem,10vw,7.2rem)] font-black leading-none tracking-[-0.055em] text-[#2a190b]">#{bestGame?.my_rank || "—"}</strong><span className="mx-auto mt-2 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--palmares-accent)] bg-[#fffdf8] shadow-[0_4px_12px_rgba(58,42,26,.14)]"><img src={JERSEY_BY_THEME[bestTheme.key]} alt="" className="h-11 w-auto object-contain" /></span></div>
+            <div className="pointer-events-none absolute -right-10 -top-4 hidden h-[calc(100%+2rem)] w-20 rounded-[50%] border-r-2 border-[var(--palmares-accent)] bg-[#fffdf8] lg:block" aria-hidden />
           </div>
+          <div className="relative flex min-h-[265px] flex-col justify-center px-6 py-8 sm:px-9 lg:pl-14 lg:pr-10">
+            <p className="font-oswald text-xs font-bold uppercase tracking-[0.18em] text-[var(--palmares-accent-strong)] sm:text-sm">{raceHeading(bestGame)}</p><h3 className="mt-3 font-oswald text-3xl font-black uppercase leading-[1.02] tracking-[-0.02em] text-[#281a0e] sm:text-4xl lg:text-[2.65rem]">{t("common.palmares.strongestGrandTour")}</h3>
+            <p className="mt-5 flex items-center gap-2 text-sm text-[var(--ink-faded)] sm:text-base"><Users className="h-5 w-5 text-[#8f7d62]/70" aria-hidden />{bestGame ? t("common.palmares.rankOf", { rank: bestGame.my_rank, total: bestGame.total_participants.toLocaleString(i18n.language) }) : "—"}</p>
+            {bestPercent !== null && <div className="mt-6 flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[#6b5640]/16 bg-[#fffdf8]/90 px-4 py-3 shadow-sm sm:w-fit"><BarChart3 className="h-5 w-5 shrink-0 text-[var(--palmares-accent)]" aria-hidden /><strong className="text-sm text-[var(--ink-sepia)] sm:text-base">{t("common.palmares.topPercent", { percent: bestPercent })}</strong><span className="text-xs text-[var(--ink-faded)] sm:text-sm">{t("common.palmares.ofField")}</span></div>}
+          </div>
+        </article>
 
-          <TabsContent value="races" className="mt-5 space-y-6">
-            {seasons.map(({ year, games: seasonGames }) => (
-              <section key={year ?? "past"}>
-                <div className="mb-3 flex items-center gap-4">
-                  <h3 className="font-oswald text-lg font-black tracking-[0.12em] text-[var(--ink-sepia)]">
-                    {year ?? t("common.palmares.earlier")}
-                  </h3>
-                  <span className="h-px flex-1 bg-[#6b5640]/25" aria-hidden />
-                </div>
-                <div className="space-y-3">
-                  {seasonGames.map((game) => (
-                    <GameCard
-                      key={game.game_id}
-                      game={game}
-                      defaultOpen={game.game_id === bestGame?.game_id}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </TabsContent>
+        <div className="mt-5 grid grid-cols-2 overflow-hidden rounded-[1.35rem] border border-[#6b5640]/16 bg-[#fffdf8]/72 shadow-[0_4px_14px_rgba(58,42,26,0.055)] lg:grid-cols-4">
+          <AchievementStat icon={<Trophy className="h-6 w-6" aria-hidden />} value={totalStageWins} label={t("common.palmares.stageWins")} className="border-b border-r border-[#6b5640]/14 lg:border-b-0" /><AchievementStat icon={<Medal className="h-6 w-6" aria-hidden />} value={totalStagePodiums} label={t("common.palmares.stagePodiums")} className="border-b border-[#6b5640]/14 lg:border-b-0 lg:border-r" /><AchievementStat icon={<Crown className="h-6 w-6" aria-hidden />} value={subpouleWins} label={t("common.palmares.subpouleWins")} className="border-r border-[#6b5640]/14" /><AchievementStat icon={<Bike className="h-6 w-6" aria-hidden />} value={games.length} label={t("common.palmares.racesPlayed")} />
+        </div>
 
-          <TabsContent value="subpoules" className="mt-5">
-            {subpoules.length > 0 ? (
-              <div className="grid gap-3 lg:grid-cols-2">
-                {subpoules.map((subpoule) => (
-                  <SubpouleCard key={subpoule.subpoule_id} subpoule={subpoule} />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-[#6b5640]/20 bg-[#fffdf7]/70 p-8 text-center">
-                <Users className="mx-auto mb-3 h-9 w-9 text-[#6b5640]/50" aria-hidden />
-                <p className="font-serif text-sm italic text-[var(--ink-faded)]">
-                  {t("common.palmares.noSubpoules")}
-                </p>
-              </div>
-            )}
+        <Tabs defaultValue="races" className="mt-7">
+          <div className="flex items-end justify-between gap-4 border-b border-[#6b5640]/18"><TabsList className="h-auto gap-1 rounded-none bg-transparent p-0"><TabsTrigger value="races" className="rounded-t-xl rounded-b-none border border-transparent px-4 py-3 font-sans text-sm font-bold text-[var(--ink-faded)] data-[state=active]:border-[#6b5640]/18 data-[state=active]:border-b-2 data-[state=active]:border-b-[var(--palmares-accent)] data-[state=active]:bg-[#fffdf8]/85 data-[state=active]:text-[var(--ink-sepia)] data-[state=active]:shadow-none sm:px-6">{t("common.palmares.racesTab")}</TabsTrigger><TabsTrigger value="subpoules" className="rounded-t-xl rounded-b-none border border-transparent px-4 py-3 font-sans text-sm font-bold text-[var(--ink-faded)] data-[state=active]:border-[#6b5640]/18 data-[state=active]:border-b-2 data-[state=active]:border-b-[var(--palmares-accent)] data-[state=active]:bg-[#fffdf8]/85 data-[state=active]:text-[var(--ink-sepia)] data-[state=active]:shadow-none sm:px-6">{t("common.palmares.subpoules")}</TabsTrigger></TabsList>{latestSeason && <span className="hidden pb-3 font-oswald text-xs font-bold uppercase tracking-[0.16em] text-[var(--ink-faded)] sm:block">{latestSeason.year ?? t("common.palmares.earlier")} · {t("common.palmares.chapters", { count: latestSeason.games.length })}</span>}</div>
+          <TabsContent value="races" className="mt-5 space-y-7">
+            {seasons.map(({ year, games: seasonGames }, seasonIndex) => <section key={year ?? "past"}>{(seasons.length > 1 || seasonIndex > 0) && <div className="mb-3 flex items-center gap-4"><h3 className="font-oswald text-sm font-black uppercase tracking-[0.16em] text-[var(--ink-faded)]">{year ?? t("common.palmares.earlier")}</h3><span className="h-px flex-1 bg-[#6b5640]/16" aria-hidden /></div>}<div className="relative ml-2 space-y-3 border-l border-[#6b5640]/22 pl-5 sm:ml-0 sm:pl-8">{seasonGames.map((game) => <div key={game.game_id} className="relative"><span className="absolute -left-[1.78rem] top-7 h-3 w-3 rounded-full border-2 border-[#fffaf0] bg-[var(--palmares-accent)] shadow-[0_0_0_1px_var(--palmares-accent)] sm:-left-[2.32rem]" style={raceThemeStyle(getRaceTheme(game.game_type))} aria-hidden /><GameCard game={game} defaultOpen={game.game_id === bestGame?.game_id} /></div>)}</div></section>)}
           </TabsContent>
+          <TabsContent value="subpoules" className="mt-5">{subpoules.length > 0 ? <div className="grid gap-3 lg:grid-cols-2">{subpoules.map((subpoule) => <SubpouleCard key={subpoule.subpoule_id} subpoule={subpoule} />)}</div> : <div className="rounded-2xl border border-[#6b5640]/16 bg-[#fffdf8]/70 p-8 text-center"><Users className="mx-auto mb-3 h-9 w-9 text-[#6b5640]/50" aria-hidden /><p className="font-serif text-sm italic text-[var(--ink-faded)]">{t("common.palmares.noSubpoules")}</p></div>}</TabsContent>
         </Tabs>
+
+        <footer className="mt-8 flex items-center gap-4 rounded-xl border border-[var(--palmares-accent)]/35 bg-[var(--palmares-accent-soft)]/55 px-5 py-4 sm:px-6">
+          <MiniLaurel />
+          <p className="min-w-0 text-sm leading-relaxed text-[var(--ink-faded)]">
+            <strong className="block font-medium text-[var(--palmares-accent-strong)]">{t(`common.palmares.themeOutro.${bestTheme.key}.title`)}</strong>
+            {t(`common.palmares.themeOutro.${bestTheme.key}.body`)}
+          </p>
+        </footer>
       </div>
     </section>
   );

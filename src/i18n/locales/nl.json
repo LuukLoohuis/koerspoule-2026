@@ -1474,9 +1474,33 @@
       "stageLabel": "Rit {{n}}",
       "of": "van {{total}}",
       "hero": "Mijn palmares",
-      "heroSub": "De mooiste momenten uit jouw Koerspoule-carrière.",
+      "heroSub": "Jouw Koerspoule-carrière, koers voor koers.",
       "personalHonours": "Persoonlijke erelijst",
       "bestPerformance": "Beste prestatie",
+      "bestFinalRank": "Beste eindklassering",
+      "strongestGrandTour": "Jouw sterkste grote ronde",
+      "topPercent": "Top {{percent}}%",
+      "ofField": "van het deelnemersveld",
+      "chapters_one": "{{count}} hoofdstuk",
+      "chapters_other": "{{count}} hoofdstukken",
+      "themeOutro": {
+        "tour": {
+          "title": "Elk seizoen. Elke koers. Elk punt.",
+          "body": "Jouw momenten maken jouw palmares."
+        },
+        "giro": {
+          "title": "De mooiste bergen. De grootste verhalen.",
+          "body": "Jouw Giro-momenten, voor altijd."
+        },
+        "vuelta": {
+          "title": "Passie. Strijd. Vuelta.",
+          "body": "Jouw Spaanse hoofdstukken."
+        },
+        "neutral": {
+          "title": "Koers voor koers.",
+          "body": "Samen vormen ze jouw persoonlijke erelijst."
+        }
+      },
       "bestRank": "Beste stand",
       "subpouleWins": "Subpoule­wins",
       "racesPlayed": "Koersen gespeeld",

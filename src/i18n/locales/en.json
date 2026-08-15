@@ -1474,9 +1474,33 @@
       "stageLabel": "Stage {{n}}",
       "of": "of {{total}}",
       "hero": "My palmarès",
-      "heroSub": "The finest moments from your Koerspoule career.",
+      "heroSub": "Your Koerspoule career, race by race.",
       "personalHonours": "Personal honours list",
       "bestPerformance": "Best performance",
+      "bestFinalRank": "Best final ranking",
+      "strongestGrandTour": "Your strongest Grand Tour",
+      "topPercent": "Top {{percent}}%",
+      "ofField": "of the participant field",
+      "chapters_one": "{{count}} chapter",
+      "chapters_other": "{{count}} chapters",
+      "themeOutro": {
+        "tour": {
+          "title": "Every season. Every race. Every point.",
+          "body": "Your moments make your palmarès."
+        },
+        "giro": {
+          "title": "The finest mountains. The greatest stories.",
+          "body": "Your Giro moments, forever."
+        },
+        "vuelta": {
+          "title": "Passion. Battle. Vuelta.",
+          "body": "Your Spanish chapters."
+        },
+        "neutral": {
+          "title": "Race by race.",
+          "body": "Together they form your personal honours list."
+        }
+      },
       "bestRank": "Best rank",
       "subpouleWins": "Subpoule wins",
       "racesPlayed": "Races played",
