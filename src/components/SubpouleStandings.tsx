@@ -462,12 +462,13 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           </div>
         )}
 
-        {/* Eenmalige hint op mobiel: hele rij = vergelijken */}
+        {/* Eenmalige, sluitbare benchmarkhint; dezelfde rustige vorm als in Uitslagen. */}
         {showTapHint && (
-          <div className="md:hidden px-3 py-1.5 border-b border-border bg-secondary/30 text-[10px] text-muted-foreground font-sans italic flex items-center justify-between gap-2">
+          <div className="px-3 py-1.5 border-b border-border bg-secondary/30 text-[10px] text-muted-foreground font-sans italic flex items-center justify-between gap-2">
             <span className="inline-flex items-center gap-1.5">
-              <ArrowLeftRight className="w-3 h-3 shrink-0" />
-              {t("subpoule.standings.tapToCompare")}
+              <Swords className="w-3 h-3 shrink-0" />
+              <span className="hidden md:inline">{t("subpoule.standings.colVsTitle")}</span>
+              <span className="md:hidden">{t("subpoule.standings.tapToCompare")}</span>
             </span>
             <button
               onClick={dismissTapHint}
@@ -488,11 +489,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           )}
           <div className="shrink-0 min-w-[2.5rem] md:min-w-[3rem] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">{t("subpoule.standings.colPts")}</div>
           <div className="shrink-0 min-w-[48px] md:min-w-[64px] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title={t("subpoule.standings.colPtsTitle")}>{t("subpoule.standings.colDay")}</div>
-          {/* Kolomkop boven het compare-slot (desktop); mobiele spacer houdt de uitlijning. */}
-          <div className="shrink-0 w-5 md:w-[104px] hidden md:flex items-center justify-end gap-1 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title={t("subpoule.standings.colVsTitle")}>
-            <Swords className="h-3 w-3" /> VS
-          </div>
-          <div className="shrink-0 w-5 md:hidden" />
+          {/* Alleen ruimte reserveren; de hint erboven legt de actie subtiel uit. */}
+          <div className="shrink-0 w-5 md:w-[104px]" />
         </div>
 
         <div className="max-h-[600px] overflow-y-auto">
@@ -675,14 +673,18 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                       {/* Desktop: "⚔ Vergelijk"-pill; zet de selectie (SubpouleManager
                           toont het duel als zijpaneel). */}
                       <button
-                        onClick={(e) => { e.stopPropagation(); setCompareId(isComparing ? null : m.user_id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCompareId(isComparing ? null : m.user_id);
+                          if (showTapHint) dismissTapHint();
+                        }}
                         className={cn(
                           "hidden md:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1",
                           "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
                           "transition-colors duration-150",
                           isComparing
                             ? "opacity-100 bg-primary/10 border-primary text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.5)]"
-                            : "opacity-60 border-border bg-card text-muted-foreground group-hover:opacity-100 group-hover:border-primary/60 group-hover:text-primary group-hover:bg-primary/5 focus-visible:opacity-100",
+                            : "opacity-0 border-border bg-card text-muted-foreground group-hover:opacity-100 group-hover:border-primary/60 group-hover:text-primary group-hover:bg-primary/5 focus-visible:opacity-100",
                         )}
                         aria-label={isComparing ? t("subpoule.standings.closeComparison") : t("subpoule.standings.benchmarkAgainst", { name: m.team_name ?? m.display_name ?? t("subpoule.standings.thisTeamFallback") })}
                         title={isComparing ? t("subpoule.standings.closeComparison") : t("subpoule.standings.benchmarkTitle")}

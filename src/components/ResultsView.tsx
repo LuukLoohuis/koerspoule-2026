@@ -96,6 +96,18 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   const gameId = gameIdProp ?? curGame?.id;
   const gameName = gameNameProp ?? curGame?.name;
   const [compareUserId, setCompareUserId] = useState<string | null>(null);
+  const [showBenchmarkHint, setShowBenchmarkHint] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem("results-benchmark-hint-dismissed") !== "1";
+  });
+  const dismissBenchmarkHint = () => {
+    setShowBenchmarkHint(false);
+    try { sessionStorage.setItem("results-benchmark-hint-dismissed", "1"); } catch { /* ignore */ }
+  };
+  const toggleComparison = (userId: string) => {
+    setCompareUserId((current) => current === userId ? null : userId);
+    if (showBenchmarkHint) dismissBenchmarkHint();
+  };
 
   const { data: stages = [], isLoading: stagesLoading } = useStages(gameId);
   const { data: entries = [] } = useEntries(gameId);
@@ -451,6 +463,24 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                       </p>
                     </div>
                   ) : (
+                    <>
+                    {showBenchmarkHint && myEntry && (
+                      <div className="px-3 py-1.5 border-b border-border bg-secondary/30 text-[10px] text-muted-foreground font-sans italic flex items-center justify-between gap-2">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Swords className="w-3 h-3 shrink-0" />
+                          <span className="hidden md:inline">{t("subpoule.standings.colVsTitle")}</span>
+                          <span className="md:hidden">{t("subpoule.standings.tapToCompare")}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={dismissBenchmarkHint}
+                          className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 hover:text-foreground px-1"
+                          aria-label={t("subpoule.standings.closeHint")}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
                     <StandingsList
                       topN={isMobile ? 5 : 10}
                       maxHeightClass={isMobile ? "max-h-[460px]" : "max-h-[620px]"}
@@ -471,11 +501,11 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                             tabIndex={canCompare ? 0 : undefined}
                             aria-pressed={canCompare ? isComparing : undefined}
                             aria-label={canCompare ? t("subpoule.standings.compareWith", { name: opponentName }) : undefined}
-                            onClick={canCompare ? () => setCompareUserId(isComparing ? null : s.user_id) : undefined}
+                            onClick={canCompare ? () => toggleComparison(s.user_id) : undefined}
                             onKeyDown={canCompare ? (event) => {
                               if (event.key === "Enter" || event.key === " ") {
                                 event.preventDefault();
-                                setCompareUserId(isComparing ? null : s.user_id);
+                                toggleComparison(s.user_id);
                               }
                             } : undefined}
                             className={cn(
@@ -510,6 +540,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                         };
                       })}
                     />
+                    </>
                   )}
                 </div>
 
@@ -654,12 +685,12 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
             {/* Pool overall standings */}
             <div className="retro-border bg-card">
               <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
-              <div className="sticky top-0 z-20 p-4 border-b-2 border-foreground bg-secondary backdrop-blur-sm flex items-center justify-between">
+              <div className="sticky top-0 z-20 p-4 border-b-2 border-foreground bg-secondary backdrop-blur-sm flex items-center justify-between gap-3">
                 <h2 className="heading-oswald text-xl flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-[hsl(var(--vintage-gold))]" />
                   {t("results.view.overallStandingsTitle")}
                 </h2>
-                <span className="text-[11px] text-muted-foreground font-mono">
+                <span className="shrink-0 text-[11px] text-muted-foreground font-mono">
                   {t("results.view.participantCount", { count: overallStandings.length })}
                 </span>
               </div>
@@ -693,6 +724,23 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                     isMe: s.user_id === user?.id,
                   }))}
                 />
+                {showBenchmarkHint && myEntry && (
+                  <div className="px-3 py-1.5 border-y border-border bg-secondary/30 text-[10px] text-muted-foreground font-sans italic flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Swords className="w-3 h-3 shrink-0" />
+                      <span className="hidden md:inline">{t("subpoule.standings.colVsTitle")}</span>
+                      <span className="md:hidden">{t("subpoule.standings.tapToCompare")}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={dismissBenchmarkHint}
+                      className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 hover:text-foreground px-1"
+                      aria-label={t("subpoule.standings.closeHint")}
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
                 <StandingsList
                   maxHeightClass="max-h-[600px]"
                   placeholder={t("results.view.searchPlaceholder")}
@@ -734,15 +782,16 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                         tabIndex={canCompare ? 0 : undefined}
                         aria-pressed={canCompare ? isComparing : undefined}
                         aria-label={canCompare ? t("subpoule.standings.compareWith", { name: opponentName }) : undefined}
-                        onClick={canCompare ? () => setCompareUserId(isComparing ? null : s.user_id) : undefined}
+                        title={canCompare ? t("subpoule.standings.benchmarkTitle") : undefined}
+                        onClick={canCompare ? () => toggleComparison(s.user_id) : undefined}
                         onKeyDown={canCompare ? (event) => {
                           if (event.key === "Enter" || event.key === " ") {
                             event.preventDefault();
-                            setCompareUserId(isComparing ? null : s.user_id);
+                            toggleComparison(s.user_id);
                           }
                         } : undefined}
                         className={cn(
-                          "group flex items-center gap-2.5 px-3 py-2.5 border-b border-border/40 transition-colors select-none",
+                          "group flex w-full min-w-0 items-center gap-1.5 sm:gap-2.5 px-2 sm:px-3 py-2.5 border-b border-border/40 transition-colors select-none overflow-hidden",
                           rowAccentCls,
                           isMe && "bg-primary/[0.08] ring-1 ring-inset ring-primary/30",
                           isComparing && "bg-accent/15 ring-1 ring-inset ring-accent/50",
@@ -816,17 +865,18 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                           )}
                         </div>
 
-                        {canCompare && (
-                          <span
-                            aria-hidden
-                            className={cn(
-                              "inline-flex shrink-0 text-muted-foreground/60 transition-colors group-hover:text-primary",
-                              isComparing && "text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]",
-                            )}
-                          >
-                            <Swords className="h-3.5 w-3.5" strokeWidth={isComparing ? 2.5 : 2} />
-                          </span>
-                        )}
+                        <span className="inline-flex w-5 shrink-0 items-center justify-end">
+                          {canCompare && (
+                            <Swords
+                              aria-hidden
+                              className={cn(
+                                "h-3.5 w-3.5 text-muted-foreground/60 transition-colors group-hover:text-primary",
+                                isComparing && "text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]",
+                              )}
+                              strokeWidth={isComparing ? 2.5 : 2}
+                            />
+                          )}
+                        </span>
                       </div>
                       ),
                     };
@@ -1013,7 +1063,7 @@ function StandingsList({
       ) : rendered.length === 0 ? (
         <div className="p-4 text-sm text-muted-foreground italic text-center">{t("results.list.noMatch", { query: q })}</div>
       ) : (
-        <div ref={parentRef} className={cn("overflow-y-auto relative", maxHeightClass)}>
+        <div ref={parentRef} className={cn("w-full min-w-0 overflow-x-hidden overflow-y-auto relative", maxHeightClass)}>
           <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: "relative" }}>
             {rowVirtualizer.getVirtualItems().map((vi) => (
               <div
