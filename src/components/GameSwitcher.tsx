@@ -11,11 +11,12 @@
  * game.status. Geen subtitels.
  */
 import { useEffect, useRef } from "react";
-import { Wrench } from "lucide-react";
+import { Snowflake, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlagIcon from "@/components/FlagIcon";
 import { gameTheme, type GameRow } from "@/hooks/useAllGames";
 import { isVisibleToUser, isAdminOnlyStatus, statusBadge, statusOrderRank, isFinishedLike } from "@/lib/gameStatus";
+import { gameSeasonName, isMeermarathonGame } from "@/lib/gameTypes";
 
 type Props = {
   games: GameRow[];
@@ -27,6 +28,9 @@ type Props = {
 };
 
 const raceGradient = (type: string | null | undefined) => {
+  if (isMeermarathonGame(type)) {
+    return "linear-gradient(135deg, #061f4f 0%, #0b4c91 52%, #167fbd 100%)";
+  }
   const c = gameTheme(type).colors;
   return `linear-gradient(135deg, ${c[0]}, ${c[1]}, ${c[2]})`;
 };
@@ -35,6 +39,7 @@ const raceGradient = (type: string | null | undefined) => {
 function segmentName(game: GameRow, finished: boolean): string {
   const y = game.year;
   const t = String(game.game_type ?? "").toLowerCase();
+  if (isMeermarathonGame(t)) return gameSeasonName(t, y);
   if (finished) {
     if (t === "giro") return `Giro ${y}`;
     if (t === "vuelta" || t === "vta") return `Vuelta ${y}`;
@@ -96,6 +101,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
       >
         {ordered.map((game) => {
           const theme = gameTheme(game.game_type);
+          const meermarathon = isMeermarathonGame(game.game_type);
           const isActive = selectedId === game.id;
           const concept = isAdminOnlyStatus(game.status);
           const badge = statusBadge(game.status);
@@ -151,10 +157,22 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
               <span className="relative z-10 flex flex-col items-center justify-center gap-[5px] min-w-0 max-w-full">
                 {/* Bovenste regel: vlag + racenaam op één lijn. */}
                 <span className="flex items-center gap-[7px] min-w-0 max-w-full">
-                  <FlagIcon
-                    country={theme.country}
-                    className={cn("w-6 h-[17px] shrink-0", isActive ? "ring-1 ring-white/60 border-white/40" : "")}
-                  />
+                  {meermarathon ? (
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "grid h-7 w-7 shrink-0 place-items-center rounded-full",
+                        isActive ? "bg-white/12 text-white" : "bg-[#ddecf8] text-[#0b4c91]",
+                      )}
+                    >
+                      <Snowflake className="h-[18px] w-[18px]" strokeWidth={1.8} />
+                    </span>
+                  ) : (
+                    <FlagIcon
+                      country={theme.country}
+                      className={cn("w-6 h-[17px] shrink-0", isActive ? "ring-1 ring-white/60 border-white/40" : "")}
+                    />
+                  )}
                   <span
                     className={cn("font-display text-[13px] min-w-0 truncate whitespace-nowrap", isActive ? "font-semibold" : "font-bold")}
                     style={isActive ? { color: "#fff", textShadow: "0 1px 2px rgba(10,10,40,0.6)" } : undefined}

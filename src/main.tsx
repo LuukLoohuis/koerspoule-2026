@@ -6,6 +6,7 @@ import App from "./App.tsx";
 import { initPostHog } from "@/lib/posthog";
 import "./index.css";
 import "./styles/salle-de-course.css";
+import "./styles/meermarathon.css";
 
 initPostHog();
 

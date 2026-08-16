@@ -12,11 +12,12 @@ import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deriveThemaKey, THEMAS, type ThemaKey } from "@/lib/themas";
 import { useQueryClient } from "@tanstack/react-query";
+import { gameSeasonName } from "@/lib/gameTypes";
 
 export type Game = {
   id: string;
   name: string;
-  game_type: "giro" | "tdf" | "vuelta" | "femmes" | null;
+  game_type: "giro" | "tdf" | "vuelta" | "femmes" | "meermarathon" | null;
   year: number | null;
   status: "draft" | "open" | "open_inschrijving" | "locked" | "live" | "finished";
   starts_at: string | null;
@@ -40,6 +41,7 @@ const TYPE_LABELS: Record<string, string> = {
   tdf: "Tour de France",
   femmes: "Tour de France Femmes",
   vuelta: "Vuelta a España",
+  meermarathon: "Meermarathon",
 };
 
 // Kiesbaar, opgeschoond model: open → open_inschrijving → live → afgerond.
@@ -111,7 +113,7 @@ export default function GamesTab({
   reload: () => Promise<void> | void;
 }) {
   const queryClient = useQueryClient();
-  const [type, setType] = useState<"giro" | "tdf" | "vuelta" | "femmes">("tdf");
+  const [type, setType] = useState<"giro" | "tdf" | "vuelta" | "femmes" | "meermarathon">("tdf");
   const [year, setYear] = useState<string>(String(new Date().getFullYear()));
   const [startsAt, setStartsAt] = useState("");
   const [creating, setCreating] = useState(false);
@@ -126,7 +128,7 @@ export default function GamesTab({
 
     setCreating(true);
     try {
-      const name = `${TYPE_LABELS[type]} ${yr}`;
+      const name = gameSeasonName(type, yr);
       const payload: Record<string, unknown> = {
         name,
         game_type: type,
@@ -274,6 +276,7 @@ export default function GamesTab({
                 <SelectItem value="tdf">Tour de France</SelectItem>
                 <SelectItem value="femmes">Tour de France Femmes</SelectItem>
                 <SelectItem value="vuelta">Vuelta a España</SelectItem>
+                <SelectItem value="meermarathon">Meermarathon</SelectItem>
               </SelectContent>
             </Select>
           </div>

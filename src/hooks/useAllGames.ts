@@ -46,7 +46,8 @@ export function useAllGames() {
         if (k === "tour" || k === "tdf") return 1;
         if (k === "femmes") return 2;
         if (k === "vuelta" || k === "vta") return 3;
-        return 4;
+        if (k === "meermarathon") return 4;
+        return 5;
       };
       return [...rows].sort((a, b) => {
         if (b.year !== a.year) return b.year - a.year;
@@ -57,7 +58,7 @@ export function useAllGames() {
 }
 
 export function gameTheme(type: string | null | undefined): {
-  country: "IT" | "FR" | "ES";
+  country: "IT" | "FR" | "ES" | "NL";
   colors: string[];
 } {
   switch ((type ?? "").toLowerCase()) {
@@ -69,6 +70,9 @@ export function gameTheme(type: string | null | undefined): {
     case "vta":
       return { country: "ES", colors: ["#AA151B", "#F1BF00", "#AA151B"] };
     case "giro":
+      return { country: "IT", colors: ["#009246", "#ffffff", "#CE2B37"] };
+    case "meermarathon":
+      return { country: "NL", colors: ["#061f4f", "#0b4c91", "#167fbd"] };
     default:
       return { country: "IT", colors: ["#009246", "#ffffff", "#CE2B37"] };
   }
