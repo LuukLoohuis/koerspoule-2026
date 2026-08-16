@@ -9,7 +9,7 @@ describe("centrale game-branding", () => {
     ["femmes", "geel", "/koerspoule-tour.svg", "/favicon-tour.svg"],
     ["giro", "roze", "/koerspoule-giro.svg", "/favicon-giro.svg"],
     ["vuelta", "rood", "/koerspoule-vuelta.svg", "/favicon-vuelta.svg"],
-    ["meermarathon", "winter", "/koerspoule-meermarathon.svg", "/favicon-meermarathon.svg"],
+    ["meermarathon", "winter", "/koerspoule-meermarathon.png", "/favicon-meermarathon.svg"],
   ] as const)("koppelt %s aan thema %s en de juiste branding", (gameType, key, logo, favicon) => {
     const resolved = deriveThemaKey(null, gameType);
     expect(resolved).toBe(key);
@@ -51,11 +51,15 @@ describe("centrale game-branding", () => {
     expect(THEMAS.roze.kleuren.primair).toBe("#E6446D");
   });
 
-  it("levert winterbranding als zelfstandige vector-assets", () => {
-    const logo = readFileSync(`${process.cwd()}/public/koerspoule-meermarathon.svg`, "utf8");
-    const favicon = readFileSync(`${process.cwd()}/public/favicon-meermarathon.svg`, "utf8");
-    expect(logo).toContain('viewBox="0 0 480 320"');
-    expect(logo).toContain("#14538E");
+  it("levert winterbranding als eigen assets", () => {
+    // Het schaatslogo is een raster-illustratie met transparante achtergrond;
+    // de favicon blijft vector zodat 'ie ook op 16px scherp is.
+    const logo = readFileSync(`${process.cwd()}/public${THEMAS.winter.logo}`);
+    expect(logo.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    // IHDR: breedte/hoogte staan als big-endian uint32 op offset 16 resp. 20.
+    expect(logo.readUInt32BE(16) / logo.readUInt32BE(20)).toBeCloseTo(1.5, 2);
+
+    const favicon = readFileSync(`${process.cwd()}/public${THEMAS.winter.favicon}`, "utf8");
     expect(favicon).toContain('viewBox="0 0 256 256"');
     expect(favicon).toContain("#14538E");
   });

@@ -149,7 +149,8 @@ export const THEMAS: Record<ThemaKey, Thema> = {
   },
   winter: {
     key: "winter",
-    logo: "/koerspoule-meermarathon.svg",
+    // Schaatslogo als transparante PNG (raster-illustratie, geen vector-variant).
+    logo: "/koerspoule-meermarathon.png",
     favicon: "/favicon-meermarathon.svg",
     kleuren: { primair: "#14538E", secundair: "#4FA8D8", achtergrond: "#F4F9FC", kaart: "#E4F0FA", tekst: "#0B2C4D", accent: "#4FA8D8" },
     krant: "IJsjournaal",

@@ -124,7 +124,7 @@ describe("ThemaProvider + KoerspouleLogo", () => {
     );
 
     expect(screen.getByTestId("theme-key")).toHaveTextContent("winter");
-    expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-meermarathon.svg");
+    expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-meermarathon.png");
     expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-meermarathon.svg");
     expect(storage.has("koerspoule:themaKey")).toBe(false);
     expect(storage.has("koerspoule:themaTokens")).toBe(false);
