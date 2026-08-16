@@ -2,11 +2,11 @@
   <title id="title">Koerspoule Giro d'Italia</title>
   <defs>
     <filter id="giro-accent" color-interpolation-filters="sRGB">
-      <!-- Geel/goud -> roze (#ff69b4); zwart, wit en neutraalgrijs blijven gelijk. -->
+      <!-- Geel/goud -> officieel Giro-roze (#E6446D); zwart, wit en neutraalgrijs blijven gelijk. -->
       <feColorMatrix type="matrix" values="
-        1 0 0 0 0
-        0 .515 .485 0 0
-        .706 0 .294 0 0
+        .902 0 .098 0 0
+        .267 0 .733 0 0
+        .427 0 .573 0 0
         0 0 0 1 0"/>
     </filter>
     <clipPath id="shield-flag">

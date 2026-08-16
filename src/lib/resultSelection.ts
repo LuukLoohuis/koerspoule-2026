@@ -17,3 +17,16 @@ export function getInitialResultsStageIndex(stages: SelectableStage[], preferGc:
   }
   return 0;
 }
+
+/** Parseer de fiat-deep-link: `gc` kiest de eindstand, een positief nummer een rit. */
+export function parseResultsStageParam(stageParam: string | null): {
+  preferGc: boolean;
+  stageNumber: number | null;
+} {
+  if (stageParam === "gc") return { preferGc: true, stageNumber: null };
+  if (stageParam && /^\d+$/.test(stageParam)) {
+    const stageNumber = Number(stageParam);
+    if (stageNumber > 0) return { preferGc: false, stageNumber };
+  }
+  return { preferGc: false, stageNumber: null };
+}

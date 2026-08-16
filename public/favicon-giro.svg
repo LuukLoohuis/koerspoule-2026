@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
   <defs>
     <filter id="giro" color-interpolation-filters="sRGB">
-      <!-- Dominante achtergrond exact naar het Giro-accent #FF69B4; wit blijft wit. -->
+      <!-- Dominante achtergrond exact naar het Giro-accent #E6446D; wit blijft wit. -->
       <feColorMatrix type="matrix" values="
-        0 0 0 0 1
-        0 1.785714 0 0 -.785714
-        0 0 .340909 0 .659091
+        .862 0 0 0 .138
+        0 2.226 0 0 -1.226
+        0 0 .664 0 .336
         0 0 0 1 0"/>
     </filter>
   </defs>

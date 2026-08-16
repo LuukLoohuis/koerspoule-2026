@@ -7,6 +7,20 @@ type ThemaContextValue = { thema: Thema; key: ThemaKey; ready: boolean };
 
 const ThemaContext = createContext<ThemaContextValue>({ thema: THEMAS.roze, key: "roze", ready: false });
 
+type ThemeGame = {
+  game_type?: string | null;
+  status?: string | null;
+  theme?: string | null;
+} | null;
+
+/** Meermarathon voert de globale winterstijl uitsluitend tijdens de livefase. */
+export function resolveSiteThemaKey(game: ThemeGame): ThemaKey {
+  if (game?.game_type === "meermarathon") {
+    return game.status === "live" ? "winter" : "roze";
+  }
+  return deriveThemaKey(game?.theme, game?.game_type);
+}
+
 /** Zet de thema-kleuren op de bestaande HSL-tokens → hele site herkleurt. */
 function applyThemaTokens(key: ThemaKey) {
   const t = THEMAS[key];
@@ -54,10 +68,16 @@ function applyThemaTokens(key: ThemaKey) {
   // Persisteer de toegepaste accent-tokens zodat het no-flash-script in
   // index.html ze bij een volgend bezoek vóór de eerste paint kan zetten.
   try {
-    localStorage.setItem(
-      THEMA_TOKENS_LS_KEY,
-      JSON.stringify({ "--primary": primair, "--primary-foreground": primairFg, "--ring": primair, "--jersey-pink": primair, "--vintage-gold": accent }),
-    );
+    if (key === "winter") {
+      // Winter mag bij een volgende start niet uit cache verschijnen als de
+      // Meermarathon inmiddels niet meer live staat.
+      localStorage.removeItem(THEMA_TOKENS_LS_KEY);
+    } else {
+      localStorage.setItem(
+        THEMA_TOKENS_LS_KEY,
+        JSON.stringify({ "--primary": primair, "--primary-foreground": primairFg, "--ring": primair, "--jersey-pink": primair, "--vintage-gold": accent }),
+      );
+    }
   } catch { /* ignore */ }
 }
 
@@ -80,7 +100,7 @@ function neutralizeAccent() {
 function readCachedKey(): ThemaKey | null {
   try {
     const v = typeof localStorage !== "undefined" ? localStorage.getItem(THEMA_LS_KEY) : null;
-    return v && v in THEMAS ? (v as ThemaKey) : null;
+    return v && v in THEMAS && v !== "winter" ? (v as ThemaKey) : null;
   } catch {
     return null;
   }
@@ -103,7 +123,7 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
 
   // Definitief thema zodra de bron geladen is; daarvóór de cache (indien er is).
   const fetchedKey = isFetched
-    ? deriveThemaKey(activeGame?.theme, activeGame?.game_type)
+    ? resolveSiteThemaKey(activeGame)
     : null;
   const resolvedKey: ThemaKey | null = fetchedKey ?? cachedKey;
   const key: ThemaKey = resolvedKey ?? "roze";
@@ -113,7 +133,10 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isFetched && fetchedKey) {
       applyThemaTokens(fetchedKey);
-      try { localStorage.setItem(THEMA_LS_KEY, fetchedKey); } catch { /* ignore */ }
+      try {
+        if (fetchedKey === "winter") localStorage.removeItem(THEMA_LS_KEY);
+        else localStorage.setItem(THEMA_LS_KEY, fetchedKey);
+      } catch { /* ignore */ }
     } else if (cachedKey) {
       applyThemaTokens(cachedKey);
     } else {

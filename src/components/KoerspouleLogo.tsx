@@ -2,7 +2,7 @@ import type { ImgHTMLAttributes } from "react";
 import { useThema } from "@/contexts/ThemaContext";
 
 export type KoerspouleLogoProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src">;
-export type RaceKey = "giro" | "tdf" | "vuelta" | "femmes";
+export type RaceKey = "giro" | "tdf" | "vuelta" | "femmes" | "meermarathon";
 
 /**
  * Het enige Koerspoule-logo voor de client-app.

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase, Loader2, AlertTriangle, Trophy, Search, X } from "lucide-react";
+import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase, Loader2, AlertTriangle, Trophy, Search, X, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { getCalculationProgress, isCalculationActive, isFiatReady } from "@/lib/calculationProgress";
 import { useNavigate } from "react-router-dom";
@@ -303,6 +303,46 @@ type Row = {
   calculation_error: string | null;
 };
 
+type ApprovalProgress = {
+  stageId: string;
+  percent: number;
+  label: string;
+};
+
+function waitForNextPaint() {
+  return new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
+  });
+}
+
+function FiatProgress({ progress, stageNumber }: { progress: ApprovalProgress; stageNumber: number }) {
+  return (
+    <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3" aria-live="polite">
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <span className="flex items-center gap-2 font-medium">
+          <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
+          {progress.label}
+        </span>
+        <span className="font-mono font-bold">{progress.percent}%</span>
+      </div>
+      <div
+        className="h-2.5 overflow-hidden rounded-full bg-secondary"
+        role="progressbar"
+        aria-label={`Voortgang fiatteren etappe ${stageNumber}`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progress.percent}
+      >
+        <div
+          className="h-full bg-primary transition-[width] duration-300 motion-reduce:transition-none"
+          style={{ width: `${progress.percent}%` }}
+        />
+      </div>
+      <p className="text-[11px] text-muted-foreground">Laat deze pagina open; de uitslag opent automatisch zodra de publicatie klaar is.</p>
+    </div>
+  );
+}
+
 function GcClassificationSummary({ stageId }: { stageId: string }) {
   type GcResultRow = {
     gc_position: number | null;
@@ -383,13 +423,16 @@ function GcClassificationSummary({ stageId }: { stageId: string }) {
 
 function GcApprovalCard({
   row,
-  busy,
+  progress,
+  disabled,
   onApprove,
 }: {
   row: Row;
-  busy: boolean;
+  progress?: ApprovalProgress;
+  disabled: boolean;
   onApprove: () => void;
 }) {
+  const busy = Boolean(progress);
   return (
     <div className="overflow-hidden border border-amber-400/70 bg-card shadow-sm" aria-live="polite">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b bg-amber-50/60 p-4 dark:bg-amber-950/15">
@@ -426,12 +469,87 @@ function GcApprovalCard({
             <div className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /><span>{row.total_count || "Alle"} deelnemers verwerkt</span></div>
             <div className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /><span>Totaalstand is bijgewerkt</span></div>
           </div>
-          <p className="my-4 text-xs leading-relaxed text-muted-foreground">
-            Na fiatteren opent automatisch het definitieve eindklassement. Je controleert dus direct dezelfde GC-weergave als de deelnemers.
-          </p>
-          <Button onClick={onApprove} disabled={busy} className="w-full bg-amber-500 text-black hover:bg-amber-600">
+          {progress ? (
+            <div className="my-4"><FiatProgress progress={progress} stageNumber={row.stage_number} /></div>
+          ) : (
+            <p className="my-4 text-xs leading-relaxed text-muted-foreground">
+              Na fiatteren opent automatisch het definitieve eindklassement. Je controleert dus direct dezelfde GC-weergave als de deelnemers.
+            </p>
+          )}
+          <Button onClick={onApprove} disabled={disabled} className="w-full bg-amber-500 text-black hover:bg-amber-600">
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
-            {busy ? "Fiatteren…" : "Fiatteer en bekijk eindklassement"}
+            {busy ? `Fiatteren… ${progress?.percent ?? 0}%` : "Fiatteer en bekijk eindklassement"}
+          </Button>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function StageApprovalCard({
+  row,
+  progress,
+  disabled,
+  onApprove,
+}: {
+  row: Row;
+  progress?: ApprovalProgress;
+  disabled: boolean;
+  onApprove: () => void;
+}) {
+  const busy = Boolean(progress);
+  return (
+    <div className="overflow-hidden border border-green-300/80 bg-card shadow-sm" aria-live="polite">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b bg-green-50/60 p-4 dark:bg-green-950/15">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Flag className="h-5 w-5 text-green-700 dark:text-green-400" />
+            <h3 className="font-display text-xl font-bold">Etappe {row.stage_number} fiatteren</h3>
+            <Badge className="gap-1 bg-green-600 hover:bg-green-600"><CheckCircle2 className="h-3 w-3" />Klaar voor fiat</Badge>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">{row.stage_name ?? "Etappe-uitslag"}</p>
+        </div>
+        {row.calculation_completed_at && (
+          <span className="text-xs text-muted-foreground">
+            Berekend {new Date(row.calculation_completed_at).toLocaleString("nl-NL")}
+          </span>
+        )}
+      </div>
+
+      <div className="grid md:grid-cols-[minmax(0,1.55fr)_minmax(240px,.72fr)]">
+        <div className="min-w-0 md:border-r">
+          <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+            <div>
+              <h4 className="font-display font-semibold">Puntencontrole</h4>
+              <p className="text-xs text-muted-foreground">Bekijk per deelnemer welke renners punten hebben opgeleverd.</p>
+            </div>
+            <span className="shrink-0 text-xs font-medium text-green-700 dark:text-green-400">
+              {row.total_count || "Alle"} deelnemers
+            </span>
+          </div>
+          <div className="px-2 py-2">
+            <StageBreakdown stageId={row.stage_id} />
+          </div>
+        </div>
+
+        <aside className="flex flex-col p-4">
+          <h4 className="font-display font-semibold">Publicatiecheck</h4>
+          <div className="mt-3 flex-1 space-y-3 text-sm">
+            <div className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /><span>Officiële etappe-uitslag is ingevuld</span></div>
+            <div className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /><span>Puntenberekening is voltooid</span></div>
+            <div className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /><span>{row.total_count || "Alle"} deelnemers zijn verwerkt</span></div>
+            <div className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /><span>Klaar om zichtbaar te maken bij Uitslagen</span></div>
+          </div>
+          {progress ? (
+            <div className="my-4"><FiatProgress progress={progress} stageNumber={row.stage_number} /></div>
+          ) : (
+            <p className="my-4 text-xs leading-relaxed text-muted-foreground">
+              Na fiatteren opent automatisch deze etappe bij Uitslagen. Zo controleer je direct wat deelnemers zien.
+            </p>
+          )}
+          <Button onClick={onApprove} disabled={disabled} className="w-full bg-green-600 hover:bg-green-700">
+            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+            {busy ? `Fiatteren… ${progress?.percent ?? 0}%` : "Fiatteer en bekijk etappe"}
           </Button>
         </aside>
       </div>
@@ -445,6 +563,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [approvalProgress, setApprovalProgress] = useState<ApprovalProgress | null>(null);
   const [lefBusy, setLefBusy] = useState(false);
   // Lefevère-batch: voortgangsteller (per huidige stand) + generatie-status.
   const [lefCount, setLefCount] = useState<LefevereCount | null>(null);
@@ -653,26 +772,35 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGameId, hasActiveCalculation]);
 
-  async function approve(stageId: string) {
+  async function approve(row: Row) {
+    const stageId = row.stage_id;
     const isGc = gcStageIds.has(stageId);
     const question = isGc
       ? "Eindklassement definitief fiatteren? De GC- en truibonussen tellen daarna mee in de totaalstand."
       : "Uitslag fiatteren? Deelnemers zien dit pas zodra de game op Live staat. Met testmodus zie je zelf direct de volledige live-weergave.";
     if (!confirm(question)) return;
     setBusyId(stageId);
+    setApprovalProgress({ stageId, percent: 25, label: "Uitslag fiatteren in de database…" });
     const { error } = await supabase.rpc("approve_stage_results", { p_stage_id: stageId });
-    setBusyId(null);
     if (error) {
+      setApprovalProgress(null);
+      setBusyId(null);
       toast.error(error.message);
       return;
     }
+    setApprovalProgress({ stageId, percent: 85, label: "Stand bijgewerkt — uitslag voorbereiden…" });
+    await waitForNextPaint();
+    setApprovalProgress({ stageId, percent: 100, label: "Gepubliceerd — uitslag openen…" });
+    await waitForNextPaint();
+    setBusyId(null);
     if (isGc) {
       toast.success("Eindklassement gefiatteerd — definitieve stand geopend");
       navigate(`/uitslagen?game=${encodeURIComponent(activeGameId)}&view=klassement&stage=gc`);
     } else {
-      toast.success("Uitslag gefiatteerd");
-      load();
+      toast.success(`Etappe ${row.stage_number} gefiatteerd — uitslag geopend`);
+      navigate(`/uitslagen?game=${encodeURIComponent(activeGameId)}&view=etappes&stage=${row.stage_number}`);
     }
+    setApprovalProgress(null);
     // Bewust GEEN automatische commentaargeneratie meer bij fiatteren: het
     // commentaar wordt on-demand per subpoule gegenereerd zodra een deelnemer
     // 'm opent (of via de handmatige knoppen hieronder).
@@ -748,8 +876,20 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                   <GcApprovalCard
                     key={r.stage_id}
                     row={r}
-                    busy={busyId === r.stage_id}
-                    onApprove={() => approve(r.stage_id)}
+                    progress={approvalProgress?.stageId === r.stage_id ? approvalProgress : undefined}
+                    disabled={busyId !== null}
+                    onApprove={() => approve(r)}
+                  />
+                );
+              }
+              if (ready) {
+                return (
+                  <StageApprovalCard
+                    key={r.stage_id}
+                    row={r}
+                    progress={approvalProgress?.stageId === r.stage_id ? approvalProgress : undefined}
+                    disabled={busyId !== null}
+                    onApprove={() => approve(r)}
                   />
                 );
               }
@@ -801,12 +941,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                       </p>
                     )}
                   </div>
-                  {ready ? (
-                    <Button onClick={() => approve(r.stage_id)} disabled={busyId !== null} className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
-                      {busyId === r.stage_id ? <Loader2 className="w-4 h-4 mr-2 animate-spin motion-reduce:animate-none" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-                      {busyId === r.stage_id ? "Fiatteren…" : "Fiatteren"}
-                    </Button>
-                  ) : failed ? (
+                  {failed ? (
                     <Button variant="outline" onClick={() => load()} className="w-full sm:w-auto"><RefreshCw className="h-4 w-4 mr-2" />Opnieuw controleren</Button>
                   ) : (
                     <Button disabled className="w-full sm:w-auto min-w-[180px]">
@@ -814,7 +949,6 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                     </Button>
                   )}
                 </div>
-                {ready && <StageBreakdown stageId={r.stage_id} />}
               </div>
             );})
           )}

@@ -9,6 +9,7 @@ describe("centrale game-branding", () => {
     ["femmes", "geel", "/koerspoule-tour.svg", "/favicon-tour.svg"],
     ["giro", "roze", "/koerspoule-giro.svg", "/favicon-giro.svg"],
     ["vuelta", "rood", "/koerspoule-vuelta.svg", "/favicon-vuelta.svg"],
+    ["meermarathon", "winter", "/koerspoule-meermarathon.svg", "/favicon-meermarathon.svg"],
   ] as const)("koppelt %s aan thema %s en de juiste branding", (gameType, key, logo, favicon) => {
     const resolved = deriveThemaKey(null, gameType);
     expect(resolved).toBe(key);
@@ -22,7 +23,7 @@ describe("centrale game-branding", () => {
 
   it("houdt site-accent en logo-opdracht op dezelfde racekleuren", () => {
     expect(THEMAS.geel.kleuren.primair).toBe("#FFC300");
-    expect(THEMAS.roze.kleuren.primair).toBe("#FF69B4");
+    expect(THEMAS.roze.kleuren.primair).toBe("#E6446D");
     expect(THEMAS.rood.kleuren.primair).toBe("#E30613");
   });
 
@@ -46,8 +47,17 @@ describe("centrale game-branding", () => {
 
   it("koppelt de Giro-favicon expliciet aan exact dezelfde primaire roze kleur", () => {
     const svg = readFileSync(`${process.cwd()}/public/favicon-giro.svg`, "utf8");
-    expect(svg).toContain("#FF69B4");
-    expect(THEMAS.roze.kleuren.primair).toBe("#FF69B4");
+    expect(svg).toContain("#E6446D");
+    expect(THEMAS.roze.kleuren.primair).toBe("#E6446D");
+  });
+
+  it("levert winterbranding als zelfstandige vector-assets", () => {
+    const logo = readFileSync(`${process.cwd()}/public/koerspoule-meermarathon.svg`, "utf8");
+    const favicon = readFileSync(`${process.cwd()}/public/favicon-meermarathon.svg`, "utf8");
+    expect(logo).toContain('viewBox="0 0 480 320"');
+    expect(logo).toContain("#0B4C91");
+    expect(favicon).toContain('viewBox="0 0 256 256"');
+    expect(favicon).toContain("#0B4C91");
   });
 
   it("gebruikt voor Spanje een ingekaderde rood-geel-rood vlag met een dubbelbrede gele baan", () => {

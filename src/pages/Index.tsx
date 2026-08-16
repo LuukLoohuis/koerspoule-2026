@@ -67,6 +67,7 @@ const THEMA_TO_RACE: Record<ThemaKey, RaceKey> = {
   roze: "giro",
   geel: "tdf",
   rood: "vuelta",
+  winter: "meermarathon",
 };
 
 const RACE_COPY: Record<RaceKey, RaceCopy> = {
@@ -105,6 +106,15 @@ const RACE_COPY: Record<RaceKey, RaceCopy> = {
     edition: "Édition 5 · 1–9 août MMXXVI",
     jersey: "maillot jaune",
     startToFinish: "1–9 aug 2026",
+  },
+  meermarathon: {
+    longName: "Meermarathon",
+    line1: "Meer",
+    line2: "marathon",
+    yearTag: "26/27",
+    edition: "Winterseizoen 2026–2027",
+    jersey: "winterklassement",
+    startToFinish: "winter 2026–2027",
   },
 };
 

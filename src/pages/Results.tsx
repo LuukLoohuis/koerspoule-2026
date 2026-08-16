@@ -6,6 +6,7 @@ import { useSelectedGame } from "@/context/SelectedGameContext";
 import { maySeeLiveContent } from "@/lib/gameStatus";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
 import { useLocation } from "react-router-dom";
+import { parseResultsStageParam } from "@/lib/resultSelection";
 
 export default function Results() {
   const { t } = useTranslation();
@@ -14,7 +15,7 @@ export default function Results() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const initialView = params.get("view") === "etappes" ? "etappes" : "klassement";
-  const initialGc = params.get("stage") === "gc";
+  const { preferGc: initialGc, stageNumber: initialStageNumber } = parseResultsStageParam(params.get("stage"));
   // Gedeelde game-keuze uit de context (één kiezer voor de hele app).
   const { games, selectedGame, setSelectedGameId } = useSelectedGame();
 
@@ -37,6 +38,7 @@ export default function Results() {
           gameId={selectedGame?.id}
           gameName={selectedGame?.name}
           initialView={initialView}
+          initialStageNumber={initialStageNumber}
           initialGc={initialGc}
         />
       ) : (

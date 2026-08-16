@@ -25,7 +25,7 @@ export type Game = {
   registration_opens_at?: string | null;
   registration_closes_at?: string | null;
   accent_color?: string | null;
-  theme?: "roze" | "geel" | "rood" | null;
+  theme?: ThemaKey | null;
 };
 
 // Convert ISO timestamp ↔ datetime-local input string (in user's local TZ)
@@ -61,11 +61,12 @@ const LEGACY_STATUS_LABELS: Record<string, string> = {
   closed: "Afgerond (gesloten)",
 };
 
-// Thema-knoppen: roze (Giro) / geel (Tour) / rood (Vuelta).
+// Wielergames houden hun eigen koerskleuren; Meermarathon heeft één winterthema.
 const THEME_BUTTONS: { key: ThemaKey; emoji: string; label: string }[] = [
   { key: "roze", emoji: "🌸", label: "Giro" },
   { key: "geel", emoji: "💛", label: "Tour" },
   { key: "rood", emoji: "🔴", label: "Vuelta" },
+  { key: "winter", emoji: "❄️", label: "Winter" },
 ];
 
 function ThemeButtons({
@@ -76,9 +77,12 @@ function ThemeButtons({
   onChange: (key: ThemaKey) => void;
 }) {
   const activeKey = deriveThemaKey(game.theme, game.game_type);
+  const buttons = isMeermarathonGame(game.game_type)
+    ? THEME_BUTTONS.filter((button) => button.key === "winter")
+    : THEME_BUTTONS.filter((button) => button.key !== "winter");
   return (
     <div className="flex items-center gap-1.5">
-      {THEME_BUTTONS.map((btn) => {
+      {buttons.map((btn) => {
         const isActive = activeKey === btn.key;
         const kleur = THEMAS[btn.key].kleuren.primair;
         return (
@@ -176,7 +180,7 @@ export default function GamesTab({
     ]);
   }
 
-  async function setTheme(id: string, theme: "roze" | "geel" | "rood") {
+  async function setTheme(id: string, theme: ThemaKey) {
     if (!supabase) return;
     const { error } = await supabase.from("games").update({ theme }).eq("id", id);
     if (error) {
@@ -327,7 +331,7 @@ export default function GamesTab({
 
       {/* Thema migration note */}
       <div className="text-xs text-muted-foreground bg-muted/50 border border-border rounded px-3 py-2">
-        <strong>Thema:</strong> 🌸 Giro · 💛 Tour · 🔴 Vuelta. De hele site herkleurt automatisch op het gekozen thema van de actieve game. Vereist kolom in database:{" "}
+        <strong>Thema:</strong> 🌸 Giro · 💛 Tour · 🔴 Vuelta · ❄️ Winter. Het winterthema wordt alleen actief als Meermarathon op Live staat. Vereist kolom in database:{" "}
         <code className="font-mono bg-muted px-1 rounded">
           ALTER TABLE games ADD COLUMN IF NOT EXISTS theme text;
         </code>{" "}

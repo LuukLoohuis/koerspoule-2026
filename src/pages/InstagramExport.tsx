@@ -198,7 +198,7 @@ function StageSelect({
 // TEMPLATE SHARED CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PINK = "#E91E63";
+const PINK = "#E6446D";
 const GOLD = "#FFD700";
 const SILVER = "#C0C0C0";
 const BRONZE = "#CD7F32";
@@ -267,7 +267,7 @@ function KlassementTemplate({
             </div>
           </div>
         </div>
-        <div style={{ height: 3, background: `linear-gradient(90deg, ${PINK} 0%, rgba(233,30,99,0.3) 60%, transparent 100%)`, marginTop: 24 }} />
+        <div style={{ height: 3, background: `linear-gradient(90deg, ${PINK} 0%, rgba(230,68,109,0.3) 60%, transparent 100%)`, marginTop: 24 }} />
       </div>
 
       {/* Standings */}
@@ -569,7 +569,7 @@ type RaceTheme = {
   daguitslagBg: string; // PNG-sjabloon (public/) voor daguitslag
 };
 
-type RaceKey = "roze" | "geel" | "rood" | "femmes";
+type RaceKey = "roze" | "geel" | "rood" | "femmes" | "winter";
 
 function RaceBike({ size = 54, color = R_INK }: { size?: number; color?: string }) {
   return (
@@ -630,7 +630,7 @@ function RaceLaurel({ size = 38 }: { size?: number }) {
 // Titels per koers (script voor Giro/Tour, bold voor Vuelta).
 const GiroTitle = (
   <div style={{ fontFamily: R_SERIF, fontStyle: "italic", fontWeight: 900, lineHeight: 0.9 }}>
-    <span style={{ fontSize: 98, color: "#E8336D" }}>Giro</span><br />
+    <span style={{ fontSize: 98, color: "#E6446D" }}>Giro</span><br />
     <span style={{ fontSize: 64, color: R_INK }}>d'Italia</span>
     <div style={{ display: "flex", gap: 0, marginTop: 6, width: 150 }}>
       <span style={{ flex: 1, height: 5, background: "#009246" }} /><span style={{ flex: 1, height: 5, background: "#fff" }} /><span style={{ flex: 1, height: 5, background: "#CE2B37" }} />
@@ -650,12 +650,20 @@ const VueltaTitle = (
     <div style={{ fontSize: 40, color: R_INK }}>A ESPAÑA</div>
   </div>
 );
+const WinterTitle = (
+  <div style={{ fontFamily: R_OSWALD, fontWeight: 700, lineHeight: 0.9 }}>
+    <div style={{ fontSize: 42, color: "#167FBD", letterSpacing: 5 }}>WINTERSEIZOEN</div>
+    <div style={{ fontSize: 76, color: "#0B4C91" }}>MEERMARATHON</div>
+    <div style={{ fontSize: 36, color: R_INK }}>2026–2027</div>
+  </div>
+);
 
 const RACE_THEMES: Record<RaceKey, RaceTheme> = {
   geel: { primary: "#E0A411", onPrimary: "#1C1813", race: "TOUR DE FRANCE 2026", title: TourTitle, klassementBg: "/ig/klassement-template.png", daguitslagBg: "/ig/daguitslag-template.png" },
   femmes: { primary: "#E0A411", onPrimary: "#1C1813", race: "TOUR DE FRANCE FEMMES 2026", title: TourTitle, klassementBg: "/ig/klassement-template-femmes.png", daguitslagBg: "/ig/daguitslag-template-femmes.png" },
-  roze: { primary: "#E8336D", onPrimary: "#FFFFFF", race: "GIRO D'ITALIA 2026", title: GiroTitle, klassementBg: "/ig/klassement-template-giro.png", daguitslagBg: "/ig/daguitslag-template-giro.png" },
+  roze: { primary: "#E6446D", onPrimary: "#FFFFFF", race: "GIRO D'ITALIA 2026", title: GiroTitle, klassementBg: "/ig/klassement-template-giro.png", daguitslagBg: "/ig/daguitslag-template-giro.png" },
   rood: { primary: "#CC0000", onPrimary: "#FFF4EC", race: "LA VUELTA 2026", title: VueltaTitle, klassementBg: "/ig/klassement-template-vuelta.png", daguitslagBg: "/ig/daguitslag-template-vuelta.png" },
+  winter: { primary: "#0B4C91", onPrimary: "#FFFFFF", race: "MEERMARATHON 2026–2027", title: WinterTitle, klassementBg: "/ig/klassement-template.png", daguitslagBg: "/ig/daguitslag-template.png" },
 };
 
 function RaceFooter({ theme }: { theme: RaceTheme }) {
@@ -791,6 +799,7 @@ const RACE_GEO: Record<RaceKey, RaceGeo> = {
   femmes: GEO_FEMMES,
   rood: GEO_VUELTA,
   roze: GEO_GIRO,
+  winter: GEO_TOUR,
 };
 
 // ── Canvas-export voor de race-templates ─────────────────────────────────────

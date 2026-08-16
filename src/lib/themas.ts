@@ -1,9 +1,9 @@
-// Thema-systeem: roze (Giro) / geel (Tour) / rood (Vuelta).
+// Thema-systeem: roze (Giro) / geel (Tour) / rood (Vuelta) / winter (Meermarathon).
 // Bevat per thema: kleuren (hex), teksten, quotes en klassements-truien.
 // De ThemaProvider zet de kleuren om naar de bestaande HSL-tokens, zodat de
 // hele site automatisch herkleurt.
 
-export type ThemaKey = "roze" | "geel" | "rood";
+export type ThemaKey = "roze" | "geel" | "rood" | "winter";
 
 export type TruiType = "algemeen" | "punten" | "berg" | "jongeren";
 
@@ -64,7 +64,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     key: "roze",
     logo: "/koerspoule-giro.svg",
     favicon: "/favicon-giro.svg",
-    kleuren: { primair: "#FF69B4", secundair: "#C8A020", achtergrond: "#FAF7F2", kaart: "#FDF2F6", tekst: "#2C2416", accent: "#C8A020" },
+    kleuren: { primair: "#E6446D", secundair: "#C8A020", achtergrond: "#FAF7F2", kaart: "#FDF2F6", tekst: "#2C2416", accent: "#C8A020" },
     krant: "Gazzetta",
     koers: "Giro d'Italia",
     etappe: "Tappa",
@@ -83,7 +83,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
       "Forza, sempre avanti!",
     ],
     truien: {
-      algemeen: { naam: "Maglia Rosa", kleur: "#E8336D", patroon: "effen" },
+      algemeen: { naam: "Maglia Rosa", kleur: "#E6446D", patroon: "effen" },
       punten: { naam: "Maglia Ciclamino", kleur: "#9B59B6", patroon: "effen" },
       berg: { naam: "Maglia Azzurra", kleur: "#3498DB", patroon: "effen" },
       jongeren: { naam: "Maglia Bianca", kleur: "#FFFFFF", patroon: "effen", rand: WIT_RAND },
@@ -147,11 +147,40 @@ export const THEMAS: Record<ThemaKey, Thema> = {
       jongeren: { naam: "Maillot Blanco", kleur: "#FFFFFF", patroon: "effen", rand: WIT_RAND },
     },
   },
+  winter: {
+    key: "winter",
+    logo: "/koerspoule-meermarathon.svg",
+    favicon: "/favicon-meermarathon.svg",
+    kleuren: { primair: "#0B4C91", secundair: "#DFF3FF", achtergrond: "#F5FBFF", kaart: "#EAF7FF", tekst: "#071B3D", accent: "#167FBD" },
+    krant: "IJsjournaal",
+    koers: "Meermarathon",
+    etappe: "Wedstrijd",
+    startlijst: "Startlijst",
+    supporters: "Schaatsfans",
+    homepage_titel: "Meermarathon 2026-2027",
+    homepage_subtitel: "Iedere ronde telt",
+    login_welkom: "Welkom terug!",
+    login_meedoen: "Doe mee met het winterklassement!",
+    beker: null,
+    quotes: [
+      "Op het ijs telt iedere ronde.",
+      "Van kunstijs tot natuurijs: één winterklassement.",
+      "De koers wordt gereden op het scherpst van de schaats.",
+      "Samen sterk in de kopgroep.",
+      "De winter is lang, de strijd blijft spannend.",
+    ],
+    truien: {
+      algemeen: { naam: "Winterleider", kleur: "#0B4C91", patroon: "effen" },
+      punten: { naam: "Sprintleider", kleur: "#F05A1A", patroon: "effen" },
+      berg: { naam: "Natuurijsleider", kleur: "#8DD2F2", patroon: "effen" },
+      jongeren: { naam: "Jongerenleider", kleur: "#FFFFFF", patroon: "effen", rand: "#8FB7D8" },
+    },
+  },
 };
 
 /** Leid een themasleutel af uit een (optionele) theme-kolom + game_type-fallback. */
 export function deriveThemaKey(theme: string | null | undefined, gameType: string | null | undefined): ThemaKey {
-  if (theme === "roze" || theme === "geel" || theme === "rood") return theme;
+  if (theme === "roze" || theme === "geel" || theme === "rood" || theme === "winter") return theme;
   switch (gameType) {
     case "tdf":
     case "tour":
@@ -159,6 +188,8 @@ export function deriveThemaKey(theme: string | null | undefined, gameType: strin
       return "geel";
     case "vuelta":
       return "rood";
+    case "meermarathon":
+      return "winter";
     case "giro":
     default:
       return "roze";
