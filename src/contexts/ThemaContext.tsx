@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { THEMAS, deriveThemaKey, hexToHsl, readableForeground, type Thema, type ThemaKey } from "@/lib/themas";
 import { useSelectedGame } from "@/context/SelectedGameContext";
+import { resolveDefaultGameId } from "@/lib/gameStatus";
 
 type ThemaContextValue = { thema: Thema; key: ThemaKey; ready: boolean };
 
@@ -86,10 +87,15 @@ function readCachedKey(): ThemaKey | null {
 }
 
 export function ThemaProvider({ children }: { children: React.ReactNode }) {
-  // Eén bron voor de hele deelnemer-app: exact dezelfde opgeloste game als de
-  // GameSwitcher, useCurrentGame en de overige game-scoped schermen.
-  const { selectedGame: activeGame, loading } = useSelectedGame();
+  // De site-identiteit volgt de statusgestuurde default-game uit het admin-
+  // dashboard. Een keuze in de GameSwitcher wisselt alleen de game-inhoud en
+  // mag het globale logo, de layoutkleur en de favicon niet veranderen.
+  const { games, loading } = useSelectedGame();
   const isFetched = !loading;
+  const activeGame = useMemo(() => {
+    const activeGameId = resolveDefaultGameId(games);
+    return games.find((game) => game.id === activeGameId) ?? null;
+  }, [games]);
 
   // Laatst-bekende thema uit localStorage → terugkerende bezoekers zien meteen
   // het juiste thema (geen flits). Eénmalig per mount gelezen.

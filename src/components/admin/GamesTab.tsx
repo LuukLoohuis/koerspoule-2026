@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deriveThemaKey, THEMAS, type ThemaKey } from "@/lib/themas";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type Game = {
   id: string;
@@ -109,6 +110,7 @@ export default function GamesTab({
   setActiveGameId: (id: string) => void;
   reload: () => Promise<void> | void;
 }) {
+  const queryClient = useQueryClient();
   const [type, setType] = useState<"giro" | "tdf" | "vuelta" | "femmes">("tdf");
   const [year, setYear] = useState<string>(String(new Date().getFullYear()));
   const [startsAt, setStartsAt] = useState("");
@@ -156,6 +158,10 @@ export default function GamesTab({
     }
     toast.success("Status bijgewerkt");
     await reload();
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["all-games"] }),
+      queryClient.invalidateQueries({ queryKey: ["current-game"] }),
+    ]);
   }
 
   async function setTheme(id: string, theme: "roze" | "geel" | "rood") {
@@ -174,6 +180,10 @@ export default function GamesTab({
     }
     toast.success("Thema geactiveerd");
     await reload();
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["all-games"] }),
+      queryClient.invalidateQueries({ queryKey: ["current-game"] }),
+    ]);
   }
 
   async function setRegistrationWindow(

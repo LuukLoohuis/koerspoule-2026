@@ -15,16 +15,24 @@ Object.defineProperty(globalThis, "localStorage", {
 });
 
 const selectedGameState = vi.hoisted(() => ({
-  game: { id: "giro-2026", game_type: "giro", theme: "roze" } as {
+  selectedGame: { id: "giro-2026", game_type: "giro", theme: "roze" } as {
     id: string;
     game_type: string;
     theme: string | null;
   } | null,
+  games: [
+    { id: "vuelta-2026", game_type: "vuelta", theme: "rood", status: "live", year: 2026 },
+    { id: "giro-2026", game_type: "giro", theme: "roze", status: "finished", year: 2026 },
+  ],
   loading: false,
 }));
 
 vi.mock("@/context/SelectedGameContext", () => ({
-  useSelectedGame: () => ({ selectedGame: selectedGameState.game, loading: selectedGameState.loading }),
+  useSelectedGame: () => ({
+    selectedGame: selectedGameState.selectedGame,
+    games: selectedGameState.games,
+    loading: selectedGameState.loading,
+  }),
 }));
 
 function BrandingProbe() {
@@ -40,22 +48,16 @@ function BrandingProbe() {
 describe("ThemaProvider + KoerspouleLogo", () => {
   beforeEach(() => {
     storage.clear();
-    selectedGameState.game = { id: "giro-2026", game_type: "giro", theme: "roze" };
+    selectedGameState.selectedGame = { id: "giro-2026", game_type: "giro", theme: "roze" };
+    selectedGameState.games = [
+      { id: "vuelta-2026", game_type: "vuelta", theme: "rood", status: "live", year: 2026 },
+      { id: "giro-2026", game_type: "giro", theme: "roze", status: "finished", year: 2026 },
+    ];
     document.head.innerHTML = '<link rel="icon" href="/favicon.png">';
   });
 
-  it("wisselt thema, zichtbaar logo en favicon direct mee met de geselecteerde game", () => {
+  it("laat de admin-status het thema bepalen en negeert de aangeklikte game", () => {
     const { rerender } = render(
-      <ThemaProvider>
-        <BrandingProbe />
-      </ThemaProvider>,
-    );
-
-    expect(screen.getByTestId("theme-key")).toHaveTextContent("roze");
-    expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-giro.svg");
-
-    selectedGameState.game = { id: "vuelta-2026", game_type: "vuelta", theme: "rood" };
-    rerender(
       <ThemaProvider>
         <BrandingProbe />
       </ThemaProvider>,
@@ -64,5 +66,29 @@ describe("ThemaProvider + KoerspouleLogo", () => {
     expect(screen.getByTestId("theme-key")).toHaveTextContent("rood");
     expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-vuelta.svg");
     expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-vuelta.svg");
+
+    selectedGameState.selectedGame = { id: "giro-2026", game_type: "giro", theme: "roze" };
+    rerender(
+      <ThemaProvider>
+        <BrandingProbe />
+      </ThemaProvider>,
+    );
+
+    expect(screen.getByTestId("theme-key")).toHaveTextContent("rood");
+    expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-vuelta.svg");
+
+    selectedGameState.games = [
+      { id: "vuelta-2026", game_type: "vuelta", theme: "rood", status: "finished", year: 2026 },
+      { id: "giro-2026", game_type: "giro", theme: "roze", status: "open_inschrijving", year: 2026 },
+    ];
+    rerender(
+      <ThemaProvider>
+        <BrandingProbe />
+      </ThemaProvider>,
+    );
+
+    expect(screen.getByTestId("theme-key")).toHaveTextContent("roze");
+    expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-giro.svg");
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-giro.svg");
   });
 });

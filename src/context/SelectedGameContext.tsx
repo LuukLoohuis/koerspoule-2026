@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { useAllGames, type GameRow } from "@/hooks/useAllGames";
+import { resolveDefaultGameId } from "@/lib/gameStatus";
 
 /**
  * SelectedGameContext — één gedeelde game-keuze voor de hele deelnemer-app.
@@ -13,8 +14,6 @@ import { useAllGames, type GameRow } from "@/hooks/useAllGames";
  * (concept/draft alleen voor admins) doet de GameSwitcher zelf via isAdmin.
  */
 const STORAGE_KEY = "koerspoule_selected_game";
-
-const ADMIN_ONLY = new Set(["concept", "draft"]);
 
 type SelectedGameCtx = {
   selectedGameId: string | null;
@@ -33,22 +32,6 @@ const Ctx = createContext<SelectedGameCtx | null>(null);
  * anders open, anders concept/draft (admin), anders de meest recente afgeronde.
  * `games` is al gesorteerd op year desc, dus .find pakt de hoogste year.
  */
-export function resolveDefaultGameId(games: GameRow[]): string | null {
-  const byStatus = (set: Set<string> | string) =>
-    games.find((g) =>
-      typeof set === "string" ? String(g.status) === set : set.has(String(g.status)),
-    )?.id ?? null;
-  return (
-    byStatus(new Set(["live", "locked"])) ??
-    byStatus("open_inschrijving") ??
-    byStatus("open") ??
-    byStatus(ADMIN_ONLY) ??
-    byStatus(new Set(["finished", "closed"])) ??
-    games[0]?.id ??
-    null
-  );
-}
-
 export function SelectedGameProvider({ children }: { children: ReactNode }) {
   const { data: games = [], isLoading } = useAllGames();
 

@@ -28,6 +28,27 @@ const LOCKED = ["live", "locked", "finished", "closed"];
 
 const s = (status?: string | null) => String(status ?? "");
 
+type StatusGame = { id: string; status?: string | null };
+
+/**
+ * Bepaalt welke game de globale site-identiteit voert. De admin-status is
+ * leidend; een persoonlijke keuze in de GameSwitcher speelt hier geen rol.
+ * De invoer staat al op jaar aflopend, dus binnen één status wint de nieuwste.
+ */
+export function resolveDefaultGameId(games: StatusGame[]): string | null {
+  const byStatus = (statuses: string[]) =>
+    games.find((game) => statuses.includes(s(game.status)))?.id ?? null;
+  return (
+    byStatus(["live", "locked"]) ??
+    byStatus([REGISTRATION]) ??
+    byStatus(["open"]) ??
+    byStatus(["concept", "draft"]) ??
+    byStatus(["finished", "closed"]) ??
+    games[0]?.id ??
+    null
+  );
+}
+
 /** Game alleen zichtbaar voor admins (concept/draft). */
 export function isAdminOnlyStatus(status?: string | null): boolean {
   return ADMIN_ONLY.includes(s(status));

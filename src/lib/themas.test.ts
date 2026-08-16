@@ -44,6 +44,12 @@ describe("centrale game-branding", () => {
     expect(svg).toContain('href="data:image/png;base64,');
   });
 
+  it("koppelt de Giro-favicon expliciet aan exact dezelfde primaire roze kleur", () => {
+    const svg = readFileSync(`${process.cwd()}/public/favicon-giro.svg`, "utf8");
+    expect(svg).toContain("#FF69B4");
+    expect(THEMAS.roze.kleuren.primair).toBe("#FF69B4");
+  });
+
   it("gebruikt voor Spanje een ingekaderde rood-geel-rood vlag met een dubbelbrede gele baan", () => {
     const svg = readFileSync(`${process.cwd()}/public/koerspoule-vuelta.svg`, "utf8");
     expect(svg).toContain('fill="#111318" stroke="#050608"');
