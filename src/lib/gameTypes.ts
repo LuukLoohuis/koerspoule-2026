@@ -5,8 +5,29 @@ export function isMeermarathonGame(gameType: string | null | undefined): boolean
 }
 
 export function meermarathonSeason(startYear: number): string {
-  const shortYear = (year: number) => String(year % 100).padStart(2, "0");
-  return `${shortYear(startYear)}/${shortYear(startYear + 1)}`;
+  return `${startYear}-${startYear + 1}`;
+}
+
+export function parseGameYearInput(gameType: string | null | undefined, value: string): number | null {
+  const input = value.trim();
+
+  if (isMeermarathonGame(gameType)) {
+    const match = input.match(/^(\d{4})\s*[-–—]\s*(\d{4})$/);
+    if (!match) return null;
+    const startYear = Number(match[1]);
+    const endYear = Number(match[2]);
+    return startYear >= 1900 && startYear <= 2099 && endYear === startYear + 1
+      ? startYear
+      : null;
+  }
+
+  if (!/^\d{4}$/.test(input)) return null;
+  const year = Number(input);
+  return year >= 1900 && year <= 2100 ? year : null;
+}
+
+export function gameYearFieldValue(gameType: string | null | undefined, startYear: number): string {
+  return isMeermarathonGame(gameType) ? meermarathonSeason(startYear) : String(startYear);
 }
 
 export function gameTypeName(gameType: string | null | undefined): string | null {

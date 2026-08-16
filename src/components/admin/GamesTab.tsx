@@ -12,7 +12,7 @@ import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deriveThemaKey, THEMAS, type ThemaKey } from "@/lib/themas";
 import { useQueryClient } from "@tanstack/react-query";
-import { gameSeasonName } from "@/lib/gameTypes";
+import { gameSeasonName, gameYearFieldValue, isMeermarathonGame, parseGameYearInput } from "@/lib/gameTypes";
 
 export type Game = {
   id: string;
@@ -117,12 +117,22 @@ export default function GamesTab({
   const [year, setYear] = useState<string>(String(new Date().getFullYear()));
   const [startsAt, setStartsAt] = useState("");
   const [creating, setCreating] = useState(false);
+  const isMeermarathon = isMeermarathonGame(type);
+
+  function changeType(nextType: typeof type) {
+    const currentStartYear = Number(year.slice(0, 4));
+    const safeStartYear = Number.isInteger(currentStartYear) ? currentStartYear : new Date().getFullYear();
+    setType(nextType);
+    setYear(gameYearFieldValue(nextType, safeStartYear));
+  }
 
   async function createGame() {
     if (!supabase) return;
-    const yr = Number(year);
-    if (!Number.isFinite(yr) || yr < 1900 || yr > 2100) {
-      toast.error("Vul een geldig jaartal in");
+    const yr = parseGameYearInput(type, year);
+    if (yr === null) {
+      toast.error(isMeermarathon
+        ? "Vul een geldig seizoen in, bijvoorbeeld 2026-2027"
+        : "Vul een geldig jaartal in");
       return;
     }
 
@@ -267,7 +277,7 @@ export default function GamesTab({
         <CardContent className="grid gap-3 md:grid-cols-4">
           <div>
             <Label className="text-xs">Type koers</Label>
-            <Select value={type} onValueChange={(v) => setType(v as typeof type)}>
+            <Select value={type} onValueChange={(v) => changeType(v as typeof type)}>
               <SelectTrigger data-testid="game-type-select" className="h-8 text-sm">
                 <SelectValue />
               </SelectTrigger>
@@ -281,12 +291,14 @@ export default function GamesTab({
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Jaartal</Label>
+            <Label className="text-xs">{isMeermarathon ? "Seizoen" : "Jaartal"}</Label>
             <Input
               data-testid="game-year-input"
-              type="number"
+              type={isMeermarathon ? "text" : "number"}
+              inputMode="numeric"
               value={year}
               onChange={(e) => setYear(e.target.value)}
+              placeholder={isMeermarathon ? "2026-2027" : "2026"}
               className="h-8 text-sm"
             />
           </div>
