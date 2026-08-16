@@ -395,7 +395,7 @@ export default function MyTeamPanel({
       return () => cancelAnimationFrame(id);
     }
   }, [editingName]);
-  const { data: categories = [] } = useCategories(game?.id);
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories(game?.id);
   const { data: stages = [] } = useStages(game?.id);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stagePoints = [] } = useMyStagePoints(entry?.id);
@@ -533,7 +533,10 @@ export default function MyTeamPanel({
   if (!game) {
     return <div className="ornate-frame retro-border bg-card p-6 text-muted-foreground">{t("team.panel.noActiveRace")}</div>;
   }
-  if (!entry || picksByCategory.size === 0) {
+  // De Meermarathon-Volgwagen is óók het inrichtingsscherm voor een nieuw
+  // winterseizoen. Zodra er een entry is, tonen we daarom het ijsdashboard al
+  // vóór de eerste keuze; wielergames behouden hun bestaande lege staat.
+  if (!entry || (picksByCategory.size === 0 && !isMeermarathon)) {
     return (
       <Card className="ornate-frame retro-border">
         <CardContent className="p-4 text-center space-y-3">
@@ -777,6 +780,15 @@ export default function MyTeamPanel({
 
   return (
     <div className={cn("space-y-3 pb-4", isMeermarathon && "meermarathon-volgwagen")}>
+      {isMeermarathon && !categoriesLoading && categories.length === 0 && (
+        <div className="mm-setup-notice" role="status">
+          <Snowflake className="h-5 w-5 shrink-0" aria-hidden />
+          <div>
+            <strong>Dit winterseizoen wordt nog ingericht.</strong>
+            <p>Voeg in Beheer eerst de categorieën, schaatsers en speelrondes toe. De Volgwagen staat alvast klaar.</p>
+          </div>
+        </div>
+      )}
       {/* Rustige melding: gekozen renner(s) niet gestart — wisselen mag nog */}
       {fallenRiders.length > 0 && (
         <div className="ornate-frame retro-border bg-[hsl(var(--vintage-gold))/0.12] border-[hsl(var(--vintage-gold))/0.5] p-4">
