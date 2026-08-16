@@ -55,9 +55,9 @@ describe("centrale game-branding", () => {
     const logo = readFileSync(`${process.cwd()}/public/koerspoule-meermarathon.svg`, "utf8");
     const favicon = readFileSync(`${process.cwd()}/public/favicon-meermarathon.svg`, "utf8");
     expect(logo).toContain('viewBox="0 0 480 320"');
-    expect(logo).toContain("#0B4C91");
+    expect(logo).toContain("#14538E");
     expect(favicon).toContain('viewBox="0 0 256 256"');
-    expect(favicon).toContain("#0B4C91");
+    expect(favicon).toContain("#14538E");
   });
 
   it("gebruikt voor Spanje een ingekaderde rood-geel-rood vlag met een dubbelbrede gele baan", () => {

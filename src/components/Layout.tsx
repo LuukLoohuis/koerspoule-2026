@@ -15,10 +15,20 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useThema } from "@/contexts/ThemaContext";
+import type { ThemaKey } from "@/lib/themas";
 import SponsorStrip from "@/components/SponsorStrip";
 import KoerspouleLogo from "@/components/KoerspouleLogo";
 
 const INSTAGRAM_URL = "https://www.instagram.com/koerspoule/";
+
+// Admin-only site-thema-preview — geldt voor alle games, forceert de kleur
+// los van de echte live-status. Alleen deze vier keys bestaan als thema.
+const THEME_PREVIEW_OPTIONS: { key: ThemaKey; label: string }[] = [
+  { key: "roze", label: "Giro" },
+  { key: "geel", label: "Tour" },
+  { key: "rood", label: "Vuelta" },
+  { key: "winter", label: "Winter" },
+];
 
 // Labels als i18n-sleutels; t() in de component (nav.<key>).
 const navItems = [
@@ -35,7 +45,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, role } = useAuth();
-  const { thema } = useThema();
+  const { thema, canPreview, previewKey, setPreviewKey } = useThema();
   const { data: allGames = [] } = useAllGames();
   const { t } = useTranslation();
   const isLoggedIn = Boolean(user);
@@ -81,6 +91,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 (desktop) / hamburger (mobiel). De game-switcher staat als eigen
                 rij onder de nav (niet hier). */}
             <div className="flex items-center gap-2">
+              {canPreview && (
+                <ThemePreviewSelect
+                  className="hidden md:flex"
+                  previewKey={previewKey}
+                  setPreviewKey={setPreviewKey}
+                />
+              )}
               <LanguageToggle />
               <a
                 href={INSTAGRAM_URL}
@@ -176,6 +193,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 {t(item.key)}
               </Link>
             ))}
+            {canPreview && (
+              <div className="w-full border-t border-border/40 pt-2 mt-1">
+                <ThemePreviewSelect previewKey={previewKey} setPreviewKey={setPreviewKey} />
+              </div>
+            )}
             <div className="w-full border-t border-border/40 pt-2 mt-1 flex">
               {isLoggedIn ? (
                 <button
@@ -256,6 +278,44 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <CookieBanner />
     </div>
+  );
+}
+
+/**
+ * Admin-only site-thema-preview: forceert het globale kleurthema los van de
+ * echte live-status van games, alleen zichtbaar in de eigen browsersessie
+ * (nooit voor andere bezoekers). Geldt voor alle spellen — niet alleen
+ * Meermarathon — zodat elk thema los van de kalender te bekijken is.
+ */
+function ThemePreviewSelect({
+  previewKey,
+  setPreviewKey,
+  className,
+}: {
+  previewKey: ThemaKey | null;
+  setPreviewKey: (key: ThemaKey | null) => void;
+  className?: string;
+}) {
+  return (
+    <label
+      className={cn(
+        "items-center gap-1.5 text-xs border border-foreground/30 rounded px-2 py-1.5",
+        className ?? "flex",
+      )}
+      title="Alleen voor jou zichtbaar: forceert het site-thema los van de live-status."
+    >
+      <span className="text-muted-foreground font-medium">Preview</span>
+      <select
+        value={previewKey ?? ""}
+        onChange={(e) => setPreviewKey((e.target.value || null) as ThemaKey | null)}
+        className="bg-transparent text-xs font-semibold outline-none"
+      >
+        <option value="">Live</option>
+        {THEME_PREVIEW_OPTIONS.map((opt) => (
+          <option key={opt.key} value={opt.key}>{opt.label}</option>
+        ))}
+      </select>
+    </label>
   );
 }
 

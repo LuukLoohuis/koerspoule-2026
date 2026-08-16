@@ -151,7 +151,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     key: "winter",
     logo: "/koerspoule-meermarathon.svg",
     favicon: "/favicon-meermarathon.svg",
-    kleuren: { primair: "#0B4C91", secundair: "#DFF3FF", achtergrond: "#F5FBFF", kaart: "#EAF7FF", tekst: "#071B3D", accent: "#167FBD" },
+    kleuren: { primair: "#14538E", secundair: "#4FA8D8", achtergrond: "#F4F9FC", kaart: "#E4F0FA", tekst: "#0B2C4D", accent: "#4FA8D8" },
     krant: "IJsjournaal",
     koers: "Meermarathon",
     etappe: "Wedstrijd",
@@ -170,10 +170,10 @@ export const THEMAS: Record<ThemaKey, Thema> = {
       "De winter is lang, de strijd blijft spannend.",
     ],
     truien: {
-      algemeen: { naam: "Winterleider", kleur: "#0B4C91", patroon: "effen" },
-      punten: { naam: "Sprintleider", kleur: "#F05A1A", patroon: "effen" },
-      berg: { naam: "Natuurijsleider", kleur: "#8DD2F2", patroon: "effen" },
-      jongeren: { naam: "Jongerenleider", kleur: "#FFFFFF", patroon: "effen", rand: "#8FB7D8" },
+      algemeen: { naam: "Winterleider", kleur: "#14538E", patroon: "effen" },
+      punten: { naam: "Sprintleider", kleur: "#4FA8D8", patroon: "effen" },
+      berg: { naam: "Natuurijsleider", kleur: "#A9D7EF", patroon: "effen" },
+      jongeren: { naam: "Jongerenleider", kleur: "#FFFFFF", patroon: "effen", rand: "#4FA8D8" },
     },
   },
 };

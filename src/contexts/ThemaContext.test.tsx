@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import KoerspouleLogo from "@/components/KoerspouleLogo";
 import { ThemaProvider, useThema } from "@/contexts/ThemaContext";
@@ -35,6 +35,12 @@ vi.mock("@/context/SelectedGameContext", () => ({
   }),
 }));
 
+const authState = vi.hoisted(() => ({ role: "user" as "user" | "admin" }));
+
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ user: null, session: null, loading: false, role: authState.role }),
+}));
+
 function BrandingProbe() {
   const { key } = useThema();
   return (
@@ -48,6 +54,8 @@ function BrandingProbe() {
 describe("ThemaProvider + KoerspouleLogo", () => {
   beforeEach(() => {
     storage.clear();
+    sessionStorage.clear();
+    authState.role = "user";
     selectedGameState.selectedGame = { id: "giro-2026", game_type: "giro", theme: "roze" };
     selectedGameState.games = [
       { id: "vuelta-2026", game_type: "vuelta", theme: "rood", status: "live", year: 2026 },
@@ -131,5 +139,64 @@ describe("ThemaProvider + KoerspouleLogo", () => {
     );
 
     expect(screen.getByTestId("theme-key")).toHaveTextContent("roze");
+  });
+
+  it("laat een admin het thema forceren via preview, los van de live-status; niet-admins mogen dit niet", () => {
+    function PreviewProbe() {
+      const { key, canPreview, previewKey, setPreviewKey } = useThema();
+      return (
+        <>
+          <span data-testid="theme-key">{key}</span>
+          <span data-testid="can-preview">{String(canPreview)}</span>
+          <span data-testid="preview-key">{previewKey ?? ""}</span>
+          <button onClick={() => setPreviewKey("winter")}>preview-winter</button>
+          <button onClick={() => setPreviewKey(null)}>preview-uit</button>
+        </>
+      );
+    }
+
+    // Vuelta staat live → normaal gesproken "rood", ongeacht de klik van een
+    // niet-admin op de (niet-gerenderde) preview-knop.
+    authState.role = "user";
+    const { rerender, getByText } = render(
+      <ThemaProvider>
+        <PreviewProbe />
+      </ThemaProvider>,
+    );
+    expect(screen.getByTestId("can-preview")).toHaveTextContent("false");
+    fireEvent.click(getByText("preview-winter"));
+    rerender(
+      <ThemaProvider>
+        <PreviewProbe />
+      </ThemaProvider>,
+    );
+    expect(screen.getByTestId("theme-key")).toHaveTextContent("rood");
+
+    // Als admin overschrijft de preview-keuze het live-thema.
+    authState.role = "admin";
+    rerender(
+      <ThemaProvider>
+        <PreviewProbe />
+      </ThemaProvider>,
+    );
+    expect(screen.getByTestId("can-preview")).toHaveTextContent("true");
+    fireEvent.click(getByText("preview-winter"));
+    rerender(
+      <ThemaProvider>
+        <PreviewProbe />
+      </ThemaProvider>,
+    );
+    expect(screen.getByTestId("theme-key")).toHaveTextContent("winter");
+    // Preview mag nooit de gedeelde no-flash-cache vervuilen — die blijft op
+    // het echte live-thema (rood) staan, niet op de preview (winter).
+    expect(storage.get("koerspoule:themaKey")).toBe("rood");
+
+    fireEvent.click(getByText("preview-uit"));
+    rerender(
+      <ThemaProvider>
+        <PreviewProbe />
+      </ThemaProvider>,
+    );
+    expect(screen.getByTestId("theme-key")).toHaveTextContent("rood");
   });
 });

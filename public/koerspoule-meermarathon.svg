@@ -8,14 +8,14 @@
     </linearGradient>
   </defs>
   <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <ellipse cx="240" cy="102" rx="164" ry="61" stroke="#0B4C91" stroke-width="12" transform="rotate(-8 240 102)"/>
+    <ellipse cx="240" cy="102" rx="164" ry="61" stroke="#14538E" stroke-width="12" transform="rotate(-8 240 102)"/>
     <ellipse cx="240" cy="102" rx="139" ry="39" stroke="url(#ice)" stroke-width="7" transform="rotate(-8 240 102)"/>
-    <path d="M110 128c41-26 91-42 149-48 48-5 90-1 123 12" stroke="#167FBD" stroke-width="8"/>
+    <path d="M110 128c41-26 91-42 149-48 48-5 90-1 123 12" stroke="#4FA8D8" stroke-width="8"/>
   </g>
-  <g transform="translate(240 99)" stroke="#0B4C91" stroke-width="7" stroke-linecap="round">
+  <g transform="translate(240 99)" stroke="#14538E" stroke-width="7" stroke-linecap="round">
     <path d="M0-35v70M-30-18l60 36M-30 18l60-36"/>
     <path d="M0-35l-8 10M0-35l8 10M0 35l-8-10M0 35l8-10M-30-18l13 1M-30-18l5 12M30 18l-13-1M30 18l-5-12M-30 18l13-1M-30 18l5-12M30-18l-13 1M30-18l-5 12" stroke-width="4"/>
   </g>
-  <text x="240" y="211" text-anchor="middle" fill="#071B3D" font-family="Arial, Helvetica, sans-serif" font-size="43" font-weight="800" letter-spacing="3">KOERSPOULE</text>
-  <text x="240" y="251" text-anchor="middle" fill="#0B4C91" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" letter-spacing="2">MEERMARATHON 26/27</text>
+  <text x="240" y="211" text-anchor="middle" fill="#0B2C4D" font-family="Arial, Helvetica, sans-serif" font-size="43" font-weight="800" letter-spacing="3">KOERSPOULE</text>
+  <text x="240" y="251" text-anchor="middle" fill="#14538E" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" letter-spacing="2">MEERMARATHON 26/27</text>
 </svg>
