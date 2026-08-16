@@ -63,6 +63,6 @@ describe("ThemaProvider + KoerspouleLogo", () => {
 
     expect(screen.getByTestId("theme-key")).toHaveTextContent("rood");
     expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-vuelta.svg");
-    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/koerspoule-vuelta.svg");
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-vuelta.svg");
   });
 });

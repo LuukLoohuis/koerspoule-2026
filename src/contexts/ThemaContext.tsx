@@ -44,11 +44,11 @@ function applyThemaTokens(key: ThemaKey) {
 
   root.setAttribute("data-thema", key);
 
-  // Favicon en homescreen-icon volgen dezelfde raceconfiguratie. De zichtbare
-  // app-logo's worden door KoerspouleLogo bijgewerkt.
+  // Favicon en homescreen-icon behouden het compacte witte-fiets-ontwerp in de
+  // racekleur. De zichtbare app-logo's worden door KoerspouleLogo bijgewerkt.
   document
     .querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]')
-    .forEach((link) => { link.href = t.logo; });
+    .forEach((link) => { link.href = t.favicon; });
 
   // Persisteer de toegepaste accent-tokens zodat het no-flash-script in
   // index.html ze bij een volgend bezoek vóór de eerste paint kan zetten.

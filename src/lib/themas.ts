@@ -28,6 +28,8 @@ export type Thema = {
   key: ThemaKey;
   /** Race-specifiek Koerspoule-logo; volgt dezelfde actieve game als dit thema. */
   logo: string;
+  /** Compacte fiets-favicon in de racekleur; bewust los van het volledige logo. */
+  favicon: string;
   kleuren: ThemaKleuren;
   krant: string;
   koers: string;
@@ -61,6 +63,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
   roze: {
     key: "roze",
     logo: "/koerspoule-giro.svg",
+    favicon: "/favicon-giro.svg",
     kleuren: { primair: "#FF69B4", secundair: "#C8A020", achtergrond: "#FAF7F2", kaart: "#FDF2F6", tekst: "#2C2416", accent: "#C8A020" },
     krant: "Gazzetta",
     koers: "Giro d'Italia",
@@ -89,6 +92,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
   geel: {
     key: "geel",
     logo: "/koerspoule-tour.svg",
+    favicon: "/favicon-tour.svg",
     kleuren: { primair: "#FFC300", secundair: "#1a1a1a", achtergrond: "#FFFDF0", kaart: "#FFF8E6", tekst: "#1a1a1a", accent: "#C0851A" },
     krant: "L'Équipe",
     koers: "Tour de France",
@@ -117,6 +121,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
   rood: {
     key: "rood",
     logo: "/koerspoule-vuelta.svg",
+    favicon: "/favicon-vuelta.svg",
     kleuren: { primair: "#E30613", secundair: "#F5A623", achtergrond: "#FFF9F5", kaart: "#FFF1EC", tekst: "#2C1810", accent: "#F5A623" },
     krant: "Marca",
     koers: "Vuelta a España",
