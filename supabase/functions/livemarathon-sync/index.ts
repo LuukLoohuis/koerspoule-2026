@@ -86,8 +86,34 @@ Deno.serve(async (req: Request) => {
     if (!roleRow) return respond({ error: "Forbidden" }, 403);
   }
 
-  let body: { trackIds?: string[] } = {};
+  let body: { trackIds?: string[]; action?: string } = {};
   try { body = await req.json(); } catch { /* leeg body is prima */ }
+
+  // ── Banenlijst ───────────────────────────────────────────────────────────
+  // Voor het koppelscherm: alle wedstrijden die de bron kent, zodat een
+  // beheerder kiest in plaats van een trackId over te typen.
+  if (body.action === "tracks") {
+    let list;
+    try {
+      list = await ddpFetch([{ name: "tracks.public", params: [] }], { quietMs: 1200, maxMs: 15000 });
+    } catch (err) {
+      return respond({ error: `bron onbereikbaar: ${String(err)}` }, 502);
+    }
+    const tracks = docsOf(list, "tracks")
+      .map((t) => ({
+        track_id: t._id,
+        naam: str(t.naam),
+        volledige_naam: str(t.volledigenaam),
+        categorie: str(t.categorie),
+        categorie_code: str(t.categorieCode),
+        competitie: str(t.competitie),
+        niveau: num(t.niveau),
+        datum: str(t.datumTijd),
+      }))
+      // Nieuwste eerst: de beheerder koppelt bijna altijd een aanstaande race.
+      .sort((a, b) => String(b.datum ?? "").localeCompare(String(a.datum ?? "")));
+    return respond({ tracks });
+  }
 
   // ── Welke banen? ─────────────────────────────────────────────────────────
   // Zonder expliciete lijst: alle banen die aan een ronde van een live game

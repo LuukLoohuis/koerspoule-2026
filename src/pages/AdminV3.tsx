@@ -87,7 +87,7 @@ export default function AdminV3() {
         .order("start_number", { nullsFirst: false }),
       supabase
         .from("stages")
-        .select("id, game_id, stage_number, name, date, status, stage_type, distance_km, profile_image_url, profile_data, is_gc, results_status")
+        .select("id, game_id, stage_number, name, date, status, stage_type, distance_km, profile_image_url, profile_data, is_gc, results_status, ijs_type")
         .eq("game_id", gameId)
         .order("stage_number"),
     ]);
@@ -218,7 +218,7 @@ export default function AdminV3() {
         </TabsContent>
 
         <TabsContent value="stages">
-          <StagesTab activeGameId={activeGameId} stages={stages} reload={() => loadGameScoped(activeGameId)} />
+          <StagesTab activeGameId={activeGameId} stages={stages} reload={() => loadGameScoped(activeGameId)} gameType={activeGame?.game_type ?? null} />
         </TabsContent>
 
         <TabsContent value="results">

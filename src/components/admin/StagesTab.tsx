@@ -10,7 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Trophy, LineChart } from "lucide-react";
+import { Trash2, Trophy, LineChart, Radio } from "lucide-react";
+import { isMeermarathonGame } from "@/lib/gameTypes";
+import StageLiveTracks from "@/components/admin/StageLiveTracks";
 import { toast } from "sonner";
 
 export const STAGE_TYPES = [
@@ -39,6 +41,7 @@ export type Stage = {
   profile_image_url?: string | null;
   profile_data?: StageProfileData | null;
   is_gc?: boolean;
+  ijs_type?: string | null;
 };
 
 export type StageProfileData = {
@@ -62,11 +65,16 @@ export default function StagesTab({
   activeGameId,
   stages,
   reload,
+  gameType,
 }: {
   activeGameId: string;
   stages: Stage[];
   reload: () => Promise<void> | void;
+  gameType?: string | null;
 }) {
+  // Live-uitslagen bestaan alleen bij Meermarathon; de koerspoules hebben geen bron.
+  const isMeermarathon = isMeermarathonGame(gameType);
+  const [liveDialog, setLiveDialog] = useState<Stage | null>(null);
   const [stageNumber, setStageNumber] = useState(stages.length + 1);
   const [stageName, setStageName] = useState("");
   const [date, setDate] = useState("");
@@ -396,6 +404,7 @@ export default function StagesTab({
                 <TableHead className="w-24">Km</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Profiel</TableHead>
+                {isMeermarathon && <TableHead className="w-28">Live</TableHead>}
                 <TableHead>Status</TableHead>
                 <TableHead className="w-16"></TableHead>
               </TableRow>
@@ -504,6 +513,19 @@ export default function StagesTab({
                       </div>
                     )}
                   </TableCell>
+                  {isMeermarathon && (
+                    <TableCell>
+                      <Button
+                        variant={s.ijs_type ? "secondary" : "outline"}
+                        size="sm"
+                        className="h-7 gap-1.5 text-xs"
+                        onClick={() => setLiveDialog(s)}
+                      >
+                        <Radio className="h-3.5 w-3.5" />
+                        {s.ijs_type ?? "koppel"}
+                      </Button>
+                    </TableCell>
+                  )}
                   <TableCell><Badge variant="outline" className="text-xs">{s.status ?? "draft"}</Badge></TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" onClick={() => deleteStage(s.id, s.is_gc)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
@@ -511,7 +533,7 @@ export default function StagesTab({
                 </TableRow>
               ))}
               {stages.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Nog geen etappes.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={isMeermarathon ? 9 : 8} className="text-center text-muted-foreground py-6">Nog geen etappes.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -548,6 +570,17 @@ export default function StagesTab({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {liveDialog && (
+        <StageLiveTracks
+          stageId={liveDialog.id}
+          stageNumber={liveDialog.stage_number}
+          ijsType={liveDialog.ijs_type ?? null}
+          open={Boolean(liveDialog)}
+          onOpenChange={(open) => { if (!open) setLiveDialog(null); }}
+          onSaved={reload}
+        />
+      )}
     </div>
   );
 }
