@@ -59,6 +59,7 @@ type RaceCopy = {
   edition: string; // volledige editie-string voor eyebrow
   jersey: string;
   startToFinish: string; // bv. "9–31 mei 2026"
+  gameLabel: string; // naam + jaar, voor de tagline onder de kop
 };
 
 const INSTAGRAM_URL = "https://www.instagram.com/koerspoule/";
@@ -79,6 +80,7 @@ const RACE_COPY: Record<RaceKey, RaceCopy> = {
     edition: "Edizione N°109 · 9–31 mei MMXXVI",
     jersey: "maglia rosa",
     startToFinish: "9–31 mei 2026",
+    gameLabel: "Giro d'Italia 2026",
   },
   tdf: {
     longName: "Tour de France",
@@ -88,6 +90,7 @@ const RACE_COPY: Record<RaceKey, RaceCopy> = {
     edition: "Édition 113 · 4–26 juillet MMXXVI",
     jersey: "maillot jaune",
     startToFinish: "4–26 juli 2026",
+    gameLabel: "Tour de France 2026",
   },
   vuelta: {
     longName: "Vuelta a España",
@@ -97,6 +100,7 @@ const RACE_COPY: Record<RaceKey, RaceCopy> = {
     edition: "Edición 81 · 22 ago–13 sep MMXXVI",
     jersey: "maillot rojo",
     startToFinish: "22 aug–13 sep 2026",
+    gameLabel: "Vuelta a España 2026",
   },
   femmes: {
     longName: "Tour de France Femmes",
@@ -106,6 +110,7 @@ const RACE_COPY: Record<RaceKey, RaceCopy> = {
     edition: "Édition 5 · 1–9 août MMXXVI",
     jersey: "maillot jaune",
     startToFinish: "1–9 aug 2026",
+    gameLabel: "Tour de France Femmes 2026",
   },
   meermarathon: {
     longName: "Meermarathon",
@@ -115,6 +120,7 @@ const RACE_COPY: Record<RaceKey, RaceCopy> = {
     edition: "Winterseizoen 2026–2027",
     jersey: "winterklassement",
     startToFinish: "winter 2026–2027",
+    gameLabel: "Meermarathon 2026–2027",
   },
 };
 
@@ -504,7 +510,7 @@ export default function Index() {
 
 
               <p className="font-serif italic text-foreground/80 md:text-xl max-w-[480px] mt-6 leading-relaxed text-lg my-[2px] text-center">
-                {t("landing.tagline")}
+                {t("landing.tagline", { race: copy.gameLabel })}
               </p>
 
               {/* Sociale teller — drijft FOMO. Pas tonen vanaf 5 ploegen,

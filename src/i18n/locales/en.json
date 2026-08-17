@@ -88,7 +88,7 @@
   },
   "landing": {
     "subtitleFallback": "For the love of the race",
-    "tagline": "The free Tour de France 2026 game. Build your team and play in your own subpoule. ⭐",
+    "tagline": "The free {{race}} game. Build your team and play in your own subpoule. ⭐",
     "ctaBuildTeam": "🚴 Build your team",
     "ctaRegister": "Sign up →",
     "ctaResults": "View results",

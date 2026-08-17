@@ -88,7 +88,7 @@
   },
   "landing": {
     "subtitleFallback": "Uit liefde voor de koers",
-    "tagline": "Het gratis Tour de France 2026-spel. Stel je ploeg samen en speel in je eigen subpoule. ⭐",
+    "tagline": "Het gratis {{race}}-spel. Stel je ploeg samen en speel in je eigen subpoule. ⭐",
     "ctaBuildTeam": "🚴 Stel je ploeg samen",
     "ctaRegister": "Schrijf je in →",
     "ctaResults": "Bekijk uitslagen",
