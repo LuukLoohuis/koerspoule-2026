@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Snowflake, ChevronDown } from "lucide-react";
+import { Snowflake, ChevronDown, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { projectPoints, type LiveGroup, type PointsSchema } from "@/lib/liveMarathon";
 import { tierColor, tierLabel, tiersPresent } from "@/lib/liveRink";
@@ -10,19 +10,32 @@ import LiveRink from "@/components/meermarathon/LiveRink";
  * Live-tab in de Volgwagen: de baan, de situatie in koers en wat het jou
  * voorlopig oplevert. Alleen zichtbaar bij Meermarathon met een gekoppelde baan.
  */
-export default function LiveTab({
+type LiveTabProps = {
+  race: LiveRace | null;
+  mineRiderIds: Set<string>;
+  jokerRiderIds: Set<string>;
+  pointsSchema: PointsSchema;
+  jokerMultiplier: number;
+};
+
+/**
+ * Het tabje staat er altijd, ook buiten een wedstrijd — beter een rustige
+ * uitleg dan een tab die verschijnt en verdwijnt. De keuze zit bewust in deze
+ * wrapper: de inhoud gebruikt hooks, en die mogen niet achter een early return
+ * staan.
+ */
+export default function LiveTab(props: LiveTabProps) {
+  if (!props.race || props.race.tracks.length === 0) return <LiveLeeg />;
+  return <LiveInhoud {...props} race={props.race} />;
+}
+
+function LiveInhoud({
   race,
   mineRiderIds,
   jokerRiderIds,
   pointsSchema,
   jokerMultiplier,
-}: {
-  race: LiveRace;
-  mineRiderIds: Set<string>;
-  jokerRiderIds: Set<string>;
-  pointsSchema: PointsSchema;
-  jokerMultiplier: number;
-}) {
+}: LiveTabProps & { race: LiveRace }) {
   const [actief, setActief] = useState(0);
   const [standOpen, setStandOpen] = useState(false);
 
@@ -402,6 +415,21 @@ function KopBanner({
         <span className="block font-display text-lg font-bold leading-none">{groot}</span>
         <span className="font-mono text-[8px] tracking-widest opacity-90">{klein}</span>
       </div>
+    </div>
+  );
+}
+
+function LiveLeeg() {
+  return (
+    <div className="rounded-2xl border border-dashed border-[rgba(18,104,168,.35)] bg-[rgba(236,248,255,.6)] px-4 py-8 text-center">
+      <Radio className="mx-auto h-6 w-6 text-[#1268a8]" aria-hidden />
+      <p className="mt-2.5 font-display text-sm font-bold uppercase tracking-wide text-[#071b3d]">
+        Nog geen wedstrijd live
+      </p>
+      <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-muted-foreground">
+        Zodra er gereden wordt zie je hier de baan, de groepen op het ijs en wat jouw
+        rijders op dat moment opleveren.
+      </p>
     </div>
   );
 }

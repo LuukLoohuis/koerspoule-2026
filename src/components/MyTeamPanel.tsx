@@ -31,7 +31,7 @@ import { Check, Pencil, X, Target, Crown, ClipboardList, Flag, Shirt, Snowflake,
 import FlagIcon from "@/components/FlagIcon";
 import { Trans, useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
-import { isMeermarathonGame } from "@/lib/gameTypes";
+import { isMeermarathonGame, meermarathonStageLabel } from "@/lib/gameTypes";
 import { useLiveRace } from "@/hooks/useLiveRace";
 import LiveTab from "@/components/meermarathon/LiveTab";
 import { useStagePointsSchema } from "@/hooks/usePointsSchema";
@@ -374,7 +374,7 @@ export default function MyTeamPanel({
   const [volgwagenTab, setVolgwagenTab] = useState<"ploeg" | "live">("ploeg");
   const { data: liveRace } = useLiveRace(game?.id, isMeermarathon);
   const { schema: pointsSchema, jokerMultiplier } = useStagePointsSchema(game?.id);
-  const heeftLive = isMeermarathon && Boolean(liveRace && liveRace.tracks.length > 0);
+  const heeftLive = isMeermarathon;
   const { entry, picksByCategory, jokerIds, predictions, isLoading, teamName, saveTeamName } = useEntry(game?.id);
   const { toast } = useToast();
   // Ploegnaam-editor (verhuisd uit MijnPeloton): inline nudge in Zone 1 van
@@ -820,9 +820,9 @@ export default function MyTeamPanel({
         </div>
       )}
 
-      {heeftLive && volgwagenTab === "live" && liveRace && (
+      {heeftLive && volgwagenTab === "live" && (
         <LiveTab
-          race={liveRace}
+          race={liveRace ?? null}
           mineRiderIds={mineRiderIds}
           jokerRiderIds={new Set(jokerIds)}
           pointsSchema={pointsSchema}
@@ -1479,7 +1479,7 @@ export default function MyTeamPanel({
                           onClick={() => setSelectedStageId(s.id)}
                           aria-pressed={sel}
                           aria-selected={sel}
-                          title={s.name ?? (isMeermarathon ? `Ronde ${s.stage_number}` : t("team.panel.stageTitle", { stage: s.stage_number }))}
+                          title={isMeermarathon ? meermarathonStageLabel(s) : (s.name ?? t("team.panel.stageTitle", { stage: s.stage_number }))}
                           className="relative shrink-0 flex flex-col items-center justify-end gap-0.5 rounded transition-all"
                           style={{
                             scrollSnapAlign: "center",

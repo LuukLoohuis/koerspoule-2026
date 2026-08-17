@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trash2, Trophy, LineChart, Radio } from "lucide-react";
-import { isMeermarathonGame } from "@/lib/gameTypes";
+import { isMeermarathonGame, WEDSTRIJD_TYPES, defaultWedstrijdType, type WedstrijdType } from "@/lib/gameTypes";
 import StageLiveTracks from "@/components/admin/StageLiveTracks";
 import { toast } from "sonner";
 
@@ -42,6 +42,8 @@ export type Stage = {
   profile_data?: StageProfileData | null;
   is_gc?: boolean;
   ijs_type?: string | null;
+  wedstrijd_type?: string | null;
+  aantal_rondes?: number | null;
 };
 
 export type StageProfileData = {
@@ -279,6 +281,28 @@ export default function StagesTab({
     }
     await reload();
   }
+  // Meermarathon meet kunstijs in ronden en natuurijs in kilometers; daarom een
+  // eigen veld naast distance_km in plaats van dat te overladen.
+  async function updateRondes(id: string, value: string) {
+    if (!supabase) return;
+    const n = value.trim() === "" ? null : Number(value);
+    if (n !== null && (!Number.isFinite(n) || n <= 0)) { toast.error("Aantal ronden moet groter dan 0 zijn"); return; }
+    setSavingKm(id);
+    const { error } = await supabase.from("stages").update({ aantal_rondes: n } as never).eq("id", id);
+    setSavingKm(null);
+    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
+    await reload();
+  }
+
+  async function updateWedstrijdType(id: string, type: WedstrijdType) {
+    if (!supabase) return;
+    setSavingType(id);
+    const { error } = await supabase.from("stages").update({ wedstrijd_type: type } as never).eq("id", id);
+    setSavingType(null);
+    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
+    await reload();
+  }
+
 
   async function uploadProfile(id: string, file: File | undefined | null) {
     if (!supabase || !file) return;
@@ -401,7 +425,8 @@ export default function StagesTab({
                 <TableHead>#</TableHead>
                 <TableHead>Naam</TableHead>
                 <TableHead>Datum</TableHead>
-                <TableHead className="w-24">Km</TableHead>
+                <TableHead className="w-24">{isMeermarathon ? "Maat" : "Km"}</TableHead>
+                {isMeermarathon && <TableHead className="w-36">Soort</TableHead>}
                 <TableHead>Type</TableHead>
                 <TableHead>Profiel</TableHead>
                 {isMeermarathon && <TableHead className="w-28">Live</TableHead>}
@@ -428,20 +453,36 @@ export default function StagesTab({
                     {s.is_gc ? (
                       <span className="text-xs text-muted-foreground">—</span>
                     ) : (
-                      <Input
-                        type="number"
-                        min={0}
-                        max={400}
-                        defaultValue={s.distance_km ?? ""}
-                        disabled={savingKm === s.id}
-                        onBlur={(e) => {
-                          const next = e.target.value;
-                          const cur = s.distance_km == null ? "" : String(s.distance_km);
-                          if (next !== cur) updateKm(s.id, next);
-                        }}
-                        className="h-8 w-20 text-sm"
-                        placeholder="—"
-                      />
+                      (() => {
+                        // Kunstijs telt ronden, natuurijs kilometers.
+                        const opRonden = isMeermarathon && s.ijs_type !== "natuurijs";
+                        const huidig = opRonden ? s.aantal_rondes : s.distance_km;
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <Input
+                              type="number"
+                              min={0}
+                              max={opRonden ? 999 : 400}
+                              defaultValue={huidig ?? ""}
+                              disabled={savingKm === s.id}
+                              onBlur={(e) => {
+                                const next = e.target.value;
+                                const cur = huidig == null ? "" : String(huidig);
+                                if (next === cur) return;
+                                if (opRonden) updateRondes(s.id, next);
+                                else updateKm(s.id, next);
+                              }}
+                              className="h-8 w-16 text-sm"
+                              placeholder="—"
+                            />
+                            {isMeermarathon && (
+                              <span className="text-[10px] text-muted-foreground">
+                                {opRonden ? "ronden" : "km"}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()
                     )}
                   </TableCell>
                   <TableCell>
@@ -515,6 +556,22 @@ export default function StagesTab({
                   </TableCell>
                   {isMeermarathon && (
                     <TableCell>
+                      <Select
+                        value={(s.wedstrijd_type as WedstrijdType | null) ?? defaultWedstrijdType(s.ijs_type)}
+                        onValueChange={(v) => updateWedstrijdType(s.id, v as WedstrijdType)}
+                        disabled={savingType === s.id}
+                      >
+                        <SelectTrigger className="h-8 w-[130px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {WEDSTRIJD_TYPES.map((w) => (
+                            <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  )}
+                  {isMeermarathon && (
+                    <TableCell>
                       <Button
                         variant={s.ijs_type ? "secondary" : "outline"}
                         size="sm"
@@ -533,7 +590,7 @@ export default function StagesTab({
                 </TableRow>
               ))}
               {stages.length === 0 && (
-                <TableRow><TableCell colSpan={isMeermarathon ? 9 : 8} className="text-center text-muted-foreground py-6">Nog geen etappes.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={isMeermarathon ? 10 : 8} className="text-center text-muted-foreground py-6">Nog geen etappes.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

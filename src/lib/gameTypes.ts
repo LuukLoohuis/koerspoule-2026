@@ -56,3 +56,55 @@ export function gameSeasonName(gameType: string | null | undefined, year: number
     ? `${name} ${meermarathonSeason(year)}`
     : `${name} ${year}`;
 }
+
+// ── Meermarathon: wedstrijdsoorten ────────────────────────────────────────
+// Meermarathon rijdt geen etappes maar losse wedstrijden. Cups op kunstijs en
+// Grand Prix' op natuurijs lopen door in nummering; ONK en NK staan los en
+// krijgen daarom géén nummer achter hun naam.
+
+export const WEDSTRIJD_TYPES = [
+  { value: "cup", label: "Cup", genummerd: true },
+  { value: "grandprix", label: "Grand Prix", genummerd: true },
+  { value: "onk", label: "ONK", genummerd: false },
+  { value: "nk", label: "NK", genummerd: false },
+] as const;
+
+export type WedstrijdType = typeof WEDSTRIJD_TYPES[number]["value"];
+
+/** Standaardsoort bij een ondergrond: kunstijs rijdt cups, natuurijs Grand Prix'. */
+export function defaultWedstrijdType(ijsType: string | null | undefined): WedstrijdType {
+  return ijsType === "natuurijs" ? "grandprix" : "cup";
+}
+
+/**
+ * Hoe een Meermarathon-wedstrijd heet.
+ *
+ * Een eigen naam wint altijd; anders "Cup 3" / "Grand Prix 5", en voor een
+ * titelwedstrijd alleen "ONK" of "NK" — die zijn eenmalig, dus een nummer
+ * erachter zou verwarrend zijn.
+ */
+export function meermarathonStageLabel(stage: {
+  name?: string | null;
+  stage_number: number;
+  wedstrijd_type?: string | null;
+  ijs_type?: string | null;
+}): string {
+  if (stage.name?.trim()) return stage.name.trim();
+  const type = (stage.wedstrijd_type as WedstrijdType | null) ?? defaultWedstrijdType(stage.ijs_type);
+  const def = WEDSTRIJD_TYPES.find((w) => w.value === type) ?? WEDSTRIJD_TYPES[0];
+  return def.genummerd ? `${def.label} ${stage.stage_number}` : def.label;
+}
+
+/** De maat van een wedstrijd: ronden op kunstijs, kilometers op natuurijs. */
+export function meermarathonAfstandLabel(stage: {
+  ijs_type?: string | null;
+  aantal_rondes?: number | null;
+  distance_km?: number | null;
+}): string | null {
+  if (stage.ijs_type === "natuurijs") {
+    return stage.distance_km != null ? `${stage.distance_km} km` : null;
+  }
+  return stage.aantal_rondes != null
+    ? `${stage.aantal_rondes} ronde${stage.aantal_rondes === 1 ? "" : "n"}`
+    : null;
+}

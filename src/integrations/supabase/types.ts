@@ -1401,6 +1401,7 @@ export type Database = {
           distance_km: number | null
           game_id: string
           id: string
+          aantal_rondes: number | null
           ijs_type: string | null
           is_gc: boolean
           name: string | null
@@ -1411,6 +1412,7 @@ export type Database = {
           stage_type: Database["public"]["Enums"]["stage_type_enum"]
           status: string | null
           submitted_for_approval_at: string | null
+          wedstrijd_type: string | null
         }
         Insert: {
           approved_at?: string | null
@@ -1426,6 +1428,7 @@ export type Database = {
           distance_km?: number | null
           game_id: string
           id?: string
+          aantal_rondes?: number | null
           ijs_type?: string | null
           is_gc?: boolean
           name?: string | null
@@ -1436,6 +1439,7 @@ export type Database = {
           stage_type?: Database["public"]["Enums"]["stage_type_enum"]
           status?: string | null
           submitted_for_approval_at?: string | null
+          wedstrijd_type?: string | null
         }
         Update: {
           approved_at?: string | null
@@ -1451,6 +1455,7 @@ export type Database = {
           distance_km?: number | null
           game_id?: string
           id?: string
+          aantal_rondes?: number | null
           ijs_type?: string | null
           is_gc?: boolean
           name?: string | null
@@ -1461,6 +1466,7 @@ export type Database = {
           stage_type?: Database["public"]["Enums"]["stage_type_enum"]
           status?: string | null
           submitted_for_approval_at?: string | null
+          wedstrijd_type?: string | null
         }
         Relationships: [
           {
