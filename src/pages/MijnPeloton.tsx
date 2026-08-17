@@ -1197,22 +1197,25 @@ export default function MijnPeloton() {
         nameEntry?.id ? (
           <form
             onSubmit={handleInlineSaveName}
-            className="retro-border bg-card px-3 py-2 flex items-center gap-2"
+            className="retro-border bg-card px-3 py-2.5 flex flex-col gap-2 md:items-stretch"
           >
-            <Pencil className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <Pencil className="h-3 w-3 shrink-0" />
+              {t("team.peloton.teamNameLabel")}
+            </span>
             <Input
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               placeholder={t("team.peloton.teamNamePlaceholder")}
               maxLength={40}
               aria-label={t("team.peloton.teamNameLabel")}
-              className="h-9 flex-1 min-w-0 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0 font-display font-bold"
+              className="h-9 w-full min-w-0 border border-border bg-background px-2 shadow-none focus-visible:ring-1 font-display font-bold"
             />
             <Button
               type="submit"
               size="sm"
               disabled={!nameInput.trim() || saveTeamName.isPending}
-              className="shrink-0 retro-border-primary font-bold"
+              className="w-full retro-border-primary font-bold"
             >
               {saveTeamName.isPending ? "…" : "Opslaan"}
             </Button>
@@ -1307,7 +1310,7 @@ export default function MijnPeloton() {
               {/* Desktop sub-tab nav — retro dossard-tabbalk */}
               <RetroTabs
                 variant="segment"
-                className="hidden md:flex mb-3"
+                className="mb-3 hidden md:inline-flex"
                 aria-label={t("team.tabs.volgwagenSectionsAria")}
                 active={teamSubTab}
                 onChange={setTeamSubTab}

@@ -104,7 +104,9 @@ export function RetroTabs({
       className={cn(
         "relative flex items-stretch rounded-xl",
         segment
-          ? "w-auto gap-0.5 self-start bg-foreground/[0.06] p-1"
+          // w-fit, niet w-auto: een display:flex div blijft block-level en zou
+          // anders over de volle breedte uitrekken.
+          ? "w-fit gap-0.5 self-start bg-foreground/[0.06] p-1"
           : "w-full gap-1.5 border-2 border-foreground bg-card p-1.5 shadow-[3px_3px_0_hsl(var(--foreground))]",
         className,
       )}
