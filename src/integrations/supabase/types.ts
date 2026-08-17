@@ -775,6 +775,185 @@ export type Database = {
           },
         ]
       }
+      live_premies: {
+        Row: {
+          aantal_ronden: number | null
+          id: string
+          posities: Json
+          ronde: number | null
+          synced_at: string
+          track_id: string
+          vastgesteld: boolean
+          volgnr: number
+        }
+        Insert: {
+          aantal_ronden?: number | null
+          id?: string
+          posities?: Json
+          ronde?: number | null
+          synced_at?: string
+          track_id: string
+          vastgesteld?: boolean
+          volgnr: number
+        }
+        Update: {
+          aantal_ronden?: number | null
+          id?: string
+          posities?: Json
+          ronde?: number | null
+          synced_at?: string
+          track_id?: string
+          vastgesteld?: boolean
+          volgnr?: number
+        }
+        Relationships: []
+      }
+      live_race_state: {
+        Row: {
+          aantal_actief: number | null
+          aantal_rijders: number | null
+          bron_tijd: string | null
+          gem_ronde_snelheid: string | null
+          gem_ronde_tijd: string | null
+          lap_time: string | null
+          max_ronden: number | null
+          peloton_ronden: number | null
+          race_time: string | null
+          ronde_lengte: number | null
+          ronden_te_gaan: number | null
+          snelste_ronde_beennummer: string | null
+          snelste_ronde_naam: string | null
+          snelste_ronde_nr: number | null
+          snelste_ronde_snelheid: string | null
+          snelste_ronde_tijd: string | null
+          synced_at: string
+          totaal_ronden: number | null
+          track_id: string
+        }
+        Insert: {
+          aantal_actief?: number | null
+          aantal_rijders?: number | null
+          bron_tijd?: string | null
+          gem_ronde_snelheid?: string | null
+          gem_ronde_tijd?: string | null
+          lap_time?: string | null
+          max_ronden?: number | null
+          peloton_ronden?: number | null
+          race_time?: string | null
+          ronde_lengte?: number | null
+          ronden_te_gaan?: number | null
+          snelste_ronde_beennummer?: string | null
+          snelste_ronde_naam?: string | null
+          snelste_ronde_nr?: number | null
+          snelste_ronde_snelheid?: string | null
+          snelste_ronde_tijd?: string | null
+          synced_at?: string
+          totaal_ronden?: number | null
+          track_id: string
+        }
+        Update: {
+          aantal_actief?: number | null
+          aantal_rijders?: number | null
+          bron_tijd?: string | null
+          gem_ronde_snelheid?: string | null
+          gem_ronde_tijd?: string | null
+          lap_time?: string | null
+          max_ronden?: number | null
+          peloton_ronden?: number | null
+          race_time?: string | null
+          ronde_lengte?: number | null
+          ronden_te_gaan?: number | null
+          snelste_ronde_beennummer?: string | null
+          snelste_ronde_naam?: string | null
+          snelste_ronde_nr?: number | null
+          snelste_ronde_snelheid?: string | null
+          snelste_ronde_tijd?: string | null
+          synced_at?: string
+          totaal_ronden?: number | null
+          track_id?: string
+        }
+        Relationships: []
+      }
+      live_rider_standings: {
+        Row: {
+          aantal_ronden: number
+          aantal_ronden_kop: number | null
+          beennummer: string
+          fastest: string | null
+          finished: boolean
+          groep: number | null
+          id: string
+          lap: string | null
+          meter: number | null
+          naam: string
+          positie: number
+          punten: number | null
+          relatienummer: string | null
+          rider_id: string | null
+          sectie: string | null
+          shownummer: string | null
+          sponsor: string | null
+          synced_at: string
+          tijd: string | null
+          tijd_sort: number | null
+          track_id: string
+        }
+        Insert: {
+          aantal_ronden?: number
+          aantal_ronden_kop?: number | null
+          beennummer: string
+          fastest?: string | null
+          finished?: boolean
+          groep?: number | null
+          id?: string
+          lap?: string | null
+          meter?: number | null
+          naam: string
+          positie: number
+          punten?: number | null
+          relatienummer?: string | null
+          rider_id?: string | null
+          sectie?: string | null
+          shownummer?: string | null
+          sponsor?: string | null
+          synced_at?: string
+          tijd?: string | null
+          tijd_sort?: number | null
+          track_id: string
+        }
+        Update: {
+          aantal_ronden?: number
+          aantal_ronden_kop?: number | null
+          beennummer?: string
+          fastest?: string | null
+          finished?: boolean
+          groep?: number | null
+          id?: string
+          lap?: string | null
+          meter?: number | null
+          naam?: string
+          positie?: number
+          punten?: number | null
+          relatienummer?: string | null
+          rider_id?: string | null
+          sectie?: string | null
+          shownummer?: string | null
+          sponsor?: string | null
+          synced_at?: string
+          tijd?: string | null
+          tijd_sort?: number | null
+          track_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_rider_standings_rider_id_fkey"
+            columns: ["rider_id"]
+            isOneToOne: false
+            referencedRelation: "riders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notify_subscribers: {
         Row: {
           created_at: string
@@ -924,6 +1103,7 @@ export type Database = {
           id: string
           is_dnf: boolean
           is_youth_eligible: boolean
+          knsb_relatienummer: string | null
           name: string
           start_number: number | null
           team: string | null
@@ -950,6 +1130,7 @@ export type Database = {
           id?: string
           is_dnf?: boolean
           is_youth_eligible?: boolean
+          knsb_relatienummer?: string | null
           name?: string
           start_number?: number | null
           team?: string | null
@@ -1047,6 +1228,44 @@ export type Database = {
             columns: ["rubriek_id"]
             isOneToOne: false
             referencedRelation: "rubriek_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stage_live_tracks: {
+        Row: {
+          categorie: string | null
+          created_at: string
+          id: string
+          label: string | null
+          sort_order: number
+          stage_id: string
+          track_id: string
+        }
+        Insert: {
+          categorie?: string | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          sort_order?: number
+          stage_id: string
+          track_id: string
+        }
+        Update: {
+          categorie?: string | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          sort_order?: number
+          stage_id?: string
+          track_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stage_live_tracks_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "stages"
             referencedColumns: ["id"]
           },
         ]
@@ -1182,6 +1401,7 @@ export type Database = {
           distance_km: number | null
           game_id: string
           id: string
+          ijs_type: string | null
           is_gc: boolean
           name: string | null
           profile_data: Json | null
@@ -1206,6 +1426,7 @@ export type Database = {
           distance_km?: number | null
           game_id: string
           id?: string
+          ijs_type?: string | null
           is_gc?: boolean
           name?: string | null
           profile_data?: Json | null
@@ -1230,6 +1451,7 @@ export type Database = {
           distance_km?: number | null
           game_id?: string
           id?: string
+          ijs_type?: string | null
           is_gc?: boolean
           name?: string | null
           profile_data?: Json | null
