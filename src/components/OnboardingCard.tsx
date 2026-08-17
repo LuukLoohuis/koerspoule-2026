@@ -9,7 +9,13 @@ import { Check, X, Users, Share2, LineChart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
-const KEY = "kp_onboarding_dismissed";
+export const ONBOARDING_KEY = "kp_onboarding_dismissed";
+const KEY = ONBOARDING_KEY;
+
+/** Is de kaart eerder weggeklikt? Nodig om een lege zijkolom te voorkomen. */
+export function onboardingWeggeklikt(): boolean {
+  try { return localStorage.getItem(ONBOARDING_KEY) === "1"; } catch { return false; }
+}
 
 type Step = { label: string; hint: string; done: boolean; cta: string; Icon: typeof Users; onClick: () => void };
 
@@ -20,6 +26,7 @@ export default function OnboardingCard({
   onTeam,
   onSubpoule,
   onResults,
+  onDismissed,
 }: {
   hasTeam: boolean;
   inSubpoule: boolean;
@@ -27,6 +34,8 @@ export default function OnboardingCard({
   onTeam: () => void;
   onSubpoule: () => void;
   onResults: () => void;
+  /** Vuurt bij wegklikken, zodat een omliggende kolom kan inklappen. */
+  onDismissed?: () => void;
 }) {
   const { t } = useTranslation();
   const [dismissed, setDismissed] = useState(() => {
@@ -39,6 +48,7 @@ export default function OnboardingCard({
   const close = () => {
     setDismissed(true);
     try { localStorage.setItem(KEY, "1"); } catch { /* negeer */ }
+    onDismissed?.();
   };
 
   const steps: Step[] = [

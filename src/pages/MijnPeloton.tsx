@@ -48,7 +48,7 @@ import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { Input } from "@/components/ui/input";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useAuth } from "@/hooks/useAuth";
-import OnboardingCard from "@/components/OnboardingCard";
+import OnboardingCard, { onboardingWeggeklikt } from "@/components/OnboardingCard";
 import { Wrench, Share2 } from "lucide-react";
 import {
   ChartContainer,
@@ -177,6 +177,9 @@ export default function MijnPeloton() {
 
   // Volgwagen-subtabs (mobiel): vinger-volgende carrousel + zwevende schakelaar.
   const teamHint = useSwipeHint("volgwagen");
+  // Wegklikken van de onboarding moet de zijkolom direct laten inklappen; de
+  // kaart bewaart dat zelf in localStorage, dus we spiegelen het hier.
+  const [onbWeg, setOnbWeg] = useState(() => onboardingWeggeklikt());
   const teamBarVisible = useAutoHideOnScroll();
   const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
@@ -1041,6 +1044,12 @@ export default function MijnPeloton() {
 
   /* ── Main overview ── */
   const hasTeamName = Boolean(teamName?.trim());
+
+  // De zijkolom bestaat alleen zolang er iets in staat; anders zou er op
+  // desktop een lege kolom van 268px blijven hangen.
+  const toontOnboarding =
+    Boolean(authUser && selectedGameObj) && !onbWeg && !(obHasTeam && obInSubpoule);
+  const heeftZijkolom = toontOnboarding || Boolean(supportBanner.data?.active);
   return (
     <div className="container mx-auto px-5 pb-4 md:py-6">
       {/* Game-switcher (vertrekbord) — alleen ingelogd + >1 zichtbare game.
@@ -1071,11 +1080,6 @@ export default function MijnPeloton() {
         <div className="double-rule mt-2 md:mt-3 mx-auto max-w-md" />
       </div>
 
-      {/* Handmatige steun-banner (alleen als de admin 'm aanzette voor deze game).
-          Zelfde breedte als de tabbalk-container (max-w-5xl). */}
-      {supportBanner.data?.active && (
-        <SteunBanner revKey={supportBanner.data.updatedAt} className="mb-3 max-w-5xl mx-auto" />
-      )}
 
       {/* 3. Ploegnaam-nudge — alleen tonen als er nog géén ploegnaam is.
            Heb je een entry? Dan kun je de naam direct in de balk invoeren.
@@ -1171,17 +1175,6 @@ export default function MijnPeloton() {
         )}
 
 
-        {/* Onboarding: 3-stappen-start voor nieuwe gebruikers (self-hiding). */}
-        {authUser && selectedGameObj && (
-          <OnboardingCard
-            hasTeam={!!obHasTeam}
-            inSubpoule={obInSubpoule}
-            liveTracking={!!obLive}
-            onTeam={() => navigate("/team-samenstellen")}
-            onSubpoule={() => setGameTab("subpoules")}
-            onResults={() => setGameTab("uitslagen")}
-          />
-        )}
 
         {/* Subpoule-sponsorbanner — korte strip onder de titel, boven de tabs.
             Alleen op de Subpoules-tab én wanneer de open subpoule een actieve
@@ -1217,6 +1210,34 @@ export default function MijnPeloton() {
               { key: "hors",      label: "Hors Catégorie", Icon: Mountain },
             ]}
           />
+
+          {/* Twee kolommen op desktop: inhoud links, tijdelijke zaken rechts.
+              Onboarding en steunbanner stonden vol over de breedte bóven de
+              inhoud en duwden die onder de vouw. Ze staan nu in een zijkolom,
+              die vanzelf verdwijnt zodra er niets meer in staat.
+              Op mobiel blijft de volgorde zoals hij was: order zet de zijkolom
+              daar weer boven de inhoud, zonder de component dubbel te renderen. */}
+          <div className="flex flex-col md:grid md:grid-cols-[minmax(0,1fr)_268px] md:items-start md:gap-5">
+            {(heeftZijkolom) && (
+              <aside className="order-1 flex flex-col gap-3 md:order-2 md:sticky md:top-4">
+                {authUser && selectedGameObj && (
+                  <OnboardingCard
+                    hasTeam={!!obHasTeam}
+                    inSubpoule={obInSubpoule}
+                    liveTracking={!!obLive}
+                    onTeam={() => navigate("/team-samenstellen")}
+                    onSubpoule={() => setGameTab("subpoules")}
+                    onResults={() => setGameTab("uitslagen")}
+                    onDismissed={() => setOnbWeg(true)}
+                  />
+                )}
+                {supportBanner.data?.active && (
+                  <SteunBanner revKey={supportBanner.data.updatedAt} />
+                )}
+              </aside>
+            )}
+
+            <div className="order-2 min-w-0 md:order-1">
 
           {/* Telbordje: vervanger(s) nodig → klik gaat naar de Volgwagen */}
           {fallenCount > 0 && gameTab !== "team" && (
@@ -1368,6 +1389,8 @@ export default function MijnPeloton() {
             <HorsCategorieTab initialTab={horsTab} gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} adminTestmodus={selectedGameObj?.admin_testmodus ?? false} />
           </TabsContent>
 
+            </div>
+          </div>
         </Tabs>
       </div>
     </div>);
