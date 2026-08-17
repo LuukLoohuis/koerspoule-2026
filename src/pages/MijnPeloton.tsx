@@ -1049,7 +1049,8 @@ export default function MijnPeloton() {
   // desktop een lege kolom van 268px blijven hangen.
   const toontOnboarding =
     Boolean(authUser && selectedGameObj) && !onbWeg && !(obHasTeam && obInSubpoule);
-  const heeftZijkolom = toontOnboarding || Boolean(supportBanner.data?.active);
+  const heeftZijkolom =
+    toontOnboarding || !hasTeamName || Boolean(supportBanner.data?.active);
   return (
     <div className="container mx-auto px-5 pb-4 md:py-6">
       {/* Game-switcher (vertrekbord) — alleen ingelogd + >1 zichtbare game.
@@ -1080,54 +1081,6 @@ export default function MijnPeloton() {
         <div className="double-rule mt-2 md:mt-3 mx-auto max-w-md" />
       </div>
 
-
-      {/* 3. Ploegnaam-nudge — alleen tonen als er nog géén ploegnaam is.
-           Heb je een entry? Dan kun je de naam direct in de balk invoeren.
-           Anders (nog geen entry/niet ingelogd) → naar de Volgwagen. */}
-      {!hasTeamName && (
-        nameEntry?.id ? (
-          <form
-            onSubmit={handleInlineSaveName}
-            className="w-full max-w-5xl mx-auto mb-3 retro-border bg-card px-3 py-2 flex items-center gap-2"
-          >
-            <Pencil className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <Input
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              placeholder={t("team.peloton.teamNamePlaceholder")}
-              maxLength={40}
-              aria-label={t("team.peloton.teamNameLabel")}
-              className="h-9 flex-1 min-w-0 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0 font-display font-bold"
-            />
-            <Button
-              type="submit"
-              size="sm"
-              disabled={!nameInput.trim() || saveTeamName.isPending}
-              className="shrink-0 retro-border-primary font-bold"
-            >
-              {saveTeamName.isPending ? "…" : "Opslaan"}
-            </Button>
-          </form>
-        ) : (
-          <button
-            type="button"
-            onClick={goEditTeamName}
-            className="w-full max-w-5xl mx-auto mb-3 retro-border bg-card px-3 py-2 flex items-center justify-between gap-3 text-left hover:bg-secondary/40 transition-colors"
-            aria-label={t("team.peloton.setTeamNameAria")}
-          >
-            <span className="flex items-center gap-2 min-w-0">
-              <Pencil className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span className="font-display text-sm font-bold truncate">
-                Stel je ploegnaam in
-              </span>
-              <span className="hidden sm:inline text-xs font-serif italic text-muted-foreground truncate">
-                — geef je team een naam voor de start
-              </span>
-            </span>
-            <span className="shrink-0 text-base text-muted-foreground" aria-hidden>→</span>
-          </button>
-        )
-      )}
 
       <div className="max-w-5xl mx-auto">
 
@@ -1217,7 +1170,13 @@ export default function MijnPeloton() {
               die vanzelf verdwijnt zodra er niets meer in staat.
               Op mobiel blijft de volgorde zoals hij was: order zet de zijkolom
               daar weer boven de inhoud, zonder de component dubbel te renderen. */}
-          <div className="flex flex-col md:grid md:grid-cols-[minmax(0,1fr)_268px] md:items-start md:gap-5">
+          <div className={cn(
+            "flex flex-col",
+            // Alleen twee kolommen als de zijkolom ook echt inhoud heeft;
+            // anders bleef er een lege strook van 268px staan en verbreedde
+            // de inhoud niet na het wegklikken.
+            heeftZijkolom && "md:grid md:grid-cols-[minmax(0,1fr)_268px] md:items-start md:gap-5",
+          )}>
             {(heeftZijkolom) && (
               <aside className="order-1 flex flex-col gap-3 md:order-2 md:sticky md:top-4">
                 {authUser && selectedGameObj && (
@@ -1231,6 +1190,53 @@ export default function MijnPeloton() {
                     onDismissed={() => setOnbWeg(true)}
                   />
                 )}
+                {/* Ploegnaam-nudge — alleen tonen als er nog géén ploegnaam is.
+           Heb je een entry? Dan kun je de naam direct in de balk invoeren.
+           Anders (nog geen entry/niet ingelogd) → naar de Volgwagen. */}
+      {!hasTeamName && (
+        nameEntry?.id ? (
+          <form
+            onSubmit={handleInlineSaveName}
+            className="retro-border bg-card px-3 py-2 flex items-center gap-2"
+          >
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <Input
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder={t("team.peloton.teamNamePlaceholder")}
+              maxLength={40}
+              aria-label={t("team.peloton.teamNameLabel")}
+              className="h-9 flex-1 min-w-0 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0 font-display font-bold"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!nameInput.trim() || saveTeamName.isPending}
+              className="shrink-0 retro-border-primary font-bold"
+            >
+              {saveTeamName.isPending ? "…" : "Opslaan"}
+            </Button>
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={goEditTeamName}
+            className="retro-border bg-card px-3 py-2 flex items-center justify-between gap-3 text-left hover:bg-secondary/40 transition-colors"
+            aria-label={t("team.peloton.setTeamNameAria")}
+          >
+            <span className="flex items-center gap-2 min-w-0">
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="font-display text-sm font-bold truncate">
+                Stel je ploegnaam in
+              </span>
+              <span className="hidden sm:inline text-xs font-serif italic text-muted-foreground truncate">
+                — geef je team een naam voor de start
+              </span>
+            </span>
+            <span className="shrink-0 text-base text-muted-foreground" aria-hidden>→</span>
+          </button>
+        )
+      )}
                 {supportBanner.data?.active && (
                   <SteunBanner revKey={supportBanner.data.updatedAt} />
                 )}
@@ -1300,6 +1306,7 @@ export default function MijnPeloton() {
 
               {/* Desktop sub-tab nav — retro dossard-tabbalk */}
               <RetroTabs
+                variant="segment"
                 className="hidden md:flex mb-3"
                 aria-label={t("team.tabs.volgwagenSectionsAria")}
                 active={teamSubTab}
