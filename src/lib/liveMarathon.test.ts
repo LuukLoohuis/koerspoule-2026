@@ -12,6 +12,7 @@ import {
   type LiveRider,
   type RawStandDoc,
 } from "@/lib/liveMarathon";
+import fixture from "@/test/fixtures/livemarathon-haaksbergen.json";
 
 /** Bouw een live rijder; tijd in seconden voor leesbaarheid (bron: ms). */
 function rider(
@@ -258,5 +259,89 @@ describe("rennerkoppeling", () => {
   it("normaliseert diakrieten en leestekens weg", () => {
     expect(normalizeName("Crispijn Ariëns")).toBe("crispijn ariens");
     expect(normalizeName("Sanne in 't Hof")).toBe("sanne in t hof");
+  });
+});
+
+// ── Echte brondata ─────────────────────────────────────────────────────────
+// Onderstaande fixture is de letterlijke DDP-payload van Haaksbergen
+// (Marathon Inline Cup 4). Testen op verzonnen data zou de eigenaardigheden
+// van de bron missen: getallen als string, beennummers met voorloopnul, en
+// rijders met ronde-achterstand die een lágere kloktijd hebben dan de leider.
+describe("echte payload van Haaksbergen", () => {
+  const riders = fixture.stand
+    .map((d) => normalizeRider(d as RawStandDoc))
+    .filter((r): r is NonNullable<typeof r> => r !== null);
+
+  it("leest alle 25 rijders in", () => {
+    expect(fixture.stand).toHaveLength(25);
+    expect(riders).toHaveLength(25);
+  });
+
+  it("geeft dezelfde volgorde als de website", () => {
+    const top5 = sortStandings(riders).slice(0, 5);
+    expect(top5.map((r) => `${r.beennummer} ${r.naam}`)).toEqual([
+      "134 Jorian ten Cate",
+      "032 Kevin van der Horst",
+      "023 Casper de Gier",
+      "538 Joël Haasjes",
+      "007 Luc ter Haar",
+    ]);
+  });
+
+  it("laat een rijder op ronde-achterstand niet omhoog vallen door zijn lagere kloktijd", () => {
+    const sorted = sortStandings(riders);
+    const hoolwerf = sorted.findIndex((r) => r.beennummer === "214");
+    const cate = sorted.findIndex((r) => r.beennummer === "134");
+    // Hoolwerf staat op 43:18.285 tegenover 46:06.353 van de leider, maar heeft
+    // 17 ronden tegen 18: hij hoort dus áchter de hele kopgroep.
+    expect(hoolwerf).toBeGreaterThan(cate);
+    expect(sorted[hoolwerf].aantalRonden).toBe(17);
+    expect(sorted[13].beennummer).toBe("214");
+  });
+
+  it("herkent de grootste ronde-groep als peloton", () => {
+    // 13 van de 25 rijders zitten op 18 ronden.
+    expect(pelotonLaps(riders)).toBe(18);
+  });
+
+  it("zet rijders met ronde-achterstand op een negatieve tier", () => {
+    const groups = buildGroups(riders);
+    const tiers = new Map(
+      groups.flatMap((g) => g.leden.map((l) => [l.rider.beennummer, l.tier] as const)),
+    );
+    expect(tiers.get("134")).toBe(0);   // peloton-ronde, kopgroep
+    expect(tiers.get("214")).toBe(-1);  // één ronde achter
+    expect(tiers.get("184")).toBe(-2);  // twee ronden achter
+    expect(tiers.get("165")).toBe(-14); // ver terug
+  });
+
+  it("normaliseert de string-getallen uit het race-document", () => {
+    const race = normalizeRace(fixture.race);
+    expect(race.totaalRonden).toBe(21);
+    expect(race.rondeLengte).toBe(1800);
+    expect(race.rondenTeGaan).toBe(2);
+    expect(race.aantalRijders).toBe(25);
+    expect(race.snelsteRondeNaam).toBe("Ronald Haasjes");
+  });
+
+  it("slaat de premies plat en laat de lege plekken vallen", () => {
+    const premies = fixture.premies
+      .map((p) => normalizePremie(p as never))
+      .filter((p): p is NonNullable<typeof p> => p !== null)
+      .sort((a, b) => a.volgnr - b.volgnr);
+    expect(premies.map((p) => p.volgnr)).toEqual([1, 2, 3]);
+    // Nr4..Nr10 zijn null en horen te verdwijnen.
+    expect(premies.every((p) => p.posities.length === 3)).toBe(true);
+    expect(premies[0].posities[0].naam).toBe("Ronald Haasjes");
+  });
+
+  it("koppelt op relatienummer, ook bij een afwijkend geschreven naam", () => {
+    const ariens = riders.find((r) => r.beennummer === "005")!;
+    expect(ariens.naam).toBe("Crispijn Ariëns");
+    const match = matchRider(ariens, [
+      { id: "juist", name: "Crispijn Ariens", knsbRelatienummer: "10154217" },
+      { id: "fout", name: "Crispijn Ariëns", knsbRelatienummer: "99999999" },
+    ]);
+    expect(match?.id).toBe("juist");
   });
 });
