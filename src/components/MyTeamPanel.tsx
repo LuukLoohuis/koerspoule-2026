@@ -32,6 +32,9 @@ import FlagIcon from "@/components/FlagIcon";
 import { Trans, useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 import { isMeermarathonGame } from "@/lib/gameTypes";
+import { useLiveRace } from "@/hooks/useLiveRace";
+import LiveTab from "@/components/meermarathon/LiveTab";
+import { useStagePointsSchema } from "@/hooks/usePointsSchema";
 
 
 type StagePoint = { stage_id: string; entry_id: string; points: number };
@@ -366,6 +369,12 @@ export default function MyTeamPanel({
   // Optioneel een specifieke (bv. afgeronde) game tonen i.p.v. de live game.
   const game = gameIdProp ? { id: gameIdProp, status: gameStatus, name: gameName } : curGame;
   const isMeermarathon = isMeermarathonGame(gameType ?? curGame?.game_type);
+
+  // Live-tab: alleen bij Meermarathon, en alleen als er een baan gekoppeld is.
+  const [volgwagenTab, setVolgwagenTab] = useState<"ploeg" | "live">("ploeg");
+  const { data: liveRace } = useLiveRace(game?.id, isMeermarathon);
+  const { schema: pointsSchema, jokerMultiplier } = useStagePointsSchema(game?.id);
+  const heeftLive = isMeermarathon && Boolean(liveRace && liveRace.tracks.length > 0);
   const { entry, picksByCategory, jokerIds, predictions, isLoading, teamName, saveTeamName } = useEntry(game?.id);
   const { toast } = useToast();
   // Ploegnaam-editor (verhuisd uit MijnPeloton): inline nudge in Zone 1 van
@@ -778,8 +787,50 @@ export default function MyTeamPanel({
     );
   }
 
+  // Eigen renners + jokers als id-set, voor de live projectie.
+  const mineRiderIds = new Set<string>();
+  for (const arr of picksByCategory.values()) for (const id of arr) mineRiderIds.add(id);
+  for (const id of jokerIds) mineRiderIds.add(id);
+
   return (
     <div className={cn("space-y-3 pb-4", isMeermarathon && "meermarathon-volgwagen")}>
+      {/* Live-tab verschijnt pas zodra er een baan aan de ronde hangt. */}
+      {heeftLive && (
+        <div className="flex gap-1.5 rounded-xl border border-[rgba(18,104,168,.2)] bg-white/55 p-1">
+          {([["ploeg", "Mijn ploeg"], ["live", "Live"]] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={volgwagenTab === key}
+              onClick={() => setVolgwagenTab(key)}
+              className={cn(
+                "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 font-display text-xs font-bold uppercase tracking-wide transition-colors",
+                volgwagenTab === key
+                  ? "bg-[#071b3d] text-[#eaf6ff] shadow"
+                  : "text-foreground/55",
+              )}
+            >
+              {key === "live" && (
+                <span className="h-1.5 w-1.5 rounded-full bg-[#ff5a3c] animate-pulse" aria-hidden />
+              )}
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {heeftLive && volgwagenTab === "live" && liveRace && (
+        <LiveTab
+          race={liveRace}
+          mineRiderIds={mineRiderIds}
+          jokerRiderIds={new Set(jokerIds)}
+          pointsSchema={pointsSchema}
+          jokerMultiplier={jokerMultiplier}
+        />
+      )}
+
+      {(!heeftLive || volgwagenTab === "ploeg") && <>
       {isMeermarathon && !categoriesLoading && categories.length === 0 && (
         <div className="mm-setup-notice" role="status">
           <Snowflake className="h-5 w-5 shrink-0" aria-hidden />
@@ -1586,8 +1637,7 @@ export default function MyTeamPanel({
           </div>
         );
       })()}
-
-
+      </>}
     </div>
   );
 }
