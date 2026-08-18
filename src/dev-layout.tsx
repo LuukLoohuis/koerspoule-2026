@@ -10,6 +10,8 @@ import { createRoot } from "react-dom/client";
 import { Newspaper, Car, Users, Trophy, Mountain, Target, Pencil } from "lucide-react";
 import { RetroTabs } from "@/components/RetroTabs";
 import OnboardingCard from "@/components/OnboardingCard";
+import PercentileVerdict from "@/components/horscat/PercentileVerdict";
+import aapFietser from "@/assets/horscat/aap-fietser-transparant.png";
 import "@/i18n";
 import "./index.css";
 
@@ -40,6 +42,9 @@ function Harness() {
   const [hoofd, setHoofd] = useState<string>("team");
   const [sub, setSub] = useState<string>("ploeg");
   const [rail, setRail] = useState(true);
+  // Bootst na: de pagina denkt dat er een zijkolom is, maar alle kaarten
+  // geven zelf null terug (eerder weggeklikt).
+  const [leegKind, setLeegKind] = useState(false);
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -51,6 +56,12 @@ function Harness() {
             className="rounded-md border-2 border-foreground bg-card px-3 py-1.5 text-xs font-bold"
           >
             zijkolom: {rail ? "aan" : "uit"}
+          </button>
+          <button
+            onClick={() => setLeegKind((v) => !v)}
+            className="rounded-md border-2 border-foreground bg-card px-3 py-1.5 text-xs font-bold"
+          >
+            kaarten weggeklikt: {leegKind ? "ja" : "nee"}
           </button>
         </div>
 
@@ -66,12 +77,12 @@ function Harness() {
           <RetroTabs tabs={HOOFD} active={hoofd} onChange={setHoofd} aria-label="hoofd2" />
           <div
             className={
-              "mt-4 flex flex-col " +
-              (rail ? "md:grid md:grid-cols-[minmax(0,1fr)_268px] md:items-start md:gap-5" : "")
+              "mt-4 flex flex-col md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-5"
             }
           >
             {rail && (
-              <aside className="order-1 flex flex-col gap-3 md:order-2">
+              <aside className="order-1 flex flex-col gap-3 empty:hidden md:order-2 md:w-[268px]">
+                {!leegKind && <>
                 <form className="retro-border flex flex-col gap-2 bg-card px-3 py-2.5">
                   <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     <Pencil className="h-3 w-3 shrink-0" /> Ploegnaam
@@ -96,6 +107,7 @@ function Harness() {
                   onStats={() => {}}
                   onKrant={() => {}}
                 />
+                </>}
               </aside>
             )}
             <div className="order-2 min-w-0 md:order-1">
@@ -104,6 +116,18 @@ function Harness() {
                 inhoud — let op de breedte van de subbalk hierboven
               </div>
             </div>
+          </div>
+        </Blok>
+        <Blok titel="Monkey IQ-hero — puilt het getal buiten de kaart?">
+          <div className="space-y-4">
+            {[860, 700, 560, 420].map((w) => (
+              <div key={w}>
+                <div className="mb-1 font-mono text-[10px] text-muted-foreground">kolombreedte {w}px</div>
+                <div style={{ width: w }} data-meet={w}>
+                  <PercentileVerdict percentile={88} userPoints={545} monkeyAvg={432} illustrationSrc={aapFietser} />
+                </div>
+              </div>
+            ))}
           </div>
         </Blok>
       </div>

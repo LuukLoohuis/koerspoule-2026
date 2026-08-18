@@ -1186,13 +1186,16 @@ export default function MijnPeloton() {
               daar weer boven de inhoud, zonder de component dubbel te renderen. */}
           <div className={cn(
             "flex flex-col",
-            // Alleen twee kolommen als de zijkolom ook echt inhoud heeft;
-            // anders bleef er een lege strook van 268px staan en verbreedde
-            // de inhoud niet na het wegklikken.
-            heeftZijkolom && "md:grid md:grid-cols-[minmax(0,1fr)_268px] md:items-start md:gap-5",
+            // De tweede kolom is auto-breed en de zijkolom verbergt zichzelf
+            // zodra hij leeg is. Eerder stond hier een vaste 268px met een
+            // vooraf berekende vlag, maar die kon er niet naast zitten: de
+            // kaarten erin (onboarding, steunbanner) geven zelf null terug als
+            // ze ooit zijn weggeklikt. De pagina dacht dan dat er inhoud was en
+            // liet een lege strook staan. Nu bepaalt de kolom het zelf.
+            "md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-5",
           )}>
-            {(heeftZijkolom) && (
-              <aside className="order-1 flex flex-col gap-3 md:order-2 md:sticky md:top-4">
+            {heeftZijkolom && (
+              <aside className="order-1 flex flex-col gap-3 empty:hidden md:order-2 md:w-[268px] md:sticky md:top-4">
                 {authUser && selectedGameObj && (
                   <OnboardingCard
                     hasTeam={!!obHasTeam}

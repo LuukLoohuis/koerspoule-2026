@@ -90,9 +90,9 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, i
       <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
         <div className="flex-1 min-w-0">
       {/* Score links, vergelijking rechts — compacte hero (mobiel gestapeld) */}
-      <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-10">
+      <div className="flex flex-col md:flex-row md:flex-wrap items-center justify-center gap-4 md:gap-x-8 md:gap-y-5">
         {/* Links: Monkey IQ + percentage */}
-        <div className="text-center shrink-0">
+        <div className="min-w-0 text-center">
           <div
             className="vintage-stamp uppercase"
             style={{ color: FADED, fontSize: "11px", letterSpacing: "0.32em" }}
@@ -105,7 +105,7 @@ export default function PercentileVerdict({ percentile, userPoints, monkeyAvg, i
               fontFamily: "'Oswald','Bebas Neue','Archivo Black',sans-serif",
               fontWeight: 900,
               color: v.color,
-              fontSize: "clamp(56px, 11vw, 92px)",
+              fontSize: "clamp(52px, 9vw, 80px)",
               textShadow: "3px 3px 0 rgba(58,42,26,0.10)",
             }}
             aria-label={t("hors.dartpijl.monkeyIqAria", { percentile })}
