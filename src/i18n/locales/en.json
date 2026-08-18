@@ -84,7 +84,8 @@
     "explain": "Game Guide",
     "rules": "Race rules",
     "prizes": "Prizes",
-    "resultsShort": "Results"
+    "resultsShort": "Results",
+    "wijzigPloeg": "Edit team"
   },
   "landing": {
     "subtitleFallback": "For the love of the race",
@@ -420,7 +421,10 @@
       "notSubmittedCta": "🚴‍♂️ <strong>Your peloton isn't at the start yet.</strong> Confirm your entry in the team builder.",
       "editShort": "Edit",
       "toBuilderShort": "To team builder",
-      "prizesLink": "There's something to win — <bold>check out the prizes</bold>"
+      "prizesLink": "There's something to win — <bold>check out the prizes</bold>",
+      "zoekRenner": "Search your team…",
+      "zoekWissen": "Clear search",
+      "zoekGeenTreffer": "No rider found for “{{term}}”."
     },
     "sheet": {
       "noRidersChosen": "No riders picked yet.",
@@ -1669,5 +1673,18 @@
       "superteam": "how much of the dream team you had",
       "benchmark": "your team next to someone else's"
     }
+  },
+  "statusblok": {
+    "eyebrow": "Your standing",
+    "eyebrowNaEtappe": "Your standing — after stage {{nummer}}",
+    "algemeen": "Overall place",
+    "laatsteRit": "Last stage",
+    "subpoule": "Subpoule",
+    "deelnemers": "Entrants",
+    "totaal": "Total",
+    "pt": "pts",
+    "punten": "{{count}} pts",
+    "vanTotaal": "of {{totaal}}",
+    "naarKlassement": "View the full standings"
   }
 }

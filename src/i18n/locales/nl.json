@@ -84,7 +84,8 @@
     "explain": "Uitleg",
     "rules": "Koersreglement",
     "prizes": "Prijzen",
-    "resultsShort": "Uitslag."
+    "resultsShort": "Uitslag.",
+    "wijzigPloeg": "Wijzig ploeg"
   },
   "landing": {
     "subtitleFallback": "Uit liefde voor de koers",
@@ -420,7 +421,10 @@
       "notSubmittedCta": "🚴‍♂️ <strong>Je peloton staat nog niet aan de start.</strong> Bevestig je inzending in de teambuilder.",
       "editShort": "Wijzigen",
       "toBuilderShort": "Naar teambuilder",
-      "prizesLink": "Er valt wat te winnen — <bold>bekijk de prijzen</bold>"
+      "prizesLink": "Er valt wat te winnen — <bold>bekijk de prijzen</bold>",
+      "zoekRenner": "Zoek in je ploeg…",
+      "zoekWissen": "Zoekterm wissen",
+      "zoekGeenTreffer": "Geen renner gevonden voor “{{term}}”."
     },
     "sheet": {
       "noRidersChosen": "Nog geen renners gekozen.",
@@ -1669,5 +1673,18 @@
       "superteam": "hoeveel van het droomteam had jij",
       "benchmark": "jouw ploeg naast die van iemand anders"
     }
+  },
+  "statusblok": {
+    "eyebrow": "Jouw stand",
+    "eyebrowNaEtappe": "Jouw stand — na etappe {{nummer}}",
+    "algemeen": "Plek algemeen",
+    "laatsteRit": "Laatste rit",
+    "subpoule": "Subpoule",
+    "deelnemers": "Deelnemers",
+    "totaal": "Totaal",
+    "pt": "pt",
+    "punten": "{{count}} pt",
+    "vanTotaal": "van {{totaal}}",
+    "naarKlassement": "Bekijk het volledige klassement"
   }
 }

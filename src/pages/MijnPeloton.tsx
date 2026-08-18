@@ -48,6 +48,8 @@ import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { Input } from "@/components/ui/input";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { isMeermarathonGame } from "@/lib/gameTypes";
+import StatusBlok from "@/components/StatusBlok";
+import ZwevendeActie from "@/components/ZwevendeActie";
 import Rondleiding, { rondleidingGezien, rondleidingHerstarten } from "@/components/Rondleiding";
 import { useAuth } from "@/hooks/useAuth";
 import OnboardingCard, { ONBOARDING_KEY, onboardingWeggeklikt } from "@/components/OnboardingCard";
@@ -1360,6 +1362,8 @@ export default function MijnPeloton() {
               L'Équipe is óók in de sneak preview ('open') volledig zichtbaar voor
               deelnemers (geen preview-schil meer). */}
           <TabsContent value="karavaan" className="mt-3">
+            {/* Mobiel: eerst waar je staat, dan pas het nieuws. */}
+            <StatusBlok onOpenKlassement={openUitslagen} />
             <KaravaanFeed
               onGoToPloeg={() => setGameTab("team")}
               onOpenHors={openHors}
@@ -1431,6 +1435,17 @@ export default function MijnPeloton() {
                   </>
                 )}
               />
+
+              {/* De hoofdhandeling blijft binnen duimbereik, ook halverwege de
+                  rennerlijst. Linksonder, zodat hij de tab-schakelaar
+                  rechtsonder niet in de weg zit. */}
+              {teamSubTab === "ploeg" && (
+                <ZwevendeActie
+                  label={t("nav.wijzigPloeg")}
+                  icon={Pencil}
+                  onClick={() => navigate("/team-samenstellen")}
+                />
+              )}
 
               {/* Mobiel: één consistente zwevende schakelaar. */}
               <FloatingTabSwitcher

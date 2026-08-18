@@ -27,12 +27,14 @@ import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { isGameLocked, canRegister, isPreviewStatus } from "@/lib/gameStatus";
-import { Check, Pencil, X, Target, Crown, ClipboardList, Flag, Shirt, Snowflake, Trophy, type LucideIcon } from "lucide-react";
+import { Check, Pencil, Search, X, Target, Crown, ClipboardList, Flag, Shirt, Snowflake, Trophy, type LucideIcon } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
 import { Trans, useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 import { isMeermarathonGame, meermarathonStageLabel } from "@/lib/gameTypes";
 import { useLiveRace } from "@/hooks/useLiveRace";
+import { normalizeName } from "@/lib/liveMarathon";
+import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
 import LiveTab from "@/components/meermarathon/LiveTab";
 import { useStagePointsSchema } from "@/hooks/usePointsSchema";
 
@@ -372,6 +374,9 @@ export default function MyTeamPanel({
 
   // Live-tab: alleen bij Meermarathon, en alleen als er een baan gekoppeld is.
   const { data: liveRace } = useLiveRace(game?.id, isMeermarathon);
+  // Zoeken binnen je eigen ploeg. Bij een grote selectie is de lijst op een
+  // telefoon meerdere schermen lang en scroll je langs je eigen renner heen.
+  const [zoek, setZoek] = useState("");
   const { schema: pointsSchema, jokerMultiplier } = useStagePointsSchema(game?.id);
   const heeftLive = isMeermarathon;
   const { entry, picksByCategory, jokerIds, predictions, isLoading, teamName, saveTeamName } = useEntry(game?.id);
@@ -536,7 +541,7 @@ export default function MyTeamPanel({
     return <div className="ornate-frame retro-border bg-card p-6 text-muted-foreground">{t("team.panel.loginToView")}</div>;
   }
   if (isLoading) {
-    return <div className="ornate-frame retro-border bg-card p-6">{t("team.panel.loadingTeam")}</div>;
+    return <PloegSkeleton />;
   }
   if (!game) {
     return <div className="ornate-frame retro-border bg-card p-6 text-muted-foreground">{t("team.panel.noActiveRace")}</div>;
@@ -1602,10 +1607,46 @@ export default function MyTeamPanel({
             team: r.team,
           });
         }
+        // Filteren gebeurt op de platte lijst, zodat de groepskoppen vanzelf
+        // verdwijnen zodra er in die groep niets overblijft.
+        const term = normalizeName(zoek);
+        const zichtbaar = term
+          ? sheet.filter((r) => normalizeName(`${r.name} ${r.team ?? ""}`).includes(term))
+          : sheet;
+        // Onder de tien renners scroll je niet; dan is een zoekvak ruis.
+        const toonZoek = sheet.length >= 10;
         return (
           <div className={cn("mb-4 md:mb-6", isMeermarathon && "mm-team-sheet")}>
+            {toonZoek && (
+              <div className="relative mb-2.5">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                <input
+                  type="search"
+                  value={zoek}
+                  onChange={(e) => setZoek(e.target.value)}
+                  placeholder={t("team.panel.zoekRenner")}
+                  aria-label={t("team.panel.zoekRenner")}
+                  className="h-9 w-full rounded-lg border border-border bg-background pl-8 pr-8 text-sm outline-none focus:border-primary"
+                />
+                {zoek && (
+                  <button
+                    type="button"
+                    onClick={() => setZoek("")}
+                    aria-label={t("team.panel.zoekWissen")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
+            {toonZoek && term && zichtbaar.length === 0 && (
+              <p className="mb-2.5 rounded-lg bg-foreground/[0.04] px-3 py-2.5 text-sm text-muted-foreground">
+                {t("team.panel.zoekGeenTreffer", { term: zoek })}
+              </p>
+            )}
             <TeamSheetView
-              riders={sheet}
+              riders={zichtbaar}
               expandedRiderId={expandedRiderId}
               onToggleRider={toggleRider}
               gameId={game?.id}

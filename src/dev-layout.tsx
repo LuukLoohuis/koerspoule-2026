@@ -13,6 +13,9 @@ import OnboardingCard, { ONBOARDING_KEY, onboardingWeggeklikt } from "@/componen
 import { SteunBanner } from "@/components/SteunKopgroep";
 import PercentileVerdict from "@/components/horscat/PercentileVerdict";
 import Rondleiding, { rondleidingHerstarten, useUitgelichteNav } from "@/components/Rondleiding";
+import { StatusBlokView } from "@/components/StatusBlok";
+import ZwevendeActie from "@/components/ZwevendeActie";
+import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
 import aapFietser from "@/assets/horscat/aap-fietser-transparant.png";
 import "@/i18n";
 import "./index.css";
@@ -147,6 +150,40 @@ function Harness() {
             </div>
           </div>
         </Blok>
+        <Blok titel="Statusblok (mobiel) — met en zonder subpoule">
+          <div className="grid gap-6 sm:grid-cols-2">
+            {[
+              { naam: "met subpoule", subpoule: { rank: 3, total: 14, delta: 1, name: "De Kopgroep" } },
+              { naam: "zonder subpoule", subpoule: null },
+            ].map((v) => (
+              <div key={v.naam}>
+                <div className="mb-1 font-mono text-[10px] text-muted-foreground">{v.naam} (375px)</div>
+                <div style={{ width: 375 }} className="rounded border border-dashed border-foreground/20 p-2">
+                  <StatusBlokView
+                    overall={{ rank: 5, total: 212, delta: 2 }}
+                    subpoule={v.subpoule}
+                    totaalPunten={486}
+                    laatsteEtappe={{ stageNumber: 12, rank: 8, points: 34 }}
+                    onOpenKlassement={() => {}}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+            NB: md:hidden — smal maken om te zien, of het venster onder 768px brengen.
+          </p>
+        </Blok>
+
+        <Blok titel="Ploeg-skeleton">
+          <div style={{ width: 375 }}><PloegSkeleton /></div>
+        </Blok>
+
+        <Blok titel="Zwevende actieknop (linksonder, md:hidden)">
+          <ZwevendeActie label="Wijzig ploeg" icon={Pencil} onClick={() => {}} />
+          <p className="font-mono text-[10px] text-muted-foreground">Kijk linksonder in beeld.</p>
+        </Blok>
+
         <Blok titel="Monkey IQ-hero — puilt het getal buiten de kaart?">
           <div className="space-y-4">
             {[860, 700, 560, 420].map((w) => (

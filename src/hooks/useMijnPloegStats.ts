@@ -41,6 +41,10 @@ export type MijnPloegStatsData = {
   topscorer: { name: string; points: number } | null;
   /** Mijn dagklassering per etappe (stage_id → rang) — voor "Beste etappe". */
   myStageRanks: Map<string, number> | null;
+  /** Puntentotaal van mijn inschrijving. */
+  totaalPunten: number | null;
+  /** Mijn resultaat in de laatste etappe waar punten voor staan. */
+  laatsteEtappe: { stageNumber: number; rank: number | null; points: number } | null;
 };
 
 function rankInMap(
@@ -82,6 +86,8 @@ export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnP
   }, [picksByCategory, jokerIds]);
 
   // Alle stage-results van mijn renners — voor de topscorer-berekening
+  const myEntry = useMemo(() => entries.find((e) => e.user_id === user?.id), [entries, user?.id]);
+
   const { data: ridersAllResults = [] } = useQuery({
     queryKey: ["my-riders-all-stage-results", entry?.id, allRiderIds.slice().sort().join(",")],
     enabled: Boolean(supabase && entry?.id && allRiderIds.length > 0),
@@ -106,8 +112,6 @@ export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnP
     },
   });
 
-  const myEntry = useMemo(() => entries.find((e) => e.user_id === user?.id), [entries, user?.id]);
-
   // Etappes met daadwerkelijk geregistreerde punten
   const stagesWithData = useMemo(() => {
     return stages.filter((s) => (stageAverages?.get(s.id) ?? 0) > 0);
@@ -126,6 +130,11 @@ export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnP
     return entries.filter((e) => uids.has(e.user_id)).map((e) => e.id);
   }, [firstSubpoule, subpouleMembers, entries]);
   const { data: memberStagePoints = [] } = useStagePointsForEntries(game?.id, memberEntryIds);
+
+  // Eigen punten per etappe. Apart van memberStagePoints, want dat is beperkt
+  // tot subpoule-leden en niet iedereen zit in een subpoule.
+  const myEntryIds = useMemo(() => (myEntry ? [myEntry.id] : []), [myEntry]);
+  const { data: myStagePoints = [] } = useStagePointsForEntries(game?.id, myEntryIds);
 
   // ── 1: Beste dagklassering in de volle poule ──
   const bestStageRank = useMemo(() => {
@@ -209,5 +218,27 @@ export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnP
     return best?.pts ? { name: best.name, points: best.pts } : null;
   }, [schema, ridersAllResults, jokerIds, jokerMult]);
 
-  return { bestStageRank, overall, subpoule, topscorer, myStageRanks: myStageRanks ?? null };
+  // ── 5: Laatste etappe met punten ──
+  const laatsteEtappe = useMemo(() => {
+    const laatste = stagesWithData[stagesWithData.length - 1];
+    if (!laatste || !myEntry) return null;
+    const punten = myStagePoints
+      .filter((sp) => sp.stage_id === laatste.id && sp.entry_id === myEntry.id)
+      .reduce((som, sp) => som + sp.points, 0);
+    return {
+      stageNumber: laatste.stage_number,
+      rank: myStageRanks?.get(laatste.id) ?? null,
+      points: punten,
+    };
+  }, [stagesWithData, myEntry, myStagePoints, myStageRanks]);
+
+  return {
+    bestStageRank,
+    overall,
+    subpoule,
+    topscorer,
+    myStageRanks: myStageRanks ?? null,
+    totaalPunten: myEntry?.total_points ?? null,
+    laatsteEtappe,
+  };
 }
