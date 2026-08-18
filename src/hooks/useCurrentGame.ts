@@ -27,10 +27,12 @@ export type Game = {
   admin_testmodus?: boolean | null;
   /** Homepage-deelnemersteller aan/uit voor deze game (admin, handmatig). */
   deelnemers_teller_visible?: boolean | null;
+  /** Hors Categorie-teaser in de Krant aan/uit (admin, handmatig). */
+  hors_banner_visible?: boolean | null;
 };
 
 const SELECT =
-  "id, name, year, status, game_type, homepage_quote, homepage_quote_author, homepage_quote_size, prizes_visible, admin_testmodus, deelnemers_teller_visible";
+  "id, name, year, status, game_type, homepage_quote, homepage_quote_author, homepage_quote_size, prizes_visible, admin_testmodus, deelnemers_teller_visible, hors_banner_visible";
 // Zolang de homepage_quote_size-migratie nog niet op de DB staat zou de
 // volle SELECT een 42703 (undefined column) geven en heel current-game
 // breken. Dan vallen we terug op de oude kolomlijst.

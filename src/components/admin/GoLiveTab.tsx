@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Rocket, Coffee, Inbox, Users, Megaphone } from "lucide-react";
+import { Eye, Rocket, Coffee, Inbox, Users, Megaphone, Mountain } from "lucide-react";
 import { toast } from "sonner";
 import { resultsHiddenForUsers } from "@/lib/gameStatus";
 import { fetchAllRows } from "@/lib/fetchAll";
@@ -29,6 +29,7 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
   const [banner, setBanner] = useState(false);
   const [teller, setTeller] = useState(false);
   const [inschrijfBanner, setInschrijfBanner] = useState(false);
+  const [horsBanner, setHorsBanner] = useState(true);
   const [loaded, setLoaded] = useState(false);
   // Aantal concepten met >= MIN_PICKS keuzes (kandidaten voor bulk-indienen).
   const [draftKandidaten, setDraftKandidaten] = useState<number | null>(null);
@@ -56,10 +57,13 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
   useEffect(() => {
     if (!supabase || !activeGameId) return;
     (async () => {
-      const { data } = await supabase.from("games").select("admin_testmodus, support_banner_visible, support_banner_updated_at, deelnemers_teller_visible, inschrijf_banner_visible").eq("id", activeGameId).maybeSingle();
+      const { data } = await supabase.from("games").select("admin_testmodus, support_banner_visible, support_banner_updated_at, deelnemers_teller_visible, inschrijf_banner_visible, hors_banner_visible").eq("id", activeGameId).maybeSingle();
       setTestmodus(Boolean(data?.admin_testmodus));
       setBanner(Boolean(data?.support_banner_visible));
       setTeller(Boolean(data?.deelnemers_teller_visible));
+      // Ontbreekt de kolom nog, dan staat de banner aan — dat is het gedrag
+      // van vóór deze schakelaar.
+      setHorsBanner(data?.hors_banner_visible ?? true);
       setInschrijfBanner(Boolean(data?.inschrijf_banner_visible));
       setLoaded(true);
     })();
@@ -121,6 +125,14 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
     toast.success(next ? "Inschrijving-open-banner AAN voor deze game" : "Inschrijving-open-banner uit");
   }
 
+  async function toggleHorsBanner(next: boolean) {
+    if (!supabase || !activeGameId) return;
+    const { error } = await supabase.from("games").update({ hors_banner_visible: next }).eq("id", activeGameId);
+    if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
+    setHorsBanner(next);
+    toast.success(next ? "Hors Catégorie-banner AAN in de Krant" : "Hors Catégorie-banner uit");
+  }
+
   const preview = resultsHiddenForUsers(gameStatus);
   const isInschrijving = String(gameStatus ?? "") === "open_inschrijving";
   const statusLabel = STATUS_LABEL[String(gameStatus ?? "")] ?? String(gameStatus ?? "onbekend");
@@ -178,6 +190,22 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
           </div>
           <Button size="sm" variant={teller ? "default" : "outline"} className="shrink-0" disabled={!activeGameId || !loaded} onClick={() => toggleTeller(!teller)}>
             {teller ? "Zet uit" : "Zet aan"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className={horsBanner ? "border-[hsl(var(--vintage-gold))]" : ""}>
+        <CardContent className="flex items-center justify-between gap-3 p-4">
+          <div className="min-w-0">
+            <p className="font-display font-bold flex items-center gap-2">
+              <Mountain className="w-4 h-4" /> Hors Catégorie-banner (Krant) {horsBanner ? "AAN" : "uit"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              De teaser onderaan de Krant die naar de statistieken verwijst. Zet 'm uit zolang er nog geen etappes verwerkt zijn — dan wijst hij naar lege grafieken. Handmatig, per game.
+            </p>
+          </div>
+          <Button size="sm" variant={horsBanner ? "default" : "outline"} className="shrink-0" disabled={!activeGameId || !loaded} onClick={() => toggleHorsBanner(!horsBanner)}>
+            {horsBanner ? "Zet uit" : "Zet aan"}
           </Button>
         </CardContent>
       </Card>

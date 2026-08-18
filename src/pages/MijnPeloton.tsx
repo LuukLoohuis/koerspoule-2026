@@ -1393,6 +1393,7 @@ export default function MijnPeloton() {
               onOpenUitslagen={openUitslagen}
               gameId={selectedGameObj?.id}
               gameStatus={selectedGameObj?.status}
+              horsBanner={selectedGameObj?.hors_banner_visible ?? true}
             />
           </TabsContent>
 

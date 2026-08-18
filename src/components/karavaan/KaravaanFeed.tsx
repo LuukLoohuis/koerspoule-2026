@@ -30,6 +30,7 @@ export default function KaravaanFeed({
   onOpenUitslagen,
   gameId,
   gameStatus,
+  horsBanner = true,
 }: {
   onGoToPloeg?: () => void;
   onOpenHors?: (tab: HorsTabKey) => void;
@@ -37,6 +38,8 @@ export default function KaravaanFeed({
   onOpenUitslagen?: () => void;
   gameId?: string;
   gameStatus?: string;
+  /** Hors Categorie-teaser tonen; uit te zetten per game in Go-live. */
+  horsBanner?: boolean;
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -44,6 +47,9 @@ export default function KaravaanFeed({
   const { data: curGame } = useCurrentGame();
   // Optioneel een specifieke (bv. afgeronde) game i.p.v. de live game.
   const game = gameId ? { id: gameId, status: gameStatus } : curGame;
+  // Zonder expliciete game valt de vlag terug op de huidige koers; ontbreekt
+  // de kolom nog, dan staat de banner aan (het gedrag van voorheen).
+  const horsBannerZichtbaar = gameId ? horsBanner : (curGame?.hors_banner_visible ?? true);
   const subpoulesQuery = useSubpoules(game?.id);
   const subpoules = subpoulesQuery.subpoules;
 
@@ -186,7 +192,11 @@ export default function KaravaanFeed({
         />
       )}
 
-      {/* HC teaser — slim banner op mobiel, ruimer op desktop */}
+      {/* HC teaser — slim banner op mobiel, ruimer op desktop. Uit te zetten
+          per game in Beheer > Go-live: bij een koers zonder verwerkte etappes
+          wijst hij naar lege grafieken. Ontbreekt de kolom nog, dan staat hij
+          aan; dat is het gedrag van voor die schakelaar. */}
+      {horsBannerZichtbaar && (
       <button
         type="button"
         onClick={() => onOpenHors?.("dartpijl")}
@@ -237,6 +247,7 @@ export default function KaravaanFeed({
           </div>
         </div>
       </button>
+      )}
 
       {/* De Voorbeschouwing — vooruitblik op de eerstvolgende etappe */}
       <Voorbeschouwing gameId={game?.id} />
