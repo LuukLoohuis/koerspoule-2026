@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { RetroTabs } from "@/components/RetroTabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Users, Plus, Copy, Trophy, TrendingUp, Target, Award, ChevronRight, Medal, User, Mountain, Zap, Baby, ArrowLeftRight, MoreHorizontal, Pencil, Newspaper, Car } from "lucide-react";
+import { ArrowLeftRight, Award, Baby, Car, ChevronRight, Copy, Medal, MoreHorizontal, Mountain, Newspaper, Pencil, Plus, RotateCcw, Target, TrendingUp, Trophy, User, Users, Zap } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
 import SubpouleManager from "@/components/SubpouleManager";
 import WervingStrook from "@/components/WervingStrook";
@@ -48,7 +48,7 @@ import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { Input } from "@/components/ui/input";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useAuth } from "@/hooks/useAuth";
-import OnboardingCard, { onboardingWeggeklikt } from "@/components/OnboardingCard";
+import OnboardingCard, { ONBOARDING_KEY, onboardingWeggeklikt } from "@/components/OnboardingCard";
 import { Wrench, Share2 } from "lucide-react";
 import {
   ChartContainer,
@@ -180,6 +180,23 @@ export default function MijnPeloton() {
   // Wegklikken van de onboarding moet de zijkolom direct laten inklappen; de
   // kaart bewaart dat zelf in localStorage, dus we spiegelen het hier.
   const [onbWeg, setOnbWeg] = useState(() => onboardingWeggeklikt());
+  // Wegklikken mag niet definitief zijn. De kaarten lezen hun status bij het
+  // opbouwen, dus terughalen betekent: sleutels wissen en ze opnieuw aanmaken —
+  // vandaar de teller als React-key.
+  const [herstelTeller, setHerstelTeller] = useState(0);
+  function haalKaartenTerug() {
+    try {
+      localStorage.removeItem(ONBOARDING_KEY);
+      // De steunbanner hangt zijn sleutel aan een revisie, dus die staan er in
+      // meerdere varianten.
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const sleutel = localStorage.key(i);
+        if (sleutel?.startsWith("kp_steun_banner_dismissed_v1:")) localStorage.removeItem(sleutel);
+      }
+    } catch { /* negeer */ }
+    setOnbWeg(false);
+    setHerstelTeller((n) => n + 1);
+  }
   // Statistieken en de krant hebben geen meetbare "klaar"-staat zoals een ploeg
   // of subpoule; we onthouden simpelweg of de deelnemer er ooit is geweest.
   const [bezocht, setBezocht] = useState<Record<string, boolean>>(() => {
@@ -1170,7 +1187,7 @@ export default function MijnPeloton() {
             active={gameTab}
             onChange={setGameTab}
             tabs={[
-              { key: "karavaan",  label: thema.krant,      Icon: Newspaper },
+              { key: "karavaan",  label: "Krant",          Icon: Newspaper },
               { key: "team",      label: "Volgwagen",      Icon: Car      },
               { key: "subpoules", label: "Subpoules",      Icon: Users    },
               { key: "uitslagen", label: t("team.peloton.tabResults"), Icon: Trophy   },
@@ -1198,6 +1215,7 @@ export default function MijnPeloton() {
               <aside className="order-1 flex flex-col gap-3 empty:hidden md:order-2 md:w-[268px] md:sticky md:top-4">
                 {authUser && selectedGameObj && (
                   <OnboardingCard
+                    key={herstelTeller}
                     hasTeam={!!obHasTeam}
                     inSubpoule={obInSubpoule}
                     liveTracking={!!obLive}
@@ -1262,12 +1280,24 @@ export default function MijnPeloton() {
         )
       )}
                 {supportBanner.data?.active && (
-                  <SteunBanner revKey={supportBanner.data.updatedAt} />
+                  <SteunBanner key={herstelTeller} revKey={supportBanner.data.updatedAt} />
                 )}
               </aside>
             )}
 
             <div className="order-2 min-w-0 md:order-1">
+
+          {/* Wegklikken is omkeerbaar; zonder deze knop zou het definitief zijn. */}
+          {onbWeg && (
+            <button
+              type="button"
+              onClick={haalKaartenTerug}
+              className="mb-3 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <RotateCcw className="h-3 w-3" aria-hidden />
+              Toon hulpkaarten weer
+            </button>
+          )}
 
           {/* Telbordje: vervanger(s) nodig → klik gaat naar de Volgwagen */}
           {fallenCount > 0 && gameTab !== "team" && (

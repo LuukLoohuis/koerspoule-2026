@@ -9,7 +9,7 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Newspaper, Car, Users, Trophy, Mountain, Target, Pencil } from "lucide-react";
 import { RetroTabs } from "@/components/RetroTabs";
-import OnboardingCard from "@/components/OnboardingCard";
+import OnboardingCard, { ONBOARDING_KEY, onboardingWeggeklikt } from "@/components/OnboardingCard";
 import PercentileVerdict from "@/components/horscat/PercentileVerdict";
 import aapFietser from "@/assets/horscat/aap-fietser-transparant.png";
 import "@/i18n";
@@ -45,6 +45,13 @@ function Harness() {
   // Bootst na: de pagina denkt dat er een zijkolom is, maar alle kaarten
   // geven zelf null terug (eerder weggeklikt).
   const [leegKind, setLeegKind] = useState(false);
+  const [herstelTeller, setHerstelTeller] = useState(0);
+  const [onbWeg, setOnbWeg] = useState(() => onboardingWeggeklikt());
+  const haalTerug = () => {
+    try { localStorage.removeItem(ONBOARDING_KEY); } catch { /* negeer */ }
+    setOnbWeg(false);
+    setHerstelTeller((n) => n + 1);
+  };
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -82,7 +89,7 @@ function Harness() {
           >
             {rail && (
               <aside className="order-1 flex flex-col gap-3 empty:hidden md:order-2 md:w-[268px]">
-                {!leegKind && <>
+                {!leegKind && !onbWeg && <>
                 <form className="retro-border flex flex-col gap-2 bg-card px-3 py-2.5">
                   <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     <Pencil className="h-3 w-3 shrink-0" /> Ploegnaam
@@ -96,6 +103,8 @@ function Harness() {
                   </button>
                 </form>
                 <OnboardingCard
+                  key={herstelTeller}
+                  onDismissed={() => setOnbWeg(true)}
                   hasTeam={false}
                   inSubpoule
                   liveTracking={false}
@@ -111,6 +120,11 @@ function Harness() {
               </aside>
             )}
             <div className="order-2 min-w-0 md:order-1">
+              {onbWeg && (
+                <button data-herstel onClick={haalTerug} className="mb-3 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground hover:bg-foreground/[0.05]">
+                  ↺ Toon hulpkaarten weer
+                </button>
+              )}
               <RetroTabs variant="segment" tabs={SUB} active={sub} onChange={setSub} aria-label="sub2" className="mb-3 inline-flex" />
               <div className="ornate-frame retro-border bg-card p-8 text-center text-sm text-muted-foreground">
                 inhoud — let op de breedte van de subbalk hierboven

@@ -13,11 +13,10 @@ type NavItem = {
   icon: LucideIcon;
   to: string;
   tab?: string;
-  krant?: boolean; // label volgt thema.krant
 };
 
 const NAV: NavItem[] = [
-  { label: "Gazetta",        icon: Newspaper, to: "/karavaan", krant: true },
+  { label: "Krant",          icon: Newspaper, to: "/karavaan" },
   { label: "Volgwagen",      icon: Car,       to: "/mijn-peloton", tab: "team" },
   { label: "Subpoule",       icon: Users,     to: "/mijn-peloton", tab: "subpoules" },
   { label: "Uitslagen",      labelKey: "nav.results", labelXsKey: "nav.resultsShort", icon: Flag, to: "/uitslagen" },
@@ -41,8 +40,11 @@ export default function BottomNav() {
       <div
         className="grid grid-cols-5 border-t border-border/60 bg-card pb-[env(safe-area-inset-bottom)]"
       >
-        {NAV.map(({ label, labelKey, labelXs, labelXsKey, icon: Icon, to, tab, krant }) => {
-          const shownLabel = krant ? thema.krant : labelKey ? t(labelKey) : label;
+        {NAV.map(({ label, labelKey, labelXs, labelXsKey, icon: Icon, to, tab }) => {
+          // Vaste naam: de wegwijzer moet niet per koers veranderen. De
+          // koersnaam (Marca, Gazzetta, L'Equipe) staat als masthead op de
+          // pagina zelf.
+          const shownLabel = labelKey ? t(labelKey) : label;
           const shownLabelXs = labelXsKey ? t(labelXsKey) : labelXs;
           let active = false;
           if (tab === "team") {
