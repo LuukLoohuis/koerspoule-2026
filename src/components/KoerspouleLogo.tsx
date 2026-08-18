@@ -19,7 +19,13 @@ export default function KoerspouleLogo({
   ...props
 }: KoerspouleLogoProps) {
   const { thema } = useThema();
-  const intrinsicSize = width == null && height == null ? { width: 480, height: 320 } : { width, height };
+  // Reserveer de ruimte in de verhouding van dít logo. Stond hier vast op
+  // 480x320, waardoor de koptekst sprong zodra een logo met een andere vorm
+  // binnen was — het Vuelta-schild is bijna vierkant.
+  const intrinsicSize =
+    width == null && height == null
+      ? { width: Math.round(320 * thema.logoVerhouding), height: 320 }
+      : { width, height };
 
   return (
     <img

@@ -30,6 +30,13 @@ export type Thema = {
   logo: string;
   /** Compacte fiets-favicon in de racekleur; bewust los van het volledige logo. */
   favicon: string;
+  /**
+   * Breedte/hoogte van het logo. Het component reserveert hiermee de juiste
+   * ruimte vóórdat de afbeelding binnen is; met één vaste verhouding voor alle
+   * thema's sprong de koptekst zichtbaar zodra een logo met een andere vorm
+   * geladen was.
+   */
+  logoVerhouding: number;
   kleuren: ThemaKleuren;
   krant: string;
   koers: string;
@@ -64,6 +71,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     key: "roze",
     logo: "/koerspoule-giro.svg",
     favicon: "/favicon-giro.svg",
+    logoVerhouding: 480 / 320,
     kleuren: { primair: "#E6446D", secundair: "#C8A020", achtergrond: "#FAF7F2", kaart: "#FDF2F6", tekst: "#2C2416", accent: "#C8A020" },
     krant: "Gazzetta",
     koers: "Giro d'Italia",
@@ -93,6 +101,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     key: "geel",
     logo: "/koerspoule-tour.svg",
     favicon: "/favicon-tour.svg",
+    logoVerhouding: 480 / 320,
     kleuren: { primair: "#FFC300", secundair: "#1a1a1a", achtergrond: "#FFFDF0", kaart: "#FFF8E6", tekst: "#1a1a1a", accent: "#C0851A" },
     krant: "L'Équipe",
     koers: "Tour de France",
@@ -120,8 +129,11 @@ export const THEMAS: Record<ThemaKey, Thema> = {
   },
   rood: {
     key: "rood",
-    logo: "/koerspoule-vuelta.svg",
+    // Schildlogo als transparante PNG (3D-illustratie, geen vector-variant),
+    // net als bij Meermarathon.
+    logo: "/koerspoule-vuelta.png",
     favicon: "/favicon-vuelta.svg",
+    logoVerhouding: 700 / 612,
     kleuren: { primair: "#E30613", secundair: "#F5A623", achtergrond: "#FFF9F5", kaart: "#FFF1EC", tekst: "#2C1810", accent: "#F5A623" },
     krant: "Marca",
     koers: "Vuelta a España",
@@ -152,6 +164,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     // Schaatslogo als transparante PNG (raster-illustratie, geen vector-variant).
     logo: "/koerspoule-meermarathon.png",
     favicon: "/favicon-meermarathon.svg",
+    logoVerhouding: 480 / 320,
     kleuren: { primair: "#14538E", secundair: "#4FA8D8", achtergrond: "#F4F9FC", kaart: "#E4F0FA", tekst: "#0B2C4D", accent: "#4FA8D8" },
     krant: "IJsjournaal",
     koers: "Meermarathon",

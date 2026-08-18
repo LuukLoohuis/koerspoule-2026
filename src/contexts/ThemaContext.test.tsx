@@ -72,7 +72,7 @@ describe("ThemaProvider + KoerspouleLogo", () => {
     );
 
     expect(screen.getByTestId("theme-key")).toHaveTextContent("rood");
-    expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-vuelta.svg");
+    expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-vuelta.png");
     expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-vuelta.svg");
 
     selectedGameState.selectedGame = { id: "giro-2026", game_type: "giro", theme: "roze" };
@@ -83,7 +83,7 @@ describe("ThemaProvider + KoerspouleLogo", () => {
     );
 
     expect(screen.getByTestId("theme-key")).toHaveTextContent("rood");
-    expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-vuelta.svg");
+    expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-vuelta.png");
 
     selectedGameState.games = [
       { id: "vuelta-2026", game_type: "vuelta", theme: "rood", status: "finished", year: 2026 },

@@ -8,7 +8,7 @@ describe("centrale game-branding", () => {
     ["tour", "geel", "/koerspoule-tour.svg", "/favicon-tour.svg"],
     ["femmes", "geel", "/koerspoule-tour.svg", "/favicon-tour.svg"],
     ["giro", "roze", "/koerspoule-giro.svg", "/favicon-giro.svg"],
-    ["vuelta", "rood", "/koerspoule-vuelta.svg", "/favicon-vuelta.svg"],
+    ["vuelta", "rood", "/koerspoule-vuelta.png", "/favicon-vuelta.svg"],
     ["meermarathon", "winter", "/koerspoule-meermarathon.png", "/favicon-meermarathon.svg"],
   ] as const)("koppelt %s aan thema %s en de juiste branding", (gameType, key, logo, favicon) => {
     const resolved = deriveThemaKey(null, gameType);
@@ -27,13 +27,14 @@ describe("centrale game-branding", () => {
     expect(THEMAS.rood.kleuren.primair).toBe("#E30613");
   });
 
-  it.each(["tour", "giro", "vuelta"])("houdt het %s-logo op exact hetzelfde canvas", (race) => {
+  // Vuelta staat hier niet meer bij: dat logo is een PNG geworden.
+  it.each(["tour", "giro"])("houdt het %s-logo op exact hetzelfde canvas", (race) => {
     const svg = readFileSync(`${process.cwd()}/public/koerspoule-${race}.svg`, "utf8");
     expect(svg).toContain('viewBox="0 0 480 320"');
     expect(svg).toContain('width="480" height="320"');
   });
 
-  it.each(["tour", "giro", "vuelta"])("maakt het %s-logo zelfvoorzienend voor img-rendering", (race) => {
+  it.each(["tour", "giro"])("maakt het %s-logo zelfvoorzienend voor img-rendering", (race) => {
     const svg = readFileSync(`${process.cwd()}/public/koerspoule-${race}.svg`, "utf8");
     expect(svg).toContain('href="data:image/png;base64,');
     expect(svg).not.toContain('href="koerspoule-logo-2026.png"');
@@ -64,11 +65,14 @@ describe("centrale game-branding", () => {
     expect(favicon).toContain("#14538E");
   });
 
-  it("gebruikt voor Spanje een ingekaderde rood-geel-rood vlag met een dubbelbrede gele baan", () => {
-    const svg = readFileSync(`${process.cwd()}/public/koerspoule-vuelta.svg`, "utf8");
-    expect(svg).toContain('fill="#111318" stroke="#050608"');
-    expect(svg).toContain('height="13" fill="url(#flag-red)"');
-    expect(svg).toContain('height="26" fill="url(#flag-yellow)"');
-    expect(svg).toContain('height="14" fill="url(#flag-red)"');
+  it("levert het Vuelta-schild als transparante PNG", () => {
+    // Ook een raster-illustratie, net als het schaatslogo. De transparantie is
+    // wat telt: het logo staat op perkament, niet op wit.
+    const logo = readFileSync(`${process.cwd()}/public${THEMAS.rood.logo}`);
+    expect(logo.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    // IHDR: breedte/hoogte op offset 16 resp. 20, kleurtype op offset 25.
+    // Type 3 is palet; met een tRNS-blok houdt dat een alfakanaal.
+    expect(logo.readUInt32BE(16) / logo.readUInt32BE(20)).toBeCloseTo(1.14, 2);
+    expect(logo.includes(Buffer.from("tRNS", "ascii"))).toBe(true);
   });
 });
