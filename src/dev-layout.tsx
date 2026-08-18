@@ -31,6 +31,14 @@ const HOOFD = [
   { key: "hors", label: "Hors Catégorie", Icon: Mountain },
 ] as const;
 
+const HORS_SUB = [
+  { key: "dartpijl", label: "Dartpijl", Icon: Target },
+  { key: "pelotonkeuzes", label: "Pelotonkeuzes", Icon: Users },
+  { key: "wielerdirecteur", label: "De Wielerdirecteur", Icon: Newspaper },
+  { key: "superteam", label: "The Emirates", Icon: Trophy },
+  { key: "benchmark", label: "Benchmark", Icon: Mountain },
+] as const;
+
 const SUB = [
   { key: "ploeg", label: "Mijn Ploeg", Icon: Users },
   { key: "prono", label: "Pronostiek", Icon: Target },
@@ -49,6 +57,7 @@ function Blok({ titel, children }: { titel: string; children: React.ReactNode })
 function Harness() {
   const [hoofd, setHoofd] = useState<string>("team");
   const [sub, setSub] = useState<string>("ploeg");
+  const [horsSub, setHorsSub] = useState<string>("dartpijl");
   const [rail, setRail] = useState(true);
   // Bootst na: de pagina denkt dat er een zijkolom is, maar alle kaarten
   // geven zelf null terug (eerder weggeklikt).
@@ -113,6 +122,7 @@ function Harness() {
 
         <Blok titel="Sub-navigatie — variant segment">
           <RetroTabs variant="segment" tabs={SUB} active={sub} onChange={setSub} aria-label="sub" />
+          <div className="mt-4"><RetroTabs variant="segment" tabs={HORS_SUB} active={horsSub} onChange={setHorsSub} aria-label="sub-hors" /></div>
         </Blok>
 
         <Blok titel="Samen, in de kolomindeling zoals op Mijn Peloton">

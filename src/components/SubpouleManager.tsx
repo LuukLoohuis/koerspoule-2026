@@ -608,12 +608,13 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
           />
         </div>
 
-        {/* ── DESKTOP: 5 dossard-tabs (gelijk aan mobiel), één paneel per tab. ── */}
+        {/* ── DESKTOP: onderstreepte subbalk, één paneel per tab. ── */}
         <div className="hidden md:block w-full">
           <div className="mx-auto max-w-5xl">
             {/* Tabbalk */}
             <div className="mb-3">
               <RetroTabs
+                variant="segment"
                 aria-label={t("subpoule.manager.subpouleSectionsAria")}
                 active={activeTab}
                 onChange={setActiveTab}

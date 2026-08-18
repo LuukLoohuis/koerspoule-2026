@@ -918,9 +918,12 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mx-auto w-fit" />
       <SwipeDots count={HORS_TABS.length} activeIndex={HORS_TABS.findIndex((tab) => tab.key === activeTab)} activeLabel={tabLabel(activeTab)} />
 
-      {/* Desktop — retro dossard-tabbalk */}
+      {/* Desktop — onderstreepte subbalk, zelfde niveau-2-vorm als bij de
+          Volgwagen en de subpoule. Stond hier op de dossard-variant en was
+          daardoor niet van de hoofdnavigatie te onderscheiden. */}
       <RetroTabs
-        className="hidden md:flex"
+        variant="segment"
+        className="mb-3 hidden md:flex"
         aria-label={t("hors.tabsAria")}
         active={activeTab}
         onChange={(k) => setActiveTab(k as typeof activeTab)}

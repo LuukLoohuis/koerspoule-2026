@@ -1422,7 +1422,7 @@ export default function MijnPeloton() {
               {/* Desktop sub-tab nav — retro dossard-tabbalk */}
               <RetroTabs
                 variant="segment"
-                className="mb-3 hidden md:inline-flex"
+                className="mb-3 hidden md:flex"
                 aria-label={t("team.tabs.volgwagenSectionsAria")}
                 active={teamSubTab}
                 onChange={setTeamSubTab}
