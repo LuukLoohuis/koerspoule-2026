@@ -47,6 +47,7 @@ import SneakPreviewLock from "@/components/SneakPreviewLock";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { Input } from "@/components/ui/input";
 import { useSubpoules } from "@/hooks/useSubpoules";
+import Rondleiding, { rondleidingGezien, rondleidingHerstarten } from "@/components/Rondleiding";
 import { useAuth } from "@/hooks/useAuth";
 import OnboardingCard, { ONBOARDING_KEY, onboardingWeggeklikt } from "@/components/OnboardingCard";
 import { Wrench, Share2 } from "lucide-react";
@@ -194,9 +195,25 @@ export default function MijnPeloton() {
         if (sleutel?.startsWith("kp_steun_banner_dismissed_v1:")) localStorage.removeItem(sleutel);
       }
     } catch { /* negeer */ }
+    rondleidingHerstarten();
     setOnbWeg(false);
     setHerstelTeller((n) => n + 1);
+    // Op mobiel is de rondleiding de hulp; daar heeft "terughalen" pas zin als
+    // hij ook echt weer start.
+    if (window.matchMedia("(max-width: 767px)").matches) setRondleidingOpen(true);
   }
+  // Rondleiding: eenmalig bij het eerste bezoek, en daarna terug te halen via
+  // dezelfde knop als de hulpkaarten. Alleen mobiel — daar zitten de namen in
+  // een balk die je niet zomaar doorgrondt.
+  const [rondleidingOpen, setRondleidingOpen] = useState(false);
+  useEffect(() => {
+    if (rondleidingGezien()) return;
+    // Even wachten tot de pagina staat; een rondleiding over een halfgeladen
+    // scherm wijst naar niets.
+    const id = window.setTimeout(() => setRondleidingOpen(true), 800);
+    return () => window.clearTimeout(id);
+  }, []);
+
   // Statistieken en de krant hebben geen meetbare "klaar"-staat zoals een ploeg
   // of subpoule; we onthouden simpelweg of de deelnemer er ooit is geweest.
   const [bezocht, setBezocht] = useState<Record<string, boolean>>(() => {
@@ -1286,6 +1303,12 @@ export default function MijnPeloton() {
             )}
 
             <div className="order-2 min-w-0 md:order-1">
+
+          <Rondleiding
+            open={rondleidingOpen}
+            onClose={() => setRondleidingOpen(false)}
+            heeftStreekTab={selSubpoules.some((sp) => sp.requires_woonplaats)}
+          />
 
           {/* Wegklikken is omkeerbaar; zonder deze knop zou het definitief zijn. */}
           {onbWeg && (

@@ -1622,5 +1622,51 @@
       "elevationAlt": "Hoogteprofiel etappe {{n}}",
       "climbs": "Klimmen"
     }
+  },
+  "rondleiding": {
+    "aria": "Rondleiding door Koerspoule",
+    "stapVan": "Stap {{stap}} van {{totaal}}",
+    "overslaan": "Overslaan",
+    "volgende": "Volgende",
+    "klaar": "Klaar",
+    "sluiten": "Rondleiding sluiten",
+    "start": {
+      "titel": "Even rondkijken",
+      "tekst": "Vijf onderdelen, elk met een eigen plek in de balk onderaan. In een halve minuut weet je waar alles staat."
+    },
+    "krant": {
+      "titel": "Krant",
+      "tekst": "Het koersnieuws en wat er in jouw subpoule gebeurde."
+    },
+    "volgwagen": {
+      "titel": "Volgwagen",
+      "tekst": "Jouw ploeg en hoe die ervoor staat.",
+      "ploeg": "je renners en wat ze opleveren",
+      "prono": "je voorspellingen van vooraf",
+      "palmares": "je erelijst over alle koersen"
+    },
+    "subpoule": {
+      "titel": "Subpoule",
+      "tekst": "De strijd met je vrienden.",
+      "ranking": "de stand in jouw groep",
+      "stijgers": "wie klom en wie zakte",
+      "daguitslag": "de punten van vandaag",
+      "heatmap": "wie welke renner koos",
+      "deelnemers": "wie er meedoen",
+      "streek": "de stand in jouw regio"
+    },
+    "uitslagen": {
+      "titel": "Uitslagen",
+      "tekst": "De daguitslag per etappe en het algemeen klassement van de hele poule."
+    },
+    "hors": {
+      "titel": "Hors Catégorie",
+      "tekst": "Je statistieken — hier zie je hoe goed je echt koos.",
+      "dartpijl": "versloeg je de apen die willekeurig kiezen?",
+      "pelotonkeuzes": "welke renners koos de rest",
+      "wielerdirecteur": "je rapportcijfer als ploegleider",
+      "superteam": "hoeveel van het droomteam had jij",
+      "benchmark": "jouw ploeg naast die van iemand anders"
+    }
   }
 }

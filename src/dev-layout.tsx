@@ -12,6 +12,7 @@ import { RetroTabs } from "@/components/RetroTabs";
 import OnboardingCard, { ONBOARDING_KEY, onboardingWeggeklikt } from "@/components/OnboardingCard";
 import { SteunBanner } from "@/components/SteunKopgroep";
 import PercentileVerdict from "@/components/horscat/PercentileVerdict";
+import Rondleiding, { rondleidingHerstarten, useUitgelichteNav } from "@/components/Rondleiding";
 import aapFietser from "@/assets/horscat/aap-fietser-transparant.png";
 import "@/i18n";
 import "./index.css";
@@ -48,6 +49,8 @@ function Harness() {
   const [leegKind, setLeegKind] = useState(false);
   const [herstelTeller, setHerstelTeller] = useState(0);
   const [onbWeg, setOnbWeg] = useState(() => onboardingWeggeklikt());
+  const [tour, setTour] = useState(false);
+  const uitgelicht = useUitgelichteNav();
   const haalTerug = () => {
     try { localStorage.removeItem(ONBOARDING_KEY); } catch { /* negeer */ }
     setOnbWeg(false);
@@ -56,6 +59,7 @@ function Harness() {
 
   return (
     <div className="min-h-screen bg-background p-8">
+      <Rondleiding open={tour} onClose={() => setTour(false)} heeftStreekTab />
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex items-center gap-3">
           <h1 className="font-display text-2xl font-black">Layout-testbank</h1>
@@ -71,6 +75,13 @@ function Harness() {
           >
             kaarten weggeklikt: {leegKind ? "ja" : "nee"}
           </button>
+          <button
+            onClick={() => { rondleidingHerstarten(); setTour(true); }}
+            className="rounded-md border-2 border-foreground bg-card px-3 py-1.5 text-xs font-bold"
+          >
+            rondleiding starten
+          </button>
+          <span className="font-mono text-[11px] text-muted-foreground">uitgelicht: {uitgelicht ?? "-"}</span>
         </div>
 
         <Blok titel="Hoofdnavigatie — variant dossard">
