@@ -456,7 +456,7 @@
       "pointsChipTitle": "Total points scored through the last approved stage"
     },
     "swipeHint": {
-      "title": "Swipe or tap to switch",
+      "title": "Swipe to switch",
       "subtitle": "between the parts of this section",
       "closeAria": "Dismiss hint"
     },
@@ -1626,7 +1626,8 @@
       "allStages": "← All stages",
       "elevationAlt": "Elevation profile stage {{n}}",
       "climbs": "Climbs"
-    }
+    },
+    "verbergActie": "Hide \"{{actie}}\""
   },
   "rondleiding": {
     "aria": "Koerspoule tour",

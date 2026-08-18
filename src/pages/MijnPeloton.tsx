@@ -26,7 +26,6 @@ import { MobielTabBalk } from "@/components/MobielTabBalk";
 import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
-import SwipeDots from "@/components/SwipeDots";
 import { SteunBanner } from "@/components/SteunKopgroep";
 import { useSupportBanner } from "@/hooks/useSupportBanner";
 import { useFallenRidersCount } from "@/hooks/useFallenRidersCount";
@@ -41,14 +40,14 @@ import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import GameSwitcher from "@/components/GameSwitcher";
-import { isAdminOnlyStatus, maySeeLiveContent } from "@/lib/gameStatus";
+import { isAdminOnlyStatus, isGameLocked, maySeeLiveContent } from "@/lib/gameStatus";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { Input } from "@/components/ui/input";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { isMeermarathonGame } from "@/lib/gameTypes";
 import StatusBlok from "@/components/StatusBlok";
-import ZwevendeActie from "@/components/ZwevendeActie";
+import ZwevendeActie, { zwevendeActieWeggeklikt, zwevendeActieHerstellen } from "@/components/ZwevendeActie";
 import Rondleiding, { rondleidingGezien, rondleidingHerstarten, useUitgelichteNav } from "@/components/Rondleiding";
 import { useAuth } from "@/hooks/useAuth";
 import OnboardingCard, { ONBOARDING_KEY, onboardingWeggeklikt } from "@/components/OnboardingCard";
@@ -202,6 +201,9 @@ export default function MijnPeloton() {
   // Wegklikken van de onboarding moet de zijkolom direct laten inklappen; de
   // kaart bewaart dat zelf in localStorage, dus we spiegelen het hier.
   const [onbWeg, setOnbWeg] = useState(() => onboardingWeggeklikt());
+  // De zwevende actieknop is los wegklikbaar; we spiegelen dat hier zodat de
+  // terughaal-knop verschijnt ook wanneer de onboarding nog staat.
+  const [actieWeg, setActieWeg] = useState(() => zwevendeActieWeggeklikt());
   // Wegklikken mag niet definitief zijn. De kaarten lezen hun status bij het
   // opbouwen, dus terughalen betekent: sleutels wissen en ze opnieuw aanmaken —
   // vandaar de teller als React-key.
@@ -217,6 +219,8 @@ export default function MijnPeloton() {
       }
     } catch { /* negeer */ }
     rondleidingHerstarten();
+    zwevendeActieHerstellen();
+    setActieWeg(false);
     setOnbWeg(false);
     setHerstelTeller((n) => n + 1);
     // "Terughalen" heeft pas zin als de rondleiding ook echt weer start.
@@ -1351,7 +1355,7 @@ export default function MijnPeloton() {
           />
 
           {/* Wegklikken is omkeerbaar; zonder deze knop zou het definitief zijn. */}
-          {onbWeg && (
+          {(onbWeg || actieWeg) && (
             <button
               type="button"
               onClick={haalKaartenTerug}
@@ -1410,14 +1414,9 @@ export default function MijnPeloton() {
                 />
               </div>
 
-              {/* Swipe-hint + stippen-indicator (mobiel). */}
-              <SwipeHintBar visible={teamHint.visible} onClose={teamHint.dismiss} className="mx-auto w-fit mb-2" />
-              <SwipeDots
-                count={volgwagenTabs.length}
-                activeIndex={volgwagenKeys.indexOf(teamSubTab)}
-                activeLabel={volgwagenTabs.find((x) => x.key === teamSubTab)?.label}
-                className="mb-2"
-              />
+              {/* Veeghint (eenmalig). De stippenrij stond hier ook: die
+                  herhaalde de naam van de tab die er vlak boven al oplichtte. */}
+              <SwipeHintBar visible={teamHint.visible} onClose={teamHint.dismiss} className="mb-2" />
 
               {/* Desktop sub-tab nav — retro dossard-tabbalk */}
               <RetroTabs
@@ -1456,12 +1455,18 @@ export default function MijnPeloton() {
 
               {/* De hoofdhandeling blijft binnen duimbereik, ook halverwege de
                   rennerlijst. Linksonder, zodat hij de tab-schakelaar
-                  rechtsonder niet in de weg zit. */}
-              {teamSubTab === "ploeg" && (
+                  rechtsonder niet in de weg zit.
+
+                  Zodra de koers rijdt ligt de ploeg vast; dan is dit een knop
+                  naar een scherm waar je niets meer kunt. Vandaar de
+                  vergrendel-check in plaats van alleen de subtab. */}
+              {teamSubTab === "ploeg" && !isGameLocked(selectedGameObj?.status) && (
                 <ZwevendeActie
+                  key={herstelTeller}
                   label={t("nav.wijzigPloeg")}
                   icon={Pencil}
                   onClick={() => navigate("/team-samenstellen")}
+                  onDismissed={() => setActieWeg(true)}
                 />
               )}
 

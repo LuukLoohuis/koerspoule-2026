@@ -40,7 +40,6 @@ import { RetroTabs } from "@/components/RetroTabs";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import EmptyState from "@/components/EmptyState";
 import SwipeCarousel from "@/components/SwipeCarousel";
-import SwipeDots from "@/components/SwipeDots";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useMinWidth } from "@/hooks/use-mobile";
@@ -594,9 +593,8 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
             <MobielTabBalk tabs={dynTabItems} active={mobileTab} onChange={setMobileTab} />
           </div>
 
-          {/* Swipe-coachmark (eenmalig) + stippen-indicator. */}
-          <SwipeHintBar visible={mobileHint.visible} onClose={mobileHint.dismiss} className="mx-auto w-fit my-2" />
-          <SwipeDots count={dynTabs.length} activeIndex={dynTabKeys.indexOf(mobileTab)} activeLabel={dynTabs.find((t) => t.key === mobileTab)?.label} className="mb-2" />
+          {/* Veeghint (eenmalig). */}
+          <SwipeHintBar visible={mobileHint.visible} onClose={mobileHint.dismiss} className="mb-2" />
 
           {/* Vinger-volgende carrousel: alleen het content-vlak beweegt. */}
           <SwipeCarousel

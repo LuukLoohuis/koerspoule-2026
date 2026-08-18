@@ -456,7 +456,7 @@
       "pointsChipTitle": "Totaal behaalde punten t/m laatst gefiatteerde etappe"
     },
     "swipeHint": {
-      "title": "Veeg of tik om te wisselen",
+      "title": "Veeg om te wisselen",
       "subtitle": "tussen de onderdelen van deze sectie",
       "closeAria": "Uitleg sluiten"
     },
@@ -1626,7 +1626,8 @@
       "allStages": "← Alle etappes",
       "elevationAlt": "Hoogteprofiel etappe {{n}}",
       "climbs": "Klimmen"
-    }
+    },
+    "verbergActie": "\"{{actie}}\" verbergen"
   },
   "rondleiding": {
     "aria": "Rondleiding door Koerspoule",

@@ -1,7 +1,18 @@
 /**
- * MobielTabBalk — mobile-only shared tab component.
- * Pill layout (≤3 tabs) or scrollable chips (4+ tabs).
- * Must be wrapped in md:hidden by the parent; desktop uses its own tab bar.
+ * MobielTabBalk — de subbalk op de telefoon. Moet door de ouder in md:hidden
+ * gewikkeld worden; de webversie heeft zijn eigen balk (RetroTabs).
+ *
+ * Onderstreepte labels, dezelfde vorm als de segment-variant op de webversie:
+ * niveau 1 is een object (de onderbalk), niveau 2 is typografie. Dat scheelt
+ * ook hoogte — de balk met kader en gevulde pillen was 52px, dit is 38.
+ *
+ * Eén vorm voor elk aantal tabs. Hiervoor was het een uitgerekte pill tot en
+ * met drie tabs en losse chips vanaf vier, waardoor de Volgwagen van vorm
+ * wisselde zodra Live erbij kwam.
+ *
+ * De kleuren komen uit de themavariabelen. Ze stonden hier als vaste hexcodes
+ * (#EDE8DF / #C8B89A / #7A6A5A), zodat de balk bij Meermarathon perkament bleef
+ * terwijl de rest van de site ijsblauw werd.
  */
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -20,117 +31,66 @@ type Props = {
   className?: string;
 };
 
-// Actieve tab volgt het thema (geel = TdF, rood = Vuelta, roze = Giro) via de
-// CSS-tokens; BG/rand/inactief blijven warm-neutraal (perkament) over thema's heen.
-const ACTIVE_BG = "hsl(var(--primary))";
-const ACTIVE_FG = "hsl(var(--primary-foreground))";
-const BG   = "#EDE8DF";
-const BORDER = "#C8B89A";
-const INACTIVE = "#7A6A5A";
-
 export function MobielTabBalk({ tabs, active, onChange, className }: Props) {
-  const isPill = tabs.length <= 3;
-  const activeRef  = useRef<HTMLButtonElement>(null);
-  const scrollRef  = useRef<HTMLDivElement>(null);
+  const activeRef = useRef<HTMLButtonElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-center active chip in scrollable bar
+  // De actieve tab in beeld houden. Anders sta je na een veeg naar het laatste
+  // onderdeel te kijken naar een balk die nog op het eerste staat.
+  //
+  // offsetLeft rekent vanaf de dichtstbijzijnde gepositioneerde ouder, dus de
+  // rij moet zelf `relative` zijn — anders meet je tegen een willekeurige
+  // ouder verderop en scrollt de balk naar een plek die nergens op slaat.
   useEffect(() => {
-    if (isPill) return;
-    const el  = activeRef.current;
+    const el = activeRef.current;
     const box = scrollRef.current;
     if (!el || !box) return;
-    const left = el.offsetLeft - box.clientWidth / 2 + el.clientWidth / 2;
-    box.scrollTo({ left, behavior: "smooth" });
-  }, [active, isPill]);
+    const links = el.offsetLeft - box.clientWidth / 2 + el.clientWidth / 2;
+    box.scrollTo({ left: Math.max(0, links), behavior: "smooth" });
+  }, [active]);
 
-  /* ── Pill (≤3 tabs) ─────────────────────────────────────────── */
-  if (isPill) {
-    return (
-      <div
-        className={cn("flex w-full rounded-[8px] p-[3px] gap-[3px]", className)}
-        style={{ background: BG, border: `1px solid ${BORDER}` }}
-      >
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = tab.key === active;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              disabled={tab.disabled}
-              onClick={() => !tab.disabled && onChange(tab.key)}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 rounded-[6px]",
-                "min-h-[44px] px-3 transition-all duration-200",
-                "text-[12px] font-display font-bold uppercase tracking-[0.04em] whitespace-nowrap",
-                isActive  ? "shadow-sm" : "hover:bg-black/5",
-                tab.disabled && "opacity-40 cursor-not-allowed",
-              )}
-              style={{
-                background: isActive ? ACTIVE_BG : "transparent",
-                color: isActive ? ACTIVE_FG : INACTIVE,
-              }}
-            >
-              {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
-  /* ── Scrollable chips (4+ tabs) ─────────────────────────────── */
   return (
     <div
-      className={cn("relative w-full", className)}
-      style={{
-        maskImage:
-          "linear-gradient(to right, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%)",
-        WebkitMaskImage:
-          "linear-gradient(to right, transparent 0%, black 16px, black calc(100% - 16px), transparent 100%)",
-      }}
+      ref={scrollRef}
+      role="tablist"
+      className={cn(
+        "relative flex w-full items-end gap-5 overflow-x-auto border-b border-border pr-1",
+        "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        className,
+      )}
     >
-      <div
-        ref={scrollRef}
-        className="flex gap-1.5 overflow-x-auto"
-        style={{
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
-          background: BG,
-          border: `1px solid ${BORDER}`,
-          borderRadius: "8px",
-          padding: "3px 12px",
-        }}
-      >
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = tab.key === active;
-          return (
-            <button
-              key={tab.key}
-              ref={isActive ? activeRef : undefined}
-              type="button"
-              disabled={tab.disabled}
-              onClick={() => !tab.disabled && onChange(tab.key)}
-              className={cn(
-                "flex items-center gap-1.5 flex-none rounded-[6px]",
-                "min-h-[44px] px-4 transition-all duration-200",
-                "text-[12px] font-display font-bold uppercase tracking-[0.04em] whitespace-nowrap",
-                isActive  ? "shadow-sm" : "hover:bg-black/5",
-                tab.disabled && "opacity-40 cursor-not-allowed",
-              )}
-              style={{
-                background: isActive ? ACTIVE_BG : "transparent",
-                color: isActive ? ACTIVE_FG : INACTIVE,
-              }}
-            >
-              {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        const isActive = tab.key === active;
+        return (
+          <button
+            key={tab.key}
+            ref={isActive ? activeRef : undefined}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            disabled={tab.disabled}
+            onClick={() => !tab.disabled && onChange(tab.key)}
+            className={cn(
+              "relative flex flex-none items-center gap-1.5 whitespace-nowrap border-0 bg-transparent",
+              // Het raakvlak blijft 44px hoog; alleen de zichtbare hoogte krimpt.
+              "min-h-[38px] pb-2 pt-2.5 text-[13px] transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              isActive ? "font-bold text-foreground" : "font-semibold text-muted-foreground",
+              tab.disabled && "cursor-not-allowed opacity-40",
+            )}
+          >
+            {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
+            <span>{tab.label}</span>
+            {isActive && (
+              <span
+                aria-hidden
+                className="absolute inset-x-0 bottom-[-1px] h-0.5 rounded-t-full bg-primary"
+              />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -16,6 +16,8 @@ import Rondleiding, { rondleidingHerstarten, useUitgelichteNav } from "@/compone
 import { StatusBlokView } from "@/components/StatusBlok";
 import ZwevendeActie from "@/components/ZwevendeActie";
 import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
+import { MobielTabBalk } from "@/components/MobielTabBalk";
+import SwipeHintBar from "@/components/SwipeHintBar";
 import TruiBadge from "@/components/retro/TruiBadge";
 import Podium from "@/components/Podium";
 import { KoersThemaProvider } from "@/contexts/KoersThemaContext";
@@ -235,6 +237,30 @@ function Harness() {
                     { rank: 3, name: "EddyT", points: 2633 },
                   ]} />
                 </KoersThemaProvider>
+              </div>
+            ))}
+          </div>
+        </Blok>
+
+        <Blok titel="Mobiele subbalk — chromehoogte boven de inhoud">
+          <div className="flex gap-8">
+            {[
+              { naam: "Volgwagen (3)", tabs: SUB },
+              { naam: "Hors Cat\u00e9gorie (5)", tabs: HORS_SUB },
+            ].map((v) => (
+              <div key={v.naam} style={{ width: 351 }} data-mobiel={v.naam}>
+                <div className="mb-1 font-mono text-[10px] text-muted-foreground">{v.naam} — 351px breed</div>
+                <div className="rounded border border-dashed border-foreground/20 p-3">
+                  <div data-chrome>
+                    <MobielTabBalk
+                      tabs={v.tabs.map((t) => ({ key: t.key, label: t.label, icon: t.Icon }))}
+                      active={v.tabs[0].key}
+                      onChange={() => {}}
+                    />
+                    <SwipeHintBar visible onClose={() => {}} className="mb-2" />
+                  </div>
+                  <div className="retro-border bg-card p-4 text-center text-xs text-muted-foreground">inhoud begint hier</div>
+                </div>
               </div>
             ))}
           </div>

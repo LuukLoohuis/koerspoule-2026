@@ -33,7 +33,6 @@ import { Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Mi
 import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
-import SwipeDots from "@/components/SwipeDots";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import EmptyState from "@/components/EmptyState";
 import BenchmarkTab from "@/components/BenchmarkTab";
@@ -914,9 +913,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         />
       </div>
 
-      {/* Swipe-hint (eenmalig, wegklikbaar) + stippen-indicator (mobiel). */}
-      <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mx-auto w-fit" />
-      <SwipeDots count={HORS_TABS.length} activeIndex={HORS_TABS.findIndex((tab) => tab.key === activeTab)} activeLabel={tabLabel(activeTab)} />
+      {/* Veeghint (eenmalig, wegklikbaar). */}
+      <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mb-2" />
 
       {/* Desktop — onderstreepte subbalk, zelfde niveau-2-vorm als bij de
           Volgwagen en de subpoule. Stond hier op de dossard-variant en was

@@ -27,7 +27,6 @@ import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
-import SwipeDots from "@/components/SwipeDots";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import { RetroTabs } from "@/components/RetroTabs";
 import { buildStageBarData } from "@/components/stages/stageBarData";
@@ -335,9 +334,8 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         </TabsList>
         </div>
 
-        {/* Swipe-hint + stippen-indicator (mobiel). */}
-        <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mx-auto w-fit mt-2" />
-        <SwipeDots count={2} activeIndex={view === "klassement" ? 0 : 1} activeLabel={view === "klassement" ? t("results.view.klassementTab") : t("results.view.etappesTab")} />
+        {/* Veeghint (eenmalig). */}
+        <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mb-2" />
 
         {/* Vinger-volgende carrousel: alleen het content-vlak beweegt. */}
         <SwipeCarousel
