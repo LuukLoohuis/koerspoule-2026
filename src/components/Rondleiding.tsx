@@ -29,7 +29,6 @@ const KEY = "kp_rondleiding_gezien_v1";
 /* --- welke tab in de onderbalk oplicht ------------------------------------ */
 
 let uitgelicht: string | null = null;
-let loopt = false;
 const luisteraars = new Set<() => void>();
 
 function abonneer(fn: () => void) {
@@ -39,8 +38,7 @@ function abonneer(fn: () => void) {
 
 function zetStand(actief: boolean, navKey: string | null) {
   const nieuweKey = actief ? navKey : null;
-  if (loopt === actief && uitgelicht === nieuweKey) return;
-  loopt = actief;
+  if (uitgelicht === nieuweKey) return;
   uitgelicht = nieuweKey;
   luisteraars.forEach((fn) => fn());
 }
@@ -48,15 +46,6 @@ function zetStand(actief: boolean, navKey: string | null) {
 /** De tab die de rondleiding nu bespreekt, of null. */
 export function useUitgelichteNav(): string | null {
   return useSyncExternalStore(abonneer, () => uitgelicht, () => null);
-}
-
-/**
- * Loopt er een rondleiding? De tabbalk gebruikt dit om zichzelf boven het waas
- * te tillen; op mobiel staat de onderbalk daar al hoog genoeg voor, op de
- * webversie staat de balk gewoon in de pagina.
- */
-export function useRondleidingLoopt(): boolean {
-  return useSyncExternalStore(abonneer, () => loopt, () => false);
 }
 
 export function rondleidingGezien(): boolean {
@@ -204,14 +193,6 @@ export default function Rondleiding({
     window.scrollTo({ top: 0 });
   }, [actief, gaSectie, gaSub]);
 
-  // Achtergrond niet mee laten scrollen tijdens de rondleiding.
-  useEffect(() => {
-    if (!actief) return;
-    const vorige = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = vorige; };
-  }, [actief]);
-
   useEffect(() => {
     if (!actief) return;
     const opToets = (e: KeyboardEvent) => { if (e.key === "Escape") sluit(); };
@@ -230,27 +211,24 @@ export default function Rondleiding({
   const verder = () => (stap >= stappen.length - 1 ? sluit() : setStap((n) => n + 1));
 
   return createPortal(
+    /* Geen waas en geen scrollslot: de rondleiding gaat écht naar elk subtabje,
+       dus het scherm eronder is het onderwerp en moet gewoon te zien en te
+       scrollen zijn. Vandaar ook een aangemeerd paneel in plaats van een
+       modaal — role="region" en niet aria-modal, want de rest van de pagina
+       blijft bereikbaar. Alleen de besproken tab licht op. */
     <div
-      className="fixed inset-0 z-[60]"
-      role="dialog"
-      aria-modal="true"
+      className="fixed inset-0 z-[60] pointer-events-none"
+      role="region"
       aria-label={t("rondleiding.aria")}
     >
-      {/* Licht waas. Vanaf de subtabjes is het scherm eronder zélf de uitleg,
-          dus het mag niet meer wegvallen; het dient nog om het kaartje eruit te
-          laten springen. De besproken balk blijft er sowieso buiten: op mobiel
-          staat de onderbalk al op z-50, op de webversie tilt de tabbalk
-          zichzelf op zodra er een rondleiding loopt. */}
-      <div className="absolute inset-0 bg-foreground/25" onClick={sluit} />
-
       <div
         className={cn(
-          "absolute rounded-xl border-2 border-foreground bg-card p-4 shadow-[4px_4px_0_hsl(var(--foreground))]",
+          "pointer-events-auto absolute rounded-xl border-2 border-foreground bg-card p-4 shadow-[4px_4px_0_hsl(var(--foreground))]",
           isMobiel
             // Net boven de onderbalk, zodat de aangewezen tab in beeld blijft.
             ? "inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))]"
-            // Midden in beeld; de opgelichte balk staat er ruim boven.
-            : "left-1/2 top-1/2 w-[min(30rem,92vw)] -translate-x-1/2 -translate-y-1/2",
+            // Rechtsonder aangemeerd: het scherm zelf blijft vrij.
+            : "bottom-5 right-5 w-[min(24rem,92vw)]",
         )}
       >
         <div className="flex items-start gap-2">

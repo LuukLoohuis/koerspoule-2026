@@ -49,7 +49,7 @@ import { useSubpoules } from "@/hooks/useSubpoules";
 import { isMeermarathonGame } from "@/lib/gameTypes";
 import StatusBlok from "@/components/StatusBlok";
 import ZwevendeActie from "@/components/ZwevendeActie";
-import Rondleiding, { rondleidingGezien, rondleidingHerstarten, useUitgelichteNav, useRondleidingLoopt } from "@/components/Rondleiding";
+import Rondleiding, { rondleidingGezien, rondleidingHerstarten, useUitgelichteNav } from "@/components/Rondleiding";
 import { useAuth } from "@/hooks/useAuth";
 import OnboardingCard, { ONBOARDING_KEY, onboardingWeggeklikt } from "@/components/OnboardingCard";
 import { Wrench, Share2 } from "lucide-react";
@@ -226,9 +226,6 @@ export default function MijnPeloton() {
   // dezelfde knop als de hulpkaarten. Alleen mobiel — daar zitten de namen in
   // een balk die je niet zomaar doorgrondt.
   const [rondleidingOpen, setRondleidingOpen] = useState(false);
-  // De tabbalk moet tijdens de rondleiding boven het waas uitkomen; op mobiel
-  // regelt de onderbalk dat zelf met z-50.
-  const rondleidingLoopt = useRondleidingLoopt();
   const uitgelichteNav = useUitgelichteNav();
   useEffect(() => {
     if (rondleidingGezien()) return;
@@ -1233,7 +1230,7 @@ export default function MijnPeloton() {
 
           {/* Desktop tab nav — retro dossard-tabbalk */}
           <RetroTabs
-            className={cn("hidden md:flex", rondleidingLoopt && "relative z-[61]")}
+            className="hidden md:flex"
             uitgelichteKey={uitgelichteNav}
             aria-label="Hoofdnavigatie"
             active={gameTab}

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import TruiBadge from "@/components/retro/TruiBadge";
-import { useThema } from "@/contexts/ThemaContext";
+import { useKoersThema } from "@/contexts/KoersThemaContext";
 
 export type PodiumEntry = { rank: number; name: string; points: number; isMe?: boolean };
 
@@ -33,7 +33,9 @@ const NUM_SIZE: Record<number, string> = { 1: "text-[3.25rem]", 2: "text-[2.5rem
 /** Klassiek 3-trap podium met sequentieel reveal, goud-shine op #1 en
  *  pulserende leiderstrui. Verschijnt boven het algemeen klassement. */
 export default function Podium({ entries }: { entries: PodiumEntry[] }) {
-  const { thema } = useThema();
+  // De beker hoort bij de koers die dit scherm toont, niet bij het thema dat
+  // de site draagt: een afgeronde Tour houdt de Coupe, ook in Vuelta-rood.
+  const thema = useKoersThema();
   const byRank = new Map(entries.map((e) => [e.rank, e]));
   if (!byRank.has(1)) return null;
 

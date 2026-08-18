@@ -17,7 +17,8 @@ import { StatusBlokView } from "@/components/StatusBlok";
 import ZwevendeActie from "@/components/ZwevendeActie";
 import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
 import TruiBadge from "@/components/retro/TruiBadge";
-import { TruiThemaProvider } from "@/contexts/TruiThemaContext";
+import Podium from "@/components/Podium";
+import { KoersThemaProvider } from "@/contexts/KoersThemaContext";
 import aapFietser from "@/assets/horscat/aap-fietser-transparant.png";
 import "@/i18n";
 import "./index.css";
@@ -107,7 +108,7 @@ function Harness() {
         </Blok>
 
         <Blok titel="Samen, in de kolomindeling zoals op Mijn Peloton">
-          <RetroTabs tabs={HOOFD} active={hoofd} onChange={setHoofd} aria-label="hoofd2" uitgelichteKey={uitgelicht} className={uitgelicht ? "relative z-[61]" : undefined} />
+          <RetroTabs tabs={HOOFD} active={hoofd} onChange={setHoofd} aria-label="hoofd2" uitgelichteKey={uitgelicht} />
           <div
             className={
               "mt-4 flex flex-col md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-5"
@@ -195,10 +196,27 @@ function Harness() {
             </div>
             {(["geel", "rood", "roze"] as const).map((k) => (
               <div key={k} data-trui={k} className="text-center">
-                <TruiThemaProvider themaKey={k}>
+                <KoersThemaProvider themaKey={k}>
                   <TruiBadge type="algemeen" formaat="groot" />
-                </TruiThemaProvider>
+                </KoersThemaProvider>
                 <div className="mt-1 font-mono text-[10px] text-muted-foreground">opgelegd: {k}</div>
+              </div>
+            ))}
+          </div>
+        </Blok>
+
+        <Blok titel="Podium — volgt de beker het opgelegde koersthema?">
+          <div className="flex gap-6">
+            {(["geel", "rood"] as const).map((k) => (
+              <div key={k} style={{ width: 320 }} data-podium={k}>
+                <div className="mb-1 font-mono text-[10px] text-muted-foreground">opgelegd: {k}</div>
+                <KoersThemaProvider themaKey={k}>
+                  <Podium entries={[
+                    { rank: 1, name: "tombulter", points: 2668 },
+                    { rank: 2, name: "Kelderman Best", points: 2656 },
+                    { rank: 3, name: "EddyT", points: 2633 },
+                  ]} />
+                </KoersThemaProvider>
               </div>
             ))}
           </div>
