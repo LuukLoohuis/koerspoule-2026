@@ -3,10 +3,23 @@ import { useVisibleSponsors, type Sponsor } from "@/hooks/useSponsors";
 import { logSponsorKlik } from "@/lib/sponsorKliks";
 
 /**
- * Subtiele sponsorstrook boven de footerbalk (Layout): decoratieve stippellijn +
- * ornament, links het kopje, daarnaast de zichtbare sponsoren elk in een net wit
- * kaderkaartje (logo OF label + weergavenaam). Geen zichtbare sponsoren → niets
- * tonen. Sponsor met link_url → kaartje linkt extern.
+ * <SponsorStrip> — het reclamebord langs de finishstraat, boven de footer.
+ *
+ * Eén doorlopend paneel met inktrand, harde slagschaduw en de gouden
+ * leiderstruistreep erboven: dezelfde taal als het startbord in de
+ * hoofdnavigatie. Hiervoor stonden hier losse kaartjes met een zachte schaduw
+ * en een systeemletter — dat las als de footer van een willekeurige site.
+ *
+ * Twee dingen die de opmaak echt oplosten:
+ *
+ * 1. Elk logo krijgt een vast kader in plaats van een vaste hoogte. Bij 56px
+ *    hoogte werden deze vier logo's 160, 292, 205 en 83px breed: een spreiding
+ *    van 3,5x, waardoor het ene een balk werd en het andere een postzegel.
+ * 2. Kleuren uit themavariabelen. De kaartjes stonden op `bg-white`, dus bij
+ *    Meermarathon bleven ze wit terwijl de rest van de site ijsblauw werd.
+ *
+ * Logo's staan op het papier zelf, zonder vlak eronder. Dat vraagt wel om
+ * transparante PNG's met donkere inkt; een licht logo valt weg op perkament.
  */
 export default function SponsorStrip() {
   const { t } = useTranslation();
@@ -15,44 +28,64 @@ export default function SponsorStrip() {
 
   return (
     <section className="border-t border-border/60 bg-card/40" aria-label={t("shell.sponsors.sectionAria")}>
-      <div className="container mx-auto px-5 py-6">
-        <div className="bolletjes-rule max-w-xs mx-auto mb-3" aria-hidden />
-        <div className="vintage-ornament max-w-sm mx-auto mb-4" aria-hidden>
-          <span className="vintage-ornament-symbol">✦</span>
-        </div>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-4 md:gap-6">
-          <div className="text-center md:text-left shrink-0">
-            <p className="font-sans text-[12px] font-medium uppercase tracking-[0.16em] text-foreground/55 mb-1">{t("shell.sponsors.madePossible")}</p>
-            <h2 className="font-sans text-2xl font-semibold leading-tight text-foreground">{t("shell.sponsors.heading")}</h2>
+      <div className="container mx-auto px-5 py-7">
+        <div className="mx-auto max-w-5xl overflow-hidden rounded-xl border-2 border-foreground bg-card shadow-[4px_4px_0_hsl(var(--foreground))]">
+          {/* Leiderstruistreep — zelfde markering als op het startbord. */}
+          <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+
+          <div className="flex flex-col sm:flex-row">
+            {/* Gestempeld tabje: hoort bij het bord, niet ernaast. */}
+            <div className="flex shrink-0 flex-col justify-center gap-0.5 border-b-2 border-foreground bg-foreground/[0.04] px-4 py-3 sm:border-b-0 sm:border-r-2 sm:px-5">
+              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+                {t("shell.sponsors.madePossible")}
+              </span>
+              <h2 className="font-display text-base font-black leading-tight sm:text-lg">
+                {t("shell.sponsors.heading")}
+              </h2>
+            </div>
+
+            {/* Bij veel sponsoren schuift de rij, in plaats van naar een tweede
+                regel te vallen en het bord scheef te trekken. */}
+            <ul className="m-0 flex list-none overflow-x-auto p-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {sponsors.map((s) => (
+                <li key={s.id} className="flex-1 shrink-0 border-r border-border/70 last:border-r-0">
+                  <SponsorCel s={s} />
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul className="flex flex-wrap items-stretch justify-center gap-3 list-none p-0 m-0">
-            {sponsors.map((s) => (
-              <li key={s.id}>
-                <SponsorKaart s={s} />
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
     </section>
   );
 }
 
-function SponsorKaart({ s }: { s: Sponsor }) {
+function SponsorCel({ s }: { s: Sponsor }) {
   const { t } = useTranslation();
-  const inner = (
-    <div className="flex h-full min-h-[76px] min-w-[132px] items-center justify-center gap-2 rounded-lg border border-border/70 bg-white px-5 py-3 shadow-sm transition-shadow hover:shadow-md">
-      {s.logo_url ? (
-        // Logo-maat: makkelijk aanpasbaar via de hoogte/breedte hieronder.
-        <img src={s.logo_url} alt={s.naam} loading="lazy" className="h-14 w-auto max-w-[180px] object-contain" />
-      ) : (
-        <span className="text-center leading-tight">
-          {s.label && <span className="block text-[9px] font-sans uppercase tracking-[0.16em] text-muted-foreground">{s.label}</span>}
-          <span className="block font-display font-black uppercase tracking-tight text-foreground text-lg">{s.weergavenaam || s.naam}</span>
+
+  const inhoud = s.logo_url ? (
+    // Het kader is vast, het logo past erbinnen op hoogte én breedte. Zo
+    // wegen een breed woordmerk en een compact beeldmerk even zwaar.
+    <img
+      src={s.logo_url}
+      alt={s.naam}
+      loading="lazy"
+      className="max-h-11 w-auto max-w-[128px] object-contain"
+    />
+  ) : (
+    <span className="text-center leading-tight">
+      {s.label && (
+        <span className="block font-mono text-[8px] uppercase tracking-[0.18em] text-muted-foreground">
+          {s.label}
         </span>
       )}
-    </div>
+      <span className="block font-display text-base font-black uppercase tracking-tight">
+        {s.weergavenaam || s.naam}
+      </span>
+    </span>
   );
+
+  const cel = "flex h-full min-h-[72px] min-w-[148px] items-center justify-center px-5 py-3";
 
   return s.link_url ? (
     <a
@@ -61,11 +94,11 @@ function SponsorKaart({ s }: { s: Sponsor }) {
       rel="noopener noreferrer nofollow sponsored"
       onClick={() => logSponsorKlik("sponsor", s.id, "link_url", "voorpagina")}
       aria-label={t("shell.sponsors.visitAria", { name: s.naam })}
-      className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] rounded-lg transition-transform hover:-translate-y-px motion-reduce:transform-none"
+      className={`${cel} transition-colors hover:bg-foreground/[0.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--vintage-gold))]`}
     >
-      {inner}
+      {inhoud}
     </a>
   ) : (
-    inner
+    <div className={cel}>{inhoud}</div>
   );
 }

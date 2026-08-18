@@ -17,6 +17,8 @@ import { StatusBlokView } from "@/components/StatusBlok";
 import ZwevendeActie from "@/components/ZwevendeActie";
 import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
 import HorsSkeleton from "@/components/skeletons/HorsSkeleton";
+import SponsorStrip from "@/components/SponsorStrip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import TruiBadge from "@/components/retro/TruiBadge";
@@ -56,6 +58,16 @@ function Blok({ titel, children }: { titel: string; children: React.ReactNode })
     </section>
   );
 }
+
+// De echte SponsorStrip haalt zijn data via react-query; hier zetten we die
+// vooraf in de cache, zodat het component zelf getoond wordt en niet een kopie.
+const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+qc.setQueryData(["sponsors", "visible"], [
+  { id: "1", naam: "Wij Geven Licht", logo_url: "/koerspoule-meermarathon.png", label: null, weergavenaam: null, link_url: "https://example.com", zichtbaar: true, sort_order: 1, created_at: "" },
+  { id: "2", naam: "De Digitale Basis", logo_url: "/favicon-meermarathon.svg", label: null, weergavenaam: null, link_url: "https://example.com", zichtbaar: true, sort_order: 2, created_at: "" },
+  { id: "3", naam: "Oele Sport", logo_url: null, label: "Partner", weergavenaam: "OELE", link_url: null, zichtbaar: true, sort_order: 3, created_at: "" },
+  { id: "4", naam: "Schaatsshop", logo_url: null, label: null, weergavenaam: "SCHAATSSHOP", link_url: "https://example.com", zichtbaar: true, sort_order: 4, created_at: "" },
+]);
 
 function Harness() {
   const [hoofd, setHoofd] = useState<string>("team");
@@ -264,6 +276,14 @@ function Harness() {
                 </div>
               </div>
             ))}
+          </div>
+        </Blok>
+
+        <Blok titel="Sponsorstrook — reclamebord">
+          <div data-strook className="-mx-8">
+            <QueryClientProvider client={qc}>
+              <SponsorStrip />
+            </QueryClientProvider>
           </div>
         </Blok>
 

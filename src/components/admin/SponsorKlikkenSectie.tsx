@@ -8,6 +8,10 @@
  *
  * Dezelfde prijslink staat in de Krant én op de prijzenpagina. Die tellen
  * apart — "waar levert deze sponsor het meeste op" is juist de vraag.
+ *
+ * De prijzen volgen de koers die in het beheerscherm gekozen is; anders zag je
+ * de prijzen van alle games door elkaar. De sponsorstrook onderaan de site
+ * hangt aan geen enkele koers en blijft daarom altijd staan.
  */
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,9 +32,9 @@ const PLEK_LABEL: Record<SponsorKlikRij["plek"], string> = {
   prijzenpagina: "Prijzenpagina",
 };
 
-export default function SponsorKlikkenSectie() {
+export default function SponsorKlikkenSectie({ activeGameId }: { activeGameId?: string }) {
   const [dagen, setDagen] = useState<number | null>(30);
-  const { data: rijen = [], isLoading, error } = useSponsorKlikken(dagen);
+  const { data: rijen = [], isLoading, error } = useSponsorKlikken(dagen, activeGameId);
 
   const totaal = rijen.reduce((som, r) => som + r.aantal, 0);
   const metKlik = rijen.filter((r) => r.aantal > 0).length;
@@ -49,6 +53,7 @@ export default function SponsorKlikkenSectie() {
               {isLoading
                 ? "Bezig met tellen…"
                 : `${totaal} klikken ${periodeWoord}, verdeeld over ${metKlik} van de ${rijen.length} links`}
+              {!isLoading && " · prijzen van de gekozen koers, sponsoren altijd"}
             </p>
           </div>
           <div className="flex gap-1.5" role="group" aria-label="Periode">
@@ -75,7 +80,7 @@ export default function SponsorKlikkenSectie() {
           </p>
         ) : rijen.length === 0 && !isLoading ? (
           <p className="p-5 text-center text-sm italic text-muted-foreground">
-            Nog geen sponsor of prijs met een link ingevuld.
+            Nog geen sponsor of prijs met een link ingevuld voor deze koers.
           </p>
         ) : (
           <div className="divide-y divide-border">

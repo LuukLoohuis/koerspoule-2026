@@ -22,16 +22,20 @@ type RpcClient = {
   rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }>;
 };
 
-/** @param dagen Terugkijkvenster; null = sinds de start. */
-export function useSponsorKlikken(dagen: number | null) {
+/**
+ * @param dagen   Terugkijkvenster; null = sinds de start.
+ * @param gameId  Beperkt de prijzen tot deze koers. Platformsponsoren hangen
+ *                aan geen enkele game en blijven altijd staan.
+ */
+export function useSponsorKlikken(dagen: number | null, gameId?: string) {
   return useQuery({
-    queryKey: ["sponsor-klikken", dagen],
+    queryKey: ["sponsor-klikken", dagen, gameId ?? null],
     enabled: Boolean(supabase),
     staleTime: 60_000,
     queryFn: async (): Promise<SponsorKlikRij[]> => {
       if (!supabase) return [];
       const { data, error } = await (supabase as unknown as RpcClient)
-        .rpc("admin_sponsor_klikken", { p_dagen: dagen });
+        .rpc("admin_sponsor_klikken", { p_dagen: dagen, p_game_id: gameId ?? null });
       if (error) throw error;
       return ((data ?? []) as SponsorKlikRij[]).map((r) => ({ ...r, aantal: Number(r.aantal) }));
     },

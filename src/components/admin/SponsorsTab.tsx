@@ -201,7 +201,7 @@ export default function SponsorsTab({ activeGameId }: { activeGameId: string }) 
       </CardContent>
     </Card>
 
-      <SponsorKlikkenSectie />
+      <SponsorKlikkenSectie activeGameId={activeGameId} />
 
       <DagprijsBannerSectie activeGameId={activeGameId} />
       {activeGameId && <DagprijsPlanning activeGameId={activeGameId} />}
