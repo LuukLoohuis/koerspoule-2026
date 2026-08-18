@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { RetroTabs } from "@/components/RetroTabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowLeftRight, Award, Baby, Car, ChevronRight, Copy, Medal, MoreHorizontal, Mountain, Newspaper, Pencil, Plus, RotateCcw, Target, TrendingUp, Trophy, User, Users, Zap } from "lucide-react";
+import { ArrowLeftRight, Award, Baby, Car, ChevronRight, Copy, Medal, MoreHorizontal, Mountain, Newspaper, Pencil, Plus, Radio, RotateCcw, Target, TrendingUp, Trophy, User, Users, Zap } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
 import SubpouleManager from "@/components/SubpouleManager";
 import WervingStrook from "@/components/WervingStrook";
@@ -47,6 +47,7 @@ import SneakPreviewLock from "@/components/SneakPreviewLock";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { Input } from "@/components/ui/input";
 import { useSubpoules } from "@/hooks/useSubpoules";
+import { isMeermarathonGame } from "@/lib/gameTypes";
 import Rondleiding, { rondleidingGezien, rondleidingHerstarten } from "@/components/Rondleiding";
 import { useAuth } from "@/hooks/useAuth";
 import OnboardingCard, { ONBOARDING_KEY, onboardingWeggeklikt } from "@/components/OnboardingCard";
@@ -178,6 +179,25 @@ export default function MijnPeloton() {
 
   // Volgwagen-subtabs (mobiel): vinger-volgende carrousel + zwevende schakelaar.
   const teamHint = useSwipeHint("volgwagen");
+  // Eén lijst voor alle vier de weergaven van de Volgwagen-onderdelen: de
+  // mobiele balk, de stippen, de desktoptabs en de carrousel. Live hoort er
+  // alleen bij op de schaatsgame, en zit direct achter Mijn Ploeg omdat je er
+  // tijdens een wedstrijd heen en weer springt.
+  const volgwagenTabs = useMemo(() => {
+    const basis = [
+      { key: "ploeg",    label: t("team.tabs.myTeam"),   icon: Users  },
+      { key: "prono",    label: t("team.tabs.prono"),    icon: Target },
+      { key: "palmares", label: t("team.tabs.palmares"), icon: Trophy },
+    ];
+    if (!isMeermarathonGame(selectedGameObj?.game_type)) return basis;
+    return [basis[0], { key: "live", label: t("team.tabs.live"), icon: Radio }, ...basis.slice(1)];
+  }, [t, selectedGameObj?.game_type]);
+  const volgwagenKeys = useMemo(() => volgwagenTabs.map((x) => x.key), [volgwagenTabs]);
+  // Van schaatsgame naar wielergame wisselen laat je anders achter op een
+  // onderdeel dat niet meer bestaat.
+  useEffect(() => {
+    if (!volgwagenKeys.includes(teamSubTab)) setTeamSubTab("ploeg");
+  }, [volgwagenKeys, teamSubTab]);
   // Wegklikken van de onboarding moet de zijkolom direct laten inklappen; de
   // kaart bewaart dat zelf in localStorage, dus we spiegelen het hier.
   const [onbWeg, setOnbWeg] = useState(() => onboardingWeggeklikt());
@@ -1354,7 +1374,7 @@ export default function MijnPeloton() {
           <TabsContent value="team" className="mt-3">
             <Tabs value={teamSubTab} onValueChange={setTeamSubTab}>
 
-              {/* Mobile tab nav — pill (3 tabs). Auto-hide bij omlaag scrollen. */}
+              {/* Mobile tab nav — pill. Auto-hide bij omlaag scrollen. */}
               <div
                 className={cn(
                   "md:hidden mb-3 overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-h-[120px]",
@@ -1362,11 +1382,7 @@ export default function MijnPeloton() {
                 )}
               >
                 <MobielTabBalk
-                  tabs={[
-                    { key: "ploeg",    label: t("team.tabs.myTeam"),   icon: Users  },
-                    { key: "prono",    label: t("team.tabs.prono"),    icon: Target },
-                    { key: "palmares", label: t("team.tabs.palmares"), icon: Trophy },
-                  ]}
+                  tabs={volgwagenTabs}
                   active={teamSubTab}
                   onChange={(k) => setTeamSubTab(k as typeof teamSubTab)}
                 />
@@ -1375,9 +1391,9 @@ export default function MijnPeloton() {
               {/* Swipe-hint + stippen-indicator (mobiel). */}
               <SwipeHintBar visible={teamHint.visible} onClose={teamHint.dismiss} className="mx-auto w-fit mb-2" />
               <SwipeDots
-                count={3}
-                activeIndex={["ploeg", "prono", "palmares"].indexOf(teamSubTab)}
-                activeLabel={({ ploeg: t("team.tabs.myTeam"), prono: t("team.tabs.prono"), palmares: t("team.tabs.palmares") } as Record<string, string>)[teamSubTab]}
+                count={volgwagenTabs.length}
+                activeIndex={volgwagenKeys.indexOf(teamSubTab)}
+                activeLabel={volgwagenTabs.find((x) => x.key === teamSubTab)?.label}
                 className="mb-2"
               />
 
@@ -1388,15 +1404,11 @@ export default function MijnPeloton() {
                 aria-label={t("team.tabs.volgwagenSectionsAria")}
                 active={teamSubTab}
                 onChange={setTeamSubTab}
-                tabs={[
-                  { key: "ploeg",    label: t("team.tabs.myTeam"),   Icon: Users  },
-                  { key: "prono",    label: t("team.tabs.prono"),    Icon: Target },
-                  { key: "palmares", label: t("team.tabs.palmares"), Icon: Trophy },
-                ]}
+                tabs={volgwagenTabs.map(({ key, label, icon }) => ({ key, label, Icon: icon }))}
               />
               {/* Vinger-volgende carrousel tussen de Volgwagen-onderdelen. */}
               <SwipeCarousel
-                keys={["ploeg", "prono", "palmares"]}
+                keys={volgwagenKeys}
                 activeKey={teamSubTab}
                 onChange={setTeamSubTab}
                 onSwiped={teamHint.dismiss}
@@ -1409,6 +1421,9 @@ export default function MijnPeloton() {
                         <MyTeamPanel section="ploeg" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} gameType={selectedGameObj?.game_type} prizesVisible={selectedGameObj?.prizes_visible} adminTestmodus={selectedGameObj?.admin_testmodus ?? false} onOpenHors={openHors} onOpenUitslagen={openUitslagen} onOpenSubpoule={openSubpouleGrafiek} onOpenStageResult={openStageResult} focusNameSignal={focusNameSeq} />
                       </div>
                     )}
+                    {k === "live" && (
+                      <MyTeamPanel section="live" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} gameType={selectedGameObj?.game_type} />
+                    )}
                     {k === "prono" && (
                       <MyTeamPanel section="prono" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} gameType={selectedGameObj?.game_type} />
                     )}
@@ -1417,13 +1432,9 @@ export default function MijnPeloton() {
                 )}
               />
 
-              {/* Mobiel: één consistente zwevende schakelaar (3 onderdelen). */}
+              {/* Mobiel: één consistente zwevende schakelaar. */}
               <FloatingTabSwitcher
-                tabs={[
-                  { key: "ploeg",    label: t("team.tabs.myTeam"),   icon: Users  },
-                  { key: "prono",    label: t("team.tabs.prono"),    icon: Target },
-                  { key: "palmares", label: t("team.tabs.palmares"), icon: Trophy },
-                ]}
+                tabs={volgwagenTabs}
                 active={teamSubTab}
                 onChange={(k) => setTeamSubTab(k)}
               />

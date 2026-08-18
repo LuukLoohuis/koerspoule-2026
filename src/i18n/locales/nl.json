@@ -245,7 +245,8 @@
       "myTeam": "Mijn Ploeg",
       "prono": "Pronostiek",
       "palmares": "Palmares",
-      "volgwagenSectionsAria": "Volgwagen-onderdelen"
+      "volgwagenSectionsAria": "Volgwagen-onderdelen",
+      "live": "Live"
     },
     "builder": {
       "authRequiredTitle": "Maak een account aan",

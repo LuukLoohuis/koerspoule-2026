@@ -245,7 +245,8 @@
       "myTeam": "My Team",
       "prono": "Predictions",
       "palmares": "Palmares",
-      "volgwagenSectionsAria": "Volgwagen sections"
+      "volgwagenSectionsAria": "Volgwagen sections",
+      "live": "Live"
     },
     "builder": {
       "authRequiredTitle": "Create an account",

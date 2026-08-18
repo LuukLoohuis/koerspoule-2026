@@ -424,7 +424,9 @@ export default function TeamBuilder() {
 
   // ── Mobiele flow: categorie-voor-categorie pager (md:hidden) ───────────────
   const [activeCatRaw, setActiveCatRaw] = useState<string | null>(null);
-  const mobileHint = useSwipeHint();
+  // Eigen sleutel: anders deelt de ploegbouwer zijn "hint gezien"-vlag met
+  // elke andere sectie die de standaard gebruikt.
+  const mobileHint = useSwipeHint("teambuilder");
   const pagerRef = useRef<HTMLDivElement>(null);
 
   const mobileKeys = useMemo(() => [...categories.map((c) => c.id), "overview"], [categories]);

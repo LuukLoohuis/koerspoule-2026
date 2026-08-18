@@ -341,7 +341,7 @@ export default function MyTeamPanel({
   prizesVisible,
   adminTestmodus = false,
 }: {
-  section?: "ploeg" | "prono";
+  section?: "ploeg" | "prono" | "live";
   gameId?: string;
   gameStatus?: string;
   gameName?: string | null;
@@ -371,7 +371,6 @@ export default function MyTeamPanel({
   const isMeermarathon = isMeermarathonGame(gameType ?? curGame?.game_type);
 
   // Live-tab: alleen bij Meermarathon, en alleen als er een baan gekoppeld is.
-  const [volgwagenTab, setVolgwagenTab] = useState<"ploeg" | "live">("ploeg");
   const { data: liveRace } = useLiveRace(game?.id, isMeermarathon);
   const { schema: pointsSchema, jokerMultiplier } = useStagePointsSchema(game?.id);
   const heeftLive = isMeermarathon;
@@ -792,45 +791,25 @@ export default function MyTeamPanel({
   for (const arr of picksByCategory.values()) for (const id of arr) mineRiderIds.add(id);
   for (const id of jokerIds) mineRiderIds.add(id);
 
+  // Live is een gewoon onderdeel van de Volgwagen geworden, geen eigen
+  // schakelaartje meer binnen "Mijn ploeg". Zo hangt het aan dezelfde
+  // tabbalk, stippen en veegbeweging als de rest — het was de enige plek in
+  // de app waar je alleen mocht tikken.
+  if (section === "live") {
+    if (!heeftLive) return null;
+    return (
+      <LiveTab
+        race={liveRace ?? null}
+        mineRiderIds={mineRiderIds}
+        jokerRiderIds={new Set(jokerIds)}
+        pointsSchema={pointsSchema}
+        jokerMultiplier={jokerMultiplier}
+      />
+    );
+  }
+
   return (
     <div className={cn("space-y-3 pb-4", isMeermarathon && "meermarathon-volgwagen")}>
-      {/* Live-tab verschijnt pas zodra er een baan aan de ronde hangt. */}
-      {heeftLive && (
-        <div className="flex gap-1.5 rounded-xl border border-[rgba(18,104,168,.2)] bg-white/55 p-1">
-          {([["ploeg", "Mijn ploeg"], ["live", "Live"]] as const).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              aria-selected={volgwagenTab === key}
-              onClick={() => setVolgwagenTab(key)}
-              className={cn(
-                "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 font-display text-xs font-bold uppercase tracking-wide transition-colors",
-                volgwagenTab === key
-                  ? "bg-[#071b3d] text-[#eaf6ff] shadow"
-                  : "text-foreground/55",
-              )}
-            >
-              {key === "live" && (
-                <span className="h-1.5 w-1.5 rounded-full bg-[#ff5a3c] animate-pulse" aria-hidden />
-              )}
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {heeftLive && volgwagenTab === "live" && (
-        <LiveTab
-          race={liveRace ?? null}
-          mineRiderIds={mineRiderIds}
-          jokerRiderIds={new Set(jokerIds)}
-          pointsSchema={pointsSchema}
-          jokerMultiplier={jokerMultiplier}
-        />
-      )}
-
-      {(!heeftLive || volgwagenTab === "ploeg") && <>
       {isMeermarathon && !categoriesLoading && categories.length === 0 && (
         <div className="mm-setup-notice" role="status">
           <Snowflake className="h-5 w-5 shrink-0" aria-hidden />
@@ -1637,7 +1616,6 @@ export default function MyTeamPanel({
           </div>
         );
       })()}
-      </>}
     </div>
   );
 }
