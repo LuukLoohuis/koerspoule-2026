@@ -12,7 +12,7 @@
  * verdwijnt vanzelf zodra alles rond is, en is wegklikbaar (localStorage).
  */
 import { useState } from "react";
-import { Check, X, Users, Share2, LineChart, Mountain, Newspaper } from "lucide-react";
+import { Check, X, Users, Share2, LineChart, Mountain, Newspaper, Compass } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +42,7 @@ export default function OnboardingCard({
   onResults,
   onStats,
   onKrant,
+  onRondleiding,
   onDismissed,
 }: {
   hasTeam: boolean;
@@ -56,6 +57,8 @@ export default function OnboardingCard({
   onResults: () => void;
   onStats?: () => void;
   onKrant?: () => void;
+  /** Start de rondleiding. Weglaten = geen knop. */
+  onRondleiding?: () => void;
   /** Vuurt bij wegklikken, zodat een omliggende kolom kan inklappen. */
   onDismissed?: () => void;
 }) {
@@ -159,6 +162,20 @@ export default function OnboardingCard({
           );
         })}
       </ol>
+
+      {/* De checklist zegt wát je moet doen, de rondleiding waar het staat.
+          Vooral op de webversie is dat de brug: daar zijn de namen in de
+          tabbalk hetzelfde wielerjargon als op mobiel. */}
+      {onRondleiding && (
+        <button
+          type="button"
+          onClick={onRondleiding}
+          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-foreground/20 px-2 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Compass className="h-3 w-3" aria-hidden />
+          {t("rondleiding.starten")}
+        </button>
+      )}
     </div>
   );
 }

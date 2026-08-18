@@ -1637,7 +1637,8 @@
     "sluiten": "Rondleiding sluiten",
     "start": {
       "titel": "Even rondkijken",
-      "tekst": "Vijf onderdelen, elk met een eigen plek in de balk onderaan. In een halve minuut weet je waar alles staat."
+      "tekstMobiel": "Vijf onderdelen, elk met een eigen plek in de balk onderaan. In een halve minuut weet je waar alles staat.",
+      "tekstWeb": "Vijf onderdelen, elk met een eigen plek in de balk bovenaan. In een halve minuut weet je waar alles staat."
     },
     "krant": {
       "titel": "Krant",
@@ -1672,7 +1673,8 @@
       "wielerdirecteur": "je rapportcijfer als ploegleider",
       "superteam": "hoeveel van het droomteam had jij",
       "benchmark": "jouw ploeg naast die van iemand anders"
-    }
+    },
+    "starten": "Bekijk de rondleiding"
   },
   "statusblok": {
     "eyebrow": "Jouw stand",

@@ -1637,7 +1637,8 @@
     "sluiten": "Close tour",
     "start": {
       "titel": "A quick look around",
-      "tekst": "Five sections, each with its own spot in the bar below. Half a minute and you'll know where everything is."
+      "tekstMobiel": "Five sections, each with its own spot in the bar below. Half a minute and you'll know where everything is.",
+      "tekstWeb": "Five sections, each with its own spot in the bar at the top. Half a minute and you'll know where everything is."
     },
     "krant": {
       "titel": "Krant",
@@ -1672,7 +1673,8 @@
       "wielerdirecteur": "your report card as team manager",
       "superteam": "how much of the dream team you had",
       "benchmark": "your team next to someone else's"
-    }
+    },
+    "starten": "Take the tour"
   },
   "statusblok": {
     "eyebrow": "Your standing",

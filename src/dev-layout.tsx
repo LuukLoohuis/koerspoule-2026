@@ -96,7 +96,7 @@ function Harness() {
         </Blok>
 
         <Blok titel="Samen, in de kolomindeling zoals op Mijn Peloton">
-          <RetroTabs tabs={HOOFD} active={hoofd} onChange={setHoofd} aria-label="hoofd2" />
+          <RetroTabs tabs={HOOFD} active={hoofd} onChange={setHoofd} aria-label="hoofd2" uitgelichteKey={uitgelicht} className={uitgelicht ? "relative z-[61]" : undefined} />
           <div
             className={
               "mt-4 flex flex-col md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-5"
@@ -130,6 +130,7 @@ function Harness() {
                   onResults={() => {}}
                   onStats={() => {}}
                   onKrant={() => {}}
+                  onRondleiding={() => { rondleidingHerstarten(); setTour(true); }}
                 />
                 <div data-steun>
                   <SteunBanner revKey="testbank" />

@@ -22,27 +22,41 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const KEY = "kp_rondleiding_gezien_v1";
 
 /* --- welke tab in de onderbalk oplicht ------------------------------------ */
 
 let uitgelicht: string | null = null;
+let loopt = false;
 const luisteraars = new Set<() => void>();
 
-function zetUitgelicht(navKey: string | null) {
-  if (uitgelicht === navKey) return;
-  uitgelicht = navKey;
+function abonneer(fn: () => void) {
+  luisteraars.add(fn);
+  return () => { luisteraars.delete(fn); };
+}
+
+function zetStand(actief: boolean, navKey: string | null) {
+  const nieuweKey = actief ? navKey : null;
+  if (loopt === actief && uitgelicht === nieuweKey) return;
+  loopt = actief;
+  uitgelicht = nieuweKey;
   luisteraars.forEach((fn) => fn());
 }
 
-/** Voor BottomNav: de tab die de rondleiding nu bespreekt, of null. */
+/** De tab die de rondleiding nu bespreekt, of null. */
 export function useUitgelichteNav(): string | null {
-  return useSyncExternalStore(
-    (fn) => { luisteraars.add(fn); return () => luisteraars.delete(fn); },
-    () => uitgelicht,
-    () => null,
-  );
+  return useSyncExternalStore(abonneer, () => uitgelicht, () => null);
+}
+
+/**
+ * Loopt er een rondleiding? De tabbalk gebruikt dit om zichzelf boven het waas
+ * te tillen; op mobiel staat de onderbalk daar al hoog genoeg voor, op de
+ * webversie staat de balk gewoon in de pagina.
+ */
+export function useRondleidingLoopt(): boolean {
+  return useSyncExternalStore(abonneer, () => loopt, () => false);
 }
 
 export function rondleidingGezien(): boolean {
@@ -68,17 +82,17 @@ export default function Rondleiding({
 }) {
   const { t } = useTranslation();
   const [stap, setStap] = useState(0);
-  // De rondleiding wijst de onderbalk aan, en die bestaat alleen op mobiel.
-  // Zonder deze grens draaide op de webversie een onzichtbare rondleiding die
-  // wel het scrollen van de pagina vergrendelde.
+  // De rondleiding wijst een navigatiebalk aan, en dat is een andere balk per
+  // formaat: onderaan op mobiel, bovenaan op de webversie. Alleen de plek van
+  // het kaartje en één zinnetje verschillen; de stappen zijn dezelfde.
   const isMobiel = useIsMobile();
-  const actief = open && isMobiel;
+  const actief = open;
 
   const stappen: Stap[] = [
     {
       navKey: null,
       titel: t("rondleiding.start.titel"),
-      tekst: t("rondleiding.start.tekst"),
+      tekst: isMobiel ? t("rondleiding.start.tekstMobiel") : t("rondleiding.start.tekstWeb"),
     },
     {
       navKey: "karavaan",
@@ -133,8 +147,8 @@ export default function Rondleiding({
 
   // De onderbalk licht de besproken tab op.
   useEffect(() => {
-    zetUitgelicht(actief ? huidig.navKey : null);
-    return () => zetUitgelicht(null);
+    zetStand(actief, huidig.navKey);
+    return () => zetStand(false, null);
   }, [actief, huidig.navKey]);
 
   // Achtergrond niet mee laten scrollen tijdens de rondleiding.
@@ -169,10 +183,21 @@ export default function Rondleiding({
       aria-modal="true"
       aria-label={t("rondleiding.aria")}
     >
-      {/* Waas onder de onderbalk (z-50), zodat die zichtbaar blijft. */}
+      {/* Het waas laat de besproken balk bewust vrij: op mobiel staat de
+          onderbalk al op z-50, op de webversie tilt de tabbalk zichzelf op
+          zodra er een rondleiding loopt. */}
       <div className="absolute inset-0 bg-foreground/60" onClick={sluit} />
 
-      <div className="absolute inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] rounded-xl border-2 border-foreground bg-card p-4 shadow-[4px_4px_0_hsl(var(--foreground))]">
+      <div
+        className={cn(
+          "absolute rounded-xl border-2 border-foreground bg-card p-4 shadow-[4px_4px_0_hsl(var(--foreground))]",
+          isMobiel
+            // Net boven de onderbalk, zodat de aangewezen tab in beeld blijft.
+            ? "inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))]"
+            // Midden in beeld; de opgelichte balk staat er ruim boven.
+            : "left-1/2 top-1/2 w-[min(30rem,92vw)] -translate-x-1/2 -translate-y-1/2",
+        )}
+      >
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">

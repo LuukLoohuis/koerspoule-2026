@@ -30,6 +30,7 @@ export function RetroTabs({
   onChange,
   className,
   variant = "dossard",
+  uitgelichteKey,
   "aria-label": ariaLabel,
 }: {
   tabs: readonly RetroTab[];
@@ -43,6 +44,11 @@ export function RetroTabs({
    * de eerste is; het lichtere gewicht maakt die rangorde zichtbaar.
    */
   variant?: "dossard" | "segment";
+  /**
+   * Tijdens de rondleiding: de tab die besproken wordt. Die blijft fel, de rest
+   * dooft, zodat je ziet waar het over gaat. Niet gezet = geen rondleiding.
+   */
+  uitgelichteKey?: string | null;
   "aria-label"?: string;
 }) {
   const segment = variant === "segment";
@@ -120,6 +126,10 @@ export function RetroTabs({
             segment
               ? "top-1 bg-card shadow-sm"
               : "top-1.5 bg-primary shadow-[2px_2px_0_hsl(var(--foreground))]",
+            // De indicator is een eigen laag naast de knoppen; zonder deze
+            // regel bleef de actieve tab tijdens de rondleiding fel oplichten
+            // terwijl de knop erboven al gedoofd was.
+            uitgelichteKey != null && uitgelichteKey !== active && "opacity-30",
           )}
           style={{
             height: segment ? "calc(100% - 0.5rem)" : "calc(100% - 0.75rem)",
@@ -132,6 +142,8 @@ export function RetroTabs({
 
       {tabs.map((t) => {
         const on = t.key === active;
+        const uitgelicht = uitgelichteKey != null && t.key === uitgelichteKey;
+        const gedoofd = uitgelichteKey != null && !uitgelicht;
         return (
           <button
             key={t.key}
@@ -160,6 +172,8 @@ export function RetroTabs({
                       : "border-foreground/15 bg-foreground/[0.015] text-muted-foreground hover:-translate-y-0.5 hover:border-foreground/40 hover:text-foreground",
                   ),
               t.disabled && "cursor-not-allowed opacity-40",
+              gedoofd && "opacity-30",
+              uitgelicht && "ring-2 ring-primary ring-offset-1 ring-offset-card",
             )}
           >
             {/* Speld-puntjes horen bij het rugnummer; een segment heeft ze niet. */}

@@ -50,7 +50,7 @@ import { useSubpoules } from "@/hooks/useSubpoules";
 import { isMeermarathonGame } from "@/lib/gameTypes";
 import StatusBlok from "@/components/StatusBlok";
 import ZwevendeActie from "@/components/ZwevendeActie";
-import Rondleiding, { rondleidingGezien, rondleidingHerstarten } from "@/components/Rondleiding";
+import Rondleiding, { rondleidingGezien, rondleidingHerstarten, useUitgelichteNav, useRondleidingLoopt } from "@/components/Rondleiding";
 import { useAuth } from "@/hooks/useAuth";
 import OnboardingCard, { ONBOARDING_KEY, onboardingWeggeklikt } from "@/components/OnboardingCard";
 import { Wrench, Share2 } from "lucide-react";
@@ -220,14 +220,17 @@ export default function MijnPeloton() {
     rondleidingHerstarten();
     setOnbWeg(false);
     setHerstelTeller((n) => n + 1);
-    // Op mobiel is de rondleiding de hulp; daar heeft "terughalen" pas zin als
-    // hij ook echt weer start.
-    if (window.matchMedia("(max-width: 767px)").matches) setRondleidingOpen(true);
+    // "Terughalen" heeft pas zin als de rondleiding ook echt weer start.
+    setRondleidingOpen(true);
   }
   // Rondleiding: eenmalig bij het eerste bezoek, en daarna terug te halen via
   // dezelfde knop als de hulpkaarten. Alleen mobiel — daar zitten de namen in
   // een balk die je niet zomaar doorgrondt.
   const [rondleidingOpen, setRondleidingOpen] = useState(false);
+  // De tabbalk moet tijdens de rondleiding boven het waas uitkomen; op mobiel
+  // regelt de onderbalk dat zelf met z-50.
+  const rondleidingLoopt = useRondleidingLoopt();
+  const uitgelichteNav = useUitgelichteNav();
   useEffect(() => {
     if (rondleidingGezien()) return;
     // Even wachten tot de pagina staat; een rondleiding over een halfgeladen
@@ -1221,7 +1224,8 @@ export default function MijnPeloton() {
 
           {/* Desktop tab nav — retro dossard-tabbalk */}
           <RetroTabs
-            className="hidden md:flex"
+            className={cn("hidden md:flex", rondleidingLoopt && "relative z-[61]")}
+            uitgelichteKey={uitgelichteNav}
             aria-label="Hoofdnavigatie"
             active={gameTab}
             onChange={setGameTab}
@@ -1265,6 +1269,7 @@ export default function MijnPeloton() {
                     krantBekeken={bezocht.karavaan}
                     onStats={() => { markeerBezocht("hors"); setGameTab("hors"); }}
                     onKrant={() => { markeerBezocht("karavaan"); setGameTab("karavaan"); }}
+                    onRondleiding={() => setRondleidingOpen(true)}
                     onDismissed={() => setOnbWeg(true)}
                   />
                 )}
