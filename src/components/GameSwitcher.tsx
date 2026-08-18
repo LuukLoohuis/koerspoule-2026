@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import FlagIcon from "@/components/FlagIcon";
 import { gameTheme, type GameRow } from "@/hooks/useAllGames";
 import { isVisibleToUser, isAdminOnlyStatus, statusBadge, statusOrderRank, isFinishedLike } from "@/lib/gameStatus";
-import { gameSeasonName, isMeermarathonGame } from "@/lib/gameTypes";
+import { meermarathonSeasonKort, isMeermarathonGame } from "@/lib/gameTypes";
 
 type Props = {
   games: GameRow[];
@@ -39,7 +39,9 @@ const raceGradient = (type: string | null | undefined) => {
 function segmentName(game: GameRow, finished: boolean): string {
   const y = game.year;
   const t = String(game.game_type ?? "").toLowerCase();
-  if (isMeermarathonGame(t)) return gameSeasonName(t, y);
+  // Verkort seizoen: "Meermarathon 2026-2027" liep in dit smalle segment
+  // tegen de afkapping aan.
+  if (isMeermarathonGame(t)) return `Meermarathon ${meermarathonSeasonKort(y)}`;
   if (finished) {
     if (t === "giro") return `Giro ${y}`;
     if (t === "vuelta" || t === "vta") return `Vuelta ${y}`;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { defaultWedstrijdType, gameSeasonName, gameYearFieldValue, isMeermarathonGame, meermarathonAfstandLabel, meermarathonSeason, meermarathonStageLabel, parseGameYearInput } from "./gameTypes";
+import { defaultWedstrijdType, gameSeasonName, gameYearFieldValue, isMeermarathonGame, meermarathonAfstandLabel, meermarathonSeason,
+  meermarathonSeasonKort, meermarathonStageLabel, parseGameYearInput } from "./gameTypes";
 
 describe("Meermarathon game type", () => {
   it("recognises the game type without changing other game types", () => {
@@ -59,5 +60,22 @@ describe("meermarathon-wedstrijden", () => {
     // Kilometers op kunstijs zijn niet de maat; die worden genegeerd.
     expect(meermarathonAfstandLabel({ ijs_type: "kunstijs", distance_km: 40 })).toBeNull();
     expect(meermarathonAfstandLabel({ ijs_type: "natuurijs" })).toBeNull();
+  });
+
+  it("kort een seizoen af met de juiste tekens", () => {
+    // U+2019 (rechter enkel aanhalingsteken) markeert de weggelaten cijfers,
+    // en het streepje is een gewoon koppelteken: een seizoen is een geheel,
+    // geen bereik van-tot.
+    expect(meermarathonSeasonKort(2026)).toBe("\u201926-\u201927");
+    expect(meermarathonSeasonKort(1999)).toBe("\u201999-\u201900");
+    expect(meermarathonSeasonKort(2005)).toBe("\u201905-\u201906");
+  });
+
+  it("gebruikt niet de rechte apostrof of het linker aanhalingsteken", () => {
+    const kort = meermarathonSeasonKort(2026);
+    expect(kort).not.toContain("'");
+    expect(kort).not.toContain("\u2018");
+    // En geen halflang streepje: dat is de Engelse conventie voor bereiken.
+    expect(kort).not.toContain("\u2013");
   });
 });

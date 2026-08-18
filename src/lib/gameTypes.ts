@@ -8,6 +8,23 @@ export function meermarathonSeason(startYear: number): string {
   return `${startYear}-${startYear + 1}`;
 }
 
+/**
+ * Verkorte schrijfwijze voor krappe plekken: 2026 -> \u201926-\u201927.
+ *
+ * De apostrof is U+2019 (rechter enkel aanhalingsteken), het teken dat
+ * weggelaten cijfers markeert -- niet de rechte typemachine-apostrof en zeker
+ * niet het linker aanhalingsteken, dat een citaat opent.
+ *
+ * Het streepje is een gewoon koppelteken. Een seizoen is een geheel dat over
+ * twee kalenderjaren loopt, geen bereik van-tot; het Nederlands schrijft dat
+ * als 2026-2027, net als een schooljaar. Het halflange streepje is de Engelse
+ * conventie voor bereiken en hoort hier dus niet.
+ */
+export function meermarathonSeasonKort(startYear: number): string {
+  const kort = (jaar: number) => `\u2019${String(jaar % 100).padStart(2, "0")}`;
+  return `${kort(startYear)}-${kort(startYear + 1)}`;
+}
+
 export function parseGameYearInput(gameType: string | null | undefined, value: string): number | null {
   const input = value.trim();
 
