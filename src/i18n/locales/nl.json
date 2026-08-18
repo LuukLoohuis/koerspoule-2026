@@ -1392,7 +1392,7 @@
     "onboarding": {
       "close": "Onboarding sluiten",
       "welcome": "— Welkom in het peloton —",
-      "heading": "Zo ben je in 3 stappen weg",
+      "heading": "Aan de slag",
       "step1Label": "Stel je ploeg samen",
       "step1Hint": "Kies je renners per categorie.",
       "step1Cta": "Naar de ploeg",
@@ -1401,7 +1401,11 @@
       "step2Cta": "Maak een subpoule",
       "step3Label": "Volg je punten live",
       "step3Hint": "Vanaf de eerste etappe.",
-      "step3Cta": "Bekijk uitslagen"
+      "step3Cta": "Bekijk uitslagen",
+      "step4Label": "Bekijk je statistieken",
+      "step4Cta": "Naar Hors Catégorie",
+      "step5Label": "Lees de krant",
+      "step5Cta": "Naar de voorpagina"
     },
     "featurePreview": {
       "eyebrow": "Wat krijg je?",

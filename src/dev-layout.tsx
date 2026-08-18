@@ -9,6 +9,8 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Newspaper, Car, Users, Trophy, Mountain, Target, Pencil } from "lucide-react";
 import { RetroTabs } from "@/components/RetroTabs";
+import OnboardingCard from "@/components/OnboardingCard";
+import "@/i18n";
 import "./index.css";
 
 const HOOFD = [
@@ -82,13 +84,18 @@ function Harness() {
                     Opslaan
                   </button>
                 </form>
-                <div className="ornate-frame retro-border bg-card p-4">
-                  <div className="overline-stamp mb-1">— Welkom in het peloton —</div>
-                  <p className="font-display text-lg font-bold">Zo ben je in 3 stappen weg</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    (echte OnboardingCard is breder opgezet — dit blok laat zien hoeveel ruimte er is)
-                  </p>
-                </div>
+                <OnboardingCard
+                  hasTeam={false}
+                  inSubpoule
+                  liveTracking={false}
+                  statsBekeken={false}
+                  krantBekeken={false}
+                  onTeam={() => {}}
+                  onSubpoule={() => {}}
+                  onResults={() => {}}
+                  onStats={() => {}}
+                  onKrant={() => {}}
+                />
               </aside>
             )}
             <div className="order-2 min-w-0 md:order-1">

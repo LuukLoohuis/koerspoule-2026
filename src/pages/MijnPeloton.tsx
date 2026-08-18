@@ -180,6 +180,20 @@ export default function MijnPeloton() {
   // Wegklikken van de onboarding moet de zijkolom direct laten inklappen; de
   // kaart bewaart dat zelf in localStorage, dus we spiegelen het hier.
   const [onbWeg, setOnbWeg] = useState(() => onboardingWeggeklikt());
+  // Statistieken en de krant hebben geen meetbare "klaar"-staat zoals een ploeg
+  // of subpoule; we onthouden simpelweg of de deelnemer er ooit is geweest.
+  const [bezocht, setBezocht] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem("kp_secties_bezocht") ?? "{}"); }
+    catch { return {}; }
+  });
+  const markeerBezocht = (sectie: "hors" | "karavaan") => {
+    setBezocht((prev) => {
+      if (prev[sectie]) return prev;
+      const next = { ...prev, [sectie]: true };
+      try { localStorage.setItem("kp_secties_bezocht", JSON.stringify(next)); } catch { /* negeer */ }
+      return next;
+    });
+  };
   const teamBarVisible = useAutoHideOnScroll();
   const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
@@ -1187,6 +1201,10 @@ export default function MijnPeloton() {
                     onTeam={() => navigate("/team-samenstellen")}
                     onSubpoule={() => setGameTab("subpoules")}
                     onResults={() => setGameTab("uitslagen")}
+                    statsBekeken={bezocht.hors}
+                    krantBekeken={bezocht.karavaan}
+                    onStats={() => { markeerBezocht("hors"); setGameTab("hors"); }}
+                    onKrant={() => { markeerBezocht("karavaan"); setGameTab("karavaan"); }}
                     onDismissed={() => setOnbWeg(true)}
                   />
                 )}

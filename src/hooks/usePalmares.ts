@@ -229,8 +229,13 @@ export function usePalmares() {
         subpoules: PalmaresSubpoule[];
       }> | null;
 
-      if (!error && (summary?.games?.length ?? 0) > 0) {
-        return { games: summary?.games ?? [], subpoules: summary?.subpoules ?? [] };
+      // Alleen terugvallen als de RPC écht niet leverde. Eerder gold een lege
+      // lijst ook als mislukking, waardoor iemand zonder erelijst — precies de
+      // nieuwe deelnemer — elke keer de trage weg nam: een query per game plus
+      // een RPC per game én per subpoule, om daarna hetzelfde lege antwoord te
+      // geven.
+      if (!error && summary) {
+        return { games: summary.games ?? [], subpoules: summary.subpoules ?? [] };
       }
 
       return fetchLegacyPalmares(user.id);

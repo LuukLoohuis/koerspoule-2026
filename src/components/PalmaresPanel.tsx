@@ -123,7 +123,7 @@ function RaceProfileMark({ theme, className }: { theme: RaceTheme; className?: s
 }
 function HeaderCyclingScene() {
   return (
-    <img
+    <img loading="lazy" decoding="async"
       src={palmaresCyclingScene}
       alt=""
       decoding="async"
@@ -147,7 +147,7 @@ function RaceRoundel({ theme }: { theme: RaceTheme }) {
   const image = ROUNDEL_BY_THEME[theme.key];
   return (
     <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--palmares-accent)] bg-[var(--palmares-roundel)] text-[var(--palmares-roundel-ink)] shadow-[0_3px_8px_rgba(58,42,26,0.1)] sm:h-14 sm:w-14">
-      {image ? <img src={image} alt="" className="h-full w-full rounded-full object-cover" /> : <><Bike className="h-4 w-4" strokeWidth={2.3} aria-hidden /><span className="ml-1 font-oswald text-[9px] font-black uppercase">{theme.wordmark}</span></>}
+      {image ? <img loading="lazy" decoding="async" src={image} alt="" className="h-full w-full rounded-full object-cover" /> : <><Bike className="h-4 w-4" strokeWidth={2.3} aria-hidden /><span className="ml-1 font-oswald text-[9px] font-black uppercase">{theme.wordmark}</span></>}
     </span>
   );
 }
@@ -264,7 +264,7 @@ export default function PalmaresPanel() {
         <article className="relative grid overflow-hidden rounded-[1.4rem] border border-[var(--palmares-accent)] bg-[#fffdf8]/88 shadow-[0_8px_22px_rgba(58,42,26,0.085)] lg:grid-cols-[39fr_61fr]">
           <div className="relative flex min-h-[235px] items-center justify-center overflow-hidden [background:linear-gradient(145deg,var(--palmares-hero-start),var(--palmares-hero-end))] px-5 py-6 sm:min-h-[255px]">
             <div className="absolute inset-0 opacity-45 [background:radial-gradient(circle_at_50%_55%,rgba(255,255,255,.55),transparent_55%)]" aria-hidden /><LaurelWreath />
-            <div className="relative z-10 text-center"><span className="inline-flex rounded-lg border border-[var(--palmares-accent)] bg-[#fffaf0]/88 px-4 py-1.5 font-oswald text-[10px] font-bold uppercase tracking-[0.17em] text-[var(--palmares-accent-strong)] shadow-sm sm:text-xs">{t("common.palmares.bestFinalRank")}</span><strong className="mt-3 block font-oswald text-[clamp(4.25rem,8vw,6rem)] font-black leading-none tracking-[-0.055em] text-[#2a190b]">#{bestGame?.my_rank || "—"}</strong><span className="mx-auto mt-1.5 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--palmares-accent)] bg-[#fffdf8] shadow-[0_3px_9px_rgba(58,42,26,.12)]"><img src={JERSEY_BY_THEME[bestTheme.key]} alt="" className="h-9 w-auto object-contain" /></span></div>
+            <div className="relative z-10 text-center"><span className="inline-flex rounded-lg border border-[var(--palmares-accent)] bg-[#fffaf0]/88 px-4 py-1.5 font-oswald text-[10px] font-bold uppercase tracking-[0.17em] text-[var(--palmares-accent-strong)] shadow-sm sm:text-xs">{t("common.palmares.bestFinalRank")}</span><strong className="mt-3 block font-oswald text-[clamp(4.25rem,8vw,6rem)] font-black leading-none tracking-[-0.055em] text-[#2a190b]">#{bestGame?.my_rank || "—"}</strong><span className="mx-auto mt-1.5 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--palmares-accent)] bg-[#fffdf8] shadow-[0_3px_9px_rgba(58,42,26,.12)]"><img loading="lazy" decoding="async" src={JERSEY_BY_THEME[bestTheme.key]} alt="" className="h-9 w-auto object-contain" /></span></div>
             <div className="pointer-events-none absolute -right-10 -top-4 hidden h-[calc(100%+2rem)] w-20 rounded-[50%] border-r-2 border-[var(--palmares-accent)] bg-[#fffdf8] lg:block" aria-hidden />
           </div>
           <div className="relative flex min-h-[235px] flex-col justify-center px-6 py-6 sm:min-h-[255px] sm:px-9 lg:pl-12 lg:pr-9">

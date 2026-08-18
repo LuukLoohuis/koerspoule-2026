@@ -70,4 +70,28 @@ describe("usePalmares", () => {
     expect(mocks.rpc).toHaveBeenCalledWith("user_palmares_summary");
     expect(mocks.rpc).toHaveBeenCalledWith("game_benchmark_data", { p_game_id: "tour-2026" });
   });
+
+  it("neemt niet de trage weg als de RPC gewoon een lege erelijst teruggeeft", async () => {
+    // Iemand zonder erelijst — precies de nieuwe deelnemer — kreeg eerder de
+    // volledige fallback: een RPC per game én per subpoule, om daarna hetzelfde
+    // lege antwoord te geven. Een leeg resultaat is een geldig antwoord.
+    mocks.rpc.mockImplementation(async (name: string) => {
+      if (name === "user_palmares_summary") {
+        return { data: { games: [], subpoules: [] }, error: null };
+      }
+      throw new Error(`onverwachte RPC: ${name}`);
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => usePalmares(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual({ games: [], subpoules: [] });
+    // Eén aanroep, en geen enkele query naar entries/games/subpoules.
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
 });

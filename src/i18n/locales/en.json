@@ -1392,7 +1392,7 @@
     "onboarding": {
       "close": "Close onboarding",
       "welcome": "— Welcome to the peloton —",
-      "heading": "You're set in 3 steps",
+      "heading": "Get started",
       "step1Label": "Build your team",
       "step1Hint": "Pick your riders per category.",
       "step1Cta": "Go to team",
@@ -1401,7 +1401,11 @@
       "step2Cta": "Create a subpoule",
       "step3Label": "Track your points live",
       "step3Hint": "From the first stage.",
-      "step3Cta": "View results"
+      "step3Cta": "View results",
+      "step4Label": "Check your statistics",
+      "step4Cta": "To Hors Catégorie",
+      "step5Label": "Read the paper",
+      "step5Cta": "To the front page"
     },
     "featurePreview": {
       "eyebrow": "What do you get?",
