@@ -16,6 +16,7 @@ import Rondleiding, { rondleidingHerstarten, useUitgelichteNav } from "@/compone
 import { StatusBlokView } from "@/components/StatusBlok";
 import ZwevendeActie from "@/components/ZwevendeActie";
 import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
+import HorsSkeleton from "@/components/skeletons/HorsSkeleton";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import TruiBadge from "@/components/retro/TruiBadge";
@@ -268,6 +269,10 @@ function Harness() {
 
         <Blok titel="Ploeg-skeleton">
           <div style={{ width: 375 }}><PloegSkeleton /></div>
+        </Blok>
+
+        <Blok titel="Hors Cat\u00e9gorie-skeleton">
+          <div data-horsskel style={{ maxWidth: 820 }}><HorsSkeleton /></div>
         </Blok>
 
         <Blok titel="Zwevende actieknop (linksonder, md:hidden)">

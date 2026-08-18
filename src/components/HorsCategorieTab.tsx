@@ -46,6 +46,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { TruiType } from "@/lib/themas";
 import { useLefevereReport, useLefeverePreview } from "@/hooks/useLefevereReport";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
+import HorsSkeleton from "@/components/skeletons/HorsSkeleton";
 import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 import { simulateMonkeyTeams } from "@/lib/monkeySimulation";
 import aapFietser from "@/assets/horscat/aap-fietser-transparant.png";
@@ -873,6 +874,14 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         </CardContent>
       </Card>
     );
+  }
+
+  // ── Laden ────────────────────────────────────────────────────────────────────
+  // Na de vergrendel-check: wie geen toegang heeft, hoeft niet eerst naar een
+  // skeleton te kijken. De hook gaf isLoading altijd al terug, maar er werd
+  // niets mee gedaan.
+  if (horsSummary.isLoading) {
+    return <HorsSkeleton />;
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
