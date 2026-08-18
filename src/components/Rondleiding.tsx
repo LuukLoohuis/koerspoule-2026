@@ -215,15 +215,22 @@ export default function Rondleiding({
        dus het scherm eronder is het onderwerp en moet gewoon te zien en te
        scrollen zijn. Vandaar ook een aangemeerd paneel in plaats van een
        modaal — role="region" en niet aria-modal, want de rest van de pagina
-       blijft bereikbaar. Alleen de besproken tab licht op. */
+       blijft bereikbaar. Alleen de besproken tab licht op.
+
+       z-70 en niet z-60: de rondleiding is het enige dat over de hele pagina
+       heen mag. Alles in de app zit op 50 of lager, en de enige uitzondering
+       (de toast op 100) hoort er terecht wél overheen. */
     <div
-      className="fixed inset-0 z-[60] pointer-events-none"
+      className="fixed inset-0 z-[70] pointer-events-none"
       role="region"
       aria-label={t("rondleiding.aria")}
     >
       <div
         className={cn(
           "pointer-events-auto absolute rounded-xl border-2 border-foreground bg-card p-4 shadow-[4px_4px_0_hsl(var(--foreground))]",
+          // Een venster van 600px hoog met zeventien stappen: het paneel mag
+          // nooit buiten beeld groeien.
+          "max-h-[calc(100vh-1.5rem)] overflow-y-auto",
           isMobiel
             // Net boven de onderbalk, zodat de aangewezen tab in beeld blijft.
             ? "inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))]"
