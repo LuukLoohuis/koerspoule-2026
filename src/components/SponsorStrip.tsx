@@ -64,13 +64,18 @@ function SponsorCel({ s }: { s: Sponsor }) {
   const { t } = useTranslation();
 
   const inhoud = s.logo_url ? (
-    // Het kader is vast, het logo past erbinnen op hoogte én breedte. Zo
-    // wegen een breed woordmerk en een compact beeldmerk even zwaar.
+    // Het kader is vast, het logo past erbinnen op hoogte én breedte.
+    //
+    // De hoogte is ruimer dan de breedte toelaat, en dat is met opzet: een
+    // breed woordmerk loopt toch tegen de breedte aan en verandert hier niet
+    // van, terwijl een compact schildje anders optisch veel kleiner uitvalt
+    // dan de rest. Zo wegen ze even zwaar zonder per sponsor te hoeven
+    // sleutelen.
     <img
       src={s.logo_url}
       alt={s.naam}
       loading="lazy"
-      className="max-h-11 w-auto max-w-[128px] object-contain"
+      className="max-h-[54px] w-auto max-w-[132px] object-contain"
     />
   ) : (
     <span className="text-center leading-tight">
@@ -85,7 +90,8 @@ function SponsorCel({ s }: { s: Sponsor }) {
     </span>
   );
 
-  const cel = "flex h-full min-h-[72px] min-w-[148px] items-center justify-center px-5 py-3";
+  // 54px logo + 2x 12px lucht = 78; de 84 houdt ook de tekstvariant ruim.
+  const cel = "flex h-full min-h-[84px] min-w-[152px] items-center justify-center px-5 py-3";
 
   return s.link_url ? (
     <a

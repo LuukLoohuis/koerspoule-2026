@@ -62,9 +62,19 @@ function Blok({ titel, children }: { titel: string; children: React.ReactNode })
 // De echte SponsorStrip haalt zijn data via react-query; hier zetten we die
 // vooraf in de cache, zodat het component zelf getoond wordt en niet een kopie.
 const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+// Twee uitersten om de kaderregel te controleren: een breed woordmerk (5:1)
+// dat tegen de breedte aanloopt, en een compact schildje (1:1) dat tegen de
+// hoogte aanloopt.
+const WOORDMERK = "data:image/svg+xml," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 100"><rect width="500" height="100" fill="#111"/><text x="20" y="66" font-family="Helvetica" font-size="52" fill="#fff">breed merk</text></svg>',
+);
+const SCHILDJE = "data:image/svg+xml," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M6 6h88v58L50 96 6 64Z" fill="#F2C500"/><text x="50" y="52" text-anchor="middle" font-family="Georgia" font-style="italic" font-size="20" fill="#1a1a1a">Cyc</text></svg>',
+);
+
 qc.setQueryData(["sponsors", "visible"], [
-  { id: "1", naam: "Wij Geven Licht", logo_url: "/koerspoule-meermarathon.png", label: null, weergavenaam: null, link_url: "https://example.com", zichtbaar: true, sort_order: 1, created_at: "" },
-  { id: "2", naam: "De Digitale Basis", logo_url: "/favicon-meermarathon.svg", label: null, weergavenaam: null, link_url: "https://example.com", zichtbaar: true, sort_order: 2, created_at: "" },
+  { id: "1", naam: "Breed Merk", logo_url: WOORDMERK, label: null, weergavenaam: null, link_url: "https://example.com", zichtbaar: true, sort_order: 1, created_at: "" },
+  { id: "2", naam: "Cycling Lifestyle", logo_url: SCHILDJE, label: null, weergavenaam: null, link_url: "https://example.com", zichtbaar: true, sort_order: 2, created_at: "" },
   { id: "3", naam: "Oele Sport", logo_url: null, label: "Partner", weergavenaam: "OELE", link_url: null, zichtbaar: true, sort_order: 3, created_at: "" },
   { id: "4", naam: "Schaatsshop", logo_url: null, label: null, weergavenaam: "SCHAATSSHOP", link_url: "https://example.com", zichtbaar: true, sort_order: 4, created_at: "" },
 ]);
