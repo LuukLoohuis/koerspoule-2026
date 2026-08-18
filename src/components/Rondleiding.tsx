@@ -18,6 +18,7 @@
  * geen gemeenschappelijke ouder waar zo'n prop doorheen kan.
  */
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
@@ -67,6 +68,11 @@ export default function Rondleiding({
 }) {
   const { t } = useTranslation();
   const [stap, setStap] = useState(0);
+  // De rondleiding wijst de onderbalk aan, en die bestaat alleen op mobiel.
+  // Zonder deze grens draaide op de webversie een onzichtbare rondleiding die
+  // wel het scrollen van de pagina vergrendelde.
+  const isMobiel = useIsMobile();
+  const actief = open && isMobiel;
 
   const stappen: Stap[] = [
     {
@@ -127,27 +133,27 @@ export default function Rondleiding({
 
   // De onderbalk licht de besproken tab op.
   useEffect(() => {
-    zetUitgelicht(open ? huidig.navKey : null);
+    zetUitgelicht(actief ? huidig.navKey : null);
     return () => zetUitgelicht(null);
-  }, [open, huidig.navKey]);
+  }, [actief, huidig.navKey]);
 
   // Achtergrond niet mee laten scrollen tijdens de rondleiding.
   useEffect(() => {
-    if (!open) return;
+    if (!actief) return;
     const vorige = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = vorige; };
-  }, [open]);
+  }, [actief]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!actief) return;
     const opToets = (e: KeyboardEvent) => { if (e.key === "Escape") sluit(); };
     window.addEventListener("keydown", opToets);
     return () => window.removeEventListener("keydown", opToets);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [actief]);
 
-  if (!open) return null;
+  if (!actief) return null;
 
   const sluit = () => {
     try { localStorage.setItem(KEY, "1"); } catch { /* negeer */ }
@@ -158,7 +164,7 @@ export default function Rondleiding({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[60] md:hidden"
+      className="fixed inset-0 z-[60]"
       role="dialog"
       aria-modal="true"
       aria-label={t("rondleiding.aria")}
