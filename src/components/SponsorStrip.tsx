@@ -46,7 +46,10 @@ export default function SponsorStrip() {
 
             {/* Bij veel sponsoren schuift de rij, in plaats van naar een tweede
                 regel te vallen en het bord scheef te trekken. */}
-            <ul className="m-0 flex list-none overflow-x-auto p-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {/* flex-1: de rij vult de rest van het bord, zodat de cellen
+                meegroeien met de beschikbare breedte in plaats van op hun
+                minimum te blijven staan. */}
+            <ul className="m-0 flex flex-1 list-none overflow-x-auto p-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {sponsors.map((s) => (
                 <li key={s.id} className="flex-1 shrink-0 border-r border-border/70 last:border-r-0">
                   <SponsorCel s={s} />
@@ -66,16 +69,16 @@ function SponsorCel({ s }: { s: Sponsor }) {
   const inhoud = s.logo_url ? (
     // Het kader is vast, het logo past erbinnen op hoogte én breedte.
     //
-    // De hoogte is ruimer dan de breedte toelaat, en dat is met opzet: een
-    // breed woordmerk loopt toch tegen de breedte aan en verandert hier niet
-    // van, terwijl een compact schildje anders optisch veel kleiner uitvalt
-    // dan de rest. Zo wegen ze even zwaar zonder per sponsor te hoeven
-    // sleutelen.
+    // Twee grenzen, want de twee soorten logo's lopen tegen verschillende
+    // dingen aan: een breed woordmerk raakt de breedte en een compact
+    // schildje de hoogte. Wie er maar één optrekt, vergroot de helft van de
+    // sponsoren niet. De hoogte staat ruimer dan de breedte toelaat, zodat
+    // een schildje optisch even zwaar weegt als een woordmerk.
     <img
       src={s.logo_url}
       alt={s.naam}
       loading="lazy"
-      className="max-h-[54px] w-auto max-w-[132px] object-contain"
+      className="max-h-16 w-auto max-w-[164px] object-contain"
     />
   ) : (
     <span className="text-center leading-tight">
@@ -90,8 +93,13 @@ function SponsorCel({ s }: { s: Sponsor }) {
     </span>
   );
 
-  // 54px logo + 2x 12px lucht = 78; de 84 houdt ook de tekstvariant ruim.
-  const cel = "flex h-full min-h-[84px] min-w-[152px] items-center justify-center px-5 py-3";
+  // 64px logo + 2x 12px lucht = 88, vandaar 92 hoog.
+  //
+  // De minimumbreedte staat bewust lager dan de 164 die een breed woordmerk
+  // maximaal krijgt. De cellen groeien mee met het bord, dus op een gewoon
+  // scherm is er ruimte zat; het minimum bepaalt alleen wanneer de rij gaat
+  // schuiven. Op 204 deed hij dat al bij vier sponsoren.
+  const cel = "flex h-full min-h-[92px] min-w-[168px] items-center justify-center px-5 py-3";
 
   return s.link_url ? (
     <a
