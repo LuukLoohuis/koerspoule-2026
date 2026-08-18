@@ -207,8 +207,8 @@ function Harness() {
 
         <Blok titel="Podium — volgt de beker het opgelegde koersthema?">
           <div className="flex gap-6">
-            {(["geel", "rood"] as const).map((k) => (
-              <div key={k} style={{ width: 320 }} data-podium={k}>
+            {(["geel", "rood", "roze"] as const).map((k) => (
+              <div key={k} style={{ width: 260 }} data-podium={k}>
                 <div className="mb-1 font-mono text-[10px] text-muted-foreground">opgelegd: {k}</div>
                 <KoersThemaProvider themaKey={k}>
                   <Podium entries={[
