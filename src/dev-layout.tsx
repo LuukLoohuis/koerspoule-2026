@@ -56,6 +56,7 @@ function Harness() {
   const [herstelTeller, setHerstelTeller] = useState(0);
   const [onbWeg, setOnbWeg] = useState(() => onboardingWeggeklikt());
   const [tour, setTour] = useState(false);
+  const [heeftSub, setHeeftSub] = useState(true);
   const uitgelicht = useUitgelichteNav();
   const haalTerug = () => {
     try { localStorage.removeItem(ONBOARDING_KEY); } catch { /* negeer */ }
@@ -70,6 +71,7 @@ function Harness() {
         onClose={() => setTour(false)}
         heeftStreekTab
         heeftLiveTab
+        heeftSubpoule={heeftSub}
         onNavigeer={(sectie, sub) => {
           (window as unknown as { __nav?: string[] }).__nav ??= [];
           (window as unknown as { __nav: string[] }).__nav.push(sub ? `${sectie}/${sub}` : sectie);
@@ -95,6 +97,12 @@ function Harness() {
             className="rounded-md border-2 border-foreground bg-card px-3 py-1.5 text-xs font-bold"
           >
             rondleiding starten
+          </button>
+          <button
+            onClick={() => setHeeftSub((v) => !v)}
+            className="rounded-md border-2 border-foreground bg-card px-3 py-1.5 text-xs font-bold"
+          >
+            in subpoule: {heeftSub ? "ja" : "nee"}
           </button>
           <span className="font-mono text-[11px] text-muted-foreground">uitgelicht: {uitgelicht ?? "-"}</span>
         </div>

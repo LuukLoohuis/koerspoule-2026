@@ -39,9 +39,9 @@ const TOP_OFFSET = 12; // landen bij het begin van de tab-inhoud
 function startedInHorizontalScroller(target: EventTarget | null, root: HTMLElement): boolean {
   let el = target as HTMLElement | null;
   while (el && el !== root.parentElement) {
-    // Sommige interactieve panelen (zoals Benchmark) hebben zelf horizontale
-    // selectors en lange verticale inhoud. Daar mag een diagonale scroll nooit
-    // de bovenliggende tabcarrousel in beweging zetten.
+    // Zet dit op de horizontale scroller zelf, niet op een heel paneel: dan
+    // blijft slepen daarbinnen van die scroller, terwijl de rest van het
+    // paneel gewoon naar het volgende tabje kan vegen.
     if (el.dataset.swipeCarouselIgnore !== undefined) return true;
     const ox = window.getComputedStyle(el).overflowX;
     if ((ox === "auto" || ox === "scroll") && el.scrollWidth > el.clientWidth + 4) return true;

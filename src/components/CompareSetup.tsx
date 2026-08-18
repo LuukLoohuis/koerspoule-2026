@@ -125,8 +125,10 @@ export default function CompareSetup({
           </div>
         </div>
 
-        {/* Kandidatenlijst — horizontaal scrollende chips */}
-        <div className="flex gap-1.5 overflow-x-auto p-2.5 no-scrollbar">
+        {/* Kandidatenlijst — horizontaal scrollende chips. Uitgesloten van de
+            tabcarrousel, ook wanneer de lijst kort genoeg is om niet te
+            overlopen; slepen over kandidaten hoort nooit van tabje te wisselen. */}
+        <div className="flex gap-1.5 overflow-x-auto p-2.5 no-scrollbar" data-swipe-carousel-ignore>
           {filtered.length === 0 ? (
             <span className="text-sm text-muted-foreground italic px-1 py-1.5">{t("common.compare.noMatch")}</span>
           ) : (

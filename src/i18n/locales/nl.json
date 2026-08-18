@@ -1660,7 +1660,8 @@
       "daguitslag": "de punten van vandaag",
       "heatmap": "wie welke renner koos",
       "deelnemers": "wie er meedoen",
-      "streek": "de stand in jouw regio"
+      "streek": "de stand in jouw regio",
+      "tekstZonder": "Nog geen subpoule? Maak er een aan of doe mee met een code — daar wordt de koers pas echt leuk."
     },
     "uitslagen": {
       "titel": "Uitslagen",

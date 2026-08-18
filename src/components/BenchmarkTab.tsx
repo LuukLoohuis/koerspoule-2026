@@ -29,10 +29,13 @@ export default function BenchmarkTab({ gameId }: Props) {
   ];
 
   return (
-    <div className="max-w-3xl space-y-3" data-swipe-carousel-ignore>
-      {/* Scope-chips: alleen tonen als de gebruiker in ≥1 subpoule zit. */}
+    <div className="max-w-3xl space-y-3">
+      {/* Scope-chips: alleen tonen als de gebruiker in ≥1 subpoule zit.
+          De uitsluiting zit op de chiprij zelf en niet meer op het hele
+          paneel: zo blijft slepen over de chips van de chips, maar kun je
+          overal elders in Benchmark gewoon naar het vorige tabje vegen. */}
       {subpoules.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }} data-swipe-carousel-ignore>
           {chips.map((c) => {
             const active = scopeSubpouleId === c.id;
             return (

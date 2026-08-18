@@ -1660,7 +1660,8 @@
       "daguitslag": "today's points",
       "heatmap": "who picked which rider",
       "deelnemers": "who is taking part",
-      "streek": "the standings in your region"
+      "streek": "the standings in your region",
+      "tekstZonder": "No subpoule yet? Create one or join with a code — that is where the race gets fun."
     },
     "uitslagen": {
       "titel": "Uitslagen",

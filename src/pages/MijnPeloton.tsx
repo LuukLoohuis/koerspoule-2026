@@ -1342,6 +1342,7 @@ export default function MijnPeloton() {
             onClose={() => setRondleidingOpen(false)}
             heeftStreekTab={selSubpoules.some((sp) => sp.requires_woonplaats)}
             heeftLiveTab={isMeermarathonGame(selectedGameObj?.game_type)}
+            heeftSubpoule={selSubpoules.length > 0}
             onNavigeer={(sectie, sub) => {
               if (sectie === "hors" && sub) openHors(sub as Parameters<typeof openHors>[0]);
               else if (sectie === "subpoules" && sub) openSubpouleTab(sub);
@@ -1488,6 +1489,7 @@ export default function MijnPeloton() {
                   onActiveBannerChange={setSubpouleBanner}
                   presetJoinCode={searchParams.get("join") ?? undefined}
                   maySeeLive
+                  autoOpenId={rondleidingOpen ? selSubpoules[0]?.id : undefined}
                 />
               );
             })()}

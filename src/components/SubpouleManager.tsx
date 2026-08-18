@@ -14,6 +14,13 @@ type Props = {
   /** Deep-link: open direct op deze subtab (valt terug op 'klassement' als de
    *  gevraagde subtab onder gating wegvalt). */
   initialTab?: "klassement" | "verloop" | "daguitslag" | "heatmap" | "deelnemers" | "streek";
+  /**
+   * Open deze subpoule zodra hij bestaat en er nog niets openstaat. De
+   * subtabjes leven binnen een geopende subpoule; wie op de lijst blijft
+   * staan ziet ze niet. De rondleiding gebruikt dit om niet op het
+   * overzicht te blijven hangen.
+   */
+  autoOpenId?: string;
 };
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,7 +61,7 @@ import { cn } from "@/lib/utils";
 // Mobiele subpoule-tabs (zoals Hors Categorie). Eén paneel tegelijk.
 type SubTab = { key: string; label: string; Icon: LucideIcon };
 
-export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange, presetJoinCode, maySeeLive = true, initialTab }: Props = {}) {
+export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange, presetJoinCode, maySeeLive = true, initialTab, autoOpenId }: Props = {}) {
   const { t } = useTranslation();
   const SUB_TABS: SubTab[] = [
     { key: "klassement", label: t("subpoule.manager.tabRanking"), Icon: Trophy },
@@ -166,6 +173,13 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       setPendingOpen(null);
     }
   }, [pendingOpen, subpoules, isLoading, join, toast]);
+
+  // Zie autoOpenId: een eigen keuze van de deelnemer wint altijd, dus alleen
+  // wanneer er nog niets openstaat.
+  useEffect(() => {
+    if (!autoOpenId || activeId) return;
+    if (subpoules.some((sp) => sp.id === autoOpenId)) setActiveId(autoOpenId);
+  }, [autoOpenId, activeId, subpoules]);
 
   const active = useMemo(
     () => (activeId ? subpoules.find((s) => s.id === activeId) ?? null : null),

@@ -79,6 +79,7 @@ export default function Rondleiding({
   onClose,
   heeftStreekTab,
   heeftLiveTab,
+  heeftSubpoule,
   onNavigeer,
 }: {
   open: boolean;
@@ -87,6 +88,8 @@ export default function Rondleiding({
   heeftStreekTab?: boolean;
   /** Live bestaat alleen bij Meermarathon; elders is er niets live te volgen. */
   heeftLiveTab?: boolean;
+  /** Zonder subpoule bestaan de subtabjes niet; dan blijft het bij de sectie. */
+  heeftSubpoule?: boolean;
   /** Brengt de app naar de sectie (en eventueel het subtabje) van deze stap. */
   onNavigeer?: (sectie: string, sub?: string) => void;
 }) {
@@ -137,16 +140,22 @@ export default function Rondleiding({
     {
       navKey: "subpoules",
       titel: t("rondleiding.subpoule.titel"),
-      tekst: t("rondleiding.subpoule.tekst"),
-      ga: { sectie: "subpoules", sub: "klassement" },
+      tekst: heeftSubpoule ? t("rondleiding.subpoule.tekst") : t("rondleiding.subpoule.tekstZonder"),
+      ga: { sectie: "subpoules", sub: heeftSubpoule ? "klassement" : undefined },
     },
-    sub("subpoules", "klassement", t("subpoule.manager.tabRanking"), t("rondleiding.subpoule.ranking")),
-    sub("subpoules", "verloop", t("subpoule.manager.tabRisersFallers"), t("rondleiding.subpoule.stijgers")),
-    sub("subpoules", "daguitslag", t("subpoule.manager.tabDaguitslag"), t("rondleiding.subpoule.daguitslag")),
-    sub("subpoules", "heatmap", t("subpoule.manager.tabHeatmap"), t("rondleiding.subpoule.heatmap")),
-    sub("subpoules", "deelnemers", t("subpoule.manager.tabMembers"), t("rondleiding.subpoule.deelnemers")),
-    ...(heeftStreekTab
-      ? [sub("subpoules", "streek", t("subpoule.manager.tabStreek"), t("rondleiding.subpoule.streek"))]
+    // Zonder subpoule is er niets om langs te lopen: dan zie je het overzicht
+    // met "maak of word lid van een subpoule" en houdt het daar op.
+    ...(heeftSubpoule
+      ? [
+          sub("subpoules", "klassement", t("subpoule.manager.tabRanking"), t("rondleiding.subpoule.ranking")),
+          sub("subpoules", "verloop", t("subpoule.manager.tabRisersFallers"), t("rondleiding.subpoule.stijgers")),
+          sub("subpoules", "daguitslag", t("subpoule.manager.tabDaguitslag"), t("rondleiding.subpoule.daguitslag")),
+          sub("subpoules", "heatmap", t("subpoule.manager.tabHeatmap"), t("rondleiding.subpoule.heatmap")),
+          sub("subpoules", "deelnemers", t("subpoule.manager.tabMembers"), t("rondleiding.subpoule.deelnemers")),
+          ...(heeftStreekTab
+            ? [sub("subpoules", "streek", t("subpoule.manager.tabStreek"), t("rondleiding.subpoule.streek"))]
+            : []),
+        ]
       : []),
     {
       navKey: "uitslagen",
