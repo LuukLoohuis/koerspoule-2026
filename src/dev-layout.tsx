@@ -10,6 +10,7 @@ import { createRoot } from "react-dom/client";
 import { Newspaper, Car, Users, Trophy, Mountain, Target, Pencil } from "lucide-react";
 import { RetroTabs } from "@/components/RetroTabs";
 import OnboardingCard, { ONBOARDING_KEY, onboardingWeggeklikt } from "@/components/OnboardingCard";
+import { SteunBanner } from "@/components/SteunKopgroep";
 import PercentileVerdict from "@/components/horscat/PercentileVerdict";
 import aapFietser from "@/assets/horscat/aap-fietser-transparant.png";
 import "@/i18n";
@@ -116,6 +117,9 @@ function Harness() {
                   onStats={() => {}}
                   onKrant={() => {}}
                 />
+                <div data-steun>
+                  <SteunBanner revKey="testbank" />
+                </div>
                 </>}
               </aside>
             )}

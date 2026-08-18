@@ -145,32 +145,37 @@ export function SteunBanner({ revKey, className }: { revKey?: string | null; cla
       role="note"
     >
       <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
-      <div className="flex items-center gap-3 px-4 py-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-primary/10 text-primary">
-          <Coffee className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-display font-bold leading-tight">{t("shell.steun.bannerTitle")}</p>
-          <p className="text-xs text-muted-foreground font-serif italic">
-            {t("shell.steun.bannerBody")}
+      {/* Gestapeld, niet als rij: de banner staat in een kolom van ~268px en
+          daar brak de tekst naast een knop na bijna elk woord af. */}
+      <div className="px-3.5 py-3">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-primary/10 text-primary">
+            <Coffee className="h-4 w-4" />
+          </span>
+          <p className="min-w-0 flex-1 font-display text-sm font-bold leading-tight">
+            {t("shell.steun.bannerTitle")}
           </p>
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label={t("shell.steun.bannerClose")}
+            className="-mr-1 shrink-0 self-start p-1 text-muted-foreground/60 hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
+        <p className="mt-2 text-pretty font-serif text-xs italic leading-relaxed text-muted-foreground">
+          {t("shell.steun.bannerBody")}
+        </p>
         <a
           href={STEUN_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-md border-2 border-foreground bg-primary px-3 py-1.5 text-xs font-display font-bold text-primary-foreground shadow-[2px_2px_0_hsl(var(--foreground))] transition-transform hover:-translate-y-0.5 active:translate-y-px"
+          className="mt-2.5 inline-flex w-full items-center justify-center gap-1.5 rounded-md border-2 border-foreground bg-primary px-3 py-1.5 text-xs font-display font-bold text-primary-foreground shadow-[2px_2px_0_hsl(var(--foreground))] transition-transform hover:-translate-y-0.5 active:translate-y-px"
         >
+          <Coffee className="h-3.5 w-3.5" aria-hidden />
           {t("shell.steun.treat")}
         </a>
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label={t("shell.steun.bannerClose")}
-          className="-mr-1 shrink-0 self-start p-1 text-muted-foreground/60 hover:text-foreground"
-        >
-          <X className="h-4 w-4" />
-        </button>
       </div>
     </div>
   );
