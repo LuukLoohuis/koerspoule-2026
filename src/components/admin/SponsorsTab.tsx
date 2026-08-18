@@ -8,6 +8,7 @@ import { Handshake, Upload, Trash2, Plus, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import DagprijsBannerSectie from "@/components/admin/DagprijsBannerSectie";
 import DagprijsPlanning from "@/components/admin/DagprijsPlanning";
+import SponsorKlikkenSectie from "@/components/admin/SponsorKlikkenSectie";
 
 type Row = {
   id: string;
@@ -199,6 +200,8 @@ export default function SponsorsTab({ activeGameId }: { activeGameId: string }) 
         )}
       </CardContent>
     </Card>
+
+      <SponsorKlikkenSectie />
 
       <DagprijsBannerSectie activeGameId={activeGameId} />
       {activeGameId && <DagprijsPlanning activeGameId={activeGameId} />}

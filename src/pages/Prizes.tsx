@@ -6,6 +6,7 @@ import { useAllGames } from "@/hooks/useAllGames";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import { usePrizes, type Prize } from "@/hooks/usePrizes";
 import { cn } from "@/lib/utils";
+import { logSponsorKlik, type KlikVeld } from "@/lib/sponsorKliks";
 
 const GOLD = "hsl(var(--vintage-gold))";
 
@@ -14,7 +15,7 @@ const GOLD = "hsl(var(--vintage-gold))";
  * de sponsor doorlinkt in een nieuw tabblad. Geen url → niets (geen layout-sprong:
  * de knop hoort onderaan bij de overige kaartinhoud). Identiek op mobiel + web.
  */
-function SponsorButton({ url, naam, className }: { url?: string | null; naam?: string | null; className?: string }) {
+function SponsorButton({ url, naam, prijsId, veld, className }: { url?: string | null; naam?: string | null; prijsId?: string; veld?: KlikVeld; className?: string }) {
   if (!url) return null;
   const label = naam ? `Bekijk ${naam}` : "Bezoek website";
   return (
@@ -22,6 +23,7 @@ function SponsorButton({ url, naam, className }: { url?: string | null; naam?: s
       href={url}
       target="_blank"
       rel="noopener noreferrer nofollow sponsored"
+      onClick={() => veld && logSponsorKlik("prijs", prijsId, veld, "prijzenpagina")}
       aria-label={`Bezoek de website van ${naam || "de sponsor"}`}
       className={cn(
         "inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 rounded-md border text-xs font-black uppercase tracking-wider",
@@ -43,8 +45,8 @@ function SponsorButtons({ p, className, stack }: { p: Prize; className?: string;
   if (!p.sponsor_url && !p.sponsor_url_2) return null;
   return (
     <div className={cn("flex gap-2", stack ? "flex-col" : "flex-col sm:flex-row sm:flex-wrap", className)}>
-      <SponsorButton url={p.sponsor_url} naam={p.sponsor_naam} />
-      <SponsorButton url={p.sponsor_url_2} naam={p.sponsor_naam_2} />
+      <SponsorButton url={p.sponsor_url} naam={p.sponsor_naam} prijsId={p.id} veld="sponsor_url" />
+      <SponsorButton url={p.sponsor_url_2} naam={p.sponsor_naam_2} prijsId={p.id} veld="sponsor_url_2" />
     </div>
   );
 }

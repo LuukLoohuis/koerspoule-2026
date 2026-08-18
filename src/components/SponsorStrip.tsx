@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useVisibleSponsors, type Sponsor } from "@/hooks/useSponsors";
+import { logSponsorKlik } from "@/lib/sponsorKliks";
 
 /**
  * Subtiele sponsorstrook boven de footerbalk (Layout): decoratieve stippellijn +
@@ -58,6 +59,7 @@ function SponsorKaart({ s }: { s: Sponsor }) {
       href={s.link_url}
       target="_blank"
       rel="noopener noreferrer nofollow sponsored"
+      onClick={() => logSponsorKlik("sponsor", s.id, "link_url", "voorpagina")}
       aria-label={t("shell.sponsors.visitAria", { name: s.naam })}
       className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] rounded-lg transition-transform hover:-translate-y-px motion-reduce:transform-none"
     >

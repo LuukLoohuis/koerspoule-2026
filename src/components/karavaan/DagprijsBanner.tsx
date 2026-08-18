@@ -3,8 +3,11 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/lib/supabase";
 import { ChevronRight } from "lucide-react";
+import { logSponsorKlik } from "@/lib/sponsorKliks";
 
 type Dagprijs = {
+  /** Welke prijs de banner toont — nodig om de sponsorklik toe te wijzen. */
+  prijs_id: string | null;
   titel: string | null;
   sponsor_naam: string | null;
   sponsor_logo_url: string | null;
@@ -122,6 +125,7 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
             href={data.sponsor_url}
             target="_blank"
             rel="noopener noreferrer nofollow sponsored"
+            onClick={() => logSponsorKlik("prijs", data.prijs_id, "sponsor_url", "dagprijsbanner")}
             aria-label={t("karavaan.dagprijs.sponsorAria", { naam: data.sponsor_naam || t("karavaan.dagprijs.sponsorAriaFallback") })}
             className="group w-full transition-transform hover:-translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2 rounded-lg"
             style={{ outlineColor: GOUD }}
