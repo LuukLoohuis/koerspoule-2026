@@ -16,6 +16,8 @@ import Rondleiding, { rondleidingHerstarten, useUitgelichteNav } from "@/compone
 import { StatusBlokView } from "@/components/StatusBlok";
 import ZwevendeActie from "@/components/ZwevendeActie";
 import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
+import TruiBadge from "@/components/retro/TruiBadge";
+import { TruiThemaProvider } from "@/contexts/TruiThemaContext";
 import aapFietser from "@/assets/horscat/aap-fietser-transparant.png";
 import "@/i18n";
 import "./index.css";
@@ -62,7 +64,16 @@ function Harness() {
 
   return (
     <div className="min-h-screen bg-background p-8">
-      <Rondleiding open={tour} onClose={() => setTour(false)} heeftStreekTab />
+      <Rondleiding
+        open={tour}
+        onClose={() => setTour(false)}
+        heeftStreekTab
+        heeftLiveTab
+        onNavigeer={(sectie, sub) => {
+          (window as unknown as { __nav?: string[] }).__nav ??= [];
+          (window as unknown as { __nav: string[] }).__nav.push(sub ? `${sectie}/${sub}` : sectie);
+        }}
+      />
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex items-center gap-3">
           <h1 className="font-display text-2xl font-black">Layout-testbank</h1>
@@ -174,6 +185,23 @@ function Harness() {
           <p className="mt-2 font-mono text-[10px] text-muted-foreground">
             NB: md:hidden — smal maken om te zien, of het venster onder 768px brengen.
           </p>
+        </Blok>
+
+        <Blok titel="Truien — legt een scherm zijn eigen game-thema op?">
+          <div className="flex items-end gap-8">
+            <div data-trui="sitethema" className="text-center">
+              <TruiBadge type="algemeen" formaat="groot" />
+              <div className="mt-1 font-mono text-[10px] text-muted-foreground">zonder provider (sitethema)</div>
+            </div>
+            {(["geel", "rood", "roze"] as const).map((k) => (
+              <div key={k} data-trui={k} className="text-center">
+                <TruiThemaProvider themaKey={k}>
+                  <TruiBadge type="algemeen" formaat="groot" />
+                </TruiThemaProvider>
+                <div className="mt-1 font-mono text-[10px] text-muted-foreground">opgelegd: {k}</div>
+              </div>
+            ))}
+          </div>
         </Blok>
 
         <Blok titel="Ploeg-skeleton">

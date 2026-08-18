@@ -13,7 +13,7 @@ type Props = {
   maySeeLive?: boolean;
   /** Deep-link: open direct op deze subtab (valt terug op 'klassement' als de
    *  gevraagde subtab onder gating wegvalt). */
-  initialTab?: "klassement" | "verloop" | "daguitslag" | "heatmap" | "streek";
+  initialTab?: "klassement" | "verloop" | "daguitslag" | "heatmap" | "deelnemers" | "streek";
 };
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,6 @@ import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import { RetroTabs } from "@/components/RetroTabs";
-import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import EmptyState from "@/components/EmptyState";
 import SwipeCarousel from "@/components/SwipeCarousel";
@@ -90,7 +89,11 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   // Desktop: geselecteerde tegenstander → duel als rechter zijpaneel.
   const [duelUserId, setDuelUserId] = useState<string | null>(null);
   // Mobiel: tab-gebaseerde subpoule-weergave (zoals Hors Categorie).
-  const [mobileTab, setMobileTab] = useState<string>("klassement");
+  // Deep-link geldt ook mobiel; die begon altijd op klassement, waardoor een
+  // link naar bv. de heatmap op een telefoon op de verkeerde tab uitkwam.
+  const [mobileTab, setMobileTab] = useState<string>(
+    initialTab === "heatmap" && !heatmapUnlocked ? "klassement" : (initialTab ?? "klassement"),
+  );
   const mobileHint = useSwipeHint("subpoule");
   const mobileBarVisible = useAutoHideOnScroll();
   const [createName, setCreateName] = useState("");
@@ -656,13 +659,6 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
           </div>
         </div>
 
-        {/* ── MOBIEL: "Ga naar"-bolletje (tab-schakelaar). ── */}
-        <FloatingTabSwitcher
-          tabs={dynTabItems}
-          active={mobileTab}
-          onChange={setMobileTab}
-          offsetClassName="bottom-[136px]"
-        />
       </div>
       </WoonplaatsFilterProvider>
     );

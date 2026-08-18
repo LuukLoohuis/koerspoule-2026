@@ -1,18 +1,14 @@
 /**
  * <FloatingTabSwitcher> — één consistente zwevende tab-schakelaar (mobiel-only).
  *
- *  - 3+ tabs → rond perkament-bolletje rechtsonder dat een retro "Ga naar"-menu
- *    opent (Radix DropdownMenu, modal=false → geen iOS-scroll-lock).
- *  - 2 tabs → tweedelig pill-toggle; één tik op het inactieve segment wisselt.
+ *  Alleen de 2-tab-variant: een tweedelig pill-toggle waarbij één tik op het
+ *  inactieve segment wisselt. Bij meer tabs rendert hij niets — daarvoor was er
+ *  een "Ga naar"-bolletje, maar die schermen hebben al een tabbalk, stippen en
+ *  een veegbeweging.
  *
  *  Na wisselen scrollt de pagina naar boven (dubbele rAF, reduced-motion-safe).
- *  Zelfde retro-chrome als de subpoule "Spring naar"; die blijft apart bestaan.
  */
-import { useState } from "react";
 import type { ComponentType } from "react";
-import { useTranslation } from "react-i18next";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ListTree, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type FloatingTab = { key: string; label: string; icon?: ComponentType<{ className?: string }> };
@@ -38,8 +34,6 @@ export default function FloatingTabSwitcher({
    *  override bv. naar "bottom-[136px]" als er nóg een zweefknop onder staat. */
   offsetClassName?: string;
 }) {
-  const { t: translate } = useTranslation();
-  const [open, setOpen] = useState(false);
   const select = (key: string) => {
     onChange(key);
     scrollTopAfterChange();
@@ -71,47 +65,8 @@ export default function FloatingTabSwitcher({
     );
   }
 
-  // ── 3+ tabs → rond bolletje + "Ga naar"-menu ──
-  return (
-    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label={translate("shell.tabSwitcher.goToAria")}
-          className={cn("md:hidden fixed right-4 z-40 inline-flex items-center justify-center h-12 w-12 rounded-full bg-card text-foreground border-2 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))] active:translate-y-px active:shadow-[2px_2px_0_hsl(var(--foreground))] transition-all", offsetClassName)}
-        >
-          <ListTree className="h-5 w-5" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        side="top"
-        sideOffset={8}
-        className="w-56 p-0 rounded-xl overflow-hidden border-2 border-foreground bg-card shadow-[4px_4px_0_hsl(var(--foreground))]"
-      >
-        <div className="flex items-center gap-2 px-3 py-2 border-b-2 border-foreground bg-[hsl(var(--vintage-gold))] text-foreground font-mono uppercase tracking-[0.2em] text-[10px] font-bold">
-          <ArrowUpDown className="h-3.5 w-3.5" />
-          {translate("shell.tabSwitcher.goToHeading")}
-        </div>
-        <div className="p-1">
-          {tabs.map((t) => {
-            const isActive = active === t.key;
-            return (
-              <DropdownMenuItem
-                key={t.key}
-                onSelect={(e) => { e.preventDefault(); setOpen(false); select(t.key); }}
-                className={cn(
-                  "font-mono text-[13px] rounded-lg py-2.5 px-2.5 gap-2.5 cursor-pointer border-l-[3px] border-transparent focus:bg-secondary/60 hover:bg-secondary/60",
-                  isActive && "border-primary bg-primary/10",
-                )}
-              >
-                {t.icon && <t.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary" : "text-[hsl(var(--vintage-gold))]")} />}
-                {t.label}
-              </DropdownMenuItem>
-            );
-          })}
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  // 3+ tabs hadden hier een rond "Ga naar"-bolletje. Dat is eruit: die
+  // schermen hebben al een tabbalk bovenaan, stippen en een veegbeweging, en
+  // een vierde manier om hetzelfde te doen was op een telefoon te veel.
+  return null;
 }

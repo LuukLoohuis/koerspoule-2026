@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { useThema } from "@/contexts/ThemaContext";
-import type { TruiType } from "@/lib/themas";
+import { useTruiThemaKey } from "@/contexts/TruiThemaContext";
+import { THEMAS, type TruiType } from "@/lib/themas";
 import truiTourAlgemeen from "@/assets/trui-tour-algemeen.png";
 import truiTourPunten from "@/assets/trui-tour-punten.png";
 import truiTourBerg from "@/assets/trui-tour-berg.png";
@@ -66,7 +67,11 @@ export default function TruiBadge({
   toonNaam?: boolean;
   className?: string;
 }) {
-  const { thema } = useThema();
+  const { thema: actief } = useThema();
+  // Een scherm dat een afgeronde game toont, legt zijn eigen thema op; anders
+  // volgen we het sitethema.
+  const opgelegd = useTruiThemaKey();
+  const thema = opgelegd ? THEMAS[opgelegd] : actief;
   const trui = thema.truien[type];
   const { w, h } = FORMATEN[formaat];
   const naamZichtbaar = toonNaam ?? formaat === "groot";

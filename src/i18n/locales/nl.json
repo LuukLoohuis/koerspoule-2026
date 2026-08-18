@@ -1649,7 +1649,8 @@
       "tekst": "Jouw ploeg en hoe die ervoor staat.",
       "ploeg": "je renners en wat ze opleveren",
       "prono": "je voorspellingen van vooraf",
-      "palmares": "je erelijst over alle koersen"
+      "palmares": "je erelijst over alle koersen",
+      "live": "de stand tijdens de wedstrijd, alleen bij Meermarathon"
     },
     "subpoule": {
       "titel": "Subpoule",

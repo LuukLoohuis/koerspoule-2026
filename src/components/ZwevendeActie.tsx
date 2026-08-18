@@ -5,9 +5,8 @@
  * telefoon meerdere schermen lang is. Wie halverwege bedenkt dat hij wil
  * wisselen, moet nu eerst terugscrollen. Deze knop zweeft mee.
  *
- * Linksonder, op dezelfde hoogte als de FloatingTabSwitcher rechtsonder. Ze
- * stapelen dus niet: navigatie blijft rechts waar het al zat, de handeling
- * komt links erbij.
+ * Linksonder. Rechtsonder kan een tweedelige tab-toggle staan; ze stapelen
+ * dus niet.
  */
 import type { ComponentType } from "react";
 import { cn } from "@/lib/utils";

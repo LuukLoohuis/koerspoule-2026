@@ -23,7 +23,6 @@ import PalmaresPanel from "@/components/PalmaresPanel";
 import HorsCategorieTab from "@/components/HorsCategorieTab";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
-import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
@@ -132,7 +131,7 @@ export default function MijnPeloton() {
   const obHasTeam = selEntry?.status === "submitted";
   const obInSubpoule = selSubpoules.length > 0;
   const obLive = obHasTeam && ["live", "locked", "finished", "closed"].includes(selectedGameObj?.status ?? "");
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   // Default landing = karavaan (de gazetta), tenzij ?tab= expliciet gezet is.
   const [gameTab, setGameTab] = useState(() => searchParams.get("tab") ?? "karavaan");
@@ -258,6 +257,16 @@ export default function MijnPeloton() {
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
     setHorsTab(tab);
     setGameTab("hors");
+  };
+  // De rondleiding stuurt hier de subpoule-subtab aan. SubpouleManager leest die
+  // uit ?sub= en wordt daarop gekeyd, dus dit moet via de router-parameters —
+  // een replaceState op window laat React er niets van merken.
+  const openSubpouleTab = (sub: string) => {
+    const volgende = new URLSearchParams(searchParams);
+    volgende.set("tab", "subpoules");
+    volgende.set("sub", sub);
+    setSearchParams(volgende, { replace: true });
+    setGameTab("subpoules");
   };
   // Gazetta-shortcuts: subpoule-cel → Subpoules-tab met die subpoule open op Grafiek
   // (SubpouleManager leest ?subpoule=<id> uit de URL en opent default de Grafiek-tab).
@@ -1335,6 +1344,12 @@ export default function MijnPeloton() {
             open={rondleidingOpen}
             onClose={() => setRondleidingOpen(false)}
             heeftStreekTab={selSubpoules.some((sp) => sp.requires_woonplaats)}
+            heeftLiveTab={isMeermarathonGame(selectedGameObj?.game_type)}
+            onNavigeer={(sectie, sub) => {
+              if (sectie === "hors" && sub) openHors(sub as Parameters<typeof openHors>[0]);
+              else if (sectie === "subpoules" && sub) openSubpouleTab(sub);
+              else setGameTab(sectie);
+            }}
           />
 
           {/* Wegklikken is omkeerbaar; zonder deze knop zou het definitief zijn. */}
@@ -1452,12 +1467,6 @@ export default function MijnPeloton() {
                 />
               )}
 
-              {/* Mobiel: één consistente zwevende schakelaar. */}
-              <FloatingTabSwitcher
-                tabs={volgwagenTabs}
-                active={teamSubTab}
-                onChange={(k) => setTeamSubTab(k)}
-              />
             </Tabs>
           </TabsContent>
 
@@ -1468,8 +1477,8 @@ export default function MijnPeloton() {
             <WervingStrook className="mb-3" />
             {(() => {
               const sub = searchParams.get("sub");
-              const initialTab = (["klassement", "verloop", "daguitslag", "heatmap", "streek"].includes(sub ?? "")
-                ? sub : undefined) as "klassement" | "verloop" | "daguitslag" | "heatmap" | "streek" | undefined;
+              const initialTab = (["klassement", "verloop", "daguitslag", "heatmap", "deelnemers", "streek"].includes(sub ?? "")
+                ? sub : undefined) as "klassement" | "verloop" | "daguitslag" | "heatmap" | "deelnemers" | "streek" | undefined;
               // Key op de deep-link-subtab forceert herinitialisatie zodat een link
               // vanaf /uitleg de juiste subtab opent, ook als je al op Subpoules stond.
               return (

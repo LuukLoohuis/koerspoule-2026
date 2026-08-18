@@ -17,7 +17,7 @@
  * onderbalk hangt in de shell, de rondleiding in de pagina, en die twee delen
  * geen gemeenschappelijke ouder waar zo'n prop doorheen kan.
  */
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -67,18 +67,39 @@ export function rondleidingHerstarten(): void {
   try { localStorage.removeItem(KEY); } catch { /* negeer */ }
 }
 
-/** Welke tab in de onderbalk oplicht; null = geen (de eerste stap). */
-type Stap = { navKey: string | null; titel: string; tekst: string; onderdelen?: [string, string][] };
+/**
+ * Eén stap van de rondleiding.
+ *  - navKey  : welke tab in de navigatiebalk oplicht.
+ *  - ga      : waar de app naartoe springt zodra de stap actief wordt. Bij de
+ *              subpoule en Hors Categorie gaat dat tot op het subtabje, zodat
+ *              je het scherm ziet waar het over gaat in plaats van een lijstje
+ *              met namen.
+ *  - onderdelen : alleen nog voor de Volgwagen, waar de subtabjes samen in één
+ *              stap passen.
+ */
+type Stap = {
+  navKey: string | null;
+  titel: string;
+  tekst: string;
+  onderdelen?: [string, string][];
+  ga?: { sectie: string; sub?: string };
+};
 
 export default function Rondleiding({
   open,
   onClose,
   heeftStreekTab,
+  heeftLiveTab,
+  onNavigeer,
 }: {
   open: boolean;
   onClose: () => void;
   /** Streek bestaat alleen bij subpoules die om een woonplaats vragen. */
   heeftStreekTab?: boolean;
+  /** Live bestaat alleen bij Meermarathon; elders is er niets live te volgen. */
+  heeftLiveTab?: boolean;
+  /** Brengt de app naar de sectie (en eventueel het subtabje) van deze stap. */
+  onNavigeer?: (sectie: string, sub?: string) => void;
 }) {
   const { t } = useTranslation();
   const [stap, setStap] = useState(0);
@@ -87,6 +108,14 @@ export default function Rondleiding({
   // het kaartje en één zinnetje verschillen; de stappen zijn dezelfde.
   const isMobiel = useIsMobile();
   const actief = open;
+
+  /** Subtabje-stap: kort kaartje terwijl het echte scherm eronder openstaat. */
+  const sub = (sectie: string, key: string, label: string, uitleg: string): Stap => ({
+    navKey: sectie,
+    titel: label,
+    tekst: uitleg,
+    ga: { sectie, sub: key },
+  });
 
   const stappen: Stap[] = [
     {
@@ -98,13 +127,20 @@ export default function Rondleiding({
       navKey: "karavaan",
       titel: t("rondleiding.krant.titel"),
       tekst: t("rondleiding.krant.tekst"),
+      ga: { sectie: "karavaan" },
     },
     {
       navKey: "team",
       titel: t("rondleiding.volgwagen.titel"),
       tekst: t("rondleiding.volgwagen.tekst"),
+      ga: { sectie: "team" },
       onderdelen: [
         [t("team.tabs.myTeam"), t("rondleiding.volgwagen.ploeg")],
+        // Live hangt aan de schaatsgame; bij een wielerkoers bestaat het tabje
+        // niet en zou het noemen ervan een belofte zijn die nergens uitkomt.
+        ...(heeftLiveTab
+          ? ([[t("team.tabs.live"), t("rondleiding.volgwagen.live")]] as [string, string][])
+          : []),
         [t("team.tabs.prono"), t("rondleiding.volgwagen.prono")],
         [t("team.tabs.palmares"), t("rondleiding.volgwagen.palmares")],
       ],
@@ -113,34 +149,33 @@ export default function Rondleiding({
       navKey: "subpoules",
       titel: t("rondleiding.subpoule.titel"),
       tekst: t("rondleiding.subpoule.tekst"),
-      onderdelen: [
-        [t("subpoule.manager.tabRanking"), t("rondleiding.subpoule.ranking")],
-        [t("subpoule.manager.tabRisersFallers"), t("rondleiding.subpoule.stijgers")],
-        [t("subpoule.manager.tabDaguitslag"), t("rondleiding.subpoule.daguitslag")],
-        [t("subpoule.manager.tabHeatmap"), t("rondleiding.subpoule.heatmap")],
-        [t("subpoule.manager.tabMembers"), t("rondleiding.subpoule.deelnemers")],
-        ...(heeftStreekTab
-          ? ([[t("subpoule.manager.tabStreek"), t("rondleiding.subpoule.streek")]] as [string, string][])
-          : []),
-      ],
+      ga: { sectie: "subpoules", sub: "klassement" },
     },
+    sub("subpoules", "klassement", t("subpoule.manager.tabRanking"), t("rondleiding.subpoule.ranking")),
+    sub("subpoules", "verloop", t("subpoule.manager.tabRisersFallers"), t("rondleiding.subpoule.stijgers")),
+    sub("subpoules", "daguitslag", t("subpoule.manager.tabDaguitslag"), t("rondleiding.subpoule.daguitslag")),
+    sub("subpoules", "heatmap", t("subpoule.manager.tabHeatmap"), t("rondleiding.subpoule.heatmap")),
+    sub("subpoules", "deelnemers", t("subpoule.manager.tabMembers"), t("rondleiding.subpoule.deelnemers")),
+    ...(heeftStreekTab
+      ? [sub("subpoules", "streek", t("subpoule.manager.tabStreek"), t("rondleiding.subpoule.streek"))]
+      : []),
     {
       navKey: "uitslagen",
       titel: t("rondleiding.uitslagen.titel"),
       tekst: t("rondleiding.uitslagen.tekst"),
+      ga: { sectie: "uitslagen" },
     },
     {
       navKey: "hors",
       titel: t("rondleiding.hors.titel"),
       tekst: t("rondleiding.hors.tekst"),
-      onderdelen: [
-        [t("hors.tabs.dartpijl"), t("rondleiding.hors.dartpijl")],
-        [t("hors.tabs.pelotonkeuzes"), t("rondleiding.hors.pelotonkeuzes")],
-        [t("hors.tabs.wielerdirecteur"), t("rondleiding.hors.wielerdirecteur")],
-        [t("hors.tabs.superteam"), t("rondleiding.hors.superteam")],
-        [t("hors.tabs.benchmark"), t("rondleiding.hors.benchmark")],
-      ],
+      ga: { sectie: "hors", sub: "dartpijl" },
     },
+    sub("hors", "dartpijl", t("hors.tabs.dartpijl"), t("rondleiding.hors.dartpijl")),
+    sub("hors", "pelotonkeuzes", t("hors.tabs.pelotonkeuzes"), t("rondleiding.hors.pelotonkeuzes")),
+    sub("hors", "wielerdirecteur", t("hors.tabs.wielerdirecteur"), t("rondleiding.hors.wielerdirecteur")),
+    sub("hors", "superteam", t("hors.tabs.superteam"), t("rondleiding.hors.superteam")),
+    sub("hors", "benchmark", t("hors.tabs.benchmark"), t("rondleiding.hors.benchmark")),
   ];
 
   const huidig = stappen[Math.min(stap, stappen.length - 1)];
@@ -150,6 +185,24 @@ export default function Rondleiding({
     zetStand(actief, huidig.navKey);
     return () => zetStand(false, null);
   }, [actief, huidig.navKey]);
+
+  // De app springt mee naar het scherm dat deze stap bespreekt.
+  //
+  // Via een ref, niet via de afhankelijkheidslijst: onNavigeer komt binnen als
+  // een verse pijlfunctie per render, en die in de lijst zetten zou het effect
+  // elke render opnieuw laten vuren — inclusief het zetten van zoekparameters,
+  // wat zichzelf voedt.
+  const navRef = useRef(onNavigeer);
+  navRef.current = onNavigeer;
+  const gaSectie = huidig.ga?.sectie;
+  const gaSub = huidig.ga?.sub;
+  useEffect(() => {
+    if (!actief || !gaSectie) return;
+    navRef.current?.(gaSectie, gaSub);
+    // Vanaf de vorige stap kan de pagina halverwege staan; dan zou je van het
+    // nieuwe scherm het midden zien.
+    window.scrollTo({ top: 0 });
+  }, [actief, gaSectie, gaSub]);
 
   // Achtergrond niet mee laten scrollen tijdens de rondleiding.
   useEffect(() => {
@@ -183,10 +236,12 @@ export default function Rondleiding({
       aria-modal="true"
       aria-label={t("rondleiding.aria")}
     >
-      {/* Het waas laat de besproken balk bewust vrij: op mobiel staat de
-          onderbalk al op z-50, op de webversie tilt de tabbalk zichzelf op
-          zodra er een rondleiding loopt. */}
-      <div className="absolute inset-0 bg-foreground/60" onClick={sluit} />
+      {/* Licht waas. Vanaf de subtabjes is het scherm eronder zélf de uitleg,
+          dus het mag niet meer wegvallen; het dient nog om het kaartje eruit te
+          laten springen. De besproken balk blijft er sowieso buiten: op mobiel
+          staat de onderbalk al op z-50, op de webversie tilt de tabbalk
+          zichzelf op zodra er een rondleiding loopt. */}
+      <div className="absolute inset-0 bg-foreground/25" onClick={sluit} />
 
       <div
         className={cn(
@@ -236,17 +291,13 @@ export default function Rondleiding({
           >
             {t("rondleiding.overslaan")}
           </button>
-          <div className="ml-auto flex items-center gap-1.5" aria-hidden>
-            {stappen.map((_, i) => (
-              <span
-                key={i}
-                className={
-                  i === stap
-                    ? "h-1.5 w-4 rounded-full bg-primary"
-                    : "h-1.5 w-1.5 rounded-full bg-foreground/20"
-                }
-              />
-            ))}
+          {/* Een balkje in plaats van stippen: met de subtabjes erbij zijn het
+              er te veel om nog als rij bolletjes te lezen. */}
+          <div className="ml-auto h-1.5 w-16 overflow-hidden rounded-full bg-foreground/15" aria-hidden>
+            <div
+              className="h-full rounded-full bg-primary transition-[width] duration-200 motion-reduce:transition-none"
+              style={{ width: `${((stap + 1) / stappen.length) * 100}%` }}
+            />
           </div>
           <button
             type="button"

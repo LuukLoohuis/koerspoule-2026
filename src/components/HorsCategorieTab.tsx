@@ -30,7 +30,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Lock, Activity, Trophy, BarChart3, Sparkles, Info, X, Swords, Crown, Mic, ChevronDown } from "lucide-react";
-import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
@@ -1919,12 +1918,6 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         )}
       />
 
-      {/* ── MOBIEL: één consistente zwevende schakelaar (menu-modus). ── */}
-      <FloatingTabSwitcher
-        tabs={HORS_TABS.map((tab) => ({ key: tab.key, label: tabLabel(tab.key), icon: tab.Icon }))}
-        active={activeTab}
-        onChange={(k) => setActiveTab(k as HorsTabKey)}
-      />
     </div>
   );
 }

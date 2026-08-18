@@ -4,6 +4,9 @@ import type { TFunction } from "i18next";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Link } from "react-router-dom";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useAllGames } from "@/hooks/useAllGames";
+import { deriveThemaKey } from "@/lib/themas";
+import { TruiThemaProvider } from "@/contexts/TruiThemaContext";
 import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 import { useStages, useStageResults, useStagePointsForEntries, useMyStageRanks, useEntries, useGameStandings, type StageRow, type EntryStanding } from "@/hooks/useResults";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
@@ -95,6 +98,14 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   const { data: curGame } = useCurrentGame();
   const gameId = gameIdProp ?? curGame?.id;
   const gameName = gameNameProp ?? curGame?.name;
+  // De truien horen bij de game die hier getoond wordt, niet bij het thema dat
+  // de site toevallig draagt. Een afgeronde Tour blijft geel, ook als de site
+  // inmiddels in Vuelta-rood staat.
+  const { data: alleGames = [] } = useAllGames();
+  const truiThema = useMemo(() => {
+    const g = alleGames.find((x) => x.id === gameId);
+    return g ? deriveThemaKey(g.theme, g.game_type) : null;
+  }, [alleGames, gameId]);
   const [compareUserId, setCompareUserId] = useState<string | null>(null);
 
   const { data: stages = [], isLoading: stagesLoading } = useStages(gameId);
@@ -268,6 +279,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   }
 
   return (
+    <TruiThemaProvider themaKey={truiThema}>
     <div>
       {showHeader && (
         <div className="relative mb-5 md:mb-6">
@@ -895,6 +907,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         onChange={(k) => setView(k as "etappes" | "klassement")}
       />
     </div>
+    </TruiThemaProvider>
   );
 }
 
