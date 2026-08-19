@@ -18,6 +18,7 @@ import ZwevendeActie from "@/components/ZwevendeActie";
 import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
 import HorsSkeleton from "@/components/skeletons/HorsSkeleton";
 import SponsorStrip from "@/components/SponsorStrip";
+import KoerspouleLogo from "@/components/KoerspouleLogo";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import SwipeHintBar from "@/components/SwipeHintBar";
@@ -295,6 +296,10 @@ function Harness() {
               <SponsorStrip />
             </QueryClientProvider>
           </div>
+        </Blok>
+
+        <Blok titel="Logo — alleen een hoogteklasse, zoals op de inlogpagina">
+          <div data-logotest><KoerspouleLogo className="h-20" /></div>
         </Blok>
 
         <Blok titel="Ploeg-skeleton">
