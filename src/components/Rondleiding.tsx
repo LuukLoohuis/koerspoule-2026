@@ -21,7 +21,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { X } from "lucide-react";
+import { ExternalLink, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const KEY = "kp_rondleiding_gezien_v1";
@@ -108,8 +108,9 @@ type Stap = {
   doel?: string;
   /**
    * Een losse pagina in plaats van een tabje. De rondleiding leeft op Mijn
-   * Peloton, dus daarheen navigeren zou hem beëindigen; vandaar een knop die
-   * de bezoeker zelf laat kiezen. De uitleg staat er sowieso bij.
+   * Peloton en zou sneuvelen zodra je die pagina verlaat, dus opent de knop
+   * een nieuw tabblad: je bekijkt de pagina en komt terug op de stap waar je
+   * was. De uitleg staat er sowieso bij, dus doorklikken is nooit nodig.
    */
   link?: { pad: string; knop: string };
 };
@@ -199,13 +200,15 @@ export default function Rondleiding({
       navKey: "subpoules",
       titel: t("rondleiding.subpoule.meedoenTitel"),
       tekst: t("rondleiding.subpoule.meedoenTekst"),
-      ga: { sectie: "subpoules" },
+      ga: { sectie: "subpoules", sub: "overzicht" },
+      doel: "subpoules-overzicht",
     },
     {
       navKey: "subpoules",
       titel: t("rondleiding.subpoule.startenTitel"),
       tekst: t("rondleiding.subpoule.startenTekst"),
-      ga: { sectie: "subpoules" },
+      ga: { sectie: "subpoules", sub: "overzicht" },
+      doel: "subpoules-overzicht",
     },
     sub("subpoules", "klassement", t("subpoule.manager.tabRanking"), t("rondleiding.subpoule.ranking")),
           sub("subpoules", "verloop", t("subpoule.manager.tabRisersFallers"), t("rondleiding.subpoule.stijgers")),
@@ -431,10 +434,12 @@ export default function Rondleiding({
           {huidig.link && (
             <a
               href={huidig.link.pad}
-              onClick={sluit}
-              className="rounded-md border-2 border-foreground bg-card px-3 py-1.5 text-xs font-display font-bold shadow-[2px_2px_0_hsl(var(--foreground))] active:translate-y-px"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-md border-2 border-foreground bg-card px-3 py-1.5 text-xs font-display font-bold shadow-[2px_2px_0_hsl(var(--foreground))] active:translate-y-px"
             >
               {huidig.link.knop}
+              <ExternalLink className="h-3 w-3" aria-hidden />
             </a>
           )}
           {/* Een balkje in plaats van stippen: met de subtabjes erbij zijn het

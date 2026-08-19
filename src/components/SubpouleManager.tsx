@@ -21,6 +21,13 @@ type Props = {
    * overzicht te blijven hangen.
    */
   autoOpenId?: string;
+  /**
+   * Dwing het overzicht af (met de aanmaak- en joinvelden), ook als er al een
+   * subpoule openstaat. De rondleiding gebruikt dit om te laten zien hoe je
+   * meedoet of er zelf een begint — dat scherm zie je anders nooit meer zodra
+   * je lid bent.
+   */
+  toonOverzicht?: boolean;
 };
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,7 +68,7 @@ import { cn } from "@/lib/utils";
 // Mobiele subpoule-tabs (zoals Hors Categorie). Eén paneel tegelijk.
 type SubTab = { key: string; label: string; Icon: LucideIcon };
 
-export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange, presetJoinCode, maySeeLive = true, initialTab, autoOpenId }: Props = {}) {
+export default function SubpouleManager({ gameId, gameName, gameStatus, onActiveBannerChange, presetJoinCode, maySeeLive = true, initialTab, autoOpenId, toonOverzicht = false }: Props = {}) {
   const { t } = useTranslation();
   const SUB_TABS: SubTab[] = [
     { key: "klassement", label: t("subpoule.manager.tabRanking"), Icon: Trophy },
@@ -177,9 +184,10 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   // Zie autoOpenId: een eigen keuze van de deelnemer wint altijd, dus alleen
   // wanneer er nog niets openstaat.
   useEffect(() => {
+    if (toonOverzicht) { setActiveId(null); return; }
     if (!autoOpenId || activeId) return;
     if (subpoules.some((sp) => sp.id === autoOpenId)) setActiveId(autoOpenId);
-  }, [autoOpenId, activeId, subpoules]);
+  }, [autoOpenId, activeId, subpoules, toonOverzicht]);
 
   const active = useMemo(
     () => (activeId ? subpoules.find((s) => s.id === activeId) ?? null : null),

@@ -48,7 +48,7 @@ import { useSubpoules } from "@/hooks/useSubpoules";
 import { isMeermarathonGame } from "@/lib/gameTypes";
 import StatusBlok from "@/components/StatusBlok";
 import ZwevendeActie, { zwevendeActieWeggeklikt, zwevendeActieHerstellen } from "@/components/ZwevendeActie";
-import Rondleiding, { rondleidingGezien, rondleidingHerstarten, useUitgelichteNav } from "@/components/Rondleiding";
+import Rondleiding, { rondleidingGezien, rondleidingHerstarten, useUitgelichteNav, useUitgelichtSubtab } from "@/components/Rondleiding";
 import { useAuth } from "@/hooks/useAuth";
 import OnboardingCard, { ONBOARDING_KEY, onboardingWeggeklikt } from "@/components/OnboardingCard";
 import { Wrench, Share2 } from "lucide-react";
@@ -231,6 +231,7 @@ export default function MijnPeloton() {
   // een balk die je niet zomaar doorgrondt.
   const [rondleidingOpen, setRondleidingOpen] = useState(false);
   const uitgelichteNav = useUitgelichteNav();
+  const uitgelichtSubtab = useUitgelichtSubtab();
   useEffect(() => {
     if (rondleidingGezien()) return;
     // Even wachten tot de pagina staat; een rondleiding over een halfgeladen
@@ -1449,7 +1450,10 @@ export default function MijnPeloton() {
                 onChange={setTeamSubTab}
                 tabs={volgwagenTabs.map(({ key, label, icon }) => ({ key, label, Icon: icon }))}
               />
-              {/* Vinger-volgende carrousel tussen de Volgwagen-onderdelen. */}
+              {/* Vinger-volgende carrousel tussen de Volgwagen-onderdelen.
+                  Het paneel-doel zit hier en niet om de hele sectie, anders
+                  valt de subbalk binnen de uitsparing en licht die ook op. */}
+              <div data-rondleiding-doel="team-paneel">
               <SwipeCarousel
                 keys={volgwagenKeys}
                 activeKey={teamSubTab}
@@ -1474,6 +1478,7 @@ export default function MijnPeloton() {
                   </>
                 )}
               />
+              </div>
 
               {/* De hoofdhandeling blijft binnen duimbereik, ook halverwege de
                   rennerlijst. Linksonder, zodat hij de tab-schakelaar
@@ -1500,6 +1505,8 @@ export default function MijnPeloton() {
             {/* Wervingsstrook (admin-gestuurd, wegklikbaar) — ook hier zodat leden
                 een promote-subpoule kunnen vinden; "Doe mee" vult de code voor. */}
             <WervingStrook className="mb-3" />
+            {/* Doel voor de rondleiding: hier staan de aanmaak- en joinvelden. */}
+            <div data-rondleiding-doel="subpoules-overzicht">
             {(() => {
               const sub = searchParams.get("sub");
               const initialTab = (["klassement", "verloop", "daguitslag", "heatmap", "deelnemers", "streek"].includes(sub ?? "")
@@ -1517,9 +1524,11 @@ export default function MijnPeloton() {
                   presetJoinCode={searchParams.get("join") ?? undefined}
                   maySeeLive
                   autoOpenId={rondleidingOpen ? selSubpoules[0]?.id : undefined}
+                  toonOverzicht={uitgelichtSubtab === "overzicht"}
                 />
               );
             })()}
+            </div>
           </TabsContent>
 
           {/* ── TAB: Uitslagen ── */}

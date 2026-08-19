@@ -8,8 +8,13 @@
  * Dat vraagt om een waarschuwing die je niet kúnt missen. Een klein pilletje
  * in de hoek was te makkelijk over het hoofd te zien: iemand die de heatmap
  * openslaat leest de namen, niet het label. Vandaar een balk over de volle
- * breedte bóven het paneel, plus diagonale arcering eroverheen — die arcering
- * doet het werk als je de tekst niet leest.
+ * breedte bóven het paneel.
+ *
+ * Eerst lag er ook diagonale arcering over de inhoud. Dat werkte als
+ * waarschuwing maar maakte tabellen en heatmaps rommelig om te lezen — en
+ * juist die inhoud is wat je wilt laten zien. Nu een rustige gouden waas plus
+ * een doorlopende rand: even goed te zien dat het apart staat, zonder dat het
+ * de cijfers eronder in de weg zit.
  */
 import type { ReactNode } from "react";
 import { Info, Lock } from "lucide-react";
@@ -43,15 +48,11 @@ export default function Voorbeeldmarkering({
         </span>
       </div>
 
-      <div className="relative">
+      <div className="relative rounded-lg border border-dashed border-[hsl(var(--vintage-gold))/0.55] p-1.5">
         {children}
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-0 z-10 rounded-lg"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(-45deg, transparent 0 8px, hsl(var(--foreground)/0.06) 8px 16px)",
-          }}
+          className="pointer-events-none absolute inset-0 z-10 rounded-lg bg-[hsl(var(--vintage-gold))/0.05]"
         />
       </div>
 
