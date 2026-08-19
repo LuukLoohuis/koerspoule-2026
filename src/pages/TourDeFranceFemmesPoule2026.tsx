@@ -54,7 +54,7 @@ const JSONLD = {
   "@context": "https://schema.org",
   "@graph": [
     { "@type": "WebSite", "@id": "https://koerspoule.nl/#website", name: SITE_NAME, url: "https://koerspoule.nl/", inLanguage: "nl-NL" },
-    { "@type": "Organization", "@id": "https://koerspoule.nl/#organization", name: SITE_NAME, url: "https://koerspoule.nl/", logo: "https://koerspoule.nl/favicon.png", email: "koerspoule@gmail.com" },
+    { "@type": "Organization", "@id": "https://koerspoule.nl/#organization", name: SITE_NAME, url: "https://koerspoule.nl/", logo: "https://koerspoule.nl/favicon.png", email: "info@koerspoule.nl" },
     {
       "@type": "WebPage",
       "@id": `${PAGE_URL}#webpage`,

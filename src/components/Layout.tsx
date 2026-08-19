@@ -253,8 +253,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <p className="font-serif italic">{t("shell.footer.tagline", { subtitle: thema.homepage_subtitel })}</p>
             <p className="font-sans">
               {t("shell.footer.mechanicalIssue")}{" "}
-              <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors">
-                koerspoule@gmail.com
+              <a href="mailto:info@koerspoule.nl" className="underline hover:text-foreground transition-colors">
+                info@koerspoule.nl
               </a>
             </p>
             <div className="flex items-center gap-3 font-sans flex-wrap justify-center">

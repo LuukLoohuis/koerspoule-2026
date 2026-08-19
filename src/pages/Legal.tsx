@@ -4,7 +4,7 @@ export default function Legal() {
   const { t } = useTranslation();
 
   const mailLink = (
-    <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors" />
+    <a href="mailto:info@koerspoule.nl" className="underline hover:text-foreground transition-colors" />
   );
   const partnerLink = (
     <a

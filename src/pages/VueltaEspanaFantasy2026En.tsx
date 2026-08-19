@@ -57,7 +57,7 @@ const JSONLD = {
       name: "Koerspoule",
       url: "https://koerspoule.nl/",
       logo: "https://koerspoule.nl/favicon.png",
-      email: "koerspoule@gmail.com",
+      email: "info@koerspoule.nl",
     },
     {
       "@type": "WebPage",

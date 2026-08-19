@@ -79,7 +79,7 @@ export default function Actievoorwaarden() {
         <Trans
           i18nKey="common.actie.contact"
           components={{
-            mail: <a href="mailto:koerspoule@gmail.com" className="underline hover:text-foreground transition-colors" />,
+            mail: <a href="mailto:info@koerspoule.nl" className="underline hover:text-foreground transition-colors" />,
           }}
         />
       </p>
