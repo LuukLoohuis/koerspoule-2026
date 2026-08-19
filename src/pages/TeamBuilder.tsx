@@ -18,8 +18,10 @@ import { useStartlist } from "@/hooks/useStartlist";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { pastBijZoek, telPerPloeg, ploegenGesorteerd } from "@/lib/ploegZoek";
 import { canRegister, isGameLocked, isPreviewStatus, isVisibleToUser } from "@/lib/gameStatus";
 import RiderSearchSelect from "@/components/RiderSearchSelect";
+import ZoekRenners from "@/components/teambuilder/ZoekRenners";
 import { SteunMoment } from "@/components/SteunKopgroep";
 import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
@@ -439,6 +441,36 @@ export default function TeamBuilder() {
     return m;
   }, [allStartlistRiders]);
 
+  // ── Zoeken op renner of ploeg ──────────────────────────────────────────────
+  // Eén zoekterm voor alle categorieën. Typ je een ploegnaam, dan zie je overal
+  // alleen die ploeg -- en daarmee in één oogopslag hoeveel renners je er al uit
+  // hebt. Dat is de vraag die je wilt beantwoorden vóór je kiest: niet je halve
+  // selectie uit dezelfde wielerploeg halen, want die pakken vaak dezelfde
+  // punten, of geen van allen.
+  const [zoek, setZoek] = useState("");
+
+  const ploegTelling = useMemo(
+    () => telPerPloeg(selectedPickRiderIds, riderTeam),
+    [selectedPickRiderIds, riderTeam],
+  );
+
+  const ploegVerdeling = useMemo(() => ploegenGesorteerd(ploegTelling), [ploegTelling]);
+
+  /** Rijen van één categorie, gefilterd op de actieve zoekterm. */
+  const filterRijen = <T extends { rider_id: string; riders: { name: string } | null }>(rijen: T[]): T[] =>
+    rijen.filter((row) => row.riders && pastBijZoek(row.riders.name, riderTeam.get(row.rider_id), zoek));
+
+  /** Totaal aantal treffers over alle categorieën; null als er niet gezocht wordt. */
+  const zoekTreffers = useMemo(() => {
+    if (!zoek.trim()) return null;
+    return categories.reduce(
+      (n, c) => n + c.category_riders.filter(
+        (row) => row.riders && pastBijZoek(row.riders.name, riderTeam.get(row.rider_id), zoek),
+      ).length,
+      0,
+    );
+  }, [categories, zoek, riderTeam]);
+
   const scrollPagerTop = () => {
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     requestAnimationFrame(() =>
@@ -727,6 +759,7 @@ export default function TeamBuilder() {
 
   // ── Mobiel: één categorie per scherm ──
   const renderCategoryScreen = (category: (typeof categories)[number], idx: number) => {
+    const zichtbareRijen = filterRijen(category.category_riders);
     const max = category.max_picks ?? 1;
     const selected = validPicksByCategory.get(category.id) ?? [];
     const reached = selected.length >= max;
@@ -779,9 +812,21 @@ export default function TeamBuilder() {
           )}
         </div>
 
+        <ZoekRenners
+          waarde={zoek}
+          onChange={setZoek}
+          verdeling={ploegVerdeling}
+          gevonden={zoekTreffers}
+        />
+
         {/* Renner-lijst */}
         <div className="space-y-2">
-          {category.category_riders.map((row) => {
+          {zichtbareRijen.length === 0 && (
+            <p className="rounded-md border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+              {t("team.builder.geenTreffers")}
+            </p>
+          )}
+          {zichtbareRijen.map((row) => {
             if (!row.riders) return null;
             const rid = row.riders.id;
             const isSel = selected.includes(rid);
@@ -1186,6 +1231,13 @@ export default function TeamBuilder() {
               )}
 
 
+              <ZoekRenners
+                waarde={zoek}
+                onChange={setZoek}
+                verdeling={ploegVerdeling}
+                gevonden={zoekTreffers}
+              />
+
               {/* Categories */}
               <div id="sectie-categorieen" className="grid grid-cols-1 lg:grid-cols-2 gap-4 scroll-mt-24">
                 {categories.map((category, idx) => {
@@ -1253,7 +1305,12 @@ export default function TeamBuilder() {
                       </div>
 
                       <div className="space-y-2 mt-3">
-                        {category.category_riders.map((row) => {
+                        {filterRijen(category.category_riders).length === 0 && (
+                          <p className="rounded-md border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
+                            {t("team.builder.geenTreffers")}
+                          </p>
+                        )}
+                        {filterRijen(category.category_riders).map((row) => {
                           if (!row.riders) return null;
                           const isSelected = selected.includes(row.riders.id);
                           const disabled = Boolean(isLocked) || (!isSelected && reached && max > 1);

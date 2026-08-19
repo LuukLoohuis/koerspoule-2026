@@ -348,7 +348,15 @@
       "submittedCta": "✅ Submitted",
       "searchByRider": "Search by rider...",
       "filterByTeam": "Filter by team",
-      "allTeams": "All teams"
+      "allTeams": "All teams",
+      "zoekPlaceholder": "Search rider or team…",
+      "zoekLabel": "Search a rider by name or team",
+      "zoekWissen": "Clear search",
+      "zoekResultaat_one": "{{count}} rider found",
+      "zoekResultaat_other": "{{count}} riders found",
+      "ploegVerdeling": "In your squad",
+      "ploegFilter": "Show only riders from {{ploeg}}",
+      "geenTreffers": "No rider in this category matches your search."
     },
     "panel": {
       "loginToView": "Log in to view your team.",

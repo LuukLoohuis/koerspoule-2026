@@ -348,7 +348,15 @@
       "submittedCta": "✅ Ingediend",
       "searchByRider": "Zoek op renner...",
       "filterByTeam": "Filter op team",
-      "allTeams": "Alle teams"
+      "allTeams": "Alle teams",
+      "zoekPlaceholder": "Zoek renner of ploeg…",
+      "zoekLabel": "Zoek een renner op naam of ploeg",
+      "zoekWissen": "Zoekterm wissen",
+      "zoekResultaat_one": "{{count}} renner gevonden",
+      "zoekResultaat_other": "{{count}} renners gevonden",
+      "ploegVerdeling": "Uit je ploeg",
+      "ploegFilter": "Toon alleen renners van {{ploeg}}",
+      "geenTreffers": "Geen renner in deze categorie past bij je zoekterm."
     },
     "panel": {
       "loginToView": "Log in om je team te bekijken.",
