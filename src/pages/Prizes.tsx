@@ -15,9 +15,12 @@ const GOLD = "hsl(var(--vintage-gold))";
  * de sponsor doorlinkt in een nieuw tabblad. Geen url → niets (geen layout-sprong:
  * de knop hoort onderaan bij de overige kaartinhoud). Identiek op mobiel + web.
  */
-function SponsorButton({ url, naam, prijsId, veld, className }: { url?: string | null; naam?: string | null; prijsId?: string; veld?: KlikVeld; className?: string }) {
+function SponsorButton({ url, naam, prijsId, veld, kort, className }: { url?: string | null; naam?: string | null; prijsId?: string; veld?: KlikVeld; kort?: boolean; className?: string }) {
   if (!url) return null;
-  const label = naam ? `Bekijk ${naam}` : "Bezoek website";
+  // Op het podium past de volledige sponsornaam niet en werd hij afgekapt
+  // ("Bekijk cyclinglifestyle…"). Daar dus een vast, kort label; de naam staat
+  // toch al in de regel erboven.
+  const label = kort ? "Bekijk sponsor" : naam ? `Bekijk ${naam}` : "Bezoek website";
   return (
     <a
       href={url}
@@ -41,12 +44,12 @@ function SponsorButton({ url, naam, prijsId, veld, className }: { url?: string |
 }
 
 /** Eén of twee sponsorknoppen (2e sponsor optioneel). */
-function SponsorButtons({ p, className, stack }: { p: Prize; className?: string; stack?: boolean }) {
+function SponsorButtons({ p, className, stack, kort }: { p: Prize; className?: string; stack?: boolean; kort?: boolean }) {
   if (!p.sponsor_url && !p.sponsor_url_2) return null;
   return (
     <div className={cn("flex gap-2", stack ? "flex-col" : "flex-col sm:flex-row sm:flex-wrap", className)}>
-      <SponsorButton url={p.sponsor_url} naam={p.sponsor_naam} prijsId={p.id} veld="sponsor_url" />
-      <SponsorButton url={p.sponsor_url_2} naam={p.sponsor_naam_2} prijsId={p.id} veld="sponsor_url_2" />
+      <SponsorButton url={p.sponsor_url} naam={p.sponsor_naam} prijsId={p.id} veld="sponsor_url" kort={kort} />
+      <SponsorButton url={p.sponsor_url_2} naam={p.sponsor_naam_2} prijsId={p.id} veld="sponsor_url_2" kort={kort} />
     </div>
   );
 }
@@ -72,10 +75,14 @@ const CREME_RGB = "245, 237, 216"; // #F5EDD8
 // Glas-effect podiumkaarten: crème-vulling op opacity + backdrop-blur, zodat de
 // sfeerachtergrond zacht doorschijnt. Hoger = dekkender (beter leesbaar).
 const GLASS = {
-  empty: 0.5,   // lege/ereplekken (2e, 3e, "nog niet bekend") — luchtigst
-  filled: 0.62, // gevulde niet-winnaar
-  winner: 0.7,  // 1e-plaats — tekstzone iets dekkender
-  photo: 0.92,  // zone rond de sponsorfoto — vrijwel dekkend, geen rommel
+  // Was 0.5/0.62/0.7. Mooi glaseffect, maar de omschrijving staat in gedempt
+  // grijs en die las dwars door de Champs-Élysées heen slecht. Op 0.80 blijft
+  // de foto voelbaar door de kaart zonder de tekst op te offeren; hij doet zijn
+  // werk toch vooral in de randen eromheen.
+  empty: 0.68,  // lege plekken mogen luchtiger: daar staat weinig tekst
+  filled: 0.8,
+  winner: 0.8,
+  photo: 0.94,  // zone rond de sponsorfoto — vrijwel dekkend, geen rommel
   blur: "6px",
 };
 const podiumOverlay =
@@ -223,28 +230,54 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
             : "0 6px 18px -12px rgba(0,0,0,0.4)",
         }}
       >
-        {/* Rang-kop met accent */}
-        <div className="flex items-center justify-center gap-2 pt-3 pb-1">
-          <Icon className={isWinner ? "h-9 w-9" : "h-7 w-7"} style={{ color: accent }} strokeWidth={2} />
-          <span className={`font-display font-black tabular-nums ${isWinner ? "text-4xl" : "text-2xl"}`} style={{ color: accent }}>
-            {plek}e
+        {/* Lint: plek links, waarde rechts. De waarde stond eerder als losse
+            regel ín de omschrijving, waardoor de ene kaart drie tekstregels had
+            en de andere één — en alles eronder mee zakte. */}
+        <div
+          className="flex items-center justify-between gap-2 border-b px-3 py-2"
+          style={{ borderColor: `rgba(${CREME_RGB}, 0.9)` }}
+        >
+          <span className="flex items-center gap-1.5" style={{ color: accent }}>
+            <Icon className={isWinner ? "h-6 w-6" : "h-5 w-5"} strokeWidth={2} />
+            <span className={`font-display font-black tabular-nums ${isWinner ? "text-xl" : "text-base"}`}>
+              {plek}e
+            </span>
           </span>
+          {p?.prijs_label && (
+            <span
+              className="shrink-0 rounded-full border px-2 py-px font-mono text-[10px] font-bold"
+              style={{ color: accent, borderColor: accent }}
+            >
+              {p.prijs_label}
+            </span>
+          )}
         </div>
-        <CardContent className={`text-center ${isWinner ? "p-4 pt-1" : "p-3 pt-1"}`}>
+        {/* Links uitgelijnd: een zin lees je vanaf een rechte kantlijn. Alles
+            stond gecentreerd, wat bij twee regels aan béide kanten rafelt.
+            flex-1 op de tekst duwt de knop naar de onderrand, zodat die per
+            kolom op dezelfde hoogte staat. */}
+        <CardContent className={`flex h-full flex-col text-left ${isWinner ? "p-3" : "p-3"}`}>
           {p ? (
             <>
               {p.afbeelding_url && (
                 <div
-                  className={`w-full ${isWinner ? "aspect-[4/3]" : "aspect-[3/2]"} rounded-lg border border-border overflow-hidden mb-2`}
+                  className="w-full aspect-[16/10] rounded-lg border border-border overflow-hidden mb-2.5"
                   style={{ backgroundColor: `rgba(${CREME_RGB}, ${GLASS.photo})` }}
                 >
                   <img src={p.afbeelding_url} alt={p.titel} className="w-full h-full object-contain" loading="lazy" />
                 </div>
               )}
-              <h3 className={`font-display font-bold leading-tight ${isWinner ? "text-lg" : "text-sm"}`}>{p.titel || fallback}</h3>
-              {p.omschrijving && <p className="text-sm text-muted-foreground font-serif mt-1 leading-snug whitespace-pre-line">{p.omschrijving}</p>}
-              <div className="flex justify-center"><SponsorLine p={p} /></div>
-              <SponsorButtons p={p} stack className="mt-3" />
+              <h3 className={`font-display font-bold leading-tight ${isWinner ? "text-base" : "text-sm"}`}>{p.titel || fallback}</h3>
+              {p.omschrijving && (
+                // Twee regels: één uitbundige sponsortekst mag de rij niet
+                // scheeftrekken.
+                <p className="mt-1 line-clamp-2 font-serif text-[13px] leading-snug text-foreground/70">
+                  {p.omschrijving}
+                </p>
+              )}
+              <div className="flex-1" />
+              <SponsorLine p={p} />
+              <SponsorButtons p={p} stack kort className="mt-2.5" />
             </>
           ) : (
             <div className="py-4 flex flex-col items-center gap-1.5 text-muted-foreground">
@@ -394,7 +427,10 @@ export default function Prizes() {
                   >
                     <Trophy className="h-7 w-7 md:h-8 md:w-8" style={{ color: "#FFD400", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.55))" }} /> Het podium
                   </h2>
-                  <div className="flex flex-col md:flex-row md:justify-center md:items-end gap-4 md:gap-3">
+                  {/* items-stretch, niet items-end: dan zijn de kaarten even
+                      hoog en lijnen titel, sponsorregel en knop per kolom uit.
+                      De podiumtrap komt uit de ondermarge per plek (lift). */}
+                  <div className="flex flex-col md:flex-row md:justify-center md:items-stretch gap-4 md:gap-3">
                     <PodiumCard p={podium1} plek={1} />
                     <PodiumCard p={podium2} plek={2} />
                     <PodiumCard p={podium3} plek={3} />
