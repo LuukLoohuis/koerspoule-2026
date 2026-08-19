@@ -106,6 +106,12 @@ type Stap = {
    * de verkeerde plek.
    */
   doel?: string;
+  /**
+   * Een losse pagina in plaats van een tabje. De rondleiding leeft op Mijn
+   * Peloton, dus daarheen navigeren zou hem beëindigen; vandaar een knop die
+   * de bezoeker zelf laat kiezen. De uitleg staat er sowieso bij.
+   */
+  link?: { pad: string; knop: string };
 };
 
 export default function Rondleiding({
@@ -172,6 +178,12 @@ export default function Rondleiding({
     sub("team", "prono", t("team.tabs.prono"), t("rondleiding.volgwagen.prono")),
     sub("team", "palmares", t("team.tabs.palmares"), t("rondleiding.volgwagen.palmares")),
     {
+      navKey: "team",
+      titel: t("rondleiding.ploegbouwer.titel"),
+      tekst: t("rondleiding.ploegbouwer.tekst"),
+      link: { pad: "/team-samenstellen", knop: t("rondleiding.ploegbouwer.knop") },
+    },
+    {
       navKey: "subpoules",
       titel: t("rondleiding.subpoule.titel"),
       tekst: heeftSubpoule ? t("rondleiding.subpoule.tekst") : t("rondleiding.subpoule.tekstZonder"),
@@ -181,7 +193,19 @@ export default function Rondleiding({
     // met "maak of word lid van een subpoule" en houdt het daar op.
     ...(heeftSubpoule
       ? [
-          sub("subpoules", "klassement", t("subpoule.manager.tabRanking"), t("rondleiding.subpoule.ranking")),
+          {
+      navKey: "subpoules",
+      titel: t("rondleiding.subpoule.meedoenTitel"),
+      tekst: t("rondleiding.subpoule.meedoenTekst"),
+      ga: { sectie: "subpoules" },
+    },
+    {
+      navKey: "subpoules",
+      titel: t("rondleiding.subpoule.startenTitel"),
+      tekst: t("rondleiding.subpoule.startenTekst"),
+      ga: { sectie: "subpoules" },
+    },
+    sub("subpoules", "klassement", t("subpoule.manager.tabRanking"), t("rondleiding.subpoule.ranking")),
           sub("subpoules", "verloop", t("subpoule.manager.tabRisersFallers"), t("rondleiding.subpoule.stijgers")),
           sub("subpoules", "daguitslag", t("subpoule.manager.tabDaguitslag"), t("rondleiding.subpoule.daguitslag")),
           sub("subpoules", "heatmap", t("subpoule.manager.tabHeatmap"), t("rondleiding.subpoule.heatmap")),
@@ -210,6 +234,24 @@ export default function Rondleiding({
     sub("hors", "wielerdirecteur", t("hors.tabs.wielerdirecteur"), t("rondleiding.hors.wielerdirecteur")),
     sub("hors", "superteam", t("hors.tabs.superteam"), t("rondleiding.hors.superteam")),
     sub("hors", "benchmark", t("hors.tabs.benchmark"), t("rondleiding.hors.benchmark")),
+    {
+      navKey: null,
+      titel: t("rondleiding.prijzen.titel"),
+      tekst: t("rondleiding.prijzen.tekst"),
+      link: { pad: "/prijzen", knop: t("rondleiding.prijzen.knop") },
+    },
+    {
+      navKey: null,
+      titel: t("rondleiding.reglement.titel"),
+      tekst: t("rondleiding.reglement.tekst"),
+      link: { pad: "/regels", knop: t("rondleiding.reglement.knop") },
+    },
+    {
+      navKey: null,
+      titel: t("rondleiding.uitleg.titel"),
+      tekst: t("rondleiding.uitleg.tekst"),
+      link: { pad: "/uitleg", knop: t("rondleiding.uitleg.knop") },
+    },
   ];
 
   const huidig = stappen[Math.min(stap, stappen.length - 1)];
@@ -378,6 +420,16 @@ export default function Rondleiding({
           >
             {t("rondleiding.overslaan")}
           </button>
+
+          {huidig.link && (
+            <a
+              href={huidig.link.pad}
+              onClick={sluit}
+              className="rounded-md border-2 border-foreground bg-card px-3 py-1.5 text-xs font-display font-bold shadow-[2px_2px_0_hsl(var(--foreground))] active:translate-y-px"
+            >
+              {huidig.link.knop}
+            </a>
+          )}
           {/* Een balkje in plaats van stippen: met de subtabjes erbij zijn het
               er te veel om nog als rij bolletjes te lezen. */}
           <div className="ml-auto h-1.5 w-16 overflow-hidden rounded-full bg-foreground/15" aria-hidden>

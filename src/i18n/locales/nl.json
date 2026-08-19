@@ -1665,7 +1665,11 @@
       "heatmap": "wie welke renner koos — gaat open zodra de koers rijdt, anders kijk je elkaars ploeg af",
       "deelnemers": "wie er meedoen",
       "streek": "de stand in jouw regio",
-      "tekstZonder": "Nog geen subpoule? Maak er een aan of doe mee met een code — daar wordt de koers pas echt leuk."
+      "tekstZonder": "Nog geen subpoule? Maak er een aan of doe mee met een code — daar wordt de koers pas echt leuk.",
+      "meedoenTitel": "Meedoen met een subpoule",
+      "meedoenTekst": "Van een vriend een code gekregen? Vul die in bij Subpoules en je zit erin. Je speelt met dezelfde ploeg in elke subpoule — meedoen kan dus zo vaak je wilt.",
+      "startenTitel": "Zelf een subpoule beginnen",
+      "startenTekst": "Geef je poule een naam en je krijgt een code om rond te sturen. Wie hem invult doet mee; jij blijft de beheerder."
     },
     "uitslagen": {
       "titel": "Uitslagen",
@@ -1682,7 +1686,27 @@
       "superteam": "hoeveel van het droomteam had jij",
       "benchmark": "jouw ploeg naast die van iemand anders — werkt zodra er een klassement is om op te sorteren"
     },
-    "starten": "Bekijk de rondleiding"
+    "starten": "Bekijk de rondleiding",
+    "ploegbouwer": {
+      "titel": "De ploegbouwer",
+      "tekst": "Hier stel je je ploeg samen: per categorie kies je je renners, plus je jokers. Zolang de inschrijving loopt kun je blijven schuiven.",
+      "knop": "Naar de ploegbouwer"
+    },
+    "prijzen": {
+      "titel": "Prijzen",
+      "tekst": "Wat er te winnen valt, en welke sponsor welke prijs beschikbaar stelt. Ook de dagprijzen staan er.",
+      "knop": "Naar de prijzen"
+    },
+    "reglement": {
+      "titel": "Het koersreglement",
+      "tekst": "Hoe de punten precies werken, wat de jokers doen en wat er gebeurt bij een opgave. Bij twijfel is dit de scheidsrechter.",
+      "knop": "Naar het reglement"
+    },
+    "uitleg": {
+      "titel": "Nog vragen?",
+      "tekst": "Dat was de rondleiding. Staat je vraag er niet bij, dan vind je op de uitlegpagina de rest — inclusief hoe je contact opneemt.",
+      "knop": "Naar de uitleg"
+    }
   },
   "statusblok": {
     "eyebrow": "Jouw stand",

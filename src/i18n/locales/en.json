@@ -1665,7 +1665,11 @@
       "heatmap": "who picked which rider — opens once the race is under way, otherwise you would copy each other's team",
       "deelnemers": "who is taking part",
       "streek": "the standings in your region",
-      "tekstZonder": "No subpoule yet? Create one or join with a code — that is where the race gets fun."
+      "tekstZonder": "No subpoule yet? Create one or join with a code — that is where the race gets fun.",
+      "meedoenTitel": "Joining a subpoule",
+      "meedoenTekst": "Got a code from a friend? Enter it under Subpoules and you are in. You play with the same team in every subpoule, so join as many as you like.",
+      "startenTitel": "Starting your own subpoule",
+      "startenTekst": "Give your pool a name and you get a code to share. Whoever enters it joins; you stay the owner."
     },
     "uitslagen": {
       "titel": "Uitslagen",
@@ -1682,7 +1686,27 @@
       "superteam": "how much of the dream team you had",
       "benchmark": "your team next to someone else's — works once there is a classification to sort on"
     },
-    "starten": "Take the tour"
+    "starten": "Take the tour",
+    "ploegbouwer": {
+      "titel": "The team builder",
+      "tekst": "This is where you pick your team: riders per category, plus your jokers. You can keep changing while registration is open.",
+      "knop": "To the team builder"
+    },
+    "prijzen": {
+      "titel": "Prizes",
+      "tekst": "What there is to win, and which sponsor puts up which prize. Daily prizes are listed too.",
+      "knop": "To the prizes"
+    },
+    "reglement": {
+      "titel": "The race rules",
+      "tekst": "Exactly how points work, what the jokers do and what happens when a rider abandons. When in doubt, this is the referee.",
+      "knop": "To the rules"
+    },
+    "uitleg": {
+      "titel": "Still have questions?",
+      "tekst": "That was the tour. If your question is not covered, the explanation page has the rest — including how to get in touch.",
+      "knop": "To the explanation"
+    }
   },
   "statusblok": {
     "eyebrow": "Your standing",
