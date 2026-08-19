@@ -606,6 +606,10 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
           <SwipeHintBar visible={mobileHint.visible} onClose={mobileHint.dismiss} className="mb-2" />
 
           {/* Vinger-volgende carrousel: alleen het content-vlak beweegt. */}
+          {/* Mobiel paneel-doel: dezelfde rol als het desktopvlak hieronder.
+              Zonder dit viel de rondleiding op mobiel terug op de hele sectie
+              en bleef daardoor alles licht. */}
+          <div data-rondleiding-doel="subpoules-paneel">
           <SwipeCarousel
             keys={dynTabKeys}
             activeKey={mobileTab}
@@ -613,6 +617,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
             onSwiped={mobileHint.dismiss}
             renderTab={(k) => panelFor(k)}
           />
+          </div>
         </div>
 
         {/* ── DESKTOP: onderstreepte subbalk, één paneel per tab. ── */}

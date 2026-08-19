@@ -285,11 +285,22 @@ export default function Rondleiding({
     let stop = false;
     const meet = () => {
       if (stop) return;
+      // Het eerste ZICHTBARE doel. Web en mobiel renderen vaak allebei een
+      // versie van hetzelfde element, waarvan er één met display:none of een
+      // md:-klasse verborgen is; blind het eerste pakken levert dan een vlak
+      // van 0 bij 0 en dus een uitsparing die dichtklapt.
+      const zichtbaar = (sel: string): HTMLElement | null => {
+        for (const kandidaat of Array.from(document.querySelectorAll<HTMLElement>(sel))) {
+          const r = kandidaat.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0) return kandidaat;
+        }
+        return null;
+      };
       const el =
-        document.querySelector<HTMLElement>(`[data-rondleiding-doel="${doel}"]`) ??
+        zichtbaar(`[data-rondleiding-doel="${doel}"]`) ??
         // Heeft een sectie nog geen apart paneel-doel, dan de hele inhoud.
         (huidig.ga?.sectie
-          ? document.querySelector<HTMLElement>(`[data-rondleiding-doel="${huidig.ga.sectie}-inhoud"]`)
+          ? zichtbaar(`[data-rondleiding-doel="${huidig.ga.sectie}-inhoud"]`)
           : null);
       setGat(el ? omlijst(el) : null);
     };

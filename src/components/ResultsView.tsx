@@ -850,7 +850,13 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                               isComparing && "text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]",
                             )}
                           >
-                            <Swords className="h-3.5 w-3.5" strokeWidth={isComparing ? 2.5 : 2} />
+                            <Swords
+                              className="h-3.5 w-3.5"
+                              strokeWidth={isComparing ? 2.5 : 2}
+                              // Tweede weergave van dezelfde knop; de
+                              // rondleiding pakt degene die zichtbaar is.
+                              data-rondleiding-doel={canCompare ? "uitslagen-vergelijk" : undefined}
+                            />
                           </span>
                         )}
                       </div>

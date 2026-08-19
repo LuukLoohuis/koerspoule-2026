@@ -687,7 +687,13 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                         aria-label={isComparing ? t("subpoule.standings.closeComparison") : t("subpoule.standings.benchmarkAgainst", { name: m.team_name ?? m.display_name ?? t("subpoule.standings.thisTeamFallback") })}
                         title={isComparing ? t("subpoule.standings.closeComparison") : t("subpoule.standings.benchmarkTitle")}
                       >
-                        <Swords className="h-3 w-3" strokeWidth={isComparing ? 2.5 : 2} />
+                        <Swords
+                          className="h-3 w-3"
+                          strokeWidth={isComparing ? 2.5 : 2}
+                          // Ook hier het doel: web en mobiel tonen elk een
+                          // eigen zwaardje en de rondleiding pakt het zichtbare.
+                          data-rondleiding-doel="subpoules-vergelijk"
+                        />
                         {isComparing ? t("subpoule.standings.compareClose") : t("subpoule.standings.compare")}
                       </button>
                       {/* Mobiel: subtiel zwaard-icoon (rij opent de sheet) */}
