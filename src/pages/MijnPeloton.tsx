@@ -1404,7 +1404,7 @@ export default function MijnPeloton() {
           {/* ── TAB: De Karavaan (landing — feed-overzicht) ──
               L'Équipe is óók in de sneak preview ('open') volledig zichtbaar voor
               deelnemers (geen preview-schil meer). */}
-          <TabsContent value="karavaan" className="mt-3">
+          <TabsContent value="karavaan" className="mt-3" data-rondleiding-doel="karavaan-inhoud">
             {/* Mobiel: eerst waar je staat, dan pas het nieuws. */}
             <StatusBlok onOpenKlassement={openUitslagen} />
             <KaravaanFeed
@@ -1419,7 +1419,7 @@ export default function MijnPeloton() {
           </TabsContent>
 
           {/* ── TAB: Mijn Team (with sub-tabs) ── */}
-          <TabsContent value="team" className="mt-3">
+          <TabsContent value="team" className="mt-3" data-rondleiding-doel="team-inhoud">
             <Tabs value={teamSubTab} onValueChange={setTeamSubTab}>
 
               {/* Mobile tab nav — pill. Auto-hide bij omlaag scrollen. */}
@@ -1496,7 +1496,7 @@ export default function MijnPeloton() {
           </TabsContent>
 
           {/* ── TAB: Subpoules ── */}
-          <TabsContent value="subpoules" className="mt-3">
+          <TabsContent value="subpoules" className="mt-3" data-rondleiding-doel="subpoules-inhoud">
             {/* Wervingsstrook (admin-gestuurd, wegklikbaar) — ook hier zodat leden
                 een promote-subpoule kunnen vinden; "Doe mee" vult de code voor. */}
             <WervingStrook className="mb-3" />
@@ -1523,7 +1523,7 @@ export default function MijnPeloton() {
           </TabsContent>
 
           {/* ── TAB: Uitslagen ── */}
-          <TabsContent value="uitslagen" className="mt-3">
+          <TabsContent value="uitslagen" className="mt-3" data-rondleiding-doel="uitslagen-inhoud">
             {maySeeLive ? (
               <MyResultsPanel key={`uitslagen-${uitslagenTarget?.view ?? "def"}`} gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} initialView={uitslagenTarget?.view} initialStageNumber={uitslagenTarget?.stageNumber} />
             ) : (
@@ -1535,7 +1535,7 @@ export default function MijnPeloton() {
           </TabsContent>
 
           {/* ── TAB: Hors Catégorie ── */}
-          <TabsContent value="hors" className="mt-3">
+          <TabsContent value="hors" className="mt-3" data-rondleiding-doel="hors-inhoud">
             <HorsCategorieTab initialTab={horsTab} gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} adminTestmodus={selectedGameObj?.admin_testmodus ?? false} />
           </TabsContent>
 

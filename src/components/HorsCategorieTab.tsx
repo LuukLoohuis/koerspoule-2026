@@ -37,6 +37,7 @@ import SwipeHintBar from "@/components/SwipeHintBar";
 import EmptyState from "@/components/EmptyState";
 import Voorbeeldmarkering from "@/components/Voorbeeldmarkering";
 import { demoPickStats, demoJokerStats } from "@/lib/horsDemo";
+import { useVoorbeeldbron } from "@/hooks/useVoorbeeldbron";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import { RetroTabs } from "@/components/RetroTabs";
@@ -249,19 +250,35 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   // echte cijfers, om te kunnen testen.
   const isDemo = resultsHiddenForUsers(game?.status) && !adminSeesAll;
   const { entry, picksByCategory, jokerIds, predictions: myPredictions } = useEntry(game?.id);
-  const { data: categories = [] } = useCategories(game?.id);
+  const { data: echteCategories = [] } = useCategories(game?.id);
   const { data: echtePickStats = [] } = usePickStats(hasResults ? game?.id : undefined);
   const { data: echteJokerStats = [] } = useJokerStats(hasResults ? game?.id : undefined);
   // Vóór de start valt er niets te tellen. Voorbeeldcijfers op de échte
   // startlijst laten zien wát er straks komt; een leeg paneel leest als een
   // storing. Ze staan altijd onder een <Voorbeeldmarkering>.
-  const pickStats = useMemo(
-    () => (isDemo ? demoPickStats(categories) : echtePickStats),
-    [isDemo, categories, echtePickStats],
-  );
-  const jokerStats = useMemo(
-    () => (isDemo ? demoJokerStats(categories) : echteJokerStats),
-    [isDemo, categories, echteJokerStats],
+  // Echte cijfers uit de uitgereden Tour 2026 als voorbeeld. Verzonnen
+  // percentages ogen nooit geloofwaardig: een peloton kiest met uitschieters
+  // en staarten. Lukt het ophalen niet, dan valt het terug op gegenereerde
+  // cijfers — beter een benadering dan een leeg scherm.
+  const { data: bron } = useVoorbeeldbron(isDemo);
+  const heeftBron = isDemo && (bron?.pickStats.length ?? 0) > 0;
+
+  const pickStats = useMemo(() => {
+    if (!isDemo) return echtePickStats;
+    return heeftBron ? bron!.pickStats : demoPickStats(echteCategories);
+  }, [isDemo, heeftBron, bron, echtePickStats, echteCategories]);
+
+  const jokerStats = useMemo(() => {
+    if (!isDemo) return echteJokerStats;
+    return heeftBron ? bron!.jokerStats : demoJokerStats(echteCategories);
+  }, [isDemo, heeftBron, bron, echteJokerStats, echteCategories]);
+
+  // De cijfers horen bij de Tour-renners, dus de categorieën en de namen komen
+  // uit diezelfde koers. Anders zoekt het paneel Tour-renner-ids op in de
+  // startlijst van deze koers en blijft alles leeg.
+  const categories = useMemo(
+    () => (heeftBron ? (bron!.categorieen as unknown as typeof echteCategories) : echteCategories),
+    [heeftBron, bron, echteCategories],
   );
   const { data: predictionStats = [] } = usePredictionStats(hasResults ? game?.id : undefined);
   const { data: myStageTotal = 0 } = useMyStagePointTotal(entry?.id);

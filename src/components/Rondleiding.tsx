@@ -87,6 +87,13 @@ type Stap = {
   tekst: string;
   onderdelen?: [string, string][];
   ga?: { sectie: string; sub?: string };
+  /**
+   * Welk vlak oplicht. Standaard de tab in de navigatiebalk; bij een subtabje
+   * juist het hele inhoudsvlak, want dáár gaat de uitleg over. Alleen de
+   * hoofdtab laten oplichten terwijl je het over de heatmap hebt, wijst naar
+   * de verkeerde plek.
+   */
+  doel?: string;
 };
 
 export default function Rondleiding({
@@ -122,6 +129,8 @@ export default function Rondleiding({
     titel: label,
     tekst: uitleg,
     ga: { sectie, sub: key },
+    // Het inhoudsvlak van de sectie, niet het tabje in de balk.
+    doel: `${sectie}-inhoud`,
   });
 
   const stappen: Stap[] = [
@@ -197,12 +206,13 @@ export default function Rondleiding({
   // plaats van via een ref, want de aangewezen tab zit in de shell (onderbalk)
   // of in de pagina (dossard-balk) en die delen geen boom met dit paneel.
   const [gat, setGat] = useState<Rechthoek | null>(null);
+  const doel = huidig.doel ?? huidig.navKey;
   useEffect(() => {
-    if (!actief || !huidig.navKey) { setGat(null); return; }
+    if (!actief || !doel) { setGat(null); return; }
     let stop = false;
     const meet = () => {
       if (stop) return;
-      const el = document.querySelector<HTMLElement>(`[data-rondleiding-doel="${huidig.navKey}"]`);
+      const el = document.querySelector<HTMLElement>(`[data-rondleiding-doel="${doel}"]`);
       setGat(el ? omlijst(el) : null);
     };
     // Tweemaal meten: de tab kan nog aan het verspringen zijn (de balk scrollt
@@ -217,7 +227,7 @@ export default function Rondleiding({
       window.removeEventListener("resize", meet);
       window.removeEventListener("scroll", meet, true);
     };
-  }, [actief, huidig.navKey, stap]);
+  }, [actief, doel, stap]);
 
   // De onderbalk licht de besproken tab op.
   useEffect(() => {
