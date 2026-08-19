@@ -19,3 +19,8 @@ verify_jwt = false
 # controleert zelf of de aanroeper die sleutel heeft of beheerder is.
 [functions.livemarathon-sync]
 verify_jwt = false
+
+# Resend ondertekent zijn meldingen met Svix, niet met een Supabase-token.
+# De handtekeningcontrole in de functie is daarmee de poort.
+[functions.resend-webhook]
+verify_jwt = false
