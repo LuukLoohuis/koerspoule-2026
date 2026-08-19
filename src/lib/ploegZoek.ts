@@ -48,6 +48,24 @@ export function ploegenGesorteerd(telling: Map<string, number>): Array<[string, 
   return [...telling.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "nl"));
 }
 
+type RennerRij = { rider_id: string; riders: { name: string } | null };
+
+/**
+ * Heeft deze categorie minstens één renner die bij de zoekterm past?
+ *
+ * Zoek je op een ploeg, dan hoort een categorie zónder renner van die ploeg
+ * helemaal niet in beeld te komen -- anders zie je achttien lege kaarten voor
+ * zeven renners. Zonder zoekterm past alles.
+ */
+export function categorieHeeftTreffer(
+  rijen: RennerRij[],
+  ploegVanRenner: Map<string, string>,
+  zoek: string,
+): boolean {
+  if (!zoek.trim()) return true;
+  return rijen.some((row) => row.riders && pastBijZoek(row.riders.name, ploegVanRenner.get(row.rider_id), zoek));
+}
+
 export type PloegInfo = { short_name: string | null; jersey_url: string | null };
 
 export type PloegChip = {

@@ -24,7 +24,8 @@
       "bannerTitle": "Steun Koerspoule ☕",
       "bannerBody": "Bevalt Koerspoule? ☕ Met een kop koffie help je Koerspoule draaiende te houden.",
       "treat": "Trakteer",
-      "bannerClose": "Banner sluiten"
+      "bannerClose": "Banner sluiten",
+      "trakteer": "Trakteer"
     },
     "sponsors": {
       "sectionAria": "Sponsoren",
@@ -357,7 +358,8 @@
       "ploegVerdeling": "Uit je ploeg",
       "ploegFilter": "Toon alleen renners van {{ploeg}}",
       "geenTreffers": "Geen renner in deze categorie past bij je zoekterm.",
-      "ploegFilterAantal": "{{ploeg}} — {{count}} renner(s) in je ploeg. Toon alleen deze ploeg."
+      "ploegFilterAantal": "{{ploeg}} — {{count}} renner(s) in je ploeg. Toon alleen deze ploeg.",
+      "geenTreffersTotaal": "Geen renner past bij je zoekterm. Wis het zoekveld om alle categorieën te zien."
     },
     "panel": {
       "loginToView": "Log in om je team te bekijken.",

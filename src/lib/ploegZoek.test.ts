@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normaliseer, pastBijZoek, telPerPloeg, ploegenGesorteerd, ploegChips } from "./ploegZoek";
+import { normaliseer, pastBijZoek, telPerPloeg, ploegenGesorteerd, ploegChips, categorieHeeftTreffer } from "./ploegZoek";
 
 describe("normaliseer", () => {
   it("haalt accenten weg zodat je ze niet hoeft te typen", () => {
@@ -98,5 +98,34 @@ describe("ploegChips", () => {
 
   it("houdt de volledige naam bij voor titel en schermlezer", () => {
     expect(ploegChips(telling, info)[0].naam).toBe("Team Visma | Lease a Bike");
+  });
+});
+
+describe("categorieHeeftTreffer", () => {
+  const ploegen = new Map([["a", "UAE Team Emirates"], ["b", "Team Visma"], ["c", "UAE Team Emirates"]]);
+  const rij = (id: string, naam: string) => ({ rider_id: id, riders: { name: naam } });
+  const categorie = [rij("a", "Tadej Pogacar"), rij("b", "Jonas Vingegaard")];
+
+  it("laat een categorie staan als één renner past", () => {
+    expect(categorieHeeftTreffer(categorie, ploegen, "uae")).toBe(true);
+  });
+
+  it("laat een categorie vallen als geen enkele renner past", () => {
+    // Dit is de kern: zoek je op UAE, dan hoort een categorie zonder
+    // UAE-renner niet als lege kaart te blijven staan.
+    expect(categorieHeeftTreffer([rij("b", "Jonas Vingegaard")], ploegen, "uae")).toBe(false);
+  });
+
+  it("laat alles staan zonder zoekterm", () => {
+    expect(categorieHeeftTreffer(categorie, ploegen, "")).toBe(true);
+    expect(categorieHeeftTreffer([], ploegen, "   ")).toBe(true);
+  });
+
+  it("vindt ook op rennernaam, niet alleen op ploeg", () => {
+    expect(categorieHeeftTreffer(categorie, ploegen, "vinge")).toBe(true);
+  });
+
+  it("valt niet om op rijen zonder renner", () => {
+    expect(categorieHeeftTreffer([{ rider_id: "x", riders: null }], ploegen, "uae")).toBe(false);
   });
 });

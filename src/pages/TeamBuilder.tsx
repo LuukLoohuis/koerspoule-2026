@@ -18,7 +18,7 @@ import { useStartlist } from "@/hooks/useStartlist";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { pastBijZoek, telPerPloeg, ploegChips, type PloegInfo } from "@/lib/ploegZoek";
+import { pastBijZoek, categorieHeeftTreffer, telPerPloeg, ploegChips, type PloegInfo } from "@/lib/ploegZoek";
 import { canRegister, isGameLocked, isPreviewStatus, isVisibleToUser } from "@/lib/gameStatus";
 import RiderSearchSelect from "@/components/RiderSearchSelect";
 import ZoekRenners from "@/components/teambuilder/ZoekRenners";
@@ -424,17 +424,6 @@ export default function TeamBuilder() {
     return m;
   }, [allStartlistRiders]);
 
-  // ── Mobiele flow: categorie-voor-categorie pager (md:hidden) ───────────────
-  const [activeCatRaw, setActiveCatRaw] = useState<string | null>(null);
-  // Eigen sleutel: anders deelt de ploegbouwer zijn "hint gezien"-vlag met
-  // elke andere sectie die de standaard gebruikt.
-  const mobileHint = useSwipeHint("teambuilder");
-  const pagerRef = useRef<HTMLDivElement>(null);
-
-  const mobileKeys = useMemo(() => [...categories.map((c) => c.id), "overview"], [categories]);
-  const activeCat =
-    activeCatRaw && mobileKeys.includes(activeCatRaw) ? activeCatRaw : categories[0]?.id ?? "overview";
-
   const riderTeam = useMemo(() => {
     const m = new Map<string, string>();
     for (const r of allStartlistRiders) m.set(r.id, r.teamName);
@@ -469,6 +458,42 @@ export default function TeamBuilder() {
   /** Rijen van één categorie, gefilterd op de actieve zoekterm. */
   const filterRijen = <T extends { rider_id: string; riders: { name: string } | null }>(rijen: T[]): T[] =>
     rijen.filter((row) => row.riders && pastBijZoek(row.riders.name, riderTeam.get(row.rider_id), zoek));
+
+  /**
+   * Categorieën die er tijdens het zoeken toe doen.
+   *
+   * Zoek je op een ploeg, dan hoort een categorie zónder renner van die ploeg
+   * niet als lege kaart te blijven staan -- dan zie je achttien vakjes voor
+   * zeven renners. Buiten het zoeken blijft alles staan.
+   */
+  const zichtbareCategorieen = useMemo(() => {
+    if (!zoek.trim()) return categories;
+    return categories.filter((c) => categorieHeeftTreffer(c.category_riders, riderTeam, zoek));
+  }, [categories, zoek, riderTeam]);
+
+  // ── Mobiele flow: categorie-voor-categorie pager (md:hidden) ───────────────
+  const [activeCatRaw, setActiveCatRaw] = useState<string | null>(null);
+  // Eigen sleutel: anders deelt de ploegbouwer zijn "hint gezien"-vlag met
+  // elke andere sectie die de standaard gebruikt.
+  const mobileHint = useSwipeHint("teambuilder");
+  const pagerRef = useRef<HTMLDivElement>(null);
+
+  const mobileKeys = useMemo(
+    () => [...zichtbareCategorieen.map((c) => c.id), "overview"],
+    [zichtbareCategorieen],
+  );
+  const activeCat =
+    activeCatRaw && mobileKeys.includes(activeCatRaw)
+      ? activeCatRaw
+      : zichtbareCategorieen[0]?.id ?? "overview";
+
+
+  /** Oorspronkelijk volgnummer per categorie, zodat "Cat. 9" dat blijft bij filteren. */
+  const catVolgnummer = useMemo(() => {
+    const m = new Map<string, number>();
+    categories.forEach((c, i) => m.set(c.id, i));
+    return m;
+  }, [categories]);
 
   /** Totaal aantal treffers over alle categorieën; null als er niet gezocht wordt. */
   const zoekTreffers = useMemo(() => {
@@ -1248,9 +1273,16 @@ export default function TeamBuilder() {
                 gevonden={zoekTreffers}
               />
 
+              {zichtbareCategorieen.length === 0 && (
+                <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                  {t("team.builder.geenTreffersTotaal")}
+                </p>
+              )}
+
               {/* Categories */}
               <div id="sectie-categorieen" className="grid grid-cols-1 lg:grid-cols-2 gap-4 scroll-mt-24">
-                {categories.map((category, idx) => {
+                {zichtbareCategorieen.map((category) => {
+                  const idx = catVolgnummer.get(category.id) ?? 0;
                   const selected = validPicksByCategory.get(category.id) ?? [];
                   const max = category.max_picks ?? 1;
                   const reached = selected.length >= max;
@@ -1315,11 +1347,6 @@ export default function TeamBuilder() {
                       </div>
 
                       <div className="space-y-2 mt-3">
-                        {filterRijen(category.category_riders).length === 0 && (
-                          <p className="rounded-md border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
-                            {t("team.builder.geenTreffers")}
-                          </p>
-                        )}
                         {filterRijen(category.category_riders).map((row) => {
                           if (!row.riders) return null;
                           const isSelected = selected.includes(row.riders.id);

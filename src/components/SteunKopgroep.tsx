@@ -76,26 +76,49 @@ export function SteunMoment({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-md border border-primary/30 bg-primary/[0.07] px-3 py-2",
-        "text-xs text-muted-foreground font-serif italic",
+        // Warm en rustig in plaats van rood-op-wit: de vorige versie leunde op
+        // --primary, en dat is in het Vuelta- en Giro-thema fel rood. Een
+        // onderstreepte rode regel in een kader leest dan als foutmelding,
+        // terwijl dit een vriendelijk verzoek is. Vandaar het goud-accent.
+        "group relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5",
+        "border border-[hsl(var(--vintage-gold))/0.35] bg-[hsl(var(--vintage-gold))/0.07]",
         className,
       )}
       role="note"
     >
-      <Coffee className="h-3.5 w-3.5 shrink-0 text-primary" />
+      {/* Smalle gouden bies: geeft het blokje een kant zonder een kader te zijn. */}
+      <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-[hsl(var(--vintage-gold))/0.55]" />
+
+      <span
+        aria-hidden
+        className="ml-1 grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[hsl(var(--vintage-gold))/0.4] bg-card"
+      >
+        <Coffee className="kp-coffee-steam h-4 w-4 text-[hsl(var(--vintage-gold))]" />
+      </span>
+
+      <span className="min-w-0 flex-1 font-serif text-[13px] leading-snug text-foreground/80">
+        {shownText}
+      </span>
+
       <a
         href={STEUN_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="min-w-0 flex-1 truncate text-primary not-italic font-sans font-semibold hover:underline"
+        className={cn(
+          "shrink-0 rounded-full border border-[hsl(var(--vintage-gold))/0.55] bg-[hsl(var(--vintage-gold))/0.15]",
+          "px-3 py-1 font-sans text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--vintage-gold))]",
+          "transition-colors hover:bg-[hsl(var(--vintage-gold))/0.28]",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
+        )}
       >
-        {shownText}
+        {t("shell.steun.trakteer")}
       </a>
+
       <button
         type="button"
         onClick={dismiss}
         aria-label={t("shell.steun.tipClose")}
-        className="-mr-1 shrink-0 p-1 text-muted-foreground/60 hover:text-foreground"
+        className="-mr-1 shrink-0 rounded p-1 text-muted-foreground/50 transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
       >
         <X className="h-3.5 w-3.5" />
       </button>
