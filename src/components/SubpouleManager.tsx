@@ -485,7 +485,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
         {heatmapUnlocked ? (
           <SubpouleHeatmap subpouleId={active.id} />
         ) : (
-          <Voorbeeldmarkering opentWanneer={t("subpoule.manager.heatmapLockedNote")}>
+          <Voorbeeldmarkering opentWanneer={t("subpoule.manager.heatmapLockedNote")} bron="Tour de France 2026">
             <SubpouleHeatmap subpouleId={active.id} demo />
           </Voorbeeldmarkering>
         )}
@@ -630,7 +630,10 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
 
             {/* Content + duel-zijpaneel */}
             <div className="flex items-start gap-4">
-              <div className="min-w-0 flex-1">
+              {/* Alleen het paneel, niet de subbalk erboven: de rondleiding
+                  licht dit vlak uit en dan hoort de balk juist donker te
+                  blijven, op het besproken tabje na. */}
+              <div className="min-w-0 flex-1" data-rondleiding-doel="subpoules-paneel">
                 {activeTab === "klassement" ? standingsPanel
                   : activeTab === "verloop" ? evolutionPanel
                   : activeTab === "daguitslag" ? daguitslagPanel

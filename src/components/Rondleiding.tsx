@@ -147,8 +147,10 @@ export default function Rondleiding({
     titel: label,
     tekst: uitleg,
     ga: { sectie, sub: key },
-    // Het inhoudsvlak van de sectie, niet het tabje in de balk.
-    doel: `${sectie}-inhoud`,
+    // Het paneel van dit subtabje. Niet de hele sectie: dan valt de subbalk
+    // binnen de uitsparing en blijven álle subtabjes licht, terwijl juist
+    // alleen het besproken tabje mag oplichten.
+    doel: `${sectie}-paneel`,
   });
 
   const stappen: Stap[] = [
@@ -266,7 +268,12 @@ export default function Rondleiding({
     let stop = false;
     const meet = () => {
       if (stop) return;
-      const el = document.querySelector<HTMLElement>(`[data-rondleiding-doel="${doel}"]`);
+      const el =
+        document.querySelector<HTMLElement>(`[data-rondleiding-doel="${doel}"]`) ??
+        // Heeft een sectie nog geen apart paneel-doel, dan de hele inhoud.
+        (huidig.ga?.sectie
+          ? document.querySelector<HTMLElement>(`[data-rondleiding-doel="${huidig.ga.sectie}-inhoud"]`)
+          : null);
       setGat(el ? omlijst(el) : null);
     };
     // Tweemaal meten: de tab kan nog aan het verspringen zijn (de balk scrollt

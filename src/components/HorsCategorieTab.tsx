@@ -981,6 +981,9 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       />
 
       {/* Vinger-volgende carrousel: alleen het content-vlak beweegt. */}
+      {/* Alleen het paneel; de subbalk erboven blijft tijdens de rondleiding
+          donker, op het besproken tabje na. */}
+      <div data-rondleiding-doel="hors-paneel">
       <SwipeCarousel
         keys={HORS_TABS.map((t) => t.key)}
         activeKey={activeTab}
@@ -993,6 +996,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
               <Voorbeeldmarkering
                 className={isDemo ? undefined : "contents"}
                 opentWanneer={isDemo ? t("hors.demo.opentBijPunten") : undefined}
+                bron={bron?.koers ?? undefined}
               >
                 <BenchmarkTab gameId={game?.id} demo={isDemo} />
               </Voorbeeldmarkering>
@@ -1009,7 +1013,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           {isDemo && dartMonte ? (
             // Zonder markering kun je dit voorbeeldpercentage voor je eigen
             // score aanzien; er stond niets bij.
-            <Voorbeeldmarkering opentWanneer={t("hors.demo.opentBijLive")}>
+            <Voorbeeldmarkering opentWanneer={t("hors.demo.opentBijLive")} bron={bron?.koers ?? undefined}>
               <PercentileVerdict
                 percentile={Math.round(dartMonte.beatPct)}
                 userPoints={dartMonte.userActual}
@@ -1070,6 +1074,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         <Voorbeeldmarkering
           className={isDemo ? undefined : "contents"}
           opentWanneer={isDemo ? t("hors.demo.opentBijLive") : undefined}
+          bron={bron?.koers ?? undefined}
         >
         <Card className="ornate-frame retro-border overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
@@ -1681,6 +1686,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         <Voorbeeldmarkering
           className={isDemo ? undefined : "contents"}
           opentWanneer={isDemo ? t("hors.demo.opentBijLive") : undefined}
+          bron={bron?.koers ?? undefined}
         >
         <Card className="ornate-frame retro-border overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
@@ -1992,6 +1998,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           </div>
         )}
       />
+      </div>
 
     </div>
   );
