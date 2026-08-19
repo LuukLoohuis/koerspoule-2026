@@ -4,6 +4,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import ZoekRenners from "./ZoekRenners";
+import type { PloegChip } from "@/lib/ploegZoek";
 import nl from "@/i18n/locales/nl.json";
 
 // i18next draait niet in de testomgeving, dus t() zou kaal de sleutel teruggeven.
@@ -30,13 +31,17 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
-const verdeling: Array<[string, number]> = [["Visma", 3], ["UAE", 2], ["EF", 1]];
+const verdeling: PloegChip[] = [
+  { naam: "Team Visma | Lease a Bike", aantal: 3, kort: "VIS", trui: "https://x/visma.png" },
+  { naam: "UAE Team Emirates", aantal: 2, kort: "UAE", trui: null },
+  { naam: "EF Education", aantal: 1, kort: "EFE", trui: null },
+];
 
 describe("ZoekRenners", () => {
   it("toont per ploeg hoeveel renners je al hebt", () => {
     render(<ZoekRenners waarde="" onChange={() => {}} verdeling={verdeling} gevonden={null} />);
     const visma = screen.getByRole("button", { name: /Visma/i });
-    expect(visma).toHaveTextContent("Visma");
+    expect(visma).toHaveTextContent("VIS");
     expect(visma).toHaveTextContent("3");
     expect(screen.getByRole("button", { name: /UAE/i })).toHaveTextContent("2");
   });
@@ -45,12 +50,12 @@ describe("ZoekRenners", () => {
     const onChange = vi.fn();
     render(<ZoekRenners waarde="" onChange={onChange} verdeling={verdeling} gevonden={null} />);
     fireEvent.click(screen.getByRole("button", { name: /Visma/i }));
-    expect(onChange).toHaveBeenCalledWith("Visma");
+    expect(onChange).toHaveBeenCalledWith("Team Visma | Lease a Bike");
   });
 
   it("tikt de actieve chip het filter weer uit", () => {
     const onChange = vi.fn();
-    render(<ZoekRenners waarde="Visma" onChange={onChange} verdeling={verdeling} gevonden={3} />);
+    render(<ZoekRenners waarde="Team Visma | Lease a Bike" onChange={onChange} verdeling={verdeling} gevonden={3} />);
     const visma = screen.getByRole("button", { name: /Visma/i });
     expect(visma).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(visma);
@@ -83,5 +88,43 @@ describe("ZoekRenners", () => {
     render(<ZoekRenners waarde="" onChange={onChange} verdeling={[]} gevonden={null} />);
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "visma" } });
     expect(onChange).toHaveBeenCalledWith("visma");
+  });
+});
+
+describe("ZoekRenners — shirts", () => {
+  it("toont het ploegshirt als er een jersey_url is", () => {
+    render(<ZoekRenners waarde="" onChange={() => {}} verdeling={verdeling} gevonden={null} />);
+    const shirt = document.querySelector('img[src="https://x/visma.png"]');
+    expect(shirt).not.toBeNull();
+    // Decoratief: de naam staat al in het aria-label van de knop, dus het shirt
+    // mag geen tweede keer worden voorgelezen.
+    expect(shirt).toHaveAttribute("alt", "");
+  });
+
+  it("valt terug op de korte code als de ploeg geen shirt heeft", () => {
+    render(<ZoekRenners waarde="" onChange={() => {}} verdeling={verdeling} gevonden={null} />);
+    const uae = screen.getByRole("button", { name: /UAE Team Emirates/i });
+    expect(uae.querySelector("img")).toBeNull();
+    expect(uae).toHaveTextContent("UAE");
+  });
+
+  it("valt terug op de korte code als het shirt niet laadt", () => {
+    render(<ZoekRenners waarde="" onChange={() => {}} verdeling={verdeling} gevonden={null} />);
+    const shirt = document.querySelector('img[src="https://x/visma.png"]') as HTMLImageElement;
+    fireEvent.error(shirt);
+    expect(document.querySelector('img[src="https://x/visma.png"]')).toBeNull();
+    expect(screen.getByRole("button", { name: /Visma/i })).toHaveTextContent("VIS");
+  });
+
+  it("houdt de volledige naam bereikbaar voor de schermlezer", () => {
+    render(<ZoekRenners waarde="" onChange={() => {}} verdeling={verdeling} gevonden={null} />);
+    // Zonder dit is de chip voor een schermlezer alleen "VIS 3".
+    expect(screen.getByRole("button", { name: /Team Visma \| Lease a Bike/i })).toBeTruthy();
+  });
+
+  it("markeert drie of meer uit dezelfde ploeg", () => {
+    render(<ZoekRenners waarde="" onChange={() => {}} verdeling={verdeling} gevonden={null} />);
+    expect(screen.getByRole("button", { name: /Visma/i }).className).toMatch(/amber/);
+    expect(screen.getByRole("button", { name: /UAE/i }).className).not.toMatch(/amber/);
   });
 });

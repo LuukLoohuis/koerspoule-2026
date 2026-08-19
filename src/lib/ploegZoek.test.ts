@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normaliseer, pastBijZoek, telPerPloeg, ploegenGesorteerd } from "./ploegZoek";
+import { normaliseer, pastBijZoek, telPerPloeg, ploegenGesorteerd, ploegChips } from "./ploegZoek";
 
 describe("normaliseer", () => {
   it("haalt accenten weg zodat je ze niet hoeft te typen", () => {
@@ -67,5 +67,36 @@ describe("ploegenGesorteerd", () => {
   it("sorteert bij gelijk aantal op naam", () => {
     const t = new Map([["Visma", 2], ["Alpecin", 2]]);
     expect(ploegenGesorteerd(t).map(([n]) => n)).toEqual(["Alpecin", "Visma"]);
+  });
+});
+
+describe("ploegChips", () => {
+  const telling = new Map([["Team Visma | Lease a Bike", 3], ["Uno-X Mobility", 1]]);
+  const info = new Map([
+    ["Team Visma | Lease a Bike", { short_name: "VIS", jersey_url: "https://x/visma.png" }],
+    ["Uno-X Mobility", { short_name: null, jersey_url: null }],
+  ]);
+
+  it("levert shirt, korte code en aantal, grootste eerst", () => {
+    const [eerste, tweede] = ploegChips(telling, info);
+    expect(eerste).toEqual({
+      naam: "Team Visma | Lease a Bike", aantal: 3, kort: "VIS", trui: "https://x/visma.png",
+    });
+    expect(tweede.naam).toBe("Uno-X Mobility");
+    expect(tweede.trui).toBeNull();
+  });
+
+  it("verzint een korte code als short_name ontbreekt", () => {
+    // Leestekens tellen niet mee: "Uno-X Mobility" wordt UNO, niet "UNO-".
+    expect(ploegChips(telling, info)[1].kort).toBe("UNO");
+  });
+
+  it("valt niet om als de ploeg helemaal onbekend is", () => {
+    const chips = ploegChips(new Map([["Losse Ploeg", 2]]), new Map());
+    expect(chips[0]).toEqual({ naam: "Losse Ploeg", aantal: 2, kort: "LOS", trui: null });
+  });
+
+  it("houdt de volledige naam bij voor titel en schermlezer", () => {
+    expect(ploegChips(telling, info)[0].naam).toBe("Team Visma | Lease a Bike");
   });
 });

@@ -356,7 +356,8 @@
       "zoekResultaat_other": "{{count}} renners gevonden",
       "ploegVerdeling": "Uit je ploeg",
       "ploegFilter": "Toon alleen renners van {{ploeg}}",
-      "geenTreffers": "Geen renner in deze categorie past bij je zoekterm."
+      "geenTreffers": "Geen renner in deze categorie past bij je zoekterm.",
+      "ploegFilterAantal": "{{ploeg}} — {{count}} renner(s) in je ploeg. Toon alleen deze ploeg."
     },
     "panel": {
       "loginToView": "Log in om je team te bekijken.",

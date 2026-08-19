@@ -18,7 +18,7 @@ import { useStartlist } from "@/hooks/useStartlist";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { pastBijZoek, telPerPloeg, ploegenGesorteerd } from "@/lib/ploegZoek";
+import { pastBijZoek, telPerPloeg, ploegChips, type PloegInfo } from "@/lib/ploegZoek";
 import { canRegister, isGameLocked, isPreviewStatus, isVisibleToUser } from "@/lib/gameStatus";
 import RiderSearchSelect from "@/components/RiderSearchSelect";
 import ZoekRenners from "@/components/teambuilder/ZoekRenners";
@@ -454,7 +454,17 @@ export default function TeamBuilder() {
     [selectedPickRiderIds, riderTeam],
   );
 
-  const ploegVerdeling = useMemo(() => ploegenGesorteerd(ploegTelling), [ploegTelling]);
+  // Shirt en korte code per ploeg. useStartlist haalt jersey_url en short_name al
+  // op, dus dit kost geen extra databaseaanroep.
+  const ploegInfo = useMemo(() => {
+    const m = new Map<string, PloegInfo>();
+    for (const team of fullStartlist) {
+      m.set(team.name, { short_name: team.short_name, jersey_url: team.jersey_url });
+    }
+    return m;
+  }, [fullStartlist]);
+
+  const ploegVerdeling = useMemo(() => ploegChips(ploegTelling, ploegInfo), [ploegTelling, ploegInfo]);
 
   /** Rijen van één categorie, gefilterd op de actieve zoekterm. */
   const filterRijen = <T extends { rider_id: string; riders: { name: string } | null }>(rijen: T[]): T[] =>
