@@ -26,6 +26,21 @@ import { cn } from "@/lib/utils";
 
 const KEY = "kp_rondleiding_gezien_v1";
 
+/** Uitsparing rond het opgelichte vlak, in schermco\u00f6rdinaten. */
+type Rechthoek = { top: number; left: number; width: number; height: number };
+
+const RAND = 6;
+
+function omlijst(el: HTMLElement): Rechthoek {
+  const r = el.getBoundingClientRect();
+  return {
+    top: r.top - RAND,
+    left: r.left - RAND,
+    width: r.width + RAND * 2,
+    height: r.height + RAND * 2,
+  };
+}
+
 /* --- welke tab in de onderbalk oplicht ------------------------------------ */
 
 let uitgelicht: string | null = null;
@@ -178,6 +193,32 @@ export default function Rondleiding({
 
   const huidig = stappen[Math.min(stap, stappen.length - 1)];
 
+  // Het vlak dat oplicht. We zoeken het element op via een data-attribuut in
+  // plaats van via een ref, want de aangewezen tab zit in de shell (onderbalk)
+  // of in de pagina (dossard-balk) en die delen geen boom met dit paneel.
+  const [gat, setGat] = useState<Rechthoek | null>(null);
+  useEffect(() => {
+    if (!actief || !huidig.navKey) { setGat(null); return; }
+    let stop = false;
+    const meet = () => {
+      if (stop) return;
+      const el = document.querySelector<HTMLElement>(`[data-rondleiding-doel="${huidig.navKey}"]`);
+      setGat(el ? omlijst(el) : null);
+    };
+    // Tweemaal meten: de tab kan nog aan het verspringen zijn (de balk scrollt
+    // de actieve tab in beeld) op het moment dat de stap wisselt.
+    meet();
+    const id = window.setTimeout(meet, 260);
+    window.addEventListener("resize", meet);
+    window.addEventListener("scroll", meet, true);
+    return () => {
+      stop = true;
+      window.clearTimeout(id);
+      window.removeEventListener("resize", meet);
+      window.removeEventListener("scroll", meet, true);
+    };
+  }, [actief, huidig.navKey, stap]);
+
   // De onderbalk licht de besproken tab op.
   useEffect(() => {
     zetStand(actief, huidig.navKey);
@@ -234,6 +275,25 @@ export default function Rondleiding({
       role="region"
       aria-label={t("rondleiding.aria")}
     >
+      {/* De uitsparing. Een schaduw van 9999px maakt alles buiten dit vlak
+          donker, terwijl het vlak zelf op volle kleur blijft — geen waas
+          eroverheen dus, maar een gat erin. Zo blijft leesbaar waar het over
+          gaat. Zonder doel (de openingsstap) valt de laag weg; die stap gaat
+          nergens specifiek over. */}
+      {gat && (
+        <div
+          aria-hidden
+          className="absolute rounded-lg ring-2 ring-[hsl(var(--vintage-gold))] transition-all duration-200 motion-reduce:transition-none"
+          style={{
+            top: gat.top,
+            left: gat.left,
+            width: gat.width,
+            height: gat.height,
+            boxShadow: "0 0 0 9999px rgba(12, 10, 8, 0.72)",
+          }}
+        />
+      )}
+
       <div
         className={cn(
           "pointer-events-auto absolute rounded-xl border-2 border-foreground bg-card p-4 shadow-[4px_4px_0_hsl(var(--foreground))]",

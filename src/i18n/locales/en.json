@@ -915,7 +915,8 @@
     "demo": {
       "bannerLead": "Simulated sample data.",
       "bannerBody": "This is a preview based on ~5 fake participants. Once entries open, you'll see the real figures here.",
-      "badge": "🎲 Demo · simulated data"
+      "badge": "🎲 Demo · simulated data",
+      "opentBijLive": "Example figures — your own score appears once the race is under way."
     },
     "common": {
       "unknownRider": "Unknown"
@@ -1659,7 +1660,7 @@
       "ranking": "the standings in your group",
       "stijgers": "who climbed and who dropped",
       "daguitslag": "today's points",
-      "heatmap": "who picked which rider",
+      "heatmap": "who picked which rider — opens once the race is under way, otherwise you would copy each other's team",
       "deelnemers": "who is taking part",
       "streek": "the standings in your region",
       "tekstZonder": "No subpoule yet? Create one or join with a code — that is where the race gets fun."
@@ -1671,11 +1672,11 @@
     "hors": {
       "titel": "Hors Catégorie",
       "tekst": "Your statistics — how well you really picked.",
-      "dartpijl": "did you beat the monkeys picking at random?",
-      "pelotonkeuzes": "which riders everyone else picked",
+      "dartpijl": "did you beat the monkeys picking at random? Before the start you see an example",
+      "pelotonkeuzes": "which riders everyone else picked — visible once there are points",
       "wielerdirecteur": "your report card as team manager",
       "superteam": "how much of the dream team you had",
-      "benchmark": "your team next to someone else's"
+      "benchmark": "your team next to someone else's — works once there is a classification to sort on"
     },
     "starten": "Take the tour"
   },

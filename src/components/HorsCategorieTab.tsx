@@ -35,13 +35,14 @@ import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import EmptyState from "@/components/EmptyState";
+import Voorbeeldmarkering from "@/components/Voorbeeldmarkering";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import { RetroTabs } from "@/components/RetroTabs";
 import JerseyBadge from "@/components/retro/JerseyBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
 import { useThema } from "@/contexts/ThemaContext";
-import { isGameLocked, isAdminOnlyStatus, isPreviewStatus } from "@/lib/gameStatus";
+import { isGameLocked, isAdminOnlyStatus, resultsHiddenForUsers } from "@/lib/gameStatus";
 import { useAuth } from "@/hooks/useAuth";
 import type { TruiType } from "@/lib/themas";
 import { useLefevereReport, useLefeverePreview } from "@/hooks/useLefevereReport";
@@ -240,10 +241,12 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   const adminSeesAll = isAdmin && adminTestmodus;
   const hasResults = isGameLocked(game?.status) || adminSeesAll;
   const isVisible = Boolean(game?.status) && !isAdminOnlyStatus(game?.status);
-  // Sneak preview ('open'): gewone gebruiker krijgt UITSLUITEND een client-side
-  // demo op gesimuleerde data. De ADMIN ziet de echte gevulde HC (kan testen).
-  // Verdwijnt zodra de status verder is (open_inschrijving, live, …).
-  const isDemo = isPreviewStatus(game?.status) && !adminSeesAll;
+  // Zolang de uitslagen verborgen zijn — sneak preview én inschrijving open —
+  // krijgt een gewone deelnemer voorbeelddata in plaats van een leeg scherm.
+  // Dit stond eerder alleen op sneak preview, waardoor het scherm juist op
+  // zijn leegst was zodra de inschrijving openging. De ADMIN ziet altijd de
+  // echte cijfers, om te kunnen testen.
+  const isDemo = resultsHiddenForUsers(game?.status) && !adminSeesAll;
   const { entry, picksByCategory, jokerIds, predictions: myPredictions } = useEntry(game?.id);
   const { data: categories = [] } = useCategories(game?.id);
   const { data: pickStats = [] } = usePickStats(hasResults ? game?.id : undefined);
@@ -962,7 +965,18 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
               {t("hors.demo.badge")}
             </div>
           )}
-          {!dartMonte ? (
+          {isDemo && dartMonte ? (
+            // Zonder markering kun je dit voorbeeldpercentage voor je eigen
+            // score aanzien; er stond niets bij.
+            <Voorbeeldmarkering opentWanneer={t("hors.demo.opentBijLive")}>
+              <PercentileVerdict
+                percentile={Math.round(dartMonte.beatPct)}
+                userPoints={dartMonte.userActual}
+                monkeyAvg={Math.round(dartMonte.mean)}
+                illustrationSrc={aapFietser}
+              />
+            </Voorbeeldmarkering>
+          ) : !dartMonte ? (
             <EmptyState
               illustration={aapFietser}
               title={t("hors.dartpijl.emptyTitle")}

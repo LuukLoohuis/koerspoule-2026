@@ -915,7 +915,8 @@
     "demo": {
       "bannerLead": "Gesimuleerde voorbeelddata.",
       "bannerBody": "Dit is een voorproefje op ~5 nepdeelnemers. Zodra de inschrijving opent, zie je hier de échte cijfers.",
-      "badge": "🎲 Demo · gesimuleerde data"
+      "badge": "🎲 Demo · gesimuleerde data",
+      "opentBijLive": "Voorbeeldcijfers — je eigen score verschijnt zodra de koers rijdt."
     },
     "common": {
       "unknownRider": "Onbekend"
@@ -1659,7 +1660,7 @@
       "ranking": "de stand in jouw groep",
       "stijgers": "wie klom en wie zakte",
       "daguitslag": "de punten van vandaag",
-      "heatmap": "wie welke renner koos",
+      "heatmap": "wie welke renner koos — gaat open zodra de koers rijdt, anders kijk je elkaars ploeg af",
       "deelnemers": "wie er meedoen",
       "streek": "de stand in jouw regio",
       "tekstZonder": "Nog geen subpoule? Maak er een aan of doe mee met een code — daar wordt de koers pas echt leuk."
@@ -1671,11 +1672,11 @@
     "hors": {
       "titel": "Hors Catégorie",
       "tekst": "Je statistieken — hier zie je hoe goed je echt koos.",
-      "dartpijl": "versloeg je de apen die willekeurig kiezen?",
-      "pelotonkeuzes": "welke renners koos de rest",
+      "dartpijl": "versloeg je de apen die willekeurig kiezen? Vóór de start zie je een voorbeeld",
+      "pelotonkeuzes": "welke renners de rest koos — zichtbaar zodra er punten zijn",
       "wielerdirecteur": "je rapportcijfer als ploegleider",
       "superteam": "hoeveel van het droomteam had jij",
-      "benchmark": "jouw ploeg naast die van iemand anders"
+      "benchmark": "jouw ploeg naast die van iemand anders — werkt zodra er een klassement is om op te sorteren"
     },
     "starten": "Bekijk de rondleiding"
   },

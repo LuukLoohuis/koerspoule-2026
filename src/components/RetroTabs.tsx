@@ -168,6 +168,9 @@ export function RetroTabs({
               btnRefs.current[t.key] = el;
             }}
             role="tab"
+            // De rondleiding licht dit vlak op; alleen zinvol op het niveau
+            // waar zij naartoe navigeert.
+            data-rondleiding-doel={uitgelichteKey !== undefined ? t.key : undefined}
             aria-selected={on}
             tabIndex={on ? 0 : -1}
             type="button"

@@ -66,6 +66,8 @@ export default function BottomNav() {
           return (
             <button
               key={label}
+              // De rondleiding zoekt het op te lichten vlak hiermee op.
+              data-rondleiding-doel={navKey}
               onClick={() => navigate(tab ? `${to}?tab=${tab}` : to)}
               className={cn(
                 "group flex flex-col items-center justify-center gap-1 py-2 min-h-[58px]",
