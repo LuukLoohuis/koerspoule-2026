@@ -51,6 +51,7 @@ import DaguitslagChart from "@/components/DaguitslagChart";
 import DaguitslagCelebration from "@/components/DaguitslagCelebration";
 import { useDaguitslagCelebration } from "@/hooks/useDaguitslagCelebration";
 import SubpouleHeatmap from "@/components/SubpouleHeatmap";
+import Voorbeeldmarkering from "@/components/Voorbeeldmarkering";
 import { Copy, LogOut, Trash2, Users, Crown, UserMinus, ArrowLeft, ChevronRight, ChevronsUpDown, TrendingUp, Flame, Share2, BarChart3, Trophy, X, MapPin, Swords, type LucideIcon } from "lucide-react";
 import StreekKlassement from "@/components/StreekKlassement";
 import WoonplaatsBeheer from "@/components/WoonplaatsBeheer";
@@ -90,7 +91,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   // Deep-link: initialTab respecteert de gating (heatmap pas als unlocked; streek
   // wordt na subpoule-selectie gevalideerd via het effect hieronder).
   const [activeTab, setActiveTab] = useState(() =>
-    initialTab === "heatmap" && !heatmapUnlocked ? "klassement" : (initialTab ?? "klassement"),
+    initialTab ?? "klassement",
   );
   // Desktop: geselecteerde tegenstander → duel als rechter zijpaneel.
   const [duelUserId, setDuelUserId] = useState<string | null>(null);
@@ -98,7 +99,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   // Deep-link geldt ook mobiel; die begon altijd op klassement, waardoor een
   // link naar bv. de heatmap op een telefoon op de verkeerde tab uitkwam.
   const [mobileTab, setMobileTab] = useState<string>(
-    initialTab === "heatmap" && !heatmapUnlocked ? "klassement" : (initialTab ?? "klassement"),
+    initialTab ?? "klassement",
   );
   const mobileHint = useSwipeHint("subpoule");
   const mobileBarVisible = useAutoHideOnScroll();
@@ -186,12 +187,12 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
   );
   const { data: members = [] } = useSubpouleMembers(active?.id);
 
-  // Deep-link-gating: valt de geopende subtab onder de gating weg, val terug op
-  // klassement (heatmap tot de koers live is; streek alleen bij woonplaats-poule).
+  // Deep-link-gating: valt de geopende subtab weg, val terug op klassement.
+  // De heatmap staat hier niet meer bij — die is altijd te openen en toont
+  // vóór de start een voorbeeld.
   useEffect(() => {
-    if (activeTab === "heatmap" && !heatmapUnlocked) setActiveTab("klassement");
-    else if (activeTab === "streek" && active && !active.requires_woonplaats) setActiveTab("klassement");
-  }, [activeTab, heatmapUnlocked, active]);
+    if (activeTab === "streek" && active && !active.requires_woonplaats) setActiveTab("klassement");
+  }, [activeTab, active]);
 
   // Banner van de geopende subpoule omhoog rapporteren (paginakop toont 'm als
   // korte strip). null wanneer geen subpoule open of geen/uitgeschakelde banner.
@@ -475,18 +476,18 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
       <SneakPreviewLock title={t("subpoule.manager.daguitslagSoonTitle")} note={t("subpoule.manager.daguitslagSoonNote")} />
     );
 
+    // Vóór de start stond hier een slotje. Dat is nu een voorbeeld: het echte
+    // keuzepatroon van een uitgereden koers, met verzonnen deelnemers erover.
+    // Zo zie je wát de heatmap doet zonder dat je iemands ploeg kunt afkijken —
+    // dat laatste is precies de reden dat de echte pas bij de start opengaat.
     const heatmapPanel = (
-      <div key={heatmapUnlocked ? "heatmap-unlocked" : "heatmap-locked"}>
+      <div key={heatmapUnlocked ? "heatmap-unlocked" : "heatmap-voorbeeld"}>
         {heatmapUnlocked ? (
           <SubpouleHeatmap subpouleId={active.id} />
         ) : (
-          <Card className="retro-border">
-            <CardContent className="p-4 text-sm text-muted-foreground text-center space-y-2">
-              <Flame className="h-8 w-8 text-muted-foreground/50 mx-auto" />
-              <p className="font-display font-bold text-foreground">{t("subpoule.manager.heatmapLockedTitle")}</p>
-              <p>{t("subpoule.manager.heatmapLockedNote")}</p>
-            </CardContent>
-          </Card>
+          <Voorbeeldmarkering opentWanneer={t("subpoule.manager.heatmapLockedNote")}>
+            <SubpouleHeatmap subpouleId={active.id} demo />
+          </Voorbeeldmarkering>
         )}
       </div>
     );
@@ -620,7 +621,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                   { key: "klassement", label: t("subpoule.manager.tabRanking"),       Icon: Trophy },
                   { key: "verloop",    label: t("subpoule.manager.tabRisersFallers"), Icon: TrendingUp },
                   { key: "daguitslag", label: t("subpoule.manager.tabDaguitslag"),    Icon: BarChart3 },
-                  { key: "heatmap",    label: t("subpoule.manager.tabHeatmap"),       Icon: Flame, disabled: !heatmapUnlocked, title: !heatmapUnlocked ? t("subpoule.manager.heatmapLockedTabTitle") : undefined },
+                  { key: "heatmap",    label: t("subpoule.manager.tabHeatmap"),       Icon: Flame },
                   { key: "deelnemers", label: t("subpoule.manager.tabMembers"),       Icon: Users },
                   ...(active.requires_woonplaats ? [{ key: "streek", label: t("subpoule.manager.tabStreek"), Icon: MapPin }] : []),
                 ]}

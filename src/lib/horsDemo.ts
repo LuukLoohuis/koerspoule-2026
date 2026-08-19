@@ -106,3 +106,100 @@ export function demoDeelnemers(eigenNaam: string): DemoDeelnemer[] {
   rij.push({ user_id: "demo-ik", name: eigenNaam, total: 486 });
   return rij.sort((a, b) => b.total - a.total);
 }
+
+/* ── Voorbeeld-heatmap ───────────────────────────────────────────────────── */
+
+export type VoorbeeldRenner = { id: string; name: string };
+export type VoorbeeldCat = { id: string; category_riders?: Array<{ rider_id: string; riders?: VoorbeeldRenner | null }> | null };
+export type VoorbeeldPick = { category_id: string; rider_id: string; pick_count: number; total_entries: number };
+
+export type VoorbeeldEntry = {
+  user_id: string;
+  display_name: string;
+  entry_id: string | null;
+  team_name: string | null;
+  total_points: number;
+  picks: Map<string, string[]>;
+  jokers: Set<string>;
+  predictions: never[];
+};
+
+/** Verzonnen ploegnamen. Deelnemersnamen zijn van echte mensen; die boots je
+ *  niet na, ook niet in een voorbeeld. */
+const PLOEGNAMEN = [
+  "De Vluchters", "Bidonbrigade", "Kasseienkoning", "Team Grupetto",
+  "Berggeiten", "Waaierwacht", "Sprintcomité", "Pechvogels",
+  "Kopgroep Kollektief", "Bergop Beter",
+];
+
+/**
+ * Voorbeeld-inzendingen voor de heatmap: het échte keuzepatroon van een
+ * uitgereden koers, gedragen door verzonnen deelnemers.
+ *
+ * De trekking is gewogen met de werkelijke pick_count, zodat de kolommen
+ * kloppen: een renner die door driekwart van het peloton gekozen werd, komt
+ * hier ook bij driekwart van de voorbeelddeelnemers terug. Een gelijkmatige
+ * trekking zou juist de vlekken wegpoetsen waar de heatmap over gaat.
+ */
+export function demoSubpouleEntries(
+  categorieen: VoorbeeldCat[],
+  pickStats: VoorbeeldPick[],
+  aantal = 8,
+): { entries: VoorbeeldEntry[]; ridersById: Map<string, { name: string; team: string | null }> } {
+  const r = rng(20260822);
+
+  const ridersById = new Map<string, { name: string; team: string | null }>();
+  for (const cat of categorieen) {
+    for (const cr of cat.category_riders ?? []) {
+      if (cr.riders) ridersById.set(cr.riders.id, { name: cr.riders.name, team: null });
+    }
+  }
+
+  const perCat = new Map<string, VoorbeeldPick[]>();
+  for (const p of pickStats) {
+    const lijst = perCat.get(p.category_id) ?? [];
+    lijst.push(p);
+    perCat.set(p.category_id, lijst);
+  }
+
+  /** Trekt zonder teruglegging, gewogen naar populariteit. */
+  const trek = (lijst: VoorbeeldPick[], hoeveel: number): string[] => {
+    const pool = [...lijst];
+    const uit: string[] = [];
+    for (let i = 0; i < hoeveel && pool.length > 0; i++) {
+      const som = pool.reduce((t, p) => t + Math.max(1, p.pick_count), 0);
+      let worp = r() * som;
+      let idx = 0;
+      for (let j = 0; j < pool.length; j++) {
+        worp -= Math.max(1, pool[j].pick_count);
+        if (worp <= 0) { idx = j; break; }
+      }
+      uit.push(pool[idx].rider_id);
+      pool.splice(idx, 1);
+    }
+    return uit;
+  };
+
+  const entries: VoorbeeldEntry[] = [];
+  for (let i = 0; i < Math.min(aantal, PLOEGNAMEN.length); i++) {
+    const picks = new Map<string, string[]>();
+    for (const cat of categorieen) {
+      const lijst = perCat.get(cat.id) ?? [];
+      if (lijst.length === 0) continue;
+      picks.set(cat.id, trek(lijst, Math.min(2, lijst.length)));
+    }
+    const alle = Array.from(picks.values()).flat();
+    entries.push({
+      user_id: `voorbeeld-${i}`,
+      display_name: PLOEGNAMEN[i],
+      entry_id: `voorbeeld-entry-${i}`,
+      team_name: PLOEGNAMEN[i],
+      total_points: Math.round(380 + r() * 220),
+      picks,
+      jokers: new Set(alle.length ? [alle[Math.floor(r() * alle.length)]] : []),
+      predictions: [],
+    });
+  }
+  entries.sort((a, b) => b.total_points - a.total_points);
+  return { entries, ridersById };
+}

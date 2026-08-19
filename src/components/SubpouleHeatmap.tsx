@@ -9,9 +9,19 @@ import { useSubpouleEntries, type SubpouleEntry } from "@/hooks/useSubpouleEntri
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import { HeatmapSkeleton } from "@/components/skeletons/SubpouleSkeletons";
 import { useWoonplaatsFilter, WoonplaatsFilterSelect } from "@/context/WoonplaatsFilterContext";
+import { useVoorbeeldbron } from "@/hooks/useVoorbeeldbron";
+import { demoSubpouleEntries } from "@/lib/horsDemo";
 import { cn } from "@/lib/utils";
 
-type Props = { subpouleId: string };
+type Props = {
+  subpouleId: string;
+  /**
+   * Vóór de start valt er niets te tonen. Dan het échte keuzepatroon van een
+   * uitgereden koers, gedragen door verzonnen deelnemers — zie
+   * demoSubpouleEntries. Nooit echte namen uit een oude poule.
+   */
+  demo?: boolean;
+};
 
 // One hue per category, ordered by visible-list index. Pink first, yellow
 // second, then green, navy, red, etc. — a vintage jersey-poster palette.
@@ -36,12 +46,25 @@ type RiderCell = {
   rareness: number; // 0 (everyone) … 1 (rarest)
 };
 
-export default function SubpouleHeatmap({ subpouleId }: Props) {
+export default function SubpouleHeatmap({ subpouleId, demo = false }: Props) {
   const { t } = useTranslation();
   const { data: game } = useCurrentGame();
-  const { data: categories = [] } = useCategories(game?.id);
-  const { data, isLoading } = useSubpouleEntries(subpouleId, game?.id);
-  const { data: members = [] } = useSubpouleMembers(subpouleId);
+  const { data: echteCategories = [] } = useCategories(game?.id);
+  const { data: echteData, isLoading: echteLoading } = useSubpouleEntries(demo ? undefined : subpouleId, game?.id);
+  const { data: members = [] } = useSubpouleMembers(demo ? undefined : subpouleId);
+
+  // Voorbeeldbron: de uitgereden Tour, met verzonnen deelnemers eroverheen.
+  const { data: bron } = useVoorbeeldbron(demo);
+  const voorbeeld = useMemo(() => {
+    if (!demo || !bron || bron.pickStats.length === 0) return null;
+    return demoSubpouleEntries(bron.categorieen, bron.pickStats);
+  }, [demo, bron]);
+
+  const categories = demo && bron?.categorieen.length
+    ? (bron.categorieen as unknown as typeof echteCategories)
+    : echteCategories;
+  const data = demo ? (voorbeeld as unknown as typeof echteData) : echteData;
+  const isLoading = demo ? !voorbeeld : echteLoading;
 
   // Gedeeld woonplaats-filter (context): "all" | "none" | exacte plaats.
   const { value: woonplaatsFilter } = useWoonplaatsFilter();
