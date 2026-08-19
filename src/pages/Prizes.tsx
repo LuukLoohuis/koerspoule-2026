@@ -99,7 +99,7 @@ function SponsorLine({ p }: { p: Prize }) {
         <img src={p.sponsor_logo_url} alt={p.sponsor_naam ?? "sponsor"} className="h-6 w-auto max-w-[88px] object-contain rounded-sm" loading="lazy" />
       )}
       {sponsorNamen(p) && (
-        <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+        <span className="font-serif text-[11px] font-normal italic tracking-normal text-muted-foreground">
           aangeboden door {sponsorNamen(p)}
         </span>
       )}
@@ -201,11 +201,13 @@ function PrijsKaart({
 }
 
 const PODIUM_CFG = {
-  // lift = getrapte ondermarge; met items-end stijgt 1e het hoogst, dan 2e, dan 3e
-  // → schone podium-trappen zonder losse balkjes die met de foto botsen.
-  1: { accent: GOLD, Icon: Shirt, fallback: "Klassementstrui", lift: "md:mb-12", mdOrder: "md:order-2" },
-  2: { accent: "#9aa3ad", Icon: Award, fallback: "Beker", lift: "md:mb-5", mdOrder: "md:order-1" },
-  3: { accent: "#b87333", Icon: Award, fallback: "Beker", lift: "md:mb-0", mdOrder: "md:order-3" },
+  // lift = bovenruimte, niet ondermarge. Met een ondermarge werd de kolom
+  // korter dan zijn eigen inhoud terwijl de kaart meerekte, en knipte
+  // overflow-hidden de sponsorknop onderaan eraf. Nu duwt de bovenruimte de
+  // lagere plekken omlaag: dezelfde trap, maar niets valt weg.
+  1: { accent: GOLD, Icon: Shirt, fallback: "Klassementstrui", lift: "md:pt-0", mdOrder: "md:order-2" },
+  2: { accent: "#9aa3ad", Icon: Award, fallback: "Beker", lift: "md:pt-7", mdOrder: "md:order-1" },
+  3: { accent: "#b87333", Icon: Award, fallback: "Beker", lift: "md:pt-12", mdOrder: "md:order-3" },
 } as const;
 
 function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
@@ -215,10 +217,10 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
   const fill = !p ? GLASS.empty : isWinner ? GLASS.winner : GLASS.filled;
   return (
     // DOM-volgorde 1,2,3 (mobiel correct); op desktop herschikt md:order naar 2-1-3.
-    // Kolommen lijnen onderaan uit; getrapte ondermarge geeft het podium-trapeffect.
+    // Kolommen zijn even hoog; de bovenruimte per plek geeft het trapeffect.
     <div className={`flex-1 min-w-0 flex flex-col ${mdOrder} ${lift} ${isWinner ? "md:max-w-[44%]" : "md:max-w-[32%]"}`}>
       <Card
-        className="ornate-frame rounded-xl overflow-hidden border transition-shadow"
+        className="ornate-frame flex h-full flex-col rounded-xl overflow-hidden border transition-shadow"
         style={{
           backgroundColor: `rgba(${CREME_RGB}, ${fill})`,
           backdropFilter: `blur(${GLASS.blur})`,
@@ -264,7 +266,9 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
                   className="w-full aspect-[16/10] rounded-lg border border-border overflow-hidden mb-2.5"
                   style={{ backgroundColor: `rgba(${CREME_RGB}, ${GLASS.photo})` }}
                 >
-                  <img src={p.afbeelding_url} alt={p.titel} className="w-full h-full object-contain" loading="lazy" />
+                  {/* object-cover: contain liet witte balken naast de brede
+                      sponsorbanners staan. De randen worden nu bijgesneden. */}
+                  <img src={p.afbeelding_url} alt={p.titel} className="w-full h-full object-cover" loading="lazy" />
                 </div>
               )}
               <h3 className={`font-display font-bold leading-tight ${isWinner ? "text-base" : "text-sm"}`}>{p.titel || fallback}</h3>
