@@ -203,3 +203,31 @@ export function demoSubpouleEntries(
   entries.sort((a, b) => b.total_points - a.total_points);
   return { entries, ridersById };
 }
+
+/* ── Anonimiseren ────────────────────────────────────────────────────────── */
+
+/**
+ * Vervangt een deelnemersnaam door een verzonnen ploegnaam.
+ *
+ * Voor voorbeeldschermen die op de cijfers van een uitgereden koers draaien:
+ * de punten, de stand en de onderlinge verschillen blijven precies zoals ze
+ * waren, maar de namen zijn niet meer van echte mensen. Dat is de enige manier
+ * om zo'n scherm te laten zien zonder een oude poule bloot te leggen.
+ *
+ * Dezelfde id levert altijd dezelfde naam op, zodat iemand die in het
+ * klassement én in een vergelijking voorkomt niet plots anders heet.
+ */
+const PSEUDONIEMEN = [
+  "De Vluchters", "Bidonbrigade", "Kasseienkoning", "Team Grupetto",
+  "Berggeiten", "Waaierwacht", "Sprintcomité", "Pechvogels",
+  "Kopgroep Kollektief", "Bergop Beter", "Tegenwindtrappers", "De Muurbeklimmers",
+  "Valpartij BV", "Ronde Rakkers", "Zadelpijn United", "Klimgeiten",
+  "Tempobeulen", "Wielerwezen", "Bochtenwerk", "Slotklim Sprinters",
+];
+
+export function pseudoniem(id: string): string {
+  // Eenvoudige, stabiele hash: dezelfde id geeft altijd dezelfde naam.
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return PSEUDONIEMEN[h % PSEUDONIEMEN.length];
+}

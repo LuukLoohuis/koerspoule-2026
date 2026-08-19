@@ -5,6 +5,8 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { Link } from "react-router-dom";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useAllGames } from "@/hooks/useAllGames";
+import { resultsHiddenForUsers } from "@/lib/gameStatus";
+import { pseudoniem } from "@/lib/horsDemo";
 import { deriveThemaKey } from "@/lib/themas";
 import { KoersThemaProvider } from "@/contexts/KoersThemaContext";
 import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
@@ -91,7 +93,7 @@ type ResultsViewProps = {
 export default function ResultsView({ showHeader = true, gameId: gameIdProp, gameName: gameNameProp, initialView, initialStageNumber, initialGc = false }: ResultsViewProps) {
   const { t, i18n } = useTranslation();
   const STAGE_TYPE_META = useMemo(() => stageTypeMeta(t), [t]);
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const isMobile = useIsMobile();
   const lgUp = useMinWidth(1024);
   const { data: curGame } = useCurrentGame();
@@ -105,6 +107,15 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
     const g = alleGames.find((x) => x.id === gameId);
     return g ? deriveThemaKey(g.theme, g.game_type) : null;
   }, [alleGames, gameId]);
+
+  // Zolang de uitslagen verborgen zijn, staat hier een voorbeeldstand. De
+  // punten en de onderlinge verschillen blijven exact zoals ze zijn, maar de
+  // namen zijn van echte mensen en gaan daarom door een pseudoniem. Een
+  // beheerder ziet altijd de echte namen, om te kunnen controleren.
+  const getoondeStatus = alleGames.find((x) => x.id === gameId)?.status ?? curGame?.status;
+  const isDemo = resultsHiddenForUsers(getoondeStatus) && role !== "admin";
+  const toonNaam = (rij: { user_id?: string | null; team_name?: string | null; display_name?: string | null }) =>
+    isDemo ? pseudoniem(String(rij.user_id ?? "")) : (rij.team_name ?? rij.display_name ?? null);
   const [compareUserId, setCompareUserId] = useState<string | null>(null);
 
   const { data: stages = [], isLoading: stagesLoading } = useStages(gameId);
@@ -469,12 +480,12 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                         const isMe = s.user_id === user?.id;
                         const canCompare = Boolean(myEntry && !isMe);
                         const isComparing = s.user_id === compareUserId;
-                        const opponentName = s.team_name ?? s.display_name ?? t("subpoule.standings.playerFallback");
+                        const opponentName = toonNaam(s) ?? t("subpoule.standings.playerFallback");
                         return {
                           key: s.id,
                           rank: s.rank,
                           isMe,
-                          searchText: `${s.team_name ?? ""} ${s.display_name ?? ""}`,
+                          searchText: toonNaam(s) ?? "",
                           node: (
                           <div
                             role={canCompare ? "button" : undefined}
@@ -498,7 +509,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                             <div className="flex items-center gap-2 min-w-0">
                               {rankBadge(s.rank)}
                               <span className={cn("font-sans truncate", isMe && "font-bold text-primary")}>
-                                {s.team_name ?? s.display_name ?? "—"}
+                                {toonNaam(s) ?? "—"}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
@@ -716,7 +727,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                     const isMe = s.user_id === user?.id;
                     const canCompare = Boolean(myEntry && !isMe);
                     const isComparing = s.user_id === compareUserId;
-                    const opponentName = s.team_name ?? s.display_name ?? t("subpoule.standings.playerFallback");
+                    const opponentName = toonNaam(s) ?? t("subpoule.standings.playerFallback");
                     const dagRank = klassementStageStandings.get(s.id);
 
                     const rankNumCls =
@@ -742,7 +753,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                       key: s.id,
                       rank: s.rank,
                       isMe,
-                      searchText: `${s.team_name ?? ""} ${s.display_name ?? ""}`,
+                      searchText: toonNaam(s) ?? "",
                       node: (
                       <div
                         role={canCompare ? "button" : undefined}
@@ -783,7 +794,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                               "font-sans text-sm truncate",
                               isMe ? "font-bold text-primary" : s.rank <= 3 ? "font-semibold" : "font-medium"
                             )}>
-                              {s.team_name ?? s.display_name ?? "—"}
+                              {toonNaam(s) ?? "—"}
                             </span>
                             {isMe && (
                               <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 rounded px-1 py-px leading-4">
