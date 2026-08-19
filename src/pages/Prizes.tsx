@@ -99,7 +99,10 @@ function SponsorLine({ p }: { p: Prize }) {
         <img src={p.sponsor_logo_url} alt={p.sponsor_naam ?? "sponsor"} className="h-6 w-auto max-w-[88px] object-contain rounded-sm" loading="lazy" />
       )}
       {sponsorNamen(p) && (
-        <span className="font-serif text-[11px] font-normal italic tracking-normal text-muted-foreground">
+        // Vorige ronde te ver teruggedraaid: cursief grijs fluisterde te veel
+        // voor een sponsorvermelding. Nu de display-letter, halfvet en in
+        // inktkleur — opvallend zonder de kop van de prijs te overschreeuwen.
+        <span className="font-display text-[11.5px] font-semibold tracking-tight text-foreground">
           aangeboden door {sponsorNamen(p)}
         </span>
       )}
