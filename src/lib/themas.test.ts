@@ -40,10 +40,14 @@ describe("centrale game-branding", () => {
     expect(svg).not.toContain('href="koerspoule-logo-2026.png"');
   });
 
-  it.each(["tour", "giro", "vuelta"])("behoudt de zelfvoorzienende fiets-favicon voor %s", (race) => {
+  it.each(["tour", "giro", "vuelta", "meermarathon"])("levert een pure-vector favicon voor %s", (race) => {
     const svg = readFileSync(`${process.cwd()}/public/favicon-${race}.svg`, "utf8");
-    expect(svg).toContain('viewBox="0 0 256 256"');
-    expect(svg).toContain('href="data:image/png;base64,');
+    expect(svg).toContain('viewBox="0 0 64 64"');
+    // Geen ingebed raster meer: de vorige generatie was een 67 kB PNG in een
+    // SVG-jasje, die op 16px -- het formaat waarop Google favicons toont --
+    // tot grijze pap vervaagde. Puur pad blijft op elk formaat scherp.
+    expect(svg).not.toContain("data:image");
+    expect(svg.length).toBeLessThan(2048);
   });
 
   it("koppelt de Giro-favicon expliciet aan exact dezelfde primaire roze kleur", () => {
@@ -60,9 +64,12 @@ describe("centrale game-branding", () => {
     // IHDR: breedte/hoogte staan als big-endian uint32 op offset 16 resp. 20.
     expect(logo.readUInt32BE(16) / logo.readUInt32BE(20)).toBeCloseTo(1.5, 2);
 
+    // De trui draagt hier het lichte ijsblauw, niet het donkere marineblauw van
+    // het thema: op het inktvlak van de favicon is #14538E te donker om op 16px
+    // nog als vorm te lezen.
     const favicon = readFileSync(`${process.cwd()}/public${THEMAS.winter.favicon}`, "utf8");
-    expect(favicon).toContain('viewBox="0 0 256 256"');
-    expect(favicon).toContain("#14538E");
+    expect(favicon).toContain('viewBox="0 0 64 64"');
+    expect(favicon).toContain(THEMAS.winter.kleuren.secundair);
   });
 
   it("levert het Vuelta-schild als transparante PNG", () => {
