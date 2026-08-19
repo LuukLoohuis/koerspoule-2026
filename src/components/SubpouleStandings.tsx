@@ -700,7 +700,12 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                             : "text-muted-foreground/60",
                         )}
                       >
-                        <Swords className="h-3.5 w-3.5" strokeWidth={isComparing ? 2.5 : 2} />
+                        <Swords
+                          className="h-3.5 w-3.5"
+                          strokeWidth={isComparing ? 2.5 : 2}
+                          // De rondleiding licht dit zwaardje uit.
+                          data-rondleiding-doel="subpoules-vergelijk"
+                        />
                       </span>
                     </>
                   )}

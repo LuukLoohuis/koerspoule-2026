@@ -1706,6 +1706,11 @@
       "titel": "Nog vragen?",
       "tekst": "Dat was de rondleiding. Staat je vraag er niet bij, dan vind je op de uitlegpagina de rest — inclusief hoe je contact opneemt.",
       "knop": "Naar de uitleg"
+    },
+    "vergelijken": {
+      "titel": "Vergelijken",
+      "subpoule": "Het zwaardje naast een naam zet jouw ploeg naast die van hem: dezelfde renners, jokers en voorspellingen naast elkaar. Werkt zodra de inschrijving dicht is en de koers rijdt — daarvoor is er niets om te vergelijken.",
+      "uitslagen": "Ook hier staat dat zwaardje, bij elke deelnemer in het klassement. Zo vergelijk je niet alleen binnen je subpoule maar met de hele poule. Ook dit gaat open zodra de koers rijdt."
     }
   },
   "statusblok": {
