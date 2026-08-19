@@ -28,6 +28,9 @@ export type VoorbeeldPickStat = { category_id: string; rider_id: string; pick_co
 export type VoorbeeldJokerStat = { rider_id: string; joker_count: number; total_entries: number };
 
 export type Voorbeeldbron = {
+  /** Game-id van de voorbeeldkoers; queries die etappes of uitslagen nodig
+   *  hebben wijzen hier in demomodus naartoe. */
+  gameId: string | null;
   categorieen: VoorbeeldCategorie[];
   pickStats: VoorbeeldPickStat[];
   jokerStats: VoorbeeldJokerStat[];
@@ -35,7 +38,7 @@ export type Voorbeeldbron = {
   koers: string | null;
 };
 
-const LEEG: Voorbeeldbron = { categorieen: [], pickStats: [], jokerStats: [], koers: null };
+const LEEG: Voorbeeldbron = { gameId: null, categorieen: [], pickStats: [], jokerStats: [], koers: null };
 
 type Rpc = { rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> };
 
@@ -71,6 +74,7 @@ export function useVoorbeeldbron(actief: boolean) {
       ]);
 
       return {
+        gameId: game.id,
         categorieen: (catRes.data ?? []) as unknown as VoorbeeldCategorie[],
         pickStats: (pickRes.data ?? []) as VoorbeeldPickStat[],
         jokerStats: (jokerRes.data ?? []) as VoorbeeldJokerStat[],

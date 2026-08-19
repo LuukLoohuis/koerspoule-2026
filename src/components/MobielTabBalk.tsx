@@ -16,6 +16,7 @@
  */
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { useUitgelichtSubtab } from "@/components/Rondleiding";
 
 export type MobielTab = {
   key: string;
@@ -34,6 +35,8 @@ type Props = {
 export function MobielTabBalk({ tabs, active, onChange, className }: Props) {
   const activeRef = useRef<HTMLButtonElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Zie RetroTabs: het besproken tabje komt boven de verduistering uit.
+  const uitgelichtSub = useUitgelichtSubtab();
 
   // De actieve tab in beeld houden. Anders sta je na een veeg naar het laatste
   // onderdeel te kijken naar een balk die nog op het eerste staat.
@@ -77,6 +80,7 @@ export function MobielTabBalk({ tabs, active, onChange, className }: Props) {
               "min-h-[38px] pb-2 pt-2.5 text-[13px] transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               isActive ? "font-bold text-foreground" : "font-semibold text-muted-foreground",
+              tab.key === uitgelichtSub && "z-[71] rounded-md bg-card px-2 ring-2 ring-[hsl(var(--vintage-gold))]",
               tab.disabled && "cursor-not-allowed opacity-40",
             )}
           >

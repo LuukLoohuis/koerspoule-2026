@@ -44,6 +44,7 @@ function omlijst(el: HTMLElement): Rechthoek {
 /* --- welke tab in de onderbalk oplicht ------------------------------------ */
 
 let uitgelicht: string | null = null;
+let uitgelichtSub: string | null = null;
 const luisteraars = new Set<() => void>();
 
 function abonneer(fn: () => void) {
@@ -51,16 +52,27 @@ function abonneer(fn: () => void) {
   return () => { luisteraars.delete(fn); };
 }
 
-function zetStand(actief: boolean, navKey: string | null) {
+function zetStand(actief: boolean, navKey: string | null, subKey: string | null) {
   const nieuweKey = actief ? navKey : null;
-  if (uitgelicht === nieuweKey) return;
+  const nieuweSub = actief ? subKey : null;
+  if (uitgelicht === nieuweKey && uitgelichtSub === nieuweSub) return;
   uitgelicht = nieuweKey;
+  uitgelichtSub = nieuweSub;
   luisteraars.forEach((fn) => fn());
 }
 
 /** De tab die de rondleiding nu bespreekt, of null. */
 export function useUitgelichteNav(): string | null {
   return useSyncExternalStore(abonneer, () => uitgelicht, () => null);
+}
+
+/**
+ * Welk subtabje de rondleiding bespreekt. De subbalk gebruikt dit om dat ene
+ * tabje bóven de donkere laag te tillen — dan licht het op terwijl de rest
+ * eronder blijft en dus donker wordt.
+ */
+export function useUitgelichtSubtab(): string | null {
+  return useSyncExternalStore(abonneer, () => uitgelichtSub, () => null);
 }
 
 export function rondleidingGezien(): boolean {
@@ -231,9 +243,9 @@ export default function Rondleiding({
 
   // De onderbalk licht de besproken tab op.
   useEffect(() => {
-    zetStand(actief, huidig.navKey);
-    return () => zetStand(false, null);
-  }, [actief, huidig.navKey]);
+    zetStand(actief, huidig.navKey, huidig.ga?.sub ?? null);
+    return () => zetStand(false, null, null);
+  }, [actief, huidig.navKey, huidig.ga?.sub]);
 
   // De app springt mee naar het scherm dat deze stap bespreekt.
   //
@@ -248,9 +260,20 @@ export default function Rondleiding({
   useEffect(() => {
     if (!actief || !gaSectie) return;
     navRef.current?.(gaSectie, gaSub);
-    // Vanaf de vorige stap kan de pagina halverwege staan; dan zou je van het
-    // nieuwe scherm het midden zien.
-    window.scrollTo({ top: 0 });
+    // Het besproken vlak in beeld brengen. Naar de top springen liet bij een
+    // subtabje juist de bovenkant van de pagina zien terwijl de uitleg over
+    // iets verderop ging; nu schuift het net zo ver dat het vlak én de balk
+    // eromheen zichtbaar worden.
+    window.setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(
+        `[data-rondleiding-doel="${gaSectie}-inhoud"]`,
+      );
+      if (!el) { window.scrollTo({ top: 0 }); return; }
+      const r = el.getBoundingClientRect();
+      const marge = 120;
+      const doelTop = r.top + window.scrollY - marge;
+      window.scrollTo({ top: Math.max(0, doelTop), behavior: "smooth" });
+    }, 60);
   }, [actief, gaSectie, gaSub]);
 
   useEffect(() => {

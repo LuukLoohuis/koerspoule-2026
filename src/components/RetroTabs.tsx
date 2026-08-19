@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState, type ComponentType, type KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
+import { useUitgelichtSubtab } from "@/components/Rondleiding";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RetroTabs — twee niveaus, twee gewichten. De rangorde moet uit de vorm
@@ -61,6 +62,9 @@ export function RetroTabs({
   "aria-label"?: string;
 }) {
   const segment = variant === "segment";
+  // Tijdens de rondleiding licht één subtabje op: dat tilt zichzelf boven de
+  // donkere laag, de rest blijft eronder en wordt dus vanzelf donker.
+  const uitgelichtSub = useUitgelichtSubtab();
   const listRef = useRef<HTMLDivElement>(null);
   const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [ind, setInd] = useState<{ x: number; w: number } | null>(null);
@@ -161,6 +165,7 @@ export function RetroTabs({
         const on = t.key === active;
         const uitgelicht = uitgelichteKey != null && t.key === uitgelichteKey;
         const gedoofd = uitgelichteKey != null && !uitgelicht;
+        const subUitgelicht = segment && uitgelichtSub != null && t.key === uitgelichtSub;
         return (
           <button
             key={t.key}
@@ -196,6 +201,8 @@ export function RetroTabs({
               t.disabled && "cursor-not-allowed opacity-40",
               gedoofd && "opacity-30",
               uitgelicht && "ring-2 ring-primary ring-offset-1 ring-offset-card",
+              // z-[71] gaat net boven de verduistering van de rondleiding.
+              subUitgelicht && "z-[71] rounded-md bg-card px-2 ring-2 ring-[hsl(var(--vintage-gold))]",
             )}
           >
             {/* Speldjes zitten alleen op het gedragen rugnummer — dat is het

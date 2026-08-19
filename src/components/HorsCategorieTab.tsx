@@ -283,7 +283,12 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   const { data: predictionStats = [] } = usePredictionStats(hasResults ? game?.id : undefined);
   const { data: myStageTotal = 0 } = useMyStagePointTotal(entry?.id);
   const jokerMultiplier = useJokerMultiplier(game?.id);
-  const hcGameId = hasResults ? game?.id : undefined;
+  // In demomodus rekenen de droomploeg en de tijdlijn op de uitgereden Tour.
+  // Zo is The Emirates een écht droomteam met echte etappepunten, in plaats
+  // van een verzonnen lijstje. De deelnemersranglijst blijft bewust op de
+  // huidige koers staan: die bevat namen van echte mensen.
+  const bronGameId = heeftBron ? bron!.gameId ?? undefined : undefined;
+  const hcGameId = hasResults ? game?.id : bronGameId;
 
   // Stage-by-stage timeline data
   const { data: stages = [] } = useStages(hcGameId);
@@ -306,11 +311,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // The Emirates — alle stage_results (voor droomploeg)
   const { data: allStageResults = [] } = useQuery({
-    queryKey: ["all-stage-results", game?.id],
-    enabled: Boolean(supabase && hasResults && game?.id),
+    queryKey: ["all-stage-results", hcGameId],
+    enabled: Boolean(supabase && hcGameId),
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Array<{ stage_id: string; rider_id: string | null; finish_position: number }>> => {
-      if (!supabase || !game?.id) return [];
+      if (!supabase || !hcGameId) return [];
       // Paginate to defeat any PostgREST max-rows cap. stage_results can easily
       // exceed 1000 rows (21 etappes × ~180 finishers ≈ 3.8k), wat de Droomploeg-
       // berekening anders te laag uitvalt.
@@ -323,7 +328,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         const { data, error } = await (supabase as any)
           .from("stage_results")
           .select("stage_id, rider_id, finish_position, stages!inner(game_id, results_status)")
-          .eq("stages.game_id", game.id)
+          .eq("stages.game_id", hcGameId)
           .eq("stages.results_status", "approved")
           .range(from, from + PAGE - 1);
         if (error) throw error;
@@ -338,12 +343,12 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // Alle renners van deze koers (voor jokerpool: renners die niet in een categorie zitten)
   const { data: allGameRiders = [] } = useQuery({
-    queryKey: ["hc-all-game-riders", game?.id],
-    enabled: Boolean(supabase && hasResults && game?.id),
+    queryKey: ["hc-all-game-riders", hcGameId],
+    enabled: Boolean(supabase && hcGameId),
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Array<{ id: string; name: string; start_number: number | null }>> => {
-      if (!supabase || !game?.id) return [];
-      const { data: teams } = await supabase.from("teams").select("id").eq("game_id", game.id);
+      if (!supabase || !hcGameId) return [];
+      const { data: teams } = await supabase.from("teams").select("id").eq("game_id", hcGameId);
       const teamIds = (teams ?? []).map((t: any) => t.id);
       if (teamIds.length === 0) return [];
       const { data, error } = await supabase.from("riders").select("id, name, start_number").in("team_id", teamIds);
@@ -1673,6 +1678,10 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
       {/* ── Tab: The Emirates — de droomploeg achterop gezien ─────────────────── */}
       {k === "superteam" && (
+        <Voorbeeldmarkering
+          className={isDemo ? undefined : "contents"}
+          opentWanneer={isDemo ? t("hors.demo.opentBijLive") : undefined}
+        >
         <Card className="ornate-frame retro-border overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
           <CardHeader className="border-b-2 border-foreground bg-secondary/30">
@@ -1978,6 +1987,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
             )}
           </CardContent>
         </Card>
+        </Voorbeeldmarkering>
       )}
           </div>
         )}
