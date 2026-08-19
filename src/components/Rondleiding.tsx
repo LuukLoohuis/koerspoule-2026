@@ -140,18 +140,16 @@ export default function Rondleiding({
       navKey: "team",
       titel: t("rondleiding.volgwagen.titel"),
       tekst: t("rondleiding.volgwagen.tekst"),
-      ga: { sectie: "team" },
-      onderdelen: [
-        [t("team.tabs.myTeam"), t("rondleiding.volgwagen.ploeg")],
-        // Live hangt aan de schaatsgame; bij een wielerkoers bestaat het tabje
-        // niet en zou het noemen ervan een belofte zijn die nergens uitkomt.
-        ...(heeftLiveTab
-          ? ([[t("team.tabs.live"), t("rondleiding.volgwagen.live")]] as [string, string][])
-          : []),
-        [t("team.tabs.prono"), t("rondleiding.volgwagen.prono")],
-        [t("team.tabs.palmares"), t("rondleiding.volgwagen.palmares")],
-      ],
+      ga: { sectie: "team", sub: "ploeg" },
     },
+    sub("team", "ploeg", t("team.tabs.myTeam"), t("rondleiding.volgwagen.ploeg")),
+    // Live hangt aan de schaatsgame; bij een wielerkoers bestaat het tabje niet
+    // en zou een stap erover een belofte zijn die nergens uitkomt.
+    ...(heeftLiveTab
+      ? [sub("team", "live", t("team.tabs.live"), t("rondleiding.volgwagen.live"))]
+      : []),
+    sub("team", "prono", t("team.tabs.prono"), t("rondleiding.volgwagen.prono")),
+    sub("team", "palmares", t("team.tabs.palmares"), t("rondleiding.volgwagen.palmares")),
     {
       navKey: "subpoules",
       titel: t("rondleiding.subpoule.titel"),
@@ -176,8 +174,10 @@ export default function Rondleiding({
       navKey: "uitslagen",
       titel: t("rondleiding.uitslagen.titel"),
       tekst: t("rondleiding.uitslagen.tekst"),
-      ga: { sectie: "uitslagen" },
+      ga: { sectie: "uitslagen", sub: "klassement" },
     },
+    sub("uitslagen", "klassement", t("results.view.klassementTab"), t("rondleiding.uitslagen.klassement")),
+    sub("uitslagen", "etappes", t("results.view.etappesTab"), t("rondleiding.uitslagen.etappes")),
     {
       navKey: "hors",
       titel: t("rondleiding.hors.titel"),

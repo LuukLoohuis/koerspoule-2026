@@ -3,6 +3,7 @@ import { Search, Swords, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { demoDeelnemers } from "@/lib/horsDemo";
 import { useEntries } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
 import TeamComparison from "@/components/TeamComparison";
@@ -22,9 +23,12 @@ type Candidate = { user_id: string; name: string; total: number; rank: number };
 export default function CompareSetup({
   gameId,
   subpouleId,
+  demo = false,
 }: {
   gameId?: string;
   subpouleId?: string;
+  /** Vóór de start zijn er geen tegenstanders; dan voorbeeldcijfers tonen. */
+  demo?: boolean;
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -33,6 +37,14 @@ export default function CompareSetup({
 
   // Kandidaten in de juiste scope, verrijkt met punten en rang.
   const { me, opponents } = useMemo(() => {
+    if (demo) {
+      // Verzonnen ploegnamen: deelnemersnamen zijn van echte mensen en die
+      // mag je niet nabootsen, ook niet in een voorbeeld.
+      const rij = demoDeelnemers(t("common.compare.you"));
+      const ranked: Candidate[] = rij.map((d, i) => ({ ...d, rank: i + 1 }));
+      const ik = ranked.find((d) => d.user_id === "demo-ik") ?? null;
+      return { me: ik, opponents: ranked.filter((d) => d.user_id !== "demo-ik") };
+    }
     const entryByUser = new Map(entries.map((e) => [e.user_id, e]));
     const base = subpouleId
       ? members.map((m) => ({
@@ -53,7 +65,7 @@ export default function CompareSetup({
     const meRow = ranked.find((u) => u.user_id === user?.id) ?? null;
     const others = ranked.filter((u) => u.user_id !== user?.id);
     return { me: meRow, opponents: others };
-  }, [entries, members, subpouleId, user?.id]);
+  }, [entries, members, subpouleId, user?.id, demo, t]);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");

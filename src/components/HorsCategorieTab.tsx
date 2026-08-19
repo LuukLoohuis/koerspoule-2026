@@ -36,6 +36,7 @@ import { useSwipeHint } from "@/hooks/useSwipeHint";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import EmptyState from "@/components/EmptyState";
 import Voorbeeldmarkering from "@/components/Voorbeeldmarkering";
+import { demoPickStats, demoJokerStats } from "@/lib/horsDemo";
 import BenchmarkTab from "@/components/BenchmarkTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import { RetroTabs } from "@/components/RetroTabs";
@@ -249,8 +250,19 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   const isDemo = resultsHiddenForUsers(game?.status) && !adminSeesAll;
   const { entry, picksByCategory, jokerIds, predictions: myPredictions } = useEntry(game?.id);
   const { data: categories = [] } = useCategories(game?.id);
-  const { data: pickStats = [] } = usePickStats(hasResults ? game?.id : undefined);
-  const { data: jokerStats = [] } = useJokerStats(hasResults ? game?.id : undefined);
+  const { data: echtePickStats = [] } = usePickStats(hasResults ? game?.id : undefined);
+  const { data: echteJokerStats = [] } = useJokerStats(hasResults ? game?.id : undefined);
+  // Vóór de start valt er niets te tellen. Voorbeeldcijfers op de échte
+  // startlijst laten zien wát er straks komt; een leeg paneel leest als een
+  // storing. Ze staan altijd onder een <Voorbeeldmarkering>.
+  const pickStats = useMemo(
+    () => (isDemo ? demoPickStats(categories) : echtePickStats),
+    [isDemo, categories, echtePickStats],
+  );
+  const jokerStats = useMemo(
+    () => (isDemo ? demoJokerStats(categories) : echteJokerStats),
+    [isDemo, categories, echteJokerStats],
+  );
   const { data: predictionStats = [] } = usePredictionStats(hasResults ? game?.id : undefined);
   const { data: myStageTotal = 0 } = useMyStagePointTotal(entry?.id);
   const jokerMultiplier = useJokerMultiplier(game?.id);
@@ -955,7 +967,14 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         renderTab={(k) => (
           <div className="space-y-5">
             {/* ── Tab: Benchmark ───────────────────────────────────────────────── */}
-            {k === "benchmark" && <BenchmarkTab gameId={game?.id} />}
+            {k === "benchmark" && (
+              <Voorbeeldmarkering
+                className={isDemo ? undefined : "contents"}
+                opentWanneer={isDemo ? t("hors.demo.opentBijPunten") : undefined}
+              >
+                <BenchmarkTab gameId={game?.id} demo={isDemo} />
+              </Voorbeeldmarkering>
+            )}
 
       {/* ── Tab 1: Dartpijl (Monte Carlo) ───────────────────────────────────── */}
       {k === "dartpijl" && (
@@ -1026,6 +1045,10 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
       {/* ── Tab 2: Pelotonkeuzes ─────────────────────────────────────────────── */}
       {k === "pelotonkeuzes" && (
+        <Voorbeeldmarkering
+          className={isDemo ? undefined : "contents"}
+          opentWanneer={isDemo ? t("hors.demo.opentBijLive") : undefined}
+        >
         <Card className="ornate-frame retro-border overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
           <CardHeader className="border-b-2 border-foreground bg-secondary/30">
@@ -1266,6 +1289,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
             </div>
           </CardContent>
         </Card>
+        </Voorbeeldmarkering>
       )}
 
       {/* ── Tab 3: De Wielerdirecteur ────────────────────────────────────────── */}

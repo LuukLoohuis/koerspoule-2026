@@ -916,7 +916,8 @@
       "bannerLead": "Gesimuleerde voorbeelddata.",
       "bannerBody": "Dit is een voorproefje op ~5 nepdeelnemers. Zodra de inschrijving opent, zie je hier de échte cijfers.",
       "badge": "🎲 Demo · gesimuleerde data",
-      "opentBijLive": "Voorbeeldcijfers — je eigen score verschijnt zodra de koers rijdt."
+      "opentBijLive": "Voorbeeldcijfers — je eigen score verschijnt zodra de koers rijdt.",
+      "opentBijPunten": "Voorbeeldcijfers — vergelijken kan zodra er punten zijn."
     },
     "common": {
       "unknownRider": "Onbekend"
@@ -1439,7 +1440,8 @@
       "sub": "Kies een tegenstander — team, jokers én voorspellingen naast elkaar.",
       "searchPlaceholder": "Zoek een deelnemer…",
       "noMatch": "Geen match.",
-      "pickPrompt": "Kies hierboven een tegenstander."
+      "pickPrompt": "Kies hierboven een tegenstander.",
+      "you": "Jouw ploeg"
     },
     "benchmark": {
       "loading": "Laden…",
@@ -1644,7 +1646,7 @@
     },
     "krant": {
       "titel": "Krant",
-      "tekst": "Het koersnieuws en wat er in jouw subpoule gebeurde."
+      "tekst": "Het koersnieuws, en het commentaar bij de daguitslag van jouw subpoule — wie er won, wie er onderuitging."
     },
     "volgwagen": {
       "titel": "Volgwagen",
@@ -1667,7 +1669,9 @@
     },
     "uitslagen": {
       "titel": "Uitslagen",
-      "tekst": "De daguitslag per etappe en het algemeen klassement van de hele poule."
+      "tekst": "De daguitslag per etappe en het algemeen klassement van de hele poule.",
+      "klassement": "de totaalstand van de hele poule, van kop tot staart",
+      "etappes": "de daguitslag per etappe: wie welke punten pakte"
     },
     "hors": {
       "titel": "Hors Catégorie",

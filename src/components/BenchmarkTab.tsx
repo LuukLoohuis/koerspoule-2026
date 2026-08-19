@@ -5,9 +5,9 @@ import CompareSetup from "@/components/CompareSetup";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { cn } from "@/lib/utils";
 
-type Props = { gameId?: string };
+type Props = { gameId?: string; demo?: boolean };
 
-export default function BenchmarkTab({ gameId }: Props) {
+export default function BenchmarkTab({ gameId, demo = false }: Props) {
   const { t } = useTranslation();
   // Scope: undefined = hele koers; anders alleen leden van deze subpoule.
   const [scopeSubpouleId, setScopeSubpouleId] = useState<string | undefined>(undefined);
@@ -58,7 +58,7 @@ export default function BenchmarkTab({ gameId }: Props) {
         </div>
       )}
 
-      <CompareSetup gameId={gameId} subpouleId={scopeSubpouleId} />
+      <CompareSetup gameId={gameId} subpouleId={scopeSubpouleId} demo={demo} />
     </div>
   );
 }

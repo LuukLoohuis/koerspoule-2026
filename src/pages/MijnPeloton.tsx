@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { RetroTabs } from "@/components/RetroTabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowLeftRight, Award, Baby, Car, ChevronRight, Copy, Medal, MoreHorizontal, Mountain, Newspaper, Pencil, Plus, Radio, RotateCcw, Target, TrendingUp, Trophy, User, Users, Zap } from "lucide-react";
+import { ArrowLeftRight, Award, Baby, Car, ChevronRight, Compass, Copy, Medal, MoreHorizontal, Mountain, Newspaper, Pencil, Plus, Radio, RotateCcw, Target, TrendingUp, Trophy, User, Users, Zap } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
 import SubpouleManager from "@/components/SubpouleManager";
 import WervingStrook from "@/components/WervingStrook";
@@ -1350,9 +1350,30 @@ export default function MijnPeloton() {
             onNavigeer={(sectie, sub) => {
               if (sectie === "hors" && sub) openHors(sub as Parameters<typeof openHors>[0]);
               else if (sectie === "subpoules" && sub) openSubpouleTab(sub);
-              else setGameTab(sectie);
+              else if (sectie === "team" && sub) { setTeamSubTab(sub); setGameTab("team"); }
+              else if (sectie === "uitslagen" && sub) {
+                // ResultsView wordt gekeyd op deze view, dus dit opent de
+                // gevraagde weergave ook als je al op Uitslagen stond.
+                setUitslagenTarget({ view: sub as "klassement" | "etappes" });
+                setGameTab("uitslagen");
+              } else setGameTab(sectie);
             }}
           />
+
+          {/* De rondleiding blijft bij elke status bereikbaar. De knop hiervoor
+              zat alleen in "Aan de slag", en die kaart verdwijnt zodra je een
+              ploeg én een subpoule hebt — precies de deelnemer die hem later
+              nog eens wil nalopen kon er dan niet meer bij. */}
+          {!toontOnboarding && (
+            <button
+              type="button"
+              onClick={() => { rondleidingHerstarten(); setRondleidingOpen(true); }}
+              className="mb-3 mr-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Compass className="h-3 w-3" aria-hidden />
+              {t("rondleiding.starten")}
+            </button>
+          )}
 
           {/* Wegklikken is omkeerbaar; zonder deze knop zou het definitief zijn. */}
           {(onbWeg || actieWeg) && (

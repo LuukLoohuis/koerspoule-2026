@@ -916,7 +916,8 @@
       "bannerLead": "Simulated sample data.",
       "bannerBody": "This is a preview based on ~5 fake participants. Once entries open, you'll see the real figures here.",
       "badge": "🎲 Demo · simulated data",
-      "opentBijLive": "Example figures — your own score appears once the race is under way."
+      "opentBijLive": "Example figures — your own score appears once the race is under way.",
+      "opentBijPunten": "Example figures — comparing works once there are points."
     },
     "common": {
       "unknownRider": "Unknown"
@@ -1439,7 +1440,8 @@
       "sub": "Pick an opponent — team, jokers and predictions side by side.",
       "searchPlaceholder": "Search for a participant…",
       "noMatch": "No match.",
-      "pickPrompt": "Pick an opponent above."
+      "pickPrompt": "Pick an opponent above.",
+      "you": "Your team"
     },
     "benchmark": {
       "loading": "Loading…",
@@ -1644,7 +1646,7 @@
     },
     "krant": {
       "titel": "Krant",
-      "tekst": "Race news and what happened in your subpoule."
+      "tekst": "Race news, plus the commentary on your subpoule's daily result — who won, who came unstuck."
     },
     "volgwagen": {
       "titel": "Volgwagen",
@@ -1667,7 +1669,9 @@
     },
     "uitslagen": {
       "titel": "Uitslagen",
-      "tekst": "Stage results and the overall standings of the whole pool."
+      "tekst": "Stage results and the overall standings of the whole pool.",
+      "klassement": "the overall standings of the whole pool, top to bottom",
+      "etappes": "the daily result per stage: who scored what"
     },
     "hors": {
       "titel": "Hors Catégorie",
