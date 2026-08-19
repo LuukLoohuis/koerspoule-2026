@@ -116,6 +116,12 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   const isDemo = resultsHiddenForUsers(getoondeStatus) && role !== "admin";
   const toonNaam = (rij: { user_id?: string | null; team_name?: string | null; display_name?: string | null }) =>
     isDemo ? pseudoniem(String(rij.user_id ?? "")) : (rij.team_name ?? rij.display_name ?? null);
+
+  // Vóór de start is er niets te vergelijken, dus verscheen het zwaardje
+  // nergens en had de rondleiding niets om aan te wijzen. In demomodus tonen
+  // we er daarom één op de bovenste regel: zichtbaar en uitgelegd, maar
+  // gedempt en niet aanklikbaar — het wérkt immers pas als de koers rijdt.
+  const zwaardVoorbeeld = (index: number) => isDemo && index === 0;
   const [compareUserId, setCompareUserId] = useState<string | null>(null);
 
   const { data: stages = [], isLoading: stagesLoading } = useStages(gameId);
@@ -476,7 +482,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                       topN={isMobile ? 5 : 10}
                       maxHeightClass={isMobile ? "max-h-[460px]" : "max-h-[620px]"}
                       placeholder={t("results.view.searchPlaceholder")}
-                      items={stageStandings.map((s) => {
+                      items={stageStandings.map((s, i) => {
                         const isMe = s.user_id === user?.id;
                         const canCompare = Boolean(myEntry && !isMe);
                         const isComparing = s.user_id === compareUserId;
@@ -514,11 +520,14 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <span className="font-bold text-xs">{t("results.view.points", { count: s.stagePts })}</span>
-                              {canCompare && (
+                              {(canCompare || zwaardVoorbeeld(i)) && (
                                 <span
                                   aria-hidden
+                                  title={canCompare ? undefined : t("rondleiding.vergelijken.nogNiet")}
                                   className={cn(
-                                    "inline-flex text-muted-foreground/60 transition-colors group-hover:text-primary",
+                                    "inline-flex text-muted-foreground/60 transition-colors",
+                                    canCompare && "group-hover:text-primary",
+                                    !canCompare && "opacity-60",
                                     isComparing && "text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]",
                                   )}
                                 >
@@ -526,7 +535,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                                     className="h-3.5 w-3.5"
                                     strokeWidth={isComparing ? 2.5 : 2}
                                     // De rondleiding licht het eerste zwaardje uit.
-                                    data-rondleiding-doel={canCompare ? "uitslagen-vergelijk" : undefined}
+                                    data-rondleiding-doel="uitslagen-vergelijk"
                                   />
                                 </span>
                               )}
@@ -723,7 +732,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                   maxHeightClass="max-h-[600px]"
                   placeholder={t("results.view.searchPlaceholder")}
                   emptyMessage={t("results.view.noSubmittedTeams")}
-                  items={overallStandings.map((s) => {
+                  items={overallStandings.map((s, i) => {
                     const isMe = s.user_id === user?.id;
                     const canCompare = Boolean(myEntry && !isMe);
                     const isComparing = s.user_id === compareUserId;
@@ -842,7 +851,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                           )}
                         </div>
 
-                        {canCompare && (
+                        {(canCompare || zwaardVoorbeeld(i)) && (
                           <span
                             aria-hidden
                             className={cn(
@@ -855,7 +864,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                               strokeWidth={isComparing ? 2.5 : 2}
                               // Tweede weergave van dezelfde knop; de
                               // rondleiding pakt degene die zichtbaar is.
-                              data-rondleiding-doel={canCompare ? "uitslagen-vergelijk" : undefined}
+                              data-rondleiding-doel="uitslagen-vergelijk"
                             />
                           </span>
                         )}

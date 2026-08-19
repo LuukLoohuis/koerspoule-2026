@@ -1710,7 +1710,8 @@
     "vergelijken": {
       "titel": "Comparing",
       "subpoule": "The sword next to a name puts your team beside theirs: the same riders, jokers and predictions side by side. Works once registration closes and the race is under way — before that there is nothing to compare.",
-      "uitslagen": "That sword is here too, next to everyone in the standings. So you compare not just within your subpoule but against the whole pool. This opens once the race is under way as well."
+      "uitslagen": "That sword is here too, next to everyone in the standings. So you compare not just within your subpoule but against the whole pool. This opens once the race is under way as well.",
+      "nogNiet": "Comparing works once the race is under way"
     }
   },
   "statusblok": {
