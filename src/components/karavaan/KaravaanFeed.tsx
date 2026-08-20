@@ -9,6 +9,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import DaguitslagChart from "@/components/DaguitslagChart";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useAllGames } from "@/hooks/useAllGames";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
 import MiniStrip, { type HorsTabKey } from "@/components/karavaan/MiniStrip";
@@ -47,6 +48,11 @@ export default function KaravaanFeed({
   const { data: curGame } = useCurrentGame();
   // Optioneel een specifieke (bv. afgeronde) game i.p.v. de live game.
   const game = gameId ? { id: gameId, status: gameStatus } : curGame;
+  // Koers en jaar staan niet in de stub hierboven; bij een expliciet meegegeven
+  // game halen we ze uit de (toch al gecachete) gamelijst. Nodig voor het
+  // 3D-profiel, dat per koers en per jaar een eigen pad heeft.
+  const { data: alleGames } = useAllGames();
+  const gameMeta = gameId ? alleGames?.find((g) => g.id === gameId) : curGame;
   // Zonder expliciete game valt de vlag terug op de huidige koers; ontbreekt
   // de kolom nog, dan staat de banner aan (het gedrag van voorheen).
   const horsBannerZichtbaar = gameId ? horsBanner : (curGame?.hors_banner_visible ?? true);
@@ -250,7 +256,7 @@ export default function KaravaanFeed({
       )}
 
       {/* De Voorbeschouwing — vooruitblik op de eerstvolgende etappe */}
-      <Voorbeschouwing gameId={game?.id} />
+      <Voorbeschouwing gameId={game?.id} gameType={gameMeta?.game_type} jaar={gameMeta?.year} />
 
 
       {/* Feed */}

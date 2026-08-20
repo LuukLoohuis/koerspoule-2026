@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { tourviewUrl } from "@/lib/tourview";
 import type { TFunction } from "i18next";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
@@ -17,7 +18,7 @@ type UpcomingStage = {
 };
 
 // Interactief 3D-etappeprofiel (tourview). Lazy: iframe pas na klik laden.
-const TOURVIEW_BASE = "https://tourview.pages.dev/tdf2026/stage-";
+// De URL komt uit lib/tourview en volgt de koers én het jaar van de game.
 
 const TYPE_LABEL_KEY: Record<string, string> = {
   vlak: "karavaan.voorbeschouwing.typeVlak",
@@ -54,7 +55,16 @@ function dateBadge(date: string | null, t: TFunction, locale: string): string | 
   }
 }
 
-export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
+export default function Voorbeschouwing({
+  gameId,
+  gameType,
+  jaar,
+}: {
+  gameId?: string;
+  /** Bepaalt naar welke koers het 3D-profiel wijst. */
+  gameType?: string | null;
+  jaar?: number | null;
+}) {
   const { t, i18n } = useTranslation();
   const { thema } = useThema();
   const [showProfiel, setShowProfiel] = useState(false);
@@ -105,6 +115,9 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
   if (!enabled || !stage) return null;
 
   const locale = i18n.language === "en" ? "en-GB" : "nl-NL";
+  // Null zodra tourview deze koers niet heeft (Femmes, Meermarathon) — dan
+  // verdwijnt de knop, in plaats van het profiel van een ándere koers te tonen.
+  const profielUrl = tourviewUrl(gameType, jaar, stage.stage_number);
   const typeLabelKey = TYPE_LABEL_KEY[String(stage.stage_type)];
   const typeLabel = typeLabelKey ? t(typeLabelKey) : t("karavaan.voorbeschouwing.typeDefault");
   const wanneer = dateBadge(stage.date, t, locale);
@@ -147,7 +160,7 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
 
         {/* Interactief 3D-profiel (tourview) — lazy: iframe pas na klik, met
             open-op-tourview-link als terugval mocht embedden ooit blokkeren. */}
-        {stage.stage_number != null && (
+        {profielUrl && (
           <div className="mt-3">
             {!showProfiel ? (
               <button
@@ -180,7 +193,7 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
                 </button>
                 <div className="relative w-full overflow-hidden rounded-lg border border-[hsl(var(--vintage-sepia)/0.4)]" style={{ height: 240 }}>
                   <iframe
-                    src={`${TOURVIEW_BASE}${stage.stage_number}`}
+                    src={profielUrl}
                     title={t("karavaan.voorbeschouwing.profielIframeTitle", { number: stage.stage_number })}
                     loading="lazy"
                     referrerPolicy="no-referrer"
@@ -189,7 +202,7 @@ export default function Voorbeschouwing({ gameId }: { gameId?: string }) {
                   />
                 </div>
                 <a
-                  href={`${TOURVIEW_BASE}${stage.stage_number}`}
+                  href={profielUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:underline"
