@@ -244,7 +244,9 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     ? alleGames?.find((g) => g.id === gameIdProp)?.game_type
     : curGame?.game_type;
   const isMeermarathon = String(gameType ?? "").toLowerCase() === "meermarathon";
-  const ploegleiderNaam = isMeermarathon ? "Douwe Kastelein" : "Patrick Lefevere";
+  // Naam uit de vertaling, zodat hij maar op één plek staat: de kennismaking en
+  // de regel boven het rapport kunnen zo niet uit elkaar lopen.
+  const ploegleiderNaam = t(`hors.ploegleider.${isMeermarathon ? "feenstra" : "lefevere"}.naam`);
   // Twee aparte assen: tab tónen (isVisible, vanaf "open" t/m finished) vs. échte
   // uitslagdata aanwezig (hasResults, vanaf "live"). Concept/draft = verborgen.
   // Admin-volledig-zicht hangt aan de TESTMODUS (niet meer aan status 'open').
@@ -1346,7 +1348,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
             {/* Kennismaking staat los van het rapport: ook zonder cijfer -- sneak
                 preview, inschrijving open, of gewoon nog niks verreden -- hoort de
                 bezoeker te kunnen zien wie hem straks gaat beoordelen. */}
-            <PloegleiderIntro persona={isMeermarathon ? "kastelein" : "lefevere"} className="mt-0" />
+            <PloegleiderIntro persona={isMeermarathon ? "feenstra" : "lefevere"} className="mt-0" />
 
             {/* ── Sneak preview: Patlef's voorbeschouwing (voorproefje, geen stand) ── */}
             {isDemo && (

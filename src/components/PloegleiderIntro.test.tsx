@@ -18,22 +18,22 @@ vi.mock("react-i18next", () => ({
 
 describe("PloegleiderIntro", () => {
   it("begint dicht en toont alleen de knop", () => {
-    render(<PloegleiderIntro persona="kastelein" />);
+    render(<PloegleiderIntro persona="feenstra" />);
     expect(screen.getByRole("button")).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByText(/Katlijk/)).toBeNull();
+    expect(screen.queryByText(/Warten/)).toBeNull();
   });
 
   it("klapt open en stelt Douwe voor", () => {
-    render(<PloegleiderIntro persona="kastelein" />);
+    render(<PloegleiderIntro persona="feenstra" />);
     fireEvent.click(screen.getByRole("button"));
     expect(screen.getByRole("button")).toHaveAttribute("aria-expanded", "true");
     // Twee keer: in de kop en in zijn eigen openingszin. Dat is bedoeld.
-    expect(screen.getAllByText(/Douwe Kastelein/).length).toBe(2);
-    expect(screen.getByText(/Katlijk/)).toBeTruthy();
+    expect(screen.getAllByText(/Douwe Feenstra/).length).toBe(2);
+    expect(screen.getByText(/Warten/)).toBeTruthy();
   });
 
   it("bevat de achtergrond die het personage maakt", () => {
-    render(<PloegleiderIntro persona="kastelein" />);
+    render(<PloegleiderIntro persona="feenstra" />);
     fireEvent.click(screen.getByRole("button"));
     const tekst = document.body.textContent ?? "";
     for (const detail of ["Zesenzestig", "tegels", "'85", "bevroren veters", "deksel", "schriftje", "gemalen"]) {
@@ -42,7 +42,7 @@ describe("PloegleiderIntro", () => {
   });
 
   it("noemt hem ploegleider en nadrukkelijk geen directeur", () => {
-    render(<PloegleiderIntro persona="kastelein" />);
+    render(<PloegleiderIntro persona="feenstra" />);
     fireEvent.click(screen.getByRole("button"));
     const tekst = document.body.textContent ?? "";
     expect(tekst).toContain("Ploegleider");
@@ -54,7 +54,7 @@ describe("PloegleiderIntro", () => {
     fireEvent.click(screen.getByRole("button"));
     const tekst = document.body.textContent ?? "";
     expect(tekst).toContain("Patrick Lefevere");
-    expect(tekst).not.toContain("Katlijk");
+    expect(tekst).not.toContain("Warten");
     // Blijft bij zijn publieke rol: geen verzonnen privegeschiedenis.
     expect(tekst).toMatch(/naar uw keuzes, niet naar uw excuses/);
   });
@@ -68,10 +68,10 @@ describe("PloegleiderIntro", () => {
   });
 
   it("klapt weer dicht", () => {
-    render(<PloegleiderIntro persona="kastelein" />);
+    render(<PloegleiderIntro persona="feenstra" />);
     const knop = screen.getByRole("button");
     fireEvent.click(knop);
     fireEvent.click(knop);
-    expect(screen.queryByText(/Katlijk/)).toBeNull();
+    expect(screen.queryByText(/Warten/)).toBeNull();
   });
 });

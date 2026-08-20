@@ -3,10 +3,10 @@ import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
-export type PloegleiderSleutel = "kastelein" | "lefevere";
+export type PloegleiderSleutel = "feenstra" | "lefevere";
 
 /**
- * Kennismaking met degene die je rapport schrijft: Douwe Kastelein bij de
+ * Kennismaking met degene die je rapport schrijft: Douwe Feenstra bij de
  * Meermarathon, Patrick Lefevere bij de wielergames.
  *
  * Vaste tekst, bewust niet gegenereerd. Iemand die zich elk bezoek anders

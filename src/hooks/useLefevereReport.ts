@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 export type LefevereReportInput = {
   score: number;
   /** Bepaalt welke ploegdirecteur het rapport schrijft: Meermarathon krijgt
-   *  Douwe Kastelein, de wielergames Lefevere. */
+   *  Douwe Feenstra, de wielergames Lefevere. */
   gameType?: string | null;
   components: {
     poolRanking: { score: number; weging: number; rang: number; totaalDeelnemers: number };

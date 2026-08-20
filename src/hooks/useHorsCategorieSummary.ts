@@ -348,7 +348,7 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
       .filter(Boolean) as string[];
     return {
       score: director.score,
-      // Bepaalt wie het rapport schrijft: Meermarathon krijgt Douwe Kastelein,
+      // Bepaalt wie het rapport schrijft: Meermarathon krijgt Douwe Feenstra,
       // de wielergames Patrick Lefevere. Zonder dit veld valt de edge function
       // terug op Lefevere, en die praat niet over natuurijs.
       gameType: curGame?.game_type ?? null,
