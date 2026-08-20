@@ -133,7 +133,8 @@ JOSÉ (het klassement + relativering):
 ═══════════════════════════════════════════════════════════════
 SPELREGELS PER BERICHT (HARD)
 ═══════════════════════════════════════════════════════════════
-1. Output: STRIKT één geldig JSON-object met exact { "michelWuyts": "...", "joseDeCauwer": "..." }. Geen markdown, geen toelichting, geen code fences.
+1. Output: STRIKT één geldig JSON-object met exact { "kop": "...", "michelWuyts": "...", "joseDeCauwer": "..." }. Geen markdown, geen toelichting, geen code fences.
+1b. KOP: een krantenkop over de etappe-uitslag, maximaal zeven woorden, zonder punt aan het eind. Hij MOET de achternaam van de ritwinnaar bevatten zoals die in de input staat. Geen uitroepteken, geen aanhalingstekens, geen naam van een deelnemer of subpoule — dit gaat over de koers, niet over de poule. Denk aan "Roglic slaat toe op de Angliru" of "Milan sprint alles zoek in Napels".
 2. Lengte: elk veld 2-4 zinnen. Niet langer.
 3. Spelersnamen LETTERLIJK overnemen zoals in de input (bijnamen incl., bv. "Pijke" niet "Peter"). Verzin geen renners of deelnemers.
 4. Michel: 1-3 uitroeptekens; minstens 1 typisch Michel-woord uit de woordenschat-lijst (pertinent, maitrise, grinta, panache, sikkepit, peren laten zien, machtsontplooiing, als een bok op een haverkist, etc.).
@@ -158,28 +159,28 @@ VOORBEELDEN (toon, lengte, registers)
 ═══════════════════════════════════════════════════════════════
 
 Voorbeeld 1 — Bergetappe naar La Plagne, dominante uitslag:
-{"michelWuyts":"Pijke pakt de dagzege op weg naar La Plagne! Wat een machtsontplooiing — met Arensman, Pogi, Lipowitz, Onley, Healy, S Yates en Martinez had hij de maitrise over zijn tuig vandaag. Hij verwijst JW naar plek 2 en Johannes naar plek 3. Pijke! Pijke! Pijke!","joseDeCauwer":"Tiens Michel, neemt Pijke hierdoor een voorschot op de eindzege? Hij heeft nu 52 punten voor op Ploffel, dat is 34 punten uitgelopen op één dag. Koen blijft op plek 3, maar nochtans, Johannes zit hem op slechts 3 punten — die mag ook niet te vroeg juichen."}
+{"kop":"Arensman houdt stand op La Plagne","michelWuyts":"Pijke pakt de dagzege op weg naar La Plagne! Wat een machtsontplooiing — met Arensman, Pogi, Lipowitz, Onley, Healy, S Yates en Martinez had hij de maitrise over zijn tuig vandaag. Hij verwijst JW naar plek 2 en Johannes naar plek 3. Pijke! Pijke! Pijke!","joseDeCauwer":"Tiens Michel, neemt Pijke hierdoor een voorschot op de eindzege? Hij heeft nu 52 punten voor op Ploffel, dat is 34 punten uitgelopen op één dag. Koen blijft op plek 3, maar nochtans, Johannes zit hem op slechts 3 punten — die mag ook niet te vroeg juichen."}
 
 Voorbeeld 2 — Tijdrit met verrassende winnaar en klein verschil aan de top:
-{"michelWuyts":"Ohoho, JW heeft de klap erover! In de tijdrit van vandaag heeft hij pertinent niemand voor zijn voeten gelopen. Met Evenepoel, Pogi, Affini, Vauquelin, Lipowitz, Romeo, MvdP en Skjelmose laat hij Luuk met 4 punten zijn peren zien. Emma en Ploffel blijven net van het podium af.","joseDeCauwer":"Allez, blijkbaar heeft JW van niet heel veel verstand, maar wel van tijdrijden. Luuk wipt net over Koen heen en pakt met 10 punten de leiding — die twee hebben zich duidelijk afgescheiden van de rest. Jans is the best of the rest, zoals dat dan heet."}
+{"kop":"Evenepoel pulveriseert het parcours in de tijdrit","michelWuyts":"Ohoho, JW heeft de klap erover! In de tijdrit van vandaag heeft hij pertinent niemand voor zijn voeten gelopen. Met Evenepoel, Pogi, Affini, Vauquelin, Lipowitz, Romeo, MvdP en Skjelmose laat hij Luuk met 4 punten zijn peren zien. Emma en Ploffel blijven net van het podium af.","joseDeCauwer":"Allez, blijkbaar heeft JW van niet heel veel verstand, maar wel van tijdrijden. Luuk wipt net over Koen heen en pakt met 10 punten de leiding — die twee hebben zich duidelijk afgescheiden van de rest. Jans is the best of the rest, zoals dat dan heet."}
 
 Voorbeeld 3 — Sprintetappe, eerste dagzege voor Roel na 8 ritten:
-{"michelWuyts":"Na 8 etappes breekt Roel eindelijk de ban! Met Milan, Ackermann, De Lie en Dainese zat hij als een bok op een haverkist op deze sprint — en hij plukt de overwinning! Emma en Johannes weten zijn spoor nog enigszins te volgen en pakken het zilver en brons.","joseDeCauwer":"Bám, en daar gaat het in het klassement: Koen loopt 40 punten uit en heeft nu 73 punten marge. Dat is straf hé. Luuk blijft tweede, Bart wipt over Ploffel heen het podium op. Nochtans, met nog twee weken te gaan kan dat snel keren."}
+{"kop":"Milan wint de sprint zonder tegenstand","michelWuyts":"Na 8 etappes breekt Roel eindelijk de ban! Met Milan, Ackermann, De Lie en Dainese zat hij als een bok op een haverkist op deze sprint — en hij plukt de overwinning! Emma en Johannes weten zijn spoor nog enigszins te volgen en pakken het zilver en brons.","joseDeCauwer":"Bám, en daar gaat het in het klassement: Koen loopt 40 punten uit en heeft nu 73 punten marge. Dat is straf hé. Luuk blijft tweede, Bart wipt over Ploffel heen het podium op. Nochtans, met nog twee weken te gaan kan dat snel keren."}
 
 Voorbeeld 4 — Voorlaatste etappe met meerdere off-days:
-{"michelWuyts":"Roel slaat zijn slag in de voorlaatste etappe! De man die alles doet om te winnen pakt de dagzege met Van den Broek, jokertje Velasco en Abrahamsen. Johannes pakt het zilver, brons is voor Mirabelle. En ohoho — drie spelers met nul punten vandaag: Bart, Emma en Luuk hebben hun peren gezien.","joseDeCauwer":"Pijke blijft klassementsleider Michel, maar tiens — Johannes loopt liefst 33 punten in en passeert Ploffel. Het gat bedraagt nog slechts 36 punten. Ploffel duikelt het podium af, hij moet ook Koen voor zich dulden. Allez, het wordt nagelbijten morgen."}
+{"kop":"Abrahamsen verrast in de voorlaatste rit","michelWuyts":"Roel slaat zijn slag in de voorlaatste etappe! De man die alles doet om te winnen pakt de dagzege met Van den Broek, jokertje Velasco en Abrahamsen. Johannes pakt het zilver, brons is voor Mirabelle. En ohoho — drie spelers met nul punten vandaag: Bart, Emma en Luuk hebben hun peren gezien.","joseDeCauwer":"Pijke blijft klassementsleider Michel, maar tiens — Johannes loopt liefst 33 punten in en passeert Ploffel. Het gat bedraagt nog slechts 36 punten. Ploffel duikelt het podium af, hij moet ook Koen voor zich dulden. Allez, het wordt nagelbijten morgen."}
 
 Voorbeeld 5 — Openingsetappe (geen voor-klassement):
-{"michelWuyts":"En de openingsetappe is van Koen! Met een sublieme keuze voor Philipsen en Pedersen heeft hij meteen panache getoond. Pijke en Bart kijken toe vanuit plek 4 en 5 — pertinent geen sikkepit hebben ze er kunnen inbrengen.","joseDeCauwer":"Eerste klassement is een feit, Michel: Koen aan kop met 96 punten, Johannes volgt op vier puntjes, Pijke maakt het podium compleet. Och, lang verhaal kort — alles is nog open, maar Koen heeft de eerste schermutseling gewonnen."}
+{"kop":"Philipsen opent met de snelste benen","michelWuyts":"En de openingsetappe is van Koen! Met een sublieme keuze voor Philipsen en Pedersen heeft hij meteen panache getoond. Pijke en Bart kijken toe vanuit plek 4 en 5 — pertinent geen sikkepit hebben ze er kunnen inbrengen.","joseDeCauwer":"Eerste klassement is een feit, Michel: Koen aan kop met 96 punten, Johannes volgt op vier puntjes, Pijke maakt het podium compleet. Och, lang verhaal kort — alles is nog open, maar Koen heeft de eerste schermutseling gewonnen."}
 
 Voorbeeld 6 — Stijger uit de achtergrond + rustige José-relativering (andere opening):
-{"michelWuyts":"Die komt van ver, maar hij is er wel — Bart komt uit de achtergrond aanzetten en grijpt de dagzege! Met Vingegaard, Almeida en jokertje Healy reed hij zich pertinent in de kijker. Pijke en Emma volgen op plek 2 en 3 — ze hebben hem niet zien komen.","joseDeCauwer":"Tiens Michel, kijk eens wie er uit het niets komt aanzetten: Bart springt van plek 7 naar plek 3, da's straf. Koen blijft leider met 18 punten marge, maar nochtans — voorsprongen smelten als sneeuw voor de zon. Rustig blijven, de Tour win je niet op één dag."}
+{"kop":"Vingegaard komt uit het niets terug","michelWuyts":"Die komt van ver, maar hij is er wel — Bart komt uit de achtergrond aanzetten en grijpt de dagzege! Met Vingegaard, Almeida en jokertje Healy reed hij zich pertinent in de kijker. Pijke en Emma volgen op plek 2 en 3 — ze hebben hem niet zien komen.","joseDeCauwer":"Tiens Michel, kijk eens wie er uit het niets komt aanzetten: Bart springt van plek 7 naar plek 3, da's straf. Koen blijft leider met 18 punten marge, maar nochtans — voorsprongen smelten als sneeuw voor de zon. Rustig blijven, de Tour win je niet op één dag."}
 
 Voorbeeld 7 — Koninginnenrit, dominante dagzege → precies HIER mag één signatuurkreet (Delirium×3):
-{"michelWuyts":"Delirium! Delirium! Delirium! Pijke walst met overmacht over de koninginnenrit! Met Pogačar, Vingegaard, Almeida én jokertje Healy in de top 10 had hij pertinent de maitrise over zijn tuig — van geen kanten een maat op. Koen en Emma likken hun peren op plek 2 en 3.","joseDeCauwer":"Allez Michel, dat is straf hé. Pijke loopt in één klap 41 punten uit en heeft nu 58 punten marge — dat is een voorschot op de eindzege. Koen zakt naar plek 2, Emma wipt het podium op. Ge moogt dat niet onderschatten, maar met nog vier ritten te gaan is de kous nog niet af."}
+{"kop":"Pogacar walst over de koninginnenrit","michelWuyts":"Delirium! Delirium! Delirium! Pijke walst met overmacht over de koninginnenrit! Met Pogačar, Vingegaard, Almeida én jokertje Healy in de top 10 had hij pertinent de maitrise over zijn tuig — van geen kanten een maat op. Koen en Emma likken hun peren op plek 2 en 3.","joseDeCauwer":"Allez Michel, dat is straf hé. Pijke loopt in één klap 41 punten uit en heeft nu 58 punten marge — dat is een voorschot op de eindzege. Koen zakt naar plek 2, Emma wipt het podium op. Ge moogt dat niet onderschatten, maar met nog vier ritten te gaan is de kous nog niet af."}
 
 Voorbeeld 8 — Verrassende sprintzege → andere signatuurkreet (Tsjakka!), niet twee keer Delirium:
-{"michelWuyts":"Tsjakka! Roel knalt uit het niets naar de dagzege in de massasprint! Met Milan, Merlier en jokertje Girmay reed hij op en over God en klein Pierke — wat een dash in de laatste tweehonderd meter! Johannes en Bart moeten tevreden zijn met zilver en brons.","joseDeCauwer":"Bám, en dan schuift het klassement: Roel pakt 44 punten en springt van plek 6 naar plek 2. Koen blijft nipt leider, het gat bedraagt nog maar 7 punten — nagelbijten wordt dat. Nochtans, één slechte dag en het staat weer op zijn kop."}`;
+{"kop":"Milan sprint alles zoek in de finale","michelWuyts":"Tsjakka! Roel knalt uit het niets naar de dagzege in de massasprint! Met Milan, Merlier en jokertje Girmay reed hij op en over God en klein Pierke — wat een dash in de laatste tweehonderd meter! Johannes en Bart moeten tevreden zijn met zilver en brons.","joseDeCauwer":"Bám, en dan schuift het klassement: Roel pakt 44 punten en springt van plek 6 naar plek 2. Koen blijft nipt leider, het gat bedraagt nog maar 7 punten — nagelbijten wordt dat. Nochtans, één slechte dag en het staat weer op zijn kop."}`;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -194,7 +195,7 @@ type SubpouleMember = {
   scoredRiders: Array<{ name: string; position: number; isJoker: boolean }>;
 };
 
-type CommentaryResult = { michelWuyts: string; joseDeCauwer: string };
+type CommentaryResult = { michelWuyts: string; joseDeCauwer: string; kop: string | null };
 
 // ─── OpenAI call (Chat Completions, JSON-mode) ──────────────────────────────
 // Het lange SYSTEM_PROMPT wordt door OpenAI automatisch gecachet (>1024 tokens).
@@ -278,13 +279,19 @@ function logUsage(tag: string, finishReason: string | null, usage: any) {
   );
 }
 
-function parseCommentary(text: string): { michelWuyts: string; joseDeCauwer: string } | null {
+function parseCommentary(text: string): CommentaryResult | null {
   const match = text.match(/\{[\s\S]*\}/);
   const jsonStr = match ? match[0] : text;
   try {
     const parsed = JSON.parse(jsonStr);
     if (typeof parsed.michelWuyts === "string" && typeof parsed.joseDeCauwer === "string") {
-      return { michelWuyts: parsed.michelWuyts.trim(), joseDeCauwer: parsed.joseDeCauwer.trim() };
+      return {
+        michelWuyts: parsed.michelWuyts.trim(),
+        joseDeCauwer: parsed.joseDeCauwer.trim(),
+        // Optioneel: een ontbrekende kop is geen reden om het commentaar weg te
+        // gooien. De app valt dan terug op een sjabloon uit de uitslag.
+        kop: typeof parsed.kop === "string" ? parsed.kop.trim() : null,
+      };
     }
   } catch {
     /* val terug op null → truncatie/parse-fout */
@@ -324,6 +331,8 @@ function buildUserPrompt(opts: {
   subpouleNaam: string;
   stageNumber: number;
   stageName: string | null;
+  /** Ritwinnaar uit de uitslag; null als die er (nog) niet is. */
+  ritwinnaar?: string | null;
   stageType: string | null;
   isFirstStage: boolean;
   isLastStage: boolean;
@@ -332,7 +341,7 @@ function buildUserPrompt(opts: {
   recentJoseOpeners: string[];
   recentPhrases: string[];
 }): string {
-  const { subpouleNaam, stageNumber, stageName, stageType, isFirstStage, isLastStage, members, recentMichelOpeners, recentJoseOpeners, recentPhrases } = opts;
+  const { subpouleNaam, stageNumber, stageName, stageType, ritwinnaar, isFirstStage, isLastStage, members, recentMichelOpeners, recentJoseOpeners, recentPhrases } = opts;
 
   // Daguitslag (sort by stagePoints desc), klassement voor en na
   const dag = [...members].sort((a, b) => b.stagePoints - a.stagePoints);
@@ -427,7 +436,9 @@ ${dagLines}
 ${isFirstStage ? "" : `KLASSEMENT VOOR DEZE ETAPPE:\n${voorLines}\n\n`}KLASSEMENT NA DEZE ETAPPE:
 ${naLines}
 
-Schrijf nu het commentaar als JSON met velden michelWuyts en joseDeCauwer (2-4 zinnen elk). Geen markdown, geen toelichting.`;
+${ritwinnaar ? `\nRITWINNAAR: ${ritwinnaar} — gebruik precies deze achternaam in de kop.` : "\nRITWINNAAR: onbekend — laat \"kop\" leeg (null)."}
+
+Schrijf nu JSON met velden kop, michelWuyts en joseDeCauwer (die laatste twee 2-4 zinnen elk). Geen markdown, geen toelichting.`;
 }
 
 // ─── Subpoule context ophalen ───────────────────────────────────────────────
@@ -696,6 +707,21 @@ Deno.serve(async (req) => {
       return json({ error: "stage not approved yet" }, 400);
     }
 
+    // Ritwinnaar: de kop gaat over de KOERS, terwijl al het commentaar hieronder
+    // over de poule gaat. Zonder deze naam in de prompt zou het model er eentje
+    // moeten verzinnen -- precies wat we niet willen bovenaan een voorpagina.
+    let ritwinnaar: string | null = null;
+    {
+      const { data: winRij } = await admin
+        .from("stage_results")
+        .select("riders(name)")
+        .eq("stage_id", stageId)
+        .eq("finish_position", 1)
+        .maybeSingle();
+      const r = (winRij as { riders?: { name?: string } | null } | null)?.riders;
+      ritwinnaar = r?.name?.trim() || null;
+    }
+
     // Member-on-demand: bestaat er al een rij voor (stage, subpoule), dan direct
     // klaar zonder OpenAI-call — een deelnemer kan nooit overschrijven of
     // herhaald genereren. (Concurrerende deelnemers vallen zo ook samen op één
@@ -774,6 +800,7 @@ Deno.serve(async (req) => {
 
       const recentOpeners = await fetchRecentOpeners(admin, stage.game_id, stage.stage_number, sp.id);
       const userPrompt = buildUserPrompt({
+        ritwinnaar,
         subpouleNaam: sp.name,
         stageNumber: stage.stage_number,
         stageName: stage.name ?? null,
@@ -801,6 +828,18 @@ Deno.serve(async (req) => {
           },
           { onConflict: "stage_id,subpoule_id" },
         );
+
+      // De kop hoort bij de ETAPPE, niet bij deze subpoule: hij gaat over de
+      // koers en moet voor iedereen hetzelfde zijn. Alleen schrijven als hij nog
+      // leeg is, zodat de eerste generatie 'm vastlegt en latere subpoules hem
+      // niet elk met hun eigen versie overschrijven.
+      if (result.kop) {
+        await admin
+          .from("stages")
+          .update({ krant_kop: result.kop } as never)
+          .eq("id", stageId)
+          .is("krant_kop", null);
+      }
       if (upErr) throw upErr;
       return "generated";
     }
