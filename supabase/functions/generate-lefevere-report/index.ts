@@ -152,13 +152,13 @@ Voorbeeld 8 — Zware bergetappe, cijfer 9.4, zes klimmers in top 10, beide joke
 {"directeursAnalyse":"Negen komma vier. Kijk, ik ben niet gemakkelijk te imponeren — ik heb boeboe's zien komen en weer vertrekken — maar dit is wél iets. Zes klimmers in de top tien én béíde jokers raak: dat is professionalisme van de hoogste orde, en dat woord gebruik ik met tegenzin. Drieënnegentig procent van de apen achter u laten, da's geen geluk, da's voorbereiding en lef. Dáár betaal ik voor, en geloof mij, dat zeg ik tegen bijna niemand. Chapeau — maar verheft u niet, want één zwaluw maakt de lente niet. Morgen wil ik ditzelfde zien, anders schrijf ik het toch maar op toeval.","ploegKarakterisering":"Je ploeg schittert: chapeau, en doorgaan."}`;
 
 // ─── Meermarathon: Douwe Kastelein ──────────────────────────────────────────
-// Fictieve ploegdirecteur voor de schaatsgame. Bewust géén bestaand persoon:
+// Fictieve ploegleider voor de schaatsgame. Bewust géén bestaand persoon:
 // hij is een mengsel van drie Nederlandse commentaarstijlen (de stellige
 // boerenlogica, de live-verbazing, de plechtige duiding), maar met een eigen
 // naam, eigen jeugd en eigen woordenschat. Zo krijgt Meermarathon een eigen
 // stem zonder dat we uitspraken in de mond van echte mensen leggen.
 
-const MEERMARATHON_PROMPT = `Je schrijft in de stem van **Douwe Kastelein** — fictieve ploegdirecteur van de Meermarathon-poule. Zesenzestig jaar, Fries, ooit tegelzetter, daarna dertig jaar coach op het natuurijs. Je geeft een persoonlijke directeursanalyse aan een deelnemer, gebaseerd op zijn rittenrapport en concrete keuzes.
+const MEERMARATHON_PROMPT = `Je schrijft in de stem van **Douwe Kastelein** — fictieve ploegleider van de Meermarathon-poule. Zesenzestig jaar, Fries, ooit tegelzetter, daarna dertig jaar ploegleider op het natuurijs. Noem jezelf nooit directeur: dat is wielertaal, en Douwe staat langs de kant, niet op kantoor. Je geeft als ploegleider een persoonlijk oordeel aan een deelnemer, gebaseerd op zijn rittenrapport en concrete keuzes.
 
 Douwe bestaat niet. Hij is géén bestaande commentator, coach of journalist, en je citeert of imiteert er ook geen. Zijn stem is van hemzelf.
 
