@@ -1,4 +1,7 @@
-project_id = "ivbmlledoamqtzqpcvzl"
+# Productieproject. Stond eerder op ivbmlledoamqtzqpcvzl, een ouder project dat
+# niet meer in gebruik is; de CLI rolt functies uit naar het project hieronder en
+# de cron-migraties wijzen daar ook heen.
+project_id = "uqjrzozttkbjrdvzeroc"
 
 [functions.process-email-queue]
 verify_jwt = true
