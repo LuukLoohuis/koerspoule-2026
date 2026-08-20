@@ -9,7 +9,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import DaguitslagChart from "@/components/DaguitslagChart";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import Voorpagina, { type Rubriek } from "@/components/karavaan/Voorpagina";
+import Voorpagina, { type Rubriek, type StandCel, type Hoofdartikel } from "@/components/karavaan/Voorpagina";
+import { bouwKop } from "@/lib/krantKop";
 import { useAllGames } from "@/hooks/useAllGames";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
@@ -137,6 +138,7 @@ export default function KaravaanFeed({
   }
 
   const etappes = feed.data?.etappes ?? [];
+  const ministrip = feed.data?.ministrip;
 
   // ── Kop en rubrieken van de Krant ──────────────────────────────────────────
   const koersNaam = gameMeta?.name ?? t("karavaan.voorpagina.naam");
@@ -152,6 +154,53 @@ export default function KaravaanFeed({
     const zacht = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     doel.scrollIntoView({ behavior: zacht ? "auto" : "smooth", block: "start" });
   };
+
+  const subpouleNaam = subpoules.find((sp) => sp.id === selectedSubpouleId)?.name ?? null;
+
+  const cellen: StandCel[] = ministrip
+    ? [
+        { key: "sub", waarde: ministrip.subpoule.rank == null ? "—" : `${ministrip.subpoule.rank}ᵉ`, label: t("karavaan.ministrip.labelSubpoule"), delta: ministrip.subpoule.delta, onClick: selectedSubpouleId ? () => onOpenSubpoule?.(selectedSubpouleId) : onGoToPloeg },
+        { key: "all", waarde: ministrip.overall.rank == null ? "—" : `${ministrip.overall.rank}ᵉ`, label: t("karavaan.ministrip.labelOverall"), delta: ministrip.overall.delta, onClick: onOpenUitslagen },
+        { key: "pt", waarde: String(ministrip.points ?? "—"), label: t("karavaan.ministrip.labelPunten"), onClick: onGoToPloeg },
+        { key: "iq", waarde: horsSummary.monkeyBeatPct == null ? "—" : `${horsSummary.monkeyBeatPct}%`, label: t("karavaan.ministrip.monkeyLabel"), onClick: () => onOpenHors?.("dartpijl") },
+        { key: "em", waarde: horsSummary.emiratesPct == null ? "—" : `${horsSummary.emiratesPct}%`, label: t("karavaan.ministrip.emiratesLabel"), onClick: () => onOpenHors?.("superteam") },
+        { key: "wd", waarde: horsSummary.directorScore == null ? "—" : horsSummary.directorScore.toFixed(1).replace(".", ","), label: t("karavaan.ministrip.wielerdirLabel"), onClick: () => onOpenHors?.("wielerdirecteur") },
+      ]
+    : [];
+
+  // Hoofdartikel over de laatste etappe. De kop komt uit de generator, maar
+  // alleen als die de ritwinnaar noemt — anders een sjabloon uit de uitslag.
+  const artikel: Hoofdartikel | null = (() => {
+    if (!laatsteEtappe) return null;
+    const kop = bouwKop({
+      gegenereerd: laatsteEtappe.krant_kop,
+      winnaar: laatsteEtappe.ritwinnaar,
+      etappeNaam: laatsteEtappe.stage_name,
+      etappeNummer: laatsteEtappe.stage_number,
+    });
+    if (!kop) return null;
+
+    const chips: string[] = [];
+    if (laatsteEtappe.mijnDagpunten != null) chips.push(`+${laatsteEtappe.mijnDagpunten} ${t("karavaan.ministrip.labelPunten")}`);
+    if (laatsteEtappe.mijnDagrang != null && laatsteEtappe.subpouleStandings.length > 0) {
+      chips.push(t("karavaan.voorpagina.chipDagrang", { rang: laatsteEtappe.mijnDagrang, totaal: laatsteEtappe.subpouleStandings.length }));
+    }
+
+    const quotes: Hoofdartikel["quotes"] = [];
+    if (laatsteEtappe.michel_tekst) quotes.push({ naam: "Michel Wuyts", tekst: laatsteEtappe.michel_tekst });
+    if (laatsteEtappe.jose_tekst) quotes.push({ naam: "José De Cauwer", tekst: laatsteEtappe.jose_tekst });
+
+    return {
+      kicker: t("karavaan.voorpagina.kicker", { etappe: thema.etappe, nummer: laatsteEtappe.stage_number }),
+      kop,
+      chapeau: laatsteEtappe.mijnDagpunten != null
+        ? t("karavaan.voorpagina.chapeauMet", { punten: laatsteEtappe.mijnDagpunten, rang: laatsteEtappe.mijnDagrang ?? 0, totaal: laatsteEtappe.subpouleStandings.length })
+        : t("karavaan.voorpagina.chapeauZonder"),
+      chips,
+      profielKnop: { label: t("karavaan.voorpagina.naarProfiel"), onClick: () => naarSectie("krant-voorbeschouwing") },
+      quotes,
+    };
+  })();
 
   const rubrieken: Rubriek[] = [
     ...(selectedSubpouleId
@@ -190,7 +239,6 @@ export default function KaravaanFeed({
       : []),
   ];
 
-  const ministrip = feed.data?.ministrip;
 
   return (
     <div className="space-y-4">
@@ -216,10 +264,18 @@ export default function KaravaanFeed({
         </div>
       )}
 
-      <Voorpagina koers={koersNaam} editie={editie} rubrieken={rubrieken} />
 
       {/* Dagprijs van vandaag — compacte strook bovenaan (admin-gestuurd) */}
       <DagprijsBanner gameId={game?.id} />
+
+      <Voorpagina
+        koers={koersNaam}
+        editie={editie}
+        subpoule={subpouleNaam}
+        cellen={cellen}
+        rubrieken={rubrieken}
+        artikel={artikel}
+      />
 
       {/* Subpoule-switcher */}
       <SubpouleSwitcher
@@ -227,22 +283,6 @@ export default function KaravaanFeed({
         selectedId={selectedSubpouleId}
         onSelect={setSelectedSubpouleId}
       />
-
-      {/* Score-strip */}
-      {ministrip && (
-        <MiniStrip
-          data={ministrip}
-          hors={{
-            monkeyBeatPct: horsSummary.monkeyBeatPct,
-            emiratesPct: horsSummary.emiratesPct,
-            directorScore: horsSummary.directorScore,
-          }}
-          onClickProfile={onGoToPloeg}
-          onClickSubpoule={selectedSubpouleId ? () => onOpenSubpoule?.(selectedSubpouleId) : undefined}
-          onClickOverall={onOpenUitslagen}
-          onOpenHors={onOpenHors}
-        />
-      )}
 
       {/* Daguitslag van de subpoule — horizontale bars per lid */}
       {selectedSubpouleId && (

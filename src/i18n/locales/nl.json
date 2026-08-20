@@ -1236,7 +1236,14 @@
       "rubCommentaar": "Commentaar",
       "rubCommentaarHaak": "Wat er over de finale gezegd werd",
       "rubKlassement": "Klassementen",
-      "rubKlassementHaak": "De volledige stand van de poule"
+      "rubKlassementHaak": "De volledige stand van de poule",
+      "jouwSubpoule": "jouw subpoule",
+      "perszaal": "Uit de perszaal",
+      "kicker": "{{etappe}} {{nummer}} · uitslag binnen",
+      "chapeauMet": "Je scoorde {{punten}} punten vandaag — de {{rang}}e dagscore van {{totaal}} in je subpoule.",
+      "chapeauZonder": "De uitslag is binnen. Bekijk hieronder hoe je subpoule het deed.",
+      "chipDagrang": "{{rang}}e van {{totaal}}",
+      "naarProfiel": "🗺️ Bekijk de volgende etappe"
     }
   },
   "common": {

@@ -22,6 +22,13 @@ export type KaravaanEtappe = {
   approved_at: string;
   michel_tekst: string | null;
   jose_tekst: string | null;
+  /** Gegenereerde krantenkop; null tot generate-stage-commentary er een maakte. */
+  krant_kop: string | null;
+  /** Ritwinnaar uit de uitslag — het feit onder de kop. */
+  ritwinnaar: string | null;
+  /** Wat JIJ die dag scoorde, en de hoeveelste dat was in je subpoule. */
+  mijnDagpunten: number | null;
+  mijnDagrang: number | null;
   subpouleStandings: KaravaanRanking[];
   overallStandings: KaravaanRanking[];
   personalFlash: PersonalFlash | null;
@@ -81,14 +88,17 @@ export function useKaravaanFeed(params: {
       // 1. Gefiatteerde etappes (chronologisch)
       const { data: stagesRaw } = await supabase
         .from("stages")
-        .select("id, stage_number, name, approved_at, results_status")
+        .select("id, stage_number, name, approved_at, results_status, krant_kop")
         .eq("game_id", gameId)
         .eq("results_status", "approved")
         .order("stage_number", { ascending: true });
-      const approvedStages = (stagesRaw ?? []) as Array<{
+      // Cast via unknown: de gegenereerde Supabase-types kennen krant_kop nog
+      // niet (die worden apart bijgewerkt), maar de kolom bestaat wel.
+      const approvedStages = ((stagesRaw ?? []) as unknown) as Array<{
         id: string;
         stage_number: number;
         name: string | null;
+        krant_kop: string | null;
         approved_at: string;
       }>;
       if (approvedStages.length === 0) {
@@ -255,6 +265,28 @@ export function useKaravaanFeed(params: {
         const michel = (commentRows as any)?.michel_tekst ?? null;
         const jose = (commentRows as any)?.jose_tekst ?? null;
 
+        // Ritwinnaar: het feit waar de kop op rust. Zonder deze naam valt de
+        // voorpagina terug op een neutrale kop.
+        const { data: winRij } = await (supabase as any)
+          .from("stage_results")
+          .select("riders(name)")
+          .eq("stage_id", stage.id)
+          .eq("finish_position", 1)
+          .maybeSingle();
+        const ritwinnaar: string | null = (winRij as any)?.riders?.name?.trim() || null;
+
+        // Eigen dagscore + de hoeveelste dat was binnen de subpoule. De
+        // standings hierboven zijn cumulatief; dit gaat over deze ene dag.
+        const dagLijst = sub
+          .map((r) => ({
+            entry_id: r.entry_id,
+            pts: stagePoints.find((sp) => sp.entry_id === r.entry_id && sp.stage_id === stage.id)?.points ?? 0,
+          }))
+          .sort((a, b) => b.pts - a.pts);
+        const mijnIndex = myEntryId ? dagLijst.findIndex((d) => d.entry_id === myEntryId) : -1;
+        const mijnDagpunten = mijnIndex >= 0 ? dagLijst[mijnIndex].pts : null;
+        const mijnDagrang = mijnIndex >= 0 ? mijnIndex + 1 : null;
+
         etappes.push({
           stage_id: stage.id,
           stage_number: stage.stage_number,
@@ -262,6 +294,10 @@ export function useKaravaanFeed(params: {
           approved_at: stage.approved_at,
           michel_tekst: michel,
           jose_tekst: jose,
+          krant_kop: stage.krant_kop ?? null,
+          ritwinnaar,
+          mijnDagpunten,
+          mijnDagrang,
           subpouleStandings: sub,
           overallStandings: overall,
           personalFlash,
