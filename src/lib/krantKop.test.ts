@@ -74,3 +74,28 @@ describe("bouwKop", () => {
     expect(bouwKop({})).toBeNull();
   });
 });
+
+describe("krantKop — gevallen uit de echte data", () => {
+  it("houdt tussenvoegsels met hoofdletters bij elkaar", () => {
+    // Startlijsten schrijven het net zo vaak zo; eerder gaf dit "Poel".
+    expect(achternaam("Mathieu Van Der Poel")).toBe("Van Der Poel");
+    expect(achternaam("Wout Van Aert")).toBe("Van Aert");
+    expect(achternaam("mathieu van der poel")).toBe("van der poel");
+  });
+
+  it("snijdt de etappenaam ook op het chevron-teken", () => {
+    // "Thoiry › Paris" (U+203A) bleef eerder in zijn geheel staan.
+    expect(aankomstplaats("Thoiry › Paris")).toBe("Paris");
+    expect(aankomstplaats("Thoiry » Paris")).toBe("Paris");
+  });
+
+  it("levert daarmee de juiste kop voor deze etappe", () => {
+    expect(bouwKop({ winnaar: "Mathieu Van Der Poel", etappeNaam: "Thoiry › Paris" }))
+      .toBe("Van Der Poel wint in Paris");
+  });
+
+  it("laat een naam zonder tussenvoegsel met rust", () => {
+    expect(achternaam("Tadej Pogacar")).toBe("Pogacar");
+    expect(achternaam("Jasper De Buyst")).toBe("De Buyst");
+  });
+});

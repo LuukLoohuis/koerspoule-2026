@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { ChevronRight } from "lucide-react";
 import { logSponsorKlik } from "@/lib/sponsorKliks";
@@ -40,7 +41,7 @@ const BANNER_BG = "/img/dagprijs-banner-bg.png";
  * prijstitel + gouden waarde-badge + subline + "Alle prijzen →".
  * Mobiel: geen achtergrond, gestapeld en gecentreerd.
  */
-export default function DagprijsBanner({ gameId }: { gameId?: string }) {
+export default function DagprijsBanner({ gameId, className }: { gameId?: string; className?: string }) {
   const { t } = useTranslation();
   const { data } = useQuery({
     queryKey: ["dagprijs-vandaag", gameId],
@@ -92,7 +93,7 @@ export default function DagprijsBanner({ gameId }: { gameId?: string }) {
 
   return (
     <div
-      className="relative grid grid-cols-1 md:grid-cols-[340px_1fr] items-center gap-4 md:gap-8 overflow-hidden rounded-xl px-4 pb-3 pt-5 md:pl-12 md:pr-6 md:pb-4 md:pt-5 text-center md:text-left"
+      className={cn("relative grid grid-cols-1 md:grid-cols-[340px_1fr] items-center gap-4 md:gap-8 overflow-hidden rounded-xl px-4 pb-3 pt-5 md:pl-12 md:pr-6 md:pb-4 md:pt-5 text-center md:text-left", className)}
       style={{ background: CREME, border: `2px solid ${GOUD}`, boxShadow: "0 8px 22px rgba(0,0,0,0.08)" }}
     >
       {/* Vaste renners-achtergrond (rechts), alleen desktop */}

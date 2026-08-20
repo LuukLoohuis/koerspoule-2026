@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { RetroTabs } from "@/components/RetroTabs";
+import DagprijsBanner from "@/components/karavaan/DagprijsBanner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ArrowLeftRight, Award, Baby, Car, ChevronRight, Compass, Copy, Medal, MoreHorizontal, Mountain, Newspaper, Pencil, Plus, Radio, RotateCcw, Target, TrendingUp, Trophy, User, Users, Zap } from "lucide-react";
 import StageRoadbook from "@/components/StageRoadbook";
@@ -1226,6 +1227,10 @@ export default function MijnPeloton() {
             />
           </div>
         )}
+
+        {/* Dagprijs — boven de hoofdbalk, zodat de sponsor over alle tabbladen
+            zichtbaar is en niet meer de kop van de Krant wegduwt. */}
+        <DagprijsBanner gameId={selectedGameObj?.id} className="mb-3" />
 
         {/* Inner tabs: Team / Uitslagen / Subpoules / Hors */}
         <Tabs value={gameTab} onValueChange={setGameTab}>
