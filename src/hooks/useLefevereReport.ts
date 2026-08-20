@@ -3,6 +3,9 @@ import { supabase } from "@/lib/supabase";
 
 export type LefevereReportInput = {
   score: number;
+  /** Bepaalt welke ploegdirecteur het rapport schrijft: Meermarathon krijgt
+   *  Douwe Kastelein, de wielergames Lefevere. */
+  gameType?: string | null;
   components: {
     poolRanking: { score: number; weging: number; rang: number; totaalDeelnemers: number };
     monkeyVergelijking: { score: number; weging: number; percentageVerslagen: number };
@@ -41,9 +44,9 @@ export type LefevereReportResult = {
  * server-side met de service-role: één generatie per game, daarna voor iedereen
  * uit de cache. React Query dedupet binnen de sessie → geen per-bezoeker-calls.
  */
-export function useLefeverePreview(gameId: string | undefined, enabled: boolean) {
+export function useLefeverePreview(gameId: string | undefined, enabled: boolean, gameType?: string | null) {
   return useQuery({
-    queryKey: ["lefevere-preview", gameId ?? "nogame"],
+    queryKey: ["lefevere-preview", gameId ?? "nogame", gameType ?? "koers"],
     enabled: Boolean(supabase && enabled && gameId),
     staleTime: 60 * 60 * 1000,
     gcTime: 2 * 60 * 60 * 1000,
@@ -51,7 +54,7 @@ export function useLefeverePreview(gameId: string | undefined, enabled: boolean)
     queryFn: async (): Promise<LefevereReportResult> => {
       if (!supabase || !gameId) throw new Error("no game");
       const { data, error } = await supabase.functions.invoke("generate-lefevere-report", {
-        body: { preview: true, gameId },
+        body: { preview: true, gameId, gameType },
       });
       if (error) throw error;
       const r = data as { directeursAnalyse?: string; ploegKarakterisering?: string };
