@@ -1224,6 +1224,19 @@
       "aangebodenDoor": "aangeboden door",
       "allePrijzen": "Alle prijzen",
       "allePrijzenAria": "Bekijk alle prijzen"
+    },
+    "voorpagina": {
+      "naam": "De Koerskrant",
+      "leus": "alles van vandaag, in één oogopslag",
+      "nieuw": "nieuw",
+      "rubDaguitslag": "Daguitslag",
+      "rubDaguitslagHaak": "Hoe deed je het vandaag in je subpoule?",
+      "rubVoorbeschouwing": "Voorbeschouwing",
+      "rubVoorbeschouwingHaak": "De volgende etappe, met 3D-profiel",
+      "rubCommentaar": "Commentaar",
+      "rubCommentaarHaak": "Wat er over de finale gezegd werd",
+      "rubKlassement": "Klassementen",
+      "rubKlassementHaak": "De volledige stand van de poule"
     }
   },
   "common": {

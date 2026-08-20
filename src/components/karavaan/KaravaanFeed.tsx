@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import { ChevronDown, ChevronRight, ChevronsUpDown, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles, ClipboardList, ArrowRight, X } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronsUpDown, Flag, Map as MapIcon, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles, ClipboardList, ArrowRight, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -9,6 +9,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import DaguitslagChart from "@/components/DaguitslagChart";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import Voorpagina, { type Rubriek } from "@/components/karavaan/Voorpagina";
 import { useAllGames } from "@/hooks/useAllGames";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
@@ -136,6 +137,59 @@ export default function KaravaanFeed({
   }
 
   const etappes = feed.data?.etappes ?? [];
+
+  // ── Kop en rubrieken van de Krant ──────────────────────────────────────────
+  const koersNaam = gameMeta?.name ?? t("karavaan.voorpagina.naam");
+  const laatsteEtappe = etappes[0] ?? null;
+  const editie = laatsteEtappe
+    ? `${thema.etappe} ${laatsteEtappe.stage_number}`
+    : null;
+
+  /** Springt naar een sectie verderop op deze pagina. */
+  const naarSectie = (id: string) => {
+    const doel = document.getElementById(id);
+    if (!doel) return;
+    const zacht = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    doel.scrollIntoView({ behavior: zacht ? "auto" : "smooth", block: "start" });
+  };
+
+  const rubrieken: Rubriek[] = [
+    ...(selectedSubpouleId
+      ? [{
+          key: "daguitslag",
+          Icon: Flag,
+          titel: t("karavaan.voorpagina.rubDaguitslag"),
+          haak: t("karavaan.voorpagina.rubDaguitslagHaak"),
+          onClick: () => naarSectie("krant-daguitslag"),
+        }]
+      : []),
+    {
+      key: "voorbeschouwing",
+      Icon: MapIcon,
+      titel: t("karavaan.voorpagina.rubVoorbeschouwing"),
+      haak: t("karavaan.voorpagina.rubVoorbeschouwingHaak"),
+      onClick: () => naarSectie("krant-voorbeschouwing"),
+    },
+    ...(etappes.length > 0
+      ? [{
+          key: "commentaar",
+          Icon: Mic,
+          titel: t("karavaan.voorpagina.rubCommentaar"),
+          haak: t("karavaan.voorpagina.rubCommentaarHaak"),
+          onClick: () => naarSectie("krant-commentaar"),
+        }]
+      : []),
+    ...(onOpenUitslagen
+      ? [{
+          key: "klassement",
+          Icon: Trophy,
+          titel: t("karavaan.voorpagina.rubKlassement"),
+          haak: t("karavaan.voorpagina.rubKlassementHaak"),
+          onClick: onOpenUitslagen,
+        }]
+      : []),
+  ];
+
   const ministrip = feed.data?.ministrip;
 
   return (
@@ -161,6 +215,8 @@ export default function KaravaanFeed({
           </button>
         </div>
       )}
+
+      <Voorpagina koers={koersNaam} editie={editie} rubrieken={rubrieken} />
 
       {/* Dagprijs van vandaag — compacte strook bovenaan (admin-gestuurd) */}
       <DagprijsBanner gameId={game?.id} />
@@ -190,12 +246,14 @@ export default function KaravaanFeed({
 
       {/* Daguitslag van de subpoule — horizontale bars per lid */}
       {selectedSubpouleId && (
+        <div id="krant-daguitslag" className="scroll-mt-24">
         <DaguitslagChart
           subpouleId={selectedSubpouleId}
           subpouleName={subpoules.find((s) => s.id === selectedSubpouleId)?.name ?? ""}
           gameId={game?.id}
           gameStatus={game?.status}
         />
+        </div>
       )}
 
       {/* HC teaser — slim banner op mobiel, ruimer op desktop. Uit te zetten
@@ -256,7 +314,9 @@ export default function KaravaanFeed({
       )}
 
       {/* De Voorbeschouwing — vooruitblik op de eerstvolgende etappe */}
-      <Voorbeschouwing gameId={game?.id} gameType={gameMeta?.game_type} jaar={gameMeta?.year} />
+      <div id="krant-voorbeschouwing" className="scroll-mt-24">
+        <Voorbeschouwing gameId={game?.id} gameType={gameMeta?.game_type} jaar={gameMeta?.year} />
+      </div>
 
 
       {/* Feed */}
@@ -265,7 +325,7 @@ export default function KaravaanFeed({
       ) : etappes.length === 0 ? (
         <EmptyFeed />
       ) : (
-        <div className="space-y-4">
+        <div id="krant-commentaar" className="space-y-4 scroll-mt-24">
           {etappes.map((et, i) => (
             <div key={et.stage_id}>
               {newMarkerIndex === i && <NieuwMarker />}

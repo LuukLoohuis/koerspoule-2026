@@ -1224,6 +1224,19 @@
       "aangebodenDoor": "brought to you by",
       "allePrijzen": "All prizes",
       "allePrijzenAria": "View all prizes"
+    },
+    "voorpagina": {
+      "naam": "The Race Paper",
+      "leus": "today's racing, at a glance",
+      "nieuw": "new",
+      "rubDaguitslag": "Day result",
+      "rubDaguitslagHaak": "How did you do in your subpool today?",
+      "rubVoorbeschouwing": "Preview",
+      "rubVoorbeschouwingHaak": "The next stage, with 3D profile",
+      "rubCommentaar": "Commentary",
+      "rubCommentaarHaak": "What was said about the finale",
+      "rubKlassement": "Standings",
+      "rubKlassementHaak": "The full pool standings"
     }
   },
   "common": {
