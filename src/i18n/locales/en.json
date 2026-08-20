@@ -1102,6 +1102,17 @@
         "totalLineRich": "{{mine}} of <gold>{{dream}}</gold> points",
         "perfectCombined": "{{names}} · {{points}} — you and the dream team"
       }
+    },
+    "ploegleider": {
+      "knop": "Meet the boss",
+      "rol": "Team manager · Meermarathon",
+      "p1": "Kastelein. Douwe Kastelein, from Katlijk. Team manager, not a director — a director sits in an office, I stand at the side of the ice.",
+      "p2": "Sixty-six years old. Twenty years laying tiles first, then thirty years putting people on the ice. Less different than you'd think: both need the ground to be right before you start.",
+      "p3": "I finished the 1985 Elfstedentocht with frozen laces, and I still talk about it. Artificial ice, if you ask me, is a swimming pool with a lid on it.",
+      "p4": "I also keep a notebook of the bridges, pumping stations and windmills along every route. Nobody asked for it. It's there.",
+      "p5": "I'm not here to reassure you. Most teams in this pool were put together the way people do their shopping: grab whatever is at the front. I see that, and I say it. Don't come to me with second place.",
+      "p6": "Every race you get a mark from me, with the reason attached. If you find that harsh, you're in the wrong pool. If you find it fair, we'll get somewhere.",
+      "slot": "Show me."
     }
   },
   "karavaan": {

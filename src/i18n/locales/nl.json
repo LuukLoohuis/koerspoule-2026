@@ -1102,6 +1102,17 @@
         "totalLineRich": "{{mine}} van <gold>{{dream}}</gold> punten",
         "perfectCombined": "{{names}} · {{points}} — jij én de droomploeg"
       }
+    },
+    "ploegleider": {
+      "knop": "Even voorstellen",
+      "rol": "Ploegleider · Meermarathon",
+      "p1": "Kastelein. Douwe Kastelein, uit Katlijk. Ploegleider, geen directeur — een directeur zit op kantoor, ik sta langs de kant.",
+      "p2": "Zesenzestig jaar. Eerst twintig jaar tegels gezet, daarna dertig jaar mensen op het ijs. Dat scheelt minder dan je denkt: bij allebei moet de ondergrond kloppen voor je begint.",
+      "p3": "De tocht van '85 heb ik uitgereden met bevroren veters, en daar praat ik nog over. Kunstijs is wat mij betreft een zwembad met een deksel erop.",
+      "p4": "Verder houd ik een schriftje bij met bruggen, gemalen en molens langs de route. Daar heeft niemand om gevraagd. Het staat er.",
+      "p5": "Ik ben hier niet om je gerust te stellen. De meeste ploegen in deze poule zijn samengesteld zoals mensen boodschappen doen: pakken wat vooraan ligt. Dat zie ik, en dat zeg ik ook. Voor de tweede plaats hoef je bij mij niet aan te komen.",
+      "p6": "Elke rit krijg je een cijfer van mij, met de reden erbij. Vind je dat hard, dan zit je bij de verkeerde poule. Vind je het terecht, dan komen we ergens.",
+      "slot": "Laat maar zien."
     }
   },
   "karavaan": {

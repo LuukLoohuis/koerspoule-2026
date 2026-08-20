@@ -18,6 +18,8 @@ import {
 } from "recharts";
 import { supabase } from "@/lib/supabase";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useAllGames } from "@/hooks/useAllGames";
+import PloegleiderIntro from "@/components/PloegleiderIntro";
 import { useEntry } from "@/hooks/useEntry";
 import { pointsTable } from "@/data/riders";
 import { useCategories } from "@/hooks/useCategories";
@@ -234,6 +236,15 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   const { data: curGame } = useCurrentGame();
   // Optioneel een specifieke (bv. afgeronde) game tonen i.p.v. de live game.
   const game = gameIdProp ? { id: gameIdProp, status: gameStatus } : curGame;
+  // Wie schrijft het rapport? Meermarathon is schaatsen en heeft een eigen
+  // ploegleider. Bij een expliciet meegegeven game staat het type niet in de
+  // stub hierboven, dus dat zoeken we op in de (toch al gecachete) gamelijst.
+  const { data: alleGames } = useAllGames();
+  const gameType = gameIdProp
+    ? alleGames?.find((g) => g.id === gameIdProp)?.game_type
+    : curGame?.game_type;
+  const isMeermarathon = String(gameType ?? "").toLowerCase() === "meermarathon";
+  const ploegleiderNaam = isMeermarathon ? "Douwe Kastelein" : "Patrick Lefevere";
   // Twee aparte assen: tab tónen (isVisible, vanaf "open" t/m finished) vs. échte
   // uitslagdata aanwezig (hasResults, vanaf "live"). Concept/draft = verborgen.
   // Admin-volledig-zicht hangt aan de TESTMODUS (niet meer aan status 'open').
@@ -1385,7 +1396,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2 flex items-center gap-1.5">
-                      <Mic className="h-3 w-3 text-[hsl(var(--vintage-gold))]" /> Patrick Lefevere
+                      <Mic className="h-3 w-3 text-[hsl(var(--vintage-gold))]" /> {ploegleiderNaam}
                     </div>
                     {lefevere.isFetching && !lefevere.data ? (
                       /* On-demand generatie loopt: loading-weergave i.p.v. de
@@ -1404,6 +1415,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                         "{lefevere.data?.directeursAnalyse ?? directorScore.analysis}"
                       </p>
                     )}
+                    {isMeermarathon && <PloegleiderIntro />}
                   </div>
                 </div>
                 {/* Metric breakdown */}
