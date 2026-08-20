@@ -103,7 +103,13 @@ export default function Voorpagina({
       </div>
 
       {cellen && cellen.length > 0 && (
-        <div className="flex flex-wrap overflow-hidden rounded-xl border border-border bg-card">
+        <div className={cn(
+          "flex flex-wrap overflow-hidden rounded-xl border border-border",
+          // Zacht verloop i.p.v. vlak wit, plus een lage schaduw: geeft de band
+          // gewicht zonder dat hij van de pagina af springt.
+          "bg-gradient-to-b from-card to-secondary/25",
+          "shadow-[0_2px_4px_-2px_rgba(0,0,0,0.10),0_10px_24px_-18px_rgba(0,0,0,0.45)]",
+        )}>
           {subpoule && (
             <button
               type="button"
@@ -128,8 +134,9 @@ export default function Voorpagina({
                 onClick={c.onClick}
                 disabled={!c.onClick}
                 className={cn(
-                  "flex-1 basis-1/3 border-l border-border px-1.5 py-1.5 text-center sm:basis-0",
-                  c.onClick && "transition-colors hover:bg-secondary/60",
+                  "group flex-1 basis-1/3 border-l border-border px-1.5 py-2 text-center sm:basis-0",
+                  "transition-colors",
+                  c.onClick && "hover:bg-[hsl(var(--vintage-gold))/0.08]",
                 )}
               >
                 <span className="block whitespace-nowrap font-display text-[19px] font-black leading-none tabular-nums">
@@ -140,7 +147,10 @@ export default function Voorpagina({
                     </span>
                   )}
                 </span>
-                <span className="mt-1 block font-mono text-[8px] uppercase tracking-[0.1em] text-muted-foreground">
+                <span className={cn(
+                  "mt-1 block font-mono text-[8px] uppercase tracking-[0.1em] text-muted-foreground transition-colors",
+                  c.onClick && "group-hover:text-foreground",
+                )}>
                   {c.label}
                 </span>
               </button>
@@ -160,17 +170,34 @@ export default function Voorpagina({
                 r.onClick();
               }}
               className={cn(
-                "relative flex flex-col items-start gap-0.5 overflow-hidden rounded-lg border border-border bg-card px-2.5 py-2 text-left",
-                "transition-all hover:-translate-y-px hover:border-[hsl(var(--vintage-gold))]",
+                "group relative flex flex-col items-start gap-0.5 overflow-hidden rounded-xl px-3 py-2.5 text-left",
+                "border border-border bg-gradient-to-b from-card to-secondary/20",
+                // Rustende schaduw geeft de kaart diepte; bij hover komt hij
+                // een pixel omhoog met een warmere, diepere schaduw.
+                "shadow-[0_1px_2px_rgba(0,0,0,0.05),0_8px_18px_-14px_rgba(0,0,0,0.45)]",
+                "transition-all duration-200 motion-reduce:transition-none",
+                "hover:-translate-y-0.5 hover:border-[hsl(var(--vintage-gold))/0.75]",
+                "hover:shadow-[0_2px_4px_rgba(0,0,0,0.06),0_16px_28px_-18px_rgba(192,133,26,0.55)]",
+                "motion-reduce:hover:translate-y-0",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
               )}
             >
+              <span
+                aria-hidden
+                className={cn(
+                  "pointer-events-none absolute inset-x-0 top-0 h-[2px] opacity-0 transition-opacity duration-200",
+                  "bg-gradient-to-r from-transparent via-[hsl(var(--vintage-gold))] to-transparent",
+                  "group-hover:opacity-100",
+                )}
+              />
               {r.merk && !gezien.has(r.merk) && (
                 <span className="absolute right-1.5 top-1.5 rounded-full bg-primary px-1.5 py-px font-mono text-[7.5px] font-extrabold uppercase tracking-wider text-primary-foreground">
                   {t("karavaan.voorpagina.nieuw")}
                 </span>
               )}
-              <span aria-hidden className="text-[15px] leading-none">{r.emoji}</span>
+              <span aria-hidden className="text-[16px] leading-none transition-transform duration-200 group-hover:scale-110 motion-reduce:transition-none motion-reduce:group-hover:scale-100">
+                {r.emoji}
+              </span>
               <span className="mt-0.5 font-display text-[12.5px] font-bold leading-tight">{r.titel}</span>
               <span className="line-clamp-2 font-serif text-[11px] leading-snug text-muted-foreground">{r.haak}</span>
             </button>
