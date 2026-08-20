@@ -904,7 +904,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     enabled: activeTab === "wielerdirecteur" && Boolean(horsSummary.lefevereInput),
   });
   // Sneak preview: éénmalig, gedeeld Patlef-voorproefje (geen echte stand).
-  const lefeverePreview = useLefeverePreview(game?.id, isDemo && activeTab === "wielerdirecteur");
+  const lefeverePreview = useLefeverePreview(game?.id, isDemo && activeTab === "wielerdirecteur", gameType);
 
   // Tab-labels via t() (HORS_TABS zelf staat op module-niveau; label daar is fallback).
   const tabLabel = (key: HorsTabKey): string => t(`hors.tabs.${key}`);

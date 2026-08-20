@@ -59,10 +59,20 @@ export type BatchCtx = {
   recentByEntry: Map<string, Array<{ analyse: string; karakter: string; stage_count: number }>>; // variatie-guard
   entries: EntryRow[];
   gameId: string;
+  /** Bepaalt de ploegleider-stem in de edge function. */
+  gameType: string | null;
 };
 
 /** Haalt alle gedeelde + per-entry data op en berekent de gedeelde rekenbasis. */
 export async function buildBatchCtx(supabase: SupabaseClient, gameId: string): Promise<BatchCtx> {
+  // Type van de game: bepaalt welke ploegleider de rapporten schrijft.
+  const { data: gameRow } = await supabase
+    .from("games")
+    .select("game_type")
+    .eq("id", gameId)
+    .maybeSingle();
+  const gameType = (gameRow as { game_type?: string | null } | null)?.game_type ?? null;
+
   // Stages (voor approved-set + stageCount, identiek aan de hook).
   const { data: stagesData } = await supabase
     .from("stages")
@@ -198,7 +208,7 @@ export async function buildBatchCtx(supabase: SupabaseClient, gameId: string): P
   return {
     stageCount, approvedStageIds, categories, ridersById, pickStats, totals, randomScores,
     riderTotals, dreamTotal, catRiderIds, bestJokerPts, picksByEntry, jokersByEntry,
-    entryTotal, entryApprovedTotal, recentByEntry, entries, gameId,
+    entryTotal, entryApprovedTotal, recentByEntry, entries, gameId, gameType,
   };
 }
 
@@ -417,6 +427,8 @@ export async function runLefevereBatch(
     const { data, error } = await supabase.functions.invoke("generate-lefevere-report", {
       body: {
         ...input,
+        // Zonder dit veld schrijft Lefevere ook de schaatsrapporten.
+        gameType: ctx.gameType ?? null,
         recenteAnalyses: recente.map((r) => r.analyse).filter(Boolean),
         recenteKarakteriseringen: recente.map((r) => r.karakter).filter(Boolean),
       },

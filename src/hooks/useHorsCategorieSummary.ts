@@ -348,6 +348,10 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
       .filter(Boolean) as string[];
     return {
       score: director.score,
+      // Bepaalt wie het rapport schrijft: Meermarathon krijgt Douwe Kastelein,
+      // de wielergames Patrick Lefevere. Zonder dit veld valt de edge function
+      // terug op Lefevere, en die praat niet over natuurijs.
+      gameType: curGame?.game_type ?? null,
       components: {
         poolRanking: { score: director.poolSub, weging: 0.45, rang: director.rang, totaalDeelnemers: director.totaal },
         monkeyVergelijking: { score: director.monkeySub, weging: 0.25, percentageVerslagen: Math.round(monte!.beatPct) },
@@ -363,7 +367,7 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
         ? { emirates: { percentage: emirates.pct, droomploegPunten: emirates.dreamTotal, jouwPunten: emirates.myPoints } }
         : undefined,
     };
-  }, [isLoading, director, monte, jokerIds, entry?.team_name, ridersById, emirates, picksByCategory]);
+  }, [isLoading, director, monte, jokerIds, entry?.team_name, ridersById, emirates, picksByCategory, curGame?.game_type]);
 
   const stageCount = stages.filter((s) => s.results_status === "approved").length;
 
