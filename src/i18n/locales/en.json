@@ -1104,15 +1104,32 @@
       }
     },
     "ploegleider": {
-      "knop": "Meet the boss",
-      "rol": "Team manager · Meermarathon",
-      "p1": "Kastelein. Douwe Kastelein, from Katlijk. Team manager, not a director — a director sits in an office, I stand at the side of the ice.",
-      "p2": "Sixty-six years old. Twenty years laying tiles first, then thirty years putting people on the ice. Less different than you'd think: both need the ground to be right before you start.",
-      "p3": "I finished the 1985 Elfstedentocht with frozen laces, and I still talk about it. Artificial ice, if you ask me, is a swimming pool with a lid on it.",
-      "p4": "I also keep a notebook of the bridges, pumping stations and windmills along every route. Nobody asked for it. It's there.",
-      "p5": "I'm not here to reassure you. Most teams in this pool were put together the way people do their shopping: grab whatever is at the front. I see that, and I say it. Don't come to me with second place.",
-      "p6": "Every race you get a mark from me, with the reason attached. If you find that harsh, you're in the wrong pool. If you find it fair, we'll get somewhere.",
-      "slot": "Show me."
+      "kastelein": {
+        "knop": "Meet the boss",
+        "rol": "Team manager · Meermarathon",
+        "initialen": "DK",
+        "naam": "Douwe Kastelein",
+        "p1": "Kastelein. Douwe Kastelein, from Katlijk. Team manager, not a director — a director sits in an office, I stand at the side of the ice.",
+        "p2": "Sixty-six years old. Twenty years laying tiles first, then thirty years putting people on the ice. Less different than you'd think: both need the ground to be right before you start.",
+        "p3": "I finished the 1985 Elfstedentocht with frozen laces, and I still talk about it. Artificial ice, if you ask me, is a swimming pool with a lid on it.",
+        "p4": "I also keep a notebook of the bridges, pumping stations and windmills along every route. Nobody asked for it. It's there.",
+        "p5": "I'm not here to reassure you. Most teams in this pool were put together the way people do their shopping: grab whatever is at the front. I see that, and I say it. Don't come to me with second place.",
+        "p6": "Every race you get a mark from me, with the reason attached. If you find that harsh, you're in the wrong pool. If you find it fair, we'll get somewhere.",
+        "slot": "Show me."
+      },
+      "lefevere": {
+        "knop": "Meet the boss",
+        "rol": "Team director",
+        "initialen": "PL",
+        "naam": "Patrick Lefevere",
+        "p1": "Lefevere. You know me, or you don't — it changes nothing about what I'm going to say.",
+        "p2": "I ran teams for thirty years and heard more promises than I saw victories. You learn the difference quickly: between a rider who can race, and one who explains well why it didn't work out.",
+        "p3": "Here I do what I did there: I look at your choices, not your excuses. A mark, and the reason with it.",
+        "p4": "Don't expect a pat on the back. I rarely give one, and when I do I mean it — you can live off that for a week.",
+        "p5": "You're here of your own free will. So show me you mean it.",
+        "p6": "",
+        "slot": "Right. Get to work."
+      }
     }
   },
   "karavaan": {

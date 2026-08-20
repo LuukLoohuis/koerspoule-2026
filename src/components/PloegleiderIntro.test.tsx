@@ -18,13 +18,13 @@ vi.mock("react-i18next", () => ({
 
 describe("PloegleiderIntro", () => {
   it("begint dicht en toont alleen de knop", () => {
-    render(<PloegleiderIntro />);
+    render(<PloegleiderIntro persona="kastelein" />);
     expect(screen.getByRole("button")).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByText(/Katlijk/)).toBeNull();
   });
 
   it("klapt open en stelt Douwe voor", () => {
-    render(<PloegleiderIntro />);
+    render(<PloegleiderIntro persona="kastelein" />);
     fireEvent.click(screen.getByRole("button"));
     expect(screen.getByRole("button")).toHaveAttribute("aria-expanded", "true");
     // Twee keer: in de kop en in zijn eigen openingszin. Dat is bedoeld.
@@ -33,7 +33,7 @@ describe("PloegleiderIntro", () => {
   });
 
   it("bevat de achtergrond die het personage maakt", () => {
-    render(<PloegleiderIntro />);
+    render(<PloegleiderIntro persona="kastelein" />);
     fireEvent.click(screen.getByRole("button"));
     const tekst = document.body.textContent ?? "";
     for (const detail of ["Zesenzestig", "tegels", "'85", "bevroren veters", "deksel", "schriftje", "gemalen"]) {
@@ -42,15 +42,33 @@ describe("PloegleiderIntro", () => {
   });
 
   it("noemt hem ploegleider en nadrukkelijk geen directeur", () => {
-    render(<PloegleiderIntro />);
+    render(<PloegleiderIntro persona="kastelein" />);
     fireEvent.click(screen.getByRole("button"));
     const tekst = document.body.textContent ?? "";
     expect(tekst).toContain("Ploegleider");
     expect(tekst).toMatch(/geen directeur/);
   });
 
+  it("stelt bij de wielergames Lefevere voor, niet Douwe", () => {
+    render(<PloegleiderIntro persona="lefevere" />);
+    fireEvent.click(screen.getByRole("button"));
+    const tekst = document.body.textContent ?? "";
+    expect(tekst).toContain("Patrick Lefevere");
+    expect(tekst).not.toContain("Katlijk");
+    // Blijft bij zijn publieke rol: geen verzonnen privegeschiedenis.
+    expect(tekst).toMatch(/naar uw keuzes, niet naar uw excuses/);
+  });
+
+  it("laat lege alinea's weg", () => {
+    // Lefevere heeft er een minder dan Douwe; een leeg <p> hoort er niet te staan.
+    render(<PloegleiderIntro persona="lefevere" />);
+    fireEvent.click(screen.getByRole("button"));
+    const leeg = Array.from(document.querySelectorAll("p")).filter((n) => !n.textContent?.trim());
+    expect(leeg).toHaveLength(0);
+  });
+
   it("klapt weer dicht", () => {
-    render(<PloegleiderIntro />);
+    render(<PloegleiderIntro persona="kastelein" />);
     const knop = screen.getByRole("button");
     fireEvent.click(knop);
     fireEvent.click(knop);

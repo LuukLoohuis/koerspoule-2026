@@ -1104,15 +1104,32 @@
       }
     },
     "ploegleider": {
-      "knop": "Even voorstellen",
-      "rol": "Ploegleider · Meermarathon",
-      "p1": "Kastelein. Douwe Kastelein, uit Katlijk. Ploegleider, geen directeur — een directeur zit op kantoor, ik sta langs de kant.",
-      "p2": "Zesenzestig jaar. Eerst twintig jaar tegels gezet, daarna dertig jaar mensen op het ijs. Dat scheelt minder dan je denkt: bij allebei moet de ondergrond kloppen voor je begint.",
-      "p3": "De tocht van '85 heb ik uitgereden met bevroren veters, en daar praat ik nog over. Kunstijs is wat mij betreft een zwembad met een deksel erop.",
-      "p4": "Verder houd ik een schriftje bij met bruggen, gemalen en molens langs de route. Daar heeft niemand om gevraagd. Het staat er.",
-      "p5": "Ik ben hier niet om je gerust te stellen. De meeste ploegen in deze poule zijn samengesteld zoals mensen boodschappen doen: pakken wat vooraan ligt. Dat zie ik, en dat zeg ik ook. Voor de tweede plaats hoef je bij mij niet aan te komen.",
-      "p6": "Elke rit krijg je een cijfer van mij, met de reden erbij. Vind je dat hard, dan zit je bij de verkeerde poule. Vind je het terecht, dan komen we ergens.",
-      "slot": "Laat maar zien."
+      "kastelein": {
+        "knop": "Even voorstellen",
+        "rol": "Ploegleider · Meermarathon",
+        "initialen": "DK",
+        "naam": "Douwe Kastelein",
+        "p1": "Kastelein. Douwe Kastelein, uit Katlijk. Ploegleider, geen directeur — een directeur zit op kantoor, ik sta langs de kant.",
+        "p2": "Zesenzestig jaar. Eerst twintig jaar tegels gezet, daarna dertig jaar mensen op het ijs. Dat scheelt minder dan je denkt: bij allebei moet de ondergrond kloppen voor je begint.",
+        "p3": "De tocht van '85 heb ik uitgereden met bevroren veters, en daar praat ik nog over. Kunstijs is wat mij betreft een zwembad met een deksel erop.",
+        "p4": "Verder houd ik een schriftje bij met bruggen, gemalen en molens langs de route. Daar heeft niemand om gevraagd. Het staat er.",
+        "p5": "Ik ben hier niet om je gerust te stellen. De meeste ploegen in deze poule zijn samengesteld zoals mensen boodschappen doen: pakken wat vooraan ligt. Dat zie ik, en dat zeg ik ook. Voor de tweede plaats hoef je bij mij niet aan te komen.",
+        "p6": "Elke rit krijg je een cijfer van mij, met de reden erbij. Vind je dat hard, dan zit je bij de verkeerde poule. Vind je het terecht, dan komen we ergens.",
+        "slot": "Laat maar zien."
+      },
+      "lefevere": {
+        "knop": "Even voorstellen",
+        "rol": "Wielerdirecteur",
+        "initialen": "PL",
+        "naam": "Patrick Lefevere",
+        "p1": "Lefevere. Ge kent mij, of ge kent mij niet — dat verandert niks aan wat ik ga zeggen.",
+        "p2": "Ik heb dertig jaar ploegen geleid en in die tijd meer beloftes gehoord dan overwinningen gezien. Ge leert dan rap het verschil tussen ne vent die kan koersen en ne vent die goed kan uitleggen waarom het niet lukte.",
+        "p3": "Hier doe ik hetzelfde als daar: ik kijk naar uw keuzes, niet naar uw excuses. Een cijfer, en de reden erbij.",
+        "p4": "Verwacht geen schouderklopjes. Ik geef er zelden een, en als ik er een geef dan meen ik het — daar moogt ge dan een week op teren.",
+        "p5": "Ge doet hier vrijwillig aan mee. Toon dan ook dat het u menens is.",
+        "p6": "",
+        "slot": "Allez. Aan de slag."
+      }
     }
   },
   "karavaan": {

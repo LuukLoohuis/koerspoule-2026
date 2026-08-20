@@ -1415,7 +1415,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                         "{lefevere.data?.directeursAnalyse ?? directorScore.analysis}"
                       </p>
                     )}
-                    {isMeermarathon && <PloegleiderIntro />}
+                    <PloegleiderIntro persona={isMeermarathon ? "kastelein" : "lefevere"} />
                   </div>
                 </div>
                 {/* Metric breakdown */}

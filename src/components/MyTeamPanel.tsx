@@ -1026,7 +1026,13 @@ export default function MyTeamPanel({
                           style={{ color: INK, fontSize: "clamp(24px,4.5vw,38px)" }}
                           title={shownName}
                         >
-                          <span className="break-words [overflow-wrap:anywhere]">{shownName}</span>
+                          {/* break-words, bewust NIET overflow-wrap:anywhere. Die laatste zet de
+                              min-content-breedte van dit flex-item op één teken, waardoor de
+                              flexbox de titel veel te ver liet krimpen en "DISCOVERY CHANNEL"
+                              als "DISCOVE / RY / CHANNE / L" afbrak. Met break-words is de
+                              min-content het langste woord: hij breekt op de spatie, en alleen
+                              binnen een woord als dat woord zelf niet op een regel past. */}
+                          <span className="break-words">{shownName}</span>
                           {hasName && !editingName && (
                             <Button
                               size="sm" variant="ghost" className="h-7 px-2 shrink-0"
