@@ -4,12 +4,12 @@ import { deriveThemaKey, THEMAS } from "@/lib/themas";
 
 describe("centrale game-branding", () => {
   it.each([
-    ["tdf", "geel", "/koerspoule-tour.svg", "/favicon-tour.png"],
-    ["tour", "geel", "/koerspoule-tour.svg", "/favicon-tour.png"],
-    ["femmes", "geel", "/koerspoule-tour.svg", "/favicon-tour.png"],
-    ["giro", "roze", "/koerspoule-giro.svg", "/favicon-giro.png"],
-    ["vuelta", "rood", "/koerspoule-vuelta.png", "/favicon-vuelta.png"],
-    ["meermarathon", "winter", "/koerspoule-meermarathon.png", "/favicon-meermarathon.png"],
+    ["tdf", "geel", "/koerspoule-tour.svg", "/favicon-tour.svg"],
+    ["tour", "geel", "/koerspoule-tour.svg", "/favicon-tour.svg"],
+    ["femmes", "geel", "/koerspoule-tour.svg", "/favicon-tour.svg"],
+    ["giro", "roze", "/koerspoule-giro.svg", "/favicon-giro.svg"],
+    ["vuelta", "rood", "/koerspoule-vuelta.png", "/favicon-vuelta.svg"],
+    ["meermarathon", "winter", "/koerspoule-meermarathon.png", "/favicon-meermarathon.svg"],
   ] as const)("koppelt %s aan thema %s en de juiste branding", (gameType, key, logo, favicon) => {
     const resolved = deriveThemaKey(null, gameType);
     expect(resolved).toBe(key);
@@ -40,22 +40,20 @@ describe("centrale game-branding", () => {
     expect(svg).not.toContain('href="koerspoule-logo-2026.png"');
   });
 
-  it.each(["tour", "giro", "vuelta", "meermarathon"])("levert een vierkante koersbadge als favicon voor %s", (race) => {
-    const png = readFileSync(`${process.cwd()}/public/favicon-${race}.png`);
-    expect(png.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
-    // IHDR: breedte/hoogte staan als big-endian uint32 op offset 16 resp. 20.
-    const breedte = png.readUInt32BE(16);
-    expect(breedte).toBe(png.readUInt32BE(20));
-    // Groot genoeg voor een iOS-beginschermicoon, klein genoeg om op elke
-    // paginalading mee te sturen -- vandaar palet-PNG in plaats van volledige
-    // kleur, dat scheelt hier een factor vijf.
-    expect(breedte).toBeGreaterThanOrEqual(180);
-    expect(png.length).toBeLessThan(40 * 1024);
+  it.each(["tour", "giro", "vuelta"])("behoudt de zelfvoorzienende fiets-favicon voor %s", (race) => {
+    const svg = readFileSync(`${process.cwd()}/public/favicon-${race}.svg`, "utf8");
+    expect(svg).toContain('viewBox="0 0 256 256"');
+    // Het fietsje zit als PNG in de SVG ingebed: geen externe verwijzing, dus
+    // het icoon werkt ook als het domein onbereikbaar is.
+    expect(svg).toContain('href="data:image/png;base64,');
   });
 
   it("houdt de primaire Giro-roze kleur vast", () => {
-    // De badge is nu een raster, dus de kleur staat niet meer in het bestand.
-    // Het thema-token bewaken blijft wel zinnig: daar hangt de hele site aan.
+    // De favicon kleurt het fietsje met een feColorMatrix-filter en niet met een
+    // hexcode, dus die staat niet in het bestand. Het thema-token bewaken blijft
+    // wel zinnig: daar hangt de kleur van de hele site aan.
+    const svg = readFileSync(`${process.cwd()}/public/favicon-giro.svg`, "utf8");
+    expect(svg).toContain("feColorMatrix");
     expect(THEMAS.roze.kleuren.primair).toBe("#E6446D");
   });
 
@@ -67,11 +65,11 @@ describe("centrale game-branding", () => {
     // IHDR: breedte/hoogte staan als big-endian uint32 op offset 16 resp. 20.
     expect(logo.readUInt32BE(16) / logo.readUInt32BE(20)).toBeCloseTo(1.5, 2);
 
-    // De winterfavicon is de schaatsbadge, geen wielerbadge -- Meermarathon is
-    // de enige game die niet op de fiets zit.
-    const favicon = readFileSync(`${process.cwd()}/public${THEMAS.winter.favicon}`);
-    expect(THEMAS.winter.favicon).toBe("/favicon-meermarathon.png");
-    expect(favicon.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    // Het schaatslogo is een raster; de favicon blijft vector zodat 'ie ook op
+    // 16px scherp is.
+    const favicon = readFileSync(`${process.cwd()}/public${THEMAS.winter.favicon}`, "utf8");
+    expect(favicon).toContain('viewBox="0 0 256 256"');
+    expect(favicon).toContain("#14538E");
   });
 
   it("levert het Vuelta-schild als transparante PNG", () => {

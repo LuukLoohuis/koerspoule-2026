@@ -73,7 +73,7 @@ describe("ThemaProvider + KoerspouleLogo", () => {
 
     expect(screen.getByTestId("theme-key")).toHaveTextContent("rood");
     expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-vuelta.png");
-    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-vuelta.png");
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-vuelta.svg");
 
     selectedGameState.selectedGame = { id: "giro-2026", game_type: "giro", theme: "roze" };
     rerender(
@@ -97,7 +97,7 @@ describe("ThemaProvider + KoerspouleLogo", () => {
 
     expect(screen.getByTestId("theme-key")).toHaveTextContent("roze");
     expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-giro.svg");
-    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-giro.png");
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-giro.svg");
   });
 
   it("activeert winterbranding alleen als Meermarathon exact live staat", () => {
@@ -125,7 +125,7 @@ describe("ThemaProvider + KoerspouleLogo", () => {
 
     expect(screen.getByTestId("theme-key")).toHaveTextContent("winter");
     expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-meermarathon.png");
-    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-meermarathon.png");
+    expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-meermarathon.svg");
     expect(storage.has("koerspoule:themaKey")).toBe(false);
     expect(storage.has("koerspoule:themaTokens")).toBe(false);
 
