@@ -1343,6 +1343,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-4">
+            {/* Kennismaking staat los van het rapport: ook zonder cijfer -- sneak
+                preview, inschrijving open, of gewoon nog niks verreden -- hoort de
+                bezoeker te kunnen zien wie hem straks gaat beoordelen. */}
+            <PloegleiderIntro persona={isMeermarathon ? "kastelein" : "lefevere"} className="mt-0" />
+
             {/* ── Sneak preview: Patlef's voorbeschouwing (voorproefje, geen stand) ── */}
             {isDemo && (
               <div className="relative overflow-hidden rounded-2xl border border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.06] p-5 md:p-6">
@@ -1415,7 +1420,6 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                         "{lefevere.data?.directeursAnalyse ?? directorScore.analysis}"
                       </p>
                     )}
-                    <PloegleiderIntro persona={isMeermarathon ? "kastelein" : "lefevere"} />
                   </div>
                 </div>
                 {/* Metric breakdown */}
