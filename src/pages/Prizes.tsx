@@ -19,8 +19,9 @@ function SponsorButton({ url, naam, prijsId, veld, kort, className }: { url?: st
   if (!url) return null;
   // Op het podium past de volledige sponsornaam niet en werd hij afgekapt
   // ("Bekijk cyclinglifestyle…"). Daar dus een vast, kort label; de naam staat
-  // toch al in de regel erboven.
-  const label = kort ? "Bekijk sponsor" : naam ? `Bekijk ${naam}` : "Bezoek website";
+  // toch al in de regel erboven. Bewust niet het woord "sponsor": dat zet de
+  // aandacht op de adverteerder terwijl de prijs de hoofdrol hoort te spelen.
+  const label = kort ? "Bekijk prijs" : naam ? `Bekijk ${naam}` : "Bezoek website";
   return (
     <a
       href={url}
