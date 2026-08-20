@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { X, ArrowRight, Users } from "lucide-react";
+import { X, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deriveThemaKey, THEMAS } from "@/lib/themas";
 import { useDeelnemersAantal } from "@/hooks/useDeelnemersAantal";
@@ -73,51 +73,61 @@ export default function InschrijfBanner({
   const kleur = thema.kleuren.primair;
   const accent = thema.kleuren.secundair;
   const donker = schaduw(kleur);
+  const isSchaatsen = String(game.game_type ?? "").toLowerCase() === "meermarathon";
 
   return (
     <div
       className={cn(
-        // Vol kleurvlak in de kleur van de aangekondigde koers. Bewust niet de
-        // themakleur van de site: deze banner kondigt vaak een ándere game aan
-        // dan degene die de bezoeker open heeft staan.
-        "relative overflow-hidden rounded-2xl px-5 py-4 text-white shadow-[0_14px_30px_-16px_rgba(0,0,0,0.55)]",
+        "flex overflow-hidden rounded-2xl border border-border bg-card",
+        "shadow-[0_14px_30px_-18px_rgba(0,0,0,0.6)]",
         className,
       )}
-      style={{ background: `linear-gradient(112deg, ${donker} 0%, ${kleur} 46%, ${accent} 100%)` }}
       role="note"
     >
-      {/* Schuine belijning: geeft het vlak vaart zonder een tweede kleur nodig te
-          hebben. Puur decoratief, dus buiten de toegankelijkheidsboom. */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "repeating-linear-gradient(114deg, rgba(255,255,255,.07) 0 2px, transparent 2px 26px)",
-        }}
-      />
+      {/* Kleurpaneel links: geeft de banner gewicht zonder dat de tekst op een
+          kleurvlak komt te staan. De koersnaam blijft daardoor het scherpst
+          leesbare onderdeel, en dat is waar het om draait. */}
+      <div
+        className="relative grid w-[68px] shrink-0 place-items-center sm:w-[76px]"
+        style={{ background: `linear-gradient(150deg, ${kleur} 0%, ${donker} 100%)` }}
+      >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "repeating-linear-gradient(114deg, rgba(255,255,255,.10) 0 2px, transparent 2px 20px)",
+          }}
+        />
+        <span aria-hidden className="relative text-[26px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
+          {isSchaatsen ? "\u26F8\uFE0F" : "\uD83D\uDEB4"}
+        </span>
+      </div>
 
-      <div className="relative flex flex-wrap items-center justify-between gap-4">
+      <div
+        className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-4 px-4 py-3.5 sm:px-5"
+        style={{ borderLeft: `3px solid ${accent}` }}
+      >
         <div className="min-w-0">
-          <p className="font-mono text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/75">
+          <span
+            className="inline-block rounded-full px-2.5 py-1 font-mono text-[9.5px] font-extrabold uppercase tracking-[0.2em] text-white"
+            style={{ background: kleur }}
+          >
             Inschrijving geopend
-          </p>
-          <p className="mt-1 font-display text-xl font-black leading-tight md:text-2xl">{game.name}</p>
-          <p className="mt-0.5 text-[13px] text-white/85">
-            Gratis meedoen · je ploeg samenstellen kost vijf minuten
+          </span>
+          <p className="mt-1.5 font-display text-lg font-black leading-tight sm:text-xl">{game.name}</p>
+          <p className="mt-0.5 text-[12.5px] text-muted-foreground">
+            Gratis meedoen · samenstellen kost vijf minuten
           </p>
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Sociaal bewijs alleen als de admin de teller voor deze game aanzette
-              én er echt deelnemers zijn — zelfde regel als op de homepage. */}
+          {/* Sociaal bewijs achter dezelfde admin-vlag als de homepage-teller;
+              op smalle schermen weg zodat de knop niet in de verdrukking komt. */}
           {typeof aantal === "number" && aantal > 0 && (
             <span className="hidden text-right sm:block">
-              <span className="flex items-center gap-1.5 font-display text-lg font-black leading-none">
-                <Users className="h-4 w-4 text-white/70" aria-hidden />
-                {aantal}
-              </span>
-              <span className="mt-1 block font-mono text-[9px] font-bold uppercase tracking-[0.16em] text-white/70">
+              <span className="block font-display text-lg font-black leading-none">{aantal}</span>
+              <span className="mt-1 block font-mono text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
                 deelnemers
               </span>
             </span>
@@ -125,12 +135,12 @@ export default function InschrijfBanner({
           <Link
             to={`/team-samenstellen?game=${game.id}`}
             className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-5 py-2.5",
-              "font-display text-[13px] font-black shadow-[0_6px_16px_rgba(0,0,0,0.18)]",
-              "transition-transform hover:-translate-y-0.5 active:translate-y-px",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2",
+              "inline-flex shrink-0 items-center gap-1.5 rounded-full px-5 py-2.5 text-white",
+              "font-display text-[13px] font-black transition-transform",
+              "hover:-translate-y-0.5 active:translate-y-px",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
             )}
-            style={{ color: donker }}
+            style={{ background: kleur, boxShadow: `0 8px 18px -6px ${kleur}` }}
           >
             Doe mee <ArrowRight className="h-3.5 w-3.5" />
           </Link>
@@ -139,7 +149,7 @@ export default function InschrijfBanner({
               type="button"
               onClick={dismiss}
               aria-label="Banner sluiten"
-              className="-mr-1 shrink-0 self-start rounded p-1 text-white/60 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="-mr-1 shrink-0 self-start rounded p-1 text-muted-foreground/60 transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X className="h-4 w-4" />
             </button>
