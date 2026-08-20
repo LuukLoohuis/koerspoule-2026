@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import { ChevronDown, ChevronRight, ChevronsUpDown, Flag, Map as MapIcon, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles, ClipboardList, ArrowRight, X } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronsUpDown, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles, ClipboardList, ArrowRight, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -9,8 +9,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import DaguitslagChart from "@/components/DaguitslagChart";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import Voorpagina, { type Rubriek, type StandCel, type Hoofdartikel } from "@/components/karavaan/Voorpagina";
-import { bouwKop } from "@/lib/krantKop";
 import { useAllGames } from "@/hooks/useAllGames";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
@@ -140,106 +138,6 @@ export default function KaravaanFeed({
   const etappes = feed.data?.etappes ?? [];
   const ministrip = feed.data?.ministrip;
 
-  // ── Kop en rubrieken van de Krant ──────────────────────────────────────────
-  const koersNaam = gameMeta?.name ?? t("karavaan.voorpagina.naam");
-  const laatsteEtappe = etappes[0] ?? null;
-  const editie = laatsteEtappe
-    ? `${thema.etappe} ${laatsteEtappe.stage_number}`
-    : null;
-
-  /** Springt naar een sectie verderop op deze pagina. */
-  const naarSectie = (id: string) => {
-    const doel = document.getElementById(id);
-    if (!doel) return;
-    const zacht = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    doel.scrollIntoView({ behavior: zacht ? "auto" : "smooth", block: "start" });
-  };
-
-  const subpouleNaam = subpoules.find((sp) => sp.id === selectedSubpouleId)?.name ?? null;
-
-  const cellen: StandCel[] = ministrip
-    ? [
-        { key: "sub", waarde: ministrip.subpoule.rank == null ? "—" : `${ministrip.subpoule.rank}ᵉ`, label: t("karavaan.ministrip.labelSubpoule"), delta: ministrip.subpoule.delta, onClick: selectedSubpouleId ? () => onOpenSubpoule?.(selectedSubpouleId) : onGoToPloeg },
-        { key: "all", waarde: ministrip.overall.rank == null ? "—" : `${ministrip.overall.rank}ᵉ`, label: t("karavaan.ministrip.labelOverall"), delta: ministrip.overall.delta, onClick: onOpenUitslagen },
-        { key: "pt", waarde: String(ministrip.points ?? "—"), label: t("karavaan.ministrip.labelPunten"), onClick: onGoToPloeg },
-        { key: "iq", waarde: horsSummary.monkeyBeatPct == null ? "—" : `${horsSummary.monkeyBeatPct}%`, label: t("karavaan.ministrip.monkeyLabel"), onClick: () => onOpenHors?.("dartpijl") },
-        { key: "em", waarde: horsSummary.emiratesPct == null ? "—" : `${horsSummary.emiratesPct}%`, label: t("karavaan.ministrip.emiratesLabel"), onClick: () => onOpenHors?.("superteam") },
-        { key: "wd", waarde: horsSummary.directorScore == null ? "—" : horsSummary.directorScore.toFixed(1).replace(".", ","), label: t("karavaan.ministrip.wielerdirLabel"), onClick: () => onOpenHors?.("wielerdirecteur") },
-      ]
-    : [];
-
-  // Hoofdartikel over de laatste etappe. De kop komt uit de generator, maar
-  // alleen als die de ritwinnaar noemt — anders een sjabloon uit de uitslag.
-  const artikel: Hoofdartikel | null = (() => {
-    if (!laatsteEtappe) return null;
-    const kop = bouwKop({
-      gegenereerd: laatsteEtappe.krant_kop,
-      winnaar: laatsteEtappe.ritwinnaar,
-      etappeNaam: laatsteEtappe.stage_name,
-      etappeNummer: laatsteEtappe.stage_number,
-    });
-    if (!kop) return null;
-
-    const chips: string[] = [];
-    if (laatsteEtappe.mijnDagpunten != null) chips.push(`+${laatsteEtappe.mijnDagpunten} ${t("karavaan.ministrip.labelPunten")}`);
-    if (laatsteEtappe.mijnDagrang != null && laatsteEtappe.subpouleStandings.length > 0) {
-      chips.push(t("karavaan.voorpagina.chipDagrang", { rang: laatsteEtappe.mijnDagrang, totaal: laatsteEtappe.subpouleStandings.length }));
-    }
-
-    const quotes: Hoofdartikel["quotes"] = [];
-    if (laatsteEtappe.michel_tekst) quotes.push({ naam: "Michel Wuyts", tekst: laatsteEtappe.michel_tekst });
-    if (laatsteEtappe.jose_tekst) quotes.push({ naam: "José De Cauwer", tekst: laatsteEtappe.jose_tekst });
-
-    return {
-      kicker: t("karavaan.voorpagina.kicker", { etappe: thema.etappe, nummer: laatsteEtappe.stage_number }),
-      kop,
-      chapeau: laatsteEtappe.mijnDagpunten != null
-        ? t("karavaan.voorpagina.chapeauMet", { punten: laatsteEtappe.mijnDagpunten, rang: laatsteEtappe.mijnDagrang ?? 0, totaal: laatsteEtappe.subpouleStandings.length })
-        : t("karavaan.voorpagina.chapeauZonder"),
-      chips,
-      profielKnop: { label: t("karavaan.voorpagina.naarProfiel"), onClick: () => naarSectie("krant-voorbeschouwing") },
-      quotes,
-    };
-  })();
-
-  const rubrieken: Rubriek[] = [
-    ...(selectedSubpouleId
-      ? [{
-          key: "daguitslag",
-          Icon: Flag,
-          titel: t("karavaan.voorpagina.rubDaguitslag"),
-          haak: t("karavaan.voorpagina.rubDaguitslagHaak"),
-          onClick: () => naarSectie("krant-daguitslag"),
-        }]
-      : []),
-    {
-      key: "voorbeschouwing",
-      Icon: MapIcon,
-      titel: t("karavaan.voorpagina.rubVoorbeschouwing"),
-      haak: t("karavaan.voorpagina.rubVoorbeschouwingHaak"),
-      onClick: () => naarSectie("krant-voorbeschouwing"),
-    },
-    ...(etappes.length > 0
-      ? [{
-          key: "commentaar",
-          Icon: Mic,
-          titel: t("karavaan.voorpagina.rubCommentaar"),
-          haak: t("karavaan.voorpagina.rubCommentaarHaak"),
-          onClick: () => naarSectie("krant-commentaar"),
-        }]
-      : []),
-    ...(onOpenUitslagen
-      ? [{
-          key: "klassement",
-          Icon: Trophy,
-          titel: t("karavaan.voorpagina.rubKlassement"),
-          haak: t("karavaan.voorpagina.rubKlassementHaak"),
-          onClick: onOpenUitslagen,
-        }]
-      : []),
-  ];
-
-
   return (
     <div className="space-y-4">
       {/* Verwijsbutton naar de uitleg-hub — wegklikbaar, blijft weg na herladen */}
@@ -264,18 +162,8 @@ export default function KaravaanFeed({
         </div>
       )}
 
-
       {/* Dagprijs van vandaag — compacte strook bovenaan (admin-gestuurd) */}
       <DagprijsBanner gameId={game?.id} />
-
-      <Voorpagina
-        koers={koersNaam}
-        editie={editie}
-        subpoule={subpouleNaam}
-        cellen={cellen}
-        rubrieken={rubrieken}
-        artikel={artikel}
-      />
 
       {/* Subpoule-switcher */}
       <SubpouleSwitcher
@@ -284,16 +172,30 @@ export default function KaravaanFeed({
         onSelect={setSelectedSubpouleId}
       />
 
+      {/* Score-strip */}
+      {ministrip && (
+        <MiniStrip
+          data={ministrip}
+          hors={{
+            monkeyBeatPct: horsSummary.monkeyBeatPct,
+            emiratesPct: horsSummary.emiratesPct,
+            directorScore: horsSummary.directorScore,
+          }}
+          onClickProfile={onGoToPloeg}
+          onClickSubpoule={selectedSubpouleId ? () => onOpenSubpoule?.(selectedSubpouleId) : undefined}
+          onClickOverall={onOpenUitslagen}
+          onOpenHors={onOpenHors}
+        />
+      )}
+
       {/* Daguitslag van de subpoule — horizontale bars per lid */}
       {selectedSubpouleId && (
-        <div id="krant-daguitslag" className="scroll-mt-24">
         <DaguitslagChart
           subpouleId={selectedSubpouleId}
           subpouleName={subpoules.find((s) => s.id === selectedSubpouleId)?.name ?? ""}
           gameId={game?.id}
           gameStatus={game?.status}
         />
-        </div>
       )}
 
       {/* HC teaser — slim banner op mobiel, ruimer op desktop. Uit te zetten
@@ -354,9 +256,7 @@ export default function KaravaanFeed({
       )}
 
       {/* De Voorbeschouwing — vooruitblik op de eerstvolgende etappe */}
-      <div id="krant-voorbeschouwing" className="scroll-mt-24">
-        <Voorbeschouwing gameId={game?.id} gameType={gameMeta?.game_type} jaar={gameMeta?.year} />
-      </div>
+      <Voorbeschouwing gameId={game?.id} gameType={gameMeta?.game_type} jaar={gameMeta?.year} />
 
 
       {/* Feed */}
@@ -365,7 +265,7 @@ export default function KaravaanFeed({
       ) : etappes.length === 0 ? (
         <EmptyFeed />
       ) : (
-        <div id="krant-commentaar" className="space-y-4 scroll-mt-24">
+        <div className="space-y-4">
           {etappes.map((et, i) => (
             <div key={et.stage_id}>
               {newMarkerIndex === i && <NieuwMarker />}
