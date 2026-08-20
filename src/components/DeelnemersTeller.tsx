@@ -1,8 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
 import { Users } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
-import { supabase } from "@/lib/supabase";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useDeelnemersAantal } from "@/hooks/useDeelnemersAantal";
 
 /**
  * Subtiel sociaal bewijs op de homepage: "Al <N> koersliefhebbers doen mee".
@@ -20,17 +19,7 @@ export default function DeelnemersTeller({ className }: { className?: string }) 
   const gameId = game?.id;
   const enabled = Boolean(game?.deelnemers_teller_visible);
 
-  const { data } = useQuery({
-    queryKey: ["count-deelnemers-game", gameId],
-    enabled: Boolean(supabase && gameId && enabled),
-    staleTime: 5 * 60 * 1000,
-    queryFn: async (): Promise<number> => {
-      if (!supabase || !gameId) return 0;
-      const { data, error } = await supabase.rpc("count_deelnemers_game", { p_game_id: gameId });
-      if (error) return 0;
-      return typeof data === "number" ? data : 0;
-    },
-  });
+  const { data } = useDeelnemersAantal(gameId, enabled);
 
   // Alleen tonen als de admin 'm aanzette én er echte deelnemers zijn.
   if (!enabled || !data || data < 1) return null;
