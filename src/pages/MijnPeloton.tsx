@@ -167,13 +167,17 @@ export default function MijnPeloton() {
    * state leest, en die twee kunnen elkaar bij een externe URL-wissel om beurten
    * blijven aanstoten.
    */
-  const gaNaarTab = (tab: string) => {
+  const gaNaarTab = (tab: string, opties?: { vervang?: boolean }) => {
     setGameTab(tab);
     setSearchParams((huidig) => {
       const volgende = new URLSearchParams(huidig);
       volgende.set("tab", tab);
       return volgende;
-    }, { replace: true });
+      // Standaard een nieuwe geschiedenisstap, geen vervanging: wie vanuit de
+      // Krant doorklikt naar een rapport verwacht met "vorige" terug te komen
+      // bij die Krant. Met replace werd die stap overschreven en sprong je uit
+      // de pagina. Alleen de rondleiding vervangt, die stuurt zelf.
+    }, { replace: opties?.vervang === true });
   };
 
   // Bump om de ploegnaam-editor in MyTeamPanel te openen + te focussen.
@@ -306,7 +310,7 @@ export default function MijnPeloton() {
       volgende.set("tab", "subpoules");
       volgende.set("subpoule", subpouleId);
       return volgende;
-    }, { replace: true });
+    });
   };
   // overall-cel → Uitslagen-tab (subtab Klassement is daar de default)
   const [uitslagenTarget, setUitslagenTarget] = useState<{ view: "etappes" | "klassement"; stageNumber?: number } | null>(null);
