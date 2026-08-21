@@ -220,6 +220,34 @@ export function useKaravaanFeed(params: {
 
       const etappes: KaravaanEtappe[] = [];
 
+      // Commentaar en ritwinnaars in twee bulk-query's i.p.v. twee per etappe.
+      // Stonden ze in de lus, dan waren dat bij 21 etappes 42 losse rondjes naar
+      // de database, netjes achter elkaar -- en dat is precies waarom de Krant
+      // seconden stond te laden.
+      const [commentaarBulk, winnaarBulk] = await Promise.all([
+        (supabase as any)
+          .from("etappe_commentaren")
+          .select("stage_id, michel_tekst, jose_tekst")
+          .in("stage_id", stageIds)
+          .eq("subpoule_id", subpouleId),
+        (supabase as any)
+          .from("stage_results")
+          .select("stage_id, riders(name)")
+          .in("stage_id", stageIds)
+          .eq("finish_position", 1),
+      ]);
+      const commentaarPerStage = new Map<string, { michel: string | null; jose: string | null }>(
+        ((commentaarBulk?.data ?? []) as Array<{ stage_id: string; michel_tekst: string | null; jose_tekst: string | null }>)
+          .map((r) => [r.stage_id, { michel: r.michel_tekst ?? null, jose: r.jose_tekst ?? null }]),
+      );
+      const winnaarPerStage = new Map<string, string>(
+        ((winnaarBulk?.data ?? []) as Array<{ stage_id: string; riders?: { name?: string } | null }>)
+          .flatMap((r) => {
+            const naam = r.riders?.name?.trim();
+            return naam ? ([[r.stage_id, naam]] as Array<[string, string]>) : [];
+          }),
+      );
+
       for (let i = 0; i < sortedStages.length; i++) {
         const stage = sortedStages[i];
         const sub = buildRanking(subpouleEntryIds, stage.id);
@@ -255,25 +283,10 @@ export function useKaravaanFeed(params: {
           }
         }
 
-        // Etappe-commentaar (uit eerder gebouwde tabel)
-        const { data: commentRows } = await (supabase as any)
-          .from("etappe_commentaren")
-          .select("michel_tekst, jose_tekst")
-          .eq("stage_id", stage.id)
-          .eq("subpoule_id", subpouleId)
-          .maybeSingle();
-        const michel = (commentRows as any)?.michel_tekst ?? null;
-        const jose = (commentRows as any)?.jose_tekst ?? null;
+        const michel = commentaarPerStage.get(stage.id)?.michel ?? null;
+        const jose = commentaarPerStage.get(stage.id)?.jose ?? null;
 
-        // Ritwinnaar: het feit waar de kop op rust. Zonder deze naam valt de
-        // voorpagina terug op een neutrale kop.
-        const { data: winRij } = await (supabase as any)
-          .from("stage_results")
-          .select("riders(name)")
-          .eq("stage_id", stage.id)
-          .eq("finish_position", 1)
-          .maybeSingle();
-        const ritwinnaar: string | null = (winRij as any)?.riders?.name?.trim() || null;
+        const ritwinnaar = winnaarPerStage.get(stage.id) ?? null;
 
         // Eigen dagscore + de hoeveelste dat was binnen de subpoule. De
         // standings hierboven zijn cumulatief; dit gaat over deze ene dag.
