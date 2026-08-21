@@ -85,13 +85,32 @@ export function useKaravaanFeed(params: {
         return { etappes: [], ministrip: null, myEntryId: null, lastVisited: null };
       }
 
-      // 1. Gefiatteerde etappes (chronologisch)
-      const { data: stagesRaw } = await supabase
-        .from("stages")
-        .select("id, stage_number, name, approved_at, results_status, krant_kop")
-        .eq("game_id", gameId)
-        .eq("results_status", "approved")
-        .order("stage_number", { ascending: true });
+      // Stap 1 t/m 4 hangen nergens van elkaar af: etappes en standen aan de
+      // game, leden aan de subpoule, profiel aan de gebruiker. Achter elkaar
+      // afwachten kostte vier rondtijden op een verbinding waar er één genoeg
+      // is. Alleen stage_points en het commentaar hebben de etappe-ids nodig en
+      // volgen daarna.
+      const [stagesRes, memberRes, standings, profileRes] = await Promise.all([
+        supabase
+          .from("stages")
+          .select("id, stage_number, name, approved_at, results_status, krant_kop")
+          .eq("game_id", gameId)
+          .eq("results_status", "approved")
+          .order("stage_number", { ascending: true }),
+        supabase.from("subpoule_members").select("user_id").eq("subpoule_id", subpouleId),
+        // Gepagineerd: ook RPC's kapt PostgREST op de Max rows-limiet (1000+).
+        // Directe from("entries") kan hier niet: RLS geeft dan alleen de eigen
+        // entry terug, en dat is geen basis voor poule-brede rankings.
+        fetchAllRows<{
+          id: string;
+          user_id: string;
+          team_name: string | null;
+          display_name: string | null;
+          total_points: number;
+        }>((from, to) => (supabase as any).rpc("game_entries_standings", { p_game_id: gameId }).range(from, to)),
+        supabase.from("profiles").select("id, display_name, last_visited_karavaan").eq("id", userId),
+      ]);
+      const stagesRaw = stagesRes.data;
       // Cast via unknown: de gegenereerde Supabase-types kennen krant_kop nog
       // niet (die worden apart bijgewerkt), maar de kolom bestaat wel.
       const approvedStages = ((stagesRaw ?? []) as unknown) as Array<{
@@ -108,28 +127,12 @@ export function useKaravaanFeed(params: {
       const stageIds = approvedStages.map((s) => s.id);
       const stageById = new Map(approvedStages.map((s) => [s.id, s]));
 
-      // 2. Subpoule members (om scope te bepalen)
-      const { data: memberRows } = await supabase
-        .from("subpoule_members")
-        .select("user_id")
-        .eq("subpoule_id", subpouleId);
+      const memberRows = memberRes.data;
       const subpouleUserIds = ((memberRows ?? []) as Array<{ user_id: string }>).map((r) => r.user_id);
       if (subpouleUserIds.length === 0) {
         return { etappes: [], ministrip: EMPTY_MINISTRIP, myEntryId: null, lastVisited: null };
       }
 
-      // 3. Alle entries in deze game — via RPC `game_entries_standings` (zelfde
-      // bron als Uitslagen). Belangrijk: directe `from("entries").select()` is
-      // beperkt door RLS en geeft alleen de eigen entry terug — die kant kan
-      // dus niet gebruikt worden voor poule-brede rankings.
-      // Gepagineerd: ook RPC's kapt PostgREST op de Max rows-limiet (1000+).
-      const standings = await fetchAllRows<{
-        id: string;
-        user_id: string;
-        team_name: string | null;
-        display_name: string | null;
-        total_points: number;
-      }>((from, to) => (supabase as any).rpc("game_entries_standings", { p_game_id: gameId }).range(from, to));
       const allEntries = standings.map((s) => ({
         id: s.id,
         user_id: s.user_id,
@@ -142,11 +145,8 @@ export function useKaravaanFeed(params: {
         standings.map((s) => [s.user_id, s.display_name ?? null]),
       );
 
-      // 4. Profiles — alleen voor last_visited_karavaan (display_name komt al uit RPC)
-      const { data: profileRows } = await supabase
-        .from("profiles")
-        .select("id, display_name, last_visited_karavaan")
-        .eq("id", userId);
+      // Profiel alleen voor last_visited_karavaan; display_name komt uit de RPC.
+      const profileRows = profileRes.data;
       const myProfile = ((profileRows ?? [])[0] ?? null) as { id: string; display_name: string | null; last_visited_karavaan: string | null } | null;
       const lastVisited = myProfile?.last_visited_karavaan ?? null;
 
@@ -161,13 +161,38 @@ export function useKaravaanFeed(params: {
       // Stage_points kan eveneens RLS-beperkt zijn; bij gebrek aan een RPC werken
       // we hier best-effort. Voor de FINAL ranking gebruiken we hoe dan ook
       // de RPC-totalen, dus de eindstand klopt sowieso.
-      const stagePoints = await fetchAllRows<{ entry_id: string; stage_id: string; points: number }>((from, to) =>
+      // Stage_points, commentaar en ritwinnaars hangen alle drie alleen aan de
+      // etappe-ids, dus die gaan in één golf.
+      const [stagePoints, commentaarBulk, winnaarBulk] = await Promise.all([
+        fetchAllRows<{ entry_id: string; stage_id: string; points: number }>((from, to) =>
         supabase!
           .from("stage_points")
           .select("entry_id, stage_id, points")
           .in("stage_id", stageIds)
           .order("entry_id")
           .range(from, to),
+        ),
+        (supabase as any)
+          .from("etappe_commentaren")
+          .select("stage_id, michel_tekst, jose_tekst")
+          .in("stage_id", stageIds)
+          .eq("subpoule_id", subpouleId),
+        (supabase as any)
+          .from("stage_results")
+          .select("stage_id, riders(name)")
+          .in("stage_id", stageIds)
+          .eq("finish_position", 1),
+      ]);
+      const commentaarPerStage = new Map<string, { michel: string | null; jose: string | null }>(
+        ((commentaarBulk?.data ?? []) as Array<{ stage_id: string; michel_tekst: string | null; jose_tekst: string | null }>)
+          .map((r) => [r.stage_id, { michel: r.michel_tekst ?? null, jose: r.jose_tekst ?? null }]),
+      );
+      const winnaarPerStage = new Map<string, string>(
+        ((winnaarBulk?.data ?? []) as Array<{ stage_id: string; riders?: { name?: string } | null }>)
+          .flatMap((r) => {
+            const naam = r.riders?.name?.trim();
+            return naam ? ([[r.stage_id, naam]] as Array<[string, string]>) : [];
+          }),
       );
 
       // Cumulatieve totalen per entry, per stage — terugrekenen vanuit de
@@ -220,33 +245,6 @@ export function useKaravaanFeed(params: {
 
       const etappes: KaravaanEtappe[] = [];
 
-      // Commentaar en ritwinnaars in twee bulk-query's i.p.v. twee per etappe.
-      // Stonden ze in de lus, dan waren dat bij 21 etappes 42 losse rondjes naar
-      // de database, netjes achter elkaar -- en dat is precies waarom de Krant
-      // seconden stond te laden.
-      const [commentaarBulk, winnaarBulk] = await Promise.all([
-        (supabase as any)
-          .from("etappe_commentaren")
-          .select("stage_id, michel_tekst, jose_tekst")
-          .in("stage_id", stageIds)
-          .eq("subpoule_id", subpouleId),
-        (supabase as any)
-          .from("stage_results")
-          .select("stage_id, riders(name)")
-          .in("stage_id", stageIds)
-          .eq("finish_position", 1),
-      ]);
-      const commentaarPerStage = new Map<string, { michel: string | null; jose: string | null }>(
-        ((commentaarBulk?.data ?? []) as Array<{ stage_id: string; michel_tekst: string | null; jose_tekst: string | null }>)
-          .map((r) => [r.stage_id, { michel: r.michel_tekst ?? null, jose: r.jose_tekst ?? null }]),
-      );
-      const winnaarPerStage = new Map<string, string>(
-        ((winnaarBulk?.data ?? []) as Array<{ stage_id: string; riders?: { name?: string } | null }>)
-          .flatMap((r) => {
-            const naam = r.riders?.name?.trim();
-            return naam ? ([[r.stage_id, naam]] as Array<[string, string]>) : [];
-          }),
-      );
 
       for (let i = 0; i < sortedStages.length; i++) {
         const stage = sortedStages[i];
