@@ -47,7 +47,6 @@ import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { Input } from "@/components/ui/input";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { isMeermarathonGame } from "@/lib/gameTypes";
-import StatusBlok from "@/components/StatusBlok";
 import ZwevendeActie, { zwevendeActieWeggeklikt, zwevendeActieHerstellen } from "@/components/ZwevendeActie";
 import Rondleiding, { rondleidingGezien, rondleidingHerstarten, useUitgelichteNav, useUitgelichtSubtab } from "@/components/Rondleiding";
 import { useAuth } from "@/hooks/useAuth";
@@ -1444,8 +1443,8 @@ export default function MijnPeloton() {
               L'Équipe is óók in de sneak preview ('open') volledig zichtbaar voor
               deelnemers (geen preview-schil meer). */}
           <TabsContent value="karavaan" className="mt-3" data-rondleiding-doel="karavaan-inhoud">
-            {/* Mobiel: eerst waar je staat, dan pas het nieuws. */}
-            <StatusBlok onOpenKlassement={openUitslagen} />
+            {/* StatusBlok verwijderd: de standbalk onderin de voorpagina toont
+                dezelfde cijfers, en twee keer je positie boven elkaar is dubbel. */}
             <KaravaanFeed
               onGoToPloeg={() => gaNaarTab("team")}
               onOpenHors={openHors}

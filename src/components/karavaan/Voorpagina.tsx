@@ -163,7 +163,7 @@ export default function Voorpagina({
                 type="button"
                 onClick={artikel.profielKnop.onClick}
                 className={cn(
-                  "mt-3.5 inline-flex items-center gap-2 rounded-full bg-card px-4 py-2.5",
+                  "mt-3.5 inline-flex items-center gap-2 rounded-full bg-background px-4 py-2.5 ring-1 ring-[hsl(var(--vintage-gold))/0.35]",
                   "text-[12.5px] font-semibold text-[hsl(var(--vintage-gold))]",
                   "shadow-[0_1px_2px_rgba(0,0,0,0.05),0_8px_20px_-12px_rgba(0,0,0,0.28)]",
                   "transition-transform duration-200 hover:-translate-y-px active:scale-[0.985]",
@@ -184,7 +184,7 @@ export default function Voorpagina({
               {artikel.quotes.map((q) => (
                 <div
                   key={q.naam}
-                  className="mb-2 rounded-2xl bg-card px-3 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] last:mb-0"
+                  className="mb-2 rounded-2xl bg-background px-3 py-2.5 ring-1 ring-border/70 last:mb-0"
                 >
                   <p className="mb-1 text-[10.5px] font-semibold text-muted-foreground">{q.naam}</p>
                   <p className="line-clamp-3 font-serif text-[13px] leading-snug text-foreground/75">{q.tekst}</p>
@@ -206,10 +206,15 @@ export default function Voorpagina({
                 r.onClick();
               }}
               className={cn(
-                "relative flex items-center gap-2.5 rounded-2xl bg-card px-2.5 py-2.5 text-left",
-                "shadow-[0_1px_2px_rgba(0,0,0,0.05)]",
+                "relative flex items-center gap-2.5 rounded-2xl px-2.5 py-2.5 text-left",
+                // Kaarten stonden bijna-wit op bijna-wit en verdwenen daardoor.
+                // Nu een lichte rand plus een diepere schaduw: Apple zet witte
+                // kaarten op een grijzere ondergrond, en dat verschil moeten wij
+                // met de rand maken omdat onze pagina crème is.
+                "bg-background ring-1 ring-border/70",
+                "shadow-[0_1px_2px_rgba(0,0,0,0.06),0_6px_14px_-10px_rgba(0,0,0,0.35)]",
                 "transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(.2,.8,.2,1)]",
-                "hover:-translate-y-[1.5px] hover:shadow-[0_1px_2px_rgba(0,0,0,0.05),0_8px_20px_-12px_rgba(0,0,0,0.28)]",
+                "hover:-translate-y-[1.5px] hover:ring-[hsl(var(--vintage-gold))/0.6] hover:shadow-[0_2px_4px_rgba(0,0,0,0.07),0_14px_26px_-14px_rgba(0,0,0,0.4)]",
                 "active:scale-[0.985] motion-reduce:transition-none motion-reduce:hover:translate-y-0",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
               )}
@@ -227,7 +232,7 @@ export default function Voorpagina({
       )}
 
       {(kern.length > 0 || subpoules.length > 0) && (
-        <div className="flex flex-wrap items-stretch overflow-hidden rounded-[20px] bg-card shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+        <div className="flex flex-wrap items-stretch overflow-hidden rounded-[20px] bg-background ring-1 ring-border/70 shadow-[0_1px_2px_rgba(0,0,0,0.06),0_6px_14px_-10px_rgba(0,0,0,0.35)]">
           <SubpouleKiezer subpoules={subpoules} selectedId={selectedSubpouleId} onSelect={onSelectSubpoule} />
           {kern.map((c) => cel(c))}
           {rest.length > 0 && (
