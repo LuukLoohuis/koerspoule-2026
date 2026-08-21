@@ -1265,6 +1265,42 @@ export default function MijnPeloton() {
         <DagprijsBanner gameId={selectedGameObj?.id} className="mb-3" />
 
         {/* Inner tabs: Team / Uitslagen / Subpoules / Hors */}
+        {/* Hulpacties boven de hoofdbalk, rechts uitgelijnd.
+            Ze stonden tussen de hoofdbalk en de subbalk in, en dat brak het
+            verband tussen die twee: de subbalk leek los te staan van waar hij
+            bij hoort. Boven de balk horen ze ook inhoudelijk beter thuis --
+            het is gereedschap, geen navigatie. */}
+        {(!toontOnboarding || onbWeg || actieWeg) && (
+          <div className="mb-2 flex flex-wrap items-center justify-end gap-1">
+          {/* De rondleiding blijft bij elke status bereikbaar. De knop hiervoor
+              zat alleen in "Aan de slag", en die kaart verdwijnt zodra je een
+              ploeg én een subpoule hebt — precies de deelnemer die hem later
+              nog eens wil nalopen kon er dan niet meer bij. */}
+          {!toontOnboarding && (
+            <button
+              type="button"
+              onClick={() => { rondleidingHerstarten(); setRondleidingOpen(true); }}
+              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Compass className="h-3 w-3" aria-hidden />
+              {t("rondleiding.starten")}
+            </button>
+          )}
+
+          {/* Wegklikken is omkeerbaar; zonder deze knop zou het definitief zijn. */}
+          {(onbWeg || actieWeg) && (
+            <button
+              type="button"
+              onClick={haalKaartenTerug}
+              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <RotateCcw className="h-3 w-3" aria-hidden />
+              Toon hulpkaarten weer
+            </button>
+          )}
+          </div>
+        )}
+
         <Tabs value={gameTab} onValueChange={gaNaarTab}>
 
           {/* Mobile primary tabs verwijderd — BottomNav is enige top-level switcher op mobiel */}
@@ -1397,33 +1433,6 @@ export default function MijnPeloton() {
               } else gaNaarTab(sectie);
             }}
           />
-
-          {/* De rondleiding blijft bij elke status bereikbaar. De knop hiervoor
-              zat alleen in "Aan de slag", en die kaart verdwijnt zodra je een
-              ploeg én een subpoule hebt — precies de deelnemer die hem later
-              nog eens wil nalopen kon er dan niet meer bij. */}
-          {!toontOnboarding && (
-            <button
-              type="button"
-              onClick={() => { rondleidingHerstarten(); setRondleidingOpen(true); }}
-              className="mb-3 mr-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Compass className="h-3 w-3" aria-hidden />
-              {t("rondleiding.starten")}
-            </button>
-          )}
-
-          {/* Wegklikken is omkeerbaar; zonder deze knop zou het definitief zijn. */}
-          {(onbWeg || actieWeg) && (
-            <button
-              type="button"
-              onClick={haalKaartenTerug}
-              className="mb-3 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <RotateCcw className="h-3 w-3" aria-hidden />
-              Toon hulpkaarten weer
-            </button>
-          )}
 
           {/* Telbordje: vervanger(s) nodig → klik gaat naar de Volgwagen */}
           {fallenCount > 0 && gameTab !== "team" && (
