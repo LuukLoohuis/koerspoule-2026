@@ -1152,7 +1152,8 @@
       "label": "Subpoule",
       "placeholder": "Pick a subpoule…",
       "searchPlaceholder": "Search subpoule…",
-      "empty": "No subpoule found."
+      "empty": "No subpoule found.",
+      "aria": "Choose a subpool"
     },
     "etappe": {
       "stage": "Stage {{number}}",
@@ -1243,7 +1244,9 @@
       "chapeauMet": "You scored {{punten}} points today — the {{rang}}th best of {{totaal}} in your subpool.",
       "chapeauZonder": "The result is in. See below how your subpool did.",
       "chipDagrang": "{{rang}} of {{totaal}}",
-      "naarProfiel": "🗺️ See the next stage"
+      "naarProfiel": "🗺️ See the next stage",
+      "meer": "+{{aantal}} more",
+      "minder": "less"
     }
   },
   "common": {

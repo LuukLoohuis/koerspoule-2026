@@ -1152,7 +1152,8 @@
       "label": "Subpoule",
       "placeholder": "Kies een subpoule…",
       "searchPlaceholder": "Zoek subpoule…",
-      "empty": "Geen subpoule gevonden."
+      "empty": "Geen subpoule gevonden.",
+      "aria": "Kies een subpoule"
     },
     "etappe": {
       "stage": "Etappe {{number}}",
@@ -1243,7 +1244,9 @@
       "chapeauMet": "Je scoorde {{punten}} punten vandaag — de {{rang}}e dagscore van {{totaal}} in je subpoule.",
       "chapeauZonder": "De uitslag is binnen. Bekijk hieronder hoe je subpoule het deed.",
       "chipDagrang": "{{rang}}e van {{totaal}}",
-      "naarProfiel": "🗺️ Bekijk de volgende etappe"
+      "naarProfiel": "🗺️ Bekijk de volgende etappe",
+      "meer": "+{{aantal}} meer",
+      "minder": "minder"
     }
   },
   "common": {

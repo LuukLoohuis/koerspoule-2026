@@ -208,7 +208,6 @@ export default function KaravaanFeed({
           emoji: "🏁",
           merk: `dag-${laatsteEtappe?.stage_number ?? 0}`,
           titel: t("karavaan.voorpagina.rubDaguitslag"),
-          haak: t("karavaan.voorpagina.rubDaguitslagHaak"),
           onClick: () => naarSectie("krant-daguitslag"),
         }]
       : []),
@@ -216,7 +215,6 @@ export default function KaravaanFeed({
       key: "voorbeschouwing",
       emoji: "🗺️",
       titel: t("karavaan.voorpagina.rubVoorbeschouwing"),
-      haak: t("karavaan.voorpagina.rubVoorbeschouwingHaak"),
       onClick: () => naarSectie("krant-voorbeschouwing"),
     },
     ...(etappes.length > 0
@@ -225,7 +223,6 @@ export default function KaravaanFeed({
           emoji: "🎙️",
           merk: `com-${laatsteEtappe?.stage_number ?? 0}`,
           titel: t("karavaan.voorpagina.rubCommentaar"),
-          haak: t("karavaan.voorpagina.rubCommentaarHaak"),
           onClick: () => naarSectie("krant-commentaar"),
         }]
       : []),
@@ -234,7 +231,6 @@ export default function KaravaanFeed({
           key: "klassement",
           emoji: "🏆",
           titel: t("karavaan.voorpagina.rubKlassement"),
-          haak: t("karavaan.voorpagina.rubKlassementHaak"),
           onClick: onOpenUitslagen,
         }]
       : []),
@@ -269,17 +265,12 @@ export default function KaravaanFeed({
       <Voorpagina
         koers={koersNaam}
         editie={editie}
-        subpoule={subpouleNaam}
+        subpoules={subpoules.map((sp) => ({ id: sp.id, name: sp.name }))}
+        selectedSubpouleId={selectedSubpouleId}
+        onSelectSubpoule={setSelectedSubpouleId}
         cellen={cellen}
         rubrieken={rubrieken}
         artikel={artikel}
-      />
-
-      {/* Subpoule-switcher */}
-      <SubpouleSwitcher
-        subpoules={subpoules.map((s) => ({ id: s.id, name: s.name }))}
-        selectedId={selectedSubpouleId}
-        onSelect={setSelectedSubpouleId}
       />
 
       {/* Daguitslag van de subpoule — horizontale bars per lid */}

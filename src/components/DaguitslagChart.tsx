@@ -201,7 +201,9 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
             {t("subpoule.daguitslag.nobodyScored")}
           </p>
         ) : (
-          <ul className="space-y-1.5">
+          // Eén afgerond blok met rijen erin, zoals een lijst in Instellingen:
+          // scheidingslijntjes tussen de regels in plaats van een kader eromheen.
+          <ul className="overflow-hidden rounded-2xl bg-card shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             {scorers.map((r, i) => {
               const rank = i + 1;
               const isWinner = rank === 1;
@@ -220,14 +222,16 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
                 <li
                   key={r.user_id}
                   className={cn(
-                    "flex items-center gap-2 py-1 px-1 rounded transition-colors",
-                    isMe && "bg-primary/[0.06]",
+                    "flex items-center gap-2.5 border-t border-border/60 px-3 py-2.5 transition-colors first:border-t-0",
+                    "hover:bg-secondary/70",
+                    isMe && "bg-primary/[0.05]",
                   )}
                 >
                   {/* Rank */}
                   <div className={cn(
-                    "shrink-0 w-7 text-center font-display font-black tabular-nums text-sm leading-none",
-                    rankColorCls,
+                    "grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full text-[11.5px] font-semibold tabular-nums leading-none",
+                    isMe ? "bg-primary text-primary-foreground" : "bg-secondary",
+                    !isMe && rankColorCls,
                   )}>
                     {medal ?? rank}
                   </div>
