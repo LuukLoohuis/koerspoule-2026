@@ -1213,7 +1213,8 @@
       "profielSub": "Interactive map with elevation profile",
       "profielTitle": "3D profile",
       "profielIframeTitle": "3D profile stage {{number}}",
-      "profielFallback": "Profile not working? Open on tourview"
+      "profielFallback": "Profile not working? Open on tourview",
+      "profielVolledig": "Open full screen"
     },
     "dagprijs": {
       "defKicker": "Prize of the day",

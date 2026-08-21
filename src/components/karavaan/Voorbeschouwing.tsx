@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { tourviewUrl } from "@/lib/tourview";
+import { cn } from "@/lib/utils";
 import type { TFunction } from "i18next";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
-import { Mountain, CalendarDays, ExternalLink, Map as MapIcon, ChevronDown, ChevronUp } from "lucide-react";
+import { Mountain, CalendarDays, ExternalLink, Map as MapIcon, ChevronDown } from "lucide-react";
 
 type UpcomingStage = {
   id: string;
@@ -15,6 +16,8 @@ type UpcomingStage = {
   stage_type: string | null;
   distance_km: number | null;
   results_status: string | null;
+  /** Statisch hoogteprofiel; dient als voorproefje op de dichtgeklapte kaart. */
+  profile_image_url: string | null;
 };
 
 // Interactief 3D-etappeprofiel (tourview). Lazy: iframe pas na klik laden.
@@ -93,7 +96,7 @@ export default function Voorbeschouwing({
       if (!supabase || !gameId) return null;
       const { data, error } = await (supabase as any)
         .from("stages")
-        .select("id, stage_number, name, date, stage_type, distance_km, results_status")
+        .select("id, stage_number, name, date, stage_type, distance_km, results_status, profile_image_url")
         .eq("game_id", gameId)
         .eq("is_gc", false)
         .order("stage_number");
@@ -158,56 +161,92 @@ export default function Voorbeschouwing({
           )}
         </div>
 
-        {/* Interactief 3D-profiel (tourview) — lazy: iframe pas na klik, met
-            open-op-tourview-link als terugval mocht embedden ooit blokkeren. */}
+        {/* Interactief 3D-profiel (tourview). Dichtgeklapt een strookje van het
+            statische profiel: een randje van het echte beeld nodigt sterker uit
+            dan het woord "profiel". De iframe laadt pas na de klik. */}
         {profielUrl && (
           <div className="mt-3">
-            {!showProfiel ? (
-              <button
-                type="button"
-                onClick={() => setShowProfiel(true)}
-                aria-expanded={false}
-                className="w-full flex items-center justify-between gap-2 rounded-lg border-2 border-dashed border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.06] px-3 py-2.5 text-left transition-colors hover:bg-[hsl(var(--vintage-gold))/0.12]"
-              >
-                <span className="flex items-center gap-2 min-w-0">
-                  <MapIcon className="w-4 h-4 shrink-0 text-[hsl(var(--vintage-gold))]" />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-display font-semibold text-[hsl(var(--vintage-gold))]">{t("karavaan.voorbeschouwing.profielOpen")}</span>
-                    <span className="block text-[11px] text-muted-foreground">{t("karavaan.voorbeschouwing.profielSub")}</span>
+            <button
+              type="button"
+              onClick={() => setShowProfiel((v) => !v)}
+              aria-expanded={showProfiel}
+              className={cn(
+                "group w-full overflow-hidden rounded-xl text-left",
+                "bg-card ring-1 ring-border/70 transition-shadow",
+                "shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.09)]",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
+              )}
+            >
+              <span className="flex items-center gap-2 px-3 py-2.5">
+                <MapIcon className="h-4 w-4 shrink-0 text-[hsl(var(--vintage-gold))]" />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[13px] font-semibold text-[hsl(var(--vintage-gold))]">
+                    {showProfiel ? t("karavaan.voorbeschouwing.profielTitle") : t("karavaan.voorbeschouwing.profielOpen")}
                   </span>
+                  {!showProfiel && (
+                    <span className="block text-[11px] text-muted-foreground">
+                      {t("karavaan.voorbeschouwing.profielSub")}
+                    </span>
+                  )}
                 </span>
-                <ChevronDown className="w-4 h-4 shrink-0 text-[hsl(var(--vintage-gold))]" />
-              </button>
-            ) : (
-              <div className="space-y-1">
-                <button
-                  type="button"
-                  onClick={() => setShowProfiel(false)}
-                  aria-expanded={true}
-                  className="w-full flex items-center justify-between gap-2 rounded-lg border-2 border-dashed border-[hsl(var(--vintage-gold))/0.5] bg-[hsl(var(--vintage-gold))/0.06] px-3 py-1.5 text-left transition-colors hover:bg-[hsl(var(--vintage-gold))/0.12]"
-                >
-                  <span className="flex items-center gap-2 text-sm font-display font-semibold text-[hsl(var(--vintage-gold))]">
-                    <MapIcon className="w-4 h-4 shrink-0" /> {t("karavaan.voorbeschouwing.profielTitle")}
-                  </span>
-                  <ChevronUp className="w-4 h-4 shrink-0 text-[hsl(var(--vintage-gold))]" />
-                </button>
-                <div className="relative w-full overflow-hidden rounded-lg border border-[hsl(var(--vintage-sepia)/0.4)]" style={{ height: 240 }}>
-                  <iframe
-                    src={profielUrl}
-                    title={t("karavaan.voorbeschouwing.profielIframeTitle", { number: stage.stage_number })}
+                <ChevronDown
+                  aria-hidden
+                  className={cn(
+                    "h-4 w-4 shrink-0 text-[hsl(var(--vintage-gold))] transition-transform duration-200",
+                    showProfiel && "rotate-180",
+                  )}
+                />
+              </span>
+
+              {/* Voorproefje: een strook van het statische profiel. Alleen als
+                  die afbeelding er is -- een lege donkere balk belooft iets wat er
+                  niet is. */}
+              {!showProfiel && stage.profile_image_url && (
+                <span className="relative block h-[52px] overflow-hidden bg-[#16222c]">
+                  <img
+                    src={stage.profile_image_url}
+                    alt=""
+                    aria-hidden
                     loading="lazy"
-                    referrerPolicy="no-referrer"
-                    className="absolute inset-0 w-full h-full"
-                    style={{ border: 0 }}
+                    className="absolute inset-x-0 bottom-0 w-full object-cover opacity-80"
                   />
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+                </span>
+              )}
+            </button>
+
+            {showProfiel && (
+              <div className="mt-1.5">
+                {/* Verhouding i.p.v. een vaste hoogte: 240 px gaf op web een
+                    brievenbus van 4:1 en op mobiel een benepen vierkant.
+                    Randloos op mobiel wint de paginamarge terug. */}
+                <div className="-mx-4 overflow-hidden border-y border-[hsl(var(--vintage-sepia)/0.4)] sm:mx-0 sm:rounded-xl sm:border">
+                  <div className="relative aspect-[4/3] w-full sm:mx-auto sm:aspect-[24/10] sm:max-w-[780px]">
+                    <iframe
+                      src={profielUrl}
+                      title={t("karavaan.voorbeschouwing.profielIframeTitle", { number: stage.stage_number })}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      className="absolute inset-0 h-full w-full"
+                      style={{ border: 0 }}
+                    />
+                  </div>
                 </div>
+                {/* Op een telefoon vecht slepen in de kaart met het scrollen van
+                    de pagina. Daarom hier een echte knop naar het volledige
+                    scherm, geen kleine terugvallink meer. */}
                 <a
                   href={profielUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:underline"
+                  className={cn(
+                    "mt-2 inline-flex items-center gap-1.5 rounded-full bg-card px-3.5 py-2",
+                    "text-[12px] font-semibold text-[hsl(var(--vintage-gold))] ring-1 ring-[hsl(var(--vintage-gold))/0.35]",
+                    "transition-colors hover:bg-[hsl(var(--vintage-gold))/0.1]",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
+                  )}
                 >
-                  {t("karavaan.voorbeschouwing.profielFallback")} <ExternalLink className="w-3 h-3" />
+                  {t("karavaan.voorbeschouwing.profielVolledig")} <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
             )}

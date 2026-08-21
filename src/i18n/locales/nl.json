@@ -1213,7 +1213,8 @@
       "profielSub": "Interactieve kaart met hoogteprofiel",
       "profielTitle": "3D-profiel",
       "profielIframeTitle": "3D-profiel etappe {{number}}",
-      "profielFallback": "Werkt het profiel niet? Open op tourview"
+      "profielFallback": "Werkt het profiel niet? Open op tourview",
+      "profielVolledig": "Open op volledig scherm"
     },
     "dagprijs": {
       "defKicker": "Dagprijs van vandaag",
