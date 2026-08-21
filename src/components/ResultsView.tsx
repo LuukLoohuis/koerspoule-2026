@@ -314,9 +314,12 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
       )}
 
       <Tabs value={view} onValueChange={(v) => setView(v as "etappes" | "klassement")} className="max-w-7xl mx-auto">
-        {/* Desktop — retro dossard-tabbalk */}
+        {/* Subbalk, niet de hoofdbalkstijl: dit zit ónder de hoofdnavigatie en
+            twee identieke balken boven elkaar maakten onduidelijk welke de baas
+            was. */}
         <RetroTabs
-          className="hidden md:flex"
+          variant="segment"
+          className="mb-3 hidden md:flex"
           aria-label={t("results.view.tabsAriaLabel")}
           active={view}
           onChange={(v) => setView(v as "etappes" | "klassement")}

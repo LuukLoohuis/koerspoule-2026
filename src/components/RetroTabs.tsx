@@ -34,6 +34,28 @@ export type RetroTab = {
   title?: string;
 };
 
+/**
+ * Wielertrui als merkteken op de hoofdbalk.
+ *
+ * Zelfde silhouet als de favicons: één gesloten contour, want op 14 pixels
+ * lopen losse lijnen dicht. Vervangt de losse lucide-iconen -- vijf verschillende
+ * pictogrammen naast elkaar wezen alle kanten op; één vorm die van kleur wisselt
+ * bindt de balk aan de rest van de site.
+ */
+function TruiGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden focusable="false">
+      <path
+        d="M23 11 L11 16 L7 29 L17 33 L20 26 L20 50 Q20 53 23 53 L41 53 Q44 53 44 50 L44 26 L47 33 L57 29 L53 16 L41 11 Q32 18 23 11 Z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth={3.5}
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function RetroTabs({
   tabs,
   active,
@@ -68,6 +90,11 @@ export function RetroTabs({
   const listRef = useRef<HTMLDivElement>(null);
   const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [ind, setInd] = useState<{ x: number; w: number } | null>(null);
+  const reduce =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   const [animate, setAnimate] = useState(false);
 
   useLayoutEffect(() => {
@@ -78,6 +105,23 @@ export function RetroTabs({
         return;
       }
       setInd({ x: el.offsetLeft, w: el.offsetWidth });
+
+      // Actieve tab in beeld halen. De subbalk scrolt horizontaal zodra de
+      // labels niet passen; wissel je van elders (een knop in de pagina, de
+      // rondleiding), dan bleef de balk anders links staan en zag je je eigen
+      // tabje niet.
+      const baan = listRef.current;
+      if (baan && baan.scrollWidth > baan.clientWidth + 1) {
+        const links = el.offsetLeft;
+        const rechts = links + el.offsetWidth;
+        const zicht = baan.scrollLeft;
+        const marge = 12;
+        if (links < zicht + marge) {
+          baan.scrollTo({ left: Math.max(0, links - marge), behavior: reduce ? "auto" : "smooth" });
+        } else if (rechts > zicht + baan.clientWidth - marge) {
+          baan.scrollTo({ left: rechts - baan.clientWidth + marge, behavior: reduce ? "auto" : "smooth" });
+        }
+      }
     };
     measure();
     // Animeer pas vanaf de tweede meting → geen sprong bij eerste render.
@@ -92,12 +136,8 @@ export function RetroTabs({
       cancelAnimationFrame(raf);
       ro?.disconnect();
     };
-  }, [active, tabs]);
+  }, [active, tabs, reduce]);
 
-  const reduce =
-    typeof window !== "undefined" &&
-    typeof window.matchMedia === "function" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     const order = tabs.filter((t) => !t.disabled).map((t) => t.key);
@@ -126,8 +166,19 @@ export function RetroTabs({
           // Geen kader en geen vulling: alleen een haarlijn waar de labels op
           // staan. Scrollt horizontaal zodra de labels niet passen, zodat er
           // niets afgekapt wordt.
-          ? "w-full items-end gap-6 overflow-x-auto border-b border-border pr-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          : "w-full items-stretch gap-1 rounded-xl border-2 border-foreground bg-card p-1 shadow-[3px_3px_0_hsl(var(--foreground))]",
+          // Subbalk: lichte baan met een wit plaatje op het actieve tabje.
+          // Zichtbaar ondergeschikt aan de hoofdbalk, en horizontaal
+          // scrollbaar zodat lange labels niet worden afgekapt.
+          ? cn(
+              "w-full items-stretch gap-0.5 overflow-x-auto rounded-[13px] bg-foreground/[0.045] p-[3px]",
+              "shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)]",
+              "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            )
+          // Hoofdbalk: dezelfde vorm, groter en met het rugnummer erin.
+          : cn(
+              "w-full items-stretch gap-[3px] rounded-2xl bg-secondary/70 p-1",
+              "shadow-[inset_0_0_0_1px_hsl(var(--border)),inset_0_1px_2px_rgba(0,0,0,0.05)]",
+            ),
         className,
       )}
     >
@@ -140,23 +191,29 @@ export function RetroTabs({
           className={cn(
             "pointer-events-none absolute",
             segment
-              ? "bottom-[-1px] h-0.5 rounded-full bg-primary"
-              : "top-1 overflow-hidden rounded-lg bg-primary",
+              ? "top-[3px] rounded-[10px] bg-background shadow-[0_1px_2px_rgba(0,0,0,0.06),0_0_0_1px_hsl(var(--border))]"
+              : cn(
+                  "top-1 overflow-hidden rounded-xl",
+                  "bg-[linear-gradient(180deg,hsl(var(--primary)),hsl(var(--primary)/0.82))]",
+                  "shadow-[0_1px_2px_rgba(0,0,0,0.18),0_6px_14px_-8px_hsl(var(--primary)/0.75),inset_0_1px_0_rgba(255,255,255,0.28)]",
+                ),
             // De indicator is een eigen laag naast de knoppen; zonder deze
             // regel bleef de actieve tab tijdens de rondleiding fel oplichten
             // terwijl de knop erboven al gedoofd was.
             uitgelichteKey != null && uitgelichteKey !== active && "opacity-30",
           )}
           style={{
-            height: segment ? undefined : "calc(100% - 0.5rem)",
+            height: segment ? "calc(100% - 6px)" : "calc(100% - 0.5rem)",
             width: ind.w,
             transform: `translateX(${ind.x}px)`,
             transition: !animate || reduce ? "none" : "transform 200ms ease, width 200ms ease",
           }}
         >
           {/* Leiderstrui-streep: schuift mee met het rugnummer. */}
-          {!segment && (
+          {!segment ? (
             <span className="absolute left-1/2 top-0 h-[3px] w-8 -translate-x-1/2 rounded-b-full bg-[hsl(var(--vintage-gold))]" />
+          ) : (
+            <span className="absolute inset-x-3 bottom-[3px] h-[2px] rounded-full bg-gradient-to-r from-transparent via-[hsl(var(--vintage-gold))] to-transparent" />
           )}
         </span>
       )}
@@ -189,14 +246,15 @@ export function RetroTabs({
                 ? cn(
                     // Eigen breedte en geen afkapping: liever scrollen dan een
                     // label halveren.
-                    "shrink-0 whitespace-nowrap pb-2.5 text-[13px]",
-                    on ? "font-bold text-foreground" : "font-semibold text-muted-foreground hover:text-foreground",
+                    "shrink-0 justify-center whitespace-nowrap rounded-[10px] px-3 py-2 text-[11.5px] font-semibold",
+                    on ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                   )
                 : cn(
-                    "min-w-0 flex-1 justify-center rounded-lg border-0 px-3 min-h-[42px] text-xs font-display font-semibold uppercase tracking-wider",
+                    "min-w-0 flex-1 justify-center rounded-xl border-0 px-2.5 min-h-[42px] text-[12.5px] font-semibold tracking-tight",
+                    "active:scale-[0.97] motion-reduce:active:scale-100",
                     on
                       ? "text-primary-foreground"
-                      : "text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground",
+                      : "text-muted-foreground hover:text-foreground",
                   ),
               t.disabled && "cursor-not-allowed opacity-40",
               gedoofd && "opacity-30",
@@ -212,7 +270,16 @@ export function RetroTabs({
               <span aria-hidden className="absolute left-2 top-1.5 h-1 w-1 rounded-full bg-primary-foreground/55" />
               <span aria-hidden className="absolute right-2 top-1.5 h-1 w-1 rounded-full bg-primary-foreground/55" />
             </>}
-            <t.Icon className="h-3.5 w-3.5 shrink-0" />
+            {segment ? (
+              <t.Icon className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <TruiGlyph
+                className={cn(
+                  "h-[15px] w-[15px] shrink-0 transition-colors",
+                  on ? "text-[hsl(var(--vintage-gold))]" : "text-foreground/25",
+                )}
+              />
+            )}
             <span className={segment ? undefined : "truncate"}>{t.label}</span>
           </button>
         );
