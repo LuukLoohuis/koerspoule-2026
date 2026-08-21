@@ -153,10 +153,33 @@ export default function MijnPeloton() {
       setUitslagenTarget({ view: view as "klassement" | "etappes" });
     }
   }, [searchParams]);
+
+  /**
+   * Tab wisselen én de URL meenemen.
+   *
+   * De onderbalk op mobiel leidt zijn actieve knop af uit ?tab=, niet uit deze
+   * state. Wisselde er ergens ín de pagina een tab -- een cel in de standband,
+   * een rubriek in de Krant, de knop naar Hors Catégorie -- dan bleef die balk op
+   * het vorige tabblad staan.
+   *
+   * Bewust een helper en geen tweede useEffect: een effect dat state naar de URL
+   * spiegelt hangt aan dezelfde searchParams als het effect dat de URL naar
+   * state leest, en die twee kunnen elkaar bij een externe URL-wissel om beurten
+   * blijven aanstoten.
+   */
+  const gaNaarTab = (tab: string) => {
+    setGameTab(tab);
+    setSearchParams((huidig) => {
+      const volgende = new URLSearchParams(huidig);
+      volgende.set("tab", tab);
+      return volgende;
+    }, { replace: true });
+  };
+
   // Bump om de ploegnaam-editor in MyTeamPanel te openen + te focussen.
   const [focusNameSeq, setFocusNameSeq] = useState(0);
   const goEditTeamName = () => {
-    setGameTab("team");
+    gaNaarTab("team");
     setTeamSubTab("ploeg");
     setFocusNameSeq((s) => s + 1);
   };
@@ -259,7 +282,7 @@ export default function MijnPeloton() {
   const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
     setHorsTab(tab);
-    setGameTab("hors");
+    gaNaarTab("hors");
   };
   // De rondleiding stuurt hier de subpoule-subtab aan. SubpouleManager leest die
   // uit ?sub= en wordt daarop gekeyd, dus dit moet via de router-parameters —
@@ -274,18 +297,24 @@ export default function MijnPeloton() {
   // Gazetta-shortcuts: subpoule-cel → Subpoules-tab met die subpoule open op Grafiek
   // (SubpouleManager leest ?subpoule=<id> uit de URL en opent default de Grafiek-tab).
   const openSubpouleGrafiek = (subpouleId: string) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("subpoule", subpouleId);
-    window.history.replaceState({}, "", url.toString());
+    // Via de router en niet via window.history: dat laatste ziet React niet, en
+    // ?tab= bleef zo achter waardoor de onderbalk op mobiel op het vorige
+    // tabblad bleef staan.
     setGameTab("subpoules");
+    setSearchParams((huidig) => {
+      const volgende = new URLSearchParams(huidig);
+      volgende.set("tab", "subpoules");
+      volgende.set("subpoule", subpouleId);
+      return volgende;
+    }, { replace: true });
   };
   // overall-cel → Uitslagen-tab (subtab Klassement is daar de default)
   const [uitslagenTarget, setUitslagenTarget] = useState<{ view: "etappes" | "klassement"; stageNumber?: number } | null>(null);
-  const openUitslagen = () => { setUitslagenTarget({ view: "klassement" }); setGameTab("uitslagen"); };
+  const openUitslagen = () => { setUitslagenTarget({ view: "klassement" }); gaNaarTab("uitslagen"); };
   // Beste-etappe-cel → Uitslagen-tab, Etappe-view, op dat ritnummer.
   const openStageResult = (stageNumber: number) => {
     setUitslagenTarget({ view: "etappes", stageNumber });
-    setGameTab("uitslagen");
+    gaNaarTab("uitslagen");
   };
   const [uitslagenView, setUitslagenView] = useState<"etappes" | "poule" | "giro">("etappes");
   const [selectedPool, setSelectedPool] = useState<string | null>(null);
@@ -1193,14 +1222,14 @@ export default function MijnPeloton() {
               </button>
               <button
                 type="button"
-                onClick={() => setGameTab("subpoules")}
+                onClick={() => gaNaarTab("subpoules")}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-display font-bold bg-card text-foreground border-2 border-foreground shadow-[2px_2px_0_hsl(var(--foreground))] hover:-translate-y-0.5 active:translate-y-px active:shadow-[1px_1px_0_hsl(var(--foreground))] transition-all"
               >
                 <Users className="h-3.5 w-3.5" /> Subpoule starten
               </button>
               <button
                 type="button"
-                onClick={() => setGameTab("subpoules")}
+                onClick={() => gaNaarTab("subpoules")}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-display font-bold bg-card text-foreground border-2 border-foreground shadow-[2px_2px_0_hsl(var(--foreground))] hover:-translate-y-0.5 active:translate-y-px active:shadow-[1px_1px_0_hsl(var(--foreground))] transition-all"
               >
                 <Share2 className="h-3.5 w-3.5" /> Vrienden uitdagen
@@ -1233,7 +1262,7 @@ export default function MijnPeloton() {
         <DagprijsBanner gameId={selectedGameObj?.id} className="mb-3" />
 
         {/* Inner tabs: Team / Uitslagen / Subpoules / Hors */}
-        <Tabs value={gameTab} onValueChange={setGameTab}>
+        <Tabs value={gameTab} onValueChange={gaNaarTab}>
 
           {/* Mobile primary tabs verwijderd — BottomNav is enige top-level switcher op mobiel */}
 
@@ -1244,7 +1273,7 @@ export default function MijnPeloton() {
             uitgelichteKey={uitgelichteNav}
             aria-label="Hoofdnavigatie"
             active={gameTab}
-            onChange={setGameTab}
+            onChange={gaNaarTab}
             tabs={[
               { key: "karavaan",  label: "Krant",          Icon: Newspaper },
               { key: "team",      label: "Volgwagen",      Icon: Car      },
@@ -1279,12 +1308,12 @@ export default function MijnPeloton() {
                     inSubpoule={obInSubpoule}
                     liveTracking={!!obLive}
                     onTeam={() => navigate("/team-samenstellen")}
-                    onSubpoule={() => setGameTab("subpoules")}
-                    onResults={() => setGameTab("uitslagen")}
+                    onSubpoule={() => gaNaarTab("subpoules")}
+                    onResults={() => gaNaarTab("uitslagen")}
                     statsBekeken={bezocht.hors}
                     krantBekeken={bezocht.karavaan}
-                    onStats={() => { markeerBezocht("hors"); setGameTab("hors"); }}
-                    onKrant={() => { markeerBezocht("karavaan"); setGameTab("karavaan"); }}
+                    onStats={() => { markeerBezocht("hors"); gaNaarTab("hors"); }}
+                    onKrant={() => { markeerBezocht("karavaan"); gaNaarTab("karavaan"); }}
                     onRondleiding={() => setRondleidingOpen(true)}
                     onDismissed={() => setOnbWeg(true)}
                   />
@@ -1356,13 +1385,13 @@ export default function MijnPeloton() {
             onNavigeer={(sectie, sub) => {
               if (sectie === "hors" && sub) openHors(sub as Parameters<typeof openHors>[0]);
               else if (sectie === "subpoules" && sub) openSubpouleTab(sub);
-              else if (sectie === "team" && sub) { setTeamSubTab(sub); setGameTab("team"); }
+              else if (sectie === "team" && sub) { setTeamSubTab(sub); gaNaarTab("team"); }
               else if (sectie === "uitslagen" && sub) {
                 // ResultsView wordt gekeyd op deze view, dus dit opent de
                 // gevraagde weergave ook als je al op Uitslagen stond.
                 setUitslagenTarget({ view: sub as "klassement" | "etappes" });
-                setGameTab("uitslagen");
-              } else setGameTab(sectie);
+                gaNaarTab("uitslagen");
+              } else gaNaarTab(sectie);
             }}
           />
 
@@ -1397,7 +1426,7 @@ export default function MijnPeloton() {
           {fallenCount > 0 && gameTab !== "team" && (
             <button
               type="button"
-              onClick={() => setGameTab("team")}
+              onClick={() => gaNaarTab("team")}
               aria-label={`${fallenCount} renner${fallenCount === 1 ? "" : "s"} vervangen nodig — ga naar de Volgwagen`}
               className="mt-3 w-full inline-flex items-center gap-2 rounded-md retro-border bg-[hsl(var(--vintage-gold))/0.12] px-3 py-2 text-sm font-bold hover:bg-[hsl(var(--vintage-gold))/0.2] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
             >
@@ -1414,7 +1443,7 @@ export default function MijnPeloton() {
             {/* Mobiel: eerst waar je staat, dan pas het nieuws. */}
             <StatusBlok onOpenKlassement={openUitslagen} />
             <KaravaanFeed
-              onGoToPloeg={() => setGameTab("team")}
+              onGoToPloeg={() => gaNaarTab("team")}
               onOpenHors={openHors}
               onOpenSubpoule={openSubpouleGrafiek}
               onOpenUitslagen={openUitslagen}
