@@ -107,6 +107,7 @@ export function useKaravaanFeed(params: {
           team_name: string | null;
           display_name: string | null;
           total_points: number;
+          is_admin: boolean | null;
         }>((from, to) => (supabase as any).rpc("game_entries_standings", { p_game_id: gameId }).range(from, to)),
         supabase.from("profiles").select("id, display_name, last_visited_karavaan").eq("id", userId),
       ]);
@@ -137,6 +138,7 @@ export function useKaravaanFeed(params: {
         id: s.id,
         user_id: s.user_id,
         team_name: s.team_name,
+        is_admin: s.is_admin === true,
       }));
       const officialTotalByEntry = new Map<string, number>(
         standings.map((s) => [s.id, s.total_points ?? 0]),
@@ -241,7 +243,10 @@ export function useKaravaanFeed(params: {
       const subpouleEntryIds = allEntries
         .filter((e) => subpouleUserIds.includes(e.user_id))
         .map((e) => e.id);
-      const allEntryIds = allEntries.map((e) => e.id);
+      // Admins tellen niet mee in de totaalstand, maar blijven wél in hun eigen
+      // subpoule staan -- dezelfde regel als op de Uitslagen-pagina. Vandaar dat
+      // alleen deze lijst filtert en subpouleEntryIds hierboven niet.
+      const allEntryIds = allEntries.filter((e) => !e.is_admin).map((e) => e.id);
 
       const etappes: KaravaanEtappe[] = [];
 
