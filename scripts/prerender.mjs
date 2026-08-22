@@ -26,6 +26,8 @@ const ROUTES = [
   "/en/tour-de-france-femmes-fantasy-2026",
   "/regels",
   "/juridisch",
+  "/uitleg",
+  "/actievoorwaarden",
 ];
 
 const SEO_RE = /<!--\s*seo:start[\s\S]*?seo:end\s*-->/;
