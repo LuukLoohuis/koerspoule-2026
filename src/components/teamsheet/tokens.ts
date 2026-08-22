@@ -89,6 +89,22 @@ const RANK: Record<RiderCategory, number> = {
   OVERIG: 11,
 };
 
+/**
+ * Hoort deze categorie in de gele balk "Jacht op geel"?
+ *
+ * Dat zijn de klassementsrenners: de Alien plus GC1 tot en met GC4. Eerder
+ * stond hier een exacte lijst met "ALIEN" erin, en die miste de categorie die
+ * in de praktijk "Aliens" heet -- Pogacar viel daardoor buiten de gele balk
+ * terwijl hij er juist bovenaan hoort. Detectie kijkt daarom naar zowel de
+ * korte code als de volledige naam, en verdraagt meervoud en spaties ("GC 2").
+ */
+export function hoortBijJachtOpGeel(cat: { name?: string | null; short_name?: string | null }): boolean {
+  const plat = (v: string | null | undefined) => (v ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return [plat(cat.short_name), plat(cat.name)].some(
+    (v) => v.includes("ALIEN") || /^GC[1-4]$/.test(v),
+  );
+}
+
 /** Heuristiek om een vrij-tekst categorienaam (NL/EN/FR/IT) naar een vaste
  *  RiderCategory te mappen. Detectie houdt rekening met "GC Alien" e.d. */
 export function detectCategory(name: string | null | undefined): RiderCategory {

@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import TruiBadge from "@/components/retro/TruiBadge";
 import type { TruiType } from "@/lib/themas";
 import TeamSheetView from "@/components/teamsheet/TeamSheet";
-import { detectCategory as detectCategoryT, type SheetRider as SheetRiderT } from "@/components/teamsheet/tokens";
+import { detectCategory as detectCategoryT, hoortBijJachtOpGeel, type SheetRider as SheetRiderT } from "@/components/teamsheet/tokens";
 import FlipClock from "@/components/FlipClock";
 import { useMijnPloegStats } from "@/hooks/useMijnPloegStats";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
@@ -1570,12 +1570,11 @@ export default function MyTeamPanel({
         // Groepering = EXACT de teambuilder-categorieën. Alleen Alien+GC1-4 →
         // "Jacht op geel" (gele balk) en SPR1-3 → "Sprint" worden samengevoegd;
         // alle overige categorieën krijgen een eigen blok met hun volledige naam.
-        const GEEL = new Set(["ALIEN", "GC1", "GC2", "GC3", "GC4"]);
         const SPRINTS = new Set(["SPR1", "SPR2", "SPR3"]);
         const groupFor = (cat: { id: string; name: string; short_name?: string | null }, idx: number) => {
           const sn = (cat.short_name ?? "").toUpperCase().replace(/\s+/g, "");
           if (isMeermarathon) return { catKey: cat.id, catTitle: cat.name, catOrder: idx, category: detectCategoryT(`${cat.name} ${cat.short_name ?? ""}`) };
-          if (GEEL.has(sn)) return { catKey: "JACHT_OP_GEEL", catTitle: t("team.sheet.huntForYellow"), catOrder: 0, category: "GC" as const };
+          if (hoortBijJachtOpGeel(cat)) return { catKey: "JACHT_OP_GEEL", catTitle: t("team.sheet.huntForYellow"), catOrder: 0, category: "GC" as const };
           if (SPRINTS.has(sn)) return { catKey: "SPRINT", catTitle: "Sprint", catOrder: 1, category: "SPRINT" as const };
           return { catKey: cat.id, catTitle: cat.name, catOrder: 2 + idx, category: detectCategoryT(`${cat.name} ${cat.short_name ?? ""}`) };
         };
