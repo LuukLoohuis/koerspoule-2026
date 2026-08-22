@@ -147,11 +147,15 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   const { data: myStageRows = [] } = useStagePointsForEntries(gameId, myEntryIds);
   const { data: myRankPerStage = new Map<string, number>() } = useMyStageRanks(gameId, user?.id);
 
-  // De fiat-deep-link kiest de goedgekeurde eind-GC; gewone bezoeken blijven
-  // openen op de laatste goedgekeurde reguliere rit.
+  // Zonder deep-link opent de pagina op het eindklassement. Eerder viel de
+  // selectie op de laatste gereden rit, en dan las de bezoeker de puntentelling
+  // van etappe 21 als de eindstand -- verwarrend, want de kolom ernaast heet GC.
+  // Een rit-deeplink (?stage=14) stuurt hieronder alsnog bij, en zolang de koers
+  // loopt is de GC-rij niet goedgekeurd; dan valt de helper vanzelf terug op de
+  // laatste gereden rit.
   const initialStageIdx = useMemo(
-    () => getInitialResultsStageIndex(stages, initialGc),
-    [stages, initialGc],
+    () => getInitialResultsStageIndex(stages, initialGc || initialStageNumber == null),
+    [stages, initialGc, initialStageNumber],
   );
 
   const [selectedStageIdx, setSelectedStageIdx] = useState<number>(0);

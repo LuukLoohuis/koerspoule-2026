@@ -12,8 +12,24 @@ describe("getInitialResultsStageIndex", () => {
     expect(getInitialResultsStageIndex(stages, true)).toBe(2);
   });
 
-  it("houdt standaard de laatste gewone etappe geselecteerd", () => {
+  it("kiest de laatste gewone etappe wanneer GC niet gevraagd wordt", () => {
+    // Dit pad geldt nog voor een rit-deeplink; de pagina zelf vraagt nu om GC.
     expect(getInitialResultsStageIndex(stages, false)).toBe(1);
+  });
+
+  it("slaat etappes zonder fiat over", () => {
+    expect(getInitialResultsStageIndex([
+      { is_gc: false, results_status: "approved" },
+      { is_gc: false, results_status: "pending" },
+      { is_gc: true, results_status: "pending" },
+    ], true)).toBe(0);
+  });
+
+  it("kiest GC ook als die niet de laatste rij is", () => {
+    expect(getInitialResultsStageIndex([
+      { is_gc: true, results_status: "approved" },
+      { is_gc: false, results_status: "approved" },
+    ], true)).toBe(0);
   });
 
   it("valt terug op de laatste gewone etappe zolang de GC niet is goedgekeurd", () => {
