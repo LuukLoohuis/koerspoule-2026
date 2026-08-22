@@ -220,8 +220,12 @@ export default function Voorbeschouwing({
                 {/* Verhouding i.p.v. een vaste hoogte: 240 px gaf op web een
                     brievenbus van 4:1 en op mobiel een benepen vierkant.
                     Randloos op mobiel wint de paginamarge terug. */}
-                <div className="-mx-4 overflow-hidden border-y border-[hsl(var(--vintage-sepia)/0.4)] sm:mx-0 sm:rounded-xl sm:border">
-                  <div className="relative aspect-[4/3] w-full sm:mx-auto sm:aspect-[24/10] sm:max-w-[780px]">
+                {/* De breedtebeperking hoort op de omhullende laag, niet op het
+                    vlak erbinnen. Stond hij binnenin, dan liep de rand over de
+                    volle breedte terwijl de kaart gecentreerd op 780 px bleef --
+                    met lichte stroken links en rechts als gevolg. */}
+                <div className="-mx-4 overflow-hidden border-y border-[hsl(var(--vintage-sepia)/0.4)] sm:mx-auto sm:max-w-[780px] sm:rounded-xl sm:border">
+                  <div className="relative aspect-[4/3] w-full sm:aspect-[24/10]">
                     <iframe
                       src={profielUrl}
                       title={t("karavaan.voorbeschouwing.profielIframeTitle", { number: stage.stage_number })}
