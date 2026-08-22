@@ -10,6 +10,11 @@
 -- Alleen subpoules van DEZELFDE game als de inzending: een deelnemer die vorig
 -- jaar in een Giro-poule zat hoort hier niet in beeld te komen.
 
+-- De frontend bevraagt niet de functie maar een gelijknamige VIEW die er een
+-- dun laagje omheen legt. Die moet dus eerst weg en er daarna weer omheen --
+-- zonder dat laatste werkt het beheerscherm niet meer. Géén DROP ... CASCADE:
+-- dan verdwijnt de view stilzwijgend en merk je het pas als de tab leeg blijft.
+DROP VIEW IF EXISTS public.admin_entries_overview;
 DROP FUNCTION IF EXISTS public.admin_entries_overview();
 
 CREATE FUNCTION public.admin_entries_overview()
@@ -64,5 +69,16 @@ $$;
 
 REVOKE ALL ON FUNCTION public.admin_entries_overview() FROM public;
 GRANT EXECUTE ON FUNCTION public.admin_entries_overview() TO authenticated;
+
+-- De view terug, ongewijzigd: een dunne omhulling zodat de bestaande
+-- from("admin_entries_overview") in de frontend blijft werken.
+CREATE VIEW public.admin_entries_overview
+WITH (security_invoker = on) AS
+SELECT * FROM public.admin_entries_overview();
+
+GRANT SELECT ON public.admin_entries_overview TO authenticated;
+
+-- PostgREST kent de nieuwe kolom pas na een schema-herlaadsignaal.
+NOTIFY pgrst, 'reload schema';
 
 -- Rollback: draai 20260502102437 opnieuw; die zet de versie zonder subpoules terug.
