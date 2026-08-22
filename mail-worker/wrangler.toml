@@ -6,7 +6,7 @@ compatibility_date = "2026-08-22"
 AWS_REGION = "eu-north-1"
 MAIL_FROM = "Koerspoule <noreply@koerspoule.nl>"
 MAIL_REPLY_TO = "info@koerspoule.nl"
-SES_CONFIGURATION_SET = "koerspoule"
+SES_CONFIGURATION_SET = "Koerspoule"
 
 # Geheimen staan bewust NIET in dit bestand. Zet ze met:
 #   wrangler secret put WORKER_SECRET

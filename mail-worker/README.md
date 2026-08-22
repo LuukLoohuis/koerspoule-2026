@@ -46,7 +46,7 @@ Geef de IAM-gebruiker niet meer dan dit:
     "Action": "ses:SendEmail",
     "Resource": [
       "arn:aws:ses:eu-north-1:<account-id>:identity/koerspoule.nl",
-      "arn:aws:ses:eu-north-1:<account-id>:configuration-set/koerspoule"
+      "arn:aws:ses:eu-north-1:<account-id>:configuration-set/Koerspoule"
     ]
   }]
 }
