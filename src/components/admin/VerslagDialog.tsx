@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Wand2 } from "lucide-react";
+import { Wand2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,7 @@ export default function VerslagDialog({
   // Wat we opslaan is de eigen tekst, niet die van de bron.
   const [bronTekst, setBronTekst] = useState("");
   const [herschrijven, setHerschrijven] = useState(false);
+  const [genereren, setGenereren] = useState(false);
 
   useEffect(() => {
     if (!stage || !supabase) return;
@@ -59,6 +60,39 @@ export default function VerslagDialog({
   }, [stage]);
 
   const urlOngeldig = bronUrl.trim().length > 0 && veiligeUrl(bronUrl) === null;
+
+  /**
+   * Schrijft het verslag opnieuw uit onze eigen uitslag -- hetzelfde wat er bij
+   * fiatteren gebeurt. Scheelt de omweg van terugtrekken en opnieuw fiatteren
+   * wanneer je alleen de tekst wilt vernieuwen.
+   */
+  async function genereerUitUitslag() {
+    if (!supabase || !stage) return;
+    setGenereren(true);
+    const { data, error } = await supabase.functions.invoke("generate-stage-verslag", {
+      body: { stage_id: stage.id },
+    });
+    setGenereren(false);
+    if (error || !data?.verslag) {
+      let detail = error?.message ?? "Geen verslag ontvangen";
+      const ctx = (error as { context?: Response } | null)?.context;
+      if (ctx && typeof ctx.text === "function") {
+        try {
+          const body = await ctx.text();
+          if (body) detail = body;
+        } catch { /* val terug op de bovenstaande melding */ }
+      }
+      toast({ title: "Genereren mislukt", description: detail, variant: "destructive" });
+      return;
+    }
+    setTekst(data.verslag);
+    setBron("");
+    setBronUrl("");
+    toast({
+      title: `Verslag in ${data.zinnen} zinnen`,
+      description: "Uit onze eigen uitslag. Nog niet bewaard -- lees na en klik Bewaren.",
+    });
+  }
 
   async function herschrijf() {
     if (!supabase || !stage) return;
@@ -214,6 +248,15 @@ export default function VerslagDialog({
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="ghost" onClick={verwijder} disabled={bezig || laden} className="text-destructive">
             Verwijderen
+          </Button>
+          <Button
+            variant="outline"
+            onClick={genereerUitUitslag}
+            disabled={genereren || bezig || laden}
+            className="mr-auto"
+          >
+            <RefreshCw className={cn("mr-1.5 h-3.5 w-3.5", genereren && "animate-spin")} />
+            {genereren ? "Bezig…" : "Genereer uit uitslag"}
           </Button>
           <Button variant="outline" onClick={onClose} disabled={bezig}>Annuleren</Button>
           <Button onClick={bewaar} disabled={bezig || laden}>Bewaren</Button>
