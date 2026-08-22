@@ -7,6 +7,28 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, Mic } from "lucide-react";
 import { toast } from "sonner";
 
+/**
+ * Fire-and-forget: schrijf het etappeverslag voor de Koerskrant uit onze eigen
+ * uitslag. Draait naast de commentaargenerator en blokkeert het fiatteren niet;
+ * bestaat er al een verslag, dan overschrijft de upsert dat -- de admin kan het
+ * daarna nog met de hand aanpassen.
+ */
+async function triggerVerslag(stageId: string) {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase.functions.invoke("generate-stage-verslag", {
+      body: { stage_id: stageId, bewaar: true },
+    });
+    if (error) throw error;
+    toast.success("Verslag geschreven", { description: "Staat in de Koerskrant." });
+  } catch (e) {
+    // Zacht falen: zonder verslag werkt de krant gewoon, alleen zonder terugblik.
+    toast.warning("Verslag niet gelukt", {
+      description: e instanceof Error ? e.message : "Onbekende fout — je kunt het met de hand schrijven.",
+    });
+  }
+}
+
 // Fire-and-forget: roep de Wuyts/De Cauwer-commentaargenerator aan voor deze etappe.
 // Faalt stil; admin krijgt een toast met de échte error uit de response body.
 async function triggerCommentary(stageId: string, force = false) {
@@ -167,6 +189,8 @@ export default function StageApprovalCard({
                     await call("approve_stage_results", "Uitslag gefiatteerd en gepubliceerd");
                     // Trigger Wuyts/De Cauwer-commentaargenerator (async, niet-blokkerend voor admin)
                     void triggerCommentary(stageId, false);
+                    // En het krantenverslag uit onze eigen uitslag.
+                    void triggerVerslag(stageId);
                   }}
                   className="bg-green-600 hover:bg-green-700"
                 >
