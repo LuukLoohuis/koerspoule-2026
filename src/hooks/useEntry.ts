@@ -181,10 +181,13 @@ export function useEntry(gameId?: string) {
       queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] });
       if (user?.email) {
         const teamName = queryClient.getQueryData<{ team_name?: string | null }>(["entry", gameId, user.id])?.team_name;
+        // Profiel staat al in de cache (useProfile gebruikt dezelfde sleutel),
+        // dus dit kost geen extra query. Zonder naam groet aanhef() neutraal.
+        const displayName = queryClient.getQueryData<{ display_name?: string | null }>(["profile", user.id])?.display_name;
         sendEmail(
           user.email,
           "Je ploeg is ingediend — Koerspoule",
-          ploegIngediendHtml(user.email, teamName),
+          ploegIngediendHtml(displayName ?? "", teamName),
         );
       }
     },

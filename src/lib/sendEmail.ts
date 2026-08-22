@@ -32,10 +32,35 @@ function wrap(content: string) {
 </body></html>`;
 }
 
+/**
+ * Aanhef voor een mail. Valt terug op een neutrale groet in plaats van op het
+ * mailadres: "Beste johnfransen01@gmail.com" leest als een automaat, en het
+ * zet iemands adres nog eens extra in een mail die kan worden doorgestuurd.
+ */
+export function aanhef(naam?: string | null): string {
+  const schoon = (naam ?? "").trim();
+  if (!schoon || schoon.includes("@")) return "koersliefhebber";
+  return esc(schoon);
+}
+
+/**
+ * Ploegnamen en profielnamen komen van deelnemers zelf en gaan hier zo de HTML
+ * in. Escapen dus, anders bepaalt een deelnemer met een handige naam hoe de
+ * mail van iedereen eruitziet.
+ */
+export function esc(tekst: string): string {
+  return tekst
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export function registratieHtml(naam: string) {
+  const groet = aanhef(naam);
   return wrap(`
     <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:24px;margin:0 0 8px;color:#c8102e;">Welkom bij Koerspoule 🌹</h1>
-    <p style="font-size:15px;line-height:1.6;margin:16px 0;">Beste ${naam},</p>
+    <p style="font-size:15px;line-height:1.6;margin:16px 0;">Beste ${groet},</p>
     <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
       Je account is aangemaakt. Stel nu je ploeg samen, kies je jokers en daag vrienden uit in een subpoule.
     </p>
@@ -49,10 +74,11 @@ export function registratieHtml(naam: string) {
 }
 
 export function ploegIngediendHtml(naam: string, teamName?: string | null) {
-  const ploeg = teamName ? `<strong>${teamName}</strong>` : "je ploeg";
+  const groet = aanhef(naam);
+  const ploeg = teamName?.trim() ? `<strong>${esc(teamName.trim())}</strong>` : "je ploeg";
   return wrap(`
     <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:24px;margin:0 0 8px;color:#c8102e;">Ploeg ingediend ✅</h1>
-    <p style="font-size:15px;line-height:1.6;margin:16px 0;">Beste ${naam},</p>
+    <p style="font-size:15px;line-height:1.6;margin:16px 0;">Beste ${groet},</p>
     <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
       ${ploeg} is succesvol ingediend voor de Koerspoule. De etappes kunnen beginnen!
     </p>
@@ -66,10 +92,14 @@ export function ploegIngediendHtml(naam: string, teamName?: string | null) {
 }
 
 export function etappeAfgeslotenHtml(naam: string, stageNumber: number, stageName?: string | null) {
-  const etappe = stageName ? `Rit ${stageNumber} — ${stageName}` : `Rit ${stageNumber}`;
+  const groet = aanhef(naam);
+  // Ritnaam komt uit de beheerschermen; ook die escapen.
+  const etappe = stageName?.trim()
+    ? `Rit ${stageNumber} — ${esc(stageName.trim())}`
+    : `Rit ${stageNumber}`;
   return wrap(`
     <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:24px;margin:0 0 8px;color:#c8102e;">Uitslag gepubliceerd 🏁</h1>
-    <p style="font-size:15px;line-height:1.6;margin:16px 0;">Beste ${naam},</p>
+    <p style="font-size:15px;line-height:1.6;margin:16px 0;">Beste ${groet},</p>
     <p style="font-size:15px;line-height:1.6;margin:0 0 16px;">
       De uitslag van <strong>${etappe}</strong> is gepubliceerd. Bekijk je punten en de tussenstand.
     </p>

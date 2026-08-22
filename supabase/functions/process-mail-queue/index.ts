@@ -126,7 +126,19 @@ Deno.serve(async (req) => {
           });
           if (res.ok) {
             sent++;
-            await admin.from("mail_queue").update({ status: "sent", sent_at: new Date().toISOString(), error: null } as never).eq("id", row.id);
+            // De worker geeft het SES-MessageId door. Opslaan zodat een
+            // bouncemelding later aan deze exacte mail te koppelen is; mislukt
+            // het uitlezen, dan is dat geen reden de verzending te laten falen.
+            let messageId: string | null = null;
+            try {
+              messageId = (await res.json() as { id?: string | null }).id ?? null;
+            } catch { /* geen of onleesbare body */ }
+            await admin.from("mail_queue").update({
+              status: "sent",
+              sent_at: new Date().toISOString(),
+              error: null,
+              provider_message_id: messageId,
+            } as never).eq("id", row.id);
             return;
           }
           lastErr = `HTTP ${res.status}`;

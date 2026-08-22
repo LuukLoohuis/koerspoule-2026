@@ -207,7 +207,7 @@ export default function Login() {
             .then(() => {});
         }
 
-        sendEmail(email, "Welkom bij Koerspoule! 🌹", registratieHtml(name.trim() || email));
+        sendEmail(email, "Welkom bij Koerspoule! 🌹", registratieHtml(name.trim()));
 
         if (data.session) {
           // E-mailbevestiging staat uit → meteen ingelogd.
