@@ -707,9 +707,24 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                       {/* Desktop: "⚔ Vergelijk"-pill; zet de selectie (SubpouleManager
                           toont het duel als zijpaneel). */}
                       <button
-                        onClick={(e) => { e.stopPropagation(); setCompareId(isComparing ? null : m.user_id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Deze knop is de bediening op web; op mobiel opent de
+                          // rij zelf het duel. Beide moeten dezelfde regel
+                          // volgen -- alleen de rij afschermen liet web gewoon
+                          // vergelijken tijdens de inschrijving.
+                          if (!benchmarkOpen) {
+                            toast({
+                              title: t("subpoule.standings.benchmarkNogNiet"),
+                              description: t("subpoule.standings.benchmarkNogNietUitleg"),
+                            });
+                            return;
+                          }
+                          setCompareId(isComparing ? null : m.user_id);
+                        }}
                         className={cn(
                           "hidden md:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1",
+                          !benchmarkOpen && "opacity-55",
                           "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
                           "transition-colors duration-150",
                           isComparing
