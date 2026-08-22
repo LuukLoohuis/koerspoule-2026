@@ -1,0 +1,14 @@
+name = "koerspoule-mail"
+main = "src/index.ts"
+compatibility_date = "2026-08-22"
+
+[vars]
+AWS_REGION = "eu-north-1"
+MAIL_FROM = "Koerspoule <noreply@koerspoule.nl>"
+MAIL_REPLY_TO = "info@koerspoule.nl"
+SES_CONFIGURATION_SET = "koerspoule"
+
+# Geheimen staan bewust NIET in dit bestand. Zet ze met:
+#   wrangler secret put WORKER_SECRET
+#   wrangler secret put AWS_ACCESS_KEY_ID
+#   wrangler secret put AWS_SECRET_ACCESS_KEY

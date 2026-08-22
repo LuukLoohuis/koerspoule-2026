@@ -14,8 +14,8 @@ const CORS = {
 
 // Chunk ruim onder de edge-tijdslimiet: 300 mails à ~8-9/s ≈ 40s per run.
 const CHUNK = 300;
-const BATCH_SIZE = 10;   // gelijktijdige mails (Resend Pro ≈ 10 req/s)
-const PAUSE_MS = 800;    // ≈ 8-9 mails/sec
+const BATCH_SIZE = 10;   // gelijktijdige mails
+const PAUSE_MS = 800;    // ≈ 8-9 mails/sec -- ruim onder de 14/s van SES
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 type QueueRow = { id: string; campaign_id: string; email: string; unsub_token: string; attempts: number };
@@ -110,6 +110,11 @@ Deno.serve(async (req) => {
         to: row.email,
         subject: c.subject,
         html: buildHtml(c.body, unsubUrl, c.title_color ?? "#c8102e", c.title_size ?? 24, c.include_steun === true, c.include_cta !== false),
+        // Zelfde link als in de voettekst, maar dan als List-Unsubscribe-header.
+        // Gmail en Outlook tonen daarmee hun eigen uitschrijfknop; dat scheelt
+        // klachten, en juist het klachtpercentage bepaalt bij SES of je account
+        // blijft bestaan.
+        listUnsubscribe: unsubUrl,
       });
       let lastErr = "";
       for (let attempt = 0; attempt < 4; attempt += 1) {
