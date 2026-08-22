@@ -25,8 +25,5 @@ verify_jwt = false
 
 # Resend ondertekent zijn meldingen met Svix, niet met een Supabase-token.
 # De handtekeningcontrole in de functie is daarmee de poort.
-[functions.resend-webhook]
-verify_jwt = false
-
 [functions.ses-webhook]
 verify_jwt = false

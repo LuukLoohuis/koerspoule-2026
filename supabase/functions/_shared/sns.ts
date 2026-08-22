@@ -1,8 +1,7 @@
 // Ontleding van SES-meldingen die via Amazon SNS binnenkomen.
 //
-// Los van de edge function gehouden om dezelfde reden als _shared/webhook.ts:
-// hier staat geen npm:-import in, zodat de testsuite in src/ deze code echt
-// kan uitvoeren. Dit is de enige plek die bepaalt of een adres definitief van
+// Los van de edge function gehouden: hier staat geen npm:-import in, zodat de
+// testsuite in src/ deze code echt kan uitvoeren. Dit is de enige plek die bepaalt of een adres definitief van
 // de lijst gaat, en suppressed_emails is append-only -- een onterechte
 // blokkade krijg je vanuit de app niet meer terug.
 
