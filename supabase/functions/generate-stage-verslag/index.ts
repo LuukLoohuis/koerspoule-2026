@@ -31,9 +31,11 @@ HARDE REGELS
 2. EIGEN WOORDEN: neem GEEN enkele zin, deelzin of kenmerkende formulering uit de bron over. Haal de FEITEN eruit en schrijf die zelf op. Als je twijfelt of een formulering van de bron is, herschrijf hem.
 3. GEEN CITATEN: neem geen uitspraken van renners of ploegleiders letterlijk over. Vat ze samen ("Pogacar noemde het zijn zwaarste dag") of laat ze weg.
 4. FEITEN BLIJVEN FEITEN: verzin niets. Geen namen, tijden, plaatsen of gebeurtenissen die niet in de bron staan. Weet je iets niet, laat het weg.
-5. TOON: nuchter en meeslepend, zoals een goede krantensamenvatting. Nederlands. Geen uitroeptekens, geen aansprekingen van de lezer, geen "wij" of "je".
-6. GEEN POULE: dit gaat over de koers, niet over deelnemers, punten of subpoules.
-7. Begin met de kern: wie won en hoe. Daarna pas het verloop.
+5. TOON: dit is de sportpagina. Schrijf met vaart, gebruik krachtige werkwoorden en laat een cijfer knallen. Eén uitroepteken in het hele stuk mag, meer niet. Geen aanspreking van de lezer, geen "wij" of "je".
+6. Begin met de kern: wie de rit won en hoe. Daarna pas het verloop.
+7. POULE: krijg je onderaan POULECIJFERS, sluit dan af met één of twee zinnen daarover -- wie de dagzege pakte en wie aan de leiding gaat. Staan die cijfers er niet, laat de poule dan volledig weg.
+8. DEELNEMERSNAMEN VET: zet elke naam van een DEELNEMER tussen dubbele sterretjes, zo: **Marieke de Groot**. Doe dit elke keer dat de naam voorkomt. Namen van RENNERS krijgen GEEN sterretjes.
+9. GEEN SUBPOULES: noem geen subpoulenamen.
 
 Antwoord UITSLUITEND met JSON:
 {"verslag":"<5 tot 10 zinnen, alinea's gescheiden door \\n\\n>","kop":"<krantenkop van maximaal zeven woorden, bevat de achternaam van de winnaar, geen punt aan het eind>"}`;
@@ -307,7 +309,36 @@ Deno.serve(async (req) => {
         body?.stage_naam ? `Traject: ${body.stage_naam}` : null,
         body?.winnaar ? `Winnaar volgens onze uitslag: ${body.winnaar}` : null,
       ].filter(Boolean).join("\n");
-      prompt = `${context ? context + "\n\n" : ""}BRONARTIKEL (alleen als feitenbron -- neem geen formuleringen over):\n\n${bronTekst}`;
+
+      // Kennen we de etappe, dan halen we ook de poulecijfers erbij. Het
+      // bronartikel weet niets van onze deelnemers, dus zonder dit blijft het
+      // stuk puur over de profs gaan.
+      let poule = "";
+      if (body?.stage_id) {
+        try {
+          const dienst = createClient(
+            Deno.env.get("SUPABASE_URL")!,
+            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+          );
+          const f = await haalFeiten(dienst, body.stage_id);
+          const regels: string[] = [];
+          if (f.dagwinnaar) regels.push(`Beste deelnemer van de dag: ${f.dagwinnaar.naam} met ${f.dagwinnaar.punten} punten`);
+          if (f.leider) {
+            const marge = f.leider.voorsprong === null || f.leider.voorsprong === 0
+              ? ""
+              : ` met ${f.leider.voorsprong} punten voorsprong`;
+            regels.push(`Aan de leiding in het algemeen klassement: ${f.leider.naam} met ${f.leider.punten} punten${marge}`);
+          }
+          regels.push(`Aantal deelnemers in de poule: ${f.aantalDeelnemers}`);
+          if (regels.length > 1) poule = `\n\nPOULECIJFERS:\n${regels.join("\n")}`;
+        } catch (e) {
+          // Zonder poulecijfers is het verslag nog steeds bruikbaar; alleen dan
+          // zonder de afsluiting over de deelnemers.
+          console.error("poulecijfers ophalen mislukt", e);
+        }
+      }
+
+      prompt = `${context ? context + "\n\n" : ""}BRONARTIKEL (alleen als feitenbron -- neem geen formuleringen over):\n\n${bronTekst}${poule}`;
       systeem = SYSTEM_PROMPT;
     } else if (body?.stage_id) {
       const dienst = createClient(

@@ -69,7 +69,7 @@ export default function VerslagDialog({
     }
     setHerschrijven(true);
     const { data, error } = await supabase.functions.invoke("generate-stage-verslag", {
-      body: { bron_tekst: bronnetje, stage_nummer: stage.stage_number, stage_naam: stage.name },
+      body: { bron_tekst: bronnetje, stage_id: stage.id, stage_nummer: stage.stage_number, stage_naam: stage.name },
     });
     setHerschrijven(false);
     if (error || !data?.verslag) {

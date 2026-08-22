@@ -14,6 +14,34 @@ import { getCalculationProgress, isCalculationActive, isFiatReady } from "@/lib/
 import { useNavigate } from "react-router-dom";
 import { matchesParticipantSearch } from "@/lib/adminBreakdownSearch";
 
+/**
+ * Schrijft het etappeverslag voor de Koerskrant uit onze eigen uitslag.
+ * Fire-and-forget: het fiatteren mag hier niet op wachten.
+ */
+async function triggerVerslag(stageId: string, stageNumber: number) {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase.functions.invoke("generate-stage-verslag", {
+      body: { stage_id: stageId, bewaar: true },
+    });
+    if (error) throw error;
+    toast.success(`Verslag geschreven voor etappe ${stageNumber}`, {
+      description: "Staat als hoofdartikel in de Koerskrant.",
+    });
+  } catch (e) {
+    let detail = e instanceof Error ? e.message : String(e);
+    const ctx = (e as { context?: Response }).context;
+    if (ctx && typeof ctx.text === "function") {
+      try {
+        const body = await ctx.text();
+        if (body) detail = body;
+      } catch { /* val terug op de bovenstaande melding */ }
+    }
+    toast.warning("Verslag niet gelukt", { description: detail });
+  }
+}
+
+
 type BreakdownRow = {
   entry_id: string;
   team_name: string | null;
@@ -801,6 +829,13 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
       navigate(`/uitslagen?game=${encodeURIComponent(activeGameId)}&view=etappes&stage=${row.stage_number}`);
     }
     setApprovalProgress(null);
+
+    // Het krantenverslag wél automatisch: dat is één aanroep voor de hele
+    // etappe (niet per subpoule zoals het commentaar), dus het kost weinig en
+    // de krant heeft meteen een hoofdartikel. Niet-blokkerend; faalt het, dan
+    // werkt de krant gewoon door zonder terugblik.
+    if (!isGc) void triggerVerslag(stageId, row.stage_number);
+
     // Bewust GEEN automatische commentaargeneratie meer bij fiatteren: het
     // commentaar wordt on-demand per subpoule gegenereerd zodra een deelnemer
     // 'm opent (of via de handmatige knoppen hieronder).
