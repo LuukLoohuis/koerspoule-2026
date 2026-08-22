@@ -16,14 +16,20 @@ van provider wisselen niets aan de Supabase-kant raakt.
 
 ## Eenmalig instellen
 
+Alle commando's draaien vanuit deze map (`mail-worker/`), niet vanuit de hoofdrepo.
+Wrangler staat als devDependency vastgepind, dus een globale install is niet nodig.
+
 ```bash
-npm install -g wrangler
-wrangler login
-wrangler secret put WORKER_SECRET          # zelfde waarde als MAIL_WORKER_SECRET in Supabase
-wrangler secret put AWS_ACCESS_KEY_ID
-wrangler secret put AWS_SECRET_ACCESS_KEY
-wrangler deploy
+npm install
+npx wrangler login
+npx wrangler secret put WORKER_SECRET          # zelfde waarde als MAIL_WORKER_SECRET in Supabase
+npx wrangler secret put AWS_ACCESS_KEY_ID
+npx wrangler secret put AWS_SECRET_ACCESS_KEY
+npx wrangler deploy
 ```
+
+Elk `secret put`-commando vraagt de waarde daarna interactief; typ of plak 'm daar,
+zodat hij niet in je shellgeschiedenis belandt.
 
 Geheimen horen niet in `wrangler.toml` en niet in git. De niet-geheime instellingen
 (regio, afzender, configuratieset) staan wél in `wrangler.toml` onder `[vars]`.
