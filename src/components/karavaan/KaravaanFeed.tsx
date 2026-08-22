@@ -17,6 +17,7 @@ import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type Karavaan
 import MiniStrip, { type HorsTabKey } from "@/components/karavaan/MiniStrip";
 import Voorbeschouwing from "@/components/karavaan/Voorbeschouwing";
 import Verslag from "@/components/karavaan/Verslag";
+import { useEtappeVerslag } from "@/hooks/useEtappeVerslag";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import Stamp from "@/components/retro/Stamp";
@@ -202,6 +203,11 @@ export default function KaravaanFeed({
     };
   })();
 
+  // De rubriekknop scrolt naar #krant-verslag, en die sectie bestaat alleen als
+  // er een verslag is. Zonder deze check stond er een knop die nergens heen ging.
+  const { data: verslag } = useEtappeVerslag(laatsteEtappe?.stage_id);
+  const heeftVerslag = Boolean(verslag?.tekst?.trim());
+
   const rubrieken: Rubriek[] = [
     ...(selectedSubpouleId
       ? [{
@@ -218,7 +224,7 @@ export default function KaravaanFeed({
       titel: t("karavaan.voorpagina.rubVoorbeschouwing"),
       onClick: () => naarSectie("krant-voorbeschouwing"),
     },
-    ...(etappes.length > 0
+    ...(heeftVerslag
       ? [{
           key: "verslag",
           emoji: "📰",
