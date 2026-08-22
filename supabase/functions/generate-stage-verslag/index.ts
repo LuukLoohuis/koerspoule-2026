@@ -19,6 +19,24 @@ const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+/**
+ * Leesbare tekst uit een fout.
+ *
+ * Een Supabase/PostgREST-fout is een gewoon object en geen Error-instantie, dus
+ * String(err) levert "[object Object]" op -- precies de melding die je niet
+ * verder helpt. Dezelfde val als entryErrorMessage in src/hooks/useEntry.ts,
+ * die dit al eerder oploste.
+ */
+function foutTekst(err: unknown): string {
+  if (!err) return "Onbekende fout";
+  if (typeof err === "string") return err;
+  if (err instanceof Error) return err.message;
+  const o = err as { message?: string; details?: string; hint?: string; code?: string };
+  const delen = [o.message, o.details, o.hint].filter(Boolean);
+  const kern = delen.length > 0 ? delen.join(" — ") : JSON.stringify(err);
+  return o.code ? `${kern} (${o.code})` : kern;
+}
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
@@ -420,7 +438,8 @@ Deno.serve(async (req) => {
 
     return json({ ok: true, ...resultaat, zinnen, model: MODEL });
   } catch (err) {
-    console.error("generate-stage-verslag", err);
-    return json({ error: err instanceof Error ? err.message : String(err) }, 500);
+    const melding = foutTekst(err);
+    console.error("generate-stage-verslag", melding, err);
+    return json({ error: melding }, 500);
   }
 });
