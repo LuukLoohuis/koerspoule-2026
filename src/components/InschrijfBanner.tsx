@@ -21,13 +21,10 @@ import type { GameRow } from "@/hooks/useAllGames";
 export default function InschrijfBanner({
   game,
   dismissable = false,
-  toonAantal = true,
   className,
 }: {
   game: GameRow;
   dismissable?: boolean;
-  /** Uit op de homepage: daar staat het deelnemersaantal al in de hero-teller. */
-  toonAantal?: boolean;
   className?: string;
 }) {
   const storageKey = `inschrijf_banner_dismissed:${game.id}`;
@@ -50,7 +47,7 @@ export default function InschrijfBanner({
   // Deelnemersaantal: zelfde admin-vlag als de teller op de homepage, zodat
   // dit cijfer nooit vanzelf ergens opduikt. Hook staat vóór de guards, want
   // hooks mogen niet achter een early return.
-  const { data: aantal } = useDeelnemersAantal(game.id, toonAantal && Boolean(game.deelnemers_teller_visible));
+  const { data: aantal } = useDeelnemersAantal(game.id, Boolean(game.deelnemers_teller_visible));
 
   // Dubbele guard: vlag aan én status daadwerkelijk open_inschrijving.
   if (String(game.status) !== "open_inschrijving" || !game.inschrijf_banner_visible) return null;
@@ -71,11 +68,12 @@ export default function InschrijfBanner({
 
   // Eén grijze regel in plaats van een losse tellerkolom: hetzelfde nieuws,
   // een kwart van de hoogte.
+  // Kort genoeg om ook op een telefoon op één regel te passen -- daarom het
+  // deelnemersaantal in plaats van "samenstellen kost vijf minuten" zodra we
+  // dat aantal hebben.
   const sub = [
     "Gratis meedoen",
-    toonAantal && typeof aantal === "number" && aantal > 0
-      ? `${aantal} deelnemers`
-      : "samenstellen kost vijf minuten",
+    typeof aantal === "number" && aantal > 0 ? `${aantal} deelnemers` : "kost vijf minuten",
   ].join(" · ");
 
   return (
@@ -107,8 +105,7 @@ export default function InschrijfBanner({
           Inschrijving geopend
         </p>
         <p className="mt-0.5 truncate font-display text-[15px] font-black leading-tight">{game.name}</p>
-        {/* Op smalle schermen weg: daar telt elke pixel en de knop is het doel. */}
-        <p className="hidden truncate text-[11.5px] leading-tight text-muted-foreground sm:block">{sub}</p>
+        <p className="truncate text-[11.5px] leading-tight text-muted-foreground">{sub}</p>
       </div>
 
       <Link

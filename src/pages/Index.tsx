@@ -600,9 +600,9 @@ export default function Index() {
 
       {/* ─── INSCHRIJF-BANNER(S) — per game met de vlag aan (direct onder hero) ── */}
       {inschrijfGames.length > 0 && (
-        <section className="container mx-auto px-5 pt-6 space-y-3">
+        <section className="container mx-auto max-w-3xl px-5 pt-6 space-y-3">
           {inschrijfGames.map((g) => (
-            <InschrijfBanner key={g.id} game={g} toonAantal={false} />
+            <InschrijfBanner key={g.id} game={g} />
           ))}
         </section>
       )}
