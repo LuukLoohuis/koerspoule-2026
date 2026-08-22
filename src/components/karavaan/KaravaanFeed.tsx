@@ -125,6 +125,14 @@ export default function KaravaanFeed({
     enabled: Boolean(horsSummary.lefevereInput),
   });
 
+  // Bepaalt of er een verslag is: dat stuurt zowel het hoofdartikel als de
+  // rubriekknop. Moet BOVEN de early return hieronder staan -- een hook die
+  // soms wel en soms niet draait breekt de hook-volgorde. Daarom hier de
+  // etappe rechtstreeks uit de feed in plaats van via laatsteEtappe, dat pas
+  // verderop bestaat.
+  const { data: verslag } = useEtappeVerslag(feed.data?.etappes?.[0]?.stage_id);
+  const heeftVerslag = Boolean(verslag?.tekst?.trim());
+
   // Empty: geen subpoules
   if (subpoules.length === 0 && !subpoulesQuery.isLoading) {
     return (
@@ -168,11 +176,6 @@ export default function KaravaanFeed({
         { key: "wd", waarde: horsSummary.directorScore == null ? "—" : horsSummary.directorScore.toFixed(1).replace(".", ","), label: t("karavaan.ministrip.wielerdirLabel"), onClick: () => onOpenHors?.("wielerdirecteur") },
       ]
     : [];
-
-  // De rubriekknop scrolt naar #krant-verslag, en die sectie bestaat alleen als
-  // er een verslag is. Zonder deze check stond er een knop die nergens heen ging.
-  const { data: verslag } = useEtappeVerslag(laatsteEtappe?.stage_id);
-  const heeftVerslag = Boolean(verslag?.tekst?.trim());
 
   // Hoofdartikel over de laatste etappe. De kop komt uit de generator, maar
   // alleen als die de ritwinnaar noemt — anders een sjabloon uit de uitslag.
