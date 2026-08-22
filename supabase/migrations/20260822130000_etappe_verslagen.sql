@@ -32,6 +32,13 @@ create policy etappe_verslag_admin_write on public.etappe_verslagen
 
 create index if not exists etappe_verslagen_stage_idx on public.etappe_verslagen(stage_id);
 
+-- RLS bepaalt welke rijen een rol mag raken; GRANT of hij de tabel überhaupt
+-- mag openen. Allebei nodig -- zonder deze regels faalt elke schrijfactie met
+-- "permission denied for table".
+grant select on public.etappe_verslagen to anon, authenticated;
+grant insert, update, delete on public.etappe_verslagen to authenticated;
+grant all on public.etappe_verslagen to service_role;
+
 -- updated_at bijhouden, zodat "bijgewerkt op" klopt zonder dat de client dat
 -- hoeft mee te sturen.
 create or replace function public.touch_etappe_verslag()
