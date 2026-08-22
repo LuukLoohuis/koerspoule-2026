@@ -39,7 +39,7 @@ export function intro(tekst: string, maxTekens = 220): string {
  */
 export function bronregel(bron: string | null | undefined): string | null {
   const naam = bron?.trim();
-  return naam ? `Met toestemming overgenomen van ${naam}` : null;
+  return naam ? `Bron: ${naam}` : null;
 }
 
 /** Alleen http(s)-links; voorkomt javascript:-URL's uit een geplakte tekst. */

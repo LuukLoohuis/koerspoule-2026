@@ -59,7 +59,7 @@ describe("intro", () => {
 
 describe("bronregel", () => {
   it("schrijft de bron toe", () => {
-    expect(bronregel("WielerFlits")).toBe("Met toestemming overgenomen van WielerFlits");
+    expect(bronregel("WielerFlits")).toBe("Bron: WielerFlits");
   });
 
   it("laat de regel weg bij eigen tekst", () => {
