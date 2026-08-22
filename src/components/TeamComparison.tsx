@@ -17,6 +17,7 @@ import { Star, ArrowUp, ArrowDown, Crown, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchAllRows } from "@/lib/fetchAll";
 import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
+import { useEntry } from "@/hooks/useEntry";
 
 // ── Gedeelde stijl voor "zelfde keuze"-rijen in álle head-to-head/benchmark-
 //    weergaven (TeamComparison is de enige vergelijkingscomponent; CompareSetup
@@ -128,6 +129,11 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
 
   const { data: basePts } = useRiderBasePoints(game?.id);
   const jokerMult = useJokerMultiplier(game?.id);
+  // De RPC levert alleen INGEDIENDE ploegen (entries.status = 'submitted'), dus
+  // een concept komt hier binnen als entry_id = null -- niet te onderscheiden
+  // van "helemaal geen ploeg". Onze eigen entry kennen we wel volledig, dus
+  // daarmee kunnen we de juiste reden noemen in plaats van te gokken.
+  const { entry: mijnEntry } = useEntry(game?.id);
 
   const me = useMemo<SubpouleEntry | null>(
     () => detail?.entries.find((e) => e.user_id === user?.id) ?? null,
@@ -152,11 +158,14 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
   }
 
   if (!me?.entry_id || !opp?.entry_id) {
+    const reden = !me?.entry_id
+      ? mijnEntry?.status === "draft"
+        ? t("subpoule.comparison.ownTeamConcept")
+        : t("subpoule.comparison.noOwnTeamUitleg")
+      : t("subpoule.comparison.opponentNoTeamUitleg", { name: opponentName });
     return (
       <Card className="retro-border">
-        <CardContent className="p-4 text-sm text-muted-foreground">
-          {!me?.entry_id ? t("subpoule.comparison.noOwnTeam") : t("subpoule.comparison.opponentNoTeam", { name: opponentName })}
-        </CardContent>
+        <CardContent className="p-4 text-sm text-muted-foreground">{reden}</CardContent>
       </Card>
     );
   }

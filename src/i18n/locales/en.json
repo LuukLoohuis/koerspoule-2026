@@ -638,7 +638,8 @@
       "duel": "Duel",
       "closeDuel": "Close duel",
       "benchmarkNogNiet": "Not just yet",
-      "benchmarkNogNietUitleg": "Comparing opens when the race starts. Teams can still change until then."
+      "benchmarkNogNietUitleg": "Comparing opens when the race starts. Teams can still change until then.",
+      "concept": "draft"
     },
     "daguitslag": {
       "emptyTitle": "No day result yet",
@@ -714,7 +715,10 @@
       "pt": "pt",
       "sameChoice": "same pick",
       "jokers": "Jokers",
-      "jerseysAndClassifications": "Jerseys & GC predictions"
+      "jerseysAndClassifications": "Jerseys & GC predictions",
+      "ownTeamConcept": "Your team is still a draft. Comparing needs a submitted team — submit yours in My Peloton.",
+      "noOwnTeamUitleg": "You don't have a team for this race yet. Build one in My Peloton to compare here.",
+      "opponentNoTeamUitleg": "{{name}} hasn't submitted a team yet. Once they do, you can compare."
     },
     "koerscafe": {
       "selectSubpoule": "Select a subpoule to open the Koerscafé.",

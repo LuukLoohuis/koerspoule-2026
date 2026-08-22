@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
+import { useEntry } from "@/hooks/useEntry";
 import { maySeeLiveContent, canRegister } from "@/lib/gameStatus";
 import { useMinWidth } from "@/hooks/use-mobile";
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -63,6 +64,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   // niet tijdens de inschrijving: dan staan de ploegen nog niet vast en zou je
   // een vergelijking zien die morgen alweer anders is.
   const benchmarkOpen = !canRegister(game?.status) || (isAdmin && adminTestmodus);
+  // Alleen nodig om op je EIGEN rij "concept" i.p.v. "geen team" te tonen.
+  const { entry: mijnEntry } = useEntry(game?.id);
   const { data: members = [], isLoading: membersLoading } = useSubpouleMembers(subpouleId);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stages = [] } = useStages(game?.id);
@@ -617,7 +620,15 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                     </span>
                   )}
                   {!m.entry_id && (
-                    <Badge variant="secondary" className="text-xs shrink-0">{t("subpoule.standings.noTeam")}</Badge>
+                    <Badge variant="secondary" className="text-xs shrink-0">
+                      {/* Een concept telt in de standen niet mee (de RPC filtert
+                          op status = 'submitted'), maar "geen team" klopt dan
+                          niet: de ploeg bestaat, hij is alleen niet ingediend.
+                          Alleen voor jezelf kennen we die status. */}
+                      {isMe && mijnEntry?.status === "draft"
+                        ? t("subpoule.standings.concept")
+                        : t("subpoule.standings.noTeam")}
+                    </Badge>
                   )}
                   </div>
                   {/* De mens achter de ploegnaam, als eigen regel.

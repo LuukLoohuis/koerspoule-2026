@@ -638,7 +638,8 @@
       "duel": "Duel",
       "closeDuel": "Duel sluiten",
       "benchmarkNogNiet": "Nog even geduld",
-      "benchmarkNogNietUitleg": "Vergelijken kan zodra de koers begint. Nu kunnen ploegen nog wijzigen."
+      "benchmarkNogNietUitleg": "Vergelijken kan zodra de koers begint. Nu kunnen ploegen nog wijzigen.",
+      "concept": "concept"
     },
     "daguitslag": {
       "emptyTitle": "Nog geen daguitslag",
@@ -714,7 +715,10 @@
       "pt": "pt",
       "sameChoice": "zelfde keuze",
       "jokers": "Jokers",
-      "jerseysAndClassifications": "Truien & eindklassementen"
+      "jerseysAndClassifications": "Truien & eindklassementen",
+      "ownTeamConcept": "Je ploeg staat nog als concept. Vergelijken kan pas met een ingediende ploeg — dien je ploeg in bij Mijn Peloton.",
+      "noOwnTeamUitleg": "Je hebt nog geen ploeg voor deze koers. Stel er een samen bij Mijn Peloton, dan kun je hier vergelijken.",
+      "opponentNoTeamUitleg": "{{name}} heeft nog geen ploeg ingediend. Zodra dat gebeurt, kun je vergelijken."
     },
     "koerscafe": {
       "selectSubpoule": "Selecteer een subpoule om het Koerscafé te openen.",
