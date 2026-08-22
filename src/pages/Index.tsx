@@ -523,17 +523,18 @@ export default function Index() {
                   {t("landing.ctaBuildTeam")}
                 </Button>
                 <Button
-                  className="retro-border-primary font-bold"
-                  onClick={() => navigate("/login?register=1")}
-                >
-                  {t("landing.ctaRegister")}
-                </Button>
-                <Button
                   variant="outline"
                   className="retro-border"
                   onClick={() => navigate("/uitslagen")}
                 >
                   {t("landing.ctaResults")}
+                </Button>
+                <Button
+                  variant="link"
+                  className="h-auto p-0 text-base text-muted-foreground underline-offset-4"
+                  onClick={() => navigate("/login")}
+                >
+                  {t("landing.ctaHaveAccount")}
                 </Button>
                 <span className="margin-note tilt-l hidden md:inline-block ml-3 text-lg">
                   {t("landing.marginFree")}
@@ -601,7 +602,7 @@ export default function Index() {
       {inschrijfGames.length > 0 && (
         <section className="container mx-auto px-5 pt-6 space-y-3">
           {inschrijfGames.map((g) => (
-            <InschrijfBanner key={g.id} game={g} />
+            <InschrijfBanner key={g.id} game={g} toonAantal={false} />
           ))}
         </section>
       )}
@@ -614,12 +615,6 @@ export default function Index() {
             <h2 className="heading-oswald text-xl md:text-2xl leading-tight">{t("landing.readyToRace")}</h2>
           </div>
           <CountdownBanner className="w-full md:w-auto md:max-w-xl shrink-0" />
-          <Button
-            className="retro-border-primary font-bold shrink-0 w-full md:w-auto"
-            onClick={() => navigate("/login?register=1")}
-          >
-            {t("landing.ctaRegister")}
-          </Button>
         </div>
       </section>
 

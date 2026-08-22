@@ -21,10 +21,13 @@ import type { GameRow } from "@/hooks/useAllGames";
 export default function InschrijfBanner({
   game,
   dismissable = false,
+  toonAantal = true,
   className,
 }: {
   game: GameRow;
   dismissable?: boolean;
+  /** Uit op de homepage: daar staat het deelnemersaantal al in de hero-teller. */
+  toonAantal?: boolean;
   className?: string;
 }) {
   const storageKey = `inschrijf_banner_dismissed:${game.id}`;
@@ -47,7 +50,7 @@ export default function InschrijfBanner({
   // Deelnemersaantal: zelfde admin-vlag als de teller op de homepage, zodat
   // dit cijfer nooit vanzelf ergens opduikt. Hook staat vóór de guards, want
   // hooks mogen niet achter een early return.
-  const { data: aantal } = useDeelnemersAantal(game.id, Boolean(game.deelnemers_teller_visible));
+  const { data: aantal } = useDeelnemersAantal(game.id, toonAantal && Boolean(game.deelnemers_teller_visible));
 
   // Dubbele guard: vlag aan én status daadwerkelijk open_inschrijving.
   if (String(game.status) !== "open_inschrijving" || !game.inschrijf_banner_visible) return null;
@@ -70,8 +73,10 @@ export default function InschrijfBanner({
   // een kwart van de hoogte.
   const sub = [
     "Gratis meedoen",
-    typeof aantal === "number" && aantal > 0 ? `${aantal} deelnemers` : null,
-  ].filter(Boolean).join(" · ");
+    toonAantal && typeof aantal === "number" && aantal > 0
+      ? `${aantal} deelnemers`
+      : "samenstellen kost vijf minuten",
+  ].join(" · ");
 
   return (
     <div

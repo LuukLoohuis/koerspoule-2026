@@ -143,7 +143,8 @@
     "stageAxis": "RIT",
     "yourRaceSoFar": "Jouw koers tot nu toe",
     "afterStage": "Na rit {{stage}}",
-    "progressChartAria": "Positieverloop na {{stages}} ritten, nu op plek {{rank}}"
+    "progressChartAria": "Positieverloop na {{stages}} ritten, nu op plek {{rank}}",
+    "ctaHaveAccount": "Al een account? Inloggen"
   },
   "auth": {
     "login": {
