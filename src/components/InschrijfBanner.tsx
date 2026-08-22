@@ -18,13 +18,6 @@ import type { GameRow } from "@/hooks/useAllGames";
  * dismissable=true (in-app): wegklikken onthouden per game in localStorage.
  * Homepage gebruikt dismissable=false → blijft staan zolang de vlag aan is.
  */
-/** Donkerder variant van de koerskleur, voor de linkerkant van het verloop. */
-function schaduw(hex: string): string {
-  const n = parseInt(hex.replace("#", ""), 16);
-  const mix = (v: number) => Math.round(v * 0.55);
-  return `#${[(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => mix(v).toString(16).padStart(2, "0")).join("")}`;
-}
-
 export default function InschrijfBanner({
   game,
   dismissable = false,
@@ -71,91 +64,71 @@ export default function InschrijfBanner({
 
   const thema = THEMAS[deriveThemaKey(game.theme, game.game_type)];
   const kleur = thema.kleuren.primair;
-  const accent = thema.kleuren.secundair;
-  const donker = schaduw(kleur);
   const isSchaatsen = String(game.game_type ?? "").toLowerCase() === "meermarathon";
+
+  // Eén grijze regel in plaats van een losse tellerkolom: hetzelfde nieuws,
+  // een kwart van de hoogte.
+  const sub = [
+    "Gratis meedoen",
+    typeof aantal === "number" && aantal > 0 ? `${aantal} deelnemers` : null,
+  ].filter(Boolean).join(" · ");
 
   return (
     <div
       className={cn(
-        "flex overflow-hidden rounded-2xl border border-border bg-card",
-        "shadow-[0_14px_30px_-18px_rgba(0,0,0,0.6)]",
+        "flex items-center gap-3 overflow-hidden rounded-xl border border-border bg-card px-3 py-2.5",
+        "shadow-[0_8px_20px_-16px_rgba(0,0,0,0.5)]",
         className,
       )}
       role="note"
     >
-      {/* Kleurpaneel links: geeft de banner gewicht zonder dat de tekst op een
-          kleurvlak komt te staan. De koersnaam blijft daardoor het scherpst
-          leesbare onderdeel, en dat is waar het om draait. */}
-      <div
-        className="relative grid w-[68px] shrink-0 place-items-center sm:w-[76px]"
-        style={{ background: `linear-gradient(150deg, ${kleur} 0%, ${donker} 100%)` }}
+      {/* Schildje in plaats van het kleurvlak van 76px met streeppatroon en
+          verloop. Zelfde koersidentiteit, een fractie van de inkt. */}
+      <span
+        aria-hidden
+        className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[11px] text-[19px]"
+        style={{ background: kleur }}
       >
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "repeating-linear-gradient(114deg, rgba(255,255,255,.10) 0 2px, transparent 2px 20px)",
-          }}
-        />
-        <span aria-hidden className="relative text-[26px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
-          {isSchaatsen ? "\u26F8\uFE0F" : "\uD83D\uDEB4"}
-        </span>
+        {isSchaatsen ? "\u26F8\uFE0F" : "\uD83D\uDEB4"}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        {/* De rode pil is een rode bovenregel geworden: zelfde signaal, minder
+            gewicht, en het scheelt een regel hoogte. */}
+        <p
+          className="font-mono text-[9px] font-extrabold uppercase leading-none tracking-[0.17em]"
+          style={{ color: kleur }}
+        >
+          Inschrijving geopend
+        </p>
+        <p className="mt-0.5 truncate font-display text-[15px] font-black leading-tight">{game.name}</p>
+        {/* Op smalle schermen weg: daar telt elke pixel en de knop is het doel. */}
+        <p className="hidden truncate text-[11.5px] leading-tight text-muted-foreground sm:block">{sub}</p>
       </div>
 
-      <div
-        className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-4 px-4 py-3.5 sm:px-5"
-        style={{ borderLeft: `3px solid ${accent}` }}
+      <Link
+        to={`/team-samenstellen?game=${game.id}`}
+        className={cn(
+          "inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-1.5 text-white",
+          "font-display text-[12px] font-black transition-transform",
+          "hover:-translate-y-0.5 active:translate-y-px",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+        )}
+        style={{ background: kleur }}
       >
-        <div className="min-w-0">
-          <span
-            className="inline-block rounded-full px-2.5 py-1 font-mono text-[9.5px] font-extrabold uppercase tracking-[0.2em] text-white"
-            style={{ background: kleur }}
-          >
-            Inschrijving geopend
-          </span>
-          <p className="mt-1.5 font-display text-lg font-black leading-tight sm:text-xl">{game.name}</p>
-          <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-            Gratis meedoen · samenstellen kost vijf minuten
-          </p>
-        </div>
+        Doe mee <ArrowRight className="h-3.5 w-3.5" />
+      </Link>
 
-        <div className="flex items-center gap-4">
-          {/* Sociaal bewijs achter dezelfde admin-vlag als de homepage-teller;
-              op smalle schermen weg zodat de knop niet in de verdrukking komt. */}
-          {typeof aantal === "number" && aantal > 0 && (
-            <span className="hidden text-right sm:block">
-              <span className="block font-display text-lg font-black leading-none">{aantal}</span>
-              <span className="mt-1 block font-mono text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                deelnemers
-              </span>
-            </span>
-          )}
-          <Link
-            to={`/team-samenstellen?game=${game.id}`}
-            className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 rounded-full px-5 py-2.5 text-white",
-              "font-display text-[13px] font-black transition-transform",
-              "hover:-translate-y-0.5 active:translate-y-px",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-            )}
-            style={{ background: kleur, boxShadow: `0 8px 18px -6px ${kleur}` }}
-          >
-            Doe mee <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-          {dismissable && (
-            <button
-              type="button"
-              onClick={dismiss}
-              aria-label="Banner sluiten"
-              className="-mr-1 shrink-0 self-start rounded p-1 text-muted-foreground/60 transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-      </div>
+      {dismissable && (
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label="Banner sluiten"
+          className="-mr-0.5 shrink-0 rounded p-1 text-muted-foreground/60 transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }
