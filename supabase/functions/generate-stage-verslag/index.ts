@@ -34,7 +34,11 @@ function foutTekst(err: unknown): string {
   const o = err as { message?: string; details?: string; hint?: string; code?: string };
   const delen = [o.message, o.details, o.hint].filter(Boolean);
   const kern = delen.length > 0 ? delen.join(" — ") : JSON.stringify(err);
-  return o.code ? `${kern} (${o.code})` : kern;
+  const volledig = o.code ? `${kern} (${o.code})` : kern;
+  // Een fout kan de volledige verzoek-URL bevatten, en die is bij een
+  // in.(...)-filter duizenden tekens lang. Onleesbaar in een toast, en het
+  // nuttige deel staat vooraan.
+  return volledig.length > 400 ? `${volledig.slice(0, 400)}…` : volledig;
 }
 
 const json = (body: unknown, status = 200) =>
@@ -221,11 +225,16 @@ async function haalFeiten(admin: any, stageId: string): Promise<Feiten> {
 
   const userIds = [...new Set(entries.map((e) => e.user_id))];
   const namen = new Map<string, string>();
-  for (let i = 0; i < userIds.length; i += 500) {
+  // Blokken van 100, niet meer. Een id=in.(...)-filter gaat in de URL, en een
+  // UUID kost daar zo'n 39 tekens. Bij 500 tegelijk werd dat een URL van bijna
+  // 20.000 tekens en brak de HTTP/2-verbinding met "unspecific protocol error".
+  // Honderd blijft rond de 4 kB en dus ruim onder elke limiet.
+  const BLOK = 100;
+  for (let i = 0; i < userIds.length; i += BLOK) {
     const { data: profielen, error: profFout } = await admin
       .from("profiles")
       .select("id, display_name")
-      .in("id", userIds.slice(i, i + 500));
+      .in("id", userIds.slice(i, i + BLOK));
     if (profFout) throw profFout;
     for (const p of (profielen ?? []) as Array<{ id: string; display_name: string | null }>) {
       if (p.display_name?.trim()) namen.set(p.id, p.display_name.trim());
