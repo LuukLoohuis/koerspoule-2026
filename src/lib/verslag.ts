@@ -52,3 +52,35 @@ export function veiligeUrl(url: string | null | undefined): string | null {
     return null;
   }
 }
+
+/** Bedoelde lengte van een etappeverslag: kort genoeg om echt gelezen te worden. */
+export const LENGTE_MIN = 5;
+export const LENGTE_MAX = 10;
+
+const AFKORTINGEN = ["bijv", "nr", "ca", "resp", "incl", "excl", "etc", "evt", "ong", "max", "afb"];
+const AFKORTING_RE = new RegExp(`\\b(?:${AFKORTINGEN.join("|")})\\.`, "gi");
+
+function stripAfkortingen(tekst: string): string {
+  // Losse letter + punt vangt initialen ("M. van der Poel") en samenstellingen
+  // als "z.t." of "o.a."; de lijst vangt de meerletterige die daarna nog
+  // overblijven. Geen echte taalanalyse -- wel genoeg voor koersteksten.
+  return tekst.replace(/\b[A-Za-zÀ-ÿ]\./g, "").replace(AFKORTING_RE, "");
+}
+
+/**
+ * Telt zinnen zoals een lezer ze ziet.
+ *
+ * Twee valkuilen die in koersteksten gegarandeerd voorkomen: afkortingen als
+ * "z.t." (zelfde tijd) staan in vrijwel elke uitslag, en initialen als
+ * "M. van der Poel" zijn de normale schrijfwijze. Beide eindigen op een punt
+ * met een spatie erachter en zouden anders als zinseinde meetellen.
+ *
+ * De telling stuurt de hint voor de redacteur en de hertelling in de
+ * generatie; een verkeerde telling kost daar dus een onnodige OpenAI-ronde.
+ */
+export function telZinnen(tekst: string): number {
+  return stripAfkortingen(tekst)
+    .split(/[.!?]+(?=\s+["'\u201C\u2018(]?[A-ZÀ-Ý]|\s*$)/)
+    .map((z) => z.trim())
+    .filter(Boolean).length;
+}

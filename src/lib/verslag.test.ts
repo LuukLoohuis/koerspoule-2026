@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alineas, leestijdMinuten, intro, bronregel, veiligeUrl } from "./verslag";
+import { alineas, leestijdMinuten, intro, bronregel, veiligeUrl, telZinnen, LENGTE_MIN, LENGTE_MAX } from "./verslag";
 
 describe("alineas", () => {
   it("splitst op lege regels", () => {
@@ -86,5 +86,63 @@ describe("veiligeUrl", () => {
     expect(veiligeUrl("zomaar tekst")).toBeNull();
     expect(veiligeUrl(null)).toBeNull();
     expect(veiligeUrl("")).toBeNull();
+  });
+});
+
+describe("telZinnen", () => {
+  it("telt gewone zinnen", () => {
+    expect(telZinnen("Van der Poel won. Philipsen werd tweede. Van Aert derde.")).toBe(3);
+  });
+
+  it("telt uitroep- en vraagtekens mee", () => {
+    expect(telZinnen("Wat een sprint! Wie had dat gedacht? Niemand.")).toBe(3);
+  });
+
+  it("telt een afkorting middenin niet als zinseinde", () => {
+    // "z.t." staat in elke uitslag; dat mag geen extra zinnen opleveren.
+    expect(telZinnen("Philipsen finishte op z.t. van de winnaar.")).toBe(1);
+  });
+
+  it("laat zich niet foppen door meerdere leestekens achter elkaar", () => {
+    expect(telZinnen("Ongelooflijk!! En toen?? Stilte.")).toBe(3);
+  });
+
+  it("telt een zin zonder slotpunt ook mee", () => {
+    expect(telZinnen("Pogacar reed weg op de slotklim")).toBe(1);
+  });
+
+  it("is nul bij lege invoer", () => {
+    expect(telZinnen("")).toBe(0);
+    expect(telZinnen("   \n  ")).toBe(0);
+  });
+
+  it("herkent een verslag van tien zinnen als binnen bereik", () => {
+    const tien = Array.from({ length: 10 }, (_, i) => `Zin nummer ${i + 1}.`).join(" ");
+    expect(telZinnen(tien)).toBe(10);
+    expect(telZinnen(tien)).toBeLessThanOrEqual(LENGTE_MAX);
+    expect(telZinnen(tien)).toBeGreaterThanOrEqual(LENGTE_MIN);
+  });
+});
+
+describe("telZinnen — koersteksten", () => {
+  it("telt initialen niet als zinseinde", () => {
+    expect(telZinnen("M. van der Poel won voor J. Philipsen.")).toBe(1);
+  });
+
+  it("telt een uitslagregel met z.t. als één zin", () => {
+    expect(telZinnen("Philipsen kwam op z.t. binnen. Van Aert volgde op vier tellen.")).toBe(2);
+  });
+
+  it("laat afkortingen als bijv. en nr. met rust", () => {
+    expect(telZinnen("De favorieten, bijv. Pogacar, bleven uit de wind.")).toBe(1);
+    expect(telZinnen("Hij eindigde als nr. drie in de daguitslag.")).toBe(1);
+  });
+
+  it("telt wel gewoon door bij een echte zinsovergang", () => {
+    expect(telZinnen("Pogacar reed weg op de Angliru. Vingegaard kon niet volgen. Roglic verloor een minuut.")).toBe(3);
+  });
+
+  it("telt een zin die op een naam met accent eindigt", () => {
+    expect(telZinnen("De zege ging naar Pogačar. Daarna viel het stil.")).toBe(2);
   });
 });

@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Wand2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { alineas, leestijdMinuten, veiligeUrl } from "@/lib/verslag";
+import { alineas, leestijdMinuten, veiligeUrl, telZinnen, LENGTE_MIN, LENGTE_MAX } from "@/lib/verslag";
 import { verslagTabel } from "@/hooks/useEtappeVerslag";
 
 /**
@@ -33,6 +35,10 @@ export default function VerslagDialog({
   const [bronUrl, setBronUrl] = useState("");
   const [laden, setLaden] = useState(false);
   const [bezig, setBezig] = useState(false);
+  // Bronartikel: alleen invoer voor de herschrijving, wordt nooit bewaard.
+  // Wat we opslaan is de eigen tekst, niet die van de bron.
+  const [bronTekst, setBronTekst] = useState("");
+  const [herschrijven, setHerschrijven] = useState(false);
 
   useEffect(() => {
     if (!stage || !supabase) return;
@@ -53,6 +59,29 @@ export default function VerslagDialog({
   }, [stage]);
 
   const urlOngeldig = bronUrl.trim().length > 0 && veiligeUrl(bronUrl) === null;
+
+  async function herschrijf() {
+    if (!supabase || !stage) return;
+    const bronnetje = bronTekst.trim();
+    if (bronnetje.length < 200) {
+      toast({ title: "Te weinig tekst", description: "Plak het hele artikel; hier valt weinig uit te halen.", variant: "destructive" });
+      return;
+    }
+    setHerschrijven(true);
+    const { data, error } = await supabase.functions.invoke("generate-stage-verslag", {
+      body: { bron_tekst: bronnetje, stage_nummer: stage.stage_number, stage_naam: stage.name },
+    });
+    setHerschrijven(false);
+    if (error || !data?.verslag) {
+      toast({ title: "Herschrijven mislukt", description: error?.message ?? "Geen verslag ontvangen", variant: "destructive" });
+      return;
+    }
+    setTekst(data.verslag);
+    toast({
+      title: `Verslag in ${data.zinnen} zinnen`,
+      description: "Lees het na en pas aan waar nodig -- het gaat zo de krant in.",
+    });
+  }
 
   async function bewaar() {
     if (!supabase || !stage) return;
@@ -99,6 +128,8 @@ export default function VerslagDialog({
 
   const aantalAlineas = alineas(tekst).length;
   const minuten = leestijdMinuten(tekst);
+  const zinnen = telZinnen(tekst);
+  const buitenBereik = zinnen > 0 && (zinnen < LENGTE_MIN || zinnen > LENGTE_MAX);
 
   return (
     <Dialog open={stage !== null} onOpenChange={(o) => !o && onClose()}>
@@ -113,6 +144,27 @@ export default function VerslagDialog({
         </DialogHeader>
 
         <div className="space-y-3">
+          {/* Bronartikel erin, kort verslag eruit. Deze tekst wordt niet
+              opgeslagen: we bewaren alleen wat er in eigen woorden uit komt. */}
+          <div className="rounded-lg border border-dashed border-border bg-secondary/30 p-3">
+            <Label htmlFor="verslag-bronartikel" className="text-xs">Bronartikel (wordt niet bewaard)</Label>
+            <Textarea
+              id="verslag-bronartikel"
+              value={bronTekst}
+              onChange={(e) => setBronTekst(e.target.value)}
+              rows={4}
+              className="mt-1 text-xs"
+              placeholder="Plak hier het volledige artikel. Er wordt een eigen samenvatting van 5 tot 10 zinnen van gemaakt."
+            />
+            <div className="mt-2 flex items-center gap-2">
+              <Button size="sm" variant="secondary" onClick={herschrijf} disabled={herschrijven || bezig}>
+                <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                {herschrijven ? "Bezig…" : "Herschrijf naar kort verslag"}
+              </Button>
+              <span className="text-xs text-muted-foreground">Feiten blijven, formulering wordt van ons.</span>
+            </div>
+          </div>
+
           <div>
             <Label htmlFor="verslag-tekst">Tekst</Label>
             <Textarea
@@ -124,8 +176,9 @@ export default function VerslagDialog({
               className="mt-1 font-serif text-sm"
               placeholder={laden ? "Laden…" : "Van der Poel sprintte op de Champs-Élysées…"}
             />
-            <p className="mt-1 text-xs text-muted-foreground">
-              {aantalAlineas} {aantalAlineas === 1 ? "alinea" : "alinea's"} · {minuten} min lezen
+            <p className={cn("mt-1 text-xs", buitenBereik ? "text-amber-600 dark:text-amber-500" : "text-muted-foreground")}>
+              {zinnen} {zinnen === 1 ? "zin" : "zinnen"} · {aantalAlineas} {aantalAlineas === 1 ? "alinea" : "alinea's"} · {minuten} min lezen
+              {buitenBereik && ` — bedoeld is ${LENGTE_MIN} tot ${LENGTE_MAX}`}
             </p>
           </div>
 
