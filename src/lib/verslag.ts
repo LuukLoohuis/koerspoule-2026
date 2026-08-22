@@ -16,7 +16,7 @@ export function alineas(tekst: string): string[] {
 
 /** Ruwe schatting van de leestijd, afgerond naar boven, minimaal 1 minuut. */
 export function leestijdMinuten(tekst: string, woordenPerMinuut = 200): number {
-  const woorden = tekst.trim().split(/\s+/).filter(Boolean).length;
+  const woorden = zonderNadruk(tekst).trim().split(/\s+/).filter(Boolean).length;
   if (woorden === 0) return 0;
   return Math.max(1, Math.ceil(woorden / woordenPerMinuut));
 }
@@ -26,7 +26,7 @@ export function leestijdMinuten(tekst: string, woordenPerMinuut = 200): number {
  * kaart. Knipt op een woordgrens en plakt er een beletselteken achter.
  */
 export function intro(tekst: string, maxTekens = 220): string {
-  const eerste = alineas(tekst)[0] ?? "";
+  const eerste = zonderNadruk(alineas(tekst)[0] ?? "");
   if (eerste.length <= maxTekens) return eerste;
   const geknipt = eerste.slice(0, maxTekens);
   const spatie = geknipt.lastIndexOf(" ");
@@ -79,8 +79,43 @@ function stripAfkortingen(tekst: string): string {
  * generatie; een verkeerde telling kost daar dus een onnodige OpenAI-ronde.
  */
 export function telZinnen(tekst: string): number {
-  return stripAfkortingen(tekst)
+  return stripAfkortingen(zonderNadruk(tekst))
     .split(/[.!?]+(?=\s+["'\u201C\u2018(]?[A-ZÀ-Ý]|\s*$)/)
     .map((z) => z.trim())
     .filter(Boolean).length;
+}
+
+/** Een stuk tekst binnen een alinea: gewoon, of nadrukkelijk (deelnemersnaam). */
+export type Stuk = { tekst: string; vet: boolean };
+
+/**
+ * Splitst een alinea op **nadruk**.
+ *
+ * De generator zet deelnemersnamen tussen dubbele sterretjes -- de mensen uit
+ * je eigen poule, niet de renners. Dat onderscheid is precies waarom het werkt:
+ * in een lap tekst over profs springt jouw buurman er zo uit.
+ *
+ * Bewust géén markdown-bibliotheek en géén dangerouslySetInnerHTML: hier komt
+ * ook door een admin geplakte tekst langs, en die mag nooit als HTML landen.
+ * Het resultaat is een lijst tekststukken die React als tekst rendert.
+ */
+export function splitsNadruk(alinea: string): Stuk[] {
+  const stukken: Stuk[] = [];
+  // Niet-hebzuchtig, en de inhoud mag geen sterretje bevatten -- zo blijft een
+  // los sterretje in de tekst gewoon een sterretje.
+  const re = /\*\*([^*]+)\*\*/g;
+  let laatste = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(alinea)) !== null) {
+    if (m.index > laatste) stukken.push({ tekst: alinea.slice(laatste, m.index), vet: false });
+    stukken.push({ tekst: m[1], vet: true });
+    laatste = m.index + m[0].length;
+  }
+  if (laatste < alinea.length) stukken.push({ tekst: alinea.slice(laatste), vet: false });
+  return stukken.length > 0 ? stukken : [{ tekst: alinea, vet: false }];
+}
+
+/** De tekst zonder opmaakmarkeringen, voor tellingen en de intro. */
+export function zonderNadruk(tekst: string): string {
+  return tekst.replace(/\*\*([^*]+)\*\*/g, "$1");
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alineas, leestijdMinuten, intro, bronregel, veiligeUrl, telZinnen, LENGTE_MIN, LENGTE_MAX } from "./verslag";
+import { alineas, leestijdMinuten, intro, bronregel, veiligeUrl, telZinnen, LENGTE_MIN, LENGTE_MAX, splitsNadruk, zonderNadruk } from "./verslag";
 
 describe("alineas", () => {
   it("splitst op lege regels", () => {
@@ -144,5 +144,52 @@ describe("telZinnen — koersteksten", () => {
 
   it("telt een zin die op een naam met accent eindigt", () => {
     expect(telZinnen("De zege ging naar Pogačar. Daarna viel het stil.")).toBe(2);
+  });
+});
+
+describe("splitsNadruk", () => {
+  it("haalt een deelnemersnaam eruit", () => {
+    expect(splitsNadruk("Vandaag won **Marieke de Groot** de dag.")).toEqual([
+      { tekst: "Vandaag won ", vet: false },
+      { tekst: "Marieke de Groot", vet: true },
+      { tekst: " de dag.", vet: false },
+    ]);
+  });
+
+  it("kan meerdere namen aan", () => {
+    const s = splitsNadruk("**Anna** ging voor **Bram**.");
+    expect(s.filter((x) => x.vet).map((x) => x.tekst)).toEqual(["Anna", "Bram"]);
+  });
+
+  it("laat tekst zonder opmaak ongemoeid", () => {
+    expect(splitsNadruk("Gewoon een zin.")).toEqual([{ tekst: "Gewoon een zin.", vet: false }]);
+  });
+
+  it("laat een los sterretje met rust", () => {
+    expect(splitsNadruk("Punten * 2 telt dubbel.")).toEqual([{ tekst: "Punten * 2 telt dubbel.", vet: false }]);
+  });
+
+  it("laat een niet-gesloten markering staan als tekst", () => {
+    expect(splitsNadruk("Halverwege **Anna zonder eind")).toEqual([
+      { tekst: "Halverwege **Anna zonder eind", vet: false },
+    ]);
+  });
+
+  it("levert nooit HTML op, alleen tekststukken", () => {
+    // Een geplakt verslag mag nooit als HTML landen; dit blijft platte tekst.
+    const stukken = splitsNadruk("Kijk uit: **<img src=x onerror=alert(1)>** einde.");
+    expect(stukken.find((s) => s.vet)?.tekst).toBe("<img src=x onerror=alert(1)>");
+    expect(stukken.every((s) => typeof s.tekst === "string")).toBe(true);
+  });
+});
+
+describe("zonderNadruk", () => {
+  it("haalt de markeringen weg", () => {
+    expect(zonderNadruk("**Anna** pakte 118 punten.")).toBe("Anna pakte 118 punten.");
+  });
+
+  it("telt opmaak niet mee in zinnen, leestijd en intro", () => {
+    expect(telZinnen("**Anna** won. **Bram** volgde.")).toBe(2);
+    expect(intro("**Anna de Vries** pakte de dagzege.")).toBe("Anna de Vries pakte de dagzege.");
   });
 });

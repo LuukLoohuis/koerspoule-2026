@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronDown, ExternalLink, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEtappeVerslag } from "@/hooks/useEtappeVerslag";
-import { alineas, leestijdMinuten, intro, bronregel, veiligeUrl } from "@/lib/verslag";
+import { alineas, leestijdMinuten, intro, bronregel, veiligeUrl, splitsNadruk } from "@/lib/verslag";
 
 /**
  * Het etappeverslag als hoofdartikel in de Koerskrant: de terugblik op wat er
@@ -73,7 +73,14 @@ export default function Verslag({
                   i === 0 && "text-[15.5px] font-medium",
                 )}
               >
-                {p}
+                {/* Deelnemersnamen komen vetgedrukt binnen als **naam**. Als
+                    tekststukken gerenderd, nooit als HTML -- een verslag kan
+                    ook geplakt zijn. */}
+                {splitsNadruk(p).map((stuk, j) =>
+                  stuk.vet
+                    ? <strong key={j} className="font-display font-black text-foreground">{stuk.tekst}</strong>
+                    : <span key={j}>{stuk.tekst}</span>,
+                )}
               </p>
             ))}
           </div>

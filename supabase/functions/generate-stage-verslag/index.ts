@@ -47,12 +47,14 @@ HARDE REGELS
 2. VERZIN NIETS. Gebruik uitsluitend de feiten hieronder. Je weet NIET hoe de koers verliep -- geen aanvallen, geen valpartijen, geen kopgroepen, geen weer, geen tactiek. Schrijf alleen op wat er staat.
 3. VOLGORDE: begin met de koers (ritwinnaar, daarna de truien). Sluit af met de poule: wie de dagzege pakte en wie aan de leiding gaat.
 4. GEEN SUBPOULES: noem geen subpoulenamen. De poulecijfers gaan over het hele spel.
-5. Noem deelnemers bij de naam zoals die in de feiten staat.
-6. TOON: nuchter en meeslepend, zoals een krantensamenvatting. Nederlands. Geen uitroeptekens, geen aanspreking van de lezer, geen "wij" of "je".
-7. Is een feit niet gegeven, laat het weg. Schrijf nooit "onbekend" of "geen data".
+5. DEELNEMERSNAMEN VET: zet elke naam van een DEELNEMER tussen dubbele sterretjes, zo: **Marieke de Groot**. Doe dit ELKE keer dat de naam voorkomt. Namen van RENNERS krijgen GEEN sterretjes -- alleen deelnemers uit de poule. Gebruik de naam exact zoals die in de feiten staat.
+6. TOON: dit is de sportpagina, geen persbericht. Schrijf met vaart. Gebruik krachtige werkwoorden, korte zinnen naast lange, en durf een cijfer te laten knallen ("118 punten", "2308 anderen achter zich"). Eén uitroepteken in het hele stuk mag, meer niet. Geen aanspreking van de lezer, geen "wij" of "je".
+7. Het poulegedeelte is het feestje: daar mag de toon het hoogst. De koers is het decor, de deelnemer is de held.
+8. Is een feit niet gegeven, laat het weg. Schrijf nooit "onbekend" of "geen data".
+9. VERZIN OOK IN DE TOON NIETS: enthousiasme mag, feiten verzinnen niet. Geen "na een lange vlucht", geen "in een spannende sprint" -- dat weet je niet.
 
 Antwoord UITSLUITEND met JSON:
-{"verslag":"<5 tot 10 zinnen, alinea's gescheiden door \\n\\n>","kop":"<krantenkop van maximaal zeven woorden, bevat de achternaam van de ritwinnaar, geen punt aan het eind>"}`;
+{"verslag":"<5 tot 10 zinnen, alinea's gescheiden door \\n\\n, deelnemersnamen tussen **>","kop":"<krantenkop van maximaal zeven woorden, bevat de achternaam van de ritwinnaar, geen punt aan het eind>"}`;
 
 async function openaiChat(userPrompt: string, systemPrompt = SYSTEM_PROMPT): Promise<{ text: string; finishReason: string | null }> {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
