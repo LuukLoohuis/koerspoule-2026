@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import VerslagDialog from "@/components/admin/VerslagDialog";
-import { Trash2, Trophy, LineChart, Radio, Newspaper } from "lucide-react";
+import { Trash2, Trophy, Radio, Newspaper } from "lucide-react";
 import { isMeermarathonGame, WEDSTRIJD_TYPES, defaultWedstrijdType, type WedstrijdType } from "@/lib/gameTypes";
 import StageLiveTracks from "@/components/admin/StageLiveTracks";
 import { toast } from "sonner";
@@ -85,12 +85,8 @@ export default function StagesTab({
   const [distanceKm, setDistanceKm] = useState<string>("");
   const [savingType, setSavingType] = useState<string | null>(null);
   const [savingKm, setSavingKm] = useState<string | null>(null);
-  const [uploading, setUploading] = useState<string | null>(null);
   // Profiel-data (JSON) bewerken via dialog.
-  const [dataDialog, setDataDialog] = useState<Stage | null>(null);
   const [verslagDialog, setVerslagDialog] = useState<Stage | null>(null);
-  const [dataText, setDataText] = useState("");
-  const [savingData, setSavingData] = useState(false);
 
   // Voorbeschouwing-sectie per game aan/uit.
   const [voorVisible, setVoorVisible] = useState(false);
@@ -111,62 +107,6 @@ export default function StagesTab({
     if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
     setVoorVisible(next);
     toast.success(next ? "Voorbeschouwing zichtbaar" : "Voorbeschouwing verborgen");
-  }
-
-  function openDataDialog(s: Stage) {
-    setDataDialog(s);
-    setDataText(s.profile_data ? JSON.stringify(s.profile_data, null, 2) : "");
-  }
-
-  function pointCount(s: Stage): number {
-    return Array.isArray(s.profile_data?.points) ? s.profile_data!.points!.length : 0;
-  }
-
-  async function saveProfileData() {
-    if (!supabase || !dataDialog) return;
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(dataText);
-    } catch {
-      toast.error("Ongeldige JSON — kan niet parsen.");
-      return;
-    }
-    const obj = parsed as { points?: unknown };
-    const points = obj?.points;
-    const validPoints =
-      Array.isArray(points) &&
-      points.length >= 2 &&
-      points.every(
-        (p) => p && typeof (p as { km?: unknown }).km === "number" && typeof (p as { hoogte?: unknown }).hoogte === "number",
-      );
-    if (typeof parsed !== "object" || parsed === null || !validPoints) {
-      toast.error("Verwacht een object met een points-array van ≥2 items met numerieke km + hoogte.");
-      return;
-    }
-    setSavingData(true);
-    const { error } = await supabase.from("stages").update({ profile_data: parsed } as never).eq("id", dataDialog.id);
-    setSavingData(false);
-    if (error) {
-      toast.error(`Opslaan mislukt: ${error.message}`);
-      return;
-    }
-    toast.success("Profiel-data opgeslagen");
-    setDataDialog(null);
-    await reload();
-  }
-
-  async function clearProfileData() {
-    if (!supabase || !dataDialog) return;
-    setSavingData(true);
-    const { error } = await supabase.from("stages").update({ profile_data: null } as never).eq("id", dataDialog.id);
-    setSavingData(false);
-    if (error) {
-      toast.error(`Wissen mislukt: ${error.message}`);
-      return;
-    }
-    toast.success("Profiel-data gewist");
-    setDataDialog(null);
-    await reload();
   }
 
   const regularStages = stages.filter((s) => !s.is_gc);
@@ -305,45 +245,6 @@ export default function StagesTab({
     await reload();
   }
 
-
-  async function uploadProfile(id: string, file: File | undefined | null) {
-    if (!supabase || !file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Kies een afbeelding (png/jpg).");
-      return;
-    }
-    setUploading(id);
-    try {
-      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-      const path = `${activeGameId}/${id}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("stage-profiles")
-        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
-      if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from("stage-profiles").getPublicUrl(path);
-      // cache-bust zodat een nieuwe upload meteen zichtbaar is
-      const url = `${pub.publicUrl}?v=${Date.now()}`;
-      const { error: updErr } = await supabase.from("stages").update({ profile_image_url: url } as never).eq("id", id);
-      if (updErr) throw updErr;
-      toast.success("Profiel geüpload");
-      await reload();
-    } catch (e) {
-      toast.error(`Upload mislukt: ${(e as Error).message}`);
-    } finally {
-      setUploading(null);
-    }
-  }
-
-  async function clearProfile(id: string) {
-    if (!supabase) return;
-    const { error } = await supabase.from("stages").update({ profile_image_url: null } as never).eq("id", id);
-    if (error) {
-      toast.error(`Verwijderen mislukt: ${error.message}`);
-      return;
-    }
-    toast.success("Profiel verwijderd");
-    await reload();
-  }
 
   return (
     <div className="space-y-6">
@@ -510,40 +411,11 @@ export default function StagesTab({
                       <span className="text-xs text-muted-foreground">—</span>
                     ) : (
                       <div className="flex items-center gap-2">
-                        {s.profile_image_url && (
-                          <img
-                            src={s.profile_image_url}
-                            alt="profiel"
-                            className="h-8 w-16 object-cover rounded border border-border"
-                          />
-                        )}
-                        <label className="cursor-pointer text-xs underline text-primary">
-                          {uploading === s.id ? "Uploaden…" : s.profile_image_url ? "Vervang" : "Upload"}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={uploading === s.id}
-                            onChange={(e) => uploadProfile(s.id, e.target.files?.[0])}
-                          />
-                        </label>
-                        {s.profile_image_url && (
-                          <button
-                            type="button"
-                            className="text-xs text-destructive underline"
-                            onClick={() => clearProfile(s.id)}
-                          >
-                            Verwijder
-                          </button>
-                        )}
-                        {/* Profiel-data (JSON) — heeft in de app voorrang op de afbeelding */}
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 text-xs underline text-primary"
-                          onClick={() => openDataDialog(s)}
-                        >
-                          <LineChart className="w-3.5 h-3.5" /> Profiel-data
-                        </button>
+                        {/* Upload en Profiel-data zijn eruit: die route gebruiken
+                            we niet meer. Bestaande afbeeldingen blijven staan en
+                            worden nog getoond in de voorbeschouwing en op de
+                            etappepagina -- alleen beheren gaat niet meer vanaf
+                            hier. */}
                         {/* Verslag: de terugblik die als hoofdartikel in de
                             Koerskrant komt te staan. */}
                         <button
@@ -553,15 +425,6 @@ export default function StagesTab({
                         >
                           <Newspaper className="w-3.5 h-3.5" /> Verslag
                         </button>
-                        {pointCount(s) >= 2 ? (
-                          <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px]">
-                            Profiel ✓ {pointCount(s)} pt
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                            Geen profiel
-                          </Badge>
-                        )}
                       </div>
                     )}
                   </TableCell>
@@ -610,36 +473,6 @@ export default function StagesTab({
 
       {/* Profiel-data (JSON) bewerken */}
       <VerslagDialog stage={verslagDialog} onClose={() => setVerslagDialog(null)} />
-
-      <Dialog open={dataDialog !== null} onOpenChange={(o) => !o && setDataDialog(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="font-display">
-              Profiel-data · {dataDialog?.name ?? `Etappe ${dataDialog?.stage_number ?? ""}`}
-            </DialogTitle>
-            <DialogDescription>
-              Plak de JSON: {"{ totalKm, minEle, maxEle, points:[{km,hoogte}], cols:[{km,naam,categorie}] }"}.
-              Heeft in de app voorrang op de geüploade afbeelding.
-            </DialogDescription>
-          </DialogHeader>
-          <Textarea
-            value={dataText}
-            onChange={(e) => setDataText(e.target.value)}
-            placeholder='{ "totalKm": 180, "minEle": 20, "maxEle": 1800, "points": [{ "km": 0, "hoogte": 20 }, ...], "cols": [] }'
-            className="font-mono text-xs h-64"
-          />
-          <DialogFooter className="gap-2 sm:gap-2">
-            {dataDialog?.profile_data && (
-              <Button variant="outline" className="text-destructive" disabled={savingData} onClick={clearProfileData}>
-                Wissen
-              </Button>
-            )}
-            <Button disabled={savingData || !dataText.trim()} onClick={saveProfileData}>
-              {savingData ? "Opslaan…" : "Opslaan"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {liveDialog && (
         <StageLiveTracks
