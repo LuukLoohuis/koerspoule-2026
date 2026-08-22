@@ -52,7 +52,7 @@ HARDE REGELS
 5. DEELNEMERSNAMEN VET: zet elke naam van een DEELNEMER tussen dubbele sterretjes, zo: **Marieke de Groot**. Doe dit ELKE keer dat de naam voorkomt. Namen van RENNERS krijgen GEEN sterretjes -- alleen deelnemers uit de poule. Gebruik de naam exact zoals die in de feiten staat.
 6. TOON: dit is de sportpagina, geen persbericht. Schrijf met vaart. Gebruik krachtige werkwoorden, korte zinnen naast lange, en durf een cijfer te laten knallen ("118 punten", "2308 anderen achter zich"). Eén uitroepteken in het hele stuk mag, meer niet. Geen aanspreking van de lezer, geen "wij" of "je".
 7. Het poulegedeelte is het feestje: daar mag de toon het hoogst. De koers is het decor, de deelnemer is de held.
-8. Is een feit niet gegeven, laat het weg. Schrijf nooit "onbekend" of "geen data".
+8. Is een feit niet gegeven, laat het weg. Schrijf nooit "onbekend", "geen data" of "0 deelnemers". Staan er geen poulecijfers bij, schrijf dan helemaal niets over de poule -- dan sluit je af met de koers.
 9. VERZIN OOK IN DE TOON NIETS: enthousiasme mag, feiten verzinnen niet. Geen "na een lange vlucht", geen "in een spannende sprint" -- dat weet je niet.
 
 Antwoord UITSLUITEND met JSON:
@@ -173,29 +173,60 @@ async function haalFeiten(admin: any, stageId: string): Promise<Feiten> {
     .lte("stage_number", stage.stage_number);
   const stageIds = ((stages ?? []) as any[]).map((r) => r.id);
 
-  const { data: punten } = await admin
-    .from("stage_points")
-    .select("entry_id, stage_id, points")
-    .in("stage_id", stageIds.length > 0 ? stageIds : [stageId]);
+  // Paginerend ophalen: bij een volle Grand Tour is dit aantal deelnemers maal
+  // aantal etappes, en dat loopt hard over de standaard rijlimiet van de API
+  // heen. Zonder paginering zouden de totalen er stilletjes naast zitten.
+  const punten: Array<{ entry_id: string; stage_id: string; points: number | null }> = [];
+  const PAGINA = 1000;
+  for (let start = 0; ; start += PAGINA) {
+    const { data, error } = await admin
+      .from("stage_points")
+      .select("entry_id, stage_id, points")
+      .in("stage_id", stageIds.length > 0 ? stageIds : [stageId])
+      .range(start, start + PAGINA - 1);
+    if (error) throw error;
+    const rij = (data ?? []) as typeof punten;
+    punten.push(...rij);
+    if (rij.length < PAGINA) break;
+  }
 
-  // Admins eruit: zij spelen niet mee in het algemeen klassement.
-  const { data: entries } = await admin
+  // Entries en profiles apart ophalen. Een embedded join profiles(display_name)
+  // werkt hier niet: entries.user_id verwijst naar auth.users, niet naar
+  // profiles, dus PostgREST kent die relatie niet en de query faalt.
+  const { data: entryRijen, error: entFout } = await admin
     .from("entries")
-    .select("id, user_id, profiles(display_name)")
+    .select("id, user_id")
     .eq("game_id", stage.game_id)
     .eq("status", "submitted");
+  if (entFout) throw entFout;
+  const entries = (entryRijen ?? []) as Array<{ id: string; user_id: string }>;
+
+  const userIds = [...new Set(entries.map((e) => e.user_id))];
+  const namen = new Map<string, string>();
+  for (let i = 0; i < userIds.length; i += 500) {
+    const { data: profielen, error: profFout } = await admin
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", userIds.slice(i, i + 500));
+    if (profFout) throw profFout;
+    for (const p of (profielen ?? []) as Array<{ id: string; display_name: string | null }>) {
+      if (p.display_name?.trim()) namen.set(p.id, p.display_name.trim());
+    }
+  }
+
+  // Admins eruit: zij spelen niet mee in het algemeen klassement.
   const { data: adminRollen } = await admin.from("user_roles").select("user_id").eq("role", "admin");
-  const adminIds = new Set(((adminRollen ?? []) as any[]).map((r) => r.user_id));
+  const adminIds = new Set(((adminRollen ?? []) as Array<{ user_id: string }>).map((r) => r.user_id));
 
   const naamPerEntry = new Map<string, string>();
-  for (const e of (entries ?? []) as any[]) {
+  for (const e of entries) {
     if (adminIds.has(e.user_id)) continue;
-    naamPerEntry.set(e.id, e.profiles?.display_name?.trim() || "Onbekend");
+    naamPerEntry.set(e.id, namen.get(e.user_id) ?? "Onbekend");
   }
 
   const dagPunten = new Map<string, number>();
   const totaalPunten = new Map<string, number>();
-  for (const r of (punten ?? []) as any[]) {
+  for (const r of punten) {
     if (!naamPerEntry.has(r.entry_id)) continue;
     totaalPunten.set(r.entry_id, (totaalPunten.get(r.entry_id) ?? 0) + (r.points ?? 0));
     if (r.stage_id === stageId) dagPunten.set(r.entry_id, r.points ?? 0);
@@ -242,7 +273,7 @@ export function feitenPrompt(f: Feiten): string {
     regels.push(`Ritwinnaar: ${f.ritwinnaar}${f.ritwinnaarPloeg ? ` (${f.ritwinnaarPloeg})` : ""}`);
   }
   for (const t of f.truien) regels.push(`Draagt ${t.trui}: ${t.renner}`);
-  regels.push(`Aantal deelnemers in de poule: ${f.aantalDeelnemers}`);
+  if (f.aantalDeelnemers > 0) regels.push(`Aantal deelnemers in de poule: ${f.aantalDeelnemers}`);
   if (f.dagwinnaar) {
     regels.push(`Beste deelnemer van de dag: ${f.dagwinnaar.naam} met ${f.dagwinnaar.punten} punten`);
   }
