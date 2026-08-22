@@ -20,6 +20,8 @@ type Entry = {
   created_at: string;
   email: string;
   display_name: string;
+  /** Subpoules van dezelfde game waar deze deelnemer lid van is. */
+  subpoules: string[] | null;
   picks_count: number;
   jokers_count: number;
   total_points: number;
@@ -67,7 +69,8 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
       !search.trim() ||
       e.email.toLowerCase().includes(search.toLowerCase()) ||
       (e.team_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      e.display_name.toLowerCase().includes(search.toLowerCase())
+      e.display_name.toLowerCase().includes(search.toLowerCase()) ||
+      (e.subpoules ?? []).some((sp) => sp.toLowerCase().includes(search.toLowerCase()))
   );
 
   const submitted = entries.filter((e) => e.entry_status === "submitted").length;
@@ -109,6 +112,7 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
                     Email: e.email,
                     Spelersnaam: e.display_name,
                     Ploegnaam: e.team_name ?? "",
+                    "Subpoule(s)": (e.subpoules ?? []).join(", "),
                     Status: e.entry_status,
                     "Ingediend op": e.submitted_at ? new Date(e.submitted_at).toLocaleString("nl-NL") : "",
                     "Aangemaakt op": new Date(e.created_at).toLocaleString("nl-NL"),
@@ -135,6 +139,7 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
                   <TableHead>Speler</TableHead>
                   <TableHead>Ploegnaam</TableHead>
                   <TableHead>E-mail</TableHead>
+                  <TableHead>Subpoule(s)</TableHead>
                   <TableHead className="text-center">Picks</TableHead>
                   <TableHead className="text-center">Jokers</TableHead>
                   <TableHead>Status</TableHead>
@@ -148,6 +153,19 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
                     <TableCell className="font-medium">{e.display_name}</TableCell>
                     <TableCell>{e.team_name ?? <span className="text-muted-foreground italic">geen</span>}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{e.email}</TableCell>
+                    <TableCell>
+                      {(e.subpoules ?? []).length === 0 ? (
+                        <span className="text-muted-foreground italic text-xs">geen</span>
+                      ) : (
+                        <span className="flex flex-wrap gap-1">
+                          {(e.subpoules ?? []).map((sp) => (
+                            <span key={sp} className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium">
+                              {sp}
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-center tabular-nums">{e.picks_count}</TableCell>
                     <TableCell className="text-center tabular-nums">{e.jokers_count}</TableCell>
                     <TableCell>
@@ -167,7 +185,7 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
                 ))}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
                       {entries.length === 0 ? "Nog geen inzendingen voor deze game." : "Geen resultaten voor zoekopdracht."}
                     </TableCell>
                   </TableRow>
