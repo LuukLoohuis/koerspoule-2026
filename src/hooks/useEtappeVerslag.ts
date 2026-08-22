@@ -26,9 +26,10 @@ export function useEtappeVerslag(stageId?: string | null) {
   return useQuery({
     queryKey: ["etappe-verslag", stageId],
     enabled: Boolean(supabase && stageId),
-    // Een verslag verandert alleen als de admin het aanpast; dan invalideert
-    // die mutatie de query toch.
-    staleTime: 5 * 60 * 1000,
+    // Kort geldig: het verslag verschijnt vlak na het fiatteren, en dan hoort
+    // de voorpagina het meteen te tonen. De mutaties invalideren deze query
+    // ook, maar dat helpt niet in een ander tabblad of na een navigatie.
+    staleTime: 30 * 1000,
     queryFn: async (): Promise<EtappeVerslag | null> => {
       if (!supabase || !stageId) return null;
       const { data, error } = await verslagTabel()

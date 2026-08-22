@@ -13,18 +13,21 @@ import { toast } from "sonner";
 import { getCalculationProgress, isCalculationActive, isFiatReady } from "@/lib/calculationProgress";
 import { useNavigate } from "react-router-dom";
 import { matchesParticipantSearch } from "@/lib/adminBreakdownSearch";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 
 /**
  * Schrijft het etappeverslag voor de Koerskrant uit onze eigen uitslag.
  * Fire-and-forget: het fiatteren mag hier niet op wachten.
  */
-async function triggerVerslag(stageId: string, stageNumber: number) {
+async function triggerVerslag(stageId: string, stageNumber: number, qc?: QueryClient) {
   if (!supabase) return;
   try {
     const { error } = await supabase.functions.invoke("generate-stage-verslag", {
       body: { stage_id: stageId, bewaar: true },
     });
     if (error) throw error;
+    // Zonder dit blijft de voorpagina het gecachete "nog geen verslag" tonen.
+    await qc?.invalidateQueries({ queryKey: ["etappe-verslag", stageId] });
     toast.success(`Verslag geschreven voor etappe ${stageNumber}`, {
       description: "Staat als hoofdartikel in de Koerskrant.",
     });
@@ -590,6 +593,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [approvalProgress, setApprovalProgress] = useState<ApprovalProgress | null>(null);
   const [lefBusy, setLefBusy] = useState(false);
@@ -834,7 +838,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     // etappe (niet per subpoule zoals het commentaar), dus het kost weinig en
     // de krant heeft meteen een hoofdartikel. Niet-blokkerend; faalt het, dan
     // werkt de krant gewoon door zonder terugblik.
-    if (!isGc) void triggerVerslag(stageId, row.stage_number);
+    if (!isGc) void triggerVerslag(stageId, row.stage_number, queryClient);
 
     // Bewust GEEN automatische commentaargeneratie meer bij fiatteren: het
     // commentaar wordt on-demand per subpoule gegenereerd zodra een deelnemer
