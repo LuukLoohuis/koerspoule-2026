@@ -10,10 +10,11 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Trophy, Swords, ArrowUp, ArrowDown, Flag, ArrowLeftRight, MapPin, ChevronsUpDown, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResults";
 import { useSubpouleMembers } from "@/hooks/useSubpoules";
-import { maySeeLiveContent } from "@/lib/gameStatus";
+import { maySeeLiveContent, canRegister } from "@/lib/gameStatus";
 import { useMinWidth } from "@/hooks/use-mobile";
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import TeamComparison from "@/components/TeamComparison";
@@ -43,6 +44,7 @@ type Props = {
 
 export default function SubpouleStandings({ subpouleId, subpouleName, gameId, gameStatus, showEvolution = true, requiresWoonplaats = false, compareId: compareIdProp, onCompare }: Props) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
   const { data: curGame } = useCurrentGame();
@@ -57,6 +59,10 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   // Resultaten-inhoud (dus ook de benchmark) is verborgen tot 'live'; een admin
   // met testmodus mag hem tijdens open_inschrijving al zien (proefdraaien).
   const maySeeLive = maySeeLiveContent(game?.status, isAdmin, adminTestmodus);
+  // Benchmarken mag bij sneak preview (met voorbeelddata) en vanaf live, maar
+  // niet tijdens de inschrijving: dan staan de ploegen nog niet vast en zou je
+  // een vergelijking zien die morgen alweer anders is.
+  const benchmarkOpen = !canRegister(game?.status) || (isAdmin && adminTestmodus);
   const { data: members = [], isLoading: membersLoading } = useSubpouleMembers(subpouleId);
   const { data: entries = [] } = useEntries(game?.id);
   const { data: stages = [] } = useStages(game?.id);
@@ -499,7 +505,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           {displayedRows.map((m) => {
             const isMe = m.user_id === user?.id;
             const isComparing = m.user_id === compareId;
-            const canCompare = !isMe && !!m.entry_id;
+            const canCompare = !isMe && !!m.entry_id && benchmarkOpen;
 
             const rankNumCls =
               m.rank === 1 ? "text-amber-400"
@@ -530,6 +536,14 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
               : "";
 
             const handleRowToggle = () => {
+              if (!benchmarkOpen) {
+                // Niet stil negeren: wie op vergelijken drukt verwacht iets.
+                toast({
+                  title: t("subpoule.standings.benchmarkNogNiet"),
+                  description: t("subpoule.standings.benchmarkNogNietUitleg"),
+                });
+                return;
+              }
               if (!canCompare) return;
               setCompareId(isComparing ? null : m.user_id);
               if (showTapHint) dismissTapHint();
@@ -579,10 +593,16 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                  <span className={cn(
-                    "font-sans text-sm truncate",
-                    isMe ? "font-bold text-primary" : m.rank <= 3 ? "font-semibold" : "font-medium",
-                  )}>
+                  <span
+                    // Achter de ploegnaam zit een mens; in de subpoule ken je
+                    // elkaar, dus daar mag die naam bij het aanwijzen verschijnen.
+                    // Bewust alleen hier -- in de totaalstand blijft het de ploegnaam.
+                    title={m.display_name && m.team_name && m.display_name !== m.team_name ? m.display_name : undefined}
+                    className={cn(
+                      "font-sans text-sm truncate",
+                      isMe ? "font-bold text-primary" : m.rank <= 3 ? "font-semibold" : "font-medium",
+                    )}
+                  >
                     {m.team_name ?? m.display_name ?? "—"}
                   </span>
                   {isMe && (

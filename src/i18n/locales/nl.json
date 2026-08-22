@@ -636,7 +636,9 @@
       "compareClose": "Sluit",
       "compare": "Vergelijk",
       "duel": "Duel",
-      "closeDuel": "Duel sluiten"
+      "closeDuel": "Duel sluiten",
+      "benchmarkNogNiet": "Nog even geduld",
+      "benchmarkNogNietUitleg": "Vergelijken kan zodra de koers begint. Nu kunnen ploegen nog wijzigen."
     },
     "daguitslag": {
       "emptyTitle": "Nog geen daguitslag",

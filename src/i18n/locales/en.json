@@ -636,7 +636,9 @@
       "compareClose": "Close",
       "compare": "Compare",
       "duel": "Duel",
-      "closeDuel": "Close duel"
+      "closeDuel": "Close duel",
+      "benchmarkNogNiet": "Not just yet",
+      "benchmarkNogNietUitleg": "Comparing opens when the race starts. Teams can still change until then."
     },
     "daguitslag": {
       "emptyTitle": "No day result yet",
