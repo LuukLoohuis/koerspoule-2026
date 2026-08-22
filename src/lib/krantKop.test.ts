@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { achternaam, kopNoemtWinnaar, aankomstplaats, bouwKop } from "./krantKop";
+import { achternaam, kopNoemtWinnaar, aankomstplaats, bouwKop, kopNoemtPoulenaam } from "./krantKop";
 
 describe("achternaam", () => {
   it("pakt het laatste woord", () => {
@@ -97,5 +97,47 @@ describe("krantKop — gevallen uit de echte data", () => {
   it("laat een naam zonder tussenvoegsel met rust", () => {
     expect(achternaam("Tadej Pogacar")).toBe("Pogacar");
     expect(achternaam("Jasper De Buyst")).toBe("De Buyst");
+  });
+});
+
+describe("kopNoemtPoulenaam", () => {
+  it("herkent een ploegnaam in de kop", () => {
+    expect(kopNoemtPoulenaam("Pogacar zet JWielerteam op kop", ["JWielerteam"])).toBe(true);
+  });
+
+  it("is ongevoelig voor hoofdletters en accenten", () => {
+    expect(kopNoemtPoulenaam("Roglic verslaat Team Pogačar", ["team pogacar"])).toBe(true);
+  });
+
+  it("laat een zuivere koerskop door", () => {
+    expect(kopNoemtPoulenaam("Roglic slaat toe op de Angliru", ["JWielerteam", "Voor de apen"])).toBe(false);
+  });
+
+  it("negeert namen korter dan drie tekens", () => {
+    // Een ploeg die "AB" heet mag niet elke kop afkeuren.
+    expect(kopNoemtPoulenaam("Van Aert wint in Parijs", ["AB", "De"])).toBe(false);
+  });
+
+  it("gaat om met lege invoer", () => {
+    expect(kopNoemtPoulenaam("", ["JWielerteam"])).toBe(false);
+    expect(kopNoemtPoulenaam("Pogacar wint", [null, undefined, ""])).toBe(false);
+  });
+});
+
+describe("bouwKop weert poulenamen", () => {
+  const basis = { winnaar: "Tadej Pogačar", etappeNaam: "Monaco>Monaco", etappeNummer: 1 };
+
+  it("valt terug op het sjabloon als de kop een ploegnaam noemt", () => {
+    expect(bouwKop({ ...basis, gegenereerd: "Pogacar zet JWielerteam op kop", poulenamen: ["JWielerteam"] }))
+      .toBe("Pogačar wint in Monaco");
+  });
+
+  it("houdt de gegenereerde kop als die alleen over de koers gaat", () => {
+    expect(bouwKop({ ...basis, gegenereerd: "Pogacar wint de openingstijdrit", poulenamen: ["JWielerteam"] }))
+      .toBe("Pogacar wint de openingstijdrit");
+  });
+
+  it("werkt zonder poulenamen precies als voorheen", () => {
+    expect(bouwKop({ ...basis, gegenereerd: "Pogacar slaat meteen toe" })).toBe("Pogacar slaat meteen toe");
   });
 });

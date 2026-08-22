@@ -169,6 +169,11 @@ export default function KaravaanFeed({
       ]
     : [];
 
+  // De rubriekknop scrolt naar #krant-verslag, en die sectie bestaat alleen als
+  // er een verslag is. Zonder deze check stond er een knop die nergens heen ging.
+  const { data: verslag } = useEtappeVerslag(laatsteEtappe?.stage_id);
+  const heeftVerslag = Boolean(verslag?.tekst?.trim());
+
   // Hoofdartikel over de laatste etappe. De kop komt uit de generator, maar
   // alleen als die de ritwinnaar noemt — anders een sjabloon uit de uitslag.
   const artikel: Hoofdartikel | null = (() => {
@@ -178,6 +183,12 @@ export default function KaravaanFeed({
       winnaar: laatsteEtappe.ritwinnaar,
       etappeNaam: laatsteEtappe.stage_name,
       etappeNummer: laatsteEtappe.stage_number,
+      // De kop gaat over de koers. Noemt de generator toch een ploeg- of
+      // deelnemersnaam, dan valt bouwKop terug op het sjabloon.
+      poulenamen: [
+        ...laatsteEtappe.subpouleStandings.flatMap((r) => [r.team_name, r.display_name]),
+        ...laatsteEtappe.overallStandings.flatMap((r) => [r.team_name, r.display_name]),
+      ],
     });
     if (!kop) return null;
 
@@ -194,6 +205,16 @@ export default function KaravaanFeed({
     return {
       kicker: t("karavaan.voorpagina.kicker", { etappe: thema.etappe, nummer: laatsteEtappe.stage_number }),
       kop,
+      verslag: heeftVerslag
+        ? (
+          <Verslag
+            variant="lead"
+            stageId={laatsteEtappe.stage_id}
+            stageNumber={laatsteEtappe.stage_number}
+            stageName={laatsteEtappe.stage_name}
+          />
+        )
+        : undefined,
       chapeau: laatsteEtappe.mijnDagpunten != null
         ? t("karavaan.voorpagina.chapeauMet", { punten: laatsteEtappe.mijnDagpunten, rang: laatsteEtappe.mijnDagrang ?? 0, totaal: laatsteEtappe.subpouleStandings.length })
         : t("karavaan.voorpagina.chapeauZonder"),
@@ -202,11 +223,6 @@ export default function KaravaanFeed({
       quotes,
     };
   })();
-
-  // De rubriekknop scrolt naar #krant-verslag, en die sectie bestaat alleen als
-  // er een verslag is. Zonder deze check stond er een knop die nergens heen ging.
-  const { data: verslag } = useEtappeVerslag(laatsteEtappe?.stage_id);
-  const heeftVerslag = Boolean(verslag?.tekst?.trim());
 
   const rubrieken: Rubriek[] = [
     ...(selectedSubpouleId
@@ -357,17 +373,6 @@ export default function KaravaanFeed({
         </div>
       </button>
       )}
-
-      {/* Het verslag van de laatst gefiatteerde etappe. Staat boven de
-          voorbeschouwing: eerst wat er gebeurd is, dan wat er komt -- de
-          volgorde van een krant. Rendert niets zolang er geen verslag is. */}
-      <div className="scroll-mt-24">
-        <Verslag
-          stageId={laatsteEtappe?.stage_id}
-          stageNumber={laatsteEtappe?.stage_number}
-          stageName={laatsteEtappe?.stage_name}
-        />
-      </div>
 
       {/* De Voorbeschouwing — vooruitblik op de eerstvolgende etappe */}
       <div id="krant-voorbeschouwing" className="scroll-mt-24">

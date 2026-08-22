@@ -17,11 +17,14 @@ export default function Verslag({
   stageId,
   stageNumber,
   stageName,
+  variant = "kaart",
   className,
 }: {
   stageId?: string | null;
   stageNumber?: number | null;
   stageName?: string | null;
+  /** "lead" laat de kaartrand en de kop weg: dan staat het in het hoofdartikel. */
+  variant?: "kaart" | "lead";
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -38,11 +41,17 @@ export default function Verslag({
   const url = veiligeUrl(verslag.bron_url);
   const meerDanEen = stukken.length > 1 || opening !== stukken[0];
 
+  const isLead = variant === "lead";
+
   return (
     <section
       id="krant-verslag"
-      className={cn("retro-border no-hover-lift bg-card overflow-hidden", className)}
+      className={cn(
+        isLead ? "mt-2" : "retro-border no-hover-lift bg-card overflow-hidden",
+        className,
+      )}
     >
+      {!isLead && (
       <div className="px-4 pt-3.5">
         <div className="flex items-center gap-2">
           <span className="inline-block rounded-[3px] bg-primary px-1.5 py-0.5 font-mono text-[8.5px] font-extrabold uppercase tracking-[0.16em] text-primary-foreground">
@@ -60,8 +69,9 @@ export default function Verslag({
           </span>
         </div>
       </div>
+      )}
 
-      <div className="px-4 pb-3.5 pt-2">
+      <div className={cn(isLead ? "" : "px-4 pb-3.5 pt-2")}>
         {open ? (
           <div className="space-y-2.5">
             {stukken.map((p, i) => (
@@ -103,7 +113,10 @@ export default function Verslag({
       </div>
 
       {bron && (
-        <div className="border-t border-border bg-secondary/40 px-4 py-2 font-sans text-[11px] text-muted-foreground">
+        <div className={cn(
+          "font-sans text-[11px] text-muted-foreground",
+          isLead ? "mt-2.5" : "border-t border-border bg-secondary/40 px-4 py-2",
+        )}>
           {bron}
           {url && (
             <>

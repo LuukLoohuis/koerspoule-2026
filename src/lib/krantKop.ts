@@ -34,6 +34,27 @@ export function kopNoemtWinnaar(kop: string | null | undefined, winnaar: string 
   return plat(kop).includes(plat(naam));
 }
 
+/**
+ * Noemt deze kop een deelnemer of ploeg uit de poule?
+ *
+ * De generator krijgt de instructie dat de kop over de KOERS gaat en geen naam
+ * van een deelnemer of subpoule mag bevatten. Een model houdt zich daar niet
+ * altijd aan -- "Pogacar zet JWielerteam op kop" noemt de ritwinnaar én een
+ * ploegnaam, en glipte daarmee door de winnaarscontrole heen. Deze check vangt
+ * dat af, zodat we terugvallen op het sjabloon.
+ *
+ * Korte namen worden genegeerd: een ploeg die "De" of "AB" heet zou anders elke
+ * kop afkeuren.
+ */
+export function kopNoemtPoulenaam(kop: string | null | undefined, namen: Array<string | null | undefined>): boolean {
+  const platteKop = plat(String(kop ?? ""));
+  if (!platteKop) return false;
+  return namen.some((n) => {
+    const naam = plat(String(n ?? "").trim());
+    return naam.length >= 3 && platteKop.includes(naam);
+  });
+}
+
 /** Aankomstplaats uit een etappenaam als "Monaco>Monaco" of "Oviedo - Angliru". */
 export function aankomstplaats(etappeNaam: string | null | undefined): string | null {
   const naam = String(etappeNaam ?? "").trim();
@@ -58,9 +79,13 @@ export function bouwKop(input: {
   winnaar?: string | null;
   etappeNaam?: string | null;
   etappeNummer?: number | null;
+  /** Ploeg- en deelnemersnamen die niet in de kop thuishoren. */
+  poulenamen?: Array<string | null | undefined>;
 }): string | null {
-  const { gegenereerd, winnaar, etappeNaam, etappeNummer } = input;
-  if (kopNoemtWinnaar(gegenereerd, winnaar)) return gegenereerd!.trim();
+  const { gegenereerd, winnaar, etappeNaam, etappeNummer, poulenamen = [] } = input;
+  if (kopNoemtWinnaar(gegenereerd, winnaar) && !kopNoemtPoulenaam(gegenereerd, poulenamen)) {
+    return gegenereerd!.trim();
+  }
 
   const naam = achternaam(winnaar);
   if (!naam) return null;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import SubpouleKiezer from "@/components/karavaan/SubpouleKiezer";
@@ -18,6 +18,11 @@ export type Hoofdartikel = {
   kicker: string;
   kop: string;
   chapeau: string;
+  /**
+   * Het etappeverslag, als dat er is. Vervangt de chapeau: die meldt alleen dát
+   * de uitslag binnen is, en zodra er een verslag ligt is dat het nieuws.
+   */
+  verslag?: ReactNode;
   chips: string[];
   profielKnop?: { label: string; onClick: () => void };
   quotes: Array<{ naam: string; tekst: string }>;
@@ -145,7 +150,9 @@ export default function Voorpagina({
             <h2 className="mt-2.5 font-display text-[23px] font-bold leading-[1.08] tracking-[-0.028em] md:text-[30px]">
               {artikel.kop}
             </h2>
-            <p className="mt-2 text-[14.5px] leading-relaxed text-foreground/75">{artikel.chapeau}</p>
+            {artikel.verslag ?? (
+              <p className="mt-2 text-[14.5px] leading-relaxed text-foreground/75">{artikel.chapeau}</p>
+            )}
             {artikel.chips.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {artikel.chips.map((c) => (
