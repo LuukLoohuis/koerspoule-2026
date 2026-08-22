@@ -377,7 +377,14 @@ Deno.serve(async (req) => {
       const { error: bewaarFout } = await dienst
         .from("etappe_verslagen")
         .upsert({ stage_id: body.stage_id, tekst: resultaat.verslag }, { onConflict: "stage_id" });
-      if (bewaarFout) console.error("verslag bewaren mislukt", bewaarFout.message);
+      if (bewaarFout) {
+        // Eerder werd dit alleen gelogd en gaf de functie tóch ok terug. De
+        // admin kreeg dan "Verslag geschreven" te zien terwijl er niets in de
+        // database stond -- een melding die de fout juist verbergt. Een
+        // mislukte opslag hoort een fout te zijn.
+        console.error("verslag bewaren mislukt", bewaarFout.message);
+        return json({ error: `Verslag gemaakt maar niet opgeslagen: ${bewaarFout.message}` }, 500);
+      }
     }
 
     return json({ ok: true, ...resultaat, zinnen, model: MODEL });
