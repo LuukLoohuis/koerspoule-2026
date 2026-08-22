@@ -505,7 +505,11 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           {displayedRows.map((m) => {
             const isMe = m.user_id === user?.id;
             const isComparing = m.user_id === compareId;
-            const canCompare = !isMe && !!m.entry_id && benchmarkOpen;
+            // Zichtbaar blijven en beschikbaar zijn is niet hetzelfde: tijdens de
+            // inschrijving hoort het zwaardje er wél te staan -- anders lijkt de
+            // functie te ontbreken -- maar levert een klik een uitleg op.
+            const toontVergelijk = !isMe && !!m.entry_id;
+            const canCompare = toontVergelijk && benchmarkOpen;
 
             const rankNumCls =
               m.rank === 1 ? "text-amber-400"
@@ -552,8 +556,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
             return (
               <div
                 key={m.user_id}
-                role={canCompare ? "button" : undefined}
-                tabIndex={canCompare ? 0 : undefined}
+                role={toontVergelijk ? "button" : undefined}
+                tabIndex={toontVergelijk ? 0 : undefined}
                 aria-pressed={canCompare ? isComparing : undefined}
                 aria-label={canCompare ? t("subpoule.standings.compareWith", { name: m.team_name ?? m.display_name ?? t("subpoule.standings.playerFallback") }) : undefined}
                 onClick={canCompare ? handleRowToggle : undefined}
@@ -594,10 +598,6 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                   <span
-                    // Achter de ploegnaam zit een mens; in de subpoule ken je
-                    // elkaar, dus daar mag die naam bij het aanwijzen verschijnen.
-                    // Bewust alleen hier -- in de totaalstand blijft het de ploegnaam.
-                    title={m.display_name && m.team_name && m.display_name !== m.team_name ? m.display_name : undefined}
                     className={cn(
                       "font-sans text-sm truncate",
                       isMe ? "font-bold text-primary" : m.rank <= 3 ? "font-semibold" : "font-medium",
@@ -620,6 +620,18 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                     <Badge variant="secondary" className="text-xs shrink-0">{t("subpoule.standings.noTeam")}</Badge>
                   )}
                   </div>
+                  {/* De mens achter de ploegnaam, als eigen regel.
+                      Eerder een title-attribuut: op web een muizenpootje groot en
+                      op een telefoon helemaal niets, want daar bestaat hover niet.
+                      Een vaste tweede regel werkt overal, is leesbaar, en zit
+                      niets in de weg omdat hij klein en gedempt is. Alleen als de
+                      naam iets toevoegt -- is hij gelijk aan de ploegnaam, dan
+                      blijft de regel weg. */}
+                  {m.display_name && m.team_name && m.display_name !== m.team_name && (
+                    <p className="mt-0.5 truncate font-sans text-[11.5px] leading-tight text-muted-foreground">
+                      {m.display_name}
+                    </p>
+                  )}
                   {/* Woonplaats-label + positie binnen de gekozen plaats. */}
                   {requiresWoonplaats && woonplaatsByUser.get(m.user_id) && (
                     <div className="flex items-center gap-1.5 mt-0.5">
@@ -690,7 +702,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                     Desktop: "⚔ Vergelijk"-pill die bij hover binnenschuift.
                     Mobiel: subtiel zwaard-icoon. */}
                 <div className="shrink-0 flex items-center justify-end w-5 md:w-[104px]">
-                  {canCompare && (
+                  {toontVergelijk && (
                     <>
                       {/* Desktop: "⚔ Vergelijk"-pill; zet de selectie (SubpouleManager
                           toont het duel als zijpaneel). */}
@@ -708,7 +720,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                         title={isComparing ? t("subpoule.standings.closeComparison") : t("subpoule.standings.benchmarkTitle")}
                       >
                         <Swords
-                          className="h-3 w-3"
+                          className={cn("h-3 w-3", !benchmarkOpen && "opacity-50")}
                           strokeWidth={isComparing ? 2.5 : 2}
                           // Ook hier het doel: web en mobiel tonen elk een
                           // eigen zwaardje en de rondleiding pakt het zichtbare.
