@@ -1254,7 +1254,8 @@
       "chipDagrang": "{{rang}} of {{totaal}}",
       "naarProfiel": "🗺️ See the next stage",
       "meer": "+{{aantal}} more",
-      "minder": "less"
+      "minder": "less",
+      "rubVerslag": "Report"
     }
   },
   "common": {

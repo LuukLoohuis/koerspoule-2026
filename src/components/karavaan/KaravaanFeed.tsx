@@ -16,6 +16,7 @@ import { useSubpoules } from "@/hooks/useSubpoules";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
 import MiniStrip, { type HorsTabKey } from "@/components/karavaan/MiniStrip";
 import Voorbeschouwing from "@/components/karavaan/Voorbeschouwing";
+import Verslag from "@/components/karavaan/Verslag";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import Stamp from "@/components/retro/Stamp";
@@ -219,6 +220,15 @@ export default function KaravaanFeed({
     },
     ...(etappes.length > 0
       ? [{
+          key: "verslag",
+          emoji: "📰",
+          merk: `verslag-${laatsteEtappe?.stage_number ?? 0}`,
+          titel: t("karavaan.voorpagina.rubVerslag"),
+          onClick: () => naarSectie("krant-verslag"),
+        }]
+      : []),
+    ...(etappes.length > 0
+      ? [{
           key: "commentaar",
           emoji: "🎙️",
           merk: `com-${laatsteEtappe?.stage_number ?? 0}`,
@@ -341,6 +351,17 @@ export default function KaravaanFeed({
         </div>
       </button>
       )}
+
+      {/* Het verslag van de laatst gefiatteerde etappe. Staat boven de
+          voorbeschouwing: eerst wat er gebeurd is, dan wat er komt -- de
+          volgorde van een krant. Rendert niets zolang er geen verslag is. */}
+      <div className="scroll-mt-24">
+        <Verslag
+          stageId={laatsteEtappe?.stage_id}
+          stageNumber={laatsteEtappe?.stage_number}
+          stageName={laatsteEtappe?.stage_name}
+        />
+      </div>
 
       {/* De Voorbeschouwing — vooruitblik op de eerstvolgende etappe */}
       <div id="krant-voorbeschouwing" className="scroll-mt-24">

@@ -10,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Trophy, LineChart, Radio } from "lucide-react";
+import VerslagDialog from "@/components/admin/VerslagDialog";
+import { Trash2, Trophy, LineChart, Radio, Newspaper } from "lucide-react";
 import { isMeermarathonGame, WEDSTRIJD_TYPES, defaultWedstrijdType, type WedstrijdType } from "@/lib/gameTypes";
 import StageLiveTracks from "@/components/admin/StageLiveTracks";
 import { toast } from "sonner";
@@ -87,6 +88,7 @@ export default function StagesTab({
   const [uploading, setUploading] = useState<string | null>(null);
   // Profiel-data (JSON) bewerken via dialog.
   const [dataDialog, setDataDialog] = useState<Stage | null>(null);
+  const [verslagDialog, setVerslagDialog] = useState<Stage | null>(null);
   const [dataText, setDataText] = useState("");
   const [savingData, setSavingData] = useState(false);
 
@@ -542,6 +544,15 @@ export default function StagesTab({
                         >
                           <LineChart className="w-3.5 h-3.5" /> Profiel-data
                         </button>
+                        {/* Verslag: de terugblik die als hoofdartikel in de
+                            Koerskrant komt te staan. */}
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 text-xs underline text-primary"
+                          onClick={() => setVerslagDialog(s)}
+                        >
+                          <Newspaper className="w-3.5 h-3.5" /> Verslag
+                        </button>
                         {pointCount(s) >= 2 ? (
                           <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px]">
                             Profiel ✓ {pointCount(s)} pt
@@ -598,6 +609,8 @@ export default function StagesTab({
       </Card>
 
       {/* Profiel-data (JSON) bewerken */}
+      <VerslagDialog stage={verslagDialog} onClose={() => setVerslagDialog(null)} />
+
       <Dialog open={dataDialog !== null} onOpenChange={(o) => !o && setDataDialog(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
