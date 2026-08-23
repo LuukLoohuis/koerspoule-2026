@@ -220,15 +220,33 @@ export default function TeamBuilder() {
       });
       return;
     }
+    // Eén-knops wijzigflow: op een ingediend team eerst automatisch terug naar
+    // concept (anders weigert de pick-RPC), daarna de pick uitvoeren.
+    let teruggezet = false;
     try {
-      // Eén-knops wijzigflow: op een ingediend team eerst automatisch terug naar
-      // concept (anders weigert de pick-RPC), daarna gewoon de pick uitvoeren.
       if (isSubmitted) {
         await revertEntry.mutateAsync({ entryId: entry.id });
-        toast({ title: t("team.builder.editableAgainToast") });
+        teruggezet = true;
       }
       await togglePick.mutateAsync({ entryId: entry.id, categoryId, riderId });
+      // Pas melden dat je weer kunt wijzigen als de wijziging ook gelukt is.
+      if (teruggezet) toast({ title: t("team.builder.editableAgainToast") });
     } catch (error) {
+      // Mislukt de pick ná het terugzetten, dan stond je ploeg ineens op
+      // concept zonder dat er iets gewijzigd was -- en dat merkte je pas
+      // ergens anders, bijvoorbeeld omdat vergelijken niet meer kon. Zet hem
+      // terug zoals hij was; de oorspronkelijke fout blijft leidend.
+      if (teruggezet) {
+        try {
+          await submitEntry.mutateAsync({ entryId: entry.id });
+        } catch {
+          toast({
+            title: t("team.builder.saveFailed"),
+            description: t("team.builder.revertRestoreFailed"),
+            variant: "destructive",
+          });
+        }
+      }
       toast({
         title: t("team.builder.saveFailed"),
         description: entryErrorMessage(error),

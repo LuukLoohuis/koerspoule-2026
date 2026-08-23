@@ -361,7 +361,8 @@
       "geenTreffers": "Geen renner in deze categorie past bij je zoekterm.",
       "ploegFilterAantal": "{{ploeg}} — {{count}} renner(s) in je ploeg. Toon alleen deze ploeg.",
       "geenTreffersTotaal": "Geen renner past bij je zoekterm. Wis het zoekveld om alle categorieën te zien.",
-      "lockedToast": "De koers is begonnen; je ploeg staat vast."
+      "lockedToast": "De koers is begonnen; je ploeg staat vast.",
+      "revertRestoreFailed": "Je ploeg staat nu als concept en kon niet automatisch worden teruggezet. Dien hem opnieuw in bij Mijn Peloton."
     },
     "panel": {
       "loginToView": "Log in om je team te bekijken.",
