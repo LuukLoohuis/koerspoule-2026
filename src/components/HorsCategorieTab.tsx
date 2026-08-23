@@ -41,7 +41,7 @@ import Voorbeeldmarkering from "@/components/Voorbeeldmarkering";
 import { demoPickStats, demoJokerStats } from "@/lib/horsDemo";
 import { useVoorbeeldbron } from "@/hooks/useVoorbeeldbron";
 import BenchmarkTab from "@/components/BenchmarkTab";
-import { MobielTabBalk } from "@/components/MobielTabBalk";
+import SubTabRaster from "@/components/SubTabRaster";
 import { RetroTabs } from "@/components/RetroTabs";
 import JerseyBadge from "@/components/retro/JerseyBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
@@ -910,6 +910,9 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // Tab-labels via t() (HORS_TABS zelf staat op module-niveau; label daar is fallback).
   const tabLabel = (key: HorsTabKey): string => t(`hors.tabs.${key}`);
+  // Korte variant voor de mobiele balk: "De Wielerdirecteur" past niet naast
+  // vier andere op een telefoon.
+  const kortLabel = (key: HorsTabKey): string => t(`hors.tabsKort.${key}`);
 
   // ── Locked state ─────────────────────────────────────────────────────────────
   if (!isVisible) {
@@ -950,22 +953,25 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
       {/* ── Sub-tab navigation ─────────────────────────────────────────────── */}
 
-      {/* Mobile — MobielTabBalk (scrollable chips). Glijdt weg bij omlaag scrollen
+      {/* Mobiel — vaste subtabbalk. Glijdt weg bij omlaag scrollen
           (auto-hide); de zwevende schakelaar neemt het wisselen over. */}
       <div
         className={cn(
-          "md:hidden overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-h-[120px]",
+          "md:hidden overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-h-[64px]",
           !barVisible && "!max-h-0 opacity-0",
         )}
       >
-        {/* Tabbalk staat stil; de carrousel-content volgt de vinger. */}
-        <MobielTabBalk
+        {/* Alle vijf naast elkaar in plaats van een scrollende rij: er stonden
+            altijd onderdelen buiten beeld. Vegen blijft, de balk laat zien waar
+            je bent. */}
+        <SubTabRaster
+          aria-label={t("hors.tabsAria")}
           tabs={[
-            { key: "dartpijl", label: tabLabel("dartpijl"), icon: Activity },
-            { key: "pelotonkeuzes", label: tabLabel("pelotonkeuzes"), icon: BarChart3 },
-            { key: "wielerdirecteur", label: tabLabel("wielerdirecteur"), icon: DirectorIcon },
-            { key: "superteam", label: tabLabel("superteam"), icon: Crown },
-            { key: "benchmark", label: tabLabel("benchmark"), icon: Swords },
+            { key: "dartpijl", label: tabLabel("dartpijl"), kort: kortLabel("dartpijl"), icon: Activity },
+            { key: "pelotonkeuzes", label: tabLabel("pelotonkeuzes"), kort: kortLabel("pelotonkeuzes"), icon: BarChart3 },
+            { key: "wielerdirecteur", label: tabLabel("wielerdirecteur"), kort: kortLabel("wielerdirecteur"), icon: DirectorIcon },
+            { key: "superteam", label: tabLabel("superteam"), kort: kortLabel("superteam"), icon: Crown },
+            { key: "benchmark", label: tabLabel("benchmark"), kort: kortLabel("benchmark"), icon: Swords },
           ]}
           active={activeTab}
           onChange={(k) => setActiveTab(k as typeof activeTab)}

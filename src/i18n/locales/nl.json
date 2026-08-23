@@ -1137,6 +1137,13 @@
         "p6": "",
         "slot": "Allez. Aan de slag."
       }
+    },
+    "tabsKort": {
+      "dartpijl": "Dartpijl",
+      "pelotonkeuzes": "Peloton",
+      "wielerdirecteur": "Directeur",
+      "superteam": "Emirates",
+      "benchmark": "Benchmark"
     }
   },
   "karavaan": {

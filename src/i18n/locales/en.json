@@ -1137,6 +1137,13 @@
         "p6": "",
         "slot": "Right. Get to work."
       }
+    },
+    "tabsKort": {
+      "dartpijl": "Darts",
+      "pelotonkeuzes": "Peloton",
+      "wielerdirecteur": "Director",
+      "superteam": "Emirates",
+      "benchmark": "Benchmark"
     }
   },
   "karavaan": {
