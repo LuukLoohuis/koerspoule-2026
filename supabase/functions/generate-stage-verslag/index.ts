@@ -11,9 +11,26 @@
 // Vereist env: OPENAI_API_KEY (Supabase secrets).
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
-const MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-5.4-mini";
 const MAX_TOKENS = 2000;
+
+/**
+ * Welke aanbieder de tekst schrijft. AI_PROVIDER=deepseek schakelt om zonder
+ * code te wijzigen; leeg of "openai" houdt de bestaande route aan.
+ *
+ * DeepSeek spreekt de OpenAI-vorm, maar niet helemaal: het kent
+ * max_completion_tokens en reasoning_effort niet. Vandaar per aanbieder een
+ * eigen body in plaats van één gedeelde.
+ */
+const PROVIDER = (Deno.env.get("AI_PROVIDER") || "openai").toLowerCase();
+const IS_DEEPSEEK = PROVIDER === "deepseek";
+
+const API_URL = IS_DEEPSEEK
+  ? "https://api.deepseek.com/chat/completions"
+  : "https://api.openai.com/v1/chat/completions";
+const MODEL = IS_DEEPSEEK
+  ? (Deno.env.get("DEEPSEEK_MODEL") || "deepseek-chat")
+  : (Deno.env.get("OPENAI_MODEL") || "gpt-5.4-mini");
+const API_KEY_NAAM = IS_DEEPSEEK ? "DEEPSEEK_API_KEY" : "OPENAI_API_KEY";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -84,24 +101,36 @@ Antwoord UITSLUITEND met JSON:
 {"verslag":"<8 tot 14 zinnen; koers eerst, dan een lege regel, dan het pouledeel; deelnemersnamen tussen **>","kop":"<krantenkop van maximaal zeven woorden, bevat de achternaam van de ritwinnaar, geen punt aan het eind>"}`;
 
 async function openaiChat(userPrompt: string, systemPrompt = SYSTEM_PROMPT): Promise<{ text: string; finishReason: string | null }> {
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
-  if (!apiKey) throw new Error("OPENAI_API_KEY niet ingesteld in env");
+  const apiKey = Deno.env.get(API_KEY_NAAM);
+  if (!apiKey) throw new Error(`${API_KEY_NAAM} niet ingesteld in env`);
 
-  const res = await fetch(OPENAI_URL, {
+  const messages = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ];
+  // JSON-modus werkt bij DeepSeek alleen als het woord "json" in de prompt
+  // staat. Onze systeemprompt eindigt op "Antwoord UITSLUITEND met JSON",
+  // dus dat is gedekt -- deze controle vangt af dat iemand die regel weghaalt.
+  if (IS_DEEPSEEK && !/json/i.test(systemPrompt + userPrompt)) {
+    throw new Error("DeepSeek JSON-modus vereist het woord 'json' in de prompt");
+  }
+
+  const body = IS_DEEPSEEK
+    ? { model: MODEL, max_tokens: MAX_TOKENS, response_format: { type: "json_object" }, messages }
+    : {
+        model: MODEL,
+        max_completion_tokens: MAX_TOKENS,
+        reasoning_effort: "low",
+        response_format: { type: "json_object" },
+        messages,
+      };
+
+  const res = await fetch(API_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
-    body: JSON.stringify({
-      model: MODEL,
-      max_completion_tokens: MAX_TOKENS,
-      reasoning_effort: "low",
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-    }),
+    body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`OpenAI API ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw new Error(`${IS_DEEPSEEK ? "DeepSeek" : "OpenAI"} API ${res.status}: ${await res.text()}`);
   const data = await res.json();
   return {
     text: typeof data?.choices?.[0]?.message?.content === "string" ? data.choices[0].message.content : "",
@@ -577,7 +606,7 @@ Deno.serve(async (req) => {
     }
 
     const zinnen = telZinnen(resultaat.verslag);
-    console.log(`[verslag] etappe=${body?.stage_nummer ?? body?.stage_id ?? "?"} zinnen=${zinnen} model=${MODEL}`);
+    console.log(`[verslag] etappe=${body?.stage_nummer ?? body?.stage_id ?? "?"} zinnen=${zinnen} provider=${PROVIDER} model=${MODEL}`);
 
     // Alleen bewaren als daar expliciet om gevraagd wordt: bij handmatig
     // herschrijven leest de redacteur eerst na voordat het de krant in gaat.
@@ -599,7 +628,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ ok: true, ...resultaat, zinnen, model: MODEL });
+    return json({ ok: true, ...resultaat, zinnen, provider: PROVIDER, model: MODEL });
   } catch (err) {
     const melding = foutTekst(err);
     console.error("generate-stage-verslag", melding, err);
