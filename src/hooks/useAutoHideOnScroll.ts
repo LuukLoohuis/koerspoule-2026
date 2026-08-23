@@ -9,7 +9,12 @@
 import { useEffect, useRef, useState } from "react";
 import { isProgrammaticScroll } from "@/lib/scrollLock";
 
-export function useAutoHideOnScroll(threshold = 12): boolean {
+/**
+ * Drempel bewust ruim: op 12 px verdween de balk al bij het kleinste duwtje,
+ * en dan beweegt hij mee terwijl je alleen wat wilt lezen. Pas bij echt
+ * doorscrollen mag hij weg.
+ */
+export function useAutoHideOnScroll(threshold = 64): boolean {
   const [visible, setVisible] = useState(true);
   const lastY = useRef(0);
   const ticking = useRef(false);

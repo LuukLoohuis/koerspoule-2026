@@ -22,17 +22,29 @@ import { cn } from "@/lib/utils";
 
 export default function Voorbeeldmarkering({
   children,
+  actief = true,
   opentWanneer,
   bron,
   className,
 }: {
   children: ReactNode;
+  /**
+   * Staat er iets te waarschuwen? Zo niet, dan komt de inhoud er kaal doorheen.
+   *
+   * De aanroepers deden dit eerder met `className="contents"`, maar dat haalt
+   * alleen het omhulsel uit de layout -- de waarschuwingsbalk zelf bleef staan.
+   * Gevolg: bij een live koers stonden er echte cijfers onder de mededeling dat
+   * het voorbeeldcijfers waren.
+   */
+  actief?: boolean;
   /** Eén regel: wanneer de echte cijfers verschijnen. */
   opentWanneer?: string;
   /** Waar de voorbeeldcijfers vandaan komen, bv. "Tour de France 2026". */
   bron?: string;
   className?: string;
 }) {
+  if (!actief) return <>{children}</>;
+
   return (
     <div className={cn("relative", className)}>
       {/* Onmiskenbaar: volle breedte, gouden rand, boven het paneel. */}

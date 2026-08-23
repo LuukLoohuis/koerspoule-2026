@@ -1013,7 +1013,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
             {/* ── Tab: Benchmark ───────────────────────────────────────────────── */}
             {k === "benchmark" && (
               <Voorbeeldmarkering
-                className={isDemo ? undefined : "contents"}
+                actief={isDemo}
                 opentWanneer={isDemo ? t("hors.demo.opentBijPunten") : undefined}
                 bron={bron?.koers ?? undefined}
               >
@@ -1091,7 +1091,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       {/* ── Tab 2: Pelotonkeuzes ─────────────────────────────────────────────── */}
       {k === "pelotonkeuzes" && (
         <Voorbeeldmarkering
-          className={isDemo ? undefined : "contents"}
+          actief={isDemo}
           opentWanneer={isDemo ? t("hors.demo.opentBijLive") : undefined}
           bron={bron?.koers ?? undefined}
         >
@@ -1708,7 +1708,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       {/* ── Tab: The Emirates — de droomploeg achterop gezien ─────────────────── */}
       {k === "superteam" && (
         <Voorbeeldmarkering
-          className={isDemo ? undefined : "contents"}
+          actief={isDemo}
           opentWanneer={isDemo ? t("hors.demo.opentBijLive") : undefined}
           bron={bron?.koers ?? undefined}
         >
