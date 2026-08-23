@@ -28,9 +28,16 @@ const API_URL = IS_DEEPSEEK
   ? "https://api.deepseek.com/chat/completions"
   : "https://api.openai.com/v1/chat/completions";
 const MODEL = IS_DEEPSEEK
-  ? (Deno.env.get("DEEPSEEK_MODEL") || "deepseek-chat")
+  ? (Deno.env.get("DEEPSEEK_MODEL") || "deepseek-v4-flash")
   : (Deno.env.get("OPENAI_MODEL") || "gpt-5.4-mini");
 const API_KEY_NAAM = IS_DEEPSEEK ? "DEEPSEEK_API_KEY" : "OPENAI_API_KEY";
+
+// Alleen voor DeepSeek: de GPT-5-modellen accepteren temperature niet. DeepSeek
+// adviseert 1.0 voor analyse en 1.5 voor creatief schrijven; een verslag uit
+// vastgelegde feiten zit aan de analysekant, dus laag houden. Hoger maakt de
+// tekst levendiger maar ook losser met de cijfers, en dat is hier precies wat
+// je niet wilt.
+const TEMPERATUUR = Number(Deno.env.get("DEEPSEEK_TEMPERATURE") ?? "1.0");
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -116,7 +123,13 @@ async function openaiChat(userPrompt: string, systemPrompt = SYSTEM_PROMPT): Pro
   }
 
   const body = IS_DEEPSEEK
-    ? { model: MODEL, max_tokens: MAX_TOKENS, response_format: { type: "json_object" }, messages }
+    ? {
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        temperature: Number.isFinite(TEMPERATUUR) ? TEMPERATUUR : 1.0,
+        response_format: { type: "json_object" },
+        messages,
+      }
     : {
         model: MODEL,
         max_completion_tokens: MAX_TOKENS,
@@ -592,6 +605,8 @@ Deno.serve(async (req) => {
     let resultaat = parse((await openaiChat(prompt, systeem)).text);
     // Eén herkansing: een te lang of afgekapt antwoord is bijna altijd
     // eenmalig, en een mislukte generatie kost de admin anders handwerk.
+    // Ook herkansen bij een leeg antwoord: DeepSeek geeft in JSON-modus soms
+    // lege inhoud terug (staat zo in hun documentatie).
     if (!resultaat || telZinnen(resultaat.verslag) > 16) {
       const tweede = parse((await openaiChat(`${prompt}\n\nLET OP: houd het strikt tussen 8 en 14 zinnen.`, systeem)).text);
       if (tweede) resultaat = tweede;
