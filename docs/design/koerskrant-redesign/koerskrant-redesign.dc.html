@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=DM+Sans:wght@400;500;700&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#e8e4da;font-family:'DM Sans',system-ui,sans-serif}
+a{color:#b0121f}a:hover{color:#8a0d17}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08)}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 'DM Sans',sans-serif;color:#1a1a1a}
+.dv-opts{display:flex;flex-wrap:wrap;gap:34px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'DM Sans',sans-serif;color:rgba(0,0,0,.55)}
+.dv-opt:target .dv-oid{background:#b0121f;color:#fff}
+.dv-next{margin:22px 0 0;font:12px/1.5 'DM Sans',sans-serif;color:rgba(0,0,0,.5)}
+.halftone{background-color:#cdc4b2;background-image:radial-gradient(#8d8474 1px,transparent 1.2px),radial-gradient(#8d8474 1px,transparent 1.2px);background-size:6px 6px;background-position:0 0,3px 3px}
+.halftone-dark{background-color:#211f1a;background-image:radial-gradient(#6d6455 1.1px,transparent 1.3px),radial-gradient(#4a4438 1px,transparent 1.2px);background-size:6px 6px;background-position:0 0,3px 3px}
+.scroller{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.scroller::-webkit-scrollbar{display:none}
+.hrow::-webkit-scrollbar{display:none}
+@keyframes barIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.25}}
+.animBar{animation:barIn .28s cubic-bezier(.2,.8,.2,1) both}
+.animPane{animation:fadeUp .3s cubic-bezier(.2,.8,.2,1) both}
+.animSheet{animation:sheetUp .42s cubic-bezier(.19,1,.22,1) both}
+.livedot{animation:pulseDot 1.6s ease-in-out infinite}
+</style></helmet>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Krant mét premium tegels onderaan · en de mobiele versie opgetild</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Web · <a class="dv-oid" href="#1a">1a</a> met de Apple-tegels en standbalk onder de editie</div>
+<div style="width:1040px;background:#fbf8f0;box-shadow:0 1px 3px rgba(0,0,0,.1),0 24px 60px -30px rgba(0,0,0,.45);padding:24px 34px 18px;color:#141210">
+
+  <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#7a7064;border-bottom:1px solid #d3cabb;padding-bottom:7px">
+    <span>Vuelta a España 2026</span><span>Woensdag 26 augustus</span><span style="color:{{ accent }}">Etapa 1 · Monaco</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:18px;padding:14px 0 8px">
+    <div style="height:1px;background:#141210;opacity:.25"></div>
+    <h1 style="margin:0;font-family:'Playfair Display',serif;font-weight:900;font-size:70px;line-height:.9;letter-spacing:-.035em;text-align:center">De Koerskrant</h1>
+    <div style="height:1px;background:#141210;opacity:.25"></div>
+  </div>
+  <p style="margin:0;text-align:center;font-family:'Source Serif 4',serif;font-style:italic;font-size:13.5px;color:#6f665a">alles van vandaag, in één oogopslag</p>
+  <div style="margin-top:11px;border-top:2.5px solid #141210;border-bottom:1px solid #141210;height:4px"></div>
+
+  <div style="display:grid;grid-template-columns:1.55fr 1fr .78fr;margin-top:16px;padding-top:2px">
+    <div style="padding-right:22px;min-width:0">
+      <span style="display:inline-block;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#fff;background:{{ accent }};padding:3px 7px">Openingstijdrit</span>
+      <h2 style="margin:9px 0 0;font-family:'Playfair Display',serif;font-weight:900;font-size:47px;line-height:1.02;letter-spacing:-.032em">Pogačar wint in Monaco</h2>
+      <p style="margin:9px 0 0;font-family:'Source Serif 4',serif;font-style:italic;font-size:16px;line-height:1.4;color:#4a443c">Negen honderdsten sneller dan Hayter — en de Sloveen pakt de eerste rode trui van de ronde</p>
+      <div style="margin:12px 0 13px;border-top:1px solid #141210;border-bottom:1px solid #141210;height:3px;opacity:.8"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;font-family:'Source Serif 4',serif;font-size:14.5px;line-height:1.58;color:#231f1a;text-align:justify;hyphens:auto">
+        <p style="margin:0"><span style="display:block;font-family:'Oswald',sans-serif;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px">Monaco <span style="color:#8a8175">—</span></span><span style="float:left;font-family:'Playfair Display',serif;font-weight:900;font-size:56px;line-height:.8;padding:4px 7px 0 0">T</span>adej Pogačar heeft de openingstijdrit van de Vuelta a España gewonnen. In Monaco was de Sloveen 0,09 seconde sneller dan Ethan Hayter. Joshua Tarling eindigde als derde op vier seconden.</p>
+        <p style="margin:0">Pogačar veroverde zo de eerste rode trui van deze ronde. In de poule betekent het meteen schuiven: <strong style="color:{{ accent }};font-weight:600">JWielerteam</strong> pakt de leiding met 121 punten, Discovery Channel volgt op zeven.</p>
+      </div>
+      <button type="button" onClick="{{ toggleWeb2 }}" style="margin-top:11px;display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;cursor:pointer;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:{{ accent }};border-bottom:1px solid currentColor">{{ web2Label }}</button>
+      <sc-if value="{{ web2 }}" hint-placeholder-val="{{ false }}">
+        <div class="animPane" style="margin-top:12px;font-family:'Source Serif 4',serif;font-size:14.5px;line-height:1.58;color:#231f1a;column-count:2;column-gap:20px;column-rule:1px solid #ded5c6;text-align:justify;hyphens:auto">
+          <p style="margin:0 0 9px">Op het smalle circuit van Monaco was elke bocht een keuze. Pogačar reed de laatste kilometer met de handen op de basisbeugel en nam de tijdrit als een heer op zijn erf.</p>
+          <p style="margin:0">Hayter hield het verschil klein, Tarling verloor zijn marge in de klim naar het paleis. Voor de klassementsrenners is het een waarschuwing.</p>
+        </div>
+      </sc-if>
+      <div style="margin-top:13px;padding-top:7px;border-top:1px solid #ded5c6;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175">Bron: Wielerflits · <a href="#2a" style="color:{{ accent }};text-decoration:none;border-bottom:1px solid currentColor">lees het origineel</a></div>
+    </div>
+
+    <div style="padding:0 20px;border-left:1px solid #d3cabb;min-width:0">
+      <div class="halftone" style="height:150px;position:relative;display:flex;align-items:flex-end">
+        <span style="width:100%;background:rgba(20,18,16,.72);color:#f3ede0;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.16em;text-transform:uppercase;padding:5px 7px">Foto — winnaar over de finish</span>
+      </div>
+      <p style="margin:6px 0 0;font-family:'Source Serif 4',serif;font-style:italic;font-size:11.5px;line-height:1.35;color:#7a7064">De Sloveen op de Boulevard Albert I, kort na 17.30 uur.</p>
+      <div style="margin:14px 0 9px;border-top:1px solid #141210"></div>
+      <p style="margin:0 0 9px;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#4a443c">Uit de perszaal</p>
+      <sc-for list="{{ quotes }}" as="q" hint-placeholder-count="2">
+        <div style="border-top:1px solid #ded5c6;padding:8px 0 10px">
+          <p style="margin:0 0 3px;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#8a8175">{{ q.naam }}</p>
+          <p style="margin:0;font-family:'Source Serif 4',serif;font-size:13px;line-height:1.45;color:#3a352e">{{ q.tekst }}</p>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="padding-left:18px;border-left:1px solid #d3cabb;min-width:0">
+      <p style="margin:0 0 9px;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#4a443c;border-bottom:2px solid #141210;padding-bottom:5px">Klassement na etapa 1</p>
+      <sc-for list="{{ stand }}" as="r" hint-placeholder-count="4">
+        <span style="display:flex;align-items:baseline;gap:9px;padding:8px 0;border-bottom:1px dotted #cfc6b6">
+          <span style="font-family:'Oswald',sans-serif;font-size:11px;color:#a89e8f;min-width:12px">{{ r.pos }}</span>
+          <span style="flex:1;min-width:0;font-family:'Source Serif 4',serif;font-size:13.5px;font-weight:600">{{ r.ploeg }}</span>
+          <span style="font-family:'Source Serif 4',serif;font-size:13px;font-variant-numeric:tabular-nums;color:#7a7064">{{ r.totaal }}</span>
+        </span>
+      </sc-for>
+      <div style="margin-top:12px;background:#f1ead9;border-top:2px solid #141210;padding:9px 10px">
+        <p style="margin:0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#8a8175">Weerbericht Monaco</p>
+        <p style="margin:4px 0 0;font-family:'Playfair Display',serif;font-weight:700;font-size:20px">27° · rugwind</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;border-top:2.5px solid #141210;border-bottom:1px solid #141210;height:4px"></div>
+  <p style="margin:12px 0 10px;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8a8175">Verder in de krant</p>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+    <sc-for list="{{ tegels }}" as="t" hint-placeholder-count="4">
+      <button type="button" onClick="{{ openSheet2 }}" style="display:flex;align-items:center;gap:11px;text-align:left;cursor:pointer;background:#fffdf7;border:0;border-radius:18px;padding:13px 14px;box-shadow:0 0 0 1px rgba(20,18,16,.09),0 1px 2px rgba(0,0,0,.05),0 10px 22px -14px rgba(0,0,0,.4);transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s" style-hover="transform:translateY(-2px);box-shadow:0 0 0 1px rgba(20,18,16,.14),0 2px 5px rgba(0,0,0,.07),0 18px 32px -16px rgba(0,0,0,.45)" style-active="transform:scale(.985)">
+        <span style="width:34px;height:34px;border-radius:50%;background:#f1ead9;display:grid;place-items:center;font-size:15px;flex:none">{{ t.emoji }}</span>
+        <span style="min-width:0">
+          <span style="display:block;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;letter-spacing:-.01em;color:#141210">{{ t.titel }}</span>
+          <span style="display:block;font-family:'DM Sans',sans-serif;font-size:11px;color:#8a8175;margin-top:1px">{{ t.sub }}</span>
+        </span>
+      </button>
+    </sc-for>
+  </div>
+
+  <div style="margin-top:12px;display:flex;align-items:stretch;background:#fffdf7;border-radius:20px;overflow:hidden;box-shadow:0 0 0 1px rgba(20,18,16,.09),0 1px 2px rgba(0,0,0,.05),0 10px 22px -14px rgba(0,0,0,.4)">
+    <span style="display:flex;align-items:center;gap:10px;padding:12px 16px;min-width:214px">
+      <span style="width:30px;height:30px;border-radius:50%;background:#141210;color:#fbf8f0;display:grid;place-items:center;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.06em">PO</span>
+      <span>
+        <span style="display:block;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#141210">POA-Vuelta-2026</span>
+        <span style="display:block;font-family:'DM Sans',sans-serif;font-size:10.5px;color:#8a8175">jouw subpoule</span>
+      </span>
+    </span>
+    <sc-for list="{{ cellen }}" as="c" hint-placeholder-count="3">
+      <span style="flex:1;border-left:1px solid rgba(20,18,16,.1);padding:12px 8px;text-align:center">
+        <span style="display:block;font-family:'DM Sans',sans-serif;font-size:19px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#141210">{{ c.waarde }}</span>
+        <span style="display:block;margin-top:3px;font-family:'DM Sans',sans-serif;font-size:10px;color:#8a8175">{{ c.label }}</span>
+      </span>
+    </sc-for>
+    <span style="display:flex;align-items:center;border-left:1px solid rgba(20,18,16,.1);padding:12px 16px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:700;color:{{ accent }}">+3 meer</span>
+  </div>
+
+  <div style="margin-top:14px;padding-top:7px;border-top:1px solid #d3cabb;display:flex;justify-content:space-between;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#a89e8f">
+    <span>De Koerskrant</span><span>Pagina 1</span><span>Vuelta a España 2026</span>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>iOS · premium: live-pill, krimpende kop, tegelgrid, pull-quote, sheet</div>
+<div style="width:390px;height:844px;border-radius:52px;background:#0e0d0c;padding:11px;box-shadow:0 1px 3px rgba(0,0,0,.2),0 34px 70px -28px rgba(0,0,0,.6)">
+<div style="position:relative;height:100%;border-radius:41px;overflow:hidden;background:#f7f3e9">
+
+  <div style="position:absolute;top:0;left:0;right:0;height:52px;z-index:6;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:#141210">
+    <span>9:41</span>
+    <span style="display:flex;align-items:center;gap:5px">
+      <span style="width:16px;height:9px;border:1.5px solid #141210;border-radius:2px;display:inline-block"></span>
+      <span style="width:22px;height:10px;border:1.5px solid #141210;border-radius:3px;display:inline-block;background:linear-gradient(to right,#141210 70%,transparent 70%)"></span>
+    </span>
+  </div>
+
+  <sc-if value="{{ scrolled2 }}" hint-placeholder-val="{{ false }}">
+    <div class="animBar" style="position:absolute;top:52px;left:0;right:0;z-index:5;background:rgba(247,243,233,.8);backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);border-bottom:1px solid rgba(20,18,16,.12);padding:7px 20px 8px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:'Playfair Display',serif;font-weight:900;font-size:17px;letter-spacing:-.02em">De Koerskrant</span>
+      <span style="display:flex;align-items:center;gap:6px;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:{{ accent }}"><span class="livedot" style="width:6px;height:6px;border-radius:50%;background:{{ accent }};display:inline-block"></span>Etapa 1</span>
+    </div>
+  </sc-if>
+
+  <div class="scroller" onScroll="{{ onScroll2 }}" style="position:absolute;inset:52px 0 0;padding:0 20px 112px">
+
+    <div style="display:flex;align-items:center;gap:9px;background:#141210;border-radius:22px;padding:10px 14px;margin-top:8px;box-shadow:0 8px 22px -12px rgba(0,0,0,.7)">
+      <span class="livedot" style="width:7px;height:7px;border-radius:50%;background:{{ accent }};display:inline-block;flex:none"></span>
+      <span style="flex:1;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:#f6f0e2">Uitslag etapa 1 gefiatteerd · 17:42</span>
+      <span style="font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:700;color:{{ accent }}">+114</span>
+    </div>
+
+    <h1 style="margin:18px 0 0;font-family:'Playfair Display',serif;font-weight:900;font-size:38px;line-height:.92;letter-spacing:-.035em;text-align:center;color:#141210">De Koerskrant</h1>
+    <p style="margin:5px 0 0;text-align:center;font-family:'Source Serif 4',serif;font-style:italic;font-size:11.5px;color:#7a7064">alles van vandaag, in één oogopslag</p>
+    <div style="margin:10px 0 0;border-top:2.5px solid #141210;border-bottom:1px solid #141210;height:4px"></div>
+
+    <div style="margin-top:12px;display:flex;gap:2px;padding:2px;background:rgba(20,18,16,.06);border-radius:10px">
+      <sc-for list="{{ tabs2 }}" as="tb" hint-placeholder-count="3">
+        <button type="button" onClick="{{ tb.onClick }}" style="{{ tb.style }}">{{ tb.label }}</button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ showKrant2 }}" hint-placeholder-val="{{ true }}">
+      <div class="animPane" style="padding-top:14px">
+        <div class="halftone" style="height:200px;margin:0 -20px;display:flex;align-items:flex-end">
+          <span style="width:100%;background:linear-gradient(to top,rgba(20,18,16,.9),rgba(20,18,16,0));padding:40px 20px 13px">
+            <span style="display:inline-block;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#fff;background:{{ accent }};padding:3px 6px">Uitslag binnen</span>
+            <span style="display:block;margin-top:8px;font-family:'Playfair Display',serif;font-weight:900;font-size:32px;line-height:1.02;letter-spacing:-.03em;color:#f6f0e2">Pogačar wint in Monaco</span>
+          </span>
+        </div>
+        <p style="margin:12px 0 0;font-family:'Source Serif 4',serif;font-style:italic;font-size:14px;line-height:1.38;color:#4a443c">Negen honderdsten sneller dan Hayter — en meteen de eerste rode trui</p>
+        <div style="display:flex;align-items:center;gap:10px;margin:10px 0 0;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175">
+          <span>3 min lezen</span><span style="flex:1;height:1px;background:#ded5c6"></span><span>Wielerflits</span>
+        </div>
+        <p style="margin:12px 0 0;font-family:'Source Serif 4',serif;font-size:15.5px;line-height:1.6;color:#231f1a;text-align:justify;hyphens:auto">
+          <span style="display:block;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px">Monaco <span style="color:#8a8175">—</span></span>
+          <span style="float:left;font-family:'Playfair Display',serif;font-weight:900;font-size:50px;line-height:.8;padding:4px 7px 0 0">T</span>adej Pogačar heeft de openingstijdrit van de Vuelta a España gewonnen. In Monaco was de Sloveen 0,09 seconde sneller dan Ethan Hayter, Joshua Tarling werd derde op vier seconden.
+        </p>
+        <sc-if value="{{ lead2 }}" hint-placeholder-val="{{ false }}">
+          <div class="animPane">
+            <p style="margin:9px 0 0;font-family:'Source Serif 4',serif;font-size:15.5px;line-height:1.6;color:#231f1a;text-align:justify;hyphens:auto">Op het smalle circuit was elke bocht een keuze. Pogačar reed de laatste kilometer met de handen op de basisbeugel en nam de tijdrit als een heer op zijn erf.</p>
+          </div>
+        </sc-if>
+        <button type="button" onClick="{{ toggleLead2 }}" style="margin-top:11px;background:none;border:0;padding:0;cursor:pointer;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:{{ accent }};border-bottom:1px solid currentColor">{{ lead2Label }}</button>
+
+        <div style="margin:18px -4px 0;padding:16px 18px;background:#fffdf7;border-radius:20px;box-shadow:0 0 0 1px rgba(20,18,16,.09),0 1px 2px rgba(0,0,0,.05),0 12px 26px -16px rgba(0,0,0,.45)">
+          <p style="margin:0;font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:19px;line-height:1.28;color:#141210">„Pogačar zet de tijdrit neer als een heer op zijn erf.”</p>
+          <p style="margin:8px 0 0;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#8a8175">Michel Wuyts · perszaal</p>
+        </div>
+
+        <p style="margin:22px 0 10px;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#8a8175">Verder in de krant</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+          <sc-for list="{{ tegels }}" as="t" hint-placeholder-count="4">
+            <button type="button" onClick="{{ openSheet2 }}" style="display:flex;flex-direction:column;gap:9px;align-items:flex-start;text-align:left;cursor:pointer;background:#fffdf7;border:0;border-radius:20px;padding:14px 14px 15px;box-shadow:0 0 0 1px rgba(20,18,16,.09),0 1px 2px rgba(0,0,0,.05),0 10px 22px -14px rgba(0,0,0,.4);transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s" style-active="transform:scale(.965);box-shadow:0 0 0 1px rgba(20,18,16,.12),0 1px 2px rgba(0,0,0,.05)">
+              <span style="width:36px;height:36px;border-radius:50%;background:#f1ead9;display:grid;place-items:center;font-size:16px">{{ t.emoji }}</span>
+              <span>
+                <span style="display:block;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;letter-spacing:-.01em;color:#141210">{{ t.titel }}</span>
+                <span style="display:block;font-family:'DM Sans',sans-serif;font-size:11px;color:#8a8175;margin-top:2px">{{ t.sub }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="margin-top:12px;background:#fffdf7;border-radius:20px;overflow:hidden;box-shadow:0 0 0 1px rgba(20,18,16,.09),0 1px 2px rgba(0,0,0,.05),0 10px 22px -14px rgba(0,0,0,.4)">
+          <span style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(20,18,16,.09)">
+            <span style="width:30px;height:30px;border-radius:50%;background:#141210;color:#fbf8f0;display:grid;place-items:center;font-family:'Oswald',sans-serif;font-size:10px">PO</span>
+            <span style="flex:1">
+              <span style="display:block;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#141210">POA-Vuelta-2026</span>
+              <span style="display:block;font-family:'DM Sans',sans-serif;font-size:10.5px;color:#8a8175">jouw subpoule</span>
+            </span>
+            <span style="font-family:'DM Sans',sans-serif;font-size:15px;color:#c0b6a5">›</span>
+          </span>
+          <span style="display:flex">
+            <sc-for list="{{ cellen }}" as="c" hint-placeholder-count="3">
+              <span style="flex:1;border-left:1px solid rgba(20,18,16,.09);padding:11px 4px;text-align:center">
+                <span style="display:block;font-family:'DM Sans',sans-serif;font-size:18px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#141210">{{ c.waarde }}</span>
+                <span style="display:block;margin-top:2px;font-family:'DM Sans',sans-serif;font-size:9.5px;color:#8a8175">{{ c.label }}</span>
+              </span>
+            </sc-for>
+          </span>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showUitslag2 }}" hint-placeholder-val="{{ false }}">
+      <div class="animPane" style="padding-top:14px">
+        <h2 style="margin:0;font-family:'Playfair Display',serif;font-weight:900;font-size:26px;letter-spacing:-.03em">Daguitslag</h2>
+        <p style="margin:3px 0 11px;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#8a8175">Etapa 1 · tijdrit Monaco · 12,1 km</p>
+        <div style="background:#fffdf7;border-radius:20px;padding:4px 14px;box-shadow:0 0 0 1px rgba(20,18,16,.09),0 10px 22px -14px rgba(0,0,0,.4)">
+          <sc-for list="{{ uitslag }}" as="u" hint-placeholder-count="6">
+            <span style="display:flex;align-items:baseline;gap:10px;padding:11px 0;border-bottom:1px solid rgba(20,18,16,.07)">
+              <span style="font-family:'Oswald',sans-serif;font-size:13px;color:#a89e8f;min-width:18px">{{ u.pos }}</span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font-family:'Source Serif 4',serif;font-size:15px;font-weight:600;color:#141210">{{ u.naam }}</span>
+                <span style="display:block;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#8a8175;margin-top:1px">{{ u.ploeg }}</span>
+              </span>
+              <span style="font-family:'Source Serif 4',serif;font-size:14px;font-variant-numeric:tabular-nums;color:#3a352e">{{ u.tijd }}</span>
+            </span>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showPerszaal2 }}" hint-placeholder-val="{{ false }}">
+      <div class="animPane" style="padding-top:14px">
+        <h2 style="margin:0 0 12px;font-family:'Playfair Display',serif;font-weight:900;font-size:26px;letter-spacing:-.03em">Uit de perszaal</h2>
+        <sc-for list="{{ quotes }}" as="q" hint-placeholder-count="2">
+          <span style="display:block;margin-bottom:11px;background:#fffdf7;border-radius:20px;padding:14px 16px;box-shadow:0 0 0 1px rgba(20,18,16,.09),0 10px 22px -14px rgba(0,0,0,.4)">
+            <span style="display:block;margin-bottom:5px;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175">{{ q.naam }}</span>
+            <span style="display:block;font-family:'Source Serif 4',serif;font-size:15px;line-height:1.5;color:#231f1a">{{ q.tekst }}</span>
+          </span>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ sheet2 }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:8;background:rgba(20,18,16,.35);backdrop-filter:blur(2px)" onClick="{{ closeSheet2 }}"></div>
+  </sc-if>
+  <sc-if value="{{ sheet2 }}" hint-placeholder-val="{{ false }}">
+    <div class="animSheet" style="position:absolute;left:0;right:0;bottom:0;z-index:9;background:#f7f3e9;border-radius:26px 26px 41px 41px;box-shadow:0 -14px 44px rgba(0,0,0,.34);padding:10px 20px 30px;max-height:76%">
+      <div style="width:38px;height:5px;border-radius:3px;background:rgba(20,18,16,.2);margin:0 auto 12px"></div>
+      <p style="margin:0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:{{ accent }}">Voorbeschouwing</p>
+      <h3 style="margin:5px 0 0;font-family:'Playfair Display',serif;font-weight:900;font-size:25px;line-height:1.05;letter-spacing:-.03em">Etapa 2 · Monaco → Nice</h3>
+      <p style="margin:4px 0 12px;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175">Heuvelachtig · 189 km · morgen 13:10</p>
+      <div class="halftone" style="height:110px;margin:0 -20px 13px"></div>
+      <p style="margin:0;font-family:'Source Serif 4',serif;font-size:14.5px;line-height:1.55;color:#231f1a">Twee beklimmingen van tweede categorie in de finale. Wie zijn joker bewaart, bewaart hem voor morgen.</p>
+      <button type="button" onClick="{{ closeSheet2 }}" style="margin-top:16px;width:100%;padding:15px;border:0;border-radius:16px;background:#141210;color:#fbf8f0;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform .18s cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.97)">Sluiten</button>
+    </div>
+  </sc-if>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;z-index:6;background:rgba(247,243,233,.78);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);border-top:1px solid rgba(20,18,16,.12);padding:9px 8px 0">
+    <div style="display:flex">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+        <span style="{{ n.style }}"><span style="{{ n.dot }}"></span>{{ n.label }}</span>
+      </sc-for>
+    </div>
+    <div style="width:126px;height:5px;border-radius:3px;background:#141210;opacity:.85;margin:8px auto 8px"></div>
+  </div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Probeer hierna: „tegels van <a class="dv-oid" href="#2a">2a</a> in twee rijen van twee” · „<a class="dv-oid" href="#2b">2b</a> met echte SF-iconen i.p.v. emoji” · „maak de tegels in <a class="dv-oid" href="#2b">2b</a> horizontaal schuivend”</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">De Koerskrant — echt als krant</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Web · broadsheet voorpagina, kolomlijnen, initiaal, ledgerstand</div>
+<div style="width:1040px;background:#fbf8f0;box-shadow:0 1px 3px rgba(0,0,0,.1),0 24px 60px -30px rgba(0,0,0,.45);padding:24px 34px 14px;color:#141210">
+
+  <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#7a7064;border-bottom:1px solid #d3cabb;padding-bottom:7px">
+    <span>Vuelta a España 2026</span>
+    <span>Woensdag 26 augustus</span>
+    <span style="color:{{ accent }}">Etapa 1 · Monaco</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:18px;padding:14px 0 8px">
+    <div style="height:1px;background:#141210;opacity:.25"></div>
+    <h1 style="margin:0;font-family:'Playfair Display',serif;font-weight:900;font-size:70px;line-height:.9;letter-spacing:-.035em;text-align:center">De Koerskrant</h1>
+    <div style="height:1px;background:#141210;opacity:.25"></div>
+  </div>
+  <p style="margin:0;text-align:center;font-family:'Source Serif 4',serif;font-style:italic;font-size:13.5px;color:#6f665a">alles van vandaag, in één oogopslag</p>
+  <div style="margin-top:11px;border-top:2.5px solid #141210;border-bottom:1px solid #141210;height:4px"></div>
+  <div style="display:flex;justify-content:space-between;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:#8a8175;padding:6px 0 0">
+    <span>Editie MMXXVI · nr. 1</span><span>Uitslag gefiatteerd 17:42</span><span>Prijs — voor deelnemers</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1.55fr 1fr .78fr;margin-top:14px;border-top:1px solid #d3cabb;padding-top:16px">
+
+    <div style="padding-right:22px;min-width:0">
+      <span style="display:inline-block;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#fff;background:{{ accent }};padding:3px 7px">Openingstijdrit</span>
+      <h2 style="margin:9px 0 0;font-family:'Playfair Display',serif;font-weight:900;font-size:47px;line-height:1.02;letter-spacing:-.032em">Pogačar wint in Monaco</h2>
+      <p style="margin:9px 0 0;font-family:'Source Serif 4',serif;font-style:italic;font-size:16px;line-height:1.4;color:#4a443c">Negen honderdsten sneller dan Hayter — en de Sloveen pakt de eerste rode trui van de ronde</p>
+      <div style="margin:12px 0 13px;border-top:1px solid #141210;border-bottom:1px solid #141210;height:3px;opacity:.8"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;font-family:'Source Serif 4',serif;font-size:14.5px;line-height:1.58;color:#231f1a;text-align:justify;hyphens:auto">
+        <p style="margin:0"><span style="display:block;font-family:'Oswald',sans-serif;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px">Monaco <span style="color:#8a8175">—</span></span><span style="float:left;font-family:'Playfair Display',serif;font-weight:900;font-size:56px;line-height:.8;padding:4px 7px 0 0">T</span>adej Pogačar heeft de openingstijdrit van de Vuelta a España gewonnen. In Monaco was de Sloveen 0,09 seconde sneller dan Ethan Hayter. Joshua Tarling eindigde als derde op vier seconden.</p>
+        <p style="margin:0">Pogačar veroverde zo de eerste rode trui van deze ronde. In de poule betekent het meteen schuiven: <strong style="color:{{ accent }};font-weight:600">JWielerteam</strong> pakt de leiding met 121 punten, Discovery Channel volgt op zeven.</p>
+      </div>
+      <button type="button" onClick="{{ toggleWeb }}" style="margin-top:11px;display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;cursor:pointer;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:{{ accent }};border-bottom:1px solid currentColor">{{ webMeerLabel }}</button>
+
+      <sc-if value="{{ webOpen }}" hint-placeholder-val="{{ false }}">
+        <div class="animPane" style="margin-top:12px;font-family:'Source Serif 4',serif;font-size:14.5px;line-height:1.58;color:#231f1a;column-count:2;column-gap:20px;column-rule:1px solid #ded5c6;text-align:justify;hyphens:auto">
+          <p style="margin:0 0 9px">Op het smalle circuit van Monaco was elke bocht een keuze. Pogačar reed de laatste kilometer met de handen op de basisbeugel en nam de tijdrit als een heer op zijn erf.</p>
+          <p style="margin:0 0 9px">Hayter hield het verschil klein, Tarling verloor zijn marge in de klim naar het paleis. Van Aert schoof naar de zevende plaats.</p>
+          <p style="margin:0">Voor de klassementsrenners is het een waarschuwing: wie hier seconden liet, begint morgen al met een rekening.</p>
+        </div>
+      </sc-if>
+      <div style="margin-top:13px;padding-top:7px;border-top:1px solid #ded5c6;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175">Bron: Wielerflits · <a href="#1a" style="color:{{ accent }};text-decoration:none;border-bottom:1px solid currentColor">lees het origineel</a></div>
+    </div>
+
+    <div style="padding:0 20px;border-left:1px solid #d3cabb;min-width:0">
+      <div class="halftone" style="height:150px;position:relative;display:flex;align-items:flex-end">
+        <span style="width:100%;background:rgba(20,18,16,.72);color:#f3ede0;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.16em;text-transform:uppercase;padding:5px 7px">Foto — winnaar over de finish</span>
+      </div>
+      <p style="margin:6px 0 0;font-family:'Source Serif 4',serif;font-style:italic;font-size:11.5px;line-height:1.35;color:#7a7064">De Sloveen op de Boulevard Albert I, kort na 17.30 uur.</p>
+      <div style="margin:14px 0 9px;border-top:1px solid #141210"></div>
+      <p style="margin:0 0 9px;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#4a443c">Uit de perszaal</p>
+      <div style="border-top:1px solid #ded5c6;padding-top:8px">
+        <p style="margin:0 0 3px;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#8a8175">Michel Wuyts</p>
+        <p style="margin:0;font-family:'Source Serif 4',serif;font-size:13px;line-height:1.45;color:#3a352e">„Ohoho, Pogačar zet de tijdrit neer als een heer op zijn erf. Met Hayter, Van Aert en Brennan in zijn ploeg had JWielerteam hier de maîtrise over zijn tuig.”</p>
+      </div>
+      <div style="border-top:1px solid #ded5c6;padding-top:8px;margin-top:10px">
+        <p style="margin:0 0 3px;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#8a8175">José De Cauwer</p>
+        <p style="margin:0;font-family:'Source Serif 4',serif;font-size:13px;line-height:1.45;color:#3a352e">„Tiens Michel, dat is meteen een serieuze openingszet. JWielerteam pakt de leiding met 121 punten.”</p>
+      </div>
+    </div>
+
+    <div style="padding-left:18px;border-left:1px solid #d3cabb;min-width:0">
+      <p style="margin:0 0 9px;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#4a443c;border-bottom:2px solid #141210;padding-bottom:5px">In deze editie</p>
+      <sc-for list="{{ index }}" as="it" hint-placeholder-count="4">
+        <a href="#1a" style="display:flex;gap:9px;align-items:baseline;padding:8px 0;border-bottom:1px solid #ded5c6;text-decoration:none;color:#231f1a">
+          <span style="font-family:'Oswald',sans-serif;font-size:11px;color:#a89e8f;min-width:14px">{{ it.nr }}</span>
+          <span style="min-width:0">
+            <span style="display:block;font-family:'Playfair Display',serif;font-weight:700;font-size:15px;line-height:1.15">{{ it.titel }}</span>
+            <span style="display:block;font-family:'Source Serif 4',serif;font-size:11.5px;color:#7a7064;margin-top:2px">{{ it.sub }}</span>
+          </span>
+        </a>
+      </sc-for>
+      <div style="margin-top:12px;background:#f1ead9;border-top:2px solid #141210;padding:9px 10px">
+        <p style="margin:0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#8a8175">Weerbericht Monaco</p>
+        <p style="margin:4px 0 0;font-family:'Playfair Display',serif;font-weight:700;font-size:20px">27° · rugwind</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;border-top:2.5px solid #141210;border-bottom:1px solid #141210;height:4px"></div>
+  <div style="display:flex;align-items:baseline;justify-content:space-between;padding:9px 0 6px">
+    <p style="margin:0;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#4a443c">Stand · POA-Vuelta-2026</p>
+    <p style="margin:0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#a89e8f">na etapa 1 van 21</p>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-family:'Source Serif 4',serif;font-size:13.5px">
+    <thead><tr style="border-top:1px solid #141210;border-bottom:1px solid #141210">
+      <th style="text-align:left;padding:5px 0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175;font-weight:500">#</th>
+      <th style="text-align:left;padding:5px 0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175;font-weight:500">Ploeg</th>
+      <th style="text-align:left;padding:5px 0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175;font-weight:500">Ploegleider</th>
+      <th style="text-align:right;padding:5px 0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175;font-weight:500">Dag</th>
+      <th style="text-align:right;padding:5px 0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175;font-weight:500">Totaal</th>
+    </tr></thead>
+    <tbody>
+      <sc-for list="{{ stand }}" as="r" hint-placeholder-count="4">
+        <tr style="border-bottom:1px dotted #cfc6b6">
+          <td style="padding:6px 0;font-variant-numeric:tabular-nums;color:#8a8175;width:26px">{{ r.pos }}</td>
+          <td style="padding:6px 0;font-weight:600">{{ r.ploeg }}</td>
+          <td style="padding:6px 0;color:#7a7064">{{ r.leider }}</td>
+          <td style="padding:6px 0;text-align:right;font-variant-numeric:tabular-nums;color:#7a7064">{{ r.dag }}</td>
+          <td style="padding:6px 0;text-align:right;font-variant-numeric:tabular-nums;font-weight:600">{{ r.totaal }}</td>
+        </tr>
+      </sc-for>
+    </tbody>
+  </table>
+  <div style="margin-top:12px;padding-top:7px;border-top:1px solid #d3cabb;display:flex;justify-content:space-between;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#a89e8f">
+    <span>De Koerskrant</span><span>Pagina 1</span><span>Vuelta a España 2026</span>
+  </div>
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>iOS · ochtendeditie: krimpende kop, segmented control, blur-tabbalk, sheet</div>
+<div style="width:390px;height:844px;border-radius:52px;background:#0e0d0c;padding:11px;box-shadow:0 1px 3px rgba(0,0,0,.2),0 34px 70px -28px rgba(0,0,0,.6)">
+<div style="position:relative;height:100%;border-radius:41px;overflow:hidden;background:#fbf8f0">
+
+  <div style="position:absolute;top:0;left:0;right:0;height:52px;z-index:5;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:#141210">
+    <span>9:41</span>
+    <span style="display:flex;align-items:center;gap:5px">
+      <span style="width:16px;height:9px;border:1.5px solid #141210;border-radius:2px;display:inline-block"></span>
+      <span style="width:22px;height:10px;border:1.5px solid #141210;border-radius:3px;display:inline-block;position:relative;background:linear-gradient(to right,#141210 70%,transparent 70%)"></span>
+    </span>
+  </div>
+
+  <sc-if value="{{ scrolled }}" hint-placeholder-val="{{ false }}">
+    <div class="animBar" style="position:absolute;top:52px;left:0;right:0;z-index:4;background:rgba(251,248,240,.82);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(20,18,16,.14);padding:7px 20px 8px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:'Playfair Display',serif;font-weight:900;font-size:17px;letter-spacing:-.02em">De Koerskrant</span>
+      <span style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:{{ accent }}">Etapa 1</span>
+    </div>
+  </sc-if>
+
+  <div class="scroller" onScroll="{{ onScroll }}" style="position:absolute;inset:52px 0 0;padding:0 20px 108px">
+
+    <div style="padding-top:12px;display:flex;justify-content:space-between;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#8a8175;border-bottom:1px solid #d3cabb;padding-bottom:6px">
+      <span>Wo 26 augustus</span><span>Editie nr. 1</span>
+    </div>
+    <h1 style="margin:12px 0 0;font-family:'Playfair Display',serif;font-weight:900;font-size:38px;line-height:.92;letter-spacing:-.035em;text-align:center;color:#141210">De Koerskrant</h1>
+    <p style="margin:5px 0 0;text-align:center;font-family:'Source Serif 4',serif;font-style:italic;font-size:11.5px;color:#7a7064">alles van vandaag, in één oogopslag</p>
+    <div style="margin:10px 0 0;border-top:2.5px solid #141210;border-bottom:1px solid #141210;height:4px"></div>
+
+    <div style="margin-top:12px;display:flex;gap:2px;padding:2px;background:rgba(20,18,16,.06);border-radius:10px">
+      <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="3">
+        <button type="button" onClick="{{ tb.onClick }}" style="{{ tb.style }}">{{ tb.label }}</button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ showKrant }}" hint-placeholder-val="{{ true }}">
+      <div class="animPane" style="padding-top:14px">
+        <span style="display:inline-block;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#fff;background:{{ accent }};padding:3px 6px">Uitslag binnen</span>
+        <h2 style="margin:8px 0 0;font-family:'Playfair Display',serif;font-weight:900;font-size:33px;line-height:1.02;letter-spacing:-.03em;color:#141210">Pogačar wint in Monaco</h2>
+        <p style="margin:7px 0 0;font-family:'Source Serif 4',serif;font-style:italic;font-size:14px;line-height:1.38;color:#4a443c">Negen honderdsten sneller dan Hayter — en meteen de eerste rode trui</p>
+        <div style="margin:11px 0;border-top:1px solid #141210;border-bottom:1px solid #141210;height:3px;opacity:.8"></div>
+        <div class="halftone" style="height:170px;margin:0 -20px;display:flex;align-items:flex-end">
+          <span style="width:100%;background:rgba(20,18,16,.72);color:#f3ede0;font-family:'Oswald',sans-serif;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;padding:5px 20px">Foto — winnaar over de finish</span>
+        </div>
+        <p style="margin:12px 0 0;font-family:'Source Serif 4',serif;font-size:15.5px;line-height:1.6;color:#231f1a;text-align:justify;hyphens:auto">
+          <span style="display:block;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px">Monaco <span style="color:#8a8175">—</span></span>
+          <span style="float:left;font-family:'Playfair Display',serif;font-weight:900;font-size:50px;line-height:.8;padding:4px 7px 0 0">T</span>adej Pogačar heeft de openingstijdrit van de Vuelta a España gewonnen. In Monaco was de Sloveen 0,09 seconde sneller dan Ethan Hayter, Joshua Tarling werd derde op vier seconden.
+        </p>
+        <sc-if value="{{ leadOpen }}" hint-placeholder-val="{{ false }}">
+          <div class="animPane">
+            <p style="margin:9px 0 0;font-family:'Source Serif 4',serif;font-size:15.5px;line-height:1.6;color:#231f1a;text-align:justify;hyphens:auto">Op het smalle circuit was elke bocht een keuze. Pogačar reed de laatste kilometer met de handen op de basisbeugel en nam de tijdrit als een heer op zijn erf.</p>
+            <div style="margin:13px 0 8px;text-align:center;font-size:11px;letter-spacing:.5em;color:{{ accent }}">✦ ✦ ✦</div>
+            <p style="margin:0 0 4px;text-align:center;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#8a8175">Uit de poule</p>
+            <p style="margin:0;text-align:center;font-family:'Source Serif 4',serif;font-style:italic;font-size:14.5px;line-height:1.55;color:#3a352e">JWielerteam pakt de leiding met 121 punten, Discovery Channel volgt op zeven.</p>
+          </div>
+        </sc-if>
+        <button type="button" onClick="{{ toggleLead }}" style="margin-top:11px;background:none;border:0;padding:0;cursor:pointer;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:{{ accent }};border-bottom:1px solid currentColor">{{ leadLabel }}</button>
+        <div style="margin-top:12px;padding-top:7px;border-top:1px solid #ded5c6;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175">Bron: Wielerflits</div>
+
+        <p style="margin:20px 0 0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#4a443c;border-bottom:2px solid #141210;padding-bottom:5px">In deze editie</p>
+        <sc-for list="{{ index }}" as="it" hint-placeholder-count="4">
+          <button type="button" onClick="{{ openSheet }}" style="width:100%;display:flex;gap:10px;align-items:baseline;padding:11px 0;border:0;border-bottom:1px solid #ded5c6;background:none;text-align:left;cursor:pointer">
+            <span style="font-family:'Oswald',sans-serif;font-size:11px;color:#a89e8f;min-width:14px">{{ it.nr }}</span>
+            <span style="min-width:0;flex:1">
+              <span style="display:block;font-family:'Playfair Display',serif;font-weight:700;font-size:16px;line-height:1.15;color:#141210">{{ it.titel }}</span>
+              <span style="display:block;font-family:'Source Serif 4',serif;font-size:12px;color:#7a7064;margin-top:2px">{{ it.sub }}</span>
+            </span>
+            <span style="font-family:'DM Sans',sans-serif;font-size:15px;color:#c0b6a5">›</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showUitslag }}" hint-placeholder-val="{{ false }}">
+      <div class="animPane" style="padding-top:14px">
+        <h2 style="margin:0;font-family:'Playfair Display',serif;font-weight:900;font-size:26px;letter-spacing:-.03em">Daguitslag</h2>
+        <p style="margin:3px 0 11px;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#8a8175">Etapa 1 · tijdrit Monaco · 12,1 km</p>
+        <div style="border-top:1px solid #141210">
+          <sc-for list="{{ uitslag }}" as="u" hint-placeholder-count="6">
+            <div style="display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px dotted #cfc6b6">
+              <span style="font-family:'Oswald',sans-serif;font-size:13px;color:#a89e8f;min-width:18px">{{ u.pos }}</span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font-family:'Source Serif 4',serif;font-size:15px;font-weight:600;color:#141210">{{ u.naam }}</span>
+                <span style="display:block;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#8a8175;margin-top:1px">{{ u.ploeg }}</span>
+              </span>
+              <span style="font-family:'Source Serif 4',serif;font-size:14px;font-variant-numeric:tabular-nums;color:#3a352e">{{ u.tijd }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showPerszaal }}" hint-placeholder-val="{{ false }}">
+      <div class="animPane" style="padding-top:14px">
+        <h2 style="margin:0 0 11px;font-family:'Playfair Display',serif;font-weight:900;font-size:26px;letter-spacing:-.03em">Uit de perszaal</h2>
+        <sc-for list="{{ quotes }}" as="q" hint-placeholder-count="2">
+          <div style="border-top:1px solid #141210;padding:9px 0 13px">
+            <p style="margin:0 0 4px;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175">{{ q.naam }}</p>
+            <p style="margin:0;font-family:'Source Serif 4',serif;font-size:15px;line-height:1.5;color:#231f1a">{{ q.tekst }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:8;background:rgba(20,18,16,.35);backdrop-filter:blur(2px)" onClick="{{ closeSheet }}"></div>
+  </sc-if>
+  <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="animSheet" style="position:absolute;left:0;right:0;bottom:0;z-index:9;background:#fbf8f0;border-radius:22px 22px 41px 41px;box-shadow:0 -12px 40px rgba(0,0,0,.3);padding:10px 20px 30px;max-height:74%">
+      <div style="width:38px;height:5px;border-radius:3px;background:rgba(20,18,16,.2);margin:0 auto 12px"></div>
+      <p style="margin:0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:{{ accent }}">Voorbeschouwing</p>
+      <h3 style="margin:5px 0 0;font-family:'Playfair Display',serif;font-weight:900;font-size:24px;line-height:1.05;letter-spacing:-.03em">Etapa 2 · Monaco → Nice</h3>
+      <p style="margin:4px 0 10px;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8a8175">Heuvelachtig · 189 km · morgen 13:10</p>
+      <div class="halftone" style="height:104px;margin:0 -20px 12px"></div>
+      <p style="margin:0;font-family:'Source Serif 4',serif;font-size:14.5px;line-height:1.55;color:#231f1a">Twee beklimmingen van tweede categorie in de finale. Wie zijn joker bewaart, bewaart hem voor morgen.</p>
+      <button type="button" onClick="{{ closeSheet }}" style="margin-top:16px;width:100%;padding:14px;border:0;border-radius:14px;background:#141210;color:#fbf8f0;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer">Sluiten</button>
+    </div>
+  </sc-if>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;z-index:6;background:rgba(251,248,240,.8);backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);border-top:1px solid rgba(20,18,16,.14);padding:9px 8px 0">
+    <div style="display:flex">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+        <span style="{{ n.style }}">
+          <span style="{{ n.dot }}"></span>
+          {{ n.label }}
+        </span>
+      </sc-for>
+    </div>
+    <div style="width:126px;height:5px;border-radius:3px;background:#141210;opacity:.85;margin:8px auto 8px"></div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>iOS · avondeditie: donkere pers, live-activity pill, kiosk-strip</div>
+<div style="width:390px;height:844px;border-radius:52px;background:#0e0d0c;padding:11px;box-shadow:0 1px 3px rgba(0,0,0,.2),0 34px 70px -28px rgba(0,0,0,.6)">
+<div style="position:relative;height:100%;border-radius:41px;overflow:hidden;background:#141210">
+
+  <div style="position:absolute;top:0;left:0;right:0;height:52px;z-index:5;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:#f3ede0">
+    <span>21:07</span>
+    <span style="display:flex;align-items:center;gap:5px">
+      <span style="width:16px;height:9px;border:1.5px solid #f3ede0;border-radius:2px;display:inline-block"></span>
+      <span style="width:22px;height:10px;border:1.5px solid #f3ede0;border-radius:3px;display:inline-block;background:linear-gradient(to right,#f3ede0 55%,transparent 55%)"></span>
+    </span>
+  </div>
+
+  <div class="scroller" style="position:absolute;inset:52px 0 0;padding:0 20px 104px">
+    <div style="display:flex;align-items:center;gap:8px;background:#000;border-radius:20px;padding:9px 14px;margin-top:6px">
+      <span class="livedot" style="width:7px;height:7px;border-radius:50%;background:{{ accent }};display:inline-block"></span>
+      <span style="flex:1;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:#f3ede0">Etapa 2 · 14 km te gaan</span>
+      <span style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.1em;color:{{ accent }}">+18 pt</span>
+    </div>
+
+    <h1 style="margin:18px 0 0;font-family:'Playfair Display',serif;font-weight:900;font-size:36px;line-height:.92;letter-spacing:-.035em;text-align:center;color:#f6f0e2">De Koerskrant</h1>
+    <p style="margin:5px 0 0;text-align:center;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:#a2967f">Avondeditie · woensdag</p>
+    <div style="margin:11px 0 0;border-top:2.5px solid #6d6455;border-bottom:1px solid #6d6455;height:4px"></div>
+
+    <div class="halftone-dark" style="height:200px;margin:16px -20px 0;display:flex;align-items:flex-end">
+      <span style="width:100%;background:linear-gradient(to top,rgba(20,18,16,.95),rgba(20,18,16,0));padding:34px 20px 12px">
+        <span style="display:inline-block;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#141210;background:{{ accent }};padding:3px 6px">Openingstijdrit</span>
+        <span style="display:block;margin-top:8px;font-family:'Playfair Display',serif;font-weight:900;font-size:31px;line-height:1.02;letter-spacing:-.03em;color:#f6f0e2">Pogačar wint in Monaco</span>
+      </span>
+    </div>
+    <p style="margin:13px 0 0;font-family:'Source Serif 4',serif;font-size:15.5px;line-height:1.6;color:#ddd3bf;hyphens:auto">
+      <span style="display:block;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#f6f0e2;margin-bottom:3px">Monaco <span style="color:#a2967f">—</span></span>
+      <span style="float:left;font-family:'Playfair Display',serif;font-weight:900;font-size:50px;line-height:.8;padding:4px 7px 0 0;color:#f6f0e2">T</span>adej Pogačar heeft de openingstijdrit gewonnen: 0,09 seconde sneller dan Ethan Hayter, met Joshua Tarling op vier seconden als derde.
+    </p>
+    <a href="#1c" style="display:inline-block;margin-top:11px;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:{{ accent }};text-decoration:none;border-bottom:1px solid currentColor">Lees het hele verslag</a>
+
+    <p style="margin:22px 0 10px;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#a2967f;border-bottom:1px solid #3a352e;padding-bottom:6px">De kiosk</p>
+    <div class="hrow" style="display:flex;gap:12px;overflow-x:auto;margin:0 -20px;padding:0 20px 4px;scrollbar-width:none">
+      <sc-for list="{{ index }}" as="it" hint-placeholder-count="4">
+        <span style="flex:none;width:132px;background:#1c1a16;border:1px solid #3a352e;padding:11px 12px 13px;display:block">
+          <span style="display:block;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.16em;color:#6d6455">{{ it.nr }}</span>
+          <span style="display:block;margin-top:24px;font-family:'Playfair Display',serif;font-weight:700;font-size:16px;line-height:1.1;color:#f6f0e2">{{ it.titel }}</span>
+          <span style="display:block;margin-top:4px;font-family:'Source Serif 4',serif;font-size:11.5px;line-height:1.3;color:#a2967f">{{ it.sub }}</span>
+        </span>
+      </sc-for>
+    </div>
+
+    <p style="margin:22px 0 0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#a2967f;border-bottom:1px solid #3a352e;padding-bottom:6px">Stand · POA-Vuelta-2026</p>
+    <sc-for list="{{ stand }}" as="r" hint-placeholder-count="4">
+      <span style="display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px dotted #3a352e">
+        <span style="font-family:'Oswald',sans-serif;font-size:12px;color:#6d6455;min-width:16px">{{ r.pos }}</span>
+        <span style="flex:1;font-family:'Source Serif 4',serif;font-size:14.5px;font-weight:600;color:#f6f0e2">{{ r.ploeg }}</span>
+        <span style="font-family:'Source Serif 4',serif;font-size:13.5px;font-variant-numeric:tabular-nums;color:#a2967f">{{ r.totaal }}</span>
+      </span>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;z-index:6;background:rgba(20,18,16,.72);backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);border-top:1px solid rgba(246,240,226,.14);padding:9px 8px 0">
+    <div style="display:flex">
+      <sc-for list="{{ navDark }}" as="n" hint-placeholder-count="5">
+        <span style="{{ n.style }}"><span style="{{ n.dot }}"></span>{{ n.label }}</span>
+      </sc-for>
+    </div>
+    <div style="width:126px;height:5px;border-radius:3px;background:#f6f0e2;opacity:.8;margin:8px auto 8px"></div>
+  </div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Probeer hierna: „<a class="dv-oid" href="#1b">1b</a> maar met de kiosk-strip van <a class="dv-oid" href="#1c">1c</a>” · „<a class="dv-oid" href="#1a">1a</a> in vier kolommen” · „maak de tabbalk van <a class="dv-oid" href="#1b">1b</a> met echte iconen”</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#C81E2D&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#C81E2D&quot;,&quot;#F5C518&quot;,&quot;#D6688F&quot;,&quot;#1F5C4A&quot;],&quot;section&quot;:&quot;Koersthema&quot;}}">
+class Component extends DCLogic {
+  state = { tab: "krant", leadOpen: false, webOpen: false, scrolled: false, sheetOpen: false,
+            tab2: "krant", lead2: false, scrolled2: false, sheet2: false, web2: false };
+
+  onScroll = (e) => {
+    const s = e.target.scrollTop > 46;
+    if (s !== this.state.scrolled) this.setState({ scrolled: s });
+  };
+
+  onScroll2 = (e) => {
+    const s = e.target.scrollTop > 46;
+    if (s !== this.state.scrolled2) this.setState({ scrolled2: s });
+  };
+
+  renderVals() {
+    const accent = this.props.accent ?? "#C81E2D";
+    const tabDef = [["krant", "Voorpagina"], ["uitslag", "Daguitslag"], ["perszaal", "Perszaal"]];
+    const tabBase = {
+      flex: 1, border: 0, cursor: "pointer", padding: "7px 0", borderRadius: 8,
+      fontFamily: "'DM Sans',sans-serif", fontSize: 12.5, fontWeight: 500, letterSpacing: "-0.01em",
+      transition: "background .22s cubic-bezier(.2,.8,.2,1), color .22s",
+    };
+    const tabs = tabDef.map(([k, label]) => ({
+      key: k, label,
+      onClick: () => this.setState({ tab: k, sheetOpen: false }),
+      style: this.state.tab === k
+        ? { ...tabBase, background: "#fbf8f0", color: "#141210", fontWeight: 700, boxShadow: "0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.04)" }
+        : { ...tabBase, background: "transparent", color: "#7a7064" },
+    }));
+
+    const navItem = (label, active, dark) => ({
+      key: label, label,
+      style: {
+        flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+        fontFamily: "'Oswald',sans-serif", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase",
+        color: active ? accent : (dark ? "#8d8272" : "#8a8175"),
+      },
+      dot: {
+        width: active ? 16 : 6, height: 6, borderRadius: 3, display: "block",
+        background: active ? accent : (dark ? "#4a443c" : "#cfc6b6"),
+        transition: "width .25s cubic-bezier(.2,.8,.2,1)",
+      },
+    });
+    const labels = ["Krant", "Ploeg", "Stand", "Subpoule", "Meer"];
+
+    const tabs2 = tabDef.map(([k, label]) => ({
+      key: k, label,
+      onClick: () => this.setState({ tab2: k, sheet2: false }),
+      style: this.state.tab2 === k
+        ? { ...tabBase, background: "#fbf8f0", color: "#141210", fontWeight: 700, boxShadow: "0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.04)" }
+        : { ...tabBase, background: "transparent", color: "#7a7064" },
+    }));
+
+    return {
+      accent,
+      tabs,
+      tabs2,
+      showKrant2: this.state.tab2 === "krant",
+      showUitslag2: this.state.tab2 === "uitslag",
+      showPerszaal2: this.state.tab2 === "perszaal",
+      scrolled2: this.state.scrolled2,
+      onScroll2: this.onScroll2,
+      lead2: this.state.lead2,
+      lead2Label: this.state.lead2 ? "Inklappen" : "Lees het hele verslag",
+      toggleLead2: () => this.setState((s) => ({ lead2: !s.lead2 })),
+      web2: this.state.web2,
+      web2Label: this.state.web2 ? "Inklappen" : "Lees het hele verslag",
+      toggleWeb2: () => this.setState((s) => ({ web2: !s.web2 })),
+      sheet2: this.state.sheet2,
+      openSheet2: () => this.setState({ sheet2: true }),
+      closeSheet2: () => this.setState({ sheet2: false }),
+      cellen: [
+        { key: "sub", waarde: "2e", label: "subpoule" },
+        { key: "ov", waarde: "18e", label: "overall" },
+        { key: "pt", waarde: "114", label: "punten" },
+      ],
+      tegels: [
+        { key: "dag", emoji: "🏁", titel: "Daguitslag", sub: "Punten van etapa 1" },
+        { key: "voor", emoji: "🗺️", titel: "Voorbeschouwing", sub: "Monaco → Nice" },
+        { key: "ver", emoji: "📰", titel: "Verslag", sub: "3 min lezen" },
+        { key: "com", emoji: "🎙️", titel: "Commentaar", sub: "Wuyts & De Cauwer" },
+      ],
+      nav: labels.map((l, i) => navItem(l, i === 0, false)),
+      navDark: labels.map((l, i) => navItem(l, i === 0, true)),
+      showKrant: this.state.tab === "krant",
+      showUitslag: this.state.tab === "uitslag",
+      showPerszaal: this.state.tab === "perszaal",
+      leadOpen: this.state.leadOpen,
+      leadLabel: this.state.leadOpen ? "Inklappen" : "Lees het hele verslag",
+      toggleLead: () => this.setState((s) => ({ leadOpen: !s.leadOpen })),
+      webOpen: this.state.webOpen,
+      webMeerLabel: this.state.webOpen ? "Inklappen" : "Lees het hele verslag",
+      toggleWeb: () => this.setState((s) => ({ webOpen: !s.webOpen })),
+      scrolled: this.state.scrolled,
+      onScroll: this.onScroll,
+      sheetOpen: this.state.sheetOpen,
+      openSheet: () => this.setState({ sheetOpen: true }),
+      closeSheet: () => this.setState({ sheetOpen: false }),
+      index: [
+        { nr: "01", titel: "Daguitslag", sub: "Alle punten van etapa 1" },
+        { nr: "02", titel: "Voorbeschouwing", sub: "Monaco → Nice, morgen 13:10" },
+        { nr: "03", titel: "Verslag", sub: "Het hele stuk, 3 min lezen" },
+        { nr: "04", titel: "Commentaar", sub: "Wuyts & De Cauwer" },
+      ],
+      stand: [
+        { pos: "1", ploeg: "JWielerteam", leider: "Joris W.", dag: "+121", totaal: "121" },
+        { pos: "2", ploeg: "Discovery Channel", leider: "Marit B.", dag: "+114", totaal: "114" },
+        { pos: "3", ploeg: "LeMeilleur", leider: "Sanne K.", dag: "+108", totaal: "108" },
+        { pos: "4", ploeg: "Aap in de Volgwagen", leider: "Luuk L.", dag: "+96", totaal: "96" },
+      ],
+      uitslag: [
+        { pos: "1", naam: "Tadej Pogačar", ploeg: "UAE Team Emirates", tijd: "13'42\"" },
+        { pos: "2", naam: "Ethan Hayter", ploeg: "Soudal Quick-Step", tijd: "+0,09" },
+        { pos: "3", naam: "Joshua Tarling", ploeg: "Ineos Grenadiers", tijd: "+4\"" },
+        { pos: "4", naam: "Wout van Aert", ploeg: "Visma | Lease a Bike", tijd: "+11\"" },
+        { pos: "5", naam: "Matthew Brennan", ploeg: "Visma | Lease a Bike", tijd: "+14\"" },
+        { pos: "6", naam: "Filippo Ganna", ploeg: "Ineos Grenadiers", tijd: "+16\"" },
+      ],
+      quotes: [
+        { naam: "Michel Wuyts", tekst: "„Ohoho, Pogačar zet de tijdrit neer als een heer op zijn erf. Met Hayter, Van Aert en Brennan in zijn ploeg had JWielerteam hier de maîtrise over zijn tuig.”" },
+        { naam: "José De Cauwer", tekst: "„Tiens Michel, dat is meteen een serieuze openingszet. JWielerteam pakt de leiding met 121 punten, Discovery Channel volgt op zeven.”" },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
