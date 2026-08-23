@@ -45,7 +45,7 @@ a{color:#b0121f}a:hover{color:#8a0d17}
 
 <div class="dv-opt" id="2a">
 <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Web · <a class="dv-oid" href="#1a">1a</a> met de Apple-tegels en standbalk onder de editie</div>
-<div style="width:1040px;background:#fbf8f0;box-shadow:0 1px 3px rgba(0,0,0,.1),0 24px 60px -30px rgba(0,0,0,.45);padding:24px 34px 18px;color:#141210">
+<div style="position:relative;width:1040px;background:#fbf8f0;box-shadow:0 1px 3px rgba(0,0,0,.1),0 24px 60px -30px rgba(0,0,0,.45);padding:24px 34px 18px;color:#141210">
 
   <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#7a7064;border-bottom:1px solid #d3cabb;padding-bottom:7px">
     <span>Vuelta a España 2026</span><span>Woensdag 26 augustus</span><span style="color:{{ accent }}">Etapa 1 · Monaco</span>
@@ -92,16 +92,32 @@ a{color:#b0121f}a:hover{color:#8a0d17}
           <p style="margin:0;font-family:'Source Serif 4',serif;font-size:13px;line-height:1.45;color:#3a352e">{{ q.tekst }}</p>
         </div>
       </sc-for>
+
+      <div style="margin:13px 0 0;border-top:2.5px solid #141210;border-bottom:1px solid #141210;height:3px"></div>
+      <button type="button" onClick="{{ openEtappe }}" style="display:flex;width:100%;align-items:baseline;justify-content:space-between;gap:8px;background:none;border:0;padding:9px 0 5px;cursor:pointer;text-align:left;color:#4a443c" style-hover="color:#141210">
+        <span style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase">Uitslag etapa 1</span>
+        <span style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:{{ accent }}">Top 10 ▸</span>
+      </button>
+      <sc-for list="{{ uitslagTop5 }}" as="u" hint-placeholder-count="5">
+        <button type="button" onClick="{{ openEtappe }}" style="display:flex;width:100%;align-items:baseline;gap:8px;background:none;border:0;border-bottom:1px dotted #cfc6b6;padding:6px 0;cursor:pointer;text-align:left" style-hover="background:#f3ecdb">
+          <span style="font-family:'Oswald',sans-serif;font-size:10.5px;color:#a89e8f;min-width:12px">{{ u.pos }}</span>
+          <span style="flex:1;min-width:0;font-family:'Source Serif 4',serif;font-size:13px;font-weight:600;color:#231f1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.naam }}</span>
+          <span style="font-family:'Source Serif 4',serif;font-size:12.5px;font-variant-numeric:tabular-nums;color:#7a7064">{{ u.tijd }}</span>
+        </button>
+      </sc-for>
     </div>
 
     <div style="padding-left:18px;border-left:1px solid #d3cabb;min-width:0">
-      <p style="margin:0 0 9px;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#4a443c;border-bottom:2px solid #141210;padding-bottom:5px">Klassement na etapa 1</p>
+      <button type="button" onClick="{{ openKlassement }}" style="display:flex;width:100%;align-items:baseline;justify-content:space-between;gap:8px;background:none;border:0;border-bottom:2px solid #141210;padding:0 0 5px;margin-bottom:9px;cursor:pointer;text-align:left;color:#4a443c" style-hover="color:#141210">
+        <span style="font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase">Klassement</span>
+        <span style="font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:{{ accent }}">Top 10 ▸</span>
+      </button>
       <sc-for list="{{ stand }}" as="r" hint-placeholder-count="4">
-        <span style="display:flex;align-items:baseline;gap:9px;padding:8px 0;border-bottom:1px dotted #cfc6b6">
+        <button type="button" onClick="{{ openKlassement }}" style="display:flex;width:100%;align-items:baseline;gap:9px;padding:8px 0;border:0;border-bottom:1px dotted #cfc6b6;background:none;cursor:pointer;text-align:left" style-hover="background:#f3ecdb">
           <span style="font-family:'Oswald',sans-serif;font-size:11px;color:#a89e8f;min-width:12px">{{ r.pos }}</span>
-          <span style="flex:1;min-width:0;font-family:'Source Serif 4',serif;font-size:13.5px;font-weight:600">{{ r.ploeg }}</span>
+          <span style="flex:1;min-width:0;font-family:'Source Serif 4',serif;font-size:13.5px;font-weight:600;color:#141210">{{ r.ploeg }}</span>
           <span style="font-family:'Source Serif 4',serif;font-size:13px;font-variant-numeric:tabular-nums;color:#7a7064">{{ r.totaal }}</span>
-        </span>
+        </button>
       </sc-for>
       <div style="margin-top:12px;background:#f1ead9;border-top:2px solid #141210;padding:9px 10px">
         <p style="margin:0;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#8a8175">Weerbericht Monaco</p>
@@ -144,6 +160,37 @@ a{color:#b0121f}a:hover{color:#8a0d17}
   <div style="margin-top:14px;padding-top:7px;border-top:1px solid #d3cabb;display:flex;justify-content:space-between;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#a89e8f">
     <span>De Koerskrant</span><span>Pagina 1</span><span>Vuelta a España 2026</span>
   </div>
+
+  <sc-if value="{{ drillOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:9;background:rgba(20,18,16,.42);display:flex;align-items:flex-start;justify-content:center;padding:46px 34px" onClick="{{ closeDrill }}">
+      <div class="animPane" onClick="{{ stop }}" style="width:600px;max-height:100%;overflow-y:auto;background:#f6f1e2;padding:20px 26px 22px;box-shadow:0 26px 60px -18px rgba(0,0,0,.6);border-top:5px double #141210;border-bottom:5px double #141210">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#8a8175;border-bottom:1px solid #d3cabb;padding-bottom:6px">
+          <span>Binnenpagina · de cijfers</span>
+          <button type="button" onClick="{{ closeDrill }}" style="background:none;border:0;padding:0;cursor:pointer;font-family:'Oswald',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#4a443c" style-hover="color:#141210">Sluiten ✕</button>
+        </div>
+        <h3 style="margin:12px 0 0;font-family:'Playfair Display',serif;font-weight:900;font-size:38px;line-height:1;letter-spacing:-.03em;text-align:center">{{ drillTitel }}</h3>
+        <p style="margin:6px 0 0;text-align:center;font-family:'Source Serif 4',serif;font-style:italic;font-size:13px;color:#6f665a">{{ drillSub }}</p>
+        <div style="margin:12px 0 0;display:flex;gap:0;border-top:1px solid #141210;border-bottom:1px solid #141210">
+          <button type="button" onClick="{{ openKlassement }}" style="{{ swK }}">Klassement</button>
+          <button type="button" onClick="{{ openEtappe }}" style="{{ swE }}">Etappe-uitslag</button>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:10px;padding:9px 0 4px;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#8a8175">
+          <span style="min-width:20px">Nr.</span><span style="flex:1">{{ drillKolom }}</span><span>{{ drillWaardeKop }}</span>
+        </div>
+        <sc-for list="{{ drillRows }}" as="d" hint-placeholder-count="10">
+          <span style="display:flex;align-items:baseline;gap:10px;padding:9px 0;border-top:1px dotted #c7bda9">
+            <span style="min-width:20px;font-family:'Oswald',sans-serif;font-size:13px;color:#a89e8f">{{ d.pos }}</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font-family:'Source Serif 4',serif;font-size:16px;font-weight:600;color:#141210">{{ d.naam }}</span>
+              <span style="display:block;margin-top:1px;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#8a8175">{{ d.sub }}</span>
+            </span>
+            <span style="font-family:'Source Serif 4',serif;font-size:15px;font-variant-numeric:tabular-nums;color:#3a352e">{{ d.waarde }}</span>
+          </span>
+        </sc-for>
+        <p style="margin:12px 0 0;padding-top:8px;border-top:2.5px solid #141210;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#a89e8f">Van onze redactie · uitslag gefiatteerd 17:42</p>
+      </div>
+    </div>
+  </sc-if>
 </div>
 </div>
 
@@ -635,7 +682,8 @@ a{color:#b0121f}a:hover{color:#8a0d17}
 <script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#C81E2D&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#C81E2D&quot;,&quot;#F5C518&quot;,&quot;#D6688F&quot;,&quot;#1F5C4A&quot;],&quot;section&quot;:&quot;Koersthema&quot;}}">
 class Component extends DCLogic {
   state = { tab: "krant", leadOpen: false, webOpen: false, scrolled: false, sheetOpen: false,
-            tab2: "krant", lead2: false, scrolled2: false, sheet2: false, web2: false };
+            tab2: "krant", lead2: false, scrolled2: false, sheet2: false, web2: false,
+            drill: null };
 
   onScroll = (e) => {
     const s = e.target.scrollTop > 46;
@@ -686,9 +734,55 @@ class Component extends DCLogic {
         : { ...tabBase, background: "transparent", color: "#7a7064" },
     }));
 
+    const uitslag10 = [
+      { pos: "1", naam: "Tadej Pogačar", sub: "UAE Team Emirates", waarde: "13'42\"" },
+      { pos: "2", naam: "Ethan Hayter", sub: "Soudal Quick-Step", waarde: "+0,09" },
+      { pos: "3", naam: "Joshua Tarling", sub: "Ineos Grenadiers", waarde: "+4\"" },
+      { pos: "4", naam: "Wout van Aert", sub: "Visma | Lease a Bike", waarde: "+11\"" },
+      { pos: "5", naam: "Matthew Brennan", sub: "Visma | Lease a Bike", waarde: "+14\"" },
+      { pos: "6", naam: "Filippo Ganna", sub: "Ineos Grenadiers", waarde: "+16\"" },
+      { pos: "7", naam: "Remco Evenepoel", sub: "Soudal Quick-Step", waarde: "+19\"" },
+      { pos: "8", naam: "Mads Pedersen", sub: "Lidl-Trek", waarde: "+23\"" },
+      { pos: "9", naam: "Jonas Vingegaard", sub: "Visma | Lease a Bike", waarde: "+26\"" },
+      { pos: "10", naam: "Pau Miquel", sub: "Kern Pharma", waarde: "+31\"" },
+    ];
+    const stand10 = [
+      { pos: "1", naam: "JWielerteam", sub: "Joris W. · +121 vandaag", waarde: "121" },
+      { pos: "2", naam: "Discovery Channel", sub: "Marit B. · +114 vandaag", waarde: "114" },
+      { pos: "3", naam: "LeMeilleur", sub: "Sanne K. · +108 vandaag", waarde: "108" },
+      { pos: "4", naam: "Aap in de Volgwagen", sub: "Luuk L. · +96 vandaag", waarde: "96" },
+      { pos: "5", naam: "Zona Rossa", sub: "Bram D. · +94 vandaag", waarde: "94" },
+      { pos: "6", naam: "vreugdenhil.jg", sub: "Jesse G. · +91 vandaag", waarde: "91" },
+      { pos: "7", naam: "The Emirates", sub: "Nina V. · +88 vandaag", waarde: "88" },
+      { pos: "8", naam: "Pelotonpraat", sub: "Tim H. · +84 vandaag", waarde: "84" },
+      { pos: "9", naam: "De Wielerdirecteur", sub: "Koen S. · +79 vandaag", waarde: "79" },
+      { pos: "10", naam: "Dartpijl", sub: "Eva M. · +75 vandaag", waarde: "75" },
+    ];
+    const isK = this.state.drill === "klassement";
+    const swBase = {
+      flex: 1, border: 0, cursor: "pointer", padding: "8px 0", background: "none",
+      fontFamily: "'Oswald',sans-serif", fontSize: 10, letterSpacing: ".18em", textTransform: "uppercase",
+      transition: "background .2s, color .2s",
+    };
+    const swOn = { ...swBase, background: "#141210", color: "#f6f1e2" };
+    const swOff = { ...swBase, color: "#8a8175" };
+
     return {
       accent,
       tabs,
+      uitslagTop5: uitslag10.slice(0, 5).map((u) => ({ key: u.pos, pos: u.pos, naam: u.naam, tijd: u.waarde })),
+      drillOpen: this.state.drill !== null,
+      drillRows: (isK ? stand10 : uitslag10).map((r) => ({ ...r, key: r.pos })),
+      drillTitel: isK ? "Klassement na etapa 1" : "Uitslag etapa 1",
+      drillSub: isK ? "de eerste tien ploegen van de poule" : "tijdrit Monaco · 12,1 km · de eerste tien",
+      drillKolom: isK ? "Ploeg" : "Renner",
+      drillWaardeKop: isK ? "Punten" : "Tijd",
+      swK: isK ? swOn : swOff,
+      swE: isK ? swOff : swOn,
+      openKlassement: () => this.setState({ drill: "klassement" }),
+      openEtappe: () => this.setState({ drill: "etappe" }),
+      closeDrill: () => this.setState({ drill: null }),
+      stop: (e) => e.stopPropagation(),
       tabs2,
       showKrant2: this.state.tab2 === "krant",
       showUitslag2: this.state.tab2 === "uitslag",

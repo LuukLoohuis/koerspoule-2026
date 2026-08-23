@@ -59,9 +59,14 @@ gebruik het corresponderende CSS-variabel/token uit `src/index.css` /
      Bronregel: Oswald 9.5px caps, boven een hairline.
    - **Kolom 2:** halftone-fotoplek 150px met caption-balk (`rgba(20,18,16,.72)`, Oswald 9px caps)
      + cursief onderschrift; daaronder "Uit de perszaal": quotes gescheiden door hairlines,
-     **geen kaartjes** (dat was de oude look).
-   - **Kolom 3:** "Klassement na etapa 1" met stippellijnen (`border-bottom: 1px dotted`),
+     **geen kaartjes** (dat was de oude look). Daaronder, gescheiden door de dubbele
+     regel, het blok **"Uitslag etapa 1"**: kop-rij (Oswald 10px caps, links label,
+     rechts "Top 10 ▸" in accent) + de eerste **vijf** renners op stippellijnen
+     (nr Oswald 10.5px muted · naam Source Serif 600 13px met ellipsis · tijd
+     tabular-nums 12.5px). Kop en rijen zijn klikbaar → binnenpagina (zie "Doordril").
+   - **Kolom 3:** "Klassement" met stippellijnen (`border-bottom: 1px dotted`),
      tabular-nums; onderaan een klein weerbericht-blokje (`border-top: 2px solid ink`).
+     Kop en rijen zijn **klikbaar** → binnenpagina met top 10 (zie "Doordril").
 5. **Dubbele regel** → labelregel "Verder in de krant" (Oswald 10px caps, muted).
 6. **Premium tegels** — `grid-template-columns: repeat(4, 1fr)`, gap 12px.
    Elke tegel: `background #fffdf7`, `border-radius 18px`, padding 13px 14px,
@@ -108,6 +113,39 @@ onderpadding 112px (vrijloop onder de tabbalk).
     max-height 76%, primaire knop `#141210` radius 16px met `scale(.97)` op press.
     Gebruik de bestaande shadcn `Drawer` en geef die deze maten mee.
 
+## Doordril — binnenpagina met top 10 (web, 2a)
+Klik op de klassementkop/-rij of op de etappe-uitslagkop/-rij opent één en dezelfde
+**binnenpagina** als overlay *binnen* het krantvlak (niet een modaal met radius —
+het moet een pagina uit de krant lijken).
+
+- **Backdrop:** `rgba(20,18,16,.42)`, flex met `align-items: flex-start`,
+  padding 46px 34px. Klik op de backdrop sluit; klik in het paneel stopt propagatie.
+- **Paneel:** breedte 600px, `max-height: 100%`, `overflow-y: auto`, papier `#f6f1e2`,
+  padding 20px 26px 22px, **geen border-radius**, `border-top/bottom: 5px double #141210`,
+  `box-shadow: 0 26px 60px -18px rgba(0,0,0,.6)`, in-animatie fade-up 300ms
+  `cubic-bezier(.2,.8,.2,1)`.
+- **Kopregel:** links "Binnenpagina · de cijfers", rechts "Sluiten ✕" (beide Oswald 9.5px
+  caps, letter-spacing .2em), hairline eronder.
+- **Titel:** Playfair 900 38px/1, gecentreerd — "Klassement na etapa 1" of "Uitslag etapa 1";
+  ondertitel Source Serif italic 13px muted ("de eerste tien ploegen van de poule" /
+  "tijdrit Monaco · 12,1 km · de eerste tien").
+- **Schakelaar:** twee gelijke knoppen (Klassement / Etappe-uitslag) in een strip met
+  `border-top/bottom: 1px solid #141210`, Oswald 10px caps .18em; actief = **inverse**
+  (`background #141210`, tekst `#f6f1e2`), inactief muted. Geen pill, geen radius —
+  krantstijl, niet iOS.
+- **Tabelkop:** Nr. / Ploeg|Renner / Punten|Tijd (Oswald 9px caps muted).
+- **Rijen (exact 10):** `border-top: 1px dotted #c7bda9`, padding 9px 0;
+  nr Oswald 13px muted (min-width 20px), naam Source Serif 600 16px,
+  subregel Oswald 9px caps muted (klassement: "Joris W. · +121 vandaag";
+  etappe: ploegnaam), waarde Source Serif 15px tabular-nums.
+- **Voetregel:** `border-top: 2.5px solid #141210` + "Van onze redactie · uitslag
+  gefiatteerd 17:42".
+
+Repo-noot: vul de rijen uit `useKlassement`/poulestand (top 10) en de etappe-uitslag
+uit `useEtappeUitslag`; bouw het paneel op shadcn `Dialog` maar override radius,
+shadow en borders naar bovenstaande krantwaarden. Volledige lijst (>10) blijft de
+bestaande klassement-/uitslagpagina.
+
 ## Interacties & gedrag
 - Tegel of index-rij → opent de voorbeschouwing-sheet (mobiel) / navigeert naar de
   sectie (web, bestaande `naarSectie("krant-…")`-logica in `KaravaanFeed.tsx`).
@@ -118,6 +156,8 @@ onderpadding 112px (vrijloop onder de tabbalk).
 
 ## State
 `tab: "krant" | "uitslag" | "perszaal"`, `leadOpen: boolean`, `sheetOpen: boolean`,
+`drill: null | "klassement" | "etappe"` (null = binnenpagina gesloten; de schakelaar
+zet alleen de waarde om, het paneel blijft open),
 `scrolled: boolean` (uit scrollhandler). Data ongewijzigd uit `useKaravaanFeed`,
 `useEtappeVerslag`, `useSubpoules`.
 
