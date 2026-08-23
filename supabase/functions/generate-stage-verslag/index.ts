@@ -67,18 +67,21 @@ const EIGEN_DATA_PROMPT = `Je bent eindredacteur van De Koerskrant, de krant bin
 Je krijgt FEITEN over een zojuist afgeronde etappe: wie de rit won, wie de truien draagt, en hoe het in de poule liep. Schrijf daar een kort verslag van.
 
 HARDE REGELS
-1. LENGTE: minimaal 5 en maximaal 10 zinnen.
+1. LENGTE: minimaal 8 en maximaal 14 zinnen. Het koersdeel blijft kort (4 tot 6 zinnen); het poulegedeelte krijgt de rest.
 2. VERZIN NIETS. Gebruik uitsluitend de feiten hieronder. Je weet NIET hoe de koers verliep -- geen aanvallen, geen valpartijen, geen kopgroepen, geen weer, geen tactiek. Schrijf alleen op wat er staat.
 3. VOLGORDE: begin met de koers (ritwinnaar, daarna de truien). Sluit af met de poule: wie de dagzege pakte en wie aan de leiding gaat.
 4. GEEN SUBPOULES: noem geen subpoulenamen. De poulecijfers gaan over het hele spel.
 5. DEELNEMERSNAMEN VET: zet elke naam van een DEELNEMER tussen dubbele sterretjes, zo: **Marieke de Groot**. Doe dit ELKE keer dat de naam voorkomt. Namen van RENNERS krijgen GEEN sterretjes -- alleen deelnemers uit de poule. Gebruik de naam exact zoals die in de feiten staat.
 6. TOON: dit is de sportpagina, geen persbericht. Schrijf met vaart. Gebruik krachtige werkwoorden, korte zinnen naast lange, en durf een cijfer te laten knallen ("118 punten", "2308 anderen achter zich"). Eén uitroepteken in het hele stuk mag, meer niet. Geen aanspreking van de lezer, geen "wij" of "je".
-7. Het poulegedeelte is het feestje: daar mag de toon het hoogst. De koers is het decor, de deelnemer is de held.
+7. Het poulegedeelte is het feestje: daar mag de toon het hoogst. De koers is het decor, de deelnemer is de held. Schrijf hier 3 tot 5 zinnen en behandel ALLE volgende punten:
+   a) de top drie van het dagklassement, met naam en punten;
+   b) WAAROM de dagwinnaar won: noem de renners die hem punten brachten. Was een renner door weinig deelnemers gekozen, benoem dat als een gedurfde keuze ("die maar 8% had"). Was iedereen dezelfde renner rijk, dan zat het verschil in de combinatie -- zeg dat dan zo. Een joker verdubbelt de punten; noem dat als het meespeelt;
+   c) wie aan de leiding gaat in het algemeen klassement, met de voorsprong op de nummers 2 en 3 bij naam.
 8. Is een feit niet gegeven, laat het weg. Schrijf nooit "onbekend", "geen data" of "0 deelnemers". Staan er geen poulecijfers bij, schrijf dan helemaal niets over de poule -- dan sluit je af met de koers.
 9. VERZIN OOK IN DE TOON NIETS: enthousiasme mag, feiten verzinnen niet. Geen "na een lange vlucht", geen "in een spannende sprint" -- dat weet je niet.
 
 Antwoord UITSLUITEND met JSON:
-{"verslag":"<5 tot 10 zinnen, alinea's gescheiden door \\n\\n, deelnemersnamen tussen **>","kop":"<krantenkop van maximaal zeven woorden, bevat de achternaam van de ritwinnaar, geen punt aan het eind>"}`;
+{"verslag":"<8 tot 14 zinnen; koers eerst, dan een lege regel, dan het pouledeel; deelnemersnamen tussen **>","kop":"<krantenkop van maximaal zeven woorden, bevat de achternaam van de ritwinnaar, geen punt aan het eind>"}`;
 
 async function openaiChat(userPrompt: string, systemPrompt = SYSTEM_PROMPT): Promise<{ text: string; finishReason: string | null }> {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
@@ -135,7 +138,11 @@ type Feiten = {
   ritwinnaarPloeg: string | null;
   truien: Array<{ trui: string; renner: string }>;
   dagwinnaar: { naam: string; punten: number } | null;
+  dagTop3: Array<{ naam: string; punten: number }>;
   leider: { naam: string; punten: number; voorsprong: number | null } | null;
+  klassementTop3: Array<{ naam: string; punten: number }>;
+  /** Renners die de dagwinnaar het verschil brachten: veel punten, weinig gekozen. */
+  uitblinkers: Array<{ renner: string; punten: number; eigendomPct: number; joker: boolean }>;
   aantalDeelnemers: number;
   isEersteEtappe: boolean;
 };
@@ -166,24 +173,36 @@ async function haalFeiten(admin: any, stageId: string): Promise<Feiten> {
   if (stErr || !stage) throw new Error("Etappe niet gevonden");
 
   // Ritwinnaar en truidragers uit de uitslag van deze etappe.
-  const { data: uitslag } = await admin
+  // Hele uitslag, niet alleen de winnaars: we rekenen er straks ook de punten
+  // per renner uit om te zien wie het verschil maakte.
+  const { data: uitslag, error: uitFout } = await admin
     .from("stage_results")
-    .select("finish_position, gc_position, points_position, mountain_position, youth_position, riders(name, teams(name))")
-    .eq("stage_id", stageId)
-    .or("finish_position.eq.1,gc_position.eq.1,points_position.eq.1,mountain_position.eq.1,youth_position.eq.1");
+    .select("rider_id, finish_position, gc_position, points_position, mountain_position, youth_position, riders(name, teams(name))")
+    .eq("stage_id", stageId);
+  if (uitFout) throw uitFout;
+  type UitslagRij = {
+    rider_id: string;
+    finish_position: number | null;
+    gc_position: number | null;
+    points_position: number | null;
+    mountain_position: number | null;
+    youth_position: number | null;
+    riders?: { name?: string | null; teams?: { name?: string | null } | null } | null;
+  };
+  const rijen = (uitslag ?? []) as UitslagRij[];
 
   let ritwinnaar: string | null = null;
   let ritwinnaarPloeg: string | null = null;
   const truien: Array<{ trui: string; renner: string }> = [];
-  for (const r of (uitslag ?? []) as any[]) {
+  for (const r of rijen) {
     const naam = r.riders?.name?.trim();
     if (!naam) continue;
     if (r.finish_position === 1) {
       ritwinnaar = naam;
       ritwinnaarPloeg = r.riders?.teams?.name?.trim() ?? null;
     }
-    for (const kolom of Object.keys(TRUI_LABEL)) {
-      if (r[kolom] === 1) truien.push({ trui: TRUI_LABEL[kolom], renner: naam });
+    for (const [kolom, label] of Object.entries(TRUI_LABEL) as Array<[keyof UitslagRij, string]>) {
+      if (r[kolom] === 1) truien.push({ trui: label, renner: naam });
     }
   }
 
@@ -275,6 +294,78 @@ async function haalFeiten(admin: any, stageId: string): Promise<Feiten> {
     leider = { ...leiderRuw, voorsprong: tweede === null ? null : leiderRuw.punten - tweede };
   }
 
+  // Top drie van de dag en van het klassement.
+  const top = (m: Map<string, number>, n: number) =>
+    [...m.entries()]
+      .filter(([id]) => naamPerEntry.has(id))
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, n)
+      .map(([id, punten]) => ({ naam: naamPerEntry.get(id)!, punten }));
+
+  const dagTop3 = top(dagPunten, 3);
+  const klassementTop3 = top(totaalPunten, 3);
+
+  // Wat maakte de dagwinnaar bijzonder? Punten per renner voor deze etappe,
+  // afgezet tegen hoe vaak die renner gekozen is. Veel punten uit een renner
+  // die bijna niemand had is precies waar een dagzege op gewonnen wordt.
+  let uitblinkers: Feiten["uitblinkers"] = [];
+  const winnaarEntry = [...dagPunten.entries()]
+    .filter(([id]) => naamPerEntry.has(id))
+    .sort((a, b) => b[1] - a[1])[0]?.[0];
+
+  if (winnaarEntry) {
+    try {
+      const [{ data: schema }, { data: picks }, { data: jokers }, { data: pickStats }] = await Promise.all([
+        admin.from("points_schema").select("classification, position, points").eq("game_id", stage.game_id),
+        admin.from("entry_picks").select("rider_id").eq("entry_id", winnaarEntry),
+        admin.from("entry_jokers").select("rider_id").eq("entry_id", winnaarEntry),
+        admin.rpc("game_pick_stats", { p_game_id: stage.game_id }),
+      ]);
+
+      const punt = new Map<string, number>();
+      for (const r of (schema ?? []) as Array<{ classification: string; position: number; points: number }>) {
+        punt.set(`${r.classification}:${r.position}`, r.points);
+      }
+      const zoek = (cls: string, pos: number | null) => (pos ? punt.get(`${cls}:${pos}`) ?? 0 : 0);
+
+      // Eigendom per renner: opgeteld over de categorieën waarin hij te kiezen was.
+      const gekozen = new Map<string, number>();
+      let totaalEntries = 0;
+      for (const r of (pickStats ?? []) as Array<{ rider_id: string; pick_count: number; total_entries: number }>) {
+        gekozen.set(r.rider_id, (gekozen.get(r.rider_id) ?? 0) + r.pick_count);
+        totaalEntries = Math.max(totaalEntries, r.total_entries);
+      }
+
+      const jokerIds = new Set(((jokers ?? []) as Array<{ rider_id: string }>).map((j) => j.rider_id));
+      const mijnRenners = new Set(((picks ?? []) as Array<{ rider_id: string }>).map((p) => p.rider_id));
+
+      uitblinkers = rijen
+        .filter((r) => mijnRenners.has(r.rider_id))
+        .map((r): Feiten["uitblinkers"][number] => {
+          const basis =
+            zoek("stage", r.finish_position) + zoek("gc", r.gc_position) +
+            zoek("kom", r.mountain_position) + zoek("points", r.points_position) +
+            zoek("youth", r.youth_position);
+          const joker = jokerIds.has(r.rider_id);
+          return {
+            renner: r.riders?.name?.trim() ?? "",
+            punten: joker ? basis * 2 : basis,
+            eigendomPct: totaalEntries > 0
+              ? Math.round(((gekozen.get(r.rider_id) ?? 0) / totaalEntries) * 100)
+              : 0,
+            joker,
+          };
+        })
+        .filter((r) => r.renner && r.punten > 0)
+        .sort((a, b) => b.punten - a.punten)
+        .slice(0, 4);
+    } catch (e) {
+      // Zonder deze analyse blijft het verslag bruikbaar; alleen dan zonder de
+      // uitleg waaróm de dagwinnaar won.
+      console.error("uitblinkers bepalen mislukt", e);
+    }
+  }
+
   return {
     stageNummer: stage.stage_number,
     stageNaam: stage.name ?? null,
@@ -284,7 +375,10 @@ async function haalFeiten(admin: any, stageId: string): Promise<Feiten> {
     ritwinnaarPloeg,
     truien,
     dagwinnaar,
+    dagTop3,
     leider,
+    klassementTop3,
+    uitblinkers,
     aantalDeelnemers: naamPerEntry.size,
     isEersteEtappe: stage.stage_number === 1,
   };
@@ -301,16 +395,33 @@ export function feitenPrompt(f: Feiten): string {
   }
   for (const t of f.truien) regels.push(`Draagt ${t.trui}: ${t.renner}`);
   if (f.aantalDeelnemers > 0) regels.push(`Aantal deelnemers in de poule: ${f.aantalDeelnemers}`);
-  if (f.dagwinnaar) {
-    regels.push(`Beste deelnemer van de dag: ${f.dagwinnaar.naam} met ${f.dagwinnaar.punten} punten`);
+  if (f.dagTop3.length > 0) {
+    regels.push(
+      "Dagklassement top 3: " +
+        f.dagTop3.map((r, i) => `${i + 1}. ${r.naam} (${r.punten} pt)`).join(", "),
+    );
   }
-  if (f.leider) {
-    const marge = f.leider.voorsprong === null
-      ? ""
-      : f.leider.voorsprong === 0
-        ? " (gedeeld aan de leiding)"
-        : ` met ${f.leider.voorsprong} punten voorsprong`;
-    regels.push(`Aan de leiding in het algemeen klassement: ${f.leider.naam} met ${f.leider.punten} punten${marge}`);
+  if (f.uitblinkers.length > 0) {
+    // Eigendomspercentage erbij, zodat het model kan zien wat een gedurfde
+    // keuze was en wat iedereen had. Zonder dat cijfer klinkt elke renner even
+    // bijzonder.
+    regels.push(
+      "Renners die de dagwinnaar punten brachten (met hoeveel procent van de deelnemers ze had): " +
+        f.uitblinkers
+          .map((r) => `${r.renner} ${r.punten} pt, gekozen door ${r.eigendomPct}%${r.joker ? ", joker" : ""}`)
+          .join("; "),
+    );
+  }
+  if (f.klassementTop3.length > 0) {
+    const [een, twee, drie] = f.klassementTop3;
+    regels.push(
+      "Algemeen klassement top 3: " +
+        f.klassementTop3.map((r, i) => `${i + 1}. ${r.naam} (${r.punten} pt)`).join(", "),
+    );
+    const marges: string[] = [];
+    if (twee) marges.push(`${een.punten - twee.punten} punten op nummer 2 (${twee.naam})`);
+    if (drie) marges.push(`${een.punten - drie.punten} punten op nummer 3 (${drie.naam})`);
+    if (marges.length > 0) regels.push(`Voorsprong van ${een.naam}: ${marges.join(" en ")}`);
   }
   if (f.isEersteEtappe) {
     regels.push("Dit is de openingsetappe: er was nog geen klassement voor vandaag.");
@@ -416,8 +527,8 @@ Deno.serve(async (req) => {
     let resultaat = parse((await openaiChat(prompt, systeem)).text);
     // Eén herkansing: een te lang of afgekapt antwoord is bijna altijd
     // eenmalig, en een mislukte generatie kost de admin anders handwerk.
-    if (!resultaat || telZinnen(resultaat.verslag) > 12) {
-      const tweede = parse((await openaiChat(`${prompt}\n\nLET OP: houd het strikt tussen 5 en 10 zinnen.`, systeem)).text);
+    if (!resultaat || telZinnen(resultaat.verslag) > 16) {
+      const tweede = parse((await openaiChat(`${prompt}\n\nLET OP: houd het strikt tussen 8 en 14 zinnen.`, systeem)).text);
       if (tweede) resultaat = tweede;
     }
     if (!resultaat) return json({ error: "Kon geen verslag genereren" }, 502);

@@ -116,11 +116,11 @@ describe("telZinnen", () => {
     expect(telZinnen("   \n  ")).toBe(0);
   });
 
-  it("herkent een verslag van tien zinnen als binnen bereik", () => {
-    const tien = Array.from({ length: 10 }, (_, i) => `Zin nummer ${i + 1}.`).join(" ");
-    expect(telZinnen(tien)).toBe(10);
-    expect(telZinnen(tien)).toBeLessThanOrEqual(LENGTE_MAX);
-    expect(telZinnen(tien)).toBeGreaterThanOrEqual(LENGTE_MIN);
+  it("herkent een verslag van twaalf zinnen als binnen bereik", () => {
+    const twaalf = Array.from({ length: 12 }, (_, i) => `Zin nummer ${i + 1}.`).join(" ");
+    expect(telZinnen(twaalf)).toBe(12);
+    expect(telZinnen(twaalf)).toBeLessThanOrEqual(LENGTE_MAX);
+    expect(telZinnen(twaalf)).toBeGreaterThanOrEqual(LENGTE_MIN);
   });
 });
 

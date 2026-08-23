@@ -54,8 +54,8 @@ export function veiligeUrl(url: string | null | undefined): string | null {
 }
 
 /** Bedoelde lengte van een etappeverslag: kort genoeg om echt gelezen te worden. */
-export const LENGTE_MIN = 5;
-export const LENGTE_MAX = 10;
+export const LENGTE_MIN = 8;
+export const LENGTE_MAX = 14;
 
 const AFKORTINGEN = ["bijv", "nr", "ca", "resp", "incl", "excl", "etc", "evt", "ong", "max", "afb"];
 const AFKORTING_RE = new RegExp(`\\b(?:${AFKORTINGEN.join("|")})\\.`, "gi");
