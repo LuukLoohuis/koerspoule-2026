@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+[data-t="licht"]{--bg:#F4F1EA;--card:#FFFFFF;--card2:#FAF8F3;--ink:#14120F;--ink2:#4A443B;--mut:#8B8478;--line:rgba(20,18,15,.10);--line2:rgba(20,18,15,.06);--acc:#B0121F;--gold:#A8813A;--pos:#1E7A4B;--neg:#B0121F;--chip:#EAE5DA;--bar:rgba(255,255,255,.82);--sh:0 1px 2px rgba(20,18,15,.05),0 8px 22px -14px rgba(20,18,15,.35)}
+[data-t="nacht"]{--bg:#0E0E11;--card:#18181C;--card2:#1E1E23;--ink:#F5F3ED;--ink2:#C7C3BA;--mut:#8B8880;--line:rgba(255,255,255,.11);--line2:rgba(255,255,255,.06);--acc:#E23B48;--gold:#D9AE63;--pos:#43C489;--neg:#E23B48;--chip:#26262C;--bar:rgba(24,24,28,.82);--sh:0 1px 2px rgba(0,0,0,.4),0 10px 26px -14px rgba(0,0,0,.7)}
+.kp-scroll{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.kp-scroll::-webkit-scrollbar{display:none}
+.kp-row{overflow-x:auto;scrollbar-width:none}
+.kp-row::-webkit-scrollbar{display:none}
+@keyframes kpSheet{from{transform:translateY(102%)}to{transform:translateY(0)}}
+@keyframes kpFade{from{opacity:0}to{opacity:1}}
+@keyframes kpUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes kpToast{0%{opacity:0;transform:translateY(10px)}12%{opacity:1;transform:translateY(0)}88%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-4px)}}
+@keyframes kpShimmer{0%{background-position:-160px 0}100%{background-position:220px 0}}
+.kpSheet{animation:kpSheet .42s cubic-bezier(.19,1,.22,1) both}
+.kpScrim{animation:kpFade .22s ease both}
+.kpPane{animation:kpUp .26s cubic-bezier(.2,.8,.2,1) both}
+.kpToast{animation:kpToast 2.6s ease both}
+.kpSkel{background-image:linear-gradient(90deg,var(--chip) 0%,var(--card2) 40%,var(--chip) 80%);background-size:300px 100%;animation:kpShimmer 1.1s linear infinite}
+</style>
+</helmet>
+
+<div data-t="{{ thema }}" style="font-family:'DM Sans',system-ui,sans-serif;width:393px;height:852px;position:relative;border-radius:52px;background:var(--bg);color:var(--ink);box-shadow:0 0 0 10px #1b1b1e,0 0 0 12px #35353a,0 40px 70px -30px rgba(0,0,0,.55);overflow:hidden;isolation:isolate;-webkit-font-smoothing:antialiased">
+
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column">
+
+    <div style="position:relative;z-index:20;flex:none;background:var(--bar);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--line2)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 26px 2px;font-size:13px;font-weight:600;letter-spacing:.01em">
+        <span>9:41</span>
+        <span style="display:flex;align-items:center;gap:5px">
+          <span style="width:16px;height:9px;border:1px solid var(--ink);border-radius:2px;opacity:.75;display:block"></span>
+          <span style="width:22px;height:10px;border:1px solid var(--ink);border-radius:3px;opacity:.75;display:block;position:relative"><span style="position:absolute;inset:1.5px;right:6px;background:var(--ink);border-radius:1.5px;display:block"></span></span>
+        </span>
+      </div>
+
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:6px 18px 10px">
+        <div style="min-width:0">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)">{{ kop.boven }}</div>
+          <div style="font-family:'Playfair Display',serif;font-weight:800;font-size:26px;line-height:1.06;letter-spacing:-.02em;margin-top:2px">{{ kop.titel }}</div>
+        </div>
+        <button type="button" onClick="{{ naarMeer }}" style="flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--chip);color:var(--ink);font-size:13px;font-weight:700;cursor:pointer;display:grid;place-items:center" style-active="transform:scale(.94)">LL</button>
+      </div>
+
+      <sc-if value="{{ toonSeg }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:0 18px 12px">
+          <div style="display:flex;gap:3px;padding:3px;background:var(--chip);border-radius:11px">
+            <sc-for list="{{ segs }}" as="s" hint-placeholder-count="3">
+              <button type="button" onClick="{{ s.kies }}" style="flex:1;min-width:0;min-height:34px;border:0;border-radius:9px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;letter-spacing:-.01em;transition:background .18s,color .18s;background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.sh }}">{{ s.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div class="kp-scroll" style="flex:1;min-height:0;position:relative">
+
+      <sc-if value="{{ isKrant }}" hint-placeholder-val="{{ true }}">
+        <div class="kpPane" style="padding:14px 18px 26px;display:flex;flex-direction:column;gap:14px">
+
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--sh);overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0">
+              <span style="font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)">Vandaag · etappe 12</span>
+              <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--mut)"><span style="width:6px;height:6px;border-radius:50%;background:var(--acc);display:block"></span>Deadline 14:05</span>
+            </div>
+            <div style="padding:8px 16px 0">
+              <div style="font-family:'Playfair Display',serif;font-weight:800;font-size:23px;line-height:1.14;letter-spacing:-.015em">Tarbes → Luz Ardiden</div>
+              <div style="margin-top:6px;display:flex;gap:14px;font-size:13px;color:var(--ink2)">
+                <span>178,4 km</span><span>Bergetappe</span><span>3.850 hm</span>
+              </div>
+            </div>
+            <div style="margin:14px 16px 0;height:64px;border-radius:14px;background:var(--card2);border:1px solid var(--line2);position:relative;overflow:hidden">
+              <div style="position:absolute;inset:0;background:var(--chip);clip-path:polygon(0% 88%,14% 80%,26% 84%,40% 58%,52% 66%,64% 40%,76% 52%,88% 14%,100% 6%,100% 100%,0% 100%)"></div>
+              <span style="position:absolute;right:10px;top:8px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)">Profiel</span>
+            </div>
+            <div style="display:flex;gap:9px;padding:14px 16px 16px">
+              <button type="button" onClick="{{ naarVoorspellen }}" style="flex:1;min-height:48px;border:0;border-radius:14px;background:var(--acc);color:#fff;font-family:'DM Sans',sans-serif;font-size:15.5px;font-weight:700;letter-spacing:-.01em;cursor:pointer;transition:transform .16s" style-active="transform:scale(.975)">{{ ctaLabel }}</button>
+              <button type="button" onClick="{{ naarEtappe }}" style="flex:none;min-height:48px;padding:0 16px;border:1px solid var(--line);border-radius:14px;background:var(--card2);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer" style-active="transform:scale(.975)">Etappe</button>
+            </div>
+          </div>
+
+          <button type="button" onClick="{{ naarKlassement }}" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px;cursor:pointer;box-shadow:var(--sh)" style-active="transform:scale(.99)">
+            <span style="flex:none">
+              <span style="display:block;font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--mut)">Mijn plek</span>
+              <span style="display:flex;align-items:baseline;gap:6px;margin-top:3px"><span style="font-size:30px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums">34</span><span style="font-size:13px;font-weight:700;color:var(--pos)">▲ 3</span></span>
+            </span>
+            <span style="flex:1;min-width:0;border-left:1px solid var(--line2);padding-left:14px">
+              <span style="display:block;font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--mut)">Punten</span>
+              <span style="display:flex;align-items:baseline;gap:6px;margin-top:3px"><span style="font-size:30px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums">1.284</span><span style="font-size:13px;font-weight:600;color:var(--mut)">+68 gisteren</span></span>
+            </span>
+            <span style="flex:none;color:var(--mut);font-size:20px;line-height:1">›</span>
+          </button>
+
+          <button type="button" onClick="{{ naarSubpoules }}" style="display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px 16px;cursor:pointer;box-shadow:var(--sh)" style-active="transform:scale(.99)">
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--mut)">Mijn subpoules</span>
+              <span style="display:block;margin-top:3px;font-size:15.5px;font-weight:600;letter-spacing:-.012em">Vrienden van Luuk · 4e van 18</span>
+              <span style="display:block;margin-top:1px;font-size:12.5px;color:var(--mut)">en 2 andere subpoules</span>
+            </span>
+            <span style="flex:none;color:var(--mut);font-size:20px;line-height:1">›</span>
+          </button>
+
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:var(--sh)">
+            <div style="height:150px;background:var(--chip);position:relative">
+              <span style="position:absolute;left:0;bottom:0;right:0;padding:7px 14px;background:linear-gradient(transparent,rgba(0,0,0,.55));color:#fff;font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">Foto — de kopgroep op de Tourmalet</span>
+            </div>
+            <div style="padding:15px 16px 16px">
+              <span style="font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">Uit de perszaal</span>
+              <h3 style="margin:7px 0 0;font-family:'Playfair Display',serif;font-weight:800;font-size:22px;line-height:1.16;letter-spacing:-.02em">Vingegaard slaat toe waar niemand het verwachtte</h3>
+              <p style="margin:8px 0 0;font-size:14.5px;line-height:1.5;color:var(--ink2);text-wrap:pretty">Vijftien kilometer van de top koos de Deen het moment dat iedereen voor de slotklim had bewaard. In de poule kostte het de halve top tien hun voorsprong.</p>
+              <button type="button" onClick="{{ naarUitslagen }}" style="margin-top:12px;background:none;border:0;padding:0;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:var(--acc)">Lees het verslag →</button>
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin:2px 2px 8px">
+              <span style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)">Daguitslag etappe 11</span>
+              <button type="button" onClick="{{ naarUitslagen }}" style="background:none;border:0;padding:0;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--acc)">Alles</button>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden">
+              <sc-for list="{{ topDrie }}" as="r" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line2)">
+                  <span style="width:20px;font-size:13px;font-weight:700;color:var(--mut);font-variant-numeric:tabular-nums">{{ r.pos }}</span>
+                  <span style="flex:1;min-width:0;font-size:15px;font-weight:600;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.naam }}</span>
+                  <span style="font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--acc)">{{ r.ptn }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isEtappe }}" hint-placeholder-val="{{ false }}">
+        <div class="kpPane" style="padding:14px 18px 26px;display:flex;flex-direction:column;gap:14px">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:var(--sh)">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)">Woensdag 26 augustus</span>
+              <span style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border-radius:7px;background:var(--chip);color:var(--ink2)">Bergetappe</span>
+            </div>
+            <div style="font-family:'Playfair Display',serif;font-weight:800;font-size:24px;line-height:1.1;letter-spacing:-.02em;margin-top:8px">Tarbes → Luz Ardiden</div>
+            <div style="margin:14px 0 0;height:96px;border-radius:14px;background:var(--card2);border:1px solid var(--line2);position:relative;overflow:hidden">
+              <div style="position:absolute;inset:0;background:var(--chip);clip-path:polygon(0% 90%,12% 84%,24% 88%,38% 60%,50% 70%,62% 42%,74% 54%,86% 12%,100% 4%,100% 100%,0% 100%)"></div>
+              <span style="position:absolute;left:10px;bottom:8px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)">Km 0</span>
+              <span style="position:absolute;right:10px;bottom:8px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)">Luz Ardiden · 1.715 m</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-top:16px;background:var(--line2);border-radius:12px;overflow:hidden">
+              <sc-for list="{{ etappeFeiten }}" as="f" hint-placeholder-count="4">
+                <div style="background:var(--card);padding:11px 13px">
+                  <span style="display:block;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)">{{ f.label }}</span>
+                  <span style="display:block;margin-top:3px;font-size:17px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums">{{ f.waarde }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:var(--sh)">
+            <span style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)">Mijn voorspelling</span>
+            <sc-for list="{{ mijnKeuzeRegels }}" as="k" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line2)">
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--chip);color:var(--ink2);font-size:12px;font-weight:700;display:grid;place-items:center;flex:none">{{ k.pos }}</span>
+                <span style="flex:1;min-width:0;font-size:15.5px;font-weight:600;letter-spacing:-.01em">{{ k.naam }}</span>
+                <span style="font-size:13px;font-weight:600;color:{{ k.kleur }}">{{ k.status }}</span>
+              </div>
+            </sc-for>
+            <button type="button" onClick="{{ naarVoorspellen }}" style="margin-top:13px;width:100%;min-height:46px;border:1px solid var(--line);border-radius:13px;background:var(--card2);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer" style-active="transform:scale(.985)">Voorspelling wijzigen</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isVoorspellen }}" hint-placeholder-val="{{ false }}">
+        <div class="kpPane" style="padding:14px 18px 120px;display:flex;flex-direction:column;gap:14px">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh)">
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font-size:15px;font-weight:700;letter-spacing:-.01em">Etappe 12 · Luz Ardiden</span>
+              <span style="display:block;margin-top:2px;font-size:13.5px;color:var(--mut)">Nog te wijzigen tot 14:05</span>
+            </span>
+            <span style="flex:none;font-size:13px;font-weight:700;color:var(--acc);font-variant-numeric:tabular-nums">2u 41m</span>
+          </div>
+
+          <div>
+            <div style="margin:2px 2px 9px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)">Kies je top drie</div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ slots }}" as="s" hint-placeholder-count="3">
+                <button type="button" onClick="{{ s.open }}" style="display:flex;align-items:center;gap:13px;width:100%;text-align:left;min-height:64px;padding:12px 14px;border-radius:18px;border:1px {{ s.rand }} {{ s.randKleur }};background:var(--card);color:var(--ink);cursor:pointer;transition:transform .16s" style-active="transform:scale(.99)">
+                  <span style="flex:none;width:30px;height:30px;border-radius:50%;background:{{ s.bolBg }};color:{{ s.bolFg }};font-size:13.5px;font-weight:700;display:grid;place-items:center">{{ s.pos }}</span>
+                  <span style="flex:1;min-width:0">
+                    <span style="display:block;font-size:16px;font-weight:{{ s.gewicht }};letter-spacing:-.015em;color:{{ s.tekstKleur }}">{{ s.naam }}</span>
+                    <span style="display:block;margin-top:1px;font-size:12.5px;color:var(--mut)">{{ s.sub }}</span>
+                  </span>
+                  <span style="flex:none;color:var(--mut);font-size:19px;line-height:1">›</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--card2);border:1px solid var(--line2);border-radius:16px;padding:12px 14px;font-size:13.5px;line-height:1.5;color:var(--ink2)">Juiste winnaar levert 25 punten op, plek 2 en 3 elk 10. Je joker verdubbelt één etappe per week.</div>
+
+          <sc-if value="{{ opgeslagen }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pos);border-radius:14px;padding:12px 14px">
+              <span style="flex:none;width:22px;height:22px;border-radius:50%;background:var(--pos);color:#fff;font-size:13px;font-weight:700;display:grid;place-items:center">✓</span>
+              <span style="font-size:14px;font-weight:600">Opgeslagen om 11:24 — je kunt nog wijzigen</span>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isKlassement }}" hint-placeholder-val="{{ false }}">
+        <div class="kpPane" style="padding:12px 0 26px">
+          <div class="kp-row" style="display:flex;gap:8px;padding:2px 18px 12px">
+            <sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+              <button type="button" onClick="{{ c.kies }}" style="flex:none;min-height:34px;padding:0 14px;border-radius:17px;border:1px solid {{ c.rand }};background:{{ c.bg }};color:{{ c.fg }};font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap">{{ c.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:0 18px 8px">
+            <span style="font-size:12.5px;color:var(--mut)">{{ klassementTelling }}</span>
+            <span style="display:flex;align-items:center;gap:14px">
+            <button type="button" onClick="{{ openSorteren }}" style="background:none;border:0;padding:0;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--acc)">Sorteren</button>
+            </span>
+          </div>
+          <div style="padding:0 18px">
+            <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--sh)">
+              <sc-for list="{{ stand }}" as="r" hint-placeholder-count="8">
+                <div style="display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--line2);background:{{ r.rijBg }}">
+                  <span style="width:23px;font-size:14.5px;font-weight:700;font-variant-numeric:tabular-nums;color:{{ r.posKleur }}">{{ r.pos }}</span>
+                  <span style="width:26px;font-size:12px;font-weight:700;color:{{ r.moveKleur }}">{{ r.move }}</span>
+                  <span style="flex:1;min-width:0">
+                    <span style="display:block;font-size:15.5px;font-weight:{{ r.gewicht }};letter-spacing:-.012em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.ploeg }}</span>
+                    <span style="display:block;margin-top:1px;font-size:12px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.deelnemer }}</span>
+                  </span>
+                  <span style="flex:none;text-align:right">
+                    <span style="display:block;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em">{{ r.ptn }}</span>
+                    <span style="display:block;font-size:11.5px;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums">{{ r.verschil }}</span>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSubpoules }}" hint-placeholder-val="{{ false }}">
+        <div class="kpPane" style="padding:14px 18px 26px;display:flex;flex-direction:column;gap:11px">
+          <sc-for list="{{ subpoules }}" as="p" hint-placeholder-count="3">
+            <button type="button" onClick="{{ p.open }}" style="display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:15px 16px;cursor:pointer;box-shadow:var(--sh)" style-active="transform:scale(.99)">
+              <span style="flex:none;width:44px;height:44px;border-radius:14px;background:var(--chip);color:var(--ink2);display:grid;place-items:center;font-size:15px;font-weight:700">{{ p.initialen }}</span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font-size:16.5px;font-weight:700;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.naam }}</span>
+                <span style="display:block;margin-top:2px;font-size:13px;color:var(--mut)">{{ p.regel }}</span>
+              </span>
+              <span style="flex:none;text-align:right">
+                <span style="display:block;font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em">{{ p.eigenPos }}</span>
+                <span style="display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">van {{ p.aantal }}</span>
+              </span>
+            </button>
+          </sc-for>
+          <button type="button" onClick="{{ openAanmaken }}" style="margin-top:3px;width:100%;min-height:50px;border:1px dashed var(--line);border-radius:16px;background:none;color:var(--acc);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer" style-active="transform:scale(.99)">Subpoule aanmaken</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSubpoule }}" hint-placeholder-val="{{ false }}">
+        <div class="kpPane" style="padding:14px 18px 26px;display:flex;flex-direction:column;gap:13px">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:15px 16px;box-shadow:var(--sh)">
+            <div style="display:flex;align-items:baseline;justify-content:space-between">
+              <span style="font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)">Mijn plek in deze subpoule</span>
+              <span style="font-size:12.5px;font-weight:600;color:var(--pos)">▲ 2 deze etappe</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:9px;margin-top:5px">
+              <span style="font-size:34px;font-weight:700;letter-spacing:-.035em;font-variant-numeric:tabular-nums">4</span>
+              <span style="font-size:14px;color:var(--mut)">{{ subSamenvatting }}</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <span class="kp-row" style="display:flex;gap:8px">
+              <sc-for list="{{ subSegs }}" as="c" hint-placeholder-count="3">
+                <button type="button" onClick="{{ c.kies }}" style="flex:none;min-height:34px;padding:0 13px;border-radius:17px;border:1px solid {{ c.rand }};background:{{ c.bg }};color:{{ c.fg }};font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap">{{ c.label }}</button>
+              </sc-for>
+            </span>
+            <button type="button" onClick="{{ openSubMeer }}" style="flex:none;background:none;border:0;padding:0;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--acc)">Meer</button>
+          </div>
+
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--sh)">
+            <sc-for list="{{ subLijst }}" as="r" hint-placeholder-count="6">
+              <div style="display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--line2);background:{{ r.rijBg }}">
+                <span style="width:20px;font-size:14.5px;font-weight:700;font-variant-numeric:tabular-nums;color:{{ r.posKleur }}">{{ r.pos }}</span>
+                <span style="flex:1;min-width:0;font-size:15.5px;font-weight:{{ r.gewicht }};letter-spacing:-.012em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.ploeg }}</span>
+                <span style="flex:none;text-align:right">
+                  <span style="display:block;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em">{{ r.ptn }}</span>
+                  <span style="display:block;font-size:11.5px;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums">{{ r.verschil }}</span>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+          <button type="button" onClick="{{ naarSubpoules }}" style="align-self:flex-start;background:none;border:0;padding:4px 0;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:var(--acc)">‹ Alle subpoules</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isVolgwagen }}" hint-placeholder-val="{{ false }}">
+        <div class="kpPane" style="padding:14px 18px 26px;display:flex;flex-direction:column;gap:13px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line2);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--sh)">
+            <sc-for list="{{ ploegStats }}" as="s" hint-placeholder-count="3">
+              <div style="background:var(--card);padding:13px 12px;text-align:center">
+                <span style="display:block;font-size:21px;font-weight:700;letter-spacing:-.025em;font-variant-numeric:tabular-nums">{{ s.waarde }}</span>
+                <span style="display:block;margin-top:2px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)">{{ s.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--sh)">
+            <sc-for list="{{ ploeg }}" as="r" hint-placeholder-count="7">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line2)">
+                <span style="flex:none;width:34px;height:34px;border-radius:11px;background:var(--chip);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--ink2)">{{ r.nr }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font-size:15.5px;font-weight:600;letter-spacing:-.012em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.naam }}</span>
+                  <span style="display:block;margin-top:1px;font-size:12px;color:var(--mut)">{{ r.ploeg }}</span>
+                </span>
+                <span style="flex:none;font-size:15.5px;font-weight:700;font-variant-numeric:tabular-nums;color:{{ r.ptnKleur }}">{{ r.ptn }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isUitslagen }}" hint-placeholder-val="{{ false }}">
+        <div class="kpPane" style="padding:14px 18px 26px;display:flex;flex-direction:column;gap:13px">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--sh)">
+            <div style="padding:13px 15px;border-bottom:1px solid var(--line2);display:flex;align-items:baseline;justify-content:space-between">
+              <span style="font-size:15.5px;font-weight:700;letter-spacing:-.015em">{{ uitslagKop }}</span>
+              <span style="font-size:12px;font-weight:600;color:var(--mut)">{{ uitslagSub }}</span>
+            </div>
+            <sc-for list="{{ uitslagRijen }}" as="r" hint-placeholder-count="6">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--line2)">
+                <span style="width:20px;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--mut)">{{ r.pos }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font-size:15.5px;font-weight:600;letter-spacing:-.012em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.naam }}</span>
+                  <span style="display:block;margin-top:1px;font-size:12px;color:var(--mut)">{{ r.sub }}</span>
+                </span>
+                <span style="flex:none;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:{{ r.kleur }}">{{ r.waarde }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isHors }}" hint-placeholder-val="{{ false }}">
+        <div class="kpPane" style="padding:14px 18px 26px;display:flex;flex-direction:column;gap:13px">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:var(--sh)">
+            <span style="font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)">Bijspel · ronde 3 van 7</span>
+            <h3 style="margin:7px 0 0;font-family:'Playfair Display',serif;font-weight:800;font-size:22px;line-height:1.14;letter-spacing:-.02em">Hors Catégorie</h3>
+            <p style="margin:7px 0 0;font-size:14.5px;line-height:1.5;color:var(--ink2);text-wrap:pretty">Kies één renner per bergrit. Blijft hij overeind, dan schuift je inzet door naar de volgende ronde.</p>
+            <div style="display:flex;gap:9px;margin-top:14px">
+              <button type="button" onClick="{{ openHors }}" style="flex:1;min-height:48px;border:0;border-radius:14px;background:var(--acc);color:#fff;font-family:'DM Sans',sans-serif;font-size:15.5px;font-weight:700;cursor:pointer" style-active="transform:scale(.98)">Renner kiezen</button>
+              <button type="button" onClick="{{ naarKrant }}" style="flex:none;min-height:48px;padding:0 15px;border:1px solid var(--line);border-radius:14px;background:var(--card2);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer">Regels</button>
+            </div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--sh)">
+            <div style="padding:12px 15px;border-bottom:1px solid var(--line2);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)">Onderdelen</div>
+            <sc-for list="{{ horsOnderdelen }}" as="o" hint-placeholder-count="5">
+              <button type="button" onClick="{{ o.open }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;padding:12px 15px;background:none;border:0;border-bottom:1px solid var(--line2);cursor:pointer;color:var(--ink);font-family:'DM Sans',sans-serif" style-active="background:var(--card2)">
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font-size:15.5px;font-weight:600;letter-spacing:-.012em">{{ o.label }}</span>
+                  <span style="display:block;margin-top:1px;font-size:12.5px;color:var(--mut)">{{ o.sub }}</span>
+                </span>
+                <span style="flex:none;color:var(--mut);font-size:18px;line-height:1">›</span>
+              </button>
+            </sc-for>
+          </div>
+
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--sh)">
+            <div style="padding:12px 15px;border-bottom:1px solid var(--line2);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)">Nog in de race · 214 van 980</div>
+            <sc-for list="{{ horsRijen }}" as="r" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--line2);background:{{ r.rijBg }}">
+                <span style="flex:1;min-width:0;font-size:15.5px;font-weight:{{ r.gewicht }};letter-spacing:-.012em">{{ r.ploeg }}</span>
+                <span style="flex:none;font-size:13.5px;font-weight:600;color:var(--mut)">{{ r.keuze }}</span>
+                <span style="flex:none;width:8px;height:8px;border-radius:50%;background:{{ r.stip }}"></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isMeer }}" hint-placeholder-val="{{ false }}">
+        <div class="kpPane" style="padding:14px 18px 26px;display:flex;flex-direction:column;gap:13px">
+          <div style="display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:15px 16px;box-shadow:var(--sh)">
+            <span style="flex:none;width:52px;height:52px;border-radius:50%;background:var(--chip);color:var(--ink);display:grid;place-items:center;font-size:17px;font-weight:700">LL</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font-size:17px;font-weight:700;letter-spacing:-.015em">Luuk Loohuis</span>
+              <span style="display:block;margin-top:2px;font-size:13.5px;color:var(--mut)">JWielerteam · 3 subpoules</span>
+            </span>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--sh)">
+            <sc-for list="{{ meerItems }}" as="m" hint-placeholder-count="6">
+              <button type="button" onClick="{{ m.open }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line2);padding:14px 15px;min-height:50px;cursor:pointer;color:var(--ink);font-family:'DM Sans',sans-serif" style-active="background:var(--card2)">
+                <span style="flex:1;min-width:0;font-size:15.5px;font-weight:600;letter-spacing:-.01em">{{ m.label }}</span>
+                <span style="flex:none;font-size:13px;color:var(--mut)">{{ m.waarde }}</span>
+                <span style="flex:none;color:var(--mut);font-size:18px;line-height:1">›</span>
+              </button>
+            </sc-for>
+          </div>
+          <button type="button" onClick="{{ naarStates }}" style="width:100%;min-height:48px;border:1px solid var(--line);border-radius:14px;background:var(--card2);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer">Statussen bekijken</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStates }}" hint-placeholder-val="{{ false }}">
+        <div class="kpPane" style="padding:14px 18px 26px;display:flex;flex-direction:column;gap:13px">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:15px;box-shadow:var(--sh)">
+            <span style="font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)">Laden</span>
+            <div style="display:flex;flex-direction:column;gap:9px;margin-top:11px">
+              <div class="kpSkel" style="height:14px;width:62%;border-radius:7px"></div>
+              <div class="kpSkel" style="height:14px;width:88%;border-radius:7px"></div>
+              <div class="kpSkel" style="height:14px;width:44%;border-radius:7px"></div>
+            </div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px 16px;text-align:center;box-shadow:var(--sh)">
+            <span style="display:block;font-size:16.5px;font-weight:700;letter-spacing:-.015em">Nog geen subpoule</span>
+            <span style="display:block;margin:6px auto 0;max-width:250px;font-size:14px;line-height:1.5;color:var(--mut)">Maak er één aan of stap in met een code van een vriend.</span>
+            <button type="button" onClick="{{ openAanmaken }}" style="margin-top:14px;min-height:44px;padding:0 20px;border:0;border-radius:13px;background:var(--acc);color:#fff;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer">Subpoule aanmaken</button>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:11px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--neg);border-radius:16px;padding:14px 15px;box-shadow:var(--sh)">
+            <span style="flex:none;width:22px;height:22px;border-radius:50%;background:var(--neg);color:#fff;font-size:13px;font-weight:700;display:grid;place-items:center">!</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font-size:14.5px;font-weight:700">Uitslag nog niet binnen</span>
+              <span style="display:block;margin-top:2px;font-size:13.5px;line-height:1.45;color:var(--mut)">De jury bekijkt de finishfoto. We proberen het over een minuut opnieuw.</span>
+            </span>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pos);border-radius:16px;padding:14px 15px;box-shadow:var(--sh)">
+            <span style="flex:none;width:22px;height:22px;border-radius:50%;background:var(--pos);color:#fff;font-size:13px;font-weight:700;display:grid;place-items:center">✓</span>
+            <span style="font-size:14.5px;font-weight:600">Voorspelling opgeslagen</span>
+          </div>
+          <div style="display:flex;gap:9px">
+            <button type="button" disabled style="flex:1;min-height:48px;border:0;border-radius:14px;background:var(--chip);color:var(--mut);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:not-allowed">Deadline verstreken</button>
+            <button type="button" style="flex:none;min-height:48px;padding:0 16px;border:1px solid var(--line);border-radius:14px;background:var(--card2);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer">Offline</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="flex:none;position:relative;z-index:20;background:var(--bar);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line)">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr)">
+        <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+          <button type="button" onClick="{{ n.kies }}" style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:56px;padding:8px 2px 6px;background:none;border:0;cursor:pointer;color:{{ n.kleur }};font-family:'DM Sans',sans-serif" style-active="transform:scale(.94)">
+            <span style="position:absolute;top:0;left:50%;transform:translateX(-50%);height:2px;width:22px;border-radius:0 0 3px 3px;background:{{ n.streep }}"></span>
+            <span style="width:22px;height:22px;display:block;opacity:{{ n.dek }}">{{ n.icoon }}</span>
+            <span style="font-size:10px;font-weight:{{ n.gewicht }};letter-spacing:.02em;line-height:1;white-space:nowrap">{{ n.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="height:22px;display:grid;place-items:center"><span style="width:132px;height:5px;border-radius:3px;background:var(--ink);opacity:.22;display:block"></span></div>
+    </div>
+  </div>
+
+  <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:40">
+      <div class="kpScrim" onClick="{{ sluitSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,.42);cursor:pointer"></div>
+      <div class="kpSheet" style="position:absolute;left:0;right:0;bottom:0;max-height:76%;display:flex;flex-direction:column;background:var(--card);border-radius:26px 26px 0 0;border-top:1px solid var(--line);box-shadow:0 -18px 46px -20px rgba(0,0,0,.5)">
+        <div style="flex:none;padding:9px 0 4px;display:grid;place-items:center"><span style="width:38px;height:4px;border-radius:2px;background:var(--chip);display:block"></span></div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 18px 10px;border-bottom:1px solid var(--line2)">
+          <span style="font-size:16.5px;font-weight:700;letter-spacing:-.015em">{{ sheetTitel }}</span>
+          <button type="button" onClick="{{ sluitSheet }}" style="background:none;border:0;padding:4px 0;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:var(--acc)">Sluiten</button>
+        </div>
+        <div class="kp-scroll" style="flex:1;min-height:0;padding:6px 0 18px">
+          <sc-for list="{{ sheetOpties }}" as="o" hint-placeholder-count="6">
+            <button type="button" onClick="{{ o.kies }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:54px;padding:11px 18px;background:none;border:0;border-bottom:1px solid var(--line2);cursor:pointer;color:var(--ink);font-family:'DM Sans',sans-serif" style-active="background:var(--card2)">
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font-size:16px;font-weight:600;letter-spacing:-.012em">{{ o.label }}</span>
+                <span style="display:block;margin-top:1px;font-size:12.5px;color:var(--mut)">{{ o.sub }}</span>
+              </span>
+              <span style="flex:none;font-size:15px;font-weight:700;color:var(--acc)">{{ o.vink }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div class="kpToast" style="position:absolute;left:18px;right:18px;bottom:98px;z-index:50;display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 14px 34px -14px rgba(0,0,0,.6)">
+      <span style="flex:none;width:20px;height:20px;border-radius:50%;background:var(--pos);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center">✓</span>
+      <span style="font-size:14.5px;font-weight:600">{{ toast }}</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:413,&quot;height&quot;:872},&quot;thema&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;licht&quot;,&quot;nacht&quot;],&quot;default&quot;:&quot;licht&quot;,&quot;tsType&quot;:&quot;'licht' | 'nacht'&quot;}}">
+const I = {
+  krant: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13v14H5.5A1.5 1.5 0 0 1 4 17.5V5Z"/><path d="M17 8h3v9.5a1.5 1.5 0 0 1-1.5 1.5H17"/><path d="M7 8.5h7M7 12h7M7 15.5h4"/></svg>',
+  volgwagen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v-3.2l1.6-4A2 2 0 0 1 6.5 6.5h9.2a2 2 0 0 1 1.8 1.1L19.4 12H21v3h-2"/><path d="M8 15h6"/><circle cx="6.5" cy="16.5" r="1.9"/><circle cx="16.2" cy="16.5" r="1.9"/></svg>',
+  uitslagen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v18"/><path d="M6 4.5h12l-2.6 4.2L18 13H6"/></svg>',
+  subpoules: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.1"/><path d="M3.4 19c.5-3 2.9-4.6 5.6-4.6S14.1 16 14.6 19"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.1 4.2 1.7 4.6 4.3"/></svg>',
+  hors: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.6" cy="16.4" r="3.1"/><circle cx="18.4" cy="16.4" r="3.1"/><path d="M8.6 16.4h6.2l-3-7.2H9.2"/><path d="M12.3 9.2 15 6.4h2.6"/></svg>',
+};
+
+const NAV = [
+  { key: 'krant', label: 'Krant', boven: 'Vuelta a España 2026 · woensdag 26 aug', titel: 'De Koerskrant' },
+  { key: 'volgwagen', label: 'Volgwagen', boven: 'Mijn ploeg', titel: 'Volgwagen', segs: ['Renners', 'Punten', 'Joker'] },
+  { key: 'uitslagen', label: 'Uitslagen', boven: 'Vuelta a España 2026 · na etappe 11', titel: 'Uitslagen', segs: ['Klassement', 'Daguitslag', 'Mijn punten'] },
+  { key: 'subpoules', label: 'Subpoules', boven: '3 subpoules', titel: 'Subpoules' },
+  { key: 'hors', label: 'Hors Cat.', boven: 'Bijspel', titel: 'Hors Catégorie' },
+];
+
+const RENNERS = [
+  { naam: 'Jonas Vingegaard', ploeg: 'Visma · Lease a Bike' },
+  { naam: 'Tadej Pogačar', ploeg: 'UAE Team Emirates' },
+  { naam: 'Remco Evenepoel', ploeg: 'Soudal Quick-Step' },
+  { naam: 'Juan Ayuso', ploeg: 'UAE Team Emirates' },
+  { naam: 'Primož Roglič', ploeg: 'Red Bull – Bora' },
+  { naam: 'Enric Mas', ploeg: 'Movistar Team' },
+  { naam: 'Santiago Buitrago', ploeg: 'Bahrain Victorious' },
+  { naam: 'Mattias Skjelmose', ploeg: 'Lidl-Trek' },
+];
+
+class Component extends DCLogic {
+  state = {
+    tab: 'krant',
+    scherm: 'krant',
+    seg: { volgwagen: 'Renners', uitslagen: 'Klassement' },
+    chip: 'Alles',
+    subSeg: 'Klassement',
+    sheet: null,
+    slot: null,
+    picks: ['Jonas Vingegaard', null, null],
+    opgeslagen: false,
+    toast: null,
+  };
+
+  ga = (scherm, tab) => this.setState({ scherm, tab: tab || this.state.tab, sheet: null });
+
+  melden(tekst) {
+    this.setState({ toast: tekst });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: null }), 2600);
+  }
+
+  kiesRenner(naam) {
+    const picks = this.state.picks.slice();
+    picks[this.state.slot] = naam;
+    const vol = picks.every(Boolean);
+    this.setState({ picks, sheet: null, opgeslagen: vol, toast: null });
+    if (vol) this.melden('Voorspelling opgeslagen');
+  }
+
+  componentWillUnmount() { clearTimeout(this._t); }
+
+  renderVals() {
+    const s = this.state;
+    const acc = 'var(--acc)';
+    const scherm = s.scherm;
+    const navTab = NAV.find(n => n.key === s.tab) || NAV[0];
+    const isSub = scherm === 'subpoule';
+
+    const koppen = {
+      etappe: { boven: 'Woensdag 26 augustus', titel: 'Etappe 12' },
+      voorspellen: { boven: 'Etappe 12 · Luz Ardiden', titel: 'Voorspellen' },
+      subpoules: { boven: '3 subpoules', titel: 'Subpoules' },
+      subpoule: { boven: 'Subpoule · 18 deelnemers', titel: 'Vrienden van Luuk' },
+      meer: { boven: 'Account', titel: 'Meer' },
+      states: { boven: 'Design system', titel: 'Statussen' },
+    };
+    const kop = koppen[scherm] || { boven: navTab.boven, titel: navTab.titel };
+
+    const segLijst = (scherm === s.tab && navTab.segs) ? navTab.segs : null;
+    const actiefSeg = s.seg[s.tab];
+    const segs = (segLijst || []).map(label => ({
+      label,
+      kies: () => this.setState({ seg: { ...s.seg, [s.tab]: label } }),
+      bg: label === actiefSeg ? 'var(--card)' : 'transparent',
+      fg: label === actiefSeg ? 'var(--ink)' : 'var(--mut)',
+      sh: label === actiefSeg ? '0 1px 2px rgba(0,0,0,.16)' : 'none',
+    }));
+
+    const navItems = NAV.map(n => {
+      const aan = s.tab === n.key;
+      return {
+        label: n.label,
+        kies: () => this.ga(n.key, n.key),
+        kleur: aan ? acc : 'var(--mut)',
+        streep: aan ? acc : 'transparent',
+        dek: aan ? '1' : '.72',
+        gewicht: aan ? '700' : '600',
+        icoon: React.createElement('span', {
+          style: { display: 'block', width: 22, height: 22 },
+          dangerouslySetInnerHTML: { __html: I[n.key] },
+        }),
+      };
+    });
+
+    const rij = (pos, ploeg, deelnemer, ptn, verschil, move, eigen) => ({
+      pos, ploeg, deelnemer, ptn, verschil, move,
+      rijBg: eigen ? 'var(--card2)' : 'transparent',
+      posKleur: eigen ? acc : 'var(--mut)',
+      gewicht: eigen ? '700' : '600',
+      moveKleur: move.startsWith('▲') ? 'var(--pos)' : move.startsWith('▼') ? 'var(--neg)' : 'var(--mut)',
+    });
+
+    const stand = [
+      rij(1, 'JWielerteam', 'Jelle Wolters', '1.402', '—', '▲ 1'),
+      rij(2, 'Discovery Channel', 'Sander de Vries', '1.395', '-7', '▼ 1'),
+      rij(3, 'De Vluchtstrook', 'Marit Bakker', '1.371', '-31', '▲ 4'),
+      rij(4, 'Bidonjagers', 'Tom Peters', '1.358', '-44', '—'),
+      rij(5, 'Kasseienkoning', 'Rick Lammers', '1.340', '-62', '▼ 2'),
+      rij(33, 'Tourmalet Express', 'Eva Smits', '1.289', '-113', '▲ 6'),
+      rij(34, 'Volgwagen 12', 'Luuk Loohuis', '1.284', '-118', '▲ 3', true),
+      rij(35, 'Peloton Perdu', 'Joris Hendriks', '1.281', '-121', '▼ 4'),
+    ];
+
+    const subStand = [
+      { pos: 1, ploeg: 'Bidonjagers', ptn: '1.358', verschil: '—' },
+      { pos: 2, ploeg: 'Kasseienkoning', ptn: '1.340', verschil: '-18' },
+      { pos: 3, ploeg: 'De Vluchtstrook', ptn: '1.301', verschil: '-57' },
+      { pos: 4, ploeg: 'Volgwagen 12', ptn: '1.284', verschil: '-74', eigen: true },
+      { pos: 5, ploeg: 'Peloton Perdu', ptn: '1.281', verschil: '-77' },
+      { pos: 6, ploeg: 'Grupetto', ptn: '1.244', verschil: '-114' },
+    ].map(r => ({ ...r, rijBg: r.eigen ? 'var(--card2)' : 'transparent', posKleur: r.eigen ? acc : 'var(--mut)', gewicht: r.eigen ? '700' : '600' }));
+
+    const uitslagSeg = s.seg.uitslagen;
+    const uitslagRijen = uitslagSeg === 'Daguitslag'
+      ? [
+          { pos: 1, naam: 'Jonas Vingegaard', sub: 'Visma · Lease a Bike', waarde: '4u12:08', kleur: 'var(--ink)' },
+          { pos: 2, naam: 'Tadej Pogačar', sub: 'UAE Team Emirates', waarde: '+0:14', kleur: 'var(--ink2)' },
+          { pos: 3, naam: 'Juan Ayuso', sub: 'UAE Team Emirates', waarde: '+0:52', kleur: 'var(--ink2)' },
+          { pos: 4, naam: 'Remco Evenepoel', sub: 'Soudal Quick-Step', waarde: '+1:31', kleur: 'var(--ink2)' },
+          { pos: 5, naam: 'Enric Mas', sub: 'Movistar Team', waarde: '+2:04', kleur: 'var(--ink2)' },
+          { pos: 6, naam: 'Mattias Skjelmose', sub: 'Lidl-Trek', waarde: '+2:19', kleur: 'var(--ink2)' },
+        ]
+      : [
+          { pos: '1e', naam: 'Jonas Vingegaard', sub: 'Voorspeld als winnaar', waarde: '+25', kleur: 'var(--pos)' },
+          { pos: '2e', naam: 'Juan Ayuso', sub: 'Voorspeld als derde', waarde: '+10', kleur: 'var(--pos)' },
+          { pos: '—', naam: 'Remco Evenepoel', sub: 'Voorspeld als tweede', waarde: '0', kleur: 'var(--mut)' },
+          { pos: '★', naam: 'Joker actief', sub: 'Etappe 11 verdubbeld', waarde: '+35', kleur: 'var(--gold)' },
+          { pos: 'Σ', naam: 'Totaal etappe 11', sub: 'Voor de poule', waarde: '+68', kleur: 'var(--ink)' },
+        ];
+
+    const ploegSeg = s.seg.volgwagen;
+    const ploeg = RENNERS.slice(0, 7).map((r, i) => ({
+      nr: (i + 1) + 'e',
+      naam: r.naam,
+      ploeg: r.ploeg,
+      ptn: ploegSeg === 'Joker' ? (i === 0 ? 'joker' : '—') : [412, 388, 231, 174, 96, 62, 21][i],
+      ptnKleur: i < 2 ? 'var(--ink)' : 'var(--mut)',
+    }));
+
+    const chips = ['Alles', 'Mijn subpoules', 'Woonplaats', 'Vrienden'].map(label => ({
+      label,
+      kies: () => this.setState({ chip: label }),
+      bg: s.chip === label ? 'var(--ink)' : 'transparent',
+      fg: s.chip === label ? 'var(--bg)' : 'var(--ink2)',
+      rand: s.chip === label ? 'var(--ink)' : 'var(--line)',
+    }));
+
+    const slots = ['Winnaar', 'Tweede', 'Derde'].map((sub, i) => {
+      const naam = s.picks[i];
+      return {
+        pos: i + 1,
+        sub,
+        naam: naam || 'Renner kiezen',
+        open: () => this.setState({ sheet: 'renner', slot: i }),
+        gewicht: naam ? '700' : '600',
+        tekstKleur: naam ? 'var(--ink)' : 'var(--mut)',
+        bolBg: naam ? acc : 'var(--chip)',
+        bolFg: naam ? '#fff' : 'var(--ink2)',
+        rand: naam ? 'solid' : 'dashed',
+        randKleur: naam ? 'var(--line)' : 'var(--mut)',
+      };
+    });
+
+    const sheetOpties = s.sheet === 'renner'
+      ? RENNERS.map(r => ({
+          label: r.naam, sub: r.ploeg,
+          vink: s.picks[s.slot] === r.naam ? '✓' : '',
+          kies: () => this.kiesRenner(r.naam),
+        }))
+      : s.sheet === 'sorteren'
+        ? ['Positie', 'Punten deze etappe', 'Grootste stijgers', 'Naam A–Z'].map((label, i) => ({
+            label, sub: '', vink: i === 0 ? '✓' : '',
+            kies: () => { this.setState({ sheet: null }); this.melden('Gesorteerd op ' + label.toLowerCase()); },
+          }))
+        : s.sheet === 'aanmaken'
+          ? [
+              { label: 'Nieuwe subpoule starten', sub: 'Jij bent beheerder', vink: '', kies: () => { this.setState({ sheet: null }); this.melden('Subpoule aangemaakt'); } },
+              { label: 'Deelnemen met code', sub: 'Zes tekens van de beheerder', vink: '', kies: () => { this.setState({ sheet: null }); this.melden('Je doet mee'); } },
+            ]
+          : s.sheet === 'subMeer'
+            ? ['Daguitslag in deze subpoule', 'Heatmap', 'Streekgenoten', 'Deelnemers uitnodigen'].map(label => ({
+                label, sub: '', vink: '',
+                kies: () => { this.setState({ sheet: null }); this.melden(label + ' openen'); },
+              }))
+          : s.sheet === 'hors'
+            ? RENNERS.slice(0, 6).map(r => ({
+                label: r.naam, sub: r.ploeg, vink: '',
+                kies: () => { this.setState({ sheet: null }); this.melden(r.naam.split(' ').pop() + ' gekozen'); },
+              }))
+            : [];
+
+    return {
+      thema: this.props.thema === 'nacht' ? 'nacht' : 'licht',
+      kop,
+      toonSeg: segs.length > 0,
+      segs,
+      navItems,
+      isKrant: scherm === 'krant',
+      isEtappe: scherm === 'etappe',
+      isVoorspellen: scherm === 'voorspellen',
+      isKlassement: scherm === 'uitslagen' && s.seg.uitslagen === 'Klassement',
+      isSubpoules: scherm === 'subpoules',
+      isSubpoule: isSub,
+      isVolgwagen: scherm === 'volgwagen',
+      isUitslagen: scherm === 'uitslagen' && s.seg.uitslagen !== 'Klassement',
+      isHors: scherm === 'hors',
+      isMeer: scherm === 'meer',
+      isStates: scherm === 'states',
+      ctaLabel: s.opgeslagen ? 'Voorspelling wijzigen' : 'Voorspelling invullen',
+      naarKrant: () => this.ga('krant', 'krant'),
+      naarEtappe: () => this.ga('etappe', 'krant'),
+      naarVoorspellen: () => this.ga('voorspellen', 'krant'),
+      naarKlassement: () => { this.setState({ seg: { ...s.seg, uitslagen: 'Klassement' } }); this.ga('uitslagen', 'uitslagen'); },
+      naarUitslagen: () => { this.setState({ seg: { ...s.seg, uitslagen: 'Daguitslag' } }); this.ga('uitslagen', 'uitslagen'); },
+      naarSubpoules: () => this.ga('subpoules', 'subpoules'),
+      naarMeer: () => this.ga('meer', s.tab),
+      naarStates: () => this.ga('states', s.tab),
+      openSorteren: () => this.setState({ sheet: 'sorteren' }),
+      openAanmaken: () => this.setState({ sheet: 'aanmaken' }),
+      openHors: () => this.setState({ sheet: 'hors' }),
+      sluitSheet: () => this.setState({ sheet: null }),
+      sheetOpen: !!s.sheet,
+      sheetTitel: s.sheet === 'renner' ? 'Kies een renner' : s.sheet === 'sorteren' ? 'Sorteren' : s.sheet === 'aanmaken' ? 'Subpoule' : s.sheet === 'subMeer' ? 'Meer in deze subpoule' : 'Kies je renner',
+      sheetOpties,
+      toast: s.toast,
+      topDrie: [
+        { pos: 1, naam: 'Jonas Vingegaard', ptn: '+25' },
+        { pos: 2, naam: 'Tadej Pogačar', ptn: '+18' },
+        { pos: 3, naam: 'Juan Ayuso', ptn: '+12' },
+      ],
+      etappeFeiten: [
+        { label: 'Afstand', waarde: '178,4 km' },
+        { label: 'Hoogtemeters', waarde: '3.850' },
+        { label: 'Start', waarde: '12:20' },
+        { label: 'Finish', waarde: '± 17:10' },
+      ],
+      mijnKeuzeRegels: [
+        { pos: 1, naam: s.picks[0] || 'Nog leeg', status: s.picks[0] ? 'Ingevuld' : 'Kies', kleur: s.picks[0] ? 'var(--pos)' : 'var(--mut)' },
+        { pos: 2, naam: s.picks[1] || 'Nog leeg', status: s.picks[1] ? 'Ingevuld' : 'Kies', kleur: s.picks[1] ? 'var(--pos)' : 'var(--mut)' },
+        { pos: 3, naam: s.picks[2] || 'Nog leeg', status: s.picks[2] ? 'Ingevuld' : 'Kies', kleur: s.picks[2] ? 'var(--pos)' : 'var(--mut)' },
+      ],
+      slots,
+      opgeslagen: s.opgeslagen,
+      chips,
+      klassementTelling: '980 ploegen · ' + (s.chip === 'Alles' ? 'hele poule' : s.chip.toLowerCase()),
+      stand,
+      horsOnderdelen: [
+        { label: 'Dartpijl', sub: 'Jouw keuzes tegen de blinde gooi' },
+        { label: 'Pelotonkeuzes', sub: 'Wat koos de rest van de poule' },
+        { label: 'De Wielerdirecteur', sub: 'Score uit vier onderdelen' },
+        { label: 'The Emirates', sub: 'Hoe ver kom je met één ploeg' },
+        { label: 'Benchmark', sub: 'Vergelijk je met een ander' },
+      ].map(o => ({ ...o, open: () => this.melden(o.label + ' openen') })),
+      subSegs: ['Klassement', 'Verloop', 'Deelnemers'].map(label => ({
+        label,
+        kies: () => this.setState({ subSeg: label }),
+        bg: s.subSeg === label ? 'var(--ink)' : 'transparent',
+        fg: s.subSeg === label ? 'var(--bg)' : 'var(--ink2)',
+        rand: s.subSeg === label ? 'var(--ink)' : 'var(--line)',
+      })),
+      subLijst: s.subSeg === 'Verloop'
+        ? subStand.map((r, i) => ({ ...r, pos: ['▲', '▼', '▲', '▲', '▼', '—'][i], ptn: ['+82', '-14', '+61', '+68', '-22', '+9'][i], verschil: 'etappe 11' }))
+        : s.subSeg === 'Deelnemers'
+          ? ['Tom Peters', 'Rick Lammers', 'Marit Bakker', 'Luuk Loohuis', 'Joris Hendriks', 'Sanne Bos'].map((naam, i) => ({
+              pos: '', ploeg: naam, ptn: subStand[i].ploeg, verschil: '',
+              rijBg: naam === 'Luuk Loohuis' ? 'var(--card2)' : 'transparent',
+              posKleur: 'var(--mut)', gewicht: naam === 'Luuk Loohuis' ? '700' : '600',
+            }))
+          : subStand,
+      openSubMeer: () => this.setState({ sheet: 'subMeer' }),
+      subSamenvatting: (() => {
+        const eigen = subStand.find(r => r.eigen) || subStand[0];
+        return 'van 18 · ' + eigen.ptn + ' ptn · ' + Math.abs(parseInt(eigen.verschil, 10) || 0) + ' achter de leider';
+      })(),
+      subpoules: [
+        { naam: 'Vrienden van Luuk', initialen: 'VL', regel: 'Jij en 17 anderen', eigenPos: 4, aantal: 18, open: () => this.ga('subpoule', 'subpoules') },
+        { naam: 'Kantoor Enschede', initialen: 'KE', regel: 'Jij en 31 anderen', eigenPos: 12, aantal: 32, open: () => this.ga('subpoule', 'subpoules') },
+        { naam: 'Familie Loohuis', initialen: 'FL', regel: 'Jij en 8 anderen', eigenPos: 2, aantal: 9, open: () => this.ga('subpoule', 'subpoules') },
+      ],
+      ploegStats: [
+        { waarde: '1.284', label: 'Punten' },
+        { waarde: '34', label: 'Positie' },
+        { waarde: '1/3', label: 'Jokers' },
+      ],
+      ploeg,
+      uitslagKop: uitslagSeg === 'Daguitslag' ? 'Etappe 11 · Pau' : 'Mijn punten etappe 11',
+      uitslagSub: uitslagSeg === 'Daguitslag' ? 'Definitief' : '+68 punten',
+      uitslagRijen,
+      horsRijen: [
+        { ploeg: 'JWielerteam', keuze: 'Pogačar', stip: 'var(--pos)', eigen: false },
+        { ploeg: 'Volgwagen 12', keuze: 'Vingegaard', stip: 'var(--pos)', eigen: true },
+        { ploeg: 'Bidonjagers', keuze: 'Ayuso', stip: 'var(--pos)', eigen: false },
+        { ploeg: 'Grupetto', keuze: 'Mas', stip: 'var(--neg)', eigen: false },
+        { ploeg: 'Peloton Perdu', keuze: 'Roglič', stip: 'var(--neg)', eigen: false },
+      ].map(r => ({ ...r, rijBg: r.eigen ? 'var(--card2)' : 'transparent', gewicht: r.eigen ? '700' : '600' })),
+      meerItems: [
+        { label: 'Subpoules', waarde: '3', open: () => this.ga('subpoules', 'subpoules') },
+        { label: 'Regels', waarde: '', open: () => this.melden('Regels openen') },
+        { label: 'Uitleg', waarde: '', open: () => this.melden('Uitleg openen') },
+        { label: 'Prijzen', waarde: '', open: () => this.melden('Prijzen openen') },
+        { label: 'Meldingen', waarde: 'Aan', open: () => this.melden('Meldingen') },
+        { label: 'Taal', waarde: 'Nederlands', open: () => this.melden('Taal wijzigen') },
+        { label: 'Uitloggen', waarde: '', open: () => this.melden('Uitgelogd') },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

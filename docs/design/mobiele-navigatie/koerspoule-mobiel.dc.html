@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#e9e6df;font-family:'DM Sans',system-ui,sans-serif;color:#14120F}
+a{color:#B0121F}a:hover{color:#8a0d17}
+</style>
+</helmet>
+
+<section style="padding:44px 48px 40px;border-bottom:1px solid rgba(0,0,0,.08)">
+  <div style="display:flex;align-items:baseline;gap:10px;margin:0 0 6px">
+    <a href="#t3" style="font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none">3</a>
+    <span style="font:600 13px/1.2 'DM Sans',sans-serif">Koerspoule mobiel — navigatie opgeruimd, twee visuele varianten</span>
+  </div>
+  <p style="margin:0 0 26px;max-width:760px;font-size:14px;line-height:1.6;color:rgba(0,0,0,.6);text-wrap:pretty">Vier navigatielagen (bottom nav → <code>?tab=</code> → MobielTabBalk → zwevende switcher) zijn teruggebracht tot twee: een tabbalk onderin en per scherm maximaal één segmented control. Namen zijn ongewijzigd; Hors Catégorie blijft in de hoofdnav. Beide telefoons zijn aantikbaar — probeer Voorspelling invullen, sorteren, en een subpoule openen.</p>
+
+  <div style="display:flex;flex-wrap:wrap;gap:52px;align-items:flex-start">
+
+    <div id="3a" style="flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px">
+      <div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'DM Sans',sans-serif;color:rgba(0,0,0,.55)">
+        <a href="#3a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none">3a</a>
+        Papier — warm wit, inkt, koerspoule-rood als enige accent
+      </div>
+      <dc-import name="KoerspouleApp" thema="licht" hint-size="393px,852px"></dc-import>
+    </div>
+
+    <div id="3b" style="flex:none;display:flex;flex-direction:column;gap:12px;scroll-margin-top:16px">
+      <div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'DM Sans',sans-serif;color:rgba(0,0,0,.55)">
+        <a href="#3b" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none">3b</a>
+        Nacht — carbon, dezelfde structuur, hoger contrast voor cijfers
+      </div>
+      <dc-import name="KoerspouleApp" thema="nacht" hint-size="393px,852px"></dc-import>
+    </div>
+
+    <div style="flex:none;width:340px;display:flex;flex-direction:column;gap:14px">
+      <div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:18px;padding:18px 20px">
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8B8478">Vier niveaus, vier vormen</div>
+        <div style="display:flex;flex-direction:column;gap:11px;margin-top:12px">
+          <div style="display:flex;gap:11px;align-items:flex-start">
+            <span style="flex:none;width:20px;font-size:13px;font-weight:700;color:#B0121F">1</span>
+            <span style="font-size:13.5px;line-height:1.5"><strong>Hoofdnavigatie</strong> — tabbalk onderin, 5 items met icoon, streep boven de actieve tab. Krant · Volgwagen · Uitslagen · Subpoules · Hors Cat.</span>
+          </div>
+          <div style="display:flex;gap:11px;align-items:flex-start">
+            <span style="flex:none;width:20px;font-size:13px;font-weight:700;color:#B0121F">2</span>
+            <span style="font-size:13.5px;line-height:1.5"><strong>Sectie</strong> — segmented control in de header, maximaal drie opties. Uitslagen: Klassement · Daguitslag · Mijn punten. Volgwagen: Renners · Punten · Joker.</span>
+          </div>
+          <div style="display:flex;gap:11px;align-items:flex-start">
+            <span style="flex:none;width:20px;font-size:13px;font-weight:700;color:#B0121F">3</span>
+            <span style="font-size:13.5px;line-height:1.5"><strong>Subsectie &amp; filter</strong> — lijstrijen voor de vijf Hors Catégorie-onderdelen, chips voor filters op het klassement en in een subpoule.</span>
+          </div>
+          <div style="display:flex;gap:11px;align-items:flex-start">
+            <span style="flex:none;width:20px;font-size:13px;font-weight:700;color:#B0121F">4</span>
+            <span style="font-size:13.5px;line-height:1.5"><strong>Actie</strong> — bottom sheet: renner kiezen, sorteren, subpoule aanmaken. Altijd duimhoog, altijd te sluiten.</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:18px;padding:18px 20px">
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8B8478">Wat is er weg</div>
+        <ul style="margin:10px 0 0;padding-left:17px;font-size:13.5px;line-height:1.6;color:#4A443B">
+          <li>De zwevende tab-switcher — vierde manier om hetzelfde te doen.</li>
+          <li>Klassement als eigen hoofdtab: het is nu het eerste segment onder Uitslagen. Subpoules kwam ervoor in de plaats.</li>
+          <li>De scrollende subtabbalk (<code>MobielTabBalk</code>) met vijf à zes tabjes — die werden lijstrijen.</li>
+          <li>Volgwagen als startscherm: je landt op de Krant, met deadline en je eigen plek erin.</li>
+        </ul>
+      </div>
+
+      <div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:18px;padding:18px 20px">
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8B8478">Flows, in taps</div>
+        <ul style="margin:10px 0 0;padding-left:17px;font-size:13.5px;line-height:1.6;color:#4A443B">
+          <li>Voorspelling opslaan: 4 taps vanaf de Krant.</li>
+          <li>Eigen positie in het hoofdklassement: 1 tap (of via de stand-strip op de Krant).</li>
+          <li>Eigen positie in een subpoule: 3 taps.</li>
+          <li>Punten van gisteren: 1 tap.</li>
+        </ul>
+        <p style="margin:11px 0 0;font-size:13px;line-height:1.55;color:#8B8478">Statussen (laden, leeg, fout, succes, disabled) staan onder Meer → Statussen bekijken.</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:18px;padding:18px 20px">
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8B8478">Waar de subtabjes heen gaan</div>
+        <p style="margin:10px 0 0;font-size:13.5px;line-height:1.6;color:#4A443B;text-wrap:pretty">Hors Catégorie had vijf subtabjes, een subpoule zes. Zes tabjes in een scrollende balk laten zich op een telefoon niet lezen: je ziet er drie en de rest bestaat niet. Ze worden daarom <strong>lijstrijen op het tabblad zelf</strong> — Dartpijl, Pelotonkeuzes, De Wielerdirecteur, The Emirates, Benchmark, elk met één regel uitleg, elk 1 tap diep.</p>
+        <p style="margin:9px 0 0;font-size:13.5px;line-height:1.6;color:#4A443B;text-wrap:pretty">In een subpoule blijven de drie dagelijkse (Klassement, Verloop, Deelnemers) als chips staan; Daguitslag, Heatmap, Streekgenoten en Uitnodigen zitten achter <em>Meer</em> in een bottom sheet. Niets is verdwenen — alles staat één laag lager en is benoemd.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+</body>
+</html>
