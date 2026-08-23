@@ -28,9 +28,6 @@ export type Hoofdartikel = {
   quotes: Array<{ naam: string; tekst: string }>;
 };
 
-/** Regel in de mini-stand van kolom 3. */
-export type KlassementRegel = { rang: number; naam: string; punten: number; isMij?: boolean };
-
 export type Rubriek = {
   key: string;
   /** Emoji i.p.v. een lijnicoon: kleur maakt de rij in één oogopslag leesbaar. */
@@ -65,7 +62,6 @@ export default function Voorpagina({
   cellen,
   rubrieken,
   artikel,
-  klassement = [],
   className,
 }: {
   koers: string;
@@ -76,8 +72,6 @@ export default function Voorpagina({
   cellen?: StandCel[];
   rubrieken: Rubriek[];
   artikel?: Hoofdartikel | null;
-  /** Mini-stand in de derde kolom; leeg = kolom valt weg. */
-  klassement?: KlassementRegel[];
   className?: string;
 }) {
   const { t, i18n } = useTranslation();
@@ -169,10 +163,10 @@ export default function Voorpagina({
 
       <DubbeleRegel />
 
-      {/* ── Driekolomsgrid. De kolomlijnen zijn borders op kolom 2 en 3, dus
-             geen gap: in een krant staan kolommen tegen de lijn aan. ─────── */}
+      {/* ── Tweekolomsgrid. De kolomlijn is een border op kolom 2, dus geen
+             gap: in een krant staat een kolom tegen de lijn aan. ─────────── */}
       {artikel && (
-        <div className="grid gap-6 lg:grid-cols-[1.55fr_1fr_0.78fr] lg:gap-0">
+        <div className="grid gap-6 lg:grid-cols-[1.55fr_1fr] lg:gap-0">
           {/* Kolom 1 — hoofdartikel */}
           <div className="min-w-0 lg:pr-[22px]">
             <span className="inline-flex items-center bg-primary px-[7px] py-[3px] font-oswald text-[9.5px] uppercase tracking-[0.14em] text-primary-foreground">
@@ -220,7 +214,7 @@ export default function Voorpagina({
           {/* Kolom 2 — perszaal. Quotes gescheiden door haarlijnen, geen
               kaartjes: kaartjes waren de app-look, dit is de krant-look. */}
           {artikel.quotes.length > 0 && (
-            <div className="min-w-0 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:px-[22px] lg:pt-0">
+            <div className="min-w-0 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-[22px] lg:pt-0">
               <p className="mb-3 font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                 {t("karavaan.voorpagina.perszaal")}
               </p>
@@ -235,30 +229,6 @@ export default function Voorpagina({
             </div>
           )}
 
-          {/* Kolom 3 — mini-stand met stippellijnen. Valt weg als er geen
-              stand is; een lege kolom met een kop erboven is erger dan geen. */}
-          {klassement.length > 0 && (
-            <div className="min-w-0 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-[22px] lg:pt-0">
-              <p className="mb-3 font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                {editie ? t("karavaan.voorpagina.klassementNa", { editie }) : t("karavaan.voorpagina.perszaal")}
-              </p>
-              <ol className="space-y-[7px]">
-                {klassement.map((r) => (
-                  <li
-                    key={`${r.rang}-${r.naam}`}
-                    className={cn(
-                      "flex items-baseline gap-1.5 border-b border-dotted border-border pb-[6px] font-sans text-[12.5px] last:border-b-0",
-                      r.isMij && "font-bold text-primary",
-                    )}
-                  >
-                    <span className="w-[14px] shrink-0 tabular-nums text-muted-foreground">{r.rang}</span>
-                    <span className="min-w-0 flex-1 truncate">{r.naam}</span>
-                    <span className="shrink-0 tabular-nums">{r.punten}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
         </div>
       )}
 
