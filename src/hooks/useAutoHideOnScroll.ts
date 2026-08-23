@@ -1,23 +1,32 @@
 /**
- * useAutoHideOnScroll — `visible` voor een balk die wegglijdt bij omlaag scrollen
- * en terugkomt bij omhoog scrollen. Bovenaan de pagina altijd zichtbaar.
+ * useAutoHideOnScroll — `visible` voor een balk die alleen in beeld is terwijl
+ * je scrolt.
  *
- * Passieve window-scroll-listener, throttled via requestAnimationFrame, met
- * accumulatie tot een drempel zodat kleine bewegingen niet flikkeren.
+ * Je hebt zo'n balk nodig op het moment dat je ergens heen wilt, niet terwijl
+ * je zit te lezen. Dus: elke scrollbeweging haalt hem tevoorschijn, ongeacht de
+ * richting, en na een korte stilte glijdt hij weer weg. Bovenaan de pagina
+ * blijft hij staan -- daar ben je net aangekomen en oriënteer je je nog.
+ *
+ * Hiervoor verdween hij bij omlaag scrollen en kwam hij terug bij omhoog. Dat
+ * betekende dat hij juist tijdens het lezen in beeld bleef zodra je een keer
+ * terugscrolde, en dat hij wegviel op het moment dat je wilde navigeren.
+ *
+ * Passieve scroll-listener, throttled via requestAnimationFrame.
  * prefers-reduced-motion → altijd zichtbaar (geen verbergen).
  */
 import { useEffect, useRef, useState } from "react";
 import { isProgrammaticScroll } from "@/lib/scrollLock";
 
-/**
- * Drempel bewust ruim: op 12 px verdween de balk al bij het kleinste duwtje,
- * en dan beweegt hij mee terwijl je alleen wat wilt lezen. Pas bij echt
- * doorscrollen mag hij weg.
- */
-export function useAutoHideOnScroll(threshold = 64): boolean {
+/** Hoe lang zonder scrollen voordat de balk weer wegglijdt. */
+const RUST_MS = 1400;
+
+/** Vanaf hier tel je als "in de tekst" in plaats van "bovenaan". */
+const TOP_PX = 24;
+
+export function useAutoHideOnScroll(rustMs = RUST_MS): boolean {
   const [visible, setVisible] = useState(true);
-  const lastY = useRef(0);
   const ticking = useRef(false);
+  const timer = useRef<number | null>(null);
 
   useEffect(() => {
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -25,36 +34,36 @@ export function useAutoHideOnScroll(threshold = 64): boolean {
       setVisible(true);
       return;
     }
-    lastY.current = window.scrollY;
+
+    const plan = () => {
+      if (timer.current !== null) window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => {
+        // Bovenaan niet verbergen: daar is de balk je startpunt.
+        if (window.scrollY < TOP_PX) return;
+        setVisible(false);
+      }, rustMs);
+    };
 
     const onScroll = () => {
-      // Tabwissel-scroll (carrousel) telt niet als gebruikersscroll: negeer de
-      // event volledig, lastY blijft staan zodat er geen valse dy-sprong ontstaat.
+      // Tabwissel-scroll (carrousel) is geen gebruikersscroll; die mag de balk
+      // niet oproepen en de rusttimer niet verlengen.
       if (isProgrammaticScroll()) return;
       if (ticking.current) return;
       ticking.current = true;
       requestAnimationFrame(() => {
-        const y = window.scrollY;
-        if (y < 24) {
-          setVisible(true); // bovenaan altijd zichtbaar
-          lastY.current = y;
-          ticking.current = false;
-          return;
-        }
-        const dy = y - lastY.current;
-        if (Math.abs(dy) < threshold) {
-          ticking.current = false; // te klein → lastY niet resetten (accumuleren)
-          return;
-        }
-        setVisible(dy < 0); // omhoog → tonen, omlaag → verbergen
-        lastY.current = y;
+        setVisible(true);
+        plan();
         ticking.current = false;
       });
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [threshold]);
+    plan();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (timer.current !== null) window.clearTimeout(timer.current);
+    };
+  }, [rustMs]);
 
   return visible;
 }
