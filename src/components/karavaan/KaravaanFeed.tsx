@@ -261,14 +261,6 @@ export default function KaravaanFeed({
           onClick: () => naarSectie("krant-commentaar"),
         }]
       : []),
-    ...(onOpenUitslagen
-      ? [{
-          key: "klassement",
-          emoji: "🏆",
-          titel: t("karavaan.voorpagina.rubKlassement"),
-          onClick: onOpenUitslagen,
-        }]
-      : []),
   ];
 
 
