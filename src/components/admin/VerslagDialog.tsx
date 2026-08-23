@@ -40,6 +40,10 @@ export default function VerslagDialog({
   const [bronTekst, setBronTekst] = useState("");
   const [herschrijven, setHerschrijven] = useState(false);
   const [genereren, setGenereren] = useState(false);
+  // Leeg = de standaardaanbieder uit de serverinstelling. Zet je hem expliciet,
+  // dan kun je twee modellen op dezelfde etappe vergelijken -- zelfde feiten,
+  // zelfde prompt, alleen een ander model.
+  const [aanbieder, setAanbieder] = useState<"" | "openai" | "deepseek">("");
 
   useEffect(() => {
     if (!stage || !supabase) return;
@@ -70,7 +74,7 @@ export default function VerslagDialog({
     if (!supabase || !stage) return;
     setGenereren(true);
     const { data, error } = await supabase.functions.invoke("generate-stage-verslag", {
-      body: { stage_id: stage.id },
+      body: { stage_id: stage.id, ...(aanbieder ? { provider: aanbieder } : {}) },
     });
     setGenereren(false);
     if (error || !data?.verslag) {
@@ -88,8 +92,9 @@ export default function VerslagDialog({
     setTekst(data.verslag);
     setBron("");
     setBronUrl("");
+    const seconden = data.ms ? ` · ${(data.ms / 1000).toFixed(1)}s` : "";
     toast({
-      title: `Verslag in ${data.zinnen} zinnen`,
+      title: `${data.model} — ${data.zinnen} zinnen${seconden}`,
       description: "Uit onze eigen uitslag. Nog niet bewaard -- lees na en klik Bewaren.",
     });
   }
@@ -249,15 +254,27 @@ export default function VerslagDialog({
           <Button variant="ghost" onClick={verwijder} disabled={bezig || laden} className="text-destructive">
             Verwijderen
           </Button>
-          <Button
-            variant="outline"
-            onClick={genereerUitUitslag}
-            disabled={genereren || bezig || laden}
-            className="mr-auto"
-          >
-            <RefreshCw className={cn("mr-1.5 h-3.5 w-3.5", genereren && "animate-spin")} />
-            {genereren ? "Bezig…" : "Genereer uit uitslag"}
-          </Button>
+          <div className="mr-auto flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={genereerUitUitslag}
+              disabled={genereren || bezig || laden}
+            >
+              <RefreshCw className={cn("mr-1.5 h-3.5 w-3.5", genereren && "animate-spin")} />
+              {genereren ? "Bezig…" : "Genereer uit uitslag"}
+            </Button>
+            <select
+              value={aanbieder}
+              onChange={(e) => setAanbieder(e.target.value as "" | "openai" | "deepseek")}
+              disabled={genereren}
+              aria-label="Model"
+              className="h-9 rounded-md border border-input bg-background px-2 text-xs"
+            >
+              <option value="">Standaard</option>
+              <option value="openai">OpenAI</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+          </div>
           <Button variant="outline" onClick={onClose} disabled={bezig}>Annuleren</Button>
           <Button onClick={bewaar} disabled={bezig || laden}>Bewaren</Button>
         </DialogFooter>
