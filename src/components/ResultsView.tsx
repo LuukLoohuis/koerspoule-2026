@@ -25,7 +25,6 @@ import ResultsUpdatedBadge from "@/components/ResultsUpdatedBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
 import Podium from "@/components/Podium";
 import StageBar from "@/components/stages/StageBar";
-import FloatingTabSwitcher from "@/components/FloatingTabSwitcher";
 import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
@@ -933,15 +932,6 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         </DrawerContent>
       </Drawer>
 
-      {/* Mobiel: tweedelig pill-toggle Klassement/Etappes (één tik wisselt). */}
-      <FloatingTabSwitcher
-        tabs={[
-          { key: "klassement", label: "Klassement", icon: Trophy },
-          { key: "etappes",    label: "Etappes",    icon: ClipboardList },
-        ]}
-        active={view}
-        onChange={(k) => setView(k as "etappes" | "klassement")}
-      />
     </div>
     </KoersThemaProvider>
   );
