@@ -113,7 +113,7 @@ export default function VerslagDialog({
     setTekst(data.verslag);
     toast({
       title: `Verslag in ${data.zinnen} zinnen`,
-      description: "Lees het na en pas aan waar nodig -- het gaat zo de krant in.",
+      description: "Alleen het koersdeel is herschreven; het pouledeel is ongewijzigd.",
     });
   }
 
@@ -195,7 +195,7 @@ export default function VerslagDialog({
                 <Wand2 className="mr-1.5 h-3.5 w-3.5" />
                 {herschrijven ? "Bezig…" : "Herschrijf naar kort verslag"}
               </Button>
-              <span className="text-xs text-muted-foreground">Feiten blijven, formulering wordt van ons.</span>
+              <span className="text-xs text-muted-foreground">Herschrijft alleen het koersdeel; de pouleuitslag blijft staan.</span>
             </div>
           </div>
 

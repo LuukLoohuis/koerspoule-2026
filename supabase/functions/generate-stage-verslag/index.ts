@@ -429,6 +429,21 @@ export function feitenPrompt(f: Feiten): string {
   return `FEITEN:\n${regels.join("\n")}`;
 }
 
+// Gelijk aan splitsKoersEnPoule in src/lib/verslag.ts -- een edge function kan
+// daar niet uit importeren. De laatste alinea's mét een vetgedrukte
+// deelnemersnaam vormen het pouledeel.
+function splitsKoersEnPoule(tekst: string): { koers: string[]; poule: string[] } {
+  const stukken = tekst
+    .split(/\n\s*\n/)
+    .map((p) => p.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const heeftNaam = (p: string) => /\*\*[^*]+\*\*/.test(p);
+  let grens = stukken.length;
+  while (grens > 0 && heeftNaam(stukken[grens - 1])) grens -= 1;
+  if (grens === 0 || grens === stukken.length) return { koers: stukken, poule: [] };
+  return { koers: stukken.slice(0, grens), poule: stukken.slice(grens) };
+}
+
 function parse(text: string): { verslag: string; kop: string | null } | null {
   const match = text.match(/\{[\s\S]*\}/);
   try {
@@ -471,6 +486,8 @@ Deno.serve(async (req) => {
     // kan dus vanzelf draaien zodra een etappe gefiatteerd is.
     let prompt: string;
     let systeem: string;
+    // Pouledeel dat we ongewijzigd terugplakken na het herschrijven.
+    let bewaardePoule: string[] = [];
     if (bronTekst) {
       if (bronTekst.length > 40_000) return json({ error: "bron_tekst te lang" }, 400);
       const context = [
@@ -479,36 +496,55 @@ Deno.serve(async (req) => {
         body?.winnaar ? `Winnaar volgens onze uitslag: ${body.winnaar}` : null,
       ].filter(Boolean).join("\n");
 
-      // Kennen we de etappe, dan halen we ook de poulecijfers erbij. Het
-      // bronartikel weet niets van onze deelnemers, dus zonder dit blijft het
-      // stuk puur over de profs gaan.
+      // Het pouledeel staat vast zodra het bij het fiatteren is geschreven:
+      // dat zijn uitgerekende standen, geen tekst om opnieuw te laten
+      // formuleren. Bestaat het al, dan houden we het LETTERLIJK aan en laten
+      // we het model alleen het koersdeel herschrijven. Zo kan een tweede
+      // herschrijving die cijfers niet meer verschuiven.
+      let bestaandePoule: string[] = [];
       let poule = "";
       if (body?.stage_id) {
-        try {
-          const dienst = createClient(
-            Deno.env.get("SUPABASE_URL")!,
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-          );
-          const f = await haalFeiten(dienst, body.stage_id);
-          const regels: string[] = [];
-          if (f.dagwinnaar) regels.push(`Beste deelnemer van de dag: ${f.dagwinnaar.naam} met ${f.dagwinnaar.punten} punten`);
-          if (f.leider) {
-            const marge = f.leider.voorsprong === null || f.leider.voorsprong === 0
-              ? ""
-              : ` met ${f.leider.voorsprong} punten voorsprong`;
-            regels.push(`Aan de leiding in het algemeen klassement: ${f.leider.naam} met ${f.leider.punten} punten${marge}`);
+        const dienst = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        );
+        const { data: bestaand } = await dienst
+          .from("etappe_verslagen")
+          .select("tekst")
+          .eq("stage_id", body.stage_id)
+          .maybeSingle();
+        bestaandePoule = splitsKoersEnPoule((bestaand as { tekst?: string } | null)?.tekst ?? "").poule;
+
+        if (bestaandePoule.length === 0) {
+          // Nog geen pouledeel (bv. herschrijven vóór het fiatteren): dan
+          // rekenen we het alsnog uit en laat het model het schrijven.
+          try {
+            const f = await haalFeiten(dienst, body.stage_id);
+            const regels: string[] = [];
+            if (f.dagTop3.length > 0) {
+              regels.push("Dagklassement top 3: " + f.dagTop3.map((r, i) => `${i + 1}. ${r.naam} (${r.punten} pt)`).join(", "));
+            }
+            if (f.klassementTop3.length > 0) {
+              const [een, twee, drie] = f.klassementTop3;
+              regels.push("Algemeen klassement top 3: " + f.klassementTop3.map((r, i) => `${i + 1}. ${r.naam} (${r.punten} pt)`).join(", "));
+              const marges: string[] = [];
+              if (twee) marges.push(`${een.punten - twee.punten} punten op nummer 2 (${twee.naam})`);
+              if (drie) marges.push(`${een.punten - drie.punten} punten op nummer 3 (${drie.naam})`);
+              if (marges.length > 0) regels.push(`Voorsprong van ${een.naam}: ${marges.join(" en ")}`);
+            }
+            if (regels.length > 0) poule = `\n\nPOULECIJFERS:\n${regels.join("\n")}`;
+          } catch (e) {
+            console.error("poulecijfers ophalen mislukt", e);
           }
-          regels.push(`Aantal deelnemers in de poule: ${f.aantalDeelnemers}`);
-          if (regels.length > 1) poule = `\n\nPOULECIJFERS:\n${regels.join("\n")}`;
-        } catch (e) {
-          // Zonder poulecijfers is het verslag nog steeds bruikbaar; alleen dan
-          // zonder de afsluiting over de deelnemers.
-          console.error("poulecijfers ophalen mislukt", e);
         }
       }
 
-      prompt = `${context ? context + "\n\n" : ""}BRONARTIKEL (alleen als feitenbron -- neem geen formuleringen over):\n\n${bronTekst}${poule}`;
+      const alleenKoers = bestaandePoule.length > 0
+        ? "\n\nLET OP: schrijf UITSLUITEND over de koers. Schrijf NIETS over de poule, deelnemers, punten of het klassement -- dat deel bestaat al en wordt er los onder gezet."
+        : "";
+      prompt = `${context ? context + "\n\n" : ""}BRONARTIKEL (alleen als feitenbron -- neem geen formuleringen over):\n\n${bronTekst}${poule}${alleenKoers}`;
       systeem = SYSTEM_PROMPT;
+      bewaardePoule = bestaandePoule;
     } else if (body?.stage_id) {
       const dienst = createClient(
         Deno.env.get("SUPABASE_URL")!,
@@ -532,6 +568,13 @@ Deno.serve(async (req) => {
       if (tweede) resultaat = tweede;
     }
     if (!resultaat) return json({ error: "Kon geen verslag genereren" }, 502);
+
+    if (bewaardePoule.length > 0) {
+      // Mocht het model tóch over de poule zijn begonnen, knippen we dat weg --
+      // anders staat het er straks twee keer, en één van de twee is verzonnen.
+      const eigen = splitsKoersEnPoule(resultaat.verslag).koers;
+      resultaat = { ...resultaat, verslag: [...eigen, ...bewaardePoule].join("\n\n") };
+    }
 
     const zinnen = telZinnen(resultaat.verslag);
     console.log(`[verslag] etappe=${body?.stage_nummer ?? body?.stage_id ?? "?"} zinnen=${zinnen} model=${MODEL}`);
