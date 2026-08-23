@@ -1255,7 +1255,10 @@
       "naarProfiel": "🗺️ Bekijk de volgende etappe",
       "meer": "+{{aantal}} meer",
       "minder": "minder",
-      "rubVerslag": "Verslag"
+      "rubVerslag": "Verslag",
+      "verderInDeKrant": "Verder in de krant",
+      "klassementNa": "Klassement na {{editie}}",
+      "folioPagina": "Pagina 1"
     }
   },
   "common": {

@@ -1246,7 +1246,7 @@
       "rubCommentaarHaak": "What was said about the finale",
       "rubKlassement": "Standings",
       "rubKlassementHaak": "The full pool standings",
-      "jouwSubpoule": "your subpool",
+      "jouwSubpoule": "your subpoule",
       "perszaal": "From the press room",
       "kicker": "{{etappe}} {{nummer}} · result in",
       "chapeauMet": "You scored {{punten}} points today — the {{rang}}th best of {{totaal}} in your subpool.",
@@ -1255,7 +1255,10 @@
       "naarProfiel": "🗺️ See the next stage",
       "meer": "+{{aantal}} more",
       "minder": "less",
-      "rubVerslag": "Report"
+      "rubVerslag": "Report",
+      "verderInDeKrant": "Elsewhere in the paper",
+      "klassementNa": "Standings after {{editie}}",
+      "folioPagina": "Page 1"
     }
   },
   "common": {

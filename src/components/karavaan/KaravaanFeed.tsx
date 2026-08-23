@@ -9,7 +9,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import DaguitslagChart from "@/components/DaguitslagChart";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import Voorpagina, { type Rubriek, type StandCel, type Hoofdartikel } from "@/components/karavaan/Voorpagina";
+import Voorpagina, { type Rubriek, type StandCel, type Hoofdartikel, type KlassementRegel } from "@/components/karavaan/Voorpagina";
 import { bouwKop } from "@/lib/krantKop";
 import { useAllGames } from "@/hooks/useAllGames";
 import { useSubpoules } from "@/hooks/useSubpoules";
@@ -177,6 +177,18 @@ export default function KaravaanFeed({
       ]
     : [];
 
+  // Mini-stand voor de derde kolom van de voorpagina: de top vijf van je
+  // subpoule na de laatste gefiatteerde etappe. Vijf omdat de kolom smal is --
+  // meer regels maken hem hoger dan het artikel ernaast.
+  const klassement: KlassementRegel[] = (laatsteEtappe?.subpouleStandings ?? [])
+    .slice(0, 5)
+    .map((r) => ({
+      rang: r.rank,
+      naam: r.team_name?.trim() || r.display_name || "—",
+      punten: r.points,
+      isMij: r.is_me,
+    }));
+
   // Hoofdartikel over de laatste etappe. De kop komt uit de generator, maar
   // alleen als die de ritwinnaar noemt — anders een sjabloon uit de uitslag.
   const artikel: Hoofdartikel | null = (() => {
@@ -297,6 +309,7 @@ export default function KaravaanFeed({
         onSelectSubpoule={setSelectedSubpouleId}
         cellen={cellen}
         rubrieken={rubrieken}
+        klassement={klassement}
         artikel={artikel}
       />
 
