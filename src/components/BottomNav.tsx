@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useThema } from "@/contexts/ThemaContext";
 import { useUitgelichteNav } from "@/components/Rondleiding";
+import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 
 type NavItem = {
   label: string;
@@ -37,8 +38,25 @@ export default function BottomNav() {
   // Loopt er een rondleiding? Dan licht de besproken tab op boven het waas.
   const uitgelicht = useUitgelichteNav();
 
+  // Zelfde gedrag als de subbalken: in beeld terwijl je scrolt, weg terwijl je
+  // leest. Op een telefoon is dit de grootste vaste strook van het scherm.
+  // Tijdens een rondleiding blijft hij staan -- die wijst er juist naar.
+  const zichtbaar = useAutoHideOnScroll() || uitgelicht !== null;
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" aria-label={t("shell.bottomNav.aria")}>
+    <nav
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-50 md:hidden",
+        "transition-transform duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none",
+        // Verschuiven en niet verbergen: zo blijft de veilige zone onderaan
+        // gerespecteerd en klapt de pagina niet op als de balk weggaat.
+        !zichtbaar && "pointer-events-none translate-y-full",
+      )}
+      // Weggeschoven balk hoort niet in de leesvolgorde of onder de focus:
+      // hij staat buiten beeld en komt terug zodra je scrolt.
+      aria-hidden={!zichtbaar}
+      aria-label={t("shell.bottomNav.aria")}
+    >
       {/* Accent gradient rule — volgt thema */}
       <div className="h-[2px] bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
 
