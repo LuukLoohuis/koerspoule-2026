@@ -17,6 +17,7 @@ import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type Karavaan
 import MiniStrip, { type HorsTabKey } from "@/components/karavaan/MiniStrip";
 import Voorbeschouwing from "@/components/karavaan/Voorbeschouwing";
 import Verslag from "@/components/karavaan/Verslag";
+import Uitslagblok from "@/components/karavaan/Uitslagblok";
 import { useEtappeVerslag } from "@/hooks/useEtappeVerslag";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
@@ -177,6 +178,23 @@ export default function KaravaanFeed({
       ]
     : [];
 
+  // Uitslag en stand voor de rechterkolom. De stand is die van je subpoule --
+  // dat is de stand die jou aangaat; het totaalklassement staat op Uitslagen.
+  const uitslagblok = laatsteEtappe ? (
+    <Uitslagblok
+      etappeNummer={laatsteEtappe.stage_number}
+      etappeNaam={laatsteEtappe.stage_name}
+      rituitslag={laatsteEtappe.rituitslag}
+      stand={laatsteEtappe.subpouleStandings.slice(0, 10).map((r) => ({
+        rang: r.rank,
+        naam: r.team_name?.trim() || r.display_name || "—",
+        deelnemer: r.team_name?.trim() && r.display_name !== r.team_name ? r.display_name : null,
+        punten: r.points,
+        isMij: r.is_me,
+      }))}
+    />
+  ) : null;
+
   // Hoofdartikel over de laatste etappe. De kop komt uit de generator, maar
   // alleen als die de ritwinnaar noemt — anders een sjabloon uit de uitslag.
   const artikel: Hoofdartikel | null = (() => {
@@ -297,6 +315,7 @@ export default function KaravaanFeed({
         onSelectSubpoule={setSelectedSubpouleId}
         cellen={cellen}
         rubrieken={rubrieken}
+        uitslag={uitslagblok}
         artikel={artikel}
       />
 

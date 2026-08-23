@@ -26,6 +26,9 @@ export type KaravaanEtappe = {
   krant_kop: string | null;
   /** Ritwinnaar uit de uitslag — het feit onder de kop. */
   ritwinnaar: string | null;
+  /** Eerste tien van de rituitslag. Zonder tijden: stage_results kent alleen
+   *  posities, en een verzonnen tijd is erger dan geen tijd. */
+  rituitslag: Array<{ positie: number; renner: string; ploeg: string | null }>;
   /** Wat JIJ die dag scoorde, en de hoeveelste dat was in je subpoule. */
   mijnDagpunten: number | null;
   mijnDagrang: number | null;
@@ -181,16 +184,36 @@ export function useKaravaanFeed(params: {
           .eq("subpoule_id", subpouleId),
         (supabase as any)
           .from("stage_results")
-          .select("stage_id, riders(name)")
+          .select("stage_id, finish_position, riders(name, teams(name))")
           .in("stage_id", stageIds)
-          .eq("finish_position", 1),
+          .lte("finish_position", 10)
+          .gt("finish_position", 0),
       ]);
       const commentaarPerStage = new Map<string, { michel: string | null; jose: string | null }>(
         ((commentaarBulk?.data ?? []) as Array<{ stage_id: string; michel_tekst: string | null; jose_tekst: string | null }>)
           .map((r) => [r.stage_id, { michel: r.michel_tekst ?? null, jose: r.jose_tekst ?? null }]),
       );
+      type UitslagRij = {
+        stage_id: string;
+        finish_position: number;
+        riders?: { name?: string | null; teams?: { name?: string | null } | null } | null;
+      };
+      const uitslagRijen = (winnaarBulk?.data ?? []) as UitslagRij[];
+
+      // Top tien per etappe, op positie gesorteerd.
+      const uitslagPerStage = new Map<string, KaravaanEtappe["rituitslag"]>();
+      for (const r of uitslagRijen) {
+        const naam = r.riders?.name?.trim();
+        if (!naam) continue;
+        const lijst = uitslagPerStage.get(r.stage_id) ?? [];
+        lijst.push({ positie: r.finish_position, renner: naam, ploeg: r.riders?.teams?.name?.trim() ?? null });
+        uitslagPerStage.set(r.stage_id, lijst);
+      }
+      for (const lijst of uitslagPerStage.values()) lijst.sort((a, b) => a.positie - b.positie);
+
       const winnaarPerStage = new Map<string, string>(
-        ((winnaarBulk?.data ?? []) as Array<{ stage_id: string; riders?: { name?: string } | null }>)
+        uitslagRijen
+          .filter((r) => r.finish_position === 1)
           .flatMap((r) => {
             const naam = r.riders?.name?.trim();
             return naam ? ([[r.stage_id, naam]] as Array<[string, string]>) : [];
@@ -312,6 +335,7 @@ export function useKaravaanFeed(params: {
           jose_tekst: jose,
           krant_kop: stage.krant_kop ?? null,
           ritwinnaar,
+          rituitslag: uitslagPerStage.get(stage.id) ?? [],
           mijnDagpunten,
           mijnDagrang,
           subpouleStandings: sub,

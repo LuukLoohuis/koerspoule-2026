@@ -62,6 +62,7 @@ export default function Voorpagina({
   cellen,
   rubrieken,
   artikel,
+  uitslag,
   className,
 }: {
   koers: string;
@@ -72,6 +73,8 @@ export default function Voorpagina({
   cellen?: StandCel[];
   rubrieken: Rubriek[];
   artikel?: Hoofdartikel | null;
+  /** Uitslag en stand, onder de perszaal in de rechterkolom. */
+  uitslag?: ReactNode;
   className?: string;
 }) {
   const { t, i18n } = useTranslation();
@@ -213,19 +216,32 @@ export default function Voorpagina({
 
           {/* Kolom 2 — perszaal. Quotes gescheiden door haarlijnen, geen
               kaartjes: kaartjes waren de app-look, dit is de krant-look. */}
-          {artikel.quotes.length > 0 && (
+          {(artikel.quotes.length > 0 || uitslag) && (
             <div className="min-w-0 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-[22px] lg:pt-0">
-              <p className="mb-3 font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                {t("karavaan.voorpagina.perszaal")}
-              </p>
-              {artikel.quotes.map((q) => (
-                <div key={q.naam} className="border-b border-border/70 py-3 first:pt-0 last:border-b-0 last:pb-0">
-                  <p className="mb-1 font-oswald text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">
-                    {q.naam}
+              {artikel.quotes.length > 0 && (
+                <>
+                  <p className="mb-3 font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                    {t("karavaan.voorpagina.perszaal")}
                   </p>
-                  <p className="line-clamp-4 font-serif text-[13.5px] leading-[1.5] text-foreground/80">{q.tekst}</p>
-                </div>
-              ))}
+                  {artikel.quotes.map((q) => (
+                    <div key={q.naam} className="border-b border-border/70 py-3 first:pt-0 last:border-b-0 last:pb-0">
+                      <p className="mb-1 font-oswald text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">
+                        {q.naam}
+                      </p>
+                      <p className="line-clamp-4 font-serif text-[13.5px] leading-[1.5] text-foreground/80">{q.tekst}</p>
+                    </div>
+                  ))}
+                </>
+              )}
+              {/* De uitslag onder de perszaal, gescheiden door de dubbele regel:
+                  de kolom liep leeg terwijl het artikel ernaast doorging, en het
+                  nieuws waar alles op rust stond nergens op de voorpagina. */}
+              {uitslag && (
+                <>
+                  {artikel.quotes.length > 0 && <DubbeleRegel className="my-4" />}
+                  {uitslag}
+                </>
+              )}
             </div>
           )}
 
