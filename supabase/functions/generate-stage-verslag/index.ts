@@ -151,11 +151,28 @@ async function openaiChat(
         messages,
       };
 
-  const res = await fetch(ai.url, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const verstuur = (payload: unknown) =>
+    fetch(ai.url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+  let res = await verstuur(body);
+
+  // Niet elk model accepteert dezelfde parameters: reasoning_effort bestaat
+  // alleen bij de redeneermodellen. Wisselt OPENAI_MODEL naar een model dat
+  // hem weigert, dan zou elke generatie stuklopen op een 400. Eén keer
+  // opnieuw zonder die parameter -- dezelfde terugval die
+  // generate-stage-commentary en generate-lefevere-report al hadden.
+  if (!res.ok && !ai.isDeepSeek) {
+    const fout = await res.clone().text();
+    if (/reasoning_effort|unsupported|not supported|does not support|unknown parameter/i.test(fout)) {
+      const { reasoning_effort: _weg, ...zonder } = body as Record<string, unknown>;
+      console.warn(`${ai.model} weigert reasoning_effort — opnieuw zonder`);
+      res = await verstuur(zonder);
+    }
+  }
   if (!res.ok) throw new Error(`${ai.naam} API ${res.status}: ${await res.text()}`);
   const data = await res.json();
   return {
