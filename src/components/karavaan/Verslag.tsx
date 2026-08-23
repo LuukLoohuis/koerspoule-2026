@@ -117,6 +117,9 @@ export default function Verslag({
               "font-serif",
               // Twee kolommen met een scheidslijn ertussen: het uitgeklapte
               // stuk leest zo als een krantenkolom in plaats van als een blog.
+              // Alinea's mogen bewust wél over de kolomgrens breken -- dat is
+              // precies wat een krantenkolom doet. Met break-inside:avoid-column
+              // bleef een lange alinea in kolom 1 hangen en stond kolom 2 leeg.
               isLead && "lg:columns-2 lg:gap-5 lg:[column-rule:1px_solid_hsl(var(--border))]",
             )}>
               {koers.map((p, i) => (
@@ -124,7 +127,7 @@ export default function Verslag({
                   key={i}
                   tekst={p}
                   className={cn(
-                    "text-[15px] leading-[1.62] hyphens-auto text-justify [break-inside:avoid-column]",
+                    "text-[15px] leading-[1.62] hyphens-auto text-justify",
                     i > 0 && "mt-2.5",
                     // Initiaal alleen op de eerste alinea, en alleen in de
                     // krantweergave -- op een kaartje wordt het rommelig.
