@@ -73,6 +73,9 @@ export function registratieHtml(naam: string) {
   `);
 }
 
+// Niet meer in gebruik: de bevestigingsmail na het indienen is eruit gehaald --
+// de app toont het resultaat al, en een mail per indiening is bij duizenden
+// deelnemers vooral ruis. Blijft staan voor als hij terugkomt.
 export function ploegIngediendHtml(naam: string, teamName?: string | null) {
   const groet = aanhef(naam);
   const ploeg = teamName?.trim() ? `<strong>${esc(teamName.trim())}</strong>` : "je ploeg";

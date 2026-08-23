@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alineas, leestijdMinuten, intro, bronregel, veiligeUrl, telZinnen, LENGTE_MIN, LENGTE_MAX, splitsNadruk, zonderNadruk } from "./verslag";
+import { alineas, leestijdMinuten, intro, bronregel, veiligeUrl, telZinnen, LENGTE_MIN, LENGTE_MAX, splitsNadruk, zonderNadruk, splitsKoersEnPoule } from "./verslag";
 
 describe("alineas", () => {
   it("splitst op lege regels", () => {
@@ -191,5 +191,49 @@ describe("zonderNadruk", () => {
   it("telt opmaak niet mee in zinnen, leestijd en intro", () => {
     expect(telZinnen("**Anna** won. **Bram** volgde.")).toBe(2);
     expect(intro("**Anna de Vries** pakte de dagzege.")).toBe("Anna de Vries pakte de dagzege.");
+  });
+});
+
+describe("splitsKoersEnPoule", () => {
+  const koers = "Pogacar won de openingsrit in Monaco.";
+  const poule = "In de poule pakte **wbteeuw** de dagzege met 166 punten.";
+
+  it("zet de afsluitende poule-alinea apart", () => {
+    expect(splitsKoersEnPoule(`${koers}\n\n${poule}`)).toEqual({
+      koers: [koers],
+      poule: [poule],
+    });
+  });
+
+  it("pakt meerdere poule-alinea's achter elkaar", () => {
+    const tweede = "**wbteeuw** gaat ook aan de leiding.";
+    const r = splitsKoersEnPoule(`${koers}\n\n${poule}\n\n${tweede}`);
+    expect(r.koers).toEqual([koers]);
+    expect(r.poule).toEqual([poule, tweede]);
+  });
+
+  it("splitst niet als er geen deelnemersnamen in staan", () => {
+    const r = splitsKoersEnPoule(`${koers}\n\nEn toen was het stil.`);
+    expect(r.poule).toEqual([]);
+    expect(r.koers).toHaveLength(2);
+  });
+
+  it("splitst niet als alles poule is", () => {
+    // Anders zou het koersdeel leeg zijn en stond er een kop boven niets.
+    const r = splitsKoersEnPoule(`${poule}\n\n**wbteeuw** blijft leider.`);
+    expect(r.poule).toEqual([]);
+    expect(r.koers).toHaveLength(2);
+  });
+
+  it("laat een naam middenin de koerstekst met rust", () => {
+    // Alleen de STAART telt; een vetgedrukte naam eerder in het stuk mag geen
+    // halve tekst naar het pouleblok trekken.
+    const r = splitsKoersEnPoule(`${koers}\n\nOnderweg viel **wbteeuw** stil.\n\nDaarna won Pogacar.\n\n${poule}`);
+    expect(r.koers).toHaveLength(3);
+    expect(r.poule).toEqual([poule]);
+  });
+
+  it("gaat om met lege invoer", () => {
+    expect(splitsKoersEnPoule("")).toEqual({ koers: [], poule: [] });
   });
 });

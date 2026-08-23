@@ -119,3 +119,26 @@ export function splitsNadruk(alinea: string): Stuk[] {
 export function zonderNadruk(tekst: string): string {
   return tekst.replace(/\*\*([^*]+)\*\*/g, "$1");
 }
+
+/**
+ * Splitst het verslag in het koersdeel en het pouledeel.
+ *
+ * De generator schrijft eerst over de koers en sluit af met de poule, en zet
+ * alleen daar deelnemersnamen tussen sterretjes. De laatste alinea's mét zo'n
+ * naam vormen dus het pouledeel. Dat is een aanname over wat de generator doet
+ * en geen zekerheid, dus bij twijfel valt alles onder "koers" -- dan mist er
+ * hooguit een tussenkopje, en gaat er geen tekst verloren.
+ */
+export function splitsKoersEnPoule(tekst: string): { koers: string[]; poule: string[] } {
+  const stukken = alineas(tekst);
+  const heeftNaam = (p: string) => /\*\*[^*]+\*\*/.test(p);
+
+  // Van achter naar voren: zolang de alinea een deelnemersnaam bevat hoort hij
+  // bij de poule. Stopt bij de eerste alinea zonder.
+  let grens = stukken.length;
+  while (grens > 0 && heeftNaam(stukken[grens - 1])) grens -= 1;
+
+  // Alles poule (of niets) → geen zinnige splitsing; hou het bij één blok.
+  if (grens === 0 || grens === stukken.length) return { koers: stukken, poule: [] };
+  return { koers: stukken.slice(0, grens), poule: stukken.slice(grens) };
+}

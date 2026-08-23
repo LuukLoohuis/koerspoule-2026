@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
-import { sendEmail, ploegIngediendHtml } from "@/lib/sendEmail";
 
 // Haalt een leesbare melding uit een Error óf een Supabase/PostgREST-foutobject
 // (dat geen Error-instance is) → voorkomt "[object Object]" in toasts.
@@ -177,19 +176,8 @@ export function useEntry(gameId?: string) {
       const { error } = await supabase.rpc("submit_entry", { p_entry_id: entryId });
       if (error) throw error;
     },
-    onSuccess: (_data, { entryId }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] });
-      if (user?.email) {
-        const teamName = queryClient.getQueryData<{ team_name?: string | null }>(["entry", gameId, user.id])?.team_name;
-        // Profiel staat al in de cache (useProfile gebruikt dezelfde sleutel),
-        // dus dit kost geen extra query. Zonder naam groet aanhef() neutraal.
-        const displayName = queryClient.getQueryData<{ display_name?: string | null }>(["profile", user.id])?.display_name;
-        sendEmail(
-          user.email,
-          "Je ploeg is ingediend — Koerspoule",
-          ploegIngediendHtml(displayName ?? "", teamName),
-        );
-      }
     },
   });
 
