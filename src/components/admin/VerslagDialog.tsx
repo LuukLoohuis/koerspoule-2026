@@ -43,7 +43,18 @@ export default function VerslagDialog({
   // Leeg = de standaardaanbieder uit de serverinstelling. Zet je hem expliciet,
   // dan kun je twee modellen op dezelfde etappe vergelijken -- zelfde feiten,
   // zelfde prompt, alleen een ander model.
-  const [aanbieder, setAanbieder] = useState<"" | "openai" | "deepseek">("");
+  const [keuze, setKeuze] = useState("");
+
+  // Waarde "aanbieder:model"; leeg = de serverinstelling. Zo vergelijk je twee
+  // modellen op dezelfde etappe zonder een secret te wijzigen en te deployen.
+  const MODELLEN: Array<{ waarde: string; label: string }> = [
+    { waarde: "", label: "Standaard" },
+    { waarde: "openai:gpt-5.6-luna", label: "GPT-5.6 luna" },
+    { waarde: "openai:gpt-5.4-mini", label: "GPT-5.4 mini" },
+    { waarde: "openai:gpt-5.4-nano", label: "GPT-5.4 nano" },
+    { waarde: "deepseek:deepseek-v4-flash", label: "DeepSeek v4 flash" },
+    { waarde: "deepseek:deepseek-v4-pro", label: "DeepSeek v4 pro" },
+  ];
 
   useEffect(() => {
     if (!stage || !supabase) return;
@@ -74,7 +85,12 @@ export default function VerslagDialog({
     if (!supabase || !stage) return;
     setGenereren(true);
     const { data, error } = await supabase.functions.invoke("generate-stage-verslag", {
-      body: { stage_id: stage.id, ...(aanbieder ? { provider: aanbieder } : {}) },
+      body: {
+        stage_id: stage.id,
+        ...(keuze
+          ? { provider: keuze.split(":")[0], model: keuze.split(":")[1] }
+          : {}),
+      },
     });
     setGenereren(false);
     if (error || !data?.verslag) {
@@ -264,15 +280,15 @@ export default function VerslagDialog({
               {genereren ? "Bezig…" : "Genereer uit uitslag"}
             </Button>
             <select
-              value={aanbieder}
-              onChange={(e) => setAanbieder(e.target.value as "" | "openai" | "deepseek")}
+              value={keuze}
+              onChange={(e) => setKeuze(e.target.value)}
               disabled={genereren}
               aria-label="Model"
               className="h-9 rounded-md border border-input bg-background px-2 text-xs"
             >
-              <option value="">Standaard</option>
-              <option value="openai">OpenAI</option>
-              <option value="deepseek">DeepSeek</option>
+              {MODELLEN.map((m) => (
+                <option key={m.waarde} value={m.waarde}>{m.label}</option>
+              ))}
             </select>
           </div>
           <Button variant="outline" onClick={onClose} disabled={bezig}>Annuleren</Button>

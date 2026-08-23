@@ -30,7 +30,7 @@ type Aanbieder = { naam: string; url: string; model: string; sleutelNaam: string
  * beheerscherm twee modellen op dezelfde etappe naast elkaar kunt leggen --
  * met dezelfde feiten en dezelfde prompt, want anders vergelijk je niets.
  */
-function kiesAanbieder(override?: string | null): Aanbieder {
+function kiesAanbieder(override?: string | null, modelOverride?: string | null): Aanbieder {
   const naam = (override || Deno.env.get("AI_PROVIDER") || "openai").toLowerCase();
   const isDeepSeek = naam === "deepseek";
   return {
@@ -39,9 +39,9 @@ function kiesAanbieder(override?: string | null): Aanbieder {
     url: isDeepSeek
       ? "https://api.deepseek.com/chat/completions"
       : "https://api.openai.com/v1/chat/completions",
-    model: isDeepSeek
+    model: modelOverride?.trim() || (isDeepSeek
       ? (Deno.env.get("DEEPSEEK_MODEL") || "deepseek-v4-flash")
-      : (Deno.env.get("OPENAI_MODEL") || "gpt-5.4-mini"),
+      : (Deno.env.get("OPENAI_MODEL") || "gpt-5.4-mini")),
     sleutelNaam: isDeepSeek ? "DEEPSEEK_API_KEY" : "OPENAI_API_KEY",
   };
 }
@@ -532,7 +532,7 @@ Deno.serve(async (req) => {
     if (!isAdmin) return json({ error: "Admin only" }, 403);
 
     const body = await req.json().catch(() => null) as
-      | { bron_tekst?: string; stage_id?: string; stage_nummer?: number; stage_naam?: string; winnaar?: string; bewaar?: boolean; provider?: string }
+      | { bron_tekst?: string; stage_id?: string; stage_nummer?: number; stage_naam?: string; winnaar?: string; bewaar?: boolean; provider?: string; model?: string }
       | null;
     const bronTekst = body?.bron_tekst?.trim();
 
@@ -615,7 +615,7 @@ Deno.serve(async (req) => {
       return json({ error: "bron_tekst of stage_id is verplicht" }, 400);
     }
 
-    const ai = kiesAanbieder(body?.provider);
+    const ai = kiesAanbieder(body?.provider, body?.model);
     const gestart = Date.now();
     let resultaat = parse((await openaiChat(ai, prompt, systeem)).text);
     // Eén herkansing: een te lang of afgekapt antwoord is bijna altijd
