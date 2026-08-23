@@ -76,6 +76,13 @@ export default function VerslagDialog({
 
   const urlOngeldig = bronUrl.trim().length > 0 && veiligeUrl(bronUrl) === null;
 
+  // Het lijstje staat naast beide knoppen, dus het hoort ook voor beide te
+  // gelden. Eerder stuurde alleen "Genereer uit uitslag" de keuze mee en draaide
+  // een herschrijving stilzwijgend op de standaardaanbieder.
+  const modelKeuze = keuze
+    ? { provider: keuze.split(":")[0], model: keuze.split(":")[1] }
+    : {};
+
   /**
    * Schrijft het verslag opnieuw uit onze eigen uitslag -- hetzelfde wat er bij
    * fiatteren gebeurt. Scheelt de omweg van terugtrekken en opnieuw fiatteren
@@ -85,12 +92,7 @@ export default function VerslagDialog({
     if (!supabase || !stage) return;
     setGenereren(true);
     const { data, error } = await supabase.functions.invoke("generate-stage-verslag", {
-      body: {
-        stage_id: stage.id,
-        ...(keuze
-          ? { provider: keuze.split(":")[0], model: keuze.split(":")[1] }
-          : {}),
-      },
+      body: { stage_id: stage.id, ...modelKeuze },
     });
     setGenereren(false);
     if (error || !data?.verslag) {
@@ -124,7 +126,7 @@ export default function VerslagDialog({
     }
     setHerschrijven(true);
     const { data, error } = await supabase.functions.invoke("generate-stage-verslag", {
-      body: { bron_tekst: bronnetje, stage_id: stage.id, stage_nummer: stage.stage_number, stage_naam: stage.name },
+      body: { bron_tekst: bronnetje, stage_id: stage.id, stage_nummer: stage.stage_number, stage_naam: stage.name, ...modelKeuze },
     });
     setHerschrijven(false);
     if (error || !data?.verslag) {
@@ -132,8 +134,9 @@ export default function VerslagDialog({
       return;
     }
     setTekst(data.verslag);
+    const sec = data.ms ? ` · ${(data.ms / 1000).toFixed(1)}s` : "";
     toast({
-      title: `Verslag in ${data.zinnen} zinnen`,
+      title: `${data.model} — ${data.zinnen} zinnen${sec}`,
       description: "Alleen het koersdeel is herschreven; het pouledeel is ongewijzigd.",
     });
   }
@@ -188,7 +191,7 @@ export default function VerslagDialog({
 
   return (
     <Dialog open={stage !== null} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="flex max-h-[92vh] max-w-3xl flex-col">
         <DialogHeader>
           <DialogTitle className="font-display">
             Verslag · {stage?.name ?? `Etappe ${stage?.stage_number ?? ""}`}
@@ -198,7 +201,9 @@ export default function VerslagDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
+        {/* Scrollt binnen de dialoog: op een laag scherm werd het tekstveld
+            anders samengeknepen tot een paar regels. */}
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
           {/* Bronartikel erin, kort verslag eruit. Deze tekst wordt niet
               opgeslagen: we bewaren alleen wat er in eigen woorden uit komt. */}
           <div className="rounded-lg border border-dashed border-border bg-secondary/30 p-3">
@@ -227,8 +232,8 @@ export default function VerslagDialog({
               value={tekst}
               onChange={(e) => setTekst(e.target.value)}
               disabled={laden}
-              rows={12}
-              className="mt-1 font-serif text-sm"
+              rows={16}
+              className="mt-1 min-h-[280px] font-serif text-sm"
               placeholder={laden ? "Laden…" : "Van der Poel sprintte op de Champs-Élysées…"}
             />
             <p className={cn("mt-1 text-xs", buitenBereik ? "text-amber-600 dark:text-amber-500" : "text-muted-foreground")}>
@@ -266,7 +271,7 @@ export default function VerslagDialog({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
+        <DialogFooter className="shrink-0 gap-2 border-t pt-3 sm:gap-2">
           <Button variant="ghost" onClick={verwijder} disabled={bezig || laden} className="text-destructive">
             Verwijderen
           </Button>
