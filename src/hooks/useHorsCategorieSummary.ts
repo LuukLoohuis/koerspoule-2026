@@ -162,6 +162,8 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
   }, [stages]);
   const standQ = useGameStandings(gameId, maxStageNum);
   const myEntryIds = useMemo(() => (entry?.id ? [entry.id] : []), [entry?.id]);
+  // Alleen nog voor de laadstatus: de Emirates-berekening gebruikt deze punten
+  // niet meer (zie hieronder waarom).
   const myStagePointsQ = useStagePointsForEntries(gameId, myEntryIds);
   const allStageResultsQ = useAllStageResults(gameId);
   const allGameRidersQ = useAllGameRiders(gameId);
@@ -183,7 +185,6 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
   const totals = (standQ.data ?? []).map((r) => r.cum_points);
   const myStageTotal = myStageTotalQ.data ?? 0;
   // Alleen MIJN stage_points (Emirates-eigen-punten). Scoped fetch i.p.v. hele game.
-  const allStagePoints = myStagePointsQ.data ?? [];
   const allStageResults = allStageResultsQ.data ?? [];
   const allGameRiders = allGameRidersQ.data ?? [];
 
@@ -206,7 +207,9 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
     });
   }, [categories, allStageResults, allGameRiders, entry, myStageTotal, jokerMultiplier, game?.id]);
 
-  // ── Emirates (exact dezelfde formule als HorsCategorieTab) ─────────────────
+  // ── Emirates — moet hetzelfde uitkomen als het paneel in HorsCategorieTab.
+  //    Beide kanten van de breuk gebruiken pointsTable[finish_position]; wijk je
+  //    daarvan af, dan vergelijk je appels met peren. ─────────────────────────
   const emirates = useMemo<{ pct: number; dreamTotal: number; myPoints: number } | null>(() => {
     const approvedStages = stages
       .filter((s) => s.results_status === "approved")
@@ -249,16 +252,25 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
 
     if (dreamTotal === 0) return null;
 
-    // 3) mijn totaal in deze game
-    const approvedIds = new Set(approvedStages.map((s) => s.id));
-    let myPoints = 0;
-    for (const sp of allStagePoints) {
-      if (sp.entry_id === entry.id && approvedIds.has(sp.stage_id)) {
-        myPoints += sp.points ?? 0;
-      }
-    }
+    // 3) mijn totaal — met DEZELFDE puntentelling als de droomploeg.
+    //
+    // Hier stond eerder het echte totaal uit stage_points. Dat telt ook
+    // klassementspunten en verdubbelt jokers, terwijl de droomploeg hierboven
+    // alleen finishposities kent. Zo deelde je twee verschillende maatstaven
+    // door elkaar en week het percentage af van dat op het Emirates-paneel --
+    // 65% tegen 71% voor dezelfde ploeg.
+    //
+    // Een verhouding heeft alleen betekenis als teller en noemer hetzelfde
+    // meten. Daarom nu de punten van mijn eigen gekozen renners uit dezelfde
+    // riderTotals, plus de jokers zonder verdubbeling zoals het plafond ze ook
+    // telt.
+    const mijnRenners: string[] = [];
+    picksByCategory.forEach((ids) => mijnRenners.push(...ids));
+    let myPoints = mijnRenners.reduce((som, id) => som + (riderTotals.get(id) ?? 0), 0);
+    myPoints += jokerIds.reduce((som, id) => som + (riderTotals.get(id) ?? 0), 0);
+
     return { pct: Math.round((myPoints / dreamTotal) * 100), dreamTotal, myPoints };
-  }, [stages, categories, allStageResults, allGameRiders, allStagePoints, entry]);
+  }, [stages, categories, allStageResults, allGameRiders, entry, picksByCategory, jokerIds]);
 
   // ── Wielerdirecteur (exact dezelfde formule als HorsCategorieTab) ──────────
   const director = useMemo<
