@@ -360,7 +360,8 @@
       "ploegFilter": "Show only riders from {{ploeg}}",
       "geenTreffers": "No rider in this category matches your search.",
       "ploegFilterAantal": "{{ploeg}} — {{count}} rider(s) in your squad. Show only this team.",
-      "geenTreffersTotaal": "No rider matches your search. Clear the field to see all categories."
+      "geenTreffersTotaal": "No rider matches your search. Clear the field to see all categories.",
+      "lockedToast": "The race has started; your team is locked."
     },
     "panel": {
       "loginToView": "Log in to view your team.",

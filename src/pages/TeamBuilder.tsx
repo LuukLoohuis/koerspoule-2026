@@ -209,6 +209,17 @@ export default function TeamBuilder() {
   const handlePickToggle = async (categoryId: string, riderId: string) => {
     if (!isAuthed) return requireAuth(t("team.builder.authActionPickRider"));
     if (!entry) return;
+    // Vergrendelde koers: de database weigert dit toch, maar deed dat pas ná
+    // een netwerkronde en met een technische melding. Als admin kwam je er zelfs
+    // langs en liep je door tot een heel andere fout. Hier stoppen scheelt allebei.
+    if (gameLocked && !isAdmin) {
+      toast({
+        title: t("team.builder.lockedBadge"),
+        description: t("team.builder.lockedToast"),
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       // Eén-knops wijzigflow: op een ingediend team eerst automatisch terug naar
       // concept (anders weigert de pick-RPC), daarna gewoon de pick uitvoeren.
