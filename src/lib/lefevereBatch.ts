@@ -371,7 +371,13 @@ export type BatchResult = {
 export async function runLefevereBatch(
   supabase: SupabaseClient,
   gameId: string,
-  opts: { force?: boolean; onProgress?: (done: number, total: number) => void } = {},
+  opts: {
+    force?: boolean;
+    onProgress?: (done: number, total: number) => void;
+    /** Aanbieder en model overschrijven; leeg = de serverinstelling. */
+    provider?: string;
+    model?: string;
+  } = {},
 ): Promise<BatchResult> {
   // In de browser is er geen 150s edge-limiet: ruim budget zodat één klik veel
   // afwerkt. De ctx-opbouw (zware fetches) telt bewust NIET mee — die start het
@@ -431,6 +437,8 @@ export async function runLefevereBatch(
         gameType: ctx.gameType ?? null,
         recenteAnalyses: recente.map((r) => r.analyse).filter(Boolean),
         recenteKarakteriseringen: recente.map((r) => r.karakter).filter(Boolean),
+        ...(opts.provider ? { provider: opts.provider } : {}),
+        ...(opts.model ? { model: opts.model } : {}),
       },
     });
     if (error) {

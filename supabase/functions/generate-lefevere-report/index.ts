@@ -8,6 +8,7 @@
 // Vereist env: OPENAI_API_KEY (in Supabase secrets).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { kiesAanbieder, chat, type Aanbieder } from "../_shared/ai.ts";
 
 // Model + reasoning-budget overschrijfbaar via env (supabase secrets).
 const MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-5.4-mini";
@@ -312,38 +313,20 @@ type LefevereResult = { directeursAnalyse: string; ploegKarakterisering: string 
 // Eén Chat-Completions-call → tekst + finish_reason + token-usage, zodat de
 // aanroeper truncatie ("length") kan detecteren i.p.v. stil afgekapte tekst.
 async function openaiChat(
+  ai: Aanbieder,
   userPrompt: string,
   opts: { maxTokens: number; reasoning: string; systemPrompt?: string },
 ): Promise<{ text: string; finishReason: string | null; usage: any }> {
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
-  if (!apiKey) throw new Error("OPENAI_API_KEY niet ingesteld in env");
-
-  const res = await fetch(OPENAI_URL, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_completion_tokens: opts.maxTokens,
-      reasoning_effort: opts.reasoning,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: opts.systemPrompt ?? SYSTEM_PROMPT },
-        { role: "user", content: userPrompt },
-      ],
-    }),
+  return await chat(ai, {
+    systemPrompt: opts.systemPrompt ?? SYSTEM_PROMPT,
+    userPrompt,
+    maxTokens: opts.maxTokens,
+    // "none" betekende hier: geen reasoning meesturen.
+    reasoning: opts.reasoning === "none" ? undefined : opts.reasoning,
+    // Persona-tekst is creatief werk; DeepSeek adviseert daar een hogere
+    // temperatuur voor dan bij analyse. Alleen DeepSeek gebruikt dit.
+    temperatuur: Number(Deno.env.get("DEEPSEEK_TEMPERATURE") ?? "1.4"),
   });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`OpenAI API ${res.status}: ${text}`);
-  }
-  const data = await res.json();
-  const text = data?.choices?.[0]?.message?.content;
-  const finishReason = data?.choices?.[0]?.finish_reason ?? null;
-  return { text: typeof text === "string" ? text : "", finishReason, usage: data?.usage };
 }
 
 function logUsage(tag: string, finishReason: string | null, usage: any) {
@@ -371,10 +354,10 @@ function parseReport(text: string): LefevereResult | null {
   return null;
 }
 
-async function callOpenAI(userPrompt: string, gameType?: string | null): Promise<LefevereResult> {
+async function callOpenAI(ai: Aanbieder, userPrompt: string, gameType?: string | null): Promise<LefevereResult> {
   const persona = kiesPersona(gameType);
   // Poging 1 — laag reasoning-budget zodat de tokens naar het rapport gaan.
-  const r1 = await openaiChat(userPrompt, { maxTokens: MAX_TOKENS, reasoning: REASONING_EFFORT, systemPrompt: persona.prompt });
+  const r1 = await openaiChat(ai, userPrompt, { maxTokens: MAX_TOKENS, reasoning: REASONING_EFFORT, systemPrompt: persona.prompt });
   logUsage("try1", r1.finishReason, r1.usage);
   const parsed1 = r1.finishReason === "length" ? null : parseReport(r1.text);
   if (parsed1) return parsed1;
@@ -383,7 +366,7 @@ async function callOpenAI(userPrompt: string, gameType?: string | null): Promise
   console.warn(
     `[lefevere] try1 onbruikbaar (finish=${r1.finishReason}, len=${r1.text.length}) → retry met meer budget`,
   );
-  const r2 = await openaiChat(userPrompt, { maxTokens: MAX_TOKENS * 2, reasoning: "none", systemPrompt: persona.prompt });
+  const r2 = await openaiChat(ai, userPrompt, { maxTokens: MAX_TOKENS * 2, reasoning: "none", systemPrompt: persona.prompt });
   logUsage("try2", r2.finishReason, r2.usage);
   if (r2.finishReason === "length") {
     throw new Error(
@@ -506,6 +489,9 @@ Deno.serve(async (req) => {
     if (userErr || !userData?.user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
+    // Aanbieder en model per aanroep te kiezen, zodat je twee modellen op
+    // dezelfde ploeg kunt vergelijken zonder een secret te wijzigen.
+    const ai = kiesAanbieder(body?.provider, body?.model);
 
     // ── Preview-modus (sneak preview, status 'open') ───────────────────────────
     // Eénmalig, gedeeld voorproefje per game: lees uit lefevere_preview; alleen
@@ -524,30 +510,30 @@ Deno.serve(async (req) => {
           ok: true,
           directeursAnalyse: cached.directeurs_analyse,
           ploegKarakterisering: cached.ploeg_karakterisering ?? "",
-          model: MODEL,
+          model: ai.model,
           cached: true,
         });
       }
-      const result = await callOpenAI(buildPreviewPrompt(body), body?.gameType);
+      const result = await callOpenAI(ai, buildPreviewPrompt(body), body?.gameType);
       await admin.from("lefevere_preview").upsert(
         {
           game_id: body.gameId,
           directeurs_analyse: result.directeursAnalyse,
           ploeg_karakterisering: result.ploegKarakterisering,
-          model: MODEL,
+          model: ai.model,
           generated_at: new Date().toISOString(),
         },
         { onConflict: "game_id" },
       );
-      return json({ ok: true, ...result, model: MODEL });
+      return json({ ok: true, ...result, provider: ai.naam, model: ai.model });
     }
 
     if (typeof body?.score !== "number") return json({ error: "score (number) required" }, 400);
 
     const userPrompt = buildUserPrompt(body);
-    const result = await callOpenAI(userPrompt, body?.gameType);
+    const result = await callOpenAI(ai, userPrompt, body?.gameType);
 
-    return json({ ok: true, ...result, model: MODEL });
+    return json({ ok: true, ...result, provider: ai.naam, model: ai.model });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }

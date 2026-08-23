@@ -595,6 +595,10 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
   const [loadError, setLoadError] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const [busyId, setBusyId] = useState<string | null>(null);
+  // Model voor de Lefevere-rapporten; leeg = de serverinstelling. Waarde is
+  // "aanbieder:model", zodat je twee modellen kunt vergelijken zonder een
+  // secret te wijzigen en opnieuw te deployen.
+  const [lefModel, setLefModel] = useState("");
   const [approvalProgress, setApprovalProgress] = useState<ApprovalProgress | null>(null);
   const [lefBusy, setLefBusy] = useState(false);
   // Lefevère-batch: voortgangsteller (per huidige stand) + generatie-status.
@@ -616,7 +620,12 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
       let allFailed: Array<{ entry_id: string; error: string }> = [];
       let prevMet = -1;
       for (let round = 1; round <= MAX_ROUNDS; round++) {
-        const res = await runLefevereBatch(supabase, activeGameId, { onProgress });
+        const res = await runLefevereBatch(supabase, activeGameId, {
+          onProgress,
+          ...(lefModel
+            ? { provider: lefModel.split(":")[0], model: lefModel.split(":")[1] }
+            : {}),
+        });
         allFailed = res.failed;
         const c = await fetchLefevereCount(supabase, activeGameId);
         setLefCount(c);
@@ -1042,6 +1051,21 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
                     ? `Bezig… ${lefCount ? `${lefCount.metRapport}/${lefCount.totaal}` : ""}`
                     : "Genereer Lefevère (alle deelnemers)"}
                 </Button>
+                {/* Model kiezen om te vergelijken. Let op: dit draait voor ALLE
+                    deelnemers, dus een test kost evenveel als een echte ronde. */}
+                <select
+                  value={lefModel}
+                  onChange={(e) => setLefModel(e.target.value)}
+                  disabled={lefGenBusy}
+                  aria-label="Model voor de rapporten"
+                  className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                >
+                  <option value="">Standaard</option>
+                  <option value="openai:gpt-5.6-luna">GPT-5.6 luna</option>
+                  <option value="openai:gpt-5.4-mini">GPT-5.4 mini</option>
+                  <option value="deepseek:deepseek-v4-pro">DeepSeek v4 pro</option>
+                  <option value="deepseek:deepseek-v4-flash">DeepSeek v4 flash</option>
+                </select>
                 <Button
                   size="sm"
                   variant="outline"
