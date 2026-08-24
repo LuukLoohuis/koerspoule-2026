@@ -39,8 +39,13 @@ const TOTAAL_RONDEN = 125;
 const RONDE_LENGTE = 400;
 /** Aangenomen rondetijd; zet seconden om in ronde-fracties. */
 const RONDETIJD_S = 32;
-/** Ronden per tik. De hook tikt elke 1,2 s, dus 1,2/32 -- op ware snelheid. */
-const STAP = 1.2 / RONDETIJD_S;
+/**
+ * Ronden per tik. Op ware snelheid (1,2 s per tik bij 32 s per ronde) schoot
+ * het veld zichtbaar door en verspringen de schijfjes elke tik. Een kwart
+ * daarvan leest rustiger; het gaat om de weergave, niet om een wedstrijdklok.
+ */
+const SNELHEID = 0.25;
+const STAP = (1.2 / RONDETIJD_S) * SNELHEID;
 
 export type SimulatieOpts = {
   /** Beennummers die als "van mij" moeten gelden. */

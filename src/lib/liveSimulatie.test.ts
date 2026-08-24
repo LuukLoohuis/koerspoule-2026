@@ -14,9 +14,18 @@ describe("simuleerRijders", () => {
   });
 
   it("laat het veld vooruit gaan", () => {
+    // 200 tikken is bij een kwart snelheid bijna twee ronden; minder en de
+    // rondeteller staat nog op hetzelfde getal terwijl er wél gereden is.
     const vroeg = Math.max(...simuleerRijders(0).map((r) => r.aantalRonden));
-    const laat = Math.max(...simuleerRijders(50).map((r) => r.aantalRonden));
+    const laat = Math.max(...simuleerRijders(200).map((r) => r.aantalRonden));
     expect(laat).toBeGreaterThan(vroeg);
+  });
+
+  it("schuift ook binnen een ronde op", () => {
+    // De rondeteller staat dan nog stil, maar de positie op de baan niet.
+    const a = simuleerRijders(0)[0].meter ?? 0;
+    const b = simuleerRijders(10)[0].meter ?? 0;
+    expect(b).not.toBe(a);
   });
 
   it("geeft beennummers met voorloopnul, net als de echte bron", () => {

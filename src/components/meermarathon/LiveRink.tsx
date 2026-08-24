@@ -7,7 +7,6 @@ import {
   rinkPath,
   RINK_CENTER,
   tierColor,
-  tierSoftColor,
 } from "@/lib/liveRink";
 
 /**
@@ -138,24 +137,53 @@ export default function LiveRink({
         ].filter(Boolean).join(" · ")}
       </text>
 
-      {points.map((p) => {
-        const mine = mineBeennummers.has(p.beennummer);
-        const isLeader = p.beennummer === leader;
-        const highlight = mine || isLeader;
-        const fill = isLeader
-          ? "#e0a020"
-          : mine
-            ? (p.tier > 0 ? tierColor(p.tier) : "#1268a8")
-            : tierSoftColor(p.tier);
-        const r = highlight ? 6.4 : 4.2;
-        return (
-          <g key={p.beennummer}>
-            {p.tier > 0 && <circle cx={p.x} cy={p.y} r={r + 3.4} fill={tierColor(p.tier)} opacity={0.18} />}
-            {highlight && <circle cx={p.x} cy={p.y} r={r + 2.4} fill="#fff" opacity={0.95} />}
-            <circle cx={p.x} cy={p.y} r={r} fill={fill} filter="url(#mm-dot)" />
-          </g>
-        );
-      })}
+      {/* Genummerde schijfjes in plaats van kale stippen: op een baan met
+          veertig rijders wil je zien wie waar zit, en het beennummer is waar
+          een schaatsvolger op stuurt. Witte rand plus donkere ring houdt ze
+          leesbaar op het lichte ijs, ook waar een pak dicht op elkaar rijdt. */}
+      {[...points]
+        // Koplopers als laatste tekenen zodat ze bovenop liggen; eigen rijders
+        // helemaal bovenop.
+        .sort((a, b) => {
+          const am = mineBeennummers.has(a.beennummer) ? 1 : 0;
+          const bm = mineBeennummers.has(b.beennummer) ? 1 : 0;
+          if (am !== bm) return am - bm;
+          return b.tier - a.tier;
+        })
+        .map((p) => {
+          const mine = mineBeennummers.has(p.beennummer);
+          const isLeader = p.beennummer === leader;
+          const fill = mine ? "#d81f26" : isLeader ? "#e0a020" : tierColor(p.tier);
+          const r = mine ? 7.2 : 6.2;
+          return (
+            <g key={p.beennummer}>
+              {/* Eigen rijders krijgen een zachte gloed, zodat je ze in één
+                  oogopslag terugvindt tussen de rest. */}
+              {mine && <circle cx={p.x} cy={p.y} r={r + 3.2} fill="#d81f26" opacity={0.22} />}
+              <circle cx={p.x} cy={p.y} r={r + 1.6} fill="#fff" />
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={r + 1.6}
+                fill="none"
+                stroke={mine ? "rgba(216,31,38,.85)" : "rgba(9,24,45,.45)"}
+                strokeWidth={mine ? 1.4 : 0.9}
+              />
+              <circle cx={p.x} cy={p.y} r={r} fill={fill} />
+              <text
+                x={p.x}
+                y={p.y + 1.9}
+                textAnchor="middle"
+                fontFamily="'JetBrains Mono', monospace"
+                fontSize={mine ? 6 : 5.4}
+                fontWeight="700"
+                fill="#fff"
+              >
+                {p.beennummer.replace(/^0+(?=\d)/, "")}
+              </text>
+            </g>
+          );
+        })}
     </svg>
   );
 }
