@@ -1270,7 +1270,12 @@
       "segVoorpagina": "Front page",
       "segDaguitslag": "Today",
       "segPerszaal": "Press room",
-      "dagstandKop": "Today in your subpoule"
+      "dagstandKop": "Today in your subpoule",
+      "rubLegende": "Legend",
+      "legendeOpen": "Read the story",
+      "legendeDicht": "Hide the story",
+      "quoteMeer": "More",
+      "quoteMinder": "Less"
     }
   },
   "common": {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAllRubriekItems, type RubriekItem } from "@/hooks/useRubriek";
+import { useAllRubriekItems, HOMEPAGE_SOORTEN, type RubriekItem, type RubriekSoort } from "@/hooks/useRubriek";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,15 +10,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Check, Edit2, X } from "lucide-react";
 import { toast } from "sonner";
+import { legendeDelen } from "@/lib/legende";
 
 type Props = { activeGameId: string };
 
 type DraftForm = {
-  type: "text" | "poll";
+  type: RubriekSoort;
   content: string;
   question: string;
   options: string[];
   deadline: string;
+  titel: string;
+  jaar: string;
+  bron: string;
 };
 
 const empty = (): DraftForm => ({
@@ -27,7 +31,18 @@ const empty = (): DraftForm => ({
   question: "",
   options: ["", ""],
   deadline: "",
+  titel: "",
+  jaar: "",
+  bron: "",
 });
+
+/**
+ * Tekst en poll delen één actief item (de rubriek op de homepage); een legende
+ * heeft zijn eigen actieve item (de krant). Activeren mag dus alleen de andere
+ * items uit dezelfde groep uitzetten.
+ */
+const groepVan = (type: RubriekSoort): RubriekSoort[] =>
+  type === "legende" ? ["legende"] : HOMEPAGE_SOORTEN;
 
 export default function RubriekTab({ activeGameId }: Props) {
   const qc = useQueryClient();
@@ -41,6 +56,7 @@ export default function RubriekTab({ activeGameId }: Props) {
   function reload() {
     qc.invalidateQueries({ queryKey: ["rubriek-items-admin", activeGameId] });
     qc.invalidateQueries({ queryKey: ["active-rubriek", activeGameId] });
+    qc.invalidateQueries({ queryKey: ["active-legende", activeGameId] });
   }
 
   function openCreate() {
@@ -57,6 +73,9 @@ export default function RubriekTab({ activeGameId }: Props) {
       question: item.question ?? "",
       options: (item.options && item.options.length > 0) ? [...item.options, "", ""].slice(0, Math.max(item.options.length, 2)) : ["", ""],
       deadline: item.deadline ? item.deadline.slice(0, 16) : "",
+      titel: item.titel ?? "",
+      jaar: item.jaar ?? "",
+      bron: item.bron ?? "",
     });
     setShowForm(true);
   }
@@ -72,6 +91,16 @@ export default function RubriekTab({ activeGameId }: Props) {
     if (form.type === "text" && !form.content.trim()) {
       toast.error("Tekst mag niet leeg zijn");
       return;
+    }
+    if (form.type === "legende") {
+      if (!form.titel.trim()) {
+        toast.error("Een legende heeft een kop nodig");
+        return;
+      }
+      if (!form.content.trim()) {
+        toast.error("Het verhaal mag niet leeg zijn");
+        return;
+      }
     }
     if (form.type === "poll") {
       if (form.question.trim().length < 3) {
@@ -90,7 +119,10 @@ export default function RubriekTab({ activeGameId }: Props) {
       const cleanOpts = form.options.map((o) => o.trim()).filter(Boolean);
       const payload = {
         type: form.type,
-        content: form.type === "text" ? form.content.trim() : null,
+        content: form.type === "poll" ? null : form.content.trim(),
+        titel: form.type === "legende" ? form.titel.trim() : null,
+        jaar: form.type === "legende" ? (form.jaar.trim() || null) : null,
+        bron: form.type === "legende" ? (form.bron.trim() || null) : null,
         question: form.type === "poll" ? form.question.trim() : null,
         options: form.type === "poll" ? cleanOpts : null,
         deadline: (form.type === "poll" && form.deadline)
@@ -112,7 +144,11 @@ export default function RubriekTab({ activeGameId }: Props) {
         if (error) throw error;
       }
 
-      toast.success(editingId ? "Rubriek bijgewerkt" : "Rubriek aangemaakt");
+      toast.success(
+        form.type === "legende"
+          ? (editingId ? "Legende bijgewerkt" : "Legende aangemaakt")
+          : (editingId ? "Rubriek bijgewerkt" : "Rubriek aangemaakt"),
+      );
       setShowForm(false);
       setEditingId(null);
       reload();
@@ -123,19 +159,20 @@ export default function RubriekTab({ activeGameId }: Props) {
     }
   }
 
-  async function setActive(id: string) {
+  async function setActive(item: RubriekItem) {
     if (!supabase) return;
     const { error: e1 } = await supabase
       .from("rubriek_items")
       .update({ is_active: false })
-      .eq("game_id", activeGameId);
+      .eq("game_id", activeGameId)
+      .in("type", groepVan(item.type));
     if (e1) { toast.error(e1.message); return; }
     const { error: e2 } = await supabase
       .from("rubriek_items")
       .update({ is_active: true })
-      .eq("id", id);
+      .eq("id", item.id);
     if (e2) { toast.error(e2.message); return; }
-    toast.success("Rubriek geactiveerd");
+    toast.success(item.type === "legende" ? "Legende staat in de krant" : "Rubriek geactiveerd");
     reload();
   }
 
@@ -201,7 +238,7 @@ export default function RubriekTab({ activeGameId }: Props) {
             item={item}
             onEdit={() => openEdit(item)}
             onDelete={() => deleteItem(item.id)}
-            onSetActive={() => setActive(item.id)}
+            onSetActive={() => setActive(item)}
             onDeactivate={() => deactivate(item.id)}
           />
         ))}
@@ -268,9 +305,70 @@ function ItemForm({
         >
           📊 Poll
         </Button>
+        <Button
+          size="sm"
+          variant={form.type === "legende" ? "default" : "outline"}
+          onClick={() => setForm({ ...form, type: "legende" })}
+        >
+          📻 Legende
+        </Button>
       </div>
 
-      {form.type === "text" ? (
+      {form.type === "legende" ? (
+        <>
+          <p className="text-xs text-muted-foreground leading-snug">
+            Komt in de rechterkolom van de Koerskrant, onder de perszaal. De eerste
+            alinea staat er meteen; de rest zit achter “Lees het verhaal”. Laat een
+            lege regel tussen alinea's.
+          </p>
+          <div>
+            <Label htmlFor="legende-titel" className="text-xs">Kop</Label>
+            <Input
+              id="legende-titel"
+              value={form.titel}
+              onChange={(e) => setForm({ ...form, titel: e.target.value.slice(0, 120) })}
+              placeholder="De man die zijn eigen vork smeedde"
+              className="text-sm h-8"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor="legende-jaar" className="text-xs">Jaartal (optioneel)</Label>
+              <Input
+                id="legende-jaar"
+                value={form.jaar}
+                onChange={(e) => setForm({ ...form, jaar: e.target.value.slice(0, 20) })}
+                placeholder="1913"
+                className="text-sm h-8"
+              />
+            </div>
+            <div>
+              <Label htmlFor="legende-bron" className="text-xs">Bron (optioneel)</Label>
+              <Input
+                id="legende-bron"
+                value={form.bron}
+                onChange={(e) => setForm({ ...form, bron: e.target.value.slice(0, 200) })}
+                placeholder="Tourarchief of een link"
+                className="text-sm h-8"
+              />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="legende-verhaal" className="text-xs">Verhaal</Label>
+            <Textarea
+              id="legende-verhaal"
+              rows={7}
+              value={form.content}
+              onChange={(e) => setForm({ ...form, content: e.target.value })}
+              placeholder={"Eerste alinea = wat je dicht ziet staan.\n\nDaarna de rest van het verhaal."}
+              className="text-sm resize-y"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {legendeTeller(form.content)}
+            </p>
+          </div>
+        </>
+      ) : form.type === "text" ? (
         <div>
           <Label htmlFor="rubriek-content" className="text-xs">Tekst</Label>
           <Textarea
@@ -352,6 +450,14 @@ function ItemForm({
   );
 }
 
+/** Laat zien wat er dicht staat en wat er achter het uitklappen zit. */
+function legendeTeller(tekst: string): string {
+  const { teaser, rest } = legendeDelen(tekst);
+  if (!teaser) return "Nog niets ingevuld.";
+  if (rest.length === 0) return "1 alinea — er valt niets uit te klappen.";
+  return `${rest.length + 1} alinea's — ${rest.length} achter “Lees het verhaal”.`;
+}
+
 // ── Row ───────────────────────────────────────────────────────────────────────
 
 function ItemRow({
@@ -368,9 +474,11 @@ function ItemRow({
   onDeactivate: () => void;
 }) {
   const preview =
-    item.type === "text"
-      ? (item.content ?? "").split("\n")[0]
-      : item.question ?? "";
+    item.type === "legende"
+      ? (item.titel ?? "").trim() || (item.content ?? "").split("\n")[0]
+      : item.type === "text"
+        ? (item.content ?? "").split("\n")[0]
+        : item.question ?? "";
 
   return (
     <Card className={item.is_active ? "border-primary/50 bg-primary/[0.03]" : ""}>
@@ -381,12 +489,15 @@ function ItemRow({
               variant={item.type === "poll" ? "secondary" : "outline"}
               className="text-[10px] uppercase tracking-wide"
             >
-              {item.type === "poll" ? "📊 Poll" : "Tekst"}
+              {item.type === "poll" ? "📊 Poll" : item.type === "legende" ? "📻 Legende" : "Tekst"}
             </Badge>
             {item.is_active && (
               <Badge className="text-[10px] uppercase tracking-wide bg-primary text-primary-foreground">
-                Actief
+                {item.type === "legende" ? "In de krant" : "Actief"}
               </Badge>
+            )}
+            {item.type === "legende" && item.jaar && (
+              <span className="font-mono text-[10px] text-muted-foreground">{item.jaar}</span>
             )}
           </div>
           <p className="text-sm font-medium truncate">{preview}</p>

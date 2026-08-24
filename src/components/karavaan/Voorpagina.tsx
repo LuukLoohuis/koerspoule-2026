@@ -64,6 +64,7 @@ export default function Voorpagina({
   artikel,
   uitslag,
   dagstand,
+  legende,
   className,
 }: {
   koers: string;
@@ -78,10 +79,21 @@ export default function Voorpagina({
   uitslag?: ReactNode;
   /** Daguitslag binnen je subpoule; op mobiel een eigen segment. */
   dagstand?: ReactNode;
+  /** Archiefverhaal onderaan de perszaalkolom; ontbreekt als er geen is. */
+  legende?: ReactNode;
   className?: string;
 }) {
   const { t, i18n } = useTranslation();
   const [meerOpen, setMeerOpen] = useState(false);
+  // Per commentator onthouden of zijn quote uitstaat.
+  const [quotesOpen, setQuotesOpen] = useState<Set<string>>(new Set());
+  const toggleQuote = (naam: string) =>
+    setQuotesOpen((vorig) => {
+      const volgende = new Set(vorig);
+      if (volgende.has(naam)) volgende.delete(naam);
+      else volgende.add(naam);
+      return volgende;
+    });
 
   // Op een telefoon past de hele voorpagina niet in één kolom; drie segmenten
   // verdelen wat op desktop naast elkaar staat. Boven lg blijft alles zichtbaar,
@@ -251,7 +263,7 @@ export default function Voorpagina({
 
           {/* Kolom 2 — perszaal. Quotes gescheiden door haarlijnen, geen
               kaartjes: kaartjes waren de app-look, dit is de krant-look. */}
-          {(artikel.quotes.length > 0 || uitslag || dagstand) && (
+          {(artikel.quotes.length > 0 || uitslag || dagstand || legende) && (
             <div className="min-w-0 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-[22px] lg:pt-0 max-lg:border-t-0 max-lg:pt-0">
               {/* Daguitslag uit je eigen poule: alléén op mobiel, als eigen
                   segment. Op desktop stond hij bovenaan de rechterkolom en
@@ -264,14 +276,38 @@ export default function Voorpagina({
                   <p className="mb-3 font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                     {t("karavaan.voorpagina.perszaal")}
                   </p>
-                  {artikel.quotes.map((q) => (
-                    <div key={q.naam} className="border-b border-border/70 py-3 first:pt-0 last:border-b-0 last:pb-0">
-                      <p className="mb-1 font-oswald text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">
-                        {q.naam}
-                      </p>
-                      <p className="line-clamp-4 font-serif text-[13.5px] leading-[1.5] text-foreground/80">{q.tekst}</p>
-                    </div>
-                  ))}
+                  {artikel.quotes.map((q) => {
+                    const uit = quotesOpen.has(q.naam);
+                    return (
+                      <div key={q.naam} className="border-b border-border/70 py-2.5 first:pt-0 last:border-b-0 last:pb-0">
+                        <p className="mb-0.5 font-oswald text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+                          {q.naam}
+                        </p>
+                        {/* Twee regels in plaats van vier: de kolom moet ook de
+                            uitslag en het archiefverhaal kwijt kunnen. */}
+                        <p className={cn("font-serif text-[12px] leading-[1.42] text-foreground/[0.78]", !uit && "line-clamp-2")}>
+                          {q.tekst}
+                        </p>
+                        {/* Stil gebaar, geen rode regel: rood hoort hier bij de
+                            uitslag en de legende, en drie rode links onder
+                            elkaar schreeuwen. */}
+                        <button
+                          type="button"
+                          onClick={() => toggleQuote(q.naam)}
+                          aria-expanded={uit}
+                          className={cn(
+                            "mt-1 inline-flex items-center gap-1 border-b border-border pb-px",
+                            "font-oswald text-[9px] uppercase tracking-[0.14em] text-muted-foreground",
+                            "transition-colors hover:text-foreground",
+                            "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          )}
+                        >
+                          {uit ? t("karavaan.voorpagina.quoteMinder") : t("karavaan.voorpagina.quoteMeer")}
+                          <span aria-hidden className={cn("inline-block transition-transform", uit && "rotate-180")}>⌄</span>
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               {/* De uitslag onder de perszaal, gescheiden door de dubbele regel:
@@ -281,6 +317,15 @@ export default function Voorpagina({
                 <div className={alleenIn("daguitslag")}>
                   {artikel.quotes.length > 0 && <DubbeleRegel className="my-4 max-lg:hidden" />}
                   {uitslag}
+                </div>
+              )}
+              {/* Het archiefverhaal sluit de kolom af. Op mobiel hoort het bij
+                  de perszaal: dat segment bestaat al, dus er komt geen tabje
+                  bij. Geen verhaal → geen blok én geen dubbele regel. */}
+              {legende && (
+                <div className={alleenIn("perszaal")}>
+                  <DubbeleRegel className="my-4" />
+                  {legende}
                 </div>
               )}
             </div>
@@ -296,7 +341,15 @@ export default function Voorpagina({
           <p className="font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             {t("karavaan.voorpagina.verderInDeKrant")}
           </p>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {/* Vijf rubrieken passen niet netjes in vier kolommen: dan blijft er
+              één alleen op een tweede regel staan. Bij vijf dus 3+2 op tablet
+              en alles op één rij zodra er ruimte is. */}
+          <div
+            className={cn(
+              "grid grid-cols-2 gap-3",
+              rubrieken.length === 5 ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-4",
+            )}
+          >
             {rubrieken.map((r) => (
               <button
                 key={r.key}

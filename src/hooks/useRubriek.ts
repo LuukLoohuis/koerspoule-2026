@@ -4,11 +4,20 @@ import type { ChatPollRow, ChatPollVoteRow } from "@/hooks/useChatRealtime";
 
 // ── Rubriek item (DB row) ─────────────────────────────────────────────────────
 
+export type RubriekSoort = "text" | "poll" | "legende";
+
+/** Homepage-rubriek en krant-legende zijn twee losse slots. */
+export const HOMEPAGE_SOORTEN: RubriekSoort[] = ["text", "poll"];
+
 export type RubriekItem = {
   id: string;
   game_id: string;
-  type: "text" | "poll";
+  type: RubriekSoort;
   content: string | null;
+  /** Alleen bij een legende: kop, jaartal en herkomst van het verhaal. */
+  titel: string | null;
+  jaar: string | null;
+  bron: string | null;
   question: string | null;
   options: string[] | null;   // jsonb array, same shape as chat_polls.options
   deadline: string | null;
@@ -60,8 +69,9 @@ export function useActiveRubriek(gameId?: string) {
       if (!supabase || !gameId) return null;
       const { data, error } = await supabase
         .from("rubriek_items")
-        .select("id, game_id, type, content, question, options, deadline, is_active, created_at")
+        .select("id, game_id, type, content, titel, jaar, bron, question, options, deadline, is_active, created_at")
         .eq("game_id", gameId)
+        .in("type", HOMEPAGE_SOORTEN)
         .eq("is_active", true)
         .maybeSingle();
       if (error) throw error;
@@ -87,6 +97,30 @@ export function useRubriekVotes(rubriekId?: string) {
   });
 }
 
+/**
+ * Het actieve archiefverhaal voor de krant. Geen actief item betekent geen
+ * blok op de voorpagina -- de krant hoort niet te melden dat er niets is.
+ */
+export function useActiveLegende(gameId?: string) {
+  return useQuery({
+    queryKey: ["active-legende", gameId],
+    enabled: Boolean(gameId),
+    staleTime: 60_000,
+    queryFn: async (): Promise<RubriekItem | null> => {
+      if (!supabase || !gameId) return null;
+      const { data, error } = await supabase
+        .from("rubriek_items")
+        .select("id, game_id, type, content, titel, jaar, bron, question, options, deadline, is_active, created_at")
+        .eq("game_id", gameId)
+        .eq("type", "legende")
+        .eq("is_active", true)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as RubriekItem | null);
+    },
+  });
+}
+
 // Admin: all items for a game
 export function useAllRubriekItems(gameId?: string) {
   return useQuery({
@@ -97,7 +131,7 @@ export function useAllRubriekItems(gameId?: string) {
       if (!supabase || !gameId) return [];
       const { data, error } = await supabase
         .from("rubriek_items")
-        .select("id, game_id, type, content, question, options, deadline, is_active, created_at")
+        .select("id, game_id, type, content, titel, jaar, bron, question, options, deadline, is_active, created_at")
         .eq("game_id", gameId)
         .order("created_at", { ascending: false });
       if (error) throw error;

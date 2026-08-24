@@ -1270,7 +1270,12 @@
       "segVoorpagina": "Voorpagina",
       "segDaguitslag": "Daguitslag",
       "segPerszaal": "Perszaal",
-      "dagstandKop": "Daguitslag in je subpoule"
+      "dagstandKop": "Daguitslag in je subpoule",
+      "rubLegende": "Legende",
+      "legendeOpen": "Lees het verhaal",
+      "legendeDicht": "Verberg het verhaal",
+      "quoteMeer": "Meer",
+      "quoteMinder": "Minder"
     }
   },
   "common": {

@@ -19,6 +19,8 @@ import Voorbeschouwing from "@/components/karavaan/Voorbeschouwing";
 import Verslag from "@/components/karavaan/Verslag";
 import Uitslagblok from "@/components/karavaan/Uitslagblok";
 import { useEtappeVerslag } from "@/hooks/useEtappeVerslag";
+import { useActiveLegende } from "@/hooks/useRubriek";
+import Legende from "@/components/karavaan/Legende";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import Stamp from "@/components/retro/Stamp";
@@ -133,6 +135,11 @@ export default function KaravaanFeed({
   // verderop bestaat.
   const { data: verslag } = useEtappeVerslag(feed.data?.etappes?.[0]?.stage_id);
   const heeftVerslag = Boolean(verslag?.tekst?.trim());
+
+  // Archiefverhaal voor de rechterkolom. Staat er niets klaar in het
+  // rubriek-tabje, dan komt er ook geen blok en geen knop.
+  const { data: legendeItem } = useActiveLegende(game?.id);
+  const heeftLegende = Boolean(legendeItem?.content?.trim());
 
   // Empty: geen subpoules
   if (subpoules.length === 0 && !subpoulesQuery.isLoading) {
@@ -318,6 +325,15 @@ export default function KaravaanFeed({
           onClick: () => naarSectie("krant-verslag"),
         }]
       : []),
+    ...(heeftLegende
+      ? [{
+          key: "legende",
+          emoji: "📻",
+          merk: `legende-${legendeItem?.id ?? ""}`,
+          titel: t("karavaan.voorpagina.rubLegende"),
+          onClick: () => naarSectie("krant-legende"),
+        }]
+      : []),
     ...(etappes.length > 0
       ? [{
           key: "commentaar",
@@ -365,6 +381,7 @@ export default function KaravaanFeed({
         rubrieken={rubrieken}
         uitslag={uitslagblok}
         dagstand={dagstandblok}
+        legende={heeftLegende ? <Legende gameId={game?.id} /> : undefined}
         artikel={artikel}
       />
 
