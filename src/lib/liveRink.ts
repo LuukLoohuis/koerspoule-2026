@@ -8,6 +8,8 @@
  * fysiek rijden ze immers op dezelfde plek.
  */
 
+import type { GroepsRol } from "@/lib/liveMarathon";
+
 /** Kunstijs is altijd een 400 m-ovaal: rechte stukken met halve cirkels. */
 export const PATH_KUNSTIJS =
   "M 92,46 H 248 A 63,63 0 0 1 248,172 H 92 A 63,63 0 0 1 92,46 Z";
@@ -96,6 +98,12 @@ export type RinkPlacement = {
   fraction: number;
   /** Ronden voor (+) of achter (−) het peloton. */
   tier: number;
+  /** Plek van de groep in de stand; nodig om de rol (en dus de kleur) op te
+   *  zoeken zonder die per rijder mee te slepen. */
+  groupIndex: number;
+  /** Best geplaatste rijder van zijn groep. Alleen die krijgt het
+   *  ronde-badgetje: tien keer "−1" naast een gelost groepje is ruis. */
+  eersteInGroep: boolean;
   /** Verschuiving loodrecht op het pad; positief is naar buiten. */
   offset: number;
 };
@@ -140,6 +148,8 @@ export function placeRiders(
         beennummer: lid.rider.beennummer,
         fraction,
         tier: group.tier,
+        groupIndex,
+        eersteInGroep: i === 0,
         offset: BAAN_OFFSETS[i % BAAN_OFFSETS.length],
       });
     });
@@ -179,17 +189,47 @@ export function tierLabel(tier: number): string {
   return "peloton";
 }
 
-/** Kleur per ronde-baan: voorsprong warm, peloton blauw, achterstand rood. */
-export function tierColor(tier: number): string {
-  if (tier >= 2) return "#c9861a";
-  if (tier === 1) return "#f5761a";
-  if (tier === 0) return "#1268a8";
-  return "#b3352a";
+/* ── Kleuren ──────────────────────────────────────────────────────────────
+ *
+ * Drie kleuren, niet meer. De rol in de koers bepaalt de kleur, niet het
+ * aantal ronden voorsprong: een kopgroep die het peloton op twee ronden heeft
+ * gezet is nog steeds de kopgroep en krijgt dus hetzelfde geel. Het
+ * ronde-verschil is een aparte badge -- informatie zonder extra kleur.
+ */
+
+/** Vulkleur van een schijfje op de baan. */
+export function rolColor(rol: GroepsRol): string {
+  if (rol === "kop") return "#e2a11b";
+  if (rol === "gelost") return "#c0392b";
+  return "#2f6ba8";
 }
 
-export function tierSoftColor(tier: number): string {
-  if (tier >= 2) return "rgba(201,134,26,.75)";
-  if (tier === 1) return "rgba(245,118,26,.72)";
-  if (tier === 0) return "rgba(11,76,145,.3)";
-  return "rgba(179,53,42,.5)";
+/** Rand om het schijfje: donkere tint van de eigen kleur. */
+export function rolRingColor(rol: GroepsRol): string {
+  if (rol === "kop") return "#8a5d06";
+  if (rol === "gelost") return "#7a1e14";
+  return "#17406b";
+}
+
+/** Wit leest niet op geel; daar gaat de tekst donker. */
+export function rolTekstColor(rol: GroepsRol): string {
+  return rol === "kop" ? "#3a2703" : "#ffffff";
+}
+
+export function rolLabel(rol: GroepsRol): string {
+  if (rol === "kop") return "kopgroep";
+  if (rol === "gelost") return "gelost";
+  return "peloton";
+}
+
+/** Merkteken voor je eigen rijders: groen, en verder nergens gebruikt. */
+export const EIGEN_KLEUR = "#12703f";
+
+/**
+ * Ronde-verschil als tekst voor de badge naast een schijfje. Null bij geen
+ * verschil, zodat een gewone koers helemaal zonder badges blijft.
+ */
+export function rondeBadge(tier: number): string | null {
+  if (tier === 0) return null;
+  return tier > 0 ? `+${tier}` : `\u2212${-tier}`;
 }

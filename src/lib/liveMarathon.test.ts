@@ -10,6 +10,8 @@ import {
   projectPoints,
   sortStandings,
   groepsNaam,
+  groepsRol,
+  groepsKopje,
   virtueleUitslag,
   type LiveGroup,
   type LiveRider,
@@ -348,6 +350,72 @@ describe("echte payload van Haaksbergen", () => {
       { id: "fout", name: "Crispijn Ariëns", knsbRelatienummer: "99999999" },
     ]);
     expect(match?.id).toBe("juist");
+  });
+});
+
+describe("groepsRol", () => {
+  const groep = (n: number, tier = 0): LiveGroup => ({
+    index: 0,
+    tier,
+    gapToPrev: null,
+    leden: Array.from({ length: n }, (_, i): RiderPlacing => ({
+      rider: { beennummer: String(i), naam: `R${i}` } as LiveRider,
+      positie: i + 1,
+      tier,
+      gapInGroup: 0,
+    })),
+  });
+
+  it("geeft alles vóór het peloton dezelfde rol", () => {
+    // Kopgroep en eerste achtervolgers krijgen één kleur; het onderscheid
+    // zit in de naam, niet in het palet.
+    const g = [groep(3), groep(5), groep(20)];
+    expect(groepsRol(g, 0)).toBe("kop");
+    expect(groepsRol(g, 1)).toBe("kop");
+    expect(groepsRol(g, 2)).toBe("peloton");
+  });
+
+  it("noemt alles ná het peloton gelost", () => {
+    const g = [groep(20), groep(4), groep(2)];
+    expect(groepsRol(g, 1)).toBe("gelost");
+    expect(groepsRol(g, 2)).toBe("gelost");
+  });
+
+  it("houdt een groep met ronde-voorsprong bij de kop", () => {
+    // Dit is de kern van de kleurkeuze: +1 en +2 ronden krijgen géén eigen
+    // kleur meer, dat verschil staat als badge naast het schijfje.
+    const g = [groep(2, 2), groep(3, 1), groep(30)];
+    expect(groepsRol(g, 0)).toBe("kop");
+    expect(groepsRol(g, 1)).toBe("kop");
+  });
+
+  it("valt terug op peloton bij een onbekende index", () => {
+    expect(groepsRol([], 0)).toBe("peloton");
+  });
+});
+
+describe("groepsKopje", () => {
+  const groep = (n: number, tier = 0): LiveGroup => ({
+    index: 0,
+    tier,
+    gapToPrev: null,
+    leden: Array.from({ length: n }, (_, i): RiderPlacing => ({
+      rider: { beennummer: String(i), naam: `R${i}` } as LiveRider,
+      positie: i + 1,
+      tier,
+      gapInGroup: 0,
+    })),
+  });
+
+  it("laat het ronde-verschil uit de naam weg", () => {
+    const g = [groep(2, 2), groep(30)];
+    expect(groepsNaam(g, 0)).toBe("Kopgroep · +2");
+    expect(groepsKopje(g, 0)).toBe("Kopgroep");
+  });
+
+  it("laat een naam zonder verschil ongemoeid", () => {
+    const g = [groep(3), groep(20)];
+    expect(groepsKopje(g, 1)).toBe("Peloton");
   });
 });
 

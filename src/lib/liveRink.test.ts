@@ -10,6 +10,9 @@ import {
   placeRiders,
   rinkPath,
   tierLabel,
+  rolColor,
+  rolTekstColor,
+  rondeBadge,
   tiersPresent,
   PATH_KUNSTIJS,
   PATH_NATUURIJS,
@@ -203,5 +206,47 @@ describe("baanPositie", () => {
 
   it("heeft een omtrek die klopt met twee rechte stukken en twee bochten", () => {
     expect(OMTREK).toBeCloseTo(2 * 400 + 2 * Math.PI * 150, 6);
+  });
+});
+
+describe("rolColor", () => {
+  it("geeft elke rol één vaste kleur", () => {
+    expect(rolColor("kop")).toBe("#e2a11b");
+    expect(rolColor("peloton")).toBe("#2f6ba8");
+    expect(rolColor("gelost")).toBe("#c0392b");
+  });
+
+  it("zet donkere tekst op geel, wit op de rest", () => {
+    // Wit op #e2a11b haalt geen leesbaar contrast; daar moet het cijfer donker.
+    expect(rolTekstColor("kop")).toBe("#3a2703");
+    expect(rolTekstColor("peloton")).toBe("#ffffff");
+    expect(rolTekstColor("gelost")).toBe("#ffffff");
+  });
+});
+
+describe("badge per groep", () => {
+  it("markeert alleen de eerste rijder van elke groep", () => {
+    // Anders krijgt een gelost groepje van tien rijders tien keer "−1".
+    const p = placeRiders([
+      { tier: 1, leden: [rijder("01", 100), rijder("02", 90)] },
+      { tier: 0, leden: [rijder("03", 80), rijder("04", 70)] },
+    ], { rondeLengte: 400 });
+    expect(p.map((x) => x.eersteInGroep)).toEqual([true, false, true, false]);
+  });
+});
+
+describe("rondeBadge", () => {
+  it("geeft niets terug zonder ronde-verschil", () => {
+    // Een gewone koers hoort helemaal zonder badges te blijven.
+    expect(rondeBadge(0)).toBeNull();
+  });
+
+  it("schrijft voorsprong met een plus", () => {
+    expect(rondeBadge(1)).toBe("+1");
+    expect(rondeBadge(2)).toBe("+2");
+  });
+
+  it("schrijft achterstand met een echt minteken", () => {
+    expect(rondeBadge(-1)).toBe("\u22121");
   });
 });

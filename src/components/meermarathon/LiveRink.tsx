@@ -2,12 +2,16 @@ import { useMemo } from "react";
 import {
   baanPositie,
   placeRiders,
-  tierColor,
+  rolColor,
+  rolRingColor,
+  rolTekstColor,
+  rondeBadge,
+  EIGEN_KLEUR,
   BAAN_B,
   BAAN_H,
   FINISH_PUNT,
 } from "@/lib/liveRink";
-import type { LiveGroup } from "@/lib/liveMarathon";
+import { groepsRol, type LiveGroup } from "@/lib/liveMarathon";
 
 /**
  * De baan met de rijders erop.
@@ -42,8 +46,6 @@ export default function LiveRink({
     const plaatsen = placeRiders(groups, { rondeLengte });
     return plaatsen.map((p) => ({ ...p, ...baanPositie(p.fraction, p.offset) }));
   }, [groups, rondeLengte]);
-
-  const leider = groups[0]?.leden[0]?.rider.beennummer ?? null;
 
   // Eigen rijders om en om boven en onder het schijfje, zodat twee labels
   // dicht bij elkaar niet over elkaar heen vallen.
@@ -127,39 +129,62 @@ export default function LiveRink({
         })
         .map((p) => {
           const mine = mineBeennummers.has(p.beennummer);
-          const isLeider = p.beennummer === leider;
-          const fill = mine ? "#d81f26" : isLeider ? "#e0a020" : tierColor(p.tier);
-          const r = mine ? 15 : 13;
+          // De rol van de groep geeft de kleur, niet het ronde-verschil: een
+          // kopgroep blijft geel, of hij nu een ronde voorligt of niet.
+          const rol = groepsRol(groups, p.groupIndex);
+          const fill = rolColor(rol);
+          const r = mine ? 14 : 13;
           const nummer = p.beennummer.replace(/^0+(?=\d)/, "");
           const naam = mine ? namen?.get(p.beennummer) ?? null : null;
           const boven = mine ? (eigenTeller++ % 2 === 0) : false;
+          // Eén badge per groep: de rest van de groep rijdt per definitie
+          // op dezelfde ronde.
+          const badge = p.eersteInGroep ? rondeBadge(p.tier) : null;
+          // Badge naast het schijfje, buiten de eigen ringen om.
+          const badgeX = p.x + (mine ? 15 : 9);
           return (
             <g key={p.beennummer}>
-              {mine && <circle cx={p.x} cy={p.y} r={r + 6} fill="#d81f26" opacity={0.2} />}
-              <circle cx={p.x} cy={p.y} r={r + 2.5} fill="#fff" />
+              {/* Eigen rijder: groene ring met een witte spleet ertussen. De
+                  spleet maakt het groen los van de vulkleur, zodat het ook op
+                  geel opvalt. De vulling blijft de kleur van zijn groep. */}
+              {mine && (
+                <>
+                  <circle cx={p.x} cy={p.y} r={r + 6.5} fill="none" stroke={EIGEN_KLEUR} strokeWidth="4" />
+                  <circle cx={p.x} cy={p.y} r={r + 2} fill="none" stroke="#fff" strokeWidth="3.5" />
+                </>
+              )}
               <circle
-                cx={p.x} cy={p.y} r={r + 2.5} fill="none"
-                stroke={mine ? "rgba(216,31,38,.9)" : "rgba(9,24,45,.5)"}
-                strokeWidth={mine ? 2.5 : 1.5}
+                cx={p.x} cy={p.y} r={r} fill={fill}
+                stroke={mine ? "none" : rolRingColor(rol)} strokeWidth={mine ? 0 : 2.5}
               />
-              <circle cx={p.x} cy={p.y} r={r} fill={fill} />
               <text
                 x={p.x} y={p.y + 4} textAnchor="middle"
                 fontFamily="'JetBrains Mono', monospace" fontSize={mine ? 12 : 11}
-                fontWeight="700" fill="#fff"
+                fontWeight="700" fill={rolTekstColor(rol)}
               >
                 {nummer}
               </text>
+              {badge && (
+                <>
+                  <rect x={badgeX} y={p.y - r - 6} width="23" height="14" rx="4" fill="#1b2f14" />
+                  <text
+                    x={badgeX + 11.5} y={p.y - r + 4.5} textAnchor="middle"
+                    fontFamily="'JetBrains Mono', monospace" fontSize="10" fontWeight="700" fill="#fff"
+                  >
+                    {badge}
+                  </text>
+                </>
+              )}
               {naam && (
                 <>
                   <rect
                     x={p.x - naam.length * 3.1 - 6}
-                    y={boven ? p.y - r - 26 : p.y + r + 8}
+                    y={boven ? p.y - r - 30 : p.y + r + 12}
                     width={naam.length * 6.2 + 12}
-                    height="18" rx="4" fill="#d81f26"
+                    height="18" rx="4" fill={EIGEN_KLEUR}
                   />
                   <text
-                    x={p.x} y={boven ? p.y - r - 13 : p.y + r + 21}
+                    x={p.x} y={boven ? p.y - r - 17 : p.y + r + 25}
                     textAnchor="middle" fontFamily="'DM Sans', sans-serif"
                     fontSize="11" fontWeight="600" fill="#fff"
                   >

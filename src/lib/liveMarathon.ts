@@ -436,6 +436,31 @@ export function groepsNaam(groups: LiveGroup[], index: number): string {
   return "Gelost";
 }
 
+/**
+ * Rol van een groep in de koers. Bepaalt de kleur op de baan: drie kleuren,
+ * los van het aantal ronden voorsprong. Een kopgroep met twee ronden marge is
+ * nog steeds de kopgroep; dat verschil staat als badge naast het schijfje.
+ * "Eerste achtervolgers" rijden vóór het peloton en horen dus bij de kop.
+ */
+export type GroepsRol = "kop" | "peloton" | "gelost";
+
+export function groepsRol(groups: LiveGroup[], index: number): GroepsRol {
+  const g = groups[index];
+  if (!g) return "peloton";
+  if (g.tier > 0) return "kop";
+  const pel = pelotonIndex(groups);
+  if (index === pel) return "peloton";
+  return index < pel ? "kop" : "gelost";
+}
+
+/**
+ * De naam zonder het ronde-verschil: dat staat naast de naam als badge, en
+ * twee keer "+2" op één tegel leest als een fout.
+ */
+export function groepsKopje(groups: LiveGroup[], index: number): string {
+  return groepsNaam(groups, index).split(" · ")[0];
+}
+
 export type UitslagRegel = {
   positie: number;
   rider: LiveRider;
