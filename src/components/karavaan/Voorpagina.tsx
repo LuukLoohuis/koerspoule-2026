@@ -5,6 +5,12 @@ import SubpouleKiezer from "@/components/karavaan/SubpouleKiezer";
 
 const GEZIEN_SLEUTEL = "kp_krant_gezien_v1";
 
+/** Initiaal op kolombreedte: zelfde gebaar als boven het hoofdartikel. */
+const INITIAAL_KLEIN =
+  "[&::first-letter]:float-left [&::first-letter]:pr-1.5 [&::first-letter]:pt-[3px] " +
+  "[&::first-letter]:font-display [&::first-letter]:text-[27px] " +
+  "[&::first-letter]:font-black [&::first-letter]:leading-[0.8] [&::first-letter]:text-foreground";
+
 export type StandCel = {
   key: string;
   waarde: string;
@@ -287,7 +293,17 @@ export default function Voorpagina({
                         </p>
                         {/* Twee regels in plaats van vier: de kolom moet ook de
                             uitslag en het archiefverhaal kwijt kunnen. */}
-                        <p className={cn("font-serif text-[12px] leading-[1.42] text-foreground/90", !uit && "line-clamp-2")}>
+                        {/* Initiaal, net als boven het hoofdartikel. Drie
+                            regels in plaats van twee: een initiaal is zelf al
+                            twee regels hoog, dus bij twee bleef er niets van
+                            de quote over. */}
+                        <p
+                          className={cn(
+                            "font-serif text-[12px] leading-[1.45] text-foreground/90",
+                            INITIAAL_KLEIN,
+                            !uit && "line-clamp-3",
+                          )}
+                        >
                           {q.tekst}
                         </p>
                         {/* Stil gebaar, geen rode regel: rood hoort hier bij de

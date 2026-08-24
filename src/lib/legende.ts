@@ -6,17 +6,22 @@
  * De krant toont er eerst één alinea van en zet de rest achter "Lees het
  * verhaal"; die splitsing hoort testbaar te zijn, los van het component.
  */
-import { alineas, veiligeUrl, zonderNadruk } from "@/lib/verslag";
+import { alineas, intro, veiligeUrl, zonderNadruk } from "@/lib/verslag";
 
 /** Kortste opening die nog als intro leest; korter is een losse zin. */
 const OPENING_MIN = 90;
 
 export type LegendeDelen = {
-  /** Wat dicht zichtbaar is. */
+  /** Wat dicht zichtbaar is: hooguit een korte opening. */
   teaser: string;
-  /** Wat achter het uitklappen zit; leeg bij een verhaal van één alinea. */
+  /** Het hele verhaal, zoals het opengeklapt in de kolom staat. */
   rest: string[];
+  /** Valt er iets uit te klappen, of staat alles al in de opening? */
+  meer: boolean;
 };
+
+/** Langer dan dit is geen opening meer maar een lap tekst in een smalle kolom. */
+const TEASER_MAX = 190;
 
 export function legendeDelen(tekst: string | null | undefined): LegendeDelen {
   const schoon = zonderNadruk(String(tekst ?? ""));
@@ -46,8 +51,14 @@ export function legendeDelen(tekst: string | null | undefined): LegendeDelen {
     }
   }
 
-  if (stukken.length === 0) return { teaser: "", rest: [] };
-  return { teaser: stukken[0], rest: stukken.slice(1) };
+  if (stukken.length === 0) return { teaser: "", rest: [], meer: false };
+
+  // Dicht staat er hooguit een korte opening -- ook als het verhaal uit één
+  // lange alinea bestaat. Anders vult een geplakt verhaal de hele kolom en
+  // valt er niets in te klappen.
+  const heel = stukken.join("\n\n");
+  const opening = intro(heel, TEASER_MAX);
+  return { teaser: opening, rest: stukken, meer: opening !== stukken[0] || stukken.length > 1 };
 }
 
 /**
