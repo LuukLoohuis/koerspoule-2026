@@ -94,3 +94,35 @@ export function bouwKop(input: {
   if (plaats) return `${naam} wint in ${plaats}`;
   return etappeNummer ? `${naam} wint etappe ${etappeNummer}` : `${naam} wint`;
 }
+
+/**
+ * Kop uit de eerste zin van een verslag.
+ *
+ * Nodig voor een etappe zonder winnaar -- een geschrapte of geneutraliseerde
+ * rit. `bouwKop` geeft dan niets terug, en zonder kop verdween het hele
+ * hoofdartikel van de voorpagina, verslag en al. De eerste zin van het verslag
+ * is wél nieuws en is door de redactie zelf goedgekeurd, dus die mag de kop
+ * zijn.
+ *
+ * Alleen de eerste zin, en die wordt bij een dubbele punt of gedachtestreepje
+ * afgekapt: "De derde etappe kende geen winnaar: noodweer maakte een finish
+ * onmogelijk" wordt "De derde etappe kende geen winnaar". Blijft er dan nog
+ * te veel over, dan is het geen kop maar een alinea en geven we niets terug.
+ */
+export function kopUitVerslag(tekst: string | null | undefined, maxLengte = 72): string | null {
+  // Sterretjes zijn opmaak voor deelnemersnamen; die horen niet in een kop.
+  const plat = String(tekst ?? "").replace(/\*\*([^*]+)\*\*/g, "$1").trim();
+  if (!plat) return null;
+
+  const eersteZin = plat.split(/(?<=[.!?])\s/)[0]?.trim() ?? "";
+  if (!eersteZin) return null;
+
+  // Kappen bij de eerste dubbele punt of gedachtestreepje, maar alleen als er
+  // een zinnige kop overblijft.
+  const kort = eersteZin.split(/\s*[:\u2014\u2013]\s*/)[0]?.trim() ?? "";
+  const kandidaat = kort.length >= 20 ? kort : eersteZin;
+
+  const zonderPunt = kandidaat.replace(/[.]$/, "").trim();
+  if (zonderPunt.length < 12 || zonderPunt.length > maxLengte) return null;
+  return zonderPunt;
+}

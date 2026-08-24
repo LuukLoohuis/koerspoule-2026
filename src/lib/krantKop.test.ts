@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { achternaam, kopNoemtWinnaar, aankomstplaats, bouwKop, kopNoemtPoulenaam } from "./krantKop";
+import { achternaam, kopNoemtWinnaar, aankomstplaats, bouwKop, kopNoemtPoulenaam, kopUitVerslag } from "./krantKop";
 
 describe("achternaam", () => {
   it("pakt het laatste woord", () => {
@@ -139,5 +139,41 @@ describe("bouwKop weert poulenamen", () => {
 
   it("werkt zonder poulenamen precies als voorheen", () => {
     expect(bouwKop({ ...basis, gegenereerd: "Pogacar slaat meteen toe" })).toBe("Pogacar slaat meteen toe");
+  });
+});
+
+describe("kopUitVerslag", () => {
+  it("maakt een kop van de eerste zin", () => {
+    expect(kopUitVerslag("De rit werd geschrapt. Later meer.")).toBe("De rit werd geschrapt");
+  });
+
+  it("kapt af bij een dubbele punt", () => {
+    // Anders staat de hele toelichting in de kop.
+    expect(
+      kopUitVerslag(
+        "De derde Vuelta-etappe kende geen winnaar: noodweer maakte een finish in Font Romeu onmogelijk.",
+      ),
+    ).toBe("De derde Vuelta-etappe kende geen winnaar");
+  });
+
+  it("houdt de hele zin als het stuk vóór de dubbele punt te kort is", () => {
+    expect(kopUitVerslag("Gedaan: de rit ging niet door.")).toBe("Gedaan: de rit ging niet door");
+  });
+
+  it("haalt de sterretjes van deelnemersnamen weg", () => {
+    expect(kopUitVerslag("**Discovery Channel** pakt de dagzege.")).toBe(
+      "Discovery Channel pakt de dagzege",
+    );
+  });
+
+  it("geeft niets terug bij een zin die te lang is voor een kop", () => {
+    const lang =
+      "Na een lange dag waarin het peloton eerst uren op de wind reed en daarna alsnog besloot om te wachten gebeurde er weinig";
+    expect(kopUitVerslag(lang)).toBeNull();
+  });
+
+  it("geeft niets terug zonder tekst", () => {
+    expect(kopUitVerslag("")).toBeNull();
+    expect(kopUitVerslag(null)).toBeNull();
   });
 });

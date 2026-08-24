@@ -10,7 +10,7 @@ import DaguitslagChart from "@/components/DaguitslagChart";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import Voorpagina, { type Rubriek, type StandCel, type Hoofdartikel } from "@/components/karavaan/Voorpagina";
-import { bouwKop } from "@/lib/krantKop";
+import { bouwKop, kopUitVerslag } from "@/lib/krantKop";
 import { useAllGames } from "@/hooks/useAllGames";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
@@ -249,7 +249,17 @@ export default function KaravaanFeed({
         ...laatsteEtappe.overallStandings.flatMap((r) => [r.team_name, r.display_name]),
       ],
     });
-    if (!kop) return null;
+    // Geen winnaar (geschrapte of geneutraliseerde rit) en tóch nieuws: dan is
+    // het verslag het hoofdartikel en komt de kop uit de eerste zin daarvan.
+    // Zonder deze terugval verdween het hele artikelblok van de voorpagina --
+    // verslag, chips en al -- omdat bouwKop niets kon beweren.
+    const kopOfVerslag =
+      kop ??
+      (heeftVerslag
+        ? kopUitVerslag(verslag?.tekst) ??
+          `${thema.etappe} ${laatsteEtappe.stage_number} zonder uitslag`
+        : null);
+    if (!kopOfVerslag) return null;
 
     const chips: string[] = [];
     if (laatsteEtappe.mijnDagpunten != null) chips.push(`+${laatsteEtappe.mijnDagpunten} ${t("karavaan.ministrip.labelPunten")}`);
@@ -263,7 +273,7 @@ export default function KaravaanFeed({
 
     return {
       kicker: t("karavaan.voorpagina.kicker", { etappe: thema.etappe, nummer: laatsteEtappe.stage_number }),
-      kop,
+      kop: kopOfVerslag,
       verslag: heeftVerslag
         ? (
           <Verslag
