@@ -29,6 +29,63 @@ export const LEAD_FRACTION = 0.2;
 /** Groepen staan in klassementsvolgorde een vast stuk uit elkaar. */
 export const GROUP_SPREAD = 0.085;
 
+/* ── Baangeometrie volgens het ontwerp ────────────────────────────────────
+ *
+ * Een 400 m-ovaal in een genormaliseerd vak van 800×400: twee rechte stukken
+ * van 400 en twee bochten met straal 150. De middellijn loopt over y=350
+ * (onder) en y=50 (boven); de rechte stukken beginnen op x=200 en eindigen op
+ * x=600.
+ *
+ * Schaatsers rijden LINKSOM. In dit vak betekent dat: over het onderste rechte
+ * stuk naar rechts, de rechterbocht omhoog, over het bovenste stuk naar links,
+ * en door de linkerbocht weer omlaag.
+ *
+ * De finish ligt aan het eind van een recht stuk, vlak vóór de bocht -- zoals
+ * op een echte baan. Daarom start een ronde niet aan het begin van het rechte
+ * stuk maar aan het eind ervan: fractie 0 valt op (600, 350).
+ */
+export const BAAN_B = 800;
+export const BAAN_H = 400;
+/** Lengte van één recht stuk. */
+export const RECHT = 400;
+/** Straal van een bocht, gemeten op de middellijn. */
+export const BOCHT_R = 150;
+export const OMTREK = 2 * RECHT + 2 * Math.PI * BOCHT_R;
+
+/** Waar een ronde begint en eindigt: eind van het onderste rechte stuk. */
+export const FINISH_PUNT = { x: 200 + RECHT, y: 350 };
+
+/**
+ * Positie op de baan voor een fractie van een ronde.
+ *
+ * `off` verschuift loodrecht op de rijrichting; positief is naar buiten, weg
+ * van het middenterrein. Zo blijven rijders binnen de ijsband in plaats van
+ * over het gras te schaatsen.
+ */
+export function baanPositie(fractie: number, off = 0): { x: number; y: number } {
+  const f = ((fractie % 1) + 1) % 1;
+  // Fractie 0 op de finish leggen: die ligt een recht stuk verderop in de
+  // parametrisering hieronder.
+  const d = (f * OMTREK + RECHT) % OMTREK;
+  const bocht = Math.PI * BOCHT_R;
+
+  if (d < RECHT) return { x: 200 + d, y: 350 + off };
+  if (d < RECHT + bocht) {
+    const t = (d - RECHT) / BOCHT_R;
+    return { x: 600 + (BOCHT_R + off) * Math.sin(t), y: 200 + (BOCHT_R + off) * Math.cos(t) };
+  }
+  if (d < 2 * RECHT + bocht) return { x: 600 - (d - RECHT - bocht), y: 50 - off };
+  const t = (d - 2 * RECHT - bocht) / BOCHT_R;
+  return { x: 200 - (BOCHT_R + off) * Math.sin(t), y: 200 - (BOCHT_R + off) * Math.cos(t) };
+}
+
+/**
+ * Baanoffsets binnen een groep. Een pak waaiert over de breedte van de baan
+ * uit in plaats van op één lijn te stapelen -- anders vallen de schijfjes op
+ * elkaar zodra er meer dan een paar rijders bij elkaar zitten.
+ */
+export const BAAN_OFFSETS = [-26, 0, 24];
+
 export function rinkPath(ijsType: string | null | undefined): string {
   return ijsType === "natuurijs" ? PATH_NATUURIJS : PATH_KUNSTIJS;
 }
@@ -75,14 +132,15 @@ export function placeRiders(
       const raw = echt !== null ? echt - rotation : base - i * MIN_SEPARATION;
       // Positief modulo: fracties moeten binnen 0..1 blijven.
       const fraction = ((raw % 1) + 1) % 1;
-      // Hoger tier ligt verder naar buiten; binnen de groep licht zigzaggen
-      // zodat een dichte kopgroep niet één klont wordt.
-      const zigzag = i % 2 === 0 ? -3.5 : 3.5;
+      // Waaier het pak over de breedte van de baan uit. Ronde-voorsprong
+      // krijgt géén eigen ring meer: met de echte positie uit `meter` rijden
+      // die rijders al ergens anders op het ovaal, en een extra ring duwde ze
+      // buiten het ijs.
       out.push({
         beennummer: lid.rider.beennummer,
         fraction,
         tier: group.tier,
-        offset: clampTier(group.tier) * LANE_WIDTH + zigzag,
+        offset: BAAN_OFFSETS[i % BAAN_OFFSETS.length],
       });
     });
   });

@@ -175,52 +175,6 @@ function LiveInhoud({
         </div>
       )}
 
-      {/* KPI-strook. "Te gaan" erbij: tijdens een marathon is het aantal
-          resterende ronden het cijfer waar iedereen naar kijkt. */}
-      <div className="grid grid-cols-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#0d2f57] to-[#12508f] text-[#eaf6ff] shadow-lg sm:grid-cols-4">
-        {[
-          {
-            label: "Virtuele punten",
-            waarde: String(projectie.totaal),
-            eenheid: "pt",
-          },
-          {
-            label: "Mijn rijders",
-            waarde: String(projectie.perBaan.reduce((s, p) => s + p.rijders.length, 0)),
-            eenheid: mineRiderIds.size > 0 ? `van ${mineRiderIds.size}` : undefined,
-          },
-          {
-            label: "Ronde",
-            waarde: track.state?.maxRonden != null ? String(track.state.maxRonden) : "—",
-            eenheid: track.state?.totaalRonden != null ? `/ ${track.state.totaalRonden}` : undefined,
-          },
-          {
-            label: "Te gaan",
-            waarde: track.state?.rondenTeGaan != null ? String(track.state.rondenTeGaan) : "—",
-            eenheid:
-              track.state?.rondenTeGaan != null && track.state?.rondeLengte
-                ? `rondes · ${((track.state.rondenTeGaan * track.state.rondeLengte) / 1000).toFixed(1)} km`
-                : "rondes",
-          },
-        ].map((k, i) => (
-          <div
-            key={k.label}
-            className={cn(
-              "px-3 py-2.5",
-              i % 2 === 1 && "border-l border-white/15",
-              i >= 2 && "border-t border-white/15 sm:border-t-0",
-              i === 2 && "sm:border-l sm:border-white/15",
-            )}
-          >
-            <div className="font-mono text-[8px] uppercase tracking-[0.16em] opacity-70">{k.label}</div>
-            <div className="mt-0.5 flex items-baseline gap-1.5">
-              <span className="font-display text-xl font-bold tabular-nums">{k.waarde}</span>
-              {k.eenheid && <span className="font-mono text-[10px] opacity-70">{k.eenheid}</span>}
-            </div>
-          </div>
-        ))}
-      </div>
-
       {/* Kop van de koers */}
       {voorsprong.length > 0 ? (
         <KopBanner
@@ -239,10 +193,11 @@ function LiveInhoud({
         />
       ) : null}
 
-      {/* Twee kolommen op breed scherm: de baan links, je eigen cijfers
-          rechts. Onder elkaar stond de virtuele uitslag zo ver naar beneden
-          dat je hem tijdens de koers niet zag zonder te scrollen. */}
-      <div className="grid gap-3 lg:grid-cols-[1.45fr_1fr] lg:items-start">
+      {/* Twee kolommen op breed scherm: de baan links met de cijfertegels
+          eronder, je eigen punten en de virtuele uitslag rechts. De baan krijgt
+          bewust het meeste gewicht -- dat is waar je tijdens de koers naar
+          kijkt; de rest is naslag. */}
+      <div className="grid gap-3 lg:grid-cols-[1.9fr_1fr] lg:items-start">
         <div className="space-y-3">
         {/* Baan */}
         <div className="overflow-hidden rounded-2xl border border-[rgba(18,104,168,.25)] bg-gradient-to-b from-[#fbfeff] to-[#d6ebf9]">
@@ -250,6 +205,7 @@ function LiveInhoud({
             groups={track.groups}
             ijsType={race.ijsType}
             mineBeennummers={mineBeennummers}
+          namen={new Map(track.riders.map((r) => [r.beennummer, r.naam.split(" ").slice(-1)[0]]))}
             rondeLengte={track.state?.rondeLengte ?? null}
             baanNaam={track.trackId.split(" ")[0]}
             rondeLabel={
@@ -273,6 +229,52 @@ function LiveInhoud({
             ))}
           </div>
         </div>
+        {/* KPI-strook. "Te gaan" erbij: tijdens een marathon is het aantal
+            resterende ronden het cijfer waar iedereen naar kijkt. */}
+        <div className="grid grid-cols-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#0d2f57] to-[#12508f] text-[#eaf6ff] shadow-lg sm:grid-cols-4">
+          {[
+            {
+              label: "Virtuele punten",
+              waarde: String(projectie.totaal),
+              eenheid: "pt",
+            },
+            {
+              label: "Mijn rijders",
+              waarde: String(projectie.perBaan.reduce((s, p) => s + p.rijders.length, 0)),
+              eenheid: mineRiderIds.size > 0 ? `van ${mineRiderIds.size}` : undefined,
+            },
+            {
+              label: "Ronde",
+              waarde: track.state?.maxRonden != null ? String(track.state.maxRonden) : "—",
+              eenheid: track.state?.totaalRonden != null ? `/ ${track.state.totaalRonden}` : undefined,
+            },
+            {
+              label: "Te gaan",
+              waarde: track.state?.rondenTeGaan != null ? String(track.state.rondenTeGaan) : "—",
+              eenheid:
+                track.state?.rondenTeGaan != null && track.state?.rondeLengte
+                  ? `rondes · ${((track.state.rondenTeGaan * track.state.rondeLengte) / 1000).toFixed(1)} km`
+                  : "rondes",
+            },
+          ].map((k, i) => (
+            <div
+              key={k.label}
+              className={cn(
+                "px-3 py-2.5",
+                i % 2 === 1 && "border-l border-white/15",
+                i >= 2 && "border-t border-white/15 sm:border-t-0",
+                i === 2 && "sm:border-l sm:border-white/15",
+              )}
+            >
+              <div className="font-mono text-[8px] uppercase tracking-[0.16em] opacity-70">{k.label}</div>
+              <div className="mt-0.5 flex items-baseline gap-1.5">
+                <span className="font-display text-xl font-bold tabular-nums">{k.waarde}</span>
+                {k.eenheid && <span className="font-mono text-[10px] opacity-70">{k.eenheid}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Situatie op de baan */}
         <div>
           <div className="mb-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted-foreground">

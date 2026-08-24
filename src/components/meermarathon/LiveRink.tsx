@@ -1,20 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { LiveGroup } from "@/lib/liveMarathon";
+import { useMemo } from "react";
 import {
-  FINISH_FRACTION,
-  offsetFromCenter,
+  baanPositie,
   placeRiders,
-  rinkPath,
-  RINK_CENTER,
   tierColor,
+  BAAN_B,
+  BAAN_H,
+  FINISH_PUNT,
 } from "@/lib/liveRink";
+import type { LiveGroup } from "@/lib/liveMarathon";
 
 /**
- * De baan met de actuele posities.
+ * De baan met de rijders erop.
  *
- * Rijders met ronde-voorsprong liggen op een eigen baan naar buiten: fysiek
- * rijden ze op dezelfde plek als het peloton, dus zonder eigen baan zouden ze
- * op elkaar vallen en zou de kop onzichtbaar worden.
+ * Geometrie volgt het ontwerp: een 400 m-ovaal in een vak van 800×400, twee
+ * rechte stukken en twee bochten. Rijders staan op hun echte plek in de ronde
+ * (meter gedeeld door rondelengte) en rijden linksom -- over het onderste
+ * stuk naar rechts, de bocht omhoog, boven naar links terug.
+ *
+ * Alles is percentagegebaseerd binnen de viewBox, dus het schaalt mee met de
+ * kaart eromheen zonder media queries.
  */
 export default function LiveRink({
   groups,
@@ -23,6 +27,7 @@ export default function LiveRink({
   rondeLengte,
   baanNaam,
   rondeLabel,
+  namen,
 }: {
   groups: LiveGroup[];
   ijsType: string | null;
@@ -30,105 +35,67 @@ export default function LiveRink({
   rondeLengte: number | null;
   baanNaam: string;
   rondeLabel: string | null;
+  /** Naam per beennummer, voor het labeltje bij je eigen rijders. */
+  namen?: Map<string, string>;
 }) {
-  const pathRef = useRef<SVGPathElement | null>(null);
-  const [pathLength, setPathLength] = useState(0);
-  const d = rinkPath(ijsType);
+  const punten = useMemo(() => {
+    const plaatsen = placeRiders(groups, { rondeLengte });
+    return plaatsen.map((p) => ({ ...p, ...baanPositie(p.fraction, p.offset) }));
+  }, [groups, rondeLengte]);
 
-  useEffect(() => {
-    if (pathRef.current) setPathLength(pathRef.current.getTotalLength());
-  }, [d]);
+  const leider = groups[0]?.leden[0]?.rider.beennummer ?? null;
 
-  const placements = useMemo(() => placeRiders(groups, { rondeLengte }), [groups, rondeLengte]);
-
-  // Zonder padlengte kunnen we nog niets positioneren (eerste render).
-  const points = useMemo(() => {
-    const el = pathRef.current;
-    if (!el || pathLength === 0) return [];
-    return placements.map((p) => {
-      const raw = el.getPointAtLength(p.fraction * pathLength);
-      const pos = offsetFromCenter({ x: raw.x, y: raw.y }, p.offset);
-      return { ...p, ...pos };
-    });
-  }, [placements, pathLength]);
-
-  const finish = useMemo(() => {
-    const el = pathRef.current;
-    if (!el || pathLength === 0) return null;
-    const a = el.getPointAtLength(FINISH_FRACTION * pathLength);
-    const b = el.getPointAtLength(((FINISH_FRACTION + 0.01) % 1) * pathLength);
-    const tx = b.x - a.x;
-    const ty = b.y - a.y;
-    const len = Math.hypot(tx, ty) || 1;
-    // Loodrecht op de rijrichting, zodat de lijn bij elke baanvorm klopt.
-    const nx = -ty / len;
-    const ny = tx / len;
-    const label = offsetFromCenter({ x: a.x, y: a.y }, 42);
-    return {
-      x1: a.x - nx * 26, y1: a.y - ny * 26,
-      x2: a.x + nx * 26, y2: a.y + ny * 26,
-      lx: Math.max(50, Math.min(262, label.x)),
-      ly: Math.max(14, Math.min(226, label.y)),
-    };
-  }, [pathLength]);
-
-  const leader = groups[0]?.leden[0]?.rider.beennummer ?? null;
+  // Eigen rijders om en om boven en onder het schijfje, zodat twee labels
+  // dicht bij elkaar niet over elkaar heen vallen.
+  let eigenTeller = 0;
 
   return (
     <svg
-      viewBox="0 0 340 232"
+      viewBox={`0 0 ${BAAN_B} ${BAAN_H}`}
       className="block h-auto w-full"
       role="img"
       aria-label={`Baan met de actuele posities van de rijders op ${baanNaam}`}
     >
       <defs>
-        <linearGradient id="mm-sky" x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0" stopColor="#fbfeff" /><stop offset="1" stopColor="#dceffb" />
+        <linearGradient id="mm-ijs" x1="0" y1="0" x2="0.7" y2="1">
+          <stop offset="0" stopColor="#eef6fd" />
+          <stop offset="0.55" stopColor="#dcebfa" />
+          <stop offset="1" stopColor="#cfe3f8" />
         </linearGradient>
-        <linearGradient id="mm-ice" x1="0.1" y1="0" x2="0.9" y2="1">
-          <stop offset="0" stopColor="#eefaff" />
-          <stop offset="0.45" stopColor="#cfe8f8" />
-          <stop offset="1" stopColor="#aed6ef" />
+        <linearGradient id="mm-band" x1="0" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stopColor="#cfe3f8" />
+          <stop offset="1" stopColor="#b9d6f4" />
         </linearGradient>
-        <filter id="mm-shadow" x="-30%" y="-30%" width="160%" height="170%">
-          <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#0b3a66" floodOpacity="0.2" />
-        </filter>
-        <filter id="mm-dot" x="-60%" y="-60%" width="220%" height="220%">
-          <feDropShadow dx="0" dy="1" stdDeviation="1.1" floodColor="#062a4d" floodOpacity="0.42" />
-        </filter>
+        <linearGradient id="mm-midden" x1="0" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stopColor="#eef6fd" />
+          <stop offset="1" stopColor="#dfeefb" />
+        </linearGradient>
       </defs>
 
-      <rect width="340" height="232" fill="url(#mm-sky)" />
-      <g filter="url(#mm-shadow)">
-        <path d={d} fill="none" stroke="#ffffff" strokeWidth="52" />
-      </g>
-      <path ref={pathRef} d={d} fill="none" stroke="url(#mm-ice)" strokeWidth="47" />
-      <path d={d} fill="none" stroke="#ffffff" strokeWidth="1.1" strokeDasharray="4 8" opacity="0.8" />
+      <rect x="0" y="0" width={BAAN_B} height={BAAN_H} fill="url(#mm-ijs)" />
 
-      {finish && (
-        <>
-          <line
-            x1={finish.x1} y1={finish.y1} x2={finish.x2} y2={finish.y2}
-            stroke="#0b4c91" strokeWidth="2.6" strokeLinecap="round"
-          />
-          <text
-            x={finish.lx} y={finish.ly} textAnchor="middle" dominantBaseline="middle"
-            fontFamily="'JetBrains Mono', monospace" fontSize="7.5" fill="#0b4c91" letterSpacing="1"
-          >
-            START / FINISH
-          </text>
-        </>
-      )}
+      {/* Buitenrand van de ijsband. */}
+      <rect x="10" y="10" width="780" height="380" rx="190" fill="url(#mm-band)" />
+      <rect x="10" y="10" width="780" height="380" rx="190" fill="none" stroke="#fff" strokeWidth="3" />
+
+      {/* Middenterrein: hapt de band uit tot een ring. */}
+      <rect x="90" y="90" width="620" height="220" rx="110" fill="url(#mm-midden)" />
+      <rect x="90" y="90" width="620" height="220" rx="110" fill="none" stroke="#fff" strokeWidth="3" />
+
+      <rect
+        x="136" y="132" width="528" height="136" rx="68"
+        fill="none" stroke="rgba(255,255,255,.85)" strokeWidth="1" strokeDasharray="7 6"
+      />
 
       <text
-        x={RINK_CENTER.x - 6} y={RINK_CENTER.y - 3} textAnchor="middle"
-        fontFamily="Oswald, sans-serif" fontSize="11" fill="rgba(11,76,145,.32)" letterSpacing="2.5"
+        x={BAAN_B / 2} y={BAAN_H / 2 - 6} textAnchor="middle"
+        fontFamily="'JetBrains Mono', monospace" fontSize="24" fill="#9dbde3" letterSpacing="10"
       >
         {baanNaam.toUpperCase()}
       </text>
       <text
-        x={RINK_CENTER.x - 6} y={RINK_CENTER.y + 11} textAnchor="middle"
-        fontFamily="'JetBrains Mono', monospace" fontSize="7.5" fill="rgba(11,76,145,.28)" letterSpacing="1.2"
+        x={BAAN_B / 2} y={BAAN_H / 2 + 20} textAnchor="middle"
+        fontFamily="'JetBrains Mono', monospace" fontSize="12" fill="#9dbde3" letterSpacing="4"
       >
         {[
           ijsType === "natuurijs" ? "NATUURIJS" : "KUNSTIJS",
@@ -137,13 +104,21 @@ export default function LiveRink({
         ].filter(Boolean).join(" · ")}
       </text>
 
-      {/* Genummerde schijfjes in plaats van kale stippen: op een baan met
-          veertig rijders wil je zien wie waar zit, en het beennummer is waar
-          een schaatsvolger op stuurt. Witte rand plus donkere ring houdt ze
-          leesbaar op het lichte ijs, ook waar een pak dicht op elkaar rijdt. */}
-      {[...points]
-        // Koplopers als laatste tekenen zodat ze bovenop liggen; eigen rijders
-        // helemaal bovenop.
+      {/* Finish: aan het eind van het rechte stuk, vlak vóór de bocht. */}
+      <line
+        x1={FINISH_PUNT.x} y1={FINISH_PUNT.y - 30}
+        x2={FINISH_PUNT.x} y2={FINISH_PUNT.y + 30}
+        stroke="#0f2f5c" strokeWidth="3" strokeLinecap="round"
+      />
+      <text
+        x={FINISH_PUNT.x} y={FINISH_PUNT.y + 50} textAnchor="middle"
+        fontFamily="'JetBrains Mono', monospace" fontSize="11" fill="#5b83b3" letterSpacing="2.6"
+      >
+        START / FINISH
+      </text>
+
+      {/* Koplopers bovenop, eigen rijders helemaal bovenop. */}
+      {[...punten]
         .sort((a, b) => {
           const am = mineBeennummers.has(a.beennummer) ? 1 : 0;
           const bm = mineBeennummers.has(b.beennummer) ? 1 : 0;
@@ -152,35 +127,46 @@ export default function LiveRink({
         })
         .map((p) => {
           const mine = mineBeennummers.has(p.beennummer);
-          const isLeader = p.beennummer === leader;
-          const fill = mine ? "#d81f26" : isLeader ? "#e0a020" : tierColor(p.tier);
-          const r = mine ? 7.2 : 6.2;
+          const isLeider = p.beennummer === leider;
+          const fill = mine ? "#d81f26" : isLeider ? "#e0a020" : tierColor(p.tier);
+          const r = mine ? 15 : 13;
+          const nummer = p.beennummer.replace(/^0+(?=\d)/, "");
+          const naam = mine ? namen?.get(p.beennummer) ?? null : null;
+          const boven = mine ? (eigenTeller++ % 2 === 0) : false;
           return (
             <g key={p.beennummer}>
-              {/* Eigen rijders krijgen een zachte gloed, zodat je ze in één
-                  oogopslag terugvindt tussen de rest. */}
-              {mine && <circle cx={p.x} cy={p.y} r={r + 3.2} fill="#d81f26" opacity={0.22} />}
-              <circle cx={p.x} cy={p.y} r={r + 1.6} fill="#fff" />
+              {mine && <circle cx={p.x} cy={p.y} r={r + 6} fill="#d81f26" opacity={0.2} />}
+              <circle cx={p.x} cy={p.y} r={r + 2.5} fill="#fff" />
               <circle
-                cx={p.x}
-                cy={p.y}
-                r={r + 1.6}
-                fill="none"
-                stroke={mine ? "rgba(216,31,38,.85)" : "rgba(9,24,45,.45)"}
-                strokeWidth={mine ? 1.4 : 0.9}
+                cx={p.x} cy={p.y} r={r + 2.5} fill="none"
+                stroke={mine ? "rgba(216,31,38,.9)" : "rgba(9,24,45,.5)"}
+                strokeWidth={mine ? 2.5 : 1.5}
               />
               <circle cx={p.x} cy={p.y} r={r} fill={fill} />
               <text
-                x={p.x}
-                y={p.y + 1.9}
-                textAnchor="middle"
-                fontFamily="'JetBrains Mono', monospace"
-                fontSize={mine ? 6 : 5.4}
-                fontWeight="700"
-                fill="#fff"
+                x={p.x} y={p.y + 4} textAnchor="middle"
+                fontFamily="'JetBrains Mono', monospace" fontSize={mine ? 12 : 11}
+                fontWeight="700" fill="#fff"
               >
-                {p.beennummer.replace(/^0+(?=\d)/, "")}
+                {nummer}
               </text>
+              {naam && (
+                <>
+                  <rect
+                    x={p.x - naam.length * 3.1 - 6}
+                    y={boven ? p.y - r - 26 : p.y + r + 8}
+                    width={naam.length * 6.2 + 12}
+                    height="18" rx="4" fill="#d81f26"
+                  />
+                  <text
+                    x={p.x} y={boven ? p.y - r - 13 : p.y + r + 21}
+                    textAnchor="middle" fontFamily="'DM Sans', sans-serif"
+                    fontSize="11" fontWeight="600" fill="#fff"
+                  >
+                    {naam}
+                  </text>
+                </>
+              )}
             </g>
           );
         })}
