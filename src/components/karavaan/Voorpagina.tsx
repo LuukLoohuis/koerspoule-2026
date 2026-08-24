@@ -273,19 +273,21 @@ export default function Voorpagina({
 
               {artikel.quotes.length > 0 && (
                 <div className={alleenIn("perszaal")}>
-                  <p className="mb-3 font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  {/* Kolomkoppen in volle inkt met een haarlijn eronder: in
+                      grijs op grijs zakten ze weg tegen de quotes eronder. */}
+                  <p className="mb-2.5 border-b border-foreground/25 pb-1.5 font-oswald text-[10.5px] font-bold uppercase tracking-[0.2em] text-foreground">
                     {t("karavaan.voorpagina.perszaal")}
                   </p>
                   {artikel.quotes.map((q) => {
                     const uit = quotesOpen.has(q.naam);
                     return (
                       <div key={q.naam} className="border-b border-border/70 py-2.5 first:pt-0 last:border-b-0 last:pb-0">
-                        <p className="mb-0.5 font-oswald text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+                        <p className="mb-1 font-oswald text-[10px] font-bold uppercase tracking-[0.16em] text-foreground">
                           {q.naam}
                         </p>
                         {/* Twee regels in plaats van vier: de kolom moet ook de
                             uitslag en het archiefverhaal kwijt kunnen. */}
-                        <p className={cn("font-serif text-[12px] leading-[1.42] text-foreground/[0.78]", !uit && "line-clamp-2")}>
+                        <p className={cn("font-serif text-[12px] leading-[1.42] text-foreground/90", !uit && "line-clamp-2")}>
                           {q.tekst}
                         </p>
                         {/* Stil gebaar, geen rode regel: rood hoort hier bij de

@@ -102,7 +102,7 @@ export default function Uitslagblok({
       {/* Eén regel om open te klappen, in dezelfde vorm als "Lees het hele
           verslag". Van daaruit blijft "Top 10 ▸" de binnenpagina openen. */}
       <div>
-        <p className="mb-1.5 font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        <p className="mb-2 border-b border-foreground/25 pb-1.5 font-oswald text-[10.5px] font-bold uppercase tracking-[0.2em] text-foreground">
           {etappeNummer != null ? `Uitslagen · etappe ${etappeNummer}` : "Uitslagen"}
         </p>
         <button

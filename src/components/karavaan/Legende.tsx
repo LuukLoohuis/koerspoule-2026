@@ -29,7 +29,7 @@ export default function Legende({ gameId }: { gameId?: string }) {
 
   return (
     <section id="krant-legende" className="scroll-mt-24">
-      <p className="font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+      <p className="border-b border-foreground/25 pb-1.5 font-oswald text-[10.5px] font-bold uppercase tracking-[0.2em] text-foreground">
         {legendeKicker(t("karavaan.voorpagina.rubLegende"), item.jaar)}
       </p>
       {/* Archieffoto boven de kop, met een haarlijn eromheen zoals een
@@ -39,7 +39,7 @@ export default function Legende({ gameId }: { gameId?: string }) {
           src={item.foto_url}
           alt={item.titel?.trim() || t("karavaan.voorpagina.rubLegende")}
           loading="lazy"
-          className="mt-2 aspect-[4/3] w-full border border-foreground/15 object-cover"
+          className="mt-2.5 aspect-[4/3] w-full border border-foreground/15 object-cover"
         />
       )}
       {titel && (
@@ -47,14 +47,14 @@ export default function Legende({ gameId }: { gameId?: string }) {
           {titel}
         </h3>
       )}
-      <p className="mt-1.5 font-serif text-[13.5px] leading-[1.5] text-foreground/80">{teaser}</p>
+      <p className="mt-1.5 font-serif text-[13.5px] leading-[1.5] text-foreground/90">{teaser}</p>
 
       {rest.length > 0 && (
         <>
           {open && (
             <div className="mt-2 space-y-2">
               {rest.map((alinea, i) => (
-                <p key={i} className="font-serif text-[13.5px] leading-[1.5] text-foreground/80">
+                <p key={i} className="font-serif text-[13.5px] leading-[1.5] text-foreground/90">
                   {alinea}
                 </p>
               ))}
