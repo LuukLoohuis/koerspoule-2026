@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -79,6 +79,9 @@ export default function Uitslagblok({
   className?: string;
 }) {
   const [drill, setDrill] = useState<null | "klassement" | "etappe">(null);
+  // Dicht beginnen: twee lijsten open maakten de kolom langer dan het artikel,
+  // en de uitslag is naslag -- je leest eerst het stuk.
+  const [open, setOpen] = useState(false);
 
   if (rituitslag.length === 0 && stand.length === 0) return null;
 
@@ -96,7 +99,29 @@ export default function Uitslagblok({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {rituitslag.length > 0 && (
+      {/* Eén regel om open te klappen, in dezelfde vorm als "Lees het hele
+          verslag". Van daaruit blijft "Top 10 ▸" de binnenpagina openen. */}
+      <div>
+        <p className="mb-1.5 font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          {etappeNummer != null ? `Uitslagen · etappe ${etappeNummer}` : "Uitslagen"}
+        </p>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className={cn(
+            "inline-flex items-center gap-1 rounded font-oswald text-[10.5px] uppercase tracking-[0.16em]",
+            "text-primary underline underline-offset-[5px] decoration-primary/50",
+            "transition-colors hover:decoration-primary",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          )}
+        >
+          {open ? "Inklappen" : "Bekijk de uitslagen"}
+          <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} aria-hidden />
+        </button>
+      </div>
+
+      {open && rituitslag.length > 0 && (
         <div>
           {kopregel(etappeLabel, "etappe")}
           {/* Drie in de kolom als voorproefje; de rest staat in de binnenpagina.
@@ -107,7 +132,7 @@ export default function Uitslagblok({
         </div>
       )}
 
-      {stand.length > 0 && (
+      {open && stand.length > 0 && (
         <div>
           {kopregel("Klassement", "klassement")}
           {stand.slice(0, 3).map((p) => (

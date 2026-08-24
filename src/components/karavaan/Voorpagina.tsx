@@ -253,9 +253,11 @@ export default function Voorpagina({
               kaartjes: kaartjes waren de app-look, dit is de krant-look. */}
           {(artikel.quotes.length > 0 || uitslag || dagstand) && (
             <div className="min-w-0 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-[22px] lg:pt-0 max-lg:border-t-0 max-lg:pt-0">
-              {/* Daguitslag uit je eigen poule: op mobiel een eigen segment, op
-                  desktop bovenaan de rechterkolom. */}
-              {dagstand && <div className={cn("mb-4", alleenIn("daguitslag"))}>{dagstand}</div>}
+              {/* Daguitslag uit je eigen poule: alléén op mobiel, als eigen
+                  segment. Op desktop stond hij bovenaan de rechterkolom en
+                  duwde hij de perszaal en de uitslagen naar beneden, terwijl
+                  diezelfde cijfers ook in de standbalk onderaan staan. */}
+              {dagstand && segment === "daguitslag" && <div className="mb-4 lg:hidden">{dagstand}</div>}
 
               {artikel.quotes.length > 0 && (
                 <div className={alleenIn("perszaal")}>
