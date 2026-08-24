@@ -41,6 +41,9 @@ function LiveInhoud({
 }: LiveTabProps & { race: LiveRace }) {
   const [actief, setActief] = useState(0);
   const [standOpen, setStandOpen] = useState(false);
+  // Vijf regels zichtbaar: genoeg om de kop van de koers te zien zonder dat de
+  // kolom langer wordt dan de baan ernaast. Twintig is één tik verderop.
+  const [uitslagVol, setUitslagVol] = useState(false);
 
   const track = race.tracks[Math.min(actief, race.tracks.length - 1)];
   const verouderd = isStale(race.syncedAt);
@@ -236,183 +239,204 @@ function LiveInhoud({
         />
       ) : null}
 
-      {/* Baan */}
-      <div className="overflow-hidden rounded-2xl border border-[rgba(18,104,168,.25)] bg-gradient-to-b from-[#fbfeff] to-[#d6ebf9]">
-        <LiveRink
-          groups={track.groups}
-          ijsType={race.ijsType}
-          mineBeennummers={mineBeennummers}
-          rondeLengte={track.state?.rondeLengte ?? null}
-          baanNaam={track.trackId.split(" ")[0]}
-          rondeLabel={
-            track.state?.maxRonden != null && track.state?.totaalRonden != null
-              ? `RONDE ${track.state.maxRonden}/${track.state.totaalRonden}`
-              : null
-          }
-        />
-        <div className="flex flex-wrap gap-1.5 border-t border-[rgba(18,104,168,.15)] bg-white/55 px-3 py-2">
-          {tiers.map((t) => (
-            <span
-              key={t}
-              className="flex items-center gap-1.5 rounded-full border border-[rgba(18,104,168,.2)] bg-white px-2.5 py-0.5 text-[10.5px] text-foreground/75"
-            >
-              <i className="h-2 w-2 rounded-full" style={{ background: tierColor(t) }} aria-hidden />
-              {tierLabel(t)}
-              <b className="font-mono text-[9.5px]">
-                {track.groups.filter((g) => g.tier === t).reduce((s, g) => s + g.leden.length, 0)}
-              </b>
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Situatie op de baan */}
-      <div>
-        <div className="mb-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-          — Situatie op de baan —
-        </div>
-        <div className="space-y-1.5">
-          {track.groups.map((g, i) => (
-            <div key={i}>
-              {g.gapToPrev != null && g.gapToPrev >= 4 && (
-                <div className="mb-1.5 flex items-center gap-2 px-1">
-                  <span className="font-mono text-[10px] font-bold text-[#c2560c]">
-                    gat {g.gapToPrev.toFixed(1)}s
-                  </span>
-                  <span className="h-0.5 flex-1 rounded bg-[repeating-linear-gradient(90deg,rgba(245,118,26,.55)_0_6px,transparent_6px_11px)]" />
-                </div>
-              )}
-              <div
-                className={cn(
-                  "rounded-xl border bg-white/65 px-3 py-2.5",
-                  g.tier > 0 ? "border-[rgba(245,118,26,.5)] bg-orange-50/70" : "border-[rgba(18,104,168,.2)]",
-                )}
+      {/* Twee kolommen op breed scherm: de baan links, je eigen cijfers
+          rechts. Onder elkaar stond de virtuele uitslag zo ver naar beneden
+          dat je hem tijdens de koers niet zag zonder te scrollen. */}
+      <div className="grid gap-3 lg:grid-cols-[1.45fr_1fr] lg:items-start">
+        <div className="space-y-3">
+        {/* Baan */}
+        <div className="overflow-hidden rounded-2xl border border-[rgba(18,104,168,.25)] bg-gradient-to-b from-[#fbfeff] to-[#d6ebf9]">
+          <LiveRink
+            groups={track.groups}
+            ijsType={race.ijsType}
+            mineBeennummers={mineBeennummers}
+            rondeLengte={track.state?.rondeLengte ?? null}
+            baanNaam={track.trackId.split(" ")[0]}
+            rondeLabel={
+              track.state?.maxRonden != null && track.state?.totaalRonden != null
+                ? `RONDE ${track.state.maxRonden}/${track.state.totaalRonden}`
+                : null
+            }
+          />
+          <div className="flex flex-wrap gap-1.5 border-t border-[rgba(18,104,168,.15)] bg-white/55 px-3 py-2">
+            {tiers.map((t) => (
+              <span
+                key={t}
+                className="flex items-center gap-1.5 rounded-full border border-[rgba(18,104,168,.2)] bg-white px-2.5 py-0.5 text-[10.5px] text-foreground/75"
               >
-                <div className="mb-1.5 flex items-center gap-2">
-                  <span className="font-display text-xs font-bold uppercase tracking-wide">
-                    {groepsNaam(track.groups, i)}
-                  </span>
-                  <span className="font-mono text-[10px] text-muted-foreground">
-                    {g.leden.length} rijder{g.leden.length > 1 ? "s" : ""}
-                  </span>
-                  <span className="ml-auto font-mono text-[11px] font-bold text-[#0b4c91]">
-                    {g.tier !== 0 ? tierLabel(g.tier) : i === 0 ? "aan kop" : `+${(g.leden[0].gapInGroup + (g.gapToPrev ?? 0)).toFixed(1)}s`}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {g.leden.map((l) => {
-                    const mine = mineBeennummers.has(l.rider.beennummer);
-                    return (
-                      <span
-                        key={l.rider.beennummer}
-                        className={cn(
-                          "rounded px-1.5 py-0.5 font-mono text-[9.5px]",
-                          mine ? "bg-[#0b4c91] font-bold text-white" : "bg-foreground/[0.07] text-foreground/70",
-                        )}
-                      >
-                        {l.rider.beennummer} {l.rider.naam.split(" ").slice(-1)}
-                      </span>
-                    );
-                  })}
+                <i className="h-2 w-2 rounded-full" style={{ background: tierColor(t) }} aria-hidden />
+                {tierLabel(t)}
+                <b className="font-mono text-[9.5px]">
+                  {track.groups.filter((g) => g.tier === t).reduce((s, g) => s + g.leden.length, 0)}
+                </b>
+              </span>
+            ))}
+          </div>
+        </div>
+        {/* Situatie op de baan */}
+        <div>
+          <div className="mb-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            — Situatie op de baan —
+          </div>
+          <div className="space-y-1.5">
+            {track.groups.map((g, i) => (
+              <div key={i}>
+                {g.gapToPrev != null && g.gapToPrev >= 4 && (
+                  <div className="mb-1.5 flex items-center gap-2 px-1">
+                    <span className="font-mono text-[10px] font-bold text-[#c2560c]">
+                      gat {g.gapToPrev.toFixed(1)}s
+                    </span>
+                    <span className="h-0.5 flex-1 rounded bg-[repeating-linear-gradient(90deg,rgba(245,118,26,.55)_0_6px,transparent_6px_11px)]" />
+                  </div>
+                )}
+                <div
+                  className={cn(
+                    "rounded-xl border bg-white/65 px-3 py-2.5",
+                    g.tier > 0 ? "border-[rgba(245,118,26,.5)] bg-orange-50/70" : "border-[rgba(18,104,168,.2)]",
+                  )}
+                >
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <span className="font-display text-xs font-bold uppercase tracking-wide">
+                      {groepsNaam(track.groups, i)}
+                    </span>
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      {g.leden.length} rijder{g.leden.length > 1 ? "s" : ""}
+                    </span>
+                    <span className="ml-auto font-mono text-[11px] font-bold text-[#0b4c91]">
+                      {g.tier !== 0 ? tierLabel(g.tier) : i === 0 ? "aan kop" : `+${(g.leden[0].gapInGroup + (g.gapToPrev ?? 0)).toFixed(1)}s`}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {g.leden.map((l) => {
+                      const mine = mineBeennummers.has(l.rider.beennummer);
+                      return (
+                        <span
+                          key={l.rider.beennummer}
+                          className={cn(
+                            "rounded px-1.5 py-0.5 font-mono text-[9.5px]",
+                            mine ? "bg-[#0b4c91] font-bold text-white" : "bg-foreground/[0.07] text-foreground/70",
+                          )}
+                        >
+                          {l.rider.beennummer} {l.rider.naam.split(" ").slice(-1)}
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+        </div>
+        <div className="space-y-3">
+        {/* Virtuele punten */}
+        <div>
+          <div className="mb-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            — Virtuele punten · deze ronde —
+          </div>
+          <div className="overflow-hidden rounded-xl border border-[rgba(18,104,168,.2)] bg-white/65">
+            {projectie.perBaan.flatMap((p, bi) =>
+              p.rijders.map((r) => (
+                <div key={`${bi}-${r.rider.beennummer}`} className="flex items-center gap-2 border-b border-foreground/[0.07] px-3 py-2 last:border-b-0">
+                  <span className="w-6 text-center font-display text-sm font-bold text-foreground/60">{r.positie}</span>
+                  <span className="min-w-0 flex-1 truncate text-xs font-semibold">
+                    {r.rider.naam}
+                    {r.isJoker && (
+                      <span className="ml-1.5 rounded bg-[#e0a020] px-1 py-0.5 font-mono text-[8.5px] font-bold text-[#3a2a06]">
+                        JOKER ×{jokerMultiplier}
+                      </span>
+                    )}
+                  </span>
+                  <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+                    {r.basis ? `plek ${r.positie} · ${r.basis}` : "buiten de punten"}
+                  </span>
+                  <span className={cn("w-8 text-right font-display text-sm font-bold", !r.punten && "text-foreground/35")}>
+                    {r.punten || "—"}
+                  </span>
+                </div>
+              )),
+            )}
+            {projectie.perBaan.every((p) => p.rijders.length === 0) && (
+              <div className="px-3 py-3 text-xs text-muted-foreground">
+                Geen van jouw rijders is aan een deelnemer in deze koers gekoppeld.
+              </div>
+            )}
+            <div className="flex items-center gap-2 bg-[rgba(18,104,168,.09)] px-3 py-2">
+              <span className="w-6" />
+              <span className="flex-1 font-display text-xs font-bold uppercase tracking-wide">Ronde-totaal</span>
+              <span className="font-mono text-[10px] text-muted-foreground">voorlopig</span>
+              <span className="w-8 text-right font-display text-base font-bold text-[#0b4c91]">{projectie.totaal}</span>
             </div>
-          ))}
+          </div>
+          <p className="mt-2 px-1 text-[10px] leading-relaxed text-muted-foreground">
+            Zelfde rekenregel als bij het fiatteren: punten voor plek 1 t/m 20, joker telt dubbel.
+          </p>
         </div>
-      </div>
-
-      {/* Virtuele uitslag — het hele veld, niet alleen mijn rijders. Tijdens
-          de koers wil je zien wie er scoort, niet alleen wat jij pakt. */}
-      <div>
-        <div className="mb-2 flex items-baseline gap-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-          — Virtuele uitslag —
-          <span className="ml-auto font-normal tracking-[0.1em] opacity-70">Top 20 · punten</span>
-        </div>
-        <div className="overflow-hidden rounded-xl border border-[rgba(18,104,168,.2)] bg-white/65">
-          {virtueleUitslag(track.groups.flatMap((g) => g.leden), {
-            schema: pointsSchema,
-            mineRiderIds,
-            riderIdByBeennummer: track.riderIdByBeennummer,
-          }).map((r) => (
-            <div
-              key={r.rider.beennummer}
-              className={cn(
-                "flex items-center gap-2.5 border-b border-foreground/[0.07] px-3 py-1.5 last:border-b-0",
-                r.isMine && "bg-[rgba(11,76,145,.07)]",
-              )}
-            >
-              <span className="w-6 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
-                {r.positie}
-              </span>
-              <span
+        {/* Virtuele uitslag — het hele veld, niet alleen mijn rijders. Tijdens
+            de koers wil je zien wie er scoort, niet alleen wat jij pakt. */}
+        <div>
+          <div className="mb-2 flex items-baseline gap-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            — Virtuele uitslag —
+            <span className="ml-auto font-normal tracking-[0.1em] opacity-70">
+            Top {uitslagVol ? 20 : 5} · punten
+          </span>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-[rgba(18,104,168,.2)] bg-white/65">
+            {virtueleUitslag(track.groups.flatMap((g) => g.leden), {
+              schema: pointsSchema,
+              mineRiderIds,
+              riderIdByBeennummer: track.riderIdByBeennummer,
+            }).slice(0, uitslagVol ? 20 : 5).map((r) => (
+              <div
+                key={r.rider.beennummer}
                 className={cn(
-                  "grid h-6 w-6 shrink-0 place-items-center rounded-md font-mono text-[10px] font-bold",
-                  r.isMine ? "bg-[#0b4c91] text-white" : "bg-foreground/[0.07] text-foreground/70",
+                  "flex items-center gap-2.5 border-b border-foreground/[0.07] px-3 py-1.5 last:border-b-0",
+                  r.isMine && "bg-[rgba(11,76,145,.07)]",
                 )}
               >
-                {r.rider.beennummer}
-              </span>
-              <span className={cn("min-w-0 flex-1 truncate text-xs", r.isMine ? "font-bold" : "font-medium")}>
-                {r.rider.naam}
-              </span>
-              <span
-                className={cn(
-                  "w-9 shrink-0 text-right font-mono text-[11px] font-bold tabular-nums",
-                  r.punten === 0 ? "text-muted-foreground/60" : r.isMine ? "text-[#0b4c91]" : "text-foreground/70",
-                )}
-              >
-                {r.punten || "—"}
-              </span>
-            </div>
-          ))}
-        </div>
-        <p className="mt-1.5 px-1 text-[10.5px] leading-snug text-muted-foreground">
-          Punten volgens het schema van deze koers. De stand loopt mee met de rondestand op de baan.
-        </p>
-      </div>
-
-      {/* Virtuele punten */}
-      <div>
-        <div className="mb-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-          — Virtuele punten · deze ronde —
-        </div>
-        <div className="overflow-hidden rounded-xl border border-[rgba(18,104,168,.2)] bg-white/65">
-          {projectie.perBaan.flatMap((p, bi) =>
-            p.rijders.map((r) => (
-              <div key={`${bi}-${r.rider.beennummer}`} className="flex items-center gap-2 border-b border-foreground/[0.07] px-3 py-2 last:border-b-0">
-                <span className="w-6 text-center font-display text-sm font-bold text-foreground/60">{r.positie}</span>
-                <span className="min-w-0 flex-1 truncate text-xs font-semibold">
-                  {r.rider.naam}
-                  {r.isJoker && (
-                    <span className="ml-1.5 rounded bg-[#e0a020] px-1 py-0.5 font-mono text-[8.5px] font-bold text-[#3a2a06]">
-                      JOKER ×{jokerMultiplier}
-                    </span>
+                <span className="w-6 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {r.positie}
+                </span>
+                <span
+                  className={cn(
+                    "grid h-6 w-6 shrink-0 place-items-center rounded-md font-mono text-[10px] font-bold",
+                    r.isMine ? "bg-[#0b4c91] text-white" : "bg-foreground/[0.07] text-foreground/70",
                   )}
+                >
+                  {r.rider.beennummer}
                 </span>
-                <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
-                  {r.basis ? `plek ${r.positie} · ${r.basis}` : "buiten de punten"}
+                <span className={cn("min-w-0 flex-1 truncate text-xs", r.isMine ? "font-bold" : "font-medium")}>
+                  {r.rider.naam}
                 </span>
-                <span className={cn("w-8 text-right font-display text-sm font-bold", !r.punten && "text-foreground/35")}>
+                <span
+                  className={cn(
+                    "w-9 shrink-0 text-right font-mono text-[11px] font-bold tabular-nums",
+                    r.punten === 0 ? "text-muted-foreground/60" : r.isMine ? "text-[#0b4c91]" : "text-foreground/70",
+                  )}
+                >
                   {r.punten || "—"}
                 </span>
               </div>
-            )),
-          )}
-          {projectie.perBaan.every((p) => p.rijders.length === 0) && (
-            <div className="px-3 py-3 text-xs text-muted-foreground">
-              Geen van jouw rijders is aan een deelnemer in deze koers gekoppeld.
-            </div>
-          )}
-          <div className="flex items-center gap-2 bg-[rgba(18,104,168,.09)] px-3 py-2">
-            <span className="w-6" />
-            <span className="flex-1 font-display text-xs font-bold uppercase tracking-wide">Ronde-totaal</span>
-            <span className="font-mono text-[10px] text-muted-foreground">voorlopig</span>
-            <span className="w-8 text-right font-display text-base font-bold text-[#0b4c91]">{projectie.totaal}</span>
+            ))}
           </div>
+          <button
+            type="button"
+            onClick={() => setUitslagVol((v) => !v)}
+            aria-expanded={uitslagVol}
+            className={cn(
+              "mt-2 inline-flex items-center gap-1 rounded font-mono text-[10px] font-bold uppercase tracking-[0.16em]",
+              "text-[#0b4c91] transition-colors hover:text-[#12508f]",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            )}
+          >
+            {uitslagVol ? "Toon top 5" : "Toon top 20"}
+            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", uitslagVol && "rotate-180")} aria-hidden />
+          </button>
+          <p className="mt-1.5 px-1 text-[10.5px] leading-snug text-muted-foreground">
+            Punten volgens het schema van deze koers. De stand loopt mee met de rondestand op de baan.
+          </p>
         </div>
-        <p className="mt-2 px-1 text-[10px] leading-relaxed text-muted-foreground">
-          Zelfde rekenregel als bij het fiatteren: punten voor plek 1 t/m 20, joker telt dubbel.
-        </p>
+        </div>
       </div>
 
       {/* Volledige stand */}
