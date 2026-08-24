@@ -99,8 +99,9 @@ export default function Uitslagblok({
       {rituitslag.length > 0 && (
         <div>
           {kopregel(etappeLabel, "etappe")}
-          {/* Vijf in de kolom als voorproefje; de rest staat in de binnenpagina. */}
-          {rituitslag.slice(0, 5).map((r) => (
+          {/* Drie in de kolom als voorproefje; de rest staat in de binnenpagina.
+              Vijf maakte de kolom langer dan het artikel ernaast. */}
+          {rituitslag.slice(0, 3).map((r) => (
             <Rij key={r.positie} nummer={r.positie} naam={r.renner} onder={r.ploeg} eerste={r.positie === 1} />
           ))}
         </div>
@@ -109,7 +110,7 @@ export default function Uitslagblok({
       {stand.length > 0 && (
         <div>
           {kopregel("Klassement", "klassement")}
-          {stand.slice(0, 5).map((p) => (
+          {stand.slice(0, 3).map((p) => (
             <Rij
               key={p.rang}
               nummer={p.rang}
