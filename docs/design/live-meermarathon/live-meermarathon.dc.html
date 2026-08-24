@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#f4f2ee; color:#12233d; font-family:'IBM Plex Sans', Helvetica, Arial, sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:#17457f; text-decoration:none; }
+  a:hover { color:#d81f26; }
+  @keyframes livepulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.35; transform:scale(.8); } }
+  @keyframes minering { 0%,100% { box-shadow:0 0 0 2px #fff, 0 0 0 4px rgba(216,31,38,.9); } 50% { box-shadow:0 0 0 2px #fff, 0 0 0 7px rgba(216,31,38,.25); } }
+</style>
+</helmet>
+
+<div style="max-width:1400px;margin:0 auto;padding:20px 20px 56px">
+
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#6b7c92">
+        <span style="display:inline-flex;align-items:center;gap:6px;background:#d81f26;color:#fff;padding:4px 9px;border-radius:4px;letter-spacing:.16em">
+          <span style="width:6px;height:6px;border-radius:50%;background:#fff;animation:livepulse 1.4s ease-in-out infinite"></span>LIVE
+        </span>
+        <span>Haaksbergen &middot; natuurijsbaan 400 m</span>
+      </div>
+      <h1 style="margin:10px 0 0;font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.05">Meermarathon &mdash; {{ klasse }}</h1>
+      <div style="margin-top:6px;font-size:14px;color:#6b7c92">Zaterdagavond &middot; {{ startTijd }} &middot; {{ deelnemers }} rijders aan de start</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#6b7c92">Mijn ploeg</div>
+      <div style="font-size:19px;font-weight:600">{{ ploegnaam }}</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:2px;background:#dcd8d0;border:1px solid #dcd8d0;border-radius:10px;overflow:hidden;margin-bottom:18px">
+    <div style="background:linear-gradient(140deg,#0f2f5c,#17457f);padding:16px 18px;color:#fff">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#9dbde3">Virtuele punten</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px"><span style="font-size:30px;font-weight:700;letter-spacing:-.02em">{{ teamPunten }}</span><span style="font-size:12px;color:#9dbde3">pt</span></div>
+    </div>
+    <div style="background:linear-gradient(140deg,#123a6d,#1a4f8f);padding:16px 18px;color:#fff">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#9dbde3">Mijn rijders in koers</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px"><span style="font-size:30px;font-weight:700;letter-spacing:-.02em">{{ mijnActief }}</span><span style="font-size:12px;color:#9dbde3">van {{ ploegGrootte }}</span></div>
+    </div>
+    <div style="background:linear-gradient(140deg,#17457f,#1f5aa3);padding:16px 18px;color:#fff">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#9dbde3">Ronde</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px"><span style="font-size:30px;font-weight:700;letter-spacing:-.02em">{{ ronde }}</span><span style="font-size:12px;color:#9dbde3">/ {{ totaalRondes }}</span></div>
+    </div>
+    <div style="background:linear-gradient(140deg,#1b4f8d,#2465b3);padding:16px 18px;color:#fff">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#9dbde3">Te gaan</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px"><span style="font-size:30px;font-weight:700;letter-spacing:-.02em">{{ teGaan }}</span><span style="font-size:12px;color:#9dbde3">rondes &middot; {{ teGaanKm }} km</span></div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start">
+
+    <div style="flex:1 1 620px;min-width:340px;display:flex;flex-direction:column;gap:18px">
+
+      <div style="background:#fff;border:1px solid #e4e0d8;border-radius:14px;padding:18px 18px 22px">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#6b7c92">Op de baan</div>
+          <div style="display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;color:#6b7c92">
+            <span style="width:9px;height:9px;border-radius:50%;background:#d81f26;box-shadow:0 0 0 3px rgba(216,31,38,.18)"></span>= mijn rijder
+          </div>
+        </div>
+
+        <div style="position:relative;width:100%;aspect-ratio:2 / 1;border-radius:14px;overflow:hidden;background:linear-gradient(155deg,#eef6fd 0%,#dcebfa 55%,#cfe3f8 100%)">
+          <div style="position:absolute;left:1.25%;top:2.5%;width:97.5%;height:95%;border-radius:999px;background:linear-gradient(150deg,#cfe3f8,#b9d6f4);box-shadow:inset 0 0 0 3px rgba(255,255,255,.95), 0 8px 24px rgba(15,47,92,.1)"></div>
+          <div style="position:absolute;left:11.25%;top:22.5%;width:77.5%;height:55%;border-radius:999px;background:linear-gradient(150deg,#eef6fd,#dfeefb);box-shadow:inset 0 0 0 3px rgba(255,255,255,.95)"></div>
+          <div style="position:absolute;left:17%;top:33%;width:66%;height:34%;border:1px dashed rgba(255,255,255,.85);border-radius:999px"></div>
+          <div style="position:absolute;left:0;right:0;top:41%;text-align:center;font-family:'IBM Plex Mono',monospace;color:#9dbde3;pointer-events:none">
+            <div style="font-size:22px;letter-spacing:.42em;font-weight:500">HAAKSBERGEN</div>
+            <div style="margin-top:8px;font-size:12px;letter-spacing:.34em">400 M &middot; {{ klasseKort }}</div>
+          </div>
+          <div style="position:absolute;left:24.6%;top:80%;width:2px;height:12%;background:#0f2f5c;transform:rotate(14deg);border-radius:2px"></div>
+          <div style="position:absolute;left:5%;bottom:4%;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.24em;color:#5b83b3">START / FINISH</div>
+
+          <sc-for list="{{ dots }}" as="dot" hint-placeholder-count="24">
+            <div style="{{ dot.wrap }}" title="{{ dot.tip }}">
+              <div style="{{ dot.chip }}">{{ dot.bib }}</div>
+              <sc-if value="{{ dot.isMine }}" hint-placeholder-val="{{ false }}">
+                <div style="{{ dot.labelStyle }}">{{ dot.naam }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px">
+          <sc-for list="{{ groepen }}" as="g" hint-placeholder-count="5">
+            <div style="{{ g.card }}">
+              <div style="display:flex;align-items:center;gap:7px">
+                <span style="{{ g.swatch }}"></span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#42556e">{{ g.label }}</span>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:6px;margin-top:7px">
+                <span style="font-size:20px;font-weight:700;letter-spacing:-.02em">{{ g.aantal }}</span>
+                <span style="font-size:11px;color:#6b7c92">rijders</span>
+              </div>
+              <div style="margin-top:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6b7c92">{{ g.gap }}</div>
+              <sc-if value="{{ g.mijn }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:6px;font-size:11px;font-weight:600;color:#d81f26">{{ g.mijnTekst }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="flex:1 1 330px;min-width:300px;display:flex;flex-direction:column;gap:18px">
+
+      <div style="background:#fff;border:1px solid #e4e0d8;border-radius:14px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 16px;border-bottom:1px solid #efece6">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#6b7c92">Mijn rijders</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6b7c92">{{ teamPunten }} pt totaal</div>
+        </div>
+        <sc-for list="{{ mijnRijders }}" as="r" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #f3f1ec">
+            <div style="{{ r.bibChip }}">{{ r.bib }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.naam }}</div>
+              <div style="margin-top:3px;display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#6b7c92">
+                <span style="{{ r.groepTag }}">{{ r.groep }}</span><span>{{ r.gap }}</span>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:13px;font-weight:600;color:#0f2f5c">P{{ r.positie }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:{{ r.puntKleur }}">{{ r.punten }} pt</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e4e0d8;border-radius:14px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 16px;border-bottom:1px solid #efece6">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#6b7c92">Virtuele uitslag</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:#9aa9ba">TOP 20 &middot; PUNTEN</div>
+        </div>
+        <sc-for list="{{ uitslag }}" as="u" hint-placeholder-count="12">
+          <div style="{{ u.row }}">
+            <div style="width:24px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6b7c92;text-align:right">{{ u.positie }}</div>
+            <div style="{{ u.bibChip }}">{{ u.bib }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:{{ u.gewicht }};line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.naam }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:#8d9cae;margin-top:2px">{{ u.gap }}</div>
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:{{ u.puntKleur }};width:44px;text-align:right">{{ u.punten }}</div>
+          </div>
+        </sc-for>
+        <div style="padding:12px 16px;font-size:11px;color:#8d9cae;line-height:1.5">Punten volgens de standaardschaal 50-40-32-26-22-20&hellip;1 voor plek 1 t/m 20. Stand loopt live mee met de rondestand op de baan.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:22px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#a3a99f">Demodata &middot; groepen afgeleid uit rondestand en tijdverschil &middot; koppeling livemarathon volgt</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;wedstrijd&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Heren&quot;,&quot;Dames&quot;],&quot;default&quot;:&quot;Heren&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Wedstrijd&quot;},&quot;ploegnaam&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;De Meermarathonners&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Wedstrijd&quot;},&quot;rondesHeren&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:125,&quot;min&quot;:20,&quot;max&quot;:200,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Wedstrijd&quot;},&quot;rondesDames&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:80,&quot;min&quot;:20,&quot;max&quot;:200,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Wedstrijd&quot;},&quot;simSnelheid&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:3,&quot;min&quot;:1,&quot;max&quot;:10,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Demo&quot;}}">
+class Component extends DCLogic {
+  POINTS = [50,40,32,26,22,20,18,16,14,12,10,9,8,7,6,5,4,3,2,1];
+  LAPTIME = 32;
+  HEREN = ["Sven Bakker","Ruben de Vries","Jelle Postma","Tim Hoekstra","Bram Veenstra","Niels van Dijk","Daan Kuiper","Thijs Mulder","Joris Wiersma","Sander Bosma","Rik Zijlstra","Marten Feenstra","Wouter de Jong","Koen Terpstra","Lars Vermeer","Stijn Nauta","Pieter Dijkstra","Hidde van der Meer","Jesse Kremer","Nico Brouwer","Ties Hulshof","Erik Smeets","Gert-Jan Prins","Bas Oosterhuis","Ivo Lammers","Job Renkema","Freek Slot","Chris de Groot","Maarten Vos","Roel Beekman","Sil Hofman","Kees Aalbers","Milan de Boer","Teun Rietveld","Arjan Kooistra","Sam Duif","Willem Klok","Onno Verbeek","Doeke Sikkema","Jorn Alberts","Reinier de Wit","Menno Groen","Ali Yildiz","Hessel Bruinsma"];
+  DAMES = ["Femke Bakker","Marit de Vries","Lotte Postma","Sanne Hoekstra","Iris Veenstra","Nienke van Dijk","Anouk Kuiper","Maaike Mulder","Rixt Wiersma","Elise Bosma","Janneke Zijlstra","Sietske Feenstra","Wietske de Jong","Doutzen Terpstra","Fenna Vermeer","Britt Nauta","Karin Dijkstra","Jildou van der Meer","Noor Kremer","Hanneke Brouwer","Tessa Hulshof","Ilse Smeets","Marije Prins","Lieke Oosterhuis","Esther Lammers","Amber Renkema","Roos Slot","Suze de Groot","Nynke Vos","Danique Beekman","Loes Hofman","Trijntje Aalbers","Ivy de Boer","Merel Rietveld","Bregje Kooistra","Saar Duif","Hilde Klok","Renske Verbeek","Aukje Sikkema","Jara Alberts","Nova de Wit","Eline Groen","Zeynep Yildiz","Femke Bruinsma"];
+  GROEPDEF = [
+    { key:"u3", label:"Uitlopers +3", kleur:"#6d2f00", n:1,  start:99.55, pace:1.011 },
+    { key:"u2", label:"Uitlopers +2", kleur:"#a24d00", n:2,  start:98.42, pace:1.007 },
+    { key:"u1", label:"Uitlopers +1", kleur:"#d07d00", n:3,  start:97.28, pace:1.004 },
+    { key:"kop",label:"Kopgroep",     kleur:"#0b2547", n:7,  start:96.12, pace:1.0025 },
+    { key:"pel",label:"Peloton",      kleur:"#2f6ba8", n:21, start:96.00, pace:1.0 },
+    { key:"ach",label:"Achterblijvers",kleur:"#59708a",n:10, start:95.66, pace:0.9865 }
+  ];
+  MIJN = [3, 9, 14, 27, 39];
+
+  state = { tick: 0, dists: null, historie: null };
+
+  componentDidMount() {
+    const dists = {};
+    this.GROEPDEF.forEach(g => { dists[g.key] = g.start; });
+    const historie = [];
+    for (let i = 12; i >= 1; i--) historie.push({ ronde: 97 - i, punten: Math.max(8, 52 + Math.round(Math.sin(i * 1.3) * 9 - i * 0.8)) });
+    this.setState({ dists, historie });
+    this.timer = setInterval(() => {
+      this.setState(s => {
+        if (!s.dists) return s;
+        const step = 0.00375 * (this.props.simSnelheid ?? 3);
+        const d = {};
+        const wob = Math.sin(s.tick / 40);
+        this.GROEPDEF.forEach(g => {
+          const jitter = g.key === "ach" ? 1 - 0.004 * (1 + wob) : g.key === "u3" ? 1 + 0.003 * wob : 1;
+          d[g.key] = s.dists[g.key] + step * g.pace * jitter;
+        });
+        return { tick: s.tick + 1, dists: d, historie: s.historie };
+      });
+      const st = this.state;
+      if (st.dists && st.historie) {
+        const r = Math.floor(Math.max.apply(null, Object.values(st.dists))) + 1;
+        if (st.historie[st.historie.length - 1].ronde !== r) {
+          const h = st.historie.concat([{ ronde: r, punten: this.teamTotaal }]).slice(-14);
+          this.setState({ historie: h });
+        }
+      }
+    }, 120);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+
+  pos(frac, off) {
+    const R = 150, S = 400, W = 800, H = 400, cx0 = 200, cx1 = 600, yB = 350, yT = 50;
+    const P = 2 * S + 2 * Math.PI * R;
+    let d = ((frac % 1) + 1) % 1 * P, x, y;
+    const Ro = R + off;
+    if (d < S) { x = cx0 + d; y = yB + off; }
+    else if (d < S + Math.PI * R) {
+      const t = (d - S) / R;
+      x = cx1 + Ro * Math.sin(t); y = (yB - R) + Ro * Math.cos(t);
+    } else if (d < 2 * S + Math.PI * R) {
+      x = cx1 - (d - S - Math.PI * R); y = yT - off;
+    } else {
+      const t = (d - 2 * S - Math.PI * R) / R;
+      x = cx0 - Ro * Math.sin(t); y = (yT + R) - Ro * Math.cos(t);
+    }
+    return { l: (x / W) * 100 + "%", t: (y / H) * 100 + "%" };
+  }
+
+  bouwRijders(namen, dists) {
+    const rijders = [];
+    let i = 0;
+    this.GROEPDEF.forEach(g => {
+      for (let k = 0; k < g.n; k++) {
+        const bib = i + 1;
+        rijders.push({
+          bib, naam: namen[i % namen.length], groep: g,
+          dist: dists[g.key] - k * 0.0055 - (g.key === "pel" ? (k % 3) * 0.0012 : 0),
+          lane: [-26, 0, 24][k % 3] + (g.key === "u3" ? -8 : 0),
+          isMine: this.MIJN.indexOf(bib) !== -1
+        });
+        i++;
+      }
+    });
+    return rijders;
+  }
+
+  renderVals() {
+    const dames = (this.props.wedstrijd ?? "Heren") === "Dames";
+    const ploegnaam = this.props.ploegnaam ?? "De Meermarathonners";
+    const totaalRondes = dames ? (this.props.rondesDames ?? 80) : (this.props.rondesHeren ?? 125);
+    const dists = this.state.dists || (() => { const d = {}; this.GROEPDEF.forEach(g => d[g.key] = g.start); return d; })();
+    const rijders = this.bouwRijders(dames ? this.DAMES : this.HEREN, dists);
+
+    const gesorteerd = rijders.slice().sort((a, b) => b.dist - a.dist);
+    gesorteerd.forEach((r, idx) => { r.positie = idx + 1; r.punten = idx < 20 ? this.POINTS[idx] : 0; });
+    const pelDist = dists.pel;
+    const leider = gesorteerd[0].dist;
+    const ronde = Math.min(totaalRondes, Math.floor(leider) + 1);
+    const teGaan = Math.max(0, totaalRondes - ronde);
+
+    const gapTekst = (r) => {
+      const g = r.dist - pelDist;
+      if (g >= 0.97) { const n = Math.max(1, Math.floor(g)); return "+" + n + (n === 1 ? " ronde" : " ronden"); }
+      if (g <= -0.97) { const n = Math.max(1, Math.floor(-g)); return "-" + n + (n === 1 ? " ronde" : " ronden"); }
+      const s = Math.abs(g) * this.LAPTIME;
+      return (g >= 0 ? "+" : "-") + s.toFixed(1) + "s";
+    };
+
+    let mijnIdx = -1;
+    const dots = gesorteerd.map(r => {
+      const p = this.pos(r.dist, r.lane);
+      const kleur = r.isMine ? "#d81f26" : r.groep.kleur;
+      const uitloper = r.groep.key.charAt(0) === "u";
+      if (r.isMine) mijnIdx++;
+      const boven = mijnIdx % 2 === 0;
+      return {
+        key: "r" + r.bib, bib: r.bib, naam: r.naam, isMine: r.isMine,
+        tip: r.naam + " \u2014 " + r.groep.label + " \u2014 P" + r.positie + " \u2014 " + r.punten + " pt",
+        labelStyle: { position:"absolute", left:"50%", top: boven ? "-23px" : "auto", bottom: boven ? "auto" : "-23px",
+          transform:"translateX(-50%)", whiteSpace:"nowrap", background:"#d81f26", color:"#fff", fontSize:"10px",
+          fontWeight:600, padding:"2px 6px", borderRadius:"4px", boxShadow:"0 2px 6px rgba(15,47,92,.25)" },
+        wrap: { position:"absolute", left:p.l, top:p.t, transform:"translate(-50%,-50%)", zIndex: r.isMine ? 60 : uitloper ? 45 : 20 - Math.min(19, r.positie) },
+        chip: {
+          width: r.isMine ? "30px" : "26px", height: r.isMine ? "30px" : "26px", borderRadius:"50%",
+          background: kleur, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center",
+          fontFamily:"'IBM Plex Mono',monospace", fontSize: r.isMine ? "12px" : "11px", fontWeight:600,
+          boxShadow: r.isMine ? "0 0 0 2.5px #fff, 0 0 0 5px rgba(216,31,38,.95), 0 3px 8px rgba(9,24,45,.35)" : "0 0 0 2px #fff, 0 0 0 3px rgba(9,24,45,.5), 0 2px 6px rgba(9,24,45,.28)",
+          animation: r.isMine ? "minering 1.8s ease-in-out infinite" : "none"
+        }
+      };
+    });
+
+    const groepen = this.GROEPDEF.map(g => {
+      const leden = rijders.filter(r => r.groep.key === g.key);
+      const mijn = leden.filter(r => r.isMine);
+      return {
+        key: g.key, label: g.label, aantal: leden.length, gap: gapTekst(leden[0]) + " op peloton",
+        mijn: mijn.length > 0, mijnTekst: mijn.length + (mijn.length === 1 ? " eigen rijder" : " eigen rijders"),
+        card: { background: g.key === "pel" ? "#f6f8fb" : "#fff", border:"1px solid " + (mijn.length ? "rgba(216,31,38,.35)" : "#e8e4dc"), borderRadius:"10px", padding:"12px 13px" },
+        swatch: { width:"10px", height:"10px", borderRadius:"50%", background:g.kleur, display:"inline-block", flex:"0 0 auto" }
+      };
+    }).filter(g => g.aantal > 0);
+
+    const bibChip = (r, groot) => ({
+      width: groot ? "34px" : "28px", height: groot ? "34px" : "28px", borderRadius:"8px",
+      background: r.isMine ? "#d81f26" : r.groep.kleur, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center",
+      fontFamily:"'IBM Plex Mono',monospace", fontSize: groot ? "12px" : "11px", fontWeight:600, flex:"0 0 auto"
+    });
+
+    const mijnRijders = gesorteerd.filter(r => r.isMine).map(r => ({
+      key:"m" + r.bib, bib:r.bib, naam:r.naam, positie:r.positie, punten:r.punten, gap:gapTekst(r), groep:r.groep.label,
+      puntKleur: r.punten > 0 ? "#0f2f5c" : "#9aa9ba",
+      bibChip: bibChip(r, true),
+      groepTag: { background:"#f0f3f7", color:"#42556e", padding:"2px 6px", borderRadius:"4px", letterSpacing:".1em" }
+    }));
+    const teamTotaal = mijnRijders.reduce((a, r) => a + r.punten, 0);
+    this.teamTotaal = teamTotaal;
+
+    const uitslag = gesorteerd.slice(0, 20).map(r => ({
+      key:"u" + r.bib, bib:r.bib, naam:r.naam, positie:r.positie, punten:r.punten, gap:gapTekst(r),
+      gewicht: r.isMine ? 700 : 500, puntKleur: r.isMine ? "#d81f26" : "#0f2f5c",
+      bibChip: bibChip(r, false),
+      row: { display:"flex", alignItems:"center", gap:"10px", padding:"9px 16px", borderBottom:"1px solid #f3f1ec", background: r.isMine ? "rgba(216,31,38,.06)" : "#fff" }
+    }));
+
+    const afgerond = this.state.historie || [];
+    const hist = afgerond.concat([{ ronde, punten: teamTotaal, live: true }]);
+    const maxP = Math.max(1, Math.max.apply(null, hist.map(h => h.punten)));
+    const historie = hist.map(h => ({
+      key:"h" + h.ronde, tip:"Ronde " + h.ronde + " \u2014 " + h.punten + " pt" + (h.live ? " (nu)" : ""),
+      col: { flex:"1 1 0", display:"flex", alignItems:"flex-end", height:"100%" },
+      bar: { width:"100%", height: Math.max(4, (h.punten / maxP) * 100) + "%", borderRadius:"4px 4px 0 0",
+             background: h.live ? "linear-gradient(180deg,#d81f26,#a8151b)" : "linear-gradient(180deg,#3f74b8,#17457f)" }
+    }));
+    const vorige = afgerond.length ? afgerond[afgerond.length - 1].punten : teamTotaal;
+    const delta = teamTotaal - vorige;
+
+    return {
+      klasse: dames ? "Dames" : "Heren", klasseKort: dames ? "DAMES" : "HEREN",
+      startTijd: dames ? "19:00 dames" : "20:30 heren", deelnemers: rijders.length,
+      ploegnaam, ploegGrootte: this.MIJN.length, mijnActief: mijnRijders.length,
+      ronde, totaalRondes, teGaan, teGaanKm: (teGaan * 0.4).toFixed(1),
+      teamPunten: teamTotaal, dots, groepen, mijnRijders, uitslag,
+      historie, historieLengte: hist.length, historieVan: hist.length ? hist[0].ronde : ronde,
+      deltaTekst: (delta >= 0 ? "+" : "") + delta + " pt sinds vorige ronde",
+      deltaKleur: delta > 0 ? "#1c7a45" : delta < 0 ? "#d81f26" : "#6b7c92"
+    };
+  }
+}
+
+</script>
+</body>
+</html>
