@@ -36,6 +36,8 @@ import { useLiveRace } from "@/hooks/useLiveRace";
 import { normalizeName } from "@/lib/liveMarathon";
 import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
 import LiveTab from "@/components/meermarathon/LiveTab";
+import { useLiveSimulatie } from "@/hooks/useLiveSimulatie";
+import { simulatieMijnRiderIds, SIM_MIJN_BEENNUMMERS } from "@/lib/liveSimulatie";
 import { useStagePointsSchema } from "@/hooks/usePointsSchema";
 
 
@@ -366,7 +368,8 @@ export default function MyTeamPanel({
   focusNameSignal?: number;
 }) {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isAdmin = role === "admin";
   const { data: curGame } = useCurrentGame();
   // Optioneel een specifieke (bv. afgeronde) game tonen i.p.v. de live game.
   const game = gameIdProp ? { id: gameIdProp, status: gameStatus, name: gameName } : curGame;
@@ -374,6 +377,9 @@ export default function MyTeamPanel({
 
   // Live-tab: alleen bij Meermarathon, en alleen als er een baan gekoppeld is.
   const { data: liveRace } = useLiveRace(game?.id, isMeermarathon);
+  // Nagebootste koers om het live-tabblad buiten een wedstrijdavond te kunnen
+  // bekijken. Alleen voor admins en alleen met ?livesim=1; schrijft niets weg.
+  const simRace = useLiveSimulatie(isAdmin, { mijnBeennummers: SIM_MIJN_BEENNUMMERS });
   // Zoeken binnen je eigen ploeg. Bij een grote selectie is de lijst op een
   // telefoon meerdere schermen lang en scroll je langs je eigen renner heen.
   const [zoek, setZoek] = useState("");
@@ -804,8 +810,9 @@ export default function MyTeamPanel({
     if (!heeftLive) return null;
     return (
       <LiveTab
-        race={liveRace ?? null}
-        mineRiderIds={mineRiderIds}
+        race={simRace ?? liveRace ?? null}
+        simulatie={simRace !== null}
+        mineRiderIds={simRace ? simulatieMijnRiderIds(SIM_MIJN_BEENNUMMERS) : mineRiderIds}
         jokerRiderIds={new Set(jokerIds)}
         pointsSchema={pointsSchema}
         jokerMultiplier={jokerMultiplier}

@@ -16,6 +16,8 @@ type LiveTabProps = {
   jokerRiderIds: Set<string>;
   pointsSchema: PointsSchema;
   jokerMultiplier: number;
+  /** Nagebootste koers: zet er een onmiskenbare melding boven. */
+  simulatie?: boolean;
 };
 
 /**
@@ -35,6 +37,7 @@ function LiveInhoud({
   jokerRiderIds,
   pointsSchema,
   jokerMultiplier,
+  simulatie,
 }: LiveTabProps & { race: LiveRace }) {
   const [actief, setActief] = useState(0);
   const [standOpen, setStandOpen] = useState(false);
@@ -154,6 +157,20 @@ function LiveInhoud({
           {track.state?.rondeLengte ? ` · ${track.state.rondeLengte} m` : ""}
         </span>
       </div>
+
+      {simulatie && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border-2 border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.12] px-3 py-2"
+        >
+          <span className="font-display text-[11px] font-black uppercase tracking-[0.14em] text-[hsl(var(--vintage-gold))]">
+            Simulatie — geen echte koers
+          </span>
+          <span className="text-[11.5px] text-muted-foreground">
+            Nagebootste stand om deze weergave te bekijken. Er wordt niets opgeslagen.
+          </span>
+        </div>
+      )}
 
       {/* KPI-strook. "Te gaan" erbij: tijdens een marathon is het aantal
           resterende ronden het cijfer waar iedereen naar kijkt. */}
