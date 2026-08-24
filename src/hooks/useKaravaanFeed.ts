@@ -29,6 +29,9 @@ export type KaravaanEtappe = {
   /** Eerste tien van de rituitslag. Zonder tijden: stage_results kent alleen
    *  posities, en een verzonnen tijd is erger dan geen tijd. */
   rituitslag: Array<{ positie: number; renner: string; ploeg: string | null }>;
+  /** De dagscores binnen je subpoule, hoogste eerst. Cumulatief staat in
+   *  subpouleStandings; dit gaat over deze ene dag. */
+  dagstand: Array<{ rang: number; naam: string; deelnemer: string | null; punten: number; isMij: boolean }>;
   /** Wat JIJ die dag scoorde, en de hoeveelste dat was in je subpoule. */
   mijnDagpunten: number | null;
   mijnDagrang: number | null;
@@ -320,8 +323,18 @@ export function useKaravaanFeed(params: {
           .map((r) => ({
             entry_id: r.entry_id,
             pts: stagePoints.find((sp) => sp.entry_id === r.entry_id && sp.stage_id === stage.id)?.points ?? 0,
+            naam: r.team_name?.trim() || r.display_name || "—",
+            deelnemer: r.team_name?.trim() && r.display_name !== r.team_name ? r.display_name : null,
+            isMij: r.is_me,
           }))
           .sort((a, b) => b.pts - a.pts);
+        const dagstand = dagLijst.map((d, i) => ({
+          rang: i + 1,
+          naam: d.naam,
+          deelnemer: d.deelnemer,
+          punten: d.pts,
+          isMij: d.isMij,
+        }));
         const mijnIndex = myEntryId ? dagLijst.findIndex((d) => d.entry_id === myEntryId) : -1;
         const mijnDagpunten = mijnIndex >= 0 ? dagLijst[mijnIndex].pts : null;
         const mijnDagrang = mijnIndex >= 0 ? mijnIndex + 1 : null;
@@ -336,6 +349,7 @@ export function useKaravaanFeed(params: {
           krant_kop: stage.krant_kop ?? null,
           ritwinnaar,
           rituitslag: uitslagPerStage.get(stage.id) ?? [],
+          dagstand,
           mijnDagpunten,
           mijnDagrang,
           subpouleStandings: sub,

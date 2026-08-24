@@ -1266,7 +1266,11 @@
       "minder": "minder",
       "rubVerslag": "Verslag",
       "verderInDeKrant": "Verder in de krant",
-      "folioPagina": "Pagina 1"
+      "folioPagina": "Pagina 1",
+      "segVoorpagina": "Voorpagina",
+      "segDaguitslag": "Daguitslag",
+      "segPerszaal": "Perszaal",
+      "dagstandKop": "Daguitslag in je subpoule"
     }
   },
   "common": {

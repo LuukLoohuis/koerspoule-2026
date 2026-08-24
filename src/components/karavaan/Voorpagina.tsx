@@ -63,6 +63,7 @@ export default function Voorpagina({
   rubrieken,
   artikel,
   uitslag,
+  dagstand,
   className,
 }: {
   koers: string;
@@ -75,10 +76,20 @@ export default function Voorpagina({
   artikel?: Hoofdartikel | null;
   /** Uitslag en stand, onder de perszaal in de rechterkolom. */
   uitslag?: ReactNode;
+  /** Daguitslag binnen je subpoule; op mobiel een eigen segment. */
+  dagstand?: ReactNode;
   className?: string;
 }) {
   const { t, i18n } = useTranslation();
   const [meerOpen, setMeerOpen] = useState(false);
+
+  // Op een telefoon past de hele voorpagina niet in één kolom; drie segmenten
+  // verdelen wat op desktop naast elkaar staat. Boven lg blijft alles zichtbaar,
+  // dus dit is puur een mobiele indeling en geen tweede versie van de pagina.
+  type Segment = "voorpagina" | "daguitslag" | "perszaal";
+  const [segment, setSegment] = useState<Segment>("voorpagina");
+  /** Verbergt een sectie op mobiel als hij niet bij het gekozen segment hoort. */
+  const alleenIn = (s: Segment) => (segment === s ? "" : "hidden lg:block");
 
   // Gezien-markering per rubriek en per etappe: de stip hoort te verdwijnen
   // zodra je gekeken hebt, anders went hij en trekt hij niets meer.
@@ -166,12 +177,36 @@ export default function Voorpagina({
 
       <DubbeleRegel />
 
+      {/* Segmentschakelaar, alleen op mobiel. Krantstijl: inverse blok in
+          plaats van een pil -- zelfde taal als de binnenpagina. */}
+      <div className="flex border-y border-foreground lg:hidden">
+        {([
+          ["voorpagina", t("karavaan.voorpagina.segVoorpagina")],
+          ["daguitslag", t("karavaan.voorpagina.segDaguitslag")],
+          ["perszaal", t("karavaan.voorpagina.segPerszaal")],
+        ] as const).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setSegment(k)}
+            aria-pressed={segment === k}
+            className={cn(
+              "flex-1 py-2 font-oswald text-[10px] uppercase tracking-[0.18em] transition-colors",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              segment === k ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* ── Tweekolomsgrid. De kolomlijn is een border op kolom 2, dus geen
              gap: in een krant staat een kolom tegen de lijn aan. ─────────── */}
       {artikel && (
         <div className="grid gap-6 lg:grid-cols-[1.55fr_1fr] lg:gap-0">
           {/* Kolom 1 — hoofdartikel */}
-          <div className="min-w-0 lg:pr-[22px]">
+          <div className={cn("min-w-0 lg:pr-[22px]", alleenIn("voorpagina"))}>
             <span className="inline-flex items-center bg-primary px-[7px] py-[3px] font-oswald text-[9.5px] uppercase tracking-[0.14em] text-primary-foreground">
               {artikel.kicker}
             </span>
@@ -216,10 +251,14 @@ export default function Voorpagina({
 
           {/* Kolom 2 — perszaal. Quotes gescheiden door haarlijnen, geen
               kaartjes: kaartjes waren de app-look, dit is de krant-look. */}
-          {(artikel.quotes.length > 0 || uitslag) && (
-            <div className="min-w-0 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-[22px] lg:pt-0">
+          {(artikel.quotes.length > 0 || uitslag || dagstand) && (
+            <div className="min-w-0 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-[22px] lg:pt-0 max-lg:border-t-0 max-lg:pt-0">
+              {/* Daguitslag uit je eigen poule: op mobiel een eigen segment, op
+                  desktop bovenaan de rechterkolom. */}
+              {dagstand && <div className={cn("mb-4", alleenIn("daguitslag"))}>{dagstand}</div>}
+
               {artikel.quotes.length > 0 && (
-                <>
+                <div className={alleenIn("perszaal")}>
                   <p className="mb-3 font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                     {t("karavaan.voorpagina.perszaal")}
                   </p>
@@ -231,16 +270,16 @@ export default function Voorpagina({
                       <p className="line-clamp-4 font-serif text-[13.5px] leading-[1.5] text-foreground/80">{q.tekst}</p>
                     </div>
                   ))}
-                </>
+                </div>
               )}
               {/* De uitslag onder de perszaal, gescheiden door de dubbele regel:
                   de kolom liep leeg terwijl het artikel ernaast doorging, en het
                   nieuws waar alles op rust stond nergens op de voorpagina. */}
               {uitslag && (
-                <>
-                  {artikel.quotes.length > 0 && <DubbeleRegel className="my-4" />}
+                <div className={alleenIn("daguitslag")}>
+                  {artikel.quotes.length > 0 && <DubbeleRegel className="my-4 max-lg:hidden" />}
                   {uitslag}
-                </>
+                </div>
               )}
             </div>
           )}
@@ -248,10 +287,10 @@ export default function Voorpagina({
         </div>
       )}
 
-      <DubbeleRegel />
+      <DubbeleRegel className={alleenIn("voorpagina")} />
 
       {rubrieken.length > 0 && (
-        <>
+        <div className={cn("space-y-3", alleenIn("voorpagina"))}>
           <p className="font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             {t("karavaan.voorpagina.verderInDeKrant")}
           </p>
@@ -289,11 +328,14 @@ export default function Voorpagina({
               </button>
             ))}
           </div>
-        </>
+        </div>
       )}
 
       {(kern.length > 0 || subpoules.length > 0) && (
-        <div className="flex flex-wrap items-stretch overflow-hidden rounded-[20px] bg-background shadow-[0_0_0_1px_rgba(20,18,16,0.09),0_1px_2px_rgba(0,0,0,0.05),0_10px_22px_-14px_rgba(0,0,0,0.4)]">
+        <div className={cn(
+          "flex flex-wrap items-stretch overflow-hidden rounded-[20px] bg-background shadow-[0_0_0_1px_rgba(20,18,16,0.09),0_1px_2px_rgba(0,0,0,0.05),0_10px_22px_-14px_rgba(0,0,0,0.4)]",
+          alleenIn("voorpagina"),
+        )}>
           <SubpouleKiezer subpoules={subpoules} selectedId={selectedSubpouleId} onSelect={onSelectSubpoule} />
           {kern.map((c) => cel(c))}
           {rest.length > 0 && (

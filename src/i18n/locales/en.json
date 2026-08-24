@@ -1266,7 +1266,11 @@
       "minder": "less",
       "rubVerslag": "Report",
       "verderInDeKrant": "Elsewhere in the paper",
-      "folioPagina": "Page 1"
+      "folioPagina": "Page 1",
+      "segVoorpagina": "Front page",
+      "segDaguitslag": "Today",
+      "segPerszaal": "Press room",
+      "dagstandKop": "Today in your subpoule"
     }
   },
   "common": {
