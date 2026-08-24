@@ -17,6 +17,20 @@ describe("legendeDelen", () => {
     expect(legendeDelen("Een **held** op de fiets.").teaser).toBe("Een held op de fiets.");
   });
 
+  it("splitst ook op enkele regeleindes", () => {
+    // Zonder deze terugval telt een verhaal met enkele regeleindes als één
+    // alinea en staat het compleet dichtgeklapt op de voorpagina.
+    const { teaser, rest } = legendeDelen("Eerste regel.\nTweede regel.\nDerde regel.");
+    expect(teaser).toBe("Eerste regel.");
+    expect(rest).toEqual(["Tweede regel.", "Derde regel."]);
+  });
+
+  it("houdt lege regels voor als die er zijn", () => {
+    const { teaser, rest } = legendeDelen("Kop van het stuk.\nZelfde alinea.\n\nNieuwe alinea.");
+    expect(teaser).toBe("Kop van het stuk. Zelfde alinea.");
+    expect(rest).toEqual(["Nieuwe alinea."]);
+  });
+
   it("gaat om met lege invoer", () => {
     expect(legendeDelen("")).toEqual({ teaser: "", rest: [] });
     expect(legendeDelen(null)).toEqual({ teaser: "", rest: [] });

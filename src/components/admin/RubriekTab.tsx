@@ -318,8 +318,9 @@ function ItemForm({
         <>
           <p className="text-xs text-muted-foreground leading-snug">
             Komt in de rechterkolom van de Koerskrant, onder de perszaal. De eerste
-            alinea staat er meteen; de rest zit achter “Lees het verhaal”. Laat een
-            lege regel tussen alinea's.
+            alinea staat er meteen; de rest zit achter “Lees het verhaal”. Een lege
+            regel maakt een nieuwe alinea; schrijf je zonder lege regels, dan telt
+            elke regel als alinea.
           </p>
           <div>
             <Label htmlFor="legende-titel" className="text-xs">Kop</Label>
