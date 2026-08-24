@@ -61,8 +61,10 @@ export function simuleerRijders(tick: number): LiveRider[] {
     for (let k = 0; k < groep.n; k += 1) {
       const naam = NAMEN[n % NAMEN.length];
       // Binnen een groep rijdt iedereen net iets achter de kop, zodat een pak
-      // als een sliert leest en niet als één punt.
-      const afstand = groep.start + tick * STAP * groep.tempo - k * 0.0055;
+      // als een sliert leest en niet als één punt. 0,012 ronde is bijna vijf
+      // meter -- genoeg om de schijfjes uit elkaar te houden op onze baan,
+      // en nog steeds een geloofwaardige rij schaatsers.
+      const afstand = groep.start + tick * STAP * groep.tempo - k * 0.012;
       const beennummer = String(n + 1).padStart(2, "0");
       rijders.push({
         beennummer,

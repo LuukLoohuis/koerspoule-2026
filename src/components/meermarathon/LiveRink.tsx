@@ -39,7 +39,7 @@ export default function LiveRink({
     if (pathRef.current) setPathLength(pathRef.current.getTotalLength());
   }, [d]);
 
-  const placements = useMemo(() => placeRiders(groups), [groups]);
+  const placements = useMemo(() => placeRiders(groups, { rondeLengte }), [groups, rondeLengte]);
 
   // Zonder padlengte kunnen we nog niets positioneren (eerste render).
   const points = useMemo(() => {

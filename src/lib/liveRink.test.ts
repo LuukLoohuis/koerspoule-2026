@@ -99,3 +99,50 @@ describe("hulpfuncties", () => {
     expect(tierLabel(-3)).toBe("3 ronden achter");
   });
 });
+
+const rijder = (been: string, meter: number | null) => ({ rider: { beennummer: been, meter } });
+
+describe("placeRiders", () => {
+  it("zet een rijder op zijn echte plek in de ronde", () => {
+    // 100 m in een ronde van 400 m is een kwart rond.
+    const p = placeRiders([{ tier: 0, leden: [rijder("01", 100)] }], { rondeLengte: 400 });
+    expect(p[0].fraction).toBeCloseTo(0.25, 5);
+  });
+
+  it("spreidt een veld over het hele ovaal in plaats van één boog", () => {
+    const leden = [rijder("01", 20), rijder("02", 200), rijder("03", 380)];
+    const p = placeRiders([{ tier: 0, leden }], { rondeLengte: 400 });
+    const fracties = p.map((x) => x.fraction).sort((a, b) => a - b);
+    expect(fracties[fracties.length - 1] - fracties[0]).toBeGreaterThan(0.8);
+  });
+
+  it("valt terug op een nette spreiding zonder meters", () => {
+    const p = placeRiders([{ tier: 0, leden: [rijder("01", null), rijder("02", null)] }], { rondeLengte: 400 });
+    expect(p[0].fraction).not.toBe(p[1].fraction);
+    expect(p.every((x) => x.fraction >= 0 && x.fraction < 1)).toBe(true);
+  });
+
+  it("valt ook terug als de rondelengte ontbreekt", () => {
+    const p = placeRiders([{ tier: 0, leden: [rijder("01", 100)] }]);
+    expect(p[0].fraction).toBeGreaterThanOrEqual(0);
+    expect(p[0].fraction).toBeLessThan(1);
+  });
+
+  it("houdt fracties binnen 0..1 bij meer dan een hele ronde", () => {
+    const p = placeRiders([{ tier: 0, leden: [rijder("01", 900)] }], { rondeLengte: 400 });
+    expect(p[0].fraction).toBeGreaterThanOrEqual(0);
+    expect(p[0].fraction).toBeLessThan(1);
+    expect(p[0].fraction).toBeCloseTo(0.25, 5);
+  });
+
+  it("legt een hoger tier verder naar buiten", () => {
+    const binnen = placeRiders([{ tier: 0, leden: [rijder("01", 0)] }], { rondeLengte: 400 })[0].offset;
+    const buiten = placeRiders([{ tier: 2, leden: [rijder("01", 0)] }], { rondeLengte: 400 })[0].offset;
+    expect(buiten - binnen).toBeCloseTo(2 * LANE_WIDTH, 5);
+  });
+
+  it("knijpt het aantal banen af", () => {
+    expect(clampTier(9)).toBe(3);
+    expect(clampTier(-9)).toBe(-3);
+  });
+});

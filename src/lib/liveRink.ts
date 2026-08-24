@@ -53,17 +53,27 @@ export type RinkPlacement = {
  * kloppen, alleen de tussenruimte is uitvergroot tot een peloton.
  */
 export function placeRiders(
-  groups: { tier: number; leden: { rider: { beennummer: string } }[] }[],
-  options: { rotation?: number } = {},
+  groups: { tier: number; leden: { rider: { beennummer: string; meter?: number | null } }[] }[],
+  options: { rotation?: number; rondeLengte?: number | null } = {},
 ): RinkPlacement[] {
   const rotation = options.rotation ?? 0;
+  const rondeLengte = options.rondeLengte ?? null;
   const out: RinkPlacement[] = [];
 
   groups.forEach((group, groupIndex) => {
     const base = LEAD_FRACTION - rotation - groupIndex * GROUP_SPREAD;
     group.leden.forEach((lid, i) => {
+      // Echte positie als de bron die geeft: `meter` is het aantal meters in de
+      // huidige ronde, dus meter/rondelengte is precies waar iemand op de baan
+      // rijdt. Zonder die waarde vallen we terug op een nette spreiding per
+      // groep -- dan klopt de volgorde nog wel, maar de plek op het ovaal niet.
+      const meter = lid.rider.meter;
+      const echt =
+        rondeLengte != null && rondeLengte > 0 && meter != null && Number.isFinite(meter)
+          ? meter / rondeLengte
+          : null;
+      const raw = echt !== null ? echt - rotation : base - i * MIN_SEPARATION;
       // Positief modulo: fracties moeten binnen 0..1 blijven.
-      const raw = base - i * MIN_SEPARATION;
       const fraction = ((raw % 1) + 1) % 1;
       // Hoger tier ligt verder naar buiten; binnen de groep licht zigzaggen
       // zodat een dichte kopgroep niet één klont wordt.
