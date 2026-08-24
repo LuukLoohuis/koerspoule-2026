@@ -20,9 +20,25 @@ describe("legendeDelen", () => {
   it("splitst ook op enkele regeleindes", () => {
     // Zonder deze terugval telt een verhaal met enkele regeleindes als één
     // alinea en staat het compleet dichtgeklapt op de voorpagina.
-    const { teaser, rest } = legendeDelen("Eerste regel.\nTweede regel.\nDerde regel.");
-    expect(teaser).toBe("Eerste regel.");
-    expect(rest).toEqual(["Tweede regel.", "Derde regel."]);
+    const tekst = [
+      "Federico Bahamontes, bijgenaamd de Adelaar van Toledo, was een legendarische Spaanse wielrenner.",
+      "Tijdens de Tour van 1954 reed hij als eerste naar de top van een col.",
+      "Daar kreeg hij een lekke band.",
+    ].join("\n");
+    const { teaser, rest } = legendeDelen(tekst);
+    expect(teaser).toBe(
+      "Federico Bahamontes, bijgenaamd de Adelaar van Toledo, was een legendarische Spaanse wielrenner.",
+    );
+    // De staart wordt één blok: tien alinea's van één zin lezen als een lijstje.
+    expect(rest).toEqual([
+      "Tijdens de Tour van 1954 reed hij als eerste naar de top van een col. Daar kreeg hij een lekke band.",
+    ]);
+  });
+
+  it("plakt korte openingszinnen aan elkaar tot een leesbare intro", () => {
+    const { teaser, rest } = legendeDelen("Kort.\nOok kort.\nNog steeds kort.\nEn dan de rest van het verhaal.");
+    expect(teaser.startsWith("Kort. Ook kort.")).toBe(true);
+    expect(rest.length).toBeLessThanOrEqual(1);
   });
 
   it("houdt lege regels voor als die er zijn", () => {

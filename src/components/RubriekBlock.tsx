@@ -55,7 +55,7 @@ export default function RubriekBlock({ gameId }: Props) {
       <div className="text-xs text-muted-foreground mb-1">{"\n"}</div>
 
       {item.type === "text" ? (
-        <TextPost content={item.content ?? ""} />
+        <TextPost content={item.content ?? ""} fotoUrl={item.foto_url} />
       ) : (
         <div>
           {user ? (
@@ -89,11 +89,19 @@ export default function RubriekBlock({ gameId }: Props) {
 // ── Text post ─────────────────────────────────────────────────────────────────
 // First line = bold headline; remaining lines = italic body (same mop-card style).
 
-function TextPost({ content }: { content: string }) {
+function TextPost({ content, fotoUrl }: { content: string; fotoUrl?: string | null }) {
   const lines = content.split("\n").filter(Boolean);
   const [headline, ...rest] = lines;
   return (
     <div className="mop-card p-4 -rotate-[0.4deg]">
+      {fotoUrl && (
+        <img
+          src={fotoUrl}
+          alt=""
+          loading="lazy"
+          className="mb-3 aspect-[4/3] w-full rounded-sm border border-foreground/15 object-cover"
+        />
+      )}
       <p className="font-display font-bold text-lg leading-snug m-0 break-words whitespace-pre-wrap">{headline}</p>
       {rest.map((line, i) => (
         <p key={i} className="font-serif italic text-sm text-muted-foreground mt-2 mb-0 break-words whitespace-pre-wrap">

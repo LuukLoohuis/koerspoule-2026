@@ -32,6 +32,16 @@ export default function Legende({ gameId }: { gameId?: string }) {
       <p className="font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
         {legendeKicker(t("karavaan.voorpagina.rubLegende"), item.jaar)}
       </p>
+      {/* Archieffoto boven de kop, met een haarlijn eromheen zoals een
+          krantenplaat. Blijft staan als het verhaal dichtgeklapt is. */}
+      {item.foto_url && (
+        <img
+          src={item.foto_url}
+          alt={item.titel?.trim() || t("karavaan.voorpagina.rubLegende")}
+          loading="lazy"
+          className="mt-2 aspect-[4/3] w-full border border-foreground/15 object-cover"
+        />
+      )}
       {titel && (
         <h3 className="mt-1 font-display text-[19px] font-bold leading-[1.15] tracking-[-0.015em]">
           {titel}

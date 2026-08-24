@@ -18,6 +18,8 @@ export type RubriekItem = {
   titel: string | null;
   jaar: string | null;
   bron: string | null;
+  /** Optionele foto uit de bucket rubriek-assets. */
+  foto_url: string | null;
   question: string | null;
   options: string[] | null;   // jsonb array, same shape as chat_polls.options
   deadline: string | null;
@@ -69,7 +71,7 @@ export function useActiveRubriek(gameId?: string) {
       if (!supabase || !gameId) return null;
       const { data, error } = await supabase
         .from("rubriek_items")
-        .select("id, game_id, type, content, titel, jaar, bron, question, options, deadline, is_active, created_at")
+        .select("id, game_id, type, content, titel, jaar, bron, foto_url, question, options, deadline, is_active, created_at")
         .eq("game_id", gameId)
         .in("type", HOMEPAGE_SOORTEN)
         .eq("is_active", true)
@@ -110,7 +112,7 @@ export function useActiveLegende(gameId?: string) {
       if (!supabase || !gameId) return null;
       const { data, error } = await supabase
         .from("rubriek_items")
-        .select("id, game_id, type, content, titel, jaar, bron, question, options, deadline, is_active, created_at")
+        .select("id, game_id, type, content, titel, jaar, bron, foto_url, question, options, deadline, is_active, created_at")
         .eq("game_id", gameId)
         .eq("type", "legende")
         .eq("is_active", true)
@@ -131,7 +133,7 @@ export function useAllRubriekItems(gameId?: string) {
       if (!supabase || !gameId) return [];
       const { data, error } = await supabase
         .from("rubriek_items")
-        .select("id, game_id, type, content, titel, jaar, bron, question, options, deadline, is_active, created_at")
+        .select("id, game_id, type, content, titel, jaar, bron, foto_url, question, options, deadline, is_active, created_at")
         .eq("game_id", gameId)
         .order("created_at", { ascending: false });
       if (error) throw error;

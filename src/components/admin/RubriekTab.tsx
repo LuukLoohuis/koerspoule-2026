@@ -23,7 +23,12 @@ type DraftForm = {
   titel: string;
   jaar: string;
   bron: string;
+  fotoUrl: string;
 };
+
+/** Bestandstypen en -grootte, gelijk aan de andere uploads in de admin. */
+const FOTO_TYPES = ["image/png", "image/jpeg", "image/webp"];
+const FOTO_MAX_BYTES = 5 * 1024 * 1024;
 
 const empty = (): DraftForm => ({
   type: "text",
@@ -34,6 +39,7 @@ const empty = (): DraftForm => ({
   titel: "",
   jaar: "",
   bron: "",
+  fotoUrl: "",
 });
 
 /**
@@ -52,6 +58,7 @@ export default function RubriekTab({ activeGameId }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<DraftForm>(empty());
   const [saving, setSaving] = useState(false);
+  const [uploaden, setUploaden] = useState(false);
 
   function reload() {
     qc.invalidateQueries({ queryKey: ["rubriek-items-admin", activeGameId] });
@@ -76,6 +83,7 @@ export default function RubriekTab({ activeGameId }: Props) {
       titel: item.titel ?? "",
       jaar: item.jaar ?? "",
       bron: item.bron ?? "",
+      fotoUrl: item.foto_url ?? "",
     });
     setShowForm(true);
   }
@@ -123,6 +131,7 @@ export default function RubriekTab({ activeGameId }: Props) {
         titel: form.type === "legende" ? form.titel.trim() : null,
         jaar: form.type === "legende" ? (form.jaar.trim() || null) : null,
         bron: form.type === "legende" ? (form.bron.trim() || null) : null,
+        foto_url: form.type === "poll" ? null : (form.fotoUrl.trim() || null),
         question: form.type === "poll" ? form.question.trim() : null,
         options: form.type === "poll" ? cleanOpts : null,
         deadline: (form.type === "poll" && form.deadline)
@@ -190,11 +199,52 @@ export default function RubriekTab({ activeGameId }: Props) {
   async function deleteItem(id: string) {
     if (!supabase) return;
     if (!confirm("Rubriek verwijderen? Alle stemmen gaan ook verloren.")) return;
+    // Foto meenemen, anders blijft er een wees in de bucket achter.
+    const foto = items.find((i) => i.id === id)?.foto_url;
+    if (foto) await verwijderFoto(foto);
     const { error } = await supabase.from("rubriek_items").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Verwijderd");
     if (editingId === id) cancel();
     reload();
+  }
+
+  /**
+   * Upload naar de publieke bucket rubriek-assets. Het pad krijgt een eigen id
+   * in plaats van dat van het item: een nieuw item bestaat nog niet als je de
+   * foto kiest, en zo hoeft de upload niet op het opslaan te wachten.
+   */
+  async function uploadFoto(file: File | undefined | null) {
+    if (!supabase || !file) return;
+    if (!FOTO_TYPES.includes(file.type)) { toast.error("Alleen PNG, JPG of WEBP."); return; }
+    if (file.size > FOTO_MAX_BYTES) { toast.error("Bestand te groot (max 5 MB)."); return; }
+    setUploaden(true);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const pad = `${activeGameId}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("rubriek-assets")
+        .upload(pad, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("rubriek-assets").getPublicUrl(pad);
+      setForm((f) => ({ ...f, fotoUrl: pub.publicUrl }));
+      toast.success("Foto geüpload");
+    } catch (e) {
+      toast.error(`Upload mislukt: ${(e as Error).message}`);
+    } finally {
+      setUploaden(false);
+    }
+  }
+
+  async function verwijderFoto(url: string) {
+    if (!supabase) return;
+    const m = url.match(/rubriek-assets\/(.+?)(\?|$)/);
+    if (m?.[1]) await supabase.storage.from("rubriek-assets").remove([decodeURIComponent(m[1])]);
+  }
+
+  async function haalFotoWeg() {
+    if (form.fotoUrl) await verwijderFoto(form.fotoUrl);
+    setForm((f) => ({ ...f, fotoUrl: "" }));
   }
 
   return (
@@ -218,6 +268,9 @@ export default function RubriekTab({ activeGameId }: Props) {
               form={form}
               setForm={setForm}
               saving={saving}
+              uploaden={uploaden}
+              onUploadFoto={uploadFoto}
+              onFotoWeg={haalFotoWeg}
               isEdit={Boolean(editingId)}
               onSave={save}
               onCancel={cancel}
@@ -254,6 +307,9 @@ function ItemForm({
   form,
   setForm,
   saving,
+  uploaden,
+  onUploadFoto,
+  onFotoWeg,
   isEdit,
   onSave,
   onCancel,
@@ -261,6 +317,9 @@ function ItemForm({
   form: DraftForm;
   setForm: (f: DraftForm) => void;
   saving: boolean;
+  uploaden: boolean;
+  onUploadFoto: (file: File | undefined | null) => void;
+  onFotoWeg: () => void;
   isEdit: boolean;
   onSave: () => void;
   onCancel: () => void;
@@ -313,6 +372,37 @@ function ItemForm({
           📻 Legende
         </Button>
       </div>
+
+      {/* Foto — voor tekst en legende. Een poll toont zijn eigen kaart, daar is
+          geen plek voor een plaat. */}
+      {form.type !== "poll" && (
+        <div>
+          <Label className="text-xs">Foto (optioneel)</Label>
+          {form.fotoUrl ? (
+            <div className="mt-1 flex items-start gap-2">
+              <img
+                src={form.fotoUrl}
+                alt="Gekozen foto"
+                className="h-20 w-20 shrink-0 rounded border border-border object-cover"
+              />
+              <Button size="sm" variant="outline" onClick={onFotoWeg} disabled={uploaden}>
+                <Trash2 className="mr-1 h-3.5 w-3.5" />Weghalen
+              </Button>
+            </div>
+          ) : (
+            <Input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              disabled={uploaden}
+              onChange={(e) => onUploadFoto(e.target.files?.[0])}
+              className="mt-1 h-9 text-sm file:mr-2 file:text-xs"
+            />
+          )}
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {uploaden ? "Uploaden…" : "PNG, JPG of WEBP, max 5 MB. Staat in de krant boven de kop."}
+          </p>
+        </div>
+      )}
 
       {form.type === "legende" ? (
         <>
@@ -547,6 +637,7 @@ function HomepageQuoteCard({ activeGameId }: { activeGameId: string }) {
   const [size, setSize] = useState<string>(""); // px; leeg = default
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploaden, setUploaden] = useState(false);
 
   // Initial load
   if (!loaded && supabase && activeGameId) {

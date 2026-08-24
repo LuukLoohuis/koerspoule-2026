@@ -8,6 +8,9 @@
  */
 import { alineas, veiligeUrl, zonderNadruk } from "@/lib/verslag";
 
+/** Kortste opening die nog als intro leest; korter is een losse zin. */
+const OPENING_MIN = 90;
+
 export type LegendeDelen = {
   /** Wat dicht zichtbaar is. */
   teaser: string;
@@ -28,7 +31,19 @@ export function legendeDelen(tekst: string | null | undefined): LegendeDelen {
       .split(/\r?\n/)
       .map((r) => r.replace(/\s+/g, " ").trim())
       .filter(Boolean);
-    if (regels.length > 1) stukken = regels;
+    if (regels.length > 1) {
+      // Losse regels zijn zinnen, geen alinea's. Vooraan zoveel zinnen als
+      // nodig voor een fatsoenlijke opening, de rest als één blok erachter --
+      // een kolom met tien alinea's van één zin leest als een boodschappenlijst.
+      let opening = regels[0];
+      let i = 1;
+      while (i < regels.length && opening.length < OPENING_MIN) {
+        opening = `${opening} ${regels[i]}`;
+        i += 1;
+      }
+      const staart = regels.slice(i).join(" ");
+      stukken = staart ? [opening, staart] : [opening];
+    }
   }
 
   if (stukken.length === 0) return { teaser: "", rest: [] };
