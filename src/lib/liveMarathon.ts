@@ -403,3 +403,76 @@ export function matchRider(
   // Twee renners met dezelfde naam: dan liever niets dan een gokje.
   return byName.length === 1 ? byName[0] : null;
 }
+
+/**
+ * Naam van een groep, afgeleid uit zijn positie ten opzichte van het peloton.
+ *
+ * Eerder werden de namen op index toegekend: groep 0 heette altijd "Kopgroep",
+ * groep 1 altijd "Eerste achtervolgers". Rijdt het veld samen met één groepje
+ * eraf, dan heette het peloton dus "Eerste achtervolgers" -- en bij één groep
+ * heette het hele veld "Kopgroep".
+ *
+ * Het peloton is de grootste groep; dat is ook hoe de wedstrijdleiding het
+ * bepaalt. Alles ervoor is kop, alles erna is gelost. Namen die niet van
+ * toepassing zijn komen zo vanzelf niet voor.
+ */
+export function pelotonIndex(groups: LiveGroup[]): number {
+  let beste = 0;
+  for (let i = 1; i < groups.length; i += 1) {
+    if (groups[i].leden.length > groups[beste].leden.length) beste = i;
+  }
+  return beste;
+}
+
+export function groepsNaam(groups: LiveGroup[], index: number): string {
+  const g = groups[index];
+  if (!g) return "Groep";
+  // Een ronde voorsprong weegt zwaarder dan de indeling: dat is geen kopgroep
+  // meer maar een uitloper, en dat wil je met het aantal ronden erbij zien.
+  if (g.tier > 0) return `Kopgroep · +${g.tier}`;
+  const pel = pelotonIndex(groups);
+  if (index === pel) return "Peloton";
+  if (index < pel) return index === 0 ? "Kopgroep" : "Eerste achtervolgers";
+  return "Gelost";
+}
+
+export type UitslagRegel = {
+  positie: number;
+  rider: LiveRider;
+  punten: number;
+  isMine: boolean;
+};
+
+/**
+ * De virtuele uitslag: het hele veld op volgorde, met de punten die het op dit
+ * moment zou opleveren.
+ *
+ * projectPoints levert alleen je eigen rijders -- genoeg voor je totaal, maar
+ * niet om de stand te tonen. Deze functie gebruikt hetzelfde schema uit de
+ * database, zodat de lijst niet kan afwijken van wat er bij het fiatteren
+ * uitkomt. Buiten de punten van het schema is het 0; die grens ligt in het
+ * schema zelf en niet hier.
+ */
+export function virtueleUitslag(
+  placings: RiderPlacing[],
+  opts: {
+    schema: PointsSchema;
+    mineRiderIds: Set<string>;
+    riderIdByBeennummer: Map<string, string>;
+    limiet?: number;
+  },
+): UitslagRegel[] {
+  const { schema, mineRiderIds, riderIdByBeennummer, limiet = 20 } = opts;
+  return [...placings]
+    .sort((a, b) => a.positie - b.positie)
+    .slice(0, limiet)
+    .map((p) => {
+      const riderId = riderIdByBeennummer.get(p.rider.beennummer);
+      return {
+        positie: p.positie,
+        rider: p.rider,
+        punten: schema.get(p.positie) ?? 0,
+        isMine: riderId ? mineRiderIds.has(riderId) : false,
+      };
+    });
+}

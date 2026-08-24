@@ -9,8 +9,13 @@ import {
   pelotonLaps,
   projectPoints,
   sortStandings,
+  groepsNaam,
+  virtueleUitslag,
+  type LiveGroup,
   type LiveRider,
   type RawStandDoc,
+  type RiderPlacing,
+  type PointsSchema,
 } from "@/lib/liveMarathon";
 import fixture from "@/test/fixtures/livemarathon-haaksbergen.json";
 
@@ -343,5 +348,105 @@ describe("echte payload van Haaksbergen", () => {
       { id: "fout", name: "Crispijn Ariëns", knsbRelatienummer: "99999999" },
     ]);
     expect(match?.id).toBe("juist");
+  });
+});
+
+describe("groepsNaam", () => {
+  const groep = (n: number, tier = 0): LiveGroup => ({
+    index: 0,
+    tier,
+    gapToPrev: null,
+    leden: Array.from({ length: n }, (_, i): RiderPlacing => ({
+      rider: { beennummer: String(i), naam: `R${i}` } as LiveRider,
+      positie: i + 1,
+      tier,
+      gapInGroup: 0,
+    })),
+  });
+
+  it("noemt de grootste groep het peloton", () => {
+    const g = [groep(3), groep(20), groep(4)];
+    expect(groepsNaam(g, 1)).toBe("Peloton");
+  });
+
+  it("noemt alles vóór het peloton kop", () => {
+    const g = [groep(3), groep(5), groep(20)];
+    expect(groepsNaam(g, 0)).toBe("Kopgroep");
+    expect(groepsNaam(g, 1)).toBe("Eerste achtervolgers");
+  });
+
+  it("noemt alles ná het peloton gelost", () => {
+    const g = [groep(20), groep(4), groep(2)];
+    expect(groepsNaam(g, 1)).toBe("Gelost");
+    expect(groepsNaam(g, 2)).toBe("Gelost");
+  });
+
+  it("noemt één enkele groep het peloton, niet de kopgroep", () => {
+    // Rijdt het veld samen, dan is er geen kopgroep om over te praten.
+    expect(groepsNaam([groep(44)], 0)).toBe("Peloton");
+  });
+
+  it("noemt het peloton geen achtervolgers als er één groepje voorligt", () => {
+    // Dit ging eerder mis: op index 1 stond altijd "Eerste achtervolgers".
+    const g = [groep(4), groep(38)];
+    expect(groepsNaam(g, 1)).toBe("Peloton");
+  });
+
+  it("laat een ronde voorsprong voorgaan op de indeling", () => {
+    const g = [groep(2, 2), groep(30)];
+    expect(groepsNaam(g, 0)).toBe("Kopgroep · +2");
+  });
+
+  it("gaat om met een lege lijst", () => {
+    expect(groepsNaam([], 0)).toBe("Groep");
+  });
+});
+
+describe("virtueleUitslag", () => {
+  const plaatsing = (positie: number, been: string): RiderPlacing => ({
+    rider: { beennummer: been, naam: `Rijder ${been}` } as LiveRider,
+    positie,
+    tier: 0,
+    gapInGroup: 0,
+  });
+
+  const schema: PointsSchema = new Map([[1, 50], [2, 40], [3, 32]]);
+
+  it("sorteert op positie en kent de punten uit het schema toe", () => {
+    const r = virtueleUitslag([plaatsing(3, "c"), plaatsing(1, "a"), plaatsing(2, "b")], {
+      schema,
+      mineRiderIds: new Set(),
+      riderIdByBeennummer: new Map(),
+    });
+    expect(r.map((x) => x.positie)).toEqual([1, 2, 3]);
+    expect(r.map((x) => x.punten)).toEqual([50, 40, 32]);
+  });
+
+  it("geeft 0 punten buiten het schema", () => {
+    const r = virtueleUitslag([plaatsing(21, "z")], {
+      schema,
+      mineRiderIds: new Set(),
+      riderIdByBeennummer: new Map(),
+    });
+    expect(r[0].punten).toBe(0);
+  });
+
+  it("markeert je eigen rijders via de beennummer-koppeling", () => {
+    const r = virtueleUitslag([plaatsing(1, "a"), plaatsing(2, "b")], {
+      schema,
+      mineRiderIds: new Set(["rider-a"]),
+      riderIdByBeennummer: new Map([["a", "rider-a"]]),
+    });
+    expect(r[0].isMine).toBe(true);
+    expect(r[1].isMine).toBe(false);
+  });
+
+  it("kapt af op de limiet", () => {
+    const veel = Array.from({ length: 44 }, (_, i) => plaatsing(i + 1, String(i)));
+    expect(virtueleUitslag(veel, { schema, mineRiderIds: new Set(), riderIdByBeennummer: new Map() })).toHaveLength(20);
+  });
+
+  it("gaat om met een leeg veld", () => {
+    expect(virtueleUitslag([], { schema, mineRiderIds: new Set(), riderIdByBeennummer: new Map() })).toEqual([]);
   });
 });

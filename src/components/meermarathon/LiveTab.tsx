@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Snowflake, ChevronDown, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { projectPoints, type LiveGroup, type PointsSchema } from "@/lib/liveMarathon";
+import { projectPoints, groepsNaam, virtueleUitslag, type LiveGroup, type PointsSchema } from "@/lib/liveMarathon";
 import { tierColor, tierLabel, tiersPresent } from "@/lib/liveRink";
 import { isStale, type LiveRace } from "@/hooks/useLiveRace";
 import LiveRink from "@/components/meermarathon/LiveRink";
@@ -155,25 +155,50 @@ function LiveInhoud({
         </span>
       </div>
 
-      {/* Virtuele stand */}
-      <div className="flex overflow-hidden rounded-xl bg-gradient-to-r from-[#0d2f57] to-[#12508f] text-[#eaf6ff] shadow-lg">
-        <div className="flex-1 px-3 py-2.5">
-          <div className="font-mono text-[8px] uppercase tracking-[0.16em] opacity-70">Deze ronde</div>
-          <div className="mt-0.5 font-display text-xl font-bold">
-            {projectie.totaal}
-            <span className="ml-1 font-mono text-[10px] font-normal opacity-70">pt</span>
+      {/* KPI-strook. "Te gaan" erbij: tijdens een marathon is het aantal
+          resterende ronden het cijfer waar iedereen naar kijkt. */}
+      <div className="grid grid-cols-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#0d2f57] to-[#12508f] text-[#eaf6ff] shadow-lg sm:grid-cols-4">
+        {[
+          {
+            label: "Virtuele punten",
+            waarde: String(projectie.totaal),
+            eenheid: "pt",
+          },
+          {
+            label: "Mijn rijders",
+            waarde: String(projectie.perBaan.reduce((s, p) => s + p.rijders.length, 0)),
+            eenheid: mineRiderIds.size > 0 ? `van ${mineRiderIds.size}` : undefined,
+          },
+          {
+            label: "Ronde",
+            waarde: track.state?.maxRonden != null ? String(track.state.maxRonden) : "—",
+            eenheid: track.state?.totaalRonden != null ? `/ ${track.state.totaalRonden}` : undefined,
+          },
+          {
+            label: "Te gaan",
+            waarde: track.state?.rondenTeGaan != null ? String(track.state.rondenTeGaan) : "—",
+            eenheid:
+              track.state?.rondenTeGaan != null && track.state?.rondeLengte
+                ? `rondes · ${((track.state.rondenTeGaan * track.state.rondeLengte) / 1000).toFixed(1)} km`
+                : "rondes",
+          },
+        ].map((k, i) => (
+          <div
+            key={k.label}
+            className={cn(
+              "px-3 py-2.5",
+              i % 2 === 1 && "border-l border-white/15",
+              i >= 2 && "border-t border-white/15 sm:border-t-0",
+              i === 2 && "sm:border-l sm:border-white/15",
+            )}
+          >
+            <div className="font-mono text-[8px] uppercase tracking-[0.16em] opacity-70">{k.label}</div>
+            <div className="mt-0.5 flex items-baseline gap-1.5">
+              <span className="font-display text-xl font-bold tabular-nums">{k.waarde}</span>
+              {k.eenheid && <span className="font-mono text-[10px] opacity-70">{k.eenheid}</span>}
+            </div>
           </div>
-        </div>
-        <div className="flex-1 border-l border-white/15 px-3 py-2.5">
-          <div className="font-mono text-[8px] uppercase tracking-[0.16em] opacity-70">Mijn rijders</div>
-          <div className="mt-0.5 font-display text-xl font-bold">
-            {projectie.perBaan.reduce((s, p) => s + p.rijders.length, 0)}
-          </div>
-        </div>
-        <div className="flex-1 border-l border-white/15 px-3 py-2.5">
-          <div className="font-mono text-[8px] uppercase tracking-[0.16em] opacity-70">In koers</div>
-          <div className="mt-0.5 font-display text-xl font-bold">{track.riders.length}</div>
-        </div>
+        ))}
       </div>
 
       {/* Kop van de koers */}
@@ -248,7 +273,7 @@ function LiveInhoud({
               >
                 <div className="mb-1.5 flex items-center gap-2">
                   <span className="font-display text-xs font-bold uppercase tracking-wide">
-                    {g.tier > 0 ? `Kopgroep · +${g.tier}` : GROEPSNAMEN[i] ?? "Groep"}
+                    {groepsNaam(track.groups, i)}
                   </span>
                   <span className="font-mono text-[10px] text-muted-foreground">
                     {g.leden.length} rijder{g.leden.length > 1 ? "s" : ""}
@@ -277,6 +302,56 @@ function LiveInhoud({
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Virtuele uitslag — het hele veld, niet alleen mijn rijders. Tijdens
+          de koers wil je zien wie er scoort, niet alleen wat jij pakt. */}
+      <div>
+        <div className="mb-2 flex items-baseline gap-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          — Virtuele uitslag —
+          <span className="ml-auto font-normal tracking-[0.1em] opacity-70">Top 20 · punten</span>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-[rgba(18,104,168,.2)] bg-white/65">
+          {virtueleUitslag(track.groups.flatMap((g) => g.leden), {
+            schema: pointsSchema,
+            mineRiderIds,
+            riderIdByBeennummer: track.riderIdByBeennummer,
+          }).map((r) => (
+            <div
+              key={r.rider.beennummer}
+              className={cn(
+                "flex items-center gap-2.5 border-b border-foreground/[0.07] px-3 py-1.5 last:border-b-0",
+                r.isMine && "bg-[rgba(11,76,145,.07)]",
+              )}
+            >
+              <span className="w-6 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+                {r.positie}
+              </span>
+              <span
+                className={cn(
+                  "grid h-6 w-6 shrink-0 place-items-center rounded-md font-mono text-[10px] font-bold",
+                  r.isMine ? "bg-[#0b4c91] text-white" : "bg-foreground/[0.07] text-foreground/70",
+                )}
+              >
+                {r.rider.beennummer}
+              </span>
+              <span className={cn("min-w-0 flex-1 truncate text-xs", r.isMine ? "font-bold" : "font-medium")}>
+                {r.rider.naam}
+              </span>
+              <span
+                className={cn(
+                  "w-9 shrink-0 text-right font-mono text-[11px] font-bold tabular-nums",
+                  r.punten === 0 ? "text-muted-foreground/60" : r.isMine ? "text-[#0b4c91]" : "text-foreground/70",
+                )}
+              >
+                {r.punten || "—"}
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-1.5 px-1 text-[10.5px] leading-snug text-muted-foreground">
+          Punten volgens het schema van deze koers. De stand loopt mee met de rondestand op de baan.
+        </p>
       </div>
 
       {/* Virtuele punten */}
@@ -374,8 +449,6 @@ function LiveInhoud({
     </div>
   );
 }
-
-const GROEPSNAMEN = ["Kopgroep", "Eerste achtervolgers", "Peloton", "Achterhoede", "Gelost"];
 
 function mineInGroup(groep: LiveGroup | undefined, mine: Set<string>): string {
   const eigen = (groep?.leden ?? []).filter((l) => mine.has(l.rider.beennummer));
