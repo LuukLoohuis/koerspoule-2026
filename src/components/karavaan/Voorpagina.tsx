@@ -277,8 +277,15 @@ export default function Voorpagina({
                   diezelfde cijfers ook in de standbalk onderaan staan. */}
               {dagstand && segment === "daguitslag" && <div className="mb-4 lg:hidden">{dagstand}</div>}
 
+              {/* Het archiefverhaal bovenaan de kolom: het is het enige stuk
+                  hier dat geen cijfer of citaat van vandaag is, en het trekt
+                  de kolom op gang. Op mobiel hoort het bij de perszaal --
+                  dat segment bestaat al, dus er komt geen tabje bij. */}
+              {legende && <div className={alleenIn("perszaal")}>{legende}</div>}
+
               {artikel.quotes.length > 0 && (
                 <div className={alleenIn("perszaal")}>
+                  {legende && <DubbeleRegel className="my-4" />}
                   {/* Kolomkoppen in volle inkt met een haarlijn eronder: in
                       grijs op grijs zakten ze weg tegen de quotes eronder. */}
                   <p className="mb-2.5 border-b border-foreground/25 pb-1.5 font-oswald text-[10.5px] font-bold uppercase tracking-[0.2em] text-foreground">
@@ -328,22 +335,10 @@ export default function Voorpagina({
                   })}
                 </div>
               )}
-              {/* De uitslag onder de perszaal, gescheiden door de dubbele regel:
-                  de kolom liep leeg terwijl het artikel ernaast doorging, en het
-                  nieuws waar alles op rust stond nergens op de voorpagina. */}
               {uitslag && (
                 <div className={alleenIn("daguitslag")}>
-                  {artikel.quotes.length > 0 && <DubbeleRegel className="my-4 max-lg:hidden" />}
+                  {(artikel.quotes.length > 0 || legende) && <DubbeleRegel className="my-4 max-lg:hidden" />}
                   {uitslag}
-                </div>
-              )}
-              {/* Het archiefverhaal sluit de kolom af. Op mobiel hoort het bij
-                  de perszaal: dat segment bestaat al, dus er komt geen tabje
-                  bij. Geen verhaal → geen blok én geen dubbele regel. */}
-              {legende && (
-                <div className={alleenIn("perszaal")}>
-                  <DubbeleRegel className="my-4" />
-                  {legende}
                 </div>
               )}
             </div>
