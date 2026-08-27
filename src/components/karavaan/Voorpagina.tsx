@@ -5,6 +5,12 @@ import SubpouleKiezer from "@/components/karavaan/SubpouleKiezer";
 
 const GEZIEN_SLEUTEL = "kp_krant_gezien_v1";
 
+/**
+ * Op een telefoon past de hele voorpagina niet in één kolom; drie segmenten
+ * verdelen wat op desktop naast elkaar staat. Boven lg is alles zichtbaar.
+ */
+export type Segment = "voorpagina" | "daguitslag" | "perszaal";
+
 /** Initiaal op kolombreedte: zelfde gebaar als boven het hoofdartikel. */
 const INITIAAL_KLEIN =
   "[&::first-letter]:float-left [&::first-letter]:pr-1.5 [&::first-letter]:pt-[3px] " +
@@ -44,6 +50,12 @@ export type Rubriek = {
    * Zodra hierop geklikt is verdwijnt de stip, ook na herladen.
    */
   merk?: string;
+  /**
+   * In welk mobiel segment het doel staat. Zonder dit sprong de knop naar een
+   * sectie die op dat moment `hidden` was, en gebeurde er niets: eerst
+   * omschakelen, dan pas scrollen.
+   */
+  segment?: Segment;
   onClick: () => void;
 };
 
@@ -69,8 +81,9 @@ export default function Voorpagina({
   rubrieken,
   artikel,
   uitslag,
-  dagstand,
   legende,
+  segment,
+  onSegmentChange,
   className,
 }: {
   koers: string;
@@ -83,10 +96,12 @@ export default function Voorpagina({
   artikel?: Hoofdartikel | null;
   /** Uitslag en stand, onder de perszaal in de rechterkolom. */
   uitslag?: ReactNode;
-  /** Daguitslag binnen je subpoule; op mobiel een eigen segment. */
-  dagstand?: ReactNode;
   /** Archiefverhaal onderaan de perszaalkolom; ontbreekt als er geen is. */
   legende?: ReactNode;
+  /** Actief mobiel segment. Van buiten gestuurd, zodat blokken buiten dit
+   *  component (de daguitslag) op hetzelfde segment kunnen reageren. */
+  segment: Segment;
+  onSegmentChange: (s: Segment) => void;
   className?: string;
 }) {
   const { t, i18n } = useTranslation();
@@ -101,11 +116,6 @@ export default function Voorpagina({
       return volgende;
     });
 
-  // Op een telefoon past de hele voorpagina niet in één kolom; drie segmenten
-  // verdelen wat op desktop naast elkaar staat. Boven lg blijft alles zichtbaar,
-  // dus dit is puur een mobiele indeling en geen tweede versie van de pagina.
-  type Segment = "voorpagina" | "daguitslag" | "perszaal";
-  const [segment, setSegment] = useState<Segment>("voorpagina");
   /** Verbergt een sectie op mobiel als hij niet bij het gekozen segment hoort. */
   const alleenIn = (s: Segment) => (segment === s ? "" : "hidden lg:block");
 
@@ -206,7 +216,7 @@ export default function Voorpagina({
           <button
             key={k}
             type="button"
-            onClick={() => setSegment(k)}
+            onClick={() => onSegmentChange(k)}
             aria-pressed={segment === k}
             className={cn(
               "flex-1 py-2 font-oswald text-[10px] uppercase tracking-[0.18em] transition-colors",
@@ -269,14 +279,8 @@ export default function Voorpagina({
 
           {/* Kolom 2 — perszaal. Quotes gescheiden door haarlijnen, geen
               kaartjes: kaartjes waren de app-look, dit is de krant-look. */}
-          {(artikel.quotes.length > 0 || uitslag || dagstand || legende) && (
+          {(artikel.quotes.length > 0 || uitslag || legende) && (
             <div className="min-w-0 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-[22px] lg:pt-0 max-lg:border-t-0 max-lg:pt-0">
-              {/* Daguitslag uit je eigen poule: alléén op mobiel, als eigen
-                  segment. Op desktop stond hij bovenaan de rechterkolom en
-                  duwde hij de perszaal en de uitslagen naar beneden, terwijl
-                  diezelfde cijfers ook in de standbalk onderaan staan. */}
-              {dagstand && segment === "daguitslag" && <div className="mb-4 lg:hidden">{dagstand}</div>}
-
               {/* Het archiefverhaal bovenaan de kolom: het is het enige stuk
                   hier dat geen cijfer of citaat van vandaag is, en het trekt
                   de kolom op gang. Op mobiel hoort het bij de perszaal --
@@ -369,6 +373,13 @@ export default function Voorpagina({
                 type="button"
                 onClick={() => {
                   markeerGezien(r.merk);
+                  if (r.segment && r.segment !== segment) {
+                    onSegmentChange(r.segment);
+                    // Scrollen pas nadat het segment getekend is; anders staat
+                    // het doel nog op display:none en doet scrollIntoView niets.
+                    requestAnimationFrame(() => requestAnimationFrame(() => r.onClick()));
+                    return;
+                  }
                   r.onClick();
                 }}
                 className={cn(

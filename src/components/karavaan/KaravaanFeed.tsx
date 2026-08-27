@@ -9,7 +9,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import DaguitslagChart from "@/components/DaguitslagChart";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import Voorpagina, { type Rubriek, type StandCel, type Hoofdartikel } from "@/components/karavaan/Voorpagina";
+import Voorpagina, { type Rubriek, type StandCel, type Hoofdartikel, type Segment } from "@/components/karavaan/Voorpagina";
 import { bouwKop, kopUitVerslag } from "@/lib/krantKop";
 import { useAllGames } from "@/hooks/useAllGames";
 import { useSubpoules } from "@/hooks/useSubpoules";
@@ -133,6 +133,11 @@ export default function KaravaanFeed({
   // soms wel en soms niet draait breekt de hook-volgorde. Daarom hier de
   // etappe rechtstreeks uit de feed in plaats van via laatsteEtappe, dat pas
   // verderop bestaat.
+  // Het mobiele segment staat hier en niet in Voorpagina: de daguitslag-kaart
+  // hieronder valt buiten dat component en moet met hetzelfde segment
+  // meeschakelen, anders staat hij op elk tabje.
+  const [segment, setSegment] = useState<Segment>("voorpagina");
+
   const { data: verslag } = useEtappeVerslag(feed.data?.etappes?.[0]?.stage_id);
   const heeftVerslag = Boolean(verslag?.tekst?.trim());
 
@@ -202,44 +207,6 @@ export default function KaravaanFeed({
     />
   ) : null;
 
-  // Daguitslag uit je eigen subpoule: wie scoorde er vandaag wat. De blokken
-  // hierboven zijn cumulatief; dit gaat over deze ene dag.
-  const dagstandblok = laatsteEtappe && laatsteEtappe.dagstand.length > 0 ? (
-    <div>
-      <p className="mb-2 font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-        {t("karavaan.voorpagina.dagstandKop")}
-      </p>
-      {laatsteEtappe.dagstand.slice(0, 3).map((d) => (
-        <div
-          key={d.rang}
-          className={cn(
-            "flex items-baseline gap-2.5 border-t border-dotted border-border py-[7px] first:border-t-0",
-            d.isMij && "text-primary",
-          )}
-        >
-          <span className={cn(
-            "w-[20px] shrink-0 text-right font-oswald text-[11px] tabular-nums text-muted-foreground",
-            d.rang === 1 && "text-[hsl(var(--vintage-gold))]",
-            d.isMij && "text-primary",
-          )}>
-            {d.rang}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className={cn("block truncate font-serif text-[13.5px]", (d.rang === 1 || d.isMij) && "font-semibold")}>
-              {d.naam}
-            </span>
-            {d.deelnemer && (
-              <span className="block truncate font-oswald text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
-                {d.deelnemer}
-              </span>
-            )}
-          </span>
-          <span className="shrink-0 font-serif text-[13px] tabular-nums text-muted-foreground">+{d.punten}</span>
-        </div>
-      ))}
-    </div>
-  ) : null;
-
   // Hoofdartikel over de laatste etappe. De kop komt uit de generator, maar
   // alleen als die de ritwinnaar noemt — anders een sjabloon uit de uitslag.
   const artikel: Hoofdartikel | null = (() => {
@@ -307,6 +274,7 @@ export default function KaravaanFeed({
           emoji: "🏁",
           merk: `dag-${laatsteEtappe?.stage_number ?? 0}`,
           titel: t("karavaan.voorpagina.rubDaguitslag"),
+          segment: "daguitslag" as const,
           onClick: () => naarSectie("krant-daguitslag"),
         }]
       : []),
@@ -322,6 +290,7 @@ export default function KaravaanFeed({
           emoji: "📰",
           merk: `verslag-${laatsteEtappe?.stage_number ?? 0}`,
           titel: t("karavaan.voorpagina.rubVerslag"),
+          segment: "voorpagina" as const,
           onClick: () => naarSectie("krant-verslag"),
         }]
       : []),
@@ -331,6 +300,7 @@ export default function KaravaanFeed({
           emoji: "📻",
           merk: `legende-${legendeItem?.id ?? ""}`,
           titel: t("karavaan.voorpagina.rubLegende"),
+          segment: "perszaal" as const,
           onClick: () => naarSectie("krant-legende"),
         }]
       : []),
@@ -380,14 +350,18 @@ export default function KaravaanFeed({
         cellen={cellen}
         rubrieken={rubrieken}
         uitslag={uitslagblok}
-        dagstand={dagstandblok}
         legende={heeftLegende ? <Legende gameId={game?.id} /> : undefined}
+        segment={segment}
+        onSegmentChange={setSegment}
         artikel={artikel}
       />
 
       {/* Daguitslag van de subpoule — horizontale bars per lid */}
       {selectedSubpouleId && (
-        <div id="krant-daguitslag" className="scroll-mt-24">
+        <div
+          id="krant-daguitslag"
+          className={cn("scroll-mt-24", segment !== "daguitslag" && "hidden lg:block")}
+        >
         <DaguitslagChart
           subpouleId={selectedSubpouleId}
           subpouleName={subpoules.find((s) => s.id === selectedSubpouleId)?.name ?? ""}
