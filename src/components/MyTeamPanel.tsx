@@ -11,7 +11,7 @@ import FlipClock from "@/components/FlipClock";
 import { useMijnPloegStats } from "@/hooks/useMijnPloegStats";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useSubpoules } from "@/hooks/useSubpoules";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SubpouleKiezerBord from "@/components/salle-de-course/SubpouleKiezerBord";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1127,22 +1127,12 @@ export default function MyTeamPanel({
                       {/* Subpoule-kiezer: alleen tonen bij meerdere subpoules. De
                           Sous-peloton-instrumenten volgen deze keuze. */}
                       {subpoules.length > 1 && (
-                        <Select value={activeSubpouleId} onValueChange={setSelectedSubpouleId}>
-                          <SelectTrigger
-                            aria-label={t("team.panel.chooseSubpouleAria")}
-                            className="h-7 w-auto min-w-[140px] max-w-[200px] gap-1.5 rounded-md border-0 px-2.5 font-mono text-[10px] tracking-[0.14em] uppercase font-bold focus:ring-2 focus:ring-[#D49A1A]"
-                            style={{ background: "rgba(26,22,18,0.06)", color: "#0F0F10", borderRadius: 6, boxShadow: "inset 0 0 0 1px rgba(26,22,18,0.22)" }}
-                          >
-                            <SelectValue placeholder="Subpoule" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {subpoules.map((s) => (
-                              <SelectItem key={s.id} value={s.id} className="font-mono text-xs uppercase tracking-wide">
-                                {s.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <SubpouleKiezerBord
+                          subpoules={subpoules.map((s) => ({ id: s.id, name: s.name }))}
+                          selectedId={activeSubpouleId}
+                          onSelect={setSelectedSubpouleId}
+                          ariaLabel={t("team.panel.chooseSubpouleAria")}
+                        />
                       )}
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
