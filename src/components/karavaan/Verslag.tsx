@@ -52,7 +52,11 @@ export default function Verslag({
   variant?: "kaart" | "lead";
   className?: string;
 }) {
-  const [open, setOpen] = useState(false);
+  // Standaard open: het verslag ís het nieuws van de dag. Dichtgeklapt zag je
+  // alleen een intro van twee regels en moest je klikken voor de rest -- terwijl
+  // een krant zijn hoofdartikel ook niet achter een knop zet. "Inklappen"
+  // blijft staan voor wie de pagina korter wil.
+  const [open, setOpen] = useState(true);
   const { data: verslag, isLoading } = useEtappeVerslag(stageId);
 
   // Geen verslag = geen lege kaart. De krant hoort niet te melden dat er niets
