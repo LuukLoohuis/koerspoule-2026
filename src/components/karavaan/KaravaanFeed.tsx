@@ -262,7 +262,6 @@ export default function KaravaanFeed({
         ? t("karavaan.voorpagina.chapeauMet", { punten: laatsteEtappe.mijnDagpunten, rang: laatsteEtappe.mijnDagrang ?? 0, totaal: laatsteEtappe.subpouleStandings.length })
         : t("karavaan.voorpagina.chapeauZonder"),
       chips,
-      profielKnop: { label: t("karavaan.voorpagina.naarProfiel"), onClick: () => naarSectie("krant-voorbeschouwing") },
       quotes,
     };
   })();

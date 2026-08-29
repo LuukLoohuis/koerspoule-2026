@@ -36,7 +36,6 @@ export type Hoofdartikel = {
    */
   verslag?: ReactNode;
   chips: string[];
-  profielKnop?: { label: string; onClick: () => void };
   quotes: Array<{ naam: string; tekst: string }>;
 };
 
@@ -260,20 +259,6 @@ export default function Voorpagina({
                   </span>
                 ))}
               </div>
-            )}
-            {artikel.profielKnop && (
-              <button
-                type="button"
-                onClick={artikel.profielKnop.onClick}
-                className={cn(
-                  "mt-3 inline-flex items-center gap-2 font-oswald text-[10.5px] uppercase tracking-[0.14em]",
-                  "text-[hsl(var(--vintage-gold))] underline underline-offset-[5px] decoration-[hsl(var(--vintage-gold))/0.5]",
-                  "transition-colors hover:decoration-[hsl(var(--vintage-gold))]",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
-                )}
-              >
-                {artikel.profielKnop.label}
-              </button>
             )}
           </div>
 
