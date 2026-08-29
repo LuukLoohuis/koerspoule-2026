@@ -283,14 +283,18 @@ export default function KaravaanFeed({
       titel: t("karavaan.voorpagina.rubVoorbeschouwing"),
       onClick: () => naarSectie("krant-voorbeschouwing"),
     },
-    ...(heeftVerslag
+    // Verslag en commentaar waren twee knoppen naar hetzelfde stuk krant:
+    // het verslag staat bovenaan de voorpagina, het commentaar eronder. Twee
+    // knoppen voor één bestemming is een keuze zonder verschil. Ligt er een
+    // verslag, dan springt hij naar boven; anders naar het commentaar.
+    ...(heeftVerslag || etappes.length > 0
       ? [{
           key: "verslag",
           emoji: "📰",
           merk: `verslag-${laatsteEtappe?.stage_number ?? 0}`,
-          titel: t("karavaan.voorpagina.rubVerslag"),
-          segment: "voorpagina" as const,
-          onClick: () => naarSectie("krant-verslag"),
+          titel: t("karavaan.voorpagina.rubVerslagCommentaar"),
+          ...(heeftVerslag ? { segment: "voorpagina" as const } : {}),
+          onClick: () => naarSectie(heeftVerslag ? "krant-verslag" : "krant-commentaar"),
         }]
       : []),
     ...(heeftLegende
@@ -301,15 +305,6 @@ export default function KaravaanFeed({
           titel: t("karavaan.voorpagina.rubLegende"),
           segment: "perszaal" as const,
           onClick: () => naarSectie("krant-legende"),
-        }]
-      : []),
-    ...(etappes.length > 0
-      ? [{
-          key: "commentaar",
-          emoji: "🎙️",
-          merk: `com-${laatsteEtappe?.stage_number ?? 0}`,
-          titel: t("karavaan.voorpagina.rubCommentaar"),
-          onClick: () => naarSectie("krant-commentaar"),
         }]
       : []),
   ];
