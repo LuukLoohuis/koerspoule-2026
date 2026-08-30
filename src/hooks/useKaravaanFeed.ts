@@ -35,6 +35,10 @@ export type KaravaanEtappe = {
   /** Wat JIJ die dag scoorde, en de hoeveelste dat was in je subpoule. */
   mijnDagpunten: number | null;
   mijnDagrang: number | null;
+  /** Dezelfde dagscore, maar afgezet tegen de hele poule in plaats van je
+   *  subpoule -- en hoeveel ploegen dat er waren. */
+  mijnDagrangOverall: number | null;
+  dagDeelnemersOverall: number;
   subpouleStandings: KaravaanRanking[];
   overallStandings: KaravaanRanking[];
   personalFlash: PersonalFlash | null;
@@ -52,6 +56,8 @@ export type MiniStripData = {
   // dan nette placeholders ("—") i.p.v. te verdwijnen.
   subpoule: { rank: number | null; delta: number };
   overall: { rank: number | null; delta: number };
+  /** Hoeveelste je vandaag stond in de hele poule. */
+  dagOverall: { rank: number | null; total: number };
   points: number | null;
 };
 
@@ -59,6 +65,7 @@ export type MiniStripData = {
 const EMPTY_MINISTRIP: MiniStripData = {
   subpoule: { rank: null, delta: 0 },
   overall: { rank: null, delta: 0 },
+  dagOverall: { rank: null, total: 0 },
   points: null,
 };
 
@@ -245,6 +252,12 @@ export function useKaravaanFeed(params: {
       const myEntry = allEntries.find((e) => e.user_id === userId);
       const myEntryId = myEntry?.id ?? null;
 
+      // Losse punten per etappe, opgezocht in constante tijd. Met .find() over
+      // alle rijen zou de dagstand van de hele poule (honderden ploegen maal
+      // twintig etappes) miljoenen vergelijkingen kosten.
+      const dagPuntenBy = new Map<string, number>();
+      for (const sp of stagePoints) dagPuntenBy.set(`${sp.entry_id}|${sp.stage_id}`, sp.points);
+
       // Helper: bouw ranglijst op basis van de teruggerekende cumulatieve
       // totalen (per-stage snapshot, inclusief classification-bonussen).
       const buildRanking = (entryIds: string[], stageId: string): KaravaanRanking[] => {
@@ -339,6 +352,16 @@ export function useKaravaanFeed(params: {
         const mijnDagpunten = mijnIndex >= 0 ? dagLijst[mijnIndex].pts : null;
         const mijnDagrang = mijnIndex >= 0 ? mijnIndex + 1 : null;
 
+        // Dezelfde dag, maar tegen de hele poule afgezet. Bij gelijke score
+        // wint de vroegste in de lijst; dat is dezelfde volgorde die de
+        // subpoulestand hierboven aanhoudt.
+        const dagOverallLijst = allEntryIds
+          .map((eid) => ({ eid, pts: dagPuntenBy.get(`${eid}|${stage.id}`) ?? 0 }))
+          .sort((a, b) => b.pts - a.pts);
+        const mijnDagIndexOverall = myEntryId
+          ? dagOverallLijst.findIndex((d) => d.eid === myEntryId)
+          : -1;
+
         etappes.push({
           stage_id: stage.id,
           stage_number: stage.stage_number,
@@ -352,6 +375,8 @@ export function useKaravaanFeed(params: {
           dagstand,
           mijnDagpunten,
           mijnDagrang,
+          mijnDagrangOverall: mijnDagIndexOverall >= 0 ? mijnDagIndexOverall + 1 : null,
+          dagDeelnemersOverall: dagOverallLijst.length,
           subpouleStandings: sub,
           overallStandings: overall,
           personalFlash,
@@ -369,6 +394,7 @@ export function useKaravaanFeed(params: {
           ministrip = {
             subpoule: { rank: sub.rank, delta: sub.delta_rank },
             overall: { rank: over.rank, delta: over.delta_rank },
+            dagOverall: { rank: last.mijnDagrangOverall, total: last.dagDeelnemersOverall },
             points: sub.points,
           };
         }

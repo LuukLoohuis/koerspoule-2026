@@ -203,12 +203,14 @@ export default function KaravaanFeed({
     ? [
         { key: "sub", waarde: ministrip.subpoule.rank == null ? "—" : `${ministrip.subpoule.rank}ᵉ`, label: t("karavaan.ministrip.labelSubpoule"), delta: ministrip.subpoule.delta, onClick: selectedSubpouleId ? () => onOpenSubpoule?.(selectedSubpouleId) : onGoToPloeg },
         { key: "all", waarde: ministrip.overall.rank == null ? "—" : `${ministrip.overall.rank}ᵉ`, label: t("karavaan.ministrip.labelOverall"), delta: ministrip.overall.delta, onClick: onOpenUitslagen },
-        // Derde cel: wat je vandaag scoorde, niet je totaal. Het totaal staat
-        // op je ploegpagina en verandert nauwelijks; de dagscore is waarvoor
-        // je de krant opent. Vóór de eerste uitslag valt hij terug op het
-        // totaal, anders staat er een leeg vakje.
-        laatsteEtappe?.mijnDagpunten != null
-          ? { key: "pt", waarde: `+${laatsteEtappe.mijnDagpunten}`, label: t("karavaan.ministrip.labelVandaag"), onClick: onGoToPloeg }
+        // Derde cel: hoeveelste je vandaag stond in de héle poule, niet hoeveel
+        // punten je pakte. Een positie zegt meteen of het een goede dag was;
+        // een puntenaantal moet je met anderen vergelijken om dat te weten.
+        // Cel twee ernaast is dezelfde poule, maar dan het klassement.
+        // Vóór de eerste uitslag valt hij terug op het totaal, anders staat er
+        // een leeg vakje.
+        ministrip.dagOverall.rank != null
+          ? { key: "pt", waarde: `${ministrip.dagOverall.rank}ᵉ`, label: t("karavaan.ministrip.labelVandaag"), onClick: onOpenUitslagen }
           : { key: "pt", waarde: String(ministrip.points ?? "—"), label: t("karavaan.ministrip.labelPunten"), onClick: onGoToPloeg },
       ]
     : [];
