@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
  * Hors Catégorie als bijlage bij de krant.
  *
  * Drie cijfers over jouw ploeg, elk een knop naar zijn eigen analyse. Ze staan
- * in een eigen getint vlak met één "Bijlage ↗" in de kop: dat omhulsel vertelt
- * dat deze drie de pagina verlaten, zodat er niet bij elke tegel een pijltje
- * hoeft te staan.
+ * in een eigen getint vlak. Dat omhulsel doet het werk: één blok met een eigen
+ * achtergrond zegt genoeg dat deze drie ergens anders horen, zonder dat er bij
+ * elke tegel een pijltje of een label bij hoeft.
  *
  * Bewuste werkverdeling met de standbalk erboven: daar staat je POSITIE (rang,
  * punten), hier staat de VERGELIJKING (tegen de apen, tegen je droomploeg,
@@ -48,9 +48,6 @@ export default function HorsBijlage({
           {t("karavaan.voorpagina.bijlageKop")}
         </span>
         <span aria-hidden className="h-px flex-1 bg-border" />
-        <span className="font-oswald text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-          {t("karavaan.voorpagina.bijlageLink")} ↗
-        </span>
       </div>
 
       <div className="grid grid-cols-3 gap-2.5">
