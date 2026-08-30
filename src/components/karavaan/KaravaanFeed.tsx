@@ -251,7 +251,7 @@ export default function KaravaanFeed({
     // Geen winnaar (geschrapte of geneutraliseerde rit) en tóch nieuws: dan is
     // het verslag het hoofdartikel en komt de kop uit de eerste zin daarvan.
     // Zonder deze terugval verdween het hele artikelblok van de voorpagina --
-    // verslag, chips en al -- omdat bouwKop niets kon beweren.
+    // verslag en al -- omdat bouwKop niets kon beweren.
     const kopOfVerslag =
       kop ??
       (heeftVerslag
@@ -259,12 +259,6 @@ export default function KaravaanFeed({
           `${thema.etappe} ${laatsteEtappe.stage_number} zonder uitslag`
         : null);
     if (!kopOfVerslag) return null;
-
-    const chips: string[] = [];
-    if (laatsteEtappe.mijnDagpunten != null) chips.push(`+${laatsteEtappe.mijnDagpunten} ${t("karavaan.ministrip.labelPunten")}`);
-    if (laatsteEtappe.mijnDagrang != null && laatsteEtappe.subpouleStandings.length > 0) {
-      chips.push(t("karavaan.voorpagina.chipDagrang", { rang: laatsteEtappe.mijnDagrang, totaal: laatsteEtappe.subpouleStandings.length }));
-    }
 
     const quotes: Hoofdartikel["quotes"] = [];
     if (laatsteEtappe.michel_tekst) quotes.push({ naam: "Michel Wuyts", tekst: laatsteEtappe.michel_tekst });
@@ -286,7 +280,6 @@ export default function KaravaanFeed({
       chapeau: laatsteEtappe.mijnDagpunten != null
         ? t("karavaan.voorpagina.chapeauMet", { punten: laatsteEtappe.mijnDagpunten, rang: laatsteEtappe.mijnDagrang ?? 0, totaal: laatsteEtappe.subpouleStandings.length })
         : t("karavaan.voorpagina.chapeauZonder"),
-      chips,
       quotes,
     };
   })();

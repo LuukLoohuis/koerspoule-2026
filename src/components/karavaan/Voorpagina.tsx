@@ -35,7 +35,6 @@ export type Hoofdartikel = {
    * de uitslag binnen is, en zodra er een verslag ligt is dat het nieuws.
    */
   verslag?: ReactNode;
-  chips: string[];
   quotes: Array<{ naam: string; tekst: string }>;
 };
 
@@ -262,18 +261,6 @@ export default function Voorpagina({
             <DubbeleRegel className="mt-3" />
             {artikel.verslag}
 
-            {artikel.chips.length > 0 && (
-              <div className="mt-3.5 flex flex-wrap gap-1.5">
-                {artikel.chips.map((c) => (
-                  <span
-                    key={c}
-                    className="rounded-full bg-secondary px-2.5 py-1 font-sans text-[11px] font-medium text-muted-foreground"
-                  >
-                    {c}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Kolom 2 — perszaal. Quotes gescheiden door haarlijnen, geen
