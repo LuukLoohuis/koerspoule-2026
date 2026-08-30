@@ -1212,7 +1212,8 @@
       "wielerdirTitle": "Wielerdir.",
       "wielerdirLabel": "rapport",
       "wielerdirAria": "Open De Wielerdirecteur (rapport)",
-      "volledigePloeg": "Bekijk je volledige ploeg"
+      "volledigePloeg": "Bekijk je volledige ploeg",
+      "labelVandaag": "vandaag"
     },
     "voorbeschouwing": {
       "typeVlak": "Vlakke rit",
@@ -1280,7 +1281,9 @@
       "bijlageKop": "Hors Catégorie",
       "bijlageLink": "Bijlage",
       "rubVerslagHaak": "Het verslag en de commentatoren",
-      "rubLegendeHaak": "Een verhaal uit het archief"
+      "rubLegendeHaak": "Een verhaal uit het archief",
+      "rubPerszaal": "Perszaal",
+      "rubPerszaalHaak": "Michel Wuyts en José De Cauwer"
     }
   },
   "common": {

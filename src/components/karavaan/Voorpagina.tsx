@@ -287,7 +287,7 @@ export default function Voorpagina({
               {legende && <div className={alleenIn("perszaal")}>{legende}</div>}
 
               {artikel.quotes.length > 0 && (
-                <div className={alleenIn("perszaal")}>
+                <div id="krant-perszaal" className={cn("scroll-mt-24", alleenIn("perszaal"))}>
                   {legende && <DubbeleRegel className="my-4" />}
                   {/* Kolomkoppen in volle inkt met een haarlijn eronder: in
                       grijs op grijs zakten ze weg tegen de quotes eronder. */}

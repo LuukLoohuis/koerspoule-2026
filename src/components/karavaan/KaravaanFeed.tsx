@@ -203,7 +203,13 @@ export default function KaravaanFeed({
     ? [
         { key: "sub", waarde: ministrip.subpoule.rank == null ? "—" : `${ministrip.subpoule.rank}ᵉ`, label: t("karavaan.ministrip.labelSubpoule"), delta: ministrip.subpoule.delta, onClick: selectedSubpouleId ? () => onOpenSubpoule?.(selectedSubpouleId) : onGoToPloeg },
         { key: "all", waarde: ministrip.overall.rank == null ? "—" : `${ministrip.overall.rank}ᵉ`, label: t("karavaan.ministrip.labelOverall"), delta: ministrip.overall.delta, onClick: onOpenUitslagen },
-        { key: "pt", waarde: String(ministrip.points ?? "—"), label: t("karavaan.ministrip.labelPunten"), onClick: onGoToPloeg },
+        // Derde cel: wat je vandaag scoorde, niet je totaal. Het totaal staat
+        // op je ploegpagina en verandert nauwelijks; de dagscore is waarvoor
+        // je de krant opent. Vóór de eerste uitslag valt hij terug op het
+        // totaal, anders staat er een leeg vakje.
+        laatsteEtappe?.mijnDagpunten != null
+          ? { key: "pt", waarde: `+${laatsteEtappe.mijnDagpunten}`, label: t("karavaan.ministrip.labelVandaag"), onClick: onGoToPloeg }
+          : { key: "pt", waarde: String(ministrip.points ?? "—"), label: t("karavaan.ministrip.labelPunten"), onClick: onGoToPloeg },
       ]
     : [];
 
@@ -284,10 +290,18 @@ export default function KaravaanFeed({
   })();
 
   // Hors Catégorie als bijlage: dezelfde drie cijfers die eerst achter
-  // "+3 meer" in de standbalk zaten, nu als knoppen met hun eigen naam. Zelfde
-  // schakelaar als de oude brede banner, zodat Beheer > Go-live hem nog steeds
-  // uit kan zetten bij een koers zonder verwerkte etappes.
-  const bijlageTegels: BijlageTegel[] = horsBannerZichtbaar
+  // "+3 meer" in de standbalk zaten, nu als knoppen met hun eigen naam.
+  //
+  // Bewust NIET aan de oude banner-schakelaar gehangen. Die stond bij deze
+  // koers op uit -- bedoeld om een brede reclamebanner weg te halen -- en zou
+  // nu de enige verwijzing naar Hors Catégorie verbergen. De bijlage verschijnt
+  // zodra er iets te tonen is: alle drie de cijfers leeg betekent een koers
+  // waar nog niets berekend is, en dan wijst hij naar lege grafieken.
+  const heeftHorsCijfers =
+    horsSummary.monkeyBeatPct !== null ||
+    horsSummary.emiratesPct !== null ||
+    horsSummary.directorScore !== null;
+  const bijlageTegels: BijlageTegel[] = heeftHorsCijfers
     ? [
         {
           key: "dartpijl",
@@ -318,6 +332,8 @@ export default function KaravaanFeed({
       ]
     : [];
 
+  const artikelQuotes = artikel?.quotes.length ?? 0;
+
   const rubrieken: Rubriek[] = [
     ...(selectedSubpouleId
       ? [{
@@ -339,20 +355,20 @@ export default function KaravaanFeed({
       tint: RUBRIEK_TINT.voorbeschouwing,
       onClick: () => naarSectie("krant-voorbeschouwing"),
     },
-    // Verslag en commentaar waren twee knoppen naar hetzelfde stuk krant:
-    // het verslag staat bovenaan de voorpagina, het commentaar eronder. Twee
-    // knoppen voor één bestemming is een keuze zonder verschil. Ligt er een
-    // verslag, dan springt hij naar boven; anders naar het commentaar.
-    ...(heeftVerslag || etappes.length > 0
+    // De perszaal: wat Michel Wuyts en José De Cauwer over de dag zeggen.
+    // Heette eerst "Verslag & commentaar" en sprong naar het verslag bovenaan,
+    // maar dat stuk staat er al -- je hoeft er niet heen gestuurd te worden.
+    // Deze knop brengt je naar de twee commentatoren.
+    ...(artikelQuotes > 0 || etappes.length > 0
       ? [{
-          key: "verslag",
-          emoji: "📰",
-          merk: `verslag-${laatsteEtappe?.stage_number ?? 0}`,
-          titel: t("karavaan.voorpagina.rubVerslagCommentaar"),
-          haak: t("karavaan.voorpagina.rubVerslagHaak"),
+          key: "perszaal",
+          emoji: "🎙️",
+          merk: `perszaal-${laatsteEtappe?.stage_number ?? 0}`,
+          titel: t("karavaan.voorpagina.rubPerszaal"),
+          haak: t("karavaan.voorpagina.rubPerszaalHaak"),
           tint: RUBRIEK_TINT.verslag,
-          ...(heeftVerslag ? { segment: "voorpagina" as const } : {}),
-          onClick: () => naarSectie(heeftVerslag ? "krant-verslag" : "krant-commentaar"),
+          segment: "perszaal" as const,
+          onClick: () => naarSectie(artikelQuotes > 0 ? "krant-perszaal" : "krant-commentaar"),
         }]
       : []),
     ...(heeftLegende

@@ -1212,7 +1212,8 @@
       "wielerdirTitle": "Director",
       "wielerdirLabel": "report",
       "wielerdirAria": "Open The Cycling Director (report)",
-      "volledigePloeg": "View your full team"
+      "volledigePloeg": "View your full team",
+      "labelVandaag": "today"
     },
     "voorbeschouwing": {
       "typeVlak": "Flat stage",
@@ -1280,7 +1281,9 @@
       "bijlageKop": "Hors Catégorie",
       "bijlageLink": "Supplement",
       "rubVerslagHaak": "The report and the pundits",
-      "rubLegendeHaak": "A story from the archive"
+      "rubLegendeHaak": "A story from the archive",
+      "rubPerszaal": "Press room",
+      "rubPerszaalHaak": "Michel Wuyts and José De Cauwer"
     }
   },
   "common": {

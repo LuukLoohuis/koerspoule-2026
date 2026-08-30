@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useThema } from "@/contexts/ThemaContext";
 import { useUitgelichteNav } from "@/components/Rondleiding";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
+import { navIsActief } from "@/lib/navActief";
 
 type NavItem = {
   label: string;
@@ -20,7 +21,7 @@ type NavItem = {
 };
 
 const NAV: NavItem[] = [
-  { label: "Krant",          icon: Newspaper, to: "/karavaan", navKey: "karavaan" },
+  { label: "Krant",          icon: Newspaper, to: "/karavaan", tab: "karavaan", navKey: "karavaan" },
   { label: "Volgwagen",      icon: Car,       to: "/mijn-peloton", tab: "team", navKey: "team" },
   { label: "Subpoule",       icon: Users,     to: "/mijn-peloton", tab: "subpoules", navKey: "subpoules" },
   { label: "Uitslagen",      labelKey: "nav.results", labelXsKey: "nav.resultsShort", icon: Flag, to: "/uitslagen", navKey: "uitslagen" },
@@ -34,7 +35,6 @@ export default function BottomNav() {
   const { t } = useTranslation();
   const tabParam = new URLSearchParams(search).get("tab");
 
-  const isMijnPeloton = pathname.startsWith("/mijn-peloton");
   // Loopt er een rondleiding? Dan licht de besproken tab op boven het waas.
   const uitgelicht = useUitgelichteNav();
 
@@ -69,17 +69,7 @@ export default function BottomNav() {
           // pagina zelf.
           const shownLabel = labelKey ? t(labelKey) : label;
           const shownLabelXs = labelXsKey ? t(labelXsKey) : labelXs;
-          let active = false;
-          if (tab === "team") {
-            // Volgwagen = /mijn-peloton zonder tab-param of met tab=team
-            active = isMijnPeloton && (tabParam === null || tabParam === "team");
-          } else if (tab) {
-            active = isMijnPeloton && tabParam === tab;
-          } else if (to === "/") {
-            active = pathname === "/";
-          } else {
-            active = pathname.startsWith(to);
-          }
+          const active = navIsActief({ to, tab }, pathname, tabParam);
 
           return (
             <button
