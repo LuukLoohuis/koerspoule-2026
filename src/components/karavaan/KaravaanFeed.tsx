@@ -277,9 +277,6 @@ export default function KaravaanFeed({
           />
         )
         : undefined,
-      chapeau: laatsteEtappe.mijnDagpunten != null
-        ? t("karavaan.voorpagina.chapeauMet", { punten: laatsteEtappe.mijnDagpunten, rang: laatsteEtappe.mijnDagrang ?? 0, totaal: laatsteEtappe.subpouleStandings.length })
-        : t("karavaan.voorpagina.chapeauZonder"),
       quotes,
     };
   })();

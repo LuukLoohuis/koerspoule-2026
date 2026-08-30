@@ -29,11 +29,7 @@ export type StandCel = {
 export type Hoofdartikel = {
   kicker: string;
   kop: string;
-  chapeau: string;
-  /**
-   * Het etappeverslag, als dat er is. Vervangt de chapeau: die meldt alleen dát
-   * de uitslag binnen is, en zodra er een verslag ligt is dat het nieuws.
-   */
+  /** Het etappeverslag, als dat er is. */
   verslag?: ReactNode;
   quotes: Array<{ naam: string; tekst: string }>;
 };
@@ -253,11 +249,6 @@ export default function Voorpagina({
             <h2 className="mt-2.5 font-display text-[30px] font-black leading-[1.02] tracking-[-0.032em] lg:text-[47px]">
               {artikel.kop}
             </h2>
-            {!artikel.verslag && (
-              <p className="mt-2 font-serif text-[16px] italic leading-snug text-muted-foreground">
-                {artikel.chapeau}
-              </p>
-            )}
             <DubbeleRegel className="mt-3" />
             {artikel.verslag}
 
