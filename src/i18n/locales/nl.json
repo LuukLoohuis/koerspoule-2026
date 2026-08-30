@@ -1248,7 +1248,7 @@
       "leus": "alles van vandaag, in één oogopslag",
       "nieuw": "nieuw",
       "rubDaguitslag": "Daguitslag",
-      "rubDaguitslagHaak": "Hoe deed je het vandaag in je subpoule?",
+      "rubDaguitslagHaak": "Hoe deed je het vandaag?",
       "rubVoorbeschouwing": "Voorbeschouwing",
       "rubVoorbeschouwingHaak": "De volgende etappe, met 3D-profiel",
       "rubCommentaar": "Commentaar",
@@ -1276,7 +1276,11 @@
       "legendeDicht": "Verberg het verhaal",
       "quoteMeer": "Meer",
       "quoteMinder": "Minder",
-      "rubVerslagCommentaar": "Verslag & commentaar"
+      "rubVerslagCommentaar": "Verslag & commentaar",
+      "bijlageKop": "Hors Catégorie",
+      "bijlageLink": "Bijlage",
+      "rubVerslagHaak": "Het verslag en de commentatoren",
+      "rubLegendeHaak": "Een verhaal uit het archief"
     }
   },
   "common": {

@@ -21,6 +21,26 @@ import Uitslagblok from "@/components/karavaan/Uitslagblok";
 import { useEtappeVerslag } from "@/hooks/useEtappeVerslag";
 import { useActiveLegende } from "@/hooks/useRubriek";
 import Legende from "@/components/karavaan/Legende";
+import HorsBijlage, { type BijlageTegel } from "@/components/karavaan/HorsBijlage";
+
+/**
+ * Vaste kleur per rubriek, uit het ontwerp. Het accent volgt het thema van de
+ * koers; de rest zijn eigen tinten zodat de rubrieken uit elkaar te houden
+ * zijn zonder dat er vijf accentkleuren naast elkaar staan.
+ */
+const RUBRIEK_TINT = {
+  daguitslag: "hsl(var(--primary) / 0.14)",
+  voorbeschouwing: "rgba(47, 93, 140, 0.14)",
+  verslag: "rgba(107, 74, 140, 0.14)",
+  legende: "hsl(var(--vintage-gold) / 0.3)",
+} as const;
+
+/** Cijferkleuren in de bijlage, dieper dan de tinten hierboven. */
+const BIJLAGE_KLEUR = {
+  dartpijl: "hsl(var(--primary))",
+  emirates: "#8a6a12",
+  directeur: "#2f5d8c",
+} as const;
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import Stamp from "@/components/retro/Stamp";
@@ -184,9 +204,6 @@ export default function KaravaanFeed({
         { key: "sub", waarde: ministrip.subpoule.rank == null ? "—" : `${ministrip.subpoule.rank}ᵉ`, label: t("karavaan.ministrip.labelSubpoule"), delta: ministrip.subpoule.delta, onClick: selectedSubpouleId ? () => onOpenSubpoule?.(selectedSubpouleId) : onGoToPloeg },
         { key: "all", waarde: ministrip.overall.rank == null ? "—" : `${ministrip.overall.rank}ᵉ`, label: t("karavaan.ministrip.labelOverall"), delta: ministrip.overall.delta, onClick: onOpenUitslagen },
         { key: "pt", waarde: String(ministrip.points ?? "—"), label: t("karavaan.ministrip.labelPunten"), onClick: onGoToPloeg },
-        { key: "iq", waarde: horsSummary.monkeyBeatPct == null ? "—" : `${horsSummary.monkeyBeatPct}%`, label: t("karavaan.ministrip.monkeyLabel"), onClick: () => onOpenHors?.("dartpijl") },
-        { key: "em", waarde: horsSummary.emiratesPct == null ? "—" : `${horsSummary.emiratesPct}%`, label: t("karavaan.ministrip.emiratesLabel"), onClick: () => onOpenHors?.("superteam") },
-        { key: "wd", waarde: horsSummary.directorScore == null ? "—" : horsSummary.directorScore.toFixed(1).replace(".", ","), label: t("karavaan.ministrip.wielerdirLabel"), onClick: () => onOpenHors?.("wielerdirecteur") },
       ]
     : [];
 
@@ -266,6 +283,41 @@ export default function KaravaanFeed({
     };
   })();
 
+  // Hors Catégorie als bijlage: dezelfde drie cijfers die eerst achter
+  // "+3 meer" in de standbalk zaten, nu als knoppen met hun eigen naam. Zelfde
+  // schakelaar als de oude brede banner, zodat Beheer > Go-live hem nog steeds
+  // uit kan zetten bij een koers zonder verwerkte etappes.
+  const bijlageTegels: BijlageTegel[] = horsBannerZichtbaar
+    ? [
+        {
+          key: "dartpijl",
+          waarde: horsSummary.monkeyBeatPct,
+          eenheid: "%",
+          titel: t("karavaan.ministrip.monkeyTitle"),
+          haak: t("karavaan.ministrip.monkeyLabel"),
+          kleur: BIJLAGE_KLEUR.dartpijl,
+          onClick: () => onOpenHors?.("dartpijl"),
+        },
+        {
+          key: "emirates",
+          waarde: horsSummary.emiratesPct,
+          eenheid: "%",
+          titel: t("karavaan.ministrip.emiratesTitle"),
+          haak: t("karavaan.ministrip.emiratesLabel"),
+          kleur: BIJLAGE_KLEUR.emirates,
+          onClick: () => onOpenHors?.("superteam"),
+        },
+        {
+          key: "directeur",
+          waarde: horsSummary.directorScore,
+          titel: t("karavaan.ministrip.wielerdirTitle"),
+          haak: t("karavaan.ministrip.wielerdirLabel"),
+          kleur: BIJLAGE_KLEUR.directeur,
+          onClick: () => onOpenHors?.("wielerdirecteur"),
+        },
+      ]
+    : [];
+
   const rubrieken: Rubriek[] = [
     ...(selectedSubpouleId
       ? [{
@@ -273,6 +325,8 @@ export default function KaravaanFeed({
           emoji: "🏁",
           merk: `dag-${laatsteEtappe?.stage_number ?? 0}`,
           titel: t("karavaan.voorpagina.rubDaguitslag"),
+          haak: t("karavaan.voorpagina.rubDaguitslagHaak"),
+          tint: RUBRIEK_TINT.daguitslag,
           segment: "daguitslag" as const,
           onClick: () => naarSectie("krant-daguitslag"),
         }]
@@ -281,6 +335,8 @@ export default function KaravaanFeed({
       key: "voorbeschouwing",
       emoji: "🗺️",
       titel: t("karavaan.voorpagina.rubVoorbeschouwing"),
+      haak: t("karavaan.voorpagina.rubVoorbeschouwingHaak"),
+      tint: RUBRIEK_TINT.voorbeschouwing,
       onClick: () => naarSectie("krant-voorbeschouwing"),
     },
     // Verslag en commentaar waren twee knoppen naar hetzelfde stuk krant:
@@ -293,6 +349,8 @@ export default function KaravaanFeed({
           emoji: "📰",
           merk: `verslag-${laatsteEtappe?.stage_number ?? 0}`,
           titel: t("karavaan.voorpagina.rubVerslagCommentaar"),
+          haak: t("karavaan.voorpagina.rubVerslagHaak"),
+          tint: RUBRIEK_TINT.verslag,
           ...(heeftVerslag ? { segment: "voorpagina" as const } : {}),
           onClick: () => naarSectie(heeftVerslag ? "krant-verslag" : "krant-commentaar"),
         }]
@@ -303,6 +361,8 @@ export default function KaravaanFeed({
           emoji: "📻",
           merk: `legende-${legendeItem?.id ?? ""}`,
           titel: t("karavaan.voorpagina.rubLegende"),
+          haak: t("karavaan.voorpagina.rubLegendeHaak"),
+          tint: RUBRIEK_TINT.legende,
           segment: "perszaal" as const,
           onClick: () => naarSectie("krant-legende"),
         }]
@@ -345,6 +405,7 @@ export default function KaravaanFeed({
         rubrieken={rubrieken}
         uitslag={uitslagblok}
         legende={heeftLegende ? <Legende gameId={game?.id} /> : undefined}
+        bijlage={bijlageTegels.length > 0 ? <HorsBijlage tegels={bijlageTegels} /> : undefined}
         segment={segment}
         onSegmentChange={setSegment}
         artikel={artikel}
@@ -363,63 +424,6 @@ export default function KaravaanFeed({
           gameStatus={game?.status}
         />
         </div>
-      )}
-
-      {/* HC teaser — slim banner op mobiel, ruimer op desktop. Uit te zetten
-          per game in Beheer > Go-live: bij een koers zonder verwerkte etappes
-          wijst hij naar lege grafieken. Ontbreekt de kolom nog, dan staat hij
-          aan; dat is het gedrag van voor die schakelaar. */}
-      {horsBannerZichtbaar && (
-      <button
-        type="button"
-        onClick={() => onOpenHors?.("dartpijl")}
-        className="group block w-full text-left"
-        aria-label={t("karavaan.feed.hcAriaOpen")}
-      >
-        {/* Mobiel: slim 52px banner */}
-        <div className="md:hidden relative retro-border bg-card flex items-center gap-2.5 px-3 h-[52px] transition-shadow group-hover:shadow-[3px_3px_0_hsl(var(--foreground))]">
-          <div className="shrink-0 bg-foreground text-background font-display font-black text-sm tracking-tighter px-2 py-1 leading-none">
-            HC
-          </div>
-          <span className="font-display font-bold text-[13px] truncate flex-1">
-            {t("karavaan.feed.hcMobileLabel")}
-          </span>
-          <span aria-hidden className="shrink-0 text-base text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all">
-            →
-          </span>
-        </div>
-        {/* Desktop: poëtische tile */}
-        <div className="hidden md:flex relative retro-border bg-card overflow-hidden items-stretch transition-shadow group-hover:shadow-[5px_5px_0_hsl(var(--foreground))]">
-          <div className="relative shrink-0 bg-foreground text-background px-5 py-4 flex flex-col items-center justify-center border-r-2 border-foreground min-w-[112px]">
-            <div
-              aria-hidden
-              className="absolute inset-0 opacity-20"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle, hsl(var(--destructive)) 1.2px, transparent 1.5px)",
-                backgroundSize: "10px 10px",
-              }}
-            />
-            <span className="relative font-display text-[10px] uppercase tracking-[0.25em] opacity-75 leading-none">{t("karavaan.feed.hcCol")}</span>
-            <span className="relative font-display font-black text-5xl leading-none mt-1.5 tracking-tighter">HC</span>
-            <span className="relative font-display text-[10px] uppercase tracking-[0.25em] opacity-75 leading-none mt-1.5">{t("karavaan.feed.hcHorsCat")}</span>
-          </div>
-          <div className="flex-1 px-5 py-4 relative">
-            <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="vintage-heading text-lg font-bold tracking-wider">{t("karavaan.feed.hcStatistieken")}</span>
-              <span className="font-serif italic text-sm text-muted-foreground">{t("karavaan.feed.hcClimb")}</span>
-            </div>
-            <p className="font-serif italic text-[0.95rem] mt-1 leading-snug pr-10 text-foreground/85">
-              {t("karavaan.feed.hcQuotePre")}
-              <span className="not-italic font-display font-bold text-foreground underline decoration-[hsl(var(--vintage-gold))] decoration-2 underline-offset-2">
-                Hors&nbsp;Catégorie
-              </span>
-              {t("karavaan.feed.hcQuotePost")}
-            </p>
-            <span aria-hidden className="absolute right-4 top-1/2 -translate-y-1/2 font-display text-2xl text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all">→</span>
-          </div>
-        </div>
-      </button>
       )}
 
       {/* De Voorbeschouwing — vooruitblik op de eerstvolgende etappe */}

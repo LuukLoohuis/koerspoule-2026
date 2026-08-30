@@ -40,7 +40,7 @@ export default function SubpouleKiezer({
   const knop = (
     <span
       className={cn(
-        "flex h-full min-w-[150px] items-center gap-2.5 px-3 py-2.5 text-left transition-colors sm:min-w-[168px]",
+        "flex h-full min-w-[116px] items-center gap-2 px-2.5 py-2 text-left transition-colors sm:min-w-[168px] sm:gap-2.5 sm:px-3",
         kanWisselen && "cursor-pointer hover:bg-secondary/70",
       )}
     >

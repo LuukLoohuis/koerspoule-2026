@@ -81,6 +81,7 @@ export default function Voorpagina({
   artikel,
   uitslag,
   legende,
+  bijlage,
   segment,
   onSegmentChange,
   className,
@@ -97,6 +98,8 @@ export default function Voorpagina({
   uitslag?: ReactNode;
   /** Archiefverhaal onderaan de perszaalkolom; ontbreekt als er geen is. */
   legende?: ReactNode;
+  /** Hors Catégorie-bijlage, onder de rubriekknoppen. */
+  bijlage?: ReactNode;
   /** Actief mobiel segment. Van buiten gestuurd, zodat blokken buiten dit
    *  component (de daguitslag) op hetzelfde segment kunnen reageren. */
   segment: Segment;
@@ -104,7 +107,6 @@ export default function Voorpagina({
   className?: string;
 }) {
   const { t, i18n } = useTranslation();
-  const [meerOpen, setMeerOpen] = useState(false);
   // Per commentator onthouden of zijn quote uitstaat.
   const [quotesOpen, setQuotesOpen] = useState<Set<string>>(new Set());
   const toggleQuote = (naam: string) =>
@@ -138,8 +140,10 @@ export default function Voorpagina({
     }
   };
 
+  // Drie cijfers, meer niet. De vergelijkende cijfers (apen, droomploeg,
+  // rapport) staan nu in de Hors Catégorie-bijlage: in de balk hoort je
+  // POSITIE, in de bijlage de VERGELIJKING.
   const kern = cellen?.slice(0, 3) ?? [];
-  const rest = cellen?.slice(3) ?? [];
 
   const cel = (c: StandCel, extra?: string) => (
     <button
@@ -148,13 +152,13 @@ export default function Voorpagina({
       onClick={c.onClick}
       disabled={!c.onClick}
       className={cn(
-        "min-w-[74px] flex-1 border-l border-border/70 px-1.5 py-2.5 text-center transition-colors",
+        "min-w-[56px] flex-1 border-l border-border/70 px-1 py-2 text-center transition-colors sm:min-w-[68px] sm:px-1.5",
         c.onClick && "hover:bg-secondary/70",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--vintage-gold))]",
         extra,
       )}
     >
-      <span className="block whitespace-nowrap text-[18px] font-semibold leading-none tracking-tight tabular-nums">
+      <span className="block whitespace-nowrap text-[16px] font-semibold leading-none tracking-tight tabular-nums">
         {c.waarde}
         {typeof c.delta === "number" && c.delta !== 0 && (
           <span className={cn("ml-1 text-[10px] font-bold", c.delta > 0 ? "text-emerald-600" : "text-primary")}>
@@ -163,7 +167,7 @@ export default function Voorpagina({
           </span>
         )}
       </span>
-      <span className="mt-1.5 block text-[9.5px] font-medium text-muted-foreground">{c.label}</span>
+      <span className="mt-1 block text-[9.5px] font-medium text-muted-foreground">{c.label}</span>
     </button>
   );
 
@@ -203,6 +207,16 @@ export default function Voorpagina({
       </div>
 
       <DubbeleRegel />
+
+      {(kern.length > 0 || subpoules.length > 0) && (
+        <div className={cn(
+          "flex flex-wrap items-stretch overflow-hidden rounded-[16px] bg-background shadow-[0_0_0_1px_rgba(20,18,16,0.09),0_1px_2px_rgba(0,0,0,0.05),0_10px_22px_-14px_rgba(0,0,0,0.4)]",
+          alleenIn("voorpagina"),
+        )}>
+          <SubpouleKiezer subpoules={subpoules} selectedId={selectedSubpouleId} onSelect={onSelectSubpoule} />
+          {kern.map((c) => cel(c))}
+        </div>
+      )}
 
       {/* Segmentschakelaar, alleen op mobiel. Krantstijl: inverse blok in
           plaats van een pil -- zelfde taal als de binnenpagina. */}
@@ -368,7 +382,7 @@ export default function Voorpagina({
                   r.onClick();
                 }}
                 className={cn(
-                  "relative flex items-center gap-2.5 rounded-[18px] px-[14px] py-[13px] text-left",
+                  "relative flex min-h-[60px] items-center gap-2.5 rounded-[18px] px-[13px] py-[11px] text-left",
                   "bg-background",
                   "shadow-[0_0_0_1px_rgba(20,18,16,0.09),0_1px_2px_rgba(0,0,0,0.05),0_10px_22px_-14px_rgba(0,0,0,0.4)]",
                   "transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(.2,.8,.2,1)]",
@@ -379,12 +393,25 @@ export default function Voorpagina({
               >
                 <span
                   aria-hidden
-                  className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-secondary text-[15px]"
+                  className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full text-[15px]"
+                  // Elke rubriek een vaste kleur: na twee dagen herken je ze
+                  // op kleur in plaats van op tekst.
+                  style={{ background: r.tint ?? "hsl(var(--secondary))" }}
                 >
                   {r.emoji}
                 </span>
-                <span className="min-w-0 font-sans text-[13.5px] font-bold leading-tight tracking-[-0.01em]">
-                  {r.titel}
+                <span className="min-w-0">
+                  <span className="block font-sans text-[13.5px] font-bold leading-tight tracking-[-0.012em]">
+                    {r.titel}
+                  </span>
+                  {/* Twee regels, niet afkappen: op de webversie staan er vier
+                      naast elkaar en dan past geen enkele haak op één regel.
+                      De tegels rekken mee en blijven even hoog. */}
+                  {r.haak && (
+                    <span className="mt-0.5 line-clamp-2 text-[10.5px] font-medium leading-snug text-muted-foreground">
+                      {r.haak}
+                    </span>
+                  )}
                 </span>
                 {r.merk && !gezien.has(r.merk) && (
                   <span aria-hidden className="absolute right-3 top-3 h-[7px] w-[7px] rounded-full bg-primary" />
@@ -392,29 +419,7 @@ export default function Voorpagina({
               </button>
             ))}
           </div>
-        </div>
-      )}
-
-      {(kern.length > 0 || subpoules.length > 0) && (
-        <div className={cn(
-          "flex flex-wrap items-stretch overflow-hidden rounded-[20px] bg-background shadow-[0_0_0_1px_rgba(20,18,16,0.09),0_1px_2px_rgba(0,0,0,0.05),0_10px_22px_-14px_rgba(0,0,0,0.4)]",
-          alleenIn("voorpagina"),
-        )}>
-          <SubpouleKiezer subpoules={subpoules} selectedId={selectedSubpouleId} onSelect={onSelectSubpoule} />
-          {kern.map((c) => cel(c))}
-          {rest.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setMeerOpen((v) => !v)}
-              aria-expanded={meerOpen}
-              className="flex items-center border-l border-border/70 px-3 py-2.5 font-sans text-[12px] font-bold text-[hsl(var(--vintage-gold))] transition-colors hover:bg-secondary/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--vintage-gold))]"
-            >
-              {meerOpen ? t("karavaan.voorpagina.minder") : t("karavaan.voorpagina.meer", { aantal: rest.length })}
-            </button>
-          )}
-          {meerOpen && (
-            <div className="flex w-full border-t border-border/70">{rest.map((c) => cel(c, "first:border-l-0"))}</div>
-          )}
+          {bijlage}
         </div>
       )}
 
