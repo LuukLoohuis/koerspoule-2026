@@ -1834,7 +1834,9 @@
       "standLabel": "Standing",
       "standLink": "in the paper",
       "rapportLabel": "Report",
-      "rapportLink": "Hors Catégorie"
+      "rapportLink": "Hors Catégorie",
+      "toonNul": "Show {{aantal}} without points",
+      "verbergNul": "Hide who didn't score"
     },
     "ontwikkeling": {
       "kop": "Progress",

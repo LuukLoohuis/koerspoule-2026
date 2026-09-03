@@ -1834,7 +1834,9 @@
       "standLabel": "Stand",
       "standLink": "in de Krant",
       "rapportLabel": "Rapport",
-      "rapportLink": "Hors Catégorie"
+      "rapportLink": "Hors Catégorie",
+      "toonNul": "Toon {{aantal}} zonder punten",
+      "verbergNul": "Verberg wie niet scoorde"
     },
     "ontwikkeling": {
       "kop": "Ontwikkeling",

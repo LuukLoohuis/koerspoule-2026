@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useOogst, oogstSlotzin, type OogstRegel } from "@/hooks/useOogst";
@@ -9,8 +11,10 @@ import { useOogst, oogstSlotzin, type OogstRegel } from "@/hooks/useOogst";
  * je scoorde -- de Volgwagen weet welke renner het bracht, met de rekensom
  * erbij: 26 × 2 leest anders dan 52.
  *
- * Nulscores en uitvallers blijven staan. Een lege dag van je sprinter is
- * informatie; hem verbergen maakt het dagtotaal onverklaarbaar.
+ * Standaard alleen de renners die scoorden: dat is de oogst. Wie op nul bleef
+ * staat achter "toon alles" -- die informatie is er wel, maar hij hoort niet
+ * boven de renners die het werk deden. Bij twintig deelnemers is dat het
+ * verschil tussen vijf regels en een scrollend scherm.
  *
  * Donkere inzet in het cockpitframe, zoals de spoel-terugbalk eronder.
  */
@@ -64,6 +68,7 @@ export default function DeOogst({
   className?: string;
 }) {
   const { t } = useTranslation();
+  const [toonAlles, setToonAlles] = useState(false);
   const { data: regels = [], isLoading } = useOogst(entryId, stageId);
 
   // Geen etappe gekozen of nog niets gefiatteerd: geen leeg kader tonen.
@@ -71,6 +76,9 @@ export default function DeOogst({
 
   const totaal = regels.reduce((som, r) => som + r.total_points, 0);
   const slot = oogstSlotzin(regels);
+  const scorend = regels.filter((r) => r.total_points > 0);
+  const stil = regels.length - scorend.length;
+  const zichtbaar = toonAlles || scorend.length === 0 ? regels : scorend;
 
   return (
     <section
@@ -111,7 +119,7 @@ export default function DeOogst({
               </tr>
             </thead>
             <tbody>
-              {regels.map((r) => (
+              {zichtbaar.map((r) => (
                 <Regel key={`${r.rider_id}-${r.is_joker}`} regel={r} />
               ))}
             </tbody>
@@ -127,6 +135,22 @@ export default function DeOogst({
               {totaal}
             </span>
           </div>
+
+          {stil > 0 && (
+            <button
+              type="button"
+              onClick={() => setToonAlles((v) => !v)}
+              aria-expanded={toonAlles}
+              className={cn(
+                "mt-2.5 inline-flex min-h-[32px] items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.14em]",
+                "text-[#8a8272] transition-colors hover:text-[#d49a1a]",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D49A1A]",
+              )}
+            >
+              {toonAlles ? t("volgwagen.oogst.verbergNul") : t("volgwagen.oogst.toonNul", { aantal: stil })}
+              <ChevronDown className={cn("h-3 w-3 transition-transform", toonAlles && "rotate-180")} aria-hidden />
+            </button>
+          )}
 
           {slot && <p className="mt-2.5 font-serif text-[12.5px] text-[#a79e8c]">{slot}</p>}
         </>
