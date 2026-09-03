@@ -23,8 +23,18 @@ export default function Rendement({
   className?: string;
 }) {
   const { t } = useTranslation();
-  const { data: regels = [] } = useRendement(entryId);
-  if (regels.length === 0) return null;
+  const { data: regels = [], error, isLoading } = useRendement(entryId);
+
+  // Stil verdwijnen is prima als er geen data ís, maar niet als de query
+  // stukloopt: dan sta je naar een gat te kijken zonder te weten waarom.
+  if (error) {
+    return (
+      <p className={cn("font-mono text-[10px] uppercase tracking-[0.14em]", className)} style={{ color: "#B94A48" }}>
+        {t("volgwagen.rendement.kop")} — {(error as Error).message}
+      </p>
+    );
+  }
+  if (isLoading || regels.length === 0) return null;
 
   const schaal = Math.max(...regels.map((r) => Math.max(r.poule_beste, r.mijn_punten)), 1);
 

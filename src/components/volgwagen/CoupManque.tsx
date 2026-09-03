@@ -27,7 +27,15 @@ export default function CoupManque({
 }) {
   const { t } = useTranslation();
   const [gekozenId, setGekozenId] = useState<string | null>(null);
-  const { data: renners = [] } = useAlternatieven(entryId, categoryId);
+  const { data: renners = [], error } = useAlternatieven(entryId, categoryId);
+
+  if (error) {
+    return (
+      <p className={cn("font-mono text-[10px] uppercase tracking-[0.14em]", className)} style={{ color: "#B94A48" }}>
+        {t("volgwagen.coup.kop")} — {(error as Error).message}
+      </p>
+    );
+  }
 
   const mijn = renners.find((r) => r.is_mijn_keuze) ?? null;
   const anderen = renners.filter((r) => !r.is_mijn_keuze);
