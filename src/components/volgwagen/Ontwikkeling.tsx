@@ -14,17 +14,26 @@ export type OntwikkelingEtappe = {
  * Bewust staven en geen lijn: een dagscore is een losse gebeurtenis, geen
  * doorlopende meting. De hoogte gaat over de hoogste dag, niet over een vast
  * plafond -- anders wordt een rustige ronde één streep boven de as.
+ *
+ * De staven zijn tegelijk de etappekiezer: tikken zet de oogst op die dag.
+ * Daarmee vervalt de losse spoel-terugbalk -- twee bedieningen voor hetzelfde
+ * is er één te veel, en op de grafiek is meteen te zien wát je kiest.
  */
 export default function Ontwikkeling({
   etappes,
   rangVan,
   rangNaar,
+  actiefStageId,
+  onKies,
   className,
 }: {
   etappes: OntwikkelingEtappe[];
   /** Rang bij de eerste gefiatteerde etappe en nu; beide optioneel. */
   rangVan?: number | null;
   rangNaar?: number | null;
+  /** Welke etappe de oogst laat zien. */
+  actiefStageId?: string | null;
+  onKies?: (stageId: string) => void;
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -44,7 +53,7 @@ export default function Ontwikkeling({
         </h3>
         <span aria-hidden className="h-px flex-1" style={{ background: "rgba(26,22,18,0.18)" }} />
         <span className="font-mono text-[9px]" style={{ color: "#8A7A5E" }}>
-          {t("volgwagen.ontwikkeling.aantal", { aantal: etappes.length })}
+          {onKies ? t("volgwagen.ontwikkeling.kiesHint") : t("volgwagen.ontwikkeling.aantal", { aantal: etappes.length })}
         </span>
       </div>
 
@@ -53,40 +62,84 @@ export default function Ontwikkeling({
           const isBeste = e.stageId === beste.stageId && beste.punten > 0;
           const isSlechtste = e.stageId === slechtste.stageId && slechtste.punten < beste.punten;
           const isLaatste = e.stageId === laatste.stageId;
-          return (
-            <div
-              key={e.stageId}
-              className="relative flex-1 rounded-t-[2px]"
+          const isActief = actiefStageId ? e.stageId === actiefStageId : isLaatste;
+          const kleur = isActief
+            ? "hsl(var(--vintage-gold))"
+            : isBeste
+              ? "#5C6B3B"
+              : isSlechtste
+                ? "#B94A48"
+                : "rgba(26,22,18,0.4)";
+
+          const staaf = (
+            <span
+              className="block w-full rounded-t-[2px] transition-[filter,transform] duration-150"
               // Minimaal een streepje: een nuldag moet zichtbaar blijven,
               // anders lijkt de etappe niet gereden.
-              style={{
-                height: `${Math.max(4, (e.punten / max) * 100)}%`,
-                background: isLaatste
-                  ? "hsl(var(--vintage-gold))"
-                  : isBeste
-                    ? "#5C6B3B"
-                    : isSlechtste
-                      ? "#B94A48"
-                      : "rgba(26,22,18,0.4)",
-              }}
-              title={t("volgwagen.ontwikkeling.tooltip", { nummer: e.stageNumber, punten: e.punten })}
+              style={{ height: `${Math.max(4, (e.punten / max) * 100)}%`, background: kleur }}
+            />
+          );
+
+          const label = (isBeste || isSlechtste || isActief) && (
+            <span
+              className="absolute -top-[13px] left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[7.5px] font-bold"
+              style={{ color: "#241C14" }}
             >
-              {(isBeste || isSlechtste || isLaatste) && (
-                <span className="absolute -top-[13px] left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[7.5px] font-bold"
-                      style={{ color: "#241C14" }}>
-                  {e.punten}
-                </span>
+              {e.punten}
+            </span>
+          );
+
+          if (!onKies) {
+            return (
+              <div key={e.stageId} className="relative flex h-full flex-1 items-end">
+                {label}
+                {staaf}
+              </div>
+            );
+          }
+
+          return (
+            <button
+              key={e.stageId}
+              type="button"
+              onClick={() => onKies(e.stageId)}
+              aria-pressed={isActief}
+              aria-label={t("volgwagen.ontwikkeling.tooltip", { nummer: e.stageNumber, punten: e.punten })}
+              title={t("volgwagen.ontwikkeling.tooltip", { nummer: e.stageNumber, punten: e.punten })}
+              className={cn(
+                "group relative flex h-full flex-1 cursor-pointer items-end",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D49A1A]",
               )}
-            </div>
+            >
+              {label}
+              <span
+                className={cn(
+                  "block w-full rounded-t-[2px] transition-[filter,box-shadow] duration-150",
+                  "group-hover:brightness-110",
+                  // De gekozen dag krijgt een lichte gloed: hij is het
+                  // onderwerp van de oogst eronder, niet zomaar een staaf.
+                  isActief && "shadow-[0_0_0_1px_rgba(212,154,26,0.9),0_0_10px_rgba(212,154,26,0.35)]",
+                )}
+                style={{ height: `${Math.max(4, (e.punten / max) * 100)}%`, background: kleur }}
+              />
+            </button>
           );
         })}
       </div>
+
       <div className="mt-1 flex gap-1">
-        {etappes.map((e) => (
-          <span key={e.stageId} className="flex-1 text-center font-mono text-[8px]" style={{ color: "#8A7A5E" }}>
-            {e.stageNumber}
-          </span>
-        ))}
+        {etappes.map((e) => {
+          const isActief = actiefStageId ? e.stageId === actiefStageId : e.stageId === laatste.stageId;
+          return (
+            <span
+              key={e.stageId}
+              className={cn("flex-1 text-center font-mono text-[8px]", isActief && "font-bold")}
+              style={{ color: isActief ? "#241C14" : "#8A7A5E" }}
+            >
+              {e.stageNumber}
+            </span>
+          );
+        })}
       </div>
 
       <div className="mt-3 flex border-t pt-2" style={{ borderColor: "rgba(26,22,18,0.14)" }}>

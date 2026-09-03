@@ -1845,7 +1845,8 @@
       "slechtste": "Slechtste",
       "etappePunten": "Et {{nummer}} · {{punten}} pt",
       "rang": "Rang {{van}} → {{naar}}",
-      "tooltip": "Etappe {{nummer}}: {{punten}} punten"
+      "tooltip": "Etappe {{nummer}}: {{punten}} punten",
+      "kiesHint": "Tik op een etappe"
     },
     "rendement": {
       "kop": "Rendement per keuze",

@@ -1845,7 +1845,8 @@
       "slechtste": "Worst",
       "etappePunten": "St {{nummer}} · {{punten}} pt",
       "rang": "Rank {{van}} → {{naar}}",
-      "tooltip": "Stage {{nummer}}: {{punten}} points"
+      "tooltip": "Stage {{nummer}}: {{punten}} points",
+      "kiesHint": "Tap a stage"
     },
     "rendement": {
       "kop": "Return per pick",

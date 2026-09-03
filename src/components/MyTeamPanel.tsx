@@ -1185,6 +1185,8 @@ export default function MyTeamPanel({
                           .sort((a, b) => a.stageNumber - b.stageNumber)}
                         rangVan={ploegStats.overall ? ploegStats.overall.rank + ploegStats.overall.delta : null}
                         rangNaar={ploegStats.overall?.rank ?? null}
+                        actiefStageId={selectedStage?.id ?? null}
+                        onKies={setSelectedStageId}
                       />
 
                       <Rendement
@@ -1529,7 +1531,9 @@ export default function MyTeamPanel({
 
               {/* ── Etappe-selector: spoel het dashboard terug naar de stand t/m
                    een gekozen rit. Alleen desktop; mobiel blijft zoals het was. ── */}
-              {approvedRaceStages.length > 0 && (
+              {/* Zonder de vlag blijft de losse balk; met de nieuwe indeling
+                  zijn de staven van Ontwikkeling de etappekiezer. */}
+              {!nieuweVolgwagen && approvedRaceStages.length > 0 && (
                 <div
                   className="mt-3 p-2.5"
                   style={{ background: "#1F1813", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 2px 7px rgba(0,0,0,0.5)" }}
