@@ -1850,7 +1850,9 @@
     },
     "rendement": {
       "kop": "Rendement per keuze",
-      "uitleg": "Jouw punten per categorie tegen wat de poule eruit haalde. Het streepje is dat gemiddelde."
+      "uitleg": "Jouw punten per categorie tegen wat de poule eruit haalde. Het streepje is dat gemiddelde.",
+      "toonAlles": "Toon alle {{aantal}} andere",
+      "toonMinder": "Toon alleen de uitschieters"
     },
     "coup": {
       "kop": "Le Coup Manqué",

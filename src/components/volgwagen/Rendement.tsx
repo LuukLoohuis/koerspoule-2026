@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useRendement } from "@/hooks/useRendement";
@@ -11,6 +13,11 @@ import { useRendement } from "@/hooks/useRendement";
  *
  * De schaal is de beste categorie van de poule, niet jouw hoogste: anders
  * verspringt het beeld zodra jij ergens uitschiet.
+ *
+ * Standaard alleen de zes categorieën waar je het verst van het gemiddelde af
+ * zit -- de beste en de slechtste door elkaar. Twintig rijen op volgorde van
+ * punten is een tabel, geen oordeel: bovenaan staat dan de categorie met de
+ * meeste punten, terwijl je wilt weten wáár je wint en verliest.
  */
 export default function Rendement({
   entryId,
@@ -23,6 +30,7 @@ export default function Rendement({
   className?: string;
 }) {
   const { t } = useTranslation();
+  const [toonAlles, setToonAlles] = useState(false);
   const { data: regels = [], error, isLoading } = useRendement(entryId);
 
   // Stil verdwijnen is prima als er geen data ís, maar niet als de query
@@ -37,6 +45,11 @@ export default function Rendement({
   if (isLoading || regels.length === 0) return null;
 
   const schaal = Math.max(...regels.map((r) => Math.max(r.poule_beste, r.mijn_punten)), 1);
+  const opAfwijking = [...regels].sort(
+    (a, b) => Math.abs(b.mijn_punten - b.poule_gemiddelde) - Math.abs(a.mijn_punten - a.poule_gemiddelde),
+  );
+  const zichtbaar = toonAlles ? regels : opAfwijking.slice(0, 6);
+  const verborgen = regels.length - zichtbaar.length;
 
   return (
     <section className={cn("", className)}>
@@ -48,7 +61,7 @@ export default function Rendement({
       </div>
       <p className="text-[11.5px]" style={{ color: "#6B5640" }}>{t("volgwagen.rendement.uitleg")}</p>
 
-      {regels.map((r) => {
+      {zichtbaar.map((r) => {
         const delta = r.mijn_punten - r.poule_gemiddelde;
         const boven = delta >= 0;
         const rij = (
@@ -100,6 +113,29 @@ export default function Rendement({
           </div>
         );
       })}
+
+      {verborgen > 0 && (
+        <button
+          type="button"
+          onClick={() => setToonAlles(true)}
+          className="mt-2 inline-flex min-h-[32px] items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.14em] transition-colors hover:text-[#9C6A12] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D49A1A]"
+          style={{ color: "#8A7A5E" }}
+        >
+          {t("volgwagen.rendement.toonAlles", { aantal: verborgen })}
+          <ChevronDown className="h-3 w-3" aria-hidden />
+        </button>
+      )}
+      {toonAlles && (
+        <button
+          type="button"
+          onClick={() => setToonAlles(false)}
+          className="mt-2 inline-flex min-h-[32px] items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.14em] transition-colors hover:text-[#9C6A12] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D49A1A]"
+          style={{ color: "#8A7A5E" }}
+        >
+          {t("volgwagen.rendement.toonMinder")}
+          <ChevronDown className="h-3 w-3 rotate-180" aria-hidden />
+        </button>
+      )}
     </section>
   );
 }

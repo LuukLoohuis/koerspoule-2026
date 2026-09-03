@@ -1850,7 +1850,9 @@
     },
     "rendement": {
       "kop": "Return per pick",
-      "uitleg": "Your points per category against the pool average. The tick is that average."
+      "uitleg": "Your points per category against the pool average. The tick is that average.",
+      "toonAlles": "Show all {{aantal}} others",
+      "toonMinder": "Show only the outliers"
     },
     "coup": {
       "kop": "Le Coup Manqué",

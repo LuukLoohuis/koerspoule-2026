@@ -1521,12 +1521,17 @@ export default function MyTeamPanel({
                       <LiveKlok />
                     </span>
                   </div>
-                  {/* 2) Tuner + VOLUME/SQUELCH + fietser-telemetrie. */}
-                  <img src="/salle-de-course/tuner-telemetry.png" alt="" aria-hidden="true"
-                    className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
-                  {/* 3) Comm-unit: control-box + kabel + mic. */}
-                  <img src="/salle-de-course/radio-comm.png" alt="" aria-hidden="true"
-                    className="w-full h-auto" style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }} />
+                  {/* 2 en 3) Tuner en comm-unit: sfeer, geen informatie. Met de
+                      nieuwe indeling is deze kolom werkruimte -- daar past één
+                      beeld met de klok in, niet drie. */}
+                  {!nieuweVolgwagen && (
+                    <>
+                      <img src="/salle-de-course/tuner-telemetry.png" alt="" aria-hidden="true"
+                        className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
+                      <img src="/salle-de-course/radio-comm.png" alt="" aria-hidden="true"
+                        className="w-full h-auto" style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }} />
+                    </>
+                  )}
                 </div>
                 {nieuweVolgwagen && coupRegel && (
                   <CoupManque
