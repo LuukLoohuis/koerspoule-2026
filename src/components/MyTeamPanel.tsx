@@ -2,7 +2,7 @@
 // Color tokens: src/styles/salle-de-course.css
 // All La Salle de Course components must follow the spec in DESIGN-SPEC.md
 import { useEffect, useMemo, useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import TruiBadge from "@/components/retro/TruiBadge";
 import type { TruiType } from "@/lib/themas";
 import TeamSheetView from "@/components/teamsheet/TeamSheet";
@@ -12,6 +12,7 @@ import { useMijnPloegStats } from "@/hooks/useMijnPloegStats";
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import SubpouleKiezerBord from "@/components/salle-de-course/SubpouleKiezerBord";
+import DeOogst from "@/components/volgwagen/DeOogst";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -496,6 +497,11 @@ export default function MyTeamPanel({
     [stages],
   );
   const lastApprovedStage = approvedRaceStages[approvedRaceStages.length - 1] ?? null;
+  // Nieuwe indeling voorlopig achter een vlag: ?volgwagen=nieuw. Zo staan oud
+  // en nieuw naast elkaar op dezelfde preview zonder een tweede build.
+  const [zoekParams] = useSearchParams();
+  const nieuweVolgwagen = zoekParams.get("volgwagen") === "nieuw";
+
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
   // Default + reset naar de laatste rit zodra de stages laden of veranderen.
   useEffect(() => {
@@ -1120,6 +1126,69 @@ export default function MyTeamPanel({
                     </div>
                   </div>
 
+                  {/* ── Nieuwe indeling (?volgwagen=nieuw) ──────────────────
+                      Rangen wonen in de Krant, punten hier. Vandaar twee
+                      verwijsregels om het Tableau de Bord heen, en daartussen
+                      het enige blok dat de Krant niet kan tonen: waar je punten
+                      vandaan kwamen. */}
+                  {nieuweVolgwagen && (
+                    <div className="p-3.5 md:p-4" style={{ borderBottom: "1px solid rgba(26,22,18,0.22)" }}>
+                      <div
+                        className="flex min-h-[44px] flex-wrap items-center gap-x-2 gap-y-1 border-b py-2"
+                        style={{ borderColor: "rgba(26,22,18,0.14)" }}
+                      >
+                        <span className="font-mono text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: "#8A7A5E" }}>
+                          {t("volgwagen.oogst.standLabel")}
+                        </span>
+                        <span className="text-[12.5px]" style={{ color: "#3A2E20" }}>
+                          {[
+                            ploegStats.subpoule?.rank != null ? `${ploegStats.subpoule.rank}e ${ploegStats.subpoule.name ?? ""}`.trim() : null,
+                            ploegStats.overall?.rank != null ? `${ploegStats.overall.rank}e algemeen` : null,
+                          ].filter(Boolean).join(" · ") || "—"}
+                        </span>
+                        <Link
+                          to="/mijn-peloton?tab=karavaan"
+                          className="ml-auto border-b text-[12px]"
+                          style={{ color: "#9C6A12", borderColor: "rgba(156,106,18,0.4)" }}
+                        >
+                          {t("volgwagen.oogst.standLink")}
+                        </Link>
+                      </div>
+
+                      <DeOogst
+                        className="mt-3"
+                        entryId={entry?.id}
+                        stageId={selectedStage?.id}
+                        stageNumber={selectedStage?.stage_number}
+                        stageName={selectedStage?.name}
+                      />
+
+                      <div className="mt-3 flex min-h-[44px] flex-wrap items-center gap-x-2 gap-y-1 border-t pt-2.5"
+                           style={{ borderColor: "rgba(26,22,18,0.2)" }}>
+                        <span className="font-mono text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: "#8A7A5E" }}>
+                          {t("volgwagen.oogst.rapportLabel")}
+                        </span>
+                        <span className="text-[12.5px]" style={{ color: "#3A2E20" }}>
+                          {[
+                            hors.monkeyBeatPct != null ? `Monkey IQ ${Math.round(hors.monkeyBeatPct)} %` : null,
+                            hors.emiratesPct != null ? `Emirates ${Math.round(hors.emiratesPct)} %` : null,
+                            hors.directorScore != null ? hors.directorScore.toFixed(1).replace(".", ",") : null,
+                          ].filter(Boolean).join(" · ") || "—"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onOpenHors?.("dartpijl")}
+                          className="ml-auto border-b text-[12px]"
+                          style={{ color: "#9C6A12", borderColor: "rgba(156,106,18,0.4)" }}
+                        >
+                          {t("volgwagen.oogst.rapportLink")}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+
+                  {!nieuweVolgwagen && (<>
                   {/* Tableau de Bord — 2×3 instrumenten */}
                   <div className="p-3.5 md:p-4" style={{ borderBottom: "1px solid rgba(26,22,18,0.22)" }}>
                     <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
@@ -1366,6 +1435,7 @@ export default function MyTeamPanel({
                       );
                     })()}
                   </div>
+                  </>)}
                 </div>
 
                 {/* ── Rechterkolom: radio-chrome met echte assets (desktop only).

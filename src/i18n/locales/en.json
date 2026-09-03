@@ -1821,5 +1821,20 @@
     "punten": "{{count}} pts",
     "vanTotaal": "of {{totaal}}",
     "naarKlassement": "View the full standings"
+  },
+  "volgwagen": {
+    "oogst": {
+      "kop": "The harvest",
+      "renner": "Rider",
+      "rit": "Stage",
+      "basis": "Base",
+      "punten": "Pt",
+      "totaal": "Collected",
+      "totaalEtappe": "Collected in stage {{nummer}}",
+      "standLabel": "Standing",
+      "standLink": "in the paper",
+      "rapportLabel": "Report",
+      "rapportLink": "Hors Catégorie"
+    }
   }
 }

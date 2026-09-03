@@ -1821,5 +1821,20 @@
     "punten": "{{count}} pt",
     "vanTotaal": "van {{totaal}}",
     "naarKlassement": "Bekijk het volledige klassement"
+  },
+  "volgwagen": {
+    "oogst": {
+      "kop": "De oogst",
+      "renner": "Renner",
+      "rit": "Rit",
+      "basis": "Basis",
+      "punten": "Pt",
+      "totaal": "Binnengekomen",
+      "totaalEtappe": "Binnengekomen in etappe {{nummer}}",
+      "standLabel": "Stand",
+      "standLink": "in de Krant",
+      "rapportLabel": "Rapport",
+      "rapportLink": "Hors Catégorie"
+    }
   }
 }
