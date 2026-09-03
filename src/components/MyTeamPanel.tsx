@@ -436,6 +436,15 @@ export default function MyTeamPanel({
   const [selectedSubpouleId, setSelectedSubpouleId] = useState<string | undefined>(undefined);
   const activeSubpouleId = selectedSubpouleId ?? subpoules[0]?.id;
   const ploegStats = useMijnPloegStats({ selectedSubpouleId: activeSubpouleId });
+  // Nieuwe indeling voorlopig achter een vlag: ?volgwagen=nieuw. Zo staan oud
+  // en nieuw naast elkaar op dezelfde preview zonder een tweede build.
+  const [zoekParams] = useSearchParams();
+  const nieuweVolgwagen = zoekParams.get("volgwagen") === "nieuw";
+
+  // Welke categorie in Le Coup Manqué staat. Null = de duurste misser, dus
+  // waar het gat met de poule het grootst is.
+  const [coupCategorie, setCoupCategorie] = useState<string | null>(null);
+
   const hors = useHorsCategorieSummary({ id: game?.id, status: game?.status as string | undefined, adminTestmodus });
   const { data: rendementRegels = [] } = useRendement(nieuweVolgwagen ? entry?.id : null);
   const coupRegel =
@@ -504,15 +513,6 @@ export default function MyTeamPanel({
     [stages],
   );
   const lastApprovedStage = approvedRaceStages[approvedRaceStages.length - 1] ?? null;
-  // Nieuwe indeling voorlopig achter een vlag: ?volgwagen=nieuw. Zo staan oud
-  // en nieuw naast elkaar op dezelfde preview zonder een tweede build.
-  const [zoekParams] = useSearchParams();
-  const nieuweVolgwagen = zoekParams.get("volgwagen") === "nieuw";
-
-  // Welke categorie in Le Coup Manqué staat. Null = de duurste misser, dus
-  // waar het gat met de poule het grootst is.
-  const [coupCategorie, setCoupCategorie] = useState<string | null>(null);
-
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
   // Default + reset naar de laatste rit zodra de stages laden of veranderen.
   useEffect(() => {
