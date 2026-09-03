@@ -13,6 +13,10 @@ import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import SubpouleKiezerBord from "@/components/salle-de-course/SubpouleKiezerBord";
 import DeOogst from "@/components/volgwagen/DeOogst";
+import Ontwikkeling from "@/components/volgwagen/Ontwikkeling";
+import Rendement from "@/components/volgwagen/Rendement";
+import CoupManque from "@/components/volgwagen/CoupManque";
+import { useRendement, duursteMisser } from "@/hooks/useRendement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -433,6 +437,9 @@ export default function MyTeamPanel({
   const activeSubpouleId = selectedSubpouleId ?? subpoules[0]?.id;
   const ploegStats = useMijnPloegStats({ selectedSubpouleId: activeSubpouleId });
   const hors = useHorsCategorieSummary({ id: game?.id, status: game?.status as string | undefined, adminTestmodus });
+  const { data: rendementRegels = [] } = useRendement(nieuweVolgwagen ? entry?.id : null);
+  const coupRegel =
+    rendementRegels.find((r) => r.category_id === coupCategorie) ?? duursteMisser(rendementRegels);
 
   // Welke renner heeft z'n per-etappe-punten dropdown open (één tegelijk).
   const [expandedRiderId, setExpandedRiderId] = useState<string | null>(null);
@@ -501,6 +508,10 @@ export default function MyTeamPanel({
   // en nieuw naast elkaar op dezelfde preview zonder een tweede build.
   const [zoekParams] = useSearchParams();
   const nieuweVolgwagen = zoekParams.get("volgwagen") === "nieuw";
+
+  // Welke categorie in Le Coup Manqué staat. Null = de duurste misser, dus
+  // waar het gat met de poule het grootst is.
+  const [coupCategorie, setCoupCategorie] = useState<string | null>(null);
 
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
   // Default + reset naar de laatste rit zodra de stages laden of veranderen.
@@ -1163,7 +1174,35 @@ export default function MyTeamPanel({
                         stageName={selectedStage?.name}
                       />
 
-                      <div className="mt-3 flex min-h-[44px] flex-wrap items-center gap-x-2 gap-y-1 border-t pt-2.5"
+                      <Ontwikkeling
+                        className="mt-4"
+                        etappes={approvedRaceStages
+                          .map((st) => ({
+                            stageId: st.id,
+                            stageNumber: st.stage_number,
+                            punten: stagePoints.find((sp) => sp.stage_id === st.id)?.points ?? 0,
+                          }))
+                          .sort((a, b) => a.stageNumber - b.stageNumber)}
+                        rangVan={ploegStats.overall ? ploegStats.overall.rank + ploegStats.overall.delta : null}
+                        rangNaar={ploegStats.overall?.rank ?? null}
+                      />
+
+                      <Rendement
+                        className="mt-4"
+                        entryId={entry?.id}
+                        onKiesCategorie={setCoupCategorie}
+                      />
+
+                      {coupRegel && (
+                        <CoupManque
+                          className="mt-4"
+                          entryId={entry?.id}
+                          categoryId={coupRegel.category_id}
+                          categoryName={coupRegel.category_name}
+                        />
+                      )}
+
+                      <div className="mt-4 flex min-h-[44px] flex-wrap items-center gap-x-2 gap-y-1 border-t pt-2.5"
                            style={{ borderColor: "rgba(26,22,18,0.2)" }}>
                         <span className="font-mono text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: "#8A7A5E" }}>
                           {t("volgwagen.oogst.rapportLabel")}

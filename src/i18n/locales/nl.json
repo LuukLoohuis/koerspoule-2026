@@ -1835,6 +1835,28 @@
       "standLink": "in de Krant",
       "rapportLabel": "Rapport",
       "rapportLink": "Hors Catégorie"
+    },
+    "ontwikkeling": {
+      "kop": "Ontwikkeling",
+      "aantal": "{{aantal}} etappes",
+      "beste": "Beste dag",
+      "slechtste": "Slechtste",
+      "etappePunten": "Et {{nummer}} · {{punten}} pt",
+      "rang": "Rang {{van}} → {{naar}}",
+      "tooltip": "Etappe {{nummer}}: {{punten}} punten"
+    },
+    "rendement": {
+      "kop": "Rendement per keuze",
+      "uitleg": "Jouw punten per categorie tegen wat de poule eruit haalde. Het streepje is dat gemiddelde."
+    },
+    "coup": {
+      "kop": "Le Coup Manqué",
+      "uitleg": "Wat een andere {{categorie}} had opgeleverd, over dezelfde etappes.",
+      "jouw": "Jouw keuze",
+      "niet": "Niet gekozen",
+      "gemist": "Gemist",
+      "gewonnen": "Gewonnen",
+      "gekozenDoor": "{{aantal}} deelnemers kozen {{naam}} wel."
     }
   }
 }

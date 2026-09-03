@@ -1835,6 +1835,28 @@
       "standLink": "in the paper",
       "rapportLabel": "Report",
       "rapportLink": "Hors Catégorie"
+    },
+    "ontwikkeling": {
+      "kop": "Progress",
+      "aantal": "{{aantal}} stages",
+      "beste": "Best day",
+      "slechtste": "Worst",
+      "etappePunten": "St {{nummer}} · {{punten}} pt",
+      "rang": "Rank {{van}} → {{naar}}",
+      "tooltip": "Stage {{nummer}}: {{punten}} points"
+    },
+    "rendement": {
+      "kop": "Return per pick",
+      "uitleg": "Your points per category against the pool average. The tick is that average."
+    },
+    "coup": {
+      "kop": "Le Coup Manqué",
+      "uitleg": "What another {{categorie}} would have delivered, over the same stages.",
+      "jouw": "Your pick",
+      "niet": "Not picked",
+      "gemist": "Missed",
+      "gewonnen": "Gained",
+      "gekozenDoor": "{{aantal}} entrants did pick {{naam}}."
     }
   }
 }
