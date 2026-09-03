@@ -79,6 +79,7 @@ export default function DeOogst({
   const scorend = regels.filter((r) => r.total_points > 0);
   const stil = regels.length - scorend.length;
   const zichtbaar = toonAlles || scorend.length === 0 ? regels : scorend;
+  const helft = Math.ceil(zichtbaar.length / 2);
 
   return (
     <section
@@ -101,29 +102,43 @@ export default function DeOogst({
         <p className="mt-3 font-mono text-[11px] text-[#6b665c]">…</p>
       ) : (
         <>
-          <table className="mt-2.5 w-full border-collapse">
-            <thead>
-              <tr className="border-b border-white/[0.08]">
-                <th className="pb-[5px] text-left font-mono text-[8px] font-normal uppercase tracking-[0.14em] text-[#6b665c]">
-                  {t("volgwagen.oogst.renner")}
-                </th>
-                <th className="pb-[5px] text-right font-mono text-[8px] font-normal uppercase tracking-[0.14em] text-[#6b665c]">
-                  {t("volgwagen.oogst.rit")}
-                </th>
-                <th className="pb-[5px] text-right font-mono text-[8px] font-normal uppercase tracking-[0.14em] text-[#6b665c]">
-                  {t("volgwagen.oogst.basis")}
-                </th>
-                <th className="pb-[5px] text-right font-mono text-[8px] font-normal uppercase tracking-[0.14em] text-[#6b665c]">
-                  {t("volgwagen.oogst.punten")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {zichtbaar.map((r) => (
-                <Regel key={`${r.rider_id}-${r.is_joker}`} regel={r} />
+          {/* Op de webversie twee kolommen naast elkaar: acht renners onder
+              elkaar maakt van een oogst een lijst. Elke kolom is een eigen
+              tabel, zodat de kolombreedtes binnen die helft uitlijnen. */}
+          <div className="mt-2.5 lg:grid lg:grid-cols-2 lg:gap-x-7">
+            {[zichtbaar.slice(0, helft), zichtbaar.slice(helft)]
+              .filter((deel) => deel.length > 0)
+              .map((deel, kolom) => (
+                <table key={kolom} className="w-full border-collapse">
+                  <thead>
+                    {/* De tweede kop staat er alleen om de rijen op dezelfde
+                        hoogte te laten beginnen. */}
+                    <tr
+                      className={cn("border-b border-white/[0.08]", kolom === 1 && "invisible max-lg:hidden")}
+                      aria-hidden={kolom === 1 || undefined}
+                    >
+                      <th className="pb-[5px] text-left font-mono text-[8px] font-normal uppercase tracking-[0.14em] text-[#6b665c]">
+                        {t("volgwagen.oogst.renner")}
+                      </th>
+                      <th className="pb-[5px] text-right font-mono text-[8px] font-normal uppercase tracking-[0.14em] text-[#6b665c]">
+                        {t("volgwagen.oogst.rit")}
+                      </th>
+                      <th className="pb-[5px] text-right font-mono text-[8px] font-normal uppercase tracking-[0.14em] text-[#6b665c]">
+                        {t("volgwagen.oogst.basis")}
+                      </th>
+                      <th className="pb-[5px] text-right font-mono text-[8px] font-normal uppercase tracking-[0.14em] text-[#6b665c]">
+                        {t("volgwagen.oogst.punten")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deel.map((r) => (
+                      <Regel key={`${r.rider_id}-${r.is_joker}`} regel={r} />
+                    ))}
+                  </tbody>
+                </table>
               ))}
-            </tbody>
-          </table>
+          </div>
 
           <div className="mt-2 flex items-baseline gap-2.5 border-t border-dashed border-white/20 pt-[9px]">
             <span className="font-mono text-[9.5px] font-bold uppercase tracking-[0.16em] text-[#8a8272]">

@@ -1174,30 +1174,31 @@ export default function MyTeamPanel({
                         stageName={selectedStage?.name}
                       />
 
-                      <Ontwikkeling
-                        className="mt-4"
-                        etappes={approvedRaceStages
-                          .map((st) => ({
-                            stageId: st.id,
-                            stageNumber: st.stage_number,
-                            punten: stagePoints.find((sp) => sp.stage_id === st.id)?.points ?? 0,
-                          }))
-                          .sort((a, b) => a.stageNumber - b.stageNumber)}
-                        rangVan={ploegStats.overall ? ploegStats.overall.rank + ploegStats.overall.delta : null}
-                        rangNaar={ploegStats.overall?.rank ?? null}
-                        actiefStageId={selectedStage?.id ?? null}
-                        onKies={setSelectedStageId}
-                      />
+                      {/* Op de webversie naast elkaar: de grafiek is breed,
+                          het rendement is een lijst. Onder lg onder elkaar. */}
+                      <div className="mt-4 grid gap-4 lg:grid-cols-[1.25fr_1fr]">
+                        <Ontwikkeling
+                          etappes={approvedRaceStages
+                            .map((st) => ({
+                              stageId: st.id,
+                              stageNumber: st.stage_number,
+                              punten: stagePoints.find((sp) => sp.stage_id === st.id)?.points ?? 0,
+                            }))
+                            .sort((a, b) => a.stageNumber - b.stageNumber)}
+                          rangVan={ploegStats.overall ? ploegStats.overall.rank + ploegStats.overall.delta : null}
+                          rangNaar={ploegStats.overall?.rank ?? null}
+                          actiefStageId={selectedStage?.id ?? null}
+                          onKies={setSelectedStageId}
+                        />
 
-                      <Rendement
-                        className="mt-4"
-                        entryId={entry?.id}
-                        onKiesCategorie={setCoupCategorie}
-                      />
+                        <Rendement entryId={entry?.id} onKiesCategorie={setCoupCategorie} />
+                      </div>
 
+                      {/* Le Coup Manqué staat op de webversie in de radiokolom;
+                          op mobiel hoort hij gewoon in de stroom. */}
                       {coupRegel && (
                         <CoupManque
-                          className="mt-4"
+                          className="mt-4 lg:hidden"
                           entryId={entry?.id}
                           categoryId={coupRegel.category_id}
                           categoryName={coupRegel.category_name}
@@ -1507,7 +1508,8 @@ export default function MyTeamPanel({
                     <p>Stand op basis van gefiatteerde uitslagen.</p>
                   </aside>
                 ) : (
-                <div aria-hidden className="hidden lg:flex flex-col gap-2.5 pointer-events-none select-none">
+                <div className="hidden lg:flex lg:flex-col lg:gap-2.5">
+                <div aria-hidden className="flex flex-col gap-2.5 pointer-events-none select-none">
                   {/* 1) LIVE + grille als één paneel; live klok over het venster. */}
                   <div className="relative w-full">
                     <img src="/salle-de-course/live-grille.png" alt="" aria-hidden="true"
@@ -1525,6 +1527,14 @@ export default function MyTeamPanel({
                   {/* 3) Comm-unit: control-box + kabel + mic. */}
                   <img src="/salle-de-course/radio-comm.png" alt="" aria-hidden="true"
                     className="w-full h-auto" style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }} />
+                </div>
+                {nieuweVolgwagen && coupRegel && (
+                  <CoupManque
+                    entryId={entry?.id}
+                    categoryId={coupRegel.category_id}
+                    categoryName={coupRegel.category_name}
+                  />
+                )}
                 </div>
                 )}
               </div>
