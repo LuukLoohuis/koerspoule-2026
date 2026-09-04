@@ -20,11 +20,16 @@ import { useOogst, oogstSlotzin, type OogstRegel } from "@/hooks/useOogst";
  */
 function Regel({ regel }: { regel: OogstRegel }) {
   const uitgevallen = !regel.did_finish;
+  // "× 1" is geen rekensom maar ruis: dan staat er twee keer hetzelfde getal
+  // op één regel. De factor verschijnt alleen waar hij iets doet -- bij een
+  // joker.
   const basis = uitgevallen
     ? "uitgevallen"
     : regel.finish_position == null || regel.base_points === 0
       ? "0"
-      : `${regel.base_points} × ${regel.multiplier}`;
+      : regel.multiplier === 1
+        ? `${regel.base_points}`
+        : `${regel.base_points} × ${regel.multiplier}`;
 
   return (
     <tr className="border-b border-white/[0.055] last:border-b-0">

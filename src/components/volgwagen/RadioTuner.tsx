@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
@@ -15,11 +16,14 @@ export default function RadioTuner({
   schalen,
   actiefId,
   onKies,
+  kiezer,
   className,
 }: {
   schalen: Schaal[];
   actiefId: string | null;
   onKies: (id: string | null) => void;
+  /** Welke subpoule de stand SUBPOULE gebruikt; alleen bij meer dan één. */
+  kiezer?: ReactNode;
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -90,6 +94,8 @@ export default function RadioTuner({
           );
         })}
       </div>
+
+      {kiezer && <div className="mt-1.5 flex justify-end">{kiezer}</div>}
 
       <p className="mt-1.5 font-mono text-[9px] uppercase tracking-[0.06em] text-[#6b5f49]">
         {t("volgwagen.radio.stuurtRendement")}

@@ -1170,6 +1170,21 @@ export default function MyTeamPanel({
                             ploegStats.overall?.rank != null ? `${ploegStats.overall.rank}e algemeen` : null,
                           ].filter(Boolean).join(" · ") || "—"}
                         </span>
+                        {/* Op de webversie zit de subpoule-keuze in de tuner;
+                            mobiel is er geen radiokolom, dus staat hij hier. */}
+                        {subpoules.length > 1 && (
+                          <span className="lg:hidden">
+                            <SubpouleKiezerBord
+                              subpoules={subpoules.map((sp) => ({ id: sp.id, name: sp.name }))}
+                              selectedId={activeSubpouleId}
+                              onSelect={(id) => {
+                                setSelectedSubpouleId(id);
+                                setSchaalKeuze(id);
+                              }}
+                              ariaLabel={t("volgwagen.radio.subpoule")}
+                            />
+                          </span>
+                        )}
                         <Link
                           to="/mijn-peloton?tab=karavaan"
                           className="ml-auto border-b text-[12px]"
@@ -1571,6 +1586,21 @@ export default function MyTeamPanel({
                       ]}
                       actiefId={rendementSchaal}
                       onKies={setSchaalKeuze}
+                      kiezer={
+                        subpoules.length > 1 ? (
+                          <SubpouleKiezerBord
+                            subpoules={subpoules.map((sp) => ({ id: sp.id, name: sp.name }))}
+                            selectedId={activeSubpouleId}
+                            onSelect={(id) => {
+                              setSelectedSubpouleId(id);
+                              // Een andere subpoule kiezen is alleen zinnig als
+                              // de tuner ook op die stand komt te staan.
+                              setSchaalKeuze(id);
+                            }}
+                            ariaLabel={t("volgwagen.radio.subpoule")}
+                          />
+                        ) : null
+                      }
                     />
                   )}
                   {nieuweVolgwagen && coupRegel && (

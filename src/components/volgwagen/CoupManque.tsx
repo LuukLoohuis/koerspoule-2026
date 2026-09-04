@@ -68,17 +68,17 @@ export default function CoupManque({
         {t("volgwagen.coup.uitleg", { categorie: categoryName ?? "" })}
       </p>
 
-      <div className="mt-2.5 grid grid-cols-[1fr_auto_1fr] gap-2.5">
-        <div className="rounded-lg border border-white/10 bg-white/[0.06] p-2.5">
+      <div className="mt-2.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2.5">
+        <div className="min-w-0 rounded-lg border border-white/10 bg-white/[0.06] p-2.5">
           <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-[#6b665c]">
             {t("volgwagen.coup.jouw")}
           </span>
-          <p className="mt-1 truncate text-[14.5px] font-extrabold text-[#f5edd8]">{mijn.rider_name ?? "—"}</p>
+          <p className="mt-1 break-words text-[13.5px] font-extrabold leading-[1.2] text-[#f5edd8]">{mijn.rider_name ?? "—"}</p>
           <p className="mt-1 font-mono text-[21px] font-bold text-[#f5edd8]">{mijn.punten}</p>
         </div>
         <div className="grid place-items-center font-mono text-[11px] text-[#6b665c]">vs</div>
         <div
-          className="rounded-lg p-2.5"
+          className="min-w-0 rounded-lg p-2.5"
           style={{
             background: gewonnen ? "rgba(92,107,59,0.12)" : "rgba(185,74,72,0.1)",
             border: `1px solid ${gewonnen ? "rgba(92,107,59,0.5)" : "rgba(185,74,72,0.45)"}`,
@@ -87,7 +87,7 @@ export default function CoupManque({
           <span className="font-mono text-[8px] uppercase tracking-[0.14em]" style={{ color: gewonnen ? "#9fb07a" : "#c08a88" }}>
             {t("volgwagen.coup.niet")}
           </span>
-          <p className="mt-1 truncate text-[14.5px] font-extrabold text-[#f5edd8]">{ander.rider_name ?? "—"}</p>
+          <p className="mt-1 break-words text-[13.5px] font-extrabold leading-[1.2] text-[#f5edd8]">{ander.rider_name ?? "—"}</p>
           <p className="mt-1 font-mono text-[21px] font-bold" style={{ color: gewonnen ? "#5C6B3B" : "#B94A48" }}>
             {ander.punten}
           </p>

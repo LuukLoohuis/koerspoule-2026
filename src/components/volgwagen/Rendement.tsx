@@ -14,7 +14,7 @@ import { useRendement } from "@/hooks/useRendement";
  * De schaal is de beste categorie van de poule, niet jouw hoogste: anders
  * verspringt het beeld zodra jij ergens uitschiet.
  *
- * Standaard alleen de zes categorieën waar je het verst van het gemiddelde af
+ * Standaard alleen de drie categorieën waar je het verst van het gemiddelde af
  * zit -- de beste en de slechtste door elkaar. Twintig rijen op volgorde van
  * punten is een tabel, geen oordeel: bovenaan staat dan de categorie met de
  * meeste punten, terwijl je wilt weten wáár je wint en verliest.
@@ -51,7 +51,7 @@ export default function Rendement({
   const opAfwijking = [...regels].sort(
     (a, b) => Math.abs(b.mijn_punten - b.poule_gemiddelde) - Math.abs(a.mijn_punten - a.poule_gemiddelde),
   );
-  const zichtbaar = toonAlles ? regels : opAfwijking.slice(0, 6);
+  const zichtbaar = toonAlles ? regels : opAfwijking.slice(0, 3);
   const verborgen = regels.length - zichtbaar.length;
 
   return (
