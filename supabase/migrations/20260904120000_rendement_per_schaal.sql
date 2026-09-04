@@ -126,3 +126,8 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.entry_category_yield(uuid, uuid) FROM public;
 GRANT EXECUTE ON FUNCTION public.entry_category_yield(uuid, uuid) TO authenticated;
+
+-- PostgREST cachet de functiehandtekeningen. Zonder deze regel blijft de API
+-- "could not find the function ... in the schema cache" antwoorden tot hij uit
+-- zichzelf herlaadt.
+NOTIFY pgrst, 'reload schema';
