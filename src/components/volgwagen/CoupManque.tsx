@@ -18,15 +18,23 @@ export default function CoupManque({
   entryId,
   categoryId,
   categoryName,
+  alternatiefId,
+  onKiesAlternatief,
   className,
 }: {
   entryId?: string | null;
   categoryId?: string | null;
   categoryName?: string | null;
+  /** Van buitenaf gekozen alternatief (de comm-unit in de radiokolom). */
+  alternatiefId?: string | null;
+  /** Zodra dit meekomt zit de keuze buiten dit blok en vervalt de knoppenrij. */
+  onKiesAlternatief?: (riderId: string) => void;
   className?: string;
 }) {
   const { t } = useTranslation();
-  const [gekozenId, setGekozenId] = useState<string | null>(null);
+  const [eigenKeuze, setEigenKeuze] = useState<string | null>(null);
+  const gestuurd = typeof onKiesAlternatief === "function";
+  const gekozenId = gestuurd ? alternatiefId ?? null : eigenKeuze;
   const { data: renners = [], error } = useAlternatieven(entryId, categoryId);
 
   if (error) {
@@ -101,13 +109,16 @@ export default function CoupManque({
         </p>
       )}
 
-      {/* Elke andere renner uit deze categorie; de sterkste staat vooraan. */}
+      {/* Elke andere renner uit deze categorie; de sterkste staat vooraan.
+          Op de webversie doet de comm-unit in de radiokolom dit werk -- dan
+          zou dezelfde keuze twee keer op het scherm staan. */}
+      {!gestuurd && (
       <div className="mt-2.5 flex flex-wrap gap-1.5">
         {anderen.slice(0, 6).map((r) => (
           <button
             key={r.rider_id}
             type="button"
-            onClick={() => setGekozenId(r.rider_id)}
+            onClick={() => setEigenKeuze(r.rider_id)}
             className={cn(
               "grid min-h-[32px] place-items-center rounded-md border px-2.5 py-1.5",
               "font-mono text-[9.5px] uppercase tracking-[0.1em] transition-colors",
@@ -123,6 +134,7 @@ export default function CoupManque({
           </button>
         ))}
       </div>
+      )}
     </section>
   );
 }

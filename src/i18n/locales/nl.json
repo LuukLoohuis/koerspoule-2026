@@ -1862,6 +1862,16 @@
       "gemist": "Gemist",
       "gewonnen": "Gewonnen",
       "gekozenDoor": "{{aantal}} deelnemers kozen {{naam}} wel."
+    },
+    "radio": {
+      "schaalKop": "Vergelijk met",
+      "helePoule": "Hele poule",
+      "kanaalKop": "Team radio · kanaal",
+      "kanaal": "CH {{nummer}}",
+      "stuurtRendement": "Stuurt het streepje in Rendement per keuze.",
+      "stuurtCoup": "Kiest de renner in Le Coup Manqué.",
+      "ritStatus": "Rit {{nummer}} · uitslag binnen",
+      "ritGeen": "Nog geen rit gekozen"
     }
   }
 }

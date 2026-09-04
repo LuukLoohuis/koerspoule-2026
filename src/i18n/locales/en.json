@@ -1862,6 +1862,16 @@
       "gemist": "Missed",
       "gewonnen": "Gained",
       "gekozenDoor": "{{aantal}} entrants did pick {{naam}}."
+    },
+    "radio": {
+      "schaalKop": "Compare with",
+      "helePoule": "Whole pool",
+      "kanaalKop": "Team radio · channel",
+      "kanaal": "CH {{nummer}}",
+      "stuurtRendement": "Sets the tick in Return per pick.",
+      "stuurtCoup": "Picks the rider in Le Coup Manqué.",
+      "ritStatus": "Stage {{nummer}} · result in",
+      "ritGeen": "No stage selected yet"
     }
   }
 }

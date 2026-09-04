@@ -21,17 +21,20 @@ import { useRendement } from "@/hooks/useRendement";
  */
 export default function Rendement({
   entryId,
+  subpouleId,
   onKiesCategorie,
   className,
 }: {
   entryId?: string | null;
+  /** Vergelijkingsgroep: een subpoule, of null voor de hele poule. */
+  subpouleId?: string | null;
   /** Tik op een rij → die categorie in Le Coup Manqué. */
   onKiesCategorie?: (categoryId: string) => void;
   className?: string;
 }) {
   const { t } = useTranslation();
   const [toonAlles, setToonAlles] = useState(false);
-  const { data: regels = [], error, isLoading } = useRendement(entryId);
+  const { data: regels = [], error, isLoading } = useRendement(entryId, subpouleId);
 
   // Stil verdwijnen is prima als er geen data ís, maar niet als de query
   // stukloopt: dan sta je naar een gat te kijken zonder te weten waarom.

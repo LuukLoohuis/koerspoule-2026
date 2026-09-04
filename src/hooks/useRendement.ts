@@ -14,15 +14,20 @@ export type RendementRegel = {
   poule_beste: number;
 };
 
-export function useRendement(entryId?: string | null) {
+/**
+ * @param subpouleId  Vergelijkingsgroep: een subpoule waar je zelf in zit, of
+ *                    null voor de hele poule. Een subpoule met minder dan twee
+ *                    ploegen valt aan de databasekant terug op de hele poule.
+ */
+export function useRendement(entryId?: string | null, subpouleId?: string | null) {
   return useQuery({
-    queryKey: ["rendement", entryId],
+    queryKey: ["rendement", entryId, subpouleId ?? null],
     enabled: Boolean(supabase && entryId),
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<RendementRegel[]> => {
       if (!supabase || !entryId) return [];
       const { data, error } = await (supabase as unknown as Rpc)
-        .rpc("entry_category_yield", { p_entry_id: entryId });
+        .rpc("entry_category_yield", { p_entry_id: entryId, p_subpoule_id: subpouleId ?? null });
       if (error) throw error;
       return (data ?? []) as RendementRegel[];
     },

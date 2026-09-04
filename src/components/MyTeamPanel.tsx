@@ -16,6 +16,8 @@ import DeOogst from "@/components/volgwagen/DeOogst";
 import Ontwikkeling from "@/components/volgwagen/Ontwikkeling";
 import Rendement from "@/components/volgwagen/Rendement";
 import CoupManque from "@/components/volgwagen/CoupManque";
+import RadioTuner from "@/components/volgwagen/RadioTuner";
+import RadioComm from "@/components/volgwagen/RadioComm";
 import { useRendement, duursteMisser } from "@/hooks/useRendement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -444,11 +446,22 @@ export default function MyTeamPanel({
   // Welke categorie in Le Coup Manqué staat. Null = de duurste misser, dus
   // waar het gat met de poule het grootst is.
   const [coupCategorie, setCoupCategorie] = useState<string | null>(null);
+  // Welke renner in Le Coup Manqué tegenover je keuze staat; null = de sterkste
+  // die je liet lopen. De comm-unit in de radiokolom zet dit kanaal om.
+  const [coupAlternatief, setCoupAlternatief] = useState<string | null>(null);
+  // Waar Rendement tegen afgezet wordt: undefined betekent "volg de subpoule
+  // die het dashboard toont", een expliciete keuze op de tuner overschrijft dat.
+  const [schaalKeuze, setSchaalKeuze] = useState<string | null | undefined>(undefined);
+  const rendementSchaal = schaalKeuze === undefined ? activeSubpouleId ?? null : schaalKeuze;
 
   const hors = useHorsCategorieSummary({ id: game?.id, status: game?.status as string | undefined, adminTestmodus });
-  const { data: rendementRegels = [] } = useRendement(nieuweVolgwagen ? entry?.id : null);
+  const { data: rendementRegels = [] } = useRendement(nieuweVolgwagen ? entry?.id : null, rendementSchaal);
   const coupRegel =
     rendementRegels.find((r) => r.category_id === coupCategorie) ?? duursteMisser(rendementRegels);
+
+  useEffect(() => {
+    setCoupAlternatief(null);
+  }, [coupRegel?.category_id]);
 
   // Welke renner heeft z'n per-etappe-punten dropdown open (één tegelijk).
   const [expandedRiderId, setExpandedRiderId] = useState<string | null>(null);
@@ -1191,7 +1204,7 @@ export default function MyTeamPanel({
                           onKies={setSelectedStageId}
                         />
 
-                        <Rendement entryId={entry?.id} onKiesCategorie={setCoupCategorie} />
+                        <Rendement entryId={entry?.id} subpouleId={rendementSchaal} onKiesCategorie={setCoupCategorie} />
                       </div>
 
                       {/* Le Coup Manqué staat op de webversie in de radiokolom;
@@ -1509,28 +1522,59 @@ export default function MyTeamPanel({
                   </aside>
                 ) : (
                 <div className="hidden lg:flex lg:flex-col lg:gap-2.5">
-                <div aria-hidden className="flex flex-col gap-2.5 pointer-events-none select-none">
-                  {/* 1) LIVE + grille als één paneel; live klok over het venster. */}
-                  <div className="relative w-full">
-                    <img src="/salle-de-course/live-grille.png" alt="" aria-hidden="true"
-                      className="w-full h-auto block" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
-                    <span
-                      className="absolute flex items-center justify-center"
-                      style={{ left: "46.5%", top: "8%", width: "32%", height: "23%", background: "#0c0a07", borderRadius: "10%" }}
-                    >
-                      <LiveKlok />
-                    </span>
+                <div className="flex flex-col gap-2.5">
+                  {/* 1) LIVE + grille als één paneel; live klok over het venster.
+                      Het beeld blijft decoratief, de regel eronder niet: die
+                      zegt welke rit het dashboard laat zien. */}
+                  <div>
+                    <div aria-hidden className="relative w-full pointer-events-none select-none">
+                      <img src="/salle-de-course/live-grille.png" alt="" aria-hidden="true"
+                        className="w-full h-auto block" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
+                      <span
+                        className="absolute flex items-center justify-center"
+                        style={{ left: "46.5%", top: "8%", width: "32%", height: "23%", background: "#0c0a07", borderRadius: "10%" }}
+                      >
+                        <LiveKlok />
+                      </span>
+                    </div>
+                    {nieuweVolgwagen && (
+                      <p className="mt-1.5 font-mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "#8A7A5E" }}>
+                        {selectedStage?.stage_number != null
+                          ? t("volgwagen.radio.ritStatus", { nummer: selectedStage.stage_number })
+                          : t("volgwagen.radio.ritGeen")}
+                      </p>
+                    )}
                   </div>
-                  {/* 2 en 3) Tuner en comm-unit: sfeer, geen informatie. Met de
-                      nieuwe indeling is deze kolom werkruimte -- daar past één
-                      beeld met de klok in, niet drie. */}
+                  {/* 2 en 3) Tuner en comm-unit. Zonder de vlag zijn het de
+                      plaatjes uit /public: sfeer, geen informatie. Met de nieuwe
+                      indeling worden het de knoppen van deze kolom -- de tuner
+                      kiest de vergelijkingsgroep van Rendement, de comm-unit het
+                      kanaal van Le Coup Manqué. */}
                   {!nieuweVolgwagen && (
-                    <>
+                    <div aria-hidden className="flex flex-col gap-2.5 pointer-events-none select-none">
                       <img src="/salle-de-course/tuner-telemetry.png" alt="" aria-hidden="true"
                         className="w-full h-auto" style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.45))" }} />
                       <img src="/salle-de-course/radio-comm.png" alt="" aria-hidden="true"
                         className="w-full h-auto" style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }} />
-                    </>
+                    </div>
+                  )}
+                  {nieuweVolgwagen && (
+                    <RadioTuner
+                      schalen={[
+                        ...subpoules.map((sp) => ({ id: sp.id as string | null, label: sp.name })),
+                        { id: null, label: t("volgwagen.radio.helePoule") },
+                      ]}
+                      actiefId={rendementSchaal}
+                      onKies={setSchaalKeuze}
+                    />
+                  )}
+                  {nieuweVolgwagen && coupRegel && (
+                    <RadioComm
+                      entryId={entry?.id}
+                      categoryId={coupRegel.category_id}
+                      gekozenId={coupAlternatief}
+                      onKies={setCoupAlternatief}
+                    />
                   )}
                 </div>
                 {nieuweVolgwagen && coupRegel && (
@@ -1538,6 +1582,8 @@ export default function MyTeamPanel({
                     entryId={entry?.id}
                     categoryId={coupRegel.category_id}
                     categoryName={coupRegel.category_name}
+                    alternatiefId={coupAlternatief}
+                    onKiesAlternatief={setCoupAlternatief}
                   />
                 )}
                 </div>
