@@ -99,6 +99,10 @@ export default function Legende({ gameId }: { gameId?: string }) {
         </button>
       )}
 
+      {/* Een bron is meestal een geplakte url. Die hoort niet uitgeschreven in
+          een kolom van 300 pixels; net als onder het hoofdartikel staat er
+          "lees het origineel" en zit de link eronder. Een bron zonder url --
+          "Tourarchief" -- blijft wel gewoon als naam staan. */}
       {bron && (
         <p className="clear-left mt-2.5 font-oswald text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
           {bron.url ? (
@@ -106,9 +110,9 @@ export default function Legende({ gameId }: { gameId?: string }) {
               href={bron.url}
               target="_blank"
               rel="noopener noreferrer nofollow"
-              className="inline-flex items-center gap-1 underline underline-offset-[3px] hover:text-foreground"
+              className="inline-flex items-center gap-1 font-semibold text-primary underline underline-offset-[3px] hover:text-foreground"
             >
-              {bron.tekst}
+              lees het origineel
               <ExternalLink className="h-2.5 w-2.5" aria-hidden />
             </a>
           ) : (
