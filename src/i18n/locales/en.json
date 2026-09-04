@@ -1865,6 +1865,7 @@
     },
     "radio": {
       "schaalKop": "Compare with",
+      "subpoule": "Subpool",
       "helePoule": "Whole pool",
       "kanaalKop": "Team radio · channel",
       "kanaal": "CH {{nummer}}",

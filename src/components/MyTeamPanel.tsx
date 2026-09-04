@@ -1560,8 +1560,13 @@ export default function MyTeamPanel({
                   )}
                   {nieuweVolgwagen && (
                     <RadioTuner
+                      /* Twee standen, niet één per subpoule: wie in tien
+                         subpoules zit kreeg tien knopjes over elkaar heen. Welke
+                         subpoule het is, kiest de dropdown van het dashboard. */
                       schalen={[
-                        ...subpoules.map((sp) => ({ id: sp.id as string | null, label: sp.name })),
+                        ...(activeSubpouleId
+                          ? [{ id: activeSubpouleId as string | null, label: t("volgwagen.radio.subpoule") }]
+                          : []),
                         { id: null, label: t("volgwagen.radio.helePoule") },
                       ]}
                       actiefId={rendementSchaal}
