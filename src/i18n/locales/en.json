@@ -1869,7 +1869,7 @@
       "helePoule": "Whole pool",
       "kanaalKop": "Team radio · channel",
       "kanaal": "CH {{nummer}}",
-      "stuurtRendement": "Sets the tick in Return per pick.",
+      "stuurtRendement": "Chooses who Return per pick compares you with.",
       "stuurtCoup": "Picks the rider in Le Coup Manqué.",
       "ritStatus": "Stage {{nummer}} · result in",
       "ritGeen": "No stage selected yet"
