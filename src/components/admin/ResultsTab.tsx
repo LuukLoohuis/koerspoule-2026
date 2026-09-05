@@ -422,17 +422,25 @@ export default function ResultsTab({
 
     // Een onvolledige stage/GC mag nooit stil de bestaande top-20 vervangen.
     // Handmatige koppelingen tellen mee als opgelost.
+    //
+    // Delen door counts.total ging mis: dat is het aantal rijen dat de bron
+    // leverde (vaak 30, soms de hele uitslag), terwijl de import alleen naar de
+    // top 20 kijkt. Een volledig gekoppelde uitslag bleef dan hangen op
+    // "20 van 30 renners" en was niet op te slaan. De noemer is nu wat er
+    // werkelijk beoordeeld is: gematcht plus niet-gevonden.
     for (const key of ["stage", "gc"] as const) {
-      const count = importPreview.counts?.[key];
-      if (!count || count.total < 10) continue;
-      const manualCount = (importPreview.unmatched[key] ?? []).filter(
+      const matchedList = importPreview.matched[key] ?? [];
+      const unmatchedList = importPreview.unmatched[key] ?? [];
+      const beoordeeld = matchedList.length + unmatchedList.length;
+      if (beoordeeld < 10) continue;
+      const manualCount = unmatchedList.filter(
         (u) => manualPicks[`${key}-${u.position}`],
       ).length;
-      const resolved = (importPreview.matched[key] ?? []).length + manualCount;
-      if (resolved / count.total < 0.8) {
+      const resolved = matchedList.length + manualCount;
+      if (resolved / beoordeeld < 0.8) {
         toast.error(
           `${key === "stage" ? "Etappe" : "GC"} is nog niet betrouwbaar: ` +
-          `${resolved} van ${count.total} renners gekoppeld. Los eerst de rode regels op.`,
+          `${resolved} van ${beoordeeld} renners gekoppeld. Los eerst de rode regels op.`,
         );
         return;
       }
