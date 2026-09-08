@@ -102,17 +102,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   elkaar (NL | EN | ig) in plaats van twee losse blokjes met een
                   gat ertussen. De scheiding is een haarlijn, geen tweede rand. */}
               <div className="inline-flex items-center h-9 rounded-lg border border-foreground/30 overflow-hidden">
-                <LanguageToggle className="h-full rounded-none border-0" />
                 <a
                   href={INSTAGRAM_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={t("shell.instagramAria")}
                   title={t("shell.instagramTitle")}
-                  className="inline-flex items-center justify-center h-full w-9 border-l border-foreground/30 hover:bg-secondary transition-colors"
+                  className="inline-flex items-center justify-center h-full w-9 border-r border-foreground/30 hover:bg-secondary transition-colors"
                 >
                   <Instagram className="h-[18px] w-[18px] text-foreground" />
                 </a>
+                <LanguageToggle className="h-full rounded-none border-0" />
               </div>
 
               {/* Desktop auth */}
