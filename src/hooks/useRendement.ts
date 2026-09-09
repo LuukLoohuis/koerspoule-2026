@@ -12,6 +12,8 @@ export type RendementRegel = {
   mijn_punten: number;
   poule_gemiddelde: number;
   poule_beste: number;
+  /** Het maximum dat in deze categorie te halen viel, over alle renners erin. */
+  categorie_beste: number;
 };
 
 /**
@@ -60,14 +62,20 @@ export function useAlternatieven(entryId?: string | null, categoryId?: string | 
 
 /**
  * De categorie waar je het meest liet liggen: het grootste gat tussen jouw
- * keuze en het gemiddelde van de poule. Dat is het eerlijkste startpunt voor
- * "wat als" -- niet je laagste score, want een categorie waar niemand punt
- * haalt is geen misser.
+ * keuze en de beste renner die in die categorie te kiezen was.
+ *
+ * Eerder was de maatstaf het poulegemiddelde -- je achterstand op de
+ * concurrenten. Dat verzweeg juist de dure gevallen: een renner die tachtig
+ * punten pakte terwijl bijna niemand hem koos, drukt het gemiddelde nauwelijks
+ * en kwam dus nooit bovendrijven. Wat je liet liggen is wat er te halen viel.
+ *
+ * Valt er niets te winnen -- jouw keuze wás de beste -- dan geen misser.
  */
 export function duursteMisser(regels: RendementRegel[]): RendementRegel | null {
-  const kandidaten = regels.filter((r) => r.mijn_punten < r.poule_gemiddelde);
+  // Terugval op poule_beste zolang de database de nieuwe kolom nog niet heeft:
+  // dan wijst het blok de beste gemaakte keuze aan in plaats van te verdwijnen.
+  const gat = (r: RendementRegel) => (r.categorie_beste ?? r.poule_beste) - r.mijn_punten;
+  const kandidaten = regels.filter((r) => gat(r) > 0);
   if (kandidaten.length === 0) return null;
-  return kandidaten.reduce((a, b) =>
-    b.poule_gemiddelde - b.mijn_punten > a.poule_gemiddelde - a.mijn_punten ? b : a,
-  );
+  return kandidaten.reduce((a, b) => (gat(b) > gat(a) ? b : a));
 }
