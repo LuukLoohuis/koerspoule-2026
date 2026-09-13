@@ -25,3 +25,19 @@ export function isGcFiatReady(resultsStatus: string, calculationStatus: Calculat
   if (resultsStatus !== "pending") return false;
   return !isCalculationActive(calculationStatus) && calculationStatus !== "failed";
 }
+
+/**
+ * De oude submit_stage_for_approval eiste dat de GC-bonussen al berekend
+ * waren, terwijl die berekening op haar beurt een klaargezette GC eist: wie
+ * migratie 20260814140000 niet heeft gedraaid loopt daardoor in een kringetje.
+ * Dat is aan de melding te herkennen, dus zeg erbij wat eraan scheelt in
+ * plaats van de database-tekst kaal door te geven.
+ */
+export function gcFiatFoutUitleg(melding: string): string | undefined {
+  if (!melding.includes("Bereken eerst de eindklassement")) return undefined;
+  return (
+    "Deze database draait nog de oude versie van submit_stage_for_approval. " +
+    "Draai `npx supabase db push` (migratie 20260814140000_smooth_gc_approval); " +
+    "daarna berekent het klaarzetten de bonussen zelf."
+  );
+}

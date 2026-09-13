@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getCalculationProgress, isCalculationActive, isFiatReady, isGcFiatReady } from "./calculationProgress";
+import { gcFiatFoutUitleg, getCalculationProgress, isCalculationActive, isFiatReady, isGcFiatReady } from "./calculationProgress";
 
 describe("calculation progress", () => {
   it("calculates and clamps measurable progress", () => {
@@ -45,5 +45,22 @@ describe("isGcFiatReady", () => {
   it("vraagt nog steeds om klaarzetten", () => {
     expect(isGcFiatReady("draft", "idle")).toBe(false);
     expect(isGcFiatReady("approved", "completed")).toBe(false);
+  });
+});
+
+describe("gcFiatFoutUitleg", () => {
+  it("herkent de kringetjesfout van de oude databasefunctie", () => {
+    const uitleg = gcFiatFoutUitleg("Bereken eerst de eindklassement- en truivoorspellingen");
+    expect(uitleg).toContain("supabase db push");
+    expect(uitleg).toContain("20260814140000");
+  });
+
+  it("laat echte invoerfouten met rust", () => {
+    // Deze meldingen zeggen zelf al wat de admin moet doen.
+    expect(gcFiatFoutUitleg("Geen uitslag ingevuld voor deze etappe")).toBeUndefined();
+    expect(
+      gcFiatFoutUitleg("Het eindklassement moet precies drie unieke renners op GC-positie 1, 2 en 3 bevatten"),
+    ).toBeUndefined();
+    expect(gcFiatFoutUitleg("De puntenberekening is nog niet volledig afgerond")).toBeUndefined();
   });
 });

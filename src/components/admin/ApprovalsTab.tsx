@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase, Loader2, AlertTriangle, Trophy, Search, X, Flag } from "lucide-react";
 import { toast } from "sonner";
-import { getCalculationProgress, isCalculationActive, isFiatReady, isGcFiatReady } from "@/lib/calculationProgress";
+import { gcFiatFoutUitleg, getCalculationProgress, isCalculationActive, isFiatReady, isGcFiatReady } from "@/lib/calculationProgress";
 import { useNavigate } from "react-router-dom";
 import { matchesParticipantSearch } from "@/lib/adminBreakdownSearch";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
@@ -859,7 +859,7 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
     const { error } = await supabase.rpc("submit_stage_for_approval", { p_stage_id: stageId });
     setBusyId(null);
     if (error) {
-      toast.error(error.message);
+      toast.error(error.message, { description: gcFiatFoutUitleg(error.message) });
       return;
     }
     toast.success("Klaargezet voor controle");
