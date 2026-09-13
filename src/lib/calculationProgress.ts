@@ -12,3 +12,16 @@ export function isFiatReady(resultsStatus: string, calculationStatus: Calculatio
 export function isCalculationActive(status: CalculationStatus): boolean {
   return status === "processing" || status === "finalizing";
 }
+
+/**
+ * De GC-etappe scoort via entry_prediction_points en loopt nooit door de
+ * gewone puntenbatcher. Daar betekent 'idle' dus niet "nog niet berekend",
+ * en de strengere isFiatReady liet de fiat-knop bij een klaargezet
+ * eindklassement eeuwig op "Punten berekenen..." staan. De echte controle
+ * zit in approve_stage_results: die weigert zonder voorspellingpunten en
+ * markeert de etappe zelf als berekend.
+ */
+export function isGcFiatReady(resultsStatus: string, calculationStatus: CalculationStatus): boolean {
+  if (resultsStatus !== "pending") return false;
+  return !isCalculationActive(calculationStatus) && calculationStatus !== "failed";
+}

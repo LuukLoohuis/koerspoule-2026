@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CheckCircle2, Clock, FileEdit, ShieldCheck, Undo2, RefreshCw, ChevronDown, ChevronRight, Sparkles, Mic, Briefcase, Loader2, AlertTriangle, Trophy, Search, X, Flag } from "lucide-react";
 import { toast } from "sonner";
-import { getCalculationProgress, isCalculationActive, isFiatReady } from "@/lib/calculationProgress";
+import { getCalculationProgress, isCalculationActive, isFiatReady, isGcFiatReady } from "@/lib/calculationProgress";
 import { useNavigate } from "react-router-dom";
 import { matchesParticipantSearch } from "@/lib/adminBreakdownSearch";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
@@ -917,9 +917,16 @@ export default function ApprovalsTab({ activeGameId }: { activeGameId: string })
               const calculating = r.calculation_status === "processing";
               const finalizing = r.calculation_status === "finalizing";
               const failed = r.calculation_status === "failed";
-              const ready = isFiatReady(r.results_status, r.calculation_status);
+              const isGc = gcStageIds.has(r.stage_id);
+              // Het eindklassement krijgt geen stage_points en blijft daardoor
+              // op 'idle' staan; met de gewone eis bleef de knop hangen op
+              // "Punten berekenen...". approve_stage_results doet de echte
+              // controle en weigert zonder berekende voorspellingpunten.
+              const ready = isGc
+                ? isGcFiatReady(r.results_status, r.calculation_status)
+                : isFiatReady(r.results_status, r.calculation_status);
               const progress = getCalculationProgress(r.processed_count, r.total_count);
-              if (gcStageIds.has(r.stage_id) && ready) {
+              if (isGc && ready) {
                 return (
                   <GcApprovalCard
                     key={r.stage_id}

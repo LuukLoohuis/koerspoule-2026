@@ -409,7 +409,11 @@ export default function CalculationTab({
         .filter((s: any) => s.is_gc && ["pending", "approved"].includes(s.results_status))
         .sort((a, b) => b.stage_number - a.stage_number)[0];
       if (!finalStage) {
-        throw new Error("Zet het eindklassement eerst klaar voor controle in Fiatteren.");
+        throw new Error(
+          "Zet het eindklassement eerst klaar: tabblad Fiatteren → Concepten → " +
+          "\u201cBereken en zet klaar voor fiat\u201d. Staat het daar niet, vul dan eerst de " +
+          "GC-uitslag in bij Resultaten (top 3 plus een winnaar per trui).",
+        );
       }
 
       const { data: finalRows, error: finalError } = await supabase
