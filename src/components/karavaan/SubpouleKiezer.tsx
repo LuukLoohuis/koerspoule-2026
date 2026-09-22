@@ -76,7 +76,7 @@ export default function SubpouleKiezer({
           role="combobox"
           aria-expanded={open}
           aria-label={t("karavaan.switcher.aria")}
-          className="focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
+          className="focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
         >
           {knop}
         </button>
@@ -93,7 +93,7 @@ export default function SubpouleKiezer({
         )}
       >
         <Command>
-          <p className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          <p className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             {t("karavaan.switcher.label")}
           </p>
           {metZoek && (

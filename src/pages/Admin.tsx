@@ -248,7 +248,7 @@ export default function Admin() {
   if (!supabase) {
     return (
       <div className="max-w-4xl mx-auto p-4">
-        <Card className="rounded-xl shadow-sm">
+        <Card className="rounded-xl shadow-xs">
           <CardHeader>
             <CardTitle>Admin Dashboard</CardTitle>
           </CardHeader>
@@ -640,7 +640,7 @@ export default function Admin() {
         </TabsList>
 
         <TabsContent value="games">
-          <Card className="rounded-xl shadow-sm">
+          <Card className="rounded-xl shadow-xs">
             <CardHeader><CardTitle>Games</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
@@ -664,7 +664,7 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="categories">
-          <Card className="rounded-xl shadow-sm">
+          <Card className="rounded-xl shadow-xs">
             <CardHeader><CardTitle>Categorieen</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <Select value={activeGameId} onValueChange={setActiveGameId}>
@@ -700,7 +700,7 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="riders">
-          <Card className="rounded-xl shadow-sm">
+          <Card className="rounded-xl shadow-xs">
             <CardHeader><CardTitle>Renners</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
@@ -720,7 +720,7 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="startlist">
-          <Card className="rounded-xl shadow-sm">
+          <Card className="rounded-xl shadow-xs">
             <CardHeader><CardTitle>Startlijst beheer</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -764,7 +764,7 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="stages">
-          <Card className="rounded-xl shadow-sm">
+          <Card className="rounded-xl shadow-xs">
             <CardHeader><CardTitle>Etappes</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -780,7 +780,7 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="results" className="space-y-4">
-          <Card className="rounded-xl shadow-sm">
+          <Card className="rounded-xl shadow-xs">
             <CardHeader>
               <CardTitle>Stage Selection</CardTitle>
             </CardHeader>
@@ -802,7 +802,7 @@ export default function Admin() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-xl shadow-sm">
+          <Card className="rounded-xl shadow-xs">
         <CardHeader>
           <CardTitle>Upload Results</CardTitle>
         </CardHeader>
@@ -850,7 +850,7 @@ export default function Admin() {
         </CardContent>
       </Card>
 
-          <Card className="rounded-xl shadow-sm">
+          <Card className="rounded-xl shadow-xs">
         <CardHeader>
           <CardTitle>Preview</CardTitle>
         </CardHeader>
@@ -890,7 +890,7 @@ export default function Admin() {
         </CardContent>
       </Card>
 
-          <Card className="rounded-xl shadow-sm">
+          <Card className="rounded-xl shadow-xs">
         <CardHeader>
           <CardTitle>Actions</CardTitle>
         </CardHeader>
@@ -920,7 +920,7 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="logs">
-          <Card className="rounded-xl shadow-sm">
+          <Card className="rounded-xl shadow-xs">
         <CardHeader>
           <CardTitle>Status / Logs</CardTitle>
         </CardHeader>

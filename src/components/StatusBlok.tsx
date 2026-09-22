@@ -31,7 +31,7 @@ function Delta({ n }: { n: number }) {
 
 function Cel({ label, waarde, bij }: { label: string; waarde: React.ReactNode; bij?: React.ReactNode }) {
   return (
-    <div className="rounded-lg bg-foreground/[0.045] px-2.5 py-2">
+    <div className="rounded-lg bg-foreground/4.5 px-2.5 py-2">
       <div className="font-mono text-[8.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
         {label}
       </div>
@@ -74,7 +74,7 @@ export function StatusBlokView({
 
   return (
     <div className="md:hidden mb-3 overflow-hidden rounded-xl border-2 border-foreground bg-card shadow-[3px_3px_0_hsl(var(--foreground))]">
-      <div className="h-1 bg-gradient-to-r from-[hsl(var(--primary))] via-[hsl(var(--vintage-gold))] to-[hsl(var(--primary))]" />
+      <div className="h-1 bg-linear-to-r from-[hsl(var(--primary))] via-[hsl(var(--vintage-gold))] to-[hsl(var(--primary))]" />
       <div className="p-3">
         <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
           {laatsteEtappe

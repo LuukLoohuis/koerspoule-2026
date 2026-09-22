@@ -164,7 +164,7 @@ export default function RiderTile({
         {/* Naam + totaal-punten boven het figuurtje (startnummer verwijderd) */}
         <div className="mb-1.5 min-w-0 w-full">
           <div
-            className="break-words"
+            className="wrap-break-word"
             style={{
               fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
               fontWeight: 700,
@@ -252,7 +252,7 @@ export default function RiderTile({
         {/* Volledige naam — mag wrappen naar 2 regels zodat 'ie altijd
             zichtbaar is (geen afkapping). */}
         <span
-          className="break-words"
+          className="wrap-break-word"
           style={{
             fontFamily: "'Source Serif 4','Playfair Display',Georgia,serif",
             fontWeight: 600,

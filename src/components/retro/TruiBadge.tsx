@@ -86,11 +86,11 @@ export default function TruiBadge({
           src={themaImg}
           alt={trui.naam}
           height={h}
-          className="shrink-0 w-auto object-contain drop-shadow-sm"
+          className="shrink-0 w-auto object-contain drop-shadow-xs"
           style={{ height: h }}
         />
         {naamZichtbaar && (
-          <span className="font-display text-[10px] uppercase tracking-wider text-center leading-tight max-w-[5rem]">
+          <span className="font-display text-[10px] uppercase tracking-wider text-center leading-tight max-w-20">
             {trui.naam}
           </span>
         )}
@@ -126,7 +126,7 @@ export default function TruiBadge({
         />
       </svg>
       {naamZichtbaar && (
-        <span className="font-display text-[10px] uppercase tracking-wider text-center leading-tight max-w-[5rem]">
+        <span className="font-display text-[10px] uppercase tracking-wider text-center leading-tight max-w-20">
           {trui.naam}
         </span>
       )}

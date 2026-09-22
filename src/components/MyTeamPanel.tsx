@@ -856,7 +856,7 @@ export default function MyTeamPanel({
                 key={f.riderId}
                 to={`/team-samenstellen?category=${f.categoryId}`}
                 aria-label={t("team.panel.chooseReplacementFor", { name: f.name })}
-                className="inline-flex items-center gap-1.5 rounded-md retro-border bg-card px-3 py-2 text-sm font-bold hover:bg-[hsl(var(--vintage-gold))/0.15] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
+                className="inline-flex items-center gap-1.5 rounded-md retro-border bg-card px-3 py-2 text-sm font-bold hover:bg-[hsl(var(--vintage-gold))/0.15] transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
               >
                 {fallenRiders.length > 1 && <span className="line-through opacity-70">{f.name}</span>}
                 <span>{t("team.panel.chooseReplacement")}</span>
@@ -952,7 +952,7 @@ export default function MyTeamPanel({
             className={cn(
               "p-2.5 md:p-3 min-h-[78px] flex flex-col justify-center gap-1",
               onClick &&
-                "cursor-pointer transition-[transform,box-shadow] hover:-translate-y-[1px] hover:shadow-[0_3px_10px_rgba(0,0,0,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D49A1A]",
+                "cursor-pointer transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_3px_10px_rgba(0,0,0,0.25)] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#D49A1A]",
             )}
             style={{ border: hairline, borderLeft: accent ? `3px solid ${accent}` : hairline, background: PAPER, borderRadius: 6 }}
           >
@@ -1036,10 +1036,10 @@ export default function MyTeamPanel({
                           {/* break-words, bewust NIET overflow-wrap:anywhere. Die laatste zet de
                               min-content-breedte van dit flex-item op één teken, waardoor de
                               flexbox de titel veel te ver liet krimpen en "DISCOVERY CHANNEL"
-                              als "DISCOVE / RY / CHANNE / L" afbrak. Met break-words is de
+                              als "DISCOVE / RY / CHANNE / L" afbrak. Met wrap-break-word is de
                               min-content het langste woord: hij breekt op de spatie, en alleen
                               binnen een woord als dat woord zelf niet op een regel past. */}
-                          <span className="break-words">{shownName}</span>
+                          <span className="wrap-break-word">{shownName}</span>
                           {hasName && !editingName && (
                             <Button
                               size="sm" variant="ghost" className="h-7 px-2 shrink-0"
@@ -1319,7 +1319,7 @@ export default function MyTeamPanel({
                                   "px-3 py-1.5 min-w-0",
                                   d.flagLeft ? "flex items-center gap-2.5" : "flex flex-col gap-0.5",
                                   clickable &&
-                                    "cursor-pointer rounded-md transition-colors hover:bg-[rgba(212,154,26,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D49A1A]",
+                                    "cursor-pointer rounded-md transition-colors hover:bg-[rgba(212,154,26,0.08)] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#D49A1A]",
                                 )}
                                 style={{ borderLeft: i > 0 ? hairline : undefined }}
                               >
@@ -1451,7 +1451,7 @@ export default function MyTeamPanel({
                       const target = approvedRaceStages[next];
                       if (target) setSelectedStageId(target.id);
                     }}
-                    className="flex items-end gap-1.5 overflow-x-auto pb-1 pt-1.5 outline-none"
+                    className="flex items-end gap-1.5 overflow-x-auto pb-1 pt-1.5 outline-hidden"
                     style={{ scrollbarWidth: "none", scrollSnapType: "x mandatory" }}
                   >
                     {approvedRaceStages.map((s) => {
@@ -1628,7 +1628,7 @@ export default function MyTeamPanel({
                   onChange={(e) => setZoek(e.target.value)}
                   placeholder={t("team.panel.zoekRenner")}
                   aria-label={t("team.panel.zoekRenner")}
-                  className="h-9 w-full rounded-lg border border-border bg-background pl-8 pr-8 text-sm outline-none focus:border-primary"
+                  className="h-9 w-full rounded-lg border border-border bg-background pl-8 pr-8 text-sm outline-hidden focus:border-primary"
                 />
                 {zoek && (
                   <button
@@ -1643,7 +1643,7 @@ export default function MyTeamPanel({
               </div>
             )}
             {toonZoek && term && zichtbaar.length === 0 && (
-              <p className="mb-2.5 rounded-lg bg-foreground/[0.04] px-3 py-2.5 text-sm text-muted-foreground">
+              <p className="mb-2.5 rounded-lg bg-foreground/4 px-3 py-2.5 text-sm text-muted-foreground">
                 {t("team.panel.zoekGeenTreffer", { term: zoek })}
               </p>
             )}

@@ -351,7 +351,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           // retro-border wrapper zodat de StageBar exact dezelfde kaart-chrome
           // (2px border + 3px offset-shadow) en breedte krijgt als de
           // standings-kaart eronder. StageBar zelf chromeless.
-          <div className="retro-border bg-gradient-to-br from-card via-card to-secondary/20 p-3">
+          <div className="retro-border bg-linear-to-br from-card via-card to-secondary/20 p-3">
             <StageBar
               chromeless
               stages={dataWithFraction}
@@ -382,7 +382,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
 
       {/* Cumulative standings up to the selected stage */}
       <div className="retro-border no-hover-lift bg-card overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+        <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
 
         <div className="p-4 border-b-2 border-foreground bg-secondary/50 flex items-center justify-between">
           <h2 className="font-display text-lg font-bold flex items-center gap-2">
@@ -446,7 +446,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
                 <Command>
                   <CommandInput placeholder={t("subpoule.standings.searchWoonplaats")} />
                   <CommandList>
@@ -495,7 +495,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           {stages.length > 0 && (
             <div className="hidden md:block shrink-0 w-8 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground text-center">{t("subpoule.standings.colStage")}</div>
           )}
-          <div className="shrink-0 min-w-[2.5rem] md:min-w-[3rem] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">{t("subpoule.standings.colPts")}</div>
+          <div className="shrink-0 min-w-10 md:min-w-12 text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground">{t("subpoule.standings.colPts")}</div>
           <div className="shrink-0 min-w-[48px] md:min-w-[64px] text-right text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title={t("subpoule.standings.colPtsTitle")}>{t("subpoule.standings.colDay")}</div>
           {/* Kolomkop boven het compare-slot (desktop); mobiele spacer houdt de uitlijning. */}
           <div className="shrink-0 w-5 md:w-[104px] hidden md:flex items-center justify-end gap-1 text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground" title={t("subpoule.standings.colVsTitle")}>
@@ -521,9 +521,9 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
               : "text-muted-foreground/40";
 
             const rowAccentCls =
-              m.rank === 1 ? "border-l-[3px] border-amber-400/70 bg-amber-500/[0.04]"
-              : m.rank === 2 ? "border-l-[3px] border-zinc-400/50 bg-zinc-500/[0.03]"
-              : m.rank === 3 ? "border-l-[3px] border-orange-400/50 bg-orange-500/[0.03]"
+              m.rank === 1 ? "border-l-[3px] border-amber-400/70 bg-amber-500/4"
+              : m.rank === 2 ? "border-l-[3px] border-zinc-400/50 bg-zinc-500/3"
+              : m.rank === 3 ? "border-l-[3px] border-orange-400/50 bg-orange-500/3"
               : "border-l-[3px] border-transparent";
 
             const stageBadgeCls =
@@ -573,9 +573,9 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                 className={cn(
                   "group flex items-center gap-2 md:gap-3 px-3 border-b border-border/40 transition-colors duration-120 select-none",
                   rowAccentCls,
-                  isMe && "bg-primary/[0.08] ring-1 ring-inset ring-primary/30",
+                  isMe && "bg-primary/8 ring-1 ring-inset ring-primary/30",
                   isComparing && "bg-accent/15 ring-1 ring-inset ring-accent/50",
-                  canCompare && "cursor-pointer hover:bg-accent/10 active:bg-accent/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                  canCompare && "cursor-pointer hover:bg-accent/10 active:bg-accent/20 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50",
                 )}
                 style={{ minHeight: "44px" }}
               >
@@ -670,7 +670,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
                   </div>
                 )}
 
-                <div className="shrink-0 text-right min-w-[2.5rem] md:min-w-[3rem]">
+                <div className="shrink-0 text-right min-w-10 md:min-w-12">
                   <div>
                     <span className={cn(
                       "font-display font-bold tabular-nums",

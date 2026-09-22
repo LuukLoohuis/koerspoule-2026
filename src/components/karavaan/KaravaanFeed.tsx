@@ -504,7 +504,7 @@ function SubpouleSwitcher({
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+          <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
             <Command>
               <CommandInput placeholder={t("karavaan.switcher.searchPlaceholder")} />
               <CommandList>
@@ -535,7 +535,7 @@ function SubpouleSwitcher({
             className={cn(
               "rounded-lg px-3 min-h-[36px] text-xs font-semibold uppercase tracking-wider transition-colors",
               selectedId === s.id
-                ? "bg-card text-foreground shadow-sm border border-foreground/10"
+                ? "bg-card text-foreground shadow-xs border border-foreground/10"
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
             )}
           >

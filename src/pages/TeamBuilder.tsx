@@ -555,7 +555,7 @@ export default function TeamBuilder() {
   // Gedeeld tussen desktop-layout en het mobiele overzicht-scherm.
   const jokersBlock = (
     <div id="sectie-jokers" className="ornate-frame retro-border p-4 relative bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))] scroll-mt-24">
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[hsl(var(--vintage-gold))] via-primary to-[hsl(var(--vintage-gold))]" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-[hsl(var(--vintage-gold))] via-primary to-[hsl(var(--vintage-gold))]" />
       <div className="flex items-center gap-3 mb-1">
         <span className="text-2xl">🃏</span>
         <h2 className="font-display text-xl font-bold">{t("team.builder.jokersHeading")}</h2>
@@ -630,7 +630,7 @@ export default function TeamBuilder() {
         </p>
         {/* Dubbele inktstreep onder de kop */}
         <div className="mx-auto mt-3 w-44 md:w-56 h-[2px]" style={{ background: "var(--ink-sepia)" }} />
-        <div className="mx-auto mt-[2px] w-32 md:w-40 h-[1px]" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
+        <div className="mx-auto mt-[2px] w-32 md:w-40 h-px" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
       </div>
 
       {/* ── Podium ─────────────────────────────────────────────── */}
@@ -854,7 +854,7 @@ export default function TeamBuilder() {
         </div>
         <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
+            className="h-full bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -906,7 +906,7 @@ export default function TeamBuilder() {
                 aria-label={isSel ? t("team.builder.ariaDeselect", { name: row.riders.name }) : t("team.builder.ariaPick", { name: row.riders.name })}
                 className={cn(
                   "w-full flex items-center gap-3 rounded-lg border-2 p-3 transition-all text-left",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
+                  "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
                   isSel
                     ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.12] shadow-[inset_3px_0_0_hsl(var(--vintage-gold))]"
                     : "border-border bg-card",
@@ -977,7 +977,7 @@ export default function TeamBuilder() {
       </div>
       <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
+          className="h-full bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
           style={{ width: `${progressPct}%` }}
         />
       </div>
@@ -1207,7 +1207,7 @@ export default function TeamBuilder() {
               <div className="hidden md:block space-y-5">
               {/* Sticky progress bar */}
               <div className="sticky top-2 z-30">
-                <div className="ornate-frame retro-border bg-card/95 backdrop-blur p-3 md:p-4">
+                <div className="ornate-frame retro-border bg-card/95 backdrop-blur-sm p-3 md:p-4">
                   <div className="flex flex-wrap items-center gap-3 md:gap-4">
                     <div className="flex-1 min-w-[180px]">
                       <div className="flex items-baseline justify-between mb-1">
@@ -1220,7 +1220,7 @@ export default function TeamBuilder() {
                       </div>
                       <div className="h-2 rounded-full bg-secondary overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
+                          className="h-full bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
                           style={{ width: `${progressPct}%` }}
                         />
                       </div>
@@ -1327,7 +1327,7 @@ export default function TeamBuilder() {
                       )}
                     >
                       {/* Top gradient strip */}
-                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary opacity-70" />
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary opacity-70" />
                       {complete && (
                         <span className="absolute top-2 right-2 jersey-badge bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/50">
                           <Check className="h-3 w-3" /> {t("team.builder.complete")}
@@ -1345,7 +1345,7 @@ export default function TeamBuilder() {
                         >
                           {icon}
                           {complete && (
-                            <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white border-2 border-card shadow-sm">
+                            <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white border-2 border-card shadow-xs">
                               <Check className="h-3 w-3" strokeWidth={3} />
                             </span>
                           )}
@@ -1390,7 +1390,7 @@ export default function TeamBuilder() {
                               aria-label={isSelected ? t("team.builder.ariaDeselect", { name: row.riders.name }) : t("team.builder.ariaPick", { name: row.riders.name })}
                               className={cn(
                                 "group w-full flex items-center justify-between p-2.5 rounded-md border-2 transition-all text-left relative overflow-hidden",
-                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                                "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary",
                                 isSelected
                                   ? "border-primary bg-primary/10 shadow-[inset_3px_0_0_hsl(var(--primary))]"
                                   : "border-border hover:border-primary/50 hover:bg-secondary hover:-translate-y-px",
@@ -1478,7 +1478,7 @@ export default function TeamBuilder() {
                   deze balk erachter). Container heeft pb-32 → geen overlap. ── */}
               {!gameLocked && (
                 <div
-                  className="fixed inset-x-0 z-40 md:hidden border-t border-border bg-card/95 backdrop-blur px-3 pt-2 pb-2"
+                  className="fixed inset-x-0 z-40 md:hidden border-t border-border bg-card/95 backdrop-blur-sm px-3 pt-2 pb-2"
                   style={{ bottom: "calc(3.65rem + env(safe-area-inset-bottom))" }}
                 >
                   <div className="flex items-center gap-3">
@@ -1488,7 +1488,7 @@ export default function TeamBuilder() {
                       </p>
                       <div className="h-1.5 rounded-full bg-secondary overflow-hidden mt-1">
                         <div
-                          className="h-full bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
+                          className="h-full bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
                           style={{ width: `${progressPct}%` }}
                         />
                       </div>
@@ -1571,7 +1571,7 @@ export default function TeamBuilder() {
               {!startlistLoading &&
                 startlist.map((team) => (
                   <div key={team.id} className="ornate-frame retro-border bg-card p-4 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 bottom-0 w-1 bg-gradient-to-b from-primary to-[hsl(var(--vintage-gold))]" />
+                    <div className="absolute top-0 left-0 bottom-0 w-1 bg-linear-to-b from-primary to-[hsl(var(--vintage-gold))]" />
                     <div className="flex items-center gap-3 mb-2 pl-2">
                       {team.jersey_url && (
                         <img
@@ -1586,7 +1586,7 @@ export default function TeamBuilder() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                       {team.riders.map((rider) => (
                         <div key={rider.id} className="border rounded-md p-2 bg-secondary/20 flex items-center gap-2">
-                          <span className="inline-flex h-6 min-w-[1.75rem] px-1.5 items-center justify-center rounded-full bg-primary/15 border border-primary/30 font-mono text-xs">
+                          <span className="inline-flex h-6 min-w-7 px-1.5 items-center justify-center rounded-full bg-primary/15 border border-primary/30 font-mono text-xs">
                             {rider.start_number ?? "—"}
                           </span>
                           <span className="font-medium truncate text-slate-800">{rider.name}</span>

@@ -35,7 +35,7 @@ export default function RubriekBlock({ gameId }: Props) {
           De Rubriek ★
         </span>
         <div className="text-xs text-muted-foreground mb-1">{"\n"}</div>
-        <div className="mop-card p-4 -rotate-[0.4deg]">
+        <div className="mop-card p-4 rotate-[-0.4deg]">
           <p className="font-display font-bold text-lg leading-snug m-0">
             "Waarom neemt een classicus nóóit een paraplu mee?"
           </p>
@@ -93,18 +93,18 @@ function TextPost({ content, fotoUrl }: { content: string; fotoUrl?: string | nu
   const lines = content.split("\n").filter(Boolean);
   const [headline, ...rest] = lines;
   return (
-    <div className="mop-card p-4 -rotate-[0.4deg]">
+    <div className="mop-card p-4 rotate-[-0.4deg]">
       {fotoUrl && (
         <img
           src={fotoUrl}
           alt=""
           loading="lazy"
-          className="mb-3 aspect-[4/3] w-full rounded-sm border border-foreground/15 object-cover"
+          className="mb-3 aspect-4/3 w-full rounded-sm border border-foreground/15 object-cover"
         />
       )}
-      <p className="font-display font-bold text-lg leading-snug m-0 break-words whitespace-pre-wrap">{headline}</p>
+      <p className="font-display font-bold text-lg leading-snug m-0 wrap-break-word whitespace-pre-wrap">{headline}</p>
       {rest.map((line, i) => (
-        <p key={i} className="font-serif italic text-sm text-muted-foreground mt-2 mb-0 break-words whitespace-pre-wrap">
+        <p key={i} className="font-serif italic text-sm text-muted-foreground mt-2 mb-0 wrap-break-word whitespace-pre-wrap">
           {line}
         </p>
       ))}

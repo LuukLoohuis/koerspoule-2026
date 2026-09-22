@@ -12,7 +12,7 @@ export default function PloegSkeleton() {
     <div className="space-y-3 pb-4" role="status" aria-busy="true">
       {/* Dashboardkop */}
       <div className="retro-border bg-card overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+        <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <div className="p-4">
           <div className={`h-3 w-24 ${cell}`} />
           <div className={`mt-2 h-7 w-48 ${cell}`} />

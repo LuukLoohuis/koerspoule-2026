@@ -13,9 +13,9 @@ export type Segment = "voorpagina" | "daguitslag" | "perszaal";
 
 /** Initiaal op kolombreedte: zelfde gebaar als boven het hoofdartikel. */
 const INITIAAL_KLEIN =
-  "[&::first-letter]:float-left [&::first-letter]:pr-1.5 [&::first-letter]:pt-[3px] " +
-  "[&::first-letter]:font-display [&::first-letter]:text-[27px] " +
-  "[&::first-letter]:font-black [&::first-letter]:leading-[0.8] [&::first-letter]:text-foreground";
+  "first-letter:float-left first-letter:pr-1.5 first-letter:pt-[3px] " +
+  "first-letter:font-display first-letter:text-[27px] " +
+  "first-letter:font-black first-letter:leading-[0.8] first-letter:text-foreground";
 
 export type StandCel = {
   key: string;
@@ -149,7 +149,7 @@ export default function Voorpagina({
       className={cn(
         "min-w-[56px] flex-1 border-l border-border/70 px-1 py-2 text-center transition-colors sm:min-w-[68px] sm:px-1.5",
         c.onClick && "hover:bg-secondary/70",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--vintage-gold))]",
+        "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--vintage-gold))]",
         extra,
       )}
     >
@@ -228,7 +228,7 @@ export default function Voorpagina({
             aria-pressed={segment === k}
             className={cn(
               "flex-1 py-2 font-oswald text-[10px] uppercase tracking-[0.18em] transition-colors",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
               segment === k ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -305,7 +305,7 @@ export default function Voorpagina({
                             "mt-1 inline-flex items-center gap-1 border-b border-border pb-px",
                             "font-oswald text-[9px] uppercase tracking-[0.14em] text-muted-foreground",
                             "transition-colors hover:text-foreground",
-                            "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
                           )}
                         >
                           {uit ? t("karavaan.voorpagina.quoteMinder") : t("karavaan.voorpagina.quoteMeer")}
@@ -364,9 +364,9 @@ export default function Voorpagina({
                   "bg-background",
                   "shadow-[0_0_0_1px_rgba(20,18,16,0.09),0_1px_2px_rgba(0,0,0,0.05),0_10px_22px_-14px_rgba(0,0,0,0.4)]",
                   "transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(.2,.8,.2,1)]",
-                  "hover:-translate-y-[2px] hover:shadow-[0_0_0_1px_rgba(20,18,16,0.12),0_2px_4px_rgba(0,0,0,0.06),0_18px_30px_-16px_rgba(0,0,0,0.45)]",
+                  "hover:translate-y-[-2px] hover:shadow-[0_0_0_1px_rgba(20,18,16,0.12),0_2px_4px_rgba(0,0,0,0.06),0_18px_30px_-16px_rgba(0,0,0,0.45)]",
                   "active:scale-[0.985] motion-reduce:transition-none motion-reduce:hover:translate-y-0",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
+                  "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
                 )}
               >
                 <span

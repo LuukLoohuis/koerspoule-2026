@@ -28,7 +28,7 @@ export function SteunKopgroepPill({ className }: { className?: string }) {
       className={cn(
         "group inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10",
         "min-h-[36px] px-2.5 py-1 text-primary text-[11px] font-serif italic",
-        "transition-colors hover:bg-primary/15 focus-visible:bg-primary/15 focus-visible:outline-none",
+        "transition-colors hover:bg-primary/15 focus-visible:bg-primary/15 focus-visible:outline-hidden",
         className,
       )}
     >
@@ -108,7 +108,7 @@ export function SteunMoment({
           "shrink-0 rounded-full border border-[hsl(var(--vintage-gold))/0.55] bg-[hsl(var(--vintage-gold))/0.15]",
           "px-3 py-1 font-sans text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--vintage-gold))]",
           "transition-colors hover:bg-[hsl(var(--vintage-gold))/0.28]",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
+          "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
         )}
       >
         {t("shell.steun.trakteer")}
@@ -118,7 +118,7 @@ export function SteunMoment({
         type="button"
         onClick={dismiss}
         aria-label={t("shell.steun.tipClose")}
-        className="-mr-1 shrink-0 rounded p-1 text-muted-foreground/50 transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
+        className="-mr-1 shrink-0 rounded p-1 text-muted-foreground/50 transition-colors hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
       >
         <X className="h-3.5 w-3.5" />
       </button>
@@ -167,7 +167,7 @@ export function SteunBanner({ revKey, className }: { revKey?: string | null; cla
       )}
       role="note"
     >
-      <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+      <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
       {/* Gestapeld, niet als rij: de banner staat in een kolom van ~268px en
           daar brak de tekst naast een knop na bijna elk woord af. */}
       <div className="px-3.5 py-3">

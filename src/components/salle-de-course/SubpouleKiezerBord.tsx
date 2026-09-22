@@ -45,7 +45,7 @@ export default function SubpouleKiezerBord({
           className={cn(
             "flex h-7 min-w-[140px] max-w-[220px] items-center gap-1.5 rounded-md px-2.5",
             "font-mono text-[10px] font-bold uppercase tracking-[0.14em]",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D49A1A]",
+            "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#D49A1A]",
           )}
           style={{
             background: "rgba(26,22,18,0.06)",
@@ -75,7 +75,7 @@ export default function SubpouleKiezerBord({
               <Search className="h-3.5 w-3.5 shrink-0 opacity-60" aria-hidden />
               <CommandInput
                 placeholder={t("karavaan.switcher.searchPlaceholder")}
-                className="h-8 border-0 p-0 font-mono text-[11px] uppercase tracking-[0.1em] focus:ring-0"
+                className="h-8 border-0 p-0 font-mono text-[11px] uppercase tracking-widest focus:ring-0"
               />
             </div>
           )}
@@ -92,7 +92,7 @@ export default function SubpouleKiezerBord({
                     onSelect(s.id);
                     setOpen(false);
                   }}
-                  className="flex items-center gap-2 rounded-md px-2 py-1.5 font-mono text-[11px] uppercase tracking-[0.1em] aria-selected:bg-[rgba(26,22,18,0.08)]"
+                  className="flex items-center gap-2 rounded-md px-2 py-1.5 font-mono text-[11px] uppercase tracking-widest aria-selected:bg-[rgba(26,22,18,0.08)]"
                 >
                   <Check
                     className={cn("h-3.5 w-3.5 shrink-0", s.id === selectedId ? "opacity-100" : "opacity-0")}

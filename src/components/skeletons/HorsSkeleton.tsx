@@ -37,7 +37,7 @@ export default function HorsSkeleton() {
       <div className="grid gap-4 md:grid-cols-2">
         {[0, 1].map((blok) => (
           <div key={blok} className="retro-border bg-card overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+            <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
             <div className="border-b-2 border-foreground bg-secondary/50 p-3">
               <div className={`h-4 w-36 ${cell}`} />
             </div>

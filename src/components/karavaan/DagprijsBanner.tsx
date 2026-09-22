@@ -128,7 +128,7 @@ export default function DagprijsBanner({ gameId, className }: { gameId?: string;
             rel="noopener noreferrer nofollow sponsored"
             onClick={() => logSponsorKlik("prijs", data.prijs_id, "sponsor_url", "dagprijsbanner")}
             aria-label={t("karavaan.dagprijs.sponsorAria", { naam: data.sponsor_naam || t("karavaan.dagprijs.sponsorAriaFallback") })}
-            className="group w-full transition-transform hover:-translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2 rounded-lg"
+            className="group w-full transition-transform hover:-translate-y-px motion-reduce:transform-none focus:outline-hidden focus-visible:ring-2 rounded-lg"
             style={{ outlineColor: GOUD }}
           >
             {logoBlok}
@@ -165,7 +165,7 @@ export default function DagprijsBanner({ gameId, className }: { gameId?: string;
           <Link
             to="/prijzen"
             aria-label={t("karavaan.dagprijs.allePrijzenAria")}
-            className="inline-flex items-center justify-center gap-1.5 rounded-md px-4 py-2 text-[12px] font-black uppercase tracking-[0.08em] whitespace-nowrap transition-transform hover:translate-y-px motion-reduce:transform-none focus:outline-none focus-visible:ring-2"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md px-4 py-2 text-[12px] font-black uppercase tracking-[0.08em] whitespace-nowrap transition-transform hover:translate-y-px motion-reduce:transform-none focus:outline-hidden focus-visible:ring-2"
             style={{ background: GOUD, color: INKT, border: `2px solid ${GOUD_DONKER}`, boxShadow: `0 3px 0 ${GOUD_SCHADUW}`, outlineColor: GOUD }}
           >
             {t("karavaan.dagprijs.allePrijzen")} <ChevronRight className="h-4 w-4" aria-hidden />

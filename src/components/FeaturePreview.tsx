@@ -77,7 +77,7 @@ export default function FeaturePreview() {
       </div>
 
       {/* CTA row */}
-      <div className="ornate-frame retro-border bg-gradient-to-r from-card via-secondary/40 to-card p-4 flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="ornate-frame retro-border bg-linear-to-r from-card via-secondary/40 to-card p-4 flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="text-center md:text-left">
           <p className="font-display font-bold text-lg mb-1">
             {isLoggedIn ? t("common.featurePreview.ctaTitleLoggedIn") : t("common.featurePreview.ctaTitleGuest")}
@@ -138,7 +138,7 @@ function RiderBlock({
   if (riders.length === 0) return null;
   return (
     <article className="ornate-frame retro-border bg-card p-5 group hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary opacity-70" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary opacity-70" />
       <div className="flex items-center gap-2 mb-1">
         {icon}
         <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">

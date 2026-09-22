@@ -381,7 +381,7 @@ export default function Rondleiding({
        heen mag. Alles in de app zit op 50 of lager, en de enige uitzondering
        (de toast op 100) hoort er terecht wél overheen. */
     <div
-      className="fixed inset-0 z-[70] pointer-events-none"
+      className="fixed inset-0 z-70 pointer-events-none"
       role="region"
       aria-label={t("rondleiding.aria")}
     >

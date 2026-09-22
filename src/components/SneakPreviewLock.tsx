@@ -14,7 +14,7 @@ export default function SneakPreviewLock({
 }) {
   return (
     <div className="retro-border bg-card p-8 text-center space-y-3">
-      <div className="vintage-ornament max-w-[12rem] mx-auto">
+      <div className="vintage-ornament max-w-48 mx-auto">
         <span className="vintage-ornament-symbol">✦</span>
         <Lock className="h-6 w-6 text-[hsl(var(--vintage-gold))]" />
         <span className="vintage-ornament-symbol">✦</span>

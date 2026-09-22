@@ -84,7 +84,7 @@ export default function Rules() {
           <ol className="space-y-3 font-sans text-sm">
             {rules.map((rule, i) => (
               <li key={i} className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                <span className="shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
                   {i + 1}
                 </span>
                 <span>{rule}</span>

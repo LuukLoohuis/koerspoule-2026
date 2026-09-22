@@ -196,7 +196,7 @@ export default function GiroPoule2026() {
 
         {/* Waarom Koerspoule */}
         <section className="ornate-frame retro-border p-4 md:p-6 bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[hsl(var(--vintage-gold))] via-primary to-[hsl(var(--vintage-gold))]" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-[hsl(var(--vintage-gold))] via-primary to-[hsl(var(--vintage-gold))]" />
           <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
             🎯 Waarom Koerspoule?
           </h2>

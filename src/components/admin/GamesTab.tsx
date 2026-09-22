@@ -93,7 +93,7 @@ function ThemeButtons({
             className={cn(
               "flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border transition-all",
               isActive
-                ? "border-foreground/60 ring-1 ring-foreground/40 shadow-sm"
+                ? "border-foreground/60 ring-1 ring-foreground/40 shadow-xs"
                 : "border-border opacity-60 hover:opacity-100",
             )}
             style={isActive ? { backgroundColor: `${kleur}22`, borderColor: kleur } : undefined}

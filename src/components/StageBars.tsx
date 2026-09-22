@@ -303,8 +303,8 @@ function StageBar({
           className={cn(
             "snap-start group relative shrink-0 flex flex-col items-center justify-end",
             "rounded-2xl px-0 pb-1 transition-all duration-300 ease-out",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--medal-gold)]",
-            selected && "bg-[hsl(var(--vintage-gold)/0.10)] ring-2 ring-[var(--medal-gold)] shadow-[0_0_22px_-4px_rgba(232,185,35,0.7)]",
+            "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-(--medal-gold)",
+            selected && "bg-[hsl(var(--vintage-gold)/0.10)] ring-2 ring-(--medal-gold) shadow-[0_0_22px_-4px_rgba(232,185,35,0.7)]",
           )}
           style={{ paddingTop: 22, width: BAR_W + 14, minWidth: BAR_W + 14 }}
           aria-pressed={selected}
@@ -421,8 +421,8 @@ function GcColumn({
           disabled={locked}
           className={cn(
             "shrink-0 flex flex-col items-center justify-end ml-1 md:ml-2 rounded-2xl px-1 pb-1 transition-all duration-300",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--medal-gold)]",
-            selected && !locked && "bg-[hsl(var(--vintage-gold)/0.18)] ring-2 ring-[var(--medal-gold)] shadow-[0_0_24px_-4px_rgba(232,185,35,0.8)]",
+            "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-(--medal-gold)",
+            selected && !locked && "bg-[hsl(var(--vintage-gold)/0.18)] ring-2 ring-(--medal-gold) shadow-[0_0_24px_-4px_rgba(232,185,35,0.8)]",
             locked && "opacity-55 cursor-not-allowed",
           )}
           style={{ width: BAR_W + 16, paddingTop: 22, borderLeft: "1px dashed rgba(58,42,26,0.25)" }}

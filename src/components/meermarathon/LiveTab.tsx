@@ -134,7 +134,7 @@ function LiveInhoud({
       <div
         className={cn(
           "flex items-center gap-2 rounded-xl px-3 py-2.5 text-[#eaf6ff]",
-          verouderd ? "bg-slate-500" : "bg-gradient-to-r from-[#0d2f57] to-[#0b4c91]",
+          verouderd ? "bg-slate-500" : "bg-linear-to-r from-[#0d2f57] to-[#0b4c91]",
         )}
       >
         <span
@@ -249,7 +249,7 @@ function LiveInhoud({
       <div className="grid gap-3 lg:grid-cols-[1.9fr_1fr] lg:items-start">
         <div className="space-y-3">
         {/* Baan */}
-        <div className="overflow-hidden rounded-2xl border border-[rgba(18,104,168,.25)] bg-gradient-to-b from-[#fbfeff] to-[#d6ebf9]">
+        <div className="overflow-hidden rounded-2xl border border-[rgba(18,104,168,.25)] bg-linear-to-b from-[#fbfeff] to-[#d6ebf9]">
           <LiveRink
             groups={track.groups}
             ijsType={race.ijsType}
@@ -368,7 +368,7 @@ function LiveInhoud({
         <div>
           <div className="mb-2 flex items-baseline gap-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
             — Virtuele uitslag —
-            <span className="ml-auto font-normal tracking-[0.1em] opacity-70">
+            <span className="ml-auto font-normal tracking-widest opacity-70">
             Top {uitslagVol ? 20 : 5} · punten
           </span>
           </div>
@@ -417,7 +417,7 @@ function LiveInhoud({
             className={cn(
               "mt-2 inline-flex items-center gap-1 rounded font-mono text-[10px] font-bold uppercase tracking-[0.16em]",
               "text-[#0b4c91] transition-colors hover:text-[#12508f]",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
             )}
           >
             {uitslagVol ? "Toon top 5" : "Toon top 20"}
@@ -484,10 +484,10 @@ function LiveInhoud({
 
 /** Vier tinten blauw voor de KPI-strook, oplopend van links naar rechts. */
 const KPI_KLEUREN = [
-  "bg-gradient-to-br from-[#0f2f5c] to-[#17457f]",
-  "bg-gradient-to-br from-[#123a6d] to-[#1a4f8f]",
-  "bg-gradient-to-br from-[#17457f] to-[#1f5aa3]",
-  "bg-gradient-to-br from-[#1b4f8d] to-[#2465b3]",
+  "bg-linear-to-br from-[#0f2f5c] to-[#17457f]",
+  "bg-linear-to-br from-[#123a6d] to-[#1a4f8f]",
+  "bg-linear-to-br from-[#17457f] to-[#1f5aa3]",
+  "bg-linear-to-br from-[#1b4f8d] to-[#2465b3]",
 ];
 
 /** Welke rollen er in dit veld voorkomen, van kop naar achter. */
@@ -537,8 +537,8 @@ function GroepsTegel({
         onClick={onToggle}
         aria-expanded={open}
         className={cn(
-          "w-full px-3 py-2.5 text-left transition-colors hover:bg-foreground/[0.03]",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "w-full px-3 py-2.5 text-left transition-colors hover:bg-foreground/3",
+          "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
         )}
       >
         <span className="flex items-center gap-1.5">
@@ -617,8 +617,8 @@ function KopBanner({
       className={cn(
         "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-white shadow-lg",
         goud
-          ? "bg-gradient-to-r from-[#c9861a] via-[#e0a020] to-[#f0c04a]"
-          : "bg-gradient-to-r from-[#f5761a] to-[#e0a020]",
+          ? "bg-linear-to-r from-[#c9861a] via-[#e0a020] to-[#f0c04a]"
+          : "bg-linear-to-r from-[#f5761a] to-[#e0a020]",
       )}
     >
       <Snowflake className="h-4 w-4 shrink-0" aria-hidden />

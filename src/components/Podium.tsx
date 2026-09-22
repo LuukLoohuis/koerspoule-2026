@@ -13,9 +13,9 @@ const STEP_H: Record<number, string> = { 1: "h-24", 2: "h-16", 3: "h-12" };
 
 // Goud / zilver / brons verloop
 const STEP_BG: Record<number, string> = {
-  1: "bg-gradient-to-b from-[#F8DC6E] via-[#E5B021] to-[#9A6F0E]",
-  2: "bg-gradient-to-b from-[#EFEFEF] via-[#BFC4CB] to-[#7E848C]",
-  3: "bg-gradient-to-b from-[#D89668] via-[#A86A3D] to-[#6E4422]",
+  1: "bg-linear-to-b from-[#F8DC6E] via-[#E5B021] to-[#9A6F0E]",
+  2: "bg-linear-to-b from-[#EFEFEF] via-[#BFC4CB] to-[#7E848C]",
+  3: "bg-linear-to-b from-[#D89668] via-[#A86A3D] to-[#6E4422]",
 };
 
 const STEP_RING: Record<number, string> = {
@@ -96,7 +96,7 @@ export default function Podium({ entries }: { entries: PodiumEntry[] }) {
               {/* Naam + punten kaartje boven de trap */}
               <div
                 className={cn(
-                  "w-full max-w-[120px] rounded-md px-1.5 py-1 text-center mb-1 bg-card/85 backdrop-blur-sm border border-border/60",
+                  "w-full max-w-[120px] rounded-md px-1.5 py-1 text-center mb-1 bg-card/85 backdrop-blur-xs border border-border/60",
                   e.isMe && "ring-1 ring-inset ring-primary/40 border-primary/50",
                 )}
               >

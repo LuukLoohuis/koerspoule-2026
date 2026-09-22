@@ -92,7 +92,7 @@ export default function CategoryPanel({
           onClick={handleClick ? () => handleClick(r.id) : undefined}
           aria-expanded={onToggleRider ? isOpen : undefined}
           aria-controls={onToggleRider ? panelId : undefined}
-          className="w-full flex items-baseline gap-1 py-[3px] px-0.5 rounded-sm text-left hover:bg-[rgba(58,42,26,0.05)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--ink-sepia)] transition-colors motion-reduce:transition-none"
+          className="w-full flex items-baseline gap-1 py-[3px] px-0.5 rounded-sm text-left hover:bg-[rgba(58,42,26,0.05)] focus:outline-hidden focus-visible:ring-1 focus-visible:ring-(--ink-sepia) transition-colors motion-reduce:transition-none"
           style={{ fontSize: "12.5px", color: "var(--ink-sepia)" }}
           title={r.name}
         >

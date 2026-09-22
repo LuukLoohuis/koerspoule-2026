@@ -958,7 +958,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       <div
         className={cn(
           "md:hidden overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-h-[64px]",
-          !barVisible && "!max-h-0 opacity-0",
+          !barVisible && "max-h-0! opacity-0",
         )}
       >
         {/* Alle vijf naast elkaar in plaats van een scrollende rij: er stonden
@@ -1096,7 +1096,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           bron={bron?.koers ?? undefined}
         >
         <Card className="ornate-frame retro-border overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+          <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
           <CardHeader className="border-b-2 border-foreground bg-secondary/30">
             <CardTitle className="font-display flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-primary" /> {t("hors.peloton.title")}
@@ -1261,7 +1261,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     return (
                       <div
                         key={meta.key}
-                        className={cn("rounded-lg border-2 border-border p-3 bg-gradient-to-br", meta.tint)}
+                        className={cn("rounded-lg border-2 border-border p-3 bg-linear-to-br", meta.tint)}
                       >
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -1344,7 +1344,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           className="ornate-frame retro-border overflow-hidden"
           style={{ background: "hsl(var(--bg-wielerdirecteur))" }}
         >
-          <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+          <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
           <CardHeader className="border-b-2 border-foreground bg-secondary/30">
             <CardTitle className="font-display flex items-center gap-2">
               <DirectorIcon className="h-5 w-5 text-primary" /> {t("hors.wielerdirecteur.title")}
@@ -1713,7 +1713,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           bron={bron?.koers ?? undefined}
         >
         <Card className="ornate-frame retro-border overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+          <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
           <CardHeader className="border-b-2 border-foreground bg-secondary/30">
             <CardTitle className="font-display flex items-center gap-2">
               <Crown className="h-5 w-5 text-[hsl(var(--vintage-gold))]" /> The Emirates
@@ -1737,7 +1737,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 {t("hors.emirates.whatIsThis")}
               </button>
               {showEmiratesInfo && (
-                <div className="mt-2 rounded-xl border border-foreground/15 bg-gradient-to-br from-[hsl(var(--vintage-gold))/0.10] to-card p-3 md:p-4 space-y-2">
+                <div className="mt-2 rounded-xl border border-foreground/15 bg-linear-to-br from-[hsl(var(--vintage-gold))/0.10] to-card p-3 md:p-4 space-y-2">
                   <p className="font-serif text-sm text-foreground/85 leading-snug">
                     {t("hors.emirates.explain1")}
                   </p>
@@ -2005,7 +2005,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                 )}
 
                 {/* Footnote */}
-                <div className="mop-card p-3 -rotate-[0.3deg]">
+                <div className="mop-card p-3 rotate-[-0.3deg]">
                   <p className="font-serif italic text-xs md:text-sm leading-snug">
                     {t("hors.emirates.explain1")}
                   </p>
@@ -2031,7 +2031,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
     <div className="ornate-frame retro-border relative overflow-hidden text-center p-3">
-      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary to-[hsl(var(--vintage-gold))]" />
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))]" />
       <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-serif">{label}</p>
       <p className="font-display text-xl font-bold tabular-nums">{value}</p>
       {sub && <p className="text-[10px] text-muted-foreground font-sans">{sub}</p>}

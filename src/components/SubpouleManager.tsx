@@ -595,7 +595,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
           <div
             className={cn(
               "overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-h-[120px]",
-              !mobileBarVisible && "!max-h-0 opacity-0",
+              !mobileBarVisible && "max-h-0! opacity-0",
             )}
           >
             {/* Tabbalk staat stil; de carrousel-content volgt de vinger. */}
@@ -729,7 +729,7 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
                   <Command>
                     <CommandInput placeholder={t("subpoule.manager.searchByNameOrCode")} />
                     <CommandList>

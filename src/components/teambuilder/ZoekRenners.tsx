@@ -37,7 +37,7 @@ export default function ZoekRenners({ waarde, onChange, verdeling, gevonden, cla
           aria-label={t("team.builder.zoekLabel")}
           className={cn(
             "w-full rounded-md border-2 bg-card py-2 pl-9 pr-9 text-sm",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
+            "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
             actief ? "border-[hsl(var(--vintage-gold))]" : "border-border",
           )}
         />
@@ -102,7 +102,7 @@ function PloegKnop({
       title={`${chip.naam} — ${chip.aantal}`}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border py-0.5 pl-1 pr-2 text-[11px] transition-colors",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
+        "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
         gekozen
           ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.15] text-foreground"
           : "border-border text-muted-foreground hover:border-[hsl(var(--vintage-gold))/0.6] hover:text-foreground",

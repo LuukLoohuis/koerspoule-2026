@@ -572,7 +572,7 @@ function ItemRow({
         : item.question ?? "";
 
   return (
-    <Card className={item.is_active ? "border-primary/50 bg-primary/[0.03]" : ""}>
+    <Card className={item.is_active ? "border-primary/50 bg-primary/3" : ""}>
       <CardContent className="flex items-start gap-3 py-3 px-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-0.5">

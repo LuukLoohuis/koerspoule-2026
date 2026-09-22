@@ -465,7 +465,7 @@ function GcApprovalCard({
 }) {
   const busy = Boolean(progress);
   return (
-    <div className="overflow-hidden border border-amber-400/70 bg-card shadow-sm" aria-live="polite">
+    <div className="overflow-hidden border border-amber-400/70 bg-card shadow-xs" aria-live="polite">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b bg-amber-50/60 p-4 dark:bg-amber-950/15">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -530,7 +530,7 @@ function StageApprovalCard({
 }) {
   const busy = Boolean(progress);
   return (
-    <div className="overflow-hidden border border-green-300/80 bg-card shadow-sm" aria-live="polite">
+    <div className="overflow-hidden border border-green-300/80 bg-card shadow-xs" aria-live="polite">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b bg-green-50/60 p-4 dark:bg-green-950/15">
         <div>
           <div className="flex flex-wrap items-center gap-2">

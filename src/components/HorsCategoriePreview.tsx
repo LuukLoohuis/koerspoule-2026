@@ -175,7 +175,7 @@ export default function HorsCategoriePreview() {
       </div>
 
       {/* Jersey-voorspellingen */}
-      <div className="ornate-frame retro-border bg-gradient-to-br from-card to-[hsl(var(--vintage-gold))/0.08] p-3 md:p-4 mb-5">
+      <div className="ornate-frame retro-border bg-linear-to-br from-card to-[hsl(var(--vintage-gold))/0.08] p-3 md:p-4 mb-5">
         <div className="flex items-center gap-2 mb-2">
           <Trophy className="h-4 w-4 text-[hsl(var(--vintage-gold))]" />
           <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">

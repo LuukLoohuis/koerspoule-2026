@@ -313,7 +313,7 @@ function ThemePreviewSelect({
       <select
         value={previewKey ?? ""}
         onChange={(e) => setPreviewKey((e.target.value || null) as ThemaKey | null)}
-        className="bg-transparent text-xs font-semibold outline-none"
+        className="bg-transparent text-xs font-semibold outline-hidden"
       >
         <option value="">Live</option>
         {THEME_PREVIEW_OPTIONS.map((opt) => (
