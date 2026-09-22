@@ -233,3 +233,83 @@ export function rondeBadge(tier: number): string | null {
   if (tier === 0) return null;
   return tier > 0 ? `+${tier}` : `\u2212${-tier}`;
 }
+
+/**
+ * Pad langs de middellijn van de baan, van de achterste naar de voorste rijder
+ * van een groep: de zachte band die een pak als één blok laat lezen. Groepen
+ * die over de finish heen liggen (0,98 → 0,02) worden via de korte kant
+ * verbonden, niet een hele ronde om. Null bij minder dan twee rijders, of als
+ * de "groep" meer dan een halve ronde beslaat -- dan is het geen pak meer.
+ */
+export function groepsBand(fracties: number[]): string | null {
+  if (fracties.length < 2) return null;
+  // Het grootste gat tussen twee rijders op de cirkel: de groep ligt aan de
+  // andere kant daarvan.
+  const f = [...fracties].map((x) => ((x % 1) + 1) % 1).sort((a, b) => a - b);
+  let grootsteGat = 1 - f[f.length - 1] + f[0];
+  let start = f[0];
+  for (let i = 1; i < f.length; i += 1) {
+    const gat = f[i] - f[i - 1];
+    if (gat > grootsteGat) {
+      grootsteGat = gat;
+      start = f[i];
+    }
+  }
+  const lengte = 1 - grootsteGat;
+  if (lengte > 0.5) return null;
+  const stappen = Math.max(2, Math.ceil(lengte * 120));
+  const punten = Array.from({ length: stappen + 1 }, (_, i) => baanPositie(start + (lengte * i) / stappen, 0));
+  return punten.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+}
+
+/* ── Doorrijden tussen twee metingen ──────────────────────────────────────
+ *
+ * De feed ververst elke twintig seconden; in die tijd rijdt een schaatser een
+ * halve ronde. Zonder hulp springen de schijfjes over het ijs. We schatten per
+ * rijder de snelheid uit de laatste twee metingen en rijden daarmee door. Komt
+ * er een nieuwe meting, dan schuift de schatting in een halve seconde naar de
+ * echte plek.
+ *
+ * Alles in afgelegde ronden (ronden + fractie), niet in x/y: zo loopt een
+ * correctie altijd over de baan en nooit dwars over het middenterrein.
+ */
+
+/** Stand van één rijder zoals we hem laatst gemeten hebben. */
+export type Meting = {
+  /** Afgelegde ronden bij de meting, inclusief de fractie van de lopende. */
+  abs: number;
+  /** Tijdstip van de meting in ms (performance.now). */
+  t: number;
+  /** Geschatte snelheid in ronden per seconde. */
+  v: number;
+  /** Verschil tussen oude schatting en nieuwe meting; ebt weg. */
+  corr: number;
+};
+
+/** Hoe lang we na de laatste meting blijven doorrijden als er niets nieuws komt. */
+export const MAX_DOORRIJDEN_MS = 25_000;
+/** Hoe snel een verschil tussen geschatte en gemeten plek wordt weggewerkt. */
+export const CORRECTIE_MS = 600;
+/** Een ronde per tien seconden (≈ 144 km/u): alles daarboven is een haperende feed. */
+export const MAX_SNELHEID = 0.1;
+/** Verder dan dit van de schatting af: niet schuiven maar verspringen. */
+const MAX_CORRECTIE = 0.3;
+
+/** Afgelegde ronden op tijdstip `t`, geschat vanuit een meting. */
+export function schatAfstand(m: Meting, t: number): number {
+  const dt = Math.max(0, Math.min(t - m.t, MAX_DOORRIJDEN_MS));
+  return m.abs + (m.v * dt) / 1000 + m.corr * Math.exp(-dt / CORRECTIE_MS);
+}
+
+/** Nieuwe meting verwerken tot de stand waarmee we verder rijden. */
+export function verwerkMeting(vorig: Meting | undefined, abs: number, t: number): Meting {
+  if (!vorig) return { abs, t, v: 0, corr: 0 };
+  // Zelfde plek als de vorige keer: een her-render, geen meting. Doortellen
+  // zou de snelheid op nul zetten.
+  if (abs === vorig.abs) return vorig;
+  const dt = (t - vorig.t) / 1000;
+  const gemeten = dt > 0.2 ? (abs - vorig.abs) / dt : vorig.v;
+  const v = gemeten >= 0 && gemeten < MAX_SNELHEID ? gemeten : vorig.v;
+  const corr = schatAfstand(vorig, t) - abs;
+  return { abs, t, v, corr: Math.abs(corr) > MAX_CORRECTIE ? 0 : corr };
+}
