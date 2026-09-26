@@ -50,7 +50,14 @@ export function useEntry(gameId?: string) {
   const rollbackEntry = (ctx?: { prev?: Entry }) => {
     if (ctx?.prev) queryClient.setQueryData(entryKey, ctx.prev);
   };
-  const settleEntry = () => queryClient.invalidateQueries({ queryKey: entryKey });
+  // De Meermarathon-koersbalk en "Mijn Meermarathon" lezen de ploeg uit een
+  // eigen seizoensquery; die moet meeschuiven, anders tonen ze nog even de
+  // oude stand (Ploeg 3/5 terwijl je net bevestigde).
+  const settleEntry = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: entryKey }),
+      queryClient.invalidateQueries({ queryKey: ["mm-seizoen"] }),
+    ]);
 
   const entryQuery = useQuery({
     queryKey: ["entry", gameId, user?.id],
@@ -167,7 +174,7 @@ export function useEntry(gameId?: string) {
       });
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
+    onSuccess: () => settleEntry(),
   });
 
   const submitEntry = useMutation({
@@ -177,7 +184,7 @@ export function useEntry(gameId?: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] });
+      settleEntry();
     },
   });
 
@@ -191,7 +198,7 @@ export function useEntry(gameId?: string) {
         .eq("id", entryId);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
+    onSuccess: () => settleEntry(),
   });
 
   const saveTeamName = useMutation({
@@ -214,7 +221,7 @@ export function useEntry(gameId?: string) {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["entry", gameId, user?.id] }),
+    onSuccess: () => settleEntry(),
   });
 
   // Map<categoryId, riderId[]> — ondersteunt meerdere picks per categorie
