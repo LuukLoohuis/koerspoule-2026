@@ -199,4 +199,45 @@ describe("ThemaProvider + KoerspouleLogo", () => {
     );
     expect(screen.getByTestId("theme-key")).toHaveTextContent("rood");
   });
+
+  it("laat de wintertokens aan de CSS over en kent alleen in winter een nachtmodus", () => {
+    storage.set("koerspoule:modus", "nacht");
+    const root = document.documentElement;
+    root.style.setProperty("--primary", "340 80% 50%"); // restant van een eerder koersthema
+    selectedGameState.games = [
+      { id: "marathon-2026", game_type: "meermarathon", theme: "winter", status: "live", year: 2026 },
+    ];
+
+    function ModusProbe() {
+      const { modus, setModus } = useThema();
+      return <button onClick={() => setModus(modus === "nacht" ? "licht" : "nacht")}>{modus}</button>;
+    }
+    const { rerender } = render(
+      <ThemaProvider>
+        <ModusProbe />
+      </ThemaProvider>,
+    );
+
+    // Inline zou van meermarathon-thema.css winnen, en de nacht onmogelijk maken.
+    expect(root.style.getPropertyValue("--primary")).toBe("");
+    expect(root.style.getPropertyValue("--background")).toBe("");
+    expect(root).toHaveAttribute("data-modus", "nacht");
+
+    fireEvent.click(screen.getByRole("button", { name: "nacht" }));
+    expect(root).not.toHaveAttribute("data-modus");
+    expect(storage.has("koerspoule:modus")).toBe(false);
+
+    // Buiten winter nooit nacht, ook niet als de speler hem ooit aanzette.
+    storage.set("koerspoule:modus", "nacht");
+    selectedGameState.games = [
+      { id: "vuelta-2026", game_type: "vuelta", theme: "rood", status: "live", year: 2026 },
+    ];
+    rerender(
+      <ThemaProvider key="opnieuw">
+        <ModusProbe />
+      </ThemaProvider>,
+    );
+    expect(root).not.toHaveAttribute("data-modus");
+    expect(root.style.getPropertyValue("--primary")).not.toBe("");
+  });
 });
