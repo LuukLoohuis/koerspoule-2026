@@ -103,6 +103,23 @@ function MetNaam(props: VolgwagenPloegProps) {
   );
 }
 
+/** Zit je in meer dan één subpoule, dan kies je welke je in de Volgwagen ziet. */
+function MeerdereSubpoules() {
+  const opties = [
+    { id: "sp", naam: "De IJsvogels", rank: 2, totaal: 9 },
+    { id: "werk", naam: "Kantoor Noord", rank: 5, totaal: 14 },
+  ];
+  const [gekozen, setGekozen] = useState("sp");
+  const sub = opties.find((o) => o.id === gekozen) ?? opties[0];
+  return (
+    <VolgwagenPloeg
+      {...BASIS}
+      subpoule={sub}
+      subpouleKeuze={{ opties: opties.map(({ id, naam }) => ({ id, naam })), onKies: setGekozen }}
+    />
+  );
+}
+
 export default function Scherm3Demo() {
   const onvolledig = bouwPloegRijen({
     categorieen: CATEGORIEEN,
@@ -122,6 +139,10 @@ export default function Scherm3Demo() {
       <div className="flex flex-wrap items-start gap-8">
         <Frame titel="Ingeschreven, wissels nog open (03a)" breedte={390}>
           <MetNaam {...BASIS} />
+        </Frame>
+
+        <Frame titel="In twee subpoules: keuzelijst onder het cijfer" breedte={390}>
+          <MeerdereSubpoules />
         </Frame>
 
         <Frame titel="Ploeg 3/5, voor het seizoen" breedte={390}>

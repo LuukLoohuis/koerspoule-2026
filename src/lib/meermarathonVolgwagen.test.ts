@@ -4,6 +4,7 @@ import {
   bouwPloegRijen,
   dagenTussen,
   deadlineBijschrift,
+  gekozenSubpoule,
   heeftUitslag,
   ploegActie,
   ploegPunten,
@@ -199,5 +200,16 @@ describe("actie", () => {
 
   it("linkt naar de teambouwer van precies deze game", () => {
     expect(teambouwerHref("g-v")).toBe("/team-samenstellen?game=g-v");
+  });
+});
+
+describe("gekozen subpoule", () => {
+  const lijst = [{ id: "a" }, { id: "b" }];
+
+  it("volgt je keuze, en valt terug op de eerste als je er niet meer in zit", () => {
+    expect(gekozenSubpoule(lijst, "b")?.id).toBe("b");
+    expect(gekozenSubpoule(lijst, "weg")?.id).toBe("a");
+    expect(gekozenSubpoule(lijst, null)?.id).toBe("a");
+    expect(gekozenSubpoule([], "a")).toBeNull();
   });
 });

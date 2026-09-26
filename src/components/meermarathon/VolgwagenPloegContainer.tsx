@@ -24,6 +24,7 @@ import { mmFase } from "@/lib/meermarathonSeizoen";
 import {
   bouwAftelling,
   bouwPloegRijen,
+  gekozenSubpoule,
   heeftUitslag,
   ploegPunten,
   subpouleRang,
@@ -101,6 +102,31 @@ function useNu(elkeMs = 15_000) {
   return nu;
 }
 
+const SUBPOULE_KEUZE = (gameId: string) => `koerspoule:mm-subpoule:${gameId}`;
+
+function leesSubpouleKeuze(gameId: string | undefined): string | null {
+  if (!gameId) return null;
+  try {
+    return localStorage.getItem(SUBPOULE_KEUZE(gameId));
+  } catch {
+    return null;
+  }
+}
+
+/** Welke subpoule je in de Volgwagen ziet; onthouden per game (Vrouwen en Mannen apart). */
+function useSubpouleKeuze(gameId: string | undefined) {
+  const [keuzeId, setKeuzeId] = useState<string | null>(() => leesSubpouleKeuze(gameId));
+  // Wissel in de koersbalk: pak de keuze van die game.
+  useEffect(() => setKeuzeId(leesSubpouleKeuze(gameId)), [gameId]);
+  const kies = (id: string) => {
+    setKeuzeId(id);
+    try {
+      if (gameId) localStorage.setItem(SUBPOULE_KEUZE(gameId), id);
+    } catch { /* alleen in het geheugen */ }
+  };
+  return { keuzeId, kies };
+}
+
 export default function VolgwagenPloegContainer({
   gameId,
   onOpenUitslagen,
@@ -131,9 +157,10 @@ export default function VolgwagenPloegContainer({
   const rijdersQuery = useRijders(rijderIds);
   const { data: puntenPerRijder } = useRiderEntryTotals(gameId, entry?.id);
 
-  // Subpoule: de eerste waar je in zit, net als elders in de Volgwagen.
+  // Subpoule: je eigen keuze als je in meerdere zit, anders de eerste.
   const { subpoules } = useSubpoules(gameId);
-  const subpoule = subpoules[0] ?? null;
+  const { keuzeId, kies: kiesSubpoule } = useSubpouleKeuze(gameId);
+  const subpoule = gekozenSubpoule(subpoules, keuzeId);
   const { data: leden = [] } = useSubpouleMembers(subpoule?.id);
   // Het volledige klassement is alleen nodig om binnen een subpoule te tellen.
   const { data: standen = [] } = useEntries(subpoule ? gameId : undefined);
@@ -216,6 +243,7 @@ export default function VolgwagenPloegContainer({
           ? { id: subpoule.id, naam: subpoule.name, rank: subpouleStand?.rank ?? null, totaal: subpouleStand?.totaal ?? subpoule.member_count }
           : null
       }
+      subpouleKeuze={{ opties: subpoules.map((s) => ({ id: s.id, naam: s.name })), onKies: kiesSubpoule }}
       rijen={bouwPloegRijen({
         categorieen: categorieen.map((c) => ({ id: c.id, name: c.name, max_picks: c.max_picks })),
         picks: entry.picks,

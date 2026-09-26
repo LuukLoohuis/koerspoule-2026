@@ -11,7 +11,7 @@
  */
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Check, ChevronRight, Pencil, Snowflake, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Pencil, Snowflake, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { mmMoment, rangtekst, type MmFase } from "@/lib/meermarathonSeizoen";
 import {
@@ -380,6 +380,43 @@ function VolgendeWedstrijdKaart({
   );
 }
 
+/**
+ * Keuzelijst onder het subpoule-cijfer, alleen bij meer dan één subpoule.
+ * Native select: op de telefoon krijg je de systeemkiezer. Visueel een
+ * compacte regel, maar het tikvlak is 44px hoog (negatieve marge).
+ */
+function SubpouleKiezer({
+  huidigId,
+  opties,
+  onKies,
+}: {
+  huidigId: string;
+  opties: { id: string; naam: string }[];
+  onKies: (id: string) => void;
+}) {
+  return (
+    <label className="relative mt-0.5 inline-flex min-w-0 max-w-full items-center">
+      <span className="sr-only">Kies welke subpoule je hier ziet</span>
+      <select
+        value={huidigId}
+        onChange={(e) => onKies(e.target.value)}
+        className={cn(
+          "-my-3 min-h-11 w-auto min-w-0 max-w-full appearance-none truncate rounded-sm border-0 bg-transparent py-3 pl-0 pr-5",
+          "text-xs font-semibold text-muted-foreground underline decoration-dotted underline-offset-4",
+          "outline-hidden hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+        )}
+      >
+        {opties.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.naam}
+          </option>
+        ))}
+      </select>
+      <ChevronDown aria-hidden className="pointer-events-none absolute right-0 h-3.5 w-3.5 text-muted-foreground" />
+    </label>
+  );
+}
+
 // ── Scherm: je ploeg ──────────────────────────────────────────────────────
 
 export type VolgwagenPloegProps = {
@@ -395,6 +432,8 @@ export type VolgwagenPloegProps = {
   punten: number | null;
   /** null: je zit in geen subpoule, dan geen stat. rank null: nog geen uitslag. */
   subpoule: { id: string; naam: string; rank: number | null; totaal: number } | null;
+  /** Alle subpoules waar je in zit; bij meer dan één komt er een keuzelijst. */
+  subpouleKeuze?: { opties: { id: string; naam: string }[]; onKies: (id: string) => void };
   rijen: PloegRij[];
   gekozen: number;
   vereist: number;
@@ -440,12 +479,17 @@ export default function VolgwagenPloeg(p: VolgwagenPloegProps) {
             />
             <Stat label="Punten" waarde={p.punten != null ? String(p.punten) : null} />
             {p.subpoule && (
-              <Stat
-                label="Subpoule"
-                waarde={p.subpoule.rank != null ? rangtekst(p.subpoule.rank) : null}
-                toelichting={`van ${p.subpoule.totaal} in ${p.subpoule.naam}`}
-                onClick={p.onSubpoule ? () => p.onSubpoule?.(p.subpoule!.id) : undefined}
-              />
+              <div className="min-w-0">
+                <Stat
+                  label="Subpoule"
+                  waarde={p.subpoule.rank != null ? rangtekst(p.subpoule.rank) : null}
+                  toelichting={`van ${p.subpoule.totaal} in ${p.subpoule.naam}`}
+                  onClick={p.onSubpoule ? () => p.onSubpoule?.(p.subpoule!.id) : undefined}
+                />
+                {p.subpouleKeuze && p.subpouleKeuze.opties.length > 1 && (
+                  <SubpouleKiezer huidigId={p.subpoule.id} opties={p.subpouleKeuze.opties} onKies={p.subpouleKeuze.onKies} />
+                )}
+              </div>
             )}
           </div>
         </div>

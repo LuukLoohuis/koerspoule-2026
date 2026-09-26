@@ -137,6 +137,14 @@ export function subpouleRang(
   return { rank: voor + 1, totaal: binnen.length };
 }
 
+/**
+ * Welke subpoule de Volgwagen toont: je eigen keuze als je daar nog in zit,
+ * anders de eerste. Zo valt een oude keuze (subpoule verlaten) vanzelf weg.
+ */
+export function gekozenSubpoule<T extends { id: string }>(subpoules: T[], keuzeId: string | null): T | null {
+  return subpoules.find((s) => s.id === keuzeId) ?? subpoules[0] ?? null;
+}
+
 // ── De rijders ────────────────────────────────────────────────────────────
 
 export type PloegRij =
