@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Ploeg · C · Ranglijst</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,700&amp;family=Source+Serif+4:ital,wght@1,400&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;family=Oswald:wght@600;700&amp;family=Special+Elite&amp;display=swap">
+<style>
+body{margin:0;background:hsl(35 28% 96%)}
+.trui{filter:drop-shadow(1.5px 1.5px 0 hsl(240 12% 11%))}
+</style>
+</helmet>
+<div style="width: 375px; height: 1240px; box-sizing: border-box; background: hsl(35 28% 96%); color: hsl(240 12% 11%); font-family: Inter, sans-serif; display: flex; flex-direction: column">
+<dc-import name="Kop" hint-size="375px,72px"></dc-import>
+<main style="flex-grow: 1; display: flex; flex-direction: column; gap: 16px; padding: 12px 16px 28px">
+
+<div role="tablist" aria-label="Ploeg" style="height: 40px; box-sizing: border-box; display: flex; gap: 2px; padding: 3px; background: hsl(35 14% 90%); border-radius: 13px">
+<button type="button" role="tab" aria-selected="true" style="flex: 1 1 0; position: relative; border: 0; border-radius: 10px; background: hsl(35 20% 97.5%); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); font-family: inherit; font-size: 13px; font-weight: 700; color: hsl(240 12% 11%); cursor: pointer">Mijn ploeg<span style="position: absolute; left: 30%; right: 30%; bottom: 3px; height: 2px; background: #c8a020; border-radius: 2px"></span></button>
+<button type="button" role="tab" aria-selected="false" style="flex: 1 1 0; border: 0; border-radius: 10px; background: transparent; font-family: inherit; font-size: 13px; font-weight: 500; color: hsl(240 8% 40%); cursor: pointer">Pronostiek</button>
+<button type="button" role="tab" aria-selected="false" style="flex: 1 1 0; border: 0; border-radius: 10px; background: transparent; font-family: inherit; font-size: 13px; font-weight: 500; color: hsl(240 8% 40%); cursor: pointer">Palmares</button>
+</div>
+
+<section aria-label="Jouw ploeg" style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: hsl(35 20% 97.5%); border: 2px solid hsl(240 12% 11%); border-radius: 9px; box-shadow: 3px 3px 0 hsl(240 12% 11%)">
+<span class="trui" style="position: relative; width: 56px; height: 63px; flex-shrink: 0; display: block">
+<span style="position: absolute; inset: 0; background: #e6446d; -webkit-mask-image: url(./wielershirt.png); mask-image: url(./wielershirt.png); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center"></span>
+<img src="./wielershirt.png" alt="" style="position: absolute; inset: 0; width: 56px; height: 63px; object-fit: contain; mix-blend-mode: multiply">
+<span style="position: absolute; left: 0; right: 0; top: 24px; display: flex; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 13px; color: #ffffff">10</span>
+</span>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; gap: 2px">
+<h1 style="margin: 0; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 21px; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">De Waaierwerkers</h1>
+<button type="button" aria-label="Ploegnaam wijzigen" style="width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: transparent; border: 0; padding: 0; color: hsl(240 8% 46%); cursor: pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg></button>
+</div>
+<div style="display: flex; align-items: baseline; gap: 10px">
+<span style="display: flex; align-items: baseline; gap: 4px"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 30px; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">1.284</span><span style="font-size: 12px; font-weight: 600; color: hsl(240 8% 46%)">pt</span></span>
+<span style="padding: 2px 8px; background: #c8a020; color: hsl(240 12% 11%); border: 1.5px solid hsl(240 12% 11%); border-radius: 4px; box-shadow: 1.5px 1.5px 0 hsl(240 12% 11%); font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap">+48 vandaag</span>
+</div>
+</div>
+</section>
+
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<button type="button" aria-haspopup="listbox" style="height: 40px; display: flex; align-items: center; gap: 6px; padding: 0 12px; background: transparent; border: 1.5px solid hsl(240 12% 11%); border-radius: 9999px; font-family: inherit; font-size: 13px; font-weight: 700; color: hsl(240 12% 11%); cursor: pointer">Stand t/m rit 14<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button>
+<div role="group" aria-label="Sorteren" style="height: 32px; display: flex; padding: 2px; background: hsl(35 14% 90%); border-radius: 9999px">
+<button type="button" aria-pressed="{{s.punten.on}}" onClick="{{sorteer.punten}}" style="padding: 0 10px; border: 0; border-radius: 9999px; background: {{s.punten.bg}}; box-shadow: {{s.punten.sh}}; font-family: inherit; font-size: 11.5px; font-weight: {{s.punten.fw}}; color: {{s.punten.kl}}; cursor: pointer">Punten</button>
+<button type="button" aria-pressed="{{s.vandaag.on}}" onClick="{{sorteer.vandaag}}" style="padding: 0 10px; border: 0; border-radius: 9999px; background: {{s.vandaag.bg}}; box-shadow: {{s.vandaag.sh}}; font-family: inherit; font-size: 11.5px; font-weight: {{s.vandaag.fw}}; color: {{s.vandaag.kl}}; cursor: pointer">Vandaag</button>
+</div>
+</div>
+
+<section aria-label="Ploegblad" style="display: flex; flex-direction: column">
+<div style="height: 24px; display: flex; align-items: center; gap: 10px; padding: 0 0 4px; border-bottom: 1px solid hsl(240 12% 11%); font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(240 8% 46%)">
+<span style="width: 22px">#</span><span style="width: 32px"></span><span style="flex-grow: 1">Renner</span><span style="width: 48px; text-align: right">Rit 14</span><span style="width: 52px; text-align: right">Totaal</span>
+</div>
+<sc-for list="{{renners}}" as="r" hint-placeholder-count="10">
+<div style="{{r.rij}}">
+<span style="width: 22px; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 13px; color: hsl(240 8% 46%); font-variant-numeric: tabular-nums">{{r.rang}}</span>
+<span class="trui" style="position: relative; width: 30px; height: 34px; flex-shrink: 0; display: block; opacity: {{r.truiOpacity}}">
+<sc-if value="{{r.heeftTrui}}" hint-placeholder-val="{{false}}"><img src="{{r.truiSrc}}" alt="{{r.ploeg}}" style="position: absolute; inset: 0; width: 30px; height: 34px; object-fit: contain"></sc-if>
+<sc-if value="{{r.geenTrui}}" hint-placeholder-val="{{true}}"><img src="./wielershirt.png" alt="" style="position: absolute; inset: 0; width: 30px; height: 34px; object-fit: contain"></sc-if>
+</span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+<span style="display: flex; align-items: center; gap: 6px"><span style="{{r.naamStijl}}">{{r.naam}}</span><sc-if value="{{r.top}}" hint-placeholder-val="{{false}}"><span style="padding: 0 6px; background: #e6446d; color: #ffffff; border: 1.5px solid hsl(240 12% 11%); border-radius: 4px; box-shadow: 1.5px 1.5px 0 hsl(240 12% 11%); font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 10px; white-space: nowrap">Top</span></sc-if><sc-if value="{{r.dnf}}" hint-placeholder-val="{{false}}"><span style="padding: 0 5px; border: 1.5px solid hsl(240 8% 40%); border-radius: 3px; font-family: 'Special Elite', monospace; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: hsl(240 8% 40%); white-space: nowrap">Opgave</span></sc-if></span>
+<span style="font-size: 11px; color: hsl(240 8% 46%); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.cat}} · {{r.ploeg}}</span>
+</span>
+<span style="{{r.dagStijl}}">{{r.dag}}</span>
+<span style="{{r.ptStijl}}">{{r.pt}}</span>
+</div>
+</sc-for>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0 0; font-size: 12px; color: hsl(240 8% 46%)">
+<span>10 renners · 1 opgave</span>
+<span style="font-family: 'Source Serif 4', serif; font-style: italic">truien uit de startlijst</span>
+</div>
+</section>
+
+</main>
+<dc-import name="Onderbalk" actief="ploeg" hint-size="375px,60px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":1240}}'>
+class Component extends DCLogic {
+constructor(props) { super(props); this.state = { sort: 'punten' }; }
+renderVals() {
+// Truien: in de app komt dit uit de startlijst (per ploeg geüploade trui). Hier nog leeg, dus de blanco trui wordt getoond.
+const TRUI = { 'Visma–Lease a Bike': '', 'Lidl-Trek': '', 'UAE Team Emirates': '', 'Bahrain Victorious': '', 'Q36.5': '', 'Alpecin–Deceuninck': '', 'Ineos Grenadiers': '' };
+const data = [
+{ naam: 'Jonas Vingegaard', cat: 'Klassement', ploeg: 'Visma–Lease a Bike', pt: 214, dag: 14, top: true },
+{ naam: 'Jonathan Milan', cat: 'Sprinters', ploeg: 'Lidl-Trek', pt: 198, dag: 0 },
+{ naam: 'Giulio Ciccone', cat: 'Klimmers', ploeg: 'Lidl-Trek', pt: 176, dag: 20 },
+{ naam: 'Isaac del Toro', cat: 'Jongeren', ploeg: 'UAE Team Emirates', pt: 153, dag: 10 },
+{ naam: 'Antonio Tiberi', cat: 'Klassement', ploeg: 'Bahrain Victorious', pt: 138, dag: 4 },
+{ naam: 'Mads Pedersen', cat: 'Aanvallers', ploeg: 'Lidl-Trek', pt: 121, dag: 0 },
+{ naam: 'Tom Pidcock', cat: 'Aanvallers', ploeg: 'Q36.5', pt: 92, dag: 0 },
+{ naam: 'Kaden Groves', cat: 'Sprinters', ploeg: 'Alpecin–Deceuninck', pt: 87, dag: 0 },
+{ naam: 'Egan Bernal', cat: 'Klimmers', ploeg: 'Ineos Grenadiers', pt: 64, dag: 0 },
+{ naam: 'Juan Ayuso', cat: 'Klassement', ploeg: 'Lidl-Trek', pt: 41, dag: 0, dnf: true }
+];
+const sort = this.state.sort || 'punten';
+const gesorteerd = data.slice().sort((a, b) => sort === 'vandaag' ? (b.dag - a.dag) || (b.pt - a.pt) : b.pt - a.pt);
+const grijs = 'hsl(240 8% 46%)';
+const renners = gesorteerd.map((r, i) => {
+const trui = TRUI[r.ploeg] || '';
+return {
+rang: i + 1, naam: r.naam, cat: r.cat, ploeg: r.ploeg, top: !!r.top, dnf: !!r.dnf,
+pt: r.pt.toLocaleString('nl-NL'), dag: r.dag > 0 ? '+' + r.dag : '–',
+rij: 'min-height: 54px; display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid hsl(35 12% 81%)' + (r.top ? '; margin: 0 -8px; padding: 6px 8px; background: rgba(230, 68, 109, 0.10); border-radius: 6px; border-bottom-color: transparent' : ''),
+truiOpacity: r.dnf ? 0.45 : 1,
+truiSrc: trui, heeftTrui: !!trui, geenTrui: !trui,
+naamStijl: 'font-size: 14px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ' + (r.dnf ? 'font-weight: 500; color: ' + grijs + '; text-decoration: line-through; text-decoration-thickness: 1.5px' : 'font-weight: 700'),
+dagStijl: 'width: 48px; text-align: right; font-family: \'JetBrains Mono\', monospace; font-size: 13px; font-variant-numeric: tabular-nums; ' + (r.dag > 0 ? 'font-weight: 700; color: #2e6a4f' : 'color: ' + grijs),
+ptStijl: 'width: 52px; text-align: right; font-family: \'Playfair Display\', serif; font-weight: 900; font-size: 18px; line-height: 1; font-variant-numeric: tabular-nums' + (r.dnf ? '; color: ' + grijs : '')
+};
+});
+const mk = (k) => { const on = sort === k; return { on: on ? 'true' : 'false', bg: on ? 'hsl(35 20% 97.5%)' : 'transparent', sh: on ? '0 1px 2px rgba(0,0,0,0.08)' : 'none', fw: on ? 700 : 500, kl: on ? 'hsl(240 12% 11%)' : 'hsl(240 8% 40%)' }; };
+return {
+renners,
+s: { punten: mk('punten'), vandaag: mk('vandaag') },
+sorteer: { punten: () => this.setState({ sort: 'punten' }), vandaag: () => this.setState({ sort: 'vandaag' }) }
+};
+}
+}
+</script>
+</body>
+</html>

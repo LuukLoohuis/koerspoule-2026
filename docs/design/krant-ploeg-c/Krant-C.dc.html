@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Krant · C · Vandaag, Morgen, Perszaal</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&amp;family=Source+Serif+4:ital,wght@0,400;0,600;1,400&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;family=Oswald:wght@500;600;700&amp;family=Special+Elite&amp;display=swap">
+<style>
+body{margin:0;background:hsl(35 28% 96%)}
+a{color:hsl(240 12% 11%)}a:hover{color:hsl(335 70% 45%)}
+.trui{filter:drop-shadow(2.5px 2.5px 0 hsl(240 12% 11%))}
+</style>
+</helmet>
+<div style="width: 375px; height: 1440px; box-sizing: border-box; position: relative; background: hsl(35 28% 96%); color: hsl(240 12% 11%); font-family: Inter, sans-serif; display: flex; flex-direction: column">
+<dc-import name="Kop" hint-size="375px,72px"></dc-import>
+<main style="flex-grow: 1; display: flex; flex-direction: column; gap: 20px; padding: 0 16px 28px">
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 4px; box-sizing: border-box">
+<h1 style="margin: 0; display: flex; align-items: baseline; gap: 8px; white-space: nowrap"><span style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 900; font-size: 25px; letter-spacing: -0.02em">La Gazzetta</span><span style="color: #c8a020; font-size: 20px">·</span><span style="font-family: Oswald, sans-serif; font-weight: 600; font-size: 19px; letter-spacing: 0.04em; text-transform: uppercase">Tappa 14</span></h1>
+<button type="button" aria-label="Informatie: zo lees je de krant" aria-expanded="{{legendeOpen}}" onClick="{{openLegende}}" style="height: 36px; flex-shrink: 0; margin-right: -4px; display: flex; align-items: center; gap: 5px; background: transparent; border: 0; padding: 0 4px; cursor: pointer; color: hsl(240 8% 46%)"><span style="width: 18px; height: 18px; border-radius: 9999px; border: 1.5px solid currentColor; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 11px; line-height: 1">i</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase">Informatie</span></button>
+</div>
+<section aria-label="Jouw stand" style="margin: 0 -16px; height: 82px; display: flex; flex-direction: column; background: hsl(240 12% 11%); color: hsl(35 20% 97.5%)">
+<div style="height: 3px; background: linear-gradient(90deg, #e6446d, #c8a020 50%, #e6446d)"></div>
+<div style="flex-grow: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0 6px">
+<button type="button" aria-label="Subpoule Kantoor: plaats 3 van 14, twee plaatsen gestegen. Open volledige stand" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; padding: 0 10px; background: transparent; border: 0; font-family: inherit; color: inherit; text-align: left; cursor: pointer">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(35 14% 76%)">Kantoor ›</span>
+<span style="display: flex; align-items: baseline; gap: 5px"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 24px; line-height: 1; font-variant-numeric: tabular-nums">#3</span><span style="font-size: 11px; color: hsl(35 14% 76%)">/14</span></span>
+<span style="font-size: 11px; font-weight: 700; color: #d9b44a">▲ 2</span>
+</button>
+<button type="button" aria-label="Algemeen klassement: plaats 412 van 2.318, 37 plaatsen gestegen. Open volledige stand" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; padding: 0 10px; background: transparent; border: 0; border-left: 1px solid rgba(255, 255, 255, 0.16); font-family: inherit; color: inherit; text-align: left; cursor: pointer">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(35 14% 76%)">Algemeen ›</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 24px; line-height: 1; font-variant-numeric: tabular-nums">#412</span>
+<span style="font-size: 11px; color: hsl(35 14% 76%); font-variant-numeric: tabular-nums">/2.318 <span style="font-weight: 700; color: #d9b44a">▲ 37</span></span>
+</button>
+<button type="button" aria-label="Vandaag 48 punten, plaats 118 van de dag. Open daguitslag" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; padding: 0 10px; background: transparent; border: 0; border-left: 1px solid rgba(255, 255, 255, 0.16); font-family: inherit; color: inherit; text-align: left; cursor: pointer">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(35 14% 76%)">Vandaag ›</span>
+<span style="display: flex; align-items: baseline; gap: 4px"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 24px; line-height: 1; font-variant-numeric: tabular-nums; color: #f07a98">48</span><span style="font-size: 11px; color: hsl(35 14% 76%)">pt</span></span>
+<span style="font-size: 11px; color: hsl(35 14% 76%); font-variant-numeric: tabular-nums">#118 v.d. dag</span>
+</button>
+</div>
+</section>
+</div>
+
+<div role="tablist" aria-label="Editie" style="height: 44px; box-sizing: border-box; display: flex; gap: 2px; padding: 3px; background: hsl(35 14% 90%); border-radius: 13px">
+<button type="button" role="tab" aria-selected="{{t.vandaag.sel}}" onClick="{{kies.vandaag}}" style="flex: 1 1 0; position: relative; border: 0; border-radius: 10px; background: {{t.vandaag.bg}}; box-shadow: {{t.vandaag.sh}}; font-family: inherit; font-size: 13px; font-weight: {{t.vandaag.fw}}; color: {{t.vandaag.kl}}; cursor: pointer">Vandaag<span style="position: absolute; left: 30%; right: 30%; bottom: 4px; height: 2px; border-radius: 2px; background: {{t.vandaag.lijn}}"></span></button>
+<button type="button" role="tab" aria-selected="{{t.morgen.sel}}" onClick="{{kies.morgen}}" style="flex: 1 1 0; position: relative; border: 0; border-radius: 10px; background: {{t.morgen.bg}}; box-shadow: {{t.morgen.sh}}; font-family: inherit; font-size: 13px; font-weight: {{t.morgen.fw}}; color: {{t.morgen.kl}}; cursor: pointer">Morgen<span style="position: absolute; left: 30%; right: 30%; bottom: 4px; height: 2px; border-radius: 2px; background: {{t.morgen.lijn}}"></span></button>
+<button type="button" role="tab" aria-selected="{{t.pers.sel}}" onClick="{{kies.pers}}" style="flex: 1 1 0; position: relative; border: 0; border-radius: 10px; background: {{t.pers.bg}}; box-shadow: {{t.pers.sh}}; font-family: inherit; font-size: 13px; font-weight: {{t.pers.fw}}; color: {{t.pers.kl}}; cursor: pointer">Perszaal<span style="position: absolute; left: 30%; right: 30%; bottom: 4px; height: 2px; border-radius: 2px; background: {{t.pers.lijn}}"></span></button>
+</div>
+
+<sc-if value="{{isVandaag}}" hint-placeholder-val="{{true}}">
+<div role="tabpanel" style="display: flex; flex-direction: column; gap: 28px">
+
+<article style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: hsl(240 8% 46%)">Tappa 14 · Pila</span>
+<h2 style="margin: 0; padding-bottom: 10px; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 34px; line-height: 1.0; letter-spacing: -0.03em; border-bottom: 2px solid #e6446d; border-image: linear-gradient(90deg, #e6446d, #c8a020 45%, rgba(200, 160, 32, 0)) 1">Ciccone wint thuis, Vingegaard houdt het roze</h2>
+<p style="margin: 0; font-family: 'Source Serif 4', serif; font-size: 16px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden"><span style="font-family: 'Playfair Display', serif; font-weight: 900; font-size: 18px">PILA — </span>Ciccone sprong weg op de slotklim. Del Toro kwam op vier tellen, het roze bleef waar het was.</p>
+<a href="#" style="align-self: flex-start; display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border: 1.5px solid hsl(240 12% 11%); border-radius: 9999px; font-size: 13px; font-weight: 700; text-decoration: none; box-shadow: 1.5px 1.5px 0 hsl(240 12% 11%)">Lees verder</a>
+</article>
+
+<section aria-labelledby="dagC" style="display: flex; flex-direction: column; gap: 14px">
+<h3 id="dagC" style="margin: 0; padding-bottom: 6px; font-family: Oswald, sans-serif; font-weight: 700; font-size: 20px; letter-spacing: 0.02em; text-transform: uppercase; border-bottom: 1px solid hsl(240 12% 11%); box-shadow: 0 4px 0 -3px hsl(240 12% 11%)">Daguitslag</h3>
+<div style="display: flex; flex-direction: column">
+<h4 style="margin: 0 0 4px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(240 8% 46%)">Rit</h4>
+<div style="height: 36px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid hsl(35 12% 81%); font-size: 14px"><span style="width: 22px; height: 22px; border-radius: 9999px; background: #c9a227; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 12px">1</span><span style="flex-grow: 1; font-weight: 600">Giulio Ciccone</span><span style="font-size: 12px; color: hsl(240 8% 46%); font-variant-numeric: tabular-nums">4:52:11</span></div>
+<div style="height: 36px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid hsl(35 12% 81%); font-size: 14px"><span style="width: 22px; height: 22px; border-radius: 9999px; background: #b0b0b0; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 12px">2</span><span style="flex-grow: 1">Isaac del Toro</span><span style="font-size: 12px; color: hsl(240 8% 46%); font-variant-numeric: tabular-nums">+0:04</span></div>
+<div style="height: 36px; display: flex; align-items: center; gap: 10px; font-size: 14px"><span style="width: 22px; height: 22px; border-radius: 9999px; background: #b0793e; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 12px">3</span><span style="flex-grow: 1">Jonas Vingegaard</span><span style="font-size: 12px; color: hsl(240 8% 46%); font-variant-numeric: tabular-nums">+0:04</span></div>
+</div>
+<div style="display: flex; flex-direction: column">
+<h4 style="margin: 0 0 4px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(240 8% 46%)">Subpoule Kantoor · vandaag</h4>
+<div style="height: 36px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid hsl(35 12% 81%); font-size: 14px"><span style="width: 22px; text-align: center; font-family: 'Playfair Display', serif; font-weight: 900">1</span><span style="flex-grow: 1">Marieke</span><span style="font-size: 12px; color: hsl(240 8% 46%); font-variant-numeric: tabular-nums">61 pt</span></div>
+<div style="height: 36px; display: flex; align-items: center; gap: 10px; margin: 0 -8px; padding: 0 8px; background: rgba(230, 68, 109, 0.12); border-radius: 4px; font-size: 14px; font-weight: 700"><span style="width: 22px; text-align: center; font-family: 'Playfair Display', serif; font-weight: 900">2</span><span style="flex-grow: 1; display: flex; align-items: center; gap: 8px">Luuk<span style="padding: 1px 7px; background: #e6446d; color: #ffffff; border: 1.5px solid hsl(240 12% 11%); border-radius: 4px; box-shadow: 1.5px 1.5px 0 hsl(240 12% 11%); font-family: 'Playfair Display', serif; font-style: italic; font-size: 11px">jij</span></span><span style="font-size: 12px; font-variant-numeric: tabular-nums">48 pt</span></div>
+<div style="height: 36px; display: flex; align-items: center; gap: 10px; font-size: 14px"><span style="width: 22px; text-align: center; font-family: 'Playfair Display', serif; font-weight: 900">3</span><span style="flex-grow: 1">Jeroen</span><span style="font-size: 12px; color: hsl(240 8% 46%); font-variant-numeric: tabular-nums">45 pt</span></div>
+</div>
+<a href="#" style="align-self: flex-start; padding: 8px 0; font-size: 13px; font-weight: 600; text-decoration: underline; text-decoration-color: #e6446d; text-decoration-thickness: 2px; text-underline-offset: 5px">Hele uitslag ›</a>
+</section>
+
+<section aria-labelledby="horsC" style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid hsl(240 12% 11%); box-shadow: 0 4px 0 -3px hsl(240 12% 11%)">
+<h3 id="horsC" style="margin: 0; font-family: Oswald, sans-serif; font-weight: 700; font-size: 20px; letter-spacing: 0.02em; text-transform: uppercase">Hors Catégorie</h3>
+<a href="#" style="font-size: 12px; font-weight: 600; text-decoration: underline; text-decoration-color: #e6446d; text-decoration-thickness: 2px; text-underline-offset: 4px">Hele bijlage ›</a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 4px 0 6px">
+<a href="#" aria-label="Monkey IQ 78 procent. Open Hors Catégorie" style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: hsl(240 12% 11%)">
+<span class="trui" style="position: relative; width: 96px; height: 108px; display: block">
+<span style="position: absolute; inset: 0; background: #e6446d; -webkit-mask-image: url(./wielershirt.png); mask-image: url(./wielershirt.png); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center"></span>
+<img src="./wielershirt.png" alt="" style="position: absolute; inset: 0; width: 96px; height: 108px; object-fit: contain; mix-blend-mode: multiply">
+<span style="position: absolute; left: 14px; right: 14px; top: 40px; display: flex; justify-content: center"><span style="font-family: 'Playfair Display', serif; font-weight: 900; font-size: 24px; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: #ffffff">78<span style="font-size: 12px; font-weight: 700">%</span></span></span>
+</span>
+<span style="display: flex; flex-direction: column; align-items: center; gap: 1px"><span style="font-size: 12px; font-weight: 700">Monkey IQ</span><span style="font-family: 'Source Serif 4', serif; font-style: italic; font-size: 11px; color: hsl(240 8% 46%); text-align: center; line-height: 1.25">beter dan 78% van de apen</span></span>
+</a>
+<a href="#" aria-label="Emirates 64 procent. Open Hors Catégorie" style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: hsl(240 12% 11%)">
+<span class="trui" style="position: relative; width: 96px; height: 108px; display: block">
+<span style="position: absolute; inset: 0; background: #ffffff; -webkit-mask-image: url(./wielershirt.png); mask-image: url(./wielershirt.png); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center"></span>
+<img src="./wielershirt.png" alt="" style="position: absolute; inset: 0; width: 96px; height: 108px; object-fit: contain; mix-blend-mode: multiply">
+<span style="position: absolute; left: 14px; right: 14px; top: 40px; display: flex; justify-content: center"><span style="font-family: 'Playfair Display', serif; font-weight: 900; font-size: 24px; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: hsl(240 12% 11%)">64<span style="font-size: 12px; font-weight: 700">%</span></span></span>
+</span>
+<span style="display: flex; flex-direction: column; align-items: center; gap: 1px"><span style="font-size: 12px; font-weight: 700">Emirates</span><span style="font-family: 'Source Serif 4', serif; font-style: italic; font-size: 11px; color: hsl(240 8% 46%); text-align: center; line-height: 1.25">rendement vs. droomploeg</span></span>
+</a>
+<a href="#" aria-label="Directeur 7,4. Open Hors Catégorie" style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: hsl(240 12% 11%)">
+<span class="trui" style="position: relative; width: 96px; height: 108px; display: block">
+<span style="position: absolute; inset: 0; background: #3498db; -webkit-mask-image: url(./wielershirt.png); mask-image: url(./wielershirt.png); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center"></span>
+<img src="./wielershirt.png" alt="" style="position: absolute; inset: 0; width: 96px; height: 108px; object-fit: contain; mix-blend-mode: multiply">
+<span style="position: absolute; left: 14px; right: 14px; top: 40px; display: flex; justify-content: center"><span style="font-family: 'Playfair Display', serif; font-weight: 900; font-size: 24px; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: #ffffff">7,4<span style="font-size: 12px; font-weight: 700"></span></span></span>
+</span>
+<span style="display: flex; flex-direction: column; align-items: center; gap: 1px"><span style="font-size: 12px; font-weight: 700">Directeur</span><span style="font-family: 'Source Serif 4', serif; font-style: italic; font-size: 11px; color: hsl(240 8% 46%); text-align: center; line-height: 1.25">rapportcijfer ploegleider</span></span>
+</a>
+</div>
+</section>
+
+</div>
+</sc-if>
+
+<sc-if value="{{isMorgen}}" hint-placeholder-val="{{false}}">
+<div role="tabpanel" style="display: flex; flex-direction: column; gap: 18px">
+<article style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: hsl(240 8% 46%)">Voorbeschouwing · Tappa 15</span>
+<h2 style="margin: 0; padding-bottom: 10px; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 32px; line-height: 1.02; letter-spacing: -0.03em; border-bottom: 2px solid #e6446d; border-image: linear-gradient(90deg, #e6446d, #c8a020 45%, rgba(200, 160, 32, 0)) 1">Over de Mortirolo naar Bormio</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 10px 0; border-bottom: 1px solid hsl(35 12% 81%)">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 18px">188 km</span><span style="font-size: 11px; color: hsl(240 8% 46%)">afstand</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px; padding-left: 10px; border-left: 1px solid hsl(35 12% 81%)"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 18px">4.250 m</span><span style="font-size: 11px; color: hsl(240 8% 46%)">hoogtemeters</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px; padding-left: 10px; border-left: 1px solid hsl(35 12% 81%)"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 18px">12:05</span><span style="font-size: 11px; color: hsl(240 8% 46%)">start</span></span>
+</div>
+<p style="margin: 0; font-family: 'Source Serif 4', serif; font-size: 16px; line-height: 1.55">De laatste bergrit voor de rustdag. Wie het roze wil aanvallen, moet het op de Mortirolo doen: daarna is het dalen en hopen.</p>
+</article>
+<section aria-labelledby="fav" style="display: flex; flex-direction: column; gap: 6px">
+<h3 id="fav" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(240 8% 46%)">Favorieten van de redactie</h3>
+<div style="height: 36px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid hsl(35 12% 81%); font-size: 14px"><span style="width: 44px; color: #c8a020; letter-spacing: 1px">★★★</span><span style="flex-grow: 1; font-weight: 600">Jonas Vingegaard</span></div>
+<div style="height: 36px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid hsl(35 12% 81%); font-size: 14px"><span style="width: 44px; color: #c8a020; letter-spacing: 1px">★★</span><span style="flex-grow: 1">Isaac del Toro</span></div>
+<div style="height: 36px; display: flex; align-items: center; gap: 10px; font-size: 14px"><span style="width: 44px; color: #c8a020; letter-spacing: 1px">★</span><span style="flex-grow: 1">Giulio Ciccone</span></div>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{isPers}}" hint-placeholder-val="{{false}}">
+<div role="tabpanel" style="display: flex; flex-direction: column; gap: 22px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: hsl(240 8% 46%)">Uit de perszaal · na Tappa 14</span>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 12px">
+<span aria-hidden="true" style="font-family: 'Playfair Display', serif; font-weight: 900; font-size: 64px; line-height: 0.5; height: 28px; color: #e6446d">„</span>
+<blockquote style="margin: 0; font-family: 'Playfair Display', serif; font-style: italic; font-weight: 400; font-size: 21px; line-height: 1.35; letter-spacing: -0.01em">Dat is geen aanval meer, dat is een uitnodiging tot wanhoop voor de rest van het peloton.</blockquote>
+<figcaption style="display: flex; align-items: center; gap: 10px">
+<span style="width: 36px; height: 36px; border-radius: 9999px; background: hsl(240 12% 11%); color: #c8a020; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 12px; letter-spacing: 0.04em">MW</span>
+<span style="display: flex; flex-direction: column; gap: 1px"><span style="font-size: 13px; font-weight: 700">Michel Wuyts</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: hsl(240 8% 46%)">Commentator</span></span>
+</figcaption>
+</figure>
+<div aria-hidden="true" style="display: flex; align-items: center; gap: 10px"><div style="flex-grow: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(200, 160, 32, 0.6), rgba(230, 68, 109, 0.8), rgba(200, 160, 32, 0.6), transparent)"></div><span style="color: #c8a020; font-size: 16px; line-height: 1">⚜</span><div style="flex-grow: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(200, 160, 32, 0.6), rgba(230, 68, 109, 0.8), rgba(200, 160, 32, 0.6), transparent)"></div></div>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 12px">
+<span aria-hidden="true" style="font-family: 'Playfair Display', serif; font-weight: 900; font-size: 64px; line-height: 0.5; height: 28px; color: #e6446d">„</span>
+<blockquote style="margin: 0; font-family: 'Playfair Display', serif; font-style: italic; font-weight: 400; font-size: 21px; line-height: 1.35; letter-spacing: -0.01em">Ge moet dat zien: hij rijdt daar niet hard, hij rijdt daar gewoon niet traag.</blockquote>
+<figcaption style="display: flex; align-items: center; gap: 10px">
+<span style="width: 36px; height: 36px; border-radius: 9999px; background: hsl(240 12% 11%); color: #c8a020; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 11px; letter-spacing: 0.04em">JDC</span>
+<span style="display: flex; flex-direction: column; gap: 1px"><span style="font-size: 13px; font-weight: 700">José De Cauwer</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: hsl(240 8% 46%)">Analist</span></span>
+</figcaption>
+</figure>
+</div>
+</sc-if>
+
+
+
+</main>
+<dc-import name="Onderbalk" actief="krant" hint-size="375px,60px"></dc-import>
+<sc-if value="{{legendeOpen}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; left: 0; top: 0; width: 375px; height: 1440px; background: rgba(28, 27, 33, 0.45); display: flex; flex-direction: column; align-items: stretch; padding: 210px 12px 0; box-sizing: border-box">
+<div role="dialog" aria-label="Informatie" style="background: hsl(35 20% 97.5%); border: 2px solid hsl(240 12% 11%); border-radius: 9px; box-shadow: 3px 3px 0 hsl(240 12% 11%); padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h2 style="margin: 0; font-family: 'Playfair Display', serif; font-variant: small-caps; font-weight: 700; font-size: 20px; letter-spacing: 0.07em">Informatie</h2>
+<button type="button" aria-label="Sluiten" onClick="{{sluitLegende}}" style="width: 36px; height: 36px; margin-right: -8px; display: flex; align-items: center; justify-content: center; background: transparent; border: 0; padding: 0; color: hsl(240 12% 11%); cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: hsl(240 8% 46%); margin-bottom: 8px">Zo lees je de krant</span>
+<div style="min-height: 52px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid hsl(35 12% 81%)"><span style="width: 56px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums">#3</span><span style="font-size: 13px; line-height: 1.4">Je plaats in de stand. Tik erop voor de hele stand.</span></div>
+<div style="min-height: 52px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid hsl(35 12% 81%)"><span style="width: 56px; flex-shrink: 0; font-weight: 700; font-size: 14px; color: #2e6a4f">▲ 2</span><span style="font-size: 13px; line-height: 1.4">Plaatsen gewonnen of verloren sinds gisteren.</span></div>
+<div style="min-height: 52px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid hsl(35 12% 81%)"><span style="width: 56px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 16px">48 <span style="font-size: 11px; font-weight: 400">pt</span></span><span style="font-size: 13px; line-height: 1.4">Punten van je ploeg in deze rit. Alles per renner staat onder Ploeg.</span></div>
+<div style="min-height: 52px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid hsl(35 12% 81%)"><span style="width: 56px; flex-shrink: 0"><span style="padding: 1px 7px; background: #e6446d; color: #ffffff; border: 1.5px solid hsl(240 12% 11%); border-radius: 4px; box-shadow: 1.5px 1.5px 0 hsl(240 12% 11%); font-family: 'Playfair Display', serif; font-style: italic; font-size: 11px">jij</span></span><span style="font-size: 13px; line-height: 1.4">Jouw regel in een uitslag.</span></div>
+<div style="min-height: 52px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid hsl(35 12% 81%)"><span style="width: 56px; flex-shrink: 0; display: flex; gap: 3px"><span style="width: 16px; height: 16px; border-radius: 9999px; background: #c9a227"></span><span style="width: 16px; height: 16px; border-radius: 9999px; background: #b0b0b0"></span><span style="width: 16px; height: 16px; border-radius: 9999px; background: #b0793e"></span></span><span style="font-size: 13px; line-height: 1.4">Podium van de rit: goud, zilver, brons.</span></div>
+<div style="min-height: 52px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid hsl(35 12% 81%)"><span style="width: 56px; flex-shrink: 0; font-family: 'Special Elite', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #3a2a1a">Hors</span><span style="font-size: 13px; line-height: 1.4">Hors Catégorie is de bijlage met de Monkey IQ (jouw ploeg tegen de apen), de Emirates-benchmark (rendement tegenover de droomploeg) en het rapportcijfer van de Wielerdirecteur.</span></div>
+<div style="min-height: 52px; display: flex; align-items: center; gap: 14px"><span style="width: 56px; flex-shrink: 0; color: #c8a020; letter-spacing: 1px">★★★</span><span style="font-size: 13px; line-height: 1.4">Favoriet volgens de redactie, drie sterren is topfavoriet.</span></div>
+</div>
+
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":1440}}'>
+class Component extends DCLogic {
+constructor(props) { super(props); this.state = { tab: 'vandaag', legende: false }; }
+renderVals() {
+const tab = this.state.tab || 'vandaag';
+const mk = (k) => {
+const on = tab === k;
+return {
+sel: on ? 'true' : 'false',
+bg: on ? 'hsl(35 20% 97.5%)' : 'transparent',
+sh: on ? '0 1px 2px rgba(0, 0, 0, 0.08)' : 'none',
+fw: on ? 700 : 500,
+kl: on ? 'hsl(240 12% 11%)' : 'hsl(240 8% 40%)',
+lijn: on ? '#c8a020' : 'transparent'
+};
+};
+const set = (k) => () => this.setState({ tab: k });
+return {
+t: { vandaag: mk('vandaag'), morgen: mk('morgen'), pers: mk('pers') },
+kies: { vandaag: set('vandaag'), morgen: set('morgen'), pers: set('pers') },
+legendeOpen: !!this.state.legende,
+openLegende: () => this.setState({ legende: true }),
+sluitLegende: () => this.setState({ legende: false }),
+isVandaag: tab === 'vandaag', isMorgen: tab === 'morgen', isPers: tab === 'pers'
+};
+}
+}
+</script>
+</body>
+</html>
