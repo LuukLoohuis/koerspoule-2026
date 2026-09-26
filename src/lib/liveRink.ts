@@ -8,7 +8,7 @@
  * fysiek rijden ze immers op dezelfde plek.
  */
 
-import type { GroepsRol } from "@/lib/liveMarathon";
+import { pelotonIndex, type GroepsRol, type LiveGroup, type PointsSchema } from "@/lib/liveMarathon";
 
 /** Kunstijs is altijd een 400 m-ovaal: rechte stukken met halve cirkels. */
 export const PATH_KUNSTIJS =
@@ -191,39 +191,33 @@ export function tierLabel(tier: number): string {
 
 /* ── Kleuren ──────────────────────────────────────────────────────────────
  *
- * Drie kleuren, niet meer. De rol in de koers bepaalt de kleur, niet het
- * aantal ronden voorsprong: een kopgroep die het peloton op twee ronden heeft
- * gezet is nog steeds de kopgroep en krijgt dus hetzelfde geel. Het
- * ronde-verschil is een aparte badge -- informatie zonder extra kleur.
+ * Vier kleuren, één per rol, uit de Meermarathon-tokens: zo kloppen ze in
+ * Winter verfijnd én in Nachtijs zonder dat hier iets van de modus af hoeft te
+ * weten. Het aantal ronden voorsprong krijgt geen eigen kleur: een uitloper op
+ * twee ronden is nog steeds een uitloper. Dat verschil is een aparte badge.
  */
 
-/** Vulkleur van een schijfje op de baan. */
+const ROL_KLEUR: Record<GroepsRol, string> = {
+  uitloper: "var(--mm-g-u)",
+  kop: "var(--mm-g-k)",
+  peloton: "var(--mm-g-p)",
+  achter: "var(--mm-g-a)",
+};
+
+/** Kleur van een groep: het schijfje op de baan en de stip op de groepskaart. */
 export function rolColor(rol: GroepsRol): string {
-  if (rol === "kop") return "#e2a11b";
-  if (rol === "gelost") return "#c0392b";
-  return "#2f6ba8";
-}
-
-/** Rand om het schijfje: donkere tint van de eigen kleur. */
-export function rolRingColor(rol: GroepsRol): string {
-  if (rol === "kop") return "#8a5d06";
-  if (rol === "gelost") return "#7a1e14";
-  return "#17406b";
-}
-
-/** Wit leest niet op geel; daar gaat de tekst donker. */
-export function rolTekstColor(rol: GroepsRol): string {
-  return rol === "kop" ? "#3a2703" : "#ffffff";
+  return ROL_KLEUR[rol];
 }
 
 export function rolLabel(rol: GroepsRol): string {
+  if (rol === "uitloper") return "uitloper";
   if (rol === "kop") return "kopgroep";
-  if (rol === "gelost") return "gelost";
+  if (rol === "achter") return "achterblijvers";
   return "peloton";
 }
 
-/** Merkteken voor je eigen rijders: groen, en verder nergens gebruikt. */
-export const EIGEN_KLEUR = "#12703f";
+/** Merkteken voor je eigen rijders: de "hot"-kleur, ook die van de LIVE-badge. */
+export const EIGEN_KLEUR = "var(--mm-hot)";
 
 /**
  * Ronde-verschil als tekst voor de badge naast een schijfje. Null bij geen
@@ -312,4 +306,61 @@ export function verwerkMeting(vorig: Meting | undefined, abs: number, t: number)
   const v = gemeten >= 0 && gemeten < MAX_SNELHEID ? gemeten : vorig.v;
   const corr = schatAfstand(vorig, t) - abs;
   return { abs, t, v, corr: Math.abs(corr) > MAX_CORRECTIE ? 0 : corr };
+}
+
+/* ── Teksten bij de groepen ───────────────────────────────────────────────── */
+
+/** Seconden als "6,4 s"; vanaf tien seconden zonder decimaal, zoals "11 s". */
+function seconden(s: number): string {
+  const abs = Math.abs(s);
+  return abs < 10 ? `${abs.toFixed(1).replace(".", ",")} s` : `${Math.round(abs)} s`;
+}
+
+/**
+ * Hoe ver een groep van het peloton af rijdt, voor de groepskaart: "+1 ronde",
+ * "+6,4 s", "−11 s", of "referentie" voor het peloton zelf. Plus is vóór het
+ * peloton.
+ *
+ * Gemeten van kop tot kop, niet van groep tot groep: met vier kaarten naast
+ * elkaar lees je "hoe ver is dit pak weg", niet "hoeveel zit er tussen dit en
+ * het vorige". Tijd alleen op dezelfde ronde; daarbuiten zegt de doorkomsttijd
+ * niets. Null als er niets te vergelijken valt (één groep, tijd onbekend).
+ */
+export function groepsGat(groups: LiveGroup[], index: number): string | null {
+  const g = groups[index];
+  if (!g || groups.length < 2) return null;
+  const pi = pelotonIndex(groups);
+  if (index === pi) return "referentie";
+  const pel = groups[pi];
+  const ronden = g.tier - pel.tier;
+  if (ronden !== 0) {
+    const n = Math.abs(ronden);
+    return `${ronden > 0 ? "+" : "\u2212"}${n} ronde${n > 1 ? "n" : ""}`;
+  }
+  const eigen = g.leden[0]?.rider.tijdSort;
+  const ref = pel.leden[0]?.rider.tijdSort;
+  if (eigen == null || ref == null) return null;
+  // Wie eerder over de streep kwam, rijdt vóór: een kleinere tijd is plus.
+  const s = (ref - eigen) / 1000;
+  return `${s >= 0 ? "+" : "\u2212"}${seconden(s)}`;
+}
+
+/**
+ * De puntenschaal in één regel, uit het schema van de game zelf: "Punten
+ * volgens de schaal 50-40-32-26-22-20…1 voor plek 1 t/m 20." Zo kan de uitleg
+ * niet afwijken van wat er echt geteld wordt.
+ *
+ * `maxPlek` is dezelfde grens als in projectPoints: verder dan plek 20 scoort
+ * niemand, ook als het schema doorloopt. Null zonder scorende plekken.
+ */
+export function puntenSchaal(schema: PointsSchema, maxPlek = 20): string | null {
+  const plekken = [...schema.entries()]
+    .filter(([plek, punten]) => plek >= 1 && plek <= maxPlek && punten > 0)
+    .sort((a, b) => a[0] - b[0]);
+  if (plekken.length === 0) return null;
+  const waarden = plekken.map(([, punten]) => punten);
+  // Meer dan zeven getallen leest niet meer als schaal; dan de kop en de staart.
+  const reeks = waarden.length > 7 ? `${waarden.slice(0, 6).join("-")}\u2026${waarden[waarden.length - 1]}` : waarden.join("-");
+  const laatste = plekken[plekken.length - 1][0];
+  return `Punten volgens de schaal ${reeks} voor plek 1 t/m ${laatste}.`;
 }

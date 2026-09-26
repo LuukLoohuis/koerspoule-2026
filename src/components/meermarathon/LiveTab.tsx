@@ -1,22 +1,44 @@
-import { Fragment, useMemo, useRef, useState } from "react";
-import { Snowflake, ChevronDown, Radio } from "lucide-react";
+import { useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { ChevronDown, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   projectPoints,
   groepsKopje,
+  groepsNaam,
   groepsRol,
   kopSamenvatting,
   virtueleUitslag,
   type LiveGroup,
   type PointsSchema,
 } from "@/lib/liveMarathon";
-import { rolColor, rondeBadge, tierLabel, EIGEN_KLEUR } from "@/lib/liveRink";
+import { groepsGat, puntenSchaal, rolColor, rondeBadge, tierLabel } from "@/lib/liveRink";
+import { meermarathonCategorieLabel, meermarathonStageLabel } from "@/lib/gameTypes";
 import { isStale, type LiveRace } from "@/hooks/useLiveRace";
 import LiveRink from "@/components/meermarathon/LiveRink";
 
 /**
+ * Mono zoals in het ontwerp (JetBrains Mono); Tailwinds font-mono is de
+ * systeemletter. De hint family-name is nodig: zonder ziet tailwind-merge dit
+ * als een gewicht en gooit cn() het weg zodra er font-bold achter staat.
+ */
+const MONO = "font-[family-name:'JetBrains_Mono',ui-monospace,monospace]";
+/** Kaartkop: "MIJN RIJDERS", "OP DE BAAN". */
+const KAART_LABEL = cn(MONO, "text-[11px] font-normal uppercase tracking-[0.18em]");
+/**
+ * Tekst in de hot-kleur ("1 van jou"). In Nachtijs haalt het rood op de
+ * donkere kaart geen 4,5:1; daar mengen we er wat van de tekstkleur door.
+ */
+const HOT_TEKST =
+  "text-[var(--mm-hot)] in-data-[modus=nacht]:text-[color-mix(in_srgb,var(--mm-hot)_70%,hsl(var(--foreground)))]";
+/** Achtergrond van een regel met een rijder van jou. */
+const EIGEN_REGEL = "bg-[color-mix(in_srgb,var(--mm-hot)_8%,transparent)]";
+
+/**
  * Live-tab in de Volgwagen: de baan, de situatie in koers en wat het jou
  * voorlopig oplevert. Alleen zichtbaar bij Meermarathon met een gekoppelde baan.
+ *
+ * Presentatie: alles komt via props. De data haalt MyTeamPanel op
+ * (useLiveRace, de ploeg en het puntenschema).
  */
 type LiveTabProps = {
   race: LiveRace | null;
@@ -24,8 +46,16 @@ type LiveTabProps = {
   jokerRiderIds: Set<string>;
   pointsSchema: PointsSchema;
   jokerMultiplier: number;
-  /** Nagebootste koers: zet een stempel "Simulatie" in het scorebord. */
+  /** Nagebootste koers: zet een stempel "Simulatie" in de kop. */
   simulatie?: boolean;
+  /** Categorie van de game ("vrouwen" | "mannen"), voor de titel. Onbekend: dat deel vervalt. */
+  categorie?: string | null;
+  /** wedstrijd_type van de live wedstrijd; zonder valt de naam terug op het ijstype (Cup of Grand Prix). */
+  wedstrijdType?: string | null;
+  /** Ploegnaam, rechts naast de titel op een breed scherm. */
+  ploegNaam?: string | null;
+  /** Je rijders met naam: zo staat ook wie niet in de koers zit in "Mijn rijders". */
+  mijnRijders?: { id: string; naam: string }[];
 };
 
 /**
@@ -35,21 +65,29 @@ type LiveTabProps = {
  * staan.
  */
 export default function LiveTab(props: LiveTabProps) {
-  if (!props.race || props.race.tracks.length === 0) return <LiveLeeg />;
-  return <LiveInhoud {...props} race={props.race} />;
+  // Containerqueries i.p.v. lg: de tab staat in een kolom van MijnPeloton, en
+  // in de testbank naast elkaar op 390 en 1200 px. Breekpunten: @2xl (672 px)
+  // voor de KPI's op één rij, @4xl (896 px) voor de twee kolommen.
+  return (
+    <div data-eigen-typografie className="@container/live w-full min-w-0 font-inter">
+      {!props.race || props.race.tracks.length === 0 ? <LiveLeeg /> : <LiveInhoud {...props} race={props.race} />}
+    </div>
+  );
 }
 
 /** Eén rijder van jou, met waar hij op dit moment rijdt. */
 type EigenRegel = {
   sleutel: string;
+  riderId: string | null;
   positie: number;
   naam: string;
   isJoker: boolean;
   punten: number;
-  basis: number;
-  groep: { rol: ReturnType<typeof groepsRol>; kopje: string; badge: string | null };
+  groep: { kopje: string; badge: string | null };
   verschil: number | null | undefined;
 };
+
+type Baan = LiveRace["tracks"][number];
 
 function LiveInhoud({
   race,
@@ -58,20 +96,24 @@ function LiveInhoud({
   pointsSchema,
   jokerMultiplier,
   simulatie,
+  categorie,
+  wedstrijdType,
+  ploegNaam,
+  mijnRijders,
 }: LiveTabProps & { race: LiveRace }) {
   const [actief, setActief] = useState(0);
   const [standOpen, setStandOpen] = useState(false);
   // Vijf regels zichtbaar: genoeg om de kop van de koers te zien zonder dat de
   // kolom langer wordt dan de baan ernaast. Twintig is één tik verderop.
   const [uitslagVol, setUitslagVol] = useState(false);
-  // Eén groep tegelijk open: de strook is smal, en je kijkt naar één pak.
+  // Eén groep tegelijk open: je kijkt naar één pak.
   const [openGroep, setOpenGroep] = useState<number | null>(null);
 
   const track = race.tracks[Math.min(actief, race.tracks.length - 1)];
   const verouderd = isStale(race.syncedAt);
 
   // Eigen rijders per baan, zodat de koersschakelaar kan tonen waar je zit.
-  const mineCount = (t: (typeof race.tracks)[number]) =>
+  const mineCount = (t: Baan) =>
     t.riders.filter((r) => {
       const id = t.riderIdByBeennummer.get(r.beennummer);
       return id ? mineRiderIds.has(id) : false;
@@ -86,8 +128,8 @@ function LiveInhoud({
     return set;
   }, [track, mineRiderIds]);
 
-  // Punten over álle banen samen: je ploeg kan bij natuurijs rijders in de
-  // mannen- én de vrouwenkoers hebben.
+  // Punten over álle banen samen: een oudere, gecombineerde game kan rijders
+  // in de mannen- én de vrouwenkoers hebben.
   const projectie = useMemo(() => {
     const perBaan = race.tracks.map((t) =>
       projectPoints(t.groups.flatMap((g) => g.leden), {
@@ -122,24 +164,29 @@ function LiveInhoud({
   };
 
   const eigen: EigenRegel[] = projectie.perBaan.flatMap((p, bi) => {
-    const groups = race.tracks[bi].groups;
+    const t = race.tracks[bi];
     const groepVan = new Map<string, number>();
-    groups.forEach((g, gi) => g.leden.forEach((l) => groepVan.set(l.rider.beennummer, gi)));
+    t.groups.forEach((g, gi) => g.leden.forEach((l) => groepVan.set(l.rider.beennummer, gi)));
     return p.rijders.map((r) => {
       const gi = groepVan.get(r.rider.beennummer) ?? 0;
       const sleutel = `${bi}:${r.rider.beennummer}`;
       return {
         sleutel,
+        riderId: t.riderIdByBeennummer.get(r.rider.beennummer) ?? null,
         positie: r.positie,
         naam: r.rider.naam,
         isJoker: r.isJoker,
         punten: r.punten,
-        basis: r.basis,
-        groep: { rol: groepsRol(groups, gi), kopje: groepsKopje(groups, gi), badge: rondeBadge(groups[gi]?.tier ?? 0) },
+        groep: { kopje: groepsKopje(t.groups, gi), badge: rondeBadge(t.groups[gi]?.tier ?? 0) },
         verschil: plekVerschil(sleutel, r.positie),
       };
     });
   });
+
+  // Wie van jou niet in de uitslag van de bron staat, is niet gestart. Alleen
+  // rijders uit mineRiderIds: in de simulatie is dat een nagebootste ploeg.
+  const inKoers = new Set(eigen.map((r) => r.riderId));
+  const nietGestart = (mijnRijders ?? []).filter((r) => mineRiderIds.has(r.id) && !inKoers.has(r.id));
 
   const uitslag = virtueleUitslag(track.groups.flatMap((g) => g.leden), {
     schema: pointsSchema,
@@ -147,190 +194,185 @@ function LiveInhoud({
     riderIdByBeennummer: track.riderIdByBeennummer,
   });
 
+  const wedstrijd = meermarathonStageLabel({
+    name: race.stageName,
+    stage_number: race.stageNumber,
+    ijs_type: race.ijsType,
+    wedstrijd_type: wedstrijdType ?? null,
+  });
+  const categorieLabel = meermarathonCategorieLabel(categorie);
+  const bijgewerkt = race.syncedAt ? new Date(race.syncedAt).toLocaleTimeString("nl-NL") : null;
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-3.5 @4xl/live:space-y-5">
+      <Kop
+        race={race}
+        track={track}
+        verouderd={verouderd}
+        simulatie={simulatie}
+        titel={categorieLabel ? `${wedstrijd} — ${categorieLabel}` : wedstrijd}
+        ploegNaam={ploegNaam}
+      />
+
+      {verouderd && (
+        <p
+          role="status"
+          className="rounded-[9px] border border-[var(--mm-alert-line)] bg-[var(--mm-alert-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--mm-alert-fg)]"
+        >
+          De laatste stand is van {bijgewerkt ?? "een onbekend moment"}. De gegevens hieronder kunnen achterlopen.
+        </p>
+      )}
+
       {/* Koersschakelaar — alleen bij meerdere gelijktijdige koersen */}
       {race.tracks.length > 1 && (
-        <div className="flex gap-1.5">
-          {race.tracks.map((t, i) => (
-            <button
-              key={t.trackId}
-              type="button"
-              onClick={() => {
-                setActief(i);
-                setOpenGroep(null);
-              }}
-              aria-pressed={i === actief}
-              className={cn(
-                "flex-1 rounded-lg border px-2.5 py-2 text-left transition-colors",
-                i === actief
-                  ? "border-[#071b3d] bg-[#071b3d] text-[#eaf6ff]"
-                  : "border-[rgba(18,104,168,.2)] bg-white/60",
-              )}
-            >
-              <span className="block font-display text-xs font-bold uppercase tracking-wide">
-                {t.label ?? t.categorie ?? t.trackId}
-                {mineCount(t) > 0 && (
-                  <span className="ml-1.5 rounded bg-[#0b4c91] px-1 py-0.5 font-mono text-[9px] text-white">
-                    {mineCount(t)}×
-                  </span>
+        <div className="flex gap-2" role="group" aria-label="Kies de koers">
+          {race.tracks.map((t, i) => {
+            const n = mineCount(t);
+            return (
+              <button
+                key={t.trackId}
+                type="button"
+                onClick={() => {
+                  setActief(i);
+                  setOpenGroep(null);
+                }}
+                aria-pressed={i === actief}
+                className={cn(
+                  "min-h-11 flex-1 rounded-[9px] border-2 px-3 py-2 text-left transition-colors",
+                  "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+                  i === actief ? "border-foreground bg-primary text-primary-foreground" : "border-border bg-card",
                 )}
-              </span>
-              <span className="block font-mono text-[10px] opacity-70">{t.riders.length} rijders</span>
-            </button>
-          ))}
+              >
+                <span className="flex items-center gap-1.5 font-display text-sm font-bold">
+                  {t.label ?? t.categorie ?? t.trackId}
+                  {n > 0 && (
+                    <span className={cn(MONO, "rounded bg-[var(--mm-hot)] px-1 py-px text-[9px] font-bold text-white")}>
+                      {n} van jou
+                    </span>
+                  )}
+                </span>
+                <span className={cn(MONO, "block text-[10px] opacity-75")}>{t.riders.length} rijders</span>
+              </button>
+            );
+          })}
         </div>
       )}
 
-      <Scorebord race={race} track={track} verouderd={verouderd} simulatie={simulatie} />
-
-      {verouderd && (
-        <p className="px-1 text-[11px] text-muted-foreground">
-          De laatste stand is van{" "}
-          {race.syncedAt ? new Date(race.syncedAt).toLocaleTimeString("nl-NL") : "onbekend"}. De
-          gegevens hieronder kunnen achterlopen.
-        </p>
-      )}
+      <Kpis
+        totaal={projectie.totaal}
+        delta={vorige ? projectie.totaal - vorige.totaal : null}
+        inKoers={eigen.length}
+        aantalEigen={mineRiderIds.size || eigen.length}
+        state={track.state}
+      />
 
       {/* Twee kolommen op breed scherm: links wat er op het ijs gebeurt, rechts
           wat het jou oplevert. Op een telefoon in die volgorde onder elkaar --
           de baan eerst, want die vertelt in één blik hoe de koers ligt. */}
-      <div className="grid gap-3 lg:grid-cols-[1.9fr_1fr] lg:items-start">
-        {/* min-w-0: anders rekt de scrollende koersstrook de kolom op. */}
-        <div className="min-w-0 space-y-3">
-          <div className="overflow-hidden rounded-xl border-2 border-[#0b2c4d] bg-linear-to-b from-[#fbfeff] to-[#d6ebf9] shadow-[3px_3px_0_#0b2c4d]">
+      <div className="grid gap-3.5 @4xl/live:grid-cols-[minmax(0,1fr)_360px] @4xl/live:items-start @4xl/live:gap-5">
+        {/* Op een telefoon is alleen de baan een kaart en staan de groepen er
+            los onder; op een breed scherm zit alles in één kaart. */}
+        <section aria-label="Op de baan" className="@container/baan min-w-0 space-y-3.5 @4xl/live:retro-border @4xl/live:bg-card @4xl/live:p-4">
+          <div className="hidden items-center justify-between @4xl/live:flex">
+            <h3 className={KAART_LABEL}>Op de baan</h3>
+            <span className="flex items-center gap-1.5 text-xs">
+              <span className="size-[9px] rounded-full bg-[var(--mm-hot)]" aria-hidden />= mijn rijder
+            </span>
+          </div>
+          <div className="rounded-[9px] border-2 border-foreground bg-card p-3 shadow-[3px_3px_0_hsl(var(--foreground))] @4xl/live:rounded-none @4xl/live:border-0 @4xl/live:bg-transparent @4xl/live:p-0 @4xl/live:shadow-none">
             <KopRegel groups={track.groups} mine={mineBeennummers} />
             <LiveRink
               groups={track.groups}
-              ijsType={race.ijsType}
               mineBeennummers={mineBeennummers}
-              namen={new Map(track.riders.map((r) => [r.beennummer, r.naam.split(" ").slice(-1)[0]]))}
               rondeLengte={track.state?.rondeLengte ?? null}
-              baanNaam={track.trackId.split(" ")[0]}
-              rondeLabel={null}
+              baanNaam={track.trackId}
             />
           </div>
-          <SituatieStrook
+          <GroepKaarten
             groups={track.groups}
             mine={mineBeennummers}
             open={openGroep}
             onOpen={(i) => setOpenGroep((v) => (v === i ? null : i))}
           />
-        </div>
+        </section>
 
-        <div className="min-w-0 space-y-3">
-          <JouwPloeg
+        <div className="min-w-0 space-y-3.5 @4xl/live:space-y-5">
+          <MijnRijders
             totaal={projectie.totaal}
-            delta={vorige ? projectie.totaal - vorige.totaal : null}
             eigen={eigen}
-            aantalEigen={mineRiderIds.size}
+            nietGestart={nietGestart}
             jokerMultiplier={jokerMultiplier}
+            schaal={puntenSchaal(pointsSchema)}
           />
 
           {/* Virtuele uitslag — het hele veld, niet alleen mijn rijders. Tijdens
               de koers wil je zien wie er scoort, niet alleen wat jij pakt. */}
-          <section>
-            <Kopje rechts={`top ${uitslagVol ? 20 : 5}`}>Virtuele uitslag</Kopje>
-            <div className="overflow-hidden rounded-xl border border-[rgba(18,104,168,.25)] bg-white/75">
+          <section aria-label="Virtuele uitslag" className="overflow-hidden rounded-[9px] border border-border bg-card">
+            <div className="flex items-baseline justify-between border-b border-border px-3.5 py-3 @4xl/live:px-4">
+              <h3 className={KAART_LABEL}>Virtuele uitslag</h3>
+              <span className={cn(MONO, "text-[10px] uppercase tracking-[0.1em] text-muted-foreground")}>
+                top {uitslagVol ? 20 : 5} · punten
+              </span>
+            </div>
+            <ol>
               {uitslag.slice(0, uitslagVol ? 20 : 5).map((r) => (
-                <div
+                <li
                   key={r.rider.beennummer}
                   className={cn(
-                    "flex items-center gap-2 border-b border-foreground/7 px-3 py-1.5 last:border-b-0",
-                    r.isMine && "bg-[rgba(18,112,63,.07)]",
+                    "flex min-h-10 items-center gap-2 border-b border-border px-3.5 py-1.5 @4xl/live:px-4",
+                    r.isMine && EIGEN_REGEL,
                   )}
                 >
-                  <span className="w-5 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
-                    {r.positie}
-                  </span>
-                  <Pijltje verschil={plekVerschil(`${actief}:${r.rider.beennummer}`, r.positie)} />
-                  <span
-                    className={cn(
-                      "grid h-6 w-6 shrink-0 place-items-center rounded-md font-mono text-[10px] font-bold",
-                      r.isMine ? "text-white" : "bg-foreground/7 text-foreground/70",
-                    )}
-                    style={r.isMine ? { background: EIGEN_KLEUR } : undefined}
-                  >
-                    {r.rider.beennummer}
-                  </span>
-                  <span className={cn("min-w-0 flex-1 truncate text-xs", r.isMine ? "font-bold" : "font-medium")}>
+                  <span className={cn(MONO, "w-6 text-right text-xs tabular-nums text-muted-foreground")}>{r.positie}</span>
+                  <Pijltje verschil={plekVerschil(`${actief}:${r.rider.beennummer}`, r.positie)} vast />
+                  <Rugnummer nummer={r.rider.beennummer} mijn={r.isMine} />
+                  <span className={cn("min-w-0 flex-1 truncate text-[13px]", r.isMine ? "font-bold" : "font-medium")}>
                     {r.rider.naam}
+                    {r.isMine && <span className="sr-only"> (jouw rijder)</span>}
                   </span>
                   <span
                     className={cn(
-                      "w-8 shrink-0 text-right font-mono text-[11px] font-bold tabular-nums",
-                      r.punten === 0 ? "text-muted-foreground/60" : "text-foreground/75",
+                      MONO,
+                      "w-10 shrink-0 text-right text-[13px] font-semibold tabular-nums",
+                      r.punten === 0 && "text-muted-foreground",
                     )}
                   >
-                    {r.punten || "—"}
+                    {r.punten}
                   </span>
-                </div>
+                </li>
               ))}
-            </div>
+            </ol>
             <button
               type="button"
               onClick={() => setUitslagVol((v) => !v)}
               aria-expanded={uitslagVol}
               className={cn(
-                "mt-2 inline-flex items-center gap-1 rounded font-mono text-[10px] font-bold uppercase tracking-[0.16em]",
-                "text-[#0b4c91] transition-colors hover:text-[#12508f]",
-                "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+                MONO,
+                "flex min-h-11 w-full items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary",
+                "transition-colors hover:bg-secondary focus:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
               )}
             >
               {uitslagVol ? "Toon top 5" : "Toon top 20"}
-              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", uitslagVol && "rotate-180")} aria-hidden />
+              <ChevronDown className={cn("size-3.5 transition-transform", uitslagVol && "rotate-180")} aria-hidden />
             </button>
           </section>
         </div>
       </div>
 
-      {/* Volledige stand */}
-      <div>
-        <button
-          type="button"
-          onClick={() => setStandOpen((v) => !v)}
-          className="flex w-full items-center gap-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted-foreground"
-        >
-          — Volledige stand · {track.riders.length} —
-          <ChevronDown className={cn("ml-auto h-3.5 w-3.5 transition-transform", standOpen && "rotate-180")} />
-        </button>
-        {standOpen && (
-          <div className="mt-2 max-h-64 overflow-y-auto rounded-xl border border-[rgba(18,104,168,.2)] bg-white/65">
-            {track.groups.flatMap((g) =>
-              g.leden.map((l) => {
-                const mine = mineBeennummers.has(l.rider.beennummer);
-                return (
-                  <div
-                    key={l.rider.beennummer}
-                    className={cn(
-                      "flex items-center gap-2 border-b border-foreground/7 px-3 py-2 last:border-b-0",
-                      mine && "bg-[rgba(18,112,63,.07)]",
-                    )}
-                  >
-                    <span className="w-6 text-center font-display text-sm font-bold">{l.positie}</span>
-                    <span className="shrink-0 rounded bg-[#071b3d] px-1.5 py-0.5 font-mono text-[9.5px] text-[#dff3ff]">
-                      {l.rider.beennummer}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-xs font-semibold">{l.rider.naam}</span>
-                    <span className="shrink-0 text-right font-mono text-[10px]">
-                      <span className="block">{l.rider.tijd ?? "—"}</span>
-                      <span className={cn("block", l.tier > 0 ? "font-bold text-[#a06a06]" : l.tier < 0 ? "text-[#b3352a]" : "text-muted-foreground")}>
-                        {l.tier !== 0 ? tierLabel(l.tier) : l.gapInGroup ? `+${l.gapInGroup.toFixed(1)}` : "—"}
-                      </span>
-                    </span>
-                  </div>
-                );
-              }),
-            )}
-          </div>
-        )}
-      </div>
+      <VolledigeStand
+        track={track}
+        mine={mineBeennummers}
+        open={standOpen}
+        onToggle={() => setStandOpen((v) => !v)}
+      />
 
-      <p className="px-1 font-mono text-[9px] leading-relaxed text-muted-foreground">
-        Voorlopig · niet gefiatteerd. Zelfde rekenregel als bij het fiatteren: plek 1 t/m 20 scoort, joker telt ×
-        {jokerMultiplier}.
+      <p className={cn(MONO, "px-1 text-[10px] leading-relaxed text-muted-foreground")}>
+        Voorlopig · niet gefiatteerd, wel met dezelfde rekenregel als bij het fiatteren
+        {jokerRiderIds.size > 0 && `; een joker telt ×${jokerMultiplier}`}.
         <br />
         Bron: livemarathon.schaatsen.nl
+        {bijgewerkt && ` · bijgewerkt ${bijgewerkt}`}
+        {track.state?.raceTime && ` · duur ${track.state.raceTime}`}
       </p>
     </div>
   );
@@ -351,130 +393,203 @@ function useVorigeRonde<T>(ronde: string, waarde: T): T | null {
   return r.vorige;
 }
 
-/** Mono-kopje met streepjes, zoals elders in de Volgwagen. */
-function Kopje({ children, rechts }: { children: React.ReactNode; rechts?: string }) {
-  return (
-    <div className="mb-2 flex items-baseline gap-2 whitespace-nowrap font-mono text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-      — {children} —
-      {rechts && <span className="ml-auto font-normal tracking-widest opacity-70">{rechts}</span>}
-    </div>
-  );
-}
-
 /**
- * Scorebord: alles over de stand van de koers in één blok. Voorheen stond de
- * ronde op vier plekken (kopbalk, meta-regel, cijfertegel, op de baan); nu
- * één keer, groot, met een balk die laat zien hoe ver de koers is.
+ * Kop van de pagina: LIVE, waar er gereden wordt, en welke wedstrijd. Alleen
+ * wat de bron en de database weten: geen rondelengte of ijssoort, dan vervalt
+ * dat stukje.
  */
-function Scorebord({
+function Kop({
   race,
   track,
   verouderd,
   simulatie,
+  titel,
+  ploegNaam,
 }: {
   race: LiveRace;
-  track: LiveRace["tracks"][number];
+  track: Baan;
   verouderd: boolean;
   simulatie?: boolean;
+  titel: string;
+  ploegNaam?: string | null;
 }) {
-  const s = track.state;
-  const voortgang = s?.maxRonden != null && s?.totaalRonden ? Math.min(1, s.maxRonden / s.totaalRonden) : null;
-  const km = s?.rondenTeGaan != null && s?.rondeLengte ? ((s.rondenTeGaan * s.rondeLengte) / 1000).toFixed(1).replace(".", ",") : null;
-
+  const lengte = track.state?.rondeLengte ? `${track.state.rondeLengte} m` : null;
+  const ijs = race.ijsType === "kunstijs" || race.ijsType === "natuurijs" ? race.ijsType : null;
   return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-xl text-[#eaf6ff] shadow-[3px_3px_0_rgba(7,27,61,.3)]",
-        verouderd ? "bg-slate-600" : "bg-linear-to-r from-[#0a2547] via-[#0d3a6e] to-[#0b4c91]",
-      )}
-    >
-      <div className="flex items-center gap-2 px-3.5 pt-3">
-        <span className="flex items-center gap-1.5 rounded-full bg-white/12 px-2 py-0.5">
-          <span className="relative flex h-2 w-2">
-            {!verouderd && <span className="absolute inset-0 animate-ping rounded-full bg-[#ff5a3c] opacity-70" />}
-            <span className="relative h-2 w-2 rounded-full bg-[#ff5a3c]" />
+    <header className="flex items-end justify-between gap-4">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 @2xl/live:gap-x-2.5">
+          {verouderd ? (
+            <span
+              className={cn(
+                MONO,
+                "inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-secondary px-2 py-[3px] text-[11px] leading-[14px] tracking-[0.16em] text-secondary-foreground",
+              )}
+            >
+              <span className="size-1.5 rounded-full bg-current" aria-hidden />
+              ONDERBROKEN
+            </span>
+          ) : (
+            <span
+              className={cn(
+                MONO,
+                "inline-flex items-center gap-1.5 rounded-[4px] bg-[var(--mm-hot)] px-[9px] py-1 text-[11px] leading-[14px] tracking-[0.16em] text-white",
+              )}
+            >
+              <span className="size-1.5 rounded-full bg-white motion-safe:animate-pulse" aria-hidden />
+              LIVE
+            </span>
+          )}
+          <span className={cn(MONO, "text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground @2xl/live:text-[11px]")}>
+            {track.trackId}
+            {lengte && ` · ${lengte}`}
+            {ijs && <span className="hidden @4xl/live:inline">{lengte ? ` ${ijs}` : ` · ${ijs}`}</span>}
           </span>
-          <span className="font-mono text-[10px] font-bold tracking-[0.18em]">{verouderd ? "ONDERBROKEN" : "LIVE"}</span>
-        </span>
-        <span className="min-w-0 truncate font-display text-sm font-bold uppercase tracking-wide">
-          {track.trackId}
-          {track.categorie && <span className="ml-1.5 font-mono text-[10px] font-normal normal-case opacity-70">{track.categorie}</span>}
-        </span>
-        {simulatie && (
+          {simulatie && (
+            <span
+              role="status"
+              className="-rotate-2 rounded-sm border-2 border-dashed border-[hsl(var(--vintage-gold))] px-1.5 py-0.5 font-stamp text-[10px] uppercase tracking-[0.15em] text-foreground"
+              title="Nagebootste stand om deze weergave te bekijken. Er wordt niets opgeslagen."
+            >
+              Simulatie
+              <span className="sr-only"> — geen echte koers, er wordt niets opgeslagen</span>
+            </span>
+          )}
+        </div>
+        <h2 className="mt-1 font-display text-[26px] font-bold leading-[1.1] @2xl/live:mt-2 @2xl/live:text-[34px]">{titel}</h2>
+      </div>
+      {ploegNaam && (
+        <div className="hidden min-w-0 shrink text-right @2xl/live:block">
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Mijn ploeg</div>
+          <div className="truncate text-[19px] font-bold">{ploegNaam}</div>
+        </div>
+      )}
+    </header>
+  );
+}
+
+/**
+ * De vier cijfers van de avond: wat je ploeg nu scoort, hoeveel rijders van
+ * jou meedoen, en hoe ver de koers is. Twee bij twee op een telefoon, één rij
+ * op een breed scherm.
+ */
+function Kpis({
+  totaal,
+  delta,
+  inKoers,
+  aantalEigen,
+  state,
+}: {
+  totaal: number;
+  delta: number | null;
+  inKoers: number;
+  aantalEigen: number;
+  state: Baan["state"];
+}) {
+  const s = state;
+  const voortgang = s?.maxRonden != null && s?.totaalRonden ? Math.min(1, s.maxRonden / s.totaalRonden) : null;
+  const km =
+    s?.rondenTeGaan != null && s?.rondeLengte
+      ? ((s.rondenTeGaan * s.rondeLengte) / 1000).toFixed(1).replace(".", ",")
+      : null;
+  return (
+    <dl className="grid grid-cols-2 gap-[2px] overflow-hidden rounded-[10px] border border-border bg-border @2xl/live:grid-cols-4">
+      <Kpi label="Virtuele punten">
+        {totaal}
+        <Eenheid>pt</Eenheid>
+        {delta != null && delta !== 0 && (
           <span
-            role="status"
-            className="ml-auto shrink-0 rotate-[-4deg] rounded-sm border-2 border-dashed border-[#f0c04a] px-1.5 py-0.5 font-stamp text-[10px] uppercase tracking-[0.15em] text-[#f0c04a]"
-            title="Nagebootste stand om deze weergave te bekijken. Er wordt niets opgeslagen."
+            className={cn(MONO, "text-[11px] font-semibold tracking-normal text-[var(--mm-kpi-sub)]")}
+            title="Verschil met het eind van de vorige ronde"
           >
-            Simulatie
-            <span className="sr-only"> — geen echte koers, er wordt niets opgeslagen</span>
+            {delta > 0 ? "▲" : "▼"}
+            {Math.abs(delta)}
+            <span className="sr-only"> sinds de vorige ronde</span>
           </span>
         )}
-      </div>
-
-      <div className="flex items-end gap-3 px-3.5 pt-2.5">
-        <div>
-          <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#9dbde3]">Ronde</div>
-          <div className="flex items-baseline gap-1">
-            <span className="font-display text-3xl font-bold leading-none tabular-nums">{s?.maxRonden ?? "—"}</span>
-            {s?.totaalRonden != null && <span className="font-mono text-xs text-[#9dbde3]">/ {s.totaalRonden}</span>}
-          </div>
-        </div>
-        {s?.rondenTeGaan != null && (
-          <div className="ml-auto text-right">
-            <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#9dbde3]">Te gaan</div>
-            <div className="flex items-baseline justify-end gap-1">
-              <span className="font-display text-3xl font-bold leading-none tabular-nums text-[#ffb199]">{s.rondenTeGaan}</span>
-              <span className="font-mono text-xs text-[#9dbde3]">
-                ronde{s.rondenTeGaan === 1 ? "" : "n"}
-                {km && ` · ${km} km`}
-              </span>
-            </div>
-          </div>
+      </Kpi>
+      <Kpi
+        label={
+          <>
+            Mijn rijders<span className="hidden @4xl/live:inline"> in koers</span>
+          </>
+        }
+      >
+        {aantalEigen > 0 ? (
+          <>
+            {inKoers}
+            <Eenheid>van {aantalEigen}</Eenheid>
+          </>
+        ) : (
+          "—"
         )}
-      </div>
+      </Kpi>
+      <Kpi
+        label="Ronde"
+        onder={
+          voortgang != null && (
+            <span className="absolute inset-x-0 bottom-0 h-[3px] bg-[color-mix(in_srgb,var(--mm-kpi-sub)_22%,transparent)]" aria-hidden>
+              <span
+                className="block h-full bg-[var(--mm-kpi-sub)] transition-[width] duration-700"
+                style={{ width: `${voortgang * 100}%` }}
+              />
+            </span>
+          )
+        }
+      >
+        {s?.maxRonden ?? "—"}
+        {s?.totaalRonden != null && <Eenheid>/ {s.totaalRonden}</Eenheid>}
+      </Kpi>
+      <Kpi label="Te gaan">
+        {s?.rondenTeGaan ?? "—"}
+        {s?.rondenTeGaan != null && (
+          <Eenheid>
+            ronde{s.rondenTeGaan === 1 ? "" : "n"}
+            {km && <span className="hidden @4xl/live:inline"> · {km} km</span>}
+          </Eenheid>
+        )}
+      </Kpi>
+    </dl>
+  );
+}
 
-      {voortgang != null && (
-        <div className="mx-3.5 mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/15" aria-hidden>
-          <div
-            className="h-full rounded-full bg-linear-to-r from-[#ff8a5c] to-[#ff5a3c] transition-[width] duration-700"
-            style={{ width: `${voortgang * 100}%` }}
-          />
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5 px-3.5 pb-2.5 pt-2 font-mono text-[10px] text-[#9dbde3]">
-        <span>
-          {race.ijsType === "natuurijs" ? "natuurijs" : "kunstijs"}
-          {s?.rondeLengte ? ` · ${s.rondeLengte} m` : ""}
-        </span>
-        {s?.raceTime && <span>duur {s.raceTime}</span>}
-        {race.syncedAt && <span className="ml-auto">bijgewerkt {new Date(race.syncedAt).toLocaleTimeString("nl-NL")}</span>}
-      </div>
+function Kpi({ label, onder, children }: { label: ReactNode; onder?: ReactNode; children: ReactNode }) {
+  return (
+    <div className="relative min-w-0 bg-[var(--mm-kpi1)] px-4 py-3.5 text-[var(--mm-kpi-fg)] even:bg-[var(--mm-kpi2)] @4xl/live:px-5 @4xl/live:py-4">
+      <dt className={cn(MONO, "truncate text-[10px] uppercase tracking-[0.18em] text-[var(--mm-kpi-sub)]")}>{label}</dt>
+      <dd className="mt-2 flex flex-wrap items-baseline gap-x-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] tabular-nums">
+        {children}
+      </dd>
+      {onder}
     </div>
   );
+}
+
+function Eenheid({ children }: { children: ReactNode }) {
+  return <span className="text-xs font-medium tracking-normal text-[var(--mm-kpi-sub)]">{children}</span>;
 }
 
 /** Eén regel bovenop de baan als er iemand weg is (tekst uit `kopSamenvatting`). */
 function KopRegel({ groups, mine }: { groups: LiveGroup[]; mine: Set<string> }) {
   const kop = kopSamenvatting(groups, mine);
   if (!kop) return null;
+  const kleur = rolColor(groepsRol(groups, 0));
   return (
-    <div className="flex items-center gap-2 border-b-2 border-[#0b2c4d] bg-linear-to-r from-[#c9861a] via-[#e0a020] to-[#f0c04a] px-3 py-1.5 text-[#2a1c02]">
-      <Snowflake className="h-3.5 w-3.5 shrink-0" aria-hidden />
-      <span className="shrink-0 font-display text-[11px] font-bold uppercase tracking-wide">{kop.titel}</span>
-      <span className={cn("ml-auto truncate font-mono text-[10px]", kop.eigen.length > 0 && "font-bold")}>{kop.sub}</span>
-    </div>
+    <p className="mb-2.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 px-0.5 text-[13px] @4xl/live:mb-3">
+      <span className="size-2.5 shrink-0 rounded-full" style={{ background: kleur }} aria-hidden />
+      <span className="font-display font-bold">{kop.titel}</span>
+      <span className={cn("text-xs", kop.eigen.length > 0 ? cn("font-bold", HOT_TEKST) : "text-muted-foreground")}>
+        {kop.sub}
+      </span>
+    </p>
   );
 }
 
 /**
- * De koers als strook, zoals op tv bij het wielrennen: groepen van voor naar
- * achter met het gat ertussen. Tik op een groep om te zien wie erin zit.
- * Vervangt de losse tegels én de legenda onder de baan -- de kleuren en
- * aantallen staan hier al.
+ * Eén kaart per groep, van voor naar achter: kleur, naam, hoeveel rijders en
+ * hoe ver van het peloton. Tik op een kaart om te zien wie erin zit.
  */
-function SituatieStrook({
+function GroepKaarten({
   groups,
   mine,
   open,
@@ -485,201 +600,280 @@ function SituatieStrook({
   open: number | null;
   onOpen: (i: number) => void;
 }) {
+  const lijstId = useId();
   const openG = open != null ? groups[open] : null;
   return (
-    <section>
-      <Kopje rechts="tik voor namen">Koerssituatie</Kopje>
-      <div className="-mx-1 flex items-stretch overflow-x-auto px-1 pb-1 scrollbar-none">
+    <div>
+      <div className="grid grid-cols-2 gap-2 @xl/baan:grid-cols-4">
         {groups.map((g, i) => {
           const rol = groepsRol(groups, i);
           const badge = rondeBadge(g.tier);
           const eigen = g.leden.filter((l) => mine.has(l.rider.beennummer)).length;
-          const vorig = groups[i - 1];
-          const gat =
-            i === 0
-              ? null
-              : vorig.tier !== g.tier
-                ? `${vorig.tier - g.tier} rnd`
-                : g.gapToPrev != null
-                  ? `${g.gapToPrev.toFixed(1).replace(".", ",")}s`
-                  : "";
+          const gat = groepsGat(groups, i);
+          const n = g.leden.length;
+          const isOpen = open === i;
           return (
-            <Fragment key={i}>
-              {i > 0 && (
-                <div className="flex min-w-8 shrink-0 flex-col items-center justify-center px-0.5" aria-hidden>
-                  <span className="whitespace-nowrap font-mono text-[9.5px] font-bold text-foreground/55">{gat}</span>
-                  <span className="mt-0.5 h-0.5 w-full rounded-full bg-foreground/20" />
-                </div>
+            <button
+              key={i}
+              type="button"
+              onClick={() => onOpen(i)}
+              aria-expanded={isOpen}
+              aria-controls={isOpen ? lijstId : undefined}
+              className={cn(
+                "min-h-11 min-w-0 rounded-[9px] border bg-card px-3 py-2.5 text-left transition-shadow",
+                "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+                isOpen ? "border-foreground shadow-[2px_2px_0_hsl(var(--foreground))]" : "border-border",
               )}
-              <button
-                type="button"
-                onClick={() => onOpen(i)}
-                aria-expanded={open === i}
-                className={cn(
-                  "relative min-w-max flex-1 shrink-0 overflow-hidden rounded-lg border-2 bg-white/85 px-2 pb-2 pt-2.5 text-left transition-shadow",
-                  "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
-                  open === i ? "border-[#0b2c4d] shadow-[2px_2px_0_#0b2c4d]" : "border-[rgba(18,104,168,.25)]",
-                )}
-              >
-                <span className="absolute inset-x-0 top-0 h-1" style={{ background: rolColor(rol) }} aria-hidden />
-                <span className="flex items-center gap-1">
-                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-                    {groepsKopje(groups, i)}
-                  </span>
-                  {badge && (
-                    <span className="rounded bg-[#1b2f14] px-1 py-px font-mono text-[8.5px] font-bold text-white">{badge}</span>
-                  )}
+            >
+              <span className="flex items-center gap-1.5">
+                <span className="size-2.5 shrink-0 rounded-full" style={{ background: rolColor(rol) }} aria-hidden />
+                <span className={cn(MONO, "min-w-0 truncate text-[10px] uppercase tracking-[0.1em] text-secondary-foreground")}>
+                  {groepsKopje(groups, i)}
+                  {badge && ` ${badge}`}
                 </span>
-                <span className="mt-1 flex items-baseline gap-1">
-                  <span className="font-display text-xl font-bold leading-none tabular-nums">{g.leden.length}</span>
-                  <span className="text-[10px] text-muted-foreground">rijder{g.leden.length > 1 ? "s" : ""}</span>
+              </span>
+              <span className="mt-1 flex items-baseline gap-1">
+                <span className="text-xl font-bold leading-tight tabular-nums">{n}</span>
+                <span className="min-w-0 text-xs text-muted-foreground">
+                  rijder{n === 1 ? "" : "s"}
+                  {gat && ` · ${gat}`}
                 </span>
-                <span
-                  className={cn("mt-1 flex items-center gap-1 text-[10px] font-bold", eigen === 0 && "invisible")}
-                  style={{ color: EIGEN_KLEUR }}
-                >
-                  <i className="h-2 w-2 rounded-full bg-white" style={{ boxShadow: `0 0 0 2px ${EIGEN_KLEUR}` }} />
-                  {eigen} van jou
-                </span>
-              </button>
-            </Fragment>
+                <ChevronDown
+                  className={cn("ml-auto size-3.5 shrink-0 self-center text-muted-foreground transition-transform", isOpen && "rotate-180")}
+                  aria-hidden
+                />
+              </span>
+              {eigen > 0 && <span className={cn("block text-xs font-bold", HOT_TEKST)}>{eigen} van jou</span>}
+            </button>
           );
         })}
       </div>
-      {openG && (
-        <div className="mt-2 flex flex-wrap gap-1 rounded-lg border border-[rgba(18,104,168,.25)] bg-white/75 p-2.5">
-          {openG.leden.map((l) => {
-            const isMijn = mine.has(l.rider.beennummer);
-            return (
-              <span
-                key={l.rider.beennummer}
-                className={cn(
-                  "rounded px-1.5 py-0.5 font-mono text-[10px]",
-                  isMijn ? "bg-white font-bold" : "bg-foreground/7 text-foreground/75",
-                )}
-                style={isMijn ? { color: EIGEN_KLEUR, boxShadow: `inset 0 0 0 1.5px ${EIGEN_KLEUR}` } : undefined}
-              >
-                {l.rider.beennummer} {l.rider.naam.split(" ").slice(-1)}
-              </span>
-            );
-          })}
+      {openG && open != null && (
+        <div id={lijstId} className="mt-2 rounded-[9px] border border-border bg-card p-2.5">
+          <p className={cn(MONO, "mb-1.5 text-[10px] uppercase tracking-[0.1em] text-muted-foreground")}>
+            {groepsNaam(groups, open)} · {openG.leden.length} rijder{openG.leden.length === 1 ? "" : "s"}
+          </p>
+          <ul className="flex flex-wrap gap-1">
+            {openG.leden.map((l) => {
+              const isMijn = mine.has(l.rider.beennummer);
+              return (
+                <li
+                  key={l.rider.beennummer}
+                  className={cn(
+                    MONO,
+                    "rounded px-1.5 py-0.5 text-[10px]",
+                    isMijn
+                      ? cn("bg-card font-bold shadow-[inset_0_0_0_1.5px_var(--mm-hot)]", HOT_TEKST)
+                      : "bg-secondary text-secondary-foreground",
+                  )}
+                >
+                  {l.rider.beennummer} {l.rider.naam.split(" ").slice(-1)}
+                  {isMijn && <span className="sr-only"> (jouw rijder)</span>}
+                </li>
+              );
+            })}
+          </ul>
         </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Jouw rijders: waar ze zitten, op welke plek en wat dat nu oplevert. Wie niet
+ * in de uitslag van de bron staat, staat onderaan als "niet gestart".
+ */
+function MijnRijders({
+  totaal,
+  eigen,
+  nietGestart,
+  jokerMultiplier,
+  schaal,
+}: {
+  totaal: number;
+  eigen: EigenRegel[];
+  nietGestart: { id: string; naam: string }[];
+  jokerMultiplier: number;
+  schaal: string | null;
+}) {
+  return (
+    <section aria-label="Mijn rijders" className="retro-border overflow-hidden bg-card">
+      <div className="flex items-baseline justify-between border-b border-border px-3.5 py-3 @4xl/live:px-4 @4xl/live:py-3.5">
+        <h3 className={KAART_LABEL}>Mijn rijders</h3>
+        <span className={cn(MONO, "text-[11px] uppercase tracking-[0.18em] text-muted-foreground")}>
+          {totaal} pt<span className="hidden @4xl/live:inline"> totaal</span>
+        </span>
+      </div>
+      <ul>
+        {eigen.map((r) => (
+          <li key={r.sleutel} className="flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 py-1.5 last:border-b-0">
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1.5">
+                <span className="truncate text-[15px] font-bold">{r.naam}</span>
+                {r.isJoker && (
+                  <span className={cn(MONO, "shrink-0 rounded border border-current px-1 text-[9px] font-bold leading-[14px]")}>
+                    ×{jokerMultiplier}
+                    <span className="sr-only"> joker</span>
+                  </span>
+                )}
+              </span>
+              <span className={cn(MONO, "flex items-center gap-1.5 text-[10px] uppercase tracking-[0.1em]")}>
+                <span className="truncate">
+                  {r.groep.kopje}
+                  {r.groep.badge && ` ${r.groep.badge}`}
+                </span>
+                <Pijltje verschil={r.verschil} />
+              </span>
+            </span>
+            <span className="w-[38px] shrink-0 text-right text-[13px] font-semibold tabular-nums">P{r.positie}</span>
+            <span className="w-9 shrink-0 text-right text-[15px] font-bold tabular-nums">{r.punten}</span>
+          </li>
+        ))}
+        {nietGestart.map((r) => (
+          <li key={r.id} className="flex min-h-[52px] items-center gap-3 border-b border-border px-3.5 py-1.5 last:border-b-0">
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[15px] font-bold">{r.naam}</span>
+              <span className={cn(MONO, "block text-[10px] uppercase tracking-[0.1em]")}>Niet gestart</span>
+            </span>
+            <span className="w-[38px] shrink-0 text-right text-[13px] font-semibold">
+              <span aria-hidden>–</span>
+              <span className="sr-only">geen plek</span>
+            </span>
+            <span className="w-9 shrink-0 text-right text-[15px] font-bold tabular-nums">0</span>
+          </li>
+        ))}
+      </ul>
+      {eigen.length === 0 && nietGestart.length === 0 && (
+        <p className="px-3.5 py-3 text-xs text-muted-foreground">
+          Geen van jouw rijders is aan een deelnemer in deze koers gekoppeld.
+        </p>
+      )}
+      {schaal && (
+        <p className="border-t border-border px-3.5 py-3 text-xs leading-normal text-muted-foreground @4xl/live:px-4">
+          {schaal} Loopt live mee met de rondestand.
+        </p>
       )}
     </section>
   );
 }
 
-/**
- * Wat het jou nu oplevert: het totaal groot, met hoeveel het de afgelopen
- * ronde veranderde, en per rijder waar hij zit en wat hij pakt. Vervangt de
- * cijfertegels en de losse puntenlijst.
- */
-function JouwPloeg({
-  totaal,
-  delta,
-  eigen,
-  aantalEigen,
-  jokerMultiplier,
+/** Het hele veld op volgorde, dichtgeklapt: voor wie precies wil weten wie waar rijdt. */
+function VolledigeStand({
+  track,
+  mine,
+  open,
+  onToggle,
 }: {
-  totaal: number;
-  delta: number | null;
-  eigen: EigenRegel[];
-  aantalEigen: number;
-  jokerMultiplier: number;
+  track: Baan;
+  mine: Set<string>;
+  open: boolean;
+  onToggle: () => void;
 }) {
-  const inDePunten = eigen.filter((r) => r.basis > 0).length;
+  const lijstId = useId();
   return (
-    <section className="overflow-hidden rounded-xl border-2 border-[#0b2c4d] bg-white/85 shadow-[3px_3px_0_#0b2c4d]">
-      <div className="flex items-end gap-3 px-3.5 pb-2.5 pt-3">
-        <div className="min-w-0">
-          <div className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Jouw ploeg nu</div>
-          <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="font-display text-4xl font-black leading-none tabular-nums text-[#0b2c4d]">{totaal}</span>
-            <span className="font-mono text-xs text-muted-foreground">pt</span>
-            {delta != null && delta !== 0 && (
-              <span
-                className={cn(
-                  "ml-1 rounded-full px-1.5 py-0.5 font-mono text-[10.5px] font-bold",
-                  delta > 0 ? "bg-[rgba(18,112,63,.12)] text-[#12703f]" : "bg-[rgba(192,57,43,.12)] text-[#a3301f]",
-                )}
-                title="Verschil met het eind van de vorige ronde"
-              >
-                {delta > 0 ? "▲" : "▼"} {Math.abs(delta)}
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="ml-auto text-right">
-          <div className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">In de punten</div>
-          <div className="mt-1 flex items-baseline justify-end gap-0.5">
-            <span className="font-display text-2xl font-bold leading-none tabular-nums">{inDePunten}</span>
-            <span className="font-mono text-xs text-muted-foreground">&nbsp;/ {aantalEigen || eigen.length}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="border-t-2 border-[#0b2c4d]/15">
-        {eigen.map((r) => (
-          <div key={r.sleutel} className="flex items-center gap-2 border-b border-foreground/7 px-3 py-2 last:border-b-0">
-            <span className="w-6 text-right font-display text-sm font-bold tabular-nums text-foreground/70">{r.positie}</span>
-            <Pijltje verschil={r.verschil} />
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-1.5">
-                <span className="truncate text-xs font-semibold">{r.naam}</span>
-                {r.isJoker && (
-                  <span className="shrink-0 rounded bg-[#e0a020] px-1 py-px font-mono text-[8.5px] font-bold text-[#3a2a06]">
-                    ×{jokerMultiplier}
-                  </span>
-                )}
-              </span>
-              <span className="mt-0.5 flex items-center gap-1 font-mono text-[9.5px] text-muted-foreground">
-                <i className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: rolColor(r.groep.rol) }} aria-hidden />
-                {r.groep.kopje.toLowerCase()}
-                {r.groep.badge && ` ${r.groep.badge}`}
-              </span>
-            </span>
-            <span className={cn("w-8 text-right font-display text-base font-bold tabular-nums", !r.punten && "text-foreground/30")}>
-              {r.punten || "—"}
-            </span>
-          </div>
-        ))}
-        {eigen.length === 0 && (
-          <div className="px-3 py-3 text-xs text-muted-foreground">
-            Geen van jouw rijders is aan een deelnemer in deze koers gekoppeld.
-          </div>
+    <section>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-controls={open ? lijstId : undefined}
+        className={cn(
+          MONO,
+          "flex min-h-11 w-full items-center gap-2 rounded px-1 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground",
+          "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
         )}
-      </div>
+      >
+        Volledige stand · {track.riders.length}
+        <ChevronDown className={cn("ml-auto size-3.5 transition-transform", open && "rotate-180")} aria-hidden />
+      </button>
+      {open && (
+        <ol id={lijstId} className="max-h-72 overflow-y-auto rounded-[9px] border border-border bg-card">
+          {track.groups.flatMap((g) =>
+            g.leden.map((l) => {
+              const isMijn = mine.has(l.rider.beennummer);
+              return (
+                <li
+                  key={l.rider.beennummer}
+                  className={cn(
+                    "flex items-center gap-2 border-b border-border px-3 py-2 last:border-b-0",
+                    isMijn && EIGEN_REGEL,
+                  )}
+                >
+                  <span className="w-6 text-center font-display text-sm font-bold tabular-nums">{l.positie}</span>
+                  <Rugnummer nummer={l.rider.beennummer} mijn={isMijn} />
+                  <span className="min-w-0 flex-1 truncate text-xs font-semibold">
+                    {l.rider.naam}
+                    {isMijn && <span className="sr-only"> (jouw rijder)</span>}
+                  </span>
+                  <span className={cn(MONO, "shrink-0 text-right text-[10px] tabular-nums")}>
+                    <span className="block">{l.rider.tijd ?? "—"}</span>
+                    <span className={cn("block", l.tier > 0 ? "font-bold" : "text-muted-foreground")}>
+                      {l.tier !== 0
+                        ? tierLabel(l.tier)
+                        : l.gapInGroup
+                          ? `+${l.gapInGroup.toFixed(1).replace(".", ",")}`
+                          : "—"}
+                    </span>
+                  </span>
+                </li>
+              );
+            }),
+          )}
+        </ol>
+      )}
     </section>
   );
 }
 
-/** Plekken gewonnen (groen, omhoog) of verloren sinds de vorige ronde. */
-function Pijltje({ verschil }: { verschil: number | null | undefined }) {
-  // undefined: nog geen vorige ronde bekend -- dan ook geen lege kolom.
-  if (verschil === undefined) return null;
-  if (!verschil) return <span className="w-5 shrink-0" aria-hidden />;
-  const op = verschil > 0;
+/** Rugnummer als tegeltje: rood voor je eigen rijders, rustig voor de rest. */
+function Rugnummer({ nummer, mijn }: { nummer: string; mijn: boolean }) {
   return (
     <span
-      className={cn("w-5 shrink-0 font-mono text-[9px] font-bold tabular-nums", op ? "text-[#12703f]" : "text-[#b3352a]")}
-      title={`${Math.abs(verschil)} plek${Math.abs(verschil) > 1 ? "ken" : ""} ${op ? "gewonnen" : "verloren"} sinds de vorige ronde`}
+      className={cn(
+        MONO,
+        "grid h-7 min-w-7 shrink-0 place-items-center rounded-lg px-1 text-[11px] font-semibold",
+        mijn ? "bg-[var(--mm-hot)] text-white" : "bg-secondary text-secondary-foreground",
+      )}
     >
-      {op ? "▲" : "▼"}
-      {Math.abs(verschil)}
+      {nummer}
+    </span>
+  );
+}
+
+/**
+ * Plekken gewonnen of verloren sinds de vorige ronde. Het pijltje draagt de
+ * richting, dus geen groen of rood nodig. `vast` houdt in een lijst een lege
+ * kolom vrij, zodat de namen onder elkaar blijven staan.
+ */
+function Pijltje({ verschil, vast }: { verschil: number | null | undefined; vast?: boolean }) {
+  // undefined: nog geen vorige ronde bekend -- dan ook geen lege kolom.
+  if (verschil === undefined) return null;
+  if (!verschil) return vast ? <span className="w-6 shrink-0" aria-hidden /> : null;
+  const op = verschil > 0;
+  const n = Math.abs(verschil);
+  const uitleg = `${n} plek${n > 1 ? "ken" : ""} ${op ? "gewonnen" : "verloren"} sinds de vorige ronde`;
+  return (
+    <span
+      className={cn(MONO, "shrink-0 text-[9px] font-bold tabular-nums tracking-normal text-muted-foreground", vast && "w-6")}
+      title={uitleg}
+    >
+      <span aria-hidden>
+        {op ? "▲" : "▼"}
+        {n}
+      </span>
+      <span className="sr-only">{uitleg}</span>
     </span>
   );
 }
 
 function LiveLeeg() {
   return (
-    <div className="rounded-2xl border border-dashed border-[rgba(18,104,168,.35)] bg-[rgba(236,248,255,.6)] px-4 py-8 text-center">
-      <Radio className="mx-auto h-6 w-6 text-[#1268a8]" aria-hidden />
-      <p className="mt-2.5 font-display text-sm font-bold uppercase tracking-wide text-[#071b3d]">
-        Nog geen wedstrijd live
-      </p>
-      <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-muted-foreground">
-        Zodra er gereden wordt zie je hier de baan, de groepen op het ijs en wat jouw
-        rijders op dat moment opleveren.
+    <div className="rounded-[9px] border border-dashed border-border bg-card px-4 py-8 text-center">
+      <Radio className="mx-auto size-6 text-primary" aria-hidden />
+      <p className="mt-2.5 font-display text-base font-bold text-foreground">Nog geen wedstrijd live</p>
+      <p className="mx-auto mt-1.5 max-w-xs text-sm leading-relaxed text-muted-foreground">
+        Zodra er gereden wordt zie je hier de baan, de groepen op het ijs en wat jouw rijders op dat moment
+        opleveren.
       </p>
     </div>
   );

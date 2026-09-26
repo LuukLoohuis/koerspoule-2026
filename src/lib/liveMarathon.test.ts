@@ -378,27 +378,38 @@ describe("groepsRol", () => {
     })),
   });
 
-  it("geeft alles vóór het peloton dezelfde rol", () => {
-    // Kopgroep en eerste achtervolgers krijgen één kleur; het onderscheid
-    // zit in de naam, niet in het palet.
+  it("geeft alles vóór het peloton op dezelfde ronde dezelfde rol", () => {
+    // Kopgroep en achtervolgers krijgen één kleur; het onderscheid zit in de
+    // naam, niet in het palet.
     const g = [groep(3), groep(5), groep(20)];
     expect(groepsRol(g, 0)).toBe("kop");
     expect(groepsRol(g, 1)).toBe("kop");
     expect(groepsRol(g, 2)).toBe("peloton");
   });
 
-  it("noemt alles ná het peloton gelost", () => {
-    const g = [groep(20), groep(4), groep(2)];
-    expect(groepsRol(g, 1)).toBe("gelost");
-    expect(groepsRol(g, 2)).toBe("gelost");
+  it("zet alles ná het peloton achter", () => {
+    const g = [groep(20), groep(4), groep(2, -1)];
+    expect(groepsRol(g, 1)).toBe("achter");
+    expect(groepsRol(g, 2)).toBe("achter");
   });
 
-  it("houdt een groep met ronde-voorsprong bij de kop", () => {
-    // Dit is de kern van de kleurkeuze: +1 en +2 ronden krijgen géén eigen
-    // kleur meer, dat verschil staat als badge naast het schijfje.
-    const g = [groep(2, 2), groep(3, 1), groep(30)];
-    expect(groepsRol(g, 0)).toBe("kop");
-    expect(groepsRol(g, 1)).toBe("kop");
+  it("maakt van een groep met ronde-voorsprong een uitloper", () => {
+    // +1 en +2 ronden krijgen dezelfde kleur; het verschil staat als badge
+    // naast het schijfje.
+    const g = [groep(2, 2), groep(3, 1), groep(7), groep(30)];
+    expect(groepsRol(g, 0)).toBe("uitloper");
+    expect(groepsRol(g, 1)).toBe("uitloper");
+    expect(groepsRol(g, 2)).toBe("kop");
+    expect(groepsRol(g, 3)).toBe("peloton");
+  });
+
+  it("maakt van een grote uitlopersgroep geen peloton", () => {
+    // Twaalf man op een ronde is groter dan elk los pak erachter, maar het
+    // peloton blijft de grootste groep op de ronde van het veld.
+    const g = [groep(12, 1), groep(10), groep(9), groep(8)];
+    expect(groepsRol(g, 0)).toBe("uitloper");
+    expect(groepsRol(g, 1)).toBe("peloton");
+    expect(groepsRol(g, 2)).toBe("achter");
   });
 
   it("valt terug op peloton bij een onbekende index", () => {
@@ -421,8 +432,8 @@ describe("groepsKopje", () => {
 
   it("laat het ronde-verschil uit de naam weg", () => {
     const g = [groep(2, 2), groep(30)];
-    expect(groepsNaam(g, 0)).toBe("Kopgroep · +2");
-    expect(groepsKopje(g, 0)).toBe("Kopgroep");
+    expect(groepsNaam(g, 0)).toBe("Uitlopers · +2");
+    expect(groepsKopje(g, 0)).toBe("Uitlopers");
   });
 
   it("laat een naam zonder verschil ongemoeid", () => {
@@ -452,13 +463,13 @@ describe("groepsNaam", () => {
   it("noemt alles vóór het peloton kop", () => {
     const g = [groep(3), groep(5), groep(20)];
     expect(groepsNaam(g, 0)).toBe("Kopgroep");
-    expect(groepsNaam(g, 1)).toBe("Eerste achtervolgers");
+    expect(groepsNaam(g, 1)).toBe("Achtervolgers");
   });
 
-  it("noemt alles ná het peloton gelost", () => {
+  it("noemt alles ná het peloton achterblijvers", () => {
     const g = [groep(20), groep(4), groep(2)];
-    expect(groepsNaam(g, 1)).toBe("Gelost");
-    expect(groepsNaam(g, 2)).toBe("Gelost");
+    expect(groepsNaam(g, 1)).toBe("Achterblijvers");
+    expect(groepsNaam(g, 2)).toBe("Achterblijvers");
   });
 
   it("noemt één enkele groep het peloton, niet de kopgroep", () => {
@@ -473,8 +484,14 @@ describe("groepsNaam", () => {
   });
 
   it("laat een ronde voorsprong voorgaan op de indeling", () => {
-    const g = [groep(2, 2), groep(30)];
-    expect(groepsNaam(g, 0)).toBe("Kopgroep · +2");
+    expect(groepsNaam([groep(2, 2), groep(30)], 0)).toBe("Uitlopers · +2");
+    expect(groepsNaam([groep(1, 1), groep(30)], 0)).toBe("Uitloper · +1");
+  });
+
+  it("noemt het eerste pak achter de uitlopers de kopgroep", () => {
+    // Zoals in het ontwerp: Uitloper +1, Kopgroep, Peloton, Achterblijvers.
+    const g = [groep(1, 1), groep(7), groep(21), groep(10)];
+    expect(g.map((_x, i) => groepsNaam(g, i))).toEqual(["Uitloper · +1", "Kopgroep", "Peloton", "Achterblijvers"]);
   });
 
   it("gaat om met een lege lijst", () => {

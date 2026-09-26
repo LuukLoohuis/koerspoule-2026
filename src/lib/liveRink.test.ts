@@ -11,7 +11,8 @@ import {
   rinkPath,
   tierLabel,
   rolColor,
-  rolTekstColor,
+  groepsGat,
+  puntenSchaal,
   rondeBadge,
   tiersPresent,
   PATH_KUNSTIJS,
@@ -21,6 +22,7 @@ import {
   verwerkMeting,
   MAX_DOORRIJDEN_MS,
 } from "@/lib/liveRink";
+import type { LiveGroup, LiveRider, RiderPlacing } from "@/lib/liveMarathon";
 
 const groep = (tier: number, ...beennummers: string[]) => ({
   tier,
@@ -214,17 +216,66 @@ describe("baanPositie", () => {
 });
 
 describe("rolColor", () => {
-  it("geeft elke rol één vaste kleur", () => {
-    expect(rolColor("kop")).toBe("#e2a11b");
-    expect(rolColor("peloton")).toBe("#2f6ba8");
-    expect(rolColor("gelost")).toBe("#c0392b");
+  it("geeft elke rol zijn eigen Meermarathon-token", () => {
+    // Tokens en geen hex: dan klopt de baan in licht én in nachtmodus.
+    expect(rolColor("uitloper")).toBe("var(--mm-g-u)");
+    expect(rolColor("kop")).toBe("var(--mm-g-k)");
+    expect(rolColor("peloton")).toBe("var(--mm-g-p)");
+    expect(rolColor("achter")).toBe("var(--mm-g-a)");
+  });
+});
+
+describe("groepsGat", () => {
+  /** Groep met de doorkomsttijd van de kop in seconden. */
+  const g = (n: number, tier: number, kopSeconden: number | null): LiveGroup => ({
+    index: 0,
+    tier,
+    gapToPrev: null,
+    leden: Array.from({ length: n }, (_, i): RiderPlacing => ({
+      rider: { beennummer: `${tier}-${kopSeconden}-${i}`, tijdSort: kopSeconden == null ? null : kopSeconden * 1000 + i * 300 } as LiveRider,
+      positie: i + 1,
+      tier,
+      gapInGroup: 0,
+    })),
+  });
+  const veld = [g(1, 1, 50), g(7, 0, 100), g(21, 0, 106.4), g(10, 0, 117.4)];
+
+  it("meet elke groep vanaf de kop van het peloton, zoals in het ontwerp", () => {
+    expect(veld.map((_x, i) => groepsGat(veld, i))).toEqual(["+1 ronde", "+6,4 s", "referentie", "\u221211 s"]);
   });
 
-  it("zet donkere tekst op geel, wit op de rest", () => {
-    // Wit op #e2a11b haalt geen leesbaar contrast; daar moet het cijfer donker.
-    expect(rolTekstColor("kop")).toBe("#3a2703");
-    expect(rolTekstColor("peloton")).toBe("#ffffff");
-    expect(rolTekstColor("gelost")).toBe("#ffffff");
+  it("telt ronden in het meervoud en achterstand met een min", () => {
+    const f = [g(2, 2, 10), g(20, 0, 100), g(3, -1, 80)];
+    expect(groepsGat(f, 0)).toBe("+2 ronden");
+    expect(groepsGat(f, 2)).toBe("\u22121 ronde");
+  });
+
+  it("zegt niets bij één groep of zonder doorkomsttijd", () => {
+    expect(groepsGat([g(40, 0, 100)], 0)).toBeNull();
+    expect(groepsGat([g(3, 0, null), g(20, 0, 100)], 0)).toBeNull();
+    expect(groepsGat(veld, 9)).toBeNull();
+  });
+});
+
+describe("puntenSchaal", () => {
+  const schema = new Map([50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((p, i) => [i + 1, p]));
+
+  it("vat een lange schaal samen met kop en staart", () => {
+    expect(puntenSchaal(schema)).toBe("Punten volgens de schaal 50-40-32-26-22-20\u20261 voor plek 1 t/m 20.");
+  });
+
+  it("toont een korte schaal helemaal", () => {
+    expect(puntenSchaal(new Map([[1, 10], [2, 6], [3, 3]]))).toBe("Punten volgens de schaal 10-6-3 voor plek 1 t/m 3.");
+  });
+
+  it("telt niet verder dan plek 20, net als de puntentelling", () => {
+    const lang = new Map(Array.from({ length: 30 }, (_, i) => [i + 1, 30 - i]));
+    expect(puntenSchaal(lang)).toContain("plek 1 t/m 20");
+  });
+
+  it("zegt niets zonder scorende plekken", () => {
+    expect(puntenSchaal(new Map())).toBeNull();
+    expect(puntenSchaal(new Map([[1, 0]]))).toBeNull();
   });
 });
 

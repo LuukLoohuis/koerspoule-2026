@@ -419,15 +419,21 @@ export function matchRider(
  * heette het hele veld "Kopgroep".
  *
  * Het peloton is de grootste groep; dat is ook hoe de wedstrijdleiding het
- * bepaalt. Alles ervoor is kop, alles erna is gelost. Namen die niet van
+ * bepaalt. Alles ervoor is kop, alles erna rijdt achter. Namen die niet van
  * toepassing zijn komen zo vanzelf niet voor.
+ *
+ * Alleen groepen op de ronde van het peloton tellen mee: zet een grote groep
+ * het veld op een ronde, dan is die groter dan elk los pak erachter, maar
+ * daarmee nog geen peloton.
  */
 export function pelotonIndex(groups: LiveGroup[]): number {
-  let beste = 0;
-  for (let i = 1; i < groups.length; i += 1) {
-    if (groups[i].leden.length > groups[beste].leden.length) beste = i;
+  const opRonde = groups.some((g) => g.tier === 0);
+  let beste = -1;
+  for (let i = 0; i < groups.length; i += 1) {
+    if (opRonde && groups[i].tier !== 0) continue;
+    if (beste === -1 || groups[i].leden.length > groups[beste].leden.length) beste = i;
   }
-  return beste;
+  return Math.max(0, beste);
 }
 
 export function groepsNaam(groups: LiveGroup[], index: number): string {
@@ -435,28 +441,36 @@ export function groepsNaam(groups: LiveGroup[], index: number): string {
   if (!g) return "Groep";
   // Een ronde voorsprong weegt zwaarder dan de indeling: dat is geen kopgroep
   // meer maar een uitloper, en dat wil je met het aantal ronden erbij zien.
-  if (g.tier > 0) return `Kopgroep · +${g.tier}`;
+  if (g.tier > 0) return `${g.leden.length > 1 ? "Uitlopers" : "Uitloper"} · +${g.tier}`;
   const pel = pelotonIndex(groups);
   if (index === pel) return "Peloton";
-  if (index < pel) return index === 0 ? "Kopgroep" : "Eerste achtervolgers";
-  return "Gelost";
+  if (index > pel) return "Achterblijvers";
+  // De kopgroep is het eerste pak op de ronde van het peloton; uitlopers
+  // ervóór tellen niet mee, anders heet de echte kopgroep "achtervolgers".
+  return index === groups.findIndex((x) => x.tier <= 0) ? "Kopgroep" : "Achtervolgers";
 }
 
 /**
- * Rol van een groep in de koers. Bepaalt de kleur op de baan: drie kleuren,
- * los van het aantal ronden voorsprong. Een kopgroep met twee ronden marge is
- * nog steeds de kopgroep; dat verschil staat als badge naast het schijfje.
- * "Eerste achtervolgers" rijden vóór het peloton en horen dus bij de kop.
+ * Rol van een groep in de koers. Bepaalt de kleur op de baan: vier kleuren,
+ * zoals in het ontwerp (--mm-g-u, -k, -p en -a).
+ *
+ * - uitloper: een of meer ronden vóór het peloton;
+ * - kop: vóór het peloton op dezelfde ronde, dus ook de achtervolgers;
+ * - peloton: de grootste groep;
+ * - achter: alles erachter, ook wie op een ronde achterstand rijdt.
+ *
+ * Een uitloper met twee ronden marge krijgt dezelfde kleur als een met één:
+ * het aantal staat als badge naast het schijfje.
  */
-export type GroepsRol = "kop" | "peloton" | "gelost";
+export type GroepsRol = "uitloper" | "kop" | "peloton" | "achter";
 
 export function groepsRol(groups: LiveGroup[], index: number): GroepsRol {
   const g = groups[index];
   if (!g) return "peloton";
-  if (g.tier > 0) return "kop";
+  if (g.tier > 0) return "uitloper";
   const pel = pelotonIndex(groups);
   if (index === pel) return "peloton";
-  return index < pel ? "kop" : "gelost";
+  return index < pel ? "kop" : "achter";
 }
 
 /**
@@ -518,7 +532,10 @@ export function kopSamenvatting(
   groups: LiveGroup[],
   mineBeennummers: Set<string>,
 ): { titel: string; sub: string; eigen: string[] } | null {
-  const kopGroepen = groups.filter((_g, i) => groepsRol(groups, i) === "kop");
+  const kopGroepen = groups.filter((_g, i) => {
+    const rol = groepsRol(groups, i);
+    return rol === "uitloper" || rol === "kop";
+  });
   if (kopGroepen.length === 0) return null;
   const kop = kopGroepen[0];
   const tijdgat = groups[1]?.gapToPrev ?? null;
