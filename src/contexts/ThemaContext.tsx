@@ -36,10 +36,16 @@ type ThemeGame = {
   theme?: string | null;
 } | null;
 
-/** Meermarathon voert de globale winterstijl uitsluitend tijdens de livefase. */
+/**
+ * Meermarathon voert de globale winterstijl vanaf de inschrijving tot het
+ * einde van de livefase (locked is de oude naam voor live). Een sneak preview,
+ * concept of afgerond seizoen kleurt de site niet winters.
+ */
+const WINTER_STATUSSEN = ["open_inschrijving", "live", "locked"];
+
 export function resolveSiteThemaKey(game: ThemeGame): ThemaKey {
   if (game?.game_type === "meermarathon") {
-    return game.status === "live" ? "winter" : "roze";
+    return WINTER_STATUSSEN.includes(String(game.status ?? "")) ? "winter" : "roze";
   }
   return deriveThemaKey(game?.theme, game?.game_type);
 }
@@ -111,7 +117,7 @@ function applyThemaTokens(key: ThemaKey, opts: { persist?: boolean } = {}) {
   try {
     if (key === "winter") {
       // Winter mag bij een volgende start niet uit cache verschijnen als de
-      // Meermarathon inmiddels niet meer live staat.
+      // Meermarathon inmiddels is afgelopen.
       localStorage.removeItem(THEMA_TOKENS_LS_KEY);
     } else {
       const primair = hexToHsl(k.primair);

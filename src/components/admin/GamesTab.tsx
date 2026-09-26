@@ -391,7 +391,7 @@ export default function GamesTab({
 
       {/* Thema migration note */}
       <div className="text-xs text-muted-foreground bg-muted/50 border border-border rounded px-3 py-2">
-        <strong>Thema:</strong> 🌸 Giro · 💛 Tour · 🔴 Vuelta · ❄️ Winter. Het winterthema wordt alleen actief als Meermarathon op Live staat. Vereist kolom in database:{" "}
+        <strong>Thema:</strong> 🌸 Giro · 💛 Tour · 🔴 Vuelta · ❄️ Winter. Het winterthema is actief zolang de Meermarathon op Inschrijving open of Live staat. Vereist kolom in database:{" "}
         <code className="font-mono bg-muted px-1 rounded">
           ALTER TABLE games ADD COLUMN IF NOT EXISTS theme text;
         </code>{" "}

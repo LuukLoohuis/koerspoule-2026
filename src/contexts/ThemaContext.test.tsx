@@ -100,7 +100,7 @@ describe("ThemaProvider + KoerspouleLogo", () => {
     expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-giro.svg");
   });
 
-  it("activeert winterbranding alleen als Meermarathon exact live staat", () => {
+  it("activeert winterbranding vanaf de inschrijving tot en met de livefase", () => {
     selectedGameState.games = [
       { id: "marathon-2026", game_type: "meermarathon", theme: "winter", status: "open", year: 2026 },
     ];
@@ -129,8 +129,22 @@ describe("ThemaProvider + KoerspouleLogo", () => {
     expect(storage.has("koerspoule:themaKey")).toBe(false);
     expect(storage.has("koerspoule:themaTokens")).toBe(false);
 
+    // Tijdens de inschrijving is de site al winters, en locked werkt als live.
+    for (const status of ["open_inschrijving", "locked"]) {
+      selectedGameState.games = [
+        { id: "marathon-2026", game_type: "meermarathon", theme: "winter", status, year: 2026 },
+      ];
+      rerender(
+        <ThemaProvider>
+          <BrandingProbe />
+        </ThemaProvider>,
+      );
+      expect(screen.getByTestId("theme-key")).toHaveTextContent("winter");
+    }
+
+    // Afgerond: terug naar het neutrale thema.
     selectedGameState.games = [
-      { id: "marathon-2026", game_type: "meermarathon", theme: "winter", status: "locked", year: 2026 },
+      { id: "marathon-2026", game_type: "meermarathon", theme: "winter", status: "finished", year: 2026 },
     ];
     rerender(
       <ThemaProvider>
