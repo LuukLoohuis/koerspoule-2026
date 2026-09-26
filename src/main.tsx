@@ -7,6 +7,7 @@ import { initPostHog } from "@/lib/posthog";
 import "./index.css";
 import "./styles/salle-de-course.css";
 import "./styles/meermarathon.css";
+import "./styles/meermarathon-thema.css";
 
 initPostHog();
 

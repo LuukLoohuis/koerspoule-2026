@@ -1,0 +1,125 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Meermarathon — kleurtokens (Claude Design-handoff, seizoen 2026–2027)
+
+   Licht = "Winter verfijnd": grijswit papier, diep marineblauw, koperaccent.
+   Nacht = "Nachtijs": donker, ijsblauw, amber. Aan via data-modus="nacht".
+
+   Formaat zoals src/index.css: HSL-triplets zonder hsl()-wrapper, zodat
+   bg-primary, hsl(var(--primary)) enz. gewoon werken. De --mm-* variabelen
+   zijn hex en worden direct gebruikt (background: var(--mm-v)).
+
+   ThemaContext zet voor winter bewust níéts inline op <html>; inline zou van
+   deze regels winnen en de nachtmodus onmogelijk maken.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Meermarathon-kleuren: altijd beschikbaar. De koersbalk en de
+   Meermarathon-schermen staan er ook als het site-thema (nog) niet op winter
+   staat, bv. tijdens de inschrijving. */
+:root {
+  --mm-v: #1F6E8C;
+  --mm-v2: #2A7F9F;
+  --mm-m: #1B3F73;
+  --mm-m2: #24518F;
+  --mm-chip: #E3ECF3;
+  --mm-kpi1: #0E2238;
+  --mm-kpi2: #1B3F73;
+  --mm-kpi-fg: #FFFFFF;
+  --mm-kpi-sub: #BFD0E2;
+  --mm-hot: #B8431B;
+  --mm-alert-bg: #FBEADF;
+  --mm-alert-line: #E8B79B;
+  --mm-alert-fg: #7A2E10;
+  --mm-rink-bg: #F4F7FA;
+  --mm-rink-track: #DCE5EE;
+  --mm-rink-line: #FFFFFF;
+  --mm-g-u: #C98A2E;
+  --mm-g-k: #0E2238;
+  --mm-g-p: #52627A;
+  --mm-g-a: #9AA7B8;
+}
+
+/* Licht · Winter verfijnd */
+:root[data-thema="winter"] {
+  --background: 204 24% 96%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
+  --foreground: 211 60% 14%;
+  --card-foreground: 211 60% 14%;
+  --popover-foreground: 211 60% 14%;
+  --secondary: 207 28% 92%;
+  --secondary-foreground: 216 44% 22%;
+  --muted: 207 28% 92%;
+  --muted-foreground: 216 20% 40%;
+  --accent: 207 28% 92%;
+  --accent-foreground: 216 44% 22%;
+  --border: 208 24% 86%;
+  --input: 209 22% 81%;
+  --primary: 215 62% 28%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 215 62% 28%;
+  --jersey-pink: 215 62% 28%;
+  --sidebar-primary: 215 62% 28%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-ring: 215 62% 28%;
+  --vintage-gold: 36 63% 48%;
+  --paper: 204 24% 96%;
+  --paper-dark: 207 28% 92%;
+  --ink: 211 60% 14%;
+  --ink-soft: 215 29% 28%;
+  --hand-ink: 215 62% 28%;
+  --bolletje-kleur: #C98A2E;
+}
+
+/* Nacht · Nachtijs */
+:root[data-thema="winter"][data-modus="nacht"] {
+  color-scheme: dark;
+  --background: 217 45% 9%;
+  --card: 218 42% 14%;
+  --popover: 218 42% 14%;
+  --foreground: 214 44% 94%;
+  --card-foreground: 214 44% 94%;
+  --popover-foreground: 214 44% 94%;
+  --secondary: 217 39% 18%;
+  --secondary-foreground: 214 33% 88%;
+  --muted: 217 39% 18%;
+  --muted-foreground: 215 23% 68%;
+  --accent: 217 39% 18%;
+  --accent-foreground: 214 33% 88%;
+  --border: 217 33% 25%;
+  --input: 219 34% 31%;
+  --primary: 203 79% 71%;
+  --primary-foreground: 217 45% 9%;
+  --ring: 203 79% 71%;
+  --jersey-pink: 203 79% 71%;
+  --sidebar-primary: 203 79% 71%;
+  --sidebar-primary-foreground: 217 45% 9%;
+  --sidebar-ring: 203 79% 71%;
+  --vintage-gold: 39 87% 61%;
+  --paper: 217 45% 9%;
+  --paper-dark: 217 39% 18%;
+  --ink: 214 44% 94%;
+  --ink-soft: 214 27% 82%;
+  --hand-ink: 203 79% 71%;
+  --bolletje-kleur: #F2B544;
+
+  --mm-v: #0F6E8C;
+  --mm-v2: #12809F;
+  --mm-m: #2B4F7E;
+  --mm-m2: #355E94;
+  --mm-chip: #1C2A40;
+  --mm-kpi1: #152033;
+  --mm-kpi2: #1C2A40;
+  --mm-kpi-fg: #E8EEF6;
+  --mm-kpi-sub: #9AAAC0;
+  --mm-hot: #DC2626;
+  --mm-alert-bg: #3A1C22;
+  --mm-alert-line: #7F2F3A;
+  --mm-alert-fg: #FCA5A5;
+  --mm-rink-bg: #111C2C;
+  --mm-rink-track: #1C2A40;
+  --mm-rink-line: #2A3A54;
+  --mm-g-u: #F2B544;
+  --mm-g-k: #7CC4F0;
+  --mm-g-p: #5B7BA6;
+  --mm-g-a: #6B7A90;
+}

@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Menu, X, Instagram } from "lucide-react";
+import { Menu, X, Instagram, Moon, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useAllGames } from "@/hooks/useAllGames";
@@ -45,7 +45,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, role } = useAuth();
-  const { thema, canPreview, previewKey, setPreviewKey } = useThema();
+  const { thema, key: themaKey, canPreview, previewKey, setPreviewKey } = useThema();
   const { data: allGames = [] } = useAllGames();
   const { t } = useTranslation();
   const isLoggedIn = Boolean(user);
@@ -98,6 +98,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   setPreviewKey={setPreviewKey}
                 />
               )}
+              {themaKey === "winter" && <NachtModusKnop className="hidden md:inline-flex" />}
               {/* Taal en Instagram staan in één omlijsting: drie vakjes achter
                   elkaar (NL | EN | ig) in plaats van twee losse blokjes met een
                   gat ertussen. De scheiding is een haarlijn, geen tweede rand. */}
@@ -203,6 +204,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <ThemePreviewSelect previewKey={previewKey} setPreviewKey={setPreviewKey} />
               </div>
             )}
+            {themaKey === "winter" && (
+              <div className="w-full border-t border-border/40 pt-2 mt-1">
+                <NachtModusKnop metLabel />
+              </div>
+            )}
             <div className="w-full border-t border-border/40 pt-2 mt-1 flex">
               {isLoggedIn ? (
                 <button
@@ -292,6 +298,31 @@ export default function Layout({ children }: { children: React.ReactNode }) {
  * (nooit voor andere bezoekers). Geldt voor alle spellen — niet alleen
  * Meermarathon — zodat elk thema los van de kalender te bekijken is.
  */
+/** Nachtijs aan/uit. Alleen zinvol (en zichtbaar) in het winterthema. */
+function NachtModusKnop({ className, metLabel = false }: { className?: string; metLabel?: boolean }) {
+  const { modus, setModus } = useThema();
+  const { t } = useTranslation();
+  const nacht = modus === "nacht";
+  const label = nacht ? t("shell.nachtUit") : t("shell.nachtAan");
+  return (
+    <button
+      type="button"
+      onClick={() => setModus(nacht ? "licht" : "nacht")}
+      aria-pressed={nacht}
+      aria-label={metLabel ? undefined : label}
+      title={label}
+      className={cn(
+        "items-center justify-center gap-2 h-9 rounded-lg border border-foreground/30 hover:bg-secondary transition-colors",
+        metLabel ? "inline-flex px-3 text-sm font-medium" : "w-9",
+        className,
+      )}
+    >
+      {nacht ? <Sun className="h-[18px] w-[18px]" aria-hidden /> : <Moon className="h-[18px] w-[18px]" aria-hidden />}
+      {metLabel && <span>{label}</span>}
+    </button>
+  );
+}
+
 function ThemePreviewSelect({
   previewKey,
   setPreviewKey,

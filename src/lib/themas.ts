@@ -165,7 +165,10 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     logo: "/koerspoule-meermarathon.png",
     favicon: "/favicon-meermarathon.svg",
     logoVerhouding: 766 / 720,
-    kleuren: { primair: "#14538E", secundair: "#4FA8D8", achtergrond: "#F4F9FC", kaart: "#E4F0FA", tekst: "#0B2C4D", accent: "#4FA8D8" },
+    // "Winter verfijnd" (licht). De site-tokens staan in
+    // styles/meermarathon-thema.css, samen met de nachtmodus; deze waarden
+    // zijn voor plekken die een hex nodig hebben (favicon, exports).
+    kleuren: { primair: "#1B3F73", secundair: "#1F6E8C", achtergrond: "#F2F5F7", kaart: "#FFFFFF", tekst: "#0E2238", accent: "#C98A2E" },
     krant: "IJsjournaal",
     koers: "Meermarathon",
     etappe: "Wedstrijd",

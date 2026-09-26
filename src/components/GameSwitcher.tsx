@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import FlagIcon from "@/components/FlagIcon";
 import { gameTheme, type GameRow } from "@/hooks/useAllGames";
 import { isVisibleToUser, isAdminOnlyStatus, statusBadge, statusOrderRank, isFinishedLike } from "@/lib/gameStatus";
-import { meermarathonCategorieLabel, meermarathonSeasonKort, isMeermarathonGame } from "@/lib/gameTypes";
+import { meermarathonCategorieRang, meermarathonSeasonKort, isMeermarathonGame } from "@/lib/gameTypes";
 
 type Props = {
   games: GameRow[];
@@ -29,7 +29,7 @@ type Props = {
 
 const raceGradient = (type: string | null | undefined) => {
   if (isMeermarathonGame(type)) {
-    return "linear-gradient(135deg, #061f4f 0%, #0b4c91 52%, #167fbd 100%)";
+    return "linear-gradient(135deg, var(--mm-m), var(--mm-m2))";
   }
   const c = gameTheme(type).colors;
   return `linear-gradient(135deg, ${c[0]}, ${c[1]}, ${c[2]})`;
@@ -40,13 +40,9 @@ function segmentName(game: GameRow, finished: boolean): string {
   const y = game.year;
   const t = String(game.game_type ?? "").toLowerCase();
   // Verkort seizoen: "Meermarathon 2026-2027" liep in dit smalle segment
-  // tegen de afkapping aan. Met een categorie zegt de sneeuwvlok al
-  // "Meermarathon"; "Vrouwen" en "Mannen" krijgen die plek, zodat de twee
-  // schaatsgames naast elkaar niet hetzelfde heten.
-  if (isMeermarathonGame(t)) {
-    const categorie = meermarathonCategorieLabel(game.categorie);
-    return `${categorie ?? "Meermarathon"} ${meermarathonSeasonKort(y)}`;
-  }
+  // tegen de afkapping aan. Vrouwen en Mannen delen één segment; de keuze
+  // daartussen maakt de koersbalk.
+  if (isMeermarathonGame(t)) return `Meermarathon ${meermarathonSeasonKort(y)}`;
   if (finished) {
     if (t === "giro") return `Giro ${y}`;
     if (t === "vuelta" || t === "vta") return `Vuelta ${y}`;
@@ -59,13 +55,38 @@ function segmentName(game: GameRow, finished: boolean): string {
   return `Tour de France ${y}`;
 }
 
+/**
+ * Meermarathon Vrouwen en Mannen van één seizoen worden hier één segment: de
+ * keuze daartussen hoort bij de koersbalk, niet bij de keuze van de koers.
+ * Het segment staat voor de gekozen categorie als die in dit seizoen zit,
+ * anders voor de eerste (vrouwen).
+ */
+export function eenSegmentPerSeizoen<T extends { id: string; game_type?: string | null; year: number; categorie?: string | null }>(
+  games: T[],
+  selectedId: string | null,
+): T[] {
+  const perSeizoen = new Map<number, T[]>();
+  for (const g of games) {
+    if (!isMeermarathonGame(g.game_type)) continue;
+    perSeizoen.set(g.year, [...(perSeizoen.get(g.year) ?? []), g]);
+  }
+  const vertegenwoordiger = new Map<number, string>();
+  for (const [jaar, groep] of perSeizoen) {
+    const gekozen = groep.find((g) => g.id === selectedId);
+    const eerste = [...groep].sort((a, b) => meermarathonCategorieRang(a.categorie) - meermarathonCategorieRang(b.categorie))[0];
+    vertegenwoordiger.set(jaar, (gekozen ?? eerste).id);
+  }
+  return games.filter((g) => !isMeermarathonGame(g.game_type) || vertegenwoordiger.get(g.year) === g.id);
+}
+
 export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = false, className }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
 
-  const ordered = [...games]
-    .filter((g) => isVisibleToUser(g.status, isAdmin))
-    .sort((a, b) => statusOrderRank(a.status) - statusOrderRank(b.status));
+  const ordered = eenSegmentPerSeizoen(
+    [...games].filter((g) => isVisibleToUser(g.status, isAdmin)),
+    selectedId,
+  ).sort((a, b) => statusOrderRank(a.status) - statusOrderRank(b.status));
 
   // Actieve segment in beeld scrollen (mobiel; desktop no-op want geen scroll).
   useEffect(() => {
@@ -110,6 +131,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
           const theme = gameTheme(game.game_type);
           const meermarathon = isMeermarathonGame(game.game_type);
           const isActive = selectedId === game.id;
+          const segmentLabel = meermarathon ? `Meermarathon ${game.year}-${game.year + 1}` : game.name;
           const concept = isAdminOnlyStatus(game.status);
           const badge = statusBadge(game.status);
           const finished = isFinishedLike(game.status);
@@ -122,7 +144,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
               type="button"
               onClick={() => onSelect(game.id)}
               aria-current={isActive ? "true" : undefined}
-              aria-label={game.name}
+              aria-label={segmentLabel}
               className={cn(
                 // Mobiel: vaste minimumbreedte + shrink-0 (scrollt). Desktop:
                 // mag krimpen (md:shrink) zodat vier segmenten ALTIJD passen —
@@ -169,7 +191,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
                       aria-hidden
                       className={cn(
                         "grid h-7 w-7 shrink-0 place-items-center rounded-full",
-                        isActive ? "bg-white/12 text-white" : "bg-[#ddecf8] text-[#0b4c91]",
+                        isActive ? "bg-white/12 text-white" : "bg-[var(--mm-chip)] text-[var(--mm-m)]",
                       )}
                     >
                       <Snowflake className="h-[18px] w-[18px]" strokeWidth={1.8} />

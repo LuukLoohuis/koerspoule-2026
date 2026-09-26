@@ -12,7 +12,12 @@ type ThemaContextValue = {
   canPreview: boolean;
   previewKey: ThemaKey | null;
   setPreviewKey: (key: ThemaKey | null) => void;
+  /** Nachtmodus ("Nachtijs") bestaat alleen voor het winterthema. */
+  modus: Modus;
+  setModus: (modus: Modus) => void;
 };
+
+export type Modus = "licht" | "nacht";
 
 const ThemaContext = createContext<ThemaContextValue>({
   thema: THEMAS.roze,
@@ -21,6 +26,8 @@ const ThemaContext = createContext<ThemaContextValue>({
   canPreview: false,
   previewKey: null,
   setPreviewKey: () => {},
+  modus: "licht",
+  setModus: () => {},
 });
 
 type ThemeGame = {
@@ -37,6 +44,15 @@ export function resolveSiteThemaKey(game: ThemeGame): ThemaKey {
   return deriveThemaKey(game?.theme, game?.game_type);
 }
 
+/** Papier en inkt: alleen winter kleurt die, en dat doet de CSS. */
+const PAPIER_TOKENS = ["--background", "--card", "--popover", "--foreground", "--card-foreground", "--popover-foreground"];
+/** Alles wat applyThemaTokens ooit inline zet. */
+const INLINE_TOKENS = [
+  "--primary", "--primary-foreground", "--ring", "--jersey-pink",
+  "--sidebar-primary", "--sidebar-ring", "--sidebar-primary-foreground",
+  "--vintage-gold", ...PAPIER_TOKENS,
+];
+
 /** Zet de thema-kleuren op de bestaande HSL-tokens → hele site herkleurt. */
 function applyThemaTokens(key: ThemaKey, opts: { persist?: boolean } = {}) {
   const persist = opts.persist ?? true;
@@ -44,43 +60,30 @@ function applyThemaTokens(key: ThemaKey, opts: { persist?: boolean } = {}) {
   const root = document.documentElement;
   const k = t.kleuren;
 
-  const primair = hexToHsl(k.primair);
-  const primairFg = readableForeground(k.primair);
-  const achtergrond = hexToHsl(k.achtergrond);
-  const kaart = hexToHsl(k.kaart ?? k.achtergrond);
-  const tekst = hexToHsl(k.tekst);
-  const accent = hexToHsl(k.accent);
-
-  // Brand / primair
-  root.style.setProperty("--primary", primair);
-  root.style.setProperty("--primary-foreground", primairFg);
-  root.style.setProperty("--ring", primair);
-  root.style.setProperty("--jersey-pink", primair);
-  root.style.setProperty("--sidebar-primary", primair);
-  root.style.setProperty("--sidebar-ring", primair);
-  root.style.setProperty("--sidebar-primary-foreground", primairFg);
-
   if (key === "winter") {
-    // Meermarathon is het enige thema met een volledige recolor (achtergrond +
-    // kaart + tekst) — de koersthema's blijven bewust op het neutrale
-    // crème-papier (een getinte achtergrond vond de gebruiker daar te fel).
-    root.style.setProperty("--background", achtergrond);
-    root.style.setProperty("--card", kaart);
-    root.style.setProperty("--popover", kaart);
-    root.style.setProperty("--foreground", tekst);
-    root.style.setProperty("--card-foreground", tekst);
-    root.style.setProperty("--popover-foreground", tekst);
+    // Winter haalt al zijn kleuren uit styles/meermarathon-thema.css, licht én
+    // nacht. Inline op <html> zou daarvan winnen, dus hier alles weg.
+    for (const token of INLINE_TOKENS) root.style.removeProperty(token);
   } else {
-    root.style.removeProperty("--background");
-    root.style.removeProperty("--card");
-    root.style.removeProperty("--popover");
-    root.style.removeProperty("--foreground");
-    root.style.removeProperty("--card-foreground");
-    root.style.removeProperty("--popover-foreground");
-  }
+    const primair = hexToHsl(k.primair);
+    const primairFg = readableForeground(k.primair);
 
-  // Retro-gold accent → secundair/accent van het thema
-  root.style.setProperty("--vintage-gold", accent);
+    // Brand / primair
+    root.style.setProperty("--primary", primair);
+    root.style.setProperty("--primary-foreground", primairFg);
+    root.style.setProperty("--ring", primair);
+    root.style.setProperty("--jersey-pink", primair);
+    root.style.setProperty("--sidebar-primary", primair);
+    root.style.setProperty("--sidebar-ring", primair);
+    root.style.setProperty("--sidebar-primary-foreground", primairFg);
+
+    // De koersthema's blijven bewust op het neutrale crème-papier (een
+    // getinte achtergrond vond de gebruiker daar te fel).
+    for (const token of PAPIER_TOKENS) root.style.removeProperty(token);
+
+    // Retro-gold accent → secundair/accent van het thema
+    root.style.setProperty("--vintage-gold", hexToHsl(k.accent));
+  }
 
   root.setAttribute("data-thema", key);
 
@@ -111,15 +114,29 @@ function applyThemaTokens(key: ThemaKey, opts: { persist?: boolean } = {}) {
       // Meermarathon inmiddels niet meer live staat.
       localStorage.removeItem(THEMA_TOKENS_LS_KEY);
     } else {
+      const primair = hexToHsl(k.primair);
       localStorage.setItem(
         THEMA_TOKENS_LS_KEY,
-        JSON.stringify({ "--primary": primair, "--primary-foreground": primairFg, "--ring": primair, "--jersey-pink": primair, "--vintage-gold": accent }),
+        JSON.stringify({ "--primary": primair, "--primary-foreground": readableForeground(k.primair), "--ring": primair, "--jersey-pink": primair, "--vintage-gold": hexToHsl(k.accent) }),
       );
     }
   } catch { /* ignore */ }
 }
 
 const THEMA_LS_KEY = "koerspoule:themaKey";
+const MODUS_LS_KEY = "koerspoule:modus";
+
+/**
+ * Standaard licht, ook als het systeem donker staat: alleen de Meermarathon-
+ * schermen zijn voor de nacht ontworpen. Wie hem aanzet, houdt hem aan.
+ */
+function readModus(): Modus {
+  try {
+    return typeof localStorage !== "undefined" && localStorage.getItem(MODUS_LS_KEY) === "nacht" ? "nacht" : "licht";
+  } catch {
+    return "licht";
+  }
+}
 const THEMA_TOKENS_LS_KEY = "koerspoule:themaTokens";
 const PREVIEW_SS_KEY = "koerspoule:adminThemaPreview";
 
@@ -185,6 +202,15 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
   };
   const isPreviewing = canPreview && previewKey != null;
 
+  const [modus, setModusState] = useState<Modus>(() => readModus());
+  const setModus = (next: Modus) => {
+    setModusState(next);
+    try {
+      if (next === "nacht") localStorage.setItem(MODUS_LS_KEY, next);
+      else localStorage.removeItem(MODUS_LS_KEY);
+    } catch { /* ignore */ }
+  };
+
   // Definitief thema zodra de bron geladen is; daarvóór de cache (indien er is).
   const liveKey = isFetched ? resolveSiteThemaKey(activeGame) : null;
   const fetchedKey = isPreviewing ? previewKey : liveKey;
@@ -212,8 +238,16 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isPreviewing, previewKey, isFetched, liveKey, cachedKey]);
 
+  // De tokens voor de nacht hangen aan [data-thema="winter"][data-modus="nacht"];
+  // buiten winter mag het attribuut dus ook niet blijven hangen.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (key === "winter" && modus === "nacht") root.setAttribute("data-modus", "nacht");
+    else root.removeAttribute("data-modus");
+  }, [key, modus]);
+
   return (
-    <ThemaContext.Provider value={{ thema: THEMAS[key], key, ready, canPreview, previewKey, setPreviewKey }}>
+    <ThemaContext.Provider value={{ thema: THEMAS[key], key, ready, canPreview, previewKey, setPreviewKey, modus, setModus }}>
       {children}
     </ThemaContext.Provider>
   );

@@ -41,7 +41,9 @@ import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import GameSwitcher from "@/components/GameSwitcher";
-import { isAdminOnlyStatus, isGameLocked, maySeeLiveContent } from "@/lib/gameStatus";
+import MeermarathonKoersbalk from "@/components/meermarathon/Koersbalk";
+import MijnMeermarathon from "@/components/meermarathon/MijnMeermarathon";
+import { isAdminOnlyStatus, isFinishedLike, isGameLocked, isVisibleToUser, maySeeLiveContent } from "@/lib/gameStatus";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { Input } from "@/components/ui/input";
@@ -1162,6 +1164,13 @@ export default function MijnPeloton() {
   /* ── Main overview ── */
   const hasTeamName = Boolean(teamName?.trim());
 
+  // De Krant toont beide Meermarathon-games tegelijk; daar geen koersbalk.
+  const isMeermarathonGekozen = isMeermarathonGame(selectedGameObj?.game_type);
+  const andereKoersLoopt = allGamesCtx.some(
+    (g) => !isMeermarathonGame(g.game_type) && isVisibleToUser(g.status, isAdmin) && !isFinishedLike(g.status),
+  );
+  const toonKoersbalk = isMeermarathonGekozen && gameTab !== "karavaan";
+
   // De zijkolom bestaat alleen zolang er iets in staat; anders zou er op
   // desktop een lege kolom van 268px blijven hangen.
   const toontOnboarding =
@@ -1171,8 +1180,11 @@ export default function MijnPeloton() {
   return (
     <div className="container mx-auto px-5 pb-4 md:py-6">
       {/* Game-switcher (vertrekbord) — alleen ingelogd + >1 zichtbare game.
-          Gecentreerd in de contentkolom, gelijk met de tabbalk eronder. */}
-      {authUser && (
+          Gecentreerd in de contentkolom, gelijk met de tabbalk eronder.
+          Bij de Meermarathon neemt de koersbalk (Vrouwen/Mannen) het over,
+          tenzij er ook nog een wielerkoers loopt. */}
+      {authUser && toonKoersbalk && <MeermarathonKoersbalk className="md:hidden mb-2" />}
+      {authUser && (!isMeermarathonGekozen || andereKoersLoopt) && (
         <GameSwitcher
           games={allGamesCtx}
           selectedId={selectedGameObj?.id ?? null}
@@ -1305,6 +1317,8 @@ export default function MijnPeloton() {
 
           {/* Mobile primary tabs verwijderd — BottomNav is enige top-level switcher op mobiel */}
 
+
+          {authUser && toonKoersbalk && <MeermarathonKoersbalk className="hidden md:block max-w-2xl mx-auto mb-4" />}
 
           {/* Desktop tab nav — retro dossard-tabbalk */}
           <RetroTabs
@@ -1454,6 +1468,14 @@ export default function MijnPeloton() {
           <TabsContent value="karavaan" className="mt-3" data-rondleiding-doel="karavaan-inhoud">
             {/* StatusBlok verwijderd: de standbalk onderin de voorpagina toont
                 dezelfde cijfers, en twee keer je positie boven elkaar is dubbel. */}
+            {isMeermarathonGekozen && (
+              <MijnMeermarathon
+                onNaarVolgwagen={(id) => {
+                  setSelectedGameId(id);
+                  gaNaarTab("team");
+                }}
+              />
+            )}
             <KaravaanFeed
               onGoToPloeg={() => gaNaarTab("team")}
               onOpenHors={openHors}
