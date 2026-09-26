@@ -186,6 +186,17 @@ describe("klassement", () => {
     expect(groups[0].leden[2].gapInGroup).toBeCloseTo(1.2, 1);
   });
 
+  it("splitst pas bij méér dan 1,5 s tussen twee rijders", () => {
+    const veld = [
+      rider("1", "A", 15, 100),
+      rider("2", "B", 15, 101.5), // precies 1,5 s: blijft erbij
+      rider("3", "C", 15, 103.1), // 1,6 s: eigen groep
+    ];
+    const groups = buildGroups(veld);
+    expect(groups.map((g) => g.leden.length)).toEqual([2, 1]);
+    expect(groups[1].gapToPrev).toBeCloseTo(1.6, 1);
+  });
+
   it("geeft een leeg veld geen groepen", () => {
     expect(buildGroups([])).toEqual([]);
   });
@@ -540,7 +551,11 @@ describe("kopSamenvatting", () => {
   });
 
   it("zegt niets bij een kopgroep op een klein gat", () => {
-    expect(kopSamenvatting([groep(["a", "b"]), peloton(2)], new Set())).toBeNull();
+    expect(kopSamenvatting([groep(["a", "b"]), peloton(1.5)], new Set())).toBeNull();
+  });
+
+  it("meldt een kopgroep zodra het gat groter is dan 1,5 s", () => {
+    expect(kopSamenvatting([groep(["a", "b"]), peloton(2)], new Set())?.titel).toBe("2 rijders weg · +2,0s");
   });
 
   it("meldt een kopgroep met ronde-voorsprong", () => {

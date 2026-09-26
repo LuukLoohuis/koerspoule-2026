@@ -238,11 +238,17 @@ export type LiveGroup = {
   gapToPrev: number | null;
 };
 
-export const GAP_THRESHOLD_S = 4;
+/**
+ * Meer dan 1,5 s tussen twee rijders is bij zo'n 45 km/u bijna 20 meter: uit
+ * de luwte, dus niet meer in hetzelfde pak.
+ */
+export const GAP_THRESHOLD_S = 1.5;
 
 /**
  * Deel het veld op in groepen. Een breuk ontstaat bij een ronde-verschil, of —
- * binnen dezelfde ronde — bij een tijdgat vanaf `gapThreshold` seconden.
+ * binnen dezelfde ronde — bij een tijdgat van méér dan `gapThreshold` seconden
+ * tussen twee opeenvolgende rijders. Het gat is het verschil in doorkomsttijd
+ * (TijdSort) bij de laatste passage van de finishlijn.
  * Ronden wegen zwaarder dan tijd: wie een ronde voorligt staat altijd hoger.
  */
 export function buildGroups(
@@ -264,7 +270,7 @@ export function buildGroups(
     const prev = sorted[i - 1];
     const lapChange = prev ? rider.aantalRonden !== prev.aantalRonden : false;
     const timeGap = prev ? secondsBetween(rider.tijdSort, prev.tijdSort) : null;
-    const timeBreak = !lapChange && timeGap !== null && timeGap >= gapThreshold;
+    const timeBreak = !lapChange && timeGap !== null && timeGap > gapThreshold;
 
     if (prev && (lapChange || timeBreak) && current.length > 0) {
       groups.push({
@@ -516,7 +522,7 @@ export function kopSamenvatting(
   if (kopGroepen.length === 0) return null;
   const kop = kopGroepen[0];
   const tijdgat = groups[1]?.gapToPrev ?? null;
-  if (kop.tier <= 0 && (tijdgat == null || tijdgat < GAP_THRESHOLD_S)) return null;
+  if (kop.tier <= 0 && (tijdgat == null || tijdgat <= GAP_THRESHOLD_S)) return null;
 
   const n = kop.leden.length;
   const rijders = `${n} rijder${n > 1 ? "s" : ""}`;
