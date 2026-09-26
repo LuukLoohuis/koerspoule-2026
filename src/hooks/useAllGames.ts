@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { meermarathonCategorieRang } from "@/lib/gameTypes";
 
 export type GameRow = {
   id: string;
@@ -7,6 +8,8 @@ export type GameRow = {
   year: number;
   status: "concept" | "draft" | "open" | "open_inschrijving" | "locked" | "live" | "finished" | string;
   game_type: "giro" | "tour" | "tdf" | "vuelta" | "femmes" | string | null;
+  /** Meermarathon: "vrouwen" of "mannen". Leeg bij wielergames. */
+  categorie?: "vrouwen" | "mannen" | string | null;
   /** Centrale themasleutel; game_type blijft de fallback voor oudere databases. */
   theme?: "roze" | "geel" | "rood" | string | null;
   prizes_visible?: boolean | null;
@@ -28,7 +31,8 @@ export function useAllGames() {
     refetchOnReconnect: true,
     queryFn: async (): Promise<GameRow[]> => {
       if (!supabase) return [];
-      const SELECT = "id, name, year, status, game_type, theme, prizes_visible, admin_testmodus, inschrijf_banner_visible, hors_banner_visible, deelnemers_teller_visible";
+      const SELECT_ZONDER_CATEGORIE = "id, name, year, status, game_type, theme, prizes_visible, admin_testmodus, inschrijf_banner_visible, hors_banner_visible, deelnemers_teller_visible";
+      const SELECT = `${SELECT_ZONDER_CATEGORIE}, categorie`;
       // Vóór de inschrijf_banner-migratie geeft de volle select een 42703
       // (undefined column) → val terug op de kolomlijst zonder dat veld.
       const SELECT_LEGACY = "id, name, year, status, game_type, prizes_visible, admin_testmodus";
@@ -38,9 +42,11 @@ export function useAllGames() {
           .select(select)
           .order("year", { ascending: false })
           .order("created_at", { ascending: false });
+      // Per ontbrekende kolom (42703: nog niet gemigreerd) één stap terug.
       let res = await fetchWith(SELECT);
-      if (res.error && (res.error as { code?: string }).code === "42703") {
-        res = await fetchWith(SELECT_LEGACY);
+      for (const fallback of [SELECT_ZONDER_CATEGORIE, SELECT_LEGACY]) {
+        if (!(res.error && (res.error as { code?: string }).code === "42703")) break;
+        res = await fetchWith(fallback);
       }
       if (res.error) throw res.error;
       const rows = (res.data ?? []) as unknown as GameRow[];
@@ -55,7 +61,9 @@ export function useAllGames() {
       };
       return [...rows].sort((a, b) => {
         if (b.year !== a.year) return b.year - a.year;
-        return typeOrder(a.game_type) - typeOrder(b.game_type);
+        // Binnen één seizoen staan Meermarathon Vrouwen en Mannen naast elkaar.
+        return typeOrder(a.game_type) - typeOrder(b.game_type)
+          || meermarathonCategorieRang(a.categorie) - meermarathonCategorieRang(b.categorie);
       });
     },
   });

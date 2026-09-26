@@ -166,29 +166,46 @@ Deno.serve(async (req: Request) => {
   // per wedstrijd, dus daar koppelen we bewust niet op. Bij twee gelijke namen
   // koppelen we niets: liever handwerk voor de beheerder dan de verkeerde
   // renner punten geven.
+  //
+  // Vrouwen en mannen zijn losse games met elk hun eigen baan. We zoeken dus
+  // alleen onder de schaatsers van de game(s) waaraan de baan hangt; anders
+  // kan een gelijke naam in de andere categorie de koppeling blokkeren.
+  const gamesPerTrack = new Map<string, Set<string>>();
+  for (const r of linkRows) {
+    if (!r.game_id) continue;
+    gamesPerTrack.set(r.track_id, (gamesPerTrack.get(r.track_id) ?? new Set<string>()).add(r.game_id));
+  }
   const gameIds = [...new Set(linkRows.map((r) => r.game_id).filter(Boolean))];
-  const candidates: { id: string; name: string; knsb: string | null }[] = [];
+  const candidates: { id: string; name: string; knsb: string | null; gameId: string }[] = [];
   if (gameIds.length > 0) {
     const { data: riderRows } = await admin
       .from("riders")
       .select("id, name, knsb_relatienummer, game_id")
       .in("game_id", gameIds);
     for (const r of riderRows ?? []) {
-      candidates.push({ id: r.id, name: r.name, knsb: r.knsb_relatienummer ?? null });
+      candidates.push({ id: r.id, name: r.name, knsb: r.knsb_relatienummer ?? null, gameId: r.game_id });
     }
   }
-  const byRelatienummer = new Map<string, string>();
-  const byName = new Map<string, string[]>();
-  for (const c of candidates) {
-    if (c.knsb) byRelatienummer.set(c.knsb, c.id);
-    const key = normalizeName(c.name);
-    byName.set(key, [...(byName.get(key) ?? []), c.id]);
-  }
-  const matchRiderId = (relatienummer: string | null, naam: string): string | null => {
-    if (relatienummer && byRelatienummer.has(relatienummer)) {
-      return byRelatienummer.get(relatienummer)!;
+  type RiderIndex = { byRelatienummer: Map<string, string>; byName: Map<string, string[]> };
+  const indexPerTrack = new Map<string, RiderIndex>();
+  for (const trackId of trackIds) {
+    const games = gamesPerTrack.get(trackId) ?? new Set<string>();
+    const index: RiderIndex = { byRelatienummer: new Map(), byName: new Map() };
+    for (const c of candidates) {
+      if (!games.has(c.gameId)) continue;
+      if (c.knsb) index.byRelatienummer.set(c.knsb, c.id);
+      const key = normalizeName(c.name);
+      index.byName.set(key, [...(index.byName.get(key) ?? []), c.id]);
     }
-    const hits = byName.get(normalizeName(naam)) ?? [];
+    indexPerTrack.set(trackId, index);
+  }
+  const matchRiderId = (trackId: string, relatienummer: string | null, naam: string): string | null => {
+    const index = indexPerTrack.get(trackId);
+    if (!index) return null;
+    if (relatienummer && index.byRelatienummer.has(relatienummer)) {
+      return index.byRelatienummer.get(relatienummer)!;
+    }
+    const hits = index.byName.get(normalizeName(naam)) ?? [];
     return hits.length === 1 ? hits[0] : null;
   };
 
@@ -251,7 +268,7 @@ Deno.serve(async (req: Request) => {
 
     let gekoppeld = 0;
     const standRows = rows.map((r, i) => {
-      const riderId = matchRiderId(r.relatienummer, r.naam!);
+      const riderId = matchRiderId(trackId, r.relatienummer, r.naam!);
       if (riderId) gekoppeld++;
       return { ...r, track_id: trackId, positie: i + 1, rider_id: riderId, synced_at: syncedAt };
     });

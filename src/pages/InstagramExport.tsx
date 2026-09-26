@@ -6,6 +6,7 @@ import { useStages, useGameStandings } from "@/hooks/useResults";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { meermarathonCategorieLabel } from "@/lib/gameTypes";
 import { Download, Copy, Instagram } from "lucide-react";
 import { toast } from "sonner";
 
@@ -982,7 +983,7 @@ function RaceCanvasCard({ kind, theme, geo, stageNumber, traject, rows, filename
 
 export default function InstagramExport({ gameId: propGameId, gameInfo }: {
   gameId?: string;
-  gameInfo?: { name: string; game_type?: string | null } | null;
+  gameInfo?: { name: string; game_type?: string | null; categorie?: string | null } | null;
 }) {
   const { data: currentGame } = useCurrentGame();
   // In Admin kan een andere game geselecteerd zijn dan de globale game-switcher.
@@ -994,7 +995,11 @@ export default function InstagramExport({ gameId: propGameId, gameInfo }: {
   const { key: themaKey } = useThema();
   const isFemmes = game?.game_type === "femmes" || /femmes/i.test(game?.name ?? "");
   const raceKey: RaceKey = isFemmes ? "femmes" : themaKey;
-  const raceTheme = RACE_THEMES[raceKey];
+  // Vrouwen en mannen zijn losse Meermarathon-games; de voettekst zegt welke.
+  const categorieLabel = meermarathonCategorieLabel(game?.categorie);
+  const raceTheme = raceKey === "winter" && categorieLabel
+    ? { ...RACE_THEMES.winter, race: RACE_THEMES.winter.race.replace("MEERMARATHON", `MEERMARATHON ${categorieLabel.toUpperCase()}`) }
+    : RACE_THEMES[raceKey];
   const raceGeo = RACE_GEO[raceKey];
 
   const { data: stages = [] } = useStages(gameId);

@@ -42,8 +42,17 @@ export default function AdminV3() {
     // Try with accent_color first; if the column doesn't exist yet, fall back without it
     let { data, error } = await supabase
       .from("games")
-      .select("id, name, game_type, year, status, starts_at, slug, registration_opens_at, registration_closes_at, accent_color, theme")
+      .select("id, name, game_type, categorie, year, status, starts_at, slug, registration_opens_at, registration_closes_at, accent_color, theme")
       .order("year", { ascending: false, nullsFirst: false });
+    if (error) {
+      // Categorie-migratie nog niet gedraaid: zonder die kolom verder.
+      const zonderCategorie = await supabase
+        .from("games")
+        .select("id, name, game_type, year, status, starts_at, slug, registration_opens_at, registration_closes_at, accent_color, theme")
+        .order("year", { ascending: false, nullsFirst: false });
+      data = zonderCategorie.data as typeof data;
+      error = zonderCategorie.error;
+    }
     if (error) {
       const retry = await supabase
         .from("games")

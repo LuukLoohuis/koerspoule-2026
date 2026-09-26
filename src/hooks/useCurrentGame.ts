@@ -17,6 +17,8 @@ export type Game = {
   year: number;
   status: "draft" | "open" | "open_inschrijving" | "locked" | "live" | "finished";
   game_type?: "giro" | "tdf" | "tour" | "femmes" | "vuelta" | "meermarathon" | null;
+  /** Meermarathon: "vrouwen" of "mannen". Leeg bij wielergames. */
+  categorie?: "vrouwen" | "mannen" | null;
   homepage_quote?: string | null;
   homepage_quote_author?: string | null;
   /** Fontgrootte (px) van de hero-quote; null = frontend-default (34). */
@@ -31,8 +33,9 @@ export type Game = {
   hors_banner_visible?: boolean | null;
 };
 
-const SELECT =
+const SELECT_ZONDER_CATEGORIE =
   "id, name, year, status, game_type, homepage_quote, homepage_quote_author, homepage_quote_size, prizes_visible, admin_testmodus, deelnemers_teller_visible, hors_banner_visible";
+const SELECT = `${SELECT_ZONDER_CATEGORIE}, categorie`;
 // Zolang de homepage_quote_size-migratie nog niet op de DB staat zou de
 // volle SELECT een 42703 (undefined column) geven en heel current-game
 // breken. Dan vallen we terug op de oude kolomlijst.
@@ -47,9 +50,16 @@ export function useCurrentGame(
   const { selectedGameId, selectedGame } = useSelectedGame();
   // De publieke homepage moet altijd de live-first default tonen. Een historische
   // sessiekeuze uit Mijn Peloton mag daar niet de quote, status of teller bepalen.
-  const effectiveSelectedGameId = ignoreSelectedGame || preferRegistration
+  //
+  // De teambouwer volgt de keuze alleen als die game zelf open staat voor
+  // inschrijving. Nodig zodra er twee tegelijk openstaan (Meermarathon
+  // Vrouwen en Mannen): de switcher of de "Doe mee"-link (?game=) bepaalt dan
+  // voor welke van de twee je een ploeg bouwt.
+  const effectiveSelectedGameId = ignoreSelectedGame
     ? null
-    : selectedGameId ?? selectedGame?.id ?? null;
+    : preferRegistration
+      ? (selectedGame?.status === "open_inschrijving" ? selectedGame.id : null)
+      : selectedGameId ?? selectedGame?.id ?? null;
 
   return useQuery({
     // De opgeloste game-id in de key → zowel de default als een expliciete
@@ -78,66 +88,51 @@ export function useCurrentGame(
         return (data as unknown as Game | null) ?? null;
       };
 
-      const fetchWith = async (select: string) => {
-        // De teambouwer hoort altijd bij de koers waarvoor deelnemers zich nú
-        // kunnen inschrijven, onafhankelijk van een eerder gekozen live/archiefgame.
-        if (preferRegistration) {
-          const { data: registration, error: registrationErr } = await supabase!
-            .from("games")
-            .select(select)
-            .eq("status", "open_inschrijving")
-            .order("year", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          if (registrationErr) throw registrationErr;
-          if (registration) return registration as unknown as Game;
-        }
+      // Nieuwste eerst. Binnen één jaar vrouwen vóór mannen, zodat de keuze
+      // tussen de twee Meermarathon-games niet van de databasevolgorde afhangt
+      // (DESC: "vrouwen" > "mannen", wielergames zonder categorie achteraan).
+      const fetchNewest = async (select: string, statuses?: string[]) => {
+        let query = supabase!.from("games").select(select);
+        if (statuses) query = query.in("status", statuses);
+        query = query.order("year", { ascending: false });
+        if (select === SELECT) query = query.order("categorie", { ascending: false, nullsFirst: false });
+        const { data, error } = await query.limit(1).maybeSingle();
+        if (error) throw error;
+        return (data as unknown as Game | null) ?? null;
+      };
 
+      const fetchWith = async (select: string) => {
         if (effectiveSelectedGameId) {
           const chosen = await fetchById(select, effectiveSelectedGameId);
           if (chosen) return chosen;
         }
 
-        // Prefer an actively running game
-        const { data: live, error: liveErr } = await supabase!
-          .from("games")
-          .select(select)
-          .in("status", ["open", "open_inschrijving", "locked", "live"])
-          .order("year", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (liveErr) throw liveErr;
-        if (live) return live as unknown as Game;
+        // De teambouwer hoort altijd bij de koers waarvoor deelnemers zich nú
+        // kunnen inschrijven, onafhankelijk van een eerder gekozen live/archiefgame.
+        if (preferRegistration) {
+          const registration = await fetchNewest(select, ["open_inschrijving"]);
+          if (registration) return registration;
+        }
 
-        // Daarna: een concept/draft-game telt ook als "actieve" game, zodat de
-        // subpoule-/dashboard-context al laadt voordat de inschrijving opengaat.
-        const { data: upcoming, error: upcomingErr } = await supabase!
-          .from("games")
-          .select(select)
-          .in("status", ["concept", "draft"])
-          .order("year", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (upcomingErr) throw upcomingErr;
-        if (upcoming) return upcoming as unknown as Game;
-
-        // Fallback: most recent game of any status
-        const { data: any, error: anyErr } = await supabase!
-          .from("games")
-          .select(select)
-          .order("year", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (anyErr) throw anyErr;
-        return (any as unknown as Game | null) ?? null;
+        // Eerst een lopende game. Daarna telt een concept/draft-game ook als
+        // "actief", zodat de subpoule-/dashboard-context al laadt voordat de
+        // inschrijving opengaat. Anders de meest recente, welke status ook.
+        return (
+          (await fetchNewest(select, ["open", "open_inschrijving", "locked", "live"])) ??
+          (await fetchNewest(select, ["concept", "draft"])) ??
+          (await fetchNewest(select))
+        );
       };
 
-      try {
-        return await fetchWith(SELECT);
-      } catch (e) {
-        const code = (e as { code?: string })?.code;
-        if (code === "42703") return await fetchWith(SELECT_LEGACY);
-        throw e;
+      // Per ontbrekende kolom (42703: nog niet gemigreerd) één stap terug.
+      const selects = [SELECT, SELECT_ZONDER_CATEGORIE, SELECT_LEGACY];
+      for (let i = 0; ; i++) {
+        try {
+          return await fetchWith(selects[i]);
+        } catch (e) {
+          const code = (e as { code?: string })?.code;
+          if (code !== "42703" || i === selects.length - 1) throw e;
+        }
       }
     },
   });

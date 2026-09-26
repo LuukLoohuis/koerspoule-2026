@@ -31,7 +31,7 @@ import { Check, Pencil, Search, X, Target, Crown, ClipboardList, Flag, Shirt, Sn
 import FlagIcon from "@/components/FlagIcon";
 import { Trans, useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
-import { isMeermarathonGame, meermarathonStageLabel } from "@/lib/gameTypes";
+import { isMeermarathonGame, meermarathonCategorieLabel, meermarathonStageLabel } from "@/lib/gameTypes";
 import { useLiveRace } from "@/hooks/useLiveRace";
 import { normalizeName } from "@/lib/liveMarathon";
 import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
@@ -337,6 +337,7 @@ export default function MyTeamPanel({
   gameStatus,
   gameName,
   gameType,
+  gameCategorie,
   onOpenHors,
   onOpenUitslagen,
   onOpenSubpoule,
@@ -351,6 +352,8 @@ export default function MyTeamPanel({
   gameName?: string | null;
   /** Alleen de Volgwagen-presentatie wisselt voor de wintergame. */
   gameType?: string | null;
+  /** Meermarathon: "vrouwen" of "mannen". */
+  gameCategorie?: string | null;
   /** Toon de subtiele "bekijk de prijzen"-tegel (alleen bij prizes_visible). */
   prizesVisible?: boolean | null;
   /** Admin-testmodus → cockpit-cijfers (Monkey IQ/Emirates/Wielerdir) ook in 'open'. */
@@ -374,6 +377,7 @@ export default function MyTeamPanel({
   // Optioneel een specifieke (bv. afgeronde) game tonen i.p.v. de live game.
   const game = gameIdProp ? { id: gameIdProp, status: gameStatus, name: gameName } : curGame;
   const isMeermarathon = isMeermarathonGame(gameType ?? curGame?.game_type);
+  const categorieLabel = meermarathonCategorieLabel(gameIdProp ? gameCategorie : curGame?.categorie);
 
   // Live-tab: alleen bij Meermarathon, en alleen als er een baan gekoppeld is.
   const { data: liveRace } = useLiveRace(game?.id, isMeermarathon);
@@ -999,7 +1003,9 @@ export default function MyTeamPanel({
               {isMeermarathon ? (
                 <div className="mm-mobile-band flex lg:hidden">
                   <Snowflake className="h-5 w-5" aria-hidden />
-                  <span>Meermarathon · topdivisie mannen &amp; vrouwen</span>
+                  <span>
+                    Meermarathon · topdivisie {categorieLabel?.toLowerCase() ?? <>mannen &amp; vrouwen</>}
+                  </span>
                 </div>
               ) : (
                 <MobileInstrumentBand />

@@ -8,6 +8,34 @@ export function meermarathonSeason(startYear: number): string {
   return `${startYear}-${startYear + 1}`;
 }
 
+// ── Meermarathon: vrouwen en mannen ───────────────────────────────────────
+// Per seizoen draaien er twee losse games, elk met eigen schaatsers,
+// wedstrijden, ploegen en klassement. Meedoen aan beide is niet verplicht.
+// Vrouwen staan voorop, in de lijst en overal waar de twee naast elkaar staan.
+
+export const MEERMARATHON_CATEGORIEEN = [
+  { value: "vrouwen", label: "Vrouwen" },
+  { value: "mannen", label: "Mannen" },
+] as const;
+
+export type MeermarathonCategorie = typeof MEERMARATHON_CATEGORIEEN[number]["value"];
+
+export function parseMeermarathonCategorie(value: string | null | undefined): MeermarathonCategorie | null {
+  const v = String(value ?? "").trim().toLowerCase();
+  return MEERMARATHON_CATEGORIEEN.find((c) => c.value === v)?.value ?? null;
+}
+
+export function meermarathonCategorieLabel(value: string | null | undefined): string | null {
+  const c = parseMeermarathonCategorie(value);
+  return MEERMARATHON_CATEGORIEEN.find((x) => x.value === c)?.label ?? null;
+}
+
+/** Sorteersleutel: vrouwen, dan mannen, dan alles zonder categorie. */
+export function meermarathonCategorieRang(value: string | null | undefined): number {
+  const i = MEERMARATHON_CATEGORIEEN.findIndex((c) => c.value === parseMeermarathonCategorie(value));
+  return i === -1 ? MEERMARATHON_CATEGORIEEN.length : i;
+}
+
 /**
  * Verkorte schrijfwijze voor krappe plekken: 2026 -> \u201926-\u201927.
  *
@@ -66,12 +94,18 @@ export function gameTypeName(gameType: string | null | undefined): string | null
   }
 }
 
-export function gameSeasonName(gameType: string | null | undefined, year: number): string {
+export function gameSeasonName(
+  gameType: string | null | undefined,
+  year: number,
+  categorie?: string | null,
+): string {
   const name = gameTypeName(gameType);
   if (!name) return String(year);
-  return isMeermarathonGame(gameType)
-    ? `${name} ${meermarathonSeason(year)}`
-    : `${name} ${year}`;
+  if (!isMeermarathonGame(gameType)) return `${name} ${year}`;
+  const label = meermarathonCategorieLabel(categorie);
+  return label
+    ? `${name} ${label} ${meermarathonSeason(year)}`
+    : `${name} ${meermarathonSeason(year)}`;
 }
 
 // ── Meermarathon: wedstrijdsoorten ────────────────────────────────────────

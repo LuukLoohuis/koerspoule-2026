@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { defaultWedstrijdType, gameSeasonName, gameYearFieldValue, isMeermarathonGame, meermarathonAfstandLabel, meermarathonSeason,
-  meermarathonSeasonKort, meermarathonStageLabel, parseGameYearInput } from "./gameTypes";
+import { defaultWedstrijdType, gameSeasonName, gameYearFieldValue, isMeermarathonGame, meermarathonAfstandLabel,
+  meermarathonCategorieLabel, meermarathonCategorieRang, meermarathonSeason, meermarathonSeasonKort, meermarathonStageLabel,
+  parseGameYearInput, parseMeermarathonCategorie } from "./gameTypes";
 
 describe("Meermarathon game type", () => {
   it("recognises the game type without changing other game types", () => {
@@ -22,6 +23,30 @@ describe("Meermarathon game type", () => {
     expect(parseGameYearInput("meermarathon", "2026-2028")).toBeNull();
     expect(parseGameYearInput("tdf", "2026")).toBe(2026);
     expect(parseGameYearInput("tdf", "2026-2027")).toBeNull();
+  });
+
+  it("zet de categorie in de naam, alleen bij Meermarathon", () => {
+    expect(gameSeasonName("meermarathon", 2026, "vrouwen")).toBe("Meermarathon Vrouwen 2026-2027");
+    expect(gameSeasonName("meermarathon", 2026, "MANNEN")).toBe("Meermarathon Mannen 2026-2027");
+    expect(gameSeasonName("meermarathon", 2026, null)).toBe("Meermarathon 2026-2027");
+    expect(gameSeasonName("meermarathon", 2026, "junioren")).toBe("Meermarathon 2026-2027");
+    expect(gameSeasonName("giro", 2026, "vrouwen")).toBe("Giro d'Italia 2026");
+  });
+
+  it("herkent alleen vrouwen en mannen als categorie", () => {
+    expect(parseMeermarathonCategorie(" Vrouwen ")).toBe("vrouwen");
+    expect(parseMeermarathonCategorie("mannen")).toBe("mannen");
+    expect(parseMeermarathonCategorie("heren")).toBeNull();
+    expect(parseMeermarathonCategorie(null)).toBeNull();
+    expect(meermarathonCategorieLabel("vrouwen")).toBe("Vrouwen");
+    expect(meermarathonCategorieLabel(undefined)).toBeNull();
+  });
+
+  it("zet vrouwen vóór mannen, en games zonder categorie achteraan", () => {
+    const volgorde = ["mannen", null, "vrouwen"].sort(
+      (a, b) => meermarathonCategorieRang(a) - meermarathonCategorieRang(b),
+    );
+    expect(volgorde).toEqual(["vrouwen", "mannen", null]);
   });
 
   it("formats the admin year field for the selected game type", () => {

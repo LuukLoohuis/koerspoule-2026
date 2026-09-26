@@ -11,9 +11,10 @@ import { Loader2, RefreshCw, Radio, X, Search } from "lucide-react";
 /**
  * Koppelt één ronde aan de livebaan/-banen op livemarathon.schaatsen.nl.
  *
- * Bewust meerdere banen per ronde: op natuurijs rijden mannen en vrouwen
- * tegelijk en de bron levert die als twee losse trackIds. Bij kunstijs is het
- * er in de praktijk één.
+ * Op natuurijs rijden mannen en vrouwen tegelijk; de bron levert die als twee
+ * losse trackIds. Sinds vrouwen en mannen losse games zijn, hoort bij een
+ * ronde dus alleen de baan van de eigen categorie. Meerdere banen blijven
+ * mogelijk voor een oudere, gecombineerde game zonder categorie.
  */
 
 export type LiveTrackLink = {
@@ -170,8 +171,8 @@ export default function StageLiveTracks({
         <DialogHeader>
           <DialogTitle>Live-uitslagen — ronde {stageNumber}</DialogTitle>
           <DialogDescription>
-            Koppel deze ronde aan de wedstrijd op livemarathon.schaatsen.nl. Bij natuurijs rijden
-            mannen en vrouwen vaak tegelijk; koppel dan beide banen.
+            Koppel deze ronde aan de wedstrijd op livemarathon.schaatsen.nl. Vrouwen en mannen
+            zijn losse games: koppel alleen de baan van de categorie van deze game.
           </DialogDescription>
         </DialogHeader>
 

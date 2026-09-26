@@ -12,12 +12,22 @@ import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deriveThemaKey, THEMAS, type ThemaKey } from "@/lib/themas";
 import { useQueryClient } from "@tanstack/react-query";
-import { gameSeasonName, gameYearFieldValue, isMeermarathonGame, parseGameYearInput } from "@/lib/gameTypes";
+import {
+  gameSeasonName,
+  gameYearFieldValue,
+  isMeermarathonGame,
+  MEERMARATHON_CATEGORIEEN,
+  meermarathonCategorieLabel,
+  parseGameYearInput,
+  type MeermarathonCategorie,
+} from "@/lib/gameTypes";
 
 export type Game = {
   id: string;
   name: string;
   game_type: "giro" | "tdf" | "vuelta" | "femmes" | "meermarathon" | null;
+  /** Meermarathon: "vrouwen" of "mannen"; leeg bij wielergames. */
+  categorie?: MeermarathonCategorie | null;
   year: number | null;
   status: "draft" | "open" | "open_inschrijving" | "locked" | "live" | "finished";
   starts_at: string | null;
@@ -119,6 +129,7 @@ export default function GamesTab({
   const queryClient = useQueryClient();
   const [type, setType] = useState<"giro" | "tdf" | "vuelta" | "femmes" | "meermarathon">("tdf");
   const [year, setYear] = useState<string>(String(new Date().getFullYear()));
+  const [categorie, setCategorieKeuze] = useState<MeermarathonCategorie>("vrouwen");
   const [startsAt, setStartsAt] = useState("");
   const [creating, setCreating] = useState(false);
   const isMeermarathon = isMeermarathonGame(type);
@@ -142,13 +153,15 @@ export default function GamesTab({
 
     setCreating(true);
     try {
-      const name = gameSeasonName(type, yr);
+      const name = gameSeasonName(type, yr, isMeermarathon ? categorie : null);
       const payload: Record<string, unknown> = {
         name,
         game_type: type,
         year: yr,
         status: "open", // nieuwe game start meteen als zichtbare sneak preview
       };
+      // Vrouwen en mannen zijn per seizoen twee losse games.
+      if (isMeermarathon) payload.categorie = categorie;
       if (startsAt) payload.starts_at = startsAt;
 
       const { error } = await supabase.from("games").insert(payload);
@@ -159,7 +172,13 @@ export default function GamesTab({
     } catch (e) {
       const msg = (e as Error).message;
       console.error("Game create error:", e);
-      toast.error(msg.includes("duplicate") ? "Deze game bestaat al" : `Aanmaken mislukt: ${msg}`);
+      toast.error(
+        msg.includes("duplicate")
+          ? "Deze game bestaat al"
+          : msg.includes("categorie")
+            ? "Voer eerst de migratie 20260926120000_meermarathon_categorie.sql uit."
+            : `Aanmaken mislukt: ${msg}`,
+      );
     } finally {
       setCreating(false);
     }
@@ -173,6 +192,32 @@ export default function GamesTab({
       return;
     }
     toast.success("Status bijgewerkt");
+    await reload();
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["all-games"] }),
+      queryClient.invalidateQueries({ queryKey: ["current-game"] }),
+    ]);
+  }
+
+  async function setCategorie(g: Game, next: MeermarathonCategorie) {
+    if (!supabase) return;
+    const update: Record<string, unknown> = { categorie: next };
+    // Een automatisch opgebouwde naam loopt mee; een zelfgekozen naam blijft staan.
+    if (g.year != null && g.name === gameSeasonName(g.game_type, g.year, g.categorie)) {
+      update.name = gameSeasonName(g.game_type, g.year, next);
+    }
+    const { error } = await supabase.from("games").update(update).eq("id", g.id);
+    if (error) {
+      toast.error(
+        error.message.includes("duplicate")
+          ? `Er is al een Meermarathon ${meermarathonCategorieLabel(next)} voor dit seizoen`
+          : error.message.includes("categorie")
+            ? "Voer eerst de migratie 20260926120000_meermarathon_categorie.sql uit."
+            : `Categorie wijzigen mislukt: ${error.message}`,
+      );
+      return;
+    }
+    toast.success("Categorie bijgewerkt");
     await reload();
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["all-games"] }),
@@ -278,7 +323,7 @@ export default function GamesTab({
         <CardHeader className="pb-3">
           <CardTitle className="font-display text-base">Nieuwe game aanmaken</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-4">
+        <CardContent className={cn("grid gap-3", isMeermarathon ? "md:grid-cols-5" : "md:grid-cols-4")}>
           <div>
             <Label className="text-xs">Type koers</Label>
             <Select value={type} onValueChange={(v) => changeType(v as typeof type)}>
@@ -294,6 +339,21 @@ export default function GamesTab({
               </SelectContent>
             </Select>
           </div>
+          {isMeermarathon && (
+            <div>
+              <Label className="text-xs">Categorie</Label>
+              <Select value={categorie} onValueChange={(v) => setCategorieKeuze(v as MeermarathonCategorie)}>
+                <SelectTrigger data-testid="game-categorie-select" className="h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MEERMARATHON_CATEGORIEEN.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label className="text-xs">{isMeermarathon ? "Seizoen" : "Jaartal"}</Label>
             <Input
@@ -364,6 +424,24 @@ export default function GamesTab({
                 <TableRow key={g.id} data-testid={`game-row-${g.id}`}>
                   <TableCell className="text-xs pl-4">
                     {TYPE_LABELS[g.game_type ?? ""] ?? g.game_type ?? "—"}
+                    {isMeermarathonGame(g.game_type) && (
+                      <Select
+                        value={g.categorie ?? undefined}
+                        onValueChange={(v) => setCategorie(g, v as MeermarathonCategorie)}
+                      >
+                        <SelectTrigger
+                          data-testid={`game-categorie-${g.id}`}
+                          className={cn("mt-1 w-28 h-7 text-xs", !g.categorie && "border-amber-500 text-amber-700")}
+                        >
+                          <SelectValue placeholder="Categorie?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MEERMARATHON_CATEGORIEEN.map((c) => (
+                            <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </TableCell>
                   <TableCell className="text-xs">{g.year ?? "—"}</TableCell>
                   <TableCell className="text-xs font-medium">{g.name}</TableCell>
