@@ -1474,6 +1474,10 @@ export default function MijnPeloton() {
                   setSelectedGameId(id);
                   gaNaarTab("team");
                 }}
+                onRondkijken={(id) => {
+                  setSelectedGameId(id);
+                  gaNaarTab("uitslagen");
+                }}
               />
             )}
             <KaravaanFeed

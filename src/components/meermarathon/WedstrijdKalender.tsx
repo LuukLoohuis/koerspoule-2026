@@ -19,7 +19,7 @@ export default function WedstrijdKalender({
   className?: string;
 }) {
   return (
-    <section className={cn("space-y-2", className)} aria-label={titel}>
+    <section data-eigen-typografie className={cn("space-y-2", className)} aria-label={titel}>
       <h3 className="heading-oswald section-rule text-xl md:text-2xl">{titel}</h3>
       {ondertitel && <p className="text-sm text-muted-foreground">{ondertitel}</p>}
       {rijen.length === 0 ? (

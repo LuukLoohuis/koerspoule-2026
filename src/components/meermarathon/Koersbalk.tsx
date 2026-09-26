@@ -78,6 +78,7 @@ export function Koersbalk({
 }) {
   return (
     <nav
+      data-eigen-typografie
       aria-label="Meermarathon: kies Vrouwen of Mannen"
       className={cn(
         "flex overflow-hidden rounded-xl border-2 border-foreground bg-card",
