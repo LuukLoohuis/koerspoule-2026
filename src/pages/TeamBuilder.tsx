@@ -27,6 +27,9 @@ import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { captureEvent, captureException } from "@/lib/posthog";
+import { useSelectedGame } from "@/context/SelectedGameContext";
+import { isMeermarathonGame } from "@/lib/gameTypes";
+import PloegSamenstellenContainer from "@/components/meermarathon/PloegSamenstellenContainer";
 
 // Pick a thematic icon for each category based on its name/short_name
 function getCategoryIcon(name: string): ReactNode {
@@ -45,7 +48,22 @@ function getCategoryIcon(name: string): ReactNode {
   return "🚴";
 }
 
+/**
+ * De Meermarathon heeft een eigen ploegbouwer (een plek per categorie, geen
+ * voorspellingen). Hier alleen de splitsing; de wielerflow hieronder blijft
+ * zoals hij was en draait zijn hooks nooit voor een schaatsgame.
+ */
 export default function TeamBuilder() {
+  const { data: game, isLoading } = useCurrentGame({ preferRegistration: true });
+  const { selectedGame } = useSelectedGame();
+  if (game && isMeermarathonGame(game.game_type)) return <PloegSamenstellenContainer game={game} />;
+  // Tijdens het laden (bv. net na een wissel op de koersbalk) gokken we op de
+  // gekozen game, zodat je niet eerst de Ploegleiderswagen ziet flitsen.
+  if (isLoading && isMeermarathonGame(selectedGame?.game_type)) return <PloegSamenstellenContainer game={null} />;
+  return <WielerTeamBuilder />;
+}
+
+function WielerTeamBuilder() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();

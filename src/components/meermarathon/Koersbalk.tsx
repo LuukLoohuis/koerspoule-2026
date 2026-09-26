@@ -169,8 +169,9 @@ export default function MeermarathonKoersbalk({ className }: { className?: strin
     <div
       className={cn(
         // Mobiel: plakt onder de masthead, met papier erachter zodat scrollende
-        // inhoud niet door de marges heen schemert.
-        "sticky top-0 z-30 -mx-5 px-5 pt-2 pb-3 bg-background md:static md:mx-0 md:px-0 md:pt-0 md:pb-0 md:bg-transparent",
+        // inhoud niet door de marges heen schemert. De marge volgt .container,
+        // die onder md hard op 0.75rem staat (index.css).
+        "sticky top-0 z-30 -mx-3 px-3 pt-2 pb-3 bg-background md:static md:mx-0 md:px-0 md:pt-0 md:pb-0 md:bg-transparent",
         className,
       )}
     >
