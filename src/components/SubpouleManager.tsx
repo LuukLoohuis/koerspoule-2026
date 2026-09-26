@@ -457,8 +457,10 @@ export default function SubpouleManager({ gameId, gameName, gameStatus, onActive
     );
 
     // Losse panelen — één per tab, hergebruikt op mobiel én desktop.
-    // Sneak preview (gewone gebruiker): de data-panels tonen de schil i.p.v. echte
-    // (test)standen/commentaar; admins zien de echte data (maySeeLive=true).
+    // maySeeLive=false toont de schil i.p.v. echte (test)standen. Mijn Peloton
+    // geeft sinds de sneak-preview-keuze van juni altijd true mee: de subpoule
+    // is dan voor iedereen volledig zichtbaar. De schil blijft voor wie hem
+    // ooit wel weer wil gebruiken.
     const standingsPanel = maySeeLive ? (
       <SubpouleStandings
         subpouleId={active.id}

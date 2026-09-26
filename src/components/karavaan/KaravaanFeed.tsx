@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import { ChevronDown, ChevronRight, ChevronsUpDown, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles, ClipboardList, ArrowRight, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Mic, Newspaper, TrendingUp, TrendingDown, Trophy, HeartCrack, Sparkles, ClipboardList, ArrowRight, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import DaguitslagChart from "@/components/DaguitslagChart";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -14,7 +11,7 @@ import { bouwKop, kopUitVerslag } from "@/lib/krantKop";
 import { useAllGames } from "@/hooks/useAllGames";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
-import MiniStrip, { type HorsTabKey } from "@/components/karavaan/MiniStrip";
+import type { HorsTabKey } from "@/components/karavaan/MiniStrip";
 import Voorbeschouwing from "@/components/karavaan/Voorbeschouwing";
 import Verslag from "@/components/karavaan/Verslag";
 import Uitslagblok from "@/components/karavaan/Uitslagblok";
@@ -464,85 +461,6 @@ export default function KaravaanFeed({
           {newMarkerIndex === etappes.length && <NieuwMarker />}
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── Subpoule switcher (pill row + native select voor mobiel) ───────────────
-
-function SubpouleSwitcher({
-  subpoules,
-  selectedId,
-  onSelect,
-}: {
-  subpoules: Array<{ id: string; name: string }>;
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-}) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  if (subpoules.length === 0) return null;
-  if (subpoules.length === 1) {
-    return (
-      <div className="flex items-center gap-2 text-xs font-display uppercase tracking-widest text-muted-foreground">
-        <span>{t("karavaan.switcher.labelInline")}</span>
-        <span className="font-bold text-foreground">{subpoules[0].name}</span>
-      </div>
-    );
-  }
-  // Veel subpoules (bv. als admin alles ziet) → zoekbare dropdown i.p.v. een
-  // muur van pills (zelfde patroon als de Subpoules-tab).
-  if (subpoules.length > 8) {
-    const selected = subpoules.find((s) => s.id === selectedId);
-    return (
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="overline-stamp">{t("karavaan.switcher.label")}</span>
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" role="combobox" aria-expanded={open} className="justify-between font-normal min-w-[220px]">
-              <span className="truncate">{selected?.name ?? t("karavaan.switcher.placeholder")}</span>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
-            <Command>
-              <CommandInput placeholder={t("karavaan.switcher.searchPlaceholder")} />
-              <CommandList>
-                <CommandEmpty>{t("karavaan.switcher.empty")}</CommandEmpty>
-                <CommandGroup>
-                  {subpoules.map((s) => (
-                    <CommandItem key={s.id} value={s.name} onSelect={() => { onSelect(s.id); setOpen(false); }}>
-                      <span className="flex-1 truncate font-medium">{s.name}</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <span className="overline-stamp">{t("karavaan.switcher.label")}</span>
-      <div className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 flex-wrap">
-        {subpoules.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => onSelect(s.id)}
-            className={cn(
-              "rounded-lg px-3 min-h-[36px] text-xs font-semibold uppercase tracking-wider transition-colors",
-              selectedId === s.id
-                ? "bg-card text-foreground shadow-xs border border-foreground/10"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
-            )}
-          >
-            {s.name}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }
