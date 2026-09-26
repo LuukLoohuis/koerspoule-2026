@@ -63,7 +63,8 @@ describe("centrale game-branding", () => {
     const logo = readFileSync(`${process.cwd()}/public${THEMAS.winter.logo}`);
     expect(logo.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
     // IHDR: breedte/hoogte staan als big-endian uint32 op offset 16 resp. 20.
-    expect(logo.readUInt32BE(16) / logo.readUInt32BE(20)).toBeCloseTo(1.5, 2);
+    // De gereserveerde ruimte moet de echte vorm van het bestand volgen.
+    expect(logo.readUInt32BE(16) / logo.readUInt32BE(20)).toBeCloseTo(THEMAS.winter.logoVerhouding, 2);
 
     // Het schaatslogo is een raster; de favicon blijft vector zodat 'ie ook op
     // 16px scherp is.
