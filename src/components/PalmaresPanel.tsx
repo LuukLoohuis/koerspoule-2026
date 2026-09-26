@@ -126,7 +126,6 @@ function HeaderCyclingScene() {
     <img loading="lazy" decoding="async"
       src={palmaresCyclingScene}
       alt=""
-      decoding="async"
       fetchPriority="low"
       className="pointer-events-none absolute -bottom-8 right-0 hidden h-auto w-[62%] max-w-[760px] object-contain object-bottom-right opacity-[0.42] lg:block"
       style={{ filter: "var(--palmares-scene-filter)" }}
