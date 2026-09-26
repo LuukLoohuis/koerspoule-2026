@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Onderbalk</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<nav aria-label="Hoofdmenu" style="width: 375px; height: 60px; box-sizing: border-box; background: hsl(35 20% 97.5%); display: flex; flex-direction: column; font-family: Inter, sans-serif; box-shadow: 0 -6px 16px -12px hsl(240 12% 11% / 0.35)">
+<div style="height: 2px; background: linear-gradient(90deg, #e6446d, #c8a020 50%, #e6446d)"></div>
+<div style="height: 58px; display: flex; align-items: stretch; padding: 0 4px">
+<button type="button" aria-current="{{krant.cur}}" style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: transparent; border: 0; padding: 0; position: relative; font-family: inherit; color: {{krant.color}}; cursor: pointer">
+<span style="position: absolute; top: 0; left: 50%; width: 24px; height: 3px; margin-left: -12px; border-radius: 0 0 2px 2px; background: {{krant.stamp}}"></span>
+<span style="width: 46px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; background: {{krant.pill}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{krant.sw}}" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg></span>
+<span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase">Krant</span>
+</button>
+<button type="button" aria-current="{{ploeg.cur}}" style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: transparent; border: 0; padding: 0; position: relative; font-family: inherit; color: {{ploeg.color}}; cursor: pointer">
+<span style="position: absolute; top: 0; left: 50%; width: 24px; height: 3px; margin-left: -12px; border-radius: 0 0 2px 2px; background: {{ploeg.stamp}}"></span>
+<span style="width: 46px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; background: {{ploeg.pill}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ploeg.sw}}" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg></span>
+<span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase">Ploeg</span>
+</button>
+<button type="button" aria-current="{{subpoule.cur}}" style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: transparent; border: 0; padding: 0; position: relative; font-family: inherit; color: {{subpoule.color}}; cursor: pointer">
+<span style="position: absolute; top: 0; left: 50%; width: 24px; height: 3px; margin-left: -12px; border-radius: 0 0 2px 2px; background: {{subpoule.stamp}}"></span>
+<span style="width: 46px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; background: {{subpoule.pill}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{subpoule.sw}}" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+<span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase">Subpoule</span>
+</button>
+<button type="button" aria-current="{{uitslagen.cur}}" style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: transparent; border: 0; padding: 0; position: relative; font-family: inherit; color: {{uitslagen.color}}; cursor: pointer">
+<span style="position: absolute; top: 0; left: 50%; width: 24px; height: 3px; margin-left: -12px; border-radius: 0 0 2px 2px; background: {{uitslagen.stamp}}"></span>
+<span style="width: 46px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; background: {{uitslagen.pill}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{uitslagen.sw}}" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg></span>
+<span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase">Uitslagen</span>
+</button>
+<button type="button" aria-current="{{hors.cur}}" style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: transparent; border: 0; padding: 0; position: relative; font-family: inherit; color: {{hors.color}}; cursor: pointer">
+<span style="position: absolute; top: 0; left: 50%; width: 24px; height: 3px; margin-left: -12px; border-radius: 0 0 2px 2px; background: {{hors.stamp}}"></span>
+<span style="width: 46px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; background: {{hors.pill}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{hors.sw}}" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"></path></svg></span>
+<span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase">Hors Cat.</span>
+</button>
+</div>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"actief":{"editor":"enum","options":["krant","ploeg","subpoule","uitslagen","hors"],"default":"krant"},"$preview":{"width":375,"height":60}}'>
+class Component extends DCLogic {
+renderVals() {
+const a = this.props.actief ?? 'krant';
+const mk = (k) => {
+const on = a === k;
+return {
+color: on ? 'hsl(335 70% 45%)' : 'hsl(240 8% 46%)',
+pill: on ? 'rgba(230, 68, 109, 0.12)' : 'transparent',
+stamp: on ? '#c8a020' : 'transparent',
+sw: on ? 2.5 : 1.75,
+cur: on ? 'page' : 'false'
+};
+};
+return { krant: mk('krant'), ploeg: mk('ploeg'), subpoule: mk('subpoule'), uitslagen: mk('uitslagen'), hors: mk('hors') };
+}
+}
+</script>
+</body>
+</html>
