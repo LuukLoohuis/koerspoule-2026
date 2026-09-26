@@ -394,7 +394,7 @@ function CategoryRow({
         onDrop={onDrop}
         className={cn(
           isDragging && "opacity-50",
-          isDragOver && "outline outline-2 outline-primary"
+          isDragOver && "outline-solid outline-2 outline-primary"
         )}
       >
         <TableCell className="cursor-grab active:cursor-grabbing text-muted-foreground">

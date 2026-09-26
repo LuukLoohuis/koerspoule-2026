@@ -479,7 +479,7 @@ export default function Index() {
                 <>
                   <span className="editor-eyebrow text-lg">{copy.edition}</span>
                   <h1
-                    className="font-display font-black mt-4 leading-[0.88] tracking-[-0.025em] text-6xl md:text-[92px]"
+                    className="font-display font-black mt-4 leading-[0.88] tracking-tight text-6xl md:text-[92px]"
                     style={{ letterSpacing: "-0.025em" }}
                   >
                     <span>{copy.line1}</span>
@@ -587,7 +587,7 @@ export default function Index() {
 
             {/* Rechter kolom — logo */}
             <div className="relative flex flex-col items-center justify-center">
-              <div className="relative w-full max-w-[315px] -rotate-[3deg] transition-transform duration-500 hover:rotate-0 hover:scale-105">
+              <div className="relative w-full max-w-[315px] -rotate-3 transition-transform duration-500 hover:rotate-0 hover:scale-105">
                 <KoerspouleLogo
                   alt="Koerspoule logo"
                   className="w-full h-auto block drop-shadow-xl"
@@ -666,7 +666,7 @@ export default function Index() {
           {/* Sparkline */}
           <div className="order-1 py-5 md:order-2 md:px-5 md:border-r border-[hsl(var(--vintage-gold))/0.25] relative">
             <div className="overline-stamp mb-1">{t("landing.yourRace")}</div>
-            <div className="relative mt-2 overflow-hidden rounded-2xl border border-[hsl(var(--vintage-gold))/0.35] bg-card/80 p-4 shadow-[0_14px_35px_hsl(var(--foreground)/0.07)] before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r before:from-primary before:via-[hsl(var(--jersey-giallo))] before:to-transparent">
+            <div className="relative mt-2 overflow-hidden rounded-2xl border border-[hsl(var(--vintage-gold))/0.35] bg-card/80 p-4 shadow-[0_14px_35px_hsl(var(--foreground)/0.07)] before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-linear-to-r before:from-primary before:via-[hsl(var(--jersey-giallo))] before:to-transparent">
               <div className="flex items-start justify-between gap-3">
                 <div className="font-display font-bold text-xl leading-tight">
                   {myProgress.from === myProgress.to ? (

@@ -147,7 +147,7 @@ export default function DemoSubpouleHeatmap() {
                     : "bg-secondary/40 text-muted-foreground opacity-55 hover:opacity-85 line-through decoration-1",
                 )}
               >
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold bg-white text-black shadow-sm ring-1 ring-foreground/30">
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold bg-white text-black shadow-xs ring-1 ring-foreground/30">
                   {initials(p.display_name)}
                 </span>
                 <span className="font-medium truncate max-w-[120px]">{p.display_name}</span>

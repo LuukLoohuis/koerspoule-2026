@@ -182,7 +182,7 @@ function StageSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium focus:outline-none"
+        className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium focus:outline-hidden"
       >
         {stages.map((s) => (
           <option key={s.id} value={s.id}>
@@ -1098,7 +1098,7 @@ export default function InstagramExport({ gameId: propGameId, gameInfo }: {
             className={cn(
               "flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
               activeTab === key
-                ? "bg-card text-foreground shadow-sm border border-foreground/10"
+                ? "bg-card text-foreground shadow-xs border border-foreground/10"
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
             )}
           >

@@ -323,7 +323,7 @@ export default function LeCoupTactique({ standings, myUserName }: LeCoupTactique
                     className={cn(
                       "sticky top-0 z-20 rounded-xl border px-3 py-3 text-left",
                       isCurrent
-                        ? "border-primary/40 bg-primary/5 shadow-sm ring-2 ring-primary/30"
+                        ? "border-primary/40 bg-primary/5 shadow-xs ring-2 ring-primary/30"
                         : "border-border bg-card"
                     )}
                   >

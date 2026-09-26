@@ -114,7 +114,7 @@ export default function InschrijfBanner({
           "inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-1.5 text-white",
           "font-display text-[12px] font-black transition-transform",
           "hover:-translate-y-0.5 active:translate-y-px",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+          "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2",
         )}
         style={{ background: kleur }}
       >
@@ -126,7 +126,7 @@ export default function InschrijfBanner({
           type="button"
           onClick={dismiss}
           aria-label="Banner sluiten"
-          className="-mr-0.5 shrink-0 rounded p-1 text-muted-foreground/60 transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="-mr-0.5 shrink-0 rounded p-1 text-muted-foreground/60 transition-colors hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className="h-4 w-4" />
         </button>

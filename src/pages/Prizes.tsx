@@ -34,7 +34,7 @@ function SponsorButton({ url, naam, prijsId, veld, kort, className }: { url?: st
         "bg-[#111] hover:bg-[#1d1710] text-[#f5b51b] hover:text-[#ffc94a] border-[#f5b51b]/60",
         "shadow-[0_8px_18px_rgba(0,0,0,0.16)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.22)] hover:-translate-y-px",
         "transition-[transform,background-color,box-shadow,color] duration-200 motion-reduce:transition-none motion-reduce:transform-none",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] focus-visible:ring-offset-1",
+        "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] focus-visible:ring-offset-1",
         className,
       )}
     >
@@ -143,7 +143,7 @@ function PrijsKaart({
         <div
           className={cn(
             "relative flex flex-col p-5 md:p-6 md:min-h-[200px] border-t-4 border-[#d99a00]",
-            "bg-gradient-to-br from-[#fffaf0] to-[#f4efe4]",
+            "bg-linear-to-br from-[#fffaf0] to-[#f4efe4]",
             CARD_TEXT_W,
           )}
         >
@@ -176,13 +176,13 @@ function PrijsKaart({
           )}
 
           {p.omschrijving && (
-            <p className="mt-3 max-w-[90%] text-[15px] font-semibold leading-[1.5] text-[#626477] whitespace-pre-line">{p.omschrijving}</p>
+            <p className="mt-3 max-w-[90%] text-[15px] font-semibold leading-normal text-[#626477] whitespace-pre-line">{p.omschrijving}</p>
           )}
 
           {sponsorNamen(p) && (
             <div className="mt-2 pt-4 border-t border-[rgba(145,115,55,0.25)]">
               <span className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#74758a]">Aangeboden door</span>
-              <strong className="block text-sm font-extrabold uppercase tracking-[0.05em] text-[#22222c]">{sponsorNamen(p)}</strong>
+              <strong className="block text-sm font-extrabold uppercase tracking-wider text-[#22222c]">{sponsorNamen(p)}</strong>
             </div>
           )}
 
@@ -195,7 +195,7 @@ function PrijsKaart({
 
         {/* Foto rechts (desktop) / boven (mobiel) — ongewijzigd, object-cover */}
         {p.afbeelding_url && (
-          <div className={cn("aspect-[16/10] md:aspect-auto overflow-hidden bg-[#0d0d0d] shrink-0", CARD_PHOTO_W)}>
+          <div className={cn("aspect-16/10 md:aspect-auto overflow-hidden bg-[#0d0d0d] shrink-0", CARD_PHOTO_W)}>
             <img src={p.afbeelding_url} alt={p.titel} className="w-full h-full object-contain" loading="lazy" />
           </div>
         )}
@@ -267,7 +267,7 @@ function PodiumCard({ p, plek }: { p: Prize | undefined; plek: 1 | 2 | 3 }) {
             <>
               {p.afbeelding_url && (
                 <div
-                  className="w-full aspect-[16/10] rounded-lg border border-border overflow-hidden mb-2.5"
+                  className="w-full aspect-16/10 rounded-lg border border-border overflow-hidden mb-2.5"
                   style={{ backgroundColor: `rgba(${CREME_RGB}, ${GLASS.photo})` }}
                 >
                   {/* object-cover: contain liet witte balken naast de brede

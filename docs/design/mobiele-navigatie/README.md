@@ -8,8 +8,8 @@ Tien schermen zijn uitgewerkt als aantikbaar prototype in twee visuele varianten
 ## About the Design Files
 De bestanden in dit pakket zijn **design-referenties, gemaakt in HTML**. Het zijn prototypes die de bedoelde
 vormgeving en het gedrag laten zien — geen productiecode om over te nemen. De opdracht is om deze ontwerpen
-te **herbouwen in de bestaande omgeving van de repo**: React 18 + Vite + TypeScript, Tailwind (met de
-HSL-variabelen uit `src/index.css` en `tailwind.config.ts`), react-router, lucide-react iconen, shadcn/ui in
+te **herbouwen in de bestaande omgeving van de repo**: React 18 + Vite + TypeScript, Tailwind v4 (met de
+HSL-variabelen en het `@theme`-blok in `src/index.css`), react-router, lucide-react iconen, shadcn/ui in
 `src/components/ui/`, i18n via `react-i18next`. Gebruik die patronen; neem geen inline styles uit de HTML over.
 
 ## Fidelity

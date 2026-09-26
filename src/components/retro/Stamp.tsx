@@ -20,7 +20,7 @@ export default function Stamp({
   className?: string;
 }) {
   const toneClasses: Record<Tone, string> = {
-    ink: "text-foreground border-foreground/70 bg-foreground/[0.04]",
+    ink: "text-foreground border-foreground/70 bg-foreground/4",
     wine: "text-[hsl(var(--bolletjes-bright))] border-[hsl(var(--bolletjes-bright))/0.7] bg-[hsl(var(--bolletjes-bright))/0.06]",
     jaune: "text-[hsl(var(--maillot-jaune-dark))] border-[hsl(var(--maillot-jaune-dark))/0.7] bg-[hsl(var(--maillot-jaune))/0.12]",
     thema: "text-primary border-primary/70 bg-primary/[0.07]",

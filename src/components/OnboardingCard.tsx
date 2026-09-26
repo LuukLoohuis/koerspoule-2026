@@ -126,8 +126,8 @@ export default function OnboardingCard({
                 onClick={s.onClick}
                 className={cn(
                   "flex w-full items-start gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  volgende ? "bg-primary/[0.07]" : "hover:bg-foreground/[0.04]",
+                  "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+                  volgende ? "bg-primary/[0.07]" : "hover:bg-foreground/4",
                 )}
               >
                 <span
@@ -170,7 +170,7 @@ export default function OnboardingCard({
         <button
           type="button"
           onClick={onRondleiding}
-          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-foreground/20 px-2 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-foreground/20 px-2 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Compass className="h-3 w-3" aria-hidden />
           {t("rondleiding.starten")}

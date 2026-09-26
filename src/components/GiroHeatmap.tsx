@@ -54,7 +54,7 @@ export default function GiroHeatmap({ className, compact = false }: Props) {
     <div
       className={cn(
         "relative overflow-hidden rounded-2xl border border-white/10",
-        "bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950",
+        "bg-linear-to-br from-slate-950 via-slate-900 to-slate-950",
         "shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]",
         className
       )}

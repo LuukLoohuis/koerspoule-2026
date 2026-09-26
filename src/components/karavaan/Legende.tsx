@@ -18,9 +18,9 @@ import { legendeDelen, legendeKicker, legendeBron } from "@/lib/legende";
  */
 /** Dezelfde initiaal als boven het hoofdartikel, een maat kleiner voor de kolom. */
 const INITIAAL =
-  "[&::first-letter]:float-left [&::first-letter]:pr-1.5 [&::first-letter]:pt-1 " +
-  "[&::first-letter]:font-display [&::first-letter]:text-[34px] " +
-  "[&::first-letter]:font-black [&::first-letter]:leading-[0.8]";
+  "first-letter:float-left first-letter:pr-1.5 first-letter:pt-1 " +
+  "first-letter:font-display first-letter:text-[34px] " +
+  "first-letter:font-black first-letter:leading-[0.8]";
 
 export default function Legende({ gameId }: { gameId?: string }) {
   const { t } = useTranslation();
@@ -47,7 +47,7 @@ export default function Legende({ gameId }: { gameId?: string }) {
           src={item.foto_url}
           alt={item.titel?.trim() || t("karavaan.voorpagina.rubLegende")}
           loading="lazy"
-          className="float-left mb-2 mr-3 mt-2.5 aspect-[4/3] w-[42%] max-w-[150px] border border-foreground/15 object-cover"
+          className="float-left mb-2 mr-3 mt-2.5 aspect-4/3 w-[42%] max-w-[150px] border border-foreground/15 object-cover"
         />
       )}
       {titel && (
@@ -63,7 +63,7 @@ export default function Legende({ gameId }: { gameId?: string }) {
             <p
               key={i}
               className={cn(
-                "font-serif text-[13.5px] leading-[1.5] text-foreground/90",
+                "font-serif text-[13.5px] leading-normal text-foreground/90",
                 i === 0 && INITIAAL,
               )}
             >
@@ -74,7 +74,7 @@ export default function Legende({ gameId }: { gameId?: string }) {
       ) : (
         <p
           className={cn(
-            "mt-1.5 font-serif text-[13.5px] leading-[1.5] text-foreground/90",
+            "mt-1.5 font-serif text-[13.5px] leading-normal text-foreground/90",
             INITIAAL,
           )}
         >
@@ -91,7 +91,7 @@ export default function Legende({ gameId }: { gameId?: string }) {
             "clear-left mt-2.5 inline-flex items-center gap-1 rounded font-oswald text-[10.5px] uppercase tracking-[0.16em]",
             "text-primary underline underline-offset-[5px] decoration-primary/50",
             "transition-colors hover:decoration-primary",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
           )}
         >
           {open ? t("karavaan.voorpagina.legendeDicht") : t("karavaan.voorpagina.legendeOpen")}

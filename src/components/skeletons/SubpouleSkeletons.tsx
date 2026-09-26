@@ -12,7 +12,7 @@ export function StandingsSkeleton() {
   return (
     <div className="space-y-4">
       {/* Etappe-bar */}
-      <div className="retro-border bg-gradient-to-br from-card via-card to-secondary/20 p-3">
+      <div className="retro-border bg-linear-to-br from-card via-card to-secondary/20 p-3">
         <div className="flex items-end justify-between gap-2 h-32">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className={`flex-1 rounded-t bg-secondary/60 animate-pulse`} style={{ height: `${40 + ((i * 37) % 55)}%` }} />
@@ -21,7 +21,7 @@ export function StandingsSkeleton() {
       </div>
       {/* Klassement-tabel */}
       <div className="retro-border bg-card overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+        <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <div className="p-4 border-b-2 border-foreground bg-secondary/50">
           <div className={`h-5 w-40 ${cell}`} />
         </div>

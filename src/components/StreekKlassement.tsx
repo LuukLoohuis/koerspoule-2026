@@ -71,7 +71,7 @@ export default function StreekKlassement({ subpouleId, gameId, gameStatus, stree
   if (membersLoading) {
     return (
       <Card className="retro-border overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+        <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <CardContent className="p-4 space-y-2">
           {[0, 1, 2].map((i) => <div key={i} className="h-8 rounded bg-secondary/60 animate-pulse motion-reduce:animate-none" />)}
         </CardContent>
@@ -95,7 +95,7 @@ export default function StreekKlassement({ subpouleId, gameId, gameStatus, stree
       )}
 
       <div className="retro-border bg-card overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+        <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <div className="p-4 border-b-2 border-foreground bg-secondary/50">
           <h2 className="font-display text-lg font-bold flex items-center gap-2">
             <Flag className="h-5 w-5 text-[hsl(var(--vintage-gold))]" /> {t("subpoule.streek.title")}
@@ -122,11 +122,11 @@ export default function StreekKlassement({ subpouleId, gameId, gameStatus, stree
                       key={p.naam}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2 border-b border-border/40",
-                        i === 0 ? "border-l-[3px] border-amber-400/70 bg-amber-500/[0.04]"
-                        : i === 1 ? "border-l-[3px] border-zinc-400/50 bg-zinc-500/[0.03]"
-                        : i === 2 ? "border-l-[3px] border-orange-400/50 bg-orange-500/[0.03]"
+                        i === 0 ? "border-l-[3px] border-amber-400/70 bg-amber-500/4"
+                        : i === 1 ? "border-l-[3px] border-zinc-400/50 bg-zinc-500/3"
+                        : i === 2 ? "border-l-[3px] border-orange-400/50 bg-orange-500/3"
                         : "border-l-[3px] border-transparent",
-                        isOwn && "ring-1 ring-inset ring-primary/40 bg-primary/[0.06]",
+                        isOwn && "ring-1 ring-inset ring-primary/40 bg-primary/6",
                       )}
                     >
                       <span className={cn("shrink-0 w-7 text-center font-display font-black tabular-nums", rankCls, i <= 2 ? "text-xl" : "text-sm")}>{i + 1}</span>
@@ -137,7 +137,7 @@ export default function StreekKlassement({ subpouleId, gameId, gameStatus, stree
                       <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-muted-foreground font-mono" title={t("subpoule.streek.membersTitle")}>
                         <Users className="h-3 w-3" /> {p.aantal}
                       </span>
-                      <span className="shrink-0 text-right min-w-[3.5rem]">
+                      <span className="shrink-0 text-right min-w-14">
                         <span className="font-display font-bold tabular-nums text-base">{p.gemiddelde.toFixed(1)}</span>
                         <span className="text-[9px] text-muted-foreground font-mono ml-0.5">{t("subpoule.streek.avg")}</span>
                       </span>

@@ -58,7 +58,7 @@ export function MobielTabBalk({ tabs, active, onChange, className }: Props) {
       role="tablist"
       className={cn(
         "relative flex w-full items-end gap-5 overflow-x-auto border-b border-border pr-1",
-        "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        "scrollbar-none [&::-webkit-scrollbar]:hidden",
         className,
       )}
     >
@@ -78,9 +78,9 @@ export function MobielTabBalk({ tabs, active, onChange, className }: Props) {
               "relative flex flex-none items-center gap-1.5 whitespace-nowrap border-0 bg-transparent",
               // Het raakvlak blijft 44px hoog; alleen de zichtbare hoogte krimpt.
               "min-h-[38px] pb-2 pt-2.5 text-[13px] transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
               isActive ? "font-bold text-foreground" : "font-semibold text-muted-foreground",
-              tab.key === uitgelichtSub && "z-[71] rounded-md bg-card px-2 ring-2 ring-[hsl(var(--vintage-gold))]",
+              tab.key === uitgelichtSub && "z-71 rounded-md bg-card px-2 ring-2 ring-[hsl(var(--vintage-gold))]",
               tab.disabled && "cursor-not-allowed opacity-40",
             )}
           >
@@ -89,7 +89,7 @@ export function MobielTabBalk({ tabs, active, onChange, className }: Props) {
             {isActive && (
               <span
                 aria-hidden
-                className="absolute inset-x-0 bottom-[-1px] h-0.5 rounded-t-full bg-primary"
+                className="absolute inset-x-0 -bottom-px h-0.5 rounded-t-full bg-primary"
               />
             )}
           </button>

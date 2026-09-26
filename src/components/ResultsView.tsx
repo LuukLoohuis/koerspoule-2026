@@ -335,21 +335,21 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         <div
           className={cn(
             "md:hidden overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-md:max-h-[120px]",
-            !barVisible && "max-md:!max-h-0 max-md:opacity-0",
+            !barVisible && "max-md:max-h-0! max-md:opacity-0",
           )}
         >
         {/* Tabbalk staat stil; de carrousel-content volgt de vinger. */}
         <TabsList className="flex gap-1 rounded-xl border-2 border-foreground/15 bg-secondary/30 p-1 h-auto w-full">
           <TabsTrigger
             value="klassement"
-            className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-foreground/10"
+            className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs data-[state=active]:border data-[state=active]:border-foreground/10"
           >
             <Trophy className="h-3.5 w-3.5 shrink-0" />
             <span>{t("results.view.klassementTab")}</span>
           </TabsTrigger>
           <TabsTrigger
             value="etappes"
-            className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-foreground/10"
+            className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs data-[state=active]:border data-[state=active]:border-foreground/10"
           >
             <ClipboardList className="h-3.5 w-3.5 shrink-0" />
             <span>{t("results.view.etappesTab")}</span>
@@ -448,7 +448,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
               )}
 
               {selectedStage?.is_gc && (
-                <div className="mb-4 retro-border bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 p-4 flex flex-wrap items-center gap-3">
+                <div className="mb-4 retro-border bg-linear-to-r from-amber-100 via-yellow-50 to-amber-100 p-4 flex flex-wrap items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center">
                     <Trophy className="w-4 h-4" />
                   </div>
@@ -515,7 +515,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                               "group flex items-center justify-between gap-2 px-3 py-2 text-sm border-b border-border/40 transition-colors select-none",
                               isMe && "bg-primary/10",
                               isComparing && "bg-accent/15 ring-1 ring-inset ring-accent/50",
-                              canCompare && "cursor-pointer hover:bg-accent/10 active:bg-accent/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                              canCompare && "cursor-pointer hover:bg-accent/10 active:bg-accent/20 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50",
                             )}
                           >
                             <div className="flex items-center gap-2 min-w-0">
@@ -694,8 +694,8 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Pool overall standings */}
             <div className="retro-border bg-card">
-              <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
-              <div className="sticky top-0 z-20 p-4 border-b-2 border-foreground bg-secondary backdrop-blur-sm flex items-center justify-between">
+              <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+              <div className="sticky top-0 z-20 p-4 border-b-2 border-foreground bg-secondary backdrop-blur-xs flex items-center justify-between">
                 <h2 className="heading-oswald text-xl flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-[hsl(var(--vintage-gold))]" />
                   {t("results.view.overallStandingsTitle")}
@@ -752,9 +752,9 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                       : "text-muted-foreground/40";
 
                     const rowAccentCls =
-                      s.rank === 1 ? "border-l-[3px] border-amber-400/70 bg-amber-500/[0.04]"
-                      : s.rank === 2 ? "border-l-[3px] border-zinc-400/50 bg-zinc-500/[0.03]"
-                      : s.rank === 3 ? "border-l-[3px] border-orange-400/50 bg-orange-500/[0.03]"
+                      s.rank === 1 ? "border-l-[3px] border-amber-400/70 bg-amber-500/4"
+                      : s.rank === 2 ? "border-l-[3px] border-zinc-400/50 bg-zinc-500/3"
+                      : s.rank === 3 ? "border-l-[3px] border-orange-400/50 bg-orange-500/3"
                       : "border-l-[3px] border-transparent";
 
                     const dagBadgeCls =
@@ -785,9 +785,9 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                         className={cn(
                           "group flex items-center gap-2.5 px-3 py-2.5 border-b border-border/40 transition-colors select-none",
                           rowAccentCls,
-                          isMe && "bg-primary/[0.08] ring-1 ring-inset ring-primary/30",
+                          isMe && "bg-primary/8 ring-1 ring-inset ring-primary/30",
                           isComparing && "bg-accent/15 ring-1 ring-inset ring-accent/50",
-                          canCompare && "cursor-pointer hover:bg-accent/10 active:bg-accent/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                          canCompare && "cursor-pointer hover:bg-accent/10 active:bg-accent/20 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50",
                         )}
                       >
                         {/* Rank number — Oswald, klassementbord-stijl */}
@@ -840,7 +840,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                         )}
 
                         {/* Total points (incl. eventuele voorspellingsbonus) */}
-                        <div className="shrink-0 text-right min-w-[3rem]">
+                        <div className="shrink-0 text-right min-w-12">
                           <div>
                             <span className={cn(
                               "font-display font-bold tabular-nums",
@@ -1042,7 +1042,7 @@ function StandingsList({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={placeholder ?? t("results.list.searchPlaceholderDefault")}
-            className="w-full h-10 pl-9 pr-3 text-base rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+            className="w-full h-10 pl-9 pr-3 text-base rounded-md border border-input bg-background focus:outline-hidden focus:ring-2 focus:ring-ring focus:border-ring"
           />
         </div>
       </div>
@@ -1120,7 +1120,7 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
 
   return (
     <div className="retro-border bg-card">
-      <div className="sticky top-0 z-20 p-4 border-b-2 border-foreground bg-secondary backdrop-blur-sm">
+      <div className="sticky top-0 z-20 p-4 border-b-2 border-foreground bg-secondary backdrop-blur-xs">
         <h2 className="heading-oswald text-xl flex items-center gap-2">
           <Medal className="h-5 w-5 text-accent" />
           {t("results.classifications.title")}
@@ -1143,7 +1143,7 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
               <TabsTrigger
                 key={tab.id}
                 value={tab.id}
-                className="shrink-0 flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-primary/60 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm"
+                className="shrink-0 flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-primary/60 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-xs"
               >
                 <TruiBadge type={tab.trui} formaat="klein" />
                 <span className="whitespace-nowrap">{tab.label}</span>

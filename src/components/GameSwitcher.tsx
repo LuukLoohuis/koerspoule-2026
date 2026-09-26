@@ -89,7 +89,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
           "flex overflow-x-auto overflow-y-hidden rounded-xl border-2 border-foreground",
           "md:overflow-x-hidden",
           "bg-secondary/40 shadow-[3px_3px_0_hsl(var(--foreground))] divide-x divide-foreground/25",
-          "md:[mask-image:none]",
+          "md:mask-none",
         )}
         style={{
           scrollbarWidth: "none",
@@ -123,7 +123,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
                 // mag krimpen (md:shrink) zodat vier segmenten ALTIJD passen —
                 // de naam trunceert dan i.p.v. dat de balk gaat scrollen.
                 "kp-gs-seg relative snap-start shrink-0 min-w-[150px] md:min-w-0 md:shrink md:flex-1",
-                "flex items-center justify-center px-3 pt-[11px] pb-3 outline-none",
+                "flex items-center justify-center px-3 pt-[11px] pb-3 outline-hidden",
                 "focus-visible:ring-2 focus-visible:ring-inset",
                 isActive
                   ? "md:flex-[1.15] text-white"
@@ -233,11 +233,11 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
 
       {/* Hint onder de balk, met dunne sierlijnen. */}
       <div className="mt-2 flex items-center justify-center gap-3">
-        <span className="h-px w-8 md:w-14 bg-gradient-to-r from-transparent to-foreground/25" aria-hidden />
+        <span className="h-px w-8 md:w-14 bg-linear-to-r from-transparent to-foreground/25" aria-hidden />
         <span className="font-mono text-[9px] md:text-[10px] tracking-[0.18em] uppercase text-muted-foreground/70 whitespace-nowrap">
           Tik een koers om te wisselen — je keuze wordt onthouden
         </span>
-        <span className="h-px w-8 md:w-14 bg-gradient-to-l from-transparent to-foreground/25" aria-hidden />
+        <span className="h-px w-8 md:w-14 bg-linear-to-l from-transparent to-foreground/25" aria-hidden />
       </div>
     </div>
   );

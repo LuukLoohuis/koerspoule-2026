@@ -485,7 +485,7 @@ export default function MijnPeloton() {
                           className={cn(
                             "w-5 h-5 rounded-full border-2 transition-all shrink-0",
                             isVisible ?
-                            "border-transparent shadow-sm" :
+                            "border-transparent shadow-xs" :
                             "border-muted-foreground/30 bg-transparent"
                           )}
                           style={isVisible ? { backgroundColor: color } : {}}
@@ -1254,7 +1254,7 @@ export default function MijnPeloton() {
             <img
               src={subpouleBanner.url}
               alt={`${subpouleBanner.name} banner`}
-              className="block w-full aspect-[31/10] object-cover object-center"
+              className="block w-full aspect-31/10 object-cover object-center"
               loading="lazy"
             />
           </div>
@@ -1280,7 +1280,7 @@ export default function MijnPeloton() {
             <button
               type="button"
               onClick={() => { rondleidingHerstarten(); setRondleidingOpen(true); }}
-              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Compass className="h-3 w-3" aria-hidden />
               {t("rondleiding.starten")}
@@ -1292,7 +1292,7 @@ export default function MijnPeloton() {
             <button
               type="button"
               onClick={haalKaartenTerug}
-              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
             >
               <RotateCcw className="h-3 w-3" aria-hidden />
               Toon hulpkaarten weer
@@ -1440,7 +1440,7 @@ export default function MijnPeloton() {
               type="button"
               onClick={() => gaNaarTab("team")}
               aria-label={`${fallenCount} renner${fallenCount === 1 ? "" : "s"} vervangen nodig — ga naar de Volgwagen`}
-              className="mt-3 w-full inline-flex items-center gap-2 rounded-md retro-border bg-[hsl(var(--vintage-gold))/0.12] px-3 py-2 text-sm font-bold hover:bg-[hsl(var(--vintage-gold))/0.2] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
+              className="mt-3 w-full inline-flex items-center gap-2 rounded-md retro-border bg-[hsl(var(--vintage-gold))/0.12] px-3 py-2 text-sm font-bold hover:bg-[hsl(var(--vintage-gold))/0.2] transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
             >
               <Car className="w-4 h-4 text-[hsl(var(--vintage-gold))]" aria-hidden />
               <span>{fallenCount} renner{fallenCount === 1 ? "" : "s"} vervangen nodig</span>
@@ -1473,7 +1473,7 @@ export default function MijnPeloton() {
               <div
                 className={cn(
                   "md:hidden mb-3 overflow-hidden transition-[max-height,opacity] duration-200 ease-out max-h-[120px]",
-                  !teamBarVisible && "!max-h-0 !mb-0 opacity-0",
+                  !teamBarVisible && "max-h-0! mb-0! opacity-0",
                 )}
               >
                 <MobielTabBalk

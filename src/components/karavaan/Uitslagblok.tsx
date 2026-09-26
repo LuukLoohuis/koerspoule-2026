@@ -90,7 +90,7 @@ export default function Uitslagblok({
     <button
       type="button"
       onClick={() => setDrill(opent)}
-      className="mb-2 flex w-full items-baseline gap-2 font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="mb-2 flex w-full items-baseline gap-2 font-oswald text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
     >
       {label}
       <span className="ml-auto text-[9px] tracking-[0.12em] text-primary">Top 10 ▸</span>
@@ -113,7 +113,7 @@ export default function Uitslagblok({
             "inline-flex items-center gap-1 rounded font-oswald text-[10.5px] uppercase tracking-[0.16em]",
             "text-primary underline underline-offset-[5px] decoration-primary/50",
             "transition-colors hover:decoration-primary",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
           )}
         >
           {open ? "Inklappen" : "Bekijk de uitslagen"}
@@ -165,7 +165,7 @@ export default function Uitslagblok({
               <button
                 type="button"
                 onClick={() => setDrill(null)}
-                className="inline-flex items-center gap-1 transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex items-center gap-1 transition-colors hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Sluiten <X className="h-3 w-3" aria-hidden />
               </button>
@@ -189,7 +189,7 @@ export default function Uitslagblok({
                   onClick={() => setDrill(k)}
                   className={cn(
                     "flex-1 py-2 font-oswald text-[10px] uppercase tracking-[0.18em] transition-colors",
-                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                    "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                     drill === k ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
                   )}
                 >

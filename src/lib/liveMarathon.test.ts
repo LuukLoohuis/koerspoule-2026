@@ -12,6 +12,7 @@ import {
   groepsNaam,
   groepsRol,
   groepsKopje,
+  kopSamenvatting,
   virtueleUitslag,
   type LiveGroup,
   type LiveRider,
@@ -183,6 +184,17 @@ describe("klassement", () => {
     expect(groups).toHaveLength(1);
     expect(groups[0].leden.map((l) => l.positie)).toEqual([1, 2, 3]);
     expect(groups[0].leden[2].gapInGroup).toBeCloseTo(1.2, 1);
+  });
+
+  it("splitst pas bij méér dan 1,5 s tussen twee rijders", () => {
+    const veld = [
+      rider("1", "A", 15, 100),
+      rider("2", "B", 15, 101.5), // precies 1,5 s: blijft erbij
+      rider("3", "C", 15, 103.1), // 1,6 s: eigen groep
+    ];
+    const groups = buildGroups(veld);
+    expect(groups.map((g) => g.leden.length)).toEqual([2, 1]);
+    expect(groups[1].gapToPrev).toBeCloseTo(1.6, 1);
   });
 
   it("geeft een leeg veld geen groepen", () => {
@@ -516,5 +528,58 @@ describe("virtueleUitslag", () => {
 
   it("gaat om met een leeg veld", () => {
     expect(virtueleUitslag([], { schema, mineRiderIds: new Set(), riderIdByBeennummer: new Map() })).toEqual([]);
+  });
+});
+
+describe("kopSamenvatting", () => {
+  const groep = (namen: string[], tier = 0, gapToPrev: number | null = null): LiveGroup => ({
+    index: 0,
+    tier,
+    gapToPrev,
+    leden: namen.map((n, i): RiderPlacing => ({
+      rider: { beennummer: n, naam: `Jan ${n}` } as LiveRider,
+      positie: i + 1,
+      tier,
+      gapInGroup: 0,
+    })),
+  });
+  const peloton = (gap: number | null = null) =>
+    groep(Array.from({ length: 20 }, (_, i) => `p${i}`), 0, gap);
+
+  it("zegt niets zolang het veld bij elkaar is", () => {
+    expect(kopSamenvatting([peloton()], new Set())).toBeNull();
+  });
+
+  it("zegt niets bij een kopgroep op een klein gat", () => {
+    expect(kopSamenvatting([groep(["a", "b"]), peloton(1.5)], new Set())).toBeNull();
+  });
+
+  it("meldt een kopgroep zodra het gat groter is dan 1,5 s", () => {
+    expect(kopSamenvatting([groep(["a", "b"]), peloton(2)], new Set())?.titel).toBe("2 rijders weg · +2,0s");
+  });
+
+  it("meldt een kopgroep met ronde-voorsprong", () => {
+    const k = kopSamenvatting([groep(["a", "b"], 2), peloton()], new Set());
+    expect(k?.titel).toBe("2 rijders op 2 ronden");
+    expect(k?.sub).toBe("geen rijder van jou mee");
+  });
+
+  it("meldt een tijdsgat met komma", () => {
+    const k = kopSamenvatting([groep(["a"]), peloton(12.34)], new Set());
+    expect(k?.titel).toBe("1 rijder weg · +12,3s");
+  });
+
+  it("ziet je rijder ook in de tweede groep vóór het peloton", () => {
+    // Dit ging eerder mis: alleen de eerste groep telde, en de melding zei
+    // "geen rijder van jou mee vooruit" terwijl hij in de achtervolging zat.
+    const groups = [groep(["a", "b"], 2), groep(["c", "d", "e"], 1), peloton()];
+    const k = kopSamenvatting(groups, new Set(["d"]));
+    expect(k?.eigen).toEqual(["d"]);
+    expect(k?.sub).toBe("mee vooruit: d");
+  });
+
+  it("noemt hoeveel er vóór het peloton rijden als jij er niet bij zit", () => {
+    const groups = [groep(["a", "b"], 2), groep(["c", "d", "e"], 1), peloton()];
+    expect(kopSamenvatting(groups, new Set())?.sub).toBe("5 rijders vóór het peloton · geen van jou");
   });
 });

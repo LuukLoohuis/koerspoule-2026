@@ -38,7 +38,7 @@ export default function PloegleiderIntro({
         className={cn(
           "inline-flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3.5 transition-colors",
           "border-[hsl(var(--vintage-gold))/0.55] bg-[hsl(var(--vintage-gold))/0.12] hover:bg-[hsl(var(--vintage-gold))/0.22]",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
+          "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
         )}
       >
         <span

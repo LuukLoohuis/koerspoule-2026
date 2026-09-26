@@ -106,7 +106,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
   if (loading) {
     return (
       <Card className="retro-border overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+        <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <CardContent className="p-4 space-y-2">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="h-6 rounded bg-secondary/60 animate-pulse" style={{ width: `${90 - i * 15}%` }} />
@@ -120,7 +120,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
   if (!selectedStage) {
     return (
       <Card className="retro-border overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+        <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <CardContent className="p-5 text-center space-y-2">
           <Flag className="h-7 w-7 text-muted-foreground/50 mx-auto" />
           <p className="font-display font-bold">{t("subpoule.daguitslag.emptyTitle")}</p>
@@ -136,7 +136,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
     <>
     <DaguitslagCelebration celebration={celebration} onClose={closeCelebration} />
     <Card className="retro-border overflow-hidden">
-      <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+      <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
 
       {/* Header */}
       <div className="p-4 border-b-2 border-foreground bg-secondary/50">
@@ -224,7 +224,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
                   className={cn(
                     "flex items-center gap-2.5 border-t border-border/60 px-3 py-2.5 transition-colors first:border-t-0",
                     "hover:bg-secondary/70",
-                    isMe && "bg-primary/[0.05]",
+                    isMe && "bg-primary/5",
                   )}
                 >
                   {/* Rank */}
@@ -237,7 +237,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
                   </div>
 
                   {/* Name */}
-                  <div className="shrink-0 w-[7.5rem] sm:w-40 min-w-0 flex items-center gap-1">
+                  <div className="shrink-0 w-30 sm:w-40 min-w-0 flex items-center gap-1">
                     <span className={cn(
                       "font-sans text-[13px] truncate",
                       isMe ? "font-bold text-primary" : isWinner ? "font-bold" : rank <= 3 ? "font-semibold" : "font-medium",
@@ -275,7 +275,7 @@ export default function DaguitslagChart({ subpouleId, subpouleName, gameId, game
                       </div>
                     </div>
                     <span className={cn(
-                      "shrink-0 font-display font-bold tabular-nums text-[13px] min-w-[3.25rem] text-right",
+                      "shrink-0 font-display font-bold tabular-nums text-[13px] min-w-13 text-right",
                       isWinner ? "text-primary" : "text-foreground",
                     )}>
                       {t("subpoule.daguitslag.pt", { points: r.points })}

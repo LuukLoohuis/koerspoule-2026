@@ -20,7 +20,7 @@ Turn `#t1` is de eerdere ronde (1a/1b/1c) en dient alleen als vergelijking.
 **High-fidelity.** Kleuren, typografie, spacing en interacties zijn definitief bedoeld.
 Bouw pixelnauwkeurig na met bestaande Tailwind-tokens; waar hieronder hex staat,
 gebruik het corresponderende CSS-variabel/token uit `src/index.css` /
-`tailwind.config.ts` in plaats van een losse hex.
+het `@theme`-blok in plaats van een losse hex.
 
 ## Doelbestanden in de repo
 | Onderdeel | Bestand |

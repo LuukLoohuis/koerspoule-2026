@@ -112,7 +112,7 @@ export default function CompareSetup({
     <div className="space-y-4">
       {/* Tegenstander-kiezer */}
       <div className="retro-border bg-card overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+        <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <div className="p-4 border-b-2 border-foreground bg-secondary/50 flex items-center gap-2">
           <Swords className="h-5 w-5 text-primary" />
           <div className="min-w-0">
@@ -132,7 +132,7 @@ export default function CompareSetup({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("common.compare.searchPlaceholder")}
-              className="w-full h-10 pl-9 pr-3 text-base rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+              className="w-full h-10 pl-9 pr-3 text-base rounded-md border border-input bg-background focus:outline-hidden focus:ring-2 focus:ring-ring focus:border-ring"
             />
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function CompareSetup({
                   className={cn(
                     "shrink-0 flex items-center gap-2 rounded-full border px-3 py-1.5 transition-colors",
                     active
-                      ? "border-primary bg-primary/10 text-primary shadow-sm"
+                      ? "border-primary bg-primary/10 text-primary shadow-xs"
                       : "border-border bg-secondary/40 text-foreground/80 hover:bg-secondary hover:border-foreground/20"
                   )}
                   title={`${o.name} · ${o.total} pt`}

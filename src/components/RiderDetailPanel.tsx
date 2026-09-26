@@ -42,7 +42,7 @@ export default function RiderDetailPanel({
           <>
             {/* Masthead */}
             <div className="border-b border-border bg-card px-5 pt-5 pb-4 relative">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary opacity-80" />
+              <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary opacity-80" />
               <SheetHeader className="space-y-0.5">
                 <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
                   {t("common.riderDetail.profileLabel")}

@@ -47,7 +47,7 @@ export default function PollCard({ poll, votes, myUserId, onVote }: Props) {
     : null;
 
   return (
-    <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent overflow-hidden">
+    <Card className="border-2 border-primary/30 bg-linear-to-br from-primary/5 to-transparent overflow-hidden">
       <CardContent className="p-3 space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-2 min-w-0">

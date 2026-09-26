@@ -29,7 +29,7 @@ export const LINE_COLORS = [
 
 /** Shared visual config — import in any chart that should match this style. */
 export const CHART_VISUAL = {
-  containerClass: "relative overflow-hidden rounded-2xl border border-border shadow-sm",
+  containerClass: "relative overflow-hidden rounded-2xl border border-border shadow-xs",
   containerStyle: { background: "hsl(var(--bg-wielerdirecteur))" } as React.CSSProperties,
   gridStroke: "rgba(0,0,0,0.07)",
   xTick:       (mobile: boolean) => ({ fontSize: mobile ? 10 : 11, fill: "rgba(0,0,0,0.45)", fontWeight: 500 as const }),
@@ -250,7 +250,7 @@ export default function SubpouleEvolutionChart({
                       className={cn(
                         "px-2.5 py-1 rounded-full transition-colors",
                         othersMode === k
-                          ? "bg-card text-foreground shadow-sm"
+                          ? "bg-card text-foreground shadow-xs"
                           : "text-muted-foreground hover:text-foreground"
                       )}
                     >
@@ -265,7 +265,7 @@ export default function SubpouleEvolutionChart({
                 className={cn(
                   "px-2.5 py-1 rounded-full border text-[11px] font-medium transition-colors",
                   showNames
-                    ? "bg-primary text-primary-foreground border-foreground shadow-sm"
+                    ? "bg-primary text-primary-foreground border-foreground shadow-xs"
                     : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
                 )}
               >

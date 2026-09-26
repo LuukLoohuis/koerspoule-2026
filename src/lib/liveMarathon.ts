@@ -238,11 +238,17 @@ export type LiveGroup = {
   gapToPrev: number | null;
 };
 
-export const GAP_THRESHOLD_S = 4;
+/**
+ * Meer dan 1,5 s tussen twee rijders is bij zo'n 45 km/u bijna 20 meter: uit
+ * de luwte, dus niet meer in hetzelfde pak.
+ */
+export const GAP_THRESHOLD_S = 1.5;
 
 /**
  * Deel het veld op in groepen. Een breuk ontstaat bij een ronde-verschil, of —
- * binnen dezelfde ronde — bij een tijdgat vanaf `gapThreshold` seconden.
+ * binnen dezelfde ronde — bij een tijdgat van méér dan `gapThreshold` seconden
+ * tussen twee opeenvolgende rijders. Het gat is het verschil in doorkomsttijd
+ * (TijdSort) bij de laatste passage van de finishlijn.
  * Ronden wegen zwaarder dan tijd: wie een ronde voorligt staat altijd hoger.
  */
 export function buildGroups(
@@ -264,7 +270,7 @@ export function buildGroups(
     const prev = sorted[i - 1];
     const lapChange = prev ? rider.aantalRonden !== prev.aantalRonden : false;
     const timeGap = prev ? secondsBetween(rider.tijdSort, prev.tijdSort) : null;
-    const timeBreak = !lapChange && timeGap !== null && timeGap >= gapThreshold;
+    const timeBreak = !lapChange && timeGap !== null && timeGap > gapThreshold;
 
     if (prev && (lapChange || timeBreak) && current.length > 0) {
       groups.push({
@@ -500,4 +506,41 @@ export function virtueleUitslag(
         isMine: riderId ? mineRiderIds.has(riderId) : false,
       };
     });
+}
+
+/**
+ * Eén regel over de kop van de koers, voor bovenop de baan: hoeveel rijders
+ * weg zijn, hoe ver, en of er iemand van jou bij zit. Kijkt naar álle groepen
+ * vóór het peloton, niet alleen de eerste -- zit jouw man in de achtervolging,
+ * dan wil je dat weten. Null als er niemand echt weg is.
+ */
+export function kopSamenvatting(
+  groups: LiveGroup[],
+  mineBeennummers: Set<string>,
+): { titel: string; sub: string; eigen: string[] } | null {
+  const kopGroepen = groups.filter((_g, i) => groepsRol(groups, i) === "kop");
+  if (kopGroepen.length === 0) return null;
+  const kop = kopGroepen[0];
+  const tijdgat = groups[1]?.gapToPrev ?? null;
+  if (kop.tier <= 0 && (tijdgat == null || tijdgat <= GAP_THRESHOLD_S)) return null;
+
+  const n = kop.leden.length;
+  const rijders = `${n} rijder${n > 1 ? "s" : ""}`;
+  const titel =
+    kop.tier > 0
+      ? `${rijders} op ${kop.tier} ronde${kop.tier > 1 ? "n" : ""}`
+      : `${rijders} weg · +${tijdgat!.toFixed(1).replace(".", ",")}s`;
+
+  const eigen = kopGroepen
+    .flatMap((g) => g.leden)
+    .filter((l) => mineBeennummers.has(l.rider.beennummer))
+    .map((l) => l.rider.naam.split(" ").slice(-1)[0]);
+  const vooraan = kopGroepen.reduce((s, g) => s + g.leden.length, 0);
+  const sub =
+    eigen.length > 0
+      ? `mee vooruit: ${eigen.join(", ")}`
+      : vooraan > n
+        ? `${vooraan} rijders vóór het peloton · geen van jou`
+        : "geen rijder van jou mee";
+  return { titel, sub, eigen };
 }

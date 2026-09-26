@@ -167,7 +167,7 @@ function Harness() {
                   </span>
                   <input
                     placeholder="Stel je ploegnaam in…"
-                    className="h-9 w-full min-w-0 rounded-md border border-border bg-background px-2 font-display font-bold outline-none"
+                    className="h-9 w-full min-w-0 rounded-md border border-border bg-background px-2 font-display font-bold outline-hidden"
                   />
                   <button className="retro-border-primary w-full rounded-md bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground">
                     Opslaan
@@ -196,7 +196,7 @@ function Harness() {
             )}
             <div className="order-2 min-w-0 md:order-1">
               {onbWeg && (
-                <button data-herstel onClick={haalTerug} className="mb-3 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground hover:bg-foreground/[0.05]">
+                <button data-herstel onClick={haalTerug} className="mb-3 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground hover:bg-foreground/5">
                   ↺ Toon hulpkaarten weer
                 </button>
               )}

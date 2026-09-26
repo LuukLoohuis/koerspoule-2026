@@ -148,7 +148,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
     <div className="space-y-4">
       {/* Selector */}
       <Card className="retro-border overflow-hidden">
-        <CardHeader className="border-b-2 border-foreground bg-gradient-to-r from-secondary/40 via-secondary/20 to-transparent py-3">
+        <CardHeader className="border-b-2 border-foreground bg-linear-to-r from-secondary/40 via-secondary/20 to-transparent py-3">
           <CardTitle className="font-display flex items-center gap-2 text-base">
             <Swords className="h-5 w-5 text-primary" />
             RSLT.{scopeLabel ? <span className="text-xs font-normal text-muted-foreground">· {scopeLabel}</span> : null}
@@ -204,7 +204,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
         <>
           {/* Hero header */}
           <Card className="retro-border overflow-hidden">
-            <div className="bg-gradient-to-br from-primary/5 via-background to-accent/5 p-5">
+            <div className="bg-linear-to-br from-primary/5 via-background to-accent/5 p-5">
               <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
                 <div className="text-center min-w-0">
                   <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-[10px] uppercase tracking-wider text-primary font-bold">
@@ -216,7 +216,7 @@ export default function BenchmarkPanel({ data, isLoading, scopeLabel, emptyOppon
                   <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("common.benchmark.ptApproved")}</div>
                 </div>
                 <div className="flex flex-col items-center gap-1.5">
-                  <div className={cn("rounded-full border-2 px-4 py-2 backdrop-blur-sm", diffBg(totalDiff))}>
+                  <div className={cn("rounded-full border-2 px-4 py-2 backdrop-blur-xs", diffBg(totalDiff))}>
                     <div className={cn("font-display text-xl font-bold tabular-nums leading-none", diffTone(totalDiff))}>
                       {fmtDiff(totalDiff)}
                     </div>

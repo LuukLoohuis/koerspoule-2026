@@ -31,11 +31,11 @@ export default function SponsorStrip() {
       <div className="container mx-auto px-5 py-7">
         <div className="mx-auto max-w-5xl overflow-hidden rounded-xl border-2 border-foreground bg-card shadow-[4px_4px_0_hsl(var(--foreground))]">
           {/* Leiderstruistreep — zelfde markering als op het startbord. */}
-          <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+          <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
 
           <div className="flex flex-col sm:flex-row">
             {/* Gestempeld tabje: hoort bij het bord, niet ernaast. */}
-            <div className="flex shrink-0 flex-col justify-center gap-0.5 border-b-2 border-foreground bg-foreground/[0.04] px-4 py-3 sm:border-b-0 sm:border-r-2 sm:px-5">
+            <div className="flex shrink-0 flex-col justify-center gap-0.5 border-b-2 border-foreground bg-foreground/4 px-4 py-3 sm:border-b-0 sm:border-r-2 sm:px-5">
               <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
                 {t("shell.sponsors.madePossible")}
               </span>
@@ -49,7 +49,7 @@ export default function SponsorStrip() {
             {/* flex-1: de rij vult de rest van het bord, zodat de cellen
                 meegroeien met de beschikbare breedte in plaats van op hun
                 minimum te blijven staan. */}
-            <ul className="m-0 flex flex-1 list-none overflow-x-auto p-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <ul className="m-0 flex flex-1 list-none overflow-x-auto p-0 scrollbar-none [&::-webkit-scrollbar]:hidden">
               {sponsors.map((s) => (
                 <li key={s.id} className="flex-1 shrink-0 border-r border-border/70 last:border-r-0">
                   <SponsorCel s={s} />
@@ -108,7 +108,7 @@ function SponsorCel({ s }: { s: Sponsor }) {
       rel="noopener noreferrer nofollow sponsored"
       onClick={() => logSponsorKlik("sponsor", s.id, "link_url", "voorpagina")}
       aria-label={t("shell.sponsors.visitAria", { name: s.naam })}
-      className={`${cel} transition-colors hover:bg-foreground/[0.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--vintage-gold))]`}
+      className={`${cel} transition-colors hover:bg-foreground/5 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--vintage-gold))]`}
     >
       {inhoud}
     </a>

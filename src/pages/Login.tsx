@@ -313,9 +313,9 @@ export default function Login() {
           />
 
           <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="h-px w-12 bg-gradient-to-r from-transparent to-primary/40" />
+            <div className="h-px w-12 bg-linear-to-r from-transparent to-primary/40" />
             <Star size={12} className="text-primary/50" />
-            <div className="h-px w-12 bg-gradient-to-l from-transparent to-primary/40" />
+            <div className="h-px w-12 bg-linear-to-l from-transparent to-primary/40" />
           </div>
 
           <AnimatePresence mode="wait">
@@ -468,7 +468,7 @@ export default function Login() {
                     onClick={() => setShowPassword((v) => !v)}
                     aria-label={showPassword ? t("auth.login.hidePassword") : t("auth.login.showPassword")}
                     aria-pressed={showPassword}
-                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] rounded-r-md"
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))] rounded-r-md"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>

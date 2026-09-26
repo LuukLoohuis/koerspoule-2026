@@ -16,6 +16,10 @@ import {
   tiersPresent,
   PATH_KUNSTIJS,
   PATH_NATUURIJS,
+  groepsBand,
+  schatAfstand,
+  verwerkMeting,
+  MAX_DOORRIJDEN_MS,
 } from "@/lib/liveRink";
 
 const groep = (tier: number, ...beennummers: string[]) => ({
@@ -248,5 +252,85 @@ describe("rondeBadge", () => {
 
   it("schrijft achterstand met een echt minteken", () => {
     expect(rondeBadge(-1)).toBe("\u22121");
+  });
+});
+
+describe("groepsBand", () => {
+  const eerstePunt = (d: string) => d.split(" ")[0].slice(1).split(",").map(Number);
+  const laatstePunt = (d: string) => d.split(" ").at(-1)!.slice(1).split(",").map(Number);
+
+  it("tekent niets voor een losse rijder", () => {
+    expect(groepsBand([0.3])).toBeNull();
+  });
+
+  it("loopt van de achterste naar de voorste rijder", () => {
+    const d = groepsBand([0.12, 0.1, 0.14])!;
+    const start = baanPositie(0.1, 0);
+    const eind = baanPositie(0.14, 0);
+    expect(eerstePunt(d)).toEqual([+start.x.toFixed(1), +start.y.toFixed(1)]);
+    expect(laatstePunt(d)).toEqual([+eind.x.toFixed(1), +eind.y.toFixed(1)]);
+  });
+
+  it("verbindt een groep over de finish via de korte kant", () => {
+    // 0,98 en 0,02 liggen vier procent uit elkaar, niet zesennegentig.
+    const d = groepsBand([0.02, 0.98])!;
+    const start = baanPositie(0.98, 0);
+    expect(eerstePunt(d)).toEqual([+start.x.toFixed(1), +start.y.toFixed(1)]);
+    expect(d.split(" ").length).toBeLessThan(10);
+  });
+
+  it("slaat een 'groep' over die meer dan een halve ronde beslaat", () => {
+    expect(groepsBand([0, 0.3, 0.6])).toBeNull();
+  });
+});
+
+describe("doorrijden tussen metingen", () => {
+  it("staat stil na de eerste meting: er is nog geen snelheid", () => {
+    const m = verwerkMeting(undefined, 10.5, 0);
+    expect(schatAfstand(m, 5000)).toBe(10.5);
+  });
+
+  it("rijdt door met de snelheid uit twee metingen", () => {
+    const a = verwerkMeting(undefined, 10, 0);
+    // Halve ronde in 16 s: 32 s per ronde.
+    const b = verwerkMeting(a, 10.5, 16_000);
+    expect(b.v).toBeCloseTo(1 / 32, 6);
+    // Acht seconden later een kwart ronde verder (plus een weggeëbde correctie).
+    expect(schatAfstand(b, 24_000)).toBeCloseTo(10.75, 2);
+  });
+
+  it("schuift een afwijking weg in plaats van te verspringen", () => {
+    const a = verwerkMeting(undefined, 10, 0);
+    const b = verwerkMeting(a, 10.5, 16_000);
+    // Geschat op 11,0 na 32 s; gemeten 10,95 -> kleine correctie, ebt weg.
+    const c = verwerkMeting(b, 10.95, 32_000);
+    expect(schatAfstand(c, 32_000)).toBeCloseTo(11.0, 6);
+    expect(schatAfstand(c, 36_000) - (10.95 + 4 / 32)).toBeLessThan(0.001);
+  });
+
+  it("verspringt als de meting ver van de schatting ligt", () => {
+    const a = verwerkMeting(undefined, 10, 0);
+    const b = verwerkMeting(a, 10.5, 16_000);
+    const c = verwerkMeting(b, 12, 20_000);
+    expect(c.corr).toBe(0);
+  });
+
+  it("negeert een onmogelijke snelheid en houdt de vorige aan", () => {
+    const a = verwerkMeting(undefined, 10, 0);
+    const b = verwerkMeting(a, 10.5, 16_000);
+    const c = verwerkMeting(b, 13, 20_000); // 2,5 ronde in 4 s
+    expect(c.v).toBe(b.v);
+  });
+
+  it("telt een her-render met dezelfde plek niet als meting", () => {
+    const a = verwerkMeting(undefined, 10, 0);
+    const b = verwerkMeting(a, 10.5, 16_000);
+    expect(verwerkMeting(b, 10.5, 16_500)).toBe(b);
+  });
+
+  it("stopt met doorrijden als de feed wegvalt", () => {
+    const b = verwerkMeting(verwerkMeting(undefined, 10, 0), 10.5, 16_000);
+    const lang = schatAfstand(b, 16_000 + MAX_DOORRIJDEN_MS);
+    expect(schatAfstand(b, 16_000 + MAX_DOORRIJDEN_MS * 4)).toBe(lang);
   });
 });

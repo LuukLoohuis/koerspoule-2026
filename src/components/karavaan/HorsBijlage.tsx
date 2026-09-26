@@ -59,9 +59,9 @@ export default function HorsBijlage({
             className={cn(
               "min-h-[78px] rounded-[14px] bg-background p-2.5 text-left",
               "shadow-[0_0_0_1px_rgba(20,18,16,0.07),0_10px_22px_-16px_rgba(0,0,0,0.45)]",
-              "transition-transform duration-150 hover:-translate-y-[2px] active:translate-y-[1px]",
+              "transition-transform duration-150 hover:translate-y-[-2px] active:translate-y-px",
               "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
+              "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
             )}
           >
             {/* Geen nepnul als het cijfer er nog niet is: een streepje op

@@ -44,7 +44,7 @@ export default function StageRoadbook({
           <button
             onClick={onSelectGc}
             className={cn(
-              "flex flex-col items-center gap-1 px-2 py-1.5 rounded-md transition-all min-w-[3rem]",
+              "flex flex-col items-center gap-1 px-2 py-1.5 rounded-md transition-all min-w-12",
               gcSelected ?
               "bg-primary/10 ring-2 ring-primary" :
               "hover:bg-secondary/50"
@@ -70,7 +70,7 @@ export default function StageRoadbook({
                 key={stage.stage}
                 onClick={() => onSelectStage(i)}
                 className={cn(
-                  "group flex flex-col items-center gap-0.5 px-1 py-1 rounded-md transition-all min-w-[2.5rem]",
+                  "group flex flex-col items-center gap-0.5 px-1 py-1 rounded-md transition-all min-w-10",
                   isSelected ? "bg-primary/10 ring-2 ring-primary" : "hover:bg-secondary/50"
                 )}
                 title={`${stage.route} • ${stage.distance}`}>
@@ -132,7 +132,7 @@ export default function StageRoadbook({
           <button
             onClick={onSelectGc}
             className={cn(
-              "group flex flex-col items-center gap-1 px-1 py-1.5 rounded-md transition-all min-w-[3rem]",
+              "group flex flex-col items-center gap-1 px-1 py-1.5 rounded-md transition-all min-w-12",
               gcSelected ? "bg-primary/10 ring-2 ring-primary" : "hover:bg-secondary/50"
             )}>
             
@@ -158,7 +158,7 @@ export default function StageRoadbook({
                 key={stage.stage}
                 onClick={() => onSelectStage(i)}
                 className={cn(
-                  "group flex flex-col items-center gap-1 px-1 py-1.5 rounded-md transition-all relative min-w-[3rem]",
+                  "group flex flex-col items-center gap-1 px-1 py-1.5 rounded-md transition-all relative min-w-12",
                   isSelected ? "bg-primary/10 ring-2 ring-primary" : "hover:bg-secondary/50"
                 )}
                 title={`${stage.route} • ${stage.distance}`}>
@@ -174,7 +174,7 @@ export default function StageRoadbook({
                     </span>
                     <div className="w-6 flex items-end justify-center" style={{ height: 56 }}>
                       <div
-                      className={cn("w-full rounded-t transition-all", isSelected ? cfg.color : "bg-muted", isSelected && "shadow-sm")}
+                      className={cn("w-full rounded-t transition-all", isSelected ? cfg.color : "bg-muted", isSelected && "shadow-xs")}
                       style={{ height: barHeight }} />
                     
                     </div>

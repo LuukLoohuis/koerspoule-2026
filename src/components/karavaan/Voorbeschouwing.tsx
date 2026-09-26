@@ -126,7 +126,7 @@ export default function Voorbeschouwing({
   const wanneer = dateBadge(stage.date, t, locale);
 
   return (
-    <div className="rounded-xl border-2 border-foreground/15 bg-card overflow-hidden shadow-sm">
+    <div className="rounded-xl border-2 border-foreground/15 bg-card overflow-hidden shadow-xs">
       {/* Thema-band — bolletjes (Tour/Vuelta) of accent (Giro) */}
       <div className="bolletjes-rule" aria-hidden />
       {/* Krant-kop */}
@@ -174,7 +174,7 @@ export default function Voorbeschouwing({
                 "group w-full overflow-hidden rounded-xl text-left",
                 "bg-card ring-1 ring-border/70 transition-shadow",
                 "shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_6px_rgba(0,0,0,0.09)]",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
+                "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
               )}
             >
               <span className="flex items-center gap-2 px-3 py-2.5">
@@ -210,7 +210,7 @@ export default function Voorbeschouwing({
                     loading="lazy"
                     className="absolute inset-x-0 bottom-0 w-full object-cover opacity-80"
                   />
-                  <span className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+                  <span className="absolute inset-0 bg-linear-to-t from-black/45 to-transparent" />
                 </span>
               )}
             </button>
@@ -225,7 +225,7 @@ export default function Voorbeschouwing({
                     volle breedte terwijl de kaart gecentreerd op 780 px bleef --
                     met lichte stroken links en rechts als gevolg. */}
                 <div className="-mx-4 overflow-hidden border-y border-[hsl(var(--vintage-sepia)/0.4)] sm:mx-auto sm:max-w-[780px] sm:rounded-xl sm:border">
-                  <div className="relative aspect-[4/3] w-full sm:aspect-[24/10]">
+                  <div className="relative aspect-4/3 w-full sm:aspect-24/10">
                     <iframe
                       src={profielUrl}
                       title={t("karavaan.voorbeschouwing.profielIframeTitle", { number: stage.stage_number })}
@@ -247,7 +247,7 @@ export default function Voorbeschouwing({
                     "mt-2 inline-flex items-center gap-1.5 rounded-full bg-card px-3.5 py-2",
                     "text-[12px] font-semibold text-[hsl(var(--vintage-gold))] ring-1 ring-[hsl(var(--vintage-gold))/0.35]",
                     "transition-colors hover:bg-[hsl(var(--vintage-gold))/0.1]",
-                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
+                    "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
                   )}
                 >
                   {t("karavaan.voorbeschouwing.profielVolledig")} <ExternalLink className="h-3 w-3" />

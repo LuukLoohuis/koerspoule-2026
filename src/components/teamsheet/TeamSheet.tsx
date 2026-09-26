@@ -133,7 +133,7 @@ export default function TeamSheet({
   const inkLine = (
     <div className="flex-1">
       <div className="h-[2px]" style={{ background: "var(--ink-sepia)" }} />
-      <div className="h-[1px] mt-0.5" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
+      <div className="h-px mt-0.5" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
     </div>
   );
 
@@ -233,7 +233,7 @@ export default function TeamSheet({
                     onClick={() => (onToggleRider ?? onRiderClick)?.(r.id)}
                     aria-expanded={onToggleRider ? isOpen : undefined}
                     aria-controls={onToggleRider ? `rider-breakdown-${r.id}` : undefined}
-                    className="rounded-md px-1.5 py-1.5 text-left transition-colors motion-reduce:transition-none hover:bg-[rgba(255,255,255,0.35)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--ink-sepia)]"
+                    className="rounded-md px-1.5 py-1.5 text-left transition-colors motion-reduce:transition-none hover:bg-[rgba(255,255,255,0.35)] focus:outline-hidden focus-visible:ring-1 focus-visible:ring-(--ink-sepia)"
                     style={{ background: isOpen ? "rgba(255,255,255,0.45)" : undefined }}
                     title={r.name}
                   >

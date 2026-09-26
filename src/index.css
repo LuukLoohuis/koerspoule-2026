@@ -1,6 +1,783 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (width >= --theme(--breakpoint-sm)) {
+    max-width: none;
+  }
+  @media (width >= 1400px) {
+    max-width: 1400px;
+  }
+}
+
+@theme inline {
+  --font-display: 'Playfair Display', serif;
+  --font-serif: 'Source Serif 4', serif;
+  --font-sans: 'DM Sans', sans-serif;
+  --font-oswald: 'Oswald', 'Helvetica Neue', sans-serif;
+  --font-inter: 'Inter', 'DM Sans', sans-serif;
+  --font-stamp: 'Special Elite', 'Courier Prime', monospace;
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --color-jersey-pink: hsl(var(--jersey-pink));
+  --color-jersey-purple: hsl(var(--jersey-purple));
+  --color-jersey-blue: hsl(var(--jersey-blue));
+  --color-jersey-white: hsl(var(--jersey-white));
+
+  --color-vintage-brown: hsl(var(--vintage-brown));
+  --color-vintage-gold: hsl(var(--vintage-gold));
+
+  --color-maillot-jaune: hsl(var(--maillot-jaune));
+  --color-maillot-jaune-dark: hsl(var(--maillot-jaune-dark));
+  --color-maillot-bolletjes: hsl(var(--bolletjes-bright));
+  --color-maillot-groen: hsl(var(--maillot-groen));
+  --color-maillot-wit: hsl(var(--maillot-wit));
+
+  --color-paper: hsl(var(--paper));
+  --color-paper-dark: hsl(var(--paper-dark));
+
+  --color-ink: hsl(var(--ink));
+  --color-ink-soft: hsl(var(--ink-soft));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade-in: fade-in 0.5s ease-out forwards;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  /* v4 geeft knoppen standaard `cursor: default`; v3 gaf een handje. */
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@utility content-font {
+  /* ── Consistente website-typografie ──────────────────────────────────────
+     Alle pagina-inhoud (alles behalve de voorpagina) gebruikt één goed
+     leesbaar font: Inter. Forceert over alle tailwind font-utilities en
+     losse font-family-declaraties heen, zodat tabjes en content overal
+     gelijk ogen. De voorpagina (/) krijgt deze class niet en behoudt haar
+     eigen editorial typografie (Playfair/Caveat/Oswald). */
+  font-family: 'Inter', 'DM Sans', sans-serif !important;
+  & *:not(svg):not(svg *) {
+    font-family: 'Inter', 'DM Sans', sans-serif !important;
+  }
+}
+
+@utility margin-note {
+  /* ── Margin-notes (Caveat handschrift-annotaties) ── */
+  display: inline-block;
+  font-family: 'Caveat', cursive;
+  color: hsl(var(--hand-ink));
+  line-height: 1.15;
+  pointer-events: none;
+}
+
+@utility tilt-l {
+  transform: rotate(-3deg);
+}
+
+@utility tilt-r {
+  transform: rotate(2deg);
+}
+
+@utility sticker {
+  /* ── Sticker (retro-badge) ── */
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: 1.5px solid hsl(var(--foreground));
+  border-radius: 4px;
+  box-shadow: 1.5px 1.5px 0 hsl(var(--foreground));
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+@utility sticker--gold {
+  background: hsl(var(--vintage-gold));
+  color: hsl(var(--foreground));
+}
+
+@utility sticker--hand {
+  font-family: 'Caveat', cursive;
+  font-style: normal;
+  font-size: 15px;
+  padding: 2px 10px;
+}
+
+@utility editor-eyebrow {
+  /* ── Editor-eyebrow (mono-label met streepje) ── */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: hsl(var(--primary));
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 28px;
+    height: 3px;
+    background: hsl(var(--primary));
+  }
+  /* TdF (geel): helder goud als kleine tekst is slecht leesbaar op crème →
+     donkerder amber voor de eyebrow-tekst (streepje blijft helder als accent). */
+  [data-thema='geel'] & {
+    color: hsl(36 80% 32%);
+  }
+}
+
+@utility mop-card {
+  /* ── Mop-card (gele krantenrubriek) ── */
+  background: hsl(var(--vintage-gold) / 0.18);
+  border: 1.5px solid hsl(var(--foreground));
+  border-radius: 12px;
+  box-shadow: 2.5px 2.5px 0 hsl(var(--foreground));
+}
+
+@utility retro-border {
+  /* ── Retro border treatments ── */
+  border: 2px solid hsl(var(--foreground));
+  box-shadow: 3px 3px 0 hsl(var(--foreground));
+  border-radius: 9px;
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease;
+  &:hover {
+    transform: none;
+    box-shadow: 3px 3px 0 hsl(var(--foreground));
+  }
+  /* Grote lees-/leespanelen (bv. Koerscafé) mogen NIET wiebelen bij hover —
+     de kantel maakt de tekst onrustig. Opt-out: blijf stil staan. */
+  &.no-hover-lift:hover {
+    transform: none;
+    box-shadow: 3px 3px 0 hsl(var(--foreground));
+  }
+}
+
+@utility no-hover-lift {
+  /* Grote lees-/leespanelen (bv. Koerscafé) mogen NIET wiebelen bij hover —
+     de kantel maakt de tekst onrustig. Opt-out: blijf stil staan. */
+  &.retro-border:hover {
+    transform: none;
+    box-shadow: 3px 3px 0 hsl(var(--foreground));
+  }
+}
+
+@utility retro-border-primary {
+  border: 2px solid hsl(var(--primary));
+  box-shadow: 3px 3px 0 hsl(var(--primary) / 0.5);
+  border-radius: 9px;
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease;
+  &:hover {
+    transform: none;
+    box-shadow: 3px 3px 0 hsl(var(--primary) / 0.5);
+  }
+}
+
+@utility vintage-divider {
+  /* ── Ornamental dividers ── */
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--primary)),
+    hsl(var(--vintage-gold)),
+    hsl(var(--primary)),
+    transparent
+  );
+}
+
+@utility vintage-ornament {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  &::before {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--vintage-gold) / 0.6),
+      hsl(var(--primary) / 0.8),
+      hsl(var(--vintage-gold) / 0.6),
+      transparent
+    );
+  }
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--vintage-gold) / 0.6),
+      hsl(var(--primary) / 0.8),
+      hsl(var(--vintage-gold) / 0.6),
+      transparent
+    );
+  }
+}
+
+@utility vintage-ornament-symbol {
+  color: hsl(var(--vintage-gold));
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@utility ornate-frame {
+  /* ── Corner ornaments ── */
+  position: relative;
+  border: 1px solid hsl(var(--border));
+  &::before {
+    content: '✦';
+    position: absolute;
+    color: hsl(var(--vintage-gold));
+    font-size: 0.5rem;
+    line-height: 1;
+    opacity: 0.65;
+  }
+  &::after {
+    content: '✦';
+    position: absolute;
+    color: hsl(var(--vintage-gold));
+    font-size: 0.5rem;
+    line-height: 1;
+    opacity: 0.65;
+  }
+  &::before {
+    top: -4px;
+    left: -4px;
+  }
+  &::after {
+    bottom: -4px;
+    right: -4px;
+  }
+}
+
+@utility gradient-border-top {
+  /* ── Gradient section borders ── */
+  border-top: 2px solid transparent;
+  border-image: linear-gradient(
+      90deg,
+      hsl(var(--vintage-gold) / 0),
+      hsl(var(--primary)),
+      hsl(var(--vintage-gold)),
+      hsl(var(--primary)),
+      hsl(var(--vintage-gold) / 0)
+    )
+    1;
+}
+
+@utility gradient-border-bottom {
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(
+      90deg,
+      hsl(var(--vintage-gold) / 0),
+      hsl(var(--primary)),
+      hsl(var(--vintage-gold)),
+      hsl(var(--primary)),
+      hsl(var(--vintage-gold) / 0)
+    )
+    1;
+}
+
+@utility vintage-heading {
+  /* ── Typography utilities ── */
+  font-family: 'Playfair Display', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.12em;
+  color: hsl(var(--foreground));
+}
+
+@utility vintage-texture {
+  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.03' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+@utility jersey-badge {
+  /* ── Jersey badge ── */
+  @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold;
+}
+
+@utility section-rule {
+  /* ── Newspaper section header with trailing rule ── */
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: hsl(var(--border));
+  }
+}
+
+@utility table-editorial {
+  /* ── Compact editorial table ── */
+  & th {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+  & td {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+  }
+}
+
+@utility race-rule {
+  /* ── Race accent top line ── */
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--primary)) 25%,
+    hsl(var(--vintage-gold)) 50%,
+    hsl(var(--primary)) 75%,
+    transparent 100%
+  );
+}
+
+@utility card-compact {
+  /* ── Compact card for information-dense layouts ── */
+  @apply border border-border/60 bg-card rounded-sm p-3;
+}
+
+@utility chart-scroll {
+  /* ── Mobile chart scroll wrapper ── */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@utility dark-grain {
+  /* Subtle noise grain for dark vintage panels */
+  background-image: url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='0.035' fill-rule='evenodd'%3E%3Cpath d='M3 0h1L0 4V3zM4 3v1H3z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+@utility nav-link-editorial {
+  /* ── Editorial nav link with bottom indicator ── */
+  @apply relative inline-flex items-center px-3 py-1.5 mt-1.5 mb-0.5 text-[13px] uppercase tracking-[0.14em] transition-all duration-150 rounded-[3px] whitespace-nowrap select-none;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  border: 1.5px solid hsl(var(--foreground) / 0.18);
+  background: hsl(var(--background));
+  box-shadow: 1.5px 1.5px 0 hsl(var(--foreground) / 0.08);
+  &:hover {
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--primary) / 0.5);
+    box-shadow: 2px 2px 0 hsl(var(--primary) / 0.2);
+    background: hsl(var(--primary) / 0.04);
+    transform: translateY(-1px);
+  }
+  &.active {
+    color: hsl(var(--primary));
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary) / 0.08);
+    box-shadow: 2px 2px 0 hsl(var(--primary) / 0.35);
+    font-weight: 700;
+  }
+}
+
+@utility active {
+  &.nav-link-editorial {
+    color: hsl(var(--primary));
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary) / 0.08);
+    box-shadow: 2px 2px 0 hsl(var(--primary) / 0.35);
+    font-weight: 700;
+  }
+}
+
+@utility heading-oswald {
+  /* ─── Maillot-poster utilities (Tour-stijl accenten) ─────────────────────── */
+
+  /* Krantenkop in Oswald — uppercase, condensed, voor poster-titels */
+  font-family: 'Oswald', 'Helvetica Neue', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+  color: hsl(var(--ink));
+}
+
+@utility overline-stamp {
+  /* Overline / etappe-caption in Special Elite — typmachine-stempel */
+  font-family: 'Special Elite', 'Courier Prime', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 11px;
+  color: hsl(var(--ink-soft));
+}
+
+@utility double-rule {
+  /* Dubbele lijn onder page-headers — klassieke poster-look */
+  border-bottom: 1px solid hsl(var(--ink));
+  box-shadow: 0 4px 0 -3px hsl(var(--ink));
+  padding-bottom: 0.5rem;
+}
+
+@utility maillot-leader-row {
+  /* Leader-rij geel-getint in klassementen */
+  background: hsl(var(--maillot-jaune) / 0.22) !important;
+  border-left: 3px solid hsl(var(--maillot-jaune));
+}
+
+@utility kop-gold {
+  /* Section-kop met gouden accentlijn (krant/poster-stijl) */
+  position: relative;
+  padding-bottom: 0.5rem;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)),
+      hsl(var(--vintage-gold)) 45%,
+      hsl(var(--vintage-gold) / 0) 100%
+    );
+  }
+}
+
+@utility hover-lift {
+  /* Subtiele hover-lift voor interactieve tegels */
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px -10px hsl(var(--foreground) / 0.28);
+  }
+}
+
+@utility podium-shine {
+  /* Goud-shine voor podium-#1 — een lichtveeg die over de trede glijdt */
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    75deg,
+    transparent 30%,
+    hsl(0 0% 100% / 0.55) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+  animation: podium-shine 3.6s ease-in-out infinite;
+  mix-blend-mode: overlay;
+}
+
+@utility trui-bolletjes {
+  /* Bolletjestrui-patroon (bergtrui Tour/Vuelta) — voor HTML-elementen.
+     TruiBadge gebruikt eigen SVG; deze klasse is voor losse vlakken. */
+  background-color: #ffffff;
+  background-image: radial-gradient(
+    circle,
+    var(--bolletje-kleur, #cc0000) 30%,
+    transparent 31%
+  );
+  background-size: 12px 12px;
+}
+
+@utility bolletjes-rule {
+  /* ── Bolletjes-divider — maillot à pois (Tour) / de lunares (Vuelta) ── */
+  height: 14px;
+  background-image: radial-gradient(
+    var(--bolletje-kleur, hsl(var(--primary))) 2.4px,
+    transparent 2.7px
+  );
+  background-size: 14px 14px;
+  background-position: center;
+  background-repeat: repeat-x;
+  opacity: 0.72;
+}
+
+@utility vintage-paper {
+  /* Oud papier + halftone-textuur, leesbaar (lage opacity). */
+  background-color: var(--paper-light);
+  background-image:
+    radial-gradient(rgba(58, 42, 26, 0.06) 0.6px, transparent 0.7px),
+    radial-gradient(rgba(58, 42, 26, 0.04) 0.6px, transparent 0.7px),
+    linear-gradient(135deg, var(--paper-light) 0%, var(--paper-deep) 100%);
+  background-size:
+    3px 3px,
+    7px 7px,
+    auto;
+  background-position:
+    0 0,
+    2px 2px,
+    0 0;
+  color: var(--ink-sepia);
+}
+
+@utility vintage-frame {
+  /* Dubbele kaderlijn rond een affichepaneel. */
+  border: 1.5px solid var(--ink-sepia);
+  box-shadow:
+    inset 0 0 0 3px var(--paper-light),
+    inset 0 0 0 4.5px var(--ink-sepia),
+    0 2px 0 rgba(58, 42, 26, 0.18);
+  border-radius: 6px;
+}
+
+@utility vintage-sunburst {
+  /* Zonnestraal achter de winnaar — pure CSS conic. */
+  background:
+    radial-gradient(
+      closest-side,
+      rgba(232, 185, 35, 0.55),
+      rgba(232, 185, 35, 0) 70%
+    ),
+    repeating-conic-gradient(
+      from -90deg,
+      rgba(232, 185, 35, 0.18) 0deg 9deg,
+      transparent 9deg 18deg
+    );
+  border-radius: 50%;
+}
+
+@utility vintage-stamp {
+  /* Gespatieerde caps — gedrukt op een bord. */
+  font-family: 'Oswald', 'Bebas Neue', 'Archivo Black', 'Special Elite', serif;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--ink-faded);
+  font-weight: 700;
+}
+
+@utility vintage-numeral {
+  /* Affiche-numerals — grote vette display. */
+  font-family: 'Oswald', 'Bebas Neue', 'Archivo Black', serif;
+  font-weight: 900;
+  color: var(--ink-sepia);
+  line-height: 0.9;
+}
+
+@utility vintage-empty {
+  /* Gestippeld vintage placeholder-vak voor lege podium-/trui-slots. */
+  border: 1.5px dashed var(--ink-faded);
+  color: var(--ink-faded);
+  font-family: 'Special Elite', 'Courier Prime', serif;
+  font-style: italic;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 6px,
+    rgba(58, 42, 26, 0.04) 6px 7px
+  );
+}
+
+@utility vintage-ribbon {
+  /* Vintage cocarde-lint (Frans tricolor, iets matter). */
+  background: linear-gradient(
+    90deg,
+    var(--vintage-blue) 0 33%,
+    #f4ecd8 33% 66%,
+    var(--vintage-red) 66% 100%
+  );
+}
+
+@utility vintage-medal {
+  /* Vintage emaille-medaillon. Verkrijgt rang-cijfer als child. */
+  border: 2px solid var(--medal-rim, var(--medal-gold));
+  background:
+    radial-gradient(
+      circle at 32% 28%,
+      rgba(255, 255, 255, 0.55),
+      transparent 55%
+    ),
+    radial-gradient(circle at 60% 70%, rgba(0, 0, 0, 0.18), transparent 60%),
+    var(--medal-fill, var(--medal-gold));
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 255, 255, 0.18),
+    0 2px 4px rgba(58, 42, 26, 0.4);
+}
+
+@utility vintage-sokkel {
+  /* Sokkel met "houten/emaille" gevoel — voor podium-blok. */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(0, 0, 0, 0) 22%),
+    linear-gradient(
+      180deg,
+      var(--sokkel-top, #d9c49a),
+      var(--sokkel-bot, #b58e5a)
+    );
+  border: 1.5px solid var(--ink-sepia);
+  box-shadow:
+    inset 0 -8px 0 rgba(58, 42, 26, 0.18),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    0 3px 0 rgba(58, 42, 26, 0.25);
+}
+
+@utility vintage-sokkel--winner {
+  --sokkel-top: #f2c955;
+  --sokkel-bot: #c58a12;
+}
+
+@utility vintage-sokkel--silver {
+  --sokkel-top: #e4e2dc;
+  --sokkel-bot: #a8a39a;
+}
+
+@utility vintage-sokkel--bronze {
+  --sokkel-top: #d9a56c;
+  --sokkel-bot: #8c5a2a;
+}
+
+@utility vintage-board {
+  /* Affichekaart voor truien-voorspelling — emaille-bordje. */
+  background:
+    radial-gradient(rgba(58, 42, 26, 0.05) 0.6px, transparent 0.7px) 0 0/3px 3px,
+    linear-gradient(180deg, #faf3de 0%, #f0e5c8 100%);
+  border: 2px solid var(--ink-sepia);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 0 3px var(--paper-light),
+    inset 0 0 0 4px var(--ink-sepia),
+    0 2px 0 rgba(58, 42, 26, 0.18);
+  color: var(--ink-sepia);
+  &[data-accent='punten'] {
+    box-shadow:
+      inset 0 0 0 3px var(--paper-light),
+      inset 0 0 0 4px var(--vintage-green),
+      0 2px 0 rgba(58, 42, 26, 0.18);
+    border-color: var(--vintage-green);
+  }
+  &[data-accent='berg'] {
+    box-shadow:
+      inset 0 0 0 3px var(--paper-light),
+      inset 0 0 0 4px var(--vintage-red),
+      0 2px 0 rgba(58, 42, 26, 0.18);
+    border-color: var(--vintage-red);
+  }
+  &[data-accent='jongeren'] {
+    box-shadow:
+      inset 0 0 0 3px var(--paper-light),
+      inset 0 0 0 4px var(--ink-sepia),
+      0 2px 0 rgba(58, 42, 26, 0.18);
+    border-color: var(--ink-sepia);
+  }
+}
+
+@utility vintage-laurel {
+  /* Lauwerkrans-glyph cluster rond winnaar. */
+  color: var(--medal-gold);
+  text-shadow: 0 1px 0 rgba(58, 42, 26, 0.18);
+}
+
+@utility animate-monkey-idle {
+  /* Vintage mechanische "ademhaling" voor de aap-mascotte */
+  animation: monkey-idle 4s ease-in-out infinite;
+  transform-origin: center bottom;
+  display: inline-block;
+}
+
+@utility bg-riso-grain {
+  /* Subtiele, statische riso-grain textuur (zelf-gegenereerde SVG-noise) */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
 
 @layer base {
   :root {
@@ -115,9 +892,17 @@
   }
 }
 
-@keyframes ploegStatsFadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to   { opacity: 1; transform: translateY(0); }
+@layer utilities {
+  @keyframes ploegStatsFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 
 @layer base {
@@ -140,264 +925,6 @@
 }
 
 @layer components {
-  /* ── Consistente website-typografie ──────────────────────────────────────
-     Alle pagina-inhoud (alles behalve de voorpagina) gebruikt één goed
-     leesbaar font: Inter. Forceert over alle tailwind font-utilities en
-     losse font-family-declaraties heen, zodat tabjes en content overal
-     gelijk ogen. De voorpagina (/) krijgt deze class niet en behoudt haar
-     eigen editorial typografie (Playfair/Caveat/Oswald). */
-  .content-font,
-  .content-font *:not(svg):not(svg *) {
-    font-family: 'Inter', 'DM Sans', sans-serif !important;
-  }
-
-  /* ── Margin-notes (Caveat handschrift-annotaties) ── */
-  .margin-note {
-    display: inline-block;
-    font-family: 'Caveat', cursive;
-    color: hsl(var(--hand-ink));
-    line-height: 1.15;
-    pointer-events: none;
-  }
-  .tilt-l { transform: rotate(-3deg); }
-  .tilt-r { transform: rotate(2deg); }
-
-  /* ── Sticker (retro-badge) ── */
-  .sticker {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 9px;
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    border: 1.5px solid hsl(var(--foreground));
-    border-radius: 4px;
-    box-shadow: 1.5px 1.5px 0 hsl(var(--foreground));
-    font-family: 'Playfair Display', serif;
-    font-style: italic;
-    font-weight: 700;
-    font-size: 11px;
-  }
-  .sticker--gold {
-    background: hsl(var(--vintage-gold));
-    color: hsl(var(--foreground));
-  }
-  .sticker--hand {
-    font-family: 'Caveat', cursive;
-    font-style: normal;
-    font-size: 15px;
-    padding: 2px 10px;
-  }
-
-  /* ── Editor-eyebrow (mono-label met streepje) ── */
-  .editor-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.22em;
-    color: hsl(var(--primary));
-  }
-  .editor-eyebrow::before {
-    content: '';
-    display: inline-block;
-    width: 28px;
-    height: 3px;
-    background: hsl(var(--primary));
-  }
-  /* TdF (geel): helder goud als kleine tekst is slecht leesbaar op crème →
-     donkerder amber voor de eyebrow-tekst (streepje blijft helder als accent). */
-  [data-thema="geel"] .editor-eyebrow {
-    color: hsl(36 80% 32%);
-  }
-
-  /* ── Mop-card (gele krantenrubriek) ── */
-  .mop-card {
-    background: hsl(var(--vintage-gold) / 0.18);
-    border: 1.5px solid hsl(var(--foreground));
-    border-radius: 12px;
-    box-shadow: 2.5px 2.5px 0 hsl(var(--foreground));
-  }
-
-  /* ── Retro border treatments ── */
-  .retro-border {
-    border: 2px solid hsl(var(--foreground));
-    box-shadow: 3px 3px 0 hsl(var(--foreground));
-    border-radius: 9px;
-    transition: transform 220ms ease, box-shadow 220ms ease;
-  }
-  .retro-border:hover {
-    transform: none;
-    box-shadow: 3px 3px 0 hsl(var(--foreground));
-  }
-  /* Grote lees-/leespanelen (bv. Koerscafé) mogen NIET wiebelen bij hover —
-     de kantel maakt de tekst onrustig. Opt-out: blijf stil staan. */
-  .retro-border.no-hover-lift:hover {
-    transform: none;
-    box-shadow: 3px 3px 0 hsl(var(--foreground));
-  }
-
-  .retro-border-primary {
-    border: 2px solid hsl(var(--primary));
-    box-shadow: 3px 3px 0 hsl(var(--primary) / 0.5);
-    border-radius: 9px;
-    transition: transform 220ms ease, box-shadow 220ms ease;
-  }
-  .retro-border-primary:hover {
-    transform: none;
-    box-shadow: 3px 3px 0 hsl(var(--primary) / 0.5);
-  }
-
-  /* ── Ornamental dividers ── */
-  .vintage-divider {
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      hsl(var(--primary)),
-      hsl(var(--vintage-gold)),
-      hsl(var(--primary)),
-      transparent
-    );
-  }
-
-  .vintage-ornament {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    width: 100%;
-  }
-  .vintage-ornament::before,
-  .vintage-ornament::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      hsl(var(--vintage-gold) / 0.6),
-      hsl(var(--primary) / 0.8),
-      hsl(var(--vintage-gold) / 0.6),
-      transparent
-    );
-  }
-  .vintage-ornament-symbol {
-    color: hsl(var(--vintage-gold));
-    font-size: 1rem;
-    line-height: 1;
-  }
-
-  /* ── Corner ornaments ── */
-  .ornate-frame {
-    position: relative;
-    border: 1px solid hsl(var(--border));
-  }
-  .ornate-frame::before,
-  .ornate-frame::after {
-    content: '✦';
-    position: absolute;
-    color: hsl(var(--vintage-gold));
-    font-size: 0.5rem;
-    line-height: 1;
-    opacity: 0.65;
-  }
-  .ornate-frame::before { top: -4px; left: -4px; }
-  .ornate-frame::after  { bottom: -4px; right: -4px; }
-
-  /* ── Gradient section borders ── */
-  .gradient-border-top {
-    border-top: 2px solid transparent;
-    border-image: linear-gradient(
-      90deg,
-      hsl(var(--vintage-gold) / 0),
-      hsl(var(--primary)),
-      hsl(var(--vintage-gold)),
-      hsl(var(--primary)),
-      hsl(var(--vintage-gold) / 0)
-    ) 1;
-  }
-  .gradient-border-bottom {
-    border-bottom: 2px solid transparent;
-    border-image: linear-gradient(
-      90deg,
-      hsl(var(--vintage-gold) / 0),
-      hsl(var(--primary)),
-      hsl(var(--vintage-gold)),
-      hsl(var(--primary)),
-      hsl(var(--vintage-gold) / 0)
-    ) 1;
-  }
-
-  /* ── Typography utilities ── */
-  .vintage-heading {
-    font-family: 'Playfair Display', serif;
-    font-variant: small-caps;
-    letter-spacing: 0.12em;
-    color: hsl(var(--foreground));
-  }
-
-  .vintage-texture {
-    background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.03' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
-  }
-
-  /* ── Jersey badge ── */
-  .jersey-badge {
-    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold;
-  }
-
-  /* ── Newspaper section header with trailing rule ── */
-  .section-rule {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-  }
-  .section-rule::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: hsl(var(--border));
-  }
-
-  /* ── Compact editorial table ── */
-  .table-editorial th {
-    padding: 0.375rem 0.625rem;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: hsl(var(--muted-foreground));
-  }
-  .table-editorial td {
-    padding: 0.375rem 0.625rem;
-    font-size: 0.8125rem;
-    line-height: 1.35;
-  }
-
-  /* ── Race accent top line ── */
-  .race-rule {
-    height: 2px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      hsl(var(--primary)) 25%,
-      hsl(var(--vintage-gold)) 50%,
-      hsl(var(--primary)) 75%,
-      transparent 100%
-    );
-  }
-
-  /* ── Compact card for information-dense layouts ── */
-  .card-compact {
-    @apply border border-border/60 bg-card rounded-sm p-3;
-  }
-
-  /* ── Mobile chart scroll wrapper ── */
-  .chart-scroll {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
   /* ── Vintage dark panel palette ──────────────────────────────────────────
      Warm sepia-brown alternatives to slate-*, used by Palmares / Dartpijl /
      Wielerdirecteur. Keeps dark sections tonally linked to the golden/warm
@@ -407,128 +934,6 @@
     --v-dark:   28 30% 11%;  /* tobacco brown              — replaces slate-900 */
     --v-card:   28 22% 16%;  /* antique programme card     — replaces slate-800 */
     --v-raised: 28 18% 21%;  /* raised surface             — replaces slate-700 */
-  }
-
-  /* Subtle noise grain for dark vintage panels */
-  .dark-grain {
-    background-image:
-      url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='0.035' fill-rule='evenodd'%3E%3Cpath d='M3 0h1L0 4V3zM4 3v1H3z'/%3E%3C/g%3E%3C/svg%3E");
-  }
-
-  /* ── Editorial nav link with bottom indicator ── */
-  .nav-link-editorial {
-    @apply relative inline-flex items-center px-3 py-1.5 mt-1.5 mb-0.5 text-[13px] uppercase tracking-[0.14em] transition-all duration-150 rounded-[3px] whitespace-nowrap select-none;
-    font-family: 'JetBrains Mono', 'Courier New', monospace;
-    font-weight: 600;
-    color: hsl(var(--muted-foreground));
-    border: 1.5px solid hsl(var(--foreground) / 0.18);
-    background: hsl(var(--background));
-    box-shadow: 1.5px 1.5px 0 hsl(var(--foreground) / 0.08);
-  }
-  .nav-link-editorial:hover {
-    color: hsl(var(--foreground));
-    border-color: hsl(var(--primary) / 0.5);
-    box-shadow: 2px 2px 0 hsl(var(--primary) / 0.2);
-    background: hsl(var(--primary) / 0.04);
-    transform: translateY(-1px);
-  }
-  .nav-link-editorial.active {
-    color: hsl(var(--primary));
-    border-color: hsl(var(--primary));
-    background: hsl(var(--primary) / 0.08);
-    box-shadow: 2px 2px 0 hsl(var(--primary) / 0.35);
-    font-weight: 700;
-  }
-
-  /* ─── Maillot-poster utilities (Tour-stijl accenten) ─────────────────────── */
-
-  /* Krantenkop in Oswald — uppercase, condensed, voor poster-titels */
-  .heading-oswald {
-    font-family: 'Oswald', 'Helvetica Neue', sans-serif;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    line-height: 1.05;
-    color: hsl(var(--ink));
-  }
-
-  /* Overline / etappe-caption in Special Elite — typmachine-stempel */
-  .overline-stamp {
-    font-family: 'Special Elite', 'Courier Prime', monospace;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    font-size: 11px;
-    color: hsl(var(--ink-soft));
-  }
-
-  /* Dubbele lijn onder page-headers — klassieke poster-look */
-  .double-rule {
-    border-bottom: 1px solid hsl(var(--ink));
-    box-shadow: 0 4px 0 -3px hsl(var(--ink));
-    padding-bottom: 0.5rem;
-  }
-
-  /* Leader-rij geel-getint in klassementen */
-  .maillot-leader-row {
-    background: hsl(var(--maillot-jaune) / 0.22) !important;
-    border-left: 3px solid hsl(var(--maillot-jaune));
-  }
-
-  /* Section-kop met gouden accentlijn (krant/poster-stijl) */
-  .kop-gold {
-    position: relative;
-    padding-bottom: 0.5rem;
-  }
-  .kop-gold::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(
-      90deg,
-      hsl(var(--primary)),
-      hsl(var(--vintage-gold)) 45%,
-      hsl(var(--vintage-gold) / 0) 100%
-    );
-  }
-
-  /* Subtiele hover-lift voor interactieve tegels */
-  .hover-lift {
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
-  }
-  .hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 22px -10px hsl(var(--foreground) / 0.28);
-  }
-
-  /* Goud-shine voor podium-#1 — een lichtveeg die over de trede glijdt */
-  .podium-shine {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(75deg, transparent 30%, hsl(0 0% 100% / 0.55) 50%, transparent 70%);
-    pointer-events: none;
-    animation: podium-shine 3.6s ease-in-out infinite;
-    mix-blend-mode: overlay;
-  }
-
-  /* Bolletjestrui-patroon (bergtrui Tour/Vuelta) — voor HTML-elementen.
-     TruiBadge gebruikt eigen SVG; deze klasse is voor losse vlakken. */
-  .trui-bolletjes {
-    background-color: #ffffff;
-    background-image: radial-gradient(circle, var(--bolletje-kleur, #cc0000) 30%, transparent 31%);
-    background-size: 12px 12px;
-  }
-
-  /* ── Bolletjes-divider — maillot à pois (Tour) / de lunares (Vuelta) ── */
-  .bolletjes-rule {
-    height: 14px;
-    background-image: radial-gradient(var(--bolletje-kleur, hsl(var(--primary))) 2.4px, transparent 2.7px);
-    background-size: 14px 14px;
-    background-position: center;
-    background-repeat: repeat-x;
-    opacity: 0.72;
   }
 
   /* ──────────────────────────────────────────────────────────────────────
@@ -550,417 +955,336 @@
     --medal-silver: #B0B0B0;
     --medal-bronze: #B0793E;
   }
-
-  /* Oud papier + halftone-textuur, leesbaar (lage opacity). */
-  .vintage-paper {
-    background-color: var(--paper-light);
-    background-image:
-      radial-gradient(rgba(58,42,26,0.06) 0.6px, transparent 0.7px),
-      radial-gradient(rgba(58,42,26,0.04) 0.6px, transparent 0.7px),
-      linear-gradient(135deg, var(--paper-light) 0%, var(--paper-deep) 100%);
-    background-size: 3px 3px, 7px 7px, auto;
-    background-position: 0 0, 2px 2px, 0 0;
-    color: var(--ink-sepia);
-  }
-
-  /* Dubbele kaderlijn rond een affichepaneel. */
-  .vintage-frame {
-    border: 1.5px solid var(--ink-sepia);
-    box-shadow:
-      inset 0 0 0 3px var(--paper-light),
-      inset 0 0 0 4.5px var(--ink-sepia),
-      0 2px 0 rgba(58,42,26,0.18);
-    border-radius: 6px;
-  }
-
-  /* Zonnestraal achter de winnaar — pure CSS conic. */
-  .vintage-sunburst {
-    background:
-      radial-gradient(closest-side, rgba(232,185,35,0.55), rgba(232,185,35,0) 70%),
-      repeating-conic-gradient(
-        from -90deg,
-        rgba(232,185,35,0.18) 0deg 9deg,
-        transparent 9deg 18deg
-      );
-    border-radius: 50%;
-  }
-
-  /* Gespatieerde caps — gedrukt op een bord. */
-  .vintage-stamp {
-    font-family: 'Oswald','Bebas Neue','Archivo Black','Special Elite',serif;
-    text-transform: uppercase;
-    letter-spacing: 0.22em;
-    color: var(--ink-faded);
-    font-weight: 700;
-  }
-
-  /* Affiche-numerals — grote vette display. */
-  .vintage-numeral {
-    font-family: 'Oswald','Bebas Neue','Archivo Black',serif;
-    font-weight: 900;
-    color: var(--ink-sepia);
-    line-height: 0.9;
-  }
-
-  /* Gestippeld vintage placeholder-vak voor lege podium-/trui-slots. */
-  .vintage-empty {
-    border: 1.5px dashed var(--ink-faded);
-    color: var(--ink-faded);
-    font-family: 'Special Elite','Courier Prime',serif;
-    font-style: italic;
-    background: repeating-linear-gradient(
-      45deg,
-      transparent 0 6px,
-      rgba(58,42,26,0.04) 6px 7px
-    );
-  }
-
-  /* Vintage cocarde-lint (Frans tricolor, iets matter). */
-  .vintage-ribbon {
-    background: linear-gradient(
-      90deg,
-      var(--vintage-blue) 0 33%,
-      #F4ECD8 33% 66%,
-      var(--vintage-red) 66% 100%
-    );
-  }
-
-  /* Vintage emaille-medaillon. Verkrijgt rang-cijfer als child. */
-  .vintage-medal {
-    border: 2px solid var(--medal-rim, var(--medal-gold));
-    background:
-      radial-gradient(circle at 32% 28%, rgba(255,255,255,0.55), transparent 55%),
-      radial-gradient(circle at 60% 70%, rgba(0,0,0,0.18), transparent 60%),
-      var(--medal-fill, var(--medal-gold));
-    box-shadow:
-      inset 0 0 0 3px rgba(255,255,255,0.18),
-      0 2px 4px rgba(58,42,26,0.4);
-  }
-
-  /* Sokkel met "houten/emaille" gevoel — voor podium-blok. */
-  .vintage-sokkel {
-    background:
-      linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(0,0,0,0) 22%),
-      linear-gradient(180deg, var(--sokkel-top, #D9C49A), var(--sokkel-bot, #B58E5A));
-    border: 1.5px solid var(--ink-sepia);
-    box-shadow:
-      inset 0 -8px 0 rgba(58,42,26,0.18),
-      inset 0 2px 0 rgba(255,255,255,0.45),
-      0 3px 0 rgba(58,42,26,0.25);
-  }
-  .vintage-sokkel--winner {
-    --sokkel-top: #F2C955;
-    --sokkel-bot: #C58A12;
-  }
-  .vintage-sokkel--silver {
-    --sokkel-top: #E4E2DC;
-    --sokkel-bot: #A8A39A;
-  }
-  .vintage-sokkel--bronze {
-    --sokkel-top: #D9A56C;
-    --sokkel-bot: #8C5A2A;
-  }
-
-  /* Affichekaart voor truien-voorspelling — emaille-bordje. */
-  .vintage-board {
-    background:
-      radial-gradient(rgba(58,42,26,0.05) 0.6px, transparent 0.7px) 0 0/3px 3px,
-      linear-gradient(180deg, #FAF3DE 0%, #F0E5C8 100%);
-    border: 2px solid var(--ink-sepia);
-    border-radius: 8px;
-    box-shadow:
-      inset 0 0 0 3px var(--paper-light),
-      inset 0 0 0 4px var(--ink-sepia),
-      0 2px 0 rgba(58,42,26,0.18);
-    color: var(--ink-sepia);
-  }
-  .vintage-board[data-accent="punten"]    { box-shadow: inset 0 0 0 3px var(--paper-light), inset 0 0 0 4px var(--vintage-green), 0 2px 0 rgba(58,42,26,0.18); border-color: var(--vintage-green); }
-  .vintage-board[data-accent="berg"]      { box-shadow: inset 0 0 0 3px var(--paper-light), inset 0 0 0 4px var(--vintage-red),   0 2px 0 rgba(58,42,26,0.18); border-color: var(--vintage-red); }
-  .vintage-board[data-accent="jongeren"]  { box-shadow: inset 0 0 0 3px var(--paper-light), inset 0 0 0 4px var(--ink-sepia),     0 2px 0 rgba(58,42,26,0.18); border-color: var(--ink-sepia); }
-
-  /* Lauwerkrans-glyph cluster rond winnaar. */
-  .vintage-laurel {
-    color: var(--medal-gold);
-    text-shadow: 0 1px 0 rgba(58,42,26,0.18);
-  }
 }
 
-/* Bolletje-kleur per thema (Tour = rood, Vuelta = blauw) */
-:root[data-thema="geel"] .trui-bolletjes { --bolletje-kleur: #cc0000; }
-:root[data-thema="rood"] .trui-bolletjes { --bolletje-kleur: #2e5ba8; }
+@layer utilities {
+  /* Bolletje-kleur per thema (Tour = rood, Vuelta = blauw) */
+  :root[data-thema='geel'] .trui-bolletjes {
+    --bolletje-kleur: #cc0000;
+  }
+  :root[data-thema='rood'] .trui-bolletjes {
+    --bolletje-kleur: #2e5ba8;
+  }
 
-/* Bolletje-kleur op thema-niveau zodat losse dividers meekleuren */
-:root[data-thema="geel"] { --bolletje-kleur: #cc0000; }
-:root[data-thema="rood"] { --bolletje-kleur: #2e5ba8; }
+  /* Bolletje-kleur op thema-niveau zodat losse dividers meekleuren */
+  :root[data-thema='geel'] {
+    --bolletje-kleur: #cc0000;
+  }
+  :root[data-thema='rood'] {
+    --bolletje-kleur: #2e5ba8;
+  }
 
-/* ═══════════════════════════════════════════════════════════════════════════
+  /* ═══════════════════════════════════════════════════════════════════════════
    Tour de France (geel) — "Maillot Jaune poster" + "Vintage L'Équipe krant".
    Alles scoped op [data-thema="geel"] zodat roze/rood ongemoeid blijven.
    Achtergrond bewust ZACHT crème (lage saturatie) — eerdere felle tint vond
    de gebruiker te fel; de poster-energie zit in de masthead-band, grain en
    accenten, niet in een fel vlak.
    ═══════════════════════════════════════════════════════════════════════════ */
-:root[data-thema="geel"] {
-  --background: 50 64% 96.5%;   /* zacht crème papier (#FDFBEF-achtig) */
-  --card: 48 72% 97.5%;         /* nèt warmer dan achtergrond */
-  --popover: 48 72% 97.5%;
-  --secondary: 46 40% 90%;      /* warm-grijs paneel */
-  --muted: 44 30% 87%;
-  --border: 42 32% 80%;         /* warmere randen */
-  --input: 42 32% 80%;
-}
+  :root[data-thema='geel'] {
+    --background: 50 64% 96.5%; /* zacht crème papier (#FDFBEF-achtig) */
+    --card: 48 72% 97.5%; /* nèt warmer dan achtergrond */
+    --popover: 48 72% 97.5%;
+    --secondary: 46 40% 90%; /* warm-grijs paneel */
+    --muted: 44 30% 87%;
+    --border: 42 32% 80%; /* warmere randen */
+    --input: 42 32% 80%;
+  }
 
-/* Krantenpapier-grain over de pagina (alleen Tour) — subtiel, bovenop de
+  /* Krantenpapier-grain over de pagina (alleen Tour) — subtiel, bovenop de
    bestaande stipple. */
-:root[data-thema="geel"] body {
-  background-image:
-    radial-gradient(hsl(var(--ink) / 0.030) 0.5px, transparent 0.6px),
-    radial-gradient(hsl(var(--ink) / 0.022) 0.5px, transparent 0.6px),
-    url("data:image/svg+xml,%3Csvg width='140' height='140' viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-  background-size: 5px 5px, 7px 7px, 140px 140px;
-  background-position: 0 0, 2px 3px, 0 0;
-}
+  :root[data-thema='geel'] body {
+    background-image:
+      radial-gradient(hsl(var(--ink) / 0.03) 0.5px, transparent 0.6px),
+      radial-gradient(hsl(var(--ink) / 0.022) 0.5px, transparent 0.6px),
+      url("data:image/svg+xml,%3Csvg width='140' height='140' viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    background-size:
+      5px 5px,
+      7px 7px,
+      140px 140px;
+    background-position:
+      0 0,
+      2px 3px,
+      0 0;
+  }
 
-/* Masthead-accentstrip: gouden maillot-gradient i.p.v. de standaard race-rule */
-:root[data-thema="geel"] header .race-rule {
-  height: 4px;
-  background: linear-gradient(
-    90deg,
-    hsl(var(--maillot-jaune-dark)),
-    hsl(var(--maillot-jaune)) 50%,
-    hsl(var(--maillot-jaune-dark))
-  );
-}
+  /* Masthead-accentstrip: gouden maillot-gradient i.p.v. de standaard race-rule */
+  :root[data-thema='geel'] header .race-rule {
+    height: 4px;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--maillot-jaune-dark)),
+      hsl(var(--maillot-jaune)) 50%,
+      hsl(var(--maillot-jaune-dark))
+    );
+  }
 
-/* L'Équipe-poster band onder de masthead-logo-rij */
-.tdf-poster-band {
-  border-top: 1px solid hsl(var(--ink) / 0.85);
-  border-bottom: 1px solid hsl(var(--ink) / 0.85);
-  background:
-    linear-gradient(
+  /* L'Équipe-poster band onder de masthead-logo-rij */
+  .tdf-poster-band {
+    border-top: 1px solid hsl(var(--ink) / 0.85);
+    border-bottom: 1px solid hsl(var(--ink) / 0.85);
+    background: linear-gradient(
       180deg,
       hsl(var(--maillot-jaune)) 0%,
       hsl(var(--maillot-jaune-dark)) 100%
     );
-  box-shadow: inset 0 -2px 0 -1px hsl(var(--ink) / 0.25);
-}
-.tdf-poster-band__inner {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.28rem 0;
-}
-.tdf-poster-band__title {
-  font-size: 0.95rem;
-  letter-spacing: 0.14em;
-  color: hsl(var(--ink));
-}
-.tdf-poster-band__stamp {
-  color: hsl(var(--ink) / 0.7);
-  white-space: nowrap;
-}
-
-/* Poster-randen: kaarten krijgen een iets inktrijkere rand voor krant-look */
-:root[data-thema="geel"] .retro-border {
-  border-color: hsl(var(--ink) / 0.55);
-}
-
-/* ── Mobile — max-width: 767px ─────────────────────────────────────────────── */
-@media (max-width: 767px) {
-
-  /* Tab bars: no wrapping, scrollable for inline-flex variants */
-  [role="tablist"] {
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    box-shadow: inset 0 -2px 0 -1px hsl(var(--ink) / 0.25);
   }
-  [role="tablist"]::-webkit-scrollbar { display: none; }
-  [role="tab"] {
-    flex-shrink: 0 !important;
+  .tdf-poster-band__inner {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.28rem 0;
+  }
+  .tdf-poster-band__title {
+    font-size: 0.95rem;
+    letter-spacing: 0.14em;
+    color: hsl(var(--ink));
+  }
+  .tdf-poster-band__stamp {
+    color: hsl(var(--ink) / 0.7);
     white-space: nowrap;
   }
 
-  /* Card padding — tighter on mobile */
-  .card-header-mobile { padding: 0.625rem 0.875rem !important; }
-
-  /* Compact editorial table on mobile */
-  .table-editorial th {
-    padding: 0.25rem 0.375rem;
-    font-size: 0.6rem;
-  }
-  .table-editorial td {
-    padding: 0.25rem 0.375rem;
-    font-size: 0.75rem;
+  /* Poster-randen: kaarten krijgen een iets inktrijkere rand voor krant-look */
+  :root[data-thema='geel'] .retro-border {
+    border-color: hsl(var(--ink) / 0.55);
   }
 
-  /* Charts: allow horizontal scroll if wider than viewport */
-  .recharts-responsive-container,
-  .recharts-wrapper {
-    min-width: 0 !important;
-  }
-  .chart-scroll {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  /* ── Mobile — max-width: 767px ─────────────────────────────────────────────── */
+  @media (max-width: 767px) {
+    /* Tab bars: no wrapping, scrollable for inline-flex variants */
+    [role='tablist'] {
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    [role='tablist']::-webkit-scrollbar {
+      display: none;
+    }
+    [role='tab'] {
+      flex-shrink: 0 !important;
+      white-space: nowrap;
+    }
+
+    /* Card padding — tighter on mobile */
+    .card-header-mobile {
+      padding: 0.625rem 0.875rem !important;
+    }
+
+    /* Compact editorial table on mobile */
+    .table-editorial th {
+      padding: 0.25rem 0.375rem;
+      font-size: 0.6rem;
+    }
+    .table-editorial td {
+      padding: 0.25rem 0.375rem;
+      font-size: 0.75rem;
+    }
+
+    /* Charts: allow horizontal scroll if wider than viewport */
+    .recharts-responsive-container,
+    .recharts-wrapper {
+      min-width: 0 !important;
+    }
+    .chart-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Reduce container padding */
+    .container {
+      padding-left: 0.75rem !important;
+      padding-right: 0.75rem !important;
+    }
+
+    /* Ornate feature boxes — less padding on mobile */
+    .ornate-frame.retro-border {
+      padding: 1rem !important;
+    }
+
+    /* Vintage heading — smaller on mobile */
+    .vintage-heading {
+      letter-spacing: 0.07em;
+    }
+
+    /* Section spacing — tighter */
+    .mop-card {
+      padding: 0.75rem !important;
+    }
+
+    /* Sticker — slightly smaller */
+    .sticker--hand {
+      font-size: 12px;
+      padding: 1px 7px;
+    }
   }
 
-  /* Reduce container padding */
-  .container {
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-  }
-
-  /* Ornate feature boxes — less padding on mobile */
-  .ornate-frame.retro-border {
-    padding: 1rem !important;
-  }
-
-  /* Vintage heading — smaller on mobile */
-  .vintage-heading {
-    letter-spacing: 0.07em;
-  }
-
-  /* Section spacing — tighter */
-  .mop-card {
-    padding: 0.75rem !important;
-  }
-
-  /* Sticker — slightly smaller */
-  .sticker--hand {
-    font-size: 12px;
-    padding: 1px 7px;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════
+  /* ═══════════════════════════════════════════════════════════
    MOBILE UX IMPROVEMENTS — max-width 768px
    Desktop (≥769px) blijft 100% ongewijzigd
    ═══════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    /* ── Kaarten: compactere padding ─────────────────────────── */
+    [data-slot='card-content'] {
+      padding: 12px !important;
+    }
+    [data-slot='card-header'] {
+      padding: 12px 12px 8px !important;
+    }
 
-  /* ── Kaarten: compactere padding ─────────────────────────── */
-  [data-slot="card-content"] {
-    padding: 12px !important;
-  }
-  [data-slot="card-header"] {
-    padding: 12px 12px 8px !important;
+    /* ── Knoppen: grotere taptargets ─────────────────────────── */
+    button:not([class*='MobielTab']):not([data-sidebar]) {
+      min-height: 36px;
+    }
+
+    /* ── Cijfers en statistieken ──────────────────────────────── */
+    .font-mono,
+    [class*='tabular'] {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Lange namen: afkappen met ellipsis ───────────────────── */
+    .truncate-mobile {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    /* ── Scrollbare containers: scrollbar verbergen ───────────── */
+    .overflow-x-auto {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .overflow-x-auto::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* ── Swipe-hint animatie (eenmalig bij mount) ─────────────── */
+    @keyframes swipe-hint {
+      0% {
+        transform: translateX(0);
+      }
+      25% {
+        transform: translateX(-8px);
+      }
+      75% {
+        transform: translateX(4px);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+    .swipe-hint {
+      animation: swipe-hint 0.6s ease 0.8s 1 both;
+    }
+
+    /* Eenmalige "peek": ~12px naar links en soepel terug (leert de swipe aan). */
+    @keyframes kp-swipe-peek {
+      0% {
+        transform: translateX(0);
+      }
+      35% {
+        transform: translateX(-12px);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+    .kp-swipe-peek {
+      animation: kp-swipe-peek 0.5s ease-out 1 both;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .kp-swipe-peek {
+        animation: none;
+      }
+    }
+
+    /* Coachmark-gebaar: hand wiebelt links↔rechts om de veeg voor te doen. */
+    @keyframes kp-swipe-nudge {
+      0%,
+      100% {
+        transform: translateX(-5px);
+      }
+      50% {
+        transform: translateX(5px);
+      }
+    }
+    .kp-swipe-nudge {
+      animation: kp-swipe-nudge 1.4s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .kp-swipe-nudge {
+        animation: none;
+      }
+    }
+
+    /* Koffie-icoon: subtiel "stoom"-wiebeltje, alleen bij hover/focus. */
+    @keyframes kp-coffee-steam {
+      0%,
+      100% {
+        transform: translateY(0) rotate(0deg);
+      }
+      30% {
+        transform: translateY(-1px) rotate(-7deg);
+      }
+      60% {
+        transform: translateY(-1px) rotate(6deg);
+      }
+    }
+    .group:hover .kp-coffee-steam,
+    .group:focus-visible .kp-coffee-steam {
+      animation: kp-coffee-steam 0.7s ease-in-out;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .kp-coffee-steam {
+        animation: none !important;
+      }
+    }
+
+    /* ── Witruimte: minder verticale ruimte ───────────────────── */
+    .space-y-6 > * + * {
+      margin-top: 1rem !important;
+    }
+    .space-y-5 > * + * {
+      margin-top: 0.875rem !important;
+    }
+
+    /* ── Grote statistieken: minimaal 18px bold ───────────────── */
+    .stat-number {
+      font-size: 18px !important;
+      font-weight: 700 !important;
+      font-variant-numeric: tabular-nums;
+    }
   }
 
-  /* ── Knoppen: grotere taptargets ─────────────────────────── */
-  button:not([class*="MobielTab"]):not([data-sidebar]) {
-    min-height: 36px;
+  /* Keyframes — buiten @layer zodat ze altijd beschikbaar zijn */
+  @keyframes podium-shine {
+    0% {
+      transform: translateX(-120%);
+      opacity: 0;
+    }
+    18% {
+      opacity: 0.55;
+    }
+    55% {
+      opacity: 0.55;
+    }
+    100% {
+      transform: translateX(120%);
+      opacity: 0;
+    }
   }
 
-  /* ── Cijfers en statistieken ──────────────────────────────── */
-  .font-mono,
-  [class*="tabular"] {
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* ── Lange namen: afkappen met ellipsis ───────────────────── */
-  .truncate-mobile {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-
-  /* ── Scrollbare containers: scrollbar verbergen ───────────── */
-  .overflow-x-auto {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .overflow-x-auto::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* ── Swipe-hint animatie (eenmalig bij mount) ─────────────── */
-  @keyframes swipe-hint {
-    0%   { transform: translateX(0); }
-    25%  { transform: translateX(-8px); }
-    75%  { transform: translateX(4px); }
-    100% { transform: translateX(0); }
-  }
-  .swipe-hint {
-    animation: swipe-hint 0.6s ease 0.8s 1 both;
-  }
-
-  /* Eenmalige "peek": ~12px naar links en soepel terug (leert de swipe aan). */
-  @keyframes kp-swipe-peek {
-    0%   { transform: translateX(0); }
-    35%  { transform: translateX(-12px); }
-    100% { transform: translateX(0); }
-  }
-  .kp-swipe-peek { animation: kp-swipe-peek 0.5s ease-out 1 both; }
-  @media (prefers-reduced-motion: reduce) {
-    .kp-swipe-peek { animation: none; }
-  }
-
-  /* Coachmark-gebaar: hand wiebelt links↔rechts om de veeg voor te doen. */
-  @keyframes kp-swipe-nudge {
-    0%, 100% { transform: translateX(-5px); }
-    50%      { transform: translateX(5px); }
-  }
-  .kp-swipe-nudge { animation: kp-swipe-nudge 1.4s ease-in-out infinite; }
-  @media (prefers-reduced-motion: reduce) {
-    .kp-swipe-nudge { animation: none; }
-  }
-
-  /* Koffie-icoon: subtiel "stoom"-wiebeltje, alleen bij hover/focus. */
-  @keyframes kp-coffee-steam {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    30%      { transform: translateY(-1px) rotate(-7deg); }
-    60%      { transform: translateY(-1px) rotate(6deg); }
-  }
-  .group:hover .kp-coffee-steam,
-  .group:focus-visible .kp-coffee-steam {
-    animation: kp-coffee-steam 0.7s ease-in-out;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .kp-coffee-steam { animation: none !important; }
-  }
-
-  /* ── Witruimte: minder verticale ruimte ───────────────────── */
-  .space-y-6 > * + * {
-    margin-top: 1rem !important;
-  }
-  .space-y-5 > * + * {
-    margin-top: 0.875rem !important;
-  }
-
-  /* ── Grote statistieken: minimaal 18px bold ───────────────── */
-  .stat-number {
-    font-size: 18px !important;
-    font-weight: 700 !important;
-    font-variant-numeric: tabular-nums;
-  }
+  /* ───────────────────────── Aap met de dartpijl ───────────────────────── */
 }
-
-/* Keyframes — buiten @layer zodat ze altijd beschikbaar zijn */
-@keyframes podium-shine {
-  0% { transform: translateX(-120%); opacity: 0; }
-  18% { opacity: 0.55; }
-  55% { opacity: 0.55; }
-  100% { transform: translateX(120%); opacity: 0; }
-}
-
-/* ───────────────────────── Aap met de dartpijl ───────────────────────── */
 @layer utilities {
-  /* Vintage mechanische "ademhaling" voor de aap-mascotte */
   @keyframes monkey-idle {
     0%, 100% { transform: translateY(0) rotate(0deg); }
     50%      { transform: translateY(-3px) rotate(0.5deg); }
-  }
-  .animate-monkey-idle {
-    animation: monkey-idle 4s ease-in-out infinite;
-    transform-origin: center bottom;
-    display: inline-block;
-  }
-
-  /* Subtiele, statische riso-grain textuur (zelf-gegenereerde SVG-noise) */
-  .bg-riso-grain {
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
 }
 

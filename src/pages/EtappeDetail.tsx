@@ -53,7 +53,7 @@ export default function EtappeDetail() {
             loading="lazy"
           />
         ) : (
-          <div className="w-full aspect-[16/9] rounded-xl border-2 border-dashed border-foreground/20 bg-card flex items-center justify-center">
+          <div className="w-full aspect-video rounded-xl border-2 border-dashed border-foreground/20 bg-card flex items-center justify-center">
             <Mountain className="h-10 w-10 text-muted-foreground/40" />
           </div>
         )}

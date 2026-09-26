@@ -57,7 +57,7 @@ export default function SubTabRaster({
             onClick={() => onChange(key)}
             className={cn(
               "relative flex min-h-[52px] flex-col items-center justify-center gap-1 px-0.5 pb-2 pt-1.5",
-              "transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              "transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
               isActief ? "text-primary" : "text-muted-foreground hover:text-foreground",
             )}
           >

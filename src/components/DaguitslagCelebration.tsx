@@ -134,7 +134,7 @@ export default function DaguitslagCelebration({
 
   return (
     <div
-      className="fixed inset-x-0 top-[14%] z-[60] flex justify-center px-4 pointer-events-none"
+      className="fixed inset-x-0 top-[14%] z-60 flex justify-center px-4 pointer-events-none"
       role="status"
       aria-live="polite"
     >
@@ -145,7 +145,7 @@ export default function DaguitslagCelebration({
           shown ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2",
         )}
       >
-        <div className="h-1 bg-gradient-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
+        <div className="h-1 bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
         <div className="px-4 py-3 text-center">
           {isWin ? (
             <>

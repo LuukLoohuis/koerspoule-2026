@@ -170,9 +170,9 @@ export function RetroTabs({
           // Zichtbaar ondergeschikt aan de hoofdbalk, en horizontaal
           // scrollbaar zodat lange labels niet worden afgekapt.
           ? cn(
-              "w-full items-stretch gap-0.5 overflow-x-auto rounded-[13px] bg-foreground/[0.045] p-[3px]",
+              "w-full items-stretch gap-0.5 overflow-x-auto rounded-[13px] bg-foreground/4.5 p-[3px]",
               "shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)]",
-              "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+              "scrollbar-none [&::-webkit-scrollbar]:hidden",
             )
           // Hoofdbalk: dezelfde vorm, groter en met het rugnummer erin.
           : cn(
@@ -213,7 +213,7 @@ export function RetroTabs({
           {!segment ? (
             <span className="absolute left-1/2 top-0 h-[3px] w-8 -translate-x-1/2 rounded-b-full bg-[hsl(var(--vintage-gold))]" />
           ) : (
-            <span className="absolute inset-x-3 bottom-[3px] h-[2px] rounded-full bg-gradient-to-r from-transparent via-[hsl(var(--vintage-gold))] to-transparent" />
+            <span className="absolute inset-x-3 bottom-[3px] h-[2px] rounded-full bg-linear-to-r from-transparent via-[hsl(var(--vintage-gold))] to-transparent" />
           )}
         </span>
       )}
@@ -241,7 +241,7 @@ export function RetroTabs({
             onClick={() => !t.disabled && onChange(t.key)}
             className={cn(
               "relative z-10 flex items-center gap-1.5 transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card",
+              "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card",
               segment
                 ? cn(
                     // Eigen breedte en geen afkapping: liever scrollen dan een
@@ -259,8 +259,8 @@ export function RetroTabs({
               t.disabled && "cursor-not-allowed opacity-40",
               gedoofd && "opacity-30",
               uitgelicht && "ring-2 ring-primary ring-offset-1 ring-offset-card",
-              // z-[71] gaat net boven de verduistering van de rondleiding.
-              subUitgelicht && "z-[71] rounded-md bg-card px-2 ring-2 ring-[hsl(var(--vintage-gold))]",
+              // z-71 gaat net boven de verduistering van de rondleiding.
+              subUitgelicht && "z-71 rounded-md bg-card px-2 ring-2 ring-[hsl(var(--vintage-gold))]",
             )}
           >
             {/* Speldjes zitten alleen op het gedragen rugnummer — dat is het

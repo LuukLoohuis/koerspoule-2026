@@ -58,7 +58,7 @@ export default function BottomNav() {
       aria-label={t("shell.bottomNav.aria")}
     >
       {/* Accent gradient rule — volgt thema */}
-      <div className="h-[2px] bg-gradient-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
+      <div className="h-[2px] bg-linear-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
 
       <div
         className="grid grid-cols-5 border-t border-border/60 bg-card pb-[env(safe-area-inset-bottom)]"
