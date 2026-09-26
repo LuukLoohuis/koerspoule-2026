@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Newspaper, Flag, Users, Bike, Car } from "lucide-react";
+import { Newspaper, Flag, Users, Bike, Shirt } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,9 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { label: "Krant",          icon: Newspaper, to: "/karavaan", tab: "karavaan", navKey: "karavaan" },
-  { label: "Volgwagen",      icon: Car,       to: "/mijn-peloton", tab: "team", navKey: "team" },
+  // "Ploeg" en niet "Volgwagen": de balk zegt wat je ziet (je renners),
+  // niet waar je in zit. Route en tab blijven dezelfde.
+  { label: "Ploeg",          icon: Shirt,     to: "/mijn-peloton", tab: "team", navKey: "team" },
   { label: "Subpoule",       icon: Users,     to: "/mijn-peloton", tab: "subpoules", navKey: "subpoules" },
   { label: "Uitslagen",      labelKey: "nav.results", labelXsKey: "nav.resultsShort", icon: Flag, to: "/uitslagen", navKey: "uitslagen" },
   { label: "Hors Catégorie", labelXs: "Hors Cat.", icon: Bike, to: "/mijn-peloton", tab: "hors", navKey: "hors" },
