@@ -6,28 +6,28 @@
  * Query-keys zijn ongewijzigd t.o.v. de oude component — React Query dedupet,
  * dus er komt geen enkele extra fetch bij.
  *
- * NB: bewust op de húidige game gebaseerd (useCurrentGame), identiek aan het
- * oude gedrag van MijnPloegStats.
+ * De getallen volgen dezelfde regels als de Krant en Uitslagen: admins tellen
+ * niet mee in het algemeen klassement, gelijke punten delen de plek en de
+ * stand gaat over de laatst goedgekeurde rit. Zonder gameId valt de hook terug
+ * op de huidige koers; de Volgwagen geeft de koers uit de koerswisselaar mee.
  */
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
-import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 import { useEntry } from "@/hooks/useEntry";
-import { fetchAllRows } from "@/lib/fetchAll";
+import { useRiderEntryTotals } from "@/hooks/useRiderEntryTotals";
 import {
   useEntries,
   useStages,
-  useStageAverages,
   useMyStageRanks,
   useGameStandings,
   useStagePointsForEntries,
   type StageRow,
 } from "@/hooks/useResults";
-import { usePointsSchema } from "@/hooks/usePointsSchema";
 import { useSubpoules, useSubpouleMembers } from "@/hooks/useSubpoules";
+import { rangVan } from "@/lib/rang";
 import { supabase } from "@/lib/supabase";
 
 export type MijnPloegStatsData = {
@@ -47,26 +47,18 @@ export type MijnPloegStatsData = {
   laatsteEtappe: { stageNumber: number; rank: number | null; points: number } | null;
 };
 
-function rankInMap(
-  map: Map<string, number>,
-  entryId: string,
-  pool: Array<{ id: string }>,
-): number {
-  const sorted = pool.map((e) => ({ id: e.id, pts: map.get(e.id) ?? 0 })).sort((a, b) => b.pts - a.pts);
-  return sorted.findIndex((e) => e.id === entryId) + 1;
-}
-
-export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnPloegStatsData {
+export function useMijnPloegStats(opts?: {
+  gameId?: string;
+  selectedSubpouleId?: string;
+}): MijnPloegStatsData {
   const { user } = useAuth();
-  const { data: game } = useCurrentGame();
-  const jokerMult = useJokerMultiplier(game?.id);
-  const { entry, jokerIds, picksByCategory } = useEntry(game?.id);
-  const { data: entries = [] } = useEntries(game?.id);
-  const { data: stages = [] } = useStages(game?.id);
-  const { data: stageAverages } = useStageAverages(game?.id);
-  const { data: myStageRanks } = useMyStageRanks(game?.id, user?.id);
-  const { data: schema = [] } = usePointsSchema(game?.id);
-  const { subpoules } = useSubpoules(game?.id);
+  const { data: currentGame } = useCurrentGame();
+  const gameId = opts?.gameId ?? currentGame?.id;
+  const { entry, jokerIds, picksByCategory } = useEntry(gameId);
+  const { data: entries = [] } = useEntries(gameId);
+  const { data: stages = [] } = useStages(gameId);
+  const { data: myStageRanks } = useMyStageRanks(gameId, user?.id);
+  const { subpoules } = useSubpoules(gameId);
   // De getoonde subpoule volgt de selectie uit het dashboard (dropdown bij
   // meerdere subpoules); zonder selectie valt 'ie terug op de eerste.
   const firstSubpoule =
@@ -85,43 +77,21 @@ export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnP
     return Array.from(set);
   }, [picksByCategory, jokerIds]);
 
-  // Alle stage-results van mijn renners — voor de topscorer-berekening
   const myEntry = useMemo(() => entries.find((e) => e.user_id === user?.id), [entries, user?.id]);
 
-  const { data: ridersAllResults = [] } = useQuery({
-    queryKey: ["my-riders-all-stage-results", entry?.id, allRiderIds.slice().sort().join(",")],
-    enabled: Boolean(supabase && entry?.id && allRiderIds.length > 0),
-    staleTime: 5 * 60_000,
-    queryFn: async () => {
-      if (!supabase || !allRiderIds.length) return [];
-      // Gepagineerd: één grote range kapt alsnog op de Max rows-serverlimiet.
-      return fetchAllRows<{
-        rider_id: string;
-        finish_position: number;
-        stage_id: string;
-        riders: { name: string } | null;
-      }>((from, to) =>
-        supabase!
-          .from("stage_results")
-          .select("rider_id, finish_position, stage_id, riders(name)")
-          .in("rider_id", allRiderIds)
-          .not("finish_position", "is", null)
-          .order("stage_id")
-          .range(from, to) as never,
-      );
-    },
-  });
+  // Goedgekeurde ritten, de GC-rit inbegrepen: dezelfde reeks als de Krant.
+  const goedgekeurd = useMemo(
+    () =>
+      stages
+        .filter((s) => s.results_status === "approved")
+        .sort((a, b) => a.stage_number - b.stage_number),
+    [stages],
+  );
+  const laatsteRit = goedgekeurd[goedgekeurd.length - 1] ?? null;
 
-  // Etappes met daadwerkelijk geregistreerde punten
-  const stagesWithData = useMemo(() => {
-    return stages.filter((s) => (stageAverages?.get(s.id) ?? 0) > 0);
-  }, [stages, stageAverages]);
-
-  // Server-side stand t/m laatste etappe-met-data → rang-delta
-  const lastStageNum = stagesWithData.length
-    ? stagesWithData[stagesWithData.length - 1].stage_number
-    : undefined;
-  const { data: standRows = [] } = useGameStandings(game?.id, lastStageNum);
+  // Algemeen klassement = de stand van Uitslagen: zonder admins, t/m de laatst
+  // goedgekeurde rit, met de rang en verschuiving uit de RPC.
+  const { data: standRows = [] } = useGameStandings(gameId, laatsteRit?.stage_number, false);
 
   // Subpoule-leden: scoped stage_points voor de subpoule-delta
   const memberEntryIds = useMemo(() => {
@@ -129,12 +99,12 @@ export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnP
     const uids = new Set(subpouleMembers.map((m) => m.user_id));
     return entries.filter((e) => uids.has(e.user_id)).map((e) => e.id);
   }, [firstSubpoule, subpouleMembers, entries]);
-  const { data: memberStagePoints = [] } = useStagePointsForEntries(game?.id, memberEntryIds);
+  const { data: memberStagePoints = [] } = useStagePointsForEntries(gameId, memberEntryIds);
 
   // Eigen punten per etappe. Apart van memberStagePoints, want dat is beperkt
   // tot subpoule-leden en niet iedereen zit in een subpoule.
   const myEntryIds = useMemo(() => (myEntry ? [myEntry.id] : []), [myEntry]);
-  const { data: myStagePoints = [] } = useStagePointsForEntries(game?.id, myEntryIds);
+  const { data: myStagePoints = [] } = useStagePointsForEntries(gameId, myEntryIds);
 
   // ── 1: Beste dagklassering in de volle poule ──
   const bestStageRank = useMemo(() => {
@@ -149,78 +119,75 @@ export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnP
   }, [myStageRanks, stages]);
 
   // ── 2: Overall poule-rang + delta ──
+  // Admins staan niet in deze stand; voor hen blijft het "—", net als in de Krant.
   const overall = useMemo(() => {
-    if (!myEntry || !entries.length) return null;
-    const sorted = [...entries].sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0));
-    const rank = sorted.findIndex((e) => e.id === myEntry.id) + 1;
-    if (!rank) return null;
+    if (!myEntry || !standRows.length) return null;
     const myRow = standRows.find((r) => r.entry_id === myEntry.id);
-    const delta = myRow?.delta ?? 0;
-    return { rank, total: entries.length, delta };
-  }, [myEntry, entries, standRows]);
+    if (!myRow) return null;
+    return { rank: myRow.rank, total: standRows.length, delta: myRow.delta ?? 0 };
+  }, [myEntry, standRows]);
 
   // ── 3: Subpoule-rang + delta ──
   const subpoule = useMemo(() => {
-    if (!myEntry || !firstSubpoule || !subpouleMembers.length) return null;
+    // Vóór de eerste goedgekeurde rit is er nog geen stand ("—", zoals de Krant).
+    if (!myEntry || !firstSubpoule || !subpouleMembers.length || !laatsteRit) return null;
 
     const memberUserIds = new Set(subpouleMembers.map((m) => m.user_id));
     const memberEntries = entries.filter((e) => memberUserIds.has(e.user_id));
-    if (!memberEntries.length) return null;
+    if (!memberEntries.some((e) => e.id === myEntry.id)) return null;
 
-    const sorted = [...memberEntries].sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0));
-    const rank = sorted.findIndex((e) => e.id === myEntry.id) + 1;
-    if (!rank) return null;
+    // Officiële totalen, gelijke punten delen de plek (zoals de Krant).
+    const totaal = (e: { total_points?: number | null }) => e.total_points ?? 0;
+    const rank = rangVan(totaal(myEntry), memberEntries.map(totaal));
 
+    // Verschuiving t.o.v. de vorige goedgekeurde rit. De stand van toen is het
+    // officiële totaal min de punten van de laatste rit: dezelfde terugrekening
+    // als de Krant, zodat bonuspunten aan beide kanten gelijk meetellen.
     let delta = 0;
-    if (stagesWithData.length >= 2) {
-      const ids = new Set(memberEntries.map((e) => e.id));
-      const lastIdx = stages.indexOf(stagesWithData[stagesWithData.length - 1]);
-      const prevIdx = stages.indexOf(stagesWithData[stagesWithData.length - 2]);
-
-      const subCum = (upToIdx: number) => {
-        const allowed = new Set(stages.slice(0, upToIdx + 1).map((s) => s.id));
-        const m = new Map<string, number>();
-        memberStagePoints
-          .filter((sp) => allowed.has(sp.stage_id) && ids.has(sp.entry_id))
-          .forEach((sp) => m.set(sp.entry_id, (m.get(sp.entry_id) ?? 0) + sp.points));
-        return m;
-      };
-
-      delta = rankInMap(subCum(prevIdx), myEntry.id, memberEntries) - rankInMap(subCum(lastIdx), myEntry.id, memberEntries);
+    if (goedgekeurd.length >= 2 && laatsteRit) {
+      const laatstePunten = new Map<string, number>();
+      for (const sp of memberStagePoints) {
+        if (sp.stage_id === laatsteRit.id) {
+          laatstePunten.set(sp.entry_id, (laatstePunten.get(sp.entry_id) ?? 0) + sp.points);
+        }
+      }
+      const vorig = (e: { id: string; total_points?: number | null }) =>
+        totaal(e) - (laatstePunten.get(e.id) ?? 0);
+      delta = rangVan(vorig(myEntry), memberEntries.map(vorig)) - rank;
     }
 
     return { rank, total: memberEntries.length, name: firstSubpoule.name, delta };
-  }, [myEntry, firstSubpoule, subpouleMembers, entries, stagesWithData, stages, memberStagePoints]);
+  }, [myEntry, firstSubpoule, subpouleMembers, entries, goedgekeurd, laatsteRit, memberStagePoints]);
 
   // ── 4: Topscorer ──
-  const topscorer = useMemo(() => {
-    if (!schema.length || !ridersAllResults.length) return null;
-
-    const jokerSet = new Set(jokerIds);
-    const ptsTable = new Map(
-      schema.filter((s) => s.classification === "stage").map((s) => [s.position, s.points]),
-    );
-
-    const riderTotals = new Map<string, { pts: number; name: string }>();
-    for (const r of ridersAllResults) {
-      const base = ptsTable.get(r.finish_position) ?? 0;
-      if (base === 0) continue;
-      const pts = jokerSet.has(r.rider_id) ? base * jokerMult : base;
-      const name = (r.riders as { name: string } | null)?.name ?? "—";
-      const cur = riderTotals.get(r.rider_id);
-      riderTotals.set(r.rider_id, { pts: (cur?.pts ?? 0) + pts, name: cur?.name ?? name });
+  // Uit dezelfde rennertotalen als het ploegblad, zodat de topscorer en de
+  // gouden medaille daar dezelfde renner met hetzelfde aantal punten zijn.
+  const { data: riderTotals } = useRiderEntryTotals(gameId, entry?.id);
+  const topRenner = useMemo(() => {
+    if (!riderTotals) return null;
+    let best: { id: string; points: number } | null = null;
+    for (const id of allRiderIds) {
+      const points = riderTotals.get(id) ?? 0;
+      if (points > 0 && (!best || points > best.points)) best = { id, points };
     }
-
-    let best: { pts: number; name: string } | null = null;
-    for (const info of riderTotals.values()) {
-      if (!best || info.pts > best.pts) best = info;
-    }
-    return best?.pts ? { name: best.name, points: best.pts } : null;
-  }, [schema, ridersAllResults, jokerIds, jokerMult]);
+    return best;
+  }, [riderTotals, allRiderIds]);
+  const { data: topRennerNaam } = useQuery({
+    queryKey: ["rider-name", topRenner?.id],
+    enabled: Boolean(supabase && topRenner?.id),
+    staleTime: Infinity,
+    queryFn: async () => {
+      const { data, error } = await supabase!.from("riders").select("name").eq("id", topRenner!.id).single();
+      if (error) throw error;
+      return (data?.name as string | undefined) ?? "—";
+    },
+  });
+  const topscorer = topRenner && topRennerNaam ? { name: topRennerNaam, points: topRenner.points } : null;
 
   // ── 5: Laatste etappe met punten ──
   const laatsteEtappe = useMemo(() => {
-    const laatste = stagesWithData[stagesWithData.length - 1];
+    const ritten = goedgekeurd.filter((s) => !s.is_gc);
+    const laatste = ritten[ritten.length - 1];
     if (!laatste || !myEntry) return null;
     const punten = myStagePoints
       .filter((sp) => sp.stage_id === laatste.id && sp.entry_id === myEntry.id)
@@ -230,7 +197,7 @@ export function useMijnPloegStats(opts?: { selectedSubpouleId?: string }): MijnP
       rank: myStageRanks?.get(laatste.id) ?? null,
       points: punten,
     };
-  }, [stagesWithData, myEntry, myStagePoints, myStageRanks]);
+  }, [goedgekeurd, myEntry, myStagePoints, myStageRanks]);
 
   return {
     bestStageRank,

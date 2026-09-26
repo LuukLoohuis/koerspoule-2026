@@ -24,6 +24,7 @@ import StageBar from "@/components/stages/StageBar";
 import { buildStageBarData } from "@/components/stages/stageBarData";
 import { StandingsSkeleton } from "@/components/skeletons/SubpouleSkeletons";
 import { cn } from "@/lib/utils";
+import { dagrangVan, metGedeeldeRang, rangVan } from "@/lib/rang";
 
 
 type Props = {
@@ -164,6 +165,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   // Member rows ranked by cumulative pts up to the selected stage
   const memberRows = useMemo(() => {
     if (stages.length === 0) {
+      const alleTotalen = members.map((m) => entries.find((e) => e.user_id === m.user_id)?.total_points ?? 0);
       return members
         .map((m) => {
           const entry = entries.find((e) => e.user_id === m.user_id);
@@ -181,7 +183,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           };
         })
         .sort((a, b) => b.total_points - a.total_points)
-        .map((r, i) => ({ ...r, rank: i + 1 }));
+        .map((r) => ({ ...r, rank: rangVan(r.total_points, alleTotalen) }));
     }
 
     const curMap = cumUpTo(etappeIdx);
@@ -218,25 +220,26 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
         .forEach((sp) => selStagePts.set(sp.entry_id, (selStagePts.get(sp.entry_id) ?? 0) + sp.points));
     }
 
+    // Rangen volgen de regel van de hele app: gelijke punten delen de plek.
     // Stage rank within subpoule for the selected stage
     const stageRankByUser = new Map<string, number>();
-    [...members]
-      .map((m) => {
-        const entry = entries.find((e) => e.user_id === m.user_id);
-        return { user_id: m.user_id, pts: entry ? (selStagePts.get(entry.id) ?? 0) : 0 };
-      })
-      .filter((r) => r.pts > 0)
-      .sort((a, b) => b.pts - a.pts)
-      .forEach((r, i) => stageRankByUser.set(r.user_id, i + 1));
+    const dagPunten = members.map((m) => {
+      const entry = entries.find((e) => e.user_id === m.user_id);
+      return { user_id: m.user_id, pts: entry ? (selStagePts.get(entry.id) ?? 0) : 0 };
+    });
+    const alleDagPunten = dagPunten.map((d) => d.pts);
+    for (const r of dagPunten) {
+      const rang = dagrangVan(r.pts, alleDagPunten);
+      if (rang !== null) stageRankByUser.set(r.user_id, rang);
+    }
 
+    const vorigePunten = members.map((m) => {
+      const entry = entries.find((e) => e.user_id === m.user_id);
+      return { user_id: m.user_id, pts: entry ? (prevMap.get(entry.id) ?? 0) + bonusOf(entry) : 0 };
+    });
+    const alleVorigePunten = vorigePunten.map((v) => v.pts);
     const prevRankByUser = new Map(
-      [...members]
-        .map((m) => {
-          const entry = entries.find((e) => e.user_id === m.user_id);
-          return { user_id: m.user_id, pts: entry ? (prevMap.get(entry.id) ?? 0) + bonusOf(entry) : 0 };
-        })
-        .sort((a, b) => b.pts - a.pts)
-        .map((r, i) => [r.user_id, i + 1] as [string, number])
+      vorigePunten.map((r) => [r.user_id, rangVan(r.pts, alleVorigePunten)] as [string, number]),
     );
 
     const rows = members
@@ -255,8 +258,8 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
       })
       .sort((a, b) => b.total_points - a.total_points);
 
-    return rows.map((row, i) => {
-      const rank = i + 1;
+    return metGedeeldeRang(rows, (r) => r.total_points).map((row) => {
+      const rank = row.rank;
       const prevRank = prevRankByUser.get(row.user_id);
       const delta = prevDataIdx >= 0 && prevRank != null ? prevRank - rank : null;
       return { ...row, rank, delta };
@@ -282,9 +285,10 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   const regioPosByUser = useMemo(() => {
     const map = new Map<string, number>();
     if (woonFilter === ALL) return map;
-    memberRows
-      .filter((r) => woonplaatsByUser.get(r.user_id) === woonFilter)
-      .forEach((r, i) => map.set(r.user_id, i + 1));
+    metGedeeldeRang(
+      memberRows.filter((r) => woonplaatsByUser.get(r.user_id) === woonFilter),
+      (r) => r.total_points,
+    ).forEach((r) => map.set(r.user_id, r.rank));
     return map;
   }, [memberRows, woonFilter, woonplaatsByUser]);
   const displayedRows = useMemo(

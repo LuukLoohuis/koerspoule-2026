@@ -406,6 +406,7 @@
       "ofTotalName": "of {{total}} · {{name}}",
       "ofTotalParticipants": "of {{total}} participants",
       "onlyStage": "stage {{stage}} only",
+      "dayRankStage": "#{{rank}} of the day · stage {{stage}}",
       "monkeysBeaten": "monkeys beaten",
       "ofDreamTeam": "of dream team",
       "reportLabel": "report card",

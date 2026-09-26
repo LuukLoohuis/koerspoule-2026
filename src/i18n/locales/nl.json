@@ -406,6 +406,7 @@
       "ofTotalName": "van {{total}} · {{name}}",
       "ofTotalParticipants": "van {{total}} deelnemers",
       "onlyStage": "alleen rit {{stage}}",
+      "dayRankStage": "{{rank}}ᵉ van de dag · rit {{stage}}",
       "monkeysBeaten": "apen verslagen",
       "ofDreamTeam": "van droomploeg",
       "reportLabel": "rapport",

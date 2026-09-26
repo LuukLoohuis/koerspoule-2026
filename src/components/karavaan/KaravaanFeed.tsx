@@ -10,6 +10,7 @@ import Voorpagina, { type Rubriek, type StandCel, type Hoofdartikel, type Segmen
 import { bouwKop, kopUitVerslag } from "@/lib/krantKop";
 import { useAllGames } from "@/hooks/useAllGames";
 import { useSubpoules } from "@/hooks/useSubpoules";
+import { useGekozenSubpoule } from "@/hooks/useGekozenSubpoule";
 import { useKaravaanFeed, markKaravaanVisited, findNewMarkerIndex, type KaravaanEtappe, type PersonalFlash } from "@/hooks/useKaravaanFeed";
 import type { HorsTabKey } from "@/components/karavaan/MiniStrip";
 import Voorbeschouwing from "@/components/karavaan/Voorbeschouwing";
@@ -44,7 +45,6 @@ import Stamp from "@/components/retro/Stamp";
 import { useThema } from "@/contexts/ThemaContext";
 import { cn } from "@/lib/utils";
 
-const LAST_SUBPOULE_KEY = "karavaan:lastSubpouleId";
 const UITLEG_DISMISS_KEY = "karavaan:uitlegDismissed";
 
 export default function KaravaanFeed({
@@ -83,7 +83,8 @@ export default function KaravaanFeed({
   const subpoules = subpoulesQuery.subpoules;
 
   const navigate = useNavigate();
-  const [selectedSubpouleId, setSelectedSubpouleId] = useState<string | null>(null);
+  // Dezelfde keuze als in de Volgwagen: onthouden, anders de eerste op alfabet.
+  const [selectedSubpouleId, setSelectedSubpouleId] = useGekozenSubpoule(subpoules);
   // Verwijsbutton naar /uitleg — eenmalig wegklikbaar (localStorage).
   const [uitlegDismissed, setUitlegDismissed] = useState<boolean>(
     () => (typeof window !== "undefined" ? localStorage.getItem(UITLEG_DISMISS_KEY) === "1" : true),
@@ -92,25 +93,6 @@ export default function KaravaanFeed({
     setUitlegDismissed(true);
     try { localStorage.setItem(UITLEG_DISMISS_KEY, "1"); } catch { /* ignore */ }
   };
-
-  // Default: laatst-bekeken subpoule uit localStorage, anders eerste alfabetisch
-  useEffect(() => {
-    if (selectedSubpouleId || subpoules.length === 0) return;
-    const stored = typeof window !== "undefined" ? localStorage.getItem(LAST_SUBPOULE_KEY) : null;
-    const match = stored && subpoules.find((s) => s.id === stored);
-    if (match) {
-      setSelectedSubpouleId(match.id);
-    } else {
-      const sorted = [...subpoules].sort((a, b) => a.name.localeCompare(b.name));
-      setSelectedSubpouleId(sorted[0].id);
-    }
-  }, [subpoules, selectedSubpouleId]);
-
-  useEffect(() => {
-    if (selectedSubpouleId && typeof window !== "undefined") {
-      localStorage.setItem(LAST_SUBPOULE_KEY, selectedSubpouleId);
-    }
-  }, [selectedSubpouleId]);
 
   const feed = useKaravaanFeed({
     gameId: game?.id,
