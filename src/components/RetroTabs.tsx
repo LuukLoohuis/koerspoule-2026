@@ -29,7 +29,8 @@ import { useUitgelichtSubtab } from "@/components/Rondleiding";
 export type RetroTab = {
   key: string;
   label: string;
-  Icon: ComponentType<{ className?: string }>;
+  /** Alleen in de segment-variant zichtbaar; zonder icoon blijft het tekst. */
+  Icon?: ComponentType<{ className?: string }>;
   disabled?: boolean;
   title?: string;
 };
@@ -62,6 +63,7 @@ export function RetroTabs({
   onChange,
   className,
   variant = "dossard",
+  gelijkeBreedte = false,
   uitgelichteKey,
   "aria-label": ariaLabel,
 }: {
@@ -76,6 +78,11 @@ export function RetroTabs({
    * eerste is; het verschil in gewicht maakt die rangorde zichtbaar.
    */
   variant?: "dossard" | "segment";
+  /**
+   * Segment-variant: drie brede tabs die samen de balk vullen (de Krant en
+   * de Ploeg op een telefoon) in plaats van labels op eigen breedte.
+   */
+  gelijkeBreedte?: boolean;
   /**
    * Tijdens de rondleiding: de tab die besproken wordt. Die blijft fel, de rest
    * dooft, zodat je ziet waar het over gaat. Niet gezet = geen rondleiding.
@@ -246,7 +253,8 @@ export function RetroTabs({
                 ? cn(
                     // Eigen breedte en geen afkapping: liever scrollen dan een
                     // label halveren.
-                    "shrink-0 justify-center whitespace-nowrap rounded-[10px] px-3 py-2 text-[11.5px] font-semibold",
+                    "justify-center whitespace-nowrap rounded-[10px] px-3 py-2 font-semibold",
+                    gelijkeBreedte ? "min-w-0 flex-1 text-[13px]" : "shrink-0 text-[11.5px]",
                     on ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                   )
                 : cn(
@@ -271,7 +279,7 @@ export function RetroTabs({
               <span aria-hidden className="absolute right-2 top-1.5 h-1 w-1 rounded-full bg-primary-foreground/55" />
             </>}
             {segment ? (
-              <t.Icon className="h-3.5 w-3.5 shrink-0" />
+              t.Icon && <t.Icon className="h-3.5 w-3.5 shrink-0" />
             ) : (
               <TruiGlyph
                 className={cn(

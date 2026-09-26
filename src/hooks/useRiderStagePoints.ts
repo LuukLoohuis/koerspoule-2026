@@ -29,8 +29,20 @@ export function useRiderStagePoints(
   riderId: string | null | undefined,
   entryId?: string | null,
 ) {
-  return useQuery({
-    queryKey: ["rider-stage-points", gameId, riderId, entryId ?? null],
+  return useQuery(riderStagePointsQuery(gameId, riderId, entryId));
+}
+
+/**
+ * De query los van de hook, zodat Ploeg C er met useQueries één per renner
+ * van kan afvuren op dezelfde cache-sleutel.
+ */
+export function riderStagePointsQuery(
+  gameId: string | undefined,
+  riderId: string | null | undefined,
+  entryId?: string | null,
+) {
+  return {
+    queryKey: ["rider-stage-points", gameId, riderId, entryId ?? null] as const,
     enabled: Boolean(supabase && gameId && riderId),
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<RiderStagePointsRow[]> => {
@@ -45,5 +57,5 @@ export function useRiderStagePoints(
         .slice()
         .sort((a, b) => a.stage_number - b.stage_number);
     },
-  });
+  };
 }

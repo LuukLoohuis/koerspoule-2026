@@ -37,3 +37,27 @@ export function useMinWidth(px: number) {
   }, [px]);
   return !!ok;
 }
+
+/**
+ * Als useIsMobile, maar met het antwoord al bij de eerste render. Voor
+ * schermen die alleen ingelogd en dus alleen in de browser bestaan: daar is
+ * een eerste render als "desktop" geen hydratie-veiligheid maar een flits
+ * van het verkeerde scherm, met alle datahaken van dat scherm erbij.
+ */
+export function useIsMobileSync() {
+  const [isMobile, setIsMobile] = React.useState<boolean>(() =>
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches
+      : false,
+  );
+
+  React.useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+    const onChange = () => setIsMobile(mql.matches);
+    mql.addEventListener("change", onChange);
+    onChange();
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
+  return isMobile;
+}

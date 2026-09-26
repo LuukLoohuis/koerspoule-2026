@@ -10,6 +10,8 @@ import { Car, Compass, Mountain, Newspaper, Pencil, Radio, RotateCcw, Target, Tr
 import SubpouleManager from "@/components/SubpouleManager";
 import WervingStrook from "@/components/WervingStrook";
 import MyTeamPanel from "@/components/MyTeamPanel";
+import PloegC from "@/components/ploeg/PloegC";
+import { useIsMobileSync } from "@/hooks/use-mobile";
 import MyResultsPanel from "@/components/MyResultsPanel";
 import PalmaresPanel from "@/components/PalmaresPanel";
 import HorsCategorieTab from "@/components/HorsCategorieTab";
@@ -217,6 +219,10 @@ export default function MijnPeloton() {
     });
   };
   const teamBarVisible = useAutoHideOnScroll();
+  // Krant C en Ploeg C zijn de telefoonschermen uit docs/design/krant-ploeg-c;
+  // op de webversie blijven de bestaande panelen staan. De Meermarathon heeft
+  // zijn eigen handoff en houdt zijn eigen schermen op beide.
+  const isMobiel = useIsMobileSync();
   const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
     setHorsTab(tab);
@@ -550,11 +556,24 @@ export default function MijnPeloton() {
                   !teamBarVisible && "max-h-0! mb-0! opacity-0",
                 )}
               >
-                <MobielTabBalk
-                  tabs={volgwagenTabs}
-                  active={teamSubTab}
-                  onChange={(k) => setTeamSubTab(k as typeof teamSubTab)}
-                />
+                {isMobiel && !isMeermarathonGekozen ? (
+                  // Ploeg C: drie brede segmenten van 40px, zonder iconen.
+                  <RetroTabs
+                    variant="segment"
+                    gelijkeBreedte
+                    className="h-10"
+                    aria-label={t("team.tabs.volgwagenSectionsAria")}
+                    active={teamSubTab}
+                    onChange={(k) => setTeamSubTab(k as typeof teamSubTab)}
+                    tabs={volgwagenTabs.map(({ key, label }) => ({ key, label }))}
+                  />
+                ) : (
+                  <MobielTabBalk
+                    tabs={volgwagenTabs}
+                    active={teamSubTab}
+                    onChange={(k) => setTeamSubTab(k as typeof teamSubTab)}
+                  />
+                )}
               </div>
 
               {/* Veeghint (eenmalig). De stippenrij stond hier ook: die
@@ -581,7 +600,10 @@ export default function MijnPeloton() {
                 onSwiped={teamHint.dismiss}
                 renderTab={(k) => (
                   <>
-                    {k === "ploeg" && (
+                    {k === "ploeg" && isMobiel && !isMeermarathonGekozen && (
+                      <PloegC gameId={selectedGameObj?.id} focusNameSignal={focusNameSeq} />
+                    )}
+                    {k === "ploeg" && !(isMobiel && !isMeermarathonGekozen) && (
                       <div className="space-y-3">
                         {/* Ploegnaam-editor zit nu in het Salle-de-Course-dashboard
                             binnen MyTeamPanel (Zone 1-nudge). */}
