@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { fetchAllRows } from "@/lib/fetchAll";
+import { dagrangVan, metGedeeldeRang } from "@/lib/rang";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -275,7 +276,8 @@ export function useKaravaanFeed(params: {
           };
         });
         rows.sort((a, b) => b.points - a.points);
-        return rows.map((r, i) => ({ ...r, rank: i + 1, delta_rank: 0 }));
+        // Gelijke punten delen de plek, zoals op Uitslagen en in de Volgwagen.
+        return metGedeeldeRang(rows, (r) => r.points).map((r) => ({ ...r, delta_rank: 0 }));
       };
 
       // 6. Bouw per stage een subpoule-ranking en overall-ranking
@@ -352,15 +354,13 @@ export function useKaravaanFeed(params: {
         const mijnDagpunten = mijnIndex >= 0 ? dagLijst[mijnIndex].pts : null;
         const mijnDagrang = mijnIndex >= 0 ? mijnIndex + 1 : null;
 
-        // Dezelfde dag, maar tegen de hele poule afgezet. Bij gelijke score
-        // wint de vroegste in de lijst; dat is dezelfde volgorde die de
-        // subpoulestand hierboven aanhoudt.
-        const dagOverallLijst = allEntryIds
-          .map((eid) => ({ eid, pts: dagPuntenBy.get(`${eid}|${stage.id}`) ?? 0 }))
-          .sort((a, b) => b.pts - a.pts);
-        const mijnDagIndexOverall = myEntryId
-          ? dagOverallLijst.findIndex((d) => d.eid === myEntryId)
-          : -1;
+        // Dezelfde dag, maar tegen de hele poule afgezet. Zelfde regel als de
+        // dagklassering op Uitslagen en in de Volgwagen: gelijke punten delen
+        // de plek, en wie die dag niets pakte heeft geen dagrang.
+        const dagPuntenOverall = allEntryIds.map((eid) => dagPuntenBy.get(`${eid}|${stage.id}`) ?? 0);
+        const mijnDagrangOverall = myEntryId && allEntryIds.includes(myEntryId)
+          ? dagrangVan(dagPuntenBy.get(`${myEntryId}|${stage.id}`) ?? 0, dagPuntenOverall)
+          : null;
 
         etappes.push({
           stage_id: stage.id,
@@ -375,8 +375,8 @@ export function useKaravaanFeed(params: {
           dagstand,
           mijnDagpunten,
           mijnDagrang,
-          mijnDagrangOverall: mijnDagIndexOverall >= 0 ? mijnDagIndexOverall + 1 : null,
-          dagDeelnemersOverall: dagOverallLijst.length,
+          mijnDagrangOverall,
+          dagDeelnemersOverall: dagPuntenOverall.length,
           subpouleStandings: sub,
           overallStandings: overall,
           personalFlash,

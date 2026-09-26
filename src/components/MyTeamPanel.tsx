@@ -21,7 +21,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
-import { useStages, useEntries } from "@/hooks/useResults";
+import { useStages, useEntries, useGameStandings } from "@/hooks/useResults";
+import { useGekozenSubpoule } from "@/hooks/useGekozenSubpoule";
+import { dagrangVan } from "@/lib/rang";
 import { useRiderEntryTotals } from "@/hooks/useRiderEntryTotals";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
@@ -458,11 +460,13 @@ function KoersPanel({
   // La Salle de Course: één databron voor rangen/delta's/topscorer + de
   // Hors-Catégorie-percentages (— zolang null).
   // Subpoule-selectie: bij meerdere subpoules verschijnt een dropdown bij het
-  // Tableau de Bord; de Sous-peloton-instrumenten volgen de keuze.
+  // Tableau de Bord; de Sous-peloton-instrumenten volgen de keuze. Het is
+  // dezelfde keuze als in de Krant, zodat beide schermen één subpoule tonen.
   const { subpoules } = useSubpoules(game?.id);
-  const [selectedSubpouleId, setSelectedSubpouleId] = useState<string | undefined>(undefined);
-  const activeSubpouleId = selectedSubpouleId ?? subpoules[0]?.id;
-  const ploegStats = useMijnPloegStats({ selectedSubpouleId: activeSubpouleId });
+  const [gekozenSubpouleId, setSelectedSubpouleId] = useGekozenSubpoule(subpoules);
+  const activeSubpouleId = gekozenSubpouleId ?? undefined;
+  // De stats volgen de koers uit de koerswisselaar, net als de rest van dit paneel.
+  const ploegStats = useMijnPloegStats({ gameId: game?.id, selectedSubpouleId: activeSubpouleId });
   const hors = useHorsCategorieSummary({ id: game?.id, status: game?.status as string | undefined, adminTestmodus });
 
   // Welke renner heeft z'n per-etappe-punten dropdown open (één tegelijk).
@@ -549,25 +553,26 @@ function KoersPanel({
     }
   }, [selectedStageId]);
 
-  // Seizoenspunten t/m rit N = som van mijn stage_points met stage_number <= N.
-  const totalPoints = useMemo(
-    () =>
-      stagePoints
-        .filter((sp) => (stageNumById.get(sp.stage_id) ?? Number.POSITIVE_INFINITY) <= cutoffN)
-        .reduce((sum, sp) => sum + sp.points, 0),
-    [stagePoints, stageNumById, cutoffN],
-  );
+  // Totaalpunten. Op de actuele stand is dat het officiële totaal, hetzelfde
+  // getal als in de Krant en op Uitslagen (na de slotrit mét voorspellings-
+  // bonus). Teruggespoeld is het de tussenstand t/m die rit zonder bonus, zoals
+  // Uitslagen een tussenstand toont.
+  const officieelTotaal = entry ? entries.find((e) => e.id === entry.id)?.total_points ?? null : null;
+  const totalPoints = useMemo(() => {
+    if (!rewound && officieelTotaal !== null) return officieelTotaal;
+    return stagePoints
+      .filter((sp) => (stageNumById.get(sp.stage_id) ?? Number.POSITIVE_INFINITY) <= cutoffN)
+      .reduce((sum, sp) => sum + sp.points, 0);
+  }, [rewound, officieelTotaal, stagePoints, stageNumById, cutoffN]);
 
-  const sortedEntries = useMemo(
-    () => [...entries].sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0)),
-    [entries]
-  );
-  const myRank = entry ? sortedEntries.findIndex((e) => e.id === entry.id) + 1 : 0;
-
-  const maxStagePts = useMemo(
-    () => stagePoints.reduce((m, sp) => Math.max(m, sp.points), 0),
-    [stagePoints]
-  );
+  // Dagklassering van de getoonde rit in de hele poule: dezelfde regel als de
+  // "vandaag"-cel in de Krant en de etappestand op Uitslagen (zonder admins,
+  // gelijke punten delen de plek, zonder punten geen dagrang).
+  const { data: dagStand = [] } = useGameStandings(game?.id, selectedStage?.stage_number, false);
+  const mijnDagrang = useMemo(() => {
+    const mijn = entry ? dagStand.find((r) => r.entry_id === entry.id) : undefined;
+    return mijn ? dagrangVan(mijn.stage_points, dagStand.map((r) => r.stage_points)) : null;
+  }, [dagStand, entry]);
 
   const standaloneJokerIds = useMemo(() => {
     const picked = new Set<string>();
@@ -1173,7 +1178,13 @@ function KoersPanel({
                       <Dial
                         label={t("team.panel.stagePointsDial")}
                         value={stageDayPoints}
-                        sub={shownStage ? t("team.panel.onlyStage", { stage: shownStage.stage_number }) : t("team.panel.noResultsYet")}
+                        sub={
+                          shownStage
+                            ? mijnDagrang !== null
+                              ? t("team.panel.dayRankStage", { rank: mijnDagrang, stage: shownStage.stage_number })
+                              : t("team.panel.onlyStage", { stage: shownStage.stage_number })
+                            : t("team.panel.noResultsYet")
+                        }
                       />
                       {/* Status-bewuste accentranden: de rand kleurt mee met de
                           waarde (boven/onder de drempel), in SPEC-kleuren. */}

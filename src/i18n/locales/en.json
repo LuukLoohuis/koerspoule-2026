@@ -408,6 +408,7 @@
       "ofTotalName": "of {{total}} · {{name}}",
       "ofTotalParticipants": "of {{total}} participants",
       "onlyStage": "stage {{stage}} only",
+      "dayRankStage": "#{{rank}} of the day · stage {{stage}}",
       "monkeysBeaten": "monkeys beaten",
       "ofDreamTeam": "of dream team",
       "reportLabel": "report card",
@@ -1657,11 +1658,6 @@
       "colCat": "Cat.",
       "colStage": "St.",
       "colPos": "Pos."
-    },
-    "poolStandings": {
-      "searchPlaceholder": "Search participant...",
-      "you": "YOU",
-      "noResults": "No participants found for \"{{query}}\""
     },
     "demoChart": {
       "livePerformance": "Live performance",

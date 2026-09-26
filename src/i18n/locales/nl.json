@@ -408,6 +408,7 @@
       "ofTotalName": "van {{total}} · {{name}}",
       "ofTotalParticipants": "van {{total}} deelnemers",
       "onlyStage": "alleen rit {{stage}}",
+      "dayRankStage": "{{rank}}ᵉ van de dag · rit {{stage}}",
       "monkeysBeaten": "apen verslagen",
       "ofDreamTeam": "van droomploeg",
       "reportLabel": "rapport",
@@ -1657,11 +1658,6 @@
       "colCat": "Cat.",
       "colStage": "Et.",
       "colPos": "Pos."
-    },
-    "poolStandings": {
-      "searchPlaceholder": "Zoek deelnemer...",
-      "you": "JIJ",
-      "noResults": "Geen deelnemers gevonden voor \"{{query}}\""
     },
     "demoChart": {
       "livePerformance": "Live performance",
