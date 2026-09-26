@@ -25,6 +25,7 @@ import { useFallenRidersCount } from "@/hooks/useFallenRidersCount";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import Stamp from "@/components/retro/Stamp";
 import KaravaanFeed from "@/components/karavaan/KaravaanFeed";
+import KrantC from "@/components/krant/KrantC";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
@@ -293,7 +294,9 @@ export default function MijnPeloton() {
         />
       )}
 
-      {/* 2. Compact masthead */}
+      {/* 2. Compact masthead. Krant C en Ploeg C beginnen direct onder de kop
+          van de site, zoals in de handoff; daar valt dit tussenkopje weg. */}
+      {!(isMobiel && !isMeermarathonGekozen && (gameTab === "karavaan" || gameTab === "team")) && (
       <div className="relative mb-3 md:mb-6">
         <div className="flex flex-col items-center text-center gap-1 md:gap-2">
           <span className="overline-stamp">— Bulletin du Peloton —</span>
@@ -308,6 +311,7 @@ export default function MijnPeloton() {
         </div>
         <div className="double-rule mt-2 md:mt-3 mx-auto max-w-md" />
       </div>
+      )}
 
 
       <div className="max-w-5xl mx-auto">
@@ -534,15 +538,26 @@ export default function MijnPeloton() {
                 }}
               />
             )}
-            <KaravaanFeed
-              onGoToPloeg={() => gaNaarTab("team")}
-              onOpenHors={openHors}
-              onOpenSubpoule={openSubpouleGrafiek}
-              onOpenUitslagen={openUitslagen}
-              gameId={selectedGameObj?.id}
-              gameStatus={selectedGameObj?.status}
-              horsBanner={selectedGameObj?.hors_banner_visible ?? true}
-            />
+            {isMobiel && !isMeermarathonGekozen ? (
+              <KrantC
+                gameId={selectedGameObj?.id}
+                gameStatus={selectedGameObj?.status}
+                onOpenHors={openHors}
+                onOpenSubpoule={openSubpouleGrafiek}
+                onOpenUitslagen={openUitslagen}
+                onOpenDaguitslag={openStageResult}
+              />
+            ) : (
+              <KaravaanFeed
+                onGoToPloeg={() => gaNaarTab("team")}
+                onOpenHors={openHors}
+                onOpenSubpoule={openSubpouleGrafiek}
+                onOpenUitslagen={openUitslagen}
+                gameId={selectedGameObj?.id}
+                gameStatus={selectedGameObj?.status}
+                horsBanner={selectedGameObj?.hors_banner_visible ?? true}
+              />
+            )}
           </TabsContent>
 
           {/* ── TAB: Mijn Team (with sub-tabs) ── */}

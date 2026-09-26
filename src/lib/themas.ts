@@ -39,6 +39,8 @@ export type Thema = {
   logoVerhouding: number;
   kleuren: ThemaKleuren;
   krant: string;
+  /** De krantkop voluit ("La Gazzetta"); zonder dit is `krant` al de hele naam. */
+  krantVoluit?: string;
   koers: string;
   etappe: string;
   startlijst: string;
@@ -74,6 +76,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     logoVerhouding: 480 / 320,
     kleuren: { primair: "#E6446D", secundair: "#C8A020", achtergrond: "#FAF7F2", kaart: "#FDF2F6", tekst: "#2C2416", accent: "#C8A020" },
     krant: "Gazzetta",
+    krantVoluit: "La Gazzetta",
     koers: "Giro d'Italia",
     etappe: "Tappa",
     startlijst: "Lista di Partenza",
