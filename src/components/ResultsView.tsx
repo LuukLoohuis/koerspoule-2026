@@ -87,9 +87,15 @@ type ResultsViewProps = {
   initialStageNumber?: number | null;
   /** Deep-link: selecteer de goedgekeurde eind-GC in beide resultatenkiezers. */
   initialGc?: boolean;
+  /**
+   * Alleen de uitslag per etappe, zonder eigen Klassement/Etappes-balk. Voor
+   * de Meermarathon, die het klassement zelf toont en deze view als segment
+   * "Per wedstrijd" gebruikt; anders stond "Klassement" er twee keer.
+   */
+  alleenEtappes?: boolean;
 };
 
-export default function ResultsView({ showHeader = true, gameId: gameIdProp, gameName: gameNameProp, initialView, initialStageNumber, initialGc = false }: ResultsViewProps) {
+export default function ResultsView({ showHeader = true, gameId: gameIdProp, gameName: gameNameProp, initialView, initialStageNumber, initialGc = false, alleenEtappes = false }: ResultsViewProps) {
   const { t, i18n } = useTranslation();
   const STAGE_TYPE_META = useMemo(() => stageTypeMeta(t), [t]);
   const { user, role } = useAuth();
@@ -163,7 +169,8 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   }, [stages.length, initialStageIdx]);
 
   // Welke view (Etappes/Klassement) — controlled zodat deep-links 'm sturen.
-  const [view, setView] = useState<"etappes" | "klassement">(initialView ?? "klassement");
+  const [gekozenView, setView] = useState<"etappes" | "klassement">(initialView ?? "klassement");
+  const view = alleenEtappes ? "etappes" : gekozenView;
   // Deep-link: spring naar Etappe-view + het juiste ritnummer wanneer de
   // parent dat doorgeeft (bv. klik op "Beste etappe" in het dashboard).
   useEffect(() => {
@@ -320,6 +327,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         {/* Subbalk, niet de hoofdbalkstijl: dit zit ónder de hoofdnavigatie en
             twee identieke balken boven elkaar maakten onduidelijk welke de baas
             was. */}
+        {!alleenEtappes && (<>
         <RetroTabs
           variant="segment"
           className="mb-3 hidden md:flex"
@@ -359,10 +367,11 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
 
         {/* Veeghint (eenmalig). */}
         <SwipeHintBar visible={hint.visible} onClose={hint.dismiss} className="mb-2" />
+        </>)}
 
         {/* Vinger-volgende carrousel: alleen het content-vlak beweegt. */}
         <SwipeCarousel
-          keys={["klassement", "etappes"]}
+          keys={alleenEtappes ? ["etappes"] : ["klassement", "etappes"]}
           activeKey={view}
           onChange={(k) => setView(k as "etappes" | "klassement")}
           onSwiped={hint.dismiss}
