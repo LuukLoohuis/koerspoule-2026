@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useThema } from "@/contexts/ThemaContext";
+import { useKoersThema } from "@/contexts/KoersThemaContext";
 import { hoogtemeters, wanneer } from "@/lib/krantC";
 import type { StageRow } from "@/hooks/useResults";
 
@@ -31,7 +31,7 @@ export default function KrantMorgen({
   profielUrl: string | null;
 }) {
   const { t, i18n } = useTranslation();
-  const { thema } = useThema();
+  const thema = useKoersThema();
   const locale = i18n.language === "en" ? "en-GB" : "nl-NL";
 
   if (!rit) {

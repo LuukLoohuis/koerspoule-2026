@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { useThema } from "@/contexts/ThemaContext";
+import { useKoersThema } from "@/contexts/KoersThemaContext";
 import { monogram } from "@/lib/krantC";
 import type { KaravaanEtappe } from "@/hooks/useKaravaanFeed";
 
@@ -14,7 +14,7 @@ const MONO = "font-['JetBrains_Mono',monospace]";
  */
 export default function KrantPerszaal({ etappe, laden }: { etappe: KaravaanEtappe | null; laden: boolean }) {
   const { t } = useTranslation();
-  const { thema } = useThema();
+  const thema = useKoersThema();
 
   const citaten = etappe
     ? [

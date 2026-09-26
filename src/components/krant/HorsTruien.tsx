@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import Wielertrui, { TruiBorst } from "@/components/retro/Wielertrui";
-import { useThema } from "@/contexts/ThemaContext";
+import { useKoersThema } from "@/contexts/KoersThemaContext";
 import { readableForeground } from "@/lib/themas";
 import { pickVerdict } from "@/components/horscat/verdictConfig";
 import type { HorsScores, HorsTabKey } from "@/components/karavaan/MiniStrip";
@@ -23,7 +23,7 @@ export default function HorsTruien({
   className?: string;
 }) {
   const { t, i18n } = useTranslation();
-  const { thema } = useThema();
+  const thema = useKoersThema();
   const locale = i18n.language === "en" ? "en-GB" : "nl-NL";
 
   const berg = thema.truien.berg;

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ExternalLink, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useThema } from "@/contexts/ThemaContext";
+import { useKoersThema } from "@/contexts/KoersThemaContext";
 import { aankomstplaats } from "@/lib/krantKop";
 import { bronregel, intro, splitsKoersEnPoule, splitsNadruk, veiligeUrl } from "@/lib/verslag";
 import { podiumMetMij } from "@/lib/krantC";
@@ -79,7 +79,7 @@ export default function KrantVandaag({
   onOpenDaguitslag?: (stageNumber: number) => void;
 }) {
   const { t, i18n } = useTranslation();
-  const { thema } = useThema();
+  const thema = useKoersThema();
   const locale = i18n.language === "en" ? "en-GB" : "nl-NL";
   const [open, setOpen] = useState(false);
 
@@ -242,7 +242,7 @@ export default function KrantVandaag({
                   <span className="w-[22px] shrink-0 text-center font-display font-black">{r.rang}</span>
                   <span className="flex min-w-0 grow items-center gap-2">
                     <span className="truncate">{r.naam}</span>
-                    {r.isMij && <span className="sticker shrink-0 px-[7px] py-px text-[11px] not-italic">{t("krantC.jij")}</span>}
+                    {r.isMij && <span className="sticker shrink-0 px-[7px] py-px text-[11px]">{t("krantC.jij")}</span>}
                   </span>
                   <span className={cn("shrink-0 text-[12px] tabular-nums", !r.isMij && "text-muted-foreground")}>
                     {t("krantC.ptKort", { punten: r.punten.toLocaleString(locale) })}

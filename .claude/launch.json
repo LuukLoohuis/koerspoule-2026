@@ -4,14 +4,32 @@
     {
       "name": "dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000
     },
     {
       "name": "layout",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--port", "3100", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--port",
+        "3100",
+        "--strictPort"
+      ],
       "port": 3100
+    },
+    {
+      "name": "testbank",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "npx vite --port ${PORT:-3200} --strictPort"
+      ],
+      "port": 3200,
+      "autoPort": true
     }
   ]
 }
