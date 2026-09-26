@@ -27,15 +27,16 @@ import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { isGameLocked, canRegister, isPreviewStatus } from "@/lib/gameStatus";
-import { Check, Pencil, Search, X, Target, Crown, ClipboardList, Flag, Shirt, Snowflake, Trophy, type LucideIcon } from "lucide-react";
+import { Check, Pencil, Search, X, Target, Crown, ClipboardList, Flag, Shirt, Trophy, type LucideIcon } from "lucide-react";
 import FlagIcon from "@/components/FlagIcon";
 import { Trans, useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
-import { isMeermarathonGame, meermarathonCategorieLabel, meermarathonStageLabel } from "@/lib/gameTypes";
+import { isMeermarathonGame } from "@/lib/gameTypes";
 import { useLiveRace } from "@/hooks/useLiveRace";
 import { normalizeName } from "@/lib/liveMarathon";
 import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
 import LiveTab from "@/components/meermarathon/LiveTab";
+import VolgwagenPloegContainer from "@/components/meermarathon/VolgwagenPloegContainer";
 import { useLiveSimulatie } from "@/hooks/useLiveSimulatie";
 import { simulatieMijnRiderIds, SIM_MIJN_BEENNUMMERS } from "@/lib/liveSimulatie";
 import { useStagePointsSchema } from "@/hooks/usePointsSchema";
@@ -176,7 +177,11 @@ function useRiders(ids: string[]) {
         .select("id, name, team, country_code, start_number, is_dnf, is_vervallen")
         .in("id", sorted);
       if (error) throw error;
-      return data ?? [];
+      // is_vervallen staat (nog) niet in de gegenereerde types.
+      return (data ?? []) as unknown as Array<{
+        id: string; name: string; team: string | null; country_code: string | null;
+        start_number: number | null; is_dnf: boolean | null; is_vervallen: boolean | null;
+      }>;
     },
   });
 }
@@ -331,28 +336,15 @@ const JERSEY_META: Record<string, { labelKey: string; emoji: string; ring: strin
   youth:  { labelKey: "team.panel.jerseyYouth",  emoji: "⚪", ring: "border-foreground/30",               bg: "bg-secondary/40"                    },
 };
 
-export default function MyTeamPanel({
-  section = "ploeg",
-  gameId: gameIdProp,
-  gameStatus,
-  gameName,
-  gameType,
-  gameCategorie,
-  onOpenHors,
-  onOpenUitslagen,
-  onOpenSubpoule,
-  onOpenStageResult,
-  focusNameSignal,
-  prizesVisible,
-  adminTestmodus = false,
-}: {
+type MyTeamPanelProps = {
   section?: "ploeg" | "prono" | "live";
   gameId?: string;
   gameStatus?: string;
   gameName?: string | null;
   /** Alleen de Volgwagen-presentatie wisselt voor de wintergame. */
   gameType?: string | null;
-  /** Meermarathon: "vrouwen" of "mannen". */
+  /** Meermarathon: "vrouwen" of "mannen". De Volgwagen leest dit zelf uit het
+   *  seizoen; het veld blijft zodat bestaande aanroepen kloppen. */
   gameCategorie?: string | null;
   /** Toon de subtiele "bekijk de prijzen"-tegel (alleen bij prizes_visible). */
   prizesVisible?: boolean | null;
@@ -369,7 +361,44 @@ export default function MyTeamPanel({
   /** Increment om de ploegnaam-editor te openen + het tekstveld te focussen
    *  (bv. vanuit de "Stel je ploegnaam in"-balk op Mijn Peloton). */
   focusNameSignal?: number;
-}) {
+};
+
+/**
+ * De Meermarathon heeft voor "Mijn ploeg" een eigen, veel kleiner scherm.
+ * De splitsing staat vóór alle hooks van het wielerdashboard, zodat een
+ * schaatsploeg niet de hele wielerstatistiek (Hors Catégorie, topscorer,
+ * dagklasseringen) ophaalt voor een scherm dat er niets van toont.
+ */
+export default function MyTeamPanel(props: MyTeamPanelProps) {
+  const { data: curGame } = useCurrentGame();
+  if ((props.section ?? "ploeg") === "ploeg" && isMeermarathonGame(props.gameType ?? curGame?.game_type)) {
+    return (
+      <VolgwagenPloegContainer
+        gameId={props.gameId ?? curGame?.id}
+        onOpenUitslagen={props.onOpenUitslagen}
+        onOpenSubpoule={props.onOpenSubpoule}
+        focusNameSignal={props.focusNameSignal}
+      />
+    );
+  }
+  return <KoersPanel {...props} />;
+}
+
+function KoersPanel({
+  section = "ploeg",
+  gameId: gameIdProp,
+  gameStatus,
+  gameName,
+  gameType,
+  gameCategorie,
+  onOpenHors,
+  onOpenUitslagen,
+  onOpenSubpoule,
+  onOpenStageResult,
+  focusNameSignal,
+  prizesVisible,
+  adminTestmodus = false,
+}: MyTeamPanelProps) {
   const { t } = useTranslation();
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
@@ -377,7 +406,6 @@ export default function MyTeamPanel({
   // Optioneel een specifieke (bv. afgeronde) game tonen i.p.v. de live game.
   const game = gameIdProp ? { id: gameIdProp, status: gameStatus, name: gameName } : curGame;
   const isMeermarathon = isMeermarathonGame(gameType ?? curGame?.game_type);
-  const categorieLabel = meermarathonCategorieLabel(gameIdProp ? gameCategorie : curGame?.categorie);
 
   // Live-tab: alleen bij Meermarathon, en alleen als er een baan gekoppeld is.
   const { data: liveRace } = useLiveRace(game?.id, isMeermarathon);
@@ -556,9 +584,9 @@ export default function MyTeamPanel({
   if (!game) {
     return <div className="ornate-frame retro-border bg-card p-6 text-muted-foreground">{t("team.panel.noActiveRace")}</div>;
   }
-  // De Meermarathon-Volgwagen is óók het inrichtingsscherm voor een nieuw
-  // winterseizoen. Zodra er een entry is, tonen we daarom het ijsdashboard al
-  // vóór de eerste keuze; wielergames behouden hun bestaande lege staat.
+  // De Meermarathon komt hier alleen voor Live en Pronostiek ("Mijn ploeg"
+  // heeft een eigen scherm, zie MyTeamPanel). Live werkt ook zonder gekozen
+  // rijders, dus die krijgt de lege staat pas zonder entry.
   if (!entry || (picksByCategory.size === 0 && !isMeermarathon)) {
     return (
       <Card className="ornate-frame retro-border">
@@ -812,29 +840,29 @@ export default function MyTeamPanel({
   // de app waar je alleen mocht tikken.
   if (section === "live") {
     if (!heeftLive) return null;
+    const race = simRace ?? liveRace ?? null;
     return (
       <LiveTab
-        race={simRace ?? liveRace ?? null}
+        race={race}
         simulatie={simRace !== null}
         mineRiderIds={simRace ? simulatieMijnRiderIds(SIM_MIJN_BEENNUMMERS) : mineRiderIds}
         jokerRiderIds={new Set(jokerIds)}
         pointsSchema={pointsSchema}
         jokerMultiplier={jokerMultiplier}
+        categorie={gameIdProp ? gameCategorie : curGame?.categorie}
+        wedstrijdType={stages.find((s) => s.id === race?.stageId)?.wedstrijd_type ?? null}
+        ploegNaam={teamName}
+        // Met naam, zodat ook wie niet start in "Mijn rijders" staat. LiveTab
+        // houdt zelf alleen de rijders over die bij de getoonde ploeg horen.
+        mijnRijders={[...mineRiderIds]
+          .map((id) => ({ id, naam: ridersById[id]?.name ?? "" }))
+          .filter((r) => r.naam)}
       />
     );
   }
 
   return (
-    <div className={cn("space-y-3 pb-4", isMeermarathon && "meermarathon-volgwagen")}>
-      {isMeermarathon && !categoriesLoading && categories.length === 0 && (
-        <div className="mm-setup-notice" role="status">
-          <Snowflake className="h-5 w-5 shrink-0" aria-hidden />
-          <div>
-            <strong>Dit winterseizoen wordt nog ingericht.</strong>
-            <p>Voeg in Beheer eerst de categorieën, schaatsers en speelrondes toe. De Volgwagen staat alvast klaar.</p>
-          </div>
-        </div>
-      )}
+    <div className="space-y-3 pb-4">
       {/* Rustige melding: gekozen renner(s) niet gestart — wisselen mag nog */}
       {fallenRiders.length > 0 && (
         <div className="ornate-frame retro-border bg-[hsl(var(--vintage-gold))/0.12] border-[hsl(var(--vintage-gold))/0.5] p-4">
@@ -876,10 +904,10 @@ export default function MyTeamPanel({
           (schroeven, grille, FM-schaal, knoppen, oscilloscoop) is CSS/SVG —
           decoratief, aria-hidden, verdwijnt op mobiel. CTA + TeamSheet eronder. */}
       {(() => {
-        const PAPER = isMeermarathon ? "rgba(248,252,255,0.94)" : "#F5EDD8";
-        const INK = isMeermarathon ? "#071b3d" : "#1A1612";
-        const AMBER = isMeermarathon ? "#1268a8" : "hsl(var(--vintage-gold))";
-        const hairline = isMeermarathon ? "1px solid rgba(18,104,168,0.18)" : "1px solid rgba(26,22,18,0.18)";
+        const PAPER = "#F5EDD8";
+        const INK = "#1A1612";
+        const AMBER = "hsl(var(--vintage-gold))";
+        const hairline = "1px solid rgba(26,22,18,0.18)";
 
         const hasName = Boolean(entry.team_name?.trim());
         const shownName = entry.team_name ?? user.user_metadata?.team_name ?? t("team.panel.myTeamFallback");
@@ -988,10 +1016,7 @@ export default function MyTeamPanel({
 
         return (
           <section
-            className={cn(
-              "salle-de-course relative",
-              isMeermarathon ? "meermarathon-console" : "sdc-frame sdc-paper-texture",
-            )}
+            className="salle-de-course relative sdc-frame sdc-paper-texture"
             style={{
               // Eén doorlopend beige papieroppervlak binnen de frame; instrumenten
               // + onderbalk liggen als donkere insets daarop (zie referentie/DESIGN-SPEC).
@@ -1000,16 +1025,7 @@ export default function MyTeamPanel({
           >
             <div className="p-3 md:p-4">
               {/* Mobiele cockpit-band bovenaan (full width, < lg). */}
-              {isMeermarathon ? (
-                <div className="mm-mobile-band flex lg:hidden">
-                  <Snowflake className="h-5 w-5" aria-hidden />
-                  <span>
-                    Meermarathon · topdivisie {categorieLabel?.toLowerCase() ?? <>mannen &amp; vrouwen</>}
-                  </span>
-                </div>
-              ) : (
-                <MobileInstrumentBand />
-              )}
+              <MobileInstrumentBand />
 
               <div className="lg:grid lg:grid-cols-[1fr_240px] lg:gap-3">
                 {/* ── Linkerkolom: één doorlopend papieren console-paneel. De
@@ -1030,7 +1046,7 @@ export default function MyTeamPanel({
                   {/* Masthead-sectie */}
                   <div className="p-3.5 md:p-4" style={{ borderBottom: "1px solid rgba(26,22,18,0.22)" }}>
                     <div className="font-mono text-[10px] tracking-[0.3em] uppercase font-bold mb-2.5" style={{ color: AMBER }}>
-                      {isMeermarathon ? "❄ Meermarathon Volgwagen ❄" : "◆ La Salle de Course ◆"}
+                      ◆ La Salle de Course ◆
                     </div>
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                       <div className="min-w-0 flex-1">
@@ -1058,9 +1074,7 @@ export default function MyTeamPanel({
                           )}
                         </h2>
                         <p className="font-serif italic text-xs mt-1.5" style={{ color: "rgba(26,22,18,0.65)" }}>
-                          {isMeermarathon
-                            ? `Ploegleider · ${user.user_metadata?.display_name ?? user.email}`
-                            : t("team.panel.directeurSportif", { name: user.user_metadata?.display_name ?? user.email })}
+                          {t("team.panel.directeurSportif", { name: user.user_metadata?.display_name ?? user.email })}
                         </p>
 
                         {/* Ploegnaam-nudge (alleen zonder naam of tijdens edit) */}
@@ -1129,7 +1143,7 @@ export default function MyTeamPanel({
                   {/* Tableau de Bord — 2×3 instrumenten */}
                   <div className="p-3.5 md:p-4" style={{ borderBottom: "1px solid rgba(26,22,18,0.22)" }}>
                     <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
-                      <Stamp>{isMeermarathon ? "— Virtuele winterstand —" : "— Tableau de Bord —"}</Stamp>
+                      <Stamp>— Tableau de Bord —</Stamp>
                       {/* Subpoule-kiezer: alleen tonen bij meerdere subpoules. De
                           Sous-peloton-instrumenten volgen deze keuze. */}
                       {subpoules.length > 1 && (
@@ -1150,14 +1164,14 @@ export default function MyTeamPanel({
                         hint={t("team.panel.hintSubpoule")}
                       />
                       <Dial
-                        label={isMeermarathon ? "Algemeen klassement" : "Classement Général"}
+                        label="Classement Général"
                         value={<Rank rank={ploegStats.overall?.rank ?? null} delta={ploegStats.overall?.delta ?? null} />}
                         sub={ploegStats.overall ? t("team.panel.ofTotalParticipants", { total: ploegStats.overall.total }) : undefined}
                         onClick={onOpenUitslagen}
                         hint={t("team.panel.hintOverall")}
                       />
                       <Dial
-                        label={isMeermarathon ? "Rondepunten" : t("team.panel.stagePointsDial")}
+                        label={t("team.panel.stagePointsDial")}
                         value={stageDayPoints}
                         sub={shownStage ? t("team.panel.onlyStage", { stage: shownStage.stage_number }) : t("team.panel.noResultsYet")}
                       />
@@ -1203,7 +1217,7 @@ export default function MyTeamPanel({
                                 : "#B94A48";
                         return (
                           <Dial
-                            label={isMeermarathon ? "Ploegleider" : "Wielerdir."}
+                            label="Wielerdir."
                             accent={dirColor}
                             Icon={ClipboardList}
                             value={dash(hors.directorScore, (n) => n.toFixed(1))}
@@ -1219,7 +1233,7 @@ export default function MyTeamPanel({
 
                   {/* Détails — rij van 4 kerngetallen */}
                   <div className="p-3.5 md:p-4">
-                    <div className="text-center mb-2.5"><Stamp>{isMeermarathon ? "— Stand na geselecteerde ronde —" : "— Détails —"}</Stamp></div>
+                    <div className="text-center mb-2.5"><Stamp>— Détails —</Stamp></div>
                     {(() => {
                       // Beste etappe = mijn BESTE dagklassering in de hele poule
                       // (laagste rang over alle ritten), met de punten van die rit
@@ -1252,7 +1266,7 @@ export default function MyTeamPanel({
                         hint?: string;
                       }> = [
                         {
-                          label: isMeermarathon ? "Beste ronde" : t("team.panel.bestStage"),
+                          label: t("team.panel.bestStage"),
                           Icon: Flag,
                           flagLeft: true,
                           nowrap: true,
@@ -1263,9 +1277,7 @@ export default function MyTeamPanel({
                             </>
                           ) : "—",
                           sub: bestRank?.stage
-                            ? (isMeermarathon
-                                ? `${bestRankPoints ?? 0} pt · ronde ${bestRank.stage.stage_number}`
-                                : t("team.panel.ptStage", { points: bestRankPoints, stage: bestRank.stage.stage_number }))
+                            ? t("team.panel.ptStage", { points: bestRankPoints, stage: bestRank.stage.stage_number })
                             : undefined,
                           onClick: bestRank?.stage && onOpenStageResult
                             ? () => onOpenStageResult(bestRank.stage!.stage_number)
@@ -1378,30 +1390,6 @@ export default function MyTeamPanel({
                     Puur decoratief: aria-hidden + pointer-events-none. De klok
                     is live (LiveKlok), de rest zijn beeld-elementen uit
                     /public/salle-de-course/. ── */}
-                {isMeermarathon ? (
-                  <aside className="mm-rink-panel hidden lg:flex" aria-label="Meermarathon ronde-overzicht">
-                    <div className="mm-rink-heading">
-                      <Snowflake className="h-5 w-5" aria-hidden />
-                      <span>Iedere ronde telt</span>
-                    </div>
-                    <div className="mm-rink" aria-hidden>
-                      <span className="mm-rink-line mm-rink-line--outer" />
-                      <span className="mm-rink-line mm-rink-line--inner" />
-                      <span className="mm-rink-dots mm-rink-dots--top" />
-                      <span className="mm-rink-dots mm-rink-dots--bottom" />
-                      <span className="mm-rink-score">
-                        <strong>{selectedStage?.stage_number ?? "—"}</strong>
-                        <small>ronde</small>
-                      </span>
-                    </div>
-                    <dl className="mm-rink-stats">
-                      <div><dt>Poulepositie</dt><dd>{ploegStats.overall?.rank ? `${ploegStats.overall.rank}e` : "—"}</dd></div>
-                      <div><dt>Rondepunten</dt><dd>{stageDayPoints}</dd></div>
-                      <div><dt>Meetellende rondes</dt><dd>{approvedRaceStages.length}</dd></div>
-                    </dl>
-                    <p>Stand op basis van gefiatteerde uitslagen.</p>
-                  </aside>
-                ) : (
                 <div aria-hidden className="hidden lg:flex flex-col gap-2.5 pointer-events-none select-none">
                   {/* 1) LIVE + grille als één paneel; live klok over het venster. */}
                   <div className="relative w-full">
@@ -1421,7 +1409,6 @@ export default function MyTeamPanel({
                   <img src="/salle-de-course/radio-comm.png" alt="" aria-hidden="true"
                     className="w-full h-auto" style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }} />
                 </div>
-                )}
               </div>
 
               {/* ── Etappe-selector: spoel het dashboard terug naar de stand t/m
@@ -1433,12 +1420,10 @@ export default function MyTeamPanel({
                 >
                   <div className="flex items-center justify-between gap-2 mb-1.5 px-1">
                     <span className="font-mono text-[9px] tracking-[0.2em] uppercase" style={{ color: "rgba(237,227,204,0.55)" }}>
-                      {isMeermarathon ? "Kies een speelronde" : t("team.panel.rewindStamp")}
+                      {t("team.panel.rewindStamp")}
                     </span>
                     <span className="font-mono text-[9px] tracking-[0.12em] uppercase" style={{ color: "rgba(237,227,204,0.4)" }}>
-                      {isMeermarathon
-                        ? (rewound ? `Stand t/m ronde ${cutoffN}` : "Actuele stand")
-                        : (rewound ? t("team.panel.throughStage", { stage: cutoffN }) : t("team.panel.currentStanding"))}
+                      {rewound ? t("team.panel.throughStage", { stage: cutoffN }) : t("team.panel.currentStanding")}
                     </span>
                   </div>
 
@@ -1472,7 +1457,7 @@ export default function MyTeamPanel({
                           onClick={() => setSelectedStageId(s.id)}
                           aria-pressed={sel}
                           aria-selected={sel}
-                          title={isMeermarathon ? meermarathonStageLabel(s) : (s.name ?? t("team.panel.stageTitle", { stage: s.stage_number }))}
+                          title={s.name ?? t("team.panel.stageTitle", { stage: s.stage_number })}
                           className="relative shrink-0 flex flex-col items-center justify-end gap-0.5 rounded transition-all"
                           style={{
                             scrollSnapAlign: "center",
@@ -1496,7 +1481,7 @@ export default function MyTeamPanel({
                           </span>
                           {isNow && (
                             <span className="font-mono uppercase tracking-wider leading-none" style={{ fontSize: 7, color: sel ? "#F4C84B" : "rgba(237,227,204,0.5)" }}>
-                              {isMeermarathon ? "nu" : t("team.panel.nowLabel")}
+                              {t("team.panel.nowLabel")}
                             </span>
                           )}
                         </button>
@@ -1508,7 +1493,7 @@ export default function MyTeamPanel({
                   {rewound && (
                     <div className="mt-2 flex items-center justify-between gap-2 px-1">
                       <span className="font-mono text-[9px] leading-snug" style={{ color: "rgba(237,227,204,0.6)" }}>
-                        {isMeermarathon ? `Virtuele stand t/m ronde ${cutoffN}` : t("team.panel.rewoundThrough", { stage: cutoffN })}
+                        {t("team.panel.rewoundThrough", { stage: cutoffN })}
                       </span>
                       <button
                         type="button"
@@ -1516,7 +1501,7 @@ export default function MyTeamPanel({
                         className="font-mono text-[9px] tracking-[0.12em] uppercase font-bold px-2 py-0.5 rounded inline-flex items-center gap-1 shrink-0"
                         style={{ color: "#1A1612", background: AMBER }}
                       >
-                        {isMeermarathon ? "Naar actuele stand" : t("team.panel.backToNow")}
+                        {t("team.panel.backToNow")}
                       </button>
                     </div>
                   )}
@@ -1576,7 +1561,6 @@ export default function MyTeamPanel({
         const SPRINTS = new Set(["SPR1", "SPR2", "SPR3"]);
         const groupFor = (cat: { id: string; name: string; short_name?: string | null }, idx: number) => {
           const sn = (cat.short_name ?? "").toUpperCase().replace(/\s+/g, "");
-          if (isMeermarathon) return { catKey: cat.id, catTitle: cat.name, catOrder: idx, category: detectCategoryT(`${cat.name} ${cat.short_name ?? ""}`) };
           if (hoortBijJachtOpGeel(cat)) return { catKey: "JACHT_OP_GEEL", catTitle: t("team.sheet.huntForYellow"), catOrder: 0, category: "GC" as const };
           if (SPRINTS.has(sn)) return { catKey: "SPRINT", catTitle: "Sprint", catOrder: 1, category: "SPRINT" as const };
           return { catKey: cat.id, catTitle: cat.name, catOrder: 2 + idx, category: detectCategoryT(`${cat.name} ${cat.short_name ?? ""}`) };
@@ -1624,7 +1608,7 @@ export default function MyTeamPanel({
         // Onder de tien renners scroll je niet; dan is een zoekvak ruis.
         const toonZoek = sheet.length >= 10;
         return (
-          <div className={cn("mb-4 md:mb-6", isMeermarathon && "mm-team-sheet")}>
+          <div className="mb-4 md:mb-6">
             {toonZoek && (
               <div className="relative mb-2.5">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
