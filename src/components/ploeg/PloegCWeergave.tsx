@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Wielertrui, { TruiBorst } from "@/components/retro/Wielertrui";
-import wielershirt from "@/assets/wielershirt.png";
+import { BLANCO_TRUI } from "@/lib/wielertruien";
 import type { PloegRenner, PloegRit } from "@/hooks/usePloegRanglijst";
 import {
   ploegDagpunten,
@@ -271,7 +271,7 @@ export default function PloegCWeergave({
                 </span>
 
                 <Wielertrui
-                  src={r.truiUrl ?? wielershirt}
+                  src={r.truiUrl ?? BLANCO_TRUI}
                   alt={r.ploeg ?? ""}
                   breedte={30}
                   hoogte={34}

@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import wielershirt from "@/assets/wielershirt.png";
+import { BLANCO_TRUI } from "@/lib/wielertruien";
+import truiMasker from "@/assets/wielertrui-masker.webp";
 
 /**
  * De trui is versiering: geen sleep-voorbeeld of callout bij een lange
@@ -12,12 +13,14 @@ const NIET_SLEPEN = { WebkitUserDrag: "none", WebkitTouchCallout: "none" } as CS
 /**
  * De wielertrui van de handoff Krant C / Ploeg C.
  *
- * Twee gedaanten. Met `src` is het de echte ploegtrui uit de startlijst
- * (`teams.jersey_url`). Zonder `src` is het de blanco trui, ingekleurd met
- * `kleur`: een gekleurd vlak met de PNG als masker, en daaroverheen dezelfde
- * PNG in multiply zodat de plooien en naden erin blijven. Zo kleurt één
- * afbeelding mee met het thema (primary, de bergtrui, wit) zonder per kleur
- * een export.
+ * Twee gedaanten. Met `src` is het een kant-en-klare trui: de ploegtrui uit de
+ * startlijst (`teams.jersey_url`) of een getekende klassementstrui uit
+ * lib/wielertruien. Zonder `src` is het de blanco trui, ingekleurd met
+ * `kleur`: een gekleurd vlak met de stof als masker, en daaroverheen de witte
+ * tekening in multiply zodat de omlijning, plooien en naden erin blijven. De
+ * binnenkant van kraag en zoom valt buiten het masker en blijft grijs, net als
+ * in de getekende truien. Zo kleurt één tekening mee met het thema zonder per
+ * kleur een export.
  *
  * Wat op de borst staat (een cijfer, een aantal) komt via `children`.
  */
@@ -32,7 +35,7 @@ export default function Wielertrui({
   className,
   children,
 }: {
-  /** Echte trui; wint van `kleur`. */
+  /** Kant-en-klare trui; wint van `kleur`. */
   src?: string | null;
   /** CSS-kleur voor de blanco trui. */
   kleur?: string;
@@ -76,8 +79,8 @@ export default function Wielertrui({
     : { background: kleur };
 
   const masker: CSSProperties = {
-    WebkitMaskImage: `url(${wielershirt})`,
-    maskImage: `url(${wielershirt})`,
+    WebkitMaskImage: `url(${truiMasker})`,
+    maskImage: `url(${truiMasker})`,
     WebkitMaskSize: "contain",
     maskSize: "contain",
     WebkitMaskRepeat: "no-repeat",
@@ -90,7 +93,7 @@ export default function Wielertrui({
     <span className={cn("relative block shrink-0", className)} style={{ ...maat, filter }} role={alt ? "img" : undefined} aria-label={alt || undefined}>
       <span aria-hidden className="absolute inset-0" style={{ ...vulling, ...masker }} />
       <img
-        src={wielershirt}
+        src={BLANCO_TRUI}
         alt=""
         aria-hidden
         className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain mix-blend-multiply"
