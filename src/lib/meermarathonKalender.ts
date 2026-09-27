@@ -1,4 +1,4 @@
-import { meermarathonAfstandLabel, meermarathonStageLabel } from "@/lib/gameTypes";
+import { meermarathonAfstandLabel, meermarathonStageLabel, wedstrijdTypeVan, type WedstrijdType } from "@/lib/gameTypes";
 import type { MeermarathonGameStatus, MmWedstrijd } from "@/lib/meermarathonSeizoen";
 
 /**
@@ -12,6 +12,8 @@ export type KalenderRij = {
   /** YYYY-MM-DD, of null als de datum nog niet vaststaat. */
   date: string | null;
   label: string;
+  /** Cup, Grand Prix, ONK of NK; bepaalt het embleem voor de regel. */
+  soort?: WedstrijdType;
   /** "Kunstijs · 80 / 125 ronden", "Natuurijs · als het vriest". */
   detail: string;
   /** Punten van jouw ploeg; null als er (nog) geen uitslag is. */
@@ -59,6 +61,7 @@ export function bouwKalender(statussen: MeermarathonGameStatus[], gekozenGameId:
       sleutel,
       date: basis.date,
       label: meermarathonStageLabel(basis),
+      soort: wedstrijdTypeVan(basis),
       detail,
       punten,
       volgende: Boolean(eigen && gekozen?.volgende?.id === eigen.id),

@@ -25,6 +25,9 @@ import ResultsUpdatedBadge from "@/components/ResultsUpdatedBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
 import Podium from "@/components/Podium";
 import StageBar from "@/components/stages/StageBar";
+import WedstrijdBalk from "@/components/meermarathon/WedstrijdBalk";
+import { bouwWedstrijdBalk } from "@/lib/meermarathonBalk";
+import { isMeermarathonGame } from "@/lib/gameTypes";
 import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
@@ -118,6 +121,8 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   // namen zijn van echte mensen en gaan daarom door een pseudoniem. Een
   // beheerder ziet altijd de echte namen, om te kunnen controleren.
   const getoondeStatus = alleGames.find((x) => x.id === gameId)?.status ?? curGame?.status;
+  // De Meermarathon rijdt wedstrijden, geen ritten: eigen balk, eigen woorden.
+  const isMeermarathon = isMeermarathonGame(alleGames.find((x) => x.id === gameId)?.game_type ?? curGame?.game_type);
   const isDemo = resultsHiddenForUsers(getoondeStatus) && role !== "admin";
   const toonNaam = (rij: { user_id?: string | null; team_name?: string | null; display_name?: string | null }) =>
     isDemo ? pseudoniem(String(rij.user_id ?? "")) : (rij.team_name ?? rij.display_name ?? null);
@@ -203,6 +208,11 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
     myStageRows.forEach((sp) => m.set(sp.stage_id, (m.get(sp.stage_id) ?? 0) + sp.points));
     return m;
   }, [myStageRows]);
+
+  const wedstrijdBalk = useMemo(
+    () => bouwWedstrijdBalk(stages, myPointsPerStage, { heeftPloeg: Boolean(myEntry), totaal: myEntry?.total_points }),
+    [stages, myPointsPerStage, myEntry],
+  );
 
   // Etappe-uitslag (alle teams) van de geselecteerde rit — server-side.
   const { data: stageStandingsRows = [] } = useGameStandings(gameId, selectedStage?.stage_number, false);
@@ -380,13 +390,30 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
         {/* ── ETAPPES TAB ── */}
         {k === "etappes" && (<>
           {stagesLoading ? (
-            <p className="text-center text-muted-foreground py-8">{t("results.view.stagesLoading")}</p>
+            <p className="text-center text-muted-foreground py-8">{t(isMeermarathon ? "results.view.mmStagesLoading" : "results.view.stagesLoading")}</p>
           ) : stages.length === 0 ? (
-            <EmptyState message={t("results.view.noStages")} />
+            <EmptyState message={t(isMeermarathon ? "results.view.mmNoStages" : "results.view.noStages")} />
           ) : (
             <>
+              {/* Meermarathon: balk per wedstrijd, gekleurd naar Cup, Grand Prix,
+                  ONK of NK. Kilometers en terrein bestaan daar niet. */}
+              {isMeermarathon && (
+                <WedstrijdBalk
+                  className="mt-2 mb-4"
+                  wedstrijden={wedstrijdBalk.wedstrijden}
+                  totaal={wedstrijdBalk.totaal}
+                  gekozenId={selectedStage?.id ?? null}
+                  onKies={(id) => {
+                    const idx = stages.findIndex((x) => x.id === id);
+                    if (idx >= 0) setSelectedStageIdx(idx);
+                  }}
+                  titel={t("results.view.mmBarTitle")}
+                  ondertitel={gameName}
+                />
+              )}
+
               {/* Premium vertical bar visualizer — StageBar (PNG-asset variant) */}
-              {(() => {
+              {!isMeermarathon && (() => {
                 const { data, gcTotal, selectedNumber } = buildStageBarData(
                   stages,
                   myPointsPerStage,
@@ -420,8 +447,8 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                 );
               })()}
 
-              {/* Selected stage info */}
-              {selectedStage && !selectedStage.is_gc && (
+              {/* Selected stage info; bij de Meermarathon staat dit in de balk zelf. */}
+              {selectedStage && !selectedStage.is_gc && !isMeermarathon && (
                 <div className="mb-4 retro-border bg-secondary/30 p-3 flex flex-wrap items-center gap-3 text-sm">
                   <div className="flex items-center gap-2">
                     <div className={cn(
@@ -477,7 +504,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                   <div className="p-4 border-b-2 border-foreground bg-secondary/50">
                     <h2 className="font-display text-base font-bold flex items-center gap-2">
                       <Users className="h-5 w-5 text-primary" />
-                      {t("results.view.stageStandingsTitle")}
+                      {t(isMeermarathon ? "results.view.mmStageStandingsTitle" : "results.view.stageStandingsTitle")}
                     </h2>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {t("results.view.participantCount", { count: entries.length })}
@@ -489,7 +516,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                         <Flag className="h-6 w-6 text-muted-foreground/50" />
                       </div>
                       <p className="text-sm text-muted-foreground max-w-xs">
-                        {t("results.view.stageStandingsEmpty")}
+                        {t(isMeermarathon ? "results.view.mmStageStandingsEmpty" : "results.view.stageStandingsEmpty")}
                       </p>
                     </div>
                   ) : (
@@ -586,7 +613,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                     </div>
                   ) : myStageScorers.length === 0 ? (
                     <div className="p-4 text-center text-muted-foreground text-sm">
-                      {t("results.view.noRidersScored")}
+                      {t(isMeermarathon ? "results.view.mmNoRidersScored" : "results.view.noRidersScored")}
                     </div>
                   ) : (
                     <div className="divide-y divide-border">
@@ -617,14 +644,14 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                   <div className="p-4 border-b-2 border-foreground bg-secondary/50">
                     <h2 className="font-display text-base font-bold flex items-center gap-2">
                       <Medal className="h-5 w-5 text-accent" />
-                      {t("results.view.stageResultTitle")}
+                      {t(isMeermarathon ? "results.view.mmStageResultTitle" : "results.view.stageResultTitle")}
                     </h2>
                   </div>
                   {resultsLoading ? (
                     <RowsSkeleton rows={6} />
                   ) : results.filter((r) => r.finish_position != null).length === 0 ? (
                     <div className="p-4 text-sm text-muted-foreground italic text-center">
-                      {t("results.view.stageResultEmpty")}
+                      {t(isMeermarathon ? "results.view.mmStageResultEmpty" : "results.view.stageResultEmpty")}
                     </div>
                   ) : (
                     <div className="divide-y divide-border">

@@ -65,15 +65,15 @@ const STAND_ZAKKER: KlassementStand = { soort: "stand", wedstrijdLabel: "Cup 2",
 // ── Nepkalender (zonder baan: die staat niet in de database) ──────────────
 
 const KALENDER_BASIS: Omit<KalenderRij, "punten" | "volgende">[] = [
-  { sleutel: "1", date: "2026-10-31", label: "Cup 1", detail: "Kunstijs · 80 / 125 ronden" },
-  { sleutel: "2", date: "2026-11-07", label: "Cup 2", detail: "Kunstijs · 80 / 125 ronden" },
-  { sleutel: "3", date: "2026-11-14", label: "Cup 3", detail: "Kunstijs · 80 / 125 ronden" },
-  { sleutel: "4", date: "2026-11-21", label: "Cup 4", detail: "Kunstijs · 80 / 125 ronden" },
-  { sleutel: "5", date: "2026-12-05", label: "Cup 5", detail: "Kunstijs · 80 / 125 ronden" },
-  { sleutel: "6", date: "2027-01-09", label: "Grand Prix 6", detail: "Natuurijs · 60 / 100 km" },
-  { sleutel: "7", date: "2027-01-16", label: "Grand Prix 7", detail: "Natuurijs · 60 / 100 km" },
-  { sleutel: "8", date: null, label: "ONK", detail: "Natuurijs · als het vriest" },
-  { sleutel: "9", date: "2027-02-06", label: "NK", detail: "Kunstijs · 100 / 150 ronden" },
+  { sleutel: "1", date: "2026-10-31", label: "Cup 1", soort: "cup", detail: "Kunstijs · 80 / 125 ronden" },
+  { sleutel: "2", date: "2026-11-07", label: "Cup 2", soort: "cup", detail: "Kunstijs · 80 / 125 ronden" },
+  { sleutel: "3", date: "2026-11-14", label: "Cup 3", soort: "cup", detail: "Kunstijs · 80 / 125 ronden" },
+  { sleutel: "4", date: "2026-11-21", label: "Cup 4", soort: "cup", detail: "Kunstijs · 80 / 125 ronden" },
+  { sleutel: "5", date: "2026-12-05", label: "Cup 5", soort: "cup", detail: "Kunstijs · 80 / 125 ronden" },
+  { sleutel: "6", date: "2027-01-09", label: "Grand Prix 6", soort: "grandprix", detail: "Natuurijs · 60 / 100 km" },
+  { sleutel: "7", date: "2027-01-16", label: "Grand Prix 7", soort: "grandprix", detail: "Natuurijs · 60 / 100 km" },
+  { sleutel: "8", date: null, label: "ONK", soort: "onk", detail: "Natuurijs · als het vriest" },
+  { sleutel: "9", date: "2027-02-06", label: "NK", soort: "nk", detail: "Kunstijs · 100 / 150 ronden" },
 ];
 
 function kalender(punten: (number | null)[], volgende: number): KalenderRij[] {

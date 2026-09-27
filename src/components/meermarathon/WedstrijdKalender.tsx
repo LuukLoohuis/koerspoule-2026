@@ -4,6 +4,7 @@
  * Gebruikt op de Krant (desktop: "Komende wedstrijden") en onder Uitslagen.
  */
 import { cn } from "@/lib/utils";
+import { SoortEmbleem } from "@/components/meermarathon/WedstrijdSoort";
 import { mmKorteDatum } from "@/lib/meermarathonSeizoen";
 import type { KalenderRij } from "@/lib/meermarathonKalender";
 
@@ -33,6 +34,7 @@ export default function WedstrijdKalender({
               className={cn("flex items-center gap-3 py-3", rij.volgende && "-mx-2 rounded-lg bg-secondary px-2")}
             >
               <span className="w-14 shrink-0 font-oswald text-[15px] text-muted-foreground">{mmKorteDatum(rij.date)}</span>
+              {rij.soort && <SoortEmbleem soort={rij.soort} maat={26} />}
               <span className="min-w-0 flex-1">
                 <span className="block font-semibold leading-tight">{rij.label}</span>
                 {rij.detail && <span className="block text-sm text-muted-foreground">{rij.detail}</span>}

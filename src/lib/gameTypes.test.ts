@@ -68,6 +68,8 @@ describe("meermarathon-wedstrijden", () => {
     expect(meermarathonStageLabel({ stage_number: 2, name: "Alternatieve Elfstedentocht", wedstrijd_type: "cup" }))
       .toBe("Alternatieve Elfstedentocht");
     expect(meermarathonStageLabel({ stage_number: 2, name: "   ", wedstrijd_type: "cup" })).toBe("Cup 2");
+    // "Etappe 2" vulde het beheer vroeger zelf in; dat is geen eigen naam.
+    expect(meermarathonStageLabel({ stage_number: 2, name: "Etappe 2", wedstrijd_type: "cup" })).toBe("Cup 2");
   });
 
   it("valt zonder soort terug op de ondergrond", () => {

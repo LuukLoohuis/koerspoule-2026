@@ -55,6 +55,7 @@ describe("wedstrijdkalender", () => {
 
   it("houdt de volgorde van de wedstrijdnummers, ook zonder datum", () => {
     expect(rijen.map((r) => r.label)).toEqual(["Cup 1", "Cup 3", "Grand Prix 6", "ONK", "NK"]);
+    expect(rijen.map((r) => r.soort)).toEqual(["cup", "cup", "grandprix", "onk", "nk"]);
     expect(rijen[3]).toMatchObject({ date: null, detail: "Natuurijs · als het vriest" });
   });
 

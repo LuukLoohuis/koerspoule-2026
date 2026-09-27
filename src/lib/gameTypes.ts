@@ -128,11 +128,26 @@ export function defaultWedstrijdType(ijsType: string | null | undefined): Wedstr
 }
 
 /**
+ * De soort van een wedstrijd. Zonder gekozen soort volgt hij uit de
+ * ondergrond, zodat een wedstrijd van vóór dit veld toch een soort heeft.
+ */
+export function wedstrijdTypeVan(stage: {
+  wedstrijd_type?: string | null;
+  ijs_type?: string | null;
+}): WedstrijdType {
+  const gekozen = WEDSTRIJD_TYPES.find((w) => w.value === stage.wedstrijd_type)?.value;
+  return gekozen ?? defaultWedstrijdType(stage.ijs_type);
+}
+
+/**
  * Hoe een Meermarathon-wedstrijd heet.
  *
  * Een eigen naam wint altijd; anders "Cup 3" / "Grand Prix 5", en voor een
  * titelwedstrijd alleen "ONK" of "NK" — die zijn eenmalig, dus een nummer
  * erachter zou verwarrend zijn.
+ *
+ * "Etappe 3" telt niet als eigen naam: dat vulde het beheer vroeger zelf in
+ * als het naamveld leeg bleef, en een schaatswedstrijd is geen etappe.
  */
 export function meermarathonStageLabel(stage: {
   name?: string | null;
@@ -140,10 +155,25 @@ export function meermarathonStageLabel(stage: {
   wedstrijd_type?: string | null;
   ijs_type?: string | null;
 }): string {
-  if (stage.name?.trim()) return stage.name.trim();
-  const type = (stage.wedstrijd_type as WedstrijdType | null) ?? defaultWedstrijdType(stage.ijs_type);
+  const eigen = stage.name?.trim();
+  if (eigen && !/^etappe \d+$/i.test(eigen)) return eigen;
+  const type = wedstrijdTypeVan(stage);
   const def = WEDSTRIJD_TYPES.find((w) => w.value === type) ?? WEDSTRIJD_TYPES[0];
   return def.genummerd ? `${def.label} ${stage.stage_number}` : def.label;
+}
+
+/**
+ * Wat er onder een balk van de uitslagenbalk staat: het nummer, en voor een
+ * titelwedstrijd "ONK" of "NK". De soort zelf zegt het embleem erboven.
+ */
+export function meermarathonStageKort(stage: {
+  stage_number: number;
+  wedstrijd_type?: string | null;
+  ijs_type?: string | null;
+}): string {
+  const type = wedstrijdTypeVan(stage);
+  const def = WEDSTRIJD_TYPES.find((w) => w.value === type) ?? WEDSTRIJD_TYPES[0];
+  return def.genummerd ? String(stage.stage_number) : def.label;
 }
 
 /** De maat van een wedstrijd: ronden op kunstijs, kilometers op natuurijs. */

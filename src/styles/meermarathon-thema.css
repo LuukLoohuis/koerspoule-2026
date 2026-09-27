@@ -12,7 +12,7 @@
    deze regels winnen en de nachtmodus onmogelijk maken.
    ───────────────────────────────────────────────────────────────────────── */
 
-/* Meermarathon-kleuren: altijd beschikbaar. De koersbalk en de
+/* Meermarathon-kleuren: altijd beschikbaar. De pelotonbalk en de
    Meermarathon-schermen staan er ook als het site-thema (nog) niet op winter
    staat, bv. tijdens de inschrijving. */
 :root {
@@ -36,6 +36,13 @@
   --mm-g-k: #0E2238;
   --mm-g-p: #52627A;
   --mm-g-a: #9AA7B8;
+  /* Wedstrijdsoorten: Cup, Grand Prix, ONK, NK en het totaal. Naast de kleur
+     staat altijd een embleem en de naam; kleur draagt het nooit alleen. */
+  --mm-s-cup: #2E5E8C;
+  --mm-s-gp: #2E6A4F;
+  --mm-s-onk: #B95F14;
+  --mm-s-nk: #B8322A;
+  --mm-s-totaal: #A97708;
 }
 
 /* Licht · Winter verfijnd */
@@ -122,4 +129,9 @@
   --mm-g-k: #7CC4F0;
   --mm-g-p: #5B7BA6;
   --mm-g-a: #6B7A90;
+  --mm-s-cup: #6FA8DC;
+  --mm-s-gp: #5FB58C;
+  --mm-s-onk: #F0A04B;
+  --mm-s-nk: #F07C6E;
+  --mm-s-totaal: #F2B544;
 }
