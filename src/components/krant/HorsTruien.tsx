@@ -1,17 +1,16 @@
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import CijferTrui from "@/components/krant/CijferTrui";
-import { pickVerdict } from "@/components/horscat/verdictConfig";
 import type { HorsScores, HorsTabKey } from "@/components/karavaan/MiniStrip";
 import type { HorsTrui } from "@/lib/wielertruien";
 
 /**
  * Hors Catégorie als drie wielertruien: Monkey IQ in de kleur van de koers,
  * Emirates in het wit, de Directeur in de bergtrui van het thema. Cijfer en
- * label staan als opdruk op de borst. Daaronder alleen de uitleg (de
- * verdict-band uit verdictConfig, de Emirates-memo): de naam staat al op de
- * trui, een titel eronder zegt het twee keer. Elke trui opent zijn eigen
- * analyse in de bijlage.
+ * label staan als opdruk op de borst. Daaronder alleen de uitleg, als vervolg
+ * op het label: waar het cijfer tegen afgezet is. De naam staat al op de trui,
+ * een titel eronder zegt het twee keer. Elke trui opent zijn eigen analyse in
+ * de bijlage.
  *
  * De truien hangen tegen elkaar, mouw over mouw, zoals in het ontwerp: de
  * buitenste twee vóór de middelste. Daarom is elke trui iets breder dan zijn
@@ -52,7 +51,7 @@ export default function HorsTruien({
       aria: t("krantC.monkeyAria", { waarde: monkey ?? "–" }),
       waarde: monkey == null ? null : String(monkey),
       eenheid: "%",
-      uitleg: monkey == null ? t("krantC.nogGeenCijfer") : t(`hors.dartpijl.verdict.${pickVerdict(monkey).key}.label`),
+      uitleg: monkey == null ? t("krantC.nogGeenCijfer") : t("krantC.monkeyUitleg"),
       plek: "z-10 self-start",
     },
     {

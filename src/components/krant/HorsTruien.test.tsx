@@ -73,6 +73,7 @@ describe("HorsTruien", () => {
   it("zegt onder de trui niet nog eens wat er op de borst staat", () => {
     const { knop, opdruk } = toon("geel");
     const onderschrift = (naam: RegExp) => knop(naam).querySelector(":scope > span:last-child")?.textContent ?? "";
+    expect(onderschrift(/Monkey IQ/)).toBe("Van de apen verslagen.");
     expect(onderschrift(/Emirates/)).toBe("tegenover de droomploeg");
     expect(onderschrift(/Directeur/)).toBe("van de ploegleider");
     for (const naam of [/Monkey IQ/, /Emirates/, /Directeur/]) {
@@ -90,8 +91,11 @@ describe("HorsTruien", () => {
   });
 
   it("zet een streepje op de trui zolang het cijfer er niet is", () => {
-    const { opdruk } = toon("geel", { monkeyBeatPct: 78, emiratesPct: null, directorScore: 7.4 });
+    const { knop, opdruk } = toon("geel", { monkeyBeatPct: null, emiratesPct: null, directorScore: 7.4 });
+    expect(opdruk(/Monkey IQ/)).toEqual(["–", "MONKEY IQ"]);
     expect(opdruk(/Emirates/)).toEqual(["–", "RENDEMENT"]);
+    // Zonder cijfer valt er niets te verslaan: dan staat er dat het cijfer er nog niet is.
+    expect(knop(/Monkey IQ/).querySelector(":scope > span:last-child")?.textContent).toBe("nog geen cijfer");
   });
 
   it("opent per trui de eigen analyse", () => {
