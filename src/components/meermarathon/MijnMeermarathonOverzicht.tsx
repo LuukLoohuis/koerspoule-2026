@@ -386,7 +386,7 @@ export function MijnMeermarathonLaden({ className }: { className?: string }) {
     <div data-eigen-typografie className={cn("@container font-inter", className)}>
       <section aria-labelledby={titelId} aria-busy="true" className="flex flex-col gap-[18px] pb-8 @2xl:gap-5 @2xl:pb-10">
         <Kop titelId={titelId}>
-          <p className="m-0 text-sm text-muted-foreground @2xl:text-[15px]">Je games worden opgehaald…</p>
+          <p className="m-0 text-sm text-muted-foreground @2xl:text-[15px]">Je ploegen worden opgehaald…</p>
         </Kop>
         <div aria-hidden className="grid items-start gap-[18px] @2xl:grid-cols-2 @2xl:gap-7">
           {[0, 1].map((i) => (

@@ -75,8 +75,13 @@ export type PloegSamenstellenProps = {
   bezig: PsBezig | null;
   /** Korte melding als de rijders niet te laden zijn. */
   fout?: string | null;
-  /** De koersbalk; de container geeft de echte, de testbank een nep. */
-  koersbalk?: ReactNode;
+  /** De pelotonbalk; de container geeft de echte, de testbank een nep. */
+  pelotonbalk?: ReactNode;
+  /**
+   * Na een bevestigde ploeg: het andere peloton dat je ook koos en waar nog
+   * geen ploeg voor staat. Dan is dát de volgende stap, niet de Volgwagen.
+   */
+  volgende?: { label: string; onKies: () => void } | null;
   volgwagenPad: string;
   /** "vast": boven de onderbalk van de app. "inline": plakt onderin de ouder (testbank). */
   actiebalk?: "vast" | "inline";
@@ -243,6 +248,7 @@ function maakKnoppen(p: {
   ingediend: boolean;
   compleet: boolean;
   bezig: PsBezig | null;
+  volgende?: { label: string; onKies: () => void } | null;
   volgwagenPad: string;
   onOpslaan: () => void;
   onBevestigen: () => void;
@@ -262,7 +268,11 @@ function maakKnoppen(p: {
   }
   if (p.ingediend) {
     return {
-      primair: (
+      primair: p.volgende ? (
+        <button type="button" className={KNOP_PRIMAIR} disabled={bezig} onClick={p.volgende.onKies}>
+          Nu de {p.volgende.label.toLowerCase()}
+        </button>
+      ) : (
         <Link to={p.volgwagenPad} className={KNOP_PRIMAIR}>
           Naar je Volgwagen
         </Link>
@@ -393,7 +403,8 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
     heropend,
     bezig,
     fout,
-    koersbalk,
+    pelotonbalk,
+    volgende,
   } = props;
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -493,6 +504,7 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
     ingediend,
     compleet: tel.compleet,
     bezig,
+    volgende,
     volgwagenPad: props.volgwagenPad,
     onOpslaan: props.onOpslaan,
     onBevestigen: props.onBevestigen,
@@ -516,7 +528,7 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
 
   return (
     <div ref={rootRef} data-eigen-typografie className="@container font-inter text-foreground">
-      {koersbalk}
+      {pelotonbalk}
 
       <div
         className={cn(
@@ -536,7 +548,10 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
               <Check aria-hidden className="size-3" strokeWidth={3} />
               Ingeschreven
             </span>
-            <p className="m-0 text-sm leading-normal">Je ploeg is bevestigd en doet mee.</p>
+            <p className="m-0 text-sm leading-normal">
+              Je ploeg is bevestigd en doet mee.
+              {volgende && ` Je koos ook de ${volgende.label.toLowerCase()}: die ploeg staat nog open.`}
+            </p>
           </div>
         )}
         {!ingediend && heropend && (
@@ -635,6 +650,11 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
                   Ingeschreven
                 </span>
                 <h2 className="heading-oswald m-0 text-[22px] text-foreground">Je ploeg doet mee</h2>
+                {volgende && (
+                  <p className="m-0 text-[15px] font-semibold leading-normal text-foreground">
+                    Je koos ook de {volgende.label.toLowerCase()}: die ploeg staat nog open.
+                  </p>
+                )}
                 <p className="m-0 text-[15px] leading-normal text-secondary-foreground">
                   Wil je nog wisselen? Kies Aanpassen
                   {deadline ? `; dat kan tot ${mmMoment(deadline)}` : ""}. Bevestig je ploeg daarna opnieuw, anders
@@ -714,7 +734,7 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
 // ── Gesloten en laden ─────────────────────────────────────────────────────
 
 export type PloegSamenstellenGeslotenProps = {
-  koersbalk?: ReactNode;
+  pelotonbalk?: ReactNode;
   /** "Meermarathon Vrouwen" */
   gameNaam: string;
   /** "Vrouwen" */
@@ -730,7 +750,7 @@ export type PloegSamenstellenGeslotenProps = {
 };
 
 export function PloegSamenstellenGesloten({
-  koersbalk,
+  pelotonbalk,
   gameNaam,
   label,
   reden,
@@ -772,7 +792,7 @@ export function PloegSamenstellenGesloten({
 
   return (
     <div data-eigen-typografie className="@container font-inter text-foreground">
-      {koersbalk}
+      {pelotonbalk}
       <div className="mx-auto flex max-w-2xl flex-col gap-4 pb-12 pt-2">
         <header className="flex flex-col gap-1">
           <h1 className="vintage-heading m-0 text-[30px] font-bold leading-[1.1] @5xl:text-[40px]">Stel je ploeg samen</h1>
@@ -812,10 +832,10 @@ export function PloegSamenstellenGesloten({
   );
 }
 
-export function PloegSamenstellenLaden({ koersbalk }: { koersbalk?: ReactNode }) {
+export function PloegSamenstellenLaden({ pelotonbalk }: { pelotonbalk?: ReactNode }) {
   return (
     <div data-eigen-typografie className="@container font-inter text-foreground">
-      {koersbalk}
+      {pelotonbalk}
       <div aria-busy="true" className="mx-auto flex max-w-2xl flex-col gap-4 pb-12 pt-2 @5xl:max-w-[1200px]">
         <header className="flex flex-col gap-1">
           <h1 className="vintage-heading m-0 text-[30px] font-bold leading-[1.1] @5xl:text-[40px]">Stel je ploeg samen</h1>

@@ -88,9 +88,9 @@ const vrouwenOpen = game("vrouwen");
 const mannenOpen = game("mannen");
 
 const STATEN: { titel: string; statussen: MeermarathonGameStatus[]; desktop?: boolean }[] = [
-  { titel: "Beide games (01a / 01d)", statussen: [vrouwenIn, mannenHalf], desktop: true },
-  { titel: "Eén game (01b / 01e)", statussen: [vrouwenIn, mannenOpen], desktop: true },
-  { titel: "Geen game (01c / 01f)", statussen: [vrouwenOpen, mannenOpen], desktop: true },
+  { titel: "In beide pelotons (01a / 01d)", statussen: [vrouwenIn, mannenHalf], desktop: true },
+  { titel: "In één peloton (01b / 01e)", statussen: [vrouwenIn, mannenOpen], desktop: true },
+  { titel: "Nog nergens (01c / 01f)", statussen: [vrouwenOpen, mannenOpen], desktop: true },
   {
     titel: "Vóór de eerste uitslag · ploeg vol maar niet bevestigd",
     statussen: [

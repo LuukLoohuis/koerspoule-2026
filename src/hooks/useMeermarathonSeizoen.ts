@@ -25,7 +25,7 @@ type Rpc = (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: un
 
 /**
  * Beide Meermarathon-games van het seizoen in één keer: inschrijving, ploeg,
- * klassement en wedstrijden. Voedt de koersbalk en "Mijn Meermarathon".
+ * klassement en wedstrijden. Voedt de pelotonbalk en "Mijn Meermarathon".
  *
  * Maakt bewust géén entry aan (useEntry doet dat wel): alleen kijken naar je
  * games mag je nergens voor inschrijven.

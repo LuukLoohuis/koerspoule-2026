@@ -56,7 +56,7 @@ function keuzelijst(statussen: Status[]): string {
 }
 
 export type MijnKop = {
-  /** "Je rijdt mee in beide games", "Je rijdt mee bij de Vrouwen", … */
+  /** "Je rijdt mee bij de Vrouwen én de Mannen", "Je rijdt mee bij de Vrouwen", … */
   zin: string;
   /** Alleen als je nergens meedoet en instappen nog kan: "Kies vijf rijders voor …". */
   uitnodiging: string | null;
@@ -67,7 +67,11 @@ export type MijnKop = {
 export function mijnKop(statussen: Status[]): MijnKop {
   const seizoen = statussen[0] ? meermarathonSeason(statussen[0].game.year) : "";
   const mee = statussen.filter(doetMee);
-  if (mee.length >= 2) return { zin: "Je rijdt mee in beide games", uitnodiging: null, seizoen };
+  // Eén game: wie overal meedoet, rijdt in beide pelotons, niet in "twee games".
+  if (mee.length >= 2) {
+    const namen = mee.map((s) => `de ${s.label}`);
+    return { zin: `Je rijdt mee bij ${namen.slice(0, -1).join(", ")} én ${namen[namen.length - 1]}`, uitnodiging: null, seizoen };
+  }
   if (mee.length === 1) return { zin: `Je rijdt mee bij de ${mee[0].label}`, uitnodiging: null, seizoen };
 
   const open = statussen.filter((s) => s.wijzigbaar);
@@ -78,7 +82,7 @@ export function mijnKop(statussen: Status[]): MijnKop {
   const [aantal] = [...aantallen];
   const wat = aantallen.size === 1 && aantal > 0 ? rijders(aantal) : "je rijders";
   return {
-    zin: statussen.length >= 2 ? "Twee games, één schaatswinter" : "Je rijdt nog niet mee",
+    zin: statussen.length >= 2 ? "Eén game, twee pelotons" : "Je rijdt nog niet mee",
     uitnodiging: `Kies ${wat} voor ${keuzelijst(open)}`,
     seizoen,
   };

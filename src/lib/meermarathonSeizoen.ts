@@ -7,9 +7,9 @@ import {
 } from "@/lib/gameTypes";
 
 /**
- * Meermarathon per seizoen: twee losse games (Vrouwen en Mannen) die de
- * speler naast elkaar ziet. Hier staat de logica zonder React of database,
- * zodat de koersbalk en "Mijn Meermarathon" hetzelfde zeggen.
+ * Meermarathon per seizoen: voor de speler één game met twee pelotons
+ * (Vrouwen en Mannen); in de database twee games. Hier staat de logica zonder React of database,
+ * zodat de pelotonbalk en "Mijn Meermarathon" hetzelfde zeggen.
  */
 
 export type MmGameLite = {
@@ -149,23 +149,41 @@ export function bouwGameStatus(input: {
   };
 }
 
-export type KoersbalkPil = {
-  tekst: string;
-  soort: "live" | "vandaag" | "ingeschreven" | "let-op" | "open" | "neutraal";
+export type PelotonRegel = {
+  soort: "meedoen" | "let-op" | "uitnodiging" | "meekijken";
+  /** "12e van 1.204", "Ploeg 3/5", "Doe ook mee", "Meekijken". */
+  regel: string;
+  /** Wedstrijddag: er wordt nu gereden ("live"), of de wedstrijd is vandaag. */
+  moment: "live" | "vandaag" | null;
 };
 
-/** Het statuslabel onder een segment van de koersbalk. */
-export function koersbalkPil(s: MeermarathonGameStatus, vandaag: string): KoersbalkPil {
-  const vandaagWedstrijd = s.volgende?.date === vandaag;
-  if (String(s.game.status).toLowerCase() === "live" && vandaagWedstrijd) return { tekst: "Live", soort: "live" };
-  if (vandaagWedstrijd && s.fase !== "niet-ingeschreven") return { tekst: "Vandaag", soort: "vandaag" };
-  if (s.fase === "ingeschreven") return { tekst: "Ingeschreven", soort: "ingeschreven" };
-  if (s.fase === "onvolledig") {
-    return s.vereist > 0
-      ? { tekst: `Ploeg ${Math.min(s.entry?.picks ?? 0, s.vereist)}/${s.vereist}`, soort: "let-op" }
-      : { tekst: "Ploeg niet compleet", soort: "let-op" };
+const AANTAL = new Intl.NumberFormat("nl-NL");
+
+/**
+ * Wat er in de pelotonbalk onder "Vrouwen" of "Mannen" staat: jouw stand in
+ * dat peloton, in woorden. `ookElders`: je doet al mee in het andere peloton.
+ */
+export function pelotonRegel(s: MeermarathonGameStatus, vandaag: string, ookElders = false): PelotonRegel {
+  const wedstrijddag = s.volgende?.date === vandaag;
+  const moment: PelotonRegel["moment"] =
+    wedstrijddag && String(s.game.status).toLowerCase() === "live"
+      ? "live"
+      : wedstrijddag && s.fase !== "niet-ingeschreven"
+        ? "vandaag"
+        : null;
+  if (s.fase === "ingeschreven") {
+    const regel = s.klassement
+      ? `${rangtekst(s.klassement.rank)} van ${AANTAL.format(s.klassement.totaal)}`
+      : "Ingeschreven";
+    return { soort: "meedoen", regel, moment };
   }
-  return s.wijzigbaar ? { tekst: "Inschrijving open", soort: "open" } : { tekst: "Meekijken", soort: "neutraal" };
+  if (s.fase === "onvolledig") {
+    const regel = s.vereist > 0 ? `Ploeg ${Math.min(s.entry?.picks ?? 0, s.vereist)}/${s.vereist}` : "Ploeg niet compleet";
+    return { soort: "let-op", regel, moment };
+  }
+  return s.wijzigbaar
+    ? { soort: "uitnodiging", regel: ookElders ? "Doe ook mee" : "Doe mee", moment }
+    : { soort: "meekijken", regel: "Meekijken", moment };
 }
 
 // ── Opmaak ────────────────────────────────────────────────────────────────

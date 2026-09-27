@@ -75,9 +75,9 @@ function status(
 }
 
 describe("kop", () => {
-  it("zegt in hoeveel games je meerijdt, met het seizoen erbij", () => {
+  it("zegt in welke pelotons je meerijdt, met het seizoen erbij", () => {
     expect(mijnKop([status("vrouwen", { entry: ingediend }), status("mannen", { entry: concept(3) })])).toEqual({
-      zin: "Je rijdt mee in beide games",
+      zin: "Je rijdt mee bij de Vrouwen én de Mannen",
       uitnodiging: null,
       seizoen: "2026-2027",
     });
@@ -86,7 +86,7 @@ describe("kop", () => {
 
   it("nodigt uit als je nergens meedoet, met het echte aantal rijders", () => {
     const kop = mijnKop([status("vrouwen"), status("mannen")]);
-    expect(kop.zin).toBe("Twee games, één schaatswinter");
+    expect(kop.zin).toBe("Eén game, twee pelotons");
     expect(kop.uitnodiging).toBe("Kies vijf rijders voor de Vrouwen, de Mannen of allebei");
     expect(mijnKop([status("vrouwen", { vereist: 5 }), status("mannen", { vereist: 6 })]).uitnodiging).toBe(
       "Kies je rijders voor de Vrouwen, de Mannen of allebei",
@@ -101,7 +101,7 @@ describe("kop", () => {
   });
 
   it("telt een lege conceptploeg niet als meedoen", () => {
-    expect(mijnKop([status("vrouwen", { entry: concept(0) }), status("mannen")]).zin).toBe("Twee games, één schaatswinter");
+    expect(mijnKop([status("vrouwen", { entry: concept(0) }), status("mannen")]).zin).toBe("Eén game, twee pelotons");
   });
 });
 

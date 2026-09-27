@@ -116,7 +116,7 @@ function leesSubpouleKeuze(gameId: string | undefined): string | null {
 /** Welke subpoule je in de Volgwagen ziet; onthouden per game (Vrouwen en Mannen apart). */
 function useSubpouleKeuze(gameId: string | undefined) {
   const [keuzeId, setKeuzeId] = useState<string | null>(() => leesSubpouleKeuze(gameId));
-  // Wissel in de koersbalk: pak de keuze van die game.
+  // Wissel in de pelotonbalk: pak de keuze van die game.
   useEffect(() => setKeuzeId(leesSubpouleKeuze(gameId)), [gameId]);
   const kies = (id: string) => {
     setKeuzeId(id);
@@ -173,7 +173,7 @@ export default function VolgwagenPloegContainer({
       if (error) throw error;
     },
     onSuccess: () => {
-      // Ook de caches van useEntry (koptekst Mijn Peloton) en de koersbalk.
+      // Ook de caches van useEntry (koptekst Mijn Peloton) en de pelotonbalk.
       queryClient.invalidateQueries({ queryKey: ["mm-volgwagen-entry", gameId] });
       queryClient.invalidateQueries({ queryKey: ["entry", gameId] });
       queryClient.invalidateQueries({ queryKey: ["mm-seizoen"] });

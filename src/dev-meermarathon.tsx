@@ -3,60 +3,42 @@
  * de build). Rendert de echte componenten met nepdata, in licht en nacht,
  * zodat de opmaak te beoordelen is zonder database of inlog.
  *
- * Draaien: npx vite  →  /dev-meermarathon.html  (?scherm=1..5, ?modus=nacht)
+ * Draaien: npx vite  →  /dev-meermarathon.html  (?scherm=1..8 of ?scherm=6,7, ?modus=nacht)
  */
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Koersbalk, type KoersbalkItem } from "@/components/meermarathon/Koersbalk";
 import Scherm1Demo from "@/dev/mm/Scherm1Demo";
 import Scherm2Demo from "@/dev/mm/Scherm2Demo";
 import Scherm3Demo from "@/dev/mm/Scherm3Demo";
 import Scherm4Demo from "@/dev/mm/Scherm4Demo";
 import Scherm5Demo from "@/dev/mm/Scherm5Demo";
+import Scherm6Demo from "@/dev/mm/Scherm6Demo";
+import Scherm7Demo from "@/dev/mm/Scherm7Demo";
+import Scherm8Demo from "@/dev/mm/Scherm8Demo";
 import "@/i18n";
 import "./index.css";
 import "./styles/salle-de-course.css";
 import "./styles/meermarathon.css";
 import "./styles/meermarathon-thema.css";
 
-const KOERSBALK: KoersbalkItem[] = [
-  { id: "v", label: "Vrouwen", categorie: "vrouwen", seizoen: "26/27", pil: { tekst: "Ingeschreven", soort: "ingeschreven" } },
-  { id: "m", label: "Mannen", categorie: "mannen", seizoen: "26/27", pil: { tekst: "Ploeg 3/5", soort: "let-op" } },
-];
-
-function KoersbalkDemo() {
-  const [gekozen, setGekozen] = useState("v");
-  return (
-    <div className="space-y-3">
-      <Koersbalk items={KOERSBALK} selectedId={gekozen} onSelect={setGekozen} />
-      <Koersbalk
-        items={[
-          { ...KOERSBALK[0], pil: { tekst: "Live", soort: "live" } },
-          { ...KOERSBALK[1], pil: { tekst: "Inschrijving open", soort: "open" } },
-        ]}
-        selectedId="v"
-        onSelect={() => {}}
-      />
-    </div>
-  );
-}
-
 const SCHERMEN = [
-  { key: "0", titel: "Koersbalk", Demo: KoersbalkDemo },
   { key: "1", titel: "1 · Mijn Meermarathon", Demo: Scherm1Demo },
   { key: "2", titel: "2 · Ploeg samenstellen", Demo: Scherm2Demo },
   { key: "3", titel: "3 · Volgwagen › Mijn ploeg", Demo: Scherm3Demo },
   { key: "4", titel: "4 · Volgwagen › Live", Demo: Scherm4Demo },
   { key: "5", titel: "5 · Uitslagen", Demo: Scherm5Demo },
+  { key: "6", titel: "6 · Eén game: vrouwen en mannen", Demo: Scherm6Demo },
+  { key: "7", titel: "7 · Uitslagenbalk: Cup, Grand Prix, ONK, NK", Demo: Scherm7Demo },
+  { key: "8", titel: "8 · Beheer: wedstrijden", Demo: Scherm8Demo },
 ];
 
 function Testbank() {
   const params = new URLSearchParams(window.location.search);
   const [modus, setModus] = useState(params.get("modus") === "nacht" ? "nacht" : "licht");
   const [thema, setThema] = useState(params.get("thema") ?? "winter");
-  const alleen = params.get("scherm");
+  const alleen = params.get("scherm")?.split(",") ?? null;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -78,7 +60,7 @@ function Testbank() {
         </select>
       </div>
       <main className="container mx-auto px-5 py-6 space-y-12">
-        {SCHERMEN.filter((s) => !alleen || s.key === alleen).map(({ key, titel, Demo }) => (
+        {SCHERMEN.filter((s) => !alleen || alleen.includes(s.key)).map(({ key, titel, Demo }) => (
           <section key={key} id={`scherm-${key}`} className="space-y-4">
             <h2 className="editor-eyebrow">{titel}</h2>
             <Demo />

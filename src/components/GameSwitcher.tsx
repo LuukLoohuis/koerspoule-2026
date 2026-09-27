@@ -41,7 +41,7 @@ function segmentName(game: GameRow, finished: boolean): string {
   const t = String(game.game_type ?? "").toLowerCase();
   // Verkort seizoen: "Meermarathon 2026-2027" liep in dit smalle segment
   // tegen de afkapping aan. Vrouwen en Mannen delen één segment; de keuze
-  // daartussen maakt de koersbalk.
+  // daartussen maakt de pelotonbalk.
   if (isMeermarathonGame(t)) return `Meermarathon ${meermarathonSeasonKort(y)}`;
   if (finished) {
     if (t === "giro") return `Giro ${y}`;
@@ -57,7 +57,7 @@ function segmentName(game: GameRow, finished: boolean): string {
 
 /**
  * Meermarathon Vrouwen en Mannen van één seizoen worden hier één segment: de
- * keuze daartussen hoort bij de koersbalk, niet bij de keuze van de koers.
+ * keuze daartussen hoort bij de pelotonbalk, niet bij de keuze van de koers.
  * Het segment staat voor de gekozen categorie als die in dit seizoen zit,
  * anders voor de eerste (vrouwen).
  */

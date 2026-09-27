@@ -57,7 +57,7 @@ export default function TeamBuilder() {
   const { data: game, isLoading } = useCurrentGame({ preferRegistration: true });
   const { selectedGame } = useSelectedGame();
   if (game && isMeermarathonGame(game.game_type)) return <PloegSamenstellenContainer game={game} />;
-  // Tijdens het laden (bv. net na een wissel op de koersbalk) gokken we op de
+  // Tijdens het laden (bv. net na een wissel op de pelotonbalk) gokken we op de
   // gekozen game, zodat je niet eerst de Ploegleiderswagen ziet flitsen.
   if (isLoading && isMeermarathonGame(selectedGame?.game_type)) return <PloegSamenstellenContainer game={null} />;
   return <WielerTeamBuilder />;

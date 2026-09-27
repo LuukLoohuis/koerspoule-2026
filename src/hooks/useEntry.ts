@@ -50,7 +50,7 @@ export function useEntry(gameId?: string) {
   const rollbackEntry = (ctx?: { prev?: Entry }) => {
     if (ctx?.prev) queryClient.setQueryData(entryKey, ctx.prev);
   };
-  // De Meermarathon-koersbalk en "Mijn Meermarathon" lezen de ploeg uit een
+  // De Meermarathon-pelotonbalk en "Mijn Meermarathon" lezen de ploeg uit een
   // eigen seizoensquery; die moet meeschuiven, anders tonen ze nog even de
   // oude stand (Ploeg 3/5 terwijl je net bevestigde).
   const settleEntry = () =>

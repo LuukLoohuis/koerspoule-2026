@@ -36,7 +36,7 @@ export default function UitslagenMeermarathon({
 }) {
   const { user } = useAuth();
 
-  // Het segment is van deze tab, niet van de game: wissel je in de koersbalk
+  // Het segment is van deze tab, niet van de game: wissel je in de pelotonbalk
   // van Vrouwen naar Mannen, dan blijf je op hetzelfde segment staan.
   const [segment, setSegment] = useState<UitslagenSegment>(initialView === "etappes" ? "wedstrijd" : "klassement");
   // Een sprong naar een uitslag (bv. "beste wedstrijd" in de Volgwagen) opent

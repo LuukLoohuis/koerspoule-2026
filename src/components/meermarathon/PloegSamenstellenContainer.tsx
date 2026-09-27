@@ -8,8 +8,13 @@
  * buiten de categorieën zijn. Voorspellingen (GC-podium, truien) laten we weg:
  * die horen bij de wielergames en de schaatsuitslagen vullen geen klassement
  * of truien waar ze tegen kunnen scoren.
+ *
+ * Eén game, twee pelotons: wie nog nergens een ploeg heeft, kiest eerst waar
+ * hij meerijdt (vrouwen, mannen of allebei). Pas daarna start de bouwer, want
+ * die maakt bij het openen meteen een entry aan. Koos je allebei, dan wijst
+ * de bouwer na het bevestigen door naar het andere peloton.
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +25,8 @@ import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 import { useMeermarathonSeizoen } from "@/hooks/useMeermarathonSeizoen";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import type { Game } from "@/hooks/useCurrentGame";
-import MeermarathonKoersbalk from "@/components/meermarathon/Koersbalk";
+import DeelnameKeuze from "@/components/meermarathon/DeelnameKeuze";
+import MeermarathonPelotonbalk from "@/components/meermarathon/Pelotonbalk";
 import {
   PloegSamenstellen,
   PloegSamenstellenGesloten,
@@ -28,7 +34,19 @@ import {
   type PsBezig,
 } from "@/components/meermarathon/PloegSamenstellen";
 import { canRegister } from "@/lib/gameStatus";
-import { meermarathonCategorieLabel } from "@/lib/gameTypes";
+import { meermarathonCategorieLabel, meermarathonSeason } from "@/lib/gameTypes";
+import {
+  bewaarDeelname,
+  deelnameOpties,
+  deelnameSleutel,
+  eerstePeloton,
+  leesDeelname,
+  moetKiezen,
+  standaardKeuze,
+  volgendPeloton,
+} from "@/lib/meermarathonDeelname";
+import { mmMoment, type MeermarathonGameStatus } from "@/lib/meermarathonSeizoen";
+import { volgendeDeadline } from "@/lib/mijnMeermarathon";
 import {
   geldigeKeuzes,
   jokerPool,
@@ -45,7 +63,7 @@ import { captureEvent, captureException } from "@/lib/posthog";
 
 type GameKort = { id: string; name: string; status: string; categorie?: string | null };
 
-const KOERSBALK = <MeermarathonKoersbalk className="mb-2 md:mb-6" />;
+const PELOTONBALK = <MeermarathonPelotonbalk className="mb-2 md:mb-6 md:mx-auto md:max-w-2xl" />;
 
 /** "Vrouwen", of "Meermarathon" voor een game zonder categorie. */
 function gameLabel(g: GameKort): string {
@@ -60,7 +78,7 @@ function gameNaam(g: GameKort): string {
 
 const volgwagenPad = (gameId: string) => `/mijn-peloton?tab=team&game=${encodeURIComponent(gameId)}`;
 
-/** Kies een game zoals de koersbalk dat doet: in de context én als ?game=. */
+/** Kies een game zoals de pelotonbalk dat doet: in de context én als ?game=. */
 function useKiesGame() {
   const { setSelectedGameId } = useSelectedGame();
   const [, setParams] = useSearchParams();
@@ -77,6 +95,36 @@ function useKiesGame() {
   };
 }
 
+function opslag(): Storage | null {
+  try {
+    return typeof window !== "undefined" ? window.localStorage : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Waar de speler dit seizoen meerijdt, zoals hij het zelf koos. Staat in de
+ * browser; wie als gast koos en daarna inlogt, neemt zijn keuze mee.
+ */
+function useDeelname(userId: string | null, jaar: number) {
+  const sleutel = deelnameSleutel(userId, jaar);
+  const lees = useCallback(
+    () => leesDeelname(opslag(), sleutel) ?? (userId ? leesDeelname(opslag(), deelnameSleutel(null, jaar)) : null),
+    [sleutel, userId, jaar],
+  );
+  const [keuze, setKeuze] = useState<string[] | null>(lees);
+  useEffect(() => setKeuze(lees()), [lees]);
+  const bewaar = useCallback(
+    (ids: string[]) => {
+      bewaarDeelname(opslag(), sleutel, ids);
+      setKeuze(ids);
+    },
+    [sleutel],
+  );
+  return [keuze, bewaar] as const;
+}
+
 /** Zelfde paginamarges als de rest van de app (mobiel 12px, zie .container). */
 function Pagina({ children }: { children: ReactNode }) {
   return <div className="container mx-auto px-5 pb-4 pt-1 md:pb-8 md:pt-7">{children}</div>;
@@ -84,21 +132,48 @@ function Pagina({ children }: { children: ReactNode }) {
 
 /** game = null: de game laadt nog, maar we weten al dat het de Meermarathon is. */
 export default function PloegSamenstellenContainer({ game }: { game: Game | null }) {
-  return <Pagina>{game ? <Inhoud game={game} /> : <PloegSamenstellenLaden koersbalk={KOERSBALK} />}</Pagina>;
+  return <Pagina>{game ? <Inhoud game={game} /> : <PloegSamenstellenLaden pelotonbalk={PELOTONBALK} />}</Pagina>;
 }
 
 function Inhoud({ game }: { game: Game }) {
-  const { role } = useAuth();
+  const { user, role, loading: authLaadt } = useAuth();
   const isAdmin = role === "admin";
   const { selectedGameId, selectedGame } = useSelectedGame();
   const kiesGame = useKiesGame();
   const doel = teambouwerDoel(game, selectedGame, selectedGameId != null);
+
+  const { statussen, isLoading: seizoenLaadt } = useMeermarathonSeizoen();
+  const [keuze, bewaarKeuze] = useDeelname(user?.id ?? null, game.year);
+  // Na de keuze wisselt de game soms nog; tot die tijd geen bouwer, anders
+  // maakt hij een entry aan in een peloton dat je niet koos.
+  const [naKeuze, setNaKeuze] = useState<string | null>(null);
 
   useEffect(() => {
     if (doel.soort === "volg") kiesGame(doel.gameId);
     // kiesGame is elke render nieuw; alleen de uitkomst telt.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doel.soort, doel.gameId]);
+
+  // Zonder bewaarde keuze moeten we eerst weten of je al ergens een ploeg
+  // hebt; tot dan geen bouwer en geen keuzescherm dat weer wegflitst.
+  if (keuze == null && (authLaadt || seizoenLaadt)) return <PloegSamenstellenLaden />;
+  if (moetKiezen(statussen, keuze, isAdmin)) {
+    return (
+      <Keuze
+        statussen={statussen}
+        isAdmin={isAdmin}
+        onVerder={(ids) => {
+          bewaarKeuze(ids);
+          const eerste = eerstePeloton(statussen, ids, isAdmin);
+          if (eerste && eerste.game.id !== game.id) {
+            setNaKeuze(eerste.game.id);
+            kiesGame(eerste.game.id);
+          }
+        }}
+      />
+    );
+  }
+  if (naKeuze && naKeuze !== game.id) return <PloegSamenstellenLaden pelotonbalk={PELOTONBALK} />;
 
   if (doel.soort === "keuze-dicht" && selectedGame) {
     return (
@@ -112,9 +187,52 @@ function Inhoud({ game }: { game: Game }) {
   // Inschrijven mag alleen tijdens open_inschrijving; de beheerder mag altijd
   // (net als in de wielerteambouwer).
   if (!isAdmin && !canRegister(game.status)) return <Gesloten game={game} alternatief={null} />;
-  // Eigen key per game: wissel je met de koersbalk, dan begint de
+  // Eigen key per game: wissel je met de pelotonbalk, dan begint de
   // ploegnaam, de actieve plek en "heropend" opnieuw.
-  return <Bouwer key={game.id} game={game} />;
+  const volgend = volgendPeloton(statussen, keuze, game.id, isAdmin);
+  return (
+    <Bouwer
+      key={game.id}
+      game={game}
+      volgende={volgend ? { label: volgend.label, onKies: () => kiesGame(volgend.game.id) } : null}
+    />
+  );
+}
+
+/** De eerste stap: waar rijd je mee? Nog zonder bouwer, dus zonder entry. */
+function Keuze({
+  statussen,
+  isAdmin,
+  onVerder,
+}: {
+  statussen: MeermarathonGameStatus[];
+  isAdmin: boolean;
+  onVerder: (ids: string[]) => void;
+}) {
+  const opties = useMemo(() => deelnameOpties(statussen, isAdmin), [statussen, isAdmin]);
+  const [gekozen, setGekozen] = useState(() => new Set(standaardKeuze(opties)));
+  const deadline = volgendeDeadline(statussen, new Date());
+  const jaar = statussen[0]?.game.year;
+
+  return (
+    <DeelnameKeuze
+      className="mx-auto mt-2 max-w-3xl"
+      seizoen={jaar != null ? meermarathonSeason(jaar) : ""}
+      opties={opties}
+      gekozen={gekozen}
+      onWissel={(id) =>
+        setGekozen((oud) => {
+          const nieuw = new Set(oud);
+          if (nieuw.has(id)) nieuw.delete(id);
+          else nieuw.add(id);
+          return nieuw;
+        })
+      }
+      // In de volgorde van de pelotons, niet in die van het aantikken.
+      onVerder={() => onVerder(opties.filter((o) => gekozen.has(o.id)).map((o) => o.id))}
+      deadline={deadline ? mmMoment(deadline) : null}
+    />
+  );
 }
 
 function Gesloten({
@@ -130,11 +248,11 @@ function Gesloten({
   // Bewust geen useEntry: die maakt een entry aan, en voor een dichte game
   // schrijf je je daar nergens mee in.
   const { statussen, isLoading } = useMeermarathonSeizoen();
-  if (user && isLoading) return <PloegSamenstellenLaden koersbalk={KOERSBALK} />;
+  if (user && isLoading) return <PloegSamenstellenLaden pelotonbalk={PELOTONBALK} />;
   const status = statussen.find((s) => s.game.id === game.id);
   return (
     <PloegSamenstellenGesloten
-      koersbalk={KOERSBALK}
+      pelotonbalk={PELOTONBALK}
       gameNaam={gameNaam(game)}
       label={gameLabel(game)}
       reden={sluitReden(game.status)}
@@ -147,7 +265,14 @@ function Gesloten({
   );
 }
 
-function Bouwer({ game }: { game: Game }) {
+function Bouwer({
+  game,
+  volgende,
+}: {
+  game: Game;
+  /** Het andere gekozen peloton dat nog op een ploeg wacht. */
+  volgende: { label: string; onKies: () => void } | null;
+}) {
   const { user } = useAuth();
   const ingelogd = Boolean(user);
   const navigate = useNavigate();
@@ -355,11 +480,12 @@ function Bouwer({ game }: { game: Game }) {
     }
   };
 
-  if (catsLaden || startLaden || (ingelogd && entryLaden)) return <PloegSamenstellenLaden koersbalk={KOERSBALK} />;
+  if (catsLaden || startLaden || (ingelogd && entryLaden)) return <PloegSamenstellenLaden pelotonbalk={PELOTONBALK} />;
 
   return (
     <PloegSamenstellen
-      koersbalk={KOERSBALK}
+      pelotonbalk={PELOTONBALK}
+      volgende={volgende}
       gameNaam={naam}
       categorieen={categorieen}
       gekozen={gekozen}

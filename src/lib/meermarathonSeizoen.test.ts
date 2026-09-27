@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   bouwGameStatus,
   isWijzigbaar,
-  koersbalkPil,
   meermarathonSeizoenGames,
   meermarathonSeizoenJaar,
   mmDag,
   mmFase,
   mmKorteDatum,
   mmMoment,
+  pelotonRegel,
   vandaagIso,
   volgendeWedstrijd,
   type MmGameLite,
@@ -94,35 +94,75 @@ describe("volgende wedstrijd", () => {
   });
 });
 
-describe("koersbalk", () => {
-  const status = (over: Parameters<typeof bouwGameStatus>[0]["entry"], g: Partial<MmGameLite> = {}, date = "2026-11-14") =>
+describe("pelotonbalk", () => {
+  const ingediend = { id: "e", status: "submitted", teamName: "X", picks: 5 };
+  const status = (
+    entry: Parameters<typeof bouwGameStatus>[0]["entry"],
+    over: { game?: Partial<MmGameLite>; klassement?: Parameters<typeof bouwGameStatus>[0]["klassement"]; date?: string } = {},
+  ) =>
+    bouwGameStatus({
+      game: game(over.game),
+      entry,
+      vereist: 5,
+      wedstrijden: [wedstrijd({ stage_number: 3, date: over.date ?? "2026-11-14" })],
+      klassement: over.klassement ?? null,
+      puntenPerWedstrijd: new Map(),
+      vandaag: "2026-11-10",
+    });
+
+  it("noemt je plek zodra er een klassement is", () => {
+    const stand = { rank: 12, totaal: 1204, delta: 4, punten: 146 };
+    expect(pelotonRegel(status(ingediend, { klassement: stand }), "2026-11-10")).toEqual({
+      soort: "meedoen",
+      regel: "12e van 1.204",
+      moment: null,
+    });
+    expect(pelotonRegel(status(ingediend), "2026-11-10").regel).toBe("Ingeschreven");
+  });
+
+  it("telt een halve ploeg af", () => {
+    expect(pelotonRegel(status({ id: "e", status: "draft", teamName: null, picks: 3 }), "2026-11-10")).toMatchObject({
+      soort: "let-op",
+      regel: "Ploeg 3/5",
+    });
+  });
+
+  it("nodigt uit zolang instappen kan, en zegt 'ook' als je elders al meedoet", () => {
+    expect(pelotonRegel(status(null), "2026-11-10")).toMatchObject({ soort: "uitnodiging", regel: "Doe mee" });
+    expect(pelotonRegel(status(null), "2026-11-10", true).regel).toBe("Doe ook mee");
+    expect(pelotonRegel(status(null, { game: { status: "live" } }), "2026-11-10")).toMatchObject({
+      soort: "meekijken",
+      regel: "Meekijken",
+    });
+  });
+
+  it("meldt live alleen op de wedstrijddag van een live game", () => {
+    expect(pelotonRegel(status(ingediend, { game: { status: "live" }, date: "2026-11-10" }), "2026-11-10").moment).toBe("live");
+    expect(pelotonRegel(status(ingediend, { game: { status: "live" } }), "2026-11-10").moment).toBeNull();
+  });
+
+  it("zegt Vandaag op een wedstrijddag waarop je meedoet", () => {
+    expect(pelotonRegel(status(ingediend, { date: "2026-11-10" }), "2026-11-10").moment).toBe("vandaag");
+    expect(pelotonRegel(status(null, { date: "2026-11-10" }), "2026-11-10").moment).toBeNull();
+  });
+});
+
+describe("deadline", () => {
+  const status = (g: Partial<MmGameLite>) =>
     bouwGameStatus({
       game: game(g),
-      entry: over,
+      entry: null,
       vereist: 5,
-      wedstrijden: [wedstrijd({ stage_number: 3, date })],
+      wedstrijden: [wedstrijd({ stage_number: 3, date: "2026-11-14" })],
       klassement: null,
       puntenPerWedstrijd: new Map(),
       vandaag: "2026-11-10",
     });
 
-  it("zegt Ingeschreven, Ploeg 3/5 of Inschrijving open", () => {
-    expect(koersbalkPil(status({ id: "e", status: "submitted", teamName: "X", picks: 5 }), "2026-11-10").tekst).toBe("Ingeschreven");
-    expect(koersbalkPil(status({ id: "e", status: "draft", teamName: null, picks: 3 }), "2026-11-10").tekst).toBe("Ploeg 3/5");
-    expect(koersbalkPil(status(null), "2026-11-10")).toEqual({ tekst: "Inschrijving open", soort: "open" });
-    expect(koersbalkPil(status(null, { status: "live" }), "2026-11-10").tekst).toBe("Meekijken");
-  });
-
-  it("meldt Live alleen op de wedstrijddag van een live game", () => {
-    const ingeschreven = { id: "e", status: "submitted", teamName: "X", picks: 5 };
-    expect(koersbalkPil(status(ingeschreven, { status: "live" }, "2026-11-10"), "2026-11-10").soort).toBe("live");
-    expect(koersbalkPil(status(ingeschreven, { status: "open" }, "2026-11-10"), "2026-11-10").tekst).toBe("Vandaag");
-  });
-
   it("geeft alleen een deadline zolang wijzigen mag", () => {
     const sluit = "2026-11-13T22:59:00Z";
-    expect(status(null, { registration_closes_at: sluit }).deadline).toBeInstanceOf(Date);
-    expect(status(null, { registration_closes_at: sluit, status: "live" }).deadline).toBeNull();
+    expect(status({ registration_closes_at: sluit }).deadline).toBeInstanceOf(Date);
+    expect(status({ registration_closes_at: sluit, status: "live" }).deadline).toBeNull();
   });
 });
 

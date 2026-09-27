@@ -210,14 +210,14 @@ type GameLite = { id: string; year: number; game_type?: string | null };
  *
  * useCurrentGame({ preferRegistration }) volgt de gekozen game alleen als die
  * open staat voor inschrijving, en valt anders terug op de game waarvoor je
- * nú kunt inschrijven. De koersbalk toont echter altijd de gekozen game.
+ * nú kunt inschrijven. De pelotonbalk toont echter altijd de gekozen game.
  *
  * - bouwen: beide zeggen hetzelfde.
  * - keuze-dicht: je koos zelf de andere categorie van dit seizoen en die is
- *   niet open. Dan tonen we díe, gesloten; anders zegt de koersbalk
+ *   niet open. Dan tonen we díe, gesloten; anders zegt de pelotonbalk
  *   "Vrouwen" terwijl je aan je Mannen-ploeg bouwt.
  * - volg: geen eigen keuze, of een andere koers. Zet de keuze op de game
- *   waarvoor je inschrijft, zodat de koersbalk meeloopt.
+ *   waarvoor je inschrijft, zodat de pelotonbalk meeloopt.
  */
 export type TeambouwerDoel =
   | { soort: "bouwen"; gameId: string }

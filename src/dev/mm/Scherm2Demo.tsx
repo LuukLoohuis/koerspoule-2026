@@ -5,7 +5,7 @@
  * zien. Mobiel tikken opent de echte lade.
  */
 import { useState, type ReactNode } from "react";
-import { Koersbalk, type KoersbalkItem } from "@/components/meermarathon/Koersbalk";
+import { Pelotonbalk, type PelotonItem } from "@/components/meermarathon/Pelotonbalk";
 import {
   PloegSamenstellen,
   PloegSamenstellenGesloten,
@@ -95,17 +95,25 @@ const DRIE: [string, string[]][] = [
 ];
 const VIJF: [string, string[]][] = [...DRIE, ["c4", ["hessel"]], ["c5", ["daan"]]];
 
-const BALK: KoersbalkItem[] = [
-  { id: "v", label: "Vrouwen", categorie: "vrouwen", seizoen: "26/27", pil: { tekst: "Ingeschreven", soort: "ingeschreven" } },
-  { id: "m", label: "Mannen", categorie: "mannen", seizoen: "26/27", pil: { tekst: "Ploeg 3/5", soort: "let-op" } },
+const BALK: PelotonItem[] = [
+  { id: "v", label: "Vrouwen", categorie: "vrouwen", soort: "meedoen", regel: "Ingeschreven" },
+  { id: "m", label: "Mannen", categorie: "mannen", soort: "let-op", regel: "Ploeg 3/5" },
 ];
 
-function DemoBalk({ pil }: { pil?: KoersbalkItem["pil"] }) {
+type Stand = Pick<PelotonItem, "soort" | "regel">;
+
+function DemoBalk({ stand, vrouwen }: { stand?: Stand; vrouwen?: Stand }) {
   const [gekozen, setGekozen] = useState("m");
-  const items = pil ? [BALK[0], { ...BALK[1], pil }] : BALK;
+  const items = [vrouwen ? { ...BALK[0], ...vrouwen } : BALK[0], stand ? { ...BALK[1], ...stand } : BALK[1]];
   return (
     <div className="pb-3">
-      <Koersbalk items={items} selectedId={gekozen} onSelect={setGekozen} />
+      <Pelotonbalk
+        seizoen={"\u201926-\u201927"}
+        items={items}
+        selectedId={gekozen}
+        onSelect={setGekozen}
+        className="@5xl:mx-auto @5xl:max-w-2xl"
+      />
     </div>
   );
 }
@@ -119,6 +127,8 @@ type Start = {
   ingediend?: boolean;
   heropend?: boolean;
   ingelogd?: boolean;
+  /** Koos ook het andere peloton, en daar staat nog geen ploeg. */
+  volgende?: string;
 };
 
 function DemoBouwer({ start }: { start: Start }) {
@@ -152,7 +162,15 @@ function DemoBouwer({ start }: { start: Start }) {
 
   return (
     <PloegSamenstellen
-      koersbalk={<DemoBalk />}
+      pelotonbalk={
+        <DemoBalk
+          stand={ingediend ? { soort: "meedoen", regel: "Ingeschreven" } : undefined}
+          vrouwen={start.volgende ? { soort: "uitnodiging", regel: "Doe ook mee" } : undefined}
+        />
+      }
+      volgende={
+        start.volgende ? { label: start.volgende, onKies: () => console.info("[demo] door naar", start.volgende) } : null
+      }
       gameNaam="Meermarathon Mannen"
       categorieen={CATEGORIEEN}
       gekozen={gekozen}
@@ -267,6 +285,11 @@ export default function Scherm2Demo() {
         <Mobiel titel="Ingeschreven">
           <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: null, ingediend: true }} />
         </Mobiel>
+        <Mobiel titel="Ingeschreven · koos ook de vrouwen: knop wijst door">
+          <DemoBouwer
+            start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: null, ingediend: true, volgende: "Vrouwen" }}
+          />
+        </Mobiel>
         <Mobiel titel="Na Aanpassen: weer concept">
           <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: null, heropend: true }} />
         </Mobiel>
@@ -276,7 +299,7 @@ export default function Scherm2Demo() {
         <Mobiel titel="Gesloten, je doet mee" hoogte={620}>
           <PloegSamenstellenGesloten
             {...GESLOTEN_BASIS}
-            koersbalk={<DemoBalk pil={{ tekst: "Ingeschreven", soort: "ingeschreven" }} />}
+            pelotonbalk={<DemoBalk stand={{ soort: "meedoen", regel: "48e van 986" }} />}
             reden="gesloten"
             eigen={{ fase: "ingeschreven", ploegnaam: "De Klapschaatsers" }}
             alternatief={null}
@@ -285,7 +308,7 @@ export default function Scherm2Demo() {
         <Mobiel titel="Gesloten, niet meegedaan · Vrouwen wel open" hoogte={620}>
           <PloegSamenstellenGesloten
             {...GESLOTEN_BASIS}
-            koersbalk={<DemoBalk pil={{ tekst: "Meekijken", soort: "neutraal" }} />}
+            pelotonbalk={<DemoBalk stand={{ soort: "meekijken", regel: "Meekijken" }} />}
             reden="gesloten"
             eigen={{ fase: "niet-ingeschreven", ploegnaam: null }}
             alternatief={{ id: "v", label: "Vrouwen" }}
@@ -294,14 +317,14 @@ export default function Scherm2Demo() {
         <Mobiel titel="Nog niet open" hoogte={620}>
           <PloegSamenstellenGesloten
             {...GESLOTEN_BASIS}
-            koersbalk={<DemoBalk pil={{ tekst: "Inschrijving open", soort: "open" }} />}
+            pelotonbalk={<DemoBalk stand={{ soort: "meekijken", regel: "Meekijken" }} />}
             reden="nog-niet-open"
             eigen={null}
             alternatief={null}
           />
         </Mobiel>
         <Mobiel titel="Laden" hoogte={620}>
-          <PloegSamenstellenLaden koersbalk={<DemoBalk />} />
+          <PloegSamenstellenLaden pelotonbalk={<DemoBalk />} />
         </Mobiel>
       </div>
 
@@ -314,10 +337,15 @@ export default function Scherm2Demo() {
       <Desktop titel="Desktop · ingeschreven">
         <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: null, ingediend: true }} />
       </Desktop>
+      <Desktop titel="Desktop · ingeschreven, koos ook de vrouwen">
+        <DemoBouwer
+          start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: null, ingediend: true, volgende: "Vrouwen" }}
+        />
+      </Desktop>
       <Desktop titel="Desktop · gesloten">
         <PloegSamenstellenGesloten
           {...GESLOTEN_BASIS}
-          koersbalk={<DemoBalk />}
+          pelotonbalk={<DemoBalk />}
           reden="gesloten"
           eigen={{ fase: "onvolledig", ploegnaam: null }}
           alternatief={{ id: "v", label: "Vrouwen" }}
