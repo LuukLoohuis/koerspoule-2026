@@ -4,9 +4,9 @@ import { telwoord } from "@/lib/mijnMeermarathon";
 
 /**
  * Waar rijd je mee? De Meermarathon is één game met twee pelotons; de speler
- * kiest de vrouwen, de mannen of allebei. Hier de regels zonder React of
- * database: wanneer je moet kiezen, wat er op de kaarten staat en welk
- * peloton er na een bevestigde ploeg nog openstaat.
+ * rijdt mee bij de vrouwen, de mannen of allebei. Hier de regels zonder React
+ * of database: wat er op de uitnodiging van een peloton staat en waar de
+ * keuze bewaard wordt.
  *
  * De keuze zelf staat alleen in de browser. De database kent hem niet: daar
  * telt pas een ingediende ploeg.
@@ -57,54 +57,6 @@ export function deelnameOpties(statussen: Status[], isAdmin = false): DeelnameOp
     ingeschreven: s.fase === "ingeschreven",
     gesloten: !open(s, isAdmin),
   }));
-}
-
-/** Waar de kaarten mee beginnen: alles wat openstaat, plus waar je al meedoet. */
-export function standaardKeuze(opties: DeelnameOptie[]): string[] {
-  return opties.filter((o) => o.ingeschreven || !o.gesloten).map((o) => o.id);
-}
-
-/**
- * Moet de speler eerst kiezen? Alleen als er iets te kiezen valt (twee
- * pelotons, minstens één open), hij nog nergens een ploeg heeft en nog niet
- * eerder koos. Wie al een (halve) ploeg heeft, gaat gewoon verder waar hij was.
- */
-export function moetKiezen(statussen: Status[], keuze: string[] | null, isAdmin = false): boolean {
-  if (statussen.length < 2) return false;
-  if (geldigeKeuze(statussen, keuze)) return false;
-  if (statussen.some((s) => s.fase !== "niet-ingeschreven")) return false;
-  return statussen.some((s) => open(s, isAdmin));
-}
-
-/** De bewaarde keuze, voor zover die pelotons nog bestaan; null als er niets van over is. */
-export function geldigeKeuze(statussen: Status[], keuze: string[] | null): string[] | null {
-  const ids = (keuze ?? []).filter((id) => statussen.some((s) => s.game.id === id));
-  return ids.length > 0 ? ids : null;
-}
-
-/**
- * Het gekozen peloton dat na dit peloton nog op een ploeg wacht: open, en
- * nog niet ingediend. Vrouwen eerst, zoals overal.
- */
-export function volgendPeloton(
-  statussen: Status[],
-  keuze: string[] | null,
-  huidigId: string,
-  isAdmin = false,
-): Status | null {
-  const gekozen = geldigeKeuze(statussen, keuze) ?? [];
-  return (
-    statussen.find(
-      (s) => s.game.id !== huidigId && gekozen.includes(s.game.id) && s.fase !== "ingeschreven" && open(s, isAdmin),
-    ) ?? null
-  );
-}
-
-/** Met welk peloton je begint na de keuze: het eerste gekozen peloton zonder ingediende ploeg. */
-export function eerstePeloton(statussen: Status[], keuze: string[], isAdmin = false): Status | null {
-  return (
-    statussen.find((s) => keuze.includes(s.game.id) && s.fase !== "ingeschreven" && open(s, isAdmin)) ?? null
-  );
 }
 
 // ── Opslag ────────────────────────────────────────────────────────────────

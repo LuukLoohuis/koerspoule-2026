@@ -1,10 +1,10 @@
 /**
  * Testbank-demo voor scherm 6 (zie src/dev-meermarathon.tsx): de Meermarathon
- * als één game met twee pelotons. Pelotonbalk, deelnamekeuze, en hoe ze samen
- * op het scherm staan. Nepdata, geen database.
+ * als één game met twee pelotons. De pelotonbalk, en hoe hij samen met de
+ * uitslagen op het scherm staat. Waar je meerijdt, kies je in de ploegbouwer
+ * (scherm 2). Nepdata, geen database.
  */
 import { useState, type ReactNode } from "react";
-import DeelnameKeuze from "@/components/meermarathon/DeelnameKeuze";
 import { Pelotonbalk, type PelotonItem } from "@/components/meermarathon/Pelotonbalk";
 import UitslagenMeermarathonWeergave, {
   type KlassementStand,
@@ -12,7 +12,6 @@ import UitslagenMeermarathonWeergave, {
 } from "@/components/meermarathon/UitslagenMeermarathonWeergave";
 import WedstrijdBalk from "@/components/meermarathon/WedstrijdBalk";
 import { bouwWedstrijdBalk, type BalkBron } from "@/lib/meermarathonBalk";
-import type { DeelnameOptie } from "@/lib/meermarathonDeelname";
 import type { KalenderRij } from "@/lib/meermarathonKalender";
 import type { MmStandRij } from "@/lib/meermarathonKlassement";
 import { cn } from "@/lib/utils";
@@ -111,34 +110,6 @@ function BalkVoorbeeld({ items, start = "v", breed }: { items: PelotonItem[]; st
       selectedId={gekozen}
       onSelect={setGekozen}
       className={breed ? "mx-auto max-w-2xl" : undefined}
-    />
-  );
-}
-
-// ── Deelnamekeuze ─────────────────────────────────────────────────────────
-
-const OPTIES: DeelnameOptie[] = [
-  { id: "v", label: "Vrouwen", categorie: "vrouwen", ploeg: "Ploeg van 5 rijders", kalender: "9 wedstrijden · vanaf 31 okt" },
-  { id: "m", label: "Mannen", categorie: "mannen", ploeg: "Ploeg van 5 rijders", kalender: "9 wedstrijden · vanaf 31 okt" },
-];
-
-function KeuzeVoorbeeld({ opties = OPTIES, start }: { opties?: DeelnameOptie[]; start: string[] }) {
-  const [gekozen, setGekozen] = useState(() => new Set(start));
-  return (
-    <DeelnameKeuze
-      seizoen="2026-2027"
-      opties={opties}
-      gekozen={gekozen}
-      onWissel={(id) =>
-        setGekozen((oud) => {
-          const nieuw = new Set(oud);
-          if (nieuw.has(id)) nieuw.delete(id);
-          else nieuw.add(id);
-          return nieuw;
-        })
-      }
-      onVerder={() => console.info("[demo] verder met", [...gekozen])}
-      deadline="vr 13 nov, 23:59"
     />
   );
 }
@@ -291,28 +262,8 @@ export default function Scherm6Demo() {
       </section>
 
       <section className="space-y-4">
-        <Tussenkop uitleg="De eerste stap bij het inschrijven. De kaarten zijn aan/uit-knoppen: allebei aan mag. Tik erop om het te proberen.">
-          C · Waar rijd je mee?
-        </Tussenkop>
-        <div className="flex flex-wrap items-start gap-6">
-          <Kader label="Mobiel · nieuw, allebei gekozen">
-            <KeuzeVoorbeeld start={["v", "m"]} />
-          </Kader>
-          <Kader label="Mobiel · alleen de vrouwen gekozen">
-            <KeuzeVoorbeeld start={["v"]} />
-          </Kader>
-          <Kader label="Mobiel · al ingeschreven bij de vrouwen, mannen erbij">
-            <KeuzeVoorbeeld opties={[{ ...OPTIES[0], ingeschreven: true }, OPTIES[1]]} start={["v", "m"]} />
-          </Kader>
-        </div>
-        <Kader label="Desktop" breed>
-          <KeuzeVoorbeeld start={["v", "m"]} />
-        </Kader>
-      </section>
-
-      <section className="space-y-4">
         <Tussenkop uitleg="Pelotonbalk boven de Uitslagen. Wissel van peloton: je blijft op hetzelfde tabblad staan, alleen de cijfers wisselen.">
-          D · Samen op het scherm
+          C · Samen op het scherm
         </Tussenkop>
         <div className="flex flex-wrap items-start gap-6">
           <Kader label="Mobiel">

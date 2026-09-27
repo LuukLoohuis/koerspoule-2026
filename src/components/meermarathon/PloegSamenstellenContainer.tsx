@@ -9,10 +9,11 @@
  * peloton. Die staan los van de ploeg: ook na bevestigen te wijzigen zolang
  * de inschrijving open is.
  *
- * Eén game, twee pelotons: wie nog nergens een ploeg heeft, kiest eerst waar
- * hij meerijdt (vrouwen, mannen of allebei). Pas daarna start de bouwer, want
- * die maakt bij het openen meteen een entry aan. Koos je allebei, dan wijst
- * de bouwer na het bevestigen door naar het andere peloton.
+ * Eén game, twee pelotons, samen op één scherm: je stelt je vrouwen- en je
+ * mannenploeg tegelijk samen. Allebei hoeft niet. Je rijdt mee bij een
+ * peloton zodra je daar een ploeg hebt of op "Doe mee" tikt; die keuze staat
+ * in de browser. Pas dan draait de data van dat peloton, want useEntry maakt
+ * bij het openen meteen een entry aan: nooit voor een peloton dat je niet koos.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -24,27 +25,18 @@ import { useStartlist } from "@/hooks/useStartlist";
 import { useMeermarathonSeizoen } from "@/hooks/useMeermarathonSeizoen";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import type { Game } from "@/hooks/useCurrentGame";
-import DeelnameKeuze from "@/components/meermarathon/DeelnameKeuze";
 import MeermarathonPelotonbalk from "@/components/meermarathon/Pelotonbalk";
 import {
   PloegSamenstellen,
   PloegSamenstellenGesloten,
   PloegSamenstellenLaden,
-  type PsBezig,
+  type PsBouw,
+  type PsPeloton,
 } from "@/components/meermarathon/PloegSamenstellen";
 import { canRegister } from "@/lib/gameStatus";
-import { meermarathonCategorieLabel, meermarathonSeason } from "@/lib/gameTypes";
-import {
-  bewaarDeelname,
-  deelnameOpties,
-  deelnameSleutel,
-  eerstePeloton,
-  leesDeelname,
-  moetKiezen,
-  standaardKeuze,
-  volgendPeloton,
-} from "@/lib/meermarathonDeelname";
-import { mmMoment, type MeermarathonGameStatus } from "@/lib/meermarathonSeizoen";
+import { meermarathonCategorieLabel, meermarathonSeason, parseMeermarathonCategorie } from "@/lib/gameTypes";
+import { bewaarDeelname, deelnameOpties, deelnameSleutel, leesDeelname } from "@/lib/meermarathonDeelname";
+import type { MeermarathonGameStatus, MmGameLite } from "@/lib/meermarathonSeizoen";
 import { volgendeDeadline } from "@/lib/mijnMeermarathon";
 import {
   geldigeKeuzes,
@@ -131,21 +123,16 @@ function Pagina({ children }: { children: ReactNode }) {
 
 /** game = null: de game laadt nog, maar we weten al dat het de Meermarathon is. */
 export default function PloegSamenstellenContainer({ game }: { game: Game | null }) {
-  return <Pagina>{game ? <Inhoud game={game} /> : <PloegSamenstellenLaden pelotonbalk={PELOTONBALK} />}</Pagina>;
+  return <Pagina>{game ? <Inhoud game={game} /> : <PloegSamenstellenLaden />}</Pagina>;
 }
 
 function Inhoud({ game }: { game: Game }) {
-  const { user, role, loading: authLaadt } = useAuth();
+  const { role, loading: authLaadt } = useAuth();
   const isAdmin = role === "admin";
   const { selectedGameId, selectedGame } = useSelectedGame();
   const kiesGame = useKiesGame();
   const doel = teambouwerDoel(game, selectedGame, selectedGameId != null);
-
-  const { statussen, isLoading: seizoenLaadt } = useMeermarathonSeizoen();
-  const [keuze, bewaarKeuze] = useDeelname(user?.id ?? null, game.year);
-  // Na de keuze wisselt de game soms nog; tot die tijd geen bouwer, anders
-  // maakt hij een entry aan in een peloton dat je niet koos.
-  const [naKeuze, setNaKeuze] = useState<string | null>(null);
+  const { seizoen, statussen, isLoading: seizoenLaadt } = useMeermarathonSeizoen();
 
   useEffect(() => {
     if (doel.soort === "volg") kiesGame(doel.gameId);
@@ -153,96 +140,35 @@ function Inhoud({ game }: { game: Game }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doel.soort, doel.gameId]);
 
-  // Zonder bewaarde keuze moeten we eerst weten of je al ergens een ploeg
-  // hebt; tot dan geen bouwer en geen keuzescherm dat weer wegflitst.
-  if (keuze == null && (authLaadt || seizoenLaadt)) return <PloegSamenstellenLaden />;
-  if (moetKiezen(statussen, keuze, isAdmin)) {
-    return (
-      <Keuze
-        statussen={statussen}
-        isAdmin={isAdmin}
-        onVerder={(ids) => {
-          bewaarKeuze(ids);
-          const eerste = eerstePeloton(statussen, ids, isAdmin);
-          if (eerste && eerste.game.id !== game.id) {
-            setNaKeuze(eerste.game.id);
-            kiesGame(eerste.game.id);
-          }
-        }}
-      />
-    );
-  }
-  if (naKeuze && naKeuze !== game.id) return <PloegSamenstellenLaden pelotonbalk={PELOTONBALK} />;
+  // Het seizoen volgt de gekozen game. Hoort het (nog) niet bij deze game,
+  // dan wachten: anders staan er pelotons van een ander jaar op het scherm.
+  const pelotonGames: MmGameLite[] =
+    seizoen.length === 0 ? [{ ...game, game_type: game.game_type ?? null }] : seizoen.filter((g) => g.year === game.year);
+  // Eerst weten of je al ergens een ploeg hebt; anders flitst er een
+  // uitnodiging voor een peloton waar je allang meedoet.
+  if (authLaadt || seizoenLaadt || pelotonGames.length === 0) return <PloegSamenstellenLaden />;
 
-  if (doel.soort === "keuze-dicht" && selectedGame) {
-    return (
-      <Gesloten
-        game={selectedGame}
-        alternatief={canRegister(game.status) ? game : null}
-        onAlternatief={kiesGame}
-      />
-    );
-  }
   // Inschrijven mag alleen tijdens open_inschrijving; de beheerder mag altijd
-  // (net als in de wielerteambouwer).
-  if (!isAdmin && !canRegister(game.status)) return <Gesloten game={game} alternatief={null} />;
-  // Eigen key per game: wissel je met de pelotonbalk, dan begint de
-  // ploegnaam, de actieve plek en "heropend" opnieuw.
-  const volgend = volgendPeloton(statussen, keuze, game.id, isAdmin);
+  // (net als in de wielerteambouwer). Staat er niets meer open, dan de
+  // gesloten pagina van het peloton dat je bekeek.
+  if (!pelotonGames.some((g) => isAdmin || canRegister(g.status))) {
+    const toon = doel.soort === "keuze-dicht" && selectedGame ? selectedGame : game;
+    return <Gesloten game={toon} />;
+  }
+
   return (
     <Bouwer
-      key={game.id}
-      game={game}
-      volgende={volgend ? { label: volgend.label, onKies: () => kiesGame(volgend.game.id) } : null}
+      // Een ander seizoen begint met een schone lei (ploegnamen, "heropend").
+      key={pelotonGames.map((g) => g.id).join(",")}
+      jaar={game.year}
+      games={pelotonGames}
+      statussen={statussen}
+      isAdmin={isAdmin}
     />
   );
 }
 
-/** De eerste stap: waar rijd je mee? Nog zonder bouwer, dus zonder entry. */
-function Keuze({
-  statussen,
-  isAdmin,
-  onVerder,
-}: {
-  statussen: MeermarathonGameStatus[];
-  isAdmin: boolean;
-  onVerder: (ids: string[]) => void;
-}) {
-  const opties = useMemo(() => deelnameOpties(statussen, isAdmin), [statussen, isAdmin]);
-  const [gekozen, setGekozen] = useState(() => new Set(standaardKeuze(opties)));
-  const deadline = volgendeDeadline(statussen, new Date());
-  const jaar = statussen[0]?.game.year;
-
-  return (
-    <DeelnameKeuze
-      className="mx-auto mt-2 max-w-3xl"
-      seizoen={jaar != null ? meermarathonSeason(jaar) : ""}
-      opties={opties}
-      gekozen={gekozen}
-      onWissel={(id) =>
-        setGekozen((oud) => {
-          const nieuw = new Set(oud);
-          if (nieuw.has(id)) nieuw.delete(id);
-          else nieuw.add(id);
-          return nieuw;
-        })
-      }
-      // In de volgorde van de pelotons, niet in die van het aantikken.
-      onVerder={() => onVerder(opties.filter((o) => gekozen.has(o.id)).map((o) => o.id))}
-      deadline={deadline ? mmMoment(deadline) : null}
-    />
-  );
-}
-
-function Gesloten({
-  game,
-  alternatief,
-  onAlternatief,
-}: {
-  game: GameKort;
-  alternatief: GameKort | null;
-  onAlternatief?: (id: string) => void;
-}) {
+function Gesloten({ game }: { game: GameKort }) {
   const { user } = useAuth();
   // Bewust geen useEntry: die maakt een entry aan, en voor een dichte game
   // schrijf je je daar nergens mee in.
@@ -256,8 +182,6 @@ function Gesloten({
       label={gameLabel(game)}
       reden={sluitReden(game.status)}
       eigen={user && status ? { fase: status.fase, ploegnaam: status.entry?.teamName ?? null } : null}
-      alternatief={alternatief ? { id: alternatief.id, label: gameLabel(alternatief) } : null}
-      onAlternatief={onAlternatief}
       volgwagenPad={volgwagenPad(game.id)}
       uitslagenPad="/uitslagen"
     />
@@ -265,24 +189,168 @@ function Gesloten({
 }
 
 function Bouwer({
-  game,
-  volgende,
+  jaar,
+  games,
+  statussen,
+  isAdmin,
 }: {
-  game: Game;
-  /** Het andere gekozen peloton dat nog op een ploeg wacht. */
-  volgende: { label: string; onKies: () => void } | null;
+  jaar: number;
+  /** De pelotons van dit seizoen, vrouwen voorop; één of twee. */
+  games: MmGameLite[];
+  statussen: MeermarathonGameStatus[];
+  isAdmin: boolean;
 }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [keuze, bewaarKeuze] = useDeelname(user?.id ?? null, jaar);
+  const enkel = games.length < 2;
+
+  const open = (g: GameKort) => isAdmin || canRegister(g.status);
+  // Met één peloton valt er niets te kiezen: dan rijd je daar mee.
+  const meedoen = (g: GameKort) => {
+    if (enkel) return true;
+    const s = statussen.find((x) => x.game.id === g.id);
+    return (s != null && s.fase !== "niet-ingeschreven") || Boolean(keuze?.includes(g.id));
+  };
+
+  // Vast twee aanroepen, zodat de volgorde van de hooks nooit verandert; een
+  // peloton waar je niet meerijdt krijgt null en haalt dus niets op.
+  const [a, b] = games;
+  const bronA = usePelotonBouwer(a && open(a) && meedoen(a) ? a : null);
+  const bronB = usePelotonBouwer(b && open(b) && meedoen(b) ? b : null);
+  const bronnen = [bronA, bronB].slice(0, games.length);
+  const klaarVoorGebruik = bronnen.filter((x): x is PelotonBron & { bouw: Omit<PsBouw, "onNietMeedoen"> } => x.bouw != null);
+
+  const opties = useMemo(() => deelnameOpties(statussen, isAdmin), [statussen, isAdmin]);
+  const deadline = volgendeDeadline(statussen, new Date());
+
+  const zetKeuze = (id: string, aan: boolean) => {
+    const ids = new Set(keuze ?? []);
+    if (aan) ids.add(id);
+    else ids.delete(id);
+    // In de volgorde van de pelotons, niet in die van het aantikken.
+    bewaarKeuze(games.map((g) => g.id).filter((x) => ids.has(x)));
+  };
+
+  const pelotons: PsPeloton[] = games.map((g, i) => {
+    const basis = { id: g.id, label: gameLabel(g), categorie: parseMeermarathonCategorie(g.categorie) };
+    const status = statussen.find((s) => s.game.id === g.id);
+    if (!open(g)) return { ...basis, stand: "gesloten", reden: sluitReden(g.status), fase: status?.fase ?? null };
+    if (!meedoen(g)) {
+      const optie = opties.find((o) => o.id === g.id);
+      return {
+        ...basis,
+        stand: "uitnodiging",
+        info: optie ? `${optie.ploeg} · ${optie.kalender}` : "Eigen ploeg, eigen klassement",
+        onMeedoen: () => zetKeuze(g.id, true),
+      };
+    }
+    const bouw = bronnen[i]?.bouw;
+    if (!bouw) return { ...basis, stand: "laden" };
+    return { ...basis, stand: "bouwen", bouw: { ...bouw, onNietMeedoen: enkel ? null : () => zetKeuze(g.id, false) } };
+  });
+
+  // ── Acties voor de hele pagina ──
+  const [actie, setActie] = useState<"opslaan" | "bevestigen" | null>(null);
+
+  const vraagInlog = (wat: string) => {
+    toast({ title: "Log eerst in", description: `Log in of maak een account om ${wat}.` });
+    navigate("/login");
+  };
+
+  // Keuzes staan al in de database zodra je ze maakt. Opslaan bewaart
+  // wat nog alleen hier staat (de ploegnamen) en zegt waar je aan toe bent.
+  const opslaan = async () => {
+    if (!user) return vraagInlog("je ploeg op te slaan");
+    if (klaarVoorGebruik.length === 0) return;
+    setActie("opslaan");
+    let ok = true;
+    for (const bron of klaarVoorGebruik) ok = (await bron.bewaarNaam()) && ok;
+    setActie(null);
+    if (!ok) return;
+    for (const bron of klaarVoorGebruik) {
+      captureEvent("team_draft_saved", {
+        game_id: bron.game.id,
+        game_status: bron.game.status,
+        picks_completed: bron.tel.gekozen,
+        picks_required: bron.tel.vereist,
+      });
+    }
+    const nogOpen = klaarVoorGebruik.filter((x) => !x.ingediend);
+    const meer = klaarVoorGebruik.length > 1;
+    toast({
+      title: "Alles is bewaard",
+      description:
+        nogOpen.length === 0
+          ? meer
+            ? "Je ploegen zijn bevestigd en doen mee."
+            : "Je ploeg is bevestigd en doet mee."
+          : nogOpen.every((x) => x.tel.compleet)
+            ? nogOpen.length > 1
+              ? "Je ploegen zijn compleet. Bevestig ze om mee te doen."
+              : "Je ploeg is compleet. Bevestig hem om mee te doen."
+            : "Je kunt later verder. Bevestig je ploeg als hij compleet is; pas dan doe je mee.",
+    });
+  };
+
+  // Bevestigt elke complete ploeg die nog niet bevestigd is. Een ploeg die nog
+  // niet compleet is, houdt de andere niet tegen: allebei hoeft niet.
+  const bevestigen = async () => {
+    if (!user) return vraagInlog("je ploeg te bevestigen");
+    const klaar = klaarVoorGebruik.filter((x) => !x.ingediend && x.tel.compleet);
+    if (klaar.length === 0) return;
+    setActie("bevestigen");
+    const gelukt: MmGameLite[] = [];
+    try {
+      for (const bron of klaar) if (await bron.bevestig()) gelukt.push(bron.game);
+    } finally {
+      setActie(null);
+    }
+    if (gelukt.length === 0) return;
+    const onaf = klaarVoorGebruik.filter((x) => !x.ingediend && !klaar.includes(x));
+    const waar = enkel
+      ? `met de ${gameNaam(gelukt[0])}`
+      : `bij ${gelukt.map((g) => `de ${gameLabel(g).toLowerCase()}`).join(" én ")}`;
+    const rest = onaf.map((x) => ` Je ${gameLabel(x.game).toLowerCase()}ploeg is nog niet compleet.`).join("");
+    toast({ title: gelukt.length > 1 ? "Ploegen bevestigd" : "Ploeg bevestigd", description: `Je doet mee ${waar}.${rest}` });
+  };
+
+  const volgwagenGame = klaarVoorGebruik.find((x) => x.ingediend)?.game ?? games[0];
+
+  return (
+    <PloegSamenstellen
+      gameNaam={enkel ? gameNaam(games[0]) : `Meermarathon ${meermarathonSeason(jaar)}`}
+      pelotons={pelotons}
+      deadline={deadline}
+      ingelogd={Boolean(user)}
+      bezig={actie}
+      volgwagenPad={volgwagenPad(volgwagenGame.id)}
+      uitslagenPad="/uitslagen"
+      onOpslaan={() => void opslaan()}
+      onBevestigen={() => void bevestigen()}
+      onInloggen={() => navigate("/login")}
+    />
+  );
+}
+
+type PelotonBron = ReturnType<typeof usePelotonBouwer>;
+
+/**
+ * Alles van één peloton: rijders, je ploeg, je pronostiek en wat je ermee
+ * doet. game = null: je rijdt hier niet mee, er wordt niets opgehaald en
+ * dus ook geen entry aangemaakt.
+ */
+function usePelotonBouwer(game: MmGameLite | null) {
   const { user } = useAuth();
   const ingelogd = Boolean(user);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const naam = gameNaam(game);
+  const gameId = game?.id;
+  const label = game ? gameLabel(game) : "";
 
-  const { statussen } = useMeermarathonSeizoen();
-  const deadline = statussen.find((s) => s.game.id === game.id)?.deadline ?? null;
-
-  const { data: cats = [], isLoading: catsLaden, isError: catsFout } = useCategories(game.id);
-  const { data: startlijst = [], isLoading: startLaden } = useStartlist(game.id, "", "");
+  const { data: cats = [], isLoading: catsLaden, isError: catsFout } = useCategories(gameId);
+  const { data: startlijst = [], isLoading: startLaden } = useStartlist(gameId, "", "");
   const {
     entry,
     isLoading: entryLaden,
@@ -296,7 +364,7 @@ function Bouwer({
     saveTeamName,
     submitEntry,
     revertEntry,
-  } = useEntry(game.id);
+  } = useEntry(gameId);
 
   // ── Data in de vorm van het scherm ──
   const ploegVanTeam = useMemo(() => new Map(startlijst.map((t) => [t.id, t.name])), [startlijst]);
@@ -370,11 +438,10 @@ function Bouwer({
     }
   };
 
-  // ── Acties ──
-  const [actie, setActie] = useState<Exclude<PsBezig, "kiezen"> | null>(null);
+  // ── Acties in dit peloton ──
+  const [aanpassenBezig, setAanpassenBezig] = useState(false);
   const [heropend, setHeropend] = useState(false);
   const kiezen = savePick.isPending || togglePick.isPending || savePredictions.isPending;
-  const bezig: PsBezig | null = actie ?? (kiezen ? "kiezen" : null);
 
   const vraagInlog = (wat: string) => {
     toast({ title: "Log eerst in", description: `Log in of maak een account om ${wat}.` });
@@ -432,37 +499,11 @@ function Bouwer({
     }
   };
 
-  // Keuzes staan al in de database zodra je ze maakt. Opslaan bewaart
-  // wat nog alleen hier staat (de ploegnaam) en zegt waar je aan toe bent.
-  const opslaan = async () => {
-    if (!user) return vraagInlog("je ploeg op te slaan");
-    if (!entry) return;
-    setActie("opslaan");
-    const ok = await bewaarNaam();
-    setActie(null);
-    if (!ok) return;
-    captureEvent("team_draft_saved", {
-      game_id: game.id,
-      game_status: game.status,
-      picks_completed: tel.gekozen,
-      picks_required: tel.vereist,
-    });
-    toast({
-      title: "Alles is bewaard",
-      description: ingediend
-        ? "Je ploeg is bevestigd en doet mee."
-        : tel.compleet
-          ? "Je ploeg is compleet. Bevestig hem om mee te doen."
-          : "Je kunt later verder. Bevestig je ploeg als hij compleet is; pas dan doe je mee.",
-    });
-  };
-
-  const bevestigen = async () => {
-    if (!user) return vraagInlog("je ploeg te bevestigen");
-    if (!entry || !tel.compleet) return;
-    setActie("bevestigen");
+  /** Bevestig deze ploeg; true als dat lukte. Een fout meldt hij zelf. */
+  const bevestig = async (): Promise<boolean> => {
+    if (!game || !entry || !tel.compleet) return false;
     try {
-      if (!(await bewaarNaam())) return;
+      if (!(await bewaarNaam())) return false;
       await submitEntry.mutateAsync({ entryId: entry.id });
       captureEvent("team_submitted", {
         game_id: game.id,
@@ -472,18 +513,21 @@ function Bouwer({
         picks_required: tel.vereist,
       });
       setHeropend(false);
-      toast({ title: "Ploeg bevestigd", description: `Je doet mee met de ${naam}.` });
+      return true;
     } catch (error) {
       captureException(error, { area: "team_builder", action: "submit_team", game_id: game.id });
-      toast({ title: "Bevestigen mislukt", description: entryErrorMessage(error), variant: "destructive" });
-    } finally {
-      setActie(null);
+      toast({
+        title: label ? `${label}: bevestigen mislukt` : "Bevestigen mislukt",
+        description: entryErrorMessage(error),
+        variant: "destructive",
+      });
+      return false;
     }
   };
 
   const aanpassen = async () => {
     if (!entry) return;
-    setActie("aanpassen");
+    setAanpassenBezig(true);
     try {
       await revertEntry.mutateAsync({ entryId: entry.id });
       setHeropend(true);
@@ -491,43 +535,34 @@ function Bouwer({
     } catch (error) {
       toast({ title: "Aanpassen lukt niet", description: entryErrorMessage(error), variant: "destructive" });
     } finally {
-      setActie(null);
+      setAanpassenBezig(false);
     }
   };
 
-  if (catsLaden || startLaden || (ingelogd && entryLaden)) return <PloegSamenstellenLaden pelotonbalk={PELOTONBALK} />;
-
-  return (
-    <PloegSamenstellen
-      pelotonbalk={PELOTONBALK}
-      volgende={volgende}
-      gameNaam={naam}
-      categorieen={categorieen}
-      gekozen={gekozen}
-      pronostiek={pronostiek}
-      ploegnaam={ploegnaam}
-      ploegnaamBewaard={ploegnaam.trim() === (teamName ?? "").trim()}
-      deadline={deadline}
-      ingelogd={ingelogd}
-      ingediend={ingediend}
-      heropend={heropend}
-      bezig={bezig}
-      fout={
-        catsFout
+  const laden = !game || catsLaden || startLaden || (ingelogd && entryLaden);
+  const bouw: Omit<PsBouw, "onNietMeedoen"> | null = laden
+    ? null
+    : {
+        categorieen,
+        gekozen,
+        pronostiek,
+        ploegnaam,
+        ploegnaamBewaard: ploegnaam.trim() === (teamName ?? "").trim(),
+        ingediend,
+        heropend,
+        bezig: aanpassenBezig ? "aanpassen" : kiezen ? "kiezen" : null,
+        fout: catsFout
           ? "De rijders zijn nu niet te laden. Probeer het straks opnieuw."
           : ingelogd && entryFout
             ? "Je ploeg is nu niet te laden. Probeer het straks opnieuw."
-            : null
-      }
-      volgwagenPad={volgwagenPad(game.id)}
-      onPloegnaam={setNaamConcept}
-      onPloegnaamKlaar={() => void bewaarNaam()}
-      onKies={(doel, rijderId) => void kies(doel, rijderId)}
-      onHaalWeg={(doel) => void haalWeg(doel)}
-      onOpslaan={() => void opslaan()}
-      onBevestigen={() => void bevestigen()}
-      onAanpassen={() => void aanpassen()}
-      onInloggen={() => navigate("/login")}
-    />
-  );
+            : null,
+        onPloegnaam: setNaamConcept,
+        onPloegnaamKlaar: () => void bewaarNaam(),
+        onKies: (doel, rijderId) => void kies(doel, rijderId),
+        onHaalWeg: (doel) => void haalWeg(doel),
+        onAanpassen: () => void aanpassen(),
+      };
+
+  // game is alleen null als bouw dat ook is; de cast houdt de aanroepers simpel.
+  return { game: game as MmGameLite, bouw, tel, ingediend, bewaarNaam, bevestig };
 }

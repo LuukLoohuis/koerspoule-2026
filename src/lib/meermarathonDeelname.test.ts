@@ -1,15 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  bewaarDeelname,
-  deelnameOpties,
-  deelnameSleutel,
-  eerstePeloton,
-  geldigeKeuze,
-  leesDeelname,
-  moetKiezen,
-  standaardKeuze,
-  volgendPeloton,
-} from "./meermarathonDeelname";
+import { bewaarDeelname, deelnameOpties, deelnameSleutel, leesDeelname } from "./meermarathonDeelname";
 import { bouwGameStatus, type MmEntry, type MmWedstrijd } from "./meermarathonSeizoen";
 
 const cup = (game_id: string, stage_number: number, date: string | null): MmWedstrijd => ({
@@ -28,8 +18,6 @@ const cup = (game_id: string, stage_number: number, date: string | null): MmWeds
 });
 
 const ingediend: MmEntry = { id: "e", status: "submitted", teamName: "X", picks: 5 };
-const half: MmEntry = { id: "e", status: "draft", teamName: null, picks: 3 };
-const leeg: MmEntry = { id: "e", status: "draft", teamName: null, picks: 0 };
 
 const peloton = (
   id: "v" | "m",
@@ -51,31 +39,6 @@ const peloton = (
     puntenPerWedstrijd: new Map(),
     vandaag: "2026-10-01",
   });
-
-describe("waar rijd je mee", () => {
-  it("vraagt het alleen aan wie nog nergens een ploeg heeft en nog niet koos", () => {
-    expect(moetKiezen([peloton("v"), peloton("m")], null)).toBe(true);
-    // Een lege conceptploeg is nog geen keuze: de teambouwer maakt die zelf aan.
-    expect(moetKiezen([peloton("v", { entry: leeg }), peloton("m")], null)).toBe(true);
-    expect(moetKiezen([peloton("v", { entry: half }), peloton("m")], null)).toBe(false);
-    expect(moetKiezen([peloton("v", { entry: ingediend }), peloton("m")], null)).toBe(false);
-    expect(moetKiezen([peloton("v"), peloton("m")], ["v"])).toBe(false);
-  });
-
-  it("vraagt niets als er niets te kiezen valt", () => {
-    expect(moetKiezen([peloton("v")], null)).toBe(false);
-    expect(moetKiezen([peloton("v", { status: "live" }), peloton("m", { status: "locked" })], null)).toBe(false);
-    // De beheerder mag altijd bouwen, dus ook kiezen.
-    expect(moetKiezen([peloton("v", { status: "live" }), peloton("m", { status: "live" })], null, true)).toBe(true);
-  });
-
-  it("vergeet een keuze voor pelotons die niet meer bestaan", () => {
-    const seizoen = [peloton("v"), peloton("m")];
-    expect(geldigeKeuze(seizoen, ["oud", "m"])).toEqual(["m"]);
-    expect(geldigeKeuze(seizoen, ["oud"])).toBeNull();
-    expect(moetKiezen(seizoen, ["oud"])).toBe(true);
-  });
-});
 
 describe("kaarten", () => {
   it("zegt per peloton hoe groot de ploeg is en wanneer het begint", () => {
@@ -105,29 +68,14 @@ describe("kaarten", () => {
     });
   });
 
-  it("begint met alles aan wat openstaat", () => {
-    const opties = deelnameOpties([peloton("v"), peloton("m", { status: "locked" })]);
-    expect(opties[1].gesloten).toBe(true);
-    expect(standaardKeuze(opties)).toEqual(["v"]);
-    expect(standaardKeuze(deelnameOpties([peloton("v"), peloton("m")]))).toEqual(["v", "m"]);
-  });
-});
-
-describe("volgorde", () => {
-  it("begint bij het eerste gekozen peloton zonder ingediende ploeg", () => {
-    expect(eerstePeloton([peloton("v"), peloton("m")], ["v", "m"])?.game.id).toBe("v");
-    expect(eerstePeloton([peloton("v"), peloton("m")], ["m"])?.game.id).toBe("m");
-    expect(eerstePeloton([peloton("v", { entry: ingediend }), peloton("m")], ["v", "m"])?.game.id).toBe("m");
-  });
-
-  it("wijst na een bevestigde ploeg het andere gekozen peloton aan", () => {
-    const seizoen = [peloton("v", { entry: ingediend }), peloton("m", { entry: half })];
-    expect(volgendPeloton(seizoen, ["v", "m"], "v")?.game.id).toBe("m");
-    // Niet gekozen, al ingediend of dicht: dan is er geen volgende.
-    expect(volgendPeloton(seizoen, ["v"], "v")).toBeNull();
-    expect(volgendPeloton(seizoen, null, "v")).toBeNull();
-    expect(volgendPeloton([seizoen[0], peloton("m", { entry: ingediend })], ["v", "m"], "v")).toBeNull();
-    expect(volgendPeloton([seizoen[0], peloton("m", { status: "locked" })], ["v", "m"], "v")).toBeNull();
+  it("weet wat dicht is en waar je al meedoet", () => {
+    const opties = deelnameOpties([peloton("v", { entry: ingediend }), peloton("m", { status: "locked" })]);
+    expect(opties.map((o) => [o.ingeschreven, o.gesloten])).toEqual([
+      [true, false],
+      [false, true],
+    ]);
+    // De beheerder mag altijd bouwen.
+    expect(deelnameOpties([peloton("m", { status: "locked" })], true)[0].gesloten).toBe(false);
   });
 });
 

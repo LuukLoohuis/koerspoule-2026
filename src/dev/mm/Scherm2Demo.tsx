@@ -1,8 +1,9 @@
 /**
  * Testbank-demo voor scherm 2, Ploeg samenstellen (zie src/dev-meermarathon.tsx).
- * Nepdata, geen database. De bouwers zijn bespeelbaar: kiezen, wisselen,
- * bevestigen en aanpassen werken op lokale staat, zodat je elke overgang kunt
- * zien. Mobiel tikken opent de echte lade.
+ * Nepdata, geen database. De vrouwen en de mannen staan samen op één scherm.
+ * De bouwers zijn bespeelbaar: meedoen, kiezen, wisselen, bevestigen en
+ * aanpassen werken op lokale staat, zodat je elke overgang kunt zien. Mobiel
+ * tikken opent de echte lade.
  */
 import { useState, type ReactNode } from "react";
 import { Pelotonbalk, type PelotonItem } from "@/components/meermarathon/Pelotonbalk";
@@ -11,15 +12,18 @@ import {
   PloegSamenstellenGesloten,
   PloegSamenstellenLaden,
   type PloegSamenstellenGeslotenProps,
+  type PsPeloton,
 } from "@/components/meermarathon/PloegSamenstellen";
 import { KandidatenLijst } from "@/components/meermarathon/PloegSamenstellenKiezer";
 import {
   kandidaten,
   pickActies,
+  telling,
   type KiesDoel,
   type PsCategorie,
   type PsRijder,
   type PsVoorspellingen,
+  type SluitReden,
 } from "@/lib/ploegSamenstellen";
 
 // Vaste deadline zoals in het ontwerp: vrijdag 13 november 2026, 23:59.
@@ -27,20 +31,20 @@ const DEADLINE = new Date(2026, 10, 13, 23, 59);
 
 const r = (id: string, naam: string, ploeg: string, nummer: number | null): PsRijder => ({ id, naam, ploeg, nummer });
 
-// Placeholders uit het ontwerp; de echte namen komen uit de database.
-const CATEGORIEEN: PsCategorie[] = [
+// Verzonnen namen; de echte komen uit de database.
+const MANNEN: PsCategorie[] = [
   {
-    id: "c1",
+    id: "m1",
     naam: "Toppers",
     max: 1,
     rijders: [
       r("sjoerd", "Sjoerd de Vries", "Team Noordelijk IJs", 1),
       r("bart", "Bart Hoekstra", "Ploeg Friesland", 2),
-      r("jorrit", "Jorrit Bergsma", "Schaatsteam West", 3),
+      r("jorrit", "Jorrit Bosma", "Schaatsteam West", 3),
     ],
   },
   {
-    id: "c2",
+    id: "m2",
     naam: "Sprinters",
     max: 1,
     rijders: [
@@ -50,7 +54,7 @@ const CATEGORIEEN: PsCategorie[] = [
     ],
   },
   {
-    id: "c3",
+    id: "m3",
     naam: "Natuurijs",
     max: 1,
     rijders: [
@@ -59,7 +63,7 @@ const CATEGORIEEN: PsCategorie[] = [
     ],
   },
   {
-    id: "c4",
+    id: "m4",
     naam: "Vechters",
     max: 1,
     rijders: [
@@ -67,11 +71,10 @@ const CATEGORIEEN: PsCategorie[] = [
       r("thijs", "Thijs Bakker", "Team Noordelijk IJs", 32),
       r("jelle", "Jelle Smit", "Ploeg Friesland", 33),
       r("marco", "Marco Dekker", "IJsclub Oost", 34),
-      r("niels", "Niels Brouwer", "Schaatsteam West", 35),
     ],
   },
   {
-    id: "c5",
+    id: "m5",
     naam: "Talent",
     max: 1,
     rijders: [
@@ -82,127 +85,207 @@ const CATEGORIEEN: PsCategorie[] = [
   },
 ];
 
-const DRIE: [string, string[]][] = [
-  ["c1", ["sjoerd"]],
-  ["c2", ["gerben"]],
-  ["c3", ["wouter"]],
+const VROUWEN: PsCategorie[] = [
+  {
+    id: "v1",
+    naam: "Toppers",
+    max: 1,
+    rijders: [
+      r("anouk", "Anouk Visser", "Team Noordelijk IJs", 101),
+      r("femke", "Femke Hoekstra", "Ploeg Friesland", 102),
+      r("lotte", "Lotte de Jong", "Schaatsteam West", 103),
+    ],
+  },
+  {
+    id: "v2",
+    naam: "Sprinters",
+    max: 1,
+    rijders: [
+      r("iris", "Iris Postma", "Ploeg Friesland", 111),
+      r("marit", "Marit Kramer", "IJsclub Oost", 112),
+    ],
+  },
+  {
+    id: "v3",
+    naam: "Natuurijs",
+    max: 1,
+    rijders: [
+      r("nynke", "Nynke Wiersma", "Ploeg Friesland", 121),
+      r("jildou", "Jildou Smit", "Schaatsteam West", 122),
+    ],
+  },
+  {
+    id: "v4",
+    naam: "Vechters",
+    max: 1,
+    rijders: [
+      r("sanne", "Sanne Bakker", "Team Noordelijk IJs", 131),
+      r("rixt", "Rixt Brouwer", "Schaatsteam West", 132),
+      r("tessa", "Tessa Mulder", "IJsclub Oost", 133),
+    ],
+  },
+  {
+    id: "v5",
+    naam: "Talent",
+    max: 1,
+    rijders: [
+      r("ymkje", "Ymkje de Boer", "IJsclub Oost", 141),
+      r("sietske", "Sietske Veenstra", "Ploeg Friesland", 142),
+    ],
+  },
 ];
-const VIJF: [string, string[]][] = [...DRIE, ["c4", ["hessel"]], ["c5", ["daan"]]];
 
-const BALK: PelotonItem[] = [
-  { id: "v", label: "Vrouwen", categorie: "vrouwen", soort: "meedoen", regel: "Ingeschreven" },
-  { id: "m", label: "Mannen", categorie: "mannen", soort: "let-op", regel: "Ploeg 3/5" },
+// Rijders op de startlijst die in geen categorie staan: niet te kiezen voor
+// je ploeg, wel als klassementswinnaar in de pronostiek.
+const START_M: PsRijder[] = [...MANNEN.flatMap((c) => c.rijders), r("pieter", "Pieter Holwerda", "IJsclub Oost", 51)];
+const START_V: PsRijder[] = [...VROUWEN.flatMap((c) => c.rijders), r("janna", "Janna Kuipers", "IJsclub Oost", 151)];
+
+const M_DRIE: [string, string[]][] = [
+  ["m1", ["sjoerd"]],
+  ["m2", ["gerben"]],
+  ["m3", ["wouter"]],
 ];
-
-type Stand = Pick<PelotonItem, "soort" | "regel">;
-
-function DemoBalk({ stand, vrouwen }: { stand?: Stand; vrouwen?: Stand }) {
-  const [gekozen, setGekozen] = useState("m");
-  const items = [vrouwen ? { ...BALK[0], ...vrouwen } : BALK[0], stand ? { ...BALK[1], ...stand } : BALK[1]];
-  return (
-    <div className="pb-3">
-      <Pelotonbalk
-        seizoen={"\u201926-\u201927"}
-        items={items}
-        selectedId={gekozen}
-        onSelect={setGekozen}
-        className="@5xl:mx-auto @5xl:max-w-2xl"
-      />
-    </div>
-  );
-}
+const M_VIJF: [string, string[]][] = [...M_DRIE, ["m4", ["hessel"]], ["m5", ["daan"]]];
+const V_DRIE: [string, string[]][] = [
+  ["v1", ["anouk"]],
+  ["v2", ["iris"]],
+  ["v3", ["nynke"]],
+];
+const V_VIJF: [string, string[]][] = [...V_DRIE, ["v4", ["sanne"]], ["v5", ["ymkje"]]];
 
 // ── Bespeelbare bouwer ────────────────────────────────────────────────────
 
-type Start = {
+/** Hoe een peloton begint. Zonder start rijd je er (nog) niet mee. */
+type PelotonStart = {
   gekozen?: [string, string[]][];
   naam?: string;
   ingediend?: boolean;
   heropend?: boolean;
-  ingelogd?: boolean;
-  /** Koos ook het andere peloton, en daar staat nog geen ploeg. */
-  volgende?: string;
-  /** Voorspelde winnaars van het Cup- en het Grand Prix-klassement. */
   voorspeld?: Partial<PsVoorspellingen>;
+  gesloten?: SluitReden;
 };
 
-// Rijders op de startlijst die in geen categorie staan: niet te kiezen voor
-// je ploeg, wel als klassementswinnaar in de pronostiek.
-const OVERIGE_RIJDERS: PsRijder[] = [
-  r("pieter", "Pieter Holwerda", "IJsclub Oost", 51),
-  r("rik", "Rik Zwart", "Schaatsteam West", 52),
-  r("tom", "Tom de Graaf", "Ploeg Friesland", null),
+type Staat = {
+  meedoen: boolean;
+  gekozen: Map<string, string[]>;
+  naam: string;
+  bewaard: string;
+  ingediend: boolean;
+  heropend: boolean;
+  voorspeld: PsVoorspellingen;
+};
+
+function beginStaat(start: PelotonStart | undefined): Staat {
+  return {
+    meedoen: Boolean(start && !start.gesloten),
+    gekozen: new Map(start?.gekozen ?? []),
+    naam: start?.naam ?? "",
+    bewaard: start?.naam ?? "",
+    ingediend: start?.ingediend ?? false,
+    heropend: start?.heropend ?? false,
+    voorspeld: { cup: null, grandprix: null, ...start?.voorspeld },
+  };
+}
+
+const PELOTONS = [
+  { id: "v", label: "Vrouwen", categorie: "vrouwen" as const, cats: VROUWEN, start: START_V },
+  { id: "m", label: "Mannen", categorie: "mannen" as const, cats: MANNEN, start: START_M },
 ];
 
-// De hele startlijst: iedereen kan het klassement winnen.
-const STARTLIJST: PsRijder[] = [...CATEGORIEEN.flatMap((c) => c.rijders), ...OVERIGE_RIJDERS];
+function DemoBouwer({
+  vrouwen,
+  mannen,
+  ingelogd = true,
+}: {
+  vrouwen?: PelotonStart;
+  mannen?: PelotonStart;
+  ingelogd?: boolean;
+}) {
+  const starts = { v: vrouwen, m: mannen };
+  const [staat, setStaat] = useState<Record<string, Staat>>(() => ({ v: beginStaat(vrouwen), m: beginStaat(mannen) }));
+  const [bezig, setBezig] = useState<"opslaan" | "bevestigen" | null>(null);
+  const zet = (id: string, f: (s: Staat) => Partial<Staat>) => setStaat((oud) => ({ ...oud, [id]: { ...oud[id], ...f(oud[id]) } }));
 
-function DemoBouwer({ start }: { start: Start }) {
-  const [gekozen, setGekozen] = useState(() => new Map(start.gekozen ?? []));
-  const [naam, setNaam] = useState(start.naam ?? "");
-  const [bewaard, setBewaard] = useState(start.naam ?? "");
-  const [ingediend, setIngediend] = useState(start.ingediend ?? false);
-  const [heropend, setHeropend] = useState(start.heropend ?? false);
-  const ingelogd = start.ingelogd ?? true;
-  const [voorspeld, setVoorspeld] = useState<PsVoorspellingen>({ cup: null, grandprix: null, ...start.voorspeld });
-
-  const kies = (doel: KiesDoel, rijderId: string) => {
-    // Net als in de app: uitgelogd kun je rondkijken, niet kiezen.
-    if (!ingelogd) return;
-    if (doel.soort === "voorspelling") return setVoorspeld({ ...voorspeld, [doel.klassement]: rijderId });
-    const cat = CATEGORIEEN.find((c) => c.id === doel.categorieId)!;
-    const inCat = gekozen.get(cat.id) ?? [];
-    let ids = [...inCat];
-    for (const a of pickActies({ max: cat.max, inCategorie: inCat, oud: inCat[doel.plek] ?? null, nieuw: rijderId })) {
-      if (a.soort === "vervang") ids = [a.rijderId];
-      else ids = ids.includes(a.rijderId) ? ids.filter((x) => x !== a.rijderId) : [...ids, a.rijderId];
+  const pelotons: PsPeloton[] = PELOTONS.map((p) => {
+    const s = staat[p.id];
+    const basis = { id: p.id, label: p.label, categorie: p.categorie };
+    const gesloten = starts[p.id as "v" | "m"]?.gesloten;
+    if (gesloten) return { ...basis, stand: "gesloten", reden: gesloten, fase: null };
+    if (!s.meedoen) {
+      return {
+        ...basis,
+        stand: "uitnodiging",
+        info: "Ploeg van vijf rijders · 9 wedstrijden · vanaf 31 okt",
+        onMeedoen: () => zet(p.id, () => ({ meedoen: true })),
+      };
     }
-    setGekozen(new Map(gekozen).set(cat.id, ids));
-  };
-
-  const haalWeg = (doel: KiesDoel) => {
-    if (doel.soort === "voorspelling") return setVoorspeld({ ...voorspeld, [doel.klassement]: null });
-    const inCat = gekozen.get(doel.categorieId) ?? [];
-    setGekozen(new Map(gekozen).set(doel.categorieId, inCat.filter((_, i) => i !== doel.plek)));
-  };
+    const kies = (doel: KiesDoel, rijderId: string) => {
+      // Net als in de app: uitgelogd kun je rondkijken, niet kiezen.
+      if (!ingelogd) return;
+      if (doel.soort === "voorspelling") return zet(p.id, (x) => ({ voorspeld: { ...x.voorspeld, [doel.klassement]: rijderId } }));
+      const cat = p.cats.find((c) => c.id === doel.categorieId)!;
+      zet(p.id, (x) => {
+        const inCat = x.gekozen.get(cat.id) ?? [];
+        let ids = [...inCat];
+        for (const a of pickActies({ max: cat.max, inCategorie: inCat, oud: inCat[doel.plek] ?? null, nieuw: rijderId })) {
+          if (a.soort === "vervang") ids = [a.rijderId];
+          else ids = ids.includes(a.rijderId) ? ids.filter((y) => y !== a.rijderId) : [...ids, a.rijderId];
+        }
+        return { gekozen: new Map(x.gekozen).set(cat.id, ids) };
+      });
+    };
+    return {
+      ...basis,
+      stand: "bouwen",
+      bouw: {
+        categorieen: p.cats,
+        gekozen: s.gekozen,
+        pronostiek: { rijders: p.start, gekozen: s.voorspeld, wijzigbaar: ingelogd },
+        ploegnaam: s.naam,
+        ploegnaamBewaard: s.naam.trim() === s.bewaard.trim(),
+        ingediend: s.ingediend,
+        heropend: s.heropend,
+        bezig: null,
+        onPloegnaam: (naam) => zet(p.id, () => ({ naam })),
+        onPloegnaamKlaar: () => zet(p.id, (x) => ({ bewaard: x.naam })),
+        onKies: kies,
+        onHaalWeg: (doel) => {
+          if (doel.soort === "voorspelling") return zet(p.id, (x) => ({ voorspeld: { ...x.voorspeld, [doel.klassement]: null } }));
+          zet(p.id, (x) => ({
+            gekozen: new Map(x.gekozen).set(
+              doel.categorieId,
+              (x.gekozen.get(doel.categorieId) ?? []).filter((_, i) => i !== doel.plek),
+            ),
+          }));
+        },
+        onAanpassen: () => zet(p.id, () => ({ ingediend: false, heropend: true })),
+        onNietMeedoen: () => zet(p.id, () => ({ meedoen: false })),
+      },
+    };
+  });
 
   return (
     <PloegSamenstellen
-      pelotonbalk={
-        <DemoBalk
-          stand={ingediend ? { soort: "meedoen", regel: "Ingeschreven" } : undefined}
-          vrouwen={start.volgende ? { soort: "uitnodiging", regel: "Doe ook mee" } : undefined}
-        />
-      }
-      volgende={
-        start.volgende ? { label: start.volgende, onKies: () => console.info("[demo] door naar", start.volgende) } : null
-      }
-      gameNaam="Meermarathon Mannen"
-      categorieen={CATEGORIEEN}
-      gekozen={gekozen}
-      pronostiek={{ rijders: STARTLIJST, gekozen: voorspeld, wijzigbaar: ingelogd }}
-      ploegnaam={naam}
-      ploegnaamBewaard={naam.trim() === bewaard.trim()}
+      gameNaam="Meermarathon 2026-2027"
+      pelotons={pelotons}
       deadline={DEADLINE}
       ingelogd={ingelogd}
-      ingediend={ingediend}
-      heropend={heropend}
-      bezig={null}
+      bezig={bezig}
       volgwagenPad="/mijn-peloton?tab=team"
       actiebalk="inline"
-      onPloegnaam={setNaam}
-      onPloegnaamKlaar={() => setBewaard(naam)}
-      onKies={kies}
-      onHaalWeg={haalWeg}
-      onOpslaan={() => setBewaard(naam)}
-      onBevestigen={() => {
-        setBewaard(naam);
-        setIngediend(true);
-        setHeropend(false);
+      onOpslaan={() => {
+        for (const p of PELOTONS) zet(p.id, (x) => ({ bewaard: x.naam }));
       }}
-      onAanpassen={() => {
-        setIngediend(false);
-        setHeropend(true);
+      onBevestigen={() => {
+        setBezig("bevestigen");
+        for (const p of PELOTONS) {
+          zet(p.id, (x) =>
+            x.meedoen && !x.ingediend && telling(p.cats, x.gekozen).compleet
+              ? { ingediend: true, heropend: false, bewaard: x.naam }
+              : {},
+          );
+        }
+        setBezig(null);
       }}
       onInloggen={() => {}}
     />
@@ -244,19 +327,19 @@ function Desktop({ titel, children }: { titel: string; children: ReactNode }) {
 
 function LadeInhoud() {
   const [zoek, setZoek] = useState("");
-  const rijen = kandidaten(CATEGORIEEN[3].rijders, { huidig: null, bezet: new Set(), zoek });
+  const rijen = kandidaten(MANNEN[3].rijders, { huidig: null, bezet: new Set(), zoek });
   return (
     <div className="flex h-full flex-col justify-end bg-foreground/60">
       <div className="flex max-h-[88%] flex-col rounded-t-[10px] border bg-background">
         <div aria-hidden className="mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full bg-muted" />
         <div className="px-4 pb-2 pt-3">
-          <p className="heading-oswald m-0 text-[22px] text-foreground">Categorie 4 · Vechters</p>
+          <p className="heading-oswald m-0 text-[22px] text-foreground">Mannen · Categorie 4 · Vechters</p>
           <p className="m-0 mt-1 text-sm text-muted-foreground">Kies één rijder.</p>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
           <KandidatenLijst
             rijen={rijen}
-            totaal={CATEGORIEEN[3].rijders.length}
+            totaal={MANNEN[3].rijders.length}
             zoek={zoek}
             onZoek={setZoek}
             actie={{ kiesbaar: true, bezig: false, huidigeNaam: null, onKies: () => {}, onHaalWeg: () => {} }}
@@ -267,96 +350,105 @@ function LadeInhoud() {
   );
 }
 
-const GESLOTEN_BASIS: Omit<PloegSamenstellenGeslotenProps, "reden" | "eigen" | "alternatief"> = {
+const BALK: PelotonItem[] = [
+  { id: "v", label: "Vrouwen", categorie: "vrouwen", soort: "meekijken", regel: "Meekijken" },
+  { id: "m", label: "Mannen", categorie: "mannen", soort: "meedoen", regel: "48e van 986" },
+];
+
+function DemoBalk() {
+  const [gekozen, setGekozen] = useState("m");
+  return (
+    <div className="pb-3">
+      <Pelotonbalk seizoen={"’26-’27"} items={BALK} selectedId={gekozen} onSelect={setGekozen} />
+    </div>
+  );
+}
+
+const GESLOTEN_BASIS: Omit<PloegSamenstellenGeslotenProps, "reden" | "eigen"> = {
   gameNaam: "Meermarathon Mannen",
   label: "Mannen",
   volgwagenPad: "/mijn-peloton?tab=team",
   uitslagenPad: "/uitslagen",
-  onAlternatief: () => {},
 };
 
 export default function Scherm2Demo() {
   return (
     <div className="flex flex-col gap-10">
       <div className="flex flex-wrap items-start gap-6">
-        <Mobiel titel="02a · Mannen, ploeg 3/5">
-          <DemoBouwer start={{ gekozen: DRIE, naam: "De Klapschaatsers" }} />
+        <Mobiel titel="02a · Nieuw: nog nergens mee">
+          <DemoBouwer />
+        </Mobiel>
+        <Mobiel titel="Vrouwen 3/5 · mannen niet (niet verplicht)" hoogte={1000}>
+          <DemoBouwer vrouwen={{ gekozen: V_DRIE, naam: "De Klapschaatsers" }} />
+        </Mobiel>
+        <Mobiel titel="Allebei: vrouwen 5/5, mannen 3/5" hoogte={1000}>
+          <DemoBouwer
+            vrouwen={{ gekozen: V_VIJF, naam: "De Klapschaatsers" }}
+            mannen={{ gekozen: M_DRIE, naam: "De Klapschaatsers" }}
+          />
+        </Mobiel>
+        <Mobiel titel="Allebei compleet: één knop bevestigt beide" hoogte={1000}>
+          <DemoBouwer
+            vrouwen={{ gekozen: V_VIJF, naam: "De Klapschaatsers" }}
+            mannen={{ gekozen: M_VIJF, naam: "De Klapschaatsers", voorspeld: { cup: "gerben" } }}
+          />
+        </Mobiel>
+        <Mobiel titel="Vrouwen ingeschreven · mannen erbij" hoogte={1000}>
+          <DemoBouwer vrouwen={{ gekozen: V_VIJF, naam: "De Klapschaatsers", ingediend: true }} mannen={{}} />
+        </Mobiel>
+        <Mobiel titel="Allebei ingeschreven">
+          <DemoBouwer
+            vrouwen={{ gekozen: V_VIJF, naam: "De Klapschaatsers", ingediend: true }}
+            mannen={{ gekozen: M_VIJF, naam: "De Klapschaatsers", ingediend: true }}
+          />
+        </Mobiel>
+        <Mobiel titel="Na Aanpassen: vrouwen weer concept" hoogte={1000}>
+          <DemoBouwer
+            vrouwen={{ gekozen: V_VIJF, naam: "De Klapschaatsers", heropend: true }}
+            mannen={{ gekozen: M_VIJF, naam: "De Klapschaatsers", ingediend: true }}
+          />
+        </Mobiel>
+        <Mobiel titel="Mannen gesloten, vrouwen open" hoogte={1000}>
+          <DemoBouwer vrouwen={{ gekozen: V_DRIE }} mannen={{ gesloten: "gesloten" }} />
+        </Mobiel>
+        <Mobiel titel="Niet ingelogd">
+          <DemoBouwer vrouwen={{}} ingelogd={false} />
         </Mobiel>
         <Mobiel titel="Lade: kiezen in een categorie" hoogte={640}>
           <LadeInhoud />
         </Mobiel>
-        <Mobiel titel="5/5 compleet, nog niet bevestigd">
-          <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers" }} />
-        </Mobiel>
-        <Mobiel titel="Ingeschreven · pronostiek blijft te wijzigen">
-          <DemoBouwer
-            start={{ gekozen: VIJF, naam: "De Klapschaatsers", ingediend: true, voorspeld: { cup: "gerben" } }}
-          />
-        </Mobiel>
-        <Mobiel titel="Ingeschreven · koos ook de vrouwen: knop wijst door">
-          <DemoBouwer
-            start={{ gekozen: VIJF, naam: "De Klapschaatsers", ingediend: true, volgende: "Vrouwen" }}
-          />
-        </Mobiel>
-        <Mobiel titel="Na Aanpassen: weer concept">
-          <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers", heropend: true }} />
-        </Mobiel>
-        <Mobiel titel="Niet ingelogd">
-          <DemoBouwer start={{ ingelogd: false }} />
-        </Mobiel>
-        <Mobiel titel="Gesloten, je doet mee" hoogte={620}>
+        <Mobiel titel="Alles gesloten, je doet mee" hoogte={620}>
           <PloegSamenstellenGesloten
             {...GESLOTEN_BASIS}
-            pelotonbalk={<DemoBalk stand={{ soort: "meedoen", regel: "48e van 986" }} />}
+            pelotonbalk={<DemoBalk />}
             reden="gesloten"
             eigen={{ fase: "ingeschreven", ploegnaam: "De Klapschaatsers" }}
-            alternatief={null}
-          />
-        </Mobiel>
-        <Mobiel titel="Gesloten, niet meegedaan · Vrouwen wel open" hoogte={620}>
-          <PloegSamenstellenGesloten
-            {...GESLOTEN_BASIS}
-            pelotonbalk={<DemoBalk stand={{ soort: "meekijken", regel: "Meekijken" }} />}
-            reden="gesloten"
-            eigen={{ fase: "niet-ingeschreven", ploegnaam: null }}
-            alternatief={{ id: "v", label: "Vrouwen" }}
           />
         </Mobiel>
         <Mobiel titel="Nog niet open" hoogte={620}>
-          <PloegSamenstellenGesloten
-            {...GESLOTEN_BASIS}
-            pelotonbalk={<DemoBalk stand={{ soort: "meekijken", regel: "Meekijken" }} />}
-            reden="nog-niet-open"
-            eigen={null}
-            alternatief={null}
-          />
+          <PloegSamenstellenGesloten {...GESLOTEN_BASIS} pelotonbalk={<DemoBalk />} reden="nog-niet-open" eigen={null} />
         </Mobiel>
         <Mobiel titel="Laden" hoogte={620}>
-          <PloegSamenstellenLaden pelotonbalk={<DemoBalk />} />
+          <PloegSamenstellenLaden />
         </Mobiel>
       </div>
 
-      <Desktop titel="02b · Desktop, Mannen 3/5">
-        <DemoBouwer start={{ gekozen: DRIE, naam: "De Klapschaatsers" }} />
+      <Desktop titel="02b · Desktop, vrouwen 3/5 · mannen niet">
+        <DemoBouwer vrouwen={{ gekozen: V_DRIE, naam: "De Klapschaatsers" }} />
       </Desktop>
-      <Desktop titel="Desktop · 5/5 compleet, nog niet bevestigd">
-        <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers" }} />
-      </Desktop>
-      <Desktop titel="Desktop · ingeschreven">
-        <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers", ingediend: true }} />
-      </Desktop>
-      <Desktop titel="Desktop · ingeschreven, koos ook de vrouwen">
+      <Desktop titel="Desktop · allebei: vrouwen 5/5, mannen 3/5">
         <DemoBouwer
-          start={{ gekozen: VIJF, naam: "De Klapschaatsers", ingediend: true, volgende: "Vrouwen" }}
+          vrouwen={{ gekozen: V_VIJF, naam: "De Klapschaatsers" }}
+          mannen={{ gekozen: M_DRIE, naam: "De Klapschaatsers" }}
         />
       </Desktop>
-      <Desktop titel="Desktop · gesloten">
-        <PloegSamenstellenGesloten
-          {...GESLOTEN_BASIS}
-          pelotonbalk={<DemoBalk />}
-          reden="gesloten"
-          eigen={{ fase: "onvolledig", ploegnaam: null }}
-          alternatief={{ id: "v", label: "Vrouwen" }}
+      <Desktop titel="Desktop · nieuw: nog nergens mee">
+        <DemoBouwer />
+      </Desktop>
+      <Desktop titel="Desktop · allebei ingeschreven">
+        <DemoBouwer
+          vrouwen={{ gekozen: V_VIJF, naam: "De Klapschaatsers", ingediend: true }}
+          mannen={{ gekozen: M_VIJF, naam: "De Klapschaatsers", ingediend: true }}
         />
       </Desktop>
     </div>

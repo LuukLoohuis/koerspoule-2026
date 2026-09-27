@@ -1,44 +1,56 @@
-// Eén game, twee pelotons. Wie nog nergens een ploeg heeft, kiest eerst waar
-// hij meerijdt; pas daarna start de bouwer. Dat is geen opmaakkwestie: de
-// bouwer maakt bij het openen een entry aan, dus hij mag nooit starten voor
-// een peloton dat je niet koos.
+// Eén game, twee pelotons op één scherm. Meedoen bij allebei mag, maar hoeft
+// niet. Dat is geen opmaakkwestie: useEntry maakt bij het openen een entry
+// aan, dus de data van een peloton mag pas draaien als je daar meerijdt.
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import PloegSamenstellenContainer from "./PloegSamenstellenContainer";
 import { deelnameSleutel } from "@/lib/meermarathonDeelname";
 import { bouwGameStatus, type MeermarathonGameStatus, type MmEntry } from "@/lib/meermarathonSeizoen";
 import type { Game } from "@/hooks/useCurrentGame";
 
+type Cat = {
+  id: string;
+  name: string;
+  max_picks: number;
+  category_riders: { rider_id: string; riders: { id: string; name: string; start_number: number | null; team_id: string | null } }[];
+};
+
 const staat = vi.hoisted(() => ({
   auth: { user: { id: "u1" } as { id: string } | null, role: "user", loading: false },
   gekozenId: "v" as string | null,
+  games: [] as unknown[],
   statussen: [] as unknown[],
   seizoenLaadt: false,
-  entry: null as { id: string; status: string } | null,
+  entries: {} as Record<string, { id: string; status: string } | null>,
+  picks: {} as Record<string, [string, string[]][]>,
+  cats: {} as Record<string, unknown[]>,
   kiesGame: vi.fn(),
   useEntry: vi.fn(),
+  submit: vi.fn(),
   startlijst: [] as { id: string; name: string; riders: { id: string; name: string; start_number: number | null }[] }[],
 }));
 
 vi.mock("@/hooks/useAuth", () => ({ useAuth: () => staat.auth }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: vi.fn() }) }));
 vi.mock("@/lib/posthog", () => ({ captureEvent: vi.fn(), captureException: vi.fn() }));
-vi.mock("@/hooks/useCategories", () => ({ useCategories: () => ({ data: [], isLoading: false, isError: false }) }));
+vi.mock("@/hooks/useCategories", () => ({
+  useCategories: (gameId?: string) => ({ data: gameId ? (staat.cats[gameId] ?? []) : [], isLoading: false, isError: false }),
+}));
 vi.mock("@/hooks/useStartlist", () => ({ useStartlist: () => ({ data: staat.startlijst, isLoading: false }) }));
 vi.mock("@/components/meermarathon/Pelotonbalk", () => ({ default: () => <div data-testid="pelotonbalk" /> }));
 vi.mock("@/context/SelectedGameContext", () => ({
   useSelectedGame: () => ({
     selectedGameId: staat.gekozenId,
-    selectedGame: GAMES.find((g) => g.id === staat.gekozenId) ?? null,
+    selectedGame: (staat.games as Game[]).find((g) => g.id === staat.gekozenId) ?? null,
     setSelectedGameId: staat.kiesGame,
-    games: GAMES,
+    games: staat.games,
     loading: false,
   }),
 }));
 vi.mock("@/hooks/useMeermarathonSeizoen", () => ({
   useMeermarathonSeizoen: () => ({
-    seizoen: GAMES,
+    seizoen: staat.games,
     statussen: staat.statussen,
     isLoading: staat.seizoenLaadt,
     error: null,
@@ -46,21 +58,21 @@ vi.mock("@/hooks/useMeermarathonSeizoen", () => ({
 }));
 vi.mock("@/hooks/useEntry", () => ({
   entryErrorMessage: () => "fout",
-  useEntry: (gameId: string) => {
+  useEntry: (gameId?: string) => {
     staat.useEntry(gameId);
-    const mutatie = { mutateAsync: vi.fn(), isPending: false };
+    const mutatie = { mutateAsync: vi.fn(async () => undefined), isPending: false };
     return {
-      entry: staat.entry,
+      entry: gameId ? (staat.entries[gameId] ?? null) : null,
       isLoading: false,
       isError: false,
-      picksByCategory: new Map(),
+      picksByCategory: new Map(gameId ? (staat.picks[gameId] ?? []) : []),
       predictions: [],
       teamName: "",
       savePick: mutatie,
       togglePick: mutatie,
       savePredictions: mutatie,
       saveTeamName: mutatie,
-      submitEntry: mutatie,
+      submitEntry: { mutateAsync: staat.submit, isPending: false },
       revertEntry: mutatie,
     };
   },
@@ -74,30 +86,40 @@ const game = (id: "v" | "m", status: Game["status"] = "open_inschrijving"): Game
   game_type: "meermarathon",
   categorie: id === "v" ? "vrouwen" : "mannen",
 });
-const GAMES = [game("v"), game("m")];
 
-const peloton = (id: "v" | "m", entry: MmEntry | null = null): MeermarathonGameStatus =>
+const peloton = (id: "v" | "m", entry: MmEntry | null = null, status = "open_inschrijving"): MeermarathonGameStatus =>
   bouwGameStatus({
     game: {
       id,
       name: `Meermarathon ${id}`,
       year: 2026,
-      status: "open_inschrijving",
+      status,
       game_type: "meermarathon",
       categorie: id === "v" ? "vrouwen" : "mannen",
       registration_closes_at: null,
     },
     entry,
-    vereist: 5,
+    vereist: 1,
     wedstrijden: [],
     klassement: null,
     puntenPerWedstrijd: new Map(),
     vandaag: "2026-10-01",
   });
 
-const ingediend: MmEntry = { id: "e-v", status: "submitted", teamName: "X", picks: 5 };
-const half: MmEntry = { id: "e-v", status: "draft", teamName: null, picks: 3 };
+/** Eén categorie met één rijder: kies je die, dan is de ploeg compleet. */
+const categorie = (id: "v" | "m"): Cat => ({
+  id: `c-${id}`,
+  name: "Toppers",
+  max_picks: 1,
+  category_riders: [{ rider_id: `r-${id}`, riders: { id: `r-${id}`, name: `Rijder ${id}`, start_number: 1, team_id: null } }],
+});
+
+const ingediend: MmEntry = { id: "e-v", status: "submitted", teamName: "X", picks: 1 };
+const half: MmEntry = { id: "e-v", status: "draft", teamName: null, picks: 1 };
 const SLEUTEL = deelnameSleutel("u1", 2026);
+
+/** Voor welke games de data draait (useEntry zonder id haalt niets op). */
+const geopend = () => [...new Set(staat.useEntry.mock.calls.map((c) => c[0]).filter(Boolean))];
 
 function toon(huidig: "v" | "m" = "v") {
   return render(
@@ -111,19 +133,27 @@ beforeEach(() => {
   window.localStorage.clear();
   staat.auth = { user: { id: "u1" }, role: "user", loading: false };
   staat.gekozenId = "v";
+  staat.games = [game("v"), game("m")];
   staat.statussen = [peloton("v"), peloton("m")];
   staat.seizoenLaadt = false;
-  staat.entry = null;
+  staat.entries = {};
+  staat.picks = {};
+  staat.cats = {};
   staat.kiesGame.mockClear();
   staat.useEntry.mockClear();
+  staat.submit.mockReset();
+  staat.submit.mockResolvedValue(undefined);
   staat.startlijst = [];
 });
 
-describe("waar rijd je mee", () => {
-  it("vraagt het eerst, en start de bouwer nog niet", () => {
+describe("vrouwen en mannen op één scherm", () => {
+  it("toont allebei, en haalt niets op zolang je nergens meerijdt", () => {
     toon();
-    expect(screen.getByRole("heading", { name: "Waar rijd je mee?" })).toBeInTheDocument();
-    expect(staat.useEntry).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "Stel je ploegen samen" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Doe mee bij de vrouwen" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Doe mee bij de mannen" })).toBeInTheDocument();
+    expect(geopend()).toEqual([]);
+    // De pelotonbalk hoort hier niet: je ziet ze allebei al.
     expect(screen.queryByTestId("pelotonbalk")).not.toBeInTheDocument();
   });
 
@@ -131,49 +161,104 @@ describe("waar rijd je mee", () => {
     staat.seizoenLaadt = true;
     staat.statussen = [];
     toon();
-    expect(screen.queryByRole("heading", { name: "Waar rijd je mee?" })).not.toBeInTheDocument();
-    expect(staat.useEntry).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /Doe mee/ })).not.toBeInTheDocument();
+    expect(geopend()).toEqual([]);
   });
 
-  it("bewaart de keuze en start daarna de bouwer", () => {
+  it("start alleen het peloton waar je op meedoen tikt", () => {
     toon();
-    fireEvent.click(screen.getByRole("button", { name: "Stel je ploegen samen" }));
-    expect(JSON.parse(window.localStorage.getItem(SLEUTEL) ?? "null")).toEqual(["v", "m"]);
-    expect(screen.getByRole("heading", { name: "Stel je ploeg samen" })).toBeInTheDocument();
-    expect(staat.useEntry).toHaveBeenCalledWith("v");
+    fireEvent.click(screen.getByRole("button", { name: "Doe mee bij de vrouwen" }));
+    expect(JSON.parse(window.localStorage.getItem(SLEUTEL) ?? "null")).toEqual(["v"]);
+    expect(geopend()).toEqual(["v"]);
+    // De mannen blijven een uitnodiging: niet verplicht.
+    expect(screen.getByRole("button", { name: "Doe ook mee bij de mannen" })).toBeInTheDocument();
     expect(staat.kiesGame).not.toHaveBeenCalled();
   });
 
-  it("start geen bouwer voor een peloton dat je niet koos", () => {
-    toon("v");
-    fireEvent.click(screen.getByRole("button", { name: /^Vrouwen/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Stel je mannenploeg samen" }));
-    expect(JSON.parse(window.localStorage.getItem(SLEUTEL) ?? "null")).toEqual(["m"]);
-    expect(staat.kiesGame).toHaveBeenCalledWith("m");
-    // De game wisselt nog: tot die tijd geen entry bij de vrouwen.
-    expect(staat.useEntry).not.toHaveBeenCalled();
+  it("bouwt aan allebei tegelijk", () => {
+    toon();
+    fireEvent.click(screen.getByRole("button", { name: "Doe mee bij de mannen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Doe ook mee bij de vrouwen" }));
+    // Vrouwen voorop, in welke volgorde je ook tikte.
+    expect(JSON.parse(window.localStorage.getItem(SLEUTEL) ?? "null")).toEqual(["v", "m"]);
+    expect(geopend().sort()).toEqual(["m", "v"]);
+    expect(screen.queryByRole("button", { name: /Doe (ook )?mee/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("textbox", { name: "Ploegnaam" })).toHaveLength(2);
   });
 
-  it("slaat de vraag over voor wie al een ploeg heeft", () => {
+  it("start meteen bij het peloton waar je al een ploeg hebt", () => {
     staat.statussen = [peloton("v", half), peloton("m")];
     toon();
-    expect(screen.queryByRole("heading", { name: "Waar rijd je mee?" })).not.toBeInTheDocument();
-    expect(staat.useEntry).toHaveBeenCalledWith("v");
+    expect(geopend()).toEqual(["v"]);
+    expect(screen.getByRole("button", { name: "Doe ook mee bij de mannen" })).toBeInTheDocument();
   });
 
-  it("slaat de vraag over voor wie al koos", () => {
-    window.localStorage.setItem(SLEUTEL, JSON.stringify(["v"]));
-    toon();
-    expect(screen.queryByRole("heading", { name: "Waar rijd je mee?" })).not.toBeInTheDocument();
-    expect(staat.useEntry).toHaveBeenCalledWith("v");
-  });
-
-  it("neemt de keuze van een gast mee na het inloggen", () => {
+  it("onthoudt waar je meerijdt, ook de keuze van een gast na het inloggen", () => {
     window.localStorage.setItem(deelnameSleutel(null, 2026), JSON.stringify(["m"]));
     staat.gekozenId = "m";
     toon("m");
-    expect(screen.queryByRole("heading", { name: "Waar rijd je mee?" })).not.toBeInTheDocument();
-    expect(staat.useEntry).toHaveBeenCalledWith("m");
+    expect(geopend()).toEqual(["m"]);
+    expect(screen.getByRole("button", { name: "Doe ook mee bij de vrouwen" })).toBeInTheDocument();
+  });
+
+  it("laat je je bedenken zolang je niets koos", () => {
+    window.localStorage.setItem(SLEUTEL, JSON.stringify(["v", "m"]));
+    toon();
+    fireEvent.click(screen.getAllByRole("button", { name: "Toch niet meedoen" })[1]);
+    expect(JSON.parse(window.localStorage.getItem(SLEUTEL) ?? "null")).toEqual(["v"]);
+    expect(screen.getByRole("button", { name: "Doe ook mee bij de mannen" })).toBeInTheDocument();
+  });
+
+  it("start geen data voor een gesloten peloton", () => {
+    window.localStorage.setItem(SLEUTEL, JSON.stringify(["v", "m"]));
+    staat.games = [game("v"), game("m", "locked")];
+    staat.statussen = [peloton("v"), peloton("m", null, "locked")];
+    toon();
+    expect(geopend()).toEqual(["v"]);
+    expect(screen.getByText("Gesloten")).toBeInTheDocument();
+  });
+
+  it("toont de gesloten pagina als niets meer openstaat", () => {
+    staat.games = [game("v", "locked"), game("m", "locked")];
+    staat.statussen = [peloton("v", null, "locked"), peloton("m", null, "locked")];
+    toon();
+    expect(screen.getByRole("heading", { name: "De inschrijving is gesloten" })).toBeInTheDocument();
+    expect(geopend()).toEqual([]);
+  });
+});
+
+describe("bevestigen", () => {
+  beforeEach(() => {
+    window.localStorage.setItem(SLEUTEL, JSON.stringify(["v", "m"]));
+    staat.cats = { v: [categorie("v")], m: [categorie("m")] };
+    staat.entries = { v: { id: "e-v", status: "draft" }, m: { id: "e-m", status: "draft" } };
+  });
+
+  it("bevestigt beide complete ploegen met één knop", async () => {
+    staat.picks = { v: [["c-v", ["r-v"]]], m: [["c-m", ["r-m"]]] };
+    toon();
+    fireEvent.click(screen.getAllByRole("button", { name: "Beide ploegen bevestigen" })[0]);
+    await waitFor(() => expect(staat.submit).toHaveBeenCalledTimes(2));
+    expect(staat.submit).toHaveBeenCalledWith({ entryId: "e-v" });
+    expect(staat.submit).toHaveBeenCalledWith({ entryId: "e-m" });
+  });
+
+  it("een onvolledige mannenploeg houdt de vrouwen niet tegen", async () => {
+    staat.picks = { v: [["c-v", ["r-v"]]] };
+    toon();
+    fireEvent.click(screen.getAllByRole("button", { name: "Vrouwenploeg bevestigen" })[0]);
+    await waitFor(() => expect(staat.submit).toHaveBeenCalledTimes(1));
+    expect(staat.submit).toHaveBeenCalledWith({ entryId: "e-v" });
+  });
+
+  it("stuurt naar de Volgwagen als alles bevestigd is", () => {
+    staat.picks = { v: [["c-v", ["r-v"]]], m: [["c-m", ["r-m"]]] };
+    staat.entries = { v: { id: "e-v", status: "submitted" }, m: { id: "e-m", status: "submitted" } };
+    staat.statussen = [peloton("v", ingediend), peloton("m", { ...ingediend, id: "e-m" })];
+    toon();
+    expect(screen.getAllByRole("link", { name: "Naar je Volgwagen" }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Vrouwenploeg aanpassen" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Mannenploeg aanpassen" })).toBeInTheDocument();
   });
 });
 
@@ -184,31 +269,7 @@ describe("jokers", () => {
     // geen categorie staan. De Meermarathon kent geen jokers.
     staat.startlijst = [{ id: "t1", name: "Schaatsteam West", riders: [{ id: "los", name: "Losse Rijder", start_number: 51 }] }];
     toon();
-    expect(screen.getByRole("heading", { name: "Stel je ploeg samen" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Stel je ploegen samen" })).toBeInTheDocument();
     expect(screen.queryByText(/joker/i)).not.toBeInTheDocument();
-  });
-});
-
-describe("na het bevestigen", () => {
-  it("wijst door naar het andere peloton dat je ook koos", () => {
-    window.localStorage.setItem(SLEUTEL, JSON.stringify(["v", "m"]));
-    staat.statussen = [peloton("v", ingediend), peloton("m")];
-    staat.entry = { id: "e-v", status: "submitted" };
-    toon();
-    // Mobiel en desktop hebben elk hun eigen knop.
-    const knoppen = screen.getAllByRole("button", { name: "Nu de mannen" });
-    expect(knoppen.length).toBeGreaterThan(0);
-    expect(screen.queryByRole("link", { name: "Naar je Volgwagen" })).not.toBeInTheDocument();
-    fireEvent.click(knoppen[0]);
-    expect(staat.kiesGame).toHaveBeenCalledWith("m");
-  });
-
-  it("stuurt naar de Volgwagen als er niets meer openstaat", () => {
-    window.localStorage.setItem(SLEUTEL, JSON.stringify(["v"]));
-    staat.statussen = [peloton("v", ingediend), peloton("m")];
-    staat.entry = { id: "e-v", status: "submitted" };
-    toon();
-    expect(screen.queryByRole("button", { name: "Nu de mannen" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "Naar je Volgwagen" }).length).toBeGreaterThan(0);
   });
 });
