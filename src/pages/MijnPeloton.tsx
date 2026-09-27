@@ -33,7 +33,6 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import GameSwitcher from "@/components/GameSwitcher";
 import MeermarathonPelotonbalk from "@/components/meermarathon/Pelotonbalk";
-import MijnMeermarathon from "@/components/meermarathon/MijnMeermarathon";
 import { isFinishedLike, isGameLocked, isVisibleToUser, maySeeLiveContent } from "@/lib/gameStatus";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
@@ -222,8 +221,9 @@ export default function MijnPeloton() {
   };
   const teamBarVisible = useAutoHideOnScroll();
   // Krant C en Ploeg C zijn de telefoonschermen uit docs/design/krant-ploeg-c;
-  // op de webversie blijven de bestaande panelen staan. De Meermarathon heeft
-  // zijn eigen handoff en houdt zijn eigen schermen op beide.
+  // op de webversie blijven de bestaande panelen staan. De Meermarathon krijgt
+  // op beide dezelfde schermen als de wielergames, in schaatswoorden en per
+  // peloton (de pelotonbalk erboven kiest vrouwen of mannen).
   const isMobiel = useIsMobileSync();
   const [horsTab, setHorsTab] = useState<"dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark" | undefined>(undefined);
   const openHors = (tab: "dartpijl" | "pelotonkeuzes" | "wielerdirecteur" | "superteam" | "benchmark") => {
@@ -265,12 +265,13 @@ export default function MijnPeloton() {
   /* ── Main overview ── */
   const hasTeamName = Boolean(teamName?.trim());
 
-  // De Krant toont beide pelotons tegelijk; daar geen pelotonbalk.
+  // Krant en Volgwagen gaan per peloton, net als de rest; de pelotonbalk
+  // staat dus op elke tab.
   const isMeermarathonGekozen = isMeermarathonGame(selectedGameObj?.game_type);
   const andereKoersLoopt = allGamesCtx.some(
     (g) => !isMeermarathonGame(g.game_type) && isVisibleToUser(g.status, isAdmin) && !isFinishedLike(g.status),
   );
-  const toonPelotonbalk = isMeermarathonGekozen && gameTab !== "karavaan";
+  const toonPelotonbalk = isMeermarathonGekozen;
 
   // De zijkolom bestaat alleen zolang er iets in staat; anders zou er op
   // desktop een lege kolom van 268px blijven hangen.
@@ -297,7 +298,7 @@ export default function MijnPeloton() {
 
       {/* 2. Compact masthead. Krant C en Ploeg C beginnen direct onder de kop
           van de site, zoals in de handoff; daar valt dit tussenkopje weg. */}
-      {!(isMobiel && !isMeermarathonGekozen && (gameTab === "karavaan" || gameTab === "team")) && (
+      {!(isMobiel && (gameTab === "karavaan" || gameTab === "team")) && (
       <div className="relative mb-3 md:mb-6">
         <div className="flex flex-col items-center text-center gap-1 md:gap-2">
           <span className="overline-stamp">— Bulletin du Peloton —</span>
@@ -527,19 +528,7 @@ export default function MijnPeloton() {
           <TabsContent value="karavaan" className="mt-3" data-rondleiding-doel="karavaan-inhoud">
             {/* StatusBlok verwijderd: de standbalk onderin de voorpagina toont
                 dezelfde cijfers, en twee keer je positie boven elkaar is dubbel. */}
-            {isMeermarathonGekozen && (
-              <MijnMeermarathon
-                onNaarVolgwagen={(id) => {
-                  setSelectedGameId(id);
-                  gaNaarTab("team");
-                }}
-                onRondkijken={(id) => {
-                  setSelectedGameId(id);
-                  gaNaarTab("uitslagen");
-                }}
-              />
-            )}
-            {isMobiel && !isMeermarathonGekozen ? (
+            {isMobiel ? (
               <KrantC
                 gameId={selectedGameObj?.id}
                 gameStatus={selectedGameObj?.status}
@@ -572,8 +561,9 @@ export default function MijnPeloton() {
                   !teamBarVisible && "max-h-0! mb-0! opacity-0",
                 )}
               >
-                {isMobiel && !isMeermarathonGekozen ? (
-                  // Ploeg C: drie brede segmenten van 40px, zonder iconen.
+                {isMobiel ? (
+                  // Ploeg C: brede segmenten van 40px, zonder iconen (drie,
+                  // en vier bij de Meermarathon met Live).
                   <RetroTabs
                     variant="segment"
                     gelijkeBreedte
@@ -616,10 +606,10 @@ export default function MijnPeloton() {
                 onSwiped={teamHint.dismiss}
                 renderTab={(k) => (
                   <>
-                    {k === "ploeg" && isMobiel && !isMeermarathonGekozen && (
-                      <PloegC gameId={selectedGameObj?.id} focusNameSignal={focusNameSeq} />
+                    {k === "ploeg" && isMobiel && (
+                      <PloegC gameId={selectedGameObj?.id} focusNameSignal={focusNameSeq} meermarathon={isMeermarathonGekozen} />
                     )}
-                    {k === "ploeg" && !(isMobiel && !isMeermarathonGekozen) && (
+                    {k === "ploeg" && !isMobiel && (
                       <div className="space-y-3">
                         {/* Ploegnaam-editor zit nu in het Salle-de-Course-dashboard
                             binnen MyTeamPanel (Zone 1-nudge). */}
@@ -632,10 +622,17 @@ export default function MijnPeloton() {
                     {/* Op een telefoon het lichte paneel: als buur in de veegcarrousel
                         mount MyTeamPanel anders koud met al zijn queries en de
                         Hors-simulatie, en hapert de veeg. */}
-                    {k === "prono" && isMobiel && !isMeermarathonGekozen && (
-                      <PronostiekPanel gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} />
+                    {/* De Meermarathon ook op de webversie: de schaatspronostiek
+                        (Cup- en Grand Prix-winnaar) kent alleen dit paneel. */}
+                    {k === "prono" && (isMobiel || isMeermarathonGekozen) && (
+                      <PronostiekPanel
+                        gameId={selectedGameObj?.id}
+                        gameStatus={selectedGameObj?.status}
+                        gameName={selectedGameObj?.name}
+                        meermarathon={isMeermarathonGekozen}
+                      />
                     )}
-                    {k === "prono" && !(isMobiel && !isMeermarathonGekozen) && (
+                    {k === "prono" && !isMobiel && !isMeermarathonGekozen && (
                       <MyTeamPanel section="prono" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} gameType={selectedGameObj?.game_type} gameCategorie={selectedGameObj?.categorie} />
                     )}
                     {k === "palmares" && <PalmaresPanel />}

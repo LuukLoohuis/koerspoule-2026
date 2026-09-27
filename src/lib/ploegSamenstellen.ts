@@ -28,10 +28,39 @@ export type PsCategorie = {
 /** categorie-id → gekozen rijder-ids. */
 export type PsGekozen = ReadonlyMap<string, readonly string[]>;
 
-/** Waarvoor de kiezer openstaat: een plek in een categorie, of een joker. */
+/** Pronostiek: de winnaar van het Cup- of het Grand Prix-klassement. */
+export type Klassement = "cup" | "grandprix";
+
+/** Waarvoor de kiezer openstaat: een plek in een categorie, een joker of een voorspelling. */
 export type KiesDoel =
   | { soort: "categorie"; categorieId: string; plek: number }
-  | { soort: "joker"; plek: number };
+  | { soort: "joker"; plek: number }
+  | { soort: "voorspelling"; klassement: Klassement };
+
+/** Per klassement de voorspelde rijder-id, of null. */
+export type PsVoorspellingen = Record<Klassement, string | null>;
+
+/**
+ * De voorspellingen na één keuze: de oude van dat klassement eruit, de nieuwe
+ * erin (of niets bij weghalen). Voorspellingen van een ander soort blijven
+ * staan; save_entry_predictions vervangt de hele lijst.
+ */
+export function voorspellingenNa<P extends { classification: string; position: number; rider_id: string }>(
+  huidig: readonly P[],
+  klassement: Klassement,
+  rijderId: string | null,
+): Array<{ classification: Klassement | P["classification"]; position: number; rider_id: string }> {
+  const rest = huidig
+    .filter((p) => p.classification !== klassement)
+    .map((p) => ({ classification: p.classification, position: p.position, rider_id: p.rider_id }));
+  return rijderId ? [...rest, { classification: klassement, position: 1, rider_id: rijderId }] : rest;
+}
+
+/** Wat er per klassement voorspeld is, uit de rijen van entry_predictions. */
+export function leesVoorspellingen(rijen: ReadonlyArray<{ classification: string; position: number; rider_id: string }>): PsVoorspellingen {
+  const van = (k: Klassement) => rijen.find((p) => p.classification === k && p.position === 1)?.rider_id ?? null;
+  return { cup: van("cup"), grandprix: van("grandprix") };
+}
 
 export type PsSlot = {
   /** Stabiele sleutel, ook bruikbaar als React-key. */
@@ -45,6 +74,7 @@ export type PsSlot = {
 };
 
 export function doelSleutel(doel: KiesDoel): string {
+  if (doel.soort === "voorspelling") return `voorspelling:${doel.klassement}`;
   return doel.soort === "joker" ? `joker:${doel.plek}` : `${doel.categorieId}:${doel.plek}`;
 }
 

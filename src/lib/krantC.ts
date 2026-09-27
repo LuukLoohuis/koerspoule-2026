@@ -3,6 +3,39 @@
  * zodat de keuzes (wie staat in het podium, welke rit is "morgen") te
  * toetsen zijn zonder een feed op te tuigen.
  */
+import { meermarathonStageLabel } from "@/lib/gameTypes";
+
+/**
+ * Hoe een rit heet: "Tappa 14" in de woorden van de koers, of bij de
+ * Meermarathon de soort met zijn nummer ("Cup 3", "Grand Prix 5", "ONK").
+ * Een eigen naam van de wedstrijd blijft hier buiten; die komt als plaats
+ * achter de kop, net als bij een etappe.
+ */
+export function ritLabel(
+  rit: { stage_number: number; name?: string | null; wedstrijd_type?: string | null; ijs_type?: string | null },
+  etappeWoord: string,
+  meermarathon: boolean,
+): string {
+  return meermarathon ? meermarathonStageLabel({ ...rit, name: null }) : `${etappeWoord} ${rit.stage_number}`;
+}
+
+/**
+ * De eigen naam van een Meermarathon-wedstrijd ("Veenhoop"), of null als hij
+ * alleen zijn soort en nummer heeft. "Etappe 3" is geen naam: dat vulde het
+ * beheer vroeger zelf in.
+ */
+export function wedstrijdEigenNaam(rit: {
+  stage_number: number;
+  /** stages.name; de karavaan-feed noemt hem stage_name. */
+  name?: string | null;
+  stage_name?: string | null;
+  wedstrijd_type?: string | null;
+  ijs_type?: string | null;
+}): string | null {
+  const metNaam = { ...rit, name: rit.name ?? rit.stage_name ?? null };
+  const naam = meermarathonStageLabel(metNaam);
+  return naam === meermarathonStageLabel({ ...rit, name: null }) ? null : naam;
+}
 
 /** "La Gazzetta" voor de Giro; de andere koersen heten al voluit. */
 export function krantNaam(thema: { krant: string; krantVoluit?: string }): string {

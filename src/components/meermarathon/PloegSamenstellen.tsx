@@ -28,10 +28,13 @@ import {
   type KiesDoel,
   type PsCategorie,
   type PsGekozen,
+  type Klassement,
   type PsRijder,
+  type PsVoorspellingen,
   type SluitReden,
   type Telling,
 } from "@/lib/ploegSamenstellen";
+import { SoortEmbleem } from "@/components/meermarathon/WedstrijdSoort";
 import {
   KandidatenLijst,
   KandidatenTabel,
@@ -55,6 +58,25 @@ export type PsJokers = {
 
 export type PsBezig = "kiezen" | "opslaan" | "bevestigen" | "aanpassen";
 
+export type PsPronostiek = {
+  /** De hele startlijst van dit peloton: iedereen kan het klassement winnen. */
+  rijders: PsRijder[];
+  gekozen: PsVoorspellingen;
+  /**
+   * Los van de ploeg: ook na bevestigen te wijzigen zolang de inschrijving
+   * open is (save_entry_predictions kijkt alleen naar de status van de game).
+   * Zo hoeft niemand zijn ploeg terug naar concept te zetten voor een
+   * voorspelling.
+   */
+  wijzigbaar: boolean;
+};
+
+/** De twee klassementen van de pronostiek, in de volgorde van het scherm. */
+const KLASSEMENTEN: ReadonlyArray<{ key: Klassement; label: string; ondergrond: string }> = [
+  { key: "cup", label: "Cup-klassement", ondergrond: "kunstijs" },
+  { key: "grandprix", label: "Grand Prix-klassement", ondergrond: "natuurijs" },
+];
+
 export type PloegSamenstellenProps = {
   /** "Meermarathon Mannen" */
   gameNaam: string;
@@ -62,6 +84,8 @@ export type PloegSamenstellenProps = {
   gekozen: PsGekozen;
   /** null: geen jokerkeuze (niemand op de startlijst buiten de categorieën). */
   jokers: PsJokers | null;
+  /** Pronostiek: de winnaars van het Cup- en het Grand Prix-klassement. */
+  pronostiek?: PsPronostiek | null;
   ploegnaam: string;
   /** Staat de ploegnaam zoals hij hier staat ook in de database? */
   ploegnaamBewaard: boolean;
@@ -174,6 +198,7 @@ function SlotRij({
   leegTekst,
   actief,
   wijzigbaar,
+  icoon,
   onKies,
 }: {
   label: string;
@@ -181,6 +206,8 @@ function SlotRij({
   leegTekst: string;
   actief: boolean;
   wijzigbaar: boolean;
+  /** Embleem vóór de plek (de pronostiek); de categorieën hebben er geen. */
+  icoon?: ReactNode;
   onKies: () => void;
 }) {
   if (rijder) {
@@ -188,9 +215,11 @@ function SlotRij({
       <li
         className={cn(
           "flex min-h-[62px] items-center gap-2 border-b border-border py-2 pl-3.5 pr-1 last:border-b-0",
+          icoon && "gap-3",
           actief && ACTIEF,
         )}
       >
+        {icoon}
         <div className="flex min-w-0 flex-1 flex-col">
           <span className={SLOT_LABEL}>{label}</span>
           <span className="truncate text-[15px] font-bold">{rijder.naam}</span>
@@ -215,9 +244,12 @@ function SlotRij({
   }
   if (!wijzigbaar) {
     return (
-      <li className="flex min-h-[58px] flex-col justify-center border-b border-border px-3.5 py-2 last:border-b-0">
-        <span className={SLOT_LABEL}>{label}</span>
-        <span className="text-[15px] text-muted-foreground">Niet gekozen</span>
+      <li className="flex min-h-[58px] items-center gap-3 border-b border-border px-3.5 py-2 last:border-b-0">
+        {icoon}
+        <span className="flex min-w-0 flex-col">
+          <span className={SLOT_LABEL}>{label}</span>
+          <span className="text-[15px] text-muted-foreground">Niet gekozen</span>
+        </span>
       </li>
     );
   }
@@ -229,13 +261,16 @@ function SlotRij({
         aria-current={actief ? "true" : undefined}
         aria-label={`${leegTekst} voor ${label}`}
         className={cn(
-          "flex min-h-[58px] w-full flex-col items-start justify-center px-3.5 py-2 text-left text-primary hover:bg-secondary/60",
+          "flex min-h-[58px] w-full items-center gap-3 px-3.5 py-2 text-left text-primary hover:bg-secondary/60",
           FOCUS,
           actief && ACTIEF,
         )}
       >
-        <span className={SLOT_LABEL}>{label}</span>
-        <span className="text-[15px] font-bold">+ {leegTekst}</span>
+        {icoon}
+        <span className="flex min-w-0 flex-col items-start">
+          <span className={SLOT_LABEL}>{label}</span>
+          <span className="text-[15px] font-bold">+ {leegTekst}</span>
+        </span>
       </button>
     </li>
   );
@@ -397,6 +432,7 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
     categorieen,
     gekozen,
     jokers,
+    pronostiek = null,
     deadline,
     ingelogd,
     ingediend,
@@ -413,6 +449,7 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
   const naamIdBreed = useId();
   const slotsKopId = useId();
   const jokersKopId = useId();
+  const pronoKopId = useId();
 
   const [actief, setActief] = useState<KiesDoel | null>(null);
   const [ladeOpen, setLadeOpen] = useState(false);
@@ -430,6 +467,10 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
   );
 
   const wijzigbaar = !ingediend;
+  const voorspeld = useMemo(() => {
+    const van = (k: Klassement) => pronostiek?.rijders.find((r) => r.id === pronostiek.gekozen[k]) ?? null;
+    return { cup: van("cup"), grandprix: van("grandprix") };
+  }, [pronostiek]);
 
   // Zonder eigen keuze staat de eerste lege plek in de middelste kolom.
   const doel = useMemo<KiesDoel | null>(() => {
@@ -440,6 +481,16 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
 
   const doelInfo = useMemo(() => {
     if (!doel) return null;
+    if (doel.soort === "voorspelling") {
+      if (!pronostiek) return null;
+      const k = KLASSEMENTEN.find((x) => x.key === doel.klassement)!;
+      return {
+        titel: `Winnaar ${k.label}`,
+        rijders: pronostiek.rijders,
+        huidig: voorspeld[doel.klassement],
+        leeg: `Kies wie volgens jou het ${k.label} wint.`,
+      };
+    }
     if (doel.soort === "joker") {
       if (!jokers) return null;
       return {
@@ -457,16 +508,22 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
       huidig: slot.rijder,
       leeg: slot.categorie.max > 1 ? "Kies een rijder voor deze plek." : "Kies één rijder.",
     };
-  }, [doel, jokers, jokerRijders, slots]);
+  }, [doel, jokers, jokerRijders, slots, pronostiek, voorspeld]);
 
   const rijen = useMemo(() => {
     if (!doelInfo) return [];
+    // Een voorspelling mag op elke rijder, ook een uit je eigen ploeg.
     const bezet = new Set<string>();
-    for (const s of slots) if (s.rijder) bezet.add(s.rijder.id);
-    for (const r of jokerRijders) if (r) bezet.add(r.id);
+    if (doel?.soort !== "voorspelling") {
+      for (const s of slots) if (s.rijder) bezet.add(s.rijder.id);
+      for (const r of jokerRijders) if (r) bezet.add(r.id);
+    }
     if (doelInfo.huidig) bezet.delete(doelInfo.huidig.id);
     return kandidaten(doelInfo.rijders, { huidig: doelInfo.huidig?.id ?? null, bezet, zoek });
-  }, [doelInfo, slots, jokerRijders, zoek]);
+  }, [doelInfo, doel?.soort, slots, jokerRijders, zoek]);
+
+  // De ploeg ligt na bevestigen vast, de pronostiek niet.
+  const doelWijzigbaar = doel?.soort === "voorspelling" ? Boolean(pronostiek?.wijzigbaar) : wijzigbaar;
 
   const kiesPlek = (d: KiesDoel) => {
     if (!zelfdeDoel(d, doel)) setZoek("");
@@ -481,7 +538,7 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
   };
 
   const rijActie = {
-    kiesbaar: wijzigbaar,
+    kiesbaar: doelWijzigbaar,
     bezig: bezig === "kiezen",
     huidigeNaam: doelInfo?.huidig?.naam ?? null,
     onKies: (rijderId: string) => {
@@ -635,13 +692,43 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
               </section>
             )}
 
+            {pronostiek && (
+              <section aria-labelledby={pronoKopId} className="retro-border no-hover-lift overflow-hidden bg-card">
+                <div className="border-b border-border px-3.5 py-3">
+                  <h2 id={pronoKopId} className="m-0 text-[15px] font-bold">
+                    Pronostiek <span className="font-normal text-muted-foreground">· optioneel</span>
+                  </h2>
+                  <p className="m-0 mt-0.5 text-[12.5px] leading-snug text-muted-foreground">
+                    Wie wint aan het eind van de winter het klassement? Een rijder uit je eigen ploeg mag ook.
+                  </p>
+                </div>
+                <ul role="list" className="m-0 list-none p-0">
+                  {KLASSEMENTEN.map((k) => {
+                    const d: KiesDoel = { soort: "voorspelling", klassement: k.key };
+                    return (
+                      <SlotRij
+                        key={k.key}
+                        icoon={<SoortEmbleem soort={k.key} maat={28} />}
+                        label={`${k.label} · ${k.ondergrond}`}
+                        rijder={voorspeld[k.key]}
+                        leegTekst="Kies een winnaar"
+                        actief={isActief(d)}
+                        wijzigbaar={pronostiek.wijzigbaar}
+                        onKies={() => kiesPlek(d)}
+                      />
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+
             <p className="mop-card m-0 px-3.5 py-3 text-sm leading-normal">
               {uitleg({ ingediend, deadline, meerPerCategorie })}
             </p>
           </div>
 
           <div className="hidden @5xl:block">
-            {ingediend ? (
+            {ingediend && doel?.soort !== "voorspelling" ? (
               // Na bevestigen valt er niets te kiezen; zeg wat wél kan, en wat
               // Aanpassen kost, vóór iemand erop drukt.
               <section className="retro-border no-hover-lift flex flex-col gap-3 bg-card px-5 py-[18px]">
@@ -713,7 +800,7 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
           onOpenChange={setLadeOpen}
           titel={doelInfo.titel}
           omschrijving={
-            doelInfo.huidig && wijzigbaar
+            doelInfo.huidig && doelWijzigbaar
               ? `Nu gekozen: ${doelInfo.huidig.naam}. Kies een andere rijder of haal de keuze weg.`
               : doelInfo.leeg
           }

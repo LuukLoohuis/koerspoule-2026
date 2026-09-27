@@ -20,6 +20,7 @@ import {
   type KiesDoel,
   type PsCategorie,
   type PsRijder,
+  type PsVoorspellingen,
 } from "@/lib/ploegSamenstellen";
 
 // Vaste deadline zoals in het ontwerp: vrijdag 13 november 2026, 23:59.
@@ -129,7 +130,12 @@ type Start = {
   ingelogd?: boolean;
   /** Koos ook het andere peloton, en daar staat nog geen ploeg. */
   volgende?: string;
+  /** Voorspelde winnaars van het Cup- en het Grand Prix-klassement. */
+  voorspeld?: Partial<PsVoorspellingen>;
 };
+
+// De hele startlijst: iedereen kan het klassement winnen.
+const STARTLIJST: PsRijder[] = [...CATEGORIEEN.flatMap((c) => c.rijders), ...JOKERPOOL];
 
 function DemoBouwer({ start }: { start: Start }) {
   const [gekozen, setGekozen] = useState(() => new Map(start.gekozen ?? []));
@@ -139,10 +145,12 @@ function DemoBouwer({ start }: { start: Start }) {
   const [ingediend, setIngediend] = useState(start.ingediend ?? false);
   const [heropend, setHeropend] = useState(start.heropend ?? false);
   const ingelogd = start.ingelogd ?? true;
+  const [voorspeld, setVoorspeld] = useState<PsVoorspellingen>({ cup: null, grandprix: null, ...start.voorspeld });
 
   const kies = (doel: KiesDoel, rijderId: string) => {
     // Net als in de app: uitgelogd kun je rondkijken, niet kiezen.
     if (!ingelogd) return;
+    if (doel.soort === "voorspelling") return setVoorspeld({ ...voorspeld, [doel.klassement]: rijderId });
     if (doel.soort === "joker") return setJokerIds(jokersNa(jokerIds, doel.plek, rijderId));
     const cat = CATEGORIEEN.find((c) => c.id === doel.categorieId)!;
     const inCat = gekozen.get(cat.id) ?? [];
@@ -155,6 +163,7 @@ function DemoBouwer({ start }: { start: Start }) {
   };
 
   const haalWeg = (doel: KiesDoel) => {
+    if (doel.soort === "voorspelling") return setVoorspeld({ ...voorspeld, [doel.klassement]: null });
     if (doel.soort === "joker") return setJokerIds(jokersNa(jokerIds, doel.plek, null));
     const inCat = gekozen.get(doel.categorieId) ?? [];
     setGekozen(new Map(gekozen).set(doel.categorieId, inCat.filter((_, i) => i !== doel.plek)));
@@ -175,6 +184,7 @@ function DemoBouwer({ start }: { start: Start }) {
       categorieen={CATEGORIEEN}
       gekozen={gekozen}
       jokers={start.jokers === null ? null : { pool: JOKERPOOL, gekozen: jokerIds, vermenigvuldiger: 2 }}
+      pronostiek={{ rijders: STARTLIJST, gekozen: voorspeld, wijzigbaar: ingelogd }}
       ploegnaam={naam}
       ploegnaamBewaard={naam.trim() === bewaard.trim()}
       deadline={DEADLINE}
@@ -282,8 +292,10 @@ export default function Scherm2Demo() {
         <Mobiel titel="Met jokers, 5/5 compleet">
           <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: ["pieter"] }} />
         </Mobiel>
-        <Mobiel titel="Ingeschreven">
-          <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: null, ingediend: true }} />
+        <Mobiel titel="Ingeschreven · pronostiek blijft te wijzigen">
+          <DemoBouwer
+            start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: null, ingediend: true, voorspeld: { cup: "gerben" } }}
+          />
         </Mobiel>
         <Mobiel titel="Ingeschreven · koos ook de vrouwen: knop wijst door">
           <DemoBouwer

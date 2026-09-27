@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { StageTypeIcon } from "@/components/stages/StageIcons";
 import { STAGE_TYPE_COLOR, mapDbTypeToStage } from "@/components/stages/stageBarData";
 import type { RitScore } from "@/lib/ploegRanglijst";
+import { SoortEmbleem } from "@/components/meermarathon/WedstrijdSoort";
 
 const MONO = "font-['JetBrains_Mono',monospace]";
 
@@ -30,6 +31,8 @@ export default function RennerRitten({
   naam,
   ritten,
   gekozenRit,
+  gekozenLabel,
+  meermarathon = false,
   className,
 }: {
   id: string;
@@ -38,9 +41,13 @@ export default function RennerRitten({
   /** Alle ritten tot en met de gekozen rit, oplopend. */
   ritten: RitScore[];
   gekozenRit: number | null;
+  /** Meermarathon: "Cup 3" voor de gekozen wedstrijd. */
+  gekozenLabel?: string;
+  meermarathon?: boolean;
   className?: string;
 }) {
   const { t, i18n } = useTranslation();
+  const ctx = meermarathon ? "mm" : undefined;
   const locale = i18n.language === "en" ? "en-GB" : "nl-NL";
   const fmt = (n: number) => n.toLocaleString(locale);
 
@@ -51,16 +58,16 @@ export default function RennerRitten({
     <div
       id={id}
       role="region"
-      aria-label={t("ploegC.rittenAria", { naam })}
+      aria-label={t("ploegC.rittenAria", { naam, context: ctx })}
       className={cn("mb-2 rounded-md bg-foreground/4 px-2.5 pb-2 pt-2.5", className)}
     >
       <div className="flex items-baseline justify-between gap-2">
         <span className={cn(MONO, "text-[9px] uppercase tracking-[0.14em] text-muted-foreground")}>
-          {t("ploegC.rittenKop")}
+          {t("ploegC.rittenKop", { context: ctx })}
         </span>
         {ritten.length > 0 && (
           <span className="text-[11px] text-muted-foreground">
-            {t("ploegC.rittenGescoord", { aantal: gescoord.length, count: ritten.length })}
+            {t("ploegC.rittenGescoord", { aantal: gescoord.length, count: ritten.length, context: ctx })}
           </span>
         )}
       </div>
@@ -92,7 +99,9 @@ export default function RennerRitten({
 
       {gescoord.length === 0 ? (
         <p className="mt-2 font-serif text-[12.5px] italic text-muted-foreground">
-          {gekozenRit != null ? t("ploegC.geenPunten", { rit: gekozenRit }) : t("ploegC.geenUitslag")}
+          {gekozenRit != null
+            ? t("ploegC.geenPunten", { rit: gekozenLabel ?? gekozenRit, context: ctx })
+            : t("ploegC.geenUitslag")}
         </p>
       ) : (
         <ul className="mt-1.5 flex flex-col">
@@ -103,12 +112,16 @@ export default function RennerRitten({
                 key={r.nummer}
                 className="flex min-h-[30px] items-center gap-2 border-t border-border/70 py-1 text-[12.5px] first:border-t-0"
               >
-                <span className="inline-flex shrink-0" style={{ color: STAGE_TYPE_COLOR[soort] }}>
-                  <StageTypeIcon type={soort} size={14} />
-                </span>
+                {r.soort ? (
+                  <SoortEmbleem soort={r.soort} maat={18} />
+                ) : (
+                  <span className="inline-flex shrink-0" style={{ color: STAGE_TYPE_COLOR[soort] }}>
+                    <StageTypeIcon type={soort} size={14} />
+                  </span>
+                )}
                 <span className="min-w-0 grow truncate">
                   <span className={cn(r.nummer === gekozenRit ? "font-bold" : "font-semibold")}>
-                    {t("ploegC.kolomRit", { rit: r.nummer })}
+                    {r.label ?? t("ploegC.kolomRit", { rit: r.nummer })}
                   </span>
                   {r.naam && <span className="text-muted-foreground"> · {r.naam}</span>}
                 </span>

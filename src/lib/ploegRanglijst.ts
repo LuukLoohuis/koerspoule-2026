@@ -11,6 +11,8 @@
  * scoorde; rittenVanRenner zet die op een rij.
  */
 
+import type { WedstrijdType } from "@/lib/gameTypes";
+
 export type EtappePunten = {
   stage_number: number;
   total_points: number;
@@ -29,6 +31,9 @@ export type Sortering = "punten" | "vandaag";
 export type RitScore = {
   nummer: number;
   naam: string | null;
+  /** Meermarathon: "Cup 3" en de soort voor het embleem. */
+  label?: string;
+  soort?: WedstrijdType;
   /** stage_type uit de database (vlak, heuvelachtig, bergop, tijdrit). */
   type: string | null;
   plaats: number | null;
@@ -44,14 +49,23 @@ export type RitScore = {
  */
 export function rittenVanRenner(
   etappes: readonly EtappePunten[],
-  ritten: ReadonlyArray<{ nummer: number; naam: string | null }>,
+  ritten: ReadonlyArray<{ nummer: number; naam: string | null; label?: string; soort?: WedstrijdType }>,
   totRit: number | null,
 ): RitScore[] {
   if (totRit == null) return [];
   const perRit = new Map<number, RitScore>();
   for (const r of ritten) {
     if (r.nummer > totRit) continue;
-    perRit.set(r.nummer, { nummer: r.nummer, naam: r.naam, type: null, plaats: null, multiplier: 1, punten: 0 });
+    perRit.set(r.nummer, {
+      nummer: r.nummer,
+      naam: r.naam,
+      ...(r.label ? { label: r.label } : {}),
+      ...(r.soort ? { soort: r.soort } : {}),
+      type: null,
+      plaats: null,
+      multiplier: 1,
+      punten: 0,
+    });
   }
   for (const e of etappes) {
     if (e.stage_number > totRit) continue;
@@ -64,6 +78,7 @@ export function rittenVanRenner(
       punten: 0,
     };
     perRit.set(e.stage_number, {
+      ...rit,
       nummer: rit.nummer,
       naam: e.stage_name?.trim() || rit.naam,
       type: e.stage_type ?? rit.type,

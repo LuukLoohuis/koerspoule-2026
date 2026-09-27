@@ -6,10 +6,12 @@ import {
   jokerPool,
   jokersNa,
   kandidaten,
+  leesVoorspellingen,
   nogOpenTekst,
   ondertitel,
   opsomming,
   pickActies,
+  voorspellingenNa,
   slotLabel,
   sluitReden,
   sorteerRijders,
@@ -197,5 +199,34 @@ describe("sluitReden", () => {
     expect(sluitReden("draft")).toBe("nog-niet-open");
     expect(sluitReden("locked")).toBe("gesloten");
     expect(sluitReden("finished")).toBe("gesloten");
+  });
+});
+
+describe("pronostiek", () => {
+  const huidig = [
+    { classification: "cup", position: 1, rider_id: "a" },
+    { classification: "gc", position: 1, rider_id: "x" },
+  ];
+
+  it("leest per klassement de voorspelde rijder", () => {
+    expect(leesVoorspellingen(huidig)).toEqual({ cup: "a", grandprix: null });
+  });
+
+  it("vervangt alleen de voorspelling van dat klassement", () => {
+    expect(voorspellingenNa(huidig, "cup", "b")).toEqual([
+      { classification: "gc", position: 1, rider_id: "x" },
+      { classification: "cup", position: 1, rider_id: "b" },
+    ]);
+    expect(voorspellingenNa(huidig, "grandprix", "a")).toEqual([...huidig, { classification: "grandprix", position: 1, rider_id: "a" }]);
+  });
+
+  it("haalt een voorspelling weg", () => {
+    expect(voorspellingenNa(huidig, "cup", null)).toEqual([{ classification: "gc", position: 1, rider_id: "x" }]);
+  });
+
+  it("geeft elk klassement een eigen plek in de kiezer", () => {
+    expect(doelSleutel({ soort: "voorspelling", klassement: "cup" })).not.toBe(
+      doelSleutel({ soort: "voorspelling", klassement: "grandprix" }),
+    );
   });
 });

@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import Voorpagina, { type Rubriek, type StandCel, type Hoofdartikel, type Segment } from "@/components/karavaan/Voorpagina";
 import { bouwKop, kopUitVerslag } from "@/lib/krantKop";
+import { ritLabel, wedstrijdEigenNaam } from "@/lib/krantC";
+import { isMeermarathonGame } from "@/lib/gameTypes";
 import { useAllGames } from "@/hooks/useAllGames";
 import { useSubpoules } from "@/hooks/useSubpoules";
 import { useGekozenSubpoule } from "@/hooks/useGekozenSubpoule";
@@ -76,6 +78,8 @@ export default function KaravaanFeed({
   // 3D-profiel, dat per koers en per jaar een eigen pad heeft.
   const { data: alleGames } = useAllGames();
   const gameMeta = gameId ? alleGames?.find((g) => g.id === gameId) : curGame;
+  // Meermarathon: "Cup 3" in plaats van "Wedstrijd 3", zonder terrein of km.
+  const meermarathon = isMeermarathonGame(gameMeta?.game_type);
   // Zonder expliciete game valt de vlag terug op de huidige koers; ontbreekt
   // de kolom nog, dan staat de banner aan (het gedrag van voorheen).
   const horsBannerZichtbaar = gameId ? horsBanner : (curGame?.hors_banner_visible ?? true);
@@ -164,8 +168,12 @@ export default function KaravaanFeed({
   // ── Kop en rubrieken van de Krant ──────────────────────────────────────────
   const koersNaam = gameMeta?.name ?? t("karavaan.voorpagina.naam");
   const laatsteEtappe = etappes[0] ?? null;
-  const editie = laatsteEtappe
-    ? `${thema.etappe} ${laatsteEtappe.stage_number}`
+  const editie = laatsteEtappe ? ritLabel(laatsteEtappe, thema.etappe, meermarathon) : null;
+  // De eigen naam van de wedstrijd, of bij een etappe de naam zoals hij is.
+  const laatsteNaam = laatsteEtappe
+    ? meermarathon
+      ? wedstrijdEigenNaam(laatsteEtappe)
+      : laatsteEtappe.stage_name
     : null;
 
   /** Springt naar een sectie verderop op deze pagina. */
@@ -199,7 +207,8 @@ export default function KaravaanFeed({
   const uitslagblok = laatsteEtappe ? (
     <Uitslagblok
       etappeNummer={laatsteEtappe.stage_number}
-      etappeNaam={laatsteEtappe.stage_name}
+      etappeNaam={laatsteNaam}
+      etappeTitel={meermarathon ? editie : null}
       rituitslag={laatsteEtappe.rituitslag}
       stand={laatsteEtappe.subpouleStandings.slice(0, 10).map((r) => ({
         rang: r.rank,
@@ -218,8 +227,9 @@ export default function KaravaanFeed({
     const kop = bouwKop({
       gegenereerd: laatsteEtappe.krant_kop,
       winnaar: laatsteEtappe.ritwinnaar,
-      etappeNaam: laatsteEtappe.stage_name,
+      etappeNaam: laatsteNaam,
       etappeNummer: laatsteEtappe.stage_number,
+      wedstrijd: meermarathon ? editie : null,
       // De kop gaat over de koers. Noemt de generator toch een ploeg- of
       // deelnemersnaam, dan valt bouwKop terug op het sjabloon.
       poulenamen: [
@@ -235,7 +245,7 @@ export default function KaravaanFeed({
       kop ??
       (heeftVerslag
         ? kopUitVerslag(verslag?.tekst) ??
-          `${thema.etappe} ${laatsteEtappe.stage_number} zonder uitslag`
+          `${editie} zonder uitslag`
         : null);
     if (!kopOfVerslag) return null;
 
@@ -244,7 +254,9 @@ export default function KaravaanFeed({
     if (laatsteEtappe.jose_tekst) quotes.push({ naam: "José De Cauwer", tekst: laatsteEtappe.jose_tekst });
 
     return {
-      kicker: t("karavaan.voorpagina.kicker", { etappe: thema.etappe, nummer: laatsteEtappe.stage_number }),
+      kicker: meermarathon
+        ? t("karavaan.voorpagina.kicker_mm", { rit: editie })
+        : t("karavaan.voorpagina.kicker", { etappe: thema.etappe, nummer: laatsteEtappe.stage_number }),
       kop: kopOfVerslag,
       verslag: heeftVerslag
         ? (
@@ -252,7 +264,7 @@ export default function KaravaanFeed({
             variant="lead"
             stageId={laatsteEtappe.stage_id}
             stageNumber={laatsteEtappe.stage_number}
-            stageName={laatsteEtappe.stage_name}
+            stageName={laatsteNaam}
           />
         )
         : undefined,
@@ -437,6 +449,7 @@ export default function KaravaanFeed({
                 lefevereLaden={i === 0 && lefevere.isFetching}
                 commentaarLaden={i === 0 && !et.michel_tekst && !et.jose_tekst && et.subpouleStandings.length >= 2}
                 onOpenHors={onOpenHors}
+                meermarathon={meermarathon}
               />
             </div>
           ))}
@@ -457,6 +470,7 @@ function EtappeBlok({
   lefevereLaden,
   commentaarLaden,
   onOpenHors,
+  meermarathon = false,
 }: {
   etappe: KaravaanEtappe;
   defaultOpen: boolean;
@@ -466,9 +480,11 @@ function EtappeBlok({
   /** On-demand generatie loopt (nieuwste etappe zonder commentaar, ≥2 leden). */
   commentaarLaden?: boolean;
   onOpenHors?: (tab: HorsTabKey) => void;
+  meermarathon?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(defaultOpen);
+  const naam = meermarathon ? wedstrijdEigenNaam(etappe) : etappe.stage_name;
   const datum = new Date(etappe.approved_at).toLocaleDateString(
     i18n.language === "en" ? "en-GB" : "nl-NL",
     {
@@ -488,11 +504,11 @@ function EtappeBlok({
         {open ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
         <div className="flex-1 min-w-0 text-left">
           <span className="font-display font-bold text-sm md:text-base uppercase tracking-wider">
-            {t("karavaan.etappe.stage", { number: etappe.stage_number })}
+            {meermarathon ? ritLabel(etappe, "", true) : t("karavaan.etappe.stage", { number: etappe.stage_number })}
           </span>
-          {etappe.stage_name && (
+          {naam && (
             <span className="font-serif italic text-sm text-muted-foreground ml-2">
-              · {etappe.stage_name}
+              · {naam}
             </span>
           )}
         </div>

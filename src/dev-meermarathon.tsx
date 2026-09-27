@@ -3,7 +3,7 @@
  * de build). Rendert de echte componenten met nepdata, in licht en nacht,
  * zodat de opmaak te beoordelen is zonder database of inlog.
  *
- * Draaien: npx vite  →  /dev-meermarathon.html  (?scherm=1..8 of ?scherm=6,7, ?modus=nacht)
+ * Draaien: npx vite  →  /dev-meermarathon.html  (?scherm=1..9 of ?scherm=6,7, ?modus=nacht)
  */
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -17,6 +17,7 @@ import Scherm5Demo from "@/dev/mm/Scherm5Demo";
 import Scherm6Demo from "@/dev/mm/Scherm6Demo";
 import Scherm7Demo from "@/dev/mm/Scherm7Demo";
 import Scherm8Demo from "@/dev/mm/Scherm8Demo";
+import Scherm9Demo from "@/dev/mm/Scherm9Demo";
 import "@/i18n";
 import "./index.css";
 import "./styles/salle-de-course.css";
@@ -32,6 +33,7 @@ const SCHERMEN = [
   { key: "6", titel: "6 · Eén game: vrouwen en mannen", Demo: Scherm6Demo },
   { key: "7", titel: "7 · Uitslagenbalk: Cup, Grand Prix, ONK, NK", Demo: Scherm7Demo },
   { key: "8", titel: "8 · Beheer: wedstrijden", Demo: Scherm8Demo },
+  { key: "9", titel: "9 · Krant, Ploeg en Pronostiek zoals bij de wielergames", Demo: Scherm9Demo },
 ];
 
 function Testbank() {

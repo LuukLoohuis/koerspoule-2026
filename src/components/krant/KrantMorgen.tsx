@@ -1,8 +1,11 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useKoersThema } from "@/contexts/KoersThemaContext";
-import { hoogtemeters, wanneer } from "@/lib/krantC";
+import { hoogtemeters, ritLabel, wanneer } from "@/lib/krantC";
+import { meermarathonStageLabel, wedstrijdTypeVan } from "@/lib/gameTypes";
+import { SoortEmbleem, WEDSTRIJD_SOORT } from "@/components/meermarathon/WedstrijdSoort";
 import type { StageRow } from "@/hooks/useResults";
 
 const MONO = "font-['JetBrains_Mono',monospace]";
@@ -20,15 +23,20 @@ const TYPE_LABEL_KEY: Record<string, string> = {
  * etappe zelf (afstand, hoogtemeters uit het profiel, de datum), daaronder de
  * voorbeschouwing van de redactie als die er is. De favorieten met sterren
  * uit het ontwerp hebben nog geen bron in de app en staan er daarom niet.
+ *
+ * Bij de Meermarathon geen afstand of terrein: daar zijn de feiten de soort
+ * wedstrijd met zijn embleem, het ijs en de datum.
  */
 export default function KrantMorgen({
   rit,
   tekst,
   profielUrl,
+  meermarathon = false,
 }: {
   rit: StageRow | null;
   tekst: string | null;
   profielUrl: string | null;
+  meermarathon?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const thema = useKoersThema();
@@ -37,7 +45,9 @@ export default function KrantMorgen({
   if (!rit) {
     return (
       <div role="tabpanel" className="rounded-xl border-2 border-dashed border-foreground/20 bg-card p-6 text-center">
-        <p className="font-serif text-sm italic text-muted-foreground">{t("krantC.alleRittenGereden")}</p>
+        <p className="font-serif text-sm italic text-muted-foreground">
+          {t("krantC.alleRittenGereden", { context: meermarathon ? "mm" : undefined })}
+        </p>
       </div>
     );
   }
@@ -49,18 +59,42 @@ export default function KrantMorgen({
     vandaag: t("karavaan.voorbeschouwing.vandaag"),
     morgen: t("karavaan.voorbeschouwing.morgen"),
   });
-  const feiten: Array<{ waarde: string; label: string }> = [
-    ...(rit.distance_km != null ? [{ waarde: `${rit.distance_km.toLocaleString(locale)} km`, label: t("krantC.afstand") }] : []),
-    klim ? { waarde: klim, label: t("krantC.hoogtemeters") } : { waarde: typeLabel, label: t("krantC.type") },
-    ...(datum ? [{ waarde: datum, label: t("krantC.datum") }] : []),
-  ];
+  const soort = meermarathon ? wedstrijdTypeVan(rit) : null;
+  const feiten: Array<{ waarde: ReactNode; label: string }> = soort
+    ? [
+        {
+          waarde: (
+            <span className="inline-flex items-center gap-1.5">
+              <SoortEmbleem soort={soort} maat={22} />
+              {WEDSTRIJD_SOORT[soort].label}
+            </span>
+          ),
+          label: t("krantC.soort"),
+        },
+        // Cup en NK op kunstijs, Grand Prix en ONK op natuurijs; een
+        // ingevulde ondergrond wint.
+        {
+          waarde: rit.ijs_type === "natuurijs" || rit.ijs_type === "kunstijs"
+            ? rit.ijs_type
+            : soort === "grandprix" || soort === "onk" ? "natuurijs" : "kunstijs",
+          label: t("krantC.ijs"),
+        },
+        ...(datum ? [{ waarde: datum, label: t("krantC.datum") }] : []),
+      ]
+    : [
+        ...(rit.distance_km != null ? [{ waarde: `${rit.distance_km.toLocaleString(locale)} km`, label: t("krantC.afstand") }] : []),
+        klim ? { waarde: klim, label: t("krantC.hoogtemeters") } : { waarde: typeLabel, label: t("krantC.type") },
+        ...(datum ? [{ waarde: datum, label: t("krantC.datum") }] : []),
+      ];
 
   return (
     <div role="tabpanel" className="flex flex-col gap-[18px]">
       <article className="flex flex-col gap-2.5">
-        <span className="editor-eyebrow">{t("krantC.voorbeschouwing", { etappe: thema.etappe, nummer: rit.stage_number })}</span>
+        <span className="editor-eyebrow">{t("krantC.voorbeschouwing", { rit: ritLabel(rit, thema.etappe, meermarathon) })}</span>
         <h2 className="kop-gold m-0 pb-2.5 font-display text-[32px] font-black leading-[1.02] tracking-[-0.03em]">
-          {rit.name?.trim() || t("karavaan.voorbeschouwing.stage", { number: rit.stage_number })}
+          {meermarathon
+            ? meermarathonStageLabel(rit)
+            : rit.name?.trim() || t("karavaan.voorbeschouwing.stage", { number: rit.stage_number })}
         </h2>
 
         {feiten.length > 0 && (

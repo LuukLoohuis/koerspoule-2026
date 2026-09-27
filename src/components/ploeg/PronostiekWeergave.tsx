@@ -1,14 +1,13 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import TruiBadge from "@/components/retro/TruiBadge";
+import { SoortEmbleem, WEDSTRIJD_SOORT } from "@/components/meermarathon/WedstrijdSoort";
 import type { TruiType } from "@/lib/themas";
+import type { Prediction } from "@/hooks/useEntry";
 
-export type Voorspelling = {
-  classification: "gc" | "points" | "kom" | "youth";
-  position: number;
-  rider_id: string;
-};
+export type Voorspelling = Prediction;
 
 export type PronoRenner = { name: string; team?: string | null; is_dnf?: boolean | null };
 
@@ -16,12 +15,39 @@ type Badge = { label: string; bg: string; color: string; border: string };
 
 // Zelfde badges en kleuren als de Pronostiek in MyTeamPanel: dit is dezelfde
 // pagina, alleen zonder de zware datalaag eromheen.
-const JERSEY_BADGE: Record<Voorspelling["classification"], Badge> = {
+const JERSEY_BADGE: Record<"gc" | "points" | "kom" | "youth", Badge> = {
   gc: { label: "GC", bg: "#FFF0F7", color: "#C4185A", border: "#E8336D" },
   points: { label: "PNT", bg: "#EFF3FF", color: "#1D4A9E", border: "#2E5BA8" },
   kom: { label: "KOM", bg: "#EDF7F1", color: "#1E6B40", border: "#2E8B57" },
   youth: { label: "YNG", bg: "#F8F4EE", color: "#7A5610", border: "#B59240" },
 };
+
+/**
+ * Meermarathon: de twee klassementen, in de kleur van hun wedstrijdsoort
+ * (dezelfde als het embleem op de uitslagenbalk en de kalender).
+ */
+const MM_KLASSEMENTEN: ReadonlyArray<{ key: "cup" | "grandprix"; labelKey: string; badge: Badge }> = [
+  {
+    key: "cup",
+    labelKey: "team.panel.mmCupKlassement",
+    badge: {
+      label: "CUP",
+      bg: `color-mix(in srgb, ${WEDSTRIJD_SOORT.cup.kleur} 10%, white)`,
+      color: WEDSTRIJD_SOORT.cup.kleur,
+      border: WEDSTRIJD_SOORT.cup.kleur,
+    },
+  },
+  {
+    key: "grandprix",
+    labelKey: "team.panel.mmGpKlassement",
+    badge: {
+      label: "GP",
+      bg: `color-mix(in srgb, ${WEDSTRIJD_SOORT.grandprix.kleur} 10%, white)`,
+      color: WEDSTRIJD_SOORT.grandprix.kleur,
+      border: WEDSTRIJD_SOORT.grandprix.kleur,
+    },
+  },
+];
 
 const TRUI_LABEL: Record<"points" | "kom" | "youth", { labelKey: string; trui: TruiType }> = {
   points: { labelKey: "team.panel.jerseyPoints", trui: "punten" },
@@ -123,12 +149,17 @@ function PronoSectie({ icon, label, badge, children }: { icon: ReactNode; label:
  * truien. Eén-op-één de weergave uit MyTeamPanel, maar zonder de datahaken
  * van de Volgwagen: zo mount hij licht als buur in de veegcarrousel op een
  * telefoon, in plaats van eerst vijftien queries en een simulatie af te wachten.
+ *
+ * Bij de Meermarathon zijn het twee winnaars per peloton: het Cup-klassement
+ * (kunstijs) en het Grand Prix-klassement (natuurijs).
  */
 export default function PronostiekWeergave({
   gameName,
   predictions,
   ridersById,
   dnfZichtbaar,
+  meermarathon = false,
+  bouwerPad,
   className,
 }: {
   gameName: string;
@@ -136,15 +167,35 @@ export default function PronostiekWeergave({
   ridersById: Record<string, PronoRenner | undefined>;
   /** Opgaves pas tonen zodra de koers rijdt of gereden is. */
   dnfZichtbaar: boolean;
+  meermarathon?: boolean;
+  /** Waar je je voorspellingen kiest; alleen zolang dat nog kan. */
+  bouwerPad?: string | null;
   className?: string;
 }) {
   const { t } = useTranslation();
   const podium = [1, 2, 3].map((pos) => predictions.find((p) => p.classification === "gc" && p.position === pos) ?? null);
+  // Een schaatser heeft een team; bij de Meermarathon staan wielervoorspellingen
+  // niet op dit scherm en andersom.
+  const getoond = predictions.filter((p) =>
+    meermarathon ? p.classification === "cup" || p.classification === "grandprix" : p.classification !== "cup" && p.classification !== "grandprix",
+  );
 
   return (
     <div className={cn("pb-4", className)}>
-      {predictions.length === 0 ? (
-        <p className="py-6 text-center text-sm italic text-muted-foreground">{t("team.panel.noPredictions")}</p>
+      {getoond.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <p className="m-0 text-sm italic text-muted-foreground">
+            {t("team.panel.noPredictions", { context: meermarathon ? "mm" : undefined })}
+          </p>
+          {bouwerPad && (
+            <Link
+              to={bouwerPad}
+              className="inline-flex h-10 items-center rounded-full border-[1.5px] border-foreground px-4 text-[13px] font-bold shadow-[1.5px_1.5px_0_hsl(var(--foreground))]"
+            >
+              {t("team.panel.naarPronostiek")}
+            </Link>
+          )}
+        </div>
       ) : (
         <div className="overflow-hidden rounded-lg border-2" style={{ borderColor: "#C8A020", background: "#FAF7F2" }}>
           <div className="flex items-center justify-between border-b-2 px-4 py-3" style={{ background: "#2C2416", borderColor: "#C8A020" }}>
@@ -159,7 +210,7 @@ export default function PronostiekWeergave({
                 {t("team.panel.choicesLabel")}
               </div>
               <div className="font-display text-2xl font-black tabular-nums" style={{ color: "#C8A020" }}>
-                {predictions.length}
+                {getoond.length}
               </div>
               <div className="font-mono text-[9px]" style={{ color: "#C8A020", opacity: 0.5 }}>
                 {t("team.panel.predictedLabel")}
@@ -167,7 +218,24 @@ export default function PronostiekWeergave({
             </div>
           </div>
 
-          {podium.some(Boolean) && (
+          {meermarathon &&
+            MM_KLASSEMENTEN.map(({ key, labelKey, badge }) => {
+              const item = getoond.find((p) => p.classification === key && p.position === 1);
+              const r = item ? ridersById[item.rider_id] : undefined;
+              return (
+                <PronoSectie key={key} icon={<SoortEmbleem soort={key} maat={20} />} label={t(labelKey)} badge={badge}>
+                  <PronoRij
+                    pos={1}
+                    icon={MEDAILLES[0]}
+                    renner={r ? { name: r.name, team: r.team } : null}
+                    badge={badge}
+                    laatste
+                  />
+                </PronoSectie>
+              );
+            })}
+
+          {!meermarathon && podium.some(Boolean) && (
             <PronoSectie icon={<TruiBadge type="algemeen" formaat="klein" />} label={t("team.panel.gcTop3")} badge={JERSEY_BADGE.gc}>
               {podium.map((p, idx) => {
                 const r = p ? ridersById[p.rider_id] : undefined;
@@ -186,7 +254,7 @@ export default function PronostiekWeergave({
             </PronoSectie>
           )}
 
-          {(["points", "kom", "youth"] as const).map((cls) => {
+          {!meermarathon && (["points", "kom", "youth"] as const).map((cls) => {
             const item = predictions.find((p) => p.classification === cls && p.position === 1);
             const r = item ? ridersById[item.rider_id] : undefined;
             return (
@@ -207,6 +275,17 @@ export default function PronostiekWeergave({
               </PronoSectie>
             );
           })}
+
+          {meermarathon && bouwerPad && (
+            <div className="flex justify-end border-b px-3 py-2" style={{ borderColor: "#E8DDD0" }}>
+              <Link
+                to={bouwerPad}
+                className="text-[12px] font-semibold underline decoration-primary decoration-2 underline-offset-4"
+              >
+                {t("team.panel.pronostiekWijzigen")}
+              </Link>
+            </div>
+          )}
 
           <div className="h-1" style={{ background: "linear-gradient(90deg, transparent, #C8A020 30%, #E8336D 50%, #C8A020 70%, transparent)" }} />
         </div>

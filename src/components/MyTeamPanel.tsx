@@ -34,12 +34,13 @@ import { Check, Pencil, Search, X, Target, Crown, ClipboardList, Flag, Shirt, Tr
 import FlagIcon from "@/components/FlagIcon";
 import { Trans, useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
-import { isMeermarathonGame } from "@/lib/gameTypes";
+import { isMeermarathonGame, meermarathonStageLabel, wedstrijdTypeVan } from "@/lib/gameTypes";
+import { WedstrijdLabelsProvider, type WedstrijdLabel } from "@/contexts/WedstrijdLabelsContext";
+import { SoortEmbleem } from "@/components/meermarathon/WedstrijdSoort";
 import { useLiveRace } from "@/hooks/useLiveRace";
 import { normalizeName } from "@/lib/liveMarathon";
 import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
 import LiveTab from "@/components/meermarathon/LiveTab";
-import VolgwagenPloegContainer from "@/components/meermarathon/VolgwagenPloegContainer";
 import { useLiveSimulatie } from "@/hooks/useLiveSimulatie";
 import { simulatieMijnRiderIds, SIM_MIJN_BEENNUMMERS } from "@/lib/liveSimulatie";
 import { useStagePointsSchema } from "@/hooks/usePointsSchema";
@@ -350,23 +351,11 @@ type MyTeamPanelProps = {
 };
 
 /**
- * De Meermarathon heeft voor "Mijn ploeg" een eigen, veel kleiner scherm.
- * De splitsing staat vóór alle hooks van het wielerdashboard, zodat een
- * schaatsploeg niet de hele wielerstatistiek (Hors Catégorie, topscorer,
- * dagklasseringen) ophaalt voor een scherm dat er niets van toont.
+ * De Volgwagen op de webversie: La Salle de Course. De Meermarathon krijgt
+ * hetzelfde dashboard als de wielergames, in schaatswoorden (wedstrijden in
+ * plaats van ritten, het embleem van de soort in plaats van het terrein).
  */
 export default function MyTeamPanel(props: MyTeamPanelProps) {
-  const { data: curGame } = useCurrentGame();
-  if ((props.section ?? "ploeg") === "ploeg" && isMeermarathonGame(props.gameType ?? curGame?.game_type)) {
-    return (
-      <VolgwagenPloegContainer
-        gameId={props.gameId ?? curGame?.id}
-        onOpenUitslagen={props.onOpenUitslagen}
-        onOpenSubpoule={props.onOpenSubpoule}
-        focusNameSignal={props.focusNameSignal}
-      />
-    );
-  }
   return <KoersPanel {...props} />;
 }
 
@@ -435,6 +424,20 @@ function KoersPanel({
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(game?.id);
   const { data: stages = [] } = useStages(game?.id);
   const { data: entries = [] } = useEntries(game?.id);
+  // Meermarathon: "Cup 3" in plaats van "rit 3", en het embleem van de soort
+  // in plaats van het terrein. i18next-context "mm" kiest de schaatstekst.
+  const ctx = isMeermarathon ? "mm" : undefined;
+  const wedstrijdLabels = useMemo<Map<number, WedstrijdLabel> | null>(
+    () =>
+      isMeermarathon
+        ? new Map(
+            stages.map((s) => [s.stage_number, { label: meermarathonStageLabel({ ...s, name: null }), soort: wedstrijdTypeVan(s) }]),
+          )
+        : null,
+    [isMeermarathon, stages],
+  );
+  const stageLbl = (s: { stage_number: number }): string | number =>
+    wedstrijdLabels?.get(s.stage_number)?.label ?? s.stage_number;
   const { data: stagePoints = [] } = useMyStagePoints(entry?.id);
   // Totaal behaalde punten per renner (t/m laatst gefiatteerde etappe).
   const { data: riderTotals, isSuccess: riderTotalsReady } = useRiderEntryTotals(
@@ -573,16 +576,15 @@ function KoersPanel({
   if (!game) {
     return <div className="ornate-frame retro-border bg-card p-6 text-muted-foreground">{t("team.panel.noActiveRace")}</div>;
   }
-  // De Meermarathon komt hier alleen voor Live en Pronostiek ("Mijn ploeg"
-  // heeft een eigen scherm, zie MyTeamPanel). Live werkt ook zonder gekozen
-  // rijders, dus die krijgt de lege staat pas zonder entry.
-  if (!entry || (picksByCategory.size === 0 && !isMeermarathon)) {
+  // Live (alleen de Meermarathon) werkt ook zonder gekozen rijders, dus die
+  // krijgt de lege staat pas zonder entry.
+  if (!entry || (picksByCategory.size === 0 && !(isMeermarathon && section === "live"))) {
     return (
       <Card className="ornate-frame retro-border">
         <CardContent className="p-4 text-center space-y-3">
-          <div className="text-5xl mb-2">🚴‍♂️</div>
+          <div className="text-5xl mb-2">{isMeermarathon ? "⛸️" : "🚴‍♂️"}</div>
           <p className="font-display text-xl font-bold">{t("team.panel.noTeamYet")}</p>
-          <p className="text-sm text-muted-foreground font-serif italic">{t("team.panel.buildBeforeFlamme")}</p>
+          <p className="text-sm text-muted-foreground font-serif italic">{t("team.panel.buildBeforeFlamme", { context: ctx })}</p>
 
           {/* Ploegnaam kan al vóór het samenstellen worden gezet (en later altijd
               aanpasbaar). */}
@@ -851,6 +853,7 @@ function KoersPanel({
   }
 
   return (
+    <WedstrijdLabelsProvider labels={wedstrijdLabels}>
     <div className="space-y-3 pb-4">
       {/* Rustige melding: gekozen renner(s) niet gestart — wisselen mag nog */}
       {fallenRiders.length > 0 && (
@@ -903,7 +906,9 @@ function KoersPanel({
 
         // Label voor de seizoensstand volgt de GESELECTEERDE rit (terugspoelen).
         const shownStage = selectedStage;
-        const ritLabel = shownStage ? t("team.panel.pointsThroughStage", { stage: shownStage.stage_number }) : t("team.panel.noResultsYet");
+        const ritLabel = shownStage
+          ? t("team.panel.pointsThroughStage", { stage: stageLbl(shownStage), context: ctx })
+          : t("team.panel.noResultsYet");
         // Etappepunten: som van de punten van ENKEL de getoonde rit (i.t.t.
         // totalPoints, dat cumulatief t/m de rit optelt).
         const stageDayPoints = shownStage
@@ -1165,8 +1170,8 @@ function KoersPanel({
                         sub={
                           shownStage
                             ? mijnDagrang !== null
-                              ? t("team.panel.dayRankStage", { rank: mijnDagrang, stage: shownStage.stage_number })
-                              : t("team.panel.onlyStage", { stage: shownStage.stage_number })
+                              ? t("team.panel.dayRankStage", { rank: mijnDagrang, stage: stageLbl(shownStage), context: ctx })
+                              : t("team.panel.onlyStage", { stage: stageLbl(shownStage), context: ctx })
                             : t("team.panel.noResultsYet")
                         }
                       />
@@ -1261,7 +1266,7 @@ function KoersPanel({
                         hint?: string;
                       }> = [
                         {
-                          label: t("team.panel.bestStage"),
+                          label: t("team.panel.bestStage", { context: ctx }),
                           Icon: Flag,
                           flagLeft: true,
                           nowrap: true,
@@ -1272,12 +1277,12 @@ function KoersPanel({
                             </>
                           ) : "—",
                           sub: bestRank?.stage
-                            ? t("team.panel.ptStage", { points: bestRankPoints, stage: bestRank.stage.stage_number })
+                            ? t("team.panel.ptStage", { points: bestRankPoints, stage: stageLbl(bestRank.stage), context: ctx })
                             : undefined,
                           onClick: bestRank?.stage && onOpenStageResult
                             ? () => onOpenStageResult(bestRank.stage!.stage_number)
                             : undefined,
-                          hint: t("team.panel.hintStageResult"),
+                          hint: t("team.panel.hintStageResult", { context: ctx }),
                         },
                         {
                           label: t("team.panel.overallPoule"),
@@ -1418,7 +1423,9 @@ function KoersPanel({
                       {t("team.panel.rewindStamp")}
                     </span>
                     <span className="font-mono text-[9px] tracking-[0.12em] uppercase" style={{ color: "rgba(237,227,204,0.4)" }}>
-                      {rewound ? t("team.panel.throughStage", { stage: cutoffN }) : t("team.panel.currentStanding")}
+                      {rewound
+                        ? t("team.panel.throughStage", { stage: selectedStage ? stageLbl(selectedStage) : cutoffN, context: ctx })
+                        : t("team.panel.currentStanding")}
                     </span>
                   </div>
 
@@ -1427,7 +1434,7 @@ function KoersPanel({
                   <div
                     ref={stageSelectorRef}
                     role="listbox"
-                    aria-label={t("team.panel.rewindAria")}
+                    aria-label={t("team.panel.rewindAria", { context: ctx })}
                     tabIndex={0}
                     onKeyDown={(e) => {
                       if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
@@ -1452,7 +1459,11 @@ function KoersPanel({
                           onClick={() => setSelectedStageId(s.id)}
                           aria-pressed={sel}
                           aria-selected={sel}
-                          title={s.name ?? t("team.panel.stageTitle", { stage: s.stage_number })}
+                          title={
+                            wedstrijdLabels
+                              ? String(stageLbl(s))
+                              : s.name ?? t("team.panel.stageTitle", { stage: s.stage_number })
+                          }
                           className="relative shrink-0 flex flex-col items-center justify-end gap-0.5 rounded transition-all"
                           style={{
                             scrollSnapAlign: "center",
@@ -1470,7 +1481,11 @@ function KoersPanel({
                           {sel && (
                             <span aria-hidden className="absolute top-0 left-1 right-1 rounded-full" style={{ height: 2, background: "#F4C84B" }} />
                           )}
-                          <StageTypeIcon type={s.stage_type} size={sel ? 16 : 13} />
+                          {wedstrijdLabels?.get(s.stage_number) ? (
+                            <SoortEmbleem soort={wedstrijdLabels.get(s.stage_number)!.soort} maat={sel ? 18 : 15} />
+                          ) : (
+                            <StageTypeIcon type={s.stage_type} size={sel ? 16 : 13} />
+                          )}
                           <span className={`font-mono font-bold tabular-nums leading-none ${sel ? "text-[13px]" : "text-[11px]"}`}>
                             {s.stage_number}
                           </span>
@@ -1488,7 +1503,7 @@ function KoersPanel({
                   {rewound && (
                     <div className="mt-2 flex items-center justify-between gap-2 px-1">
                       <span className="font-mono text-[9px] leading-snug" style={{ color: "rgba(237,227,204,0.6)" }}>
-                        {t("team.panel.rewoundThrough", { stage: cutoffN })}
+                        {t("team.panel.rewoundThrough", { stage: selectedStage ? stageLbl(selectedStage) : cutoffN, context: ctx })}
                       </span>
                       <button
                         type="button"
@@ -1629,7 +1644,7 @@ function KoersPanel({
             )}
             {toonZoek && term && zichtbaar.length === 0 && (
               <p className="mb-2.5 rounded-lg bg-foreground/4 px-3 py-2.5 text-sm text-muted-foreground">
-                {t("team.panel.zoekGeenTreffer", { term: zoek })}
+                {t("team.panel.zoekGeenTreffer", { term: zoek, context: ctx })}
               </p>
             )}
             <TeamSheetView
@@ -1645,5 +1660,6 @@ function KoersPanel({
         );
       })()}
     </div>
+    </WedstrijdLabelsProvider>
   );
 }

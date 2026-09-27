@@ -441,7 +441,23 @@
       "prizesLink": "Er valt wat te winnen — <bold>bekijk de prijzen</bold>",
       "zoekRenner": "Zoek in je ploeg…",
       "zoekWissen": "Zoekterm wissen",
-      "zoekGeenTreffer": "Geen renner gevonden voor “{{term}}”."
+      "zoekGeenTreffer": "Geen renner gevonden voor “{{term}}”.",
+      "mmCupKlassement": "Cup-klassement · kunstijs",
+      "mmGpKlassement": "Grand Prix-klassement · natuurijs",
+      "noPredictions_mm": "Nog geen winnaars voorspeld voor het Cup- en het Grand Prix-klassement.",
+      "naarPronostiek": "Voorspel de winnaars",
+      "pronostiekWijzigen": "Voorspelling wijzigen ›",
+      "pointsThroughStage_mm": "punten t/m {{stage}}",
+      "onlyStage_mm": "alleen {{stage}}",
+      "dayRankStage_mm": "{{rank}}ᵉ van de dag · {{stage}}",
+      "bestStage_mm": "Beste wedstrijd",
+      "ptStage_mm": "{{points}} pt · {{stage}}",
+      "hintStageResult_mm": "Open de uitslag van deze wedstrijd",
+      "throughStage_mm": "t/m {{stage}}",
+      "rewindAria_mm": "Kies wedstrijd om naar terug te spoelen",
+      "rewoundThrough_mm": "Teruggespoeld t/m {{stage}}",
+      "zoekGeenTreffer_mm": "Geen rijder gevonden voor “{{term}}”.",
+      "buildBeforeFlamme_mm": "Stel je ploeg samen vóór het startschot."
     },
     "sheet": {
       "noRidersChosen": "Nog geen renners gekozen.",
@@ -1290,7 +1306,8 @@
       "rubVerslagHaak": "Het verslag en de commentatoren",
       "rubLegendeHaak": "Een verhaal uit het archief",
       "rubPerszaal": "Perszaal",
-      "rubPerszaalHaak": "Michel Wuyts en José De Cauwer"
+      "rubPerszaalHaak": "Michel Wuyts en José De Cauwer",
+      "kicker_mm": "{{rit}} · uitslag binnen"
     }
   },
   "common": {
@@ -1867,10 +1884,23 @@
     "geenPloegTitel": "Nog geen ploeg in de bus",
     "geenPloegTekst": "Stel je ploeg samen vóór de flamme rouge.",
     "naarPloegbouwer": "Naar de ploegbouwer",
-    "laden": "Ploeg laden…"
+    "laden": "Ploeg laden…",
+    "ritSticker_mm": "+{{punten}} in {{rit}}",
+    "standTm_mm": "Stand t/m {{rit}}",
+    "ritKiezerAria_mm": "Kies tot en met welke wedstrijd je de stand ziet",
+    "kolomRenner_mm": "Rijder",
+    "kolomRit_mm": "{{rit}}",
+    "renners_mm_one": "{{count}} rijder",
+    "renners_mm_other": "{{count}} rijders",
+    "rittenKop_mm": "Punten per wedstrijd",
+    "rittenAria_mm": "Punten per wedstrijd van {{naam}}",
+    "rittenGescoord_mm_one": "{{aantal}}× gescoord in {{count}} wedstrijd",
+    "rittenGescoord_mm_other": "{{aantal}}× gescoord in {{count}} wedstrijden",
+    "geenPunten_mm": "Nog geen punten t/m {{rit}}.",
+    "geenPloegTekst_mm": "Stel je ploeg samen vóór het startschot."
   },
   "krantC": {
-    "kopAria": "{{krant}}, {{etappe}} {{nummer}}",
+    "kopAria": "{{krant}}, {{rit}}",
     "informatie": "Informatie",
     "informatieAria": "Informatie: zo lees je de krant",
     "informatieSluiten": "Sluiten",
@@ -1915,7 +1945,7 @@
     "truiRendement": "Rendement",
     "truiRapport": "Rapportcijfer",
     "nogGeenCijfer": "nog geen cijfer",
-    "voorbeschouwing": "Voorbeschouwing · {{etappe}} {{nummer}}",
+    "voorbeschouwing": "Voorbeschouwing · {{rit}}",
     "afstand": "afstand",
     "hoogtemeters": "hoogtemeters",
     "type": "type",
@@ -1923,9 +1953,16 @@
     "profiel": "Bekijk het 3D-profiel ›",
     "alleRittenGereden": "Alle ritten zijn gereden; er valt niets meer voor te beschouwen.",
     "geenVoorbeschouwing": "De redactie schrijft de voorbeschouwing zodra die er is.",
-    "perszaalEyebrow": "Uit de perszaal · na {{etappe}} {{nummer}}",
+    "perszaalEyebrow": "Uit de perszaal · na {{rit}}",
     "commentator": "Commentator",
     "analist": "Analist",
-    "perszaalLeeg": "Nog geen commentaar bij deze rit."
+    "perszaalLeeg": "Nog geen commentaar bij deze rit.",
+    "rit_mm": "Wedstrijd",
+    "alleRittenGereden_mm": "Alle wedstrijden zijn gereden; er valt niets meer voor te beschouwen.",
+    "uitlegStijging_mm": "Plaatsen gewonnen of verloren sinds de vorige wedstrijd.",
+    "uitlegPunten_mm": "Punten van je ploeg in deze wedstrijd. Alles per rijder staat onder Ploeg.",
+    "uitlegPodium_mm": "Podium van de wedstrijd: goud, zilver, brons.",
+    "soort": "wedstrijd",
+    "ijs": "ijs"
   }
 }

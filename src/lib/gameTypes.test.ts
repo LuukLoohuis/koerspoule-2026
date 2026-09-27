@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { defaultWedstrijdType, gameSeasonName, gameYearFieldValue, isMeermarathonGame, meermarathonAfstandLabel,
-  meermarathonCategorieLabel, meermarathonCategorieRang, meermarathonSeason, meermarathonSeasonKort, meermarathonStageLabel,
+  meermarathonCategorieLabel, meermarathonCategorieRang, meermarathonSeason, meermarathonSeasonKort, meermarathonStageAfkorting, meermarathonStageLabel,
   parseGameYearInput, parseMeermarathonCategorie } from "./gameTypes";
 
 describe("Meermarathon game type", () => {
@@ -62,6 +62,12 @@ describe("meermarathon-wedstrijden", () => {
     // Titelwedstrijden zijn eenmalig; een nummer erachter zou verwarren.
     expect(meermarathonStageLabel({ stage_number: 7, wedstrijd_type: "onk" })).toBe("ONK");
     expect(meermarathonStageLabel({ stage_number: 9, wedstrijd_type: "nk" })).toBe("NK");
+  });
+
+  it("kort een wedstrijd in voor een smalle kolom", () => {
+    expect(meermarathonStageAfkorting({ stage_number: 5, wedstrijd_type: "grandprix" })).toBe("GP 5");
+    expect(meermarathonStageAfkorting({ stage_number: 3, wedstrijd_type: "cup" })).toBe("Cup 3");
+    expect(meermarathonStageAfkorting({ stage_number: 9, wedstrijd_type: "nk" })).toBe("NK");
   });
 
   it("laat een eigen naam altijd voorgaan", () => {

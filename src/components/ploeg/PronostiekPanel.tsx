@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
 import { eigenRennerIds, useRidersByIds } from "@/hooks/useRidersByIds";
+import { canRegister } from "@/lib/gameStatus";
 
 /**
  * Pronostiek op een telefoon: de container om PronostiekWeergave. Alleen de
@@ -17,11 +18,14 @@ export default function PronostiekPanel({
   gameId,
   gameStatus,
   gameName,
+  meermarathon = false,
   className,
 }: {
   gameId?: string;
   gameStatus?: string;
   gameName?: string | null;
+  /** Meermarathon: de winnaars van het Cup- en het Grand Prix-klassement. */
+  meermarathon?: boolean;
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -43,9 +47,11 @@ export default function PronostiekPanel({
   if (!entry || picksByCategory.size === 0) {
     return (
       <div className={"retro-border bg-card p-5 text-center " + (className ?? "")}>
-        <div className="mb-2 text-4xl" aria-hidden>🚴‍♂️</div>
+        <div className="mb-2 text-4xl" aria-hidden>{meermarathon ? "⛸️" : "🚴‍♂️"}</div>
         <p className="font-display text-xl font-bold">{t("team.panel.noTeamYet")}</p>
-        <p className="mt-1 font-serif text-sm italic text-muted-foreground">{t("team.panel.buildBeforeFlamme")}</p>
+        <p className="mt-1 font-serif text-sm italic text-muted-foreground">
+          {t("team.panel.buildBeforeFlamme", { context: meermarathon ? "mm" : undefined })}
+        </p>
         <Link
           to="/team-samenstellen"
           className="mt-4 inline-flex h-10 items-center rounded-full border-[1.5px] border-foreground px-4 text-[13px] font-bold shadow-[1.5px_1.5px_0_hsl(var(--foreground))]"
@@ -63,6 +69,9 @@ export default function PronostiekPanel({
       predictions={predictions as Voorspelling[]}
       ridersById={ridersById}
       dnfZichtbaar={game.status === "live" || game.status === "finished"}
+      meermarathon={meermarathon}
+      // Voorspellen gaat in de ploegbouwer, en kan zolang de inschrijving open is.
+      bouwerPad={meermarathon && canRegister(game.status) ? `/team-samenstellen?game=${encodeURIComponent(game.id)}` : null}
     />
   );
 }

@@ -7,6 +7,9 @@ import type { TFunction } from "i18next";
 import { supabase } from "@/lib/supabase";
 import { useThema } from "@/contexts/ThemaContext";
 import { Mountain, CalendarDays, ExternalLink, Map as MapIcon, ChevronDown } from "lucide-react";
+import { isMeermarathonGame, meermarathonStageLabel, wedstrijdTypeVan } from "@/lib/gameTypes";
+import { ritLabel } from "@/lib/krantC";
+import { SoortLabel } from "@/components/meermarathon/WedstrijdSoort";
 
 type UpcomingStage = {
   id: string;
@@ -16,6 +19,9 @@ type UpcomingStage = {
   stage_type: string | null;
   distance_km: number | null;
   results_status: string | null;
+  /** Meermarathon: soort en ondergrond. */
+  wedstrijd_type?: string | null;
+  ijs_type?: string | null;
   /** Statisch hoogteprofiel; dient als voorproefje op de dichtgeklapte kaart. */
   profile_image_url: string | null;
 };
@@ -96,7 +102,7 @@ export default function Voorbeschouwing({
       if (!supabase || !gameId) return null;
       const { data, error } = await (supabase as any)
         .from("stages")
-        .select("id, stage_number, name, date, stage_type, distance_km, results_status, profile_image_url")
+        .select("id, stage_number, name, date, stage_type, distance_km, results_status, profile_image_url, wedstrijd_type, ijs_type")
         .eq("game_id", gameId)
         .eq("is_gc", false)
         .order("stage_number");
@@ -124,6 +130,8 @@ export default function Voorbeschouwing({
   const typeLabelKey = TYPE_LABEL_KEY[String(stage.stage_type)];
   const typeLabel = typeLabelKey ? t(typeLabelKey) : t("karavaan.voorbeschouwing.typeDefault");
   const wanneer = dateBadge(stage.date, t, locale);
+  // Een schaatswedstrijd heeft geen terrein of kilometers, wel een soort.
+  const meermarathon = isMeermarathonGame(gameType);
 
   return (
     <div className="rounded-xl border-2 border-foreground/15 bg-card overflow-hidden shadow-xs">
@@ -144,11 +152,16 @@ export default function Voorbeschouwing({
 
       <div className="px-4 pt-4 pb-3">
         <p className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-          {thema.etappe} {stage.stage_number}
+          {ritLabel(stage, thema.etappe, meermarathon)}
         </p>
         <h3 className="font-display font-bold text-lg leading-tight">
-          {stage.name?.trim() || t("karavaan.voorbeschouwing.stage", { number: stage.stage_number })}
+          {meermarathon
+            ? meermarathonStageLabel(stage)
+            : stage.name?.trim() || t("karavaan.voorbeschouwing.stage", { number: stage.stage_number })}
         </h3>
+        {meermarathon ? (
+          <SoortLabel soort={wedstrijdTypeVan(stage)} metOndergrond className="mt-1.5 text-muted-foreground" />
+        ) : (
         <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Mountain className="h-3 w-3" />{typeLabel}
@@ -160,6 +173,7 @@ export default function Voorbeschouwing({
             </>
           )}
         </div>
+        )}
 
         {/* Interactief 3D-profiel (tourview). Dichtgeklapt een strookje van het
             statische profiel: een randje van het echte beeld nodigt sterker uit

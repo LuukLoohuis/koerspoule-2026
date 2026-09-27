@@ -47,6 +47,15 @@ describe("rittenVanRenner", () => {
     expect(rij.reduce((som, r) => som + r.punten, 0)).toBe(telPunten(etappes, 3).totaal);
   });
 
+  it("neemt label en soort van een schaatswedstrijd mee", () => {
+    const rij = rittenVanRenner(
+      [{ stage_number: 1, total_points: 20, finish_position: 2 }],
+      [{ nummer: 1, naam: "Veenhoop", label: "Grand Prix 1", soort: "grandprix" }],
+      1,
+    );
+    expect(rij[0]).toMatchObject({ nummer: 1, naam: "Veenhoop", label: "Grand Prix 1", soort: "grandprix", punten: 20, plaats: 2 });
+  });
+
   it("neemt naam, soort rit, plaats en joker over van de uitslag", () => {
     const rij = rittenVanRenner(
       [{ stage_number: 3, total_points: 40, stage_name: "Pila", stage_type: "bergop", finish_position: 2, multiplier: 2 }],

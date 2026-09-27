@@ -5,9 +5,10 @@
  * Wat de database vraagt: submit_entry wil in elke categorie een keuze, meer
  * niet. Jokers zijn optioneel maar tellen wel (calculate_stage_scores, en de
  * live projectie rekent ze mee), dus die bieden we aan zodra er rijders
- * buiten de categorieën zijn. Voorspellingen (GC-podium, truien) laten we weg:
- * die horen bij de wielergames en de schaatsuitslagen vullen geen klassement
- * of truien waar ze tegen kunnen scoren.
+ * buiten de categorieën zijn. De pronostiek is hier geen GC-podium met truien
+ * maar twee winnaars: van het Cup-klassement (kunstijs) en het Grand
+ * Prix-klassement (natuurijs), per peloton. Die staan los van de ploeg: ook
+ * na bevestigen te wijzigen zolang de inschrijving open is.
  *
  * Eén game, twee pelotons: wie nog nergens een ploeg heeft, kiest eerst waar
  * hij meerijdt (vrouwen, mannen of allebei). Pas daarna start de bouwer, want
@@ -51,6 +52,8 @@ import {
   geldigeKeuzes,
   jokerPool,
   jokersNa,
+  leesVoorspellingen,
+  voorspellingenNa,
   pickActies,
   sluitReden,
   teambouwerDoel,
@@ -290,10 +293,12 @@ function Bouwer({
     isError: entryFout,
     picksByCategory,
     jokerIds,
+    predictions,
     teamName,
     savePick,
     togglePick,
     saveJoker,
+    savePredictions,
     saveTeamName,
     submitEntry,
     revertEntry,
@@ -335,6 +340,13 @@ function Bouwer({
     [pool, jokerIds, vermenigvuldiger],
   );
   const ingediend = entry?.status === "submitted";
+  const pronostiek = useMemo(
+    () =>
+      startRijders.length > 0
+        ? { rijders: startRijders, gekozen: leesVoorspellingen(predictions), wijzigbaar: ingelogd && Boolean(entry) }
+        : null,
+    [startRijders, predictions, ingelogd, entry],
+  );
 
   // ── Ploegnaam ──
   // Het veld houdt een eigen concept bij tot je het verlaat of op Enter drukt;
@@ -372,7 +384,7 @@ function Bouwer({
   // ── Acties ──
   const [actie, setActie] = useState<Exclude<PsBezig, "kiezen"> | null>(null);
   const [heropend, setHeropend] = useState(false);
-  const kiezen = savePick.isPending || togglePick.isPending || saveJoker.isPending;
+  const kiezen = savePick.isPending || togglePick.isPending || saveJoker.isPending || savePredictions.isPending;
   const bezig: PsBezig | null = actie ?? (kiezen ? "kiezen" : null);
 
   const vraagInlog = (wat: string) => {
@@ -380,10 +392,29 @@ function Bouwer({
     navigate("/login");
   };
 
+  // savePredictions meldt zelf niets (de wielerbouwer heeft eigen toasts);
+  // hier dus wel, en de fout gaat door zodat kies/haalWeg stoppen.
+  const bewaarVoorspelling = async (klassement: "cup" | "grandprix", rijderId: string | null) => {
+    if (!entry) return;
+    try {
+      await savePredictions.mutateAsync({
+        entryId: entry.id,
+        predictions: voorspellingenNa(predictions, klassement, rijderId),
+      });
+    } catch (error) {
+      toast({ title: "Voorspelling niet bewaard", description: entryErrorMessage(error), variant: "destructive" });
+      throw error;
+    }
+  };
+
   const kies = async (doel: KiesDoel, rijderId: string) => {
     if (!user) return vraagInlog("een rijder te kiezen");
     if (!entry) return;
     try {
+      if (doel.soort === "voorspelling") {
+        await bewaarVoorspelling(doel.klassement, rijderId);
+        return;
+      }
       if (doel.soort === "joker") {
         await saveJoker.mutateAsync({ entryId: entry.id, riderIds: jokersNa(jokerIds, doel.plek, rijderId) });
         return;
@@ -405,6 +436,10 @@ function Bouwer({
   const haalWeg = async (doel: KiesDoel) => {
     if (!user || !entry) return;
     try {
+      if (doel.soort === "voorspelling") {
+        await bewaarVoorspelling(doel.klassement, null);
+        return;
+      }
       if (doel.soort === "joker") {
         await saveJoker.mutateAsync({ entryId: entry.id, riderIds: jokersNa(jokerIds, doel.plek, null) });
         return;
@@ -490,6 +525,7 @@ function Bouwer({
       categorieen={categorieen}
       gekozen={gekozen}
       jokers={jokers}
+      pronostiek={pronostiek}
       ploegnaam={ploegnaam}
       ploegnaamBewaard={ploegnaam.trim() === (teamName ?? "").trim()}
       deadline={deadline}

@@ -20,6 +20,9 @@ export type KaravaanEtappe = {
   stage_id: string;
   stage_number: number;
   stage_name: string | null;
+  /** Meermarathon: soort en ondergrond, voor "Cup 3" in plaats van "Wedstrijd 3". */
+  wedstrijd_type?: string | null;
+  ijs_type?: string | null;
   approved_at: string;
   michel_tekst: string | null;
   jose_tekst: string | null;
@@ -107,7 +110,7 @@ export function useKaravaanFeed(params: {
       const [stagesRes, memberRes, standings, profileRes] = await Promise.all([
         supabase
           .from("stages")
-          .select("id, stage_number, name, approved_at, results_status, krant_kop")
+          .select("id, stage_number, name, approved_at, results_status, krant_kop, wedstrijd_type, ijs_type")
           .eq("game_id", gameId)
           .eq("results_status", "approved")
           .order("stage_number", { ascending: true }),
@@ -134,6 +137,8 @@ export function useKaravaanFeed(params: {
         name: string | null;
         krant_kop: string | null;
         approved_at: string;
+        wedstrijd_type: string | null;
+        ijs_type: string | null;
       }>;
       if (approvedStages.length === 0) {
         // Nog geen gefiatteerde uitslagen → toon de strip met placeholders.
@@ -366,6 +371,8 @@ export function useKaravaanFeed(params: {
           stage_id: stage.id,
           stage_number: stage.stage_number,
           stage_name: stage.name,
+          wedstrijd_type: stage.wedstrijd_type,
+          ijs_type: stage.ijs_type,
           approved_at: stage.approved_at,
           michel_tekst: michel,
           jose_tekst: jose,

@@ -14,8 +14,10 @@ export function entryErrorMessage(e: unknown): string {
   return o.message || o.details || o.hint || o.error_description || JSON.stringify(e);
 }
 
-type Prediction = {
-  classification: "gc" | "points" | "kom" | "youth";
+export type Prediction = {
+  /** gc/points/kom/youth: wielergames. cup/grandprix: Meermarathon, de winnaar
+   *  van het Cup-klassement (kunstijs) en het Grand Prix-klassement (natuurijs). */
+  classification: "gc" | "points" | "kom" | "youth" | "cup" | "grandprix";
   position: number;
   rider_id: string;
 };
@@ -174,7 +176,11 @@ export function useEntry(gameId?: string) {
       });
       if (error) throw error;
     },
-    onSuccess: () => settleEntry(),
+    // Direct tonen; de aanroeper meldt een fout zelf (de wielerbouwer heeft
+    // zijn eigen toasts), hier alleen terugzetten.
+    onMutate: ({ predictions }) => optimisticEntry((e) => ({ ...e, entry_predictions: predictions })),
+    onError: (_err, _v, ctx) => rollbackEntry(ctx),
+    onSettled: settleEntry,
   });
 
   const submitEntry = useMutation({

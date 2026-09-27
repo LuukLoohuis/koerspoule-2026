@@ -14,16 +14,19 @@ import { entryErrorMessage } from "@/hooks/useEntry";
 export default function PloegC({
   gameId,
   focusNameSignal,
+  meermarathon = false,
   className,
 }: {
   gameId?: string;
+  /** Meermarathon: wedstrijden en rijders in plaats van ritten en renners. */
+  meermarathon?: boolean;
   /** Bump om de naam-editor te openen (deep-link ?edit=naam, de nudge-balk). */
   focusNameSignal?: number;
   className?: string;
 }) {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const data = usePloegRanglijst(gameId);
+  const data = usePloegRanglijst(gameId, { meermarathon });
 
   const naamOpslaan = async (naam: string): Promise<boolean> => {
     try {
@@ -54,9 +57,11 @@ export default function PloegC({
   if (!data.heeftPloeg) {
     return (
       <div data-eigen-typografie className={cn("font-inter retro-border bg-card p-5 text-center", className)}>
-        <div className="mb-2 text-4xl" aria-hidden>🚴‍♂️</div>
+        <div className="mb-2 text-4xl" aria-hidden>{meermarathon ? "⛸️" : "🚴‍♂️"}</div>
         <p className="font-display text-xl font-bold">{t("ploegC.geenPloegTitel")}</p>
-        <p className="mt-1 font-serif text-sm italic text-muted-foreground">{t("ploegC.geenPloegTekst")}</p>
+        <p className="mt-1 font-serif text-sm italic text-muted-foreground">
+          {t("ploegC.geenPloegTekst", { context: meermarathon ? "mm" : undefined })}
+        </p>
         <Link
           to="/team-samenstellen"
           className="mt-4 inline-flex h-10 items-center rounded-full border-[1.5px] border-foreground px-4 text-[13px] font-bold shadow-[1.5px_1.5px_0_hsl(var(--foreground))]"
@@ -78,6 +83,7 @@ export default function PloegC({
       ritten={data.ritten}
       ploegPunten={data.ploegPunten}
       officieelTotaal={data.officieelTotaal}
+      meermarathon={meermarathon}
     />
   );
 }

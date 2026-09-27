@@ -79,10 +79,12 @@ export function bouwKop(input: {
   winnaar?: string | null;
   etappeNaam?: string | null;
   etappeNummer?: number | null;
+  /** Meermarathon: de wedstrijd zelf ("Cup 3"), in plaats van "etappe 3". */
+  wedstrijd?: string | null;
   /** Ploeg- en deelnemersnamen die niet in de kop thuishoren. */
   poulenamen?: Array<string | null | undefined>;
 }): string | null {
-  const { gegenereerd, winnaar, etappeNaam, etappeNummer, poulenamen = [] } = input;
+  const { gegenereerd, winnaar, etappeNaam, etappeNummer, wedstrijd, poulenamen = [] } = input;
   if (kopNoemtWinnaar(gegenereerd, winnaar) && !kopNoemtPoulenaam(gegenereerd, poulenamen)) {
     return gegenereerd!.trim();
   }
@@ -92,6 +94,7 @@ export function bouwKop(input: {
 
   const plaats = aankomstplaats(etappeNaam);
   if (plaats) return `${naam} wint in ${plaats}`;
+  if (wedstrijd) return `${naam} wint ${wedstrijd}`;
   return etappeNummer ? `${naam} wint etappe ${etappeNummer}` : `${naam} wint`;
 }
 

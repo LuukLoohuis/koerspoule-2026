@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StageTypeIcon, type StageType } from "@/components/stages/StageIcons";
 import { categoryTone, type RiderCategory } from "./tokens";
 import { useRiderStagePoints } from "@/hooks/useRiderStagePoints";
+import { useWedstrijdLabels } from "@/contexts/WedstrijdLabelsContext";
+import { SoortEmbleem } from "@/components/meermarathon/WedstrijdSoort";
 
 /** DB stage_type (NL/EN) → StageType union voor het icoon. */
 function mapStageType(t: string | null | undefined): StageType {
@@ -67,6 +69,7 @@ export default function RiderStageBreakdown({
   panelId,
 }: Props) {
   const { t } = useTranslation();
+  const wedstrijden = useWedstrijdLabels();
   const tone = categoryTone(category);
   const reduce = prefersReducedMotion();
 
@@ -166,6 +169,9 @@ export default function RiderStageBreakdown({
             <ul className="space-y-0.5">
               {scored.map((r) => {
                 const jokered = (r.multiplier ?? 1) > 1;
+                // Meermarathon: "Cup 3" met zijn embleem; de ruwe naam uit
+                // de database is daar vaak nog "Etappe 3".
+                const wedstrijd = wedstrijden?.get(r.stage_number);
                 return (
                   <li
                     key={r.stage_id}
@@ -176,11 +182,17 @@ export default function RiderStageBreakdown({
                       style={{ color: tone.jersey, display: "inline-flex", flex: "0 0 auto" }}
                       aria-hidden
                     >
-                      <StageTypeIcon type={mapStageType(r.stage_type)} size={14} />
+                      {wedstrijd ? (
+                        <SoortEmbleem soort={wedstrijd.soort} maat={16} />
+                      ) : (
+                        <StageTypeIcon type={mapStageType(r.stage_type)} size={14} />
+                      )}
                     </span>
-                    <span className="min-w-0 flex-1 truncate" title={r.stage_name ?? undefined}>
-                      <span className="font-semibold">{t("team.breakdown.stage", { stage: r.stage_number })}</span>
-                      {r.stage_name ? (
+                    <span className="min-w-0 flex-1 truncate" title={wedstrijd ? undefined : r.stage_name ?? undefined}>
+                      <span className="font-semibold">
+                        {wedstrijd ? wedstrijd.label : t("team.breakdown.stage", { stage: r.stage_number })}
+                      </span>
+                      {r.stage_name && !wedstrijd ? (
                         <span style={{ color: "#9A8A74" }}> · {r.stage_name}</span>
                       ) : null}
                     </span>

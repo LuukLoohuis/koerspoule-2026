@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { hoogtemeters, krantNaam, monogram, podiumMetMij, stijging, volgendeRit, wanneer } from "@/lib/krantC";
+import {
+  hoogtemeters,
+  krantNaam,
+  monogram,
+  podiumMetMij,
+  ritLabel,
+  stijging,
+  volgendeRit,
+  wanneer,
+  wedstrijdEigenNaam,
+} from "@/lib/krantC";
 
 describe("krantNaam", () => {
   it("zegt La Gazzetta voor de Giro en laat de rest zoals het thema", () => {
@@ -91,5 +101,29 @@ describe("stijging", () => {
     expect(stijging(-37)).toEqual({ teken: "▼", aantal: 37 });
     expect(stijging(0)).toBeNull();
     expect(stijging(null)).toBeNull();
+  });
+});
+
+describe("ritLabel", () => {
+  it("noemt een etappe in de woorden van de koers", () => {
+    expect(ritLabel({ stage_number: 14 }, "Tappa", false)).toBe("Tappa 14");
+  });
+
+  it("noemt een schaatswedstrijd naar zijn soort, zonder eigen naam", () => {
+    expect(ritLabel({ stage_number: 5, name: "Veenhoop", wedstrijd_type: "grandprix" }, "Wedstrijd", true)).toBe("Grand Prix 5");
+    expect(ritLabel({ stage_number: 3, wedstrijd_type: "cup" }, "Wedstrijd", true)).toBe("Cup 3");
+    expect(ritLabel({ stage_number: 9, wedstrijd_type: "onk" }, "Wedstrijd", true)).toBe("ONK");
+  });
+});
+
+describe("wedstrijdEigenNaam", () => {
+  it("geeft de eigen naam, ook als de feed hem stage_name noemt", () => {
+    expect(wedstrijdEigenNaam({ stage_number: 5, name: "Veenhoop", wedstrijd_type: "grandprix" })).toBe("Veenhoop");
+    expect(wedstrijdEigenNaam({ stage_number: 5, stage_name: "Veenhoop", wedstrijd_type: "grandprix" })).toBe("Veenhoop");
+  });
+
+  it("telt 'Etappe 4' en een lege naam niet als naam", () => {
+    expect(wedstrijdEigenNaam({ stage_number: 4, name: "Etappe 4", wedstrijd_type: "cup" })).toBeNull();
+    expect(wedstrijdEigenNaam({ stage_number: 4, stage_name: null, wedstrijd_type: "cup" })).toBeNull();
   });
 });

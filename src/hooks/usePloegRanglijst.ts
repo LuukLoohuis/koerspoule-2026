@@ -7,6 +7,8 @@ import { eigenRennerIds, useRidersByIds } from "@/hooks/useRidersByIds";
 import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResults";
 import { riderStagePointsQuery, type RiderStagePointsRow } from "@/hooks/useRiderStagePoints";
 import type { EtappePunten } from "@/lib/ploegRanglijst";
+import { meermarathonStageAfkorting, meermarathonStageLabel, wedstrijdTypeVan, type WedstrijdType } from "@/lib/gameTypes";
+import { wedstrijdEigenNaam } from "@/lib/krantC";
 
 export type PloegRenner = {
   id: string;
@@ -23,7 +25,15 @@ export type PloegRenner = {
   etappes: EtappePunten[];
 };
 
-export type PloegRit = { id: string; nummer: number; naam: string | null };
+export type PloegRit = {
+  id: string;
+  nummer: number;
+  naam: string | null;
+  /** Meermarathon: "Cup 3" voluit, "GP 5" voor een smalle kolom, en de soort. */
+  label?: string;
+  kort?: string;
+  soort?: WedstrijdType;
+};
 
 /**
  * Alles wat Ploeg C nodig heeft, uit dezelfde bronnen als de rest van de app:
@@ -32,7 +42,7 @@ export type PloegRit = { id: string; nummer: number; naam: string | null };
  * de dossier-dropdown, dus geen dubbele call), en de ploegpunten uit
  * stage_points. Het scherm kiest zelf de rit; hier komt alleen de data.
  */
-export function usePloegRanglijst(gameId?: string) {
+export function usePloegRanglijst(gameId?: string, { meermarathon = false }: { meermarathon?: boolean } = {}) {
   const { entry, picksByCategory, jokerIds, predictions, teamName, saveTeamName, isLoading: entryLaden } = useEntry(gameId);
   const { data: categories = [], isLoading: categoriesLaden } = useCategories(gameId);
   const { data: startlist = [] } = useStartlist(gameId);
@@ -72,8 +82,19 @@ export function usePloegRanglijst(gameId?: string) {
       stages
         .filter((s) => !s.is_gc && s.results_status === "approved")
         .sort((a, b) => a.stage_number - b.stage_number)
-        .map((s) => ({ id: s.id, nummer: s.stage_number, naam: s.name })),
-    [stages],
+        .map((s) =>
+          meermarathon
+            ? {
+                id: s.id,
+                nummer: s.stage_number,
+                naam: wedstrijdEigenNaam(s),
+                label: meermarathonStageLabel({ ...s, name: null }),
+                kort: meermarathonStageAfkorting(s),
+                soort: wedstrijdTypeVan(s),
+              }
+            : { id: s.id, nummer: s.stage_number, naam: s.name },
+        ),
+    [stages, meermarathon],
   );
 
   const myEntryIds = useMemo(() => (entry?.id ? [entry.id] : []), [entry?.id]);
@@ -113,14 +134,16 @@ export function usePloegRanglijst(gameId?: string) {
         etappes: rijen.map((p) => ({
           stage_number: p.stage_number,
           total_points: p.total_points ?? 0,
-          stage_name: p.stage_name,
+          // Bij de Meermarathon heet de wedstrijd zoals in ritten hierboven;
+          // de RPC geeft de ruwe naam, soms nog "Etappe 3".
+          stage_name: meermarathon ? null : p.stage_name,
           stage_type: p.stage_type,
           finish_position: p.finish_position,
           multiplier: p.multiplier,
         })),
       }];
     });
-  }, [rennersQ.data, startlist, categories, picksByCategory, jokerIds, rennerIds, puntenQs]);
+  }, [rennersQ.data, startlist, categories, picksByCategory, jokerIds, rennerIds, puntenQs, meermarathon]);
 
   const puntenLaden = puntenQs.some((q) => q.isLoading);
 

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useKoersThema } from "@/contexts/KoersThemaContext";
 import { aankomstplaats } from "@/lib/krantKop";
 import { bronregel, intro, splitsKoersEnPoule, splitsNadruk, veiligeUrl } from "@/lib/verslag";
-import { podiumMetMij } from "@/lib/krantC";
+import { podiumMetMij, ritLabel, wedstrijdEigenNaam } from "@/lib/krantC";
 import type { KaravaanEtappe } from "@/hooks/useKaravaanFeed";
 import type { EtappeVerslag } from "@/hooks/useEtappeVerslag";
 import type { HorsScores, HorsTabKey } from "@/components/karavaan/MiniStrip";
@@ -67,6 +67,7 @@ export default function KrantVandaag({
   heeftHorsCijfers,
   onOpenHors,
   onOpenDaguitslag,
+  meermarathon = false,
 }: {
   etappe: KaravaanEtappe | null;
   kop: string | null;
@@ -77,6 +78,7 @@ export default function KrantVandaag({
   heeftHorsCijfers: boolean;
   onOpenHors?: (tab: HorsTabKey) => void;
   onOpenDaguitslag?: (stageNumber: number) => void;
+  meermarathon?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const thema = useKoersThema();
@@ -84,7 +86,7 @@ export default function KrantVandaag({
   const [open, setOpen] = useState(false);
 
   const tekst = verslag?.tekst?.trim() || null;
-  const plaats = etappe ? aankomstplaats(etappe.stage_name) : null;
+  const plaats = etappe ? (meermarathon ? wedstrijdEigenNaam(etappe) : aankomstplaats(etappe.stage_name)) : null;
 
   if (geenSubpoule) {
     return (
@@ -120,7 +122,7 @@ export default function KrantVandaag({
       {kop && (
         <article className="flex flex-col gap-2.5">
           <span className="editor-eyebrow">
-            {thema.etappe} {etappe.stage_number}
+            {ritLabel(etappe, thema.etappe, meermarathon)}
             {plaats ? ` · ${plaats}` : ""}
           </span>
           <h2 className="kop-gold m-0 pb-2.5 font-display text-[34px] font-black leading-[1] tracking-[-0.03em]">{kop}</h2>
@@ -205,7 +207,7 @@ export default function KrantVandaag({
           {podiumRit.length > 0 && (
             <div className="flex flex-col">
               <h4 className={cn(MONO, "mb-1 text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground")}>
-                {t("krantC.rit")}
+                {t("krantC.rit", { context: meermarathon ? "mm" : undefined })}
               </h4>
               {podiumRit.map((r, i) => (
                 <div

@@ -13,7 +13,8 @@ import { useEtappeVoorbeschouwing } from "@/hooks/useEtappeVoorbeschouwing";
 import { useStages } from "@/hooks/useResults";
 import { useKoersThema } from "@/contexts/KoersThemaContext";
 import { bouwKop, kopUitVerslag } from "@/lib/krantKop";
-import { volgendeRit } from "@/lib/krantC";
+import { ritLabel, volgendeRit, wedstrijdEigenNaam } from "@/lib/krantC";
+import { isMeermarathonGame } from "@/lib/gameTypes";
 import { tourviewUrl } from "@/lib/tourview";
 
 /**
@@ -45,6 +46,7 @@ export default function KrantC({
   const game = gameId ? { id: gameId, status: gameStatus } : curGame;
   const { data: alleGames } = useAllGames();
   const gameMeta = gameId ? alleGames?.find((g) => g.id === gameId) : curGame;
+  const meermarathon = isMeermarathonGame(gameMeta?.game_type);
 
   const subpoulesQuery = useSubpoules(game?.id);
   const subpoules = subpoulesQuery.subpoules;
@@ -74,8 +76,10 @@ export default function KrantC({
     const gebouwd = bouwKop({
       gegenereerd: laatste.krant_kop,
       winnaar: laatste.ritwinnaar,
-      etappeNaam: laatste.stage_name,
+      // Een schaatswedstrijd heet "Cup 3", met hooguit een plaats als eigen naam.
+      etappeNaam: meermarathon ? wedstrijdEigenNaam(laatste) : laatste.stage_name,
       etappeNummer: laatste.stage_number,
+      wedstrijd: meermarathon ? ritLabel(laatste, thema.etappe, true) : null,
       poulenamen: [
         ...laatste.subpouleStandings.flatMap((r) => [r.team_name, r.display_name]),
         ...laatste.overallStandings.flatMap((r) => [r.team_name, r.display_name]),
@@ -83,8 +87,8 @@ export default function KrantC({
     });
     if (gebouwd) return gebouwd;
     const tekst = verslag?.tekst?.trim();
-    return tekst ? kopUitVerslag(tekst) ?? `${thema.etappe} ${laatste.stage_number}` : null;
-  }, [laatste, verslag?.tekst, thema.etappe]);
+    return tekst ? kopUitVerslag(tekst) ?? ritLabel(laatste, thema.etappe, meermarathon) : null;
+  }, [laatste, verslag?.tekst, thema.etappe, meermarathon]);
 
   return (
     <KrantCWeergave
@@ -108,6 +112,7 @@ export default function KrantC({
       onOpenSubpoule={onOpenSubpoule}
       onOpenUitslagen={onOpenUitslagen}
       onOpenDaguitslag={onOpenDaguitslag}
+      meermarathon={meermarathon}
     />
   );
 }

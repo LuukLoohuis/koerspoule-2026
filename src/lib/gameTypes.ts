@@ -176,6 +176,21 @@ export function meermarathonStageKort(stage: {
   return def.genummerd ? String(stage.stage_number) : def.label;
 }
 
+/**
+ * Een wedstrijd in weinig tekens, voor een smalle kolomkop: "Cup 3", "GP 5",
+ * "ONK". Een eigen naam telt hier niet; die past zelden.
+ */
+export function meermarathonStageAfkorting(stage: {
+  stage_number: number;
+  wedstrijd_type?: string | null;
+  ijs_type?: string | null;
+}): string {
+  const type = wedstrijdTypeVan(stage);
+  if (type === "grandprix") return `GP ${stage.stage_number}`;
+  const def = WEDSTRIJD_TYPES.find((w) => w.value === type) ?? WEDSTRIJD_TYPES[0];
+  return def.genummerd ? `${def.label} ${stage.stage_number}` : def.label;
+}
+
 /** De maat van een wedstrijd: ronden op kunstijs, kilometers op natuurijs. */
 export function meermarathonAfstandLabel(stage: {
   ijs_type?: string | null;

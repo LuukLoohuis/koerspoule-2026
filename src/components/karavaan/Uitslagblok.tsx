@@ -68,12 +68,15 @@ function Rij({
 export default function Uitslagblok({
   etappeNummer,
   etappeNaam,
+  etappeTitel,
   rituitslag,
   stand,
   className,
 }: {
   etappeNummer: number | null;
   etappeNaam: string | null;
+  /** Meermarathon: de wedstrijd zelf ("Cup 3") in plaats van "etappe 3". */
+  etappeTitel?: string | null;
   rituitslag: UitslagRenner[];
   stand: StandPloeg[];
   className?: string;
@@ -85,7 +88,8 @@ export default function Uitslagblok({
 
   if (rituitslag.length === 0 && stand.length === 0) return null;
 
-  const etappeLabel = etappeNummer != null ? `Uitslag etappe ${etappeNummer}` : "Uitslag";
+  const ritNaam = etappeTitel ?? (etappeNummer != null ? `etappe ${etappeNummer}` : null);
+  const etappeLabel = ritNaam ? `Uitslag ${ritNaam}` : "Uitslag";
   const kopregel = (label: string, opent: "klassement" | "etappe") => (
     <button
       type="button"
@@ -103,7 +107,7 @@ export default function Uitslagblok({
           verslag". Van daaruit blijft "Top 10 ▸" de binnenpagina openen. */}
       <div>
         <p className="mb-2 border-b border-foreground/25 pb-1.5 font-oswald text-[10.5px] font-bold uppercase tracking-[0.2em] text-foreground">
-          {etappeNummer != null ? `Uitslagen · etappe ${etappeNummer}` : "Uitslagen"}
+          {ritNaam ? `Uitslagen · ${ritNaam}` : "Uitslagen"}
         </p>
         <button
           type="button"

@@ -441,7 +441,23 @@
       "prizesLink": "There's something to win — <bold>check out the prizes</bold>",
       "zoekRenner": "Search your team…",
       "zoekWissen": "Clear search",
-      "zoekGeenTreffer": "No rider found for “{{term}}”."
+      "zoekGeenTreffer": "No rider found for “{{term}}”.",
+      "mmCupKlassement": "Cup standings · artificial ice",
+      "mmGpKlassement": "Grand Prix standings · natural ice",
+      "noPredictions_mm": "No winners predicted yet for the Cup and Grand Prix standings.",
+      "naarPronostiek": "Predict the winners",
+      "pronostiekWijzigen": "Change prediction ›",
+      "pointsThroughStage_mm": "points through {{stage}}",
+      "onlyStage_mm": "{{stage}} only",
+      "dayRankStage_mm": "#{{rank}} of the day · {{stage}}",
+      "bestStage_mm": "Best race",
+      "ptStage_mm": "{{points}} pt · {{stage}}",
+      "hintStageResult_mm": "Open the result of this race",
+      "throughStage_mm": "through {{stage}}",
+      "rewindAria_mm": "Choose a race to rewind to",
+      "rewoundThrough_mm": "Rewound through {{stage}}",
+      "zoekGeenTreffer_mm": "No skater found for “{{term}}”.",
+      "buildBeforeFlamme_mm": "Pick your team before the starting gun."
     },
     "sheet": {
       "noRidersChosen": "No riders picked yet.",
@@ -1290,7 +1306,8 @@
       "rubVerslagHaak": "The report and the pundits",
       "rubLegendeHaak": "A story from the archive",
       "rubPerszaal": "Press room",
-      "rubPerszaalHaak": "Michel Wuyts and José De Cauwer"
+      "rubPerszaalHaak": "Michel Wuyts and José De Cauwer",
+      "kicker_mm": "{{rit}} · result in"
     }
   },
   "common": {
@@ -1867,10 +1884,23 @@
     "geenPloegTitel": "No team on the bus yet",
     "geenPloegTekst": "Build your team before the flamme rouge.",
     "naarPloegbouwer": "To the team builder",
-    "laden": "Loading team…"
+    "laden": "Loading team…",
+    "ritSticker_mm": "+{{punten}} in {{rit}}",
+    "standTm_mm": "Standing up to {{rit}}",
+    "ritKiezerAria_mm": "Choose up to which race you see the standing",
+    "kolomRenner_mm": "Skater",
+    "kolomRit_mm": "{{rit}}",
+    "renners_mm_one": "{{count}} skater",
+    "renners_mm_other": "{{count}} skaters",
+    "rittenKop_mm": "Points per race",
+    "rittenAria_mm": "Points per race for {{naam}}",
+    "rittenGescoord_mm_one": "Scored {{aantal}}× in {{count}} race",
+    "rittenGescoord_mm_other": "Scored {{aantal}}× in {{count}} races",
+    "geenPunten_mm": "No points yet up to {{rit}}.",
+    "geenPloegTekst_mm": "Pick your team before the starting gun."
   },
   "krantC": {
-    "kopAria": "{{krant}}, {{etappe}} {{nummer}}",
+    "kopAria": "{{krant}}, {{rit}}",
     "informatie": "Information",
     "informatieAria": "Information: how to read the paper",
     "informatieSluiten": "Close",
@@ -1915,7 +1945,7 @@
     "truiRendement": "Return",
     "truiRapport": "Report mark",
     "nogGeenCijfer": "no figure yet",
-    "voorbeschouwing": "Preview · {{etappe}} {{nummer}}",
+    "voorbeschouwing": "Preview · {{rit}}",
     "afstand": "distance",
     "hoogtemeters": "climbing",
     "type": "type",
@@ -1923,9 +1953,16 @@
     "profiel": "View the 3D profile ›",
     "alleRittenGereden": "All stages have been ridden; nothing left to preview.",
     "geenVoorbeschouwing": "The editors will write the preview as soon as it is ready.",
-    "perszaalEyebrow": "From the press room · after {{etappe}} {{nummer}}",
+    "perszaalEyebrow": "From the press room · after {{rit}}",
     "commentator": "Commentator",
     "analist": "Analyst",
-    "perszaalLeeg": "No commentary on this stage yet."
+    "perszaalLeeg": "No commentary on this stage yet.",
+    "rit_mm": "Race",
+    "alleRittenGereden_mm": "All races have been skated; nothing left to preview.",
+    "uitlegStijging_mm": "Places gained or lost since the previous race.",
+    "uitlegPunten_mm": "Your team's points in this race. Everything per skater is under Team.",
+    "uitlegPodium_mm": "Podium of the race: gold, silver, bronze.",
+    "soort": "race",
+    "ijs": "ice"
   }
 }

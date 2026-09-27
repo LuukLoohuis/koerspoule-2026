@@ -13,7 +13,8 @@ import type { KaravaanEtappe } from "@/hooks/useKaravaanFeed";
 import type { EtappeVerslag } from "@/hooks/useEtappeVerslag";
 import type { StageRow } from "@/hooks/useResults";
 import { useKoersThema } from "@/contexts/KoersThemaContext";
-import { krantNaam, stijging } from "@/lib/krantC";
+import { krantNaam, ritLabel, stijging } from "@/lib/krantC";
+import { meermarathonStageAfkorting } from "@/lib/gameTypes";
 
 const MONO = "font-['JetBrains_Mono',monospace]";
 
@@ -39,6 +40,8 @@ export type KrantCWeergaveProps = {
   onOpenSubpoule?: (subpouleId: string) => void;
   onOpenUitslagen?: () => void;
   onOpenDaguitslag?: (stageNumber: number) => void;
+  /** Meermarathon: wedstrijden ("Cup 3") en rijders in plaats van ritten en renners. */
+  meermarathon?: boolean;
   className?: string;
 };
 
@@ -64,12 +67,12 @@ function Cel({
       aria-label={aria}
       className={cn(
         "flex min-w-0 flex-col items-start justify-center gap-1 px-2.5 text-left",
-        !eerste && "border-l border-card/15",
+        !eerste && "border-l border-current/15",
         "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--vintage-gold))]",
         "disabled:cursor-default",
       )}
     >
-      <span className={cn(MONO, "max-w-full truncate text-[9.5px] uppercase tracking-[0.14em] text-card/75")}>{label} ›</span>
+      <span className={cn(MONO, "max-w-full truncate text-[9.5px] uppercase tracking-[0.14em] opacity-75")}>{label} ›</span>
       {children}
     </button>
   );
@@ -79,7 +82,7 @@ function Stijging({ delta }: { delta: number | null | undefined }) {
   const s = stijging(delta);
   if (!s) return null;
   return (
-    <span className={cn("text-[11px] font-bold tabular-nums", s.teken === "▲" ? "text-[hsl(var(--vintage-gold))]" : "text-card/60")}>
+    <span className={cn("text-[11px] font-bold tabular-nums", s.teken === "▲" ? "text-[hsl(var(--vintage-gold))]" : "opacity-60")}>
       {s.teken} {s.aantal}
     </span>
   );
@@ -117,6 +120,7 @@ export default function KrantCWeergave({
   onOpenSubpoule,
   onOpenUitslagen,
   onOpenDaguitslag,
+  meermarathon = false,
   className,
 }: KrantCWeergaveProps) {
   const { t, i18n } = useTranslation();
@@ -124,6 +128,12 @@ export default function KrantCWeergave({
   const thema = useKoersThema();
   const [editie, setEditie] = useState<Editie>("vandaag");
   const [infoOpen, setInfoOpen] = useState(false);
+  // i18next-context: een sleutel met _mm wint, anders de wielertekst.
+  const ctx = meermarathon ? "mm" : undefined;
+  const kopRit = laatste ? ritLabel(laatste, thema.etappe, meermarathon) : null;
+  // "IJsjournaal · Grand Prix 5" past niet op een telefoon; in de kop "GP 5",
+  // voluit in de aria-label en het artikel eronder.
+  const kopRitKort = laatste && meermarathon ? meermarathonStageAfkorting(laatste) : kopRit;
 
   const subpouleNaam = subpoules.find((sp) => sp.id === selectedSubpouleId)?.name ?? null;
   const mijSub = laatste?.subpouleStandings.find((r) => r.is_me) ?? null;
@@ -133,14 +143,14 @@ export default function KrantCWeergave({
 
   const uitleg: Array<{ symbool: ReactNode; tekst: string }> = [
     { symbool: <span className={cn(MONO, "text-[16px] font-bold tabular-nums")}>#3</span>, tekst: t("krantC.uitlegPlaats") },
-    { symbool: <span className="text-[14px] font-bold text-[var(--vintage-green)]">▲ 2</span>, tekst: t("krantC.uitlegStijging") },
+    { symbool: <span className="text-[14px] font-bold text-[var(--vintage-green)]">▲ 2</span>, tekst: t("krantC.uitlegStijging", { context: ctx }) },
     {
       symbool: (
         <span className={cn(MONO, "text-[16px] font-bold tabular-nums")}>
           48 <span className="text-[11px] font-normal">{t("ploegC.pt")}</span>
         </span>
       ),
-      tekst: t("krantC.uitlegPunten"),
+      tekst: t("krantC.uitlegPunten", { context: ctx }),
     },
     { symbool: <span className="sticker px-[7px] py-px text-[11px]">{t("krantC.jij")}</span>, tekst: t("krantC.uitlegJij") },
     {
@@ -151,7 +161,7 @@ export default function KrantCWeergave({
           ))}
         </span>
       ),
-      tekst: t("krantC.uitlegPodium"),
+      tekst: t("krantC.uitlegPodium", { context: ctx }),
     },
     { symbool: <span className="font-stamp text-[11px] uppercase tracking-[0.06em]">Hors</span>, tekst: t("krantC.uitlegHors") },
   ];
@@ -164,17 +174,15 @@ export default function KrantCWeergave({
           <h1
             className="m-0 flex min-w-0 items-baseline gap-2 whitespace-nowrap"
             aria-label={
-              laatste
-                ? t("krantC.kopAria", { krant: krantNaam(thema), etappe: thema.etappe, nummer: laatste.stage_number })
-                : krantNaam(thema)
+              kopRit ? t("krantC.kopAria", { krant: krantNaam(thema), rit: kopRit }) : krantNaam(thema)
             }
           >
             <span className="truncate font-display text-[25px] font-black italic tracking-[-0.02em]">{krantNaam(thema)}</span>
-            {laatste && (
+            {kopRit && (
               <>
                 <span aria-hidden className="text-[20px] text-[hsl(var(--vintage-gold))]">·</span>
                 <span className="font-oswald text-[19px] font-semibold uppercase tracking-[0.04em]">
-                  {thema.etappe} {laatste.stage_number}
+                  {kopRitKort}
                 </span>
               </>
             )}
@@ -193,7 +201,12 @@ export default function KrantCWeergave({
           </button>
         </div>
 
-        <section aria-label={t("krantC.standAria")} className="-mx-5 flex h-[82px] flex-col bg-foreground text-card">
+        {/* In de winternacht is foreground licht; de balk blijft dan donker
+            (secondary) met lichte letters, anders valt de dagscore weg. */}
+        <section
+          aria-label={t("krantC.standAria")}
+          className="-mx-5 flex h-[82px] flex-col bg-foreground text-card in-data-[modus=nacht]:bg-secondary in-data-[modus=nacht]:text-foreground"
+        >
           <div aria-hidden className="h-[3px] bg-linear-to-r from-primary via-[hsl(var(--vintage-gold))] to-primary" />
           <div className="grid grow grid-cols-3 px-1.5">
             <Cel
@@ -209,7 +222,7 @@ export default function KrantCWeergave({
               <span className="flex items-baseline gap-[5px]">
                 <span className={cn(MONO, "text-[24px] font-bold leading-none tabular-nums")}>{mijSub ? `#${mijSub.rank}` : "—"}</span>
                 {laatste && (
-                  <span className="text-[11px] text-card/75">/{laatste.subpouleStandings.length.toLocaleString(locale)}</span>
+                  <span className="text-[11px] opacity-75">/{laatste.subpouleStandings.length.toLocaleString(locale)}</span>
                 )}
               </span>
               <Stijging delta={mijSub?.delta_rank} />
@@ -220,7 +233,7 @@ export default function KrantCWeergave({
               onClick={onOpenUitslagen}
             >
               <span className={cn(MONO, "text-[24px] font-bold leading-none tabular-nums")}>{mijOver ? `#${mijOver.rank}` : "—"}</span>
-              <span className="flex items-baseline gap-1.5 text-[11px] text-card/75 tabular-nums">
+              <span className="flex items-baseline gap-1.5 text-[11px] opacity-75 tabular-nums">
                 {laatste && <span>/{laatste.overallStandings.length.toLocaleString(locale)}</span>}
                 <Stijging delta={mijOver?.delta_rank} />
               </span>
@@ -231,15 +244,21 @@ export default function KrantCWeergave({
               onClick={laatste && onOpenDaguitslag ? () => onOpenDaguitslag(laatste.stage_number) : undefined}
             >
               <span className="flex items-baseline gap-1">
+                {/* Themakleur, opgelicht voor de donkere balk. Het winterblauw is
+                    zelf al donker; daar gaat er meer wit bij. */}
                 <span
-                  className={cn(MONO, "text-[24px] font-bold leading-none tabular-nums")}
-                  style={{ color: "color-mix(in srgb, hsl(var(--primary)) 72%, white)" }}
+                  className={cn(
+                    MONO,
+                    "text-[24px] font-bold leading-none tabular-nums",
+                    "text-[color-mix(in_srgb,hsl(var(--primary))_72%,white)]",
+                    "in-data-[thema=winter]:text-[color-mix(in_srgb,hsl(var(--primary))_40%,white)]",
+                  )}
                 >
                   {dagpunten == null ? "—" : dagpunten.toLocaleString(locale)}
                 </span>
-                <span className="text-[11px] text-card/75">{t("ploegC.pt")}</span>
+                <span className="text-[11px] opacity-75">{t("ploegC.pt")}</span>
               </span>
-              <span className="text-[11px] text-card/75 tabular-nums">
+              <span className="text-[11px] opacity-75 tabular-nums">
                 {dagrang != null
                   ? t("krantC.vdDag", { rang: dagrang.toLocaleString(locale) })
                   : laatste
@@ -283,10 +302,13 @@ export default function KrantCWeergave({
           heeftHorsCijfers={heeftHorsCijfers}
           onOpenHors={onOpenHors}
           onOpenDaguitslag={onOpenDaguitslag}
+          meermarathon={meermarathon}
         />
       )}
-      {editie === "morgen" && <KrantMorgen rit={morgen} tekst={voorbeschouwing} profielUrl={profielUrl} />}
-      {editie === "perszaal" && <KrantPerszaal etappe={laatste} laden={commentaarLaden} />}
+      {editie === "morgen" && (
+        <KrantMorgen rit={morgen} tekst={voorbeschouwing} profielUrl={profielUrl} meermarathon={meermarathon} />
+      )}
+      {editie === "perszaal" && <KrantPerszaal etappe={laatste} laden={commentaarLaden} meermarathon={meermarathon} />}
 
       {/* ── Informatie-overlay ──────────────────────────────────────────── */}
       <DialogPrimitive.Root open={infoOpen} onOpenChange={setInfoOpen}>

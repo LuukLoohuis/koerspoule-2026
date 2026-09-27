@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useKoersThema } from "@/contexts/KoersThemaContext";
-import { monogram } from "@/lib/krantC";
+import { monogram, ritLabel } from "@/lib/krantC";
 import type { KaravaanEtappe } from "@/hooks/useKaravaanFeed";
 
 const MONO = "font-['JetBrains_Mono',monospace]";
@@ -12,7 +12,15 @@ const MONO = "font-['JetBrains_Mono',monospace]";
  * als twee grote citaten met een monogram-rondje, gescheiden door het
  * ornament. De teksten zijn het bestaande commentaar van de Koerskrant.
  */
-export default function KrantPerszaal({ etappe, laden }: { etappe: KaravaanEtappe | null; laden: boolean }) {
+export default function KrantPerszaal({
+  etappe,
+  laden,
+  meermarathon = false,
+}: {
+  etappe: KaravaanEtappe | null;
+  laden: boolean;
+  meermarathon?: boolean;
+}) {
   const { t } = useTranslation();
   const thema = useKoersThema();
 
@@ -27,7 +35,7 @@ export default function KrantPerszaal({ etappe, laden }: { etappe: KaravaanEtapp
     <div role="tabpanel" className="flex flex-col gap-[22px]">
       {etappe && (
         <span className="editor-eyebrow">
-          {t("krantC.perszaalEyebrow", { etappe: thema.etappe, nummer: etappe.stage_number })}
+          {t("krantC.perszaalEyebrow", { rit: ritLabel(etappe, thema.etappe, meermarathon) })}
         </span>
       )}
 

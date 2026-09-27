@@ -56,6 +56,8 @@ export type PloegCWeergaveProps = {
   ploegPunten: ReadonlyArray<{ stage_id: string; points: number }>;
   /** Officieel totaal van je inschrijving; null zolang dat er niet is. */
   officieelTotaal: number | null;
+  /** Meermarathon: wedstrijden en rijders in plaats van ritten en renners. */
+  meermarathon?: boolean;
   className?: string;
 };
 
@@ -79,9 +81,12 @@ export default function PloegCWeergave({
   ritten,
   ploegPunten,
   officieelTotaal,
+  meermarathon = false,
   className,
 }: PloegCWeergaveProps) {
   const { t, i18n } = useTranslation();
+  // i18next-context: een sleutel met _mm wint, anders de wielertekst.
+  const ctx = meermarathon ? "mm" : undefined;
   const locale = i18n.language === "en" ? "en-GB" : "nl-NL";
   const fmt = (n: number) => n.toLocaleString(locale);
 
@@ -215,7 +220,7 @@ export default function PloegCWeergave({
             {rit && dagPloeg > 0 && (
               <span className="sticker sticker--gold whitespace-nowrap px-2 py-0.5 text-[12px] tabular-nums">
                 {teruggespoeld
-                  ? t("ploegC.ritSticker", { punten: fmt(dagPloeg), rit: rit.nummer })
+                  ? t("ploegC.ritSticker", { punten: fmt(dagPloeg), rit: rit.label ?? rit.nummer, context: ctx })
                   : t("ploegC.vandaagSticker", { punten: fmt(dagPloeg) })}
               </span>
             )}
@@ -228,7 +233,7 @@ export default function PloegCWeergave({
         {ritten.length > 0 && ritN != null ? (
           <Select value={String(ritN)} onValueChange={(v) => setGekozenRit(Number(v))}>
             <SelectTrigger
-              aria-label={t("ploegC.ritKiezerAria")}
+              aria-label={t("ploegC.ritKiezerAria", { context: ctx })}
               className="h-10 w-auto gap-1.5 rounded-full border-[1.5px] border-foreground bg-transparent px-3 py-0 text-[13px] font-bold text-foreground shadow-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-2 focus-visible:ring-ring [&>svg]:h-4 [&>svg]:w-4 [&>svg]:opacity-100"
             >
               <SelectValue />
@@ -236,7 +241,7 @@ export default function PloegCWeergave({
             <SelectContent align="start">
               {[...ritten].reverse().map((r) => (
                 <SelectItem key={r.id} value={String(r.nummer)}>
-                  {t("ploegC.standTm", { rit: r.nummer })}
+                  {t("ploegC.standTm", { rit: r.label ?? r.nummer, context: ctx })}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -281,8 +286,10 @@ export default function PloegCWeergave({
         >
           <span className="w-[22px]">#</span>
           <span className="w-[30px]" />
-          <span className="grow">{t("ploegC.kolomRenner")}</span>
-          <span className="w-[42px] text-right">{ritN != null ? t("ploegC.kolomRit", { rit: ritN }) : "–"}</span>
+          <span className="grow">{t("ploegC.kolomRenner", { context: ctx })}</span>
+          <span className="w-[42px] whitespace-nowrap text-right">
+            {rit ? t("ploegC.kolomRit", { rit: rit.kort ?? rit.nummer, context: ctx }) : "–"}
+          </span>
           <span className="w-[48px] text-right">{t("ploegC.kolomTotaal")}</span>
         </div>
 
@@ -385,6 +392,8 @@ export default function PloegCWeergave({
                     naam={r.naam}
                     ritten={rittenVanRenner(r.etappes, ritten, ritN)}
                     gekozenRit={ritN}
+                    gekozenLabel={rit?.label}
+                    meermarathon={meermarathon}
                   />
                 )}
               </li>
@@ -394,7 +403,7 @@ export default function PloegCWeergave({
 
         <div className="flex items-center justify-between pt-2.5 text-[12px] text-muted-foreground">
           <span>
-            {t("ploegC.renners", { count: rijen.length })}
+            {t("ploegC.renners", { count: rijen.length, context: ctx })}
             {opgaves > 0 && ` · ${t("ploegC.opgaves", { count: opgaves })}`}
           </span>
           <span className="font-serif italic">{t("ploegC.truienBron")}</span>
