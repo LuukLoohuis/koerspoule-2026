@@ -3,13 +3,14 @@
  * in de router, niet in de build. Rendert de presentatiecomponenten met
  * nepdata uit het ontwerp, in een telefoonbreed kader en per koersthema,
  * zodat de opmaak te beoordelen is zonder database of inlog. De webkrant
- * staat erbij op paginabreedte, om de Hors-bijlage naast de mobiele truien
- * te kunnen leggen.
+ * staat erbij op paginabreedte; die houdt zijn Hors-tegels, de truien zijn
+ * alleen voor de mobiele Krant.
  *
  * Draaien: npx vite  →  /dev-krant-ploeg.html  (?scherm=krant|ploeg|webkrant, ?thema=roze|geel|rood)
  */
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { useTranslation } from "react-i18next";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import BottomNav from "@/components/BottomNav";
@@ -289,6 +290,7 @@ function KrantDemo({ leeg }: { leeg?: boolean }) {
 /** De voorpagina van de webkrant, met dezelfde cijfers als Krant C hierboven. */
 function WebkrantDemo({ leeg }: { leeg?: boolean }) {
   const thema = useKoersThema();
+  const { t } = useTranslation();
   const [subpoule, setSubpoule] = useState("k");
   const [segment, setSegment] = useState<Segment>("voorpagina");
   const open = (wat: string) => () => console.info("[demo] webkrant", wat);
@@ -329,8 +331,11 @@ function WebkrantDemo({ leeg }: { leeg?: boolean }) {
       }}
       bijlage={
         <HorsBijlage
-          scores={leeg ? { monkeyBeatPct: null, emiratesPct: null, directorScore: null } : { monkeyBeatPct: 78, emiratesPct: 64, directorScore: 7.4 }}
-          onOpen={(tab) => console.info("[demo] hors", tab)}
+          tegels={[
+            { key: "dartpijl", waarde: leeg ? null : 78, eenheid: "%", titel: t("karavaan.ministrip.monkeyTitle"), haak: t("karavaan.ministrip.monkeyLabel"), kleur: "hsl(var(--primary))", onClick: open("hors dartpijl") },
+            { key: "emirates", waarde: leeg ? null : 64, eenheid: "%", titel: t("karavaan.ministrip.emiratesTitle"), haak: t("karavaan.ministrip.emiratesLabel"), kleur: "#8a6a12", onClick: open("hors superteam") },
+            { key: "directeur", waarde: leeg ? null : 7.4, titel: t("karavaan.ministrip.wielerdirTitle"), haak: t("karavaan.ministrip.wielerdirLabel"), kleur: "#2f5d8c", onClick: open("hors wielerdirecteur") },
+          ]}
         />
       }
       segment={segment}
@@ -346,7 +351,7 @@ const SCHERMEN: Array<{ key: string; titel: string; Demo: () => JSX.Element; bre
   { key: "krant-leeg", titel: "Krant C · vóór de eerste uitslag", Demo: () => <KrantDemo leeg /> },
   { key: "ploeg", titel: "Ploeg C", Demo: PloegDemo },
   { key: "ploeg-carrousel", titel: "Ploeg C · in de carrousel", Demo: PloegCarrouselDemo },
-  { key: "webkrant", titel: "Webkrant · voorpagina met Hors-bijlage", Demo: () => <WebkrantDemo />, breed: true },
+  { key: "webkrant", titel: "Webkrant · voorpagina met Hors-bijlage (ongewijzigd)", Demo: () => <WebkrantDemo />, breed: true },
 ];
 
 /** Zet de thematokens zoals ThemaProvider dat doet, zonder database. */
