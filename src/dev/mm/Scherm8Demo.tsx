@@ -1,10 +1,11 @@
 /**
- * Testbank-demo voor scherm 8 (zie src/dev-meermarathon.tsx): de
- * wedstrijdenlijst in het beheer. Bij de Meermarathon geen kilometers en geen
- * terrein, wel de categorie; de wielerkoers eronder blijft zoals hij was.
+ * Testbank-demo voor scherm 8 (zie src/dev-meermarathon.tsx): het beheer. Bij
+ * de Meermarathon geen kilometers en geen terrein, wel de categorie, en geen
+ * jokerfactor; de wielerkoers eronder blijft zoals hij was.
  *
  * Zonder activeGameId schrijft het beheer niets weg: alles hier is nep.
  */
+import CalculationTab from "@/components/admin/CalculationTab";
 import StagesTab, { type Stage } from "@/components/admin/StagesTab";
 
 type Plan = [nr: number, date: string | null, type: string, ijs: "kunstijs" | "natuurijs" | null, ronden: number | null];
@@ -50,6 +51,22 @@ export default function Scherm8Demo() {
         <div className="max-w-full overflow-x-auto">
           <div className="w-[1160px] rounded-lg border border-dashed border-border bg-background px-5 py-6">
             <StagesTab activeGameId="" stages={WEDSTRIJDEN} reload={niets} gameType="meermarathon" />
+          </div>
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h3 className="m-0 font-inter text-base font-bold">Meermarathon · Berekening: geen jokerfactor</h3>
+        <div className="max-w-full overflow-x-auto">
+          <div className="w-[1160px] rounded-lg border border-dashed border-border bg-background px-5 py-6">
+            <CalculationTab activeGameId="" stages={WEDSTRIJDEN} gameType="meermarathon" />
+          </div>
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h3 className="m-0 font-inter text-base font-bold">Ter vergelijking · Berekening van een wielerkoers, met jokerfactor</h3>
+        <div className="max-w-full overflow-x-auto">
+          <div className="w-[1160px] rounded-lg border border-dashed border-border bg-background px-5 py-6">
+            <CalculationTab activeGameId="" stages={RITTEN} gameType="tdf" />
           </div>
         </div>
       </section>

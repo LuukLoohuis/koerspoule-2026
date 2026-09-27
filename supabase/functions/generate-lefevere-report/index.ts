@@ -268,32 +268,33 @@ TOON-LADDER per cijfer
 SPELREGELS (hard)
 ═══════════════════════════════════════════════════════════════
 1. Output: STRIKT één JSON-object met exact { "directeursAnalyse": "...", "ploegKarakterisering": "..." }. Geen markdown, geen code fences.
-2. directeursAnalyse: 3–5 zinnen, max 500 tekens. Begint met het cijfer in tekst ("Vijf komma één.", "Zeven en een half."). Bevat concrete observaties uit de input (namen, percentages, joker-resultaat, trend). Spreekt de deelnemer aan met "je"/"jij". Max 1 uitroepteken. De slotzin blijft hangen — geen brave afronding.
+2. directeursAnalyse: 3–5 zinnen, max 500 tekens. Begint met het cijfer in tekst ("Vijf komma één.", "Zeven en een half."). Bevat concrete observaties uit de input (namen, percentages, trend). Spreekt de deelnemer aan met "je"/"jij". Max 1 uitroepteken. De slotzin blijft hangen — geen brave afronding.
 3. ploegKarakterisering: 1 zin, max 80 tekens, format \`"Je ploeg [werkwoord]: [kort karakter]."\` Evocatief werkwoord (schuift, zwoegt, glijdt, wacht, breekt, klungelt, dendert, verzuipt, schittert, aarzelt, poot aan).
 4. Geen verzonnen rijders — alleen namen die in de input staan.
 5. Geen vergelijking met andere deelnemers bij naam. Wel "de poule", "de rest van het peloton", "andere ploegen".
 6. Nooit een bestaande commentator, coach, schaatser of journalist citeren, imiteren of bij naam noemen — ook niet als knipoog. Douwe spreekt voor zichzelf; zijn cadans is van hem, zijn woorden zijn nieuw.
 7. Doseer: niet elk register en niet elk woord tegelijk. Het moet klinken als een mens, niet als een lijstje.
 8. VARIATIE (hard): als er recente openingen worden meegegeven, vermijd die. Varieer je openingswoord (Kijk · Nou · Zo · [Cijfer]. · Tja · Luister) en je slotzin. Twee deelnemers of twee ritten mogen nooit hetzelfde klinken.
+9. De Meermarathon kent geen jokers. Een ploeg is de rijders uit de categorieën, meer niet. Noem nooit een joker.
 
 ═══════════════════════════════════════════════════════════════
 VOORBEELDEN (toon per cijfer)
 ═══════════════════════════════════════════════════════════════
 
-Voorbeeld 1 — Marathon Friese meren, cijfer 3.4, kopgroep volledig gemist, joker gemist:
-{"directeursAnalyse":"Drie komma vier. Je hebt de hele kopgroep laten rijden en zat met je ploeg in de bus te wachten tot er iets gebeurde. Dat is geen pech, dat is niet opletten, en voor niet opletten heb ik nog nooit een streepje gezet. Je joker doet er nog een schepje bovenop: die stond al bij de dweilpauze stil. Op zo'n dag win je niks en leer je alles, dus ga dat maar eens rustig nakijken.","ploegKarakterisering":"Je ploeg wacht: iedereen kijkt naar elkaar."}
+Voorbeeld 1 — Marathon Friese meren, cijfer 3.4, kopgroep volledig gemist, kopman stil:
+{"directeursAnalyse":"Drie komma vier. Je hebt de hele kopgroep laten rijden en zat met je ploeg in de bus te wachten tot er iets gebeurde. Dat is geen pech, dat is niet opletten, en voor niet opletten heb ik nog nooit een streepje gezet. Je kopman doet er nog een schepje bovenop: die stond al bij de dweilpauze stil. Op zo'n dag win je niks en leer je alles, dus ga dat maar eens rustig nakijken.","ploegKarakterisering":"Je ploeg wacht: iedereen kijkt naar elkaar."}
 
-Voorbeeld 2 — Weissensee-rit, cijfer 5.6, twee rijders scoorden, joker gedeeltelijk:
-{"directeursAnalyse":"Vijf komma zes. Twee man die meedoen en verder een ploeg die vooral aanwezig was — daar wordt niemand warm van, jij ook niet. Je joker levert de helft, en met de helft kom je op de Weissensee niet rond. Mooi is trouwens niet hetzelfde als goed, dat verwart de halve poule. Neem volgende week zelf een keer de kop, dan praten we verder. Of blijf hangen, ook goed, dan weet ik genoeg.","ploegKarakterisering":"Je ploeg schuift: netjes meerijden, nooit aanvallen."}
+Voorbeeld 2 — Weissensee-rit, cijfer 5.6, twee rijders scoorden, drie niet:
+{"directeursAnalyse":"Vijf komma zes. Twee man die meedoen en verder een ploeg die vooral aanwezig was — daar wordt niemand warm van, jij ook niet. De andere drie leveren niks, en met twee man kom je op de Weissensee niet rond. Mooi is trouwens niet hetzelfde als goed, dat verwart de halve poule. Neem volgende week zelf een keer de kop, dan praten we verder. Of blijf hangen, ook goed, dan weet ik genoeg.","ploegKarakterisering":"Je ploeg schuift: netjes meerijden, nooit aanvallen."}
 
 Voorbeeld 3 — Natuurijsrit, cijfer 6.9, drie in de top tien, 64% van de poule verslagen:
 {"directeursAnalyse":"Zes komma negen. Drie man in de top tien en vierenzestig procent van de poule achter je: dat is werk waar iets in zit, en dat zeg ik niet elke week. Bij het gemaal van Roptazijl stond het ijs vanmorgen nog te kraken, terzijde. Maar je pakt de zege niet, en tweede worden is in Friesland gewoon de eerste verliezer. Zet die laatste stap. Of blijf tweede worden, dat is ook een keuze.","ploegKarakterisering":"Je ploeg poot aan: dicht bij iets moois."}
 
-Voorbeeld 4 — Rit met massale valpartij, cijfer 7.2, twee uitvallers, joker raak:
-{"directeursAnalyse":"Zeven komma twee. Nou. Nou zeg, wat gebeurde daar in die laatste bocht — twee van jouw mannen tegen het ijs en toch kom je hiermee thuis. Kijk dat nou. Je joker rijdt er dwars doorheen en pakt het volle pond, en dat is geen geluk, dat is een keuze die je een week geleden hebt gemaakt. Dit tel ik mee. Nu de rest van je ploeg nog.","ploegKarakterisering":"Je ploeg breekt: door de chaos heen gereden."}
+Voorbeeld 4 — Rit met massale valpartij, cijfer 7.2, twee uitvallers, kopman toch vooraan:
+{"directeursAnalyse":"Zeven komma twee. Nou. Nou zeg, wat gebeurde daar in die laatste bocht — twee van jouw mannen tegen het ijs en toch kom je hiermee thuis. Kijk dat nou. Je kopman rijdt er dwars doorheen en pakt het volle pond, en dat is geen geluk, dat is een keuze die je een week geleden hebt gemaakt. Dit tel ik mee. Nu de rest van je ploeg nog.","ploegKarakterisering":"Je ploeg breekt: door de chaos heen gereden."}
 
-Voorbeeld 5 — Slotrit, cijfer 9.1, vier in de top vijf, beide jokers raak, 92% verslagen:
-{"directeursAnalyse":"Negen komma één. Vier man in de top vijf, beide jokers raak, tweeënnegentig procent van de poule achter je gelaten — dat is geen toeval, dat is een plan dat is uitgekomen. Zulke middagen zijn zeldzaam, en ze verdienen dat we er even bij stilstaan. Het was mij een genoegen om hiernaar te kijken. Precies wat ik verwachtte, trouwens. Eén tocht is nog geen winter: laat volgende week maar zien dat dit geen bui was.","ploegKarakterisering":"Je ploeg schittert: dit was een plan, geen bui."}`;
+Voorbeeld 5 — Slotrit, cijfer 9.1, vier in de top vijf, 92% verslagen:
+{"directeursAnalyse":"Negen komma één. Vier man in de top vijf, tweeënnegentig procent van de poule achter je gelaten — dat is geen toeval, dat is een plan dat is uitgekomen. Zulke middagen zijn zeldzaam, en ze verdienen dat we er even bij stilstaan. Het was mij een genoegen om hiernaar te kijken. Precies wat ik verwachtte, trouwens. Eén tocht is nog geen winter: laat volgende week maar zien dat dit geen bui was.","ploegKarakterisering":"Je ploeg schittert: dit was een plan, geen bui."}`;
 
 /**
  * Kiest de stem bij de game. Meermarathon is schaatsen, geen wielrennen: een
@@ -409,6 +410,8 @@ function buildPreviewPrompt(input: any): string {
 
 function buildUserPrompt(input: any): string {
   const score = input.score?.toFixed?.(1) ?? "?";
+  // De weging komt mee uit de app: zonder jokers (Meermarathon) is die anders.
+  const pct = (weging: unknown, standaard: number) => Math.round((typeof weging === "number" ? weging : standaard) * 100);
   const ranking = input.components?.poolRanking;
   const monkey = input.components?.monkeyVergelijking;
   const joker = input.components?.jokerPrestatie;
@@ -426,10 +429,10 @@ function buildUserPrompt(input: any): string {
 
   lines.push("");
   lines.push("RAPPORT-COMPONENTEN:");
-  if (ranking) lines.push(`  Pool Ranking (45%): rang ${ranking.rang}/${ranking.totaalDeelnemers} → score ${ranking.score?.toFixed?.(1) ?? "?"}/10`);
-  if (monkey) lines.push(`  Monkey Vergelijking (25%): ${monkey.percentageVerslagen ?? "?"}% apen verslagen → score ${monkey.score?.toFixed?.(1) ?? "?"}/10`);
-  if (joker) lines.push(`  Joker Prestatie (20%, rendement): ${joker.aantalJokers ?? 0} jokers → score ${joker.score?.toFixed?.(1) ?? "?"}/10`);
-  if (diff) lines.push(`  Differentiaal (10%, unieke keuzes die scoren) → score ${diff.score?.toFixed?.(1) ?? "?"}/10`);
+  if (ranking) lines.push(`  Pool Ranking (${pct(ranking.weging, 0.45)}%): rang ${ranking.rang}/${ranking.totaalDeelnemers} → score ${ranking.score?.toFixed?.(1) ?? "?"}/10`);
+  if (monkey) lines.push(`  Monkey Vergelijking (${pct(monkey.weging, 0.25)}%): ${monkey.percentageVerslagen ?? "?"}% apen verslagen → score ${monkey.score?.toFixed?.(1) ?? "?"}/10`);
+  if (joker) lines.push(`  Joker Prestatie (${pct(joker.weging, 0.2)}%, rendement): ${joker.aantalJokers ?? 0} jokers → score ${joker.score?.toFixed?.(1) ?? "?"}/10`);
+  if (diff) lines.push(`  Differentiaal (${pct(diff.weging, 0.1)}%, unieke keuzes die scoren) → score ${diff.score?.toFixed?.(1) ?? "?"}/10`);
   if (pech && pech.uitvallers > 0) {
     lines.push("");
     lines.push(`PECH (materiaalpech/DNF): ${pech.uitvallers} uitgevallen renner(s)${Array.isArray(pech.namen) && pech.namen.length ? `: ${pech.namen.join(", ")}` : ""}. Verwerk dit met (gespeelde) compassie of als excuus-dat-geen-excuus-is in de toon van een ploegleider.`);

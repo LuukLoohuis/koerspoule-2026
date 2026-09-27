@@ -36,6 +36,18 @@ export function meermarathonCategorieRang(value: string | null | undefined): num
   return i === -1 ? MEERMARATHON_CATEGORIEEN.length : i;
 }
 
+// ── Jokers ────────────────────────────────────────────────────────────────
+// Een wielerploeg kiest naast de categorieën twee jokers: renners die in geen
+// categorie staan. De Meermarathon kent geen jokers; daar is je ploeg precies
+// wat je in de categorieën kiest.
+
+export const JOKERS_PER_PLOEG = 2;
+
+/** Hoeveel jokers een ploeg in deze game kiest: twee, of nul bij de Meermarathon. */
+export function aantalJokers(gameType: string | null | undefined): number {
+  return isMeermarathonGame(gameType) ? 0 : JOKERS_PER_PLOEG;
+}
+
 /**
  * Verkorte schrijfwijze voor krappe plekken: 2026 -> \u201926-\u201927.
  *

@@ -12,16 +12,21 @@ import { toast } from "sonner";
 import type { Stage } from "./StagesTab";
 import { fetchAllRows } from "@/lib/fetchAll";
 import { getCalculationProgress, isCalculationActive } from "@/lib/calculationProgress";
+import { aantalJokers } from "@/lib/gameTypes";
 
 const DEFAULT_STAGE_POINTS = [50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
 export default function CalculationTab({
   activeGameId,
   stages,
+  gameType,
 }: {
   activeGameId: string;
   stages: Stage[];
+  /** De Meermarathon kent geen jokers: dan valt de jokerfactor weg. */
+  gameType?: string | null;
 }) {
+  const metJokers = aantalJokers(gameType) > 0;
   const [busy, setBusy] = useState(false);
   const [stageId, setStageId] = useState("");
   const [schemaPoints, setSchemaPoints] = useState<number[]>(DEFAULT_STAGE_POINTS);
@@ -663,6 +668,7 @@ export default function CalculationTab({
             </Button>
           </div>
 
+          {metJokers && (
           <div className="rounded-lg border p-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
@@ -694,6 +700,7 @@ export default function CalculationTab({
               Huidige instelling: <strong className="text-foreground">{jokerMultiplier}×</strong> — Joker-renners leveren {jokerMultiplier === 2 ? "dubbele" : "normale"} punten op.
             </p>
           </div>
+          )}
 
           <p className="text-xs text-muted-foreground italic">
             Tip: na opslaan een etappe herberekenen om de stand bij te werken.

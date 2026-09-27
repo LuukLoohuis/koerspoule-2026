@@ -14,7 +14,6 @@ import {
 } from "@/components/meermarathon/PloegSamenstellen";
 import { KandidatenLijst } from "@/components/meermarathon/PloegSamenstellenKiezer";
 import {
-  jokersNa,
   kandidaten,
   pickActies,
   type KiesDoel,
@@ -83,12 +82,6 @@ const CATEGORIEEN: PsCategorie[] = [
   },
 ];
 
-const JOKERPOOL: PsRijder[] = [
-  r("pieter", "Pieter Holwerda", "IJsclub Oost", 51),
-  r("rik", "Rik Zwart", "Schaatsteam West", 52),
-  r("tom", "Tom de Graaf", "Ploeg Friesland", null),
-];
-
 const DRIE: [string, string[]][] = [
   ["c1", ["sjoerd"]],
   ["c2", ["gerben"]],
@@ -123,7 +116,6 @@ function DemoBalk({ stand, vrouwen }: { stand?: Stand; vrouwen?: Stand }) {
 
 type Start = {
   gekozen?: [string, string[]][];
-  jokers?: string[] | null;
   naam?: string;
   ingediend?: boolean;
   heropend?: boolean;
@@ -134,12 +126,19 @@ type Start = {
   voorspeld?: Partial<PsVoorspellingen>;
 };
 
+// Rijders op de startlijst die in geen categorie staan: niet te kiezen voor
+// je ploeg, wel als klassementswinnaar in de pronostiek.
+const OVERIGE_RIJDERS: PsRijder[] = [
+  r("pieter", "Pieter Holwerda", "IJsclub Oost", 51),
+  r("rik", "Rik Zwart", "Schaatsteam West", 52),
+  r("tom", "Tom de Graaf", "Ploeg Friesland", null),
+];
+
 // De hele startlijst: iedereen kan het klassement winnen.
-const STARTLIJST: PsRijder[] = [...CATEGORIEEN.flatMap((c) => c.rijders), ...JOKERPOOL];
+const STARTLIJST: PsRijder[] = [...CATEGORIEEN.flatMap((c) => c.rijders), ...OVERIGE_RIJDERS];
 
 function DemoBouwer({ start }: { start: Start }) {
   const [gekozen, setGekozen] = useState(() => new Map(start.gekozen ?? []));
-  const [jokerIds, setJokerIds] = useState<string[]>(start.jokers ?? []);
   const [naam, setNaam] = useState(start.naam ?? "");
   const [bewaard, setBewaard] = useState(start.naam ?? "");
   const [ingediend, setIngediend] = useState(start.ingediend ?? false);
@@ -151,7 +150,6 @@ function DemoBouwer({ start }: { start: Start }) {
     // Net als in de app: uitgelogd kun je rondkijken, niet kiezen.
     if (!ingelogd) return;
     if (doel.soort === "voorspelling") return setVoorspeld({ ...voorspeld, [doel.klassement]: rijderId });
-    if (doel.soort === "joker") return setJokerIds(jokersNa(jokerIds, doel.plek, rijderId));
     const cat = CATEGORIEEN.find((c) => c.id === doel.categorieId)!;
     const inCat = gekozen.get(cat.id) ?? [];
     let ids = [...inCat];
@@ -164,7 +162,6 @@ function DemoBouwer({ start }: { start: Start }) {
 
   const haalWeg = (doel: KiesDoel) => {
     if (doel.soort === "voorspelling") return setVoorspeld({ ...voorspeld, [doel.klassement]: null });
-    if (doel.soort === "joker") return setJokerIds(jokersNa(jokerIds, doel.plek, null));
     const inCat = gekozen.get(doel.categorieId) ?? [];
     setGekozen(new Map(gekozen).set(doel.categorieId, inCat.filter((_, i) => i !== doel.plek)));
   };
@@ -183,7 +180,6 @@ function DemoBouwer({ start }: { start: Start }) {
       gameNaam="Meermarathon Mannen"
       categorieen={CATEGORIEEN}
       gekozen={gekozen}
-      jokers={start.jokers === null ? null : { pool: JOKERPOOL, gekozen: jokerIds, vermenigvuldiger: 2 }}
       pronostiek={{ rijders: STARTLIJST, gekozen: voorspeld, wijzigbaar: ingelogd }}
       ploegnaam={naam}
       ploegnaamBewaard={naam.trim() === bewaard.trim()}
@@ -284,29 +280,29 @@ export default function Scherm2Demo() {
     <div className="flex flex-col gap-10">
       <div className="flex flex-wrap items-start gap-6">
         <Mobiel titel="02a · Mannen, ploeg 3/5">
-          <DemoBouwer start={{ gekozen: DRIE, naam: "De Klapschaatsers", jokers: null }} />
+          <DemoBouwer start={{ gekozen: DRIE, naam: "De Klapschaatsers" }} />
         </Mobiel>
         <Mobiel titel="Lade: kiezen in een categorie" hoogte={640}>
           <LadeInhoud />
         </Mobiel>
-        <Mobiel titel="Met jokers, 5/5 compleet">
-          <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: ["pieter"] }} />
+        <Mobiel titel="5/5 compleet, nog niet bevestigd">
+          <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers" }} />
         </Mobiel>
         <Mobiel titel="Ingeschreven · pronostiek blijft te wijzigen">
           <DemoBouwer
-            start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: null, ingediend: true, voorspeld: { cup: "gerben" } }}
+            start={{ gekozen: VIJF, naam: "De Klapschaatsers", ingediend: true, voorspeld: { cup: "gerben" } }}
           />
         </Mobiel>
         <Mobiel titel="Ingeschreven · koos ook de vrouwen: knop wijst door">
           <DemoBouwer
-            start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: null, ingediend: true, volgende: "Vrouwen" }}
+            start={{ gekozen: VIJF, naam: "De Klapschaatsers", ingediend: true, volgende: "Vrouwen" }}
           />
         </Mobiel>
         <Mobiel titel="Na Aanpassen: weer concept">
-          <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: null, heropend: true }} />
+          <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers", heropend: true }} />
         </Mobiel>
         <Mobiel titel="Niet ingelogd">
-          <DemoBouwer start={{ ingelogd: false, jokers: null }} />
+          <DemoBouwer start={{ ingelogd: false }} />
         </Mobiel>
         <Mobiel titel="Gesloten, je doet mee" hoogte={620}>
           <PloegSamenstellenGesloten
@@ -341,17 +337,17 @@ export default function Scherm2Demo() {
       </div>
 
       <Desktop titel="02b · Desktop, Mannen 3/5">
-        <DemoBouwer start={{ gekozen: DRIE, naam: "De Klapschaatsers", jokers: null }} />
+        <DemoBouwer start={{ gekozen: DRIE, naam: "De Klapschaatsers" }} />
       </Desktop>
-      <Desktop titel="Desktop · met jokers">
-        <DemoBouwer start={{ gekozen: DRIE, naam: "De Klapschaatsers", jokers: ["pieter"] }} />
+      <Desktop titel="Desktop · 5/5 compleet, nog niet bevestigd">
+        <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers" }} />
       </Desktop>
       <Desktop titel="Desktop · ingeschreven">
-        <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: null, ingediend: true }} />
+        <DemoBouwer start={{ gekozen: VIJF, naam: "De Klapschaatsers", ingediend: true }} />
       </Desktop>
       <Desktop titel="Desktop · ingeschreven, koos ook de vrouwen">
         <DemoBouwer
-          start={{ gekozen: VIJF, naam: "De Klapschaatsers", jokers: null, ingediend: true, volgende: "Vrouwen" }}
+          start={{ gekozen: VIJF, naam: "De Klapschaatsers", ingediend: true, volgende: "Vrouwen" }}
         />
       </Desktop>
       <Desktop titel="Desktop · gesloten">

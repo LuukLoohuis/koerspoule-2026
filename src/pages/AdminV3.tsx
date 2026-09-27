@@ -244,11 +244,11 @@ export default function AdminV3() {
         </TabsContent>
 
         <TabsContent value="calc">
-          <CalculationTab activeGameId={activeGameId} stages={stages} />
+          <CalculationTab activeGameId={activeGameId} stages={stages} gameType={activeGame?.game_type ?? null} />
         </TabsContent>
 
         <TabsContent value="entries">
-          <EntriesTab activeGameId={activeGameId} />
+          <EntriesTab activeGameId={activeGameId} gameType={activeGame?.game_type ?? null} />
         </TabsContent>
 
         <TabsContent value="subpoules">

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useAllGames } from "@/hooks/useAllGames";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntry } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
@@ -10,6 +11,8 @@ import { pointsTable } from "@/data/riders";
 import type { LefevereReportInput } from "@/hooks/useLefevereReport";
 import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 import { simulateMonkeyTeams } from "@/lib/monkeySimulation";
+import { aantalJokers } from "@/lib/gameTypes";
+import { directeurRuw, directeurWeging } from "@/lib/directeurWeging";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -135,6 +138,13 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
   const { role } = useAuth();
   // Optioneel een specifieke (bv. afgeronde) game i.p.v. de live game.
   const game = override?.id ? { id: override.id, status: override.status } : curGame;
+  // Het type van déze game, ook als hij expliciet is meegegeven (zelfde
+  // opzoeking als in HorsCategorieTab): de Meermarathon kent geen jokers.
+  const { data: alleGames } = useAllGames();
+  const gameType = override?.id ? alleGames?.find((g) => g.id === override.id)?.game_type : curGame?.game_type;
+  const jokersPerPloeg = aantalJokers(gameType);
+  const metJokers = jokersPerPloeg > 0;
+  const weging = directeurWeging(metJokers);
   // Admin met testmodus ziet de cockpit-cijfers ook in de sneak preview ('open').
   const testmodus = override?.adminTestmodus ?? curGame?.admin_testmodus ?? false;
   const adminSeesAll = role === "admin" && Boolean(testmodus);
@@ -202,10 +212,11 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
       riderPoints,
       userScore: entry ? myStageTotal : 0,
       jokerMultiplier,
+      jokers: jokersPerPloeg,
       simulations: 10_000,
       seed: game?.id?.split("-").reduce((sum, char) => sum + char.charCodeAt(0), 0) ?? 42,
     });
-  }, [categories, allStageResults, allGameRiders, entry, myStageTotal, jokerMultiplier, game?.id]);
+  }, [categories, allStageResults, allGameRiders, entry, myStageTotal, jokerMultiplier, jokersPerPloeg, game?.id]);
 
   // ── Emirates — moet hetzelfde uitkomen als het paneel in HorsCategorieTab.
   //    Beide kanten van de breuk gebruiken pointsTable[finish_position]; wijk je
@@ -242,12 +253,13 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
       }
     }
 
-    // 2b) 2 jokers — beste renners die in geen categorie zitten
+    // 2b) de jokers — beste renners die in geen categorie zitten; geen bij de
+    //     Meermarathon, die kent geen jokers
     const jokerPool = allGameRiders
       .filter((r) => !categoryRiderIds.has(r.id))
       .map((r) => ({ id: r.id, points: riderTotals.get(r.id) ?? 0 }))
       .sort((a, b) => b.points - a.points)
-      .slice(0, 2);
+      .slice(0, jokersPerPloeg);
     dreamTotal += jokerPool.reduce((s, r) => s + r.points, 0);
 
     if (dreamTotal === 0) return null;
@@ -267,10 +279,10 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
     const mijnRenners: string[] = [];
     picksByCategory.forEach((ids) => mijnRenners.push(...ids));
     let myPoints = mijnRenners.reduce((som, id) => som + (riderTotals.get(id) ?? 0), 0);
-    myPoints += jokerIds.reduce((som, id) => som + (riderTotals.get(id) ?? 0), 0);
+    if (metJokers) myPoints += jokerIds.reduce((som, id) => som + (riderTotals.get(id) ?? 0), 0);
 
     return { pct: Math.round((myPoints / dreamTotal) * 100), dreamTotal, myPoints };
-  }, [stages, categories, allStageResults, allGameRiders, entry, picksByCategory, jokerIds]);
+  }, [stages, categories, allStageResults, allGameRiders, entry, picksByCategory, jokerIds, jokersPerPloeg, metJokers]);
 
   // ── Wielerdirecteur (exact dezelfde formule als HorsCategorieTab) ──────────
   const director = useMemo<
@@ -294,9 +306,10 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
     const catIds = new Set<string>();
     for (const c of categories) for (const cr of c.category_riders ?? []) if (cr.riders) catIds.add(cr.riders.id);
 
-    // Joker prestatie — rendement (scoorden je jokers punten?)
+    // Joker prestatie — rendement (scoorden je jokers punten?). Zonder jokers
+    // in de game weegt dit onderdeel niet mee (zie directeurWeging).
     let jokerScore = 0.5;
-    if (jokerIds.length > 0) {
+    if (metJokers && jokerIds.length > 0) {
       const bestJokerPts = allGameRiders
         .filter((r) => !catIds.has(r.id))
         .map((r) => riderTotals.get(r.id) ?? 0)
@@ -325,7 +338,7 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
       if (psum > 0) diffScore = Math.min(1, Math.max(0, wsum / psum));
     }
 
-    const raw = poolScore * 0.45 + monkeyScore * 0.25 + jokerScore * 0.2 + diffScore * 0.1;
+    const raw = directeurRuw({ pool: poolScore, monkey: monkeyScore, joker: jokerScore, diff: diffScore }, weging);
     const score = Math.max(3.0, Math.round((raw * 9 + 1) * 10) / 10);
     const toSub = (v: number) => Math.max(1.0, Math.round((v * 9 + 1) * 10) / 10);
     return {
@@ -337,7 +350,7 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
       jokerSub: toSub(jokerScore),
       diffSub: toSub(diffScore),
     };
-  }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats]);
+  }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats, metJokers, weging]);
 
   // ── Lefevere-input — één bron van waarheid, gedeeld met de Wielerdirecteur-
   //    tab én de Gazetta-feed, zodat de gegenereerde tekst 1-op-1 identiek is
@@ -352,7 +365,7 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
     // we een rapport dat niet bij het echte cijfer past.
     if (isLoading || !director) return null;
     // Pech-index: eigen renners (picks + jokers) die zijn uitgevallen (DNF).
-    const myAllRiderIds: string[] = [...jokerIds];
+    const myAllRiderIds: string[] = metJokers ? [...jokerIds] : [];
     picksByCategory.forEach((ids) => myAllRiderIds.push(...ids));
     const uitvallerNamen = Array.from(new Set(myAllRiderIds))
       .filter((id) => (ridersById[id] as { is_dnf?: boolean } | undefined)?.is_dnf)
@@ -363,23 +376,24 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
       // Bepaalt wie het rapport schrijft: Meermarathon krijgt Douwe Feenstra,
       // de wielergames Patrick Lefevere. Zonder dit veld valt de edge function
       // terug op Lefevere, en die praat niet over natuurijs.
-      gameType: curGame?.game_type ?? null,
+      gameType: gameType ?? null,
       components: {
-        poolRanking: { score: director.poolSub, weging: 0.45, rang: director.rang, totaalDeelnemers: director.totaal },
-        monkeyVergelijking: { score: director.monkeySub, weging: 0.25, percentageVerslagen: Math.round(monte!.beatPct) },
-        jokerPrestatie: { score: director.jokerSub, weging: 0.2, aantalJokers: jokerIds.length },
-        differentiaal: { score: director.diffSub, weging: 0.1 },
+        poolRanking: { score: director.poolSub, weging: weging.pool, rang: director.rang, totaalDeelnemers: director.totaal },
+        monkeyVergelijking: { score: director.monkeySub, weging: weging.monkey, percentageVerslagen: Math.round(monte!.beatPct) },
+        // Zonder jokers geen joker-onderdeel: dan schrijft de ploegleider er ook niet over.
+        ...(metJokers ? { jokerPrestatie: { score: director.jokerSub, weging: weging.joker, aantalJokers: jokerIds.length } } : {}),
+        differentiaal: { score: director.diffSub, weging: weging.diff },
       },
       deelnemer: { ploegnaam: entry?.team_name ?? undefined },
-      etappePrestatie: {
-        jokerRenners: jokerIds.map((id) => ridersById[id]?.name).filter(Boolean) as string[],
-      },
+      etappePrestatie: metJokers
+        ? { jokerRenners: jokerIds.map((id) => ridersById[id]?.name).filter(Boolean) as string[] }
+        : {},
       pech: { uitvallers: uitvallerNamen.length, namen: uitvallerNamen },
       horsCategorieScores: emirates
         ? { emirates: { percentage: emirates.pct, droomploegPunten: emirates.dreamTotal, jouwPunten: emirates.myPoints } }
         : undefined,
     };
-  }, [isLoading, director, monte, jokerIds, entry?.team_name, ridersById, emirates, picksByCategory, curGame?.game_type]);
+  }, [isLoading, director, monte, jokerIds, entry?.team_name, ridersById, emirates, picksByCategory, gameType, metJokers, weging]);
 
   const stageCount = stages.filter((s) => s.results_status === "approved").length;
 

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Pencil, Download } from "lucide-react";
 import EntryEditorDialog from "./EntryEditorDialog";
 import { exportToXlsx, todayStamp } from "@/lib/exportXlsx";
+import { aantalJokers } from "@/lib/gameTypes";
 
 type Entry = {
   entry_id: string;
@@ -27,7 +28,9 @@ type Entry = {
   total_points: number;
 };
 
-export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
+export default function EntriesTab({ activeGameId, gameType }: { activeGameId: string; gameType?: string | null }) {
+  // De Meermarathon kent geen jokers: geen kolom, geen jokervak in de editor.
+  const metJokers = aantalJokers(gameType) > 0;
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -117,7 +120,7 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
                     "Ingediend op": e.submitted_at ? new Date(e.submitted_at).toLocaleString("nl-NL") : "",
                     "Aangemaakt op": new Date(e.created_at).toLocaleString("nl-NL"),
                     "Aantal picks": e.picks_count,
-                    "Aantal jokers": e.jokers_count,
+                    ...(metJokers ? { "Aantal jokers": e.jokers_count } : {}),
                     "Totaal punten": e.total_points,
                   }));
                   exportToXlsx(rows, `koerspoule-inzendingen-${todayStamp()}.xlsx`, "Inzendingen");
@@ -141,7 +144,7 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
                   <TableHead>E-mail</TableHead>
                   <TableHead>Subpoule(s)</TableHead>
                   <TableHead className="text-center">Picks</TableHead>
-                  <TableHead className="text-center">Jokers</TableHead>
+                  {metJokers && <TableHead className="text-center">Jokers</TableHead>}
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Punten</TableHead>
                   <TableHead className="w-20"></TableHead>
@@ -167,7 +170,7 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
                       )}
                     </TableCell>
                     <TableCell className="text-center tabular-nums">{e.picks_count}</TableCell>
-                    <TableCell className="text-center tabular-nums">{e.jokers_count}</TableCell>
+                    {metJokers && <TableCell className="text-center tabular-nums">{e.jokers_count}</TableCell>}
                     <TableCell>
                       {e.entry_status === "submitted" ? (
                         <Badge>Submitted</Badge>
@@ -198,6 +201,7 @@ export default function EntriesTab({ activeGameId }: { activeGameId: string }) {
       <EntryEditorDialog
         entryId={editingEntryId}
         gameId={activeGameId}
+        metJokers={metJokers}
         open={!!editingEntryId}
         onOpenChange={(o) => !o && setEditingEntryId(null)}
         onSaved={load}

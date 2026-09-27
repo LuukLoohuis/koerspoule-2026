@@ -43,9 +43,7 @@ const EIGEN_REGEL = "bg-[color-mix(in_srgb,var(--mm-hot)_8%,transparent)]";
 type LiveTabProps = {
   race: LiveRace | null;
   mineRiderIds: Set<string>;
-  jokerRiderIds: Set<string>;
   pointsSchema: PointsSchema;
-  jokerMultiplier: number;
   /** Nagebootste koers: zet een stempel "Simulatie" in de kop. */
   simulatie?: boolean;
   /** Categorie van de game ("vrouwen" | "mannen"), voor de titel. Onbekend: dat deel vervalt. */
@@ -81,7 +79,6 @@ type EigenRegel = {
   riderId: string | null;
   positie: number;
   naam: string;
-  isJoker: boolean;
   punten: number;
   groep: { kopje: string; badge: string | null };
   verschil: number | null | undefined;
@@ -92,9 +89,7 @@ type Baan = LiveRace["tracks"][number];
 function LiveInhoud({
   race,
   mineRiderIds,
-  jokerRiderIds,
   pointsSchema,
-  jokerMultiplier,
   simulatie,
   categorie,
   wedstrijdType,
@@ -135,16 +130,14 @@ function LiveInhoud({
       projectPoints(t.groups.flatMap((g) => g.leden), {
         schema: pointsSchema,
         mineRiderIds,
-        jokerRiderIds,
         riderIdByBeennummer: t.riderIdByBeennummer,
-        jokerMultiplier,
       }),
     );
     return {
       perBaan,
       totaal: perBaan.reduce((s, p) => s + p.ritPunten, 0),
     };
-  }, [race.tracks, pointsSchema, mineRiderIds, jokerRiderIds, jokerMultiplier]);
+  }, [race.tracks, pointsSchema, mineRiderIds]);
 
   // Stand aan het eind van de vorige ronde: voor het pijltje bij je punten en
   // bij elke plek. "Vorige ronde" en niet "vorige meting" -- per twintig
@@ -175,7 +168,6 @@ function LiveInhoud({
         riderId: t.riderIdByBeennummer.get(r.rider.beennummer) ?? null,
         positie: r.positie,
         naam: r.rider.naam,
-        isJoker: r.isJoker,
         punten: r.punten,
         groep: { kopje: groepsKopje(t.groups, gi), badge: rondeBadge(t.groups[gi]?.tier ?? 0) },
         verschil: plekVerschil(sleutel, r.positie),
@@ -301,7 +293,6 @@ function LiveInhoud({
             totaal={projectie.totaal}
             eigen={eigen}
             nietGestart={nietGestart}
-            jokerMultiplier={jokerMultiplier}
             schaal={puntenSchaal(pointsSchema)}
           />
 
@@ -367,8 +358,7 @@ function LiveInhoud({
       />
 
       <p className={cn(MONO, "px-1 text-[10px] leading-relaxed text-muted-foreground")}>
-        Voorlopig · niet gefiatteerd, wel met dezelfde rekenregel als bij het fiatteren
-        {jokerRiderIds.size > 0 && `; een joker telt ×${jokerMultiplier}`}.
+        Voorlopig · niet gefiatteerd, wel met dezelfde rekenregel als bij het fiatteren.
         <br />
         Bron: livemarathon.schaatsen.nl
         {bijgewerkt && ` · bijgewerkt ${bijgewerkt}`}
@@ -687,13 +677,11 @@ function MijnRijders({
   totaal,
   eigen,
   nietGestart,
-  jokerMultiplier,
   schaal,
 }: {
   totaal: number;
   eigen: EigenRegel[];
   nietGestart: { id: string; naam: string }[];
-  jokerMultiplier: number;
   schaal: string | null;
 }) {
   return (
@@ -710,12 +698,6 @@ function MijnRijders({
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-1.5">
                 <span className="truncate text-[15px] font-bold">{r.naam}</span>
-                {r.isJoker && (
-                  <span className={cn(MONO, "shrink-0 rounded border border-current px-1 text-[9px] font-bold leading-[14px]")}>
-                    ×{jokerMultiplier}
-                    <span className="sr-only"> joker</span>
-                  </span>
-                )}
               </span>
               <span className={cn(MONO, "flex items-center gap-1.5 text-[10px] uppercase tracking-[0.1em]")}>
                 <span className="truncate">

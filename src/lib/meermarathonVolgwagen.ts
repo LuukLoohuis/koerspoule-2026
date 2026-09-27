@@ -167,18 +167,16 @@ export type PloegRijder = { name: string; team: string | null; is_vervallen?: bo
 
 /**
  * De ploeg in categorievolgorde, met een open plek voor elke categorie die
- * nog niet vol is. Jokers buiten de categorieën komen achteraan.
+ * nog niet vol is. De Meermarathon kent geen jokers: dit is de hele ploeg.
  */
 export function bouwPloegRijen(input: {
   categorieen: { id: string; name: string; max_picks: number | null }[];
   picks: { category_id: string; rider_id: string }[];
-  jokers?: string[];
   rijders: Map<string, PloegRijder>;
   /** Punten per rijder; null als er nog geen uitslag is. */
   punten: Map<string, number> | null;
 }): PloegRij[] {
   const rijen: PloegRij[] = [];
-  const gekozen = new Set<string>();
   const rijder = (id: string, categorie: string): PloegRij => {
     const r = input.rijders.get(id);
     return {
@@ -195,19 +193,11 @@ export function bouwPloegRijen(input: {
 
   for (const cat of input.categorieen) {
     const ids = input.picks.filter((p) => p.category_id === cat.id).map((p) => p.rider_id);
-    for (const id of ids) {
-      gekozen.add(id);
-      rijen.push(rijder(id, cat.name));
-    }
+    for (const id of ids) rijen.push(rijder(id, cat.name));
     const open = Math.max(0, (cat.max_picks ?? 1) - ids.length);
     for (let i = 0; i < open; i++) {
       rijen.push({ soort: "open", sleutel: `${cat.id}-open-${i}`, nummer: rijen.length + 1, categorie: cat.name });
     }
-  }
-  for (const id of input.jokers ?? []) {
-    if (gekozen.has(id)) continue;
-    gekozen.add(id);
-    rijen.push(rijder(id, "Joker"));
   }
   return rijen;
 }

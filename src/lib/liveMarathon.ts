@@ -323,7 +323,6 @@ export type ProjectedRider = {
   rider: LiveRider;
   positie: number;
   basis: number;
-  isJoker: boolean;
   punten: number;
 };
 
@@ -334,21 +333,18 @@ export type Projection = {
 
 /**
  * Voorlopige punten voor de eigen ploeg, met exact de regel uit
- * calculate_stage_scores: alleen plek 1 t/m 20 scoort, en een joker telt maal
- * `jokerMultiplier`. Zo kan de live projectie niet afwijken van wat er bij het
- * fiatteren uitkomt.
+ * calculate_stage_scores: alleen plek 1 t/m 20 scoort. Zo kan de live
+ * projectie niet afwijken van wat er bij het fiatteren uitkomt. Jokers, die
+ * bij de wielerkoersen dubbel tellen, kent de Meermarathon niet.
  */
 export function projectPoints(
   placings: RiderPlacing[],
   opts: {
     schema: PointsSchema;
     mineRiderIds: Set<string>;
-    jokerRiderIds?: Set<string>;
     riderIdByBeennummer: Map<string, string>;
-    jokerMultiplier?: number;
   },
 ): Projection {
-  const mult = opts.jokerMultiplier ?? 2;
   const rijders: ProjectedRider[] = [];
 
   for (const p of placings) {
@@ -356,14 +352,7 @@ export function projectPoints(
     if (!riderId || !opts.mineRiderIds.has(riderId)) continue;
     // DNF/uitgevallen rijders scoren niet, net als in de scorer.
     const basis = p.positie >= 1 && p.positie <= 20 ? (opts.schema.get(p.positie) ?? 0) : 0;
-    const isJoker = opts.jokerRiderIds?.has(riderId) ?? false;
-    rijders.push({
-      rider: p.rider,
-      positie: p.positie,
-      basis,
-      isJoker,
-      punten: basis * (isJoker ? mult : 1),
-    });
+    rijders.push({ rider: p.rider, positie: p.positie, basis, punten: basis });
   }
 
   rijders.sort((a, b) => a.positie - b.positie);

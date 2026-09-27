@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultWedstrijdType, gameSeasonName, gameYearFieldValue, isMeermarathonGame, meermarathonAfstandLabel,
+import { aantalJokers, defaultWedstrijdType, gameSeasonName, gameYearFieldValue, isMeermarathonGame, meermarathonAfstandLabel,
   meermarathonCategorieLabel, meermarathonCategorieRang, meermarathonSeason, meermarathonSeasonKort, meermarathonStageAfkorting, meermarathonStageLabel,
   parseGameYearInput, parseMeermarathonCategorie } from "./gameTypes";
 
@@ -110,5 +110,15 @@ describe("meermarathon-wedstrijden", () => {
     expect(kort).not.toContain("\u2018");
     // En geen halflang streepje: dat is de Engelse conventie voor bereiken.
     expect(kort).not.toContain("\u2013");
+  });
+});
+
+describe("jokers", () => {
+  it("geeft een wielerploeg twee jokers en de Meermarathon geen", () => {
+    expect(aantalJokers("tdf")).toBe(2);
+    expect(aantalJokers("giro")).toBe(2);
+    expect(aantalJokers(null)).toBe(2);
+    expect(aantalJokers("meermarathon")).toBe(0);
+    expect(aantalJokers("Meermarathon")).toBe(0);
   });
 });

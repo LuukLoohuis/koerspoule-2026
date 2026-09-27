@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useAllGames } from "@/hooks/useAllGames";
+import { aantalJokers } from "@/lib/gameTypes";
 import { useCategories } from "@/hooks/useCategories";
 import {
   useSubpouleEntries,
@@ -118,6 +120,10 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
   const { user } = useAuth();
   const { data: curGame } = useCurrentGame();
   const game = gameId ? { id: gameId } : curGame;
+  // De Meermarathon kent geen jokers: dan ook geen jokervak in de vergelijking.
+  const { data: alleGames } = useAllGames();
+  const gameType = gameId ? alleGames?.find((g) => g.id === gameId)?.game_type : curGame?.game_type;
+  const metJokers = aantalJokers(gameType) > 0;
   const { data: categories = [] } = useCategories(game?.id);
 
   // Detaildata via SECURITY DEFINER RPC's (cross-user leesbaar):
@@ -330,91 +336,93 @@ export default function TeamComparison({ opponentUserId, opponentName, subpouleI
         </div>
 
         {/* Jokers section */}
-        <div className="border-t-2 border-foreground bg-muted/10">
-          <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
-            <Crown className="h-4 w-4 text-primary" />
-            <span className="font-display text-sm font-bold">{t("subpoule.comparison.jokers")}</span>
-          </div>
-          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 px-3 py-2.5 items-center">
-            <div className="min-w-0 text-right space-y-0.5">
-              {myJokerIds.length === 0 ? (
-                <p className="text-sm text-muted-foreground">—</p>
-              ) : (
-                myJokerIds.map((id) => {
-                  const shared = opp.jokers.has(id);
-                  return (
-                    <p key={id} className={cn("text-sm font-medium truncate text-foreground", shared && "text-primary")}>
-                      {ridersById.get(id)?.name ?? "—"}
-                    </p>
-                  );
-                })
-              )}
-              <p className="text-base font-display font-bold tabular-nums">{myJokerPoints} <span className="text-[10px] font-normal text-muted-foreground">{t("subpoule.comparison.pt")}</span></p>
+        {metJokers && (
+          <div className="border-t-2 border-foreground bg-muted/10">
+            <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
+              <Crown className="h-4 w-4 text-primary" />
+              <span className="font-display text-sm font-bold">{t("subpoule.comparison.jokers")}</span>
             </div>
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 px-3 py-2.5 items-center">
+              <div className="min-w-0 text-right space-y-0.5">
+                {myJokerIds.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">—</p>
+                ) : (
+                  myJokerIds.map((id) => {
+                    const shared = opp.jokers.has(id);
+                    return (
+                      <p key={id} className={cn("text-sm font-medium truncate text-foreground", shared && "text-primary")}>
+                        {ridersById.get(id)?.name ?? "—"}
+                      </p>
+                    );
+                  })
+                )}
+                <p className="text-base font-display font-bold tabular-nums">{myJokerPoints} <span className="text-[10px] font-normal text-muted-foreground">{t("subpoule.comparison.pt")}</span></p>
+              </div>
+              {(() => {
+                const jDiff = myJokerPoints - oppJokerPoints;
+                // Zelfde jokers (goud) alleen bij volledig gelijke set.
+                const jokerSame =
+                  myJokerIds.length > 0 &&
+                  myJokerIds.length === oppJokerIds.length &&
+                  myJokerIds.every((id) => opp.jokers.has(id));
+                return (
+                  <span
+                    className={cn(
+                      "inline-flex items-center justify-center gap-0.5 rounded-full border-[1.5px]",
+                      "px-2.5 py-0.5 text-[13px] font-mono font-bold tabular-nums min-w-[52px] shrink-0 self-center",
+                      jokerSame
+                        ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.18] " + SAME_TEXT
+                        : jDiff > 0
+                          ? "border-emerald-600 bg-emerald-500/25 text-emerald-800 dark:text-emerald-300"
+                          : jDiff < 0
+                            ? "border-red-600 bg-red-500/25 text-red-800 dark:text-red-300"
+                            : "border-border bg-secondary/60 text-muted-foreground"
+                    )}
+                  >
+                    {jDiff > 0 && <ArrowUp className="h-3 w-3" />}
+                    {jDiff < 0 && <ArrowDown className="h-3 w-3" />}
+                    {jDiff > 0 ? "+" : ""}{jDiff}
+                  </span>
+                );
+              })()}
+              <div className="min-w-0 space-y-0.5">
+                {oppJokerIds.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">—</p>
+                ) : (
+                  oppJokerIds.map((id) => {
+                    const shared = me.jokers.has(id);
+                    return (
+                      <p key={id} className={cn("text-sm font-medium truncate text-foreground", shared && "text-primary")}>
+                        {ridersById.get(id)?.name ?? "—"}
+                      </p>
+                    );
+                  })
+                )}
+                <p className="text-base font-display font-bold tabular-nums">{oppJokerPoints} <span className="text-[10px] font-normal text-muted-foreground">{t("subpoule.comparison.pt")}</span></p>
+              </div>
+            </div>
+            {/* Divergerende balk voor de jokerpunten */}
             {(() => {
-              const jDiff = myJokerPoints - oppJokerPoints;
-              // Zelfde jokers (goud) alleen bij volledig gelijke set.
-              const jokerSame =
-                myJokerIds.length > 0 &&
-                myJokerIds.length === oppJokerIds.length &&
-                myJokerIds.every((id) => opp.jokers.has(id));
+              const maxPts = Math.max(myJokerPoints, oppJokerPoints, 1);
               return (
-                <span
-                  className={cn(
-                    "inline-flex items-center justify-center gap-0.5 rounded-full border-[1.5px]",
-                    "px-2.5 py-0.5 text-[13px] font-mono font-bold tabular-nums min-w-[52px] shrink-0 self-center",
-                    jokerSame
-                      ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.18] " + SAME_TEXT
-                      : jDiff > 0
-                        ? "border-emerald-600 bg-emerald-500/25 text-emerald-800 dark:text-emerald-300"
-                        : jDiff < 0
-                          ? "border-red-600 bg-red-500/25 text-red-800 dark:text-red-300"
-                          : "border-border bg-secondary/60 text-muted-foreground"
-                  )}
-                >
-                  {jDiff > 0 && <ArrowUp className="h-3 w-3" />}
-                  {jDiff < 0 && <ArrowDown className="h-3 w-3" />}
-                  {jDiff > 0 ? "+" : ""}{jDiff}
-                </span>
+                <div className="px-3 pb-2.5 -mt-1 grid grid-cols-2 gap-0.5">
+                  <div className="flex justify-end">
+                    <div
+                      className={cn("h-1.5 rounded-l-full", myJokerPoints >= oppJokerPoints ? "bg-primary" : "bg-foreground/20")}
+                      style={{ width: `${(myJokerPoints / maxPts) * 100}%` }}
+                    />
+                  </div>
+                  <div>
+                    <div
+                      className={cn("h-1.5 rounded-r-full", oppJokerPoints >= myJokerPoints ? "bg-primary" : "bg-foreground/20")}
+                      style={{ width: `${(oppJokerPoints / maxPts) * 100}%` }}
+                    />
+                  </div>
+                </div>
               );
             })()}
-            <div className="min-w-0 space-y-0.5">
-              {oppJokerIds.length === 0 ? (
-                <p className="text-sm text-muted-foreground">—</p>
-              ) : (
-                oppJokerIds.map((id) => {
-                  const shared = me.jokers.has(id);
-                  return (
-                    <p key={id} className={cn("text-sm font-medium truncate text-foreground", shared && "text-primary")}>
-                      {ridersById.get(id)?.name ?? "—"}
-                    </p>
-                  );
-                })
-              )}
-              <p className="text-base font-display font-bold tabular-nums">{oppJokerPoints} <span className="text-[10px] font-normal text-muted-foreground">{t("subpoule.comparison.pt")}</span></p>
-            </div>
           </div>
-          {/* Divergerende balk voor de jokerpunten */}
-          {(() => {
-            const maxPts = Math.max(myJokerPoints, oppJokerPoints, 1);
-            return (
-              <div className="px-3 pb-2.5 -mt-1 grid grid-cols-2 gap-0.5">
-                <div className="flex justify-end">
-                  <div
-                    className={cn("h-1.5 rounded-l-full", myJokerPoints >= oppJokerPoints ? "bg-primary" : "bg-foreground/20")}
-                    style={{ width: `${(myJokerPoints / maxPts) * 100}%` }}
-                  />
-                </div>
-                <div>
-                  <div
-                    className={cn("h-1.5 rounded-r-full", oppJokerPoints >= myJokerPoints ? "bg-primary" : "bg-foreground/20")}
-                    style={{ width: `${(oppJokerPoints / maxPts) * 100}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })()}
-        </div>
+        )}
 
         {/* Predictions section: GC podium + jersey winners */}
         {hasPredictions && (

@@ -3,12 +3,11 @@
  * weergave staat in PloegSamenstellen.tsx.
  *
  * Wat de database vraagt: submit_entry wil in elke categorie een keuze, meer
- * niet. Jokers zijn optioneel maar tellen wel (calculate_stage_scores, en de
- * live projectie rekent ze mee), dus die bieden we aan zodra er rijders
- * buiten de categorieën zijn. De pronostiek is hier geen GC-podium met truien
- * maar twee winnaars: van het Cup-klassement (kunstijs) en het Grand
- * Prix-klassement (natuurijs), per peloton. Die staan los van de ploeg: ook
- * na bevestigen te wijzigen zolang de inschrijving open is.
+ * niet. Jokers horen bij de wielergames: de Meermarathon kent ze niet. De
+ * pronostiek is hier geen GC-podium met truien maar twee winnaars: van het
+ * Cup-klassement (kunstijs) en het Grand Prix-klassement (natuurijs), per
+ * peloton. Die staan los van de ploeg: ook na bevestigen te wijzigen zolang
+ * de inschrijving open is.
  *
  * Eén game, twee pelotons: wie nog nergens een ploeg heeft, kiest eerst waar
  * hij meerijdt (vrouwen, mannen of allebei). Pas daarna start de bouwer, want
@@ -22,7 +21,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useCategories } from "@/hooks/useCategories";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { useStartlist } from "@/hooks/useStartlist";
-import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 import { useMeermarathonSeizoen } from "@/hooks/useMeermarathonSeizoen";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import type { Game } from "@/hooks/useCurrentGame";
@@ -50,8 +48,6 @@ import { mmMoment, type MeermarathonGameStatus } from "@/lib/meermarathonSeizoen
 import { volgendeDeadline } from "@/lib/mijnMeermarathon";
 import {
   geldigeKeuzes,
-  jokerPool,
-  jokersNa,
   leesVoorspellingen,
   voorspellingenNa,
   pickActies,
@@ -292,18 +288,15 @@ function Bouwer({
     isLoading: entryLaden,
     isError: entryFout,
     picksByCategory,
-    jokerIds,
     predictions,
     teamName,
     savePick,
     togglePick,
-    saveJoker,
     savePredictions,
     saveTeamName,
     submitEntry,
     revertEntry,
   } = useEntry(game.id);
-  const vermenigvuldiger = useJokerMultiplier(game.id);
 
   // ── Data in de vorm van het scherm ──
   const ploegVanTeam = useMemo(() => new Map(startlijst.map((t) => [t.id, t.name])), [startlijst]);
@@ -328,17 +321,13 @@ function Bouwer({
       })),
     [cats, ploegVanTeam],
   );
+  // De hele startlijst: kandidaten voor de pronostiek.
   const startRijders = useMemo<PsRijder[]>(
     () => startlijst.flatMap((t) => t.riders.map((r) => ({ id: r.id, naam: r.name, ploeg: t.name, nummer: r.start_number }))),
     [startlijst],
   );
-  const pool = useMemo(() => jokerPool(startRijders, categorieen), [startRijders, categorieen]);
   const gekozen = useMemo(() => geldigeKeuzes(categorieen, picksByCategory), [categorieen, picksByCategory]);
   const tel = telling(categorieen, gekozen);
-  const jokers = useMemo(
-    () => (pool.length > 0 || jokerIds.length > 0 ? { pool, gekozen: jokerIds, vermenigvuldiger } : null),
-    [pool, jokerIds, vermenigvuldiger],
-  );
   const ingediend = entry?.status === "submitted";
   const pronostiek = useMemo(
     () =>
@@ -384,7 +373,7 @@ function Bouwer({
   // ── Acties ──
   const [actie, setActie] = useState<Exclude<PsBezig, "kiezen"> | null>(null);
   const [heropend, setHeropend] = useState(false);
-  const kiezen = savePick.isPending || togglePick.isPending || saveJoker.isPending || savePredictions.isPending;
+  const kiezen = savePick.isPending || togglePick.isPending || savePredictions.isPending;
   const bezig: PsBezig | null = actie ?? (kiezen ? "kiezen" : null);
 
   const vraagInlog = (wat: string) => {
@@ -415,10 +404,6 @@ function Bouwer({
         await bewaarVoorspelling(doel.klassement, rijderId);
         return;
       }
-      if (doel.soort === "joker") {
-        await saveJoker.mutateAsync({ entryId: entry.id, riderIds: jokersNa(jokerIds, doel.plek, rijderId) });
-        return;
-      }
       const cat = categorieen.find((c) => c.id === doel.categorieId);
       if (!cat) return;
       const inCategorie = gekozen.get(cat.id) ?? [];
@@ -440,10 +425,6 @@ function Bouwer({
         await bewaarVoorspelling(doel.klassement, null);
         return;
       }
-      if (doel.soort === "joker") {
-        await saveJoker.mutateAsync({ entryId: entry.id, riderIds: jokersNa(jokerIds, doel.plek, null) });
-        return;
-      }
       const oud = gekozen.get(doel.categorieId)?.[doel.plek];
       if (oud) await togglePick.mutateAsync({ entryId: entry.id, categoryId: doel.categorieId, riderId: oud });
     } catch {
@@ -451,7 +432,7 @@ function Bouwer({
     }
   };
 
-  // Picks en jokers staan al in de database zodra je ze kiest. Opslaan bewaart
+  // Keuzes staan al in de database zodra je ze maakt. Opslaan bewaart
   // wat nog alleen hier staat (de ploegnaam) en zegt waar je aan toe bent.
   const opslaan = async () => {
     if (!user) return vraagInlog("je ploeg op te slaan");
@@ -465,7 +446,6 @@ function Bouwer({
       game_status: game.status,
       picks_completed: tel.gekozen,
       picks_required: tel.vereist,
-      jokers_selected: jokerIds.length,
     });
     toast({
       title: "Alles is bewaard",
@@ -524,7 +504,6 @@ function Bouwer({
       gameNaam={naam}
       categorieen={categorieen}
       gekozen={gekozen}
-      jokers={jokers}
       pronostiek={pronostiek}
       ploegnaam={ploegnaam}
       ploegnaamBewaard={ploegnaam.trim() === (teamName ?? "").trim()}

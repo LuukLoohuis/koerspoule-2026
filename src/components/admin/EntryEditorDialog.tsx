@@ -20,10 +20,12 @@ const CLASS_LABELS: Record<string, string> = {
 };
 
 export default function EntryEditorDialog({
-  entryId, gameId, open, onOpenChange, onSaved,
+  entryId, gameId, metJokers = true, open, onOpenChange, onSaved,
 }: {
   entryId: string | null;
   gameId: string;
+  /** Kent de game jokers? De Meermarathon niet. */
+  metJokers?: boolean;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onSaved: () => void;
@@ -110,9 +112,11 @@ export default function EntryEditorDialog({
       }
 
       // Jokers via RPC (validates uniqueness etc.)
-      const validJokers = jokers.filter(Boolean);
-      const { error: jErr } = await supabase.rpc("save_entry_jokers", { p_entry_id: entryId, p_rider_ids: validJokers });
-      if (jErr) throw jErr;
+      if (metJokers) {
+        const validJokers = jokers.filter(Boolean);
+        const { error: jErr } = await supabase.rpc("save_entry_jokers", { p_entry_id: entryId, p_rider_ids: validJokers });
+        if (jErr) throw jErr;
+      }
 
       // Predictions via RPC
       const validPreds = predictions.filter((p) => p.rider_id);
@@ -150,7 +154,11 @@ export default function EntryEditorDialog({
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Inzending bekijken & wijzigen</DialogTitle>
-          <DialogDescription>Als admin kun je picks, jokers, voorspellingen en status aanpassen.</DialogDescription>
+          <DialogDescription>
+            {metJokers
+              ? "Als admin kun je picks, jokers, voorspellingen en status aanpassen."
+              : "Als admin kun je picks, voorspellingen en status aanpassen."}
+          </DialogDescription>
         </DialogHeader>
 
         {loading ? (
@@ -192,19 +200,21 @@ export default function EntryEditorDialog({
               </div>
             </section>
 
-            <section>
-              <h3 className="font-display text-lg mb-2">Jokers (max 2)</h3>
-              <div className="grid gap-2">
-                {[0, 1].map((idx) => (
-                  <RiderSelect
-                    key={idx}
-                    value={jokers[idx] ?? ""}
-                    riders={riders}
-                    onChange={(v) => setJokerAt(idx, v)}
-                  />
-                ))}
-              </div>
-            </section>
+            {metJokers && (
+              <section>
+                <h3 className="font-display text-lg mb-2">Jokers (max 2)</h3>
+                <div className="grid gap-2">
+                  {[0, 1].map((idx) => (
+                    <RiderSelect
+                      key={idx}
+                      value={jokers[idx] ?? ""}
+                      riders={riders}
+                      onChange={(v) => setJokerAt(idx, v)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
             <section>
               <h3 className="font-display text-lg mb-2">Voorspellingen</h3>

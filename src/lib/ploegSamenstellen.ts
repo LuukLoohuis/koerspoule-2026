@@ -6,6 +6,9 @@ import { pastBijZoek } from "@/lib/ploegZoek";
  * Ploeg samenstellen voor de Meermarathon: de regels zonder React of
  * database. De teambouwer, de kiezer en de testbank rekenen hier allemaal
  * mee, zodat "3/5 gekozen" overal hetzelfde betekent.
+ *
+ * Een Meermarathon-ploeg is precies wat je in de categorieën kiest: jokers,
+ * zoals bij de wielerkoersen, bestaan hier niet.
  */
 
 export type PsRijder = {
@@ -31,10 +34,9 @@ export type PsGekozen = ReadonlyMap<string, readonly string[]>;
 /** Pronostiek: de winnaar van het Cup- of het Grand Prix-klassement. */
 export type Klassement = "cup" | "grandprix";
 
-/** Waarvoor de kiezer openstaat: een plek in een categorie, een joker of een voorspelling. */
+/** Waarvoor de kiezer openstaat: een plek in een categorie, of een voorspelling. */
 export type KiesDoel =
   | { soort: "categorie"; categorieId: string; plek: number }
-  | { soort: "joker"; plek: number }
   | { soort: "voorspelling"; klassement: Klassement };
 
 /** Per klassement de voorspelde rijder-id, of null. */
@@ -74,8 +76,7 @@ export type PsSlot = {
 };
 
 export function doelSleutel(doel: KiesDoel): string {
-  if (doel.soort === "voorspelling") return `voorspelling:${doel.klassement}`;
-  return doel.soort === "joker" ? `joker:${doel.plek}` : `${doel.categorieId}:${doel.plek}`;
+  return doel.soort === "voorspelling" ? `voorspelling:${doel.klassement}` : `${doel.categorieId}:${doel.plek}`;
 }
 
 export function zelfdeDoel(a: KiesDoel | null, b: KiesDoel | null): boolean {
@@ -175,8 +176,8 @@ export type Kandidaat = { rijder: PsRijder; status: KandidaatStatus };
  * De rijders die je voor één plek kunt kiezen, gefilterd op naam of ploeg.
  *
  * - huidig: staat nu op deze plek (je kunt hem weghalen).
- * - bezet: zit al elders in je ploeg of is joker. De database weigert hem
- *   daar toch; hier zie je het vóór je tikt.
+ * - bezet: zit al elders in je ploeg. De database weigert hem daar toch;
+ *   hier zie je het vóór je tikt.
  */
 export function kandidaten(
   rijders: readonly PsRijder[],
@@ -212,23 +213,6 @@ export function pickActies(opties: {
   if (Math.max(1, max) === 1) return [{ soort: "vervang", rijderId: nieuw }];
   if (oud) return [{ soort: "aan-uit", rijderId: oud }, { soort: "aan-uit", rijderId: nieuw }];
   return inCategorie.length < max ? [{ soort: "aan-uit", rijderId: nieuw }] : [];
-}
-
-/** Jokers mogen niet uit een categorie komen; de rest van de startlijst wel. */
-export function jokerPool(startlijst: readonly PsRijder[], categorieen: PsCategorie[]): PsRijder[] {
-  const inCategorie = new Set(categorieen.flatMap((c) => c.rijders.map((r) => r.id)));
-  return sorteerRijders(startlijst.filter((r) => !inCategorie.has(r.id)));
-}
-
-export const MAX_JOKERS = 2;
-
-/** De jokerlijst na het zetten (of leegmaken) van één jokerplek. */
-export function jokersNa(huidig: readonly string[], plek: number, nieuw: string | null): string[] {
-  const plekken: (string | null)[] = Array.from({ length: MAX_JOKERS }, (_, i) => huidig[i] ?? null);
-  if (plek >= 0 && plek < MAX_JOKERS) plekken[plek] = nieuw;
-  const uit: string[] = [];
-  for (const id of plekken) if (id && !uit.includes(id)) uit.push(id);
-  return uit;
 }
 
 // ── Welke game ────────────────────────────────────────────────────────────

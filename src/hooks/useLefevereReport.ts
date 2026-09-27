@@ -9,7 +9,8 @@ export type LefevereReportInput = {
   components: {
     poolRanking: { score: number; weging: number; rang: number; totaalDeelnemers: number };
     monkeyVergelijking: { score: number; weging: number; percentageVerslagen: number };
-    jokerPrestatie: { score: number; weging: number; aantalJokers: number };
+    /** Ontbreekt bij een game zonder jokers (Meermarathon). */
+    jokerPrestatie?: { score: number; weging: number; aantalJokers: number };
     differentiaal?: { score: number; weging: number };
   };
   // Pech-index: eigen renners die zijn uitgevallen (DNF) — alleen voor de tekst.

@@ -66,9 +66,7 @@ function renderTab(extra: Partial<Parameters<typeof LiveTab>[0]> = {}) {
     <LiveTab
       race={race()}
       mineRiderIds={new Set(MIJN)}
-      jokerRiderIds={new Set()}
       pointsSchema={SCHEMA}
-      jokerMultiplier={2}
       categorie="vrouwen"
       wedstrijdType="cup"
       mijnRijders={[

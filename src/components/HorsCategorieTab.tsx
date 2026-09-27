@@ -54,12 +54,15 @@ import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import HorsSkeleton from "@/components/skeletons/HorsSkeleton";
 import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 import { simulateMonkeyTeams } from "@/lib/monkeySimulation";
+import { aantalJokers } from "@/lib/gameTypes";
+import { directeurRuw, directeurWeging, wegingPct } from "@/lib/directeurWeging";
 import aapFietser from "@/assets/horscat/aap-fietser-transparant.png";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type PickStat = { category_id: string; rider_id: string; pick_count: number; total_entries: number };
 type JokerStat = { rider_id: string; joker_count: number; total_entries: number };
+const GEEN_JOKERS: string[] = [];
 type PredictionStat = {
   classification: string;
   position: number;
@@ -244,6 +247,29 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     ? alleGames?.find((g) => g.id === gameIdProp)?.game_type
     : curGame?.game_type;
   const isMeermarathon = String(gameType ?? "").toLowerCase() === "meermarathon";
+  // De Meermarathon kent geen jokers: geen jokers in de droomploeg, bij de
+  // apen of in het Wielerdirecteur-cijfer, en ook geen uitleg erover.
+  const jokersPerPloeg = aantalJokers(gameType);
+  const metJokers = jokersPerPloeg > 0;
+  const weging = directeurWeging(metJokers);
+  // De formule en het rekenvoorbeeld in de uitleg volgen de weging: zonder
+  // jokers staan er drie termen in, geen vier.
+  const formuleRuw = `raw = ${[
+    `pool×${weging.pool.toFixed(2)}`,
+    `monkey×${weging.monkey.toFixed(2)}`,
+    ...(metJokers ? [`joker×${weging.joker.toFixed(2)}`] : []),
+    `diff×${weging.diff.toFixed(2)}`,
+  ].join(" + ")}`;
+  const voorbeeldRuw = directeurRuw({ pool: 0.857, monkey: 0.72, joker: 0.748, diff: 0.55 }, weging);
+  const voorbeeld = {
+    ruw: `raw = ${[
+      `${weging.pool.toFixed(2)}·0.857`,
+      `${weging.monkey.toFixed(2)}·0.72`,
+      ...(metJokers ? [`${weging.joker.toFixed(2)}·0.748`] : []),
+      `${weging.diff.toFixed(2)}·0.55`,
+    ].join(" + ")} = ${voorbeeldRuw.toFixed(3)}`,
+    score: `score = (${voorbeeldRuw.toFixed(3)}×9 + 1) = ${(Number(voorbeeldRuw.toFixed(3)) * 9 + 1).toFixed(1)}`,
+  };
   // Naam uit de vertaling, zodat hij maar op één plek staat: de kennismaking en
   // de regel boven het rapport kunnen zo niet uit elkaar lopen.
   const ploegleiderNaam = t(`hors.ploegleider.${isMeermarathon ? "feenstra" : "lefevere"}.naam`);
@@ -262,7 +288,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   // zijn leegst was zodra de inschrijving openging. De ADMIN ziet altijd de
   // echte cijfers, om te kunnen testen.
   const isDemo = resultsHiddenForUsers(game?.status) && !adminSeesAll;
-  const { entry, picksByCategory, jokerIds, predictions: myPredictions } = useEntry(game?.id);
+  const { entry, picksByCategory, jokerIds: eigenJokerIds, predictions: myPredictions } = useEntry(game?.id);
+  const jokerIds = metJokers ? eigenJokerIds : GEEN_JOKERS;
   const { data: echteCategories = [] } = useCategories(game?.id);
   const { data: echtePickStats = [] } = usePickStats(hasResults ? game?.id : undefined);
   const { data: echteJokerStats = [] } = useJokerStats(hasResults ? game?.id : undefined);
@@ -282,9 +309,10 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
   }, [isDemo, heeftBron, bron, echtePickStats, echteCategories]);
 
   const jokerStats = useMemo(() => {
+    if (!metJokers) return [];
     if (!isDemo) return echteJokerStats;
     return heeftBron ? bron!.jokerStats : demoJokerStats(echteCategories);
-  }, [isDemo, heeftBron, bron, echteJokerStats, echteCategories]);
+  }, [metJokers, isDemo, heeftBron, bron, echteJokerStats, echteCategories]);
 
   // De cijfers horen bij de Tour-renners, dus de categorieën en de namen komen
   // uit diezelfde koers. Anders zoekt het paneel Tour-renner-ids op in de
@@ -411,6 +439,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       riderPoints,
       userScore: userActual,
       jokerMultiplier,
+      jokers: jokersPerPloeg,
       simulations: 10_000,
       seed: game?.id?.split("-").reduce((sum, char) => sum + char.charCodeAt(0), 0) ?? 42,
     });
@@ -438,7 +467,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       console.log("[monte] bins:", dist);
     }
     return { mean, median, top10cut, beatPct, top10, worseThanApe, aboveMedian, userActual, dist };
-  }, [categories, allStageResults, allGameRiders, entry, myStageTotal, jokerMultiplier, game?.id]);
+  }, [categories, allStageResults, allGameRiders, entry, myStageTotal, jokerMultiplier, jokersPerPloeg, game?.id]);
 
   // ── Demo Monte Carlo (alleen sneak preview 'open') ───────────────────────────
   // Volledig client-side, deterministisch (vaste seed): ~5 gesimuleerde deelnemers
@@ -583,7 +612,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     const pickedRiderIds = new Set<string>();
     for (const cat of picks) for (const r of cat.riders) pickedRiderIds.add(r.riderId);
 
-    // 2b) 2 jokers — beste renners die in GEEN ENKELE categorie zitten, x1
+    // 2b) de jokers — beste renners die in GEEN ENKELE categorie zitten, x1.
+    //     De Meermarathon kent geen jokers: dan blijft dit leeg.
     const categoryRiderIds = new Set<string>();
     for (const cat of categories) {
       for (const cr of cat.category_riders ?? []) {
@@ -598,7 +628,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
         startNumber: r.start_number,
         points: riderTotals.get(r.id) ?? 0,
       }));
-    const jokers = jokerPool.sort((a, b) => b.points - a.points).slice(0, 2);
+    const jokers = jokerPool.sort((a, b) => b.points - a.points).slice(0, jokersPerPloeg);
     const jokerSubtotal = jokers.reduce((s, r) => s + r.points, 0);
 
     const total = picks.reduce((s, c) => s + c.subtotal, 0) + jokerSubtotal;
@@ -624,11 +654,12 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       stagesCount: approvedStages.length,
       riderTotals,
     };
-  }, [stages, categories, allStageResults, standRows, entry?.id, allGameRiders, t]);
+  }, [stages, categories, allStageResults, standRows, entry?.id, allGameRiders, jokersPerPloeg, t]);
 
   // ── Emirates-benchmark: eigen ploeg vs droomploeg, set-gewijs per categorie ──
-  // Zelfde scope als het ceiling-totaal: alle categorieën + de 2 jokers (×1),
-  // dezelfde riderTotals — teller en noemer kloppen dus per definitie.
+  // Zelfde scope als het ceiling-totaal: alle categorieën + de jokers (×1, geen
+  // bij de Meermarathon), dezelfde riderTotals — teller en noemer kloppen dus
+  // per definitie.
   const emiratesBenchmark = useMemo(() => {
     if (!entry || picksByCategory.size === 0) return null;
     if (emiratesData.lastStage === null || emiratesData.total <= 0) return null;
@@ -670,22 +701,24 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     });
 
     // Jokers als eigen rij — het ceiling-totaal telt ze mee (×1).
-    const dreamJokerIds = emiratesData.jokers.map((r) => r.riderId);
-    const myJokers = jokerIds.map((id) => ({
-      name: nameById.get(id) ?? "?",
-      points: riderTotals.get(id) ?? 0,
-    }));
-    const myJokerPoints = myJokers.reduce((s, r) => s + r.points, 0);
-    rows.push({
-      key: "__jokers",
-      categoryName: t("hors.emirates.bench.jokersRow"),
-      mine: myJokers,
-      dream: emiratesData.jokers.map((r) => ({ name: r.name, points: r.points })),
-      minePoints: myJokerPoints,
-      dreamPoints: emiratesData.jokerSubtotal,
-      diff: Math.max(0, emiratesData.jokerSubtotal - myJokerPoints),
-      perfect: setEqual(jokerIds, dreamJokerIds),
-    });
+    if (metJokers) {
+      const dreamJokerIds = emiratesData.jokers.map((r) => r.riderId);
+      const myJokers = jokerIds.map((id) => ({
+        name: nameById.get(id) ?? "?",
+        points: riderTotals.get(id) ?? 0,
+      }));
+      const myJokerPoints = myJokers.reduce((s, r) => s + r.points, 0);
+      rows.push({
+        key: "__jokers",
+        categoryName: t("hors.emirates.bench.jokersRow"),
+        mine: myJokers,
+        dream: emiratesData.jokers.map((r) => ({ name: r.name, points: r.points })),
+        minePoints: myJokerPoints,
+        dreamPoints: emiratesData.jokerSubtotal,
+        diff: Math.max(0, emiratesData.jokerSubtotal - myJokerPoints),
+        perfect: setEqual(jokerIds, dreamJokerIds),
+      });
+    }
 
     const mijnTotaal = rows.reduce((s, r) => s + r.minePoints, 0);
     const droomTotaal = emiratesData.total;
@@ -705,7 +738,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       totalCats: rows.length,
       worstKey,
     };
-  }, [entry, picksByCategory, jokerIds, emiratesData, allGameRiders, t]);
+  }, [entry, picksByCategory, jokerIds, metJokers, emiratesData, allGameRiders, t]);
 
   // ── Derived display values ──────────────────────────────────────────────────
   const diffPct = monte && monte.mean > 0 ? ((monte.userActual - monte.mean) / monte.mean) * 100 : 0;
@@ -783,7 +816,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     for (const c of categories) for (const cr of c.category_riders ?? []) if (cr.riders) catIds.add(cr.riders.id);
 
     // Joker prestatie (20%) — RENDEMENT: scoorden je jokers punten t.o.v. de
-    // best mogelijke jokers (de 2 best scorende niet-categorie-renners)?
+    // best mogelijke jokers (de 2 best scorende niet-categorie-renners)? Zonder
+    // jokers in de game weegt dit onderdeel niet mee (zie directeurWeging).
     let jokerScore = 0.5;
     let jokerDetail: {
       yourPts: number;
@@ -791,7 +825,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       rendementPct: number;
       rows: Array<{ name: string; pts: number }>;
     } = { yourPts: 0, bestPts: 0, rendementPct: 0, rows: [] };
-    if (jokerIds.length > 0) {
+    if (metJokers && jokerIds.length > 0) {
       const nameByIdJ = new Map(allGameRiders.map((r) => [r.id, r.name]));
       const bestJokerPts = allGameRiders
         .filter((r) => !catIds.has(r.id))
@@ -845,7 +879,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       };
     }
 
-    const raw = poolScore * 0.45 + monkeyScore * 0.25 + jokerScore * 0.2 + diffScore * 0.1;
+    const raw = directeurRuw({ pool: poolScore, monkey: monkeyScore, joker: jokerScore, diff: diffScore }, weging);
     const score = Math.max(3.0, Math.round((raw * 9 + 1) * 10) / 10);
     const toSub = (v: number) => Math.max(1.0, Math.round((v * 9 + 1) * 10) / 10);
 
@@ -882,7 +916,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       diffDetail,
       jokerDetail,
     };
-  }, [hasResults, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats, t]);
+  }, [hasResults, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats, metJokers, weging, t]);
 
   // ── Sub-tab state (must be declared before any early return to keep hook order stable) ──
   const [activeTab, setActiveTab] = useState<HorsTabKey>(initialTab ?? "dartpijl");
@@ -1049,7 +1083,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
           ) : (
             <>
               {/* Uitleg-accordion "Hoe werkt dit?" — de aap met de dartpijl. */}
-              <MonkeyExplainerModal monkeyCount={10_000} variant="text" />
+              <MonkeyExplainerModal monkeyCount={10_000} variant="text" metJokers={metJokers} />
 
               {/* ── Monkey IQ-hero: percentile + verdict + Jij-vs-aap ──
                   Alle uitleg-/titel-lagen en de Prestatieklasse-banner zijn
@@ -1454,34 +1488,41 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                     <div className="rounded-xl border border-border bg-secondary/40 p-4 space-y-3 text-[11px] text-foreground/70 leading-relaxed">
                       <p className="text-foreground font-semibold text-xs">{t("hors.wielerdirecteur.info.title")}</p>
                       <p>
-                        <Trans i18nKey="hors.wielerdirecteur.info.intro" components={{ mono: <span className="text-foreground font-mono" /> }} />
+                        <Trans
+                          i18nKey={metJokers ? "hors.wielerdirecteur.info.intro" : "hors.wielerdirecteur.info.introZonderJokers"}
+                          components={{ mono: <span className="text-foreground font-mono" /> }}
+                        />
                       </p>
                       <div className="space-y-2.5">
                         <div className="flex gap-2">
                           <span className="shrink-0">🏆</span>
                           <div>
-                            <span className="text-foreground font-semibold">{t("hors.wielerdirecteur.info.poolHead")}</span>
+                            <span className="text-foreground font-semibold">{t("hors.wielerdirecteur.info.poolHead", { w: wegingPct(weging.pool) })}</span>
                             <p className="mt-0.5">{t("hors.wielerdirecteur.info.poolBody")}</p>
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <span className="shrink-0">🐒</span>
                           <div>
-                            <span className="text-foreground font-semibold">{t("hors.wielerdirecteur.info.monkeyHead")}</span>
+                            <span className="text-foreground font-semibold">{t("hors.wielerdirecteur.info.monkeyHead", { w: wegingPct(weging.monkey) })}</span>
                             <p className="mt-0.5">{t("hors.wielerdirecteur.info.monkeyBody")}</p>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <span className="shrink-0">🃏</span>
-                          <div>
-                            <span className="text-foreground font-semibold">{t("hors.wielerdirecteur.info.jokerHead")}</span>
-                            <p className="mt-0.5">{t("hors.wielerdirecteur.info.jokerBody")}</p>
+                        {metJokers && (
+                          <div className="flex gap-2">
+                            <span className="shrink-0">🃏</span>
+                            <div>
+                              <span className="text-foreground font-semibold">
+                                {t("hors.wielerdirecteur.info.jokerHead", { w: wegingPct(weging.joker) })}
+                              </span>
+                              <p className="mt-0.5">{t("hors.wielerdirecteur.info.jokerBody")}</p>
+                            </div>
                           </div>
-                        </div>
+                        )}
                         <div className="flex gap-2">
                           <span className="shrink-0">🎯</span>
                           <div>
-                            <span className="text-foreground font-semibold">{t("hors.wielerdirecteur.info.diffHead")}</span>
+                            <span className="text-foreground font-semibold">{t("hors.wielerdirecteur.info.diffHead", { w: wegingPct(weging.diff) })}</span>
                             <p className="mt-0.5">
                               <Trans i18nKey="hors.wielerdirecteur.info.diffBody" components={{ bold: <span className="text-foreground font-semibold" />, mono: <span className="font-mono" /> }} />
                             </p>
@@ -1505,7 +1546,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
                           <div className="space-y-1">
                             <p className="text-muted-foreground uppercase tracking-widest text-[9px]">
-                              {t("hors.wielerdirecteur.calc.poolSection")}
+                              {t("hors.wielerdirecteur.calc.poolSection", { w: wegingPct(weging.pool) })}
                             </p>
                             <p className="text-foreground">{t("hors.wielerdirecteur.calc.poolFormula")}</p>
                             <p className="text-muted-foreground text-[9px]">
@@ -1515,31 +1556,33 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
                           <div className="space-y-1">
                             <p className="text-muted-foreground uppercase tracking-widest text-[9px]">
-                              {t("hors.wielerdirecteur.calc.monkeySection")}
+                              {t("hors.wielerdirecteur.calc.monkeySection", { w: wegingPct(weging.monkey) })}
                             </p>
                             <p className="text-foreground">monkeyScore = beatPct / 100</p>
                             <p className="text-muted-foreground text-[9px]">
-                              {t("hors.wielerdirecteur.calc.monkeyNote1")}
+                              {t(metJokers ? "hors.wielerdirecteur.calc.monkeyNote1" : "hors.wielerdirecteur.calc.monkeyNote1ZonderJokers")}
                             </p>
                             <p className="text-muted-foreground text-[9px]">
-                              {t("hors.wielerdirecteur.calc.monkeyNote2")}
+                              {t("hors.wielerdirecteur.calc.monkeyNote2", { w: wegingPct(weging.monkey) })}
                             </p>
                           </div>
 
-                          <div className="space-y-1">
-                            <p className="text-muted-foreground uppercase tracking-widest text-[9px]">
-                              {t("hors.wielerdirecteur.calc.jokerSection")}
-                            </p>
-                            <p className="text-foreground">{t("hors.wielerdirecteur.calc.jokerFormula1")}</p>
-                            <p className="text-foreground">{t("hors.wielerdirecteur.calc.jokerFormula2")}</p>
-                            <p className="text-muted-foreground text-[9px]">
-                              {t("hors.wielerdirecteur.calc.jokerNote")}
-                            </p>
-                          </div>
+                          {metJokers && (
+                            <div className="space-y-1">
+                              <p className="text-muted-foreground uppercase tracking-widest text-[9px]">
+                                {t("hors.wielerdirecteur.calc.jokerSection", { w: wegingPct(weging.joker) })}
+                              </p>
+                              <p className="text-foreground">{t("hors.wielerdirecteur.calc.jokerFormula1")}</p>
+                              <p className="text-foreground">{t("hors.wielerdirecteur.calc.jokerFormula2")}</p>
+                              <p className="text-muted-foreground text-[9px]">
+                                {t("hors.wielerdirecteur.calc.jokerNote")}
+                              </p>
+                            </div>
+                          )}
 
                           <div className="space-y-1">
                             <p className="text-muted-foreground uppercase tracking-widest text-[9px]">
-                              {t("hors.wielerdirecteur.calc.diffSection")}
+                              {t("hors.wielerdirecteur.calc.diffSection", { w: wegingPct(weging.diff) })}
                             </p>
                             <p className="text-foreground">{t("hors.wielerdirecteur.calc.diffFormula1")}</p>
                             <p className="text-foreground">{t("hors.wielerdirecteur.calc.diffFormula2")}</p>
@@ -1553,18 +1596,20 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
                           <div className="border-t border-border pt-2 space-y-1">
                             <p className="text-muted-foreground uppercase tracking-widest text-[9px]">{t("hors.wielerdirecteur.calc.finalSection")}</p>
-                            <p className="text-foreground">raw = pool×0.45 + monkey×0.25 + joker×0.20 + diff×0.10</p>
+                            <p className="text-foreground">{formuleRuw}</p>
                             <p className="text-foreground">score = max(3.0, round((raw × 9 + 1) × 10) / 10)</p>
                             <p className="text-muted-foreground text-[9px]">{t("hors.wielerdirecteur.calc.finalNote")}</p>
                           </div>
 
                           <div className="border-t border-border pt-2 space-y-1">
                             <p className="text-amber-700 font-semibold text-[10px] not-italic">{t("hors.wielerdirecteur.calc.exampleTitle")}</p>
-                            <p className="text-muted-foreground text-[9px]">{t("hors.wielerdirecteur.calc.exampleGiven")}</p>
+                            <p className="text-muted-foreground text-[9px]">
+                              {t(metJokers ? "hors.wielerdirecteur.calc.exampleGiven" : "hors.wielerdirecteur.calc.exampleGivenZonderJokers")}
+                            </p>
                             <p className="text-foreground">pool = (50−8)/49 = 0.857</p>
-                            <p className="text-foreground">joker = 0.3 + (64/100)×0.7 = 0.748</p>
-                            <p className="text-foreground">raw = 0.45·0.857 + 0.25·0.72 + 0.20·0.748 + 0.10·0.55 = 0.770</p>
-                            <p className="text-foreground">score = (0.770×9 + 1) = 7.9</p>
+                            {metJokers && <p className="text-foreground">joker = 0.3 + (64/100)×0.7 = 0.748</p>}
+                            <p className="text-foreground">{voorbeeld.ruw}</p>
+                            <p className="text-foreground">{voorbeeld.score}</p>
                           </div>
                         </div>
                       )}
@@ -1574,11 +1619,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   <p className="text-[10px] text-muted-foreground/70 -mt-1">{t("hors.wielerdirecteur.clickOpen")}</p>
 
                   {([
-                    { key: "pool",   label: "Pool Ranking",        sub: directorScore.rankLabel,  pct: directorScore.poolScore,   val: directorScore.poolSubScore,   w: 45 },
-                    { key: "monkey", label: "Monkey Vergelijking", sub: directorScore.beatLabel,  pct: directorScore.monkeyScore, val: directorScore.monkeySubScore, w: 25 },
-                    { key: "joker",  label: "Joker Prestatie",     sub: directorScore.jokerLabel, pct: directorScore.jokerScore,  val: directorScore.jokerSubScore,  w: 20 },
-                    { key: "diff",   label: "Differentiaal",       sub: directorScore.diffLabel,  pct: directorScore.diffScore,   val: directorScore.diffSubScore,   w: 10 },
-                  ] as const).map(({ key, label, sub, pct, val, w }) => {
+                    { key: "pool",   label: "Pool Ranking",        sub: directorScore.rankLabel,  pct: directorScore.poolScore,   val: directorScore.poolSubScore,   w: wegingPct(weging.pool) },
+                    { key: "monkey", label: "Monkey Vergelijking", sub: directorScore.beatLabel,  pct: directorScore.monkeyScore, val: directorScore.monkeySubScore, w: wegingPct(weging.monkey) },
+                    { key: "joker",  label: "Joker Prestatie",     sub: directorScore.jokerLabel, pct: directorScore.jokerScore,  val: directorScore.jokerSubScore,  w: wegingPct(weging.joker) },
+                    { key: "diff",   label: "Differentiaal",       sub: directorScore.diffLabel,  pct: directorScore.diffScore,   val: directorScore.diffSubScore,   w: wegingPct(weging.diff) },
+                  ] as const).filter(({ w }) => w > 0).map(({ key, label, sub, pct, val, w }) => {
                     const tone = pct >= 0.7 ? "emerald" : pct >= 0.4 ? "amber" : "rose";
                     const barCls = tone === "emerald" ? "bg-emerald-500" : tone === "amber" ? "bg-amber-500" : "bg-rose-500";
                     const chipCls =
@@ -1626,7 +1671,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                             {key === "monkey" && (
                               <>
                                 <p className="font-mono text-foreground">monkeyScore = beatPct / 100 = {directorScore.beatPct.toFixed(0)} / 100 = {directorScore.monkeyScore.toFixed(2)}</p>
-                                <p className="text-muted-foreground">{t("hors.wielerdirecteur.detail.monkey", { pct: directorScore.beatPct.toFixed(0) })}</p>
+                                <p className="text-muted-foreground">{t(metJokers ? "hors.wielerdirecteur.detail.monkey" : "hors.wielerdirecteur.detail.monkeyZonderJokers", { pct: directorScore.beatPct.toFixed(0) })}</p>
                               </>
                             )}
                             {key === "joker" && (
@@ -1741,9 +1786,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   <p className="font-serif text-sm text-foreground/85 leading-snug">
                     {t("hors.emirates.explain1")}
                   </p>
-                  <p className="font-serif text-sm text-foreground/85 leading-snug">
-                    {t("hors.emirates.explain2")}
-                  </p>
+                  {metJokers && (
+                    <p className="font-serif text-sm text-foreground/85 leading-snug">
+                      {t("hors.emirates.explain2")}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -2009,9 +2056,11 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
                   <p className="font-serif italic text-xs md:text-sm leading-snug">
                     {t("hors.emirates.explain1")}
                   </p>
-                  <p className="font-serif italic text-xs md:text-sm leading-snug mt-2">
-                    {t("hors.emirates.explain2")}
-                  </p>
+                  {metJokers && (
+                    <p className="font-serif italic text-xs md:text-sm leading-snug mt-2">
+                      {t("hors.emirates.explain2")}
+                    </p>
+                  )}
                 </div>
               </>
             )}

@@ -12,6 +12,24 @@ describe("simulateMonkeyTeams", () => {
     expect(new Set(result!.scores)).toEqual(new Set([26, 36]));
   });
 
+  it("kiest zonder jokers alleen uit de categorieën (Meermarathon)", () => {
+    const result = simulateMonkeyTeams({ categories, riders, riderPoints, userScore: 15, jokerMultiplier: 2, jokers: 0, simulations: 100, seed: 42 });
+    expect(new Set(result!.scores)).toEqual(new Set([10, 20]));
+    // Zonder rijders buiten de categorieën kan de aap nog steeds een ploeg maken.
+    const alleenCategorie = simulateMonkeyTeams({
+      categories,
+      riders: riders.slice(0, 2),
+      riderPoints,
+      userScore: 15,
+      jokerMultiplier: 2,
+      jokers: 0,
+      simulations: 100,
+      seed: 42,
+    });
+    expect(alleenCategorie).not.toBeNull();
+    expect(simulateMonkeyTeams({ categories, riders: riders.slice(0, 2), riderPoints, userScore: 15, jokerMultiplier: 2, simulations: 100, seed: 42 })).toBeNull();
+  });
+
   it("is deterministisch voor dezelfde game-seed", () => {
     const input = { categories, riders, riderPoints, userScore: 30, jokerMultiplier: 2, simulations: 100, seed: 7 };
     expect(simulateMonkeyTeams(input)).toEqual(simulateMonkeyTeams(input));

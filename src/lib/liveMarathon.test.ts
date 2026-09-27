@@ -205,7 +205,7 @@ describe("klassement", () => {
 describe("virtuele punten", () => {
   const schema = new Map([[1, 25], [2, 20], [3, 16], [4, 13], [5, 11]]);
 
-  it("telt alleen eigen rijders en verdubbelt de joker", () => {
+  it("telt alleen eigen rijders, elk met zijn eigen punten", () => {
     const veld = [
       rider("134", "Mijn kopman", 15, 100),
       rider("032", "Andermans rijder", 15, 100.5),
@@ -218,13 +218,13 @@ describe("virtuele punten", () => {
       schema,
       riderIdByBeennummer: new Map([["134", "r1"], ["032", "r2"], ["538", "r3"]]),
       mineRiderIds: new Set(["r1", "r3"]),
-      jokerRiderIds: new Set(["r1"]),
     });
 
     expect(p.rijders.map((r) => r.rider.naam)).toEqual(["Mijn kopman", "Mijn tweede"]);
-    expect(p.rijders[0].punten).toBe(50); // plek 1 = 25, joker ×2
+    // De Meermarathon kent geen jokers: niemand telt dubbel.
+    expect(p.rijders[0].punten).toBe(25); // plek 1
     expect(p.rijders[1].punten).toBe(16); // plek 3
-    expect(p.ritPunten).toBe(66);
+    expect(p.ritPunten).toBe(41);
   });
 
   it("scoort niets buiten plek 20 — net als calculate_stage_scores", () => {

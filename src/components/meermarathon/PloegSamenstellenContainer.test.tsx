@@ -18,14 +18,14 @@ const staat = vi.hoisted(() => ({
   entry: null as { id: string; status: string } | null,
   kiesGame: vi.fn(),
   useEntry: vi.fn(),
+  startlijst: [] as { id: string; name: string; riders: { id: string; name: string; start_number: number | null }[] }[],
 }));
 
 vi.mock("@/hooks/useAuth", () => ({ useAuth: () => staat.auth }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: vi.fn() }) }));
 vi.mock("@/lib/posthog", () => ({ captureEvent: vi.fn(), captureException: vi.fn() }));
 vi.mock("@/hooks/useCategories", () => ({ useCategories: () => ({ data: [], isLoading: false, isError: false }) }));
-vi.mock("@/hooks/useStartlist", () => ({ useStartlist: () => ({ data: [], isLoading: false }) }));
-vi.mock("@/hooks/useJokerMultiplier", () => ({ useJokerMultiplier: () => 2 }));
+vi.mock("@/hooks/useStartlist", () => ({ useStartlist: () => ({ data: staat.startlijst, isLoading: false }) }));
 vi.mock("@/components/meermarathon/Pelotonbalk", () => ({ default: () => <div data-testid="pelotonbalk" /> }));
 vi.mock("@/context/SelectedGameContext", () => ({
   useSelectedGame: () => ({
@@ -54,12 +54,10 @@ vi.mock("@/hooks/useEntry", () => ({
       isLoading: false,
       isError: false,
       picksByCategory: new Map(),
-      jokerIds: [],
       predictions: [],
       teamName: "",
       savePick: mutatie,
       togglePick: mutatie,
-      saveJoker: mutatie,
       savePredictions: mutatie,
       saveTeamName: mutatie,
       submitEntry: mutatie,
@@ -118,6 +116,7 @@ beforeEach(() => {
   staat.entry = null;
   staat.kiesGame.mockClear();
   staat.useEntry.mockClear();
+  staat.startlijst = [];
 });
 
 describe("waar rijd je mee", () => {
@@ -175,6 +174,18 @@ describe("waar rijd je mee", () => {
     toon("m");
     expect(screen.queryByRole("heading", { name: "Waar rijd je mee?" })).not.toBeInTheDocument();
     expect(staat.useEntry).toHaveBeenCalledWith("m");
+  });
+});
+
+describe("jokers", () => {
+  it("biedt geen jokers aan, ook niet met rijders buiten de categorieën", () => {
+    window.localStorage.setItem(SLEUTEL, JSON.stringify(["v"]));
+    // Vroeger verscheen het jokervak zodra de startlijst rijders had die in
+    // geen categorie staan. De Meermarathon kent geen jokers.
+    staat.startlijst = [{ id: "t1", name: "Schaatsteam West", riders: [{ id: "los", name: "Losse Rijder", start_number: 51 }] }];
+    toon();
+    expect(screen.getByRole("heading", { name: "Stel je ploeg samen" })).toBeInTheDocument();
+    expect(screen.queryByText(/joker/i)).not.toBeInTheDocument();
   });
 });
 

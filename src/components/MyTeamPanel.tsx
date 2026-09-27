@@ -390,7 +390,7 @@ function KoersPanel({
   // Zoeken binnen je eigen ploeg. Bij een grote selectie is de lijst op een
   // telefoon meerdere schermen lang en scroll je langs je eigen renner heen.
   const [zoek, setZoek] = useState("");
-  const { schema: pointsSchema, jokerMultiplier } = useStagePointsSchema(game?.id);
+  const { schema: pointsSchema } = useStagePointsSchema(game?.id);
   const heeftLive = isMeermarathon;
   const { entry, picksByCategory, jokerIds, predictions, isLoading, teamName, saveTeamName } = useEntry(game?.id);
   const { toast } = useToast();
@@ -820,10 +820,10 @@ function KoersPanel({
     );
   }
 
-  // Eigen renners + jokers als id-set, voor de live projectie.
+  // Eigen rijders als id-set, voor de live projectie. Live is er alleen bij
+  // de Meermarathon, en die kent geen jokers.
   const mineRiderIds = new Set<string>();
   for (const arr of picksByCategory.values()) for (const id of arr) mineRiderIds.add(id);
-  for (const id of jokerIds) mineRiderIds.add(id);
 
   // Live is een gewoon onderdeel van de Volgwagen geworden, geen eigen
   // schakelaartje meer binnen "Mijn ploeg". Zo hangt het aan dezelfde
@@ -837,9 +837,7 @@ function KoersPanel({
         race={race}
         simulatie={simRace !== null}
         mineRiderIds={simRace ? simulatieMijnRiderIds(SIM_MIJN_BEENNUMMERS) : mineRiderIds}
-        jokerRiderIds={new Set(jokerIds)}
         pointsSchema={pointsSchema}
-        jokerMultiplier={jokerMultiplier}
         categorie={gameIdProp ? gameCategorie : curGame?.categorie}
         wedstrijdType={stages.find((s) => s.id === race?.stageId)?.wedstrijd_type ?? null}
         ploegNaam={teamName}

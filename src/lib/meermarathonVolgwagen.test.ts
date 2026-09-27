@@ -171,16 +171,15 @@ describe("ploegrijen", () => {
     expect(rijen[0]).toMatchObject({ punten: null, afgemeld: true, ploeg: null });
   });
 
-  it("zet losse jokers achteraan en telt een joker die al gekozen is niet dubbel", () => {
+  it("toont alleen de categorieën: een Meermarathon-ploeg heeft geen jokers", () => {
     const rijen = bouwPloegRijen({
       categorieen: categorieen.slice(0, 1),
       picks: [{ category_id: "top", rider_id: "r1" }],
-      jokers: ["r1", "r3"],
       rijders,
       punten: null,
     });
-    expect(rijen.map((r) => r.sleutel)).toEqual(["r1", "r3"]);
-    expect(rijen[1]).toMatchObject({ categorie: "Joker", nummer: 2 });
+    expect(rijen.map((r) => r.sleutel)).toEqual(["r1"]);
+    expect(rijen.some((r) => r.soort === "rijder" && r.categorie === "Joker")).toBe(false);
   });
 });
 

@@ -3,8 +3,6 @@ import {
   bouwSlots,
   doelSleutel,
   geldigeKeuzes,
-  jokerPool,
-  jokersNa,
   kandidaten,
   leesVoorspellingen,
   nogOpenTekst,
@@ -150,26 +148,12 @@ describe("pickActies", () => {
   });
 });
 
-describe("jokers", () => {
-  it("haalt categorierijders uit de pool", () => {
-    const pool = jokerPool([rijder("a"), rijder("x", 9), rijder("y", 2)], VIJF);
-    expect(pool.map((r) => r.id)).toEqual(["y", "x"]);
-  });
-
-  it("zet en wist één jokerplek", () => {
-    expect(jokersNa([], 0, "x")).toEqual(["x"]);
-    expect(jokersNa(["x"], 1, "y")).toEqual(["x", "y"]);
-    expect(jokersNa(["x", "y"], 0, "z")).toEqual(["z", "y"]);
-    expect(jokersNa(["x", "y"], 0, null)).toEqual(["y"]);
-    expect(jokersNa(["x", "y"], 1, "x")).toEqual(["x"]);
-  });
-});
-
 describe("doelen", () => {
   it("vergelijkt kiesdoelen op plek", () => {
     expect(doelSleutel({ soort: "categorie", categorieId: "c1", plek: 0 })).toBe("c1:0");
-    expect(zelfdeDoel({ soort: "joker", plek: 1 }, { soort: "joker", plek: 1 })).toBe(true);
-    expect(zelfdeDoel({ soort: "joker", plek: 1 }, null)).toBe(false);
+    expect(zelfdeDoel({ soort: "categorie", categorieId: "c1", plek: 1 }, { soort: "categorie", categorieId: "c1", plek: 1 })).toBe(true);
+    expect(zelfdeDoel({ soort: "categorie", categorieId: "c1", plek: 1 }, { soort: "categorie", categorieId: "c1", plek: 0 })).toBe(false);
+    expect(zelfdeDoel({ soort: "categorie", categorieId: "c1", plek: 1 }, null)).toBe(false);
   });
 });
 

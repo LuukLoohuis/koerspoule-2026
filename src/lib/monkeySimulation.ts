@@ -1,3 +1,5 @@
+import { JOKERS_PER_PLOEG } from "@/lib/gameTypes";
+
 export type MonkeyCategory = {
   max_picks: number | null;
   category_riders?: Array<{ riders: { id: string } | null }> | null;
@@ -28,13 +30,17 @@ function pickN<T>(values: T[], count: number, rng: () => number): T[] {
   return picked;
 }
 
-/** Bouw volledige apenteams: categoriekeuzes plus twee unieke geldige jokers. */
+/**
+ * Bouw volledige apenteams: categoriekeuzes plus unieke geldige jokers, net
+ * zoveel als een echte ploeg er kiest. Bij de Meermarathon zijn dat er nul.
+ */
 export function simulateMonkeyTeams({
   categories,
   riders,
   riderPoints,
   userScore,
   jokerMultiplier,
+  jokers = JOKERS_PER_PLOEG,
   simulations = 10_000,
   seed,
 }: {
@@ -43,6 +49,8 @@ export function simulateMonkeyTeams({
   riderPoints: ReadonlyMap<string, number>;
   userScore: number;
   jokerMultiplier: number;
+  /** Aantal jokers per apenteam; 0 voor een game zonder jokers. */
+  jokers?: number;
   simulations?: number;
   seed: number;
 }): MonkeySimulationResult | null {
@@ -55,7 +63,7 @@ export function simulateMonkeyTeams({
 
   const categoryRiderIds = new Set(categoryPools.flat());
   const jokerPool = riders.map((rider) => rider.id).filter((id) => !categoryRiderIds.has(id));
-  if (jokerPool.length < 2) return null;
+  if (jokerPool.length < jokers) return null;
 
   const rng = seededRandom(seed);
   const scores: number[] = [];
@@ -67,7 +75,7 @@ export function simulateMonkeyTeams({
         score += riderPoints.get(riderId) ?? 0;
       }
     }
-    for (const jokerId of pickN(jokerPool, 2, rng)) {
+    for (const jokerId of pickN(jokerPool, jokers, rng)) {
       score += (riderPoints.get(jokerId) ?? 0) * jokerMultiplier;
     }
     scores.push(score);

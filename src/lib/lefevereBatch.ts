@@ -15,6 +15,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { pointsTable } from "@/data/riders";
 import type { LefevereReportInput } from "@/hooks/useLefevereReport";
 import { fetchAllRows } from "@/lib/fetchAll";
+import { aantalJokers } from "@/lib/gameTypes";
+import { directeurRuw, directeurWeging } from "@/lib/directeurWeging";
 
 // ─── Monte-Carlo primitieven (identieke kopie uit useHorsCategorieSummary) ────
 function seededRandom(seed: number) {
@@ -51,7 +53,7 @@ export type BatchCtx = {
   riderTotals: Map<string, number>;        // finishpunten per renner (approved)
   dreamTotal: number;                      // Emirates-droomploegtotaal (gedeeld)
   catRiderIds: Set<string>;                // renners die in een categorie zitten
-  bestJokerPts: number;                    // top-2 non-categorie-renners (gedeeld)
+  bestJokerPts: number;                    // beste non-categorie-renners, zoveel als er jokers zijn (gedeeld)
   picksByEntry: Map<string, Map<string, string[]>>; // entry → cat → riderIds
   jokersByEntry: Map<string, string[]>;    // entry → riderIds
   entryTotal: Map<string, number>;         // entry → som ALLE stage_points
@@ -138,11 +140,13 @@ export async function buildBatchCtx(supabase: SupabaseClient, gameId: string): P
     dreamTotal += candidates.slice(0, cat.max_picks ?? 1).reduce((s, r) => s + r.points, 0);
     for (const cr of cat.category_riders ?? []) if (cr.riders) catRiderIds.add(cr.riders.id);
   }
+  // De Meermarathon kent geen jokers: dan hoort er ook geen in de droomploeg.
+  const jokersPerPloeg = aantalJokers(gameType);
   const bestJokerList = riderRows
     .filter((r) => !catRiderIds.has(r.id))
     .map((r) => riderTotals.get(r.id) ?? 0)
     .sort((a, b) => b - a)
-    .slice(0, 2);
+    .slice(0, jokersPerPloeg);
   dreamTotal += bestJokerList.reduce((s, p) => s + p, 0);
   const bestJokerPts = bestJokerList.reduce((s, p) => s + p, 0);
 
@@ -173,7 +177,7 @@ export async function buildBatchCtx(supabase: SupabaseClient, gameId: string): P
       arr.push(p.rider_id);
       m.set(p.category_id, arr);
     }
-    const jokerRows = await fetchAllRows<{ entry_id: string; rider_id: string }>((from, to) =>
+    const jokerRows = jokersPerPloeg === 0 ? [] : await fetchAllRows<{ entry_id: string; rider_id: string }>((from, to) =>
       supabase.from("entry_jokers")
         .select("entry_id, rider_id, entries!inner(game_id, status)")
         .eq("entries.game_id", gameId).eq("entries.status", "submitted").range(from, to) as never);
@@ -254,7 +258,9 @@ export function buildEntryInput(entryId: string, ctx: BatchCtx): LefevereReportI
   const entry = ctx.entries.find((e) => e.id === entryId);
   if (!entry) return null;
   const picks = ctx.picksByEntry.get(entryId) ?? new Map<string, string[]>();
-  const jokerIds = ctx.jokersByEntry.get(entryId) ?? [];
+  const metJokers = aantalJokers(ctx.gameType) > 0;
+  const weging = directeurWeging(metJokers);
+  const jokerIds = metJokers ? ctx.jokersByEntry.get(entryId) ?? [] : [];
   const myStageTotal = ctx.entryTotal.get(entryId) ?? 0;
 
   // Pool-score (rang) — identiek aan de hook.
@@ -294,7 +300,7 @@ export function buildEntryInput(entryId: string, ctx: BatchCtx): LefevereReportI
     if (psum > 0) diffScore = Math.min(1, Math.max(0, wsum / psum));
   }
 
-  const raw = poolScore * 0.45 + monkeyScore * 0.25 + jokerScore * 0.2 + diffScore * 0.1;
+  const raw = directeurRuw({ pool: poolScore, monkey: monkeyScore, joker: jokerScore, diff: diffScore }, weging);
   const score = Math.max(3.0, Math.round((raw * 9 + 1) * 10) / 10);
   const toSub = (v: number) => Math.max(1.0, Math.round((v * 9 + 1) * 10) / 10);
 
@@ -313,15 +319,15 @@ export function buildEntryInput(entryId: string, ctx: BatchCtx): LefevereReportI
   return {
     score,
     components: {
-      poolRanking: { score: toSub(poolScore), weging: 0.45, rang: myRank, totaalDeelnemers: n },
-      monkeyVergelijking: { score: toSub(monkeyScore), weging: 0.25, percentageVerslagen: Math.round(beatPct) },
-      jokerPrestatie: { score: toSub(jokerScore), weging: 0.2, aantalJokers: jokerIds.length },
-      differentiaal: { score: toSub(diffScore), weging: 0.1 },
+      poolRanking: { score: toSub(poolScore), weging: weging.pool, rang: myRank, totaalDeelnemers: n },
+      monkeyVergelijking: { score: toSub(monkeyScore), weging: weging.monkey, percentageVerslagen: Math.round(beatPct) },
+      ...(metJokers ? { jokerPrestatie: { score: toSub(jokerScore), weging: weging.joker, aantalJokers: jokerIds.length } } : {}),
+      differentiaal: { score: toSub(diffScore), weging: weging.diff },
     },
     deelnemer: { ploegnaam: entry.team_name ?? undefined },
-    etappePrestatie: {
-      jokerRenners: jokerIds.map((id) => ctx.ridersById.get(id)?.name).filter((x): x is string => Boolean(x)),
-    },
+    etappePrestatie: metJokers
+      ? { jokerRenners: jokerIds.map((id) => ctx.ridersById.get(id)?.name).filter((x): x is string => Boolean(x)) }
+      : {},
     pech: { uitvallers: uitvallerNamen.length, namen: uitvallerNamen },
     horsCategorieScores: emiratesPct
       ? { emirates: { percentage: emiratesPct.pct, droomploegPunten: emiratesPct.dreamTotal, jouwPunten: emiratesPct.myPoints } }

@@ -15,9 +15,11 @@ type Props = {
   monkeyCount?: number;
   /** Compacte trigger-knop (icon-only) of "text" met label. */
   variant?: "icon" | "text";
+  /** Kiest de aap ook jokers? Niet bij de Meermarathon. */
+  metJokers?: boolean;
 };
 
-export default function MonkeyExplainerModal({ monkeyCount = 10_000, variant = "icon" }: Props) {
+export default function MonkeyExplainerModal({ monkeyCount = 10_000, variant = "icon", metJokers = true }: Props) {
   const { t, i18n } = useTranslation();
   const monkeyCountStr = monkeyCount.toLocaleString(i18n.language === "en" ? "en-GB" : "nl-NL");
   const [open, setOpen] = useState(false);
@@ -140,7 +142,7 @@ export default function MonkeyExplainerModal({ monkeyCount = 10_000, variant = "
               className="pl-3"
               style={{ borderLeft: "3px solid hsl(var(--vintage-gold))", color: "var(--ink-sepia)" }}
             >
-              {t("hors.dartpijl.explainer.p2")}
+              {t(metJokers ? "hors.dartpijl.explainer.p2" : "hors.dartpijl.explainer.p2ZonderJokers")}
             </p>
 
             <div>

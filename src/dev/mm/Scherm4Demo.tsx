@@ -137,9 +137,7 @@ function useSimulatie(): LiveRace {
 
 const GEDEELD = {
   mineRiderIds: MIJN_IDS,
-  jokerRiderIds: new Set<string>(),
   pointsSchema: SCHEMA,
-  jokerMultiplier: 2,
   mijnRijders: MIJN_RIJDERS,
   categorie: "vrouwen",
   wedstrijdType: "cup",
@@ -196,9 +194,7 @@ export default function Scherm4Demo() {
             race={sim}
             simulatie
             mineRiderIds={simulatieMijnRiderIds(SIM_MIJN_BEENNUMMERS)}
-            jokerRiderIds={new Set()}
             pointsSchema={SCHEMA}
-            jokerMultiplier={2}
             categorie="mannen"
           />
         </Frame>
@@ -207,9 +203,7 @@ export default function Scherm4Demo() {
             race={sim}
             simulatie
             mineRiderIds={simulatieMijnRiderIds(SIM_MIJN_BEENNUMMERS)}
-            jokerRiderIds={new Set()}
             pointsSchema={SCHEMA}
-            jokerMultiplier={2}
             categorie="mannen"
             ploegNaam="IJzeren Hein"
           />

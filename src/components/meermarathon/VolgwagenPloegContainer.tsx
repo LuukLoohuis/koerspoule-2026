@@ -38,7 +38,6 @@ type EigenEntry = {
   status: string;
   teamName: string | null;
   picks: { category_id: string; rider_id: string }[];
-  jokers: string[];
 };
 
 function useEigenEntry(gameId: string | undefined, userId: string | undefined) {
@@ -52,7 +51,7 @@ function useEigenEntry(gameId: string | undefined, userId: string | undefined) {
       if (!supabase || !gameId || !userId) return null;
       const { data, error } = await supabase
         .from("entries")
-        .select("id, status, team_name, entry_picks(category_id, rider_id), entry_jokers(rider_id)")
+        .select("id, status, team_name, entry_picks(category_id, rider_id)")
         .eq("game_id", gameId)
         .eq("user_id", userId)
         .maybeSingle();
@@ -63,14 +62,12 @@ function useEigenEntry(gameId: string | undefined, userId: string | undefined) {
         status: string;
         team_name: string | null;
         entry_picks: { category_id: string; rider_id: string }[] | null;
-        entry_jokers: { rider_id: string }[] | null;
       };
       return {
         id: rij.id,
         status: rij.status,
         teamName: rij.team_name?.trim() || null,
         picks: rij.entry_picks ?? [],
-        jokers: (rij.entry_jokers ?? []).map((j) => j.rider_id),
       };
     },
   });
@@ -151,7 +148,7 @@ export default function VolgwagenPloegContainer({
   const entry = entryQuery.data ?? null;
 
   const rijderIds = useMemo(
-    () => (entry ? [...entry.picks.map((p) => p.rider_id), ...entry.jokers] : []),
+    () => (entry ? entry.picks.map((p) => p.rider_id) : []),
     [entry],
   );
   const rijdersQuery = useRijders(rijderIds);
@@ -247,7 +244,6 @@ export default function VolgwagenPloegContainer({
       rijen={bouwPloegRijen({
         categorieen: categorieen.map((c) => ({ id: c.id, name: c.name, max_picks: c.max_picks })),
         picks: entry.picks,
-        jokers: entry.jokers,
         rijders: rijdersQuery.data ?? new Map(),
         // Nog aan het laden: liever even "—" dan overal een 0.
         punten: uitslag ? puntenPerRijder ?? null : null,

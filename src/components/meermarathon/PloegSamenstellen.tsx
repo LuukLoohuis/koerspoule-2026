@@ -19,7 +19,6 @@ import { mmMoment, type MmFase } from "@/lib/meermarathonSeizoen";
 import {
   bouwSlots,
   kandidaten,
-  MAX_JOKERS,
   nogOpenTekst,
   ondertitel,
   slotLabel,
@@ -48,14 +47,6 @@ import {
 /** Zelfde grens als @5xl (64rem): daaronder kies je in de lade. */
 const BREED_PX = 1024;
 
-export type PsJokers = {
-  /** Rijders van de startlijst die in geen enkele categorie staan. */
-  pool: PsRijder[];
-  gekozen: string[];
-  /** games.joker_multiplier. */
-  vermenigvuldiger: number;
-};
-
 export type PsBezig = "kiezen" | "opslaan" | "bevestigen" | "aanpassen";
 
 export type PsPronostiek = {
@@ -82,8 +73,6 @@ export type PloegSamenstellenProps = {
   gameNaam: string;
   categorieen: PsCategorie[];
   gekozen: PsGekozen;
-  /** null: geen jokerkeuze (niemand op de startlijst buiten de categorieën). */
-  jokers: PsJokers | null;
   /** Pronostiek: de winnaars van het Cup- en het Grand Prix-klassement. */
   pronostiek?: PsPronostiek | null;
   ploegnaam: string;
@@ -431,7 +420,6 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
     gameNaam,
     categorieen,
     gekozen,
-    jokers,
     pronostiek = null,
     deadline,
     ingelogd,
@@ -448,7 +436,6 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
   const naamIdMobiel = useId();
   const naamIdBreed = useId();
   const slotsKopId = useId();
-  const jokersKopId = useId();
   const pronoKopId = useId();
 
   const [actief, setActief] = useState<KiesDoel | null>(null);
@@ -458,13 +445,6 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
   const slots = useMemo(() => bouwSlots(categorieen, gekozen), [categorieen, gekozen]);
   const tel = useMemo(() => telling(categorieen, gekozen), [categorieen, gekozen]);
   const nogOpen = useMemo(() => nogOpenTekst(categorieen, gekozen), [categorieen, gekozen]);
-  const jokerRijders = useMemo(
-    () =>
-      jokers
-        ? Array.from({ length: MAX_JOKERS }, (_, i) => jokers.pool.find((r) => r.id === jokers.gekozen[i]) ?? null)
-        : [],
-    [jokers],
-  );
 
   const wijzigbaar = !ingediend;
   const voorspeld = useMemo(() => {
@@ -491,15 +471,6 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
         leeg: `Kies wie volgens jou het ${k.label} wint.`,
       };
     }
-    if (doel.soort === "joker") {
-      if (!jokers) return null;
-      return {
-        titel: `Joker ${doel.plek + 1}`,
-        rijders: jokers.pool,
-        huidig: jokerRijders[doel.plek] ?? null,
-        leeg: "Kies een rijder van buiten de categorieën.",
-      };
-    }
     const slot = slots.find((s) => s.categorie.id === doel.categorieId && s.plek === doel.plek);
     if (!slot) return null;
     return {
@@ -508,7 +479,7 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
       huidig: slot.rijder,
       leeg: slot.categorie.max > 1 ? "Kies een rijder voor deze plek." : "Kies één rijder.",
     };
-  }, [doel, jokers, jokerRijders, slots, pronostiek, voorspeld]);
+  }, [doel, slots, pronostiek, voorspeld]);
 
   const rijen = useMemo(() => {
     if (!doelInfo) return [];
@@ -516,11 +487,10 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
     const bezet = new Set<string>();
     if (doel?.soort !== "voorspelling") {
       for (const s of slots) if (s.rijder) bezet.add(s.rijder.id);
-      for (const r of jokerRijders) if (r) bezet.add(r.id);
     }
     if (doelInfo.huidig) bezet.delete(doelInfo.huidig.id);
     return kandidaten(doelInfo.rijders, { huidig: doelInfo.huidig?.id ?? null, bezet, zoek });
-  }, [doelInfo, doel?.soort, slots, jokerRijders, zoek]);
+  }, [doelInfo, doel?.soort, slots, zoek]);
 
   // De ploeg ligt na bevestigen vast, de pronostiek niet.
   const doelWijzigbaar = doel?.soort === "voorspelling" ? Boolean(pronostiek?.wijzigbaar) : wijzigbaar;
@@ -661,36 +631,6 @@ export function PloegSamenstellen(props: PloegSamenstellenProps) {
                 </ul>
               )}
             </section>
-
-            {jokers && (
-              <section aria-labelledby={jokersKopId} className="retro-border no-hover-lift overflow-hidden bg-card">
-                <div className="border-b border-border px-3.5 py-3">
-                  <h2 id={jokersKopId} className="m-0 text-[15px] font-bold">
-                    Jokers <span className="font-normal text-muted-foreground">· optioneel</span>
-                  </h2>
-                  <p className="m-0 mt-0.5 text-[12.5px] leading-snug text-muted-foreground">
-                    Twee extra rijders van buiten de categorieën.
-                    {jokers.vermenigvuldiger > 1 && ` Hun punten tellen ×${jokers.vermenigvuldiger}.`}
-                  </p>
-                </div>
-                <ul role="list" className="m-0 list-none p-0">
-                  {jokerRijders.map((rijder, plek) => {
-                    const d: KiesDoel = { soort: "joker", plek };
-                    return (
-                      <SlotRij
-                        key={plek}
-                        label={`Joker ${plek + 1}`}
-                        rijder={rijder}
-                        leegTekst="Kies een joker"
-                        actief={isActief(d)}
-                        wijzigbaar={wijzigbaar}
-                        onKies={() => kiesPlek(d)}
-                      />
-                    );
-                  })}
-                </ul>
-              </section>
-            )}
 
             {pronostiek && (
               <section aria-labelledby={pronoKopId} className="retro-border no-hover-lift overflow-hidden bg-card">
