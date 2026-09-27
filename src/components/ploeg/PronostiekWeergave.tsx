@@ -6,6 +6,8 @@ import TruiBadge from "@/components/retro/TruiBadge";
 import { SoortEmbleem, WEDSTRIJD_SOORT } from "@/components/meermarathon/WedstrijdSoort";
 import type { TruiType } from "@/lib/themas";
 import type { Prediction } from "@/hooks/useEntry";
+import type { KlassementUitslag } from "@/hooks/useKlassementUitslag";
+import { KLASSEMENT_PUNTEN } from "@/lib/klassementVoorspelling";
 
 export type Voorspelling = Prediction;
 
@@ -160,6 +162,7 @@ export default function PronostiekWeergave({
   dnfZichtbaar,
   meermarathon = false,
   bouwerPad,
+  uitslag = null,
   className,
 }: {
   gameName: string;
@@ -170,6 +173,8 @@ export default function PronostiekWeergave({
   meermarathon?: boolean;
   /** Waar je je voorspellingen kiest; alleen zolang dat nog kan. */
   bouwerPad?: string | null;
+  /** Meermarathon: de klassementswinnaars en je punten, zodra die er zijn. */
+  uitslag?: KlassementUitslag | null;
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -222,6 +227,8 @@ export default function PronostiekWeergave({
             MM_KLASSEMENTEN.map(({ key, labelKey, badge }) => {
               const item = getoond.find((p) => p.classification === key && p.position === 1);
               const r = item ? ridersById[item.rider_id] : undefined;
+              const winnaar = uitslag?.winnaars[key] ?? null;
+              const goed = Boolean(winnaar && item?.rider_id === winnaar);
               return (
                 <PronoSectie key={key} icon={<SoortEmbleem soort={key} maat={20} />} label={t(labelKey)} badge={badge}>
                   <PronoRij
@@ -231,6 +238,22 @@ export default function PronostiekWeergave({
                     badge={badge}
                     laatste
                   />
+                  {/* Het klassement is beslist: goed voorspeld, of wie het wel won. */}
+                  {winnaar && (
+                    <div
+                      className="flex items-center justify-between gap-2 px-3 py-1.5 text-[12px]"
+                      style={{ background: goed ? "#EDF7F1" : "#F4EFE6", color: goed ? "#1E6B40" : "#6B5B45", borderTop: "1px solid #EDE8DE" }}
+                    >
+                      <span className="min-w-0 truncate font-semibold">
+                        {goed
+                          ? t("team.panel.mmGoedVoorspeld")
+                          : t("team.panel.mmWinnaar", { naam: ridersById[winnaar]?.name ?? "—" })}
+                      </span>
+                      <span className="shrink-0 font-mono font-bold tabular-nums">
+                        {goed ? `+${uitslag?.punten[key] ?? KLASSEMENT_PUNTEN}` : "0"} {t("ploegC.pt")}
+                      </span>
+                    </div>
+                  )}
                 </PronoSectie>
               );
             })}

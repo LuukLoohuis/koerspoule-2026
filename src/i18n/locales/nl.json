@@ -489,7 +489,9 @@
       "rewindAria_mm": "Kies wedstrijd om naar terug te spoelen",
       "rewoundThrough_mm": "Teruggespoeld t/m {{stage}}",
       "zoekGeenTreffer_mm": "Geen rijder gevonden voor “{{term}}”.",
-      "buildBeforeFlamme_mm": "Stel je ploeg samen vóór het startschot."
+      "buildBeforeFlamme_mm": "Stel je ploeg samen vóór het startschot.",
+      "mmGoedVoorspeld": "✓ Goed voorspeld",
+      "mmWinnaar": "Winnaar: {{naam}}"
     },
     "sheet": {
       "noRidersChosen": "Nog geen renners gekozen.",

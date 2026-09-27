@@ -14,6 +14,7 @@ import VerslagDialog from "@/components/admin/VerslagDialog";
 import { Trash2, Trophy, Radio, Newspaper } from "lucide-react";
 import { isMeermarathonGame, WEDSTRIJD_TYPES, meermarathonStageLabel, wedstrijdTypeVan, type WedstrijdType } from "@/lib/gameTypes";
 import StageLiveTracks from "@/components/admin/StageLiveTracks";
+import EindklassementMeermarathon from "@/components/admin/EindklassementMeermarathon";
 
 export const STAGE_TYPES = [
   { value: "vlak", label: "Vlak" },
@@ -68,11 +69,14 @@ export default function StagesTab({
   stages,
   reload,
   gameType,
+  riders = [],
 }: {
   activeGameId: string;
   stages: Stage[];
   reload: () => Promise<void> | void;
   gameType?: string | null;
+  /** De startlijst van deze game; de Meermarathon kiest daaruit de klassementswinnaars. */
+  riders?: Array<{ id: string; name: string; team_name?: string | null }>;
 }) {
   // Live-uitslagen bestaan alleen bij Meermarathon; de koerspoules hebben geen bron.
   const isMeermarathon = isMeermarathonGame(gameType);
@@ -527,6 +531,14 @@ export default function StagesTab({
           </Table>
         </CardContent>
       </Card>
+
+      {/* Pronostiek: de winnaars van het Cup- en het Grand Prix-klassement. */}
+      {isMeermarathon && (
+        <EindklassementMeermarathon
+          activeGameId={activeGameId}
+          rijders={riders.map((r) => ({ id: r.id, naam: r.name, ploeg: r.team_name ?? null }))}
+        />
+      )}
 
       {/* Profiel-data (JSON) bewerken */}
       <VerslagDialog stage={verslagDialog} onClose={() => setVerslagDialog(null)} />

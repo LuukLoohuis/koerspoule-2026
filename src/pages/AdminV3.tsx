@@ -228,7 +228,7 @@ export default function AdminV3() {
         </TabsContent>
 
         <TabsContent value="stages">
-          <StagesTab activeGameId={activeGameId} stages={stages} reload={() => loadGameScoped(activeGameId)} gameType={activeGame?.game_type ?? null} />
+          <StagesTab activeGameId={activeGameId} stages={stages} reload={() => loadGameScoped(activeGameId)} gameType={activeGame?.game_type ?? null} riders={riders} />
         </TabsContent>
 
         <TabsContent value="results">

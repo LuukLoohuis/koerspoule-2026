@@ -473,7 +473,9 @@
       "rewindAria_mm": "Choose a race to rewind to",
       "rewoundThrough_mm": "Rewound through {{stage}}",
       "zoekGeenTreffer_mm": "No skater found for “{{term}}”.",
-      "buildBeforeFlamme_mm": "Pick your team before the starting gun."
+      "buildBeforeFlamme_mm": "Pick your team before the starting gun.",
+      "mmGoedVoorspeld": "✓ Correct prediction",
+      "mmWinnaar": "Winner: {{naam}}"
     },
     "sheet": {
       "noRidersChosen": "No riders picked yet.",

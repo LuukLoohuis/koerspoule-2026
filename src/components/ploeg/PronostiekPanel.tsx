@@ -8,6 +8,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useEntry } from "@/hooks/useEntry";
 import { eigenRennerIds, useRidersByIds } from "@/hooks/useRidersByIds";
 import { canRegister } from "@/lib/gameStatus";
+import { useKlassementUitslag } from "@/hooks/useKlassementUitslag";
 
 /**
  * Pronostiek op een telefoon: de container om PronostiekWeergave. Alleen de
@@ -33,7 +34,15 @@ export default function PronostiekPanel({
   const { data: curGame } = useCurrentGame();
   const game = gameId ? { id: gameId, status: gameStatus, name: gameName ?? "" } : curGame;
   const { entry, picksByCategory, jokerIds, predictions, isLoading } = useEntry(game?.id);
-  const ids = useMemo(() => eigenRennerIds({ picksByCategory, jokerIds, predictions }), [picksByCategory, jokerIds, predictions]);
+  // Meermarathon: hoe de voorspelling uitpakt, zodra de beheerder de winnaars zette.
+  const { data: uitslag } = useKlassementUitslag(game?.id, entry?.id, meermarathon);
+  const ids = useMemo(() => {
+    const eigen = eigenRennerIds({ picksByCategory, jokerIds, predictions });
+    // De winnaars erbij, voor "Winnaar: …" als je iemand anders koos. Zonder
+    // uitslag blijft de sleutel die van Ploeg C (warme cache bij het vegen).
+    const winnaars = [uitslag?.winnaars.cup, uitslag?.winnaars.grandprix].filter((id): id is string => Boolean(id));
+    return winnaars.length > 0 ? [...eigen, ...winnaars] : eigen;
+  }, [picksByCategory, jokerIds, predictions, uitslag]);
   const { data: riders = [] } = useRidersByIds(ids);
   const ridersById = useMemo(() => Object.fromEntries(riders.map((r) => [r.id, r])), [riders]);
 
@@ -70,6 +79,7 @@ export default function PronostiekPanel({
       ridersById={ridersById}
       dnfZichtbaar={game.status === "live" || game.status === "finished"}
       meermarathon={meermarathon}
+      uitslag={uitslag ?? null}
       // Voorspellen gaat in de ploegbouwer, en kan zolang de inschrijving open is.
       bouwerPad={meermarathon && canRegister(game.status) ? `/team-samenstellen?game=${encodeURIComponent(game.id)}` : null}
     />

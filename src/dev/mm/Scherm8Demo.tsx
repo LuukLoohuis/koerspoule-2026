@@ -5,8 +5,11 @@
  *
  * Zonder activeGameId schrijft het beheer niets weg: alles hier is nep.
  */
+import { useState } from "react";
 import CalculationTab from "@/components/admin/CalculationTab";
 import StagesTab, { type Stage } from "@/components/admin/StagesTab";
+import { EindklassementKaart, type EindRijder } from "@/components/admin/EindklassementMeermarathon";
+import { telVoorspellingen, type KlassementRijders } from "@/lib/klassementVoorspelling";
 
 type Plan = [nr: number, date: string | null, type: string, ijs: "kunstijs" | "natuurijs" | null, ronden: number | null];
 
@@ -43,6 +46,33 @@ const RITTEN: Stage[] = [
 
 const niets = () => {};
 
+const RIJDERS: EindRijder[] = [
+  { id: "r1", naam: "Lotte Bosma", ploeg: "Team Noordelijk IJs" },
+  { id: "r2", naam: "Iris Kooistra", ploeg: "Ploeg Friesland" },
+  { id: "r3", naam: "Jildou Terpstra", ploeg: "Schaatsteam West" },
+  { id: "r4", naam: "Esmee Wijnia", ploeg: "Schaatsteam West" },
+];
+
+// 214 voorspellingen per klassement, verdeeld over vier rijders.
+const VOORSPELLINGEN = (["cup", "grandprix"] as const).flatMap((k) =>
+  RIJDERS.flatMap((r, i) => Array.from({ length: [88, 61, 40, 25][i] }, () => ({ classification: k, rider_id: r.id }))),
+);
+
+/** De beheerkaart op lokale staat: opslaan zet de winnaar en telt opnieuw. */
+function EindklassementDemo() {
+  const [winnaars, setWinnaars] = useState<KlassementRijders>({ cup: "r2", grandprix: null });
+  return (
+    <EindklassementKaart
+      rijders={RIJDERS}
+      opgeslagen={winnaars}
+      telling={telVoorspellingen(VOORSPELLINGEN, winnaars)}
+      punten={50}
+      bezig={false}
+      onOpslaan={setWinnaars}
+    />
+  );
+}
+
 export default function Scherm8Demo() {
   return (
     <div className="space-y-10">
@@ -51,6 +81,16 @@ export default function Scherm8Demo() {
         <div className="max-w-full overflow-x-auto">
           <div className="w-[1160px] rounded-lg border border-dashed border-border bg-background px-5 py-6">
             <StagesTab activeGameId="" stages={WEDSTRIJDEN} reload={niets} gameType="meermarathon" />
+          </div>
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h3 className="m-0 font-inter text-base font-bold">
+          Meermarathon · eindklassementen: de winnaars zetten kent de pronostiekpunten toe
+        </h3>
+        <div className="max-w-full overflow-x-auto">
+          <div className="w-[1160px] rounded-lg border border-dashed border-border bg-background px-5 py-6">
+            <EindklassementDemo />
           </div>
         </div>
       </section>

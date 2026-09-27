@@ -13,6 +13,7 @@ import { KoersThemaProvider } from "@/contexts/KoersThemaContext";
 import type { KaravaanEtappe, KaravaanRanking } from "@/hooks/useKaravaanFeed";
 import type { PloegRenner, PloegRit } from "@/hooks/usePloegRanglijst";
 import type { StageRow } from "@/hooks/useResults";
+import type { KlassementUitslag } from "@/hooks/useKlassementUitslag";
 import { meermarathonStageAfkorting, meermarathonStageLabel, wedstrijdTypeVan } from "@/lib/gameTypes";
 import { wedstrijdEigenNaam } from "@/lib/krantC";
 
@@ -125,7 +126,15 @@ function PloegDemo() {
 
 const RIJDERS_OP_ID = Object.fromEntries(RIJDERS.map((r) => [r.id, { name: r.naam, team: r.ploeg }]));
 
-function PronostiekDemo({ voorspellingen, bouwer = true }: { voorspellingen: Voorspelling[]; bouwer?: boolean }) {
+function PronostiekDemo({
+  voorspellingen,
+  bouwer = true,
+  uitslag = null,
+}: {
+  voorspellingen: Voorspelling[];
+  bouwer?: boolean;
+  uitslag?: KlassementUitslag | null;
+}) {
   return (
     <PronostiekWeergave
       meermarathon
@@ -134,9 +143,13 @@ function PronostiekDemo({ voorspellingen, bouwer = true }: { voorspellingen: Voo
       ridersById={RIJDERS_OP_ID}
       dnfZichtbaar={false}
       bouwerPad={bouwer ? "/team-samenstellen" : null}
+      uitslag={uitslag}
     />
   );
 }
+
+// Na het seizoen: Kooistra won de Cup (goed voorspeld), Bosma de Grand Prix.
+const UITSLAG: KlassementUitslag = { winnaars: { cup: "r2", grandprix: "r1" }, punten: { cup: 50 } };
 
 const TWEE: Voorspelling[] = [
   { classification: "cup", position: 1, rider_id: "r2" },
@@ -315,6 +328,10 @@ export default function Scherm9Demo() {
         <Mobiel titel="9e · Krant vóór de eerste uitslag" hoogte={620}>
           <DemoBalk />
           <KrantDemo leeg />
+        </Mobiel>
+        <Mobiel titel="9g · Pronostiek na het seizoen: één goed (+50)" hoogte={560}>
+          <DemoBalk />
+          <PronostiekDemo voorspellingen={TWEE} uitslag={UITSLAG} bouwer={false} />
         </Mobiel>
         <Breed titel="9f · Pronostiek op de webversie (hetzelfde paneel)">
           <PronostiekDemo voorspellingen={TWEE} />

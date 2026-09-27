@@ -730,6 +730,42 @@ export type Database = {
         }
         Relationships: []
       }
+      klassement_winnaars: {
+        Row: {
+          game_id: string
+          klassement: string
+          rider_id: string
+          updated_at: string
+        }
+        Insert: {
+          game_id: string
+          klassement: string
+          rider_id: string
+          updated_at?: string
+        }
+        Update: {
+          game_id?: string
+          klassement?: string
+          rider_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "klassement_winnaars_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "klassement_winnaars_rider_id_fkey"
+            columns: ["rider_id"]
+            isOneToOne: false
+            referencedRelation: "riders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lefevere_rapporten: {
         Row: {
           directeurs_analyse: string
@@ -2147,6 +2183,10 @@ export type Database = {
       touch_karavaan_visit: { Args: never; Returns: undefined }
       update_total_ranking: { Args: { p_game_id: string }; Returns: undefined }
       user_palmares_summary: { Args: never; Returns: Json }
+      zet_klassement_winnaars: {
+        Args: { p_game_id: string; p_cup: string | null; p_grandprix: string | null }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "user" | "admin"
