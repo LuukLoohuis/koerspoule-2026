@@ -70,6 +70,17 @@ describe("HorsTruien", () => {
     expect(opdruk(/Directeur/)).toEqual(["10,0", "RAPPORTCIJFER"]);
   });
 
+  it("zegt onder de trui niet nog eens wat er op de borst staat", () => {
+    const { knop, opdruk } = toon("geel");
+    const onderschrift = (naam: RegExp) => knop(naam).querySelector(":scope > span:last-child")?.textContent ?? "";
+    expect(onderschrift(/Emirates/)).toBe("tegenover de droomploeg");
+    expect(onderschrift(/Directeur/)).toBe("van de ploegleider");
+    for (const naam of [/Monkey IQ/, /Emirates/, /Directeur/]) {
+      const label = String(opdruk(naam)[1]).toLowerCase();
+      expect(onderschrift(naam).toLowerCase()).not.toContain(label);
+    }
+  });
+
   it("houdt een lang cijfer tussen de mouwen", () => {
     const { knop } = toon("geel", { monkeyBeatPct: 100, emiratesPct: 64, directorScore: 7.4 });
     const lengte = (naam: RegExp) => Number(knop(naam).querySelector("svg text")?.getAttribute("textLength"));
