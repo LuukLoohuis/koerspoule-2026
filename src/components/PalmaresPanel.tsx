@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import palmaresCyclingScene from "@/assets/palmares-cycling-scene-v2.avif";
 import roundelGiro from "@/assets/palmares-roundel-giro.png";
+import roundelMeermarathon from "@/assets/palmares-roundel-meermarathon.webp";
 import roundelTour from "@/assets/palmares-roundel-tour.png";
 import roundelVuelta from "@/assets/palmares-roundel-vuelta.png";
 import truiGiroAlgemeen from "@/assets/trui-giro-algemeen.png";
@@ -13,6 +14,7 @@ import FlagIcon from "@/components/FlagIcon";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePalmares, type PalmaresGame, type PalmaresSubpoule, type StageDagzege } from "@/hooks/usePalmares";
+import { isMeermarathonGame } from "@/lib/gameTypes";
 import { cn } from "@/lib/utils";
 
 const LIVE_STATUSES = new Set(["active", "live", "open", "open_inschrijving", "locked"]);
@@ -142,8 +144,8 @@ function LaurelWreath() {
     </svg>
   );
 }
-function RaceRoundel({ theme }: { theme: RaceTheme }) {
-  const image = ROUNDEL_BY_THEME[theme.key];
+function RaceRoundel({ theme, gameType }: { theme: RaceTheme; gameType: string | null }) {
+  const image = isMeermarathonGame(gameType) ? roundelMeermarathon : ROUNDEL_BY_THEME[theme.key];
   return (
     <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--palmares-accent) bg-(--palmares-roundel) text-(--palmares-roundel-ink) shadow-[0_3px_8px_rgba(58,42,26,0.1)] sm:h-14 sm:w-14">
       {image ? <img loading="lazy" decoding="async" src={image} alt="" className="h-full w-full rounded-full object-cover" /> : <><Bike className="h-4 w-4" strokeWidth={2.3} aria-hidden /><span className="ml-1 font-oswald text-[9px] font-black uppercase">{theme.wordmark}</span></>}
@@ -184,7 +186,7 @@ function GameCard({ game, defaultOpen }: { game: PalmaresGame; defaultOpen: bool
       <div className="overflow-hidden rounded-xl border border-[#6b5640]/16 bg-[#fffdf8]/92 shadow-[0_3px_9px_rgba(58,42,26,0.055)]">
         <CollapsibleTrigger asChild>
           <button type="button" className="grid w-full grid-cols-[48px_minmax(0,1fr)_auto_20px] items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-(--palmares-accent-soft)/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--palmares-accent) sm:grid-cols-[56px_minmax(0,1fr)_auto_24px] sm:gap-4 sm:px-4 sm:py-3">
-            <RaceRoundel theme={theme} />
+            <RaceRoundel theme={theme} gameType={game.game_type} />
             <span className="min-w-0"><span className="block truncate font-oswald text-sm font-black uppercase text-(--ink-sepia) sm:text-base">{game.game_name}</span><span className={cn("mt-1 block truncate text-[11px] text-(--ink-faded) sm:text-xs", live && "font-semibold text-(--vintage-green)")}>{live ? "● " : ""}{live ? t("common.palmares.provisional") : t("common.palmares.finalStanding")}{game.stages_count > 0 ? ` · ${t("common.palmares.stages", { count: game.stages_count })}` : ""}</span></span>
             <span className="flex flex-col items-end text-right"><strong className={cn("block font-oswald text-xl font-black leading-none text-(--ink-sepia) sm:text-2xl", topThree && "text-(--palmares-accent-strong)")}>#{game.my_rank || "—"}</strong><span className="mt-1 block text-[11px] text-(--ink-faded) sm:text-xs">{t("common.palmares.of", { total: game.total_participants.toLocaleString(i18n.language) })}</span>{percentage !== null && <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-(--palmares-accent)/35 bg-(--palmares-accent-soft) px-2 py-0.5 text-[10px] font-bold text-(--palmares-accent-strong) sm:text-[11px]"><BarChart3 className="h-3 w-3" aria-hidden />{t("common.palmares.topPercent", { percent: formatPercentage(percentage, i18n.language) })}</span>}</span>
             <ChevronDown className="h-5 w-5 text-(--ink-faded) transition-transform duration-200 group-data-[state=open]:rotate-180" aria-hidden />
