@@ -33,12 +33,6 @@ const RUBRIEK_TINT = {
   legende: "hsl(var(--vintage-gold) / 0.3)",
 } as const;
 
-/** Cijferkleuren in de bijlage, dieper dan de tinten hierboven. */
-const BIJLAGE_KLEUR = {
-  dartpijl: "hsl(var(--primary))",
-  emirates: "#8a6a12",
-  directeur: "#2f5d8c",
-} as const;
 import { useHorsCategorieSummary } from "@/hooks/useHorsCategorieSummary";
 import { useLefevereReport } from "@/hooks/useLefevereReport";
 import Stamp from "@/components/retro/Stamp";
@@ -280,7 +274,7 @@ export default function KaravaanFeed({
           eenheid: "%",
           titel: t("karavaan.ministrip.monkeyTitle"),
           haak: t("karavaan.ministrip.monkeyLabel"),
-          kleur: BIJLAGE_KLEUR.dartpijl,
+          trui: "leider",
           onClick: () => onOpenHors?.("dartpijl"),
         },
         {
@@ -289,7 +283,7 @@ export default function KaravaanFeed({
           eenheid: "%",
           titel: t("karavaan.ministrip.emiratesTitle"),
           haak: t("karavaan.ministrip.emiratesLabel"),
-          kleur: BIJLAGE_KLEUR.emirates,
+          trui: "wit",
           onClick: () => onOpenHors?.("superteam"),
         },
         {
@@ -297,7 +291,7 @@ export default function KaravaanFeed({
           waarde: horsSummary.directorScore,
           titel: t("karavaan.ministrip.wielerdirTitle"),
           haak: t("karavaan.ministrip.wielerdirLabel"),
-          kleur: BIJLAGE_KLEUR.directeur,
+          trui: "berg",
           onClick: () => onOpenHors?.("wielerdirecteur"),
         },
       ]

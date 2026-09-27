@@ -2,9 +2,11 @@
  * Visuele testbank voor Krant C en Ploeg C (docs/design/krant-ploeg-c). Niet
  * in de router, niet in de build. Rendert de presentatiecomponenten met
  * nepdata uit het ontwerp, in een telefoonbreed kader en per koersthema,
- * zodat de opmaak te beoordelen is zonder database of inlog.
+ * zodat de opmaak te beoordelen is zonder database of inlog. De webkrant
+ * staat erbij op paginabreedte, om de Hors-bijlage naast de mobiele truien
+ * te kunnen leggen.
  *
- * Draaien: npx vite  →  /dev-krant-ploeg.html  (?scherm=krant|ploeg, ?thema=roze|geel|rood)
+ * Draaien: npx vite  →  /dev-krant-ploeg.html  (?scherm=krant|ploeg|webkrant, ?thema=roze|geel|rood)
  */
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -14,14 +16,17 @@ import BottomNav from "@/components/BottomNav";
 import SwipeCarousel from "@/components/SwipeCarousel";
 import { RetroTabs } from "@/components/RetroTabs";
 import KrantCWeergave from "@/components/krant/KrantCWeergave";
+import HorsBijlage from "@/components/karavaan/HorsBijlage";
+import Voorpagina, { type Segment } from "@/components/karavaan/Voorpagina";
 import PloegCWeergave from "@/components/ploeg/PloegCWeergave";
 import PronostiekWeergave from "@/components/ploeg/PronostiekWeergave";
-import { KoersThemaProvider } from "@/contexts/KoersThemaContext";
+import { KoersThemaProvider, useKoersThema } from "@/contexts/KoersThemaContext";
 import type { KaravaanEtappe, KaravaanRanking } from "@/hooks/useKaravaanFeed";
 import type { PloegRenner, PloegRit } from "@/hooks/usePloegRanglijst";
 import type { StageRow } from "@/hooks/useResults";
 import { THEMAS, hexToHsl, readableForeground, type ThemaKey } from "@/lib/themas";
 import { tourviewUrl } from "@/lib/tourview";
+import { cn } from "@/lib/utils";
 import "@/i18n";
 import "./index.css";
 
@@ -198,8 +203,11 @@ const ETAPPE: KaravaanEtappe = {
   stage_number: 14,
   stage_name: "Treviso › Pila",
   approved_at: "2026-05-23T17:30:00Z",
-  michel_tekst: "Dat is geen aanval meer, dat is een uitnodiging tot wanhoop voor de rest van het peloton.",
-  jose_tekst: "Ge moet dat zien: hij rijdt daar niet hard, hij rijdt daar gewoon niet traag.",
+  // Op ware lengte: het commentaar is in het echt een alinea, geen zin.
+  michel_tekst:
+    "Dat is geen aanval meer, dat is een uitnodiging tot wanhoop voor de rest van het peloton! Ciccone vertrekt op vijf kilometer van de streep en niemand, maar dan ook niemand, heeft de benen om mee te gaan. In de poule lacht Marieke het hardst: eenenzestig punten, met Ciccone en del Toro in dezelfde ploeg. De Waaierwerkers van Luuk blijven op dertien punten hangen, en Jeroen mag al blij zijn dat hij het podium van de dag nog haalt.",
+  jose_tekst:
+    "Ge moet dat zien, Michel: hij rijdt daar niet hard, hij rijdt daar gewoon niet traag. Dat is het hele verschil. Wie vandaag zijn joker op Ciccone had staan, die heeft goed naar het profiel gekeken. De rest heeft naar de namen gekeken, en namen rijden niet bergop.",
   krant_kop: "Ciccone wint thuis, Vingegaard houdt het roze",
   ritwinnaar: "Giulio Ciccone",
   rituitslag: [
@@ -276,13 +284,72 @@ function KrantDemo({ leeg }: { leeg?: boolean }) {
   );
 }
 
+// ── Webkrant ─────────────────────────────────────────────────────────────────
+
+/** De voorpagina van de webkrant, met dezelfde cijfers als Krant C hierboven. */
+function WebkrantDemo({ leeg }: { leeg?: boolean }) {
+  const thema = useKoersThema();
+  const [subpoule, setSubpoule] = useState("k");
+  const [segment, setSegment] = useState<Segment>("voorpagina");
+  const open = (wat: string) => () => console.info("[demo] webkrant", wat);
+  return (
+    <Voorpagina
+      koers={`${thema.koers} 2026`}
+      editie={`${thema.etappe} ${ETAPPE.stage_number}`}
+      subpoules={[{ id: "k", name: "Kantoor" }, { id: "f", name: "Familie" }]}
+      selectedSubpouleId={subpoule}
+      onSelectSubpoule={setSubpoule}
+      cellen={[
+        { key: "sub", waarde: "3ᵉ", label: "subpoule", delta: 2, onClick: open("subpoule") },
+        { key: "all", waarde: "412ᵉ", label: "overall", delta: 37, onClick: open("uitslagen") },
+        { key: "pt", waarde: "118ᵉ", label: "vandaag", onClick: open("uitslagen") },
+      ]}
+      rubrieken={[
+        { key: "daguitslag", emoji: "🏁", titel: "Daguitslag", haak: "Wie pakte vandaag de punten", tint: "hsl(var(--primary) / 0.14)", onClick: open("daguitslag") },
+        { key: "voorbeschouwing", emoji: "🗺️", titel: "Voorbeschouwing", haak: "De rit van morgen", tint: "rgba(47, 93, 140, 0.14)", onClick: open("voorbeschouwing") },
+        { key: "perszaal", emoji: "🎙️", titel: "Perszaal", haak: "Wuyts en De Cauwer over de dag", tint: "rgba(107, 74, 140, 0.14)", onClick: open("perszaal") },
+        { key: "legende", emoji: "📻", titel: "De legende", haak: "Een verhaal uit het archief", tint: "hsl(var(--vintage-gold) / 0.3)", onClick: open("legende") },
+      ]}
+      artikel={{
+        kicker: `${thema.etappe} ${ETAPPE.stage_number}`,
+        kop: "Ciccone wint thuis, Vingegaard houdt het roze",
+        verslag: (
+          <div className="mt-3 space-y-2.5 font-serif text-[15px] leading-[1.6]">
+            {VERSLAG.tekst.split("\n\n").map((alinea) => (
+              <p key={alinea} className="m-0">
+                {alinea.replace(/\*\*/g, "")}
+              </p>
+            ))}
+          </div>
+        ),
+        quotes: [
+          { naam: "Michel Wuyts", tekst: ETAPPE.michel_tekst ?? "" },
+          { naam: "José De Cauwer", tekst: ETAPPE.jose_tekst ?? "" },
+        ],
+      }}
+      bijlage={
+        <HorsBijlage
+          tegels={[
+            { key: "dartpijl", waarde: leeg ? null : 78, eenheid: "%", titel: "Monkey IQ", haak: "apen verslagen", trui: "leider", onClick: open("dartpijl") },
+            { key: "emirates", waarde: leeg ? null : 64, eenheid: "%", titel: "Emirates", haak: "van droomploeg", trui: "wit", onClick: open("superteam") },
+            { key: "directeur", waarde: leeg ? null : 7.4, titel: "Wielerdir.", haak: "rapport", trui: "berg", onClick: open("wielerdirecteur") },
+          ]}
+        />
+      }
+      segment={segment}
+      onSegmentChange={setSegment}
+    />
+  );
+}
+
 // ── Testbank ─────────────────────────────────────────────────────────────────
 
-const SCHERMEN = [
+const SCHERMEN: Array<{ key: string; titel: string; Demo: () => JSX.Element; breed?: boolean }> = [
   { key: "krant", titel: "Krant C", Demo: () => <KrantDemo /> },
   { key: "krant-leeg", titel: "Krant C · vóór de eerste uitslag", Demo: () => <KrantDemo leeg /> },
   { key: "ploeg", titel: "Ploeg C", Demo: PloegDemo },
   { key: "ploeg-carrousel", titel: "Ploeg C · in de carrousel", Demo: PloegCarrouselDemo },
+  { key: "webkrant", titel: "Webkrant · voorpagina met Hors-bijlage", Demo: () => <WebkrantDemo />, breed: true },
 ];
 
 /** Zet de thematokens zoals ThemaProvider dat doet, zonder database. */
@@ -316,10 +383,11 @@ function Testbank() {
           </select>
         </div>
         {/* Zelfde omhulsel als de echte pagina: content-font (Inter overal) en
-            de containermarge van 20px, in een telefoonbreed kader. */}
-        <main className="content-font mx-auto w-full max-w-[375px] space-y-14 px-5 pb-28 pt-4">
-          {SCHERMEN.filter((s) => !alleen || s.key === alleen).map(({ key, titel, Demo }) => (
-            <section key={key} id={`scherm-${key}`} className="space-y-4">
+            de containermarge van 20px, in een telefoonbreed kader. De webkrant
+            krijgt de max-w-5xl van Mijn Peloton. */}
+        <main className="content-font space-y-14 px-5 pb-28 pt-4">
+          {SCHERMEN.filter((s) => !alleen || s.key === alleen).map(({ key, titel, Demo, breed }) => (
+            <section key={key} id={`scherm-${key}`} className={cn("mx-auto w-full space-y-4", breed ? "max-w-5xl" : "max-w-[335px]")}>
               <h2 className="editor-eyebrow">{titel}</h2>
               <Demo />
             </section>

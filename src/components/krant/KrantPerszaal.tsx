@@ -44,10 +44,15 @@ export default function KrantPerszaal({ etappe, laden }: { etappe: KaravaanEtapp
               </div>
             )}
             <figure className="m-0 flex flex-col gap-3">
-              <span aria-hidden className="h-7 font-display text-[64px] font-black leading-[0.5] text-primary">
+              {/* h-9 en niet h-7: het teken hangt onder zijn regel en stond
+                  anders over het eerste woord van het citaat. */}
+              <span aria-hidden className="h-9 font-display text-[64px] font-black leading-[0.5] text-primary">
                 „
               </span>
-              <blockquote className="m-0 font-display text-[21px] italic leading-[1.35] tracking-[-0.01em]">{c.tekst}</blockquote>
+              {/* De handoff zette het citaat in Playfair italic 21 px. Dat is een
+                  kopletter: mooi voor één zin, vermoeiend voor de alinea die
+                  het commentaar in het echt is. Vandaar de leesletter. */}
+              <blockquote className="m-0 font-serif text-[17px] italic leading-[1.55]">{c.tekst}</blockquote>
               <figcaption className="flex items-center gap-2.5">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-foreground font-display text-[12px] font-bold tracking-[0.04em] text-[hsl(var(--vintage-gold))]">
                   {monogram(c.naam)}

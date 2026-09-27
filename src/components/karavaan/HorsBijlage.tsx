@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import CijferTrui from "@/components/krant/CijferTrui";
+import type { HorsTrui } from "@/lib/wielertruien";
 
 /**
  * Hors Catégorie als bijlage bij de krant.
@@ -8,6 +10,10 @@ import { cn } from "@/lib/utils";
  * in een eigen getint vlak. Dat omhulsel doet het werk: één blok met een eigen
  * achtergrond zegt genoeg dat deze drie ergens anders horen, zonder dat er bij
  * elke tegel een pijltje of een label bij hoeft.
+ *
+ * Het cijfer staat op de borst van een wielertrui, dezelfde drie truien als op
+ * de mobiele Krant: wie op zijn telefoon de gele trui bij Monkey IQ kent,
+ * herkent hem hier.
  *
  * Bewuste werkverdeling met de standbalk erboven: daar staat je POSITIE (rang,
  * punten), hier staat de VERGELIJKING (tegen de apen, tegen je droomploeg,
@@ -21,8 +27,8 @@ export type BijlageTegel = {
   eenheid?: string;
   titel: string;
   haak: string;
-  /** Kleur van het cijfer, als CSS-kleur. */
-  kleur: string;
+  /** De trui die het cijfer draagt. */
+  trui: HorsTrui;
   onClick: () => void;
 };
 
@@ -57,28 +63,28 @@ export default function HorsBijlage({
             type="button"
             onClick={tegel.onClick}
             className={cn(
-              "min-h-[78px] rounded-[14px] bg-background p-2.5 text-left",
+              // Smal: trui boven de tekst. Vanaf md ernaast; eerder past de
+              // haak niet meer naast de trui.
+              "flex min-h-[78px] flex-col items-center gap-2 rounded-[14px] bg-background p-2.5 text-center",
+              "md:flex-row md:gap-3.5 md:px-3.5 md:text-left",
               "shadow-[0_0_0_1px_rgba(20,18,16,0.07),0_10px_22px_-16px_rgba(0,0,0,0.45)]",
               "transition-transform duration-150 hover:translate-y-[-2px] active:translate-y-px",
               "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
               "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
             )}
           >
-            {/* Geen nepnul als het cijfer er nog niet is: een streepje op
-                cijferhoogte houdt het raster staan en liegt niet. */}
-            {tegel.waarde === null ? (
-              <span aria-hidden className="mt-1.5 mb-[11px] block h-[3px] w-[26px] bg-foreground" />
-            ) : (
-              <span
-                className="block text-[24px] font-extrabold leading-none tracking-[-0.02em] tabular-nums"
-                style={{ color: tegel.kleur }}
-              >
-                {tegel.waarde.toLocaleString("nl-NL")}
-                {tegel.eenheid && <span className="ml-px text-[11px] font-bold">{tegel.eenheid}</span>}
-              </span>
-            )}
-            <span className="mt-1.5 block text-[13px] font-bold leading-tight">{tegel.titel}</span>
-            <span className="mt-0.5 block text-[10.5px] leading-snug text-muted-foreground">{tegel.haak}</span>
+            {/* Geen nepnul als het cijfer er nog niet is: de trui draagt dan
+                een streepje. */}
+            <CijferTrui
+              trui={tegel.trui}
+              waarde={tegel.waarde === null ? null : tegel.waarde.toLocaleString("nl-NL")}
+              eenheid={tegel.eenheid}
+              breedte={72}
+            />
+            <span className="min-w-0">
+              <span className="block text-[13px] font-bold leading-tight">{tegel.titel}</span>
+              <span className="mt-0.5 block text-[10.5px] leading-snug text-muted-foreground">{tegel.haak}</span>
+            </span>
           </button>
         ))}
       </div>

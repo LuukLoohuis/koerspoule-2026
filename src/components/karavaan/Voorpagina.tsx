@@ -39,6 +39,10 @@ export type Rubriek = {
   /** Emoji i.p.v. een lijnicoon: kleur maakt de rij in één oogopslag leesbaar. */
   emoji: string;
   titel: string;
+  /** Eén regel onder de titel: wat je achter de knop vindt. */
+  haak?: string;
+  /** Achtergrond van het emoji-rondje, als CSS-kleur. */
+  tint?: string;
   /**
    * Unieke stempel voor "nieuw sinds ...", meestal rubriek + etappenummer.
    * Zodra hierop geklikt is verdwijnt de stip, ook na herladen.
