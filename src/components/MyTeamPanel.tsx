@@ -25,6 +25,7 @@ import { useStages, useEntries, useGameStandings } from "@/hooks/useResults";
 import { useGekozenSubpoule } from "@/hooks/useGekozenSubpoule";
 import { dagrangVan } from "@/lib/rang";
 import { useRiderEntryTotals } from "@/hooks/useRiderEntryTotals";
+import { useRidersByIds } from "@/hooks/useRidersByIds";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -167,26 +168,9 @@ function useMyStagePoints(entryId?: string) {
   });
 }
 
-function useRiders(ids: string[]) {
-  const sorted = useMemo(() => [...new Set(ids)].sort(), [ids]);
-  return useQuery({
-    queryKey: ["riders-by-ids", sorted],
-    enabled: Boolean(supabase && sorted.length > 0),
-    queryFn: async () => {
-      if (!supabase || sorted.length === 0) return [];
-      const { data, error } = await supabase
-        .from("riders")
-        .select("id, name, team, country_code, start_number, is_dnf, is_vervallen")
-        .in("id", sorted);
-      if (error) throw error;
-      // is_vervallen staat (nog) niet in de gegenereerde types.
-      return (data ?? []) as unknown as Array<{
-        id: string; name: string; team: string | null; country_code: string | null;
-        start_number: number | null; is_dnf: boolean | null; is_vervallen: boolean | null;
-      }>;
-    },
-  });
-}
+// De renners op id komen uit de gedeelde hook (zelfde cache als Pronostiek
+// en Ploeg C op een telefoon).
+const useRiders = useRidersByIds;
 
 const STAGE_TYPE_ICON: Record<string, string> = {
   vlak: "🏁",

@@ -11,8 +11,11 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import BottomNav from "@/components/BottomNav";
+import SwipeCarousel from "@/components/SwipeCarousel";
+import { RetroTabs } from "@/components/RetroTabs";
 import KrantCWeergave from "@/components/krant/KrantCWeergave";
 import PloegCWeergave from "@/components/ploeg/PloegCWeergave";
+import PronostiekWeergave from "@/components/ploeg/PronostiekWeergave";
 import { KoersThemaProvider } from "@/contexts/KoersThemaContext";
 import type { KaravaanEtappe, KaravaanRanking } from "@/hooks/useKaravaanFeed";
 import type { PloegRenner, PloegRit } from "@/hooks/usePloegRanglijst";
@@ -83,6 +86,49 @@ function PloegDemo() {
       ploegPunten={PLOEGPUNTEN}
       officieelTotaal={1284}
     />
+  );
+}
+
+/** De Ploeg-tab zoals MijnPeloton hem op een telefoon opbouwt: subbalk + carrousel. */
+function PloegCarrouselDemo() {
+  const [sub, setSub] = useState("ploeg");
+  const tabs = [
+    { key: "ploeg", label: "Mijn ploeg" },
+    { key: "prono", label: "Pronostiek" },
+    { key: "palmares", label: "Palmares" },
+  ];
+  return (
+    <div data-demo="ploeg-carrousel">
+      <div className="mb-3 max-h-[120px] overflow-hidden transition-[max-height,opacity] duration-200 ease-out">
+        <RetroTabs variant="segment" gelijkeBreedte className="h-10" aria-label="Ploeg-onderdelen" active={sub} onChange={setSub} tabs={tabs} />
+      </div>
+      <SwipeCarousel
+        keys={tabs.map((t) => t.key)}
+        activeKey={sub}
+        onChange={setSub}
+        renderTab={(k) =>
+          k === "ploeg" ? (
+            <PloegDemo />
+          ) : k === "prono" ? (
+            <PronostiekWeergave
+              gameName="Giro d'Italia 2026"
+              predictions={[
+                { classification: "gc", position: 1, rider_id: "r1" },
+                { classification: "gc", position: 2, rider_id: "r4" },
+                { classification: "gc", position: 3, rider_id: "r10" },
+                { classification: "points", position: 1, rider_id: "r2" },
+                { classification: "kom", position: 1, rider_id: "r3" },
+                { classification: "youth", position: 1, rider_id: "r4" },
+              ]}
+              ridersById={Object.fromEntries(RENNERS.map((r) => [r.id, { name: r.naam, team: r.ploeg, is_dnf: r.opgave }]))}
+              dnfZichtbaar
+            />
+          ) : (
+            <div className="retro-border bg-card p-6 text-center font-display text-xl font-bold">{k}</div>
+          )
+        }
+      />
+    </div>
   );
 }
 
@@ -189,6 +235,7 @@ const SCHERMEN = [
   { key: "krant", titel: "Krant C", Demo: () => <KrantDemo /> },
   { key: "krant-leeg", titel: "Krant C · vóór de eerste uitslag", Demo: () => <KrantDemo leeg /> },
   { key: "ploeg", titel: "Ploeg C", Demo: PloegDemo },
+  { key: "ploeg-carrousel", titel: "Ploeg C · in de carrousel", Demo: PloegCarrouselDemo },
 ];
 
 /** Zet de thematokens zoals ThemaProvider dat doet, zonder database. */

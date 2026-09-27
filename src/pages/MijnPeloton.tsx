@@ -11,6 +11,7 @@ import SubpouleManager from "@/components/SubpouleManager";
 import WervingStrook from "@/components/WervingStrook";
 import MyTeamPanel from "@/components/MyTeamPanel";
 import PloegC from "@/components/ploeg/PloegC";
+import PronostiekPanel from "@/components/ploeg/PronostiekPanel";
 import { useIsMobileSync } from "@/hooks/use-mobile";
 import MyResultsPanel from "@/components/MyResultsPanel";
 import PalmaresPanel from "@/components/PalmaresPanel";
@@ -628,7 +629,13 @@ export default function MijnPeloton() {
                     {k === "live" && (
                       <MyTeamPanel section="live" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} gameType={selectedGameObj?.game_type} gameCategorie={selectedGameObj?.categorie} />
                     )}
-                    {k === "prono" && (
+                    {/* Op een telefoon het lichte paneel: als buur in de veegcarrousel
+                        mount MyTeamPanel anders koud met al zijn queries en de
+                        Hors-simulatie, en hapert de veeg. */}
+                    {k === "prono" && isMobiel && !isMeermarathonGekozen && (
+                      <PronostiekPanel gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} />
+                    )}
+                    {k === "prono" && !(isMobiel && !isMeermarathonGekozen) && (
                       <MyTeamPanel section="prono" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} gameType={selectedGameObj?.game_type} gameCategorie={selectedGameObj?.categorie} />
                     )}
                     {k === "palmares" && <PalmaresPanel />}

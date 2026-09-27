@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { useQueries, useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { useQueries } from "@tanstack/react-query";
 import { useEntry } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
 import { useStartlist } from "@/hooks/useStartlist";
+import { eigenRennerIds, useRidersByIds } from "@/hooks/useRidersByIds";
 import { useEntries, useStages, useStagePointsForEntries } from "@/hooks/useResults";
 import { riderStagePointsQuery, type RiderStagePointsRow } from "@/hooks/useRiderStagePoints";
 import type { EtappePunten } from "@/lib/ploegRanglijst";
@@ -33,7 +33,7 @@ export type PloegRit = { id: string; nummer: number; naam: string | null };
  * stage_points. Het scherm kiest zelf de rit; hier komt alleen de data.
  */
 export function usePloegRanglijst(gameId?: string) {
-  const { entry, picksByCategory, jokerIds, teamName, saveTeamName, isLoading: entryLaden } = useEntry(gameId);
+  const { entry, picksByCategory, jokerIds, predictions, teamName, saveTeamName, isLoading: entryLaden } = useEntry(gameId);
   const { data: categories = [], isLoading: categoriesLaden } = useCategories(gameId);
   const { data: startlist = [] } = useStartlist(gameId);
   const { data: stages = [] } = useStages(gameId);
@@ -55,20 +55,11 @@ export function usePloegRanglijst(gameId?: string) {
     return ids;
   }, [categories, picksByCategory, jokerIds]);
 
-  const rennersQ = useQuery({
-    queryKey: ["ploeg-renners", [...rennerIds].sort()],
-    enabled: Boolean(supabase && rennerIds.length > 0),
-    staleTime: 5 * 60 * 1000,
-    queryFn: async () => {
-      if (!supabase || rennerIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from("riders")
-        .select("id, name, team, team_id, is_dnf")
-        .in("id", rennerIds);
-      if (error) throw error;
-      return (data ?? []) as Array<{ id: string; name: string; team: string | null; team_id: string | null; is_dnf: boolean | null }>;
-    },
-  });
+  // Zelfde set en dus zelfde sleutel als Mijn ploeg en Pronostiek (ook de
+  // voorspelde renners erbij): de buur in de carrousel vindt de renners dan
+  // al in de cache en hoeft niets op te halen.
+  const alleIds = useMemo(() => eigenRennerIds({ picksByCategory, jokerIds, predictions }), [picksByCategory, jokerIds, predictions]);
+  const rennersQ = useRidersByIds(alleIds);
 
   // Eén kleine RPC per renner; dezelfde sleutel als useRiderStagePoints, zodat
   // een geopend dossier elders uit deze cache leest.
