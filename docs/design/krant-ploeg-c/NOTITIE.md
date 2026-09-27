@@ -36,8 +36,9 @@ Niet in de `.dc.html`-bestanden, wel in de app:
   tegelijk open. Het vak volgt de rit-kiezer: teruggespoeld toont het alleen de ritten tot en met die rit, zodat de
   som het totaal in de rij is. Het pijltje hangt onder het totaal en kost de naam geen breedte.
 - **Ploegkaart in het Tour-thema.** De trui is de gele trui zoals hij in het echt is
-  (`src/assets/wielertrui-maillot-jaune.webp`); het aantal renners staat onder de opdruk. De andere thema's houden de
-  blanco trui in `primary`.
+  (`src/assets/wielertrui-maillot-jaune.webp`). De andere thema's houden de blanco trui in `primary`.
+- **Ploegkaart zonder cijfer.** Het aantal renners op de borst (README, Ploeg C punt 2) is geschrapt: zonder
+  uitleg was niet duidelijk wat het getal betekende. Het aantal staat nog onder de ranglijst.
 
 ## Open punten
 - De onderschriften van de drie Hors-truien zijn voorbeeldtekst; zet er de echte uitleg uit `verdictConfig.ts`

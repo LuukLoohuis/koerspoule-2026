@@ -172,4 +172,10 @@ describe("PloegCWeergave", () => {
     const img = screen.getByRole("region", { name: "Jouw ploeg" }).querySelector("img");
     expect(img?.className).toContain("mix-blend-multiply");
   });
+
+  it.each(["geel", "roze"] as const)("zet geen cijfer op de trui van de ploegkaart (%s)", (thema) => {
+    toon({}, thema);
+    const trui = screen.getByRole("region", { name: "Jouw ploeg" }).querySelector("img")?.parentElement;
+    expect(trui?.textContent).toBe("");
+  });
 });

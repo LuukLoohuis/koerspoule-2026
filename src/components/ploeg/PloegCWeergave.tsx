@@ -4,7 +4,7 @@ import { Check, ChevronDown, Pencil, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import Wielertrui, { TruiBorst } from "@/components/retro/Wielertrui";
+import Wielertrui from "@/components/retro/Wielertrui";
 import RennerRitten from "@/components/ploeg/RennerRitten";
 import { useKoersThema } from "@/contexts/KoersThemaContext";
 import { markProgrammaticScroll } from "@/lib/scrollLock";
@@ -146,11 +146,7 @@ export default function PloegCWeergave({
     <div data-eigen-typografie className={cn("font-inter flex flex-col gap-4", className)}>
       {/* ── Ploegkaart ──────────────────────────────────────────────────── */}
       <section aria-label={t("ploegC.ploegAria")} className="retro-border bg-card flex items-center gap-3.5 px-3.5 py-3">
-        <Wielertrui breedte={56} hoogte={63} schaduw={1.5} src={kaartTrui?.src}>
-          <TruiBorst top={kaartTrui?.borst}>
-            <span className="font-display text-[13px] font-black text-primary-foreground">{rijen.length}</span>
-          </TruiBorst>
-        </Wielertrui>
+        <Wielertrui breedte={56} hoogte={63} schaduw={1.5} src={kaartTrui} />
 
         <div className="flex min-w-0 grow flex-col gap-1">
           {bewerkt ? (

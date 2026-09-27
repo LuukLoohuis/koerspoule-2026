@@ -15,14 +15,13 @@ export const BLANCO_TRUI = truiWit;
 /**
  * De trui op de ploegkaart van Ploeg C: de leiderstrui zoals hij in het echt
  * is, met opdruk en al. Alleen de Tour heeft er een; bij de andere thema's
- * kleurt Wielertrui de blanco trui in met `primary`. `borst` is de plek van
- * het aantal renners, als aandeel van de hoogte: onder de opdruk.
+ * kleurt Wielertrui de blanco trui in met `primary`.
  */
-const PLOEGKAART: Partial<Record<ThemaKey, { src: string; borst: number }>> = {
-  geel: { src: maillotJaune, borst: 0.56 },
+const PLOEGKAART: Partial<Record<ThemaKey, string>> = {
+  geel: maillotJaune,
 };
 
-export function ploegkaartTrui(thema: ThemaKey): { src: string; borst: number } | null {
+export function ploegkaartTrui(thema: ThemaKey): string | null {
   return PLOEGKAART[thema] ?? null;
 }
 
