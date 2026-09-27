@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { ploegDagpunten, ploegTotaalTotRit, sorteerRenners, telPunten, topscorerId } from "@/lib/ploegRanglijst";
+import {
+  ploegDagpunten,
+  ploegTotaalTotRit,
+  rittenVanRenner,
+  sorteerRenners,
+  telPunten,
+  topscorerId,
+} from "@/lib/ploegRanglijst";
 
 const etappes = [
   { stage_number: 1, total_points: 10 },
@@ -18,6 +25,46 @@ describe("telPunten", () => {
     expect(telPunten(etappes, null)).toEqual({ dag: 0, totaal: 0 });
     expect(telPunten(etappes, 2)).toEqual({ dag: 0, totaal: 10 });
     expect(telPunten([], 3)).toEqual({ dag: 0, totaal: 0 });
+  });
+});
+
+describe("rittenVanRenner", () => {
+  const ritten = [
+    { nummer: 1, naam: "Alba › Napels" },
+    { nummer: 2, naam: null },
+    { nummer: 3, naam: "Treviso › Pila" },
+    { nummer: 4, naam: "Rome" },
+  ];
+
+  it("zet elke rit tot en met de gekozen rit op een rij, ook die zonder punten", () => {
+    const rij = rittenVanRenner(etappes, ritten, 3);
+    expect(rij.map((r) => [r.nummer, r.punten])).toEqual([
+      [1, 10],
+      [2, 0],
+      [3, 14],
+    ]);
+    // Dezelfde grens als telPunten: de som is het totaal in de rij.
+    expect(rij.reduce((som, r) => som + r.punten, 0)).toBe(telPunten(etappes, 3).totaal);
+  });
+
+  it("neemt naam, soort rit, plaats en joker over van de uitslag", () => {
+    const rij = rittenVanRenner(
+      [{ stage_number: 3, total_points: 40, stage_name: "Pila", stage_type: "bergop", finish_position: 2, multiplier: 2 }],
+      ritten,
+      4,
+    );
+    expect(rij[2]).toEqual({ nummer: 3, naam: "Pila", type: "bergop", plaats: 2, multiplier: 2, punten: 40 });
+    // Zonder eigen regel: de naam van de rit, nul punten.
+    expect(rij[0]).toEqual({ nummer: 1, naam: "Alba › Napels", type: null, plaats: null, multiplier: 1, punten: 0 });
+  });
+
+  it("houdt een rit die alleen in de uitslag staat, en sorteert oplopend", () => {
+    const rij = rittenVanRenner([{ stage_number: 2, total_points: 6 }, { stage_number: 1, total_points: 4 }], [], 2);
+    expect(rij.map((r) => r.nummer)).toEqual([1, 2]);
+  });
+
+  it("geeft niets zonder gekozen rit", () => {
+    expect(rittenVanRenner(etappes, ritten, null)).toEqual([]);
   });
 });
 

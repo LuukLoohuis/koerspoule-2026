@@ -1,15 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, Pencil, X } from "lucide-react";
+import { Check, ChevronDown, Pencil, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Wielertrui, { TruiBorst } from "@/components/retro/Wielertrui";
-import { BLANCO_TRUI } from "@/lib/wielertruien";
+import RennerRitten from "@/components/ploeg/RennerRitten";
+import { useKoersThema } from "@/contexts/KoersThemaContext";
+import { markProgrammaticScroll } from "@/lib/scrollLock";
+import { BLANCO_TRUI, ploegkaartTrui } from "@/lib/wielertruien";
 import type { PloegRenner, PloegRit } from "@/hooks/usePloegRanglijst";
 import {
   ploegDagpunten,
   ploegTotaalTotRit,
+  rittenVanRenner,
   sorteerRenners,
   telPunten,
   topscorerId,
@@ -18,6 +22,25 @@ import {
 
 /** JetBrains Mono, zoals de eyebrows en stempels elders op de site. */
 const MONO = "font-['JetBrains_Mono',monospace]";
+
+/** Ruimte die de kop en de onderbalk van het scherm afhalen, in px. */
+const KOP_PX = 72;
+const ONDERBALK_PX = 92;
+
+/**
+ * Schuift een opengeklapte rij in beeld als het vak onder de rand valt, maar
+ * nooit verder dan dat de rij zelf bovenaan blijft staan.
+ */
+function schuifInBeeld(rij: HTMLElement) {
+  const vak = rij.getBoundingClientRect();
+  const teLaag = vak.bottom - (window.innerHeight - ONDERBALK_PX);
+  const omhoog = Math.min(teLaag, vak.top - KOP_PX);
+  if (omhoog <= 0) return;
+  const rustig = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  // Onze eigen scroll: de tabbalk en de carrousel tellen hem niet als veeg.
+  markProgrammaticScroll(600);
+  window.scrollBy({ top: omhoog, behavior: rustig ? "auto" : "smooth" });
+}
 
 export type PloegCWeergaveProps = {
   ploegnaam: string | null;
@@ -41,7 +64,8 @@ export type PloegCWeergaveProps = {
  * docs/design/krant-ploeg-c. Eén ranglijst van je eigen renners in plaats
  * van de cockpit met meters en wijzers. Bovenaan de ploegkaart met het totaal
  * en de dagpunten, daaronder de rit-kiezer en de schakelaar Punten/Vandaag,
- * dan de rijen. Alles wat over de poule gaat staat op de Krant, niet hier.
+ * dan de rijen. Een rij klapt open met de ritten waarin die renner scoorde.
+ * Alles wat over de poule gaat staat op de Krant, niet hier.
  *
  * Geen datahaken: de container (PloegC) haalt de data, de testbank geeft
  * nepdata.
@@ -74,6 +98,17 @@ export default function PloegCWeergave({
   );
   const top = useMemo(() => topscorerId(rijen), [rijen]);
   const opgaves = rijen.filter((r) => r.opgave).length;
+
+  // ── Uitklapvak: één renner tegelijk open ──────────────────────────────────
+  const vakId = useId();
+  const [openRenner, setOpenRenner] = useState<string | null>(null);
+  const openRij = useRef<HTMLLIElement | null>(null);
+  useEffect(() => {
+    if (openRenner && openRij.current) schuifInBeeld(openRij.current);
+  }, [openRenner]);
+
+  const thema = useKoersThema();
+  const kaartTrui = ploegkaartTrui(thema.key);
 
   const ritNummerVan = useMemo(() => new Map(ritten.map((r) => [r.id, r.nummer])), [ritten]);
   const dagPloeg = ploegDagpunten(ploegPunten, rit?.id ?? null);
@@ -111,8 +146,8 @@ export default function PloegCWeergave({
     <div data-eigen-typografie className={cn("font-inter flex flex-col gap-4", className)}>
       {/* ── Ploegkaart ──────────────────────────────────────────────────── */}
       <section aria-label={t("ploegC.ploegAria")} className="retro-border bg-card flex items-center gap-3.5 px-3.5 py-3">
-        <Wielertrui breedte={56} hoogte={63} schaduw={1.5}>
-          <TruiBorst>
+        <Wielertrui breedte={56} hoogte={63} schaduw={1.5} src={kaartTrui?.src}>
+          <TruiBorst top={kaartTrui?.borst}>
             <span className="font-display text-[13px] font-black text-primary-foreground">{rijen.length}</span>
           </TruiBorst>
         </Wielertrui>
@@ -258,75 +293,104 @@ export default function PloegCWeergave({
         <ol className="flex select-none flex-col [-webkit-touch-callout:none]">
           {rijen.map((r, i) => {
             const isTop = r.id === top;
+            const open = r.id === openRenner;
             return (
               <li
                 key={r.id}
+                ref={open ? openRij : undefined}
                 className={cn(
-                  "flex min-h-[54px] items-center gap-2 border-b border-border py-1.5",
+                  "border-b border-border",
                   isTop && "-mx-2 rounded-md border-b-transparent bg-primary/10 px-2",
                 )}
               >
-                <span className="w-[22px] shrink-0 font-display text-[13px] font-bold tabular-nums text-muted-foreground">
-                  {i + 1}
-                </span>
+                {/* De hele rij is de knop: tik klapt de ritten van de renner open. */}
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  aria-controls={open ? `${vakId}-${r.id}` : undefined}
+                  onClick={() => setOpenRenner(open ? null : r.id)}
+                  className="flex min-h-[54px] w-full items-center gap-2 rounded-md py-1.5 text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span className="w-[22px] shrink-0 font-display text-[13px] font-bold tabular-nums text-muted-foreground">
+                    {i + 1}
+                  </span>
 
-                <Wielertrui
-                  src={r.truiUrl ?? BLANCO_TRUI}
-                  alt={r.ploeg ?? ""}
-                  breedte={30}
-                  hoogte={34}
-                  className={cn(r.opgave && "opacity-45")}
-                />
+                  <Wielertrui
+                    src={r.truiUrl ?? BLANCO_TRUI}
+                    alt={r.ploeg ?? ""}
+                    breedte={30}
+                    hoogte={34}
+                    className={cn(r.opgave && "opacity-45")}
+                  />
 
-                <span className="flex min-w-0 grow flex-col gap-px">
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className={cn(
-                        "min-w-0 truncate text-[14px] leading-tight",
-                        r.opgave ? "font-medium text-muted-foreground line-through decoration-[1.5px]" : "font-bold",
-                      )}
-                    >
-                      {r.naam}
-                    </span>
-                    {r.joker && r.multiplier > 1 && (
+                  <span className="flex min-w-0 grow flex-col gap-px">
+                    <span className="flex items-center gap-1.5">
                       <span
-                        className={cn(MONO, "shrink-0 rounded-[3px] bg-foreground/8 px-1 text-[9px] font-bold text-muted-foreground")}
-                        aria-label={t("ploegC.jokerAria", { multiplier: r.multiplier })}
+                        className={cn(
+                          "min-w-0 truncate text-[14px] leading-tight",
+                          r.opgave ? "font-medium text-muted-foreground line-through decoration-[1.5px]" : "font-bold",
+                        )}
                       >
-                        ×{r.multiplier}
+                        {r.naam}
                       </span>
-                    )}
-                    {isTop && (
-                      <span className="sticker shrink-0 px-1 py-0 text-[9.5px] leading-4">{t("ploegC.top")}</span>
-                    )}
-                    {r.opgave && (
-                      <span className="shrink-0 rounded-[3px] border-[1.5px] border-muted-foreground px-[5px] font-stamp text-[9px] uppercase tracking-[0.06em] text-muted-foreground">
-                        {t("ploegC.opgave")}
-                      </span>
-                    )}
+                      {r.joker && r.multiplier > 1 && (
+                        <span
+                          className={cn(MONO, "shrink-0 rounded-[3px] bg-foreground/8 px-1 text-[9px] font-bold text-muted-foreground")}
+                          aria-label={t("ploegC.jokerAria", { multiplier: r.multiplier })}
+                        >
+                          ×{r.multiplier}
+                        </span>
+                      )}
+                      {isTop && (
+                        <span className="sticker shrink-0 px-1 py-0 text-[9.5px] leading-4">{t("ploegC.top")}</span>
+                      )}
+                      {r.opgave && (
+                        <span className="shrink-0 rounded-[3px] border-[1.5px] border-muted-foreground px-[5px] font-stamp text-[9px] uppercase tracking-[0.06em] text-muted-foreground">
+                          {t("ploegC.opgave")}
+                        </span>
+                      )}
+                    </span>
+                    <span className="truncate text-[11px] text-muted-foreground">
+                      {[r.categorie === "Joker" ? t("ploegC.joker") : r.categorie, r.ploeg].filter(Boolean).join(" · ")}
+                    </span>
                   </span>
-                  <span className="truncate text-[11px] text-muted-foreground">
-                    {[r.categorie === "Joker" ? t("ploegC.joker") : r.categorie, r.ploeg].filter(Boolean).join(" · ")}
-                  </span>
-                </span>
 
-                <span
-                  className={cn(
-                    MONO,
-                    "w-[42px] shrink-0 text-right text-[13px] tabular-nums",
-                    r.dag > 0 ? "font-bold text-[var(--vintage-green)]" : "text-muted-foreground",
-                  )}
-                >
-                  {r.dag > 0 ? `+${fmt(r.dag)}` : "–"}
-                </span>
-                <span
-                  className={cn(
-                    "w-[48px] shrink-0 text-right font-display text-[18px] font-black leading-none tabular-nums",
-                    r.opgave && "text-muted-foreground",
-                  )}
-                >
-                  {fmt(r.totaal)}
-                </span>
+                  <span
+                    className={cn(
+                      MONO,
+                      "w-[42px] shrink-0 text-right text-[13px] tabular-nums",
+                      r.dag > 0 ? "font-bold text-[var(--vintage-green)]" : "text-muted-foreground",
+                    )}
+                  >
+                    {r.dag > 0 ? `+${fmt(r.dag)}` : "–"}
+                  </span>
+                  {/* Het pijltje hangt onder het totaal: zo kost het de naam geen breedte. */}
+                  <span
+                    className={cn(
+                      "relative w-[48px] shrink-0 text-right font-display text-[18px] font-black leading-none tabular-nums",
+                      r.opgave && "text-muted-foreground",
+                    )}
+                  >
+                    {fmt(r.totaal)}
+                    <ChevronDown
+                      aria-hidden
+                      strokeWidth={2.25}
+                      className={cn(
+                        "absolute right-0 top-full mt-0.5 h-3 w-3 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none",
+                        open && "rotate-180",
+                      )}
+                    />
+                  </span>
+                </button>
+
+                {open && (
+                  <RennerRitten
+                    id={`${vakId}-${r.id}`}
+                    naam={r.naam}
+                    ritten={rittenVanRenner(r.etappes, ritten, ritN)}
+                    gekozenRit={ritN}
+                  />
+                )}
               </li>
             );
           })}

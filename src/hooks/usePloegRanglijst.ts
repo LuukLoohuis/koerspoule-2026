@@ -110,7 +110,14 @@ export function usePloegRanglijst(gameId?: string) {
         opgave: Boolean(r.is_dnf),
         joker: jokers.has(id),
         multiplier,
-        etappes: rijen.map((p) => ({ stage_number: p.stage_number, total_points: p.total_points ?? 0 })),
+        etappes: rijen.map((p) => ({
+          stage_number: p.stage_number,
+          total_points: p.total_points ?? 0,
+          stage_name: p.stage_name,
+          stage_type: p.stage_type,
+          finish_position: p.finish_position,
+          multiplier: p.multiplier,
+        })),
       }];
     });
   }, [rennersQ.data, startlist, categories, picksByCategory, jokerIds, rennerIds, puntenQs]);

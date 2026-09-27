@@ -27,7 +27,31 @@ import "./index.css";
 
 // ── Ploeg C ─────────────────────────────────────────────────────────────────
 
-const RITTEN: PloegRit[] = Array.from({ length: 14 }, (_, i) => ({ id: `s${i + 1}`, nummer: i + 1, naam: null }));
+const RITNAMEN: Array<[naam: string, soort: string]> = [
+  ["Durrës › Tirana", "heuvelachtig"],
+  ["Tirana › Tirana", "tijdrit"],
+  ["Vlorë › Vlorë", "heuvelachtig"],
+  ["Alberobello › Lecce", "vlak"],
+  ["Ceglie Messapica › Matera", "heuvelachtig"],
+  ["Potenza › Napels", "vlak"],
+  ["Castel di Sangro › Tagliacozzo", "bergop"],
+  ["Giulianova › Castelraimondo", "heuvelachtig"],
+  ["Gubbio › Siena", "heuvelachtig"],
+  ["Lucca › Pisa", "tijdrit"],
+  ["Viareggio › Castelnovo ne' Monti", "bergop"],
+  ["Modena › Viadana", "vlak"],
+  ["Rovigo › Vicenza", "heuvelachtig"],
+  ["Treviso › Pila", "bergop"],
+];
+
+const RITTEN: PloegRit[] = RITNAMEN.map(([naam], i) => ({ id: `s${i + 1}`, nummer: i + 1, naam }));
+
+/** Het puntenschema van een rit, plaats 1 t/m 20. */
+const SCHEMA = [50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+
+/** De plaats waarvan de punten het dichtst bij `punten` liggen, zonder eroverheen te gaan. */
+const plaatsVoor = (punten: number, vanaf = 0) =>
+  1 + SCHEMA.findIndex((p, i) => (i >= vanaf && p <= punten) || i === SCHEMA.length - 1);
 
 function renner(
   id: string,
@@ -38,8 +62,23 @@ function renner(
   dag: number,
   extra: Partial<PloegRenner> = {},
 ): PloegRenner {
-  // Rit 14 = de dagpunten, rit 1 = de rest; zo kloppen dag en totaal met het ontwerp.
+  // Rit 14 = de dagpunten; de rest in plaatsen uit het puntenschema over de
+  // eerdere ritten, per renner andere. Dag en totaal kloppen zo met het
+  // ontwerp, en het uitklapvak heeft iets te tonen.
   const mult = extra.multiplier ?? 1;
+  const n = Number(id.slice(1));
+  const perRit = new Map<number, { plaats: number; punten: number }>();
+  let rest = Math.floor((totaal - dag) / mult);
+  for (let k = 0; rest > 0 && k < 13; k++) {
+    const plaats = plaatsVoor(rest, (n % 2) + k);
+    perRit.set(1 + ((n * 5 + k * 3) % 13), { plaats, punten: SCHEMA[plaats - 1] * mult });
+    rest -= SCHEMA[plaats - 1];
+  }
+  // Wat niet in het schema past (een oneven totaal met joker) komt bij de eerste rit.
+  const over = totaal - dag - [...perRit.values()].reduce((som, r) => som + r.punten, 0);
+  const eerste = perRit.values().next().value;
+  if (eerste) eerste.punten += over;
+  if (dag > 0) perRit.set(14, { plaats: plaatsVoor(dag / mult), punten: dag });
   return {
     id,
     naam,
@@ -51,7 +90,11 @@ function renner(
     multiplier: mult,
     etappes: RITTEN.map((r) => ({
       stage_number: r.nummer,
-      total_points: r.nummer === 14 ? dag : r.nummer === 1 ? totaal - dag : 0,
+      total_points: perRit.get(r.nummer)?.punten ?? 0,
+      stage_name: r.naam,
+      stage_type: RITNAMEN[r.nummer - 1][1],
+      finish_position: perRit.get(r.nummer)?.plaats ?? null,
+      multiplier: mult,
     })),
     ...extra,
   };
@@ -70,7 +113,11 @@ const RENNERS: PloegRenner[] = [
   renner("r10", "Juan Ayuso", "Joker", "UAE Team Emirates", 41, 0, { opgave: true, joker: true, multiplier: 2 }),
 ];
 
-const PLOEGPUNTEN = RITTEN.map((r) => ({ stage_id: r.id, points: r.nummer === 14 ? 48 : r.nummer === 1 ? 1236 : 0 }));
+// De ploeg is de som van haar renners: 1.284 in totaal, 48 in rit 14.
+const PLOEGPUNTEN = RITTEN.map((r) => ({
+  stage_id: r.id,
+  points: RENNERS.reduce((som, x) => som + (x.etappes.find((e) => e.stage_number === r.nummer)?.total_points ?? 0), 0),
+}));
 
 function PloegDemo() {
   const [naam, setNaam] = useState<string | null>("De Waaierwerkers");

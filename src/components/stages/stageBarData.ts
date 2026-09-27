@@ -37,6 +37,14 @@ export function mapDbTypeToStage(t: string | null | undefined): StageBarType {
   }
 }
 
+/** Kleur per soort rit, dezelfde als de badges van de etappe-bar. */
+export const STAGE_TYPE_COLOR: Record<StageBarType, string> = {
+  flat: "#2E6A4F",
+  hilly: "#C2691C",
+  mountain: "#C0395B",
+  timetrial: "#2E5E8C",
+};
+
 /** Bouwt StageBar-props uit onze DB-stages + points-map.
  *  `totalPointsOverride` (meestal myEntry.total_points uit
  *  game_entries_standings) is de authoritative totale punten incl.

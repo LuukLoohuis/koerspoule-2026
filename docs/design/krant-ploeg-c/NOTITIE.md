@@ -29,6 +29,16 @@ de tabs per tijd (Vandaag, Morgen, Perszaal) de voorpagina kort houden zonder in
 en omdat de ranglijst op de Ploeg de vraag beantwoordt die spelers het vaakst hebben: wie scoort, en wie
 deed vandaag iets.
 
+## Aanvullingen na de bouw (27 september 2026)
+Niet in de `.dc.html`-bestanden, wel in de app:
+- **Ploeg C, punten per rit.** Een rij in de ranglijst is een knop; tik klapt onder de renner een vak open met een
+  balkje per rit en de ritten waarin hij scoorde (soort rit, naam, plaats in de uitslag, joker, punten). Eén renner
+  tegelijk open. Het vak volgt de rit-kiezer: teruggespoeld toont het alleen de ritten tot en met die rit, zodat de
+  som het totaal in de rij is. Het pijltje hangt onder het totaal en kost de naam geen breedte.
+- **Ploegkaart in het Tour-thema.** De trui is de gele trui zoals hij in het echt is
+  (`src/assets/wielertrui-maillot-jaune.webp`); het aantal renners staat onder de opdruk. De andere thema's houden de
+  blanco trui in `primary`.
+
 ## Open punten
 - De onderschriften van de drie Hors-truien zijn voorbeeldtekst; zet er de echte uitleg uit `verdictConfig.ts`
   en de Emirates-memo onder.

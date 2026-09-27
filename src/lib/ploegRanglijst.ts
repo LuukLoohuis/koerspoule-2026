@@ -6,11 +6,74 @@
  * dagpunten (die ene rit) en het totaal (alles tot en met die rit). De
  * sortering "Punten" zet het totaal voorop, "Vandaag" wie in de gekozen rit
  * scoorde.
+ *
+ * Tik je een renner aan, dan klapt zijn rij open met de ritten waarin hij
+ * scoorde; rittenVanRenner zet die op een rij.
  */
 
-export type EtappePunten = { stage_number: number; total_points: number };
+export type EtappePunten = {
+  stage_number: number;
+  total_points: number;
+  /** De rest is voor het uitklapvak; de ranglijst zelf rekent zonder. */
+  stage_name?: string | null;
+  stage_type?: string | null;
+  /** Plaats in de rituitslag waar de punten vandaan komen (1 t/m 20). */
+  finish_position?: number | null;
+  /** Joker-multiplier zoals de RPC hem toepaste; 1 zonder joker. */
+  multiplier?: number | null;
+};
 
 export type Sortering = "punten" | "vandaag";
+
+/** Eén rit van één renner, zoals het uitklapvak hem toont. */
+export type RitScore = {
+  nummer: number;
+  naam: string | null;
+  /** stage_type uit de database (vlak, heuvelachtig, bergop, tijdrit). */
+  type: string | null;
+  plaats: number | null;
+  multiplier: number;
+  punten: number;
+};
+
+/**
+ * De ritten van één renner tot en met `totRit`, oplopend. Elke goedgekeurde
+ * rit staat erin, ook die zonder punten: het balkje laat zo zien wáár in de
+ * koers hij scoorde. Dezelfde grens als telPunten, dus de som is het totaal
+ * in de rij.
+ */
+export function rittenVanRenner(
+  etappes: readonly EtappePunten[],
+  ritten: ReadonlyArray<{ nummer: number; naam: string | null }>,
+  totRit: number | null,
+): RitScore[] {
+  if (totRit == null) return [];
+  const perRit = new Map<number, RitScore>();
+  for (const r of ritten) {
+    if (r.nummer > totRit) continue;
+    perRit.set(r.nummer, { nummer: r.nummer, naam: r.naam, type: null, plaats: null, multiplier: 1, punten: 0 });
+  }
+  for (const e of etappes) {
+    if (e.stage_number > totRit) continue;
+    const rit = perRit.get(e.stage_number) ?? {
+      nummer: e.stage_number,
+      naam: null,
+      type: null,
+      plaats: null,
+      multiplier: 1,
+      punten: 0,
+    };
+    perRit.set(e.stage_number, {
+      nummer: rit.nummer,
+      naam: e.stage_name?.trim() || rit.naam,
+      type: e.stage_type ?? rit.type,
+      plaats: e.finish_position ?? rit.plaats,
+      multiplier: Math.max(rit.multiplier, e.multiplier ?? 1),
+      punten: rit.punten + (e.total_points ?? 0),
+    });
+  }
+  return [...perRit.values()].sort((a, b) => a.nummer - b.nummer);
+}
 
 /** Dagpunten van rit `totRit` en het totaal tot en met die rit. */
 export function telPunten(etappes: EtappePunten[], totRit: number | null): { dag: number; totaal: number } {

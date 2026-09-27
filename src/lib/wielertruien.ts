@@ -7,9 +7,24 @@ import truiGeel from "@/assets/wielertrui-geel.webp";
 import truiGroen from "@/assets/wielertrui-groen.webp";
 import truiBolletjesRood from "@/assets/wielertrui-bolletjes-rood.webp";
 import truiBolletjesBlauw from "@/assets/wielertrui-bolletjes-blauw.webp";
+import maillotJaune from "@/assets/wielertrui-maillot-jaune.webp";
 
 /** De blanco trui: de witte tekening, ook de terugval voor een ploeg zonder trui. */
 export const BLANCO_TRUI = truiWit;
+
+/**
+ * De trui op de ploegkaart van Ploeg C: de leiderstrui zoals hij in het echt
+ * is, met opdruk en al. Alleen de Tour heeft er een; bij de andere thema's
+ * kleurt Wielertrui de blanco trui in met `primary`. `borst` is de plek van
+ * het aantal renners, als aandeel van de hoogte: onder de opdruk.
+ */
+const PLOEGKAART: Partial<Record<ThemaKey, { src: string; borst: number }>> = {
+  geel: { src: maillotJaune, borst: 0.56 },
+};
+
+export function ploegkaartTrui(thema: ThemaKey): { src: string; borst: number } | null {
+  return PLOEGKAART[thema] ?? null;
+}
 
 /**
  * Wit is overal wit. Staat een trui er niet bij (roze, azzurra, rood), dan
