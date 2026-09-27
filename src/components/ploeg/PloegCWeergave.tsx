@@ -255,7 +255,7 @@ export default function PloegCWeergave({
           <span className="w-[48px] text-right">{t("ploegC.kolomTotaal")}</span>
         </div>
 
-        <ol className="flex flex-col">
+        <ol className="flex select-none flex-col [-webkit-touch-callout:none]">
           {rijen.map((r, i) => {
             const isTop = r.id === top;
             return (

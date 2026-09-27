@@ -3,6 +3,13 @@ import { cn } from "@/lib/utils";
 import wielershirt from "@/assets/wielershirt.png";
 
 /**
+ * De trui is versiering: geen sleep-voorbeeld of callout bij een lange
+ * aanraking. Op iOS begint een aanraking op een afbeelding anders een sleep
+ * van die afbeelding, en dan breekt de browser de veeg in de carrousel af.
+ */
+const NIET_SLEPEN = { WebkitUserDrag: "none", WebkitTouchCallout: "none" } as CSSProperties;
+
+/**
  * De wielertrui van de handoff Krant C / Ploeg C.
  *
  * Twee gedaanten. Met `src` is het de echte ploegtrui uit de startlijst
@@ -45,7 +52,14 @@ export default function Wielertrui({
   if (src) {
     return (
       <span className={cn("relative block shrink-0", className)} style={{ ...maat, filter }}>
-        <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-contain" loading="lazy" />
+        <img
+          src={src}
+          alt={alt}
+          className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain"
+          style={NIET_SLEPEN}
+          loading="lazy"
+          draggable={false}
+        />
         {children}
       </span>
     );
@@ -79,7 +93,8 @@ export default function Wielertrui({
         src={wielershirt}
         alt=""
         aria-hidden
-        className="absolute inset-0 h-full w-full object-contain mix-blend-multiply"
+        className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain mix-blend-multiply"
+        style={NIET_SLEPEN}
         draggable={false}
       />
       {children}

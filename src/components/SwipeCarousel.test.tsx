@@ -95,6 +95,35 @@ describe("SwipeCarousel", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it("bevestigt een volwaardige veeg ook als de browser de aanraking afbreekt", () => {
+    // iOS breekt de aanraking af (touchcancel) zodra de pagina zelf gaat
+    // scrollen of een afbeelding gesleept wordt; midden in een lange lijst
+    // gebeurt dat vaak. De veeg was tot dan toe horizontaal en ver genoeg:
+    // dan hoort de buur te komen, niet het terugveren.
+    const onChange = vi.fn();
+    toonBenchmark(onChange);
+    const doel = screen.getByTestId("paneel");
+    const punt = (x: number, y: number) => [{ clientX: x, clientY: y }];
+    fireEvent.touchStart(doel, { touches: punt(40, 200), targetTouches: punt(40, 200) });
+    fireEvent.touchMove(doel, { touches: punt(100, 203) });
+    fireEvent.touchMove(doel, { touches: punt(160, 206) });
+    fireEvent.touchCancel(doel);
+
+    expect(onChange).toHaveBeenCalledWith("superteam");
+  });
+
+  it("veert terug als de aanraking vroeg wordt afgebroken", () => {
+    const onChange = vi.fn();
+    toonBenchmark(onChange);
+    const doel = screen.getByTestId("paneel");
+    const punt = (x: number, y: number) => [{ clientX: x, clientY: y }];
+    fireEvent.touchStart(doel, { touches: punt(40, 200), targetTouches: punt(40, 200) });
+    fireEvent.touchMove(doel, { touches: punt(60, 201) });
+    fireEvent.touchCancel(doel);
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it("negeert een veeg die te kort is om bedoeld te zijn", () => {
     const onChange = vi.fn();
     toonBenchmark(onChange);

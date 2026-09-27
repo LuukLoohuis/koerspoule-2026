@@ -79,6 +79,13 @@ export default function SwipeCarousel({
     width: 1,
     dir: 0 as 0 | 1 | -1,
     reduce: false,
+    // Laatste twee vingerstanden: voor een afgebroken aanraking (touchcancel)
+    // en voor de snelheid van de laatste beweging (de flick aan het eind).
+    lastDx: 0,
+    lastDy: 0,
+    lastT: 0,
+    prevDx: 0,
+    prevT: 0,
   });
 
   // Props in refs zodat de native (non-passive) listeners altijd de verse waarde zien.
@@ -147,6 +154,11 @@ export default function SwipeCarousel({
       s.startT = performance.now();
       s.axis = "none";
       s.dir = 0;
+      s.lastDx = 0;
+      s.lastDy = 0;
+      s.lastT = s.startT;
+      s.prevDx = 0;
+      s.prevT = s.startT;
       // Negeer: gebaar begint in een uitgesloten interactief paneel, een
       // horizontale scroller (etappe-bar), OF vlak na verticale scroll/momentum.
       s.ignore =
@@ -164,6 +176,11 @@ export default function SwipeCarousel({
       const t = e.touches[0];
       const dx = t.clientX - s.startX;
       const dy = t.clientY - s.startY;
+      s.prevDx = s.lastDx;
+      s.prevT = s.lastT;
+      s.lastDx = dx;
+      s.lastDy = dy;
+      s.lastT = performance.now();
 
       if (s.axis === "none") {
         const adx = Math.abs(dx);
@@ -225,19 +242,19 @@ export default function SwipeCarousel({
       }, SNAP_MS);
     };
 
-    const onEnd = (e: TouchEvent) => {
+    /** Snelheid van de laatste beweging (px/ms): vangt een flick aan het
+     *  eind van een verder rustige sleep, die het gemiddelde over de hele
+     *  veeg niet ziet. */
+    const recenteSnelheid = () => {
       const s = st.current;
-      const lockedDir = s.dir;
-      const wasH = s.axis === "h";
-      const ignore = s.ignore;
-      reset();
-      if (ignore || !wasH) return;
+      const dt = s.lastT - s.prevT;
+      return dt > 0 ? Math.abs(s.lastDx - s.prevDx) / dt : 0;
+    };
 
-      const t = e.changedTouches[0];
-      const dx = t.clientX - s.startX;
-      const dy = t.clientY - s.startY;
-      const dt = Math.max(1, performance.now() - s.startT);
-      const vel = Math.abs(dx) / dt;
+    /** Loslaten óf afgebroken: naar de buur als de veeg ver of snel genoeg
+     *  was in de vergrendelde richting, anders terugveren. */
+    const rondAf = (dx: number, dy: number, vel: number, lockedDir: 0 | 1 | -1) => {
+      const s = st.current;
 
       if (s.reduce) {
         if (Math.abs(dx) >= RM_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
@@ -260,9 +277,35 @@ export default function SwipeCarousel({
       else settleBack();
     };
 
-    const onCancel = () => {
-      if (st.current.axis === "h" && !st.current.reduce) settleBack();
+    const onEnd = (e: TouchEvent) => {
+      const s = st.current;
+      const lockedDir = s.dir;
+      const wasH = s.axis === "h";
+      const ignore = s.ignore;
       reset();
+      if (ignore || !wasH) return;
+
+      const t = e.changedTouches[0];
+      const dx = t ? t.clientX - s.startX : s.lastDx;
+      const dy = t ? t.clientY - s.startY : s.lastDy;
+      const dt = Math.max(1, performance.now() - s.startT);
+      rondAf(dx, dy, Math.max(Math.abs(dx) / dt, recenteSnelheid()), lockedDir);
+    };
+
+    // De browser breekt de aanraking af (touchcancel) als hij hem zelf
+    // overneemt: iOS zodra de pagina verticaal gaat scrollen of een sleep van
+    // een afbeelding begint, Android bij een systeemgebaar. Dat gebeurt vooral
+    // midden in een lange lijst. Eerder veerde de carrousel dan altijd terug,
+    // ook na een volwaardige veeg: "schuift mee, springt terug". Nu beslist
+    // hij op de laatste vingerstand, net als bij loslaten.
+    const onCancel = () => {
+      const s = st.current;
+      const lockedDir = s.dir;
+      const wasH = s.axis === "h";
+      const ignore = s.ignore;
+      reset();
+      if (ignore || !wasH) return;
+      rondAf(s.lastDx, s.lastDy, recenteSnelheid(), lockedDir);
     };
 
     vp.addEventListener("touchstart", onStart, { passive: true });
