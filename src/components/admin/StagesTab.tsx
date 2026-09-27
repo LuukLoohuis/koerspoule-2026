@@ -12,9 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import VerslagDialog from "@/components/admin/VerslagDialog";
 import { Trash2, Trophy, Radio, Newspaper } from "lucide-react";
-import { isMeermarathonGame, WEDSTRIJD_TYPES, defaultWedstrijdType, type WedstrijdType } from "@/lib/gameTypes";
+import { isMeermarathonGame, WEDSTRIJD_TYPES, meermarathonStageLabel, wedstrijdTypeVan, type WedstrijdType } from "@/lib/gameTypes";
 import StageLiveTracks from "@/components/admin/StageLiveTracks";
-import { toast } from "sonner";
 
 export const STAGE_TYPES = [
   { value: "vlak", label: "Vlak" },
@@ -83,6 +82,8 @@ export default function StagesTab({
   const [date, setDate] = useState("");
   const [stageType, setStageType] = useState<StageType>("vlak");
   const [distanceKm, setDistanceKm] = useState<string>("");
+  // Meermarathon kent geen terrein of kilometers, wel een categorie.
+  const [wedstrijdType, setWedstrijdType] = useState<WedstrijdType>("cup");
   const [savingType, setSavingType] = useState<string | null>(null);
   const [savingKm, setSavingKm] = useState<string | null>(null);
   // Profiel-data (JSON) bewerken via dialog.
@@ -115,21 +116,34 @@ export default function StagesTab({
 
   async function createStage() {
     if (!supabase || !activeGameId) return;
-    const { error } = await supabase.from("stages").insert({
-      game_id: activeGameId,
-      stage_number: stageNumber,
-      name: stageName.trim() || `Etappe ${stageNumber}`,
-      date: date || null,
-      status: "draft",
-      stage_type: stageType,
-      distance_km: distanceKm ? Number(distanceKm) : null,
-    } as never);
+    // Meermarathon: zonder eigen naam heet de wedstrijd naar zijn categorie
+    // ("Cup 3", "NK"); een standaardnaam "Etappe 3" zou dat overschrijven.
+    const rij = isMeermarathon
+      ? {
+          game_id: activeGameId,
+          stage_number: stageNumber,
+          name: stageName.trim() || null,
+          date: date || null,
+          status: "draft",
+          wedstrijd_type: wedstrijdType,
+        }
+      : {
+          game_id: activeGameId,
+          stage_number: stageNumber,
+          name: stageName.trim() || `Etappe ${stageNumber}`,
+          date: date || null,
+          status: "draft",
+          stage_type: stageType,
+          distance_km: distanceKm ? Number(distanceKm) : null,
+        };
+    const wat = isMeermarathon ? "Wedstrijd" : "Etappe";
+    const { error } = await supabase.from("stages").insert(rij as never);
     if (error) {
       console.error("Stage create error:", error);
-      toast.error(`Etappe aanmaken mislukt: ${error.message}`);
+      toast.error(`${wat} aanmaken mislukt: ${error.message}`);
       return;
     }
-    toast.success(`Etappe ${stageNumber} aangemaakt`);
+    toast.success(`${wat} ${stageNumber} aangemaakt`);
     setStageNumber((v) => v + 1);
     setStageName("");
     setDate("");
@@ -223,10 +237,10 @@ export default function StagesTab({
     }
     await reload();
   }
-  // Meermarathon meet kunstijs in ronden en natuurijs in kilometers; daarom een
-  // eigen veld naast distance_km in plaats van dat te overladen.
+  // Meermarathon telt op de baan in ronden; kilometers en terrein vult de
+  // beheerder daar niet in.
   async function updateRondes(id: string, value: string) {
-    if (!supabase) return;
+    if (!supabase || !activeGameId) return;
     const n = value.trim() === "" ? null : Number(value);
     if (n !== null && (!Number.isFinite(n) || n <= 0)) { toast.error("Aantal ronden moet groter dan 0 zijn"); return; }
     setSavingKm(id);
@@ -237,7 +251,7 @@ export default function StagesTab({
   }
 
   async function updateWedstrijdType(id: string, type: WedstrijdType) {
-    if (!supabase) return;
+    if (!supabase || !activeGameId) return;
     setSavingType(id);
     const { error } = await supabase.from("stages").update({ wedstrijd_type: type } as never).eq("id", id);
     setSavingType(null);
@@ -258,46 +272,69 @@ export default function StagesTab({
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="font-display">Nieuwe etappe</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-7">
+        <CardHeader><CardTitle className="font-display">{isMeermarathon ? "Nieuwe wedstrijd" : "Nieuwe etappe"}</CardTitle></CardHeader>
+        <CardContent className={isMeermarathon ? "grid gap-3 md:grid-cols-6" : "grid gap-3 md:grid-cols-7"}>
           <div>
-            <Label>Etappe nr.</Label>
+            <Label>{isMeermarathon ? "Wedstrijd nr." : "Etappe nr."}</Label>
             <Input data-testid="stage-number-input" type="number" min={1} value={stageNumber} onChange={(e) => setStageNumber(Number(e.target.value))} />
           </div>
           <div className="md:col-span-2">
             <Label>Naam (optioneel)</Label>
-            <Input data-testid="stage-name-input" placeholder="bv. Bilbao → Bilbao" value={stageName} onChange={(e) => setStageName(e.target.value)} />
+            <Input
+              data-testid="stage-name-input"
+              placeholder={isMeermarathon ? "leeg = Cup 3, Grand Prix 6, NK" : "bv. Bilbao → Bilbao"}
+              value={stageName}
+              onChange={(e) => setStageName(e.target.value)}
+            />
           </div>
           <div>
             <Label>Datum</Label>
             <Input data-testid="stage-date-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
-          <div>
-            <Label>Km</Label>
-            <Input
-              type="number"
-              min={0}
-              max={400}
-              placeholder="bv. 198"
-              value={distanceKm}
-              onChange={(e) => setDistanceKm(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label>Type</Label>
-            <Select value={stageType} onValueChange={(v) => setStageType(v as StageType)}>
-              <SelectTrigger data-testid="stage-type-select"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {STAGE_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {isMeermarathon ? (
+            <div>
+              <Label>Categorie</Label>
+              <Select value={wedstrijdType} onValueChange={(v) => setWedstrijdType(v as WedstrijdType)}>
+                <SelectTrigger data-testid="wedstrijd-type-select"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {WEDSTRIJD_TYPES.map((w) => (
+                    <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <>
+              <div>
+                <Label>Km</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={400}
+                  placeholder="bv. 198"
+                  value={distanceKm}
+                  onChange={(e) => setDistanceKm(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Type</Label>
+                <Select value={stageType} onValueChange={(v) => setStageType(v as StageType)}>
+                  <SelectTrigger data-testid="stage-type-select"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {STAGE_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
           <div className="flex items-end">
             <Button data-testid="create-stage-btn" onClick={createStage} className="w-full">Aanmaken</Button>
           </div>
         </CardContent>
+        {/* Een Grand Tour in één keer en de GC-etappe horen bij de wielerkoersen. */}
+        {!isMeermarathon && (
         <CardContent className="pt-0 flex flex-wrap gap-2">
           <Button data-testid="bulk-21-btn" variant="outline" onClick={() => bulkCreate(21)}>+ 21 etappes aanmaken (Grand Tour)</Button>
           <Button
@@ -317,10 +354,11 @@ export default function StagesTab({
             GC-etappe aanmaken
           </Button>
         </CardContent>
+        )}
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="font-display">Etappes ({stages.length})</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="font-display">{isMeermarathon ? "Wedstrijden" : "Etappes"} ({stages.length})</CardTitle></CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
@@ -328,10 +366,18 @@ export default function StagesTab({
                 <TableHead>#</TableHead>
                 <TableHead>Naam</TableHead>
                 <TableHead>Datum</TableHead>
-                <TableHead className="w-24">{isMeermarathon ? "Maat" : "Km"}</TableHead>
-                {isMeermarathon && <TableHead className="w-36">Soort</TableHead>}
-                <TableHead>Type</TableHead>
-                <TableHead>Profiel</TableHead>
+                {isMeermarathon ? (
+                  <>
+                    <TableHead className="w-36">Categorie</TableHead>
+                    <TableHead className="w-28">Ronden</TableHead>
+                  </>
+                ) : (
+                  <>
+                    <TableHead className="w-24">Km</TableHead>
+                    <TableHead>Type</TableHead>
+                  </>
+                )}
+                <TableHead>{isMeermarathon ? "Verslag" : "Profiel"}</TableHead>
                 {isMeermarathon && <TableHead className="w-28">Live</TableHead>}
                 <TableHead>Status</TableHead>
                 <TableHead className="w-16"></TableHead>
@@ -348,64 +394,91 @@ export default function StagesTab({
                           <Trophy className="w-3 h-3" /> GC
                         </Badge>
                       )}
-                      <span>{s.name ?? `Etappe ${s.stage_number}`}</span>
+                      <span>{isMeermarathon ? meermarathonStageLabel(s) : s.name ?? `Etappe ${s.stage_number}`}</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{s.date ?? "—"}</TableCell>
-                  <TableCell>
-                    {s.is_gc ? (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    ) : (
-                      (() => {
-                        // Kunstijs telt ronden, natuurijs kilometers.
-                        const opRonden = isMeermarathon && s.ijs_type !== "natuurijs";
-                        const huidig = opRonden ? s.aantal_rondes : s.distance_km;
-                        return (
-                          <div className="flex items-center gap-1.5">
-                            <Input
-                              type="number"
-                              min={0}
-                              max={opRonden ? 999 : 400}
-                              defaultValue={huidig ?? ""}
-                              disabled={savingKm === s.id}
-                              onBlur={(e) => {
-                                const next = e.target.value;
-                                const cur = huidig == null ? "" : String(huidig);
-                                if (next === cur) return;
-                                if (opRonden) updateRondes(s.id, next);
-                                else updateKm(s.id, next);
-                              }}
-                              className="h-8 w-16 text-sm"
-                              placeholder="—"
-                            />
-                            {isMeermarathon && (
-                              <span className="text-[10px] text-muted-foreground">
-                                {opRonden ? "ronden" : "km"}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })()
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {s.is_gc ? (
-                      <span className="text-xs text-muted-foreground italic">eindklassement</span>
-                    ) : (
-                      <Select
-                        value={s.stage_type ?? "vlak"}
-                        onValueChange={(v) => updateStageType(s.id, v as StageType)}
-                        disabled={savingType === s.id}
-                      >
-                        <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {STAGE_TYPES.map((t) => (
-                            <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </TableCell>
+                  {isMeermarathon ? (
+                    <>
+                      <TableCell>
+                        <Select
+                          value={wedstrijdTypeVan(s)}
+                          onValueChange={(v) => updateWedstrijdType(s.id, v as WedstrijdType)}
+                          disabled={savingType === s.id}
+                        >
+                          <SelectTrigger className="h-8 w-[130px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {WEDSTRIJD_TYPES.map((w) => (
+                              <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        {/* Ronden bestaan alleen op de baan; natuurijs heeft er geen. */}
+                        {s.ijs_type === "natuurijs" ? (
+                          <span className="text-xs text-muted-foreground">natuurijs</span>
+                        ) : (
+                          <Input
+                            type="number"
+                            min={0}
+                            max={999}
+                            defaultValue={s.aantal_rondes ?? ""}
+                            disabled={savingKm === s.id}
+                            onBlur={(e) => {
+                              const next = e.target.value;
+                              const cur = s.aantal_rondes == null ? "" : String(s.aantal_rondes);
+                              if (next !== cur) updateRondes(s.id, next);
+                            }}
+                            className="h-8 w-16 text-sm"
+                            placeholder="—"
+                            aria-label={`Ronden ${meermarathonStageLabel(s)}`}
+                          />
+                        )}
+                      </TableCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell>
+                        {s.is_gc ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
+                          <Input
+                            type="number"
+                            min={0}
+                            max={400}
+                            defaultValue={s.distance_km ?? ""}
+                            disabled={savingKm === s.id}
+                            onBlur={(e) => {
+                              const next = e.target.value;
+                              const cur = s.distance_km == null ? "" : String(s.distance_km);
+                              if (next !== cur) updateKm(s.id, next);
+                            }}
+                            className="h-8 w-16 text-sm"
+                            placeholder="—"
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {s.is_gc ? (
+                          <span className="text-xs text-muted-foreground italic">eindklassement</span>
+                        ) : (
+                          <Select
+                            value={s.stage_type ?? "vlak"}
+                            onValueChange={(v) => updateStageType(s.id, v as StageType)}
+                            disabled={savingType === s.id}
+                          >
+                            <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {STAGE_TYPES.map((t) => (
+                                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </TableCell>
+                    </>
+                  )}
                   <TableCell>
                     {s.is_gc ? (
                       <span className="text-xs text-muted-foreground">—</span>
@@ -430,22 +503,6 @@ export default function StagesTab({
                   </TableCell>
                   {isMeermarathon && (
                     <TableCell>
-                      <Select
-                        value={(s.wedstrijd_type as WedstrijdType | null) ?? defaultWedstrijdType(s.ijs_type)}
-                        onValueChange={(v) => updateWedstrijdType(s.id, v as WedstrijdType)}
-                        disabled={savingType === s.id}
-                      >
-                        <SelectTrigger className="h-8 w-[130px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {WEDSTRIJD_TYPES.map((w) => (
-                            <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                  )}
-                  {isMeermarathon && (
-                    <TableCell>
                       <Button
                         variant={s.ijs_type ? "secondary" : "outline"}
                         size="sm"
@@ -464,7 +521,7 @@ export default function StagesTab({
                 </TableRow>
               ))}
               {stages.length === 0 && (
-                <TableRow><TableCell colSpan={isMeermarathon ? 10 : 8} className="text-center text-muted-foreground py-6">Nog geen etappes.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={isMeermarathon ? 9 : 8} className="text-center text-muted-foreground py-6">{isMeermarathon ? "Nog geen wedstrijden." : "Nog geen etappes."}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

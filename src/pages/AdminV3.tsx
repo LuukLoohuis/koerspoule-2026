@@ -25,6 +25,7 @@ import EntriesTab from "@/components/admin/EntriesTab";
 import InstagramExport from "@/pages/InstagramExport";
 import DashboardTab from "@/components/admin/DashboardTab";
 import RubriekTab from "@/components/admin/RubriekTab";
+import { isMeermarathonGame } from "@/lib/gameTypes";
 
 export default function AdminV3() {
   const { user, role, loading } = useAuth();
@@ -195,7 +196,7 @@ export default function AdminV3() {
           <TabsTrigger value="games" data-testid="tab-games"><Trophy className="w-4 h-4 mr-2" />Games</TabsTrigger>
           <TabsTrigger value="categories" disabled={!activeGameId} data-testid="tab-categories"><Tag className="w-4 h-4 mr-2" />Categorieën</TabsTrigger>
           <TabsTrigger value="startlist" disabled={!activeGameId} data-testid="tab-startlist"><Users className="w-4 h-4 mr-2" />Startlijst</TabsTrigger>
-          <TabsTrigger value="stages" disabled={!activeGameId} data-testid="tab-stages"><Calendar className="w-4 h-4 mr-2" />Etappes</TabsTrigger>
+          <TabsTrigger value="stages" disabled={!activeGameId} data-testid="tab-stages"><Calendar className="w-4 h-4 mr-2" />{isMeermarathonGame(activeGame?.game_type) ? "Wedstrijden" : "Etappes"}</TabsTrigger>
           <TabsTrigger value="results" disabled={!activeGameId} data-testid="tab-results"><ListChecks className="w-4 h-4 mr-2" />Uitslagen</TabsTrigger>
           <TabsTrigger value="calc" disabled={!activeGameId} data-testid="tab-calc"><Calculator className="w-4 h-4 mr-2" />Berekening</TabsTrigger>
           <TabsTrigger value="golive" disabled={!activeGameId} data-testid="tab-golive"><Rocket className="w-4 h-4 mr-2" />Go-live</TabsTrigger>
