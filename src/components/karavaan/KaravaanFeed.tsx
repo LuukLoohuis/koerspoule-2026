@@ -19,7 +19,7 @@ import Uitslagblok from "@/components/karavaan/Uitslagblok";
 import { useEtappeVerslag } from "@/hooks/useEtappeVerslag";
 import { useActiveLegende } from "@/hooks/useRubriek";
 import Legende from "@/components/karavaan/Legende";
-import HorsBijlage, { type BijlageTegel } from "@/components/karavaan/HorsBijlage";
+import HorsBijlage from "@/components/karavaan/HorsBijlage";
 
 /**
  * Vaste kleur per rubriek, uit het ontwerp. Het accent volgt het thema van de
@@ -266,36 +266,6 @@ export default function KaravaanFeed({
     horsSummary.monkeyBeatPct !== null ||
     horsSummary.emiratesPct !== null ||
     horsSummary.directorScore !== null;
-  const bijlageTegels: BijlageTegel[] = heeftHorsCijfers
-    ? [
-        {
-          key: "dartpijl",
-          waarde: horsSummary.monkeyBeatPct,
-          eenheid: "%",
-          titel: t("karavaan.ministrip.monkeyTitle"),
-          haak: t("karavaan.ministrip.monkeyLabel"),
-          trui: "leider",
-          onClick: () => onOpenHors?.("dartpijl"),
-        },
-        {
-          key: "emirates",
-          waarde: horsSummary.emiratesPct,
-          eenheid: "%",
-          titel: t("karavaan.ministrip.emiratesTitle"),
-          haak: t("karavaan.ministrip.emiratesLabel"),
-          trui: "wit",
-          onClick: () => onOpenHors?.("superteam"),
-        },
-        {
-          key: "directeur",
-          waarde: horsSummary.directorScore,
-          titel: t("karavaan.ministrip.wielerdirTitle"),
-          haak: t("karavaan.ministrip.wielerdirLabel"),
-          trui: "berg",
-          onClick: () => onOpenHors?.("wielerdirecteur"),
-        },
-      ]
-    : [];
 
   const artikelQuotes = artikel?.quotes.length ?? 0;
 
@@ -386,7 +356,7 @@ export default function KaravaanFeed({
         rubrieken={rubrieken}
         uitslag={uitslagblok}
         legende={heeftLegende ? <Legende gameId={game?.id} /> : undefined}
-        bijlage={bijlageTegels.length > 0 ? <HorsBijlage tegels={bijlageTegels} /> : undefined}
+        bijlage={heeftHorsCijfers ? <HorsBijlage scores={horsSummary} onOpen={onOpenHors} /> : undefined}
         segment={segment}
         onSegmentChange={setSegment}
         artikel={artikel}

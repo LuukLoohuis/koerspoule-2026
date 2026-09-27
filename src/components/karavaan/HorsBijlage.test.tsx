@@ -1,8 +1,8 @@
-// De Hors-bijlage van de webkrant: elk cijfer op de borst van zijn trui,
-// dezelfde drie truien als op de mobiele Krant.
+// De Hors-bijlage van de webkrant: dezelfde drie truien als op de mobiele
+// Krant, in het getinte vlak van de bijlage.
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import HorsBijlage, { type BijlageTegel } from "./HorsBijlage";
+import HorsBijlage from "./HorsBijlage";
 import { KoersThemaProvider } from "@/contexts/KoersThemaContext";
 
 vi.mock("react-i18next", async () => {
@@ -10,42 +10,36 @@ vi.mock("react-i18next", async () => {
   return { useTranslation: () => ({ t: maakT(), i18n: { language: "nl" } }) };
 });
 
-function toon(over: Partial<Record<"dartpijl" | "emirates" | "directeur", Partial<BijlageTegel>>> = {}) {
-  const open = vi.fn();
-  const tegels: BijlageTegel[] = [
-    { key: "dartpijl", waarde: 78, eenheid: "%", titel: "Monkey IQ", haak: "apen verslagen", trui: "leider", onClick: () => open("dartpijl"), ...over.dartpijl },
-    { key: "emirates", waarde: 64, eenheid: "%", titel: "Emirates", haak: "van droomploeg", trui: "wit", onClick: () => open("superteam"), ...over.emirates },
-    { key: "directeur", waarde: 7.4, titel: "Wielerdir.", haak: "rapport", trui: "berg", onClick: () => open("wielerdirecteur"), ...over.directeur },
-  ];
+function toon() {
+  const onOpen = vi.fn();
   render(
     <KoersThemaProvider themaKey="geel">
-      <HorsBijlage tegels={tegels} />
+      <HorsBijlage scores={{ monkeyBeatPct: 78, emiratesPct: 64, directorScore: 7.4 }} onOpen={onOpen} />
     </KoersThemaProvider>,
   );
-  const tegel = (naam: RegExp) => screen.getByRole("button", { name: naam });
-  return { open, tegel, trui: (naam: RegExp) => tegel(naam).querySelector("img")?.getAttribute("src") ?? "" };
+  const knop = (naam: RegExp) => screen.getByRole("button", { name: naam });
+  return { onOpen, knop, trui: (naam: RegExp) => knop(naam).querySelector("img")?.getAttribute("src") ?? "" };
 }
 
 describe("HorsBijlage", () => {
-  it("zet elk cijfer op zijn eigen trui", () => {
-    const { tegel, trui } = toon();
-    expect(tegel(/Monkey IQ/).textContent).toContain("78%");
-    expect(trui(/Monkey IQ/)).toContain("wielertrui-geel");
-    expect(tegel(/Emirates/).textContent).toContain("64%");
-    expect(trui(/Emirates/)).toContain("wielertrui-wit");
-    expect(tegel(/Wielerdir/).textContent).toContain("7,4");
-    expect(trui(/Wielerdir/)).toContain("wielertrui-bolletjes-rood");
+  it("zet de bijlagekop boven de drie truien", () => {
+    const { trui } = toon();
+    expect(screen.getByText("Hors Catégorie")).toBeTruthy();
+    expect(trui(/Monkey IQ/)).toContain("hors-trui-geel");
+    expect(trui(/Emirates/)).toContain("hors-trui-wit");
+    expect(trui(/Directeur/)).toContain("hors-trui-bolletjes-rood");
   });
 
-  it("zet een streepje op de trui zolang het cijfer er niet is", () => {
-    const { tegel } = toon({ emirates: { waarde: null } });
-    expect(tegel(/Emirates/).textContent).toContain("–");
-    expect(tegel(/Emirates/).textContent).not.toContain("%");
+  it("draagt het cijfer op de trui", () => {
+    const { knop } = toon();
+    expect(knop(/Monkey IQ/).textContent).toContain("78%");
+    expect(knop(/Emirates/).textContent).toContain("64%");
+    expect(knop(/Directeur/).textContent).toContain("7,4");
   });
 
-  it("opent de analyse van de tegel", () => {
-    const { open, tegel } = toon();
-    fireEvent.click(tegel(/Wielerdir/));
-    expect(open).toHaveBeenCalledWith("wielerdirecteur");
+  it("opent de analyse van de trui", () => {
+    const { onOpen, knop } = toon();
+    fireEvent.click(knop(/Directeur/));
+    expect(onOpen).toHaveBeenCalledWith("wielerdirecteur");
   });
 });

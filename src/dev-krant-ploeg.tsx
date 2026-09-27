@@ -329,11 +329,8 @@ function WebkrantDemo({ leeg }: { leeg?: boolean }) {
       }}
       bijlage={
         <HorsBijlage
-          tegels={[
-            { key: "dartpijl", waarde: leeg ? null : 78, eenheid: "%", titel: "Monkey IQ", haak: "apen verslagen", trui: "leider", onClick: open("dartpijl") },
-            { key: "emirates", waarde: leeg ? null : 64, eenheid: "%", titel: "Emirates", haak: "van droomploeg", trui: "wit", onClick: open("superteam") },
-            { key: "directeur", waarde: leeg ? null : 7.4, titel: "Wielerdir.", haak: "rapport", trui: "berg", onClick: open("wielerdirecteur") },
-          ]}
+          scores={leeg ? { monkeyBeatPct: null, emiratesPct: null, directorScore: null } : { monkeyBeatPct: 78, emiratesPct: 64, directorScore: 7.4 }}
+          onOpen={(tab) => console.info("[demo] hors", tab)}
         />
       }
       segment={segment}
