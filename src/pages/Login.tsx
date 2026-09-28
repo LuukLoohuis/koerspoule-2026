@@ -356,7 +356,7 @@ export default function Login() {
           </div>
 
           <div className="flex justify-center gap-2 mb-4">
-            {(["algemeen", "punten", "berg", "jongeren"] as const).map((type) => {
+            {thema.klassementen.map((type) => {
               const trui = thema.truien[type];
               return (
                 <span

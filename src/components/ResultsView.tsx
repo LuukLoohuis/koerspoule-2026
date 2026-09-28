@@ -1171,8 +1171,9 @@ function PouleLeiderTeken({ meermarathon }: { meermarathon: boolean }) {
 function RaceClassifications({ stageId, meermarathon = false }: { stageId: string | undefined; meermarathon?: boolean }) {
   const { t } = useTranslation();
   const { data: results = [], isLoading } = useStageResults(stageId);
-  // Bij de schaatsers alleen het algemeen klassement (oranje leiderstrui) en
-  // de witte trui.
+  // Welke truien er zijn, zegt het thema van de koers: bij de schaatsers alleen
+  // het algemeen klassement (oranje leiderstrui) en de witte trui.
+  const thema = useKoersThema();
   const context = meermarathon ? "mm" : undefined;
 
   const buildList = (key: "gc_position" | "points_position" | "mountain_position" | "youth_position") =>
@@ -1187,7 +1188,7 @@ function RaceClassifications({ stageId, meermarathon = false }: { stageId: strin
     { id: "kom", label: t("results.classifications.mountain"), trui: "berg" as const, rows: buildList("mountain_position") },
     { id: "youth", label: t("results.classifications.youth", { context }), trui: "jongeren" as const, rows: buildList("youth_position") },
   ];
-  const tabs = meermarathon ? alleTabs.filter((tab) => tab.id === "gc" || tab.id === "youth") : alleTabs;
+  const tabs = alleTabs.filter((tab) => thema.klassementen.includes(tab.trui));
 
   return (
     <div className="retro-border bg-card">

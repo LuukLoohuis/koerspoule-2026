@@ -15,13 +15,14 @@ import type { Stage } from "./StagesTab";
 import type { Rider } from "./StartlistTab";
 import RiderSearchSelect, { type RiderOption } from "@/components/RiderSearchSelect";
 import StageApprovalCard from "./StageApprovalCard";
+import { isMeermarathonGame, meermarathonStageLabel } from "@/lib/gameTypes";
 import {
   buildScreenshotImportPreview,
   type ImportClassification,
   type ScreenshotExtraction,
 } from "@/lib/screenshotResultImport";
 
-type GameType = "giro" | "tdf" | "vuelta" | "femmes" | null;
+type GameType = "giro" | "tdf" | "vuelta" | "femmes" | "meermarathon" | null;
 
 type Classification = "stage" | "gc" | "kom" | "points" | "youth";
 
@@ -34,6 +35,16 @@ const CLASSIFICATION_LABELS: Record<Classification, { name: string; jersey: stri
 };
 
 const CLASSIFICATIONS: Classification[] = ["stage", "gc", "kom", "points", "youth"];
+
+// Meermarathon: bij de schaatsers alleen de uitslag, het algemeen klassement
+// (oranje leiderstrui) en de witte trui. Een punten- en bergklassement bestaan
+// daar niet.
+const MM_CLASSIFICATIONS: Classification[] = ["stage", "gc", "youth"];
+const MM_LABELS: Partial<Record<Classification, { name: string; jersey: string; emoji: string; tab: string }>> = {
+  stage: { name: "Wedstrijduitslag", jersey: "Top 20 finish", emoji: "🏁", tab: "Uitslag" },
+  gc: { name: "Algemeen klassement", jersey: "Oranje leiderstrui", emoji: "🟠", tab: "Algemeen" },
+  youth: { name: "Klassement witte trui", jersey: "Witte trui", emoji: "⚪", tab: "Witte trui" },
+};
 
 type ResultRow = { position: number; rider_id: string };
 
@@ -129,6 +140,17 @@ export default function ResultsTab({
   const canImport = gameType === "tdf" || gameType === "femmes" || gameType === "vuelta";
   const canImportPCS = !!gameType && !!gameYear;
 
+  const isMeermarathon = isMeermarathonGame(gameType);
+  const klassementen = isMeermarathon ? MM_CLASSIFICATIONS : CLASSIFICATIONS;
+  const woord = isMeermarathon ? "wedstrijd" : "etappe";
+  /** Naam, trui en embleem van een klassement; bij de Meermarathon in schaatswoorden. */
+  const labelVan = (c: Classification) => ({ ...CLASSIFICATION_LABELS[c], ...(isMeermarathon ? MM_LABELS[c] : undefined) });
+  // Stond Punten of Berg open bij een wielerkoers en kies je de Meermarathon:
+  // terug naar de uitslag.
+  useEffect(() => {
+    if (!klassementen.includes(classification)) setClassification("stage");
+  }, [klassementen, classification]);
+
   function closeImportPreview() {
     setImportPreview(null);
     setScreenshotPreview(null);
@@ -184,7 +206,7 @@ export default function ResultsTab({
 
   async function saveResults() {
     if (!supabase || !selectedStage) {
-      toast.error("Selecteer een etappe");
+      toast.error(`Selecteer een ${woord}`);
       return;
     }
     const filled = rows.filter((r) => r.rider_id);
@@ -246,7 +268,7 @@ export default function ResultsTab({
         }
       }
 
-      toast.success(`${filled.length} resultaten opgeslagen voor ${CLASSIFICATION_LABELS[classification].name}`);
+      toast.success(`${filled.length} resultaten opgeslagen voor ${labelVan(classification).name}`);
     } catch (e) {
       console.error("Save error:", e);
       toast.error((e as Error).message);
@@ -256,7 +278,7 @@ export default function ResultsTab({
   }
 
   async function clearResults() {
-    if (!confirm(`Weet je zeker dat je het ${CLASSIFICATION_LABELS[classification].name} voor deze etappe wilt wissen?`)) return;
+    if (!confirm(`Weet je zeker dat je het ${labelVan(classification).name} voor deze ${woord} wilt wissen?`)) return;
     if (!supabase || !selectedStage) return;
     const col = CLASSIFICATION_LABELS[classification].column;
     const { error } = await supabase
@@ -542,16 +564,18 @@ export default function ResultsTab({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-display">Selecteer etappe & klassement</CardTitle>
+          <CardTitle className="font-display">Selecteer {woord} & klassement</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2">
           <div>
-            <Label>Etappe</Label>
+            <Label>{isMeermarathon ? "Wedstrijd" : "Etappe"}</Label>
             <Select value={selectedStage} onValueChange={setSelectedStage}>
-              <SelectTrigger data-testid="results-stage-select"><SelectValue placeholder="Kies etappe" /></SelectTrigger>
+              <SelectTrigger data-testid="results-stage-select"><SelectValue placeholder={`Kies ${woord}`} /></SelectTrigger>
               <SelectContent>
                 {stages.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>Etappe {s.stage_number}{s.date ? ` (${s.date})` : ""}</SelectItem>
+                  <SelectItem key={s.id} value={s.id}>
+                    {isMeermarathon ? meermarathonStageLabel(s) : `Etappe ${s.stage_number}`}{s.date ? ` (${s.date})` : ""}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -559,10 +583,10 @@ export default function ResultsTab({
           <div>
             <Label>Klassement</Label>
             <Tabs value={classification} onValueChange={(v) => setClassification(v as Classification)}>
-              <TabsList className="grid grid-cols-5 w-full">
-                {CLASSIFICATIONS.map((c) => (
+              <TabsList className={`grid w-full ${isMeermarathon ? "grid-cols-3" : "grid-cols-5"}`}>
+                {klassementen.map((c) => (
                   <TabsTrigger key={c} value={c} data-testid={`classification-${c}`} className="text-xs">
-                    {CLASSIFICATION_LABELS[c].emoji} {c.toUpperCase()}
+                    {labelVan(c).emoji} {isMeermarathon ? MM_LABELS[c]?.tab : c.toUpperCase()}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -578,6 +602,9 @@ export default function ResultsTab({
       {selectedStage && (
         <Card className="border-primary/40 bg-primary/5">
           <CardContent className="pt-6 space-y-4">
+            {/* De officiële wielersites en ProCyclingStats kennen geen
+                schaatsers: bij de Meermarathon alleen de screenshot-import. */}
+            {!isMeermarathon && (<>
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <h3 className="font-display text-lg flex items-center gap-2">
@@ -621,8 +648,9 @@ export default function ResultsTab({
                 {importingPCS ? "Ophalen..." : `ProCyclingStats (etappe ${selectedStageObj?.stage_number ?? ""})`}
               </Button>
             </div>
+            </>)}
 
-            <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-primary/20">
+            <div className={`flex items-center justify-between flex-wrap gap-3${isMeermarathon ? "" : " pt-3 border-t border-primary/20"}`}>
               <div>
                 <h3 className="font-display text-lg flex items-center gap-2">
                   <ImageUp className="w-5 h-5" /> Screenshot import (AI)
@@ -665,10 +693,10 @@ export default function ResultsTab({
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <CardTitle className="font-display flex items-center gap-2">
-                  <span className="text-2xl">{CLASSIFICATION_LABELS[classification].emoji}</span>
-                  {CLASSIFICATION_LABELS[classification].name}
+                  <span className="text-2xl">{labelVan(classification).emoji}</span>
+                  {labelVan(classification).name}
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">{CLASSIFICATION_LABELS[classification].jersey} — top 20</p>
+                <p className="text-sm text-muted-foreground">{labelVan(classification).jersey} — top 20</p>
               </div>
               <Badge variant="outline" data-testid="filled-count">{filledCount} / 20 ingevuld</Badge>
             </div>
@@ -795,7 +823,7 @@ export default function ResultsTab({
                 .filter((c) => importPreview.source_kind !== "screenshot" || (importPreview.counts?.[c]?.total ?? 0) > 0)
                 .map((c) => {
                 const labelKey = c === "mountain" ? "kom" : c;
-                const label = CLASSIFICATION_LABELS[labelKey as Classification];
+                const label = labelVan(labelKey as Classification);
                 const matched = importPreview.matched[c] ?? [];
                 const unmatched = importPreview.unmatched[c] ?? [];
                 const diagnostic = importPreview.diagnostics?.[c];

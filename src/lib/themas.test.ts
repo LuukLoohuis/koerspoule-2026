@@ -17,6 +17,15 @@ describe("centrale game-branding", () => {
     expect(THEMAS[resolved].favicon).toBe(favicon);
   });
 
+  // Bij de schaatsers alleen de oranje leiderstrui en de witte trui; op de
+  // loginpagina en bij de klassementen van de uitslagen staan er dan twee.
+  it("kent per koers zijn klassementstruien", () => {
+    expect(THEMAS.winter.klassementen).toEqual(["algemeen", "jongeren"]);
+    for (const key of ["roze", "geel", "rood"] as const) {
+      expect(THEMAS[key].klassementen).toEqual(["algemeen", "punten", "berg", "jongeren"]);
+    }
+  });
+
   it("geeft een expliciete game-theme voorrang op het game_type", () => {
     expect(deriveThemaKey("rood", "giro")).toBe("rood");
   });

@@ -7,6 +7,7 @@
  */
 import { useState } from "react";
 import CalculationTab from "@/components/admin/CalculationTab";
+import ResultsTab from "@/components/admin/ResultsTab";
 import StagesTab, { type Stage } from "@/components/admin/StagesTab";
 import { EindklassementKaart, type EindRijder } from "@/components/admin/EindklassementMeermarathon";
 import { telVoorspellingen, type KlassementRijders } from "@/lib/klassementVoorspelling";
@@ -81,6 +82,24 @@ export default function Scherm8Demo() {
         <div className="max-w-full overflow-x-auto">
           <div className="w-[1160px] rounded-lg border border-dashed border-border bg-background px-5 py-6">
             <StagesTab activeGameId="" stages={WEDSTRIJDEN} reload={niets} gameType="meermarathon" />
+          </div>
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h3 className="m-0 font-inter text-base font-bold">
+          Meermarathon · Uitslagen: alleen de uitslag, het algemeen klassement (oranje leiderstrui) en de witte trui
+        </h3>
+        <div className="max-w-full overflow-x-auto">
+          <div className="w-[1160px] rounded-lg border border-dashed border-border bg-background px-5 py-6">
+            <ResultsTab activeGameId="" stages={WEDSTRIJDEN} riders={[]} gameType="meermarathon" gameYear={2026} />
+          </div>
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h3 className="m-0 font-inter text-base font-bold">Ter vergelijking · Uitslagen van een wielerkoers, met punten en berg</h3>
+        <div className="max-w-full overflow-x-auto">
+          <div className="w-[1160px] rounded-lg border border-dashed border-border bg-background px-5 py-6">
+            <ResultsTab activeGameId="" stages={RITTEN} riders={[]} gameType="tdf" gameYear={2026} />
           </div>
         </div>
       </section>

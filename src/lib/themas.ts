@@ -54,7 +54,11 @@ export type Thema = {
   /** Optionele auteur bij quotes[0] (getoond als handgeschreven signatuur). */
   quoteAuteur?: string;
   truien: Record<TruiType, TruiDef>;
+  /** Welke klassementstruien deze koers kent, in vaste volgorde. */
+  klassementen: readonly TruiType[];
 };
+
+const ALLE_TRUIEN: readonly TruiType[] = ["algemeen", "punten", "berg", "jongeren"];
 
 // Glob-import: pikt elke beker-{segment}.png in src/assets op. Geen bestand
 // aanwezig → leeg object → beker = null → Podium valt terug op de TruiBadge.
@@ -99,6 +103,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
       berg: { naam: "Maglia Azzurra", kleur: "#3498DB", patroon: "effen" },
       jongeren: { naam: "Maglia Bianca", kleur: "#FFFFFF", patroon: "effen", rand: WIT_RAND },
     },
+    klassementen: ALLE_TRUIEN,
   },
   geel: {
     key: "geel",
@@ -129,6 +134,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
       berg: { naam: "Maillot à Pois", kleur: "#FFFFFF", patroon: "bolletjes", bolletjeKleur: "#CC0000" },
       jongeren: { naam: "Maillot Blanc", kleur: "#FFFFFF", patroon: "effen", rand: WIT_RAND },
     },
+    klassementen: ALLE_TRUIEN,
   },
   rood: {
     key: "rood",
@@ -161,6 +167,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
       berg: { naam: "Maillot de Lunares", kleur: "#FFFFFF", patroon: "bolletjes", bolletjeKleur: "#2E5BA8" },
       jongeren: { naam: "Maillot Blanco", kleur: "#FFFFFF", patroon: "effen", rand: WIT_RAND },
     },
+    klassementen: ALLE_TRUIEN,
   },
   winter: {
     key: "winter",
@@ -201,6 +208,7 @@ export const THEMAS: Record<ThemaKey, Thema> = {
       berg: { naam: "Natuurijsleider", kleur: "#A9D7EF", patroon: "effen" },
       jongeren: { naam: "Witte trui", kleur: "#FFFFFF", patroon: "effen", rand: WIT_RAND },
     },
+    klassementen: ["algemeen", "jongeren"],
   },
 };
 
