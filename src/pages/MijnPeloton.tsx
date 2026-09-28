@@ -33,7 +33,7 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import GameSwitcher from "@/components/GameSwitcher";
 import MeermarathonPelotonbalk from "@/components/meermarathon/Pelotonbalk";
-import { isFinishedLike, isGameLocked, isVisibleToUser, maySeeLiveContent } from "@/lib/gameStatus";
+import { isGameLocked, maySeeLiveContent } from "@/lib/gameStatus";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
 import { Input } from "@/components/ui/input";
@@ -268,9 +268,6 @@ export default function MijnPeloton() {
   // Krant en Volgwagen gaan per peloton, net als de rest; de pelotonbalk
   // staat dus op elke tab.
   const isMeermarathonGekozen = isMeermarathonGame(selectedGameObj?.game_type);
-  const andereKoersLoopt = allGamesCtx.some(
-    (g) => !isMeermarathonGame(g.game_type) && isVisibleToUser(g.status, isAdmin) && !isFinishedLike(g.status),
-  );
   const toonPelotonbalk = isMeermarathonGekozen;
 
   // De zijkolom bestaat alleen zolang er iets in staat; anders zou er op
@@ -283,10 +280,10 @@ export default function MijnPeloton() {
     <div className="container mx-auto px-5 pb-4 md:py-6">
       {/* Game-switcher (vertrekbord) — alleen ingelogd + >1 zichtbare game.
           Gecentreerd in de contentkolom, gelijk met de tabbalk eronder.
-          Bij de Meermarathon neemt de pelotonbalk (Vrouwen/Mannen) het over,
-          tenzij er ook nog een wielerkoers loopt. */}
-      {authUser && toonPelotonbalk && <MeermarathonPelotonbalk className="md:hidden mb-2" />}
-      {authUser && (!isMeermarathonGekozen || andereKoersLoopt) && (
+          Ook bij de Meermarathon: anders zijn de andere (afgeronde) koersen
+          vanuit Mijn Peloton onbereikbaar. De pelotonbalk (Vrouwen/Mannen)
+          staat eronder, want die kiest binnen de gekozen koers. */}
+      {authUser && (
         <GameSwitcher
           games={allGamesCtx}
           selectedId={selectedGameObj?.id ?? null}
@@ -295,6 +292,7 @@ export default function MijnPeloton() {
           className="max-w-5xl mx-auto mb-4"
         />
       )}
+      {authUser && toonPelotonbalk && <MeermarathonPelotonbalk className="md:hidden mb-2" />}
 
       {/* 2. Compact masthead. Krant C en Ploeg C beginnen direct onder de kop
           van de site, zoals in de handoff; daar valt dit tussenkopje weg. */}
