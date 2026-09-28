@@ -621,6 +621,7 @@
       "selectStandingTitle": "SELECT STANDINGS",
       "throughStage": "Through stage {{stage}}",
       "throughStageNamed": "Through stage {{stage}} — {{name}}",
+      "throughStage_mm": "Through {{stage}}",
       "pickStage": "Pick a stage",
       "addWoonplaats": "Add your hometown — join the regional ranking:",
       "saving": "Saving…",
@@ -824,6 +825,7 @@
       "stageResultTitle": "Stage result",
       "stageResultEmpty": "No result for this stage yet.",
       "mmBarTitle": "Result per race",
+      "mmEtappesTab": "Per race",
       "mmStagesLoading": "Loading races...",
       "mmNoStages": "There are no races on the calendar yet.",
       "mmStageStandingsTitle": "Standings of this race",
@@ -856,11 +858,17 @@
       "points": "Points",
       "mountain": "Mountain",
       "youth": "Youth",
+      "title_mm": "Skater classifications",
+      "subtitle_mm": "Standing after the latest uploaded race",
+      "selectStage_mm": "Pick a race to see the classifications.",
+      "youth_mm": "White jersey",
       "empty": {
         "gc": "No general classification filled in for this stage yet.",
         "points": "No points classification filled in for this stage yet.",
         "kom": "No mountain classification filled in for this stage yet.",
-        "youth": "No youth classification filled in for this stage yet."
+        "youth": "No youth classification filled in for this stage yet.",
+        "gc_mm": "No general classification filled in for this race yet.",
+        "youth_mm": "No white jersey standing filled in for this race yet."
       }
     },
     "gc": {

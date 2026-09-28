@@ -3,20 +3,23 @@
  * die aan UitslagenMeermarathonWeergave.
  *
  * Het klassement telt tot en met de laatste wedstrijd met een goedgekeurde
- * uitslag, zonder beheerders (zoals overal in het algemeen klassement).
+ * uitslag, zonder beheerders (zoals overal in het algemeen klassement). In de
+ * balk erboven kies je een eerdere gereden wedstrijd voor de tussenstand.
  * "Per wedstrijd" is de bestaande uitslagweergave, zodat de uitslag per
  * wedstrijd precies blijft werken zoals hij werkte.
  */
 import { useEffect, useMemo, useState } from "react";
 import ResultsView from "@/components/ResultsView";
+import WedstrijdBalk from "@/components/meermarathon/WedstrijdBalk";
 import UitslagenMeermarathonWeergave, {
   type KlassementStand,
   type UitslagenSegment,
 } from "@/components/meermarathon/UitslagenMeermarathonWeergave";
 import { useAuth } from "@/hooks/useAuth";
-import { useGameStandings, useStages } from "@/hooks/useResults";
+import { useEntries, useGameStandings, useStagePointsForEntries, useStages } from "@/hooks/useResults";
 import { useMeermarathonSeizoen } from "@/hooks/useMeermarathonSeizoen";
 import { meermarathonCategorieLabel, meermarathonStageLabel } from "@/lib/gameTypes";
+import { bouwWedstrijdBalk } from "@/lib/meermarathonBalk";
 import { bouwKalender } from "@/lib/meermarathonKalender";
 import { heeftEerdereUitslag, laatsteGoedgekeurdeWedstrijd } from "@/lib/meermarathonKlassement";
 import { mmDag } from "@/lib/meermarathonSeizoen";
@@ -49,7 +52,28 @@ export default function UitslagenMeermarathon({
   const stagesQ = useStages(gameId);
   const stages = useMemo(() => stagesQ.data ?? [], [stagesQ.data]);
   const laatste = useMemo(() => laatsteGoedgekeurdeWedstrijd(stages), [stages]);
-  const standQ = useGameStandings(gameId, laatste?.stage_number, false);
+
+  // Na welke wedstrijd het klassement staat: de laatste gereden, of een
+  // eerdere die je in de balk kiest. Een ander peloton begint weer bij de
+  // laatste.
+  const [gekozenNr, setGekozenNr] = useState<number | null>(null);
+  useEffect(() => setGekozenNr(null), [gameId]);
+  const telTot = useMemo(
+    () =>
+      stages.find((s) => !s.is_gc && s.results_status === "approved" && s.stage_number === gekozenNr) ?? laatste,
+    [stages, gekozenNr, laatste],
+  );
+  const standQ = useGameStandings(gameId, telTot?.stage_number, false);
+
+  // Jouw punten per wedstrijd: de hoogte van de balken.
+  const { data: entries = [] } = useEntries(gameId);
+  const mijnEntry = useMemo(() => entries.find((e) => e.user_id === user?.id) ?? null, [entries, user?.id]);
+  const { data: mijnPunten = [] } = useStagePointsForEntries(gameId, mijnEntry ? [mijnEntry.id] : []);
+  const balk = useMemo(() => {
+    const perStage = new Map<string, number>();
+    mijnPunten.forEach((r) => perStage.set(r.stage_id, (perStage.get(r.stage_id) ?? 0) + r.points));
+    return bouwWedstrijdBalk(stages, perStage, { heeftPloeg: Boolean(mijnEntry), totaal: mijnEntry?.total_points });
+  }, [stages, mijnPunten, mijnEntry]);
 
   const { statussen, isLoading: seizoenLaadt } = useMeermarathonSeizoen();
   const status = statussen.find((s) => s.game.id === gameId) ?? null;
@@ -63,7 +87,7 @@ export default function UitslagenMeermarathon({
     // query uit, en dan zou een lege tabel even "geen ploegen" suggereren.
     if (stagesQ.isPending) return { soort: "laden" };
     if (stagesQ.isError) return { soort: "fout" };
-    if (!laatste) {
+    if (!laatste || !telTot) {
       const volgende = status?.volgende ?? null;
       return {
         soort: "leeg",
@@ -76,11 +100,11 @@ export default function UitslagenMeermarathon({
     if (standQ.isError) return { soort: "fout" };
     return {
       soort: "stand",
-      wedstrijdLabel: meermarathonStageLabel(laatste),
+      wedstrijdLabel: meermarathonStageLabel(telTot),
       rijen: standQ.data,
-      metBeweging: heeftEerdereUitslag(stages, laatste.stage_number),
+      metBeweging: heeftEerdereUitslag(stages, telTot.stage_number),
     };
-  }, [stagesQ.isPending, stagesQ.isError, laatste, status, standQ.isPending, standQ.isError, standQ.data, stages]);
+  }, [stagesQ.isPending, stagesQ.isError, laatste, telTot, status, standQ.isPending, standQ.isError, standQ.data, stages]);
 
   return (
     <UitslagenMeermarathonWeergave
@@ -90,6 +114,22 @@ export default function UitslagenMeermarathon({
       kalender={kalender}
       segment={segment}
       onSegment={setSegment}
+      balk={
+        balk.wedstrijden.length > 0 ? (
+          <WedstrijdBalk
+            wedstrijden={balk.wedstrijden}
+            totaal={balk.totaal}
+            gekozenId={telTot?.id ?? null}
+            onKies={(id) => {
+              const s = stages.find((x) => x.id === id);
+              if (s?.results_status === "approved") setGekozenNr(s.stage_number);
+            }}
+            kiesbaar={(w) => w.gereden}
+            titel="Tussenstand selecteren"
+            ondertitel={gameName}
+          />
+        ) : null
+      }
       perWedstrijd={
         <ResultsView
           showHeader={false}

@@ -621,6 +621,7 @@
       "selectStandingTitle": "TUSSENSTAND SELECTEREN",
       "throughStage": "T/m rit {{stage}}",
       "throughStageNamed": "T/m rit {{stage}} — {{name}}",
+      "throughStage_mm": "T/m {{stage}}",
       "pickStage": "Kies een rit",
       "addWoonplaats": "Woonplaats toevoegen — doe mee aan het streekklassement:",
       "saving": "Opslaan…",
@@ -824,6 +825,7 @@
       "stageResultTitle": "Etappe-uitslag",
       "stageResultEmpty": "Nog geen uitslag voor deze rit.",
       "mmBarTitle": "Uitslag per wedstrijd",
+      "mmEtappesTab": "Per wedstrijd",
       "mmStagesLoading": "Wedstrijden laden...",
       "mmNoStages": "Er staan nog geen wedstrijden op de kalender.",
       "mmStageStandingsTitle": "Stand van deze wedstrijd",
@@ -856,11 +858,17 @@
       "points": "Punten",
       "mountain": "Berg",
       "youth": "Jongeren",
+      "title_mm": "Klassementen schaatsers",
+      "subtitle_mm": "Stand na de laatst geüploade wedstrijd",
+      "selectStage_mm": "Kies een wedstrijd om de klassementen te zien.",
+      "youth_mm": "Witte trui",
       "empty": {
         "gc": "Nog geen algemeen klassement ingevuld voor deze rit.",
         "points": "Nog geen puntenklassement ingevuld voor deze rit.",
         "kom": "Nog geen bergklassement ingevuld voor deze rit.",
-        "youth": "Nog geen jongerenklassement ingevuld voor deze rit."
+        "youth": "Nog geen jongerenklassement ingevuld voor deze rit.",
+        "gc_mm": "Nog geen algemeen klassement ingevuld voor deze wedstrijd.",
+        "youth_mm": "Nog geen stand voor de witte trui ingevuld voor deze wedstrijd."
       }
     },
     "gc": {

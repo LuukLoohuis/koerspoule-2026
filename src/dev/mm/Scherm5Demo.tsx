@@ -10,6 +10,8 @@ import UitslagenMeermarathonWeergave, {
   type KlassementStand,
   type UitslagenSegment,
 } from "@/components/meermarathon/UitslagenMeermarathonWeergave";
+import WedstrijdBalk from "@/components/meermarathon/WedstrijdBalk";
+import { bouwWedstrijdBalk, type BalkBron } from "@/lib/meermarathonBalk";
 import { cn } from "@/lib/utils";
 import type { KalenderRij } from "@/lib/meermarathonKalender";
 import type { MmStandRij } from "@/lib/meermarathonKlassement";
@@ -84,6 +86,44 @@ const KALENDER_MET_PUNTEN = kalender([54, 38], 2);
 const KALENDER_ZONDER_PUNTEN = kalender([], 2);
 const KALENDER_VOOR_START = kalender([], 0);
 
+// ── Balk boven het klassement: kies de tussenstand ────────────────────────
+
+type BalkDemo = { gereden: number; scores: number[]; heeftPloeg?: boolean };
+
+function demoWedstrijden(gereden: number): BalkBron[] {
+  return KALENDER_BASIS.map((r, i) => ({
+    id: `w${i + 1}`,
+    stage_number: i + 1,
+    name: null,
+    date: r.date,
+    is_gc: false,
+    results_status: i < gereden ? "approved" : null,
+    wedstrijd_type: r.soort,
+    ijs_type: r.soort === "grandprix" || r.soort === "onk" ? "natuurijs" : "kunstijs",
+  }));
+}
+
+/** Alleen de gereden wedstrijden zijn te kiezen; het klassement hieronder is nep en wisselt niet mee. */
+function DemoBalk({ gereden, scores, heeftPloeg = true, ondertitel }: BalkDemo & { ondertitel: string }) {
+  const [gekozen, setGekozen] = useState<string | null>(gereden > 0 ? `w${gereden}` : null);
+  const { wedstrijden, totaal } = bouwWedstrijdBalk(
+    demoWedstrijden(gereden),
+    new Map(scores.map((p, i) => [`w${i + 1}`, p])),
+    { heeftPloeg },
+  );
+  return (
+    <WedstrijdBalk
+      wedstrijden={wedstrijden}
+      totaal={totaal}
+      gekozenId={gekozen}
+      onKies={setGekozen}
+      kiesbaar={(w) => w.gereden}
+      titel="Tussenstand selecteren"
+      ondertitel={ondertitel}
+    />
+  );
+}
+
 // ── Kaders ────────────────────────────────────────────────────────────────
 
 function PerWedstrijdPlaatshouder() {
@@ -103,6 +143,7 @@ function Voorbeeld({
   kalender: rijen,
   eigenUserId = IK,
   start = "klassement",
+  balk,
 }: {
   titel: string;
   breed?: boolean;
@@ -113,6 +154,7 @@ function Voorbeeld({
   kalender: KalenderRij[] | null;
   eigenUserId?: string | null;
   start?: UitslagenSegment;
+  balk?: BalkDemo;
 }) {
   const [segment, setSegment] = useState<UitslagenSegment>(start);
   return (
@@ -133,6 +175,7 @@ function Voorbeeld({
             segment={segment}
             onSegment={setSegment}
             perWedstrijd={<PerWedstrijdPlaatshouder />}
+            balk={balk && <DemoBalk {...balk} ondertitel={`Meermarathon ${categorieLabel ?? ""} 2026-2027`} />}
           />
         </div>
       </div>
@@ -144,12 +187,13 @@ export default function Scherm5Demo() {
   return (
     <div className="space-y-10">
       <div className="flex flex-wrap items-start gap-6">
-        <Voorbeeld titel="Mobiel · jij op 12 (05a)" stand={STAND_12} kalender={KALENDER_MET_PUNTEN} />
+        <Voorbeeld titel="Mobiel · jij op 12 (05a)" stand={STAND_12} kalender={KALENDER_MET_PUNTEN} balk={{ gereden: 2, scores: [54, 38] }} />
         <Voorbeeld
           titel="Mobiel · Mannen, jij aan de leiding na de eerste wedstrijd (geen ▲)"
           categorieLabel="Mannen"
           stand={STAND_LEIDER_NA_1}
           kalender={kalender([61], 1)}
+          balk={{ gereden: 1, scores: [61] }}
         />
         <Voorbeeld titel="Mobiel · gezakt, jij vlak onder de top" stand={STAND_ZAKKER} kalender={KALENDER_MET_PUNTEN} />
         <Voorbeeld
@@ -157,11 +201,13 @@ export default function Scherm5Demo() {
           stand={STAND_BUITEN}
           eigenUserId={null}
           kalender={KALENDER_ZONDER_PUNTEN}
+          balk={{ gereden: 2, scores: [], heeftPloeg: false }}
         />
         <Voorbeeld
           titel="Mobiel · nog geen uitslag"
           stand={{ soort: "leeg", volgende: { label: "Cup 1", dag: "za 31 okt" } }}
           kalender={KALENDER_VOOR_START}
+          balk={{ gereden: 0, scores: [] }}
         />
         <Voorbeeld titel="Mobiel · laden" stand={{ soort: "laden" }} kalender={null} />
         <Voorbeeld titel="Mobiel · fout bij laden" stand={{ soort: "fout" }} kalender={KALENDER_MET_PUNTEN} />
@@ -169,18 +215,20 @@ export default function Scherm5Demo() {
         <Voorbeeld titel="Mobiel · segment Per wedstrijd" stand={STAND_12} kalender={KALENDER_MET_PUNTEN} start="wedstrijd" />
       </div>
 
-      <Voorbeeld titel="Desktop · jij op 12 (05b)" breed stand={STAND_12} kalender={KALENDER_MET_PUNTEN} />
+      <Voorbeeld titel="Desktop · jij op 12 (05b)" breed stand={STAND_12} kalender={KALENDER_MET_PUNTEN} balk={{ gereden: 2, scores: [54, 38] }} />
       <Voorbeeld
         titel="Desktop naast de zijkolom (±736px): kalender onder het klassement"
         smal
         stand={STAND_12}
         kalender={KALENDER_MET_PUNTEN}
+        balk={{ gereden: 2, scores: [54, 38] }}
       />
       <Voorbeeld
         titel="Desktop · nog geen uitslag"
         breed
         stand={{ soort: "leeg", volgende: { label: "Cup 1", dag: "za 31 okt" } }}
         kalender={KALENDER_VOOR_START}
+        balk={{ gereden: 0, scores: [] }}
       />
       <Voorbeeld titel="Desktop · segment Kalender" breed stand={STAND_12} kalender={KALENDER_MET_PUNTEN} start="kalender" />
     </div>

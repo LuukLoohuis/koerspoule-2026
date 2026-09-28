@@ -8,7 +8,7 @@ import { useAllGames } from "@/hooks/useAllGames";
 import { resultsHiddenForUsers } from "@/lib/gameStatus";
 import { pseudoniem } from "@/lib/horsDemo";
 import { deriveThemaKey } from "@/lib/themas";
-import { KoersThemaProvider } from "@/contexts/KoersThemaContext";
+import { KoersThemaProvider, useKoersThema } from "@/contexts/KoersThemaContext";
 import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
 import { useStages, useStageResults, useStagePointsForEntries, useMyStageRanks, useEntries, useGameStandings, type StageRow, type EntryStanding } from "@/hooks/useResults";
 import { usePointsSchema } from "@/hooks/usePointsSchema";
@@ -346,7 +346,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
           onChange={(v) => setView(v as "etappes" | "klassement")}
           tabs={[
             { key: "klassement", label: t("results.view.klassementTab"), Icon: Trophy },
-            { key: "etappes",    label: t("results.view.etappesTab"),    Icon: ClipboardList },
+            { key: "etappes",    label: t(isMeermarathon ? "results.view.mmEtappesTab" : "results.view.etappesTab"), Icon: ClipboardList },
           ]}
         />
         {/* Mobiel — bestaande swipe/auto-hide tabbalk (ongewijzigd). */}
@@ -370,7 +370,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
             className="flex items-center justify-center gap-1.5 rounded-lg px-3 min-h-[44px] text-xs font-semibold uppercase tracking-wider transition-colors flex-1 text-muted-foreground hover:text-foreground hover:bg-secondary/60 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs data-[state=active]:border data-[state=active]:border-foreground/10"
           >
             <ClipboardList className="h-3.5 w-3.5 shrink-0" />
-            <span>{t("results.view.etappesTab")}</span>
+            <span>{t(isMeermarathon ? "results.view.mmEtappesTab" : "results.view.etappesTab")}</span>
           </TabsTrigger>
         </TabsList>
         </div>
@@ -692,8 +692,26 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
 
         {/* ── KLASSEMENT TAB ── */}
         {k === "klassement" && (<>
+          {/* Meermarathon: dezelfde schaatsbalk als onder Per wedstrijd; hier
+              kies je na welke wedstrijd het klassement staat. */}
+          {stages.length > 0 && isMeermarathon && (
+            <WedstrijdBalk
+              className="mt-2 mb-4"
+              wedstrijden={wedstrijdBalk.wedstrijden}
+              totaal={wedstrijdBalk.totaal}
+              gekozenId={klassementStage?.id ?? null}
+              onKies={(id) => {
+                const idx = stages.findIndex((x) => x.id === id);
+                if (idx >= 0) setKlassementStageIdx(idx);
+              }}
+              kiesbaar={(w) => w.gereden}
+              titel={t("results.view.klassementBarTitle")}
+              ondertitel={gameName}
+            />
+          )}
+
           {/* Premium vertical bar selector — StageBar (PNG-asset variant) */}
-          {stages.length > 0 && (() => {
+          {stages.length > 0 && !isMeermarathon && (() => {
             const { data, gcTotal, selectedNumber } = buildStageBarData(
               stages,
               myPointsPerStage,
@@ -838,9 +856,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                         {/* Name + delta */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            {s.rank === 1 && (
-                              <TruiBadge type="algemeen" formaat="klein" className="shrink-0" />
-                            )}
+                            {s.rank === 1 && <PouleLeiderTeken meermarathon={isMeermarathon} />}
                             <span className={cn(
                               "font-sans text-sm truncate",
                               isMe ? "font-bold text-primary" : s.rank <= 3 ? "font-semibold" : "font-medium"
@@ -927,7 +943,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                 onClose={() => setCompareUserId(null)}
               />
             ) : (
-              <RaceClassifications stageId={klassementStage?.id} />
+              <RaceClassifications stageId={klassementStage?.id} meermarathon={isMeermarathon} />
             )}
           </div>
         </>)}
@@ -1137,9 +1153,27 @@ function useMyEntryRiders(entryId?: string, gameId?: string) {
   }).data;
 }
 
-function RaceClassifications({ stageId }: { stageId: string | undefined }) {
+/**
+ * Nummer 1 van de poule. Bij de wielerkoersen draagt die de leiderstrui; bij
+ * de Meermarathon horen de truien bij de schaatsers en krijgt de poulewinnaar
+ * de beker.
+ */
+function PouleLeiderTeken({ meermarathon }: { meermarathon: boolean }) {
+  const thema = useKoersThema();
+  if (meermarathon) {
+    return thema.beker ? (
+      <img src={thema.beker} alt={`Beker ${thema.koers}`} className="h-7 w-auto shrink-0 object-contain drop-shadow-xs" />
+    ) : null;
+  }
+  return <TruiBadge type="algemeen" formaat="klein" className="shrink-0" />;
+}
+
+function RaceClassifications({ stageId, meermarathon = false }: { stageId: string | undefined; meermarathon?: boolean }) {
   const { t } = useTranslation();
   const { data: results = [], isLoading } = useStageResults(stageId);
+  // Bij de schaatsers alleen het algemeen klassement (oranje leiderstrui) en
+  // de witte trui.
+  const context = meermarathon ? "mm" : undefined;
 
   const buildList = (key: "gc_position" | "points_position" | "mountain_position" | "youth_position") =>
     results
@@ -1147,28 +1181,29 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
       .sort((a, b) => (a[key] ?? 999) - (b[key] ?? 999))
       .slice(0, 20);
 
-  const tabs = [
+  const alleTabs = [
     { id: "gc", label: t("results.classifications.gc"), trui: "algemeen" as const, rows: buildList("gc_position") },
     { id: "points", label: t("results.classifications.points"), trui: "punten" as const, rows: buildList("points_position") },
     { id: "kom", label: t("results.classifications.mountain"), trui: "berg" as const, rows: buildList("mountain_position") },
-    { id: "youth", label: t("results.classifications.youth"), trui: "jongeren" as const, rows: buildList("youth_position") },
+    { id: "youth", label: t("results.classifications.youth", { context }), trui: "jongeren" as const, rows: buildList("youth_position") },
   ];
+  const tabs = meermarathon ? alleTabs.filter((tab) => tab.id === "gc" || tab.id === "youth") : alleTabs;
 
   return (
     <div className="retro-border bg-card">
       <div className="sticky top-0 z-20 p-4 border-b-2 border-foreground bg-secondary backdrop-blur-xs">
         <h2 className="heading-oswald text-xl flex items-center gap-2">
           <Medal className="h-5 w-5 text-accent" />
-          {t("results.classifications.title")}
+          {t("results.classifications.title", { context })}
         </h2>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {t("results.classifications.subtitle")}
+          {t("results.classifications.subtitle", { context })}
         </p>
       </div>
 
       {!stageId ? (
         <div className="p-4 text-sm text-muted-foreground italic text-center">
-          {t("results.classifications.selectStage")}
+          {t("results.classifications.selectStage", { context })}
         </div>
       ) : isLoading ? (
         <RowsSkeleton />
@@ -1190,7 +1225,7 @@ function RaceClassifications({ stageId }: { stageId: string | undefined }) {
             <TabsContent key={tab.id} value={tab.id} className="mt-0">
               {tab.rows.length === 0 ? (
                 <div className="p-4 text-sm text-muted-foreground italic text-center">
-                  {t(`results.classifications.empty.${tab.id}`)}
+                  {t(`results.classifications.empty.${tab.id}`, { context })}
                 </div>
               ) : (
                 <div className="divide-y divide-border max-h-[500px] overflow-y-auto">

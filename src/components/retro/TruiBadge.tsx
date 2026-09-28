@@ -13,6 +13,8 @@ import truiVueltaAlgemeen from "@/assets/trui-vuelta-algemeen.png";
 import truiVueltaPunten from "@/assets/trui-vuelta-punten.png";
 import truiVueltaBerg from "@/assets/trui-vuelta-berg.png";
 import truiVueltaJongeren from "@/assets/trui-vuelta-jongeren.png";
+import truiMeermarathonAlgemeen from "@/assets/trui-meermarathon-algemeen.png";
+import truiMeermarathonWit from "@/assets/trui-meermarathon-wit.png";
 
 const FORMATEN = {
   klein: { w: 20, h: 28 },
@@ -25,8 +27,10 @@ const FORMATEN = {
  *  - geel (Tour):   LCL / Škoda / Leclerc / Krys
  *  - roze (Giro):   IUMAN / madeinitaly / Mediolanum (blauw) / Mediolanum (wit)
  *  - rood (Vuelta): Carrefour / Škoda / Carrefour (bolletjes) / plenitude
+ *  - winter (Meermarathon): oranje leiderstrui / witte trui; de schaatsers
+ *    rijden geen punten- of bergklassement, die vallen terug op het silhouet
  */
-const TRUI_IMG: Partial<Record<string, Record<TruiType, string>>> = {
+const TRUI_IMG: Partial<Record<string, Partial<Record<TruiType, string>>>> = {
   geel: {
     algemeen: truiTourAlgemeen,
     punten: truiTourPunten,
@@ -44,6 +48,10 @@ const TRUI_IMG: Partial<Record<string, Record<TruiType, string>>> = {
     punten: truiVueltaPunten,
     berg: truiVueltaBerg,
     jongeren: truiVueltaJongeren,
+  },
+  winter: {
+    algemeen: truiMeermarathonAlgemeen,
+    jongeren: truiMeermarathonWit,
   },
 };
 

@@ -22,6 +22,10 @@ import TeamComparison from "@/components/TeamComparison";
 import SubpouleEvolutionChart from "@/components/SubpouleEvolutionChart";
 import StageBar from "@/components/stages/StageBar";
 import { buildStageBarData } from "@/components/stages/stageBarData";
+import WedstrijdBalk from "@/components/meermarathon/WedstrijdBalk";
+import { bouwWedstrijdBalk } from "@/lib/meermarathonBalk";
+import { isMeermarathonGame, meermarathonStageLabel } from "@/lib/gameTypes";
+import { useAllGames } from "@/hooks/useAllGames";
 import { StandingsSkeleton } from "@/components/skeletons/SubpouleSkeletons";
 import { cn } from "@/lib/utils";
 import { dagrangVan, metGedeeldeRang, rangVan } from "@/lib/rang";
@@ -58,6 +62,11 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   // die i.p.v. de huidige live game, anders laden we de verkeerde entries/punten
   // en staat alles op 0 / "geen team".
   const game = gameId ? { id: gameId, status: gameStatus } : curGame;
+  // De Meermarathon rijdt wedstrijden, geen ritten: eigen balk, eigen woorden.
+  const { data: alleGames = [] } = useAllGames();
+  const isMeermarathon = isMeermarathonGame(
+    gameId ? alleGames.find((g) => g.id === gameId)?.game_type : curGame?.game_type,
+  );
   // Resultaten-inhoud (dus ook de benchmark) is verborgen tot 'live'; een admin
   // met testmodus mag hem tijdens open_inschrijving al zien (proefdraaien).
   const maySeeLive = maySeeLiveContent(game?.status, isAdmin, adminTestmodus);
@@ -152,6 +161,17 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
     });
     return res;
   }, [myEntry, stagePoints, stages]);
+
+  // Meermarathon: de schaatsbalk, met dezelfde subpoule-hoogtes als de
+  // etappebalk. Een wedstrijd die nog komt blijft een stippellijn.
+  const wedstrijdBalk = useMemo(() => {
+    const balk = bouwWedstrijdBalk(stages, myPointsPerStage, { heeftPloeg: Boolean(myEntry), totaal: myEntry?.total_points });
+    if (!myEntry) return balk;
+    return {
+      ...balk,
+      wedstrijden: balk.wedstrijden.map((w) => (w.fractie == null ? w : { ...w, fractie: barFractionByStageId.get(w.id) ?? 0 })),
+    };
+  }, [stages, myPointsPerStage, myEntry, barFractionByStageId]);
 
   // Cumulative points up to a given stage index
   const cumUpTo = (upToIdx: number) => {
@@ -334,8 +354,25 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   return (
     <div className="space-y-4">
 
+      {/* Meermarathon: dezelfde schaatsbalk als bij de Uitslagen; hier kies je
+          na welke wedstrijd de stand staat. */}
+      {stages.length > 0 && isMeermarathon && (
+        <WedstrijdBalk
+          wedstrijden={wedstrijdBalk.wedstrijden}
+          totaal={wedstrijdBalk.totaal}
+          gekozenId={selectedEtappe?.id ?? null}
+          onKies={(id) => {
+            const idx = stages.findIndex((x) => x.id === id);
+            if (idx >= 0) setEtappeIdx(idx);
+          }}
+          kiesbaar={(w) => w.gereden}
+          titel={t("subpoule.standings.selectStandingTitle")}
+          ondertitel={subpouleName}
+        />
+      )}
+
       {/* Stage selector — identieke etappe-bar als de Uitslagen-tab. */}
-      {stages.length > 0 && (() => {
+      {stages.length > 0 && !isMeermarathon && (() => {
         const { data, gcTotal, selectedNumber } = buildStageBarData(
           stages,
           myPointsPerStage,
@@ -395,7 +432,9 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           </h2>
           {selectedEtappe && (
             <span className="text-[11px] text-muted-foreground font-mono uppercase tracking-wider">
-              {selectedEtappe.name
+              {isMeermarathon
+                ? t("subpoule.standings.throughStage", { context: "mm", stage: meermarathonStageLabel(selectedEtappe) })
+                : selectedEtappe.name
                 ? t("subpoule.standings.throughStageNamed", { stage: selectedEtappe.stage_number, name: selectedEtappe.name })
                 : t("subpoule.standings.throughStage", { stage: selectedEtappe.stage_number })}
             </span>

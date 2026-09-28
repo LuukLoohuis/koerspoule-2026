@@ -64,6 +64,7 @@ export default function UitslagenMeermarathonWeergave({
   segment,
   onSegment,
   perWedstrijd,
+  balk,
   className,
 }: {
   /** "Vrouwen" of "Mannen"; null voor een game zonder categorie. */
@@ -76,6 +77,8 @@ export default function UitslagenMeermarathonWeergave({
   onSegment: (segment: UitslagenSegment) => void;
   /** De uitslag per wedstrijd; wordt pas gemount als dat segment open staat. */
   perWedstrijd: ReactNode;
+  /** De uitslagenbalk boven het klassement: kies na welke wedstrijd de stand staat. */
+  balk?: ReactNode;
   className?: string;
 }) {
   const actief = SEGMENTEN.find((s) => s.key === segment) ?? SEGMENTEN[0];
@@ -94,12 +97,15 @@ export default function UitslagenMeermarathonWeergave({
       />
       <div role="tabpanel" aria-label={actief.label}>
         {actief.key === "klassement" && (
-          <div
-            data-eigen-typografie
-            className="grid gap-8 font-inter @4xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] @4xl:items-start @4xl:gap-9"
-          >
-            <KlassementBlok categorieLabel={categorieLabel} stand={stand} eigenUserId={eigenUserId} />
-            <KalenderBlok rijen={kalender} kaartVanaf="4xl" />
+          <div className="grid gap-5 @2xl:gap-6">
+            {balk}
+            <div
+              data-eigen-typografie
+              className="grid gap-8 font-inter @4xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] @4xl:items-start @4xl:gap-9"
+            >
+              <KlassementBlok categorieLabel={categorieLabel} stand={stand} eigenUserId={eigenUserId} />
+              <KalenderBlok rijen={kalender} kaartVanaf="4xl" />
+            </div>
           </div>
         )}
         {actief.key === "kalender" && (

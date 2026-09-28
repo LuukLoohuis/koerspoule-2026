@@ -4,6 +4,12 @@
  * De tegenhanger van de etappebalk bij de wielerkoersen, maar zonder
  * kilometers of terrein: die kent het schaatsen niet.
  *
+ * Achter de balken staat een schaatsfoto (assets/meermarathon-balk.*). De
+ * inhoud krijgt dan de nachtkleuren (.mm-balk-foto in
+ * styles/meermarathon-thema.css): lichte tekst op de gedimde foto, in licht
+ * én nacht leesbaar. Zonder foto blijft het de lichte kaart met de ijsbaan
+ * als watermerk.
+ *
  * Alleen weergave; bouwWedstrijdBalk (lib/meermarathonBalk) maakt de rijen.
  * Schakelt op zijn eigen breedte: smal schuift de rij opzij, breed past alles.
  */
@@ -24,6 +30,20 @@ const EMBLEEM = 30;
 const VAK_H = MAX_H + EMBLEEM / 2 + 4;
 
 const GLANS = "shadow-[0_0_0_3px_hsl(var(--vintage-gold)/0.6),0_0_18px_hsl(var(--vintage-gold)/0.45)]";
+
+/** De foto is optioneel: zolang het bestand er niet is, blijft de lichte kaart. */
+const FOTO: string | null =
+  Object.values(
+    import.meta.glob("../../assets/meermarathon-balk.{webp,jpg,jpeg,png}", { eager: true, import: "default" }) as Record<string, string>,
+  )[0] ?? null;
+
+/**
+ * Dimlaag over de foto: bovenaan (kop en legenda) en onderaan (nummers en
+ * punten, op het witte ijs) het donkerst; in het midden, bij de lichtjes en de
+ * schaatsers, laat hij de foto het meest zien.
+ */
+const DIM =
+  "linear-gradient(180deg, rgb(9 17 31 / 0.86) 0%, rgb(9 17 31 / 0.64) 45%, rgb(9 17 31 / 0.78) 72%, rgb(9 17 31 / 0.9) 100%)";
 
 function capsule(kleur: string) {
   return {
@@ -52,19 +72,47 @@ function IJsbaan() {
   );
 }
 
-function Kolom({ w, gekozen, onKies }: { w: BalkWedstrijd; gekozen: boolean; onKies: (id: string) => void }) {
+/** De schaatsfoto met de dimlaag erover. */
+function Foto({ src }: { src: string }) {
+  return (
+    <>
+      <img
+        src={src}
+        alt=""
+        aria-hidden
+        decoding="async"
+        className="pointer-events-none absolute inset-0 size-full object-cover object-[50%_62%]"
+      />
+      <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: DIM }} />
+    </>
+  );
+}
+
+function Kolom({
+  w,
+  gekozen,
+  kiesbaar,
+  onKies,
+}: {
+  w: BalkWedstrijd;
+  gekozen: boolean;
+  kiesbaar: boolean;
+  onKies: (id: string) => void;
+}) {
   const hoogte = w.fractie == null ? LEEG_H : Math.max(MIN_H, Math.round(w.fractie * MAX_H));
   return (
     <button
       type="button"
       data-wedstrijd={w.id}
       aria-pressed={gekozen}
+      aria-disabled={kiesbaar ? undefined : true}
       aria-label={`${w.label}, ${w.date ? mmDag(w.date) : "datum volgt"}, ${puntenTekst(w)}`}
-      onClick={() => onKies(w.id)}
+      onClick={kiesbaar ? () => onKies(w.id) : undefined}
       className={cn(
         "group flex w-10 shrink-0 snap-center flex-col items-center rounded-md outline-hidden",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
         "@2xl:w-auto @2xl:min-w-0 @2xl:max-w-[76px] @2xl:flex-1",
+        !kiesbaar && "cursor-default",
       )}
     >
       <span className="flex w-full items-end justify-center" style={{ height: VAK_H }}>
@@ -79,7 +127,14 @@ function Kolom({ w, gekozen, onKies }: { w: BalkWedstrijd; gekozen: boolean; onK
             className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2"
           />
           {w.fractie == null ? (
-            <span className="block h-full w-full rounded-full border-[1.5px] border-dashed border-foreground/30 bg-foreground/[0.03] group-hover:border-foreground/50" />
+            <span
+              className={cn(
+                "block h-full w-full rounded-full border-[1.5px] border-dashed",
+                // Op de foto een donkere vulling, anders verdwijnt de stippellijn tussen de schaatsers.
+                FOTO ? "border-foreground/55 bg-card/50" : "border-foreground/30 bg-foreground/[0.03]",
+                kiesbaar && (FOTO ? "group-hover:border-foreground/80" : "group-hover:border-foreground/50"),
+              )}
+            />
           ) : (
             <span className="block h-full w-full rounded-full border-[1.5px]" style={capsule(WEDSTRIJD_SOORT[w.soort].kleur)} />
           )}
@@ -147,6 +202,7 @@ export default function WedstrijdBalk({
   totaal,
   gekozenId,
   onKies,
+  kiesbaar,
   onKiesTotaal,
   titel = "Uitslag per wedstrijd",
   ondertitel,
@@ -157,6 +213,12 @@ export default function WedstrijdBalk({
   totaal: number | null;
   gekozenId: string | null;
   onKies: (id: string) => void;
+  /**
+   * Welke wedstrijden je kunt kiezen; zonder zijn het ze allemaal. Het
+   * klassement kiest alleen gereden wedstrijden: na een wedstrijd die nog
+   * komt, is er nog geen tussenstand.
+   */
+  kiesbaar?: (w: BalkWedstrijd) => boolean;
   /** Tik op "Totaal": naar het klassement. Zonder is het alleen een getal. */
   onKiesTotaal?: () => void;
   titel?: string;
@@ -179,64 +241,79 @@ export default function WedstrijdBalk({
 
   return (
     <section data-eigen-typografie aria-label={titel} className={cn("@container font-inter", className)}>
-      <div className="retro-border no-hover-lift relative overflow-hidden bg-card px-3.5 pb-3.5 pt-3 text-card-foreground @2xl:px-5 @2xl:pb-4 @2xl:pt-4">
-        <IJsbaan />
+      {/* De rand en de schaduw volgen het sitethema; alleen de inhoud op de
+          foto krijgt de nachtkleuren. */}
+      <div className="retro-border no-hover-lift relative overflow-hidden bg-card">
+        {FOTO ? <Foto src={FOTO} /> : <IJsbaan />}
 
-        <header className="relative flex flex-col gap-2.5 @2xl:flex-row @2xl:items-start @2xl:justify-between @2xl:gap-6">
-          <div className="min-w-0">
-            <h3 className="heading-oswald m-0 text-lg @2xl:text-xl">{titel}</h3>
-            {ondertitel && <p className="m-0 text-[13px] text-muted-foreground @2xl:text-sm">{ondertitel}</p>}
-          </div>
-          <ul aria-label="Soorten wedstrijden" className="m-0 flex list-none flex-wrap gap-x-3.5 gap-y-1.5 p-0">
-            {soorten.map((s) => (
-              <li key={s.soort}>
-                <SoortLabel soort={s.soort} aantal={s.aantal} />
-              </li>
-            ))}
-          </ul>
-        </header>
+        <div
+          className={cn(
+            "relative px-3.5 pb-3.5 pt-3 text-card-foreground @2xl:px-5 @2xl:pb-4 @2xl:pt-4",
+            FOTO && "mm-balk-foto",
+          )}
+        >
+          <header className="relative flex flex-col gap-2.5 @2xl:flex-row @2xl:items-start @2xl:justify-between @2xl:gap-6">
+            <div className="min-w-0">
+              <h3 className="heading-oswald m-0 text-lg @2xl:text-xl">{titel}</h3>
+              {ondertitel && <p className="m-0 text-[13px] text-muted-foreground @2xl:text-sm">{ondertitel}</p>}
+            </div>
+            <ul aria-label="Soorten wedstrijden" className="m-0 flex list-none flex-wrap gap-x-3.5 gap-y-1.5 p-0">
+              {soorten.map((s) => (
+                <li key={s.soort}>
+                  <SoortLabel soort={s.soort} aantal={s.aantal} />
+                </li>
+              ))}
+            </ul>
+          </header>
 
-        {gekozen && (
-          <p
-            role="status"
-            className="relative m-0 mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-lg bg-secondary px-3 py-2 text-sm leading-snug"
-          >
-            <SoortEmbleem soort={gekozen.soort} maat={22} />
-            <strong className="font-bold">{gekozen.label}</strong>
-            <span className="text-muted-foreground">
-              {gekozen.date ? mmDag(gekozen.date) : "datum volgt"} · {WEDSTRIJD_SOORT[gekozen.soort].ondergrond}
-            </span>
-            <span className={cn("ml-auto tabular-nums", gekozen.punten != null ? "font-bold" : "text-muted-foreground")}>
-              {puntenTekst(gekozen)}
-            </span>
-          </p>
-        )}
+          {gekozen && (
+            <p
+              role="status"
+              className="relative m-0 mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-lg bg-secondary px-3 py-2 text-sm leading-snug"
+            >
+              <SoortEmbleem soort={gekozen.soort} maat={22} />
+              <strong className="font-bold">{gekozen.label}</strong>
+              <span className="text-muted-foreground">
+                {gekozen.date ? mmDag(gekozen.date) : "datum volgt"} · {WEDSTRIJD_SOORT[gekozen.soort].ondergrond}
+              </span>
+              <span className={cn("ml-auto tabular-nums", gekozen.punten != null ? "font-bold" : "text-muted-foreground")}>
+                {puntenTekst(gekozen)}
+              </span>
+            </p>
+          )}
 
-        <div className="relative mt-2 flex items-end gap-2 @2xl:gap-3.5">
-          <div aria-hidden className="hidden shrink-0 flex-col justify-end pb-px text-right @2xl:flex">
-            <span className="text-[10px] font-bold uppercase leading-[19px] tracking-[0.14em] text-muted-foreground">Wedstrijd</span>
-            <span className="mt-1.5 text-[10px] font-bold uppercase leading-5 tracking-[0.14em] text-muted-foreground">Punten</span>
-          </div>
+          <div className="relative mt-2 flex items-end gap-2 @2xl:gap-3.5">
+            <div aria-hidden className="hidden shrink-0 flex-col justify-end pb-px text-right @2xl:flex">
+              <span className="text-[10px] font-bold uppercase leading-[19px] tracking-[0.14em] text-muted-foreground">Wedstrijd</span>
+              <span className="mt-1.5 text-[10px] font-bold uppercase leading-5 tracking-[0.14em] text-muted-foreground">Punten</span>
+            </div>
 
-          <div
-            ref={baan}
-            role="group"
-            aria-label="Kies een wedstrijd"
-            className={cn(
-              "flex min-w-0 flex-1 snap-x snap-mandatory items-end gap-2 overflow-x-auto pb-1 pl-1.5 pr-6",
-              "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-              // Smal: de rij loopt rechts uit beeld; de vervaging zegt dat er meer komt.
-              "[mask-image:linear-gradient(to_right,black_calc(100%-22px),transparent)]",
-              "@2xl:snap-none @2xl:justify-center @2xl:gap-1 @2xl:overflow-visible @2xl:px-1.5 @2xl:[mask-image:none]",
-            )}
-          >
-            {wedstrijden.map((w) => (
-              <Kolom key={w.id} w={w} gekozen={w.id === gekozenId} onKies={onKies} />
-            ))}
-          </div>
+            <div
+              ref={baan}
+              role="group"
+              aria-label="Kies een wedstrijd"
+              className={cn(
+                "flex min-w-0 flex-1 snap-x snap-mandatory items-end gap-2 overflow-x-auto pb-1 pl-1.5 pr-6",
+                "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+                // Smal: de rij loopt rechts uit beeld; de vervaging zegt dat er meer komt.
+                "[mask-image:linear-gradient(to_right,black_calc(100%-22px),transparent)]",
+                "@2xl:snap-none @2xl:justify-center @2xl:gap-1 @2xl:overflow-visible @2xl:px-1.5 @2xl:[mask-image:none]",
+              )}
+            >
+              {wedstrijden.map((w) => (
+                <Kolom
+                  key={w.id}
+                  w={w}
+                  gekozen={w.id === gekozenId}
+                  kiesbaar={kiesbaar ? kiesbaar(w) : true}
+                  onKies={onKies}
+                />
+              ))}
+            </div>
 
-          <div className="pb-1">
-            <Totaal totaal={totaal} onKies={onKiesTotaal} />
+            <div className="pb-1">
+              <Totaal totaal={totaal} onKies={onKiesTotaal} />
+            </div>
           </div>
         </div>
       </div>

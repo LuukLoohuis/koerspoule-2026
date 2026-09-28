@@ -62,7 +62,7 @@ const BEKER_GLOB = import.meta.glob("../assets/beker-*.png", {
   eager: true,
   import: "default",
 }) as Record<string, string>;
-function bekerVoor(segment: "giro" | "tour" | "vuelta"): string | null {
+function bekerVoor(segment: "giro" | "tour" | "vuelta" | "meermarathon"): string | null {
   return BEKER_GLOB[`../assets/beker-${segment}.png`] ?? null;
 }
 
@@ -181,7 +181,10 @@ export const THEMAS: Record<ThemaKey, Thema> = {
     homepage_subtitel: "Iedere ronde telt",
     login_welkom: "Welkom terug!",
     login_meedoen: "Doe mee met het winterklassement!",
-    beker: null,
+    // De winnaar van de poule krijgt de beker; de truien horen bij de
+    // schaatsers. Zolang er geen eigen beker-meermarathon.png is, dezelfde
+    // Trofeo als de Giro (keuze user, 2026-09-28).
+    beker: bekerVoor("meermarathon") ?? bekerVoor("giro"),
     quotes: [
       "Op het ijs telt iedere ronde.",
       "Van kunstijs tot natuurijs: één winterklassement.",
@@ -189,11 +192,14 @@ export const THEMAS: Record<ThemaKey, Thema> = {
       "Samen sterk in de kopgroep.",
       "De winter is lang, de strijd blijft spannend.",
     ],
+    // Bij de schaatsers alleen twee truien (user, 2026-09-28): de oranje
+    // leiderstrui van het algemeen klassement en de witte trui. Een punten- en
+    // bergklassement komen in de uitslagen van de Meermarathon niet voor.
     truien: {
-      algemeen: { naam: "Winterleider", kleur: "#14538E", patroon: "effen" },
+      algemeen: { naam: "Leiderstrui", kleur: "#F77A0B", patroon: "effen" },
       punten: { naam: "Sprintleider", kleur: "#4FA8D8", patroon: "effen" },
       berg: { naam: "Natuurijsleider", kleur: "#A9D7EF", patroon: "effen" },
-      jongeren: { naam: "Jongerenleider", kleur: "#FFFFFF", patroon: "effen", rand: "#4FA8D8" },
+      jongeren: { naam: "Witte trui", kleur: "#FFFFFF", patroon: "effen", rand: WIT_RAND },
     },
   },
 };
