@@ -762,6 +762,21 @@
       0 2px 0 rgba(58, 42, 26, 0.18);
     border-color: var(--ink-sepia);
   }
+  /* Meermarathon-pronostiek: in de kleur van de wedstrijdsoort (WedstrijdSoort.tsx). */
+  &[data-accent='cup'] {
+    box-shadow:
+      inset 0 0 0 3px var(--paper-light),
+      inset 0 0 0 4px var(--mm-s-cup),
+      0 2px 0 rgba(58, 42, 26, 0.18);
+    border-color: var(--mm-s-cup);
+  }
+  &[data-accent='grandprix'] {
+    box-shadow:
+      inset 0 0 0 3px var(--paper-light),
+      inset 0 0 0 4px var(--mm-s-gp),
+      0 2px 0 rgba(58, 42, 26, 0.18);
+    border-color: var(--mm-s-gp);
+  }
 }
 
 @utility vintage-laurel {

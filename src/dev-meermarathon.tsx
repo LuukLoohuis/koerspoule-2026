@@ -4,13 +4,14 @@
  * zodat de opmaak te beoordelen is zonder database of inlog.
  *
  * Draaien: npx vite  →  /dev-meermarathon.html  (?scherm=1..10 of ?scherm=6,7, ?modus=nacht)
+ * Scherm 2 (ploeg samenstellen) is weg: de Meermarathon gebruikt de gewone
+ * ploegbouwer. Die staat met nepdata in /dev-ploegbouwer.html.
  */
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Scherm1Demo from "@/dev/mm/Scherm1Demo";
-import Scherm2Demo from "@/dev/mm/Scherm2Demo";
 import Scherm3Demo from "@/dev/mm/Scherm3Demo";
 import Scherm4Demo from "@/dev/mm/Scherm4Demo";
 import Scherm5Demo from "@/dev/mm/Scherm5Demo";
@@ -27,7 +28,6 @@ import "./styles/meermarathon-thema.css";
 
 const SCHERMEN = [
   { key: "1", titel: "1 · Mijn Meermarathon", Demo: Scherm1Demo },
-  { key: "2", titel: "2 · Ploeg samenstellen", Demo: Scherm2Demo },
   { key: "3", titel: "3 · Volgwagen › Mijn ploeg", Demo: Scherm3Demo },
   { key: "4", titel: "4 · Volgwagen › Live", Demo: Scherm4Demo },
   { key: "5", titel: "5 · Uitslagen", Demo: Scherm5Demo },

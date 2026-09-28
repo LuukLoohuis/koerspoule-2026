@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,9 +11,9 @@ import SwipeCarousel from "@/components/SwipeCarousel";
 import SwipeHintBar from "@/components/SwipeHintBar";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
 import { useToast } from "@/hooks/use-toast";
-import { useCurrentGame } from "@/hooks/useCurrentGame";
+import { useCurrentGame, type Game } from "@/hooks/useCurrentGame";
 import { useCategories } from "@/hooks/useCategories";
-import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
+import { useEntry, entryErrorMessage, type Prediction } from "@/hooks/useEntry";
 import { useStartlist } from "@/hooks/useStartlist";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,12 +28,23 @@ import type { ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { captureEvent, captureException } from "@/lib/posthog";
 import { useSelectedGame } from "@/context/SelectedGameContext";
-import { isMeermarathonGame } from "@/lib/gameTypes";
-import PloegSamenstellenContainer from "@/components/meermarathon/PloegSamenstellenContainer";
+import { aantalJokers, isMeermarathonGame, meermarathonCategorieLabel } from "@/lib/gameTypes";
+import { teambouwerDoel } from "@/lib/teambouwerDoel";
+import MeermarathonPelotonbalk from "@/components/meermarathon/Pelotonbalk";
+import { SoortEmbleem } from "@/components/meermarathon/WedstrijdSoort";
 
 // Pick a thematic icon for each category based on its name/short_name
-function getCategoryIcon(name: string): ReactNode {
+function getCategoryIcon(name: string, meermarathon = false): ReactNode {
   const n = name.toLowerCase();
+  if (meermarathon) {
+    // Berg, tijdrit en kasseien zeggen een schaatser niets; een sprint of natuurijs wel.
+    if (/\bnl\b|nederland|dutch/.test(n)) return <FlagIcon country="NL" className="w-6 h-5" />;
+    if (/belg|belgië|belgie|belgium/.test(n)) return <FlagIcon country="BE" className="w-6 h-5" />;
+    if (/(sprint|spurt)/.test(n)) return "⚡";
+    if (/natuur/.test(n)) return "❄️";
+    if (/(top|favoriet|kop)/.test(n)) return "⭐";
+    return "⛸️";
+  }
   if (/(gc\s*alien|alien)/.test(n)) return "👽";
   if (/(baby\s*giro|baby)/.test(n)) return "👶";
   if (/\boud\b|veteraan|oldie/.test(n)) return "👴";
@@ -49,31 +60,71 @@ function getCategoryIcon(name: string): ReactNode {
 }
 
 /**
- * De Meermarathon heeft een eigen ploegbouwer (een plek per categorie, geen
- * voorspellingen). Hier alleen de splitsing; de wielerflow hieronder blijft
- * zoals hij was en draait zijn hooks nooit voor een schaatsgame.
+ * Eén ploegbouwer voor elke game. De Meermarathon wijkt op twee punten af:
+ * geen jokers (aantalJokers) en een eigen pronostiek, de eindwinnaars van het
+ * Cup- en het Grand Prix-klassement.
+ *
+ * Vrouwen en mannen zijn twee pelotons van één game. De pelotonbalk bovenaan
+ * kiest voor welk peloton je bouwt; allebei meedoen mag, maar hoeft niet.
  */
 export default function TeamBuilder() {
-  const { data: game, isLoading } = useCurrentGame({ preferRegistration: true });
-  const { selectedGame } = useSelectedGame();
-  if (game && isMeermarathonGame(game.game_type)) return <PloegSamenstellenContainer game={game} />;
-  // Tijdens het laden (bv. net na een wissel op de pelotonbalk) gokken we op de
-  // gekozen game, zodat je niet eerst de Ploegleiderswagen ziet flitsen.
-  if (isLoading && isMeermarathonGame(selectedGame?.game_type)) return <PloegSamenstellenContainer game={null} />;
-  return <WielerTeamBuilder />;
+  // Zodra een game op open_inschrijving staat, bouwt deze pagina altijd voor
+  // die game—ook als de deelnemer eerder een live of afgeronde koers bekeek.
+  const { data: huidig, isLoading } = useCurrentGame({ preferRegistration: true });
+  const { selectedGame, selectedGameId, setSelectedGameId } = useSelectedGame();
+  const [, setParams] = useSearchParams();
+  const doel = huidig && isMeermarathonGame(huidig.game_type)
+    ? teambouwerDoel(huidig, selectedGame, selectedGameId != null)
+    : null;
+
+  // Bouw je voor de Meermarathon terwijl er een andere koers gekozen staat, dan
+  // schuift de keuze mee (net als de pelotonbalk: in de context én als ?game=).
+  // Anders ontbreekt de pelotonbalk.
+  useEffect(() => {
+    if (doel?.soort !== "volg") return;
+    setSelectedGameId(doel.gameId);
+    setParams(
+      (p) => {
+        const next = new URLSearchParams(p);
+        next.set("game", doel.gameId);
+        return next;
+      },
+      { replace: true },
+    );
+    // setParams en setSelectedGameId zijn elke render nieuw; alleen de uitkomst telt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doel?.soort, doel?.gameId]);
+
+  // Een peloton waar de inschrijving (nog) niet open is, bekijk je gewoon: de
+  // bouwer zegt dan zelf dat inschrijven (nog) niet kan. Na een wissel op de
+  // pelotonbalk staat het gekozen peloton meteen in beeld, ook als de game nog laadt.
+  const mmGekozen = isMeermarathonGame(selectedGame?.game_type) ? (selectedGame as Game) : null;
+  const game = doel?.soort === "keuze-dicht" && mmGekozen ? mmGekozen : huidig ?? (isLoading ? mmGekozen : null);
+
+  return (
+    <div className="container mx-auto px-5 py-4 md:py-6 pb-32 md:pb-8">
+      {/* Niet plakkend: hier plakt de voortgang al. */}
+      {isMeermarathonGame(game?.game_type) && (
+        <MeermarathonPelotonbalk className="static mb-1 md:mx-auto md:mb-6 md:max-w-2xl" />
+      )}
+      {/* Per game een schone lei: anders loopt de pronostiek van de vrouwen mee naar de mannen. */}
+      <Ploegbouwer key={game?.id ?? "geen-game"} game={game ?? null} gameLoading={isLoading && !game} />
+    </div>
+  );
 }
 
-function WielerTeamBuilder() {
+function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: boolean }) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, role } = useAuth();
   const isAuthed = Boolean(user);
-  // Zodra een game op open_inschrijving staat, bouwt deze pagina altijd voor
-  // die game—ook als de deelnemer eerder een live of afgeronde koers bekeek.
-  const { data: game, isLoading: gameLoading } = useCurrentGame({ preferRegistration: true });
   const { data: profile } = useProfile();
   const isAdmin = role === "admin";
+  // Schaatsen: rijders in plaats van renners, en geen jokers.
+  const meermarathon = isMeermarathonGame(game?.game_type);
+  const ctx = meermarathon ? "mm" : undefined;
+  const jokersNodig = aantalJokers(game?.game_type);
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(game?.id);
   const { entry, isLoading: entryLoading, picksByCategory, jokerIds, predictions, togglePick, saveJoker, savePredictions, submitEntry, revertEntry } = useEntry(game?.id);
 
@@ -136,6 +187,24 @@ function WielerTeamBuilder() {
   const [pointsJersey, setPointsJersey] = useState("");
   const [mountainJersey, setMountainJersey] = useState("");
   const [youthJersey, setYouthJersey] = useState("");
+  // Meermarathon: de eindwinnaar van het Cup- en van het Grand Prix-klassement.
+  const [cupWinnaar, setCupWinnaar] = useState("");
+  const [gpWinnaar, setGpWinnaar] = useState("");
+
+  /** De pronostiek zoals hij nu op het scherm staat, in de vorm van entry_predictions. */
+  const voorspellingen = (): Prediction[] => {
+    const list: Prediction[] = [];
+    if (meermarathon) {
+      if (cupWinnaar) list.push({ classification: "cup", position: 1, rider_id: cupWinnaar });
+      if (gpWinnaar) list.push({ classification: "grandprix", position: 1, rider_id: gpWinnaar });
+      return list;
+    }
+    gcPodium.forEach((rid, i) => { if (rid) list.push({ classification: "gc", position: i + 1, rider_id: rid }); });
+    if (pointsJersey) list.push({ classification: "points", position: 1, rider_id: pointsJersey });
+    if (mountainJersey) list.push({ classification: "kom", position: 1, rider_id: mountainJersey });
+    if (youthJersey) list.push({ classification: "youth", position: 1, rider_id: youthJersey });
+    return list;
+  };
 
   const isSubmitted = entry?.status === "submitted";
   const status = game?.status ?? "";
@@ -157,17 +226,21 @@ function WielerTeamBuilder() {
     if (hydratedRef.current || !entry) return;
     if (!predictions) return;
     const podium = ["", "", ""];
-    let pts = "", kom = "", youth = "";
+    let pts = "", kom = "", youth = "", cup = "", gp = "";
     for (const p of predictions) {
       if (p.classification === "gc" && p.position >= 1 && p.position <= 3) podium[p.position - 1] = p.rider_id;
       if (p.classification === "points" && p.position === 1) pts = p.rider_id;
       if (p.classification === "kom" && p.position === 1) kom = p.rider_id;
       if (p.classification === "youth" && p.position === 1) youth = p.rider_id;
+      if (p.classification === "cup" && p.position === 1) cup = p.rider_id;
+      if (p.classification === "grandprix" && p.position === 1) gp = p.rider_id;
     }
     setGcPodium(podium);
     setPointsJersey(pts);
     setMountainJersey(kom);
     setYouthJersey(youth);
+    setCupWinnaar(cup);
+    setGpWinnaar(gp);
     if (jokerIds[0]) setJokerDraft1(jokerIds[0]);
     if (jokerIds[1]) setJokerDraft2(jokerIds[1]);
     hydratedRef.current = true;
@@ -176,16 +249,11 @@ function WielerTeamBuilder() {
   useEffect(() => {
     if (!entry || !hydratedRef.current || isSubmitted) return;
     const timer = setTimeout(() => {
-      const list: Array<{ classification: "gc" | "points" | "kom" | "youth"; position: number; rider_id: string }> = [];
-      gcPodium.forEach((rid, i) => { if (rid) list.push({ classification: "gc", position: i + 1, rider_id: rid }); });
-      if (pointsJersey) list.push({ classification: "points", position: 1, rider_id: pointsJersey });
-      if (mountainJersey) list.push({ classification: "kom", position: 1, rider_id: mountainJersey });
-      if (youthJersey) list.push({ classification: "youth", position: 1, rider_id: youthJersey });
-      savePredictions.mutate({ entryId: entry.id, predictions: list });
+      savePredictions.mutate({ entryId: entry.id, predictions: voorspellingen() });
     }, 700);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gcPodium, pointsJersey, mountainJersey, youthJersey]);
+  }, [gcPodium, pointsJersey, mountainJersey, youthJersey, cupWinnaar, gpWinnaar]);
 
   // Auto-save jokers — ook één losse joker wordt direct bewaard (voorheen pas
   // zodra beide gekozen waren, waardoor een halve keuze verloren kon gaan).
@@ -225,7 +293,7 @@ function WielerTeamBuilder() {
   }, [validPicksByCategory]);
 
   const handlePickToggle = async (categoryId: string, riderId: string) => {
-    if (!isAuthed) return requireAuth(t("team.builder.authActionPickRider"));
+    if (!isAuthed) return requireAuth(t("team.builder.authActionPickRider", { context: ctx }));
     if (!entry) return;
     // Vergrendelde koers: de database weigert dit toch, maar deed dat pas ná
     // een netwerkronde en met een technische melding. Als admin kwam je er zelfs
@@ -233,7 +301,7 @@ function WielerTeamBuilder() {
     if (gameLocked && !isAdmin) {
       toast({
         title: t("team.builder.lockedBadge"),
-        description: t("team.builder.lockedToast"),
+        description: t("team.builder.lockedToast", { context: ctx }),
         variant: "destructive",
       });
       return;
@@ -309,12 +377,7 @@ function WielerTeamBuilder() {
     if (!isAuthed) return requireAuth(t("team.builder.authActionSaveTeam"));
     if (!entry) return;
     try {
-      const list: Array<{ classification: "gc" | "points" | "kom" | "youth"; position: number; rider_id: string }> = [];
-      gcPodium.forEach((rid, i) => { if (rid) list.push({ classification: "gc", position: i + 1, rider_id: rid }); });
-      if (pointsJersey) list.push({ classification: "points", position: 1, rider_id: pointsJersey });
-      if (mountainJersey) list.push({ classification: "kom", position: 1, rider_id: mountainJersey });
-      if (youthJersey) list.push({ classification: "youth", position: 1, rider_id: youthJersey });
-      await savePredictions.mutateAsync({ entryId: entry.id, predictions: list });
+      await savePredictions.mutateAsync({ entryId: entry.id, predictions: voorspellingen() });
       if (
         jokerDraft1 && jokerDraft2 && jokerDraft1 !== jokerDraft2 &&
         !selectedPickRiderIds.has(jokerDraft1) && !selectedPickRiderIds.has(jokerDraft2)
@@ -349,12 +412,7 @@ function WielerTeamBuilder() {
       if (isSubmitted) {
         await revertEntry.mutateAsync({ entryId: entry.id });
       }
-      const list: Array<{ classification: "gc" | "points" | "kom" | "youth"; position: number; rider_id: string }> = [];
-      gcPodium.forEach((rid, i) => { if (rid) list.push({ classification: "gc", position: i + 1, rider_id: rid }); });
-      if (pointsJersey) list.push({ classification: "points", position: 1, rider_id: pointsJersey });
-      if (mountainJersey) list.push({ classification: "kom", position: 1, rider_id: mountainJersey });
-      if (youthJersey) list.push({ classification: "youth", position: 1, rider_id: youthJersey });
-      await savePredictions.mutateAsync({ entryId: entry.id, predictions: list });
+      await savePredictions.mutateAsync({ entryId: entry.id, predictions: voorspellingen() });
       if (
         jokerDraft1 && jokerDraft2 && jokerDraft1 !== jokerDraft2 &&
         !selectedPickRiderIds.has(jokerDraft1) && !selectedPickRiderIds.has(jokerDraft2)
@@ -398,21 +456,28 @@ function WielerTeamBuilder() {
   const progressPct = totalRequired > 0 ? Math.round((completedPicks / totalRequired) * 100) : 0;
   const podiumFilled = gcPodium.filter(Boolean).length;
   const jerseysFilled = [pointsJersey, mountainJersey, youthJersey].filter(Boolean).length;
+  const klassementenFilled = [cupWinnaar, gpWinnaar].filter(Boolean).length;
   // "Nog te doen"-items zijn klikbaar: target bepaalt waar de klik heen springt
   // (desktop: scroll naar sectie; mobiel: pager-stap).
   type MissingTarget = "categories" | "jokers" | "predictions";
   const missing: Array<{ label: string; target: MissingTarget }> = [];
   if (completedPicks < totalRequired) {
-    missing.push({ label: t("team.builder.missingRiders", { count: totalRequired - completedPicks }), target: "categories" });
+    missing.push({ label: t("team.builder.missingRiders", { count: totalRequired - completedPicks, context: ctx }), target: "categories" });
   }
-  if (jokerIds.length < 2) {
-    missing.push({ label: t("team.builder.missingJokers", { count: 2 - jokerIds.length }), target: "jokers" });
+  if (jokerIds.length < jokersNodig) {
+    missing.push({ label: t("team.builder.missingJokers", { count: jokersNodig - jokerIds.length }), target: "jokers" });
   }
-  if (podiumFilled < 3) {
-    missing.push({ label: t("team.builder.missingPodium", { filled: podiumFilled }), target: "predictions" });
-  }
-  if (jerseysFilled < 3) {
-    missing.push({ label: t("team.builder.missingJerseys", { filled: jerseysFilled }), target: "predictions" });
+  if (meermarathon) {
+    if (klassementenFilled < 2) {
+      missing.push({ label: t("team.builder.missingKlassementen", { filled: klassementenFilled }), target: "predictions" });
+    }
+  } else {
+    if (podiumFilled < 3) {
+      missing.push({ label: t("team.builder.missingPodium", { filled: podiumFilled }), target: "predictions" });
+    }
+    if (jerseysFilled < 3) {
+      missing.push({ label: t("team.builder.missingJerseys", { filled: jerseysFilled }), target: "predictions" });
+    }
   }
   const teamComplete = missing.length === 0;
 
@@ -439,12 +504,7 @@ function WielerTeamBuilder() {
   // blijft dan lokaal staan. Vergelijk de huidige selectie met de ingediende
   // (persisted) staat → is er verschil dan is de ploeg "dirty" en mag opnieuw
   // ingediend worden.
-  const currentPredList = [
-    ...gcPodium.map((rid, i) => (rid ? { classification: "gc", position: i + 1, rider_id: rid } : null)),
-    pointsJersey ? { classification: "points", position: 1, rider_id: pointsJersey } : null,
-    mountainJersey ? { classification: "kom", position: 1, rider_id: mountainJersey } : null,
-    youthJersey ? { classification: "youth", position: 1, rider_id: youthJersey } : null,
-  ].filter(Boolean) as Array<{ classification: string; position: number; rider_id: string }>;
+  const currentPredList = voorspellingen();
   const predKey = (l: Array<{ classification: string; position: number; rider_id: string }>) =>
     l.map((p) => `${p.classification}:${p.position}:${p.rider_id}`).sort().join("|");
   const jokerKey = (a: string[]) => [...a].filter(Boolean).sort().join("|");
@@ -570,8 +630,9 @@ function WielerTeamBuilder() {
     scrollPagerTop();
   };
 
-  // Gedeeld tussen desktop-layout en het mobiele overzicht-scherm.
-  const jokersBlock = (
+  // Gedeeld tussen desktop-layout en het mobiele overzicht-scherm. De
+  // Meermarathon kent geen jokers: dan valt het blok weg.
+  const jokersBlock = jokersNodig === 0 ? null : (
     <div id="sectie-jokers" className="ornate-frame retro-border p-4 relative bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))] scroll-mt-24">
       <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-[hsl(var(--vintage-gold))] via-primary to-[hsl(var(--vintage-gold))]" />
       <div className="flex items-center gap-3 mb-1">
@@ -634,157 +695,167 @@ function WielerTeamBuilder() {
   );
 
   const predictionsSection = (
-    <section id="sectie-voorspellingen" className="vintage-paper vintage-frame p-4 md:p-6 relative overflow-hidden scroll-mt-24">
+    <section id="sectie-voorspellingen" data-papier-licht className="vintage-paper vintage-frame p-4 md:p-6 relative overflow-hidden scroll-mt-24">
       {/* Affiche-koptekst */}
       <div className="text-center mb-4 md:mb-5 relative">
         <div className="vintage-stamp text-[10px] md:text-[11px] mb-1.5">
-          {t("team.builder.pronoStamp")}
+          {t("team.builder.pronoStamp", { context: ctx })}
         </div>
         <h2 className="vintage-numeral text-2xl md:text-4xl mb-1" style={{ letterSpacing: "0.04em" }}>
           {t("team.builder.predictionsHeading")}
         </h2>
         <p className="text-xs md:text-sm font-serif italic" style={{ color: "var(--ink-faded)" }}>
-          {t("team.builder.predictionsSubtitle")}
+          {t("team.builder.predictionsSubtitle", { context: ctx })}
         </p>
         {/* Dubbele inktstreep onder de kop */}
         <div className="mx-auto mt-3 w-44 md:w-56 h-[2px]" style={{ background: "var(--ink-sepia)" }} />
         <div className="mx-auto mt-[2px] w-32 md:w-40 h-px" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
       </div>
 
-      {/* ── Podium ─────────────────────────────────────────────── */}
-      <div className="mb-7 md:mb-8 relative">
-        <div className="vintage-stamp text-center text-[10px] md:text-[11px] mb-4">
-          {t("team.builder.podiumStamp")}
-        </div>
+      {/* ── Podium (wielergames; de Meermarathon voorspelt alleen winnaars) ── */}
+      {!meermarathon && (
+        <div className="mb-7 md:mb-8 relative">
+          <div className="vintage-stamp text-center text-[10px] md:text-[11px] mb-4">
+            {t("team.builder.podiumStamp")}
+          </div>
 
-        <div className="grid grid-cols-3 gap-2 md:gap-4 items-end relative">
-          {[
-            { idx: 1, rank: "2", sokkel: "vintage-sokkel--silver", height: "h-14 md:h-16", order: "order-1", medalVar: { "--medal-rim": "var(--medal-silver)", "--medal-fill": "linear-gradient(180deg,#EAE7E0,#9C9890)" } },
-            { idx: 0, rank: "1", sokkel: "vintage-sokkel--winner", height: "h-20 md:h-24", order: "order-2", medalVar: null },
-            { idx: 2, rank: "3", sokkel: "vintage-sokkel--bronze", height: "h-12 md:h-14", order: "order-3", medalVar: { "--medal-rim": "var(--medal-bronze)", "--medal-fill": "linear-gradient(180deg,#D69862,#8C5A2A)" } },
-          ].map(({ idx, rank, sokkel, height, order, medalVar }) => {
-            const otherPodium = gcPodium.filter((_, j) => j !== idx && Boolean(_));
-            const picked = gcPodium[idx] ? riderById.get(gcPodium[idx]) : null;
-            const isWinner = idx === 0;
-            return (
-              <div key={idx} className={cn("flex flex-col items-center", order)}>
-                {/* Eredecoratie boven het podium */}
-                <div className="mb-2 md:mb-3 relative flex items-center justify-center min-h-[64px] md:min-h-[88px]">
-                  {isWinner ? (
-                    <>
-                      {/* Sunburst achter de winnaar */}
-                      <div
-                        aria-hidden
-                        className="absolute inset-0 -m-4 md:-m-6 vintage-sunburst pointer-events-none"
-                      />
-                      {/* Gele trui — alleen voor de eindwinnaar */}
-                      <div className={cn("relative z-10", picked ? "opacity-100" : "opacity-60")}>
-                        <TruiBadge type="algemeen" formaat="groot" />
+          <div className="grid grid-cols-3 gap-2 md:gap-4 items-end relative">
+            {[
+              { idx: 1, rank: "2", sokkel: "vintage-sokkel--silver", height: "h-14 md:h-16", order: "order-1", medalVar: { "--medal-rim": "var(--medal-silver)", "--medal-fill": "linear-gradient(180deg,#EAE7E0,#9C9890)" } },
+              { idx: 0, rank: "1", sokkel: "vintage-sokkel--winner", height: "h-20 md:h-24", order: "order-2", medalVar: null },
+              { idx: 2, rank: "3", sokkel: "vintage-sokkel--bronze", height: "h-12 md:h-14", order: "order-3", medalVar: { "--medal-rim": "var(--medal-bronze)", "--medal-fill": "linear-gradient(180deg,#D69862,#8C5A2A)" } },
+            ].map(({ idx, rank, sokkel, height, order, medalVar }) => {
+              const otherPodium = gcPodium.filter((_, j) => j !== idx && Boolean(_));
+              const picked = gcPodium[idx] ? riderById.get(gcPodium[idx]) : null;
+              const isWinner = idx === 0;
+              return (
+                <div key={idx} className={cn("flex flex-col items-center", order)}>
+                  {/* Eredecoratie boven het podium */}
+                  <div className="mb-2 md:mb-3 relative flex items-center justify-center min-h-[64px] md:min-h-[88px]">
+                    {isWinner ? (
+                      <>
+                        {/* Sunburst achter de winnaar */}
+                        <div
+                          aria-hidden
+                          className="absolute inset-0 -m-4 md:-m-6 vintage-sunburst pointer-events-none"
+                        />
+                        {/* Gele trui — alleen voor de eindwinnaar */}
+                        <div className={cn("relative z-10", picked ? "opacity-100" : "opacity-60")}>
+                          <TruiBadge type="algemeen" formaat="groot" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        {/* Cocarde-lint */}
+                        <div
+                          className="vintage-ribbon w-9 md:w-11 h-3.5 md:h-4 -mb-1.5 rounded-t-[2px]"
+                          style={{ clipPath: "polygon(0 0, 100% 0, 88% 100%, 12% 100%)" }}
+                        />
+                        {/* Emaille-medaillon */}
+                        <div
+                          className="vintage-medal relative z-10 h-12 w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center"
+                          style={medalVar as React.CSSProperties}
+                        >
+                          <span className="vintage-numeral text-lg md:text-2xl" style={{ color: "var(--ink-sepia)" }}>
+                            {rank}
+                          </span>
+                        </div>
                       </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      {/* Cocarde-lint */}
-                      <div
-                        className="vintage-ribbon w-9 md:w-11 h-3.5 md:h-4 -mb-1.5 rounded-t-[2px]"
-                        style={{ clipPath: "polygon(0 0, 100% 0, 88% 100%, 12% 100%)" }}
-                      />
-                      {/* Emaille-medaillon */}
-                      <div
-                        className="vintage-medal relative z-10 h-12 w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center"
-                        style={medalVar as React.CSSProperties}
-                      >
-                        <span className="vintage-numeral text-lg md:text-2xl" style={{ color: "var(--ink-sepia)" }}>
-                          {rank}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Sokkel met emaille/hout-uitstraling */}
-                <div
-                  className={cn(
-                    "vintage-sokkel relative w-full flex flex-col items-center justify-center text-center px-2 py-2 mb-2 rounded-t-md",
-                    height,
-                    sokkel
-                  )}
-                >
-                  {/* Hoeknieten */}
-                  <span aria-hidden className="absolute top-1 left-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
-                  <span aria-hidden className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
-                  {/* Affiche-cijfer */}
-                  <span
-                    className={cn(
-                      "vintage-numeral leading-none mb-1",
-                      isWinner ? "text-5xl md:text-6xl" : "text-3xl md:text-4xl"
                     )}
-                    style={{
-                      color: isWinner ? "var(--ink-sepia)" : "var(--ink-faded)",
-                      textShadow: isWinner ? "2px 2px 0 rgba(255,255,255,0.55), 4px 4px 0 rgba(58,42,26,0.18)" : undefined,
-                    }}
-                    aria-hidden
+                  </div>
+
+                  {/* Sokkel met emaille/hout-uitstraling */}
+                  <div
+                    className={cn(
+                      "vintage-sokkel relative w-full flex flex-col items-center justify-center text-center px-2 py-2 mb-2 rounded-t-md",
+                      height,
+                      sokkel
+                    )}
                   >
-                    {rank}
-                  </span>
-                  {/* Rennernaam of vintage placeholder */}
-                  {picked ? (
+                    {/* Hoeknieten */}
+                    <span aria-hidden className="absolute top-1 left-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
+                    <span aria-hidden className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full" style={{ background: "var(--ink-sepia)", opacity: 0.5 }} />
+                    {/* Affiche-cijfer */}
                     <span
                       className={cn(
-                        "font-display font-bold leading-tight line-clamp-2",
-                        isWinner ? "text-[12px] md:text-sm" : "text-[11px] md:text-xs"
+                        "vintage-numeral leading-none mb-1",
+                        isWinner ? "text-5xl md:text-6xl" : "text-3xl md:text-4xl"
                       )}
-                      style={{ color: "var(--ink-sepia)" }}
+                      style={{
+                        color: isWinner ? "var(--ink-sepia)" : "var(--ink-faded)",
+                        textShadow: isWinner ? "2px 2px 0 rgba(255,255,255,0.55), 4px 4px 0 rgba(58,42,26,0.18)" : undefined,
+                      }}
+                      aria-hidden
                     >
-                      {picked.name}
+                      {rank}
                     </span>
-                  ) : (
-                    <span className="text-[10px] md:text-xs italic" style={{ color: "var(--ink-sepia)", opacity: 0.7, fontFamily: "'Special Elite','Courier Prime',serif" }}>
-                      {t("team.builder.toBeFilled")}
-                    </span>
-                  )}
-                </div>
+                    {/* Rennernaam of vintage placeholder */}
+                    {picked ? (
+                      <span
+                        className={cn(
+                          "font-display font-bold leading-tight line-clamp-2",
+                          isWinner ? "text-[12px] md:text-sm" : "text-[11px] md:text-xs"
+                        )}
+                        style={{ color: "var(--ink-sepia)" }}
+                      >
+                        {picked.name}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] md:text-xs italic" style={{ color: "var(--ink-sepia)", opacity: 0.7, fontFamily: "'Special Elite','Courier Prime',serif" }}>
+                        {t("team.builder.toBeFilled")}
+                      </span>
+                    )}
+                  </div>
 
-                {/* Vintage formulier-veld */}
-                <div className="w-full">
-                  <RiderSearchSelect
-                    riders={allStartlistRiders}
-                    value={gcPodium[idx]}
-                    onChange={(v) => {
-                      const next = [...gcPodium];
-                      next[idx] = v;
-                      setGcPodium(next);
-                    }}
-                    excludeIds={otherPodium}
-                    placeholder={t("team.builder.searchShort")}
-                    disabled={Boolean(isLocked)}
-                    compact
-                  />
+                  {/* Vintage formulier-veld */}
+                  <div className="w-full">
+                    <RiderSearchSelect
+                      riders={allStartlistRiders}
+                      value={gcPodium[idx]}
+                      onChange={(v) => {
+                        const next = [...gcPodium];
+                        next[idx] = v;
+                        setGcPodium(next);
+                      }}
+                      excludeIds={otherPodium}
+                      placeholder={t("team.builder.searchShort")}
+                      disabled={Boolean(isLocked)}
+                      compact
+                    />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Sectie-scheiding affichestijl */}
       <div className="flex items-center gap-3 my-5">
         <div className="flex-1 h-[1.5px]" style={{ background: "var(--ink-sepia)" }} />
-        <span className="vintage-stamp text-[10px]">{t("team.builder.jerseyWinnersStamp")}</span>
+        <span className="vintage-stamp text-[10px]">
+          {t(meermarathon ? "team.builder.eindwinnaarsStamp" : "team.builder.jerseyWinnersStamp")}
+        </span>
         <div className="flex-1 h-[1.5px]" style={{ background: "var(--ink-sepia)" }} />
       </div>
 
-      {/* ── Trui-kaarten (emaille-bordjes) ─────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {([
-          { label: "Maillot à pois",  sub: t("team.builder.mountainJersey"), trui: "berg"     as const, accent: "berg",     value: mountainJersey, setter: setMountainJersey, riders: allStartlistRiders, hint: undefined as string | undefined },
-          { label: "Maillot vert",    sub: t("team.builder.pointsJersey"),   trui: "punten"   as const, accent: "punten",   value: pointsJersey,   setter: setPointsJersey,   riders: allStartlistRiders, hint: undefined },
-          { label: "Maillot blanc",   sub: t("team.builder.youthJersey"),    trui: "jongeren" as const, accent: "jongeren", value: youthJersey,    setter: setYouthJersey,    riders: youthEligibleRiders, hint: t("team.builder.youthHint", { count: youthEligibleRiders.length }) },
-        ]).map(({ label, sub, trui, accent, value, setter, riders: jerseyRiders, hint }) => {
+      {/* ── Emaille-bordjes: de truien, of bij de Meermarathon de twee klassementen ── */}
+      <div className={cn("grid grid-cols-1 gap-4", meermarathon ? "md:grid-cols-2" : "md:grid-cols-3")}>
+        {(meermarathon
+          ? [
+              { label: t("team.builder.cupKlassement"), sub: t("team.builder.kunstijs"),  icoon: <SoortEmbleem soort="cup" maat={40} />,       accent: "cup",       value: cupWinnaar, setter: setCupWinnaar, riders: allStartlistRiders, hint: undefined as string | undefined },
+              { label: t("team.builder.gpKlassement"),  sub: t("team.builder.natuurijs"), icoon: <SoortEmbleem soort="grandprix" maat={40} />, accent: "grandprix", value: gpWinnaar,  setter: setGpWinnaar,  riders: allStartlistRiders, hint: undefined },
+            ]
+          : [
+              { label: "Maillot à pois",  sub: t("team.builder.mountainJersey"), icoon: <TruiBadge type="berg" formaat="medium" />,     accent: "berg",     value: mountainJersey, setter: setMountainJersey, riders: allStartlistRiders, hint: undefined as string | undefined },
+              { label: "Maillot vert",    sub: t("team.builder.pointsJersey"),   icoon: <TruiBadge type="punten" formaat="medium" />,   accent: "punten",   value: pointsJersey,   setter: setPointsJersey,   riders: allStartlistRiders, hint: undefined },
+              { label: "Maillot blanc",   sub: t("team.builder.youthJersey"),    icoon: <TruiBadge type="jongeren" formaat="medium" />, accent: "jongeren", value: youthJersey,    setter: setYouthJersey,    riders: youthEligibleRiders, hint: t("team.builder.youthHint", { count: youthEligibleRiders.length }) },
+            ]
+        ).map(({ label, sub, icoon, accent, value, setter, riders: jerseyRiders, hint }) => {
           const picked = value ? riderById.get(value) : null;
           return (
             <div
-              key={label}
+              key={accent}
               data-accent={accent}
               className={cn("vintage-board p-3 md:p-4 flex flex-col gap-2 relative")}
             >
@@ -797,7 +868,7 @@ function WielerTeamBuilder() {
               {/* Kop: trui + label */}
               <div className="flex items-center gap-3 pb-2 border-b" style={{ borderColor: "var(--ink-sepia)", borderBottomStyle: "dashed", opacity: 1 }}>
                 <div className={cn("shrink-0 transition-opacity", picked ? "opacity-100" : "opacity-70")} style={{ filter: "drop-shadow(1px 1px 0 rgba(58,42,26,0.18))" }}>
-                  <TruiBadge type={trui} formaat="medium" />
+                  {icoon}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="vintage-stamp text-[9px] md:text-[10px]">{sub}</div>
@@ -823,9 +894,10 @@ function WielerTeamBuilder() {
                 riders={jerseyRiders}
                 value={value}
                 onChange={setter}
-                placeholder={t("team.builder.searchRider")}
+                placeholder={t("team.builder.searchRider", { context: ctx })}
                 disabled={Boolean(isLocked)}
                 compact
+                meermarathon={meermarathon}
               />
               {hint && (
                 <p className="text-[10px] italic" style={{ color: "var(--ink-faded)", fontFamily: "'Special Elite','Courier Prime',serif" }}>
@@ -861,13 +933,13 @@ function WielerTeamBuilder() {
             {category.short_name && category.short_name !== category.name && (
               <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground/80 leading-tight">{category.short_name}</p>
             )}
-            <p className="text-xs text-muted-foreground">{t("team.builder.pickRiders", { count: max })}</p>
+            <p className="text-xs text-muted-foreground">{t("team.builder.pickRiders", { count: max, context: ctx })}</p>
           </div>
           <div className="text-right shrink-0">
             <div className="font-mono text-sm font-bold">
               {completedPicks}<span className="text-muted-foreground">/{totalRequired}</span>
             </div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("team.builder.ridersLabel")}</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("team.builder.ridersLabel", { context: ctx })}</div>
           </div>
         </div>
         <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
@@ -899,13 +971,14 @@ function WielerTeamBuilder() {
           onChange={setZoek}
           verdeling={ploegVerdeling}
           gevonden={zoekTreffers}
+          meermarathon={meermarathon}
         />
 
         {/* Renner-lijst */}
         <div className="space-y-2">
           {zichtbareRijen.length === 0 && (
             <p className="rounded-md border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-              {t("team.builder.geenTreffers")}
+              {t("team.builder.geenTreffers", { context: ctx })}
             </p>
           )}
           {zichtbareRijen.map((row) => {
@@ -990,7 +1063,7 @@ function WielerTeamBuilder() {
           <div className="font-mono text-sm font-bold">
             {completedPicks}<span className="text-muted-foreground">/{totalRequired}</span>
           </div>
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("team.builder.ridersLabel")}</div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("team.builder.ridersLabel", { context: ctx })}</div>
         </div>
       </div>
       <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
@@ -1020,7 +1093,7 @@ function WielerTeamBuilder() {
               )}
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-border bg-secondary text-lg">
-                {getCategoryIcon(`${cat.name} ${cat.short_name ?? ""}`)}
+                {getCategoryIcon(`${cat.name} ${cat.short_name ?? ""}`, meermarathon)}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{t("team.builder.catShort", { num: idx + 1 })}</span>
@@ -1046,8 +1119,8 @@ function WielerTeamBuilder() {
       {/* Status + inzenden */}
       {gameLocked ? (
         <div className="retro-border bg-secondary/50 p-3 text-sm">
-          <Trans i18nKey="team.builder.lockedMessage" values={{ status: game?.status }} components={{ strong: <strong /> }} />
-          {!isSubmitted && <> {t("team.builder.autoEnrollNote")}</>}
+          <Trans i18nKey="team.builder.lockedMessage" context={ctx} values={{ status: game?.status }} components={{ strong: <strong /> }} />
+          {!isSubmitted && <> {t("team.builder.autoEnrollNote", { context: ctx })}</>}
         </div>
       ) : !isAuthed ? (
         <div className="ornate-frame retro-border bg-primary/10 border-primary/40 p-4 space-y-3 text-center">
@@ -1112,15 +1185,19 @@ function WielerTeamBuilder() {
     return cat ? renderCategoryScreen(cat, idx) : null;
   };
 
+  // Meermarathon: één game, dus de naam met het peloton waarvoor je bouwt. Het
+  // seizoen staat al in de pelotonbalk; met erbij past de regel mobiel niet.
+  const pelotonLabel = meermarathon ? meermarathonCategorieLabel(game?.categorie) : null;
+  const kopNaam = pelotonLabel ? `Meermarathon · ${pelotonLabel}` : game?.name ?? "Koerspoule";
+
   return (
-    <div className="container mx-auto px-5 py-4 md:py-6 pb-32 md:pb-8">
         <div className="max-w-5xl mx-auto">
           {/* Vintage Hero */}
           <div className="text-center mb-6">
             <div className="vintage-ornament mb-3">
               <span className="vintage-ornament-symbol">✦</span>
               <span className="text-xs tracking-[0.3em] uppercase text-muted-foreground font-serif">
-                {game?.name ?? "Koerspoule"}
+                {kopNaam}
               </span>
               <span className="vintage-ornament-symbol">✦</span>
             </div>
@@ -1128,7 +1205,7 @@ function WielerTeamBuilder() {
               De Ploegleiderswagen
             </h1>
             <p className="text-muted-foreground font-serif italic">
-              {t("team.builder.heroTagline")}
+              {t("team.builder.heroTagline", { context: ctx })}
           </p>
           <div className="vintage-divider mt-4 max-w-md mx-auto" />
         </div>
@@ -1173,7 +1250,7 @@ function WielerTeamBuilder() {
               <div className="md:hidden" ref={pagerRef}>
                 {gameLocked && (
                   <div className="retro-border bg-secondary/50 p-2.5 text-xs mb-2">
-                    <Trans i18nKey="team.builder.lockedMessage" values={{ status: game.status }} components={{ strong: <strong /> }} />
+                    <Trans i18nKey="team.builder.lockedMessage" context={ctx} values={{ status: game.status }} components={{ strong: <strong /> }} />
                   </div>
                 )}
                 {!isAuthed && !gameLocked && (
@@ -1230,7 +1307,7 @@ function WielerTeamBuilder() {
                     <div className="flex-1 min-w-[180px]">
                       <div className="flex items-baseline justify-between mb-1">
                         <span className="text-xs uppercase tracking-wider text-muted-foreground font-serif">
-                          {t("team.builder.ridersHeading")}
+                          {t("team.builder.ridersHeading", { context: ctx })}
                         </span>
                         <span className="text-sm font-mono font-bold">
                           {completedPicks}<span className="text-muted-foreground">/{totalRequired}</span>
@@ -1243,13 +1320,15 @@ function WielerTeamBuilder() {
                         />
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-base">🃏</span>
-                      <span className="font-mono font-bold">
-                        {jokerIds.length}<span className="text-muted-foreground">/2</span>
-                      </span>
-                      <span className="text-xs text-muted-foreground hidden md:inline">{t("team.builder.jokersLabel")}</span>
-                    </div>
+                    {jokersNodig > 0 && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-base">🃏</span>
+                        <span className="font-mono font-bold">
+                          {jokerIds.length}<span className="text-muted-foreground">/{jokersNodig}</span>
+                        </span>
+                        <span className="text-xs text-muted-foreground hidden md:inline">{t("team.builder.jokersLabel")}</span>
+                      </div>
+                    )}
                     <div>
                       {gameLocked ? (
                         <span className="jersey-badge bg-muted text-muted-foreground border border-border">
@@ -1265,7 +1344,7 @@ function WielerTeamBuilder() {
                         </span>
                       ) : (
                         <span className="jersey-badge bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/40">
-                          {t("team.builder.incompleteBadge")}
+                          {t("team.builder.incompleteBadge", { context: ctx })}
                         </span>
                       )}
                     </div>
@@ -1289,8 +1368,8 @@ function WielerTeamBuilder() {
 
               {gameLocked && (
                 <div className="retro-border bg-secondary/50 p-3 text-sm">
-                  <Trans i18nKey="team.builder.lockedMessage" values={{ status: game.status }} components={{ strong: <strong /> }} />
-                  {!isSubmitted && <> {t("team.builder.autoEnrollNote")}</>}
+                  <Trans i18nKey="team.builder.lockedMessage" context={ctx} values={{ status: game.status }} components={{ strong: <strong /> }} />
+                  {!isSubmitted && <> {t("team.builder.autoEnrollNote", { context: ctx })}</>}
                 </div>
               )}
               {!isAuthed && !gameLocked && (
@@ -1318,11 +1397,12 @@ function WielerTeamBuilder() {
                 onChange={setZoek}
                 verdeling={ploegVerdeling}
                 gevonden={zoekTreffers}
+                meermarathon={meermarathon}
               />
 
               {zichtbareCategorieen.length === 0 && (
                 <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                  {t("team.builder.geenTreffersTotaal")}
+                  {t("team.builder.geenTreffersTotaal", { context: ctx })}
                 </p>
               )}
 
@@ -1334,7 +1414,7 @@ function WielerTeamBuilder() {
                   const max = category.max_picks ?? 1;
                   const reached = selected.length >= max;
                   const complete = selected.length === max;
-                  const icon = getCategoryIcon(`${category.name} ${category.short_name ?? ""}`);
+                  const icon = getCategoryIcon(`${category.name} ${category.short_name ?? ""}`, meermarathon);
                   return (
                     <div
                       id={`cat-${category.id}`}
@@ -1449,11 +1529,11 @@ function WielerTeamBuilder() {
               {!gameLocked && !teamComplete && (
                 <div className="ornate-frame retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl">🚴‍♂️💨</span>
+                    <span className="text-xl">{meermarathon ? "⛸️💨" : "🚴‍♂️💨"}</span>
                     <strong className="font-display text-base">{t("team.builder.notCompleteHeading")}</strong>
                   </div>
                   <p className="text-muted-foreground mb-2 font-serif italic">
-                    {t("team.builder.notCompleteBody")}
+                    {t("team.builder.notCompleteBody", { context: ctx })}
                   </p>
                   <ul className="list-disc pl-5 space-y-1">
                     {missing.map((m) => (
@@ -1469,7 +1549,7 @@ function WielerTeamBuilder() {
 
               {!gameLocked && !isSubmitted && teamComplete && (
                 <div className="retro-border bg-amber-500/10 border-amber-500/40 p-4 text-sm">
-                  <Trans i18nKey="team.builder.completeNotSubmitted" components={{ strong: <strong />, em: <em /> }} />
+                  <Trans i18nKey="team.builder.completeNotSubmitted" context={ctx} components={{ strong: <strong />, em: <em /> }} />
                 </div>
               )}
 
@@ -1502,7 +1582,7 @@ function WielerTeamBuilder() {
                   <div className="flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-mono tabular-nums text-muted-foreground truncate">
-                        {t("team.builder.bottomProgress", { completed: completedPicks, total: totalRequired, jokers: jokerIds.length })}
+                        {t("team.builder.bottomProgress", { completed: completedPicks, total: totalRequired, jokers: jokerIds.length, context: ctx })}
                       </p>
                       <div className="h-1.5 rounded-full bg-secondary overflow-hidden mt-1">
                         <div
@@ -1554,7 +1634,7 @@ function WielerTeamBuilder() {
                   <Input
                     value={startlistSearch}
                     onChange={(e) => setStartlistSearch(e.target.value)}
-                    placeholder={t("team.builder.searchByRider")}
+                    placeholder={t("team.builder.searchByRider", { context: ctx })}
                   />
                   <Select value={startlistTeamFilter} onValueChange={setStartlistTeamFilter}>
                     <SelectTrigger>
@@ -1607,7 +1687,7 @@ function WielerTeamBuilder() {
                           <span className="inline-flex h-6 min-w-7 px-1.5 items-center justify-center rounded-full bg-primary/15 border border-primary/30 font-mono text-xs">
                             {rider.start_number ?? "—"}
                           </span>
-                          <span className="font-medium truncate text-slate-800">{rider.name}</span>
+                          <span className="font-medium truncate text-foreground">{rider.name}</span>
                         </div>
                       ))}
                     </div>
@@ -1617,6 +1697,5 @@ function WielerTeamBuilder() {
           </Tabs>
         )}
       </div>
-    </div>
   );
 }

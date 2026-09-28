@@ -19,9 +19,14 @@ vi.mock("react-i18next", () => ({
         k.reduce<unknown>((n, deel) => (n as Record<string, unknown>)?.[deel], nl);
       const telwoord = typeof vars?.count === "number" && vars.count === 1 ? "_one" : "_other";
       const laatste = pad[pad.length - 1];
-      const tekst =
-        (zoekOp(pad) as string | undefined) ??
-        (zoekOp([...pad.slice(0, -1), laatste + telwoord]) as string | undefined);
+      // i18next-context (Meermarathon: _mm) wint, anders de gewone tekst.
+      const varianten = vars?.context ? [`${laatste}_${vars.context}`, laatste] : [laatste];
+      const tekst = varianten
+        .map((v) =>
+          (zoekOp([...pad.slice(0, -1), v]) as string | undefined) ??
+          (zoekOp([...pad.slice(0, -1), v + telwoord]) as string | undefined),
+        )
+        .find((x) => typeof x === "string");
       if (typeof tekst !== "string") throw new Error(`vertaalsleutel ontbreekt: ${sleutel}`);
       return Object.entries(vars ?? {}).reduce(
         (uit, [k, v]) => uit.replace(new RegExp(`{{${k}}}`, "g"), String(v)),
@@ -126,5 +131,15 @@ describe("ZoekRenners — shirts", () => {
     render(<ZoekRenners waarde="" onChange={() => {}} verdeling={verdeling} gevonden={null} />);
     expect(screen.getByRole("button", { name: /Visma/i }).className).toMatch(/amber/);
     expect(screen.getByRole("button", { name: /UAE/i }).className).not.toMatch(/amber/);
+  });
+});
+
+describe("ZoekRenners — Meermarathon", () => {
+  it("spreekt van rijders in plaats van renners", () => {
+    render(<ZoekRenners waarde="Zaan" onChange={() => {}} verdeling={verdeling} gevonden={1} meermarathon />);
+    expect(screen.getByPlaceholderText("Zoek rijder of ploeg…")).toBeTruthy();
+    expect(screen.getByLabelText("Zoek een rijder op naam of ploeg")).toBeTruthy();
+    expect(screen.getByRole("status")).toHaveTextContent("1 rijder gevonden");
+    expect(screen.getByRole("button", { name: /EF Education — 1 rijder\(s\) in je ploeg/ })).toBeTruthy();
   });
 });

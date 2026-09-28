@@ -11,6 +11,8 @@ type Props = {
   verdeling: PloegChip[];
   /** Hoeveel renners de huidige zoekterm oplevert, over alle categorieën. */
   gevonden: number | null;
+  /** Schaatswoorden: rijder in plaats van renner. */
+  meermarathon?: boolean;
   className?: string;
 };
 
@@ -21,8 +23,9 @@ type Props = {
  * ik uit dezelfde wielerploeg?" zonder dat je je hele selectie hoeft na te
  * lopen. Tikken filtert meteen op die ploeg, zodat je ziet wie het zijn.
  */
-export default function ZoekRenners({ waarde, onChange, verdeling, gevonden, className }: Props) {
+export default function ZoekRenners({ waarde, onChange, verdeling, gevonden, meermarathon = false, className }: Props) {
   const { t } = useTranslation();
+  const context = meermarathon ? "mm" : undefined;
   const actief = waarde.trim().length > 0;
 
   return (
@@ -33,8 +36,8 @@ export default function ZoekRenners({ waarde, onChange, verdeling, gevonden, cla
           type="search"
           value={waarde}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={t("team.builder.zoekPlaceholder")}
-          aria-label={t("team.builder.zoekLabel")}
+          placeholder={t("team.builder.zoekPlaceholder", { context })}
+          aria-label={t("team.builder.zoekLabel", { context })}
           className={cn(
             "w-full rounded-md border-2 bg-card py-2 pl-9 pr-9 text-sm",
             "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
@@ -55,7 +58,7 @@ export default function ZoekRenners({ waarde, onChange, verdeling, gevonden, cla
 
       {actief && gevonden !== null && (
         <p className="text-xs text-muted-foreground" role="status">
-          {t("team.builder.zoekResultaat", { count: gevonden })}
+          {t("team.builder.zoekResultaat", { count: gevonden, context })}
         </p>
       )}
 
@@ -70,6 +73,7 @@ export default function ZoekRenners({ waarde, onChange, verdeling, gevonden, cla
               chip={chip}
               gekozen={waarde.trim().toLowerCase() === chip.naam.toLowerCase()}
               onKies={onChange}
+              context={context}
             />
           ))}
         </div>
@@ -87,8 +91,8 @@ export default function ZoekRenners({ waarde, onChange, verdeling, gevonden, cla
  * de korte code voor in de plaats; niet elke ploeg heeft een afbeelding.
  */
 function PloegKnop({
-  chip, gekozen, onKies,
-}: { chip: PloegChip; gekozen: boolean; onKies: (v: string) => void }) {
+  chip, gekozen, onKies, context,
+}: { chip: PloegChip; gekozen: boolean; onKies: (v: string) => void; context?: string }) {
   const { t } = useTranslation();
   const [truiStuk, setTruiStuk] = useState(false);
   const toonTrui = Boolean(chip.trui) && !truiStuk;
@@ -98,7 +102,7 @@ function PloegKnop({
       type="button"
       onClick={() => onKies(gekozen ? "" : chip.naam)}
       aria-pressed={gekozen}
-      aria-label={t("team.builder.ploegFilterAantal", { ploeg: chip.naam, count: chip.aantal })}
+      aria-label={t("team.builder.ploegFilterAantal", { ploeg: chip.naam, count: chip.aantal, context })}
       title={`${chip.naam} — ${chip.aantal}`}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border py-0.5 pl-1 pr-2 text-[11px] transition-colors",

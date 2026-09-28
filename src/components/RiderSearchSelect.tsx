@@ -21,6 +21,8 @@ type Props = {
   /** Smalle slots (podium/trui-kaarten): selected toont alleen naam + ×.
    *  Rugnummer en ploeg blijven zichtbaar in de zoeklijst zelf. */
   compact?: boolean;
+  /** Schaatswoorden: rijder in plaats van renner. */
+  meermarathon?: boolean;
 };
 
 export default function RiderSearchSelect({
@@ -31,9 +33,10 @@ export default function RiderSearchSelect({
   placeholder,
   disabled,
   compact = false,
+  meermarathon = false,
 }: Props) {
   const { t } = useTranslation();
-  const resolvedPlaceholder = placeholder ?? t("common.riderSearch.placeholder");
+  const resolvedPlaceholder = placeholder ?? t("common.riderSearch.placeholder", { context: meermarathon ? "mm" : undefined });
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -114,7 +117,7 @@ export default function RiderSearchSelect({
     if (compact) {
       return (
         <div className="flex items-center gap-1.5 rounded-md border bg-background px-2 py-2 text-sm">
-          <span className="font-medium truncate flex-1 min-w-0 text-slate-800">{selected.name}</span>
+          <span className="font-medium truncate flex-1 min-w-0 text-foreground">{selected.name}</span>
           {!disabled && (
             <button
               type="button"
@@ -133,7 +136,7 @@ export default function RiderSearchSelect({
         <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
           #{selected.start_number ?? "—"}
         </span>
-        <span className="font-medium truncate text-slate-800">{selected.name}</span>
+        <span className="font-medium truncate text-foreground">{selected.name}</span>
         {selected.teamName && (
           <span className="text-xs text-muted-foreground truncate">{selected.teamName}</span>
         )}
@@ -212,7 +215,7 @@ export default function RiderSearchSelect({
               </div>
             )}
             {showEmpty && (
-              <div className="px-3 py-2 text-sm text-muted-foreground">{t("common.riderSearch.noRiders")}</div>
+              <div className="px-3 py-2 text-sm text-muted-foreground">{t("common.riderSearch.noRiders", { context: meermarathon ? "mm" : undefined })}</div>
             )}
           </div>,
           document.body,

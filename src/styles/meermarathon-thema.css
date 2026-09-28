@@ -165,3 +165,21 @@
   --mm-s-nk: #F07C6E;
   --mm-s-totaal: #F2B544;
 }
+
+/* Nacht: het affichepaneel van de pronostiek in de ploegbouwer blijft crème
+   papier (vintage-paper). De velden en emblemen erin krijgen daarom de
+   lichte wintertokens; anders staan er donkere invulvelden op crème. */
+:root[data-thema="winter"][data-modus="nacht"] [data-papier-licht] {
+  color-scheme: light;
+  --background: 204 24% 96%;
+  --card: 0 0% 100%;
+  --foreground: 211 60% 14%;
+  --muted-foreground: 216 20% 40%;
+  --secondary: 207 28% 92%;
+  --border: 208 24% 86%;
+  --input: 209 22% 81%;
+  --primary: 215 62% 28%;
+  --ring: 215 62% 28%;
+  --mm-s-cup: #2E5E8C;
+  --mm-s-gp: #2E6A4F;
+}
