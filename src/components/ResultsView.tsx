@@ -326,7 +326,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
               <p className="text-muted-foreground font-serif italic">{gameName}</p>
             )}
             <div className="mt-2 flex justify-center">
-              <ResultsUpdatedBadge gameId={gameId} />
+              <ResultsUpdatedBadge gameId={gameId} meermarathon={isMeermarathon} />
             </div>
           </div>
           <div className="double-rule mt-3 mx-auto max-w-md" />

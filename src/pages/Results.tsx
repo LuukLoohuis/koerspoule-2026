@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import ResultsView from "@/components/ResultsView";
 import GameSwitcher from "@/components/GameSwitcher";
+import MeermarathonPelotonbalk from "@/components/meermarathon/Pelotonbalk";
 import { useAuth } from "@/hooks/useAuth";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import { maySeeLiveContent } from "@/lib/gameStatus";
@@ -31,6 +32,10 @@ export default function Results() {
           className="max-w-5xl mx-auto mb-4"
         />
       )}
+      {/* Meermarathon: vrouwen en mannen zijn twee pelotons van één game. De
+          koersbalk kiest de game, de pelotonbalk het peloton; bij een
+          wielerkoers blijft hij weg. */}
+      {user && <MeermarathonPelotonbalk className="mb-2 md:mx-auto md:mb-4 md:max-w-2xl" />}
 
       {maySeeLiveContent(selectedGame?.status, isAdmin, selectedGame?.admin_testmodus ?? false) ? (
         <ResultsView

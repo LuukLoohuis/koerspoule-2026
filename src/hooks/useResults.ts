@@ -50,6 +50,9 @@ export type LastApprovedStage = {
   stage_number: number;
   name: string | null;
   approved_at: string | null;
+  // Meermarathon: een wedstrijd heet naar zijn soort ("Cup 3"), niet "etappe 3".
+  ijs_type?: string | null;
+  wedstrijd_type?: string | null;
 };
 
 export function useLastApprovedStage(gameId?: string) {
@@ -61,7 +64,7 @@ export function useLastApprovedStage(gameId?: string) {
       if (!supabase || !gameId) return null;
       const { data, error } = await supabase
         .from("stages")
-        .select("id, stage_number, name, approved_at")
+        .select("id, stage_number, name, approved_at, ijs_type, wedstrijd_type")
         .eq("game_id", gameId)
         .eq("results_status", "approved")
         .order("stage_number", { ascending: false })
