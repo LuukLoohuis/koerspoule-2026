@@ -1046,9 +1046,9 @@ function DesktopComparisonPanel({
  *   daarna de volledige lijst (scrollen).
  * - Elke rij wordt door de caller voorgerenderd als `node`.
  */
-type StandingNode = { key: string; rank: number; isMe: boolean; searchText: string; node: React.ReactNode };
+export type StandingNode = { key: string; rank: number; isMe: boolean; searchText: string; node: React.ReactNode };
 
-function StandingsList({
+export function StandingsList({
   items,
   maxHeightClass = "max-h-[480px]",
   placeholder,
@@ -1158,7 +1158,7 @@ function useMyEntryRiders(entryId?: string, gameId?: string) {
  * de Meermarathon horen de truien bij de schaatsers en krijgt de poulewinnaar
  * de beker.
  */
-function PouleLeiderTeken({ meermarathon }: { meermarathon: boolean }) {
+export function PouleLeiderTeken({ meermarathon }: { meermarathon: boolean }) {
   const thema = useKoersThema();
   if (meermarathon) {
     return thema.beker ? (

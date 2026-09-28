@@ -2,12 +2,14 @@ import { useTranslation } from "react-i18next";
 import ResultsView from "@/components/ResultsView";
 import GameSwitcher from "@/components/GameSwitcher";
 import MeermarathonPelotonbalk from "@/components/meermarathon/Pelotonbalk";
+import MeermarathonTotaalklassement from "@/components/meermarathon/Totaalklassement";
 import { useAuth } from "@/hooks/useAuth";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import { maySeeLiveContent } from "@/lib/gameStatus";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
 import { useLocation } from "react-router-dom";
 import { parseResultsStageParam } from "@/lib/resultSelection";
+import { isMeermarathonGame } from "@/lib/gameTypes";
 
 export default function Results() {
   const { t } = useTranslation();
@@ -19,6 +21,10 @@ export default function Results() {
   const { preferGc: initialGc, stageNumber: initialStageNumber } = parseResultsStageParam(params.get("stage"));
   // Gedeelde game-keuze uit de context (één kiezer voor de hele app).
   const { games, selectedGame, setSelectedGameId } = useSelectedGame();
+  // Meermarathon: naast vrouwen en mannen het totaal van beide pelotons. Met
+  // één peloton biedt de pelotonbalk geen Totaal, dan ook geen totaalstand.
+  const pelotons = games.filter((g) => isMeermarathonGame(g.game_type) && g.year === selectedGame?.year).length;
+  const totaal = isMeermarathonGame(selectedGame?.game_type) && pelotons >= 2 && params.get("klassement") === "totaal";
 
   return (
     <div className="container mx-auto px-5 py-4 md:py-6">
@@ -33,19 +39,23 @@ export default function Results() {
         />
       )}
       {/* Meermarathon: vrouwen en mannen zijn twee pelotons van één game. De
-          koersbalk kiest de game, de pelotonbalk het peloton; bij een
-          wielerkoers blijft hij weg. */}
-      {user && <MeermarathonPelotonbalk className="mb-2 md:mx-auto md:mb-4 md:max-w-2xl" />}
+          koersbalk kiest de game, de pelotonbalk het peloton of het totaal;
+          bij een wielerkoers blijft hij weg. */}
+      {user && <MeermarathonPelotonbalk metTotaal className="mb-2 md:mx-auto md:mb-4 md:max-w-2xl" />}
 
       {maySeeLiveContent(selectedGame?.status, isAdmin, selectedGame?.admin_testmodus ?? false) ? (
-        <ResultsView
-          showHeader
-          gameId={selectedGame?.id}
-          gameName={selectedGame?.name}
-          initialView={initialView}
-          initialStageNumber={initialStageNumber}
-          initialGc={initialGc}
-        />
+        totaal ? (
+          <MeermarathonTotaalklassement />
+        ) : (
+          <ResultsView
+            showHeader
+            gameId={selectedGame?.id}
+            gameName={selectedGame?.name}
+            initialView={initialView}
+            initialStageNumber={initialStageNumber}
+            initialGc={initialGc}
+          />
+        )
       ) : (
         <SneakPreviewLock
           title={t("results.page.sneakPreviewTitle")}

@@ -11,6 +11,7 @@
  *   stand   nieuw | bezig | ingediend  (je vrouwenploeg; bij de mannen nog niets)
  *   mannen  open_inschrijving | open   (open = sneak preview)
  *   game    mm-v | mm-m                (welk peloton open staat)
+ *   vrouwen geen                       (alleen de mannen, live: zoals nu op koerspoule.nl)
  *   modus   nacht                      (winter bij nacht)
  */
 import { createRoot } from "react-dom/client";
@@ -28,7 +29,7 @@ import TeamBuilder from "@/pages/TeamBuilder";
 import { supabaseConfig } from "@/lib/supabase";
 import { huidigeWereld, laadWereld } from "@/dev/nepdata/supabase";
 import { NEP_GEBRUIKER_ID } from "@/dev/nepdata/useAuth";
-import { meermarathon, tour, type MmStand } from "@/dev/nepdata/werelden";
+import { alleenMannen, meermarathon, tour, type MmStand } from "@/dev/nepdata/werelden";
 import "@/i18n";
 import "./index.css";
 import "./styles/salle-de-course.css";
@@ -40,8 +41,16 @@ const wereldNaam = params.get("wereld") === "tour" ? "tour" : "mm";
 const stand = (["nieuw", "bezig", "ingediend"].includes(params.get("stand") ?? "") ? params.get("stand") : "bezig") as MmStand;
 const mannen = params.get("mannen") === "open" ? "open" : "open_inschrijving";
 const game = params.get("game");
+const zonderVrouwen = params.get("vrouwen") === "geen";
 
-laadWereld(wereldNaam === "tour" ? tour(NEP_GEBRUIKER_ID) : meermarathon(NEP_GEBRUIKER_ID, stand, mannen), NEP_GEBRUIKER_ID);
+laadWereld(
+  wereldNaam === "tour"
+    ? tour(NEP_GEBRUIKER_ID)
+    : zonderVrouwen
+      ? alleenMannen(NEP_GEBRUIKER_ID)
+      : meermarathon(NEP_GEBRUIKER_ID, stand, mannen),
+  NEP_GEBRUIKER_ID,
+);
 // In de console: nepWereld().entries laat zien wat er bewaard is.
 Object.assign(window, { nepWereld: huidigeWereld });
 
@@ -75,6 +84,10 @@ function Bediening() {
       </select>
       {wereldNaam === "mm" && (
         <>
+          <select className={knop} value={zonderVrouwen ? "geen" : "wel"} onChange={(e) => zet("vrouwen", e.target.value === "geen" ? "geen" : null)}>
+            <option value="wel">vrouwen en mannen</option>
+            <option value="geen">alleen mannen, live (zoals nu)</option>
+          </select>
           <select className={knop} value={stand} onChange={(e) => zet("stand", e.target.value)}>
             <option value="nieuw">vrouwen: nog niets</option>
             <option value="bezig">vrouwen: half af</option>

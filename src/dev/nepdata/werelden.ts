@@ -163,6 +163,36 @@ export function meermarathon(userId: string, stand: MmStand, mannenStatus = "ope
   });
 }
 
+/**
+ * Zoals koerspoule.nl eind september 2026: alleen het mannenpeloton bestaat,
+ * het staat op live en jouw ploeg is ingediend. De pelotonbalk toont de
+ * vrouwen dan als "Nog niet open".
+ */
+export function alleenMannen(userId: string): NepWereld {
+  return bouw({
+    games: [{ ...MM_GAME, id: "mm-m", categorie: "mannen", status: "live" }],
+    ploegen: MM_PLOEGEN("m"),
+    rijders: MANNEN,
+    categorieen: MM_CATEGORIEEN.filter((c) => c.game_id === "mm-m"),
+    entries: [
+      entry("mm-m", userId, {
+        status: "submitted",
+        entry_picks: [
+          { category_id: "m-cat1", rider_id: "sjoerd" },
+          { category_id: "m-cat2", rider_id: "gerben" },
+          { category_id: "m-cat3", rider_id: "wouter" },
+          { category_id: "m-cat4", rider_id: "hessel" },
+          { category_id: "m-cat5", rider_id: "daan" },
+        ],
+        entry_predictions: [
+          { classification: "cup", position: 1, rider_id: "sjoerd" },
+          { classification: "grandprix", position: 1, rider_id: "klaas" },
+        ],
+      }),
+    ],
+  });
+}
+
 // ── Een wielergame, om naast te leggen ────────────────────────────────────
 
 export function tour(userId: string): NepWereld {

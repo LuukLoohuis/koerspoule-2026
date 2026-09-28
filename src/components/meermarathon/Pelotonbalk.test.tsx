@@ -22,6 +22,26 @@ vi.mock("@/context/SelectedGameContext", () => ({
     loading: false,
   }),
 }));
+vi.mock("@/hooks/useAuth", () => ({ useAuth: () => ({ user: { id: "mij" } }) }));
+vi.mock("@/hooks/useMeermarathonTotaal", async () => {
+  const { bouwTotaalklassement } = await import("@/lib/meermarathonTotaal");
+  return {
+    useMeermarathonTotaal: () => ({
+      rijen: bouwTotaalklassement([
+        {
+          categorie: "vrouwen",
+          rijen: [
+            { user_id: "a", display_name: "A", team_name: null, punten: 90 },
+            { user_id: "mij", display_name: "Ik", team_name: null, punten: 50 },
+          ],
+        },
+        { categorie: "mannen", rijen: [{ user_id: "b", display_name: "B", team_name: null, punten: 30 }] },
+      ]),
+      pelotons: [],
+      isLoading: false,
+    }),
+  };
+});
 vi.mock("@/hooks/useMeermarathonSeizoen", () => ({
   useMeermarathonSeizoen: () => ({
     seizoen: staat.games.filter((g) => g.game_type === "meermarathon"),
@@ -116,10 +136,10 @@ function Adres() {
   return <output data-testid="adres">{pathname + search}</output>;
 }
 
-function toonMetData(start = "/mijn-peloton?tab=uitslagen") {
+function toonMetData(start = "/mijn-peloton?tab=uitslagen", metTotaal = false) {
   return render(
     <MemoryRouter initialEntries={[start]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <MeermarathonPelotonbalk />
+      <MeermarathonPelotonbalk metTotaal={metTotaal} />
       <Adres />
     </MemoryRouter>,
   );
@@ -168,15 +188,53 @@ describe("pelotonbalk met data", () => {
     expect(knoppen.map((k) => k.textContent?.trim())).toEqual(["Vrouwen", "Mannen"]);
   });
 
-  it("blijft weg bij een wielerkoers of een seizoen met één peloton", () => {
+  it("blijft weg bij een wielerkoers", () => {
     staat.gekozenId = "tour";
-    const { unmount } = toonMetData();
-    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
-    unmount();
-
-    staat.gekozenId = "v";
-    staat.games = [game("v", "vrouwen")];
     toonMetData();
     expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+  });
+
+  it("toont een peloton dat er nog niet is als 'Nog niet open', zonder knop", () => {
+    // Zoals eind september 2026: alleen de mannen bestaan.
+    staat.gekozenId = "m";
+    staat.games = [game("m", "mannen")];
+    staat.statussen = [peloton("m", { id: "e", status: "submitted", teamName: null, picks: 5 })];
+    toonMetData();
+    const balk = screen.getByRole("navigation", { name: /Meermarathon ’26-’27/ });
+    expect(balk).toHaveTextContent(/Vrouwen\s*Nog niet open/);
+    const knoppen = within(balk).getAllByRole("button");
+    expect(knoppen).toHaveLength(1);
+    expect(knoppen[0]).toHaveTextContent("Mannen");
+    expect(knoppen[0]).toHaveAttribute("aria-current", "true");
+  });
+
+  it("zet bij de uitslagen het totaal erbij, met jouw plek", () => {
+    toonMetData("/uitslagen?game=v", true);
+    const totaal = screen.getByRole("button", { name: /Totaal/ });
+    expect(totaal).toHaveTextContent("2e van 3");
+    fireEvent.click(totaal);
+    expect(screen.getByTestId("adres")).toHaveTextContent("/uitslagen?game=v&klassement=totaal");
+    expect(screen.getByRole("button", { name: /Totaal/ })).toHaveAttribute("aria-current", "true");
+    // Geen peloton tegelijk gekozen.
+    expect(screen.getByRole("button", { name: /Vrouwen/ })).not.toHaveAttribute("aria-current");
+  });
+
+  it("verlaat het totaal zodra je een peloton kiest", () => {
+    toonMetData("/uitslagen?game=v&klassement=totaal", true);
+    fireEvent.click(screen.getByRole("button", { name: /Mannen/ }));
+    expect(screen.getByTestId("adres")).toHaveTextContent("/uitslagen?game=m");
+    expect(screen.getByTestId("adres")).not.toHaveTextContent("klassement");
+  });
+
+  it("heeft geen totaal zolang er maar één peloton is", () => {
+    staat.gekozenId = "m";
+    staat.games = [game("m", "mannen")];
+    toonMetData("/uitslagen", true);
+    expect(screen.queryByRole("button", { name: /Totaal/ })).not.toBeInTheDocument();
+  });
+
+  it("biedt geen totaal in de ploegbouwer", () => {
+    toonMetData("/team-samenstellen");
+    expect(screen.queryByRole("button", { name: /Totaal/ })).not.toBeInTheDocument();
   });
 });
