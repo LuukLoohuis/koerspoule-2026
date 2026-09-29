@@ -24,7 +24,7 @@ import StageBar from "@/components/stages/StageBar";
 import { buildStageBarData } from "@/components/stages/stageBarData";
 import WedstrijdBalk from "@/components/meermarathon/WedstrijdBalk";
 import { bouwWedstrijdBalk } from "@/lib/meermarathonBalk";
-import { isMeermarathonGame, meermarathonStageLabel } from "@/lib/gameTypes";
+import { isMeermarathonGame, meermarathonStageLabel, parseMeermarathonCategorie } from "@/lib/gameTypes";
 import { useAllGames } from "@/hooks/useAllGames";
 import { StandingsSkeleton } from "@/components/skeletons/SubpouleSkeletons";
 import { cn } from "@/lib/utils";
@@ -67,6 +67,10 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
   const isMeermarathon = isMeermarathonGame(
     gameId ? alleGames.find((g) => g.id === gameId)?.game_type : curGame?.game_type,
   );
+  // Vrouwen of mannen: achter de schaatsbalk staat de foto van dat peloton.
+  const peloton = isMeermarathon
+    ? parseMeermarathonCategorie(alleGames.find((g) => g.id === (gameId ?? curGame?.id))?.categorie)
+    : null;
   // Resultaten-inhoud (dus ook de benchmark) is verborgen tot 'live'; een admin
   // met testmodus mag hem tijdens open_inschrijving al zien (proefdraaien).
   const maySeeLive = maySeeLiveContent(game?.status, isAdmin, adminTestmodus);
@@ -368,6 +372,7 @@ export default function SubpouleStandings({ subpouleId, subpouleName, gameId, ga
           kiesbaar={(w) => w.gereden}
           titel={t("subpoule.standings.selectStandingTitle")}
           ondertitel={subpouleName}
+          peloton={peloton}
         />
       )}
 

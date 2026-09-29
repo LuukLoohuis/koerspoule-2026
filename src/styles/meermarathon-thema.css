@@ -166,6 +166,39 @@
   --mm-s-totaal: #F2B544;
 }
 
+/* De kop van een pagina op een schaatsfoto (KopOpFoto). De waas is achter de
+   kop het dichtst en laat onderaan, waar het peloton rijdt, de foto zien. */
+.mm-kop-waas {
+  background: linear-gradient(
+    180deg,
+    rgb(9 17 31 / 0.5) 0%,
+    rgb(9 17 31 / 0.58) 46%,
+    rgb(9 17 31 / 0.12) 78%,
+    rgb(9 17 31 / 0.3) 100%
+  );
+}
+
+/* Een lichte foto (mist, sneeuw): witte waas, de tekst houdt de inkt van het
+   thema. In de nacht is die inkt licht, dus daar de donkere waas. */
+.mm-kop-foto[data-licht] .mm-kop-waas {
+  background: linear-gradient(
+    180deg,
+    rgb(244 247 250 / 0.8) 0%,
+    rgb(244 247 250 / 0.84) 50%,
+    rgb(244 247 250 / 0.1) 76%,
+    rgb(244 247 250 / 0) 100%
+  );
+}
+:root[data-modus="nacht"] .mm-kop-foto[data-licht] .mm-kop-waas {
+  background: linear-gradient(
+    180deg,
+    rgb(9 17 31 / 0.66) 0%,
+    rgb(9 17 31 / 0.72) 46%,
+    rgb(9 17 31 / 0.3) 78%,
+    rgb(9 17 31 / 0.42) 100%
+  );
+}
+
 /* Nacht: het affichepaneel van de pronostiek in de ploegbouwer blijft crème
    papier (vintage-paper). De velden en emblemen erin krijgen daarom de
    lichte wintertokens; anders staan er donkere invulvelden op crème. */

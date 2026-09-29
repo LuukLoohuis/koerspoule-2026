@@ -33,6 +33,8 @@ import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import GameSwitcher from "@/components/GameSwitcher";
 import MeermarathonPelotonbalk from "@/components/meermarathon/Pelotonbalk";
+import KopOpFoto from "@/components/meermarathon/KopOpFoto";
+import { KOP_FOTO } from "@/lib/meermarathonFotos";
 import { isGameLocked, maySeeLiveContent } from "@/lib/gameStatus";
 import SneakPreviewLock from "@/components/SneakPreviewLock";
 import { useEntry, entryErrorMessage } from "@/hooks/useEntry";
@@ -296,22 +298,35 @@ export default function MijnPeloton() {
 
       {/* 2. Compact masthead. Krant C en Ploeg C beginnen direct onder de kop
           van de site, zoals in de handoff; daar valt dit tussenkopje weg. */}
-      {!(isMobiel && (gameTab === "karavaan" || gameTab === "team")) && (
-      <div className="relative mb-3 md:mb-6">
-        <div className="flex flex-col items-center text-center gap-1 md:gap-2">
-          <span className="overline-stamp">— Bulletin du Peloton —</span>
-          <h1 className="heading-oswald text-3xl md:text-5xl">Mijn Peloton</h1>
-          <p className="hidden md:block text-muted-foreground font-serif italic max-w-md">
-            Welkom terug, {displayName}! Beheer je koersen en subpoules.
-          </p>
-        </div>
-        {/* Stamp rechtsboven op desktop */}
-        <div className="hidden md:block absolute top-0 right-0">
-          <Stamp tone="wine" rotation={-4}>{`Dag ${new Date().getDate()} · ${new Date().toLocaleDateString("nl-NL", { month: "short" }).toUpperCase()}`}</Stamp>
-        </div>
-        <div className="double-rule mt-2 md:mt-3 mx-auto max-w-md" />
-      </div>
-      )}
+      {!(isMobiel && (gameTab === "karavaan" || gameTab === "team")) && (() => {
+        const kop = (
+          <>
+            <div className="flex flex-col items-center text-center gap-1 md:gap-2">
+              <span className="overline-stamp">— Bulletin du Peloton —</span>
+              <h1 className="heading-oswald text-3xl md:text-5xl">Mijn Peloton</h1>
+              <p className="hidden md:block text-muted-foreground font-serif italic max-w-md">
+                Welkom terug, {displayName}! Beheer je koersen en subpoules.
+              </p>
+            </div>
+            {/* Stamp rechtsboven op desktop */}
+            <div className="hidden md:block absolute top-0 right-0">
+              <Stamp tone="wine" rotation={-4}>{`Dag ${new Date().getDate()} · ${new Date().toLocaleDateString("nl-NL", { month: "short" }).toUpperCase()}`}</Stamp>
+            </div>
+          </>
+        );
+        // Meermarathon: de kop staat op een schaatsfoto; de wielerkoersen
+        // houden hun kop op papier.
+        return isMeermarathonGekozen ? (
+          <KopOpFoto foto={KOP_FOTO.peloton} className="mx-auto mb-3 max-w-5xl md:mb-6">
+            <div className="relative">{kop}</div>
+          </KopOpFoto>
+        ) : (
+          <div className="relative mb-3 md:mb-6">
+            {kop}
+            <div className="double-rule mt-2 md:mt-3 mx-auto max-w-md" />
+          </div>
+        );
+      })()}
 
 
       <div className="max-w-5xl mx-auto">

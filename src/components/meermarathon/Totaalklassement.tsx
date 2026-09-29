@@ -8,12 +8,14 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, Clock, Plus, Trophy } from "lucide-react";
 import Podium from "@/components/Podium";
+import KopOpFoto from "@/components/meermarathon/KopOpFoto";
 import { PouleLeiderTeken, StandingsList } from "@/components/ResultsView";
 import { KoersThemaProvider } from "@/contexts/KoersThemaContext";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useMeermarathonTotaal, type TotaalPeloton } from "@/hooks/useMeermarathonTotaal";
 import { meermarathonCategorieLabel, meermarathonSeason, type MeermarathonCategorie } from "@/lib/gameTypes";
+import { KOP_FOTO } from "@/lib/meermarathonFotos";
 import { rangtekst } from "@/lib/meermarathonSeizoen";
 import type { PelotonDeel, TotaalRij } from "@/lib/meermarathonTotaal";
 import { cn } from "@/lib/utils";
@@ -174,7 +176,8 @@ export function TotaalklassementWeergave({
 
   return (
     <div>
-      <div className="relative mb-5 md:mb-6">
+      {/* Dezelfde kop op dezelfde foto als bij de pelotons (ResultsView). */}
+      <KopOpFoto foto={KOP_FOTO.uitslagen} className="mx-auto mb-5 max-w-7xl md:mb-6">
         <div className="flex flex-col items-center text-center gap-2">
           <span className="overline-stamp">— Bulletin Officiel —</span>
           <h1 className="heading-oswald text-4xl md:text-5xl">{t("results.view.headerTitle")}</h1>
@@ -183,8 +186,7 @@ export function TotaalklassementWeergave({
             <StandChip pelotons={pelotons} />
           </div>
         </div>
-        <div className="double-rule mt-3 mx-auto max-w-md" />
-      </div>
+      </KopOpFoto>
 
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="retro-border bg-card">

@@ -4,8 +4,10 @@
  * De tegenhanger van de etappebalk bij de wielerkoersen, maar zonder
  * kilometers of terrein: die kent het schaatsen niet.
  *
- * Achter de balken staat een schaatsfoto (assets/meermarathon-balk.*). De
- * inhoud krijgt dan de nachtkleuren (.mm-balk-foto in
+ * Achter de balken staat een schaatsfoto: het peloton dat je bekijkt, de
+ * vrouwen of de mannen (lib/meermarathonFotos). Een game zonder peloton houdt
+ * de overzichtsfoto van de baan (assets/meermarathon-balk.*). De inhoud
+ * krijgt dan de nachtkleuren (.mm-balk-foto in
  * styles/meermarathon-thema.css): lichte tekst op de gedimde foto, in licht
  * én nacht leesbaar. Zonder foto blijft het de lichte kaart met de ijsbaan
  * als watermerk.
@@ -16,8 +18,11 @@
 import { useEffect, useRef } from "react";
 import { Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import FotoCredit from "@/components/meermarathon/FotoCredit";
 import { SoortEmbleem, SoortLabel, WEDSTRIJD_SOORT } from "@/components/meermarathon/WedstrijdSoort";
 import { soortenInBalk, type BalkWedstrijd } from "@/lib/meermarathonBalk";
+import { BALK_FOTO, type BalkFoto } from "@/lib/meermarathonFotos";
+import type { MeermarathonCategorie } from "@/lib/gameTypes";
 import { mmGetal } from "@/lib/meermarathonKlassement";
 import { mmDag } from "@/lib/meermarathonSeizoen";
 
@@ -32,10 +37,11 @@ const VAK_H = MAX_H + EMBLEEM / 2 + 4;
 const GLANS = "shadow-[0_0_0_3px_hsl(var(--vintage-gold)/0.6),0_0_18px_hsl(var(--vintage-gold)/0.45)]";
 
 /** De foto is optioneel: zolang het bestand er niet is, blijft de lichte kaart. */
-const FOTO: string | null =
+const FOTO_SRC: string | null =
   Object.values(
     import.meta.glob("../../assets/meermarathon-balk.{webp,jpg,jpeg,png}", { eager: true, import: "default" }) as Record<string, string>,
   )[0] ?? null;
+const FOTO: BalkFoto | null = FOTO_SRC ? { src: FOTO_SRC } : null;
 
 /**
  * Dimlaag over de foto: bovenaan (kop en legenda) en onderaan (nummers en
@@ -73,17 +79,18 @@ function IJsbaan() {
 }
 
 /** De schaatsfoto met de dimlaag erover. */
-function Foto({ src }: { src: string }) {
+function Foto({ foto }: { foto: BalkFoto }) {
   return (
     <>
       <img
-        src={src}
+        src={foto.src}
         alt=""
         aria-hidden
         decoding="async"
-        className="pointer-events-none absolute inset-0 size-full object-cover object-[50%_62%]"
+        className="pointer-events-none absolute inset-0 size-full object-cover"
+        style={{ objectPosition: foto.positie ?? "50% 62%" }}
       />
-      <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: DIM }} />
+      <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: foto.dim ?? DIM }} />
     </>
   );
 }
@@ -92,11 +99,14 @@ function Kolom({
   w,
   gekozen,
   kiesbaar,
+  opFoto,
   onKies,
 }: {
   w: BalkWedstrijd;
   gekozen: boolean;
   kiesbaar: boolean;
+  /** Staat de balk op een foto? Dan de nachtkleuren. */
+  opFoto: boolean;
   onKies: (id: string) => void;
 }) {
   const hoogte = w.fractie == null ? LEEG_H : Math.max(MIN_H, Math.round(w.fractie * MAX_H));
@@ -131,8 +141,8 @@ function Kolom({
               className={cn(
                 "block h-full w-full rounded-full border-[1.5px] border-dashed",
                 // Op de foto een donkere vulling, anders verdwijnt de stippellijn tussen de schaatsers.
-                FOTO ? "border-foreground/55 bg-card/50" : "border-foreground/30 bg-foreground/[0.03]",
-                kiesbaar && (FOTO ? "group-hover:border-foreground/80" : "group-hover:border-foreground/50"),
+                opFoto ? "border-foreground/55 bg-card/50" : "border-foreground/30 bg-foreground/[0.03]",
+                kiesbaar && (opFoto ? "group-hover:border-foreground/80" : "group-hover:border-foreground/50"),
               )}
             />
           ) : (
@@ -206,6 +216,8 @@ export default function WedstrijdBalk({
   onKiesTotaal,
   titel = "Uitslag per wedstrijd",
   ondertitel,
+  peloton,
+  foto = (peloton && BALK_FOTO[peloton]) || FOTO,
   className,
 }: {
   wedstrijden: BalkWedstrijd[];
@@ -224,6 +236,10 @@ export default function WedstrijdBalk({
   titel?: string;
   /** "Meermarathon Vrouwen 2026-2027" */
   ondertitel?: string | null;
+  /** Het peloton van deze game: bepaalt de foto achter de balken. */
+  peloton?: MeermarathonCategorie | null;
+  /** Een andere foto dan die van het peloton; null = geen foto (de lichte kaart). */
+  foto?: BalkFoto | null;
   className?: string;
 }) {
   const baan = useRef<HTMLDivElement>(null);
@@ -244,12 +260,14 @@ export default function WedstrijdBalk({
       {/* De rand en de schaduw volgen het sitethema; alleen de inhoud op de
           foto krijgt de nachtkleuren. */}
       <div className="retro-border no-hover-lift relative overflow-hidden bg-card">
-        {FOTO ? <Foto src={FOTO} /> : <IJsbaan />}
+        {foto ? <Foto foto={foto} /> : <IJsbaan />}
 
         <div
           className={cn(
             "relative px-3.5 pb-3.5 pt-3 text-card-foreground @2xl:px-5 @2xl:pb-4 @2xl:pt-4",
-            FOTO && "mm-balk-foto",
+            foto && "mm-balk-foto",
+            // Onder de punten blijft een regel vrij voor de naam van de fotograaf.
+            foto?.fotograaf && "pb-6 @2xl:pb-6",
           )}
         >
           <header className="relative flex flex-col gap-2.5 @2xl:flex-row @2xl:items-start @2xl:justify-between @2xl:gap-6">
@@ -306,6 +324,7 @@ export default function WedstrijdBalk({
                   w={w}
                   gekozen={w.id === gekozenId}
                   kiesbaar={kiesbaar ? kiesbaar(w) : true}
+                  opFoto={Boolean(foto)}
                   onKies={onKies}
                 />
               ))}
@@ -316,6 +335,7 @@ export default function WedstrijdBalk({
             </div>
           </div>
         </div>
+        {foto?.fotograaf && <FotoCredit fotograaf={foto.fotograaf} />}
       </div>
     </section>
   );
