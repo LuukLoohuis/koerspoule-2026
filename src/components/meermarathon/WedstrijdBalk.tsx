@@ -4,13 +4,12 @@
  * De tegenhanger van de etappebalk bij de wielerkoersen, maar zonder
  * kilometers of terrein: die kent het schaatsen niet.
  *
- * Achter de balken staat een schaatsfoto: het peloton dat je bekijkt, de
- * vrouwen of de mannen (lib/meermarathonFotos). Een game zonder peloton houdt
- * de overzichtsfoto van de baan (assets/meermarathon-balk.*). De inhoud
- * krijgt dan de nachtkleuren (.mm-balk-foto in
- * styles/meermarathon-thema.css): lichte tekst op de gedimde foto, in licht
- * én nacht leesbaar. Zonder foto blijft het de lichte kaart met de ijsbaan
- * als watermerk.
+ * Achter de balken staat een schaatsfoto (lib/meermarathonFotos): het peloton
+ * in de mist. Een lichte foto krijgt een witte waas (.mm-balk-waas-licht in
+ * styles/meermarathon-thema.css, in de nacht donker) en de inhoud houdt de
+ * kleuren van het thema. Een donkere foto krijgt een dimlaag en de
+ * nachtkleuren (.mm-balk-foto). Met foto={null} blijft het de lichte kaart met
+ * de ijsbaan als watermerk.
  *
  * Alleen weergave; bouwWedstrijdBalk (lib/meermarathonBalk) maakt de rijen.
  * Schakelt op zijn eigen breedte: smal schuift de rij opzij, breed past alles.
@@ -22,7 +21,6 @@ import FotoCredit from "@/components/meermarathon/FotoCredit";
 import { SoortEmbleem, SoortLabel, WEDSTRIJD_SOORT } from "@/components/meermarathon/WedstrijdSoort";
 import { soortenInBalk, type BalkWedstrijd } from "@/lib/meermarathonBalk";
 import { BALK_FOTO, type BalkFoto } from "@/lib/meermarathonFotos";
-import type { MeermarathonCategorie } from "@/lib/gameTypes";
 import { mmGetal } from "@/lib/meermarathonKlassement";
 import { mmDag } from "@/lib/meermarathonSeizoen";
 
@@ -36,17 +34,10 @@ const VAK_H = MAX_H + EMBLEEM / 2 + 4;
 
 const GLANS = "shadow-[0_0_0_3px_hsl(var(--vintage-gold)/0.6),0_0_18px_hsl(var(--vintage-gold)/0.45)]";
 
-/** De foto is optioneel: zolang het bestand er niet is, blijft de lichte kaart. */
-const FOTO_SRC: string | null =
-  Object.values(
-    import.meta.glob("../../assets/meermarathon-balk.{webp,jpg,jpeg,png}", { eager: true, import: "default" }) as Record<string, string>,
-  )[0] ?? null;
-const FOTO: BalkFoto | null = FOTO_SRC ? { src: FOTO_SRC } : null;
-
 /**
- * Dimlaag over de foto: bovenaan (kop en legenda) en onderaan (nummers en
- * punten, op het witte ijs) het donkerst; in het midden, bij de lichtjes en de
- * schaatsers, laat hij de foto het meest zien.
+ * Dimlaag over een donkere foto: bovenaan (kop en legenda) en onderaan
+ * (nummers en punten, op het witte ijs) het donkerst; in het midden, bij de
+ * lichtjes en de schaatsers, laat hij de foto het meest zien.
  */
 const DIM =
   "linear-gradient(180deg, rgb(9 17 31 / 0.86) 0%, rgb(9 17 31 / 0.64) 45%, rgb(9 17 31 / 0.78) 72%, rgb(9 17 31 / 0.9) 100%)";
@@ -78,7 +69,7 @@ function IJsbaan() {
   );
 }
 
-/** De schaatsfoto met de dimlaag erover. */
+/** De schaatsfoto met de waas (licht) of de dimlaag (donker) erover. */
 function Foto({ foto }: { foto: BalkFoto }) {
   return (
     <>
@@ -90,7 +81,11 @@ function Foto({ foto }: { foto: BalkFoto }) {
         className="pointer-events-none absolute inset-0 size-full object-cover"
         style={{ objectPosition: foto.positie ?? "50% 62%" }}
       />
-      <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: foto.dim ?? DIM }} />
+      <span
+        aria-hidden
+        className={cn("pointer-events-none absolute inset-0", foto.licht && "mm-balk-waas-licht")}
+        style={foto.licht ? undefined : { background: DIM }}
+      />
     </>
   );
 }
@@ -105,7 +100,7 @@ function Kolom({
   w: BalkWedstrijd;
   gekozen: boolean;
   kiesbaar: boolean;
-  /** Staat de balk op een foto? Dan de nachtkleuren. */
+  /** Staat de balk op een foto? Dan krijgen de lege balken een vulling. */
   opFoto: boolean;
   onKies: (id: string) => void;
 }) {
@@ -140,7 +135,7 @@ function Kolom({
             <span
               className={cn(
                 "block h-full w-full rounded-full border-[1.5px] border-dashed",
-                // Op de foto een donkere vulling, anders verdwijnt de stippellijn tussen de schaatsers.
+                // Op de foto een vulling in de kaartkleur, anders verdwijnt de stippellijn tussen de schaatsers.
                 opFoto ? "border-foreground/55 bg-card/50" : "border-foreground/30 bg-foreground/[0.03]",
                 kiesbaar && (opFoto ? "group-hover:border-foreground/80" : "group-hover:border-foreground/50"),
               )}
@@ -216,8 +211,7 @@ export default function WedstrijdBalk({
   onKiesTotaal,
   titel = "Uitslag per wedstrijd",
   ondertitel,
-  peloton,
-  foto = (peloton && BALK_FOTO[peloton]) || FOTO,
+  foto = BALK_FOTO,
   className,
 }: {
   wedstrijden: BalkWedstrijd[];
@@ -236,9 +230,7 @@ export default function WedstrijdBalk({
   titel?: string;
   /** "Meermarathon Vrouwen 2026-2027" */
   ondertitel?: string | null;
-  /** Het peloton van deze game: bepaalt de foto achter de balken. */
-  peloton?: MeermarathonCategorie | null;
-  /** Een andere foto dan die van het peloton; null = geen foto (de lichte kaart). */
+  /** Een andere foto dan de mist; null = geen foto (de lichte kaart). */
   foto?: BalkFoto | null;
   className?: string;
 }) {
@@ -257,15 +249,15 @@ export default function WedstrijdBalk({
 
   return (
     <section data-eigen-typografie aria-label={titel} className={cn("@container font-inter", className)}>
-      {/* De rand en de schaduw volgen het sitethema; alleen de inhoud op de
-          foto krijgt de nachtkleuren. */}
+      {/* De rand en de schaduw volgen het sitethema; alleen de inhoud op een
+          donkere foto krijgt de nachtkleuren. */}
       <div className="retro-border no-hover-lift relative overflow-hidden bg-card">
         {foto ? <Foto foto={foto} /> : <IJsbaan />}
 
         <div
           className={cn(
             "relative px-3.5 pb-3.5 pt-3 text-card-foreground @2xl:px-5 @2xl:pb-4 @2xl:pt-4",
-            foto && "mm-balk-foto",
+            foto && !foto.licht && "mm-balk-foto",
             // Onder de punten blijft een regel vrij voor de naam van de fotograaf.
             foto?.fotograaf && "pb-6 @2xl:pb-6",
           )}

@@ -199,6 +199,36 @@
   );
 }
 
+/* Uitslagenbalk op een lichte foto (WedstrijdBalk, de mist): een waas in de
+   kaartkleur, dus wit in licht en donker in de nacht; de inhoud houdt de
+   kleuren van het thema. Achter de kop en de legenda en achter de nummers en
+   punten het dichtst; in het midden, achter de balken zelf, laat hij het
+   peloton zien. */
+.mm-balk-waas-licht {
+  background: linear-gradient(
+    180deg,
+    hsl(var(--card) / 0.86) 0%,
+    hsl(var(--card) / 0.8) 34%,
+    hsl(var(--card) / 0.38) 46%,
+    hsl(var(--card) / 0.38) 72%,
+    hsl(var(--card) / 0.84) 80%,
+    hsl(var(--card) / 0.9) 100%
+  );
+}
+/* De mist is fel: in de nacht moet de waas ook achter de balken dichter,
+   anders ligt er een felle strook midden in de donkere kaart. */
+:root[data-modus="nacht"] .mm-balk-waas-licht {
+  background: linear-gradient(
+    180deg,
+    hsl(var(--card) / 0.9) 0%,
+    hsl(var(--card) / 0.86) 34%,
+    hsl(var(--card) / 0.62) 46%,
+    hsl(var(--card) / 0.62) 72%,
+    hsl(var(--card) / 0.88) 80%,
+    hsl(var(--card) / 0.92) 100%
+  );
+}
+
 /* Nacht: het affichepaneel van de pronostiek in de ploegbouwer blijft crème
    papier (vintage-paper). De velden en emblemen erin krijgen daarom de
    lichte wintertokens; anders staan er donkere invulvelden op crème. */

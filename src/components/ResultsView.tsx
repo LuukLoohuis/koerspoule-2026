@@ -29,7 +29,7 @@ import WedstrijdBalk from "@/components/meermarathon/WedstrijdBalk";
 import KopOpFoto from "@/components/meermarathon/KopOpFoto";
 import { bouwWedstrijdBalk } from "@/lib/meermarathonBalk";
 import { KOP_FOTO } from "@/lib/meermarathonFotos";
-import { isMeermarathonGame, parseMeermarathonCategorie } from "@/lib/gameTypes";
+import { isMeermarathonGame } from "@/lib/gameTypes";
 import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
@@ -125,8 +125,6 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
   const getoondeStatus = alleGames.find((x) => x.id === gameId)?.status ?? curGame?.status;
   // De Meermarathon rijdt wedstrijden, geen ritten: eigen balk, eigen woorden.
   const isMeermarathon = isMeermarathonGame(alleGames.find((x) => x.id === gameId)?.game_type ?? curGame?.game_type);
-  // Vrouwen of mannen: achter de schaatsbalk staat de foto van dat peloton.
-  const peloton = isMeermarathon ? parseMeermarathonCategorie(alleGames.find((x) => x.id === gameId)?.categorie) : null;
   const isDemo = resultsHiddenForUsers(getoondeStatus) && role !== "admin";
   const toonNaam = (rij: { user_id?: string | null; team_name?: string | null; display_name?: string | null }) =>
     isDemo ? pseudoniem(String(rij.user_id ?? "")) : (rij.team_name ?? rij.display_name ?? null);
@@ -424,7 +422,6 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                   }}
                   titel={t("results.view.mmBarTitle")}
                   ondertitel={gameName}
-                  peloton={peloton}
                 />
               )}
 
@@ -723,7 +720,6 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
               kiesbaar={(w) => w.gereden}
               titel={t("results.view.klassementBarTitle")}
               ondertitel={gameName}
-              peloton={peloton}
             />
           )}
 

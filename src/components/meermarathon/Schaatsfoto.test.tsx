@@ -1,13 +1,12 @@
-// De schaatsfoto's van de Meermarathon: achter de uitslagenbalk het peloton
-// dat je bekijkt, achter de kop van een pagina het natuurijs. Op elke foto van
+// De schaatsfoto's van de Meermarathon: achter de uitslagenbalk het peloton in
+// de mist, achter de kop van een pagina het natuurijs. Op elke foto van
 // Timsimaging staat haar naam.
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import KopOpFoto from "./KopOpFoto";
 import WedstrijdBalk from "./WedstrijdBalk";
 import { bouwWedstrijdBalk } from "@/lib/meermarathonBalk";
-import { BALK_FOTO, KOP_FOTO, TIMSIMAGING } from "@/lib/meermarathonFotos";
-import type { MeermarathonCategorie } from "@/lib/gameTypes";
+import { BALK_FOTO, KOP_FOTO, TIMSIMAGING, type BalkFoto } from "@/lib/meermarathonFotos";
 
 const { wedstrijden, totaal } = bouwWedstrijdBalk(
   [{ id: "w1", stage_number: 1, date: "2026-10-31", is_gc: false, results_status: "approved", wedstrijd_type: "cup", ijs_type: "kunstijs" }],
@@ -15,31 +14,46 @@ const { wedstrijden, totaal } = bouwWedstrijdBalk(
   { heeftPloeg: true },
 );
 
-function toonBalk(peloton: MeermarathonCategorie | null) {
+function toonBalk(foto?: BalkFoto | null) {
   const { container } = render(
-    <WedstrijdBalk wedstrijden={wedstrijden} totaal={totaal} gekozenId="w1" onKies={() => {}} peloton={peloton} />,
+    <WedstrijdBalk
+      wedstrijden={wedstrijden}
+      totaal={totaal}
+      gekozenId="w1"
+      onKies={() => {}}
+      {...(foto === undefined ? {} : { foto })}
+    />,
   );
-  return container.querySelector("img");
+  return container;
 }
 
 const credit = () => screen.queryByRole("link", { name: /^Foto: Timsimaging/ });
 
 describe("WedstrijdBalk › foto", () => {
-  it.each(["vrouwen", "mannen"] as const)("bij de %s staat hun eigen peloton achter de balken, met de naam van de fotograaf", (peloton) => {
-    expect(toonBalk(peloton)).toHaveAttribute("src", BALK_FOTO[peloton].src);
+  it("staat op de lichte foto van het peloton in de mist, met de naam van de fotograaf", () => {
+    const balk = toonBalk();
+    expect(balk.querySelector("img")).toHaveAttribute("src", BALK_FOTO.src);
     expect(credit()).toHaveAttribute("href", TIMSIMAGING.url);
     expect(credit()).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("vrouwen en mannen hebben elk een andere foto", () => {
-    expect(BALK_FOTO.vrouwen.src).not.toBe(BALK_FOTO.mannen.src);
+  it("een lichte foto krijgt de waas en houdt de kleuren van het thema", () => {
+    const balk = toonBalk();
+    expect(BALK_FOTO.licht).toBe(true);
+    expect(balk.querySelector(".mm-balk-waas-licht")).not.toBeNull();
+    expect(balk.querySelector(".mm-balk-foto")).toBeNull();
   });
 
-  it("een game zonder peloton houdt de overzichtsfoto, zonder naam van Timsimaging", () => {
-    const foto = toonBalk(null);
-    expect(foto).not.toBeNull();
-    expect(foto).not.toHaveAttribute("src", BALK_FOTO.vrouwen.src);
-    expect(foto).not.toHaveAttribute("src", BALK_FOTO.mannen.src);
+  it("een donkere foto krijgt de nachtkleuren", () => {
+    const balk = toonBalk({ src: "/avond.webp" });
+    expect(balk.querySelector(".mm-balk-foto")).not.toBeNull();
+    expect(balk.querySelector(".mm-balk-waas-licht")).toBeNull();
+    expect(credit()).toBeNull();
+  });
+
+  it("zonder foto de lichte kaart, zonder naam van een fotograaf", () => {
+    const balk = toonBalk(null);
+    expect(balk.querySelector("img")).toBeNull();
     expect(credit()).toBeNull();
   });
 });

@@ -3,15 +3,14 @@
  * kop van een pagina. Alleen bij de Meermarathon; de wielerkoersen houden hun
  * papier.
  *
- * Avond en kunstijs achter de balken (donker van zichzelf, dus de tekst blijft
- * leesbaar), daglicht en natuurijs achter de koppen.
+ * Achter de balken het peloton in de mist: licht van zichzelf, met een witte
+ * waas en de inkt van het thema (de avondfoto's vond de user te donker).
+ * Achter de koppen daglicht en natuurijs.
  *
  * De foto's zijn van Timsimaging, die ze beschikbaar stelde. Bij elke foto
  * hoort daarom de naamsvermelding (FotoCredit).
  */
-import type { MeermarathonCategorie } from "@/lib/gameTypes";
-import balkMannen from "@/assets/meermarathon-balk-mannen.webp";
-import balkVrouwen from "@/assets/meermarathon-balk-vrouwen.webp";
+import balkMist from "@/assets/meermarathon-balk-mist.webp";
 import kopBergen from "@/assets/meermarathon-kop-bergen.webp";
 import kopStad from "@/assets/meermarathon-kop-stad.webp";
 
@@ -23,8 +22,11 @@ export type BalkFoto = {
   src: string;
   /** Welk deel van de foto in beeld blijft (object-position), bv. "50% 62%". */
   positie?: string;
-  /** Eigen dimlaag (CSS-background); zonder de standaard. */
-  dim?: string;
+  /**
+   * Een lichte foto (mist, sneeuw): witte waas, de inhoud houdt de kleuren van
+   * het thema. Zonder: een donkere dimlaag en de nachtkleuren.
+   */
+  licht?: boolean;
   /** Wie de foto maakte; staat als naamsvermelding op de foto. */
   fotograaf?: Fotograaf;
 };
@@ -43,18 +45,11 @@ export type KopFoto = {
 };
 
 /**
- * De pelotons rijden dichter op de camera dan op een overzichtsfoto; de
- * dimlaag is daarom in het midden iets dichter, zodat de balken de baas
- * blijven.
+ * Achter de uitslagenbalk: het peloton voor de stad, in de mist. Alleen de
+ * onderste strook van de foto, zodat de schaatsers achter de balken rijden en
+ * de sneeuw achter de nummers en punten ligt.
  */
-const DIM_PELOTON =
-  "linear-gradient(180deg, rgb(9 17 31 / 0.88) 0%, rgb(9 17 31 / 0.7) 42%, rgb(9 17 31 / 0.8) 72%, rgb(9 17 31 / 0.92) 100%)";
-
-/** Achter de uitslagenbalk: het peloton dat je bekijkt. */
-export const BALK_FOTO: Record<MeermarathonCategorie, BalkFoto> = {
-  vrouwen: { src: balkVrouwen, positie: "50% 63%", dim: DIM_PELOTON, fotograaf: TIMSIMAGING },
-  mannen: { src: balkMannen, positie: "50% 66%", dim: DIM_PELOTON, fotograaf: TIMSIMAGING },
-};
+export const BALK_FOTO: BalkFoto = { src: balkMist, positie: "50% 75%", licht: true, fotograaf: TIMSIMAGING };
 
 /** Achter de kop van een pagina. */
 export const KOP_FOTO = {
