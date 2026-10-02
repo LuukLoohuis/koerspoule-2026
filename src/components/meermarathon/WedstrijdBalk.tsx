@@ -14,7 +14,7 @@
  * Alleen weergave; bouwWedstrijdBalk (lib/meermarathonBalk) maakt de rijen.
  * Schakelt op zijn eigen breedte: smal schuift de rij opzij, breed past alles.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FotoCredit from "@/components/meermarathon/FotoCredit";
@@ -48,6 +48,20 @@ function capsule(kleur: string) {
     background: `linear-gradient(90deg, color-mix(in srgb, ${kleur} 80%, white) 0%, ${kleur} 42%, color-mix(in srgb, ${kleur} 84%, black) 100%)`,
     borderColor: `color-mix(in srgb, ${kleur} 62%, black)`,
   };
+}
+
+/**
+ * Een wedstrijd die nog komt: dezelfde capsule, maar ijslicht getint in de
+ * kleur van zijn soort, met een volle rand. Gemengd met de kaartkleur, dus
+ * in de nacht donker getint.
+ */
+function nogTeRijden(kleur: string): CSSProperties {
+  const tint = (pct: number) => `color-mix(in srgb, ${kleur} ${pct}%, hsl(var(--card)))`;
+  return {
+    "--soort": kleur,
+    background: `linear-gradient(90deg, ${tint(12)} 0%, ${tint(24)} 45%, ${tint(38)} 100%)`,
+    borderColor: kleur,
+  } as CSSProperties;
 }
 
 function puntenTekst(w: BalkWedstrijd): string {
@@ -95,14 +109,11 @@ function Kolom({
   w,
   gekozen,
   kiesbaar,
-  opFoto,
   onKies,
 }: {
   w: BalkWedstrijd;
   gekozen: boolean;
   kiesbaar: boolean;
-  /** Staat de balk op een foto? Dan krijgen de lege balken een vulling. */
-  opFoto: boolean;
   onKies: (id: string) => void;
 }) {
   const hoogte = w.fractie == null ? LEEG_H : Math.max(MIN_H, Math.round(w.fractie * MAX_H));
@@ -129,17 +140,15 @@ function Kolom({
           <SoortEmbleem
             soort={w.soort}
             maat={EMBLEEM}
-            gedempt={!w.gereden}
             className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2"
           />
           {w.fractie == null ? (
             <span
               className={cn(
-                "block h-full w-full rounded-full border-[1.5px] border-dashed",
-                // Op de foto een vulling in de kaartkleur, anders verdwijnt de stippellijn tussen de schaatsers.
-                opFoto ? "border-foreground/55 bg-card/50" : "border-foreground/30 bg-foreground/[0.03]",
-                kiesbaar && (opFoto ? "group-hover:border-foreground/80" : "group-hover:border-foreground/50"),
+                "block h-full w-full rounded-full border-2 transition-shadow",
+                kiesbaar && "group-hover:shadow-[0_0_0_3px_color-mix(in_srgb,var(--soort)_30%,transparent)]",
               )}
+              style={nogTeRijden(WEDSTRIJD_SOORT[w.soort].kleur)}
             />
           ) : (
             <span className="block h-full w-full rounded-full border-[1.5px]" style={capsule(WEDSTRIJD_SOORT[w.soort].kleur)} />
@@ -334,7 +343,6 @@ export default function WedstrijdBalk({
                   w={w}
                   gekozen={w.id === gekozenId}
                   kiesbaar={kiesbaar ? kiesbaar(w) : true}
-                  opFoto={Boolean(foto)}
                   onKies={onKies}
                 />
               ))}

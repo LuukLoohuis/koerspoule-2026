@@ -22,13 +22,10 @@ export const WEDSTRIJD_SOORT: Record<WedstrijdType, { label: string; ondergrond:
 export function SoortEmbleem({
   soort,
   maat = 34,
-  gedempt = false,
   className,
 }: {
   soort: WedstrijdType;
   maat?: number;
-  /** Voor een wedstrijd die nog komt. */
-  gedempt?: boolean;
   className?: string;
 }) {
   const { kleur, Icon } = WEDSTRIJD_SOORT[soort];
@@ -41,7 +38,6 @@ export function SoortEmbleem({
         height: maat,
         color: kleur,
         boxShadow: `inset 0 0 0 2px ${kleur}, 0 0 0 2px hsl(var(--card)), 0 2px 4px rgb(10 20 40 / 0.22)`,
-        opacity: gedempt ? 0.55 : 1,
       }}
     >
       <Icon style={{ width: maat * 0.5, height: maat * 0.5 }} strokeWidth={2.2} />

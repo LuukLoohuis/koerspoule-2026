@@ -23,10 +23,22 @@ const SEIZOEN: Plan[] = [
   [9, "2027-02-06", "nk", "kunstijs"],
 ];
 
-/** Zoals nu op de site: twee wedstrijden op de kalender, nog niets gereden. */
-const BEGIN: Plan[] = [
-  [1, null, "cup", "kunstijs", "Amsterdam"],
-  [2, null, "grandprix", "natuurijs"],
+/** De kalender van de mannen zoals in oktober 2026 op de site: Cup ×17, Grand Prix ×6, ONK en NK. */
+const KALENDER: Plan[] = [
+  ...Array.from({ length: 12 }, (_, i): Plan => [i + 1, i === 0 ? "2026-10-17" : null, "cup", "kunstijs", i === 0 ? "Amsterdam" : undefined]),
+  [13, null, "nk", "kunstijs"],
+  [14, null, "cup", "kunstijs"],
+  [15, null, "cup", "kunstijs"],
+  [16, null, "grandprix", "natuurijs"],
+  [17, null, "onk", "natuurijs"],
+  [18, null, "grandprix", "natuurijs"],
+  [19, null, "grandprix", "natuurijs"],
+  [20, null, "cup", "kunstijs"],
+  [21, null, "cup", "kunstijs"],
+  [22, null, "cup", "kunstijs"],
+  [23, null, "grandprix", "natuurijs"],
+  [24, null, "grandprix", "natuurijs"],
+  [25, null, "grandprix", "natuurijs"],
 ];
 
 function bronnen(plan: Plan[], gereden: number): BalkBron[] {
@@ -87,11 +99,18 @@ function Voorbeeld({
 export default function Scherm12Demo() {
   return (
     <div className="space-y-10">
-      <Voorbeeld titel="Desktop · zoals nu op de site: twee wedstrijden, nog niets gereden" plan={BEGIN} gereden={0} scores={[]} breed />
+      <Voorbeeld titel="Desktop · zoals nu op de site: 25 wedstrijden, nog niets gereden" plan={KALENDER} gereden={0} scores={[]} breed />
+      <Voorbeeld
+        titel="Desktop · dezelfde kalender, acht wedstrijden gereden"
+        plan={KALENDER}
+        gereden={8}
+        scores={[54, 38, 61, 0, 47, 72, 33, 58]}
+        breed
+      />
       <Voorbeeld titel="Desktop · halverwege het seizoen, Cup 3 gekozen" breed />
       <div className="flex flex-wrap items-start gap-6">
         <Voorbeeld titel="Mobiel · halverwege het seizoen" ondertitel="Meermarathon Vrouwen 2026-2027" />
-        <Voorbeeld titel="Mobiel · nog niets gereden" plan={BEGIN} gereden={0} scores={[]} />
+        <Voorbeeld titel="Mobiel · nog niets gereden" plan={KALENDER} gereden={0} scores={[]} />
       </div>
     </div>
   );
