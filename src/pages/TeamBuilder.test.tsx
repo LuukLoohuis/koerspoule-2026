@@ -143,7 +143,7 @@ describe("TeamBuilder bij de Meermarathon", () => {
     toon();
     // De ploeg is compleet zonder jokers: niets meer te doen.
     expect(screen.queryByText(/Eindwinnaars voorspellen/)).toBeNull();
-    fireEvent.click(screen.getAllByRole("button", { name: "✅ Team definitief indienen" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Ploeg indienen" })[0]);
     await waitFor(() => expect(staat.submit).toHaveBeenCalledWith({ entryId: "e-v" }));
     expect(staat.savePredictions).toHaveBeenCalledWith({
       entryId: "e-v",

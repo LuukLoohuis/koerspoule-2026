@@ -316,9 +316,9 @@ function Harness() {
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-3" style={{ maxWidth: 360 }}>
               <div className="font-mono text-[10px] text-muted-foreground">mobiel overzicht — volle breedte</div>
-              <IndienKnop label="Team definitief indienen" onClick={() => {}} klaar className="w-full" />
-              <IndienKnop label="Team definitief indienen" onClick={() => {}} className="w-full" />
-              <IndienKnop label="Team definitief indienen" onClick={() => {}} bezig className="w-full" />
+              <IndienKnop label="Ploeg indienen" onClick={() => {}} klaar className="w-full" />
+              <IndienKnop label="Ploeg indienen" onClick={() => {}} className="w-full" />
+              <IndienKnop label="Ploeg indienen" onClick={() => {}} bezig className="w-full" />
               <IndienKnop label="Wijziging indienen" onClick={() => {}} klaar className="w-full" />
               <IndienKnop label="Vul je ploeg eerst compleet" onClick={() => {}} disabled className="w-full" />
             </div>
@@ -326,7 +326,7 @@ function Harness() {
               <div className="font-mono text-[10px] text-muted-foreground">desktop-rij — naast "Tussentijds opslaan"</div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" className="h-12">💾 Tussentijds opslaan</Button>
-                <IndienKnop label="Team definitief indienen" onClick={() => {}} klaar className="sm:min-w-64" />
+                <IndienKnop label="Ploeg indienen" onClick={() => {}} klaar className="sm:min-w-64" />
               </div>
               <div className="flex justify-end gap-2">
                 <IndienKnop label="Ingediend" onClick={() => {}} disabled ingediend className="sm:min-w-64" />
