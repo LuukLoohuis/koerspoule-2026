@@ -1,13 +1,16 @@
-// Het koersreglement: bij de Meermarathon geen jokers, podium, truien of
-// ploegentijdrit, wél de pronostiek en de weging per wedstrijd uit het beheer.
-// Een wielerkoers blijft zoals hij was.
+// Het koersreglement: bij de Meermarathon schaatsteksten zonder jokers en de
+// puntentelling als "De punten" in de opmaak van de Instagram-post (top 20,
+// weging per factor, pronostiek). Een wielerkoers blijft zoals hij was.
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import "@/i18n";
 import RegelsWeergave, { type RegelsWeergaveProps } from "./RegelsWeergave";
 import type { CategoryWithRiders } from "@/hooks/useCategories";
 
-const SCHEMA = [50, 40, 32, 26, 22].map((points, i) => ({ position: i + 1, points }));
+const SCHEMA = [50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((points, i) => ({
+  position: i + 1,
+  points,
+}));
 
 const CATEGORIE = {
   id: "c1",
@@ -19,6 +22,12 @@ const CATEGORIE = {
   category_riders: [{ rider_id: "r1", riders: { id: "r1", name: "Lotte Bosma", start_number: 1, team_id: null, firstcycling_id: null } }],
 } as unknown as CategoryWithRiders;
 
+const WEGING = [
+  { weging: 2, wedstrijden: ["ONK", "Grand Prix Finale"], voorbeeld: "ONK" },
+  { weging: 1, wedstrijden: ["Cup 1 t/m 12"], voorbeeld: "Cup 1 Amsterdam" },
+  { weging: 0.5, wedstrijden: ["Vierdaagse dag 1 Hoorn"], voorbeeld: "Vierdaagse dag 1 Hoorn" },
+];
+
 function toon(over: Partial<RegelsWeergaveProps> = {}) {
   return render(
     <RegelsWeergave
@@ -28,61 +37,83 @@ function toon(over: Partial<RegelsWeergaveProps> = {}) {
       categoriesLoading={false}
       stagePoints={SCHEMA}
       schemaLoading={false}
-      wegingGroepen={[
-        { soort: "cup", weging: 1, wedstrijden: ["Cup 1", "Cup 2"] },
-        { soort: "grandprix", weging: 2, wedstrijden: ["Grand Prix 6"] },
-        { soort: "onk", weging: 2, wedstrijden: ["ONK"] },
-      ]}
+      wegingGroepen={WEGING}
       pronostiekPunten={50}
+      seizoen="26/27"
       {...over}
     />,
   );
 }
 
 describe("RegelsWeergave › Meermarathon", () => {
-  it("toont de weging per soort wedstrijd met een rekenvoorbeeld", () => {
+  it("zet de hele pagina in de opmaak van de posts: kopjes zonder emoji, stappen met een groot cijfer", () => {
     toon();
-    const lijst = screen.getByRole("list", { name: "Weging per wedstrijd" });
-    const regels = within(lijst).getAllByRole("listitem");
-    expect(regels.map((r) => r.textContent)).toEqual([
-      expect.stringMatching(/Cup.*Cup 1 · Cup 2.*telt gewoon.*×1/),
-      expect.stringMatching(/Grand Prix.*Grand Prix 6.*telt dubbel.*×2/),
-      expect.stringMatching(/ONK.*telt dubbel.*×2/),
-    ]);
-    expect(screen.getByText("Voorbeeld: winst in een wedstrijd met weging ×2 levert 2 × 50 = 100 punten op.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Speluitleg & Reglement");
+    expect(screen.getByText("Meermarathon 2026-2027")).toBeInTheDocument();
+    for (const kop of ["Het Reglement", "Hoe speel je mee?", "Categorieën", "Tot slot"]) {
+      expect(screen.getByRole("heading", { name: kop })).toBeInTheDocument();
+    }
+    expect(screen.queryByText(/📜|📋|🏁/)).toBeNull();
+    // "Stap 3 —" valt weg: het grote cijfer zegt het al.
+    expect(screen.getByRole("heading", { name: "Voorspel de klassementswinnaars" })).toBeInTheDocument();
+    expect(screen.getByText("05")).toBeInTheDocument();
+    expect(screen.getByText("REGLEMENT")).toBeInTheDocument();
   });
 
-  it("zegt dat er geen jokers zijn en laat podium, truien en ploegentijdrit weg", () => {
+  it("toont De punten met de top 20 uit het puntenschema", () => {
     toon();
-    expect(screen.getByText(/De Meermarathon kent geen jokers/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "De punten" })).toBeInTheDocument();
+    expect(screen.getByText("De top 20 scoort")).toBeInTheDocument();
+    const plekken = within(screen.getByRole("list", { name: "Punten per plek" })).getAllByRole("listitem");
+    expect(plekken).toHaveLength(20);
+    expect(plekken[0]).toHaveAccessibleName("Plek 1: 50 punten");
+    expect(plekken[19]).toHaveAccessibleName("Plek 20: 1 punten");
+    expect(screen.getByText("Buiten de top 20, niet gestart of uitgestapt: 0 punten")).toBeInTheDocument();
+  });
+
+  it("zet de weging in tegels per factor, zwaarste eerst, met een rekenvoorbeeld", () => {
+    toon();
+    const tegels = within(screen.getByRole("list", { name: "Weging per wedstrijd" })).getAllByRole("listitem", { name: /^×/ });
+    expect(tegels.map((t) => t.getAttribute("aria-label"))).toEqual([
+      "×2: ONK, Grand Prix Finale",
+      "×1: Cup 1 t/m 12",
+      "×0,5: Vierdaagse dag 1 Hoorn",
+    ]);
+    expect(tegels[0]).toHaveTextContent("Dubbel");
+    expect(tegels[2]).toHaveTextContent("Half");
+    // Nummers blijven aan hun woord vast.
+    expect(tegels[1].textContent).toContain("Cup 1 t/m 12");
+    expect(screen.getByText("ONK gewonnen?", { exact: false })).toHaveTextContent("ONK gewonnen? 50 × 2 = 100 punten");
+  });
+
+  it("noemt de pronostiek met de punten uit het schema en zegt dat er geen jokers zijn", () => {
+    toon({ pronostiekPunten: 60 });
+    expect(screen.getByText("+60")).toBeInTheDocument();
+    expect(screen.getByText("Pronostiek · per peloton")).toBeInTheDocument();
+    expect(screen.getByText(/Geen\. Alleen de schaatsers uit de categorieën scoren/)).toBeInTheDocument();
+    expect(screen.getByText(/Kies uit/)).toHaveTextContent("Jokers zijn er niet.");
     expect(screen.queryByText(/Kies twee Jokers/)).toBeNull();
     expect(screen.queryByText("Podium algemeen klassement")).toBeNull();
-    expect(screen.queryByText(/Truien \(groen, berg, wit\)/)).toBeNull();
     expect(screen.queryByText(/ploegentijdrit/i)).toBeNull();
-    expect(screen.getByText(/Kies uit/)).toHaveTextContent("Kies uit 1 categorieën telkens 1 schaatser. Doe mee bij de vrouwen, de mannen of allebei. Jokers zijn er niet.");
+    expect(screen.getByText("Koerspoule · seizoen 26/27")).toBeInTheDocument();
   });
 
-  it("noemt de pronostiek met de punten uit het schema", () => {
-    toon({ pronostiekPunten: 60 });
-    expect(screen.getByText("Juiste winnaar Cup-klassement (kunstijs)").nextSibling).toHaveTextContent("60 pt");
-    expect(screen.getByText("Juiste winnaar Grand Prix-klassement (natuurijs)").nextSibling).toHaveTextContent("60 pt");
-  });
-
-  it("zegt het als alles gewoon telt, en wacht zonder wedstrijden", () => {
-    const { unmount } = toon({ wegingGroepen: [{ soort: "cup", weging: 1, wedstrijden: ["Cup 1"] }] });
-    expect(screen.getByText("Op dit moment tellen alle wedstrijden even zwaar (×1).")).toBeInTheDocument();
-    unmount();
-    toon({ wegingGroepen: [] });
+  it("wacht zonder puntenschema of wedstrijden, en rekent zonder zwaardere wedstrijd gewoon", () => {
+    const { unmount } = toon({ stagePoints: [], wegingGroepen: [] });
+    expect(screen.getByText("Het puntenschema volgt.")).toBeInTheDocument();
     expect(screen.getByText("De weging volgt zodra de wedstrijden bekend zijn.")).toBeInTheDocument();
+    unmount();
+    toon({ wegingGroepen: [{ weging: 1, wedstrijden: ["Cup 1 t/m 3"], voorbeeld: "Cup 1" }] });
+    expect(screen.getByText("Winst in een wedstrijd?", { exact: false })).toHaveTextContent("Winst in een wedstrijd? 50 punten");
   });
 });
 
 describe("RegelsWeergave › wielerkoers", () => {
-  it("blijft zoals hij was: jokers, podium en truien, geen weging", () => {
+  it("blijft zoals hij was: jokers, podium en truien, geen De punten", () => {
     toon({ meermarathon: false, gameNaam: "Tour de France 2026", wegingGroepen: undefined });
     expect(screen.getByText(/Kies twee Jokers/)).toBeInTheDocument();
     expect(screen.getByText("Podium algemeen klassement")).toBeInTheDocument();
-    expect(screen.queryByText("Weging per wedstrijd")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "De punten" })).toBeNull();
     expect(screen.queryByText(/schaatser/)).toBeNull();
   });
 });

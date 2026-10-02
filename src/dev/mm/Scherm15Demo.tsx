@@ -6,22 +6,27 @@
 import type { ReactNode } from "react";
 import RegelsWeergave from "@/components/RegelsWeergave";
 import type { CategoryWithRiders } from "@/hooks/useCategories";
-import { wegingPerSoort } from "@/lib/wegingsfactor";
+import { wegingPerFactor } from "@/lib/wegingsfactor";
 
 const SCHEMA = [50, 40, 32, 26, 22, 20, 18, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((points, i) => ({
   position: i + 1,
   points,
 }));
 
-// Kalender met de weging zoals de beheerder hem zou instellen: Grand Prix' en
-// het ONK dubbel, de rest gewoon.
-const WEDSTRIJDEN = [
-  ...[1, 2, 3, 4, 5].map((nr) => ({ stage_number: nr, wedstrijd_type: "cup", ijs_type: "kunstijs", wegingsfactor: 1 })),
-  { stage_number: 6, wedstrijd_type: "grandprix", ijs_type: "natuurijs", wegingsfactor: 2 },
-  { stage_number: 7, wedstrijd_type: "grandprix", ijs_type: "natuurijs", wegingsfactor: 2 },
-  { stage_number: 8, wedstrijd_type: "onk", ijs_type: "natuurijs", wegingsfactor: 2 },
-  { stage_number: 9, wedstrijd_type: "nk", ijs_type: "kunstijs", wegingsfactor: 1 },
+// De kalender zoals hij op 2026-10-02 bij de mannen op productie stond, met de
+// weging uit Beheer (×0,5 voor Vierdaagse dag 1 t/m ×2 voor ONK en Weissensee).
+const KALENDER: [nr: number, naam: string, soort: string, weging: number][] = [
+  [1, "Cup 1 Amsterdam", "cup", 1], [2, "Cup 2 Utrecht", "cup", 1], [3, "Cup 3 Heerenveen", "cup", 1],
+  [4, "Cup 4 Heerenveen", "cup", 1], [5, "Cup 5 Haarlem", "cup", 1], [6, "Cup 6 Hoorn", "cup", 1],
+  [7, "Cup 7 Den Haag", "cup", 1], [8, "Vierdaagse dag 1 Hoorn", "cup", 0.5], [9, "Vierdaagse dag 2 Alkmaar", "cup", 0.75],
+  [10, "Vierdaagse dag 3 Amsterdam", "cup", 1], [11, "Vierdaagse dag 4 Haarlem", "cup", 1.5], [12, "Cup 8 Breda", "cup", 1],
+  [13, "Nederlands Kampioenschap", "nk", 1.5], [14, "Cup 9 Tilburg", "cup", 1], [15, "Cup 10 Eindhoven", "cup", 1],
+  [16, "Grand Prix 1", "grandprix", 1], [17, "Open Nederlands Kampioenschap", "onk", 2], [18, "Grand Prix 2", "grandprix", 1.5],
+  [19, "Grand Prix 3 Alternatieve Elfstedentocht Weissensee", "grandprix", 2], [20, "Cup 11 Alkmaar", "cup", 1],
+  [21, "Cup 12 Groningen", "cup", 1], [22, "Cup Finale Leeuwarden", "cup", 1], [23, "Grand Prix 4", "grandprix", 1.5],
+  [24, "Grand Prix 5", "grandprix", 1.5], [25, "Grand Prix Finale", "grandprix", 2],
 ];
+const WEDSTRIJDEN = KALENDER.map(([stage_number, name, wedstrijd_type, wegingsfactor]) => ({ stage_number, name, wedstrijd_type, wegingsfactor }));
 
 const NAMEN: [string, string[]][] = [
   ["Gratis punten", ["Lotte Bosma", "Iris Kooistra"]],
@@ -64,8 +69,9 @@ export default function Scherm15Demo() {
     categoriesLoading: false,
     stagePoints: SCHEMA,
     schemaLoading: false,
-    wegingGroepen: wegingPerSoort(WEDSTRIJDEN),
+    wegingGroepen: wegingPerFactor(WEDSTRIJDEN),
     pronostiekPunten: 50,
+    seizoen: "26/27",
   };
   return (
     <div className="space-y-10">

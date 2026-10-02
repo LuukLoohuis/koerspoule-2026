@@ -2,16 +2,15 @@
  * Het koersreglement (/regels) als weergave: alles via props, zodat de pagina
  * met nepdata te bekijken en te testen is. De data haalt pages/Rules.tsx op.
  *
- * Bij de Meermarathon een eigen variant: schaatsers in plaats van renners,
- * geen jokers, geen podium, truien of ploegentijdrit, wél de pronostiek
- * (winnaars van het Cup- en het Grand Prix-klassement) en de weging per
- * wedstrijd uit het beheer. De teksten komen via i18next-context "mm".
+ * Bij de Meermarathon een eigen pagina in de opmaak van de Instagram-posts
+ * (ReglementMeermarathon): schaatsers, geen jokers, en "De punten" met de
+ * weging per wedstrijd uit het beheer. De wielerkoersen houden deze pagina.
  */
 import { useTranslation, Trans } from "react-i18next";
 import { STEUN_URL } from "@/components/SteunKopgroep";
-import { SoortEmbleem, WEDSTRIJD_SOORT, WegingPil } from "@/components/meermarathon/WedstrijdSoort";
+import ReglementMeermarathon from "@/components/meermarathon/ReglementMeermarathon";
 import type { CategoryWithRiders } from "@/hooks/useCategories";
-import { gewogenPunten, wegingGetal, wegingLabel, type WegingGroep } from "@/lib/wegingsfactor";
+import type { WegingGroep } from "@/lib/wegingsfactor";
 
 export type RegelsWeergaveProps = {
   meermarathon: boolean;
@@ -22,10 +21,12 @@ export type RegelsWeergaveProps = {
   /** Punten per plek in een etappe of wedstrijd (classification "stage"), op volgorde. */
   stagePoints: Array<{ position: number; points: number }>;
   schemaLoading: boolean;
-  /** Meermarathon: de weging per soort wedstrijd (lib/wegingsfactor). */
+  /** Meermarathon: de weging per factor (lib/wegingsfactor). */
   wegingGroepen?: WegingGroep[];
   /** Meermarathon: punten per goed voorspelde klassementswinnaar. */
   pronostiekPunten?: number;
+  /** Meermarathon: "26/27", voor de voetregel. */
+  seizoen?: string | null;
 };
 
 const H3 = "font-display text-lg font-bold mb-2";
@@ -41,15 +42,26 @@ export default function RegelsWeergave({
   schemaLoading,
   wegingGroepen = [],
   pronostiekPunten = 50,
+  seizoen,
 }: RegelsWeergaveProps) {
   const { t } = useTranslation();
-  // i18next-context: "rule3" wordt "rule3_mm" als die bestaat, anders blijft het "rule3".
-  const ctx = meermarathon ? "mm" : undefined;
-  const r = (key: string, opts: Record<string, unknown> = {}) => t(`common.rules.${key}`, { context: ctx, ...opts });
-  // Het winterthema gebruikt --accent als lichte vlakkleur: text-accent is daar
-  // onleesbaar. De punten krijgen bij de Meermarathon de primaire kleur.
-  const nadruk = meermarathon ? "text-primary" : "text-accent";
 
+  if (meermarathon) {
+    return (
+      <ReglementMeermarathon
+        gameNaam={gameNaam}
+        categories={categories}
+        categoriesLoading={categoriesLoading}
+        stagePoints={stagePoints}
+        schemaLoading={schemaLoading}
+        wegingGroepen={wegingGroepen}
+        pronostiekPunten={pronostiekPunten}
+        seizoen={seizoen}
+      />
+    );
+  }
+
+  const r = (key: string, opts: Record<string, unknown> = {}) => t(`common.rules.${key}`, opts);
   const rules = [r("rule1"), r("rule2"), r("rule3"), r("rule4"), r("rule5")];
 
   return (
@@ -97,7 +109,6 @@ export default function RegelsWeergave({
                 ) : categories.length > 0 ? (
                   <Trans
                     i18nKey="common.rules.step2Body"
-                    context={ctx}
                     values={{ n: categories.length }}
                     components={{ bold: <span className="font-bold" /> }}
                   />
@@ -133,84 +144,57 @@ export default function RegelsWeergave({
                 {stagePoints.map((row) => (
                   <div key={row.position} className="flex items-center gap-1.5">
                     <span className="text-muted-foreground font-mono text-xs w-5 text-right">{row.position}.</span>
-                    <span className={`font-bold ${nadruk}`}>{row.points}</span>
+                    <span className="font-bold text-accent">{row.points}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {meermarathon ? (
-            <>
-              <WegingBlok groepen={wegingGroepen} eerstePlek={stagePoints.find((p) => p.position === 1)?.points} />
+          <h3 className={H3}>{r("podiumHeading")}</h3>
+          <div className="space-y-2 font-sans text-sm mb-3">
+            <div className={REGEL}>
+              <span>{r("podiumRow1")}</span>
+              <span className="font-bold text-accent">{r("pts", { points: 50 })}</span>
+            </div>
+            <div className={REGEL}>
+              <span>{r("podiumRow2")}</span>
+              <span className="font-bold text-accent">{r("pts", { points: 25 })}</span>
+            </div>
+            <div className={REGEL}>
+              <span>{r("podiumRow3")}</span>
+              <span className="font-bold text-muted-foreground">{r("pts", { points: 0 })}</span>
+            </div>
+            <p className="text-xs text-muted-foreground italic">{r("podiumNote")}</p>
+          </div>
 
-              <h3 className={H3}>{r("pronostiekHeading")}</h3>
-              <div className="space-y-2 font-sans text-sm mb-3">
-                <div className={`${REGEL} gap-3`}>
-                  <span>{r("pronostiekCup")}</span>
-                  <span className={`shrink-0 whitespace-nowrap font-bold ${nadruk}`}>{r("pts", { points: pronostiekPunten })}</span>
-                </div>
-                <div className={`${REGEL} gap-3`}>
-                  <span>{r("pronostiekGp")}</span>
-                  <span className={`shrink-0 whitespace-nowrap font-bold ${nadruk}`}>{r("pts", { points: pronostiekPunten })}</span>
-                </div>
-                <p className="text-xs text-muted-foreground italic">{r("pronostiekNote")}</p>
-              </div>
+          <h3 className={H3}>{r("jerseysHeading")}</h3>
+          <div className="space-y-2 font-sans text-sm mb-3">
+            <div className={REGEL}>
+              <span>{r("jerseyGreen")}</span>
+              <span className="font-bold text-accent">{r("pts", { points: 25 })}</span>
+            </div>
+            <div className={REGEL}>
+              <span>{r("jerseyMountain")}</span>
+              <span className="font-bold text-accent">{r("pts", { points: 25 })}</span>
+            </div>
+            <div className={REGEL}>
+              <span>{r("jerseyYoung")}</span>
+              <span className="font-bold text-accent">{r("pts", { points: 25 })}</span>
+            </div>
+          </div>
 
-              <h3 className={H3}>{r("jokersHeading")}</h3>
-              <p className={UITLEG}>{r("jokersDesc")}</p>
+          <h3 className={H3}>{r("jokersHeading")}</h3>
+          <p className={UITLEG}>{r("jokersDesc")}</p>
 
-              <h3 className={H3}>{r("totalHeading")}</h3>
-              <p className="text-sm text-muted-foreground font-sans">{r("totalDesc")}</p>
-            </>
-          ) : (
-            <>
-              <h3 className={H3}>{r("podiumHeading")}</h3>
-              <div className="space-y-2 font-sans text-sm mb-3">
-                <div className={REGEL}>
-                  <span>{r("podiumRow1")}</span>
-                  <span className="font-bold text-accent">{r("pts", { points: 50 })}</span>
-                </div>
-                <div className={REGEL}>
-                  <span>{r("podiumRow2")}</span>
-                  <span className="font-bold text-accent">{r("pts", { points: 25 })}</span>
-                </div>
-                <div className={REGEL}>
-                  <span>{r("podiumRow3")}</span>
-                  <span className="font-bold text-muted-foreground">{r("pts", { points: 0 })}</span>
-                </div>
-                <p className="text-xs text-muted-foreground italic">{r("podiumNote")}</p>
-              </div>
+          <h3 className={H3}>{r("totalHeading")}</h3>
+          <p className="text-sm text-muted-foreground font-sans">{r("totalDesc")}</p>
 
-              <h3 className={H3}>{r("jerseysHeading")}</h3>
-              <div className="space-y-2 font-sans text-sm mb-3">
-                <div className={REGEL}>
-                  <span>{r("jerseyGreen")}</span>
-                  <span className="font-bold text-accent">{r("pts", { points: 25 })}</span>
-                </div>
-                <div className={REGEL}>
-                  <span>{r("jerseyMountain")}</span>
-                  <span className="font-bold text-accent">{r("pts", { points: 25 })}</span>
-                </div>
-                <div className={REGEL}>
-                  <span>{r("jerseyYoung")}</span>
-                  <span className="font-bold text-accent">{r("pts", { points: 25 })}</span>
-                </div>
-              </div>
+          <h3 className={`${H3} mt-3`}>{r("tttHeading")}</h3>
+          <p className={UITLEG}>{r("tttDesc")}</p>
 
-              <h3 className={H3}>{r("jokersHeading")}</h3>
-              <p className={UITLEG}>{r("jokersDesc")}</p>
-
-              <h3 className={H3}>{r("totalHeading")}</h3>
-              <p className="text-sm text-muted-foreground font-sans">{r("totalDesc")}</p>
-
-              <h3 className={`${H3} mt-3`}>{r("tttHeading")}</h3>
-              <p className={UITLEG}>{r("tttDesc")}</p>
-
-              <h3 className={H3}>{r("dayPrizeHeading")}</h3>
-              <p className="text-sm text-muted-foreground font-sans">{r("dayPrizeDesc")}</p>
-            </>
-          )}
+          <h3 className={H3}>{r("dayPrizeHeading")}</h3>
+          <p className="text-sm text-muted-foreground font-sans">{r("dayPrizeDesc")}</p>
         </section>
 
         {/* Categories overview */}
@@ -270,62 +254,12 @@ export default function RegelsWeergave({
               className="inline-flex items-center gap-2 px-6 py-3 rounded-md font-bold text-foreground shadow-md hover:opacity-90 transition"
               style={{ backgroundColor: "hsl(var(--vintage-gold))", fontFamily: "Arial, sans-serif", border: "1px solid hsl(var(--foreground))" }}
             >
-              <span>{meermarathon ? "⛸️" : "🚴"}</span>
+              <span>🚴</span>
               <span>{r("supportButton")}</span>
             </a>
           </div>
         </section>
       </div>
     </div>
-  );
-}
-
-/**
- * Meermarathon: hoe zwaar elke soort wedstrijd telt, uit het beheer. Met een
- * rekenvoorbeeld op de zwaarste weging, zodat "×2" meteen iets betekent.
- */
-function WegingBlok({ groepen, eerstePlek }: { groepen: WegingGroep[]; eerstePlek?: number }) {
-  const { t } = useTranslation();
-  const zwaarste = groepen.reduce((max, g) => Math.max(max, g.weging), 1);
-  return (
-    <>
-      <h3 className={H3}>{t("common.rules.wegingHeading")}</h3>
-      <p className={UITLEG}>{t("common.rules.wegingDesc")}</p>
-      {groepen.length === 0 ? (
-        <p className="text-sm text-muted-foreground italic mb-6">{t("common.rules.wegingLeeg")}</p>
-      ) : (
-        <>
-          <ul className="space-y-2 font-sans text-sm mb-2" aria-label={t("common.rules.wegingHeading")}>
-            {groepen.map((g) => (
-              <li key={`${g.soort}-${g.weging}`} className="flex items-center gap-3 p-3 bg-secondary/50 rounded-md">
-                <SoortEmbleem soort={g.soort} maat={28} />
-                <span className="min-w-0 flex-1">
-                  <span className="block font-semibold">{WEDSTRIJD_SOORT[g.soort].label}</span>
-                  {/* Een titelwedstrijd heet als zijn soort ("NK"): dan niet nog eens. */}
-                  {g.wedstrijden.join() !== WEDSTRIJD_SOORT[g.soort].label && (
-                    <span className="block text-xs text-muted-foreground">{g.wedstrijden.join(" · ")}</span>
-                  )}
-                </span>
-                {g.weging === 1 ? (
-                  <span className="shrink-0 text-xs text-muted-foreground">{t("common.rules.wegingGewoon")}</span>
-                ) : (
-                  <WegingPil soort={g.soort} weging={g.weging} className="shrink-0" />
-                )}
-                <span className="w-12 shrink-0 text-right font-bold text-primary tabular-nums">{wegingLabel(g.weging)}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="text-xs text-muted-foreground italic mb-6">
-            {zwaarste > 1 && eerstePlek
-              ? t("common.rules.wegingVoorbeeld", {
-                  factor: wegingGetal(zwaarste),
-                  punten: eerstePlek,
-                  totaal: gewogenPunten(eerstePlek, zwaarste),
-                })
-              : t("common.rules.wegingAllesGewoon")}
-          </p>
-        </>
-      )}
-    </>
   );
 }

@@ -3,10 +3,12 @@ import {
   gewogenPunten,
   leesWeging,
   schemaMetWeging,
+  nummerReeks,
   wegingLabel,
-  wegingPerSoort,
+  wegingPerFactor,
   wegingUitleg,
   wegingVan,
+  wegingWoord,
 } from "./wegingsfactor";
 
 describe("wegingVan", () => {
@@ -96,31 +98,81 @@ describe("schemaMetWeging", () => {
   });
 });
 
-describe("wegingPerSoort", () => {
-  const w = (stage_number: number, wedstrijd_type: string, wegingsfactor?: number, over = {}) => ({
-    stage_number,
-    name: null,
-    wedstrijd_type,
-    ijs_type: wedstrijd_type === "grandprix" || wedstrijd_type === "onk" ? "natuurijs" : "kunstijs",
-    wegingsfactor,
-    ...over,
+describe("wegingWoord en nummerReeks", () => {
+  it("noemt de gangbare factoren in één woord", () => {
+    expect([2, 1.5, 1, 0.75, 0.5].map(wegingWoord)).toEqual(["Dubbel", "Anderhalf", "Gewoon", "Driekwart", "Half"]);
+    expect(wegingWoord(1.25)).toBe("Zwaarder");
+    expect(wegingWoord(0.9)).toBe("Lichter");
   });
 
-  it("geeft één regel per soort, in vaste volgorde", () => {
-    const groepen = wegingPerSoort([w(9, "nk"), w(8, "onk", 2), w(2, "cup"), w(1, "cup"), w(6, "grandprix", 2), w(7, "grandprix", 2)]);
-    expect(groepen).toEqual([
-      { soort: "cup", weging: 1, wedstrijden: ["Cup 1", "Cup 2"] },
-      { soort: "grandprix", weging: 2, wedstrijden: ["Grand Prix 6", "Grand Prix 7"] },
-      { soort: "onk", weging: 2, wedstrijden: ["ONK"] },
-      { soort: "nk", weging: 1, wedstrijden: ["NK"] },
+  it("maakt pas vanaf drie op een rij een reeks", () => {
+    expect(nummerReeks([3, 1, 2, 4])).toBe("1 t/m 4");
+    expect(nummerReeks([2, 4, 5])).toBe("2, 4 en 5");
+    expect(nummerReeks([1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12])).toBe("1 t/m 7 en 9 t/m 12");
+    expect(nummerReeks([3, 4])).toBe("3 en 4");
+    expect(nummerReeks([8])).toBe("8");
+  });
+});
+
+describe("wegingPerFactor", () => {
+  type Rij = [nr: number, naam: string, soort: string, weging: number];
+  const kalender = (rijen: Rij[]) =>
+    rijen.map(([stage_number, name, wedstrijd_type, wegingsfactor]) => ({ stage_number, name, wedstrijd_type, wegingsfactor }));
+
+  // De kalender zoals hij op 2026-10-02 bij de mannen op productie stond.
+  const MANNEN: Rij[] = [
+    [1, "Cup 1 Amsterdam", "cup", 1], [2, "Cup 2 Utrecht", "cup", 1], [3, "Cup 3 Heerenveen", "cup", 1],
+    [4, "Cup 4 Heerenveen", "cup", 1], [5, "Cup 5 Haarlem", "cup", 1], [6, "Cup 6 Hoorn", "cup", 1],
+    [7, "Cup 7 Den Haag", "cup", 1], [8, "Vierdaagse dag 1 Hoorn", "cup", 0.5], [9, "Vierdaagse dag 2 Alkmaar", "cup", 0.75],
+    [10, "Vierdaagse dag 3 Amsterdam", "cup", 1], [11, "Vierdaagse dag 4 Haarlem", "cup", 1.5], [12, "Cup 8 Breda", "cup", 1],
+    [13, "Nederlands Kampioenschap", "nk", 1.5], [14, "Cup 9 Tilburg", "cup", 1], [15, "Cup 10 Eindhoven", "cup", 1],
+    [16, "Grand Prix 1", "grandprix", 1], [17, "Open Nederlands Kampioenschap", "onk", 2], [18, "Grand Prix 2", "grandprix", 1.5],
+    [19, "Grand Prix 3 Alternatieve Elfstedentocht Weissensee", "grandprix", 2], [20, "Cup 11 Alkmaar", "cup", 1],
+    [21, "Cup 12 Groningen", "cup", 1], [22, "Cup Finale Leeuwarden", "cup", 1], [23, "Grand Prix 4", "grandprix", 1.5],
+    [24, "Grand Prix 5", "grandprix", 1.5], [25, "Grand Prix Finale", "grandprix", 2],
+  ];
+
+  it("vat de echte kalender samen per factor, zwaarste eerst", () => {
+    expect(wegingPerFactor(kalender(MANNEN))).toEqual([
+      { weging: 2, wedstrijden: ["ONK", "Grand Prix 3 Alternatieve Elfstedentocht Weissensee", "Grand Prix Finale"], voorbeeld: "ONK" },
+      { weging: 1.5, wedstrijden: ["Vierdaagse dag 4 Haarlem", "NK", "Grand Prix 2, 4 en 5"], voorbeeld: "Vierdaagse dag 4 Haarlem" },
+      {
+        weging: 1,
+        wedstrijden: ["Cup 1 t/m 12", "Vierdaagse dag 3 Amsterdam", "Grand Prix 1", "Cup Finale Leeuwarden"],
+        voorbeeld: "Cup 1 Amsterdam",
+      },
+      { weging: 0.75, wedstrijden: ["Vierdaagse dag 2 Alkmaar"], voorbeeld: "Vierdaagse dag 2 Alkmaar" },
+      { weging: 0.5, wedstrijden: ["Vierdaagse dag 1 Hoorn"], voorbeeld: "Vierdaagse dag 1 Hoorn" },
     ]);
   });
 
-  it("geeft een afwijkende wedstrijd een eigen regel en slaat het eindklassement over", () => {
-    const groepen = wegingPerSoort([w(6, "grandprix", 2), w(7, "grandprix"), w(22, "cup", 1, { is_gc: true })]);
-    expect(groepen).toEqual([
-      { soort: "grandprix", weging: 2, wedstrijden: ["Grand Prix 6"] },
-      { soort: "grandprix", weging: 1, wedstrijden: ["Grand Prix 7"] },
+  it("trekt wisselende spelling recht en laat een afwijkende naam staan", () => {
+    // Zo staan ze bij de vrouwen: "Grand prix", "grand prix 5", "Marathon cup 8 Breda".
+    const vrouwen = MANNEN.map(([nr, naam, soort, weging]): Rij => {
+      if (nr === 11) return [nr, naam, soort, 1];
+      if (nr === 12) return [nr, "Marathon cup 8 Breda", soort, weging];
+      if (nr === 24) return [nr, "grand prix 5", soort, weging];
+      return [nr, naam.replace("Grand Prix", "Grand prix"), soort, weging];
+    });
+    const groepen = wegingPerFactor(kalender(vrouwen));
+    expect(groepen[0].wedstrijden).toEqual(["ONK", "Grand Prix 3 Alternatieve Elfstedentocht Weissensee", "Grand Prix Finale"]);
+    expect(groepen[1].wedstrijden).toEqual(["NK", "Grand Prix 2, 4 en 5"]);
+    expect(groepen[2].wedstrijden).toEqual([
+      "Cup 1 t/m 7 en 9 t/m 12",
+      "Vierdaagse dag 3 en 4",
+      "Marathon cup 8 Breda",
+      "Grand Prix 1",
+      "Cup Finale Leeuwarden",
     ]);
+  });
+
+  it("noemt een wedstrijd zonder eigen naam naar zijn soort en slaat het eindklassement over", () => {
+    const groepen = wegingPerFactor([
+      { stage_number: 1, name: null, wedstrijd_type: "cup" },
+      { stage_number: 2, name: "Etappe 2", wedstrijd_type: "cup" },
+      { stage_number: 3, name: null, wedstrijd_type: "cup" },
+      { stage_number: 22, name: "Eindklassement (GC)", wedstrijd_type: "cup", is_gc: true },
+    ]);
+    expect(groepen).toEqual([{ weging: 1, wedstrijden: ["Cup 1 t/m 3"], voorbeeld: "Cup 1" }]);
   });
 });

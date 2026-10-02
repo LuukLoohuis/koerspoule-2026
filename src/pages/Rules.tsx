@@ -7,7 +7,7 @@ import { usePointsSchema } from "@/hooks/usePointsSchema";
 import { useStages } from "@/hooks/useResults";
 import { isMeermarathonGame, meermarathonSeason } from "@/lib/gameTypes";
 import { KLASSEMENT_PUNTEN } from "@/lib/klassementVoorspelling";
-import { wegingPerSoort } from "@/lib/wegingsfactor";
+import { wegingPerFactor } from "@/lib/wegingsfactor";
 import RegelsWeergave from "@/components/RegelsWeergave";
 
 export default function Rules() {
@@ -47,10 +47,12 @@ export default function Rules() {
   // in het puntenschema overschrijven (pred_klassement, plek 1).
   const pronostiekPunten =
     schema.find((s) => (s.classification as string) === "pred_klassement" && s.position === 1)?.points ?? KLASSEMENT_PUNTEN;
-  const wegingGroepen = useMemo(() => wegingPerSoort(stages), [stages]);
+  const wegingGroepen = useMemo(() => wegingPerFactor(stages), [stages]);
 
   // De Meermarathon is één game: geen "Mannen" of "Vrouwen" in de naam.
   const gameNaam = game ? (meermarathon ? `Meermarathon ${meermarathonSeason(game.year)}` : game.name) : null;
+  // "26/27" voor de voetregel van De punten, zoals op de posts.
+  const seizoen = game ? `${String(game.year % 100).padStart(2, "0")}/${String((game.year + 1) % 100).padStart(2, "0")}` : null;
 
   return (
     <>
@@ -66,6 +68,7 @@ export default function Rules() {
         schemaLoading={schemaLoading}
         wegingGroepen={wegingGroepen}
         pronostiekPunten={pronostiekPunten}
+        seizoen={seizoen}
       />
     </>
   );
