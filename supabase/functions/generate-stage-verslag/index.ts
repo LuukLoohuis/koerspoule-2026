@@ -215,6 +215,8 @@ type Feiten = {
   klassementTop3: Array<{ naam: string; punten: number }>;
   /** Renners die de dagwinnaar het verschil brachten: veel punten, weinig gekozen. */
   uitblinkers: Array<{ renner: string; punten: number; eigendomPct: number; joker: boolean }>;
+  /** Meermarathon: hoe zwaar deze wedstrijd telde (Grand Prix ×2); 1 of weg = gewoon. */
+  wegingsfactor?: number;
   aantalDeelnemers: number;
   isEersteEtappe: boolean;
 };
@@ -243,6 +245,16 @@ async function haalFeiten(admin: any, stageId: string): Promise<Feiten> {
     .eq("id", stageId)
     .maybeSingle();
   if (stErr || !stage) throw new Error("Etappe niet gevonden");
+
+  // Meermarathon: telde deze wedstrijd zwaarder? Los opgehaald: zonder de kolom
+  // (database nog niet bijgewerkt) blijft het 1 en loopt het verslag gewoon door.
+  const { data: wegingRij } = await admin
+    .from("stages")
+    .select("wegingsfactor")
+    .eq("id", stageId)
+    .maybeSingle();
+  const wegingGetal = Number(wegingRij?.wegingsfactor ?? 1);
+  const weging = Number.isFinite(wegingGetal) && wegingGetal > 0 ? wegingGetal : 1;
 
   // Ritwinnaar en truidragers uit de uitslag van deze etappe.
   // Hele uitslag, niet alleen de winnaars: we rekenen er straks ook de punten
@@ -419,9 +431,12 @@ async function haalFeiten(admin: any, stageId: string): Promise<Feiten> {
             zoek("kom", r.mountain_position) + zoek("points", r.points_position) +
             zoek("youth", r.youth_position);
           const joker = jokerIds.has(r.rider_id);
+          // Zelfde afronding als calculate_stage_scores: per renner, factor in
+          // hele honderdsten, x,5 naar boven.
+          const gewogen = Math.round((basis * Math.round(weging * 100)) / 100);
           return {
             renner: r.riders?.name?.trim() ?? "",
-            punten: joker ? basis * 2 : basis,
+            punten: joker ? gewogen * 2 : gewogen,
             eigendomPct: totaalEntries > 0
               ? Math.round(((gekozen.get(r.rider_id) ?? 0) / totaalEntries) * 100)
               : 0,
@@ -451,6 +466,7 @@ async function haalFeiten(admin: any, stageId: string): Promise<Feiten> {
     leider,
     klassementTop3,
     uitblinkers,
+    wegingsfactor: weging,
     aantalDeelnemers: naamPerEntry.size,
     isEersteEtappe: stage.stage_number === 1,
   };
@@ -464,6 +480,14 @@ export function feitenPrompt(f: Feiten): string {
   if (f.stageType) regels.push(`Type rit: ${f.stageType}`);
   if (f.ritwinnaar) {
     regels.push(`Ritwinnaar: ${f.ritwinnaar}${f.ritwinnaarPloeg ? ` (${f.ritwinnaarPloeg})` : ""}`);
+  }
+  if (f.wegingsfactor && f.wegingsfactor !== 1) {
+    const factor = String(f.wegingsfactor).replace(".", ",");
+    regels.push(
+      f.wegingsfactor === 2
+        ? "Deze wedstrijd telde dubbel: alle punten van vandaag zijn ×2."
+        : `Deze wedstrijd telde zwaarder: alle punten van vandaag zijn ×${factor}.`,
+    );
   }
   for (const t of f.truien) regels.push(`Draagt ${t.trui}: ${t.renner}`);
   if (f.aantalDeelnemers > 0) regels.push(`Aantal deelnemers in de poule: ${f.aantalDeelnemers}`);

@@ -9,6 +9,7 @@
  */
 
 import { pelotonIndex, type GroepsRol, type LiveGroup, type PointsSchema } from "@/lib/liveMarathon";
+import { wegingUitleg } from "@/lib/wegingsfactor";
 
 /** Kunstijs is altijd een 400 m-ovaal: rechte stukken met halve cirkels. */
 export const PATH_KUNSTIJS =
@@ -352,8 +353,12 @@ export function groepsGat(groups: LiveGroup[], index: number): string | null {
  *
  * `maxPlek` is dezelfde grens als in projectPoints: verder dan plek 20 scoort
  * niemand, ook als het schema doorloopt. Null zonder scorende plekken.
+ *
+ * Telt de wedstrijd zwaarder (`weging`, zie lib/wegingsfactor), dan blijft de
+ * schaal die van de game en komt de factor erachter: zo zie je waarom plek 1
+ * ineens 100 oplevert.
  */
-export function puntenSchaal(schema: PointsSchema, maxPlek = 20): string | null {
+export function puntenSchaal(schema: PointsSchema, maxPlek = 20, weging = 1): string | null {
   const plekken = [...schema.entries()]
     .filter(([plek, punten]) => plek >= 1 && plek <= maxPlek && punten > 0)
     .sort((a, b) => a[0] - b[0]);
@@ -362,5 +367,6 @@ export function puntenSchaal(schema: PointsSchema, maxPlek = 20): string | null 
   // Meer dan zeven getallen leest niet meer als schaal; dan de kop en de staart.
   const reeks = waarden.length > 7 ? `${waarden.slice(0, 6).join("-")}\u2026${waarden[waarden.length - 1]}` : waarden.join("-");
   const laatste = plekken[plekken.length - 1][0];
-  return `Punten volgens de schaal ${reeks} voor plek 1 t/m ${laatste}.`;
+  const uitleg = wegingUitleg(weging);
+  return `Punten volgens de schaal ${reeks} voor plek 1 t/m ${laatste}.${uitleg ? ` Deze wedstrijd ${uitleg}.` : ""}`;
 }

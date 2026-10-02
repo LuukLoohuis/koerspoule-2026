@@ -37,6 +37,8 @@ const WEDSTRIJDEN: Stage[] = PLAN.map(([nr, date, type, ijs, ronden]) => ({
   ijs_type: ijs,
   wedstrijd_type: type,
   aantal_rondes: ronden,
+  // De Grand Prix telt dubbel, het ONK anderhalf keer (scherm 14).
+  wegingsfactor: type === "grandprix" ? 2 : type === "onk" ? 1.5 : 1,
 }));
 
 const RITTEN: Stage[] = [

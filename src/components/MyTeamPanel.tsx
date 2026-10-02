@@ -35,6 +35,7 @@ import FlagIcon from "@/components/FlagIcon";
 import { Trans, useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 import { isMeermarathonGame, meermarathonStageLabel, wedstrijdTypeVan } from "@/lib/gameTypes";
+import { wegingVan } from "@/lib/wegingsfactor";
 import { WedstrijdLabelsProvider, type WedstrijdLabel } from "@/contexts/WedstrijdLabelsContext";
 import { SoortEmbleem } from "@/components/meermarathon/WedstrijdSoort";
 import { useLiveRace } from "@/hooks/useLiveRace";
@@ -431,7 +432,10 @@ function KoersPanel({
     () =>
       isMeermarathon
         ? new Map(
-            stages.map((s) => [s.stage_number, { label: meermarathonStageLabel({ ...s, name: null }), soort: wedstrijdTypeVan(s) }]),
+            stages.map((s) => [
+              s.stage_number,
+              { label: meermarathonStageLabel({ ...s, name: null }), soort: wedstrijdTypeVan(s), weging: wegingVan(s) },
+            ]),
           )
         : null,
     [isMeermarathon, stages],
@@ -832,14 +836,16 @@ function KoersPanel({
   if (section === "live") {
     if (!heeftLive) return null;
     const race = simRace ?? liveRace ?? null;
+    const liveStage = stages.find((s) => s.id === race?.stageId);
     return (
       <LiveTab
         race={race}
         simulatie={simRace !== null}
         mineRiderIds={simRace ? simulatieMijnRiderIds(SIM_MIJN_BEENNUMMERS) : mineRiderIds}
         pointsSchema={pointsSchema}
+        weging={wegingVan(liveStage)}
         categorie={gameIdProp ? gameCategorie : curGame?.categorie}
-        wedstrijdType={stages.find((s) => s.id === race?.stageId)?.wedstrijd_type ?? null}
+        wedstrijdType={liveStage?.wedstrijd_type ?? null}
         ploegNaam={teamName}
         // Met naam, zodat ook wie niet start in "Mijn rijders" staat. LiveTab
         // houdt zelf alleen de rijders over die bij de getoonde ploeg horen.

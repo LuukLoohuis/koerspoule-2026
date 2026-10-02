@@ -28,6 +28,7 @@ import AapscoreDistributie from "@/components/horscat/AapscoreDistributie";
 import MonkeyExplainerModal from "@/components/horscat/MonkeyExplainerModal";
 import EmiratesBenchmark from "@/components/horscat/EmiratesBenchmark";
 import { useStages, useGameStandings, useStagePointsForEntries, useStageAverages } from "@/hooks/useResults";
+import { gewogenPunten, wegingPerWedstrijd } from "@/lib/wegingsfactor";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -333,6 +334,9 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
 
   // Stage-by-stage timeline data
   const { data: stages = [] } = useStages(hcGameId);
+  // Meermarathon: een wedstrijd kan zwaarder tellen (Grand Prix ×2); de
+  // rijderspunten hieronder wegen mee, net als de echte stand.
+  const wegingen = useMemo(() => wegingPerWedstrijd(stages), [stages]);
   // Hoogste goedgekeurde (niet-GC) etappe → server-side totalen via game_standings,
   // i.p.v. alle stage_points-rijen van de hele game naar de client te halen.
   const maxStageNum = useMemo(() => {
@@ -430,7 +434,8 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     const riderPoints = new Map<string, number>();
     for (const result of allStageResults) {
       if (!result.rider_id) continue;
-      riderPoints.set(result.rider_id, (riderPoints.get(result.rider_id) ?? 0) + (pointsTable[result.finish_position] ?? 0));
+      const pts = gewogenPunten(pointsTable[result.finish_position] ?? 0, wegingen.get(result.stage_id) ?? 1);
+      riderPoints.set(result.rider_id, (riderPoints.get(result.rider_id) ?? 0) + pts);
     }
     const userActual = entry ? myStageTotal : 0;
     const simulation = simulateMonkeyTeams({
@@ -467,7 +472,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       console.log("[monte] bins:", dist);
     }
     return { mean, median, top10cut, beatPct, top10, worseThanApe, aboveMedian, userActual, dist };
-  }, [categories, allStageResults, allGameRiders, entry, myStageTotal, jokerMultiplier, jokersPerPloeg, game?.id]);
+  }, [categories, allStageResults, allGameRiders, entry, myStageTotal, jokerMultiplier, jokersPerPloeg, game?.id, wegingen]);
 
   // ── Demo Monte Carlo (alleen sneak preview 'open') ───────────────────────────
   // Volledig client-side, deterministisch (vaste seed): ~5 gesimuleerde deelnemers
@@ -575,7 +580,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     const riderTotals = new Map<string, number>();
     for (const r of allStageResults) {
       if (!r.rider_id) continue;
-      const pts = pointsTable[r.finish_position] ?? 0;
+      const pts = gewogenPunten(pointsTable[r.finish_position] ?? 0, wegingen.get(r.stage_id) ?? 1);
       if (pts === 0) continue;
       riderTotals.set(r.rider_id, (riderTotals.get(r.rider_id) ?? 0) + pts);
     }
@@ -654,7 +659,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       stagesCount: approvedStages.length,
       riderTotals,
     };
-  }, [stages, categories, allStageResults, standRows, entry?.id, allGameRiders, jokersPerPloeg, t]);
+  }, [stages, categories, allStageResults, standRows, entry?.id, allGameRiders, jokersPerPloeg, t, wegingen]);
 
   // ── Emirates-benchmark: eigen ploeg vs droomploeg, set-gewijs per categorie ──
   // Zelfde scope als het ceiling-totaal: alle categorieën + de jokers (×1, geen
@@ -808,7 +813,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     const riderTotals = new Map<string, number>();
     for (const r of allStageResults) {
       if (!r.rider_id) continue;
-      const pts = pointsTable[r.finish_position] ?? 0;
+      const pts = gewogenPunten(pointsTable[r.finish_position] ?? 0, wegingen.get(r.stage_id) ?? 1);
       if (pts === 0) continue;
       riderTotals.set(r.rider_id, (riderTotals.get(r.rider_id) ?? 0) + pts);
     }
@@ -916,7 +921,7 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
       diffDetail,
       jokerDetail,
     };
-  }, [hasResults, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats, metJokers, weging, t]);
+  }, [hasResults, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats, metJokers, weging, t, wegingen]);
 
   // ── Sub-tab state (must be declared before any early return to keep hook order stable) ──
   const [activeTab, setActiveTab] = useState<HorsTabKey>(initialTab ?? "dartpijl");

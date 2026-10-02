@@ -126,6 +126,19 @@ describe("LiveTab", () => {
     expect(within(kaart).getByText(/schaal 50-40-32-26-22-20…1 voor plek 1 t\/m 20/)).toBeInTheDocument();
   });
 
+  it("telt een zwaardere wedstrijd mee in de voorlopige punten", () => {
+    renderTab({ weging: 2 });
+    const tegels = screen.getAllByRole("definition").map((d) => d.textContent?.replace(/\s+/g, " ").trim());
+    expect(tegels[0]).toBe("76pt");
+    const kaart = screen.getByRole("region", { name: "Mijn rijders" });
+    expect(within(kaart).getAllByRole("listitem")[0]).toHaveTextContent(/Rijder 04.*P4.*52/);
+    // De schaal blijft die van de game; de factor staat erachter.
+    expect(within(kaart).getByText(/schaal 50-40-32-26-22-20…1 voor plek 1 t\/m 20\. Deze wedstrijd telt dubbel\./)).toBeInTheDocument();
+    // De virtuele uitslag weegt ook: plek 1 levert 100 op.
+    const uitslag = screen.getByRole("region", { name: "Virtuele uitslag" });
+    expect(within(uitslag).getAllByRole("listitem")[0]).toHaveTextContent(/100/);
+  });
+
   it("meldt een stilgevallen feed als onderbroken", () => {
     renderTab({ race: race(new Date(Date.now() - 10 * 60_000).toISOString()) });
     expect(screen.getByText("ONDERBROKEN")).toBeInTheDocument();

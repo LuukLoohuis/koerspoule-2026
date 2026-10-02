@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import VerslagDialog from "@/components/admin/VerslagDialog";
 import { Trash2, Trophy, Radio, Newspaper } from "lucide-react";
 import { isMeermarathonGame, WEDSTRIJD_TYPES, meermarathonStageLabel, wedstrijdTypeVan, type WedstrijdType } from "@/lib/gameTypes";
+import { WEGING_MAX, leesWeging, wegingGetal, wegingLabel, wegingVan } from "@/lib/wegingsfactor";
 import StageLiveTracks from "@/components/admin/StageLiveTracks";
 import EindklassementMeermarathon from "@/components/admin/EindklassementMeermarathon";
 
@@ -30,6 +31,8 @@ export function stageTypeLabel(t: string | null | undefined): string {
   return STAGE_TYPES.find((s) => s.value === t)?.label ?? "Vlak";
 }
 
+const WEGING_UITLEG = "Hoe zwaar de wedstrijd telt: 1 = gewoon, 2 = dubbele punten";
+
 export type Stage = {
   id: string;
   game_id: string;
@@ -45,6 +48,9 @@ export type Stage = {
   ijs_type?: string | null;
   wedstrijd_type?: string | null;
   aantal_rondes?: number | null;
+  /** Meermarathon: hoe zwaar de wedstrijd telt; 1 = gewoon. */
+  wegingsfactor?: number | null;
+  results_status?: string | null;
 };
 
 export type StageProfileData = {
@@ -88,6 +94,9 @@ export default function StagesTab({
   const [distanceKm, setDistanceKm] = useState<string>("");
   // Meermarathon kent geen terrein of kilometers, wel een categorie.
   const [wedstrijdType, setWedstrijdType] = useState<WedstrijdType>("cup");
+  // Weging als tekst, zodat "1,5" met een komma kan.
+  const [weging, setWeging] = useState("1");
+  const [savingWeging, setSavingWeging] = useState<string | null>(null);
   const [savingType, setSavingType] = useState<string | null>(null);
   const [savingKm, setSavingKm] = useState<string | null>(null);
   // Profiel-data (JSON) bewerken via dialog.
@@ -122,6 +131,11 @@ export default function StagesTab({
     if (!supabase || !activeGameId) return;
     // Meermarathon: zonder eigen naam heet de wedstrijd naar zijn categorie
     // ("Cup 3", "NK"); een standaardnaam "Etappe 3" zou dat overschrijven.
+    const factor = isMeermarathon ? leesWeging(weging) : 1;
+    if (factor === null) {
+      toast.error(`Weging moet groter dan 0 en hooguit ${WEGING_MAX} zijn`);
+      return;
+    }
     const rij = isMeermarathon
       ? {
           game_id: activeGameId,
@@ -130,6 +144,8 @@ export default function StagesTab({
           date: date || null,
           status: "draft",
           wedstrijd_type: wedstrijdType,
+          // Alleen meesturen als hij afwijkt: 1 is al de standaard.
+          ...(factor !== 1 ? { wegingsfactor: factor } : {}),
         }
       : {
           game_id: activeGameId,
@@ -153,6 +169,7 @@ export default function StagesTab({
     setDate("");
     setStageType("vlak");
     setDistanceKm("");
+    setWeging("1");
     await reload();
   }
 
@@ -263,6 +280,37 @@ export default function StagesTab({
     await reload();
   }
 
+  // Hoe zwaar een wedstrijd telt. Via de database-functie: die telt een al
+  // berekende wedstrijd meteen opnieuw, want fiatteren rekent zelf niet meer.
+  // Geeft false terug als er niets is opgeslagen, zodat het veld terugspringt.
+  async function updateWeging(stage: Stage, value: string): Promise<boolean> {
+    if (!supabase || !activeGameId) return false;
+    const factor = leesWeging(value);
+    if (factor === null) {
+      toast.error(`Weging moet groter dan 0 en hooguit ${WEGING_MAX} zijn`);
+      return false;
+    }
+    if (factor === wegingVan(stage)) return true;
+    const label = meermarathonStageLabel(stage);
+    const inKlassement = stage.results_status === "approved";
+    if (inKlassement && !confirm(`${label} staat al in het klassement. De punten en de stand worden opnieuw geteld met ${wegingLabel(factor)}. Doorgaan?`)) {
+      return false;
+    }
+    setSavingWeging(stage.id);
+    const { data: herteld, error } = await supabase.rpc("zet_wegingsfactor", { p_stage_id: stage.id, p_factor: factor });
+    setSavingWeging(null);
+    if (error) { toast.error(`Weging opslaan mislukt: ${error.message}`); return false; }
+    toast.success(`${label} telt nu ${wegingLabel(factor)}`, {
+      description: inKlassement
+        ? "Punten en klassement zijn opnieuw geteld."
+        : herteld
+          ? "De berekende punten zijn opnieuw geteld."
+          : undefined,
+    });
+    await reload();
+    return true;
+  }
+
 
   return (
     <div className="space-y-6">
@@ -277,7 +325,7 @@ export default function StagesTab({
 
       <Card>
         <CardHeader><CardTitle className="font-display">{isMeermarathon ? "Nieuwe wedstrijd" : "Nieuwe etappe"}</CardTitle></CardHeader>
-        <CardContent className={isMeermarathon ? "grid gap-3 md:grid-cols-6" : "grid gap-3 md:grid-cols-7"}>
+        <CardContent className="grid gap-3 md:grid-cols-7">
           <div>
             <Label>{isMeermarathon ? "Wedstrijd nr." : "Etappe nr."}</Label>
             <Input data-testid="stage-number-input" type="number" min={1} value={stageNumber} onChange={(e) => setStageNumber(Number(e.target.value))} />
@@ -296,17 +344,34 @@ export default function StagesTab({
             <Input data-testid="stage-date-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
           {isMeermarathon ? (
-            <div>
-              <Label>Categorie</Label>
-              <Select value={wedstrijdType} onValueChange={(v) => setWedstrijdType(v as WedstrijdType)}>
-                <SelectTrigger data-testid="wedstrijd-type-select"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {WEDSTRIJD_TYPES.map((w) => (
-                    <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <>
+              <div>
+                <Label>Categorie</Label>
+                <Select value={wedstrijdType} onValueChange={(v) => setWedstrijdType(v as WedstrijdType)}>
+                  <SelectTrigger data-testid="wedstrijd-type-select"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {WEDSTRIJD_TYPES.map((w) => (
+                      <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="nieuwe-weging">Weging</Label>
+                <div className="relative">
+                  <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">×</span>
+                  <Input
+                    id="nieuwe-weging"
+                    data-testid="wedstrijd-weging-input"
+                    inputMode="decimal"
+                    value={weging}
+                    onChange={(e) => setWeging(e.target.value)}
+                    className="pl-7 tabular-nums"
+                    title={WEGING_UITLEG}
+                  />
+                </div>
+              </div>
+            </>
           ) : (
             <>
               <div>
@@ -362,7 +427,15 @@ export default function StagesTab({
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="font-display">{isMeermarathon ? "Wedstrijden" : "Etappes"} ({stages.length})</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="font-display">{isMeermarathon ? "Wedstrijden" : "Etappes"} ({stages.length})</CardTitle>
+          {isMeermarathon && (
+            <p className="text-sm text-muted-foreground">
+              Weging: hoe zwaar een wedstrijd telt. 1 is gewoon, 2 geeft dubbele punten. Is een wedstrijd al
+              berekend, dan worden de punten bij het wijzigen meteen opnieuw geteld. De pronostiek telt niet mee.
+            </p>
+          )}
+        </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
@@ -373,6 +446,7 @@ export default function StagesTab({
                 {isMeermarathon ? (
                   <>
                     <TableHead className="w-36">Categorie</TableHead>
+                    <TableHead className="w-24" title={WEGING_UITLEG}>Weging</TableHead>
                     <TableHead className="w-28">Ronden</TableHead>
                   </>
                 ) : (
@@ -417,6 +491,27 @@ export default function StagesTab({
                             ))}
                           </SelectContent>
                         </Select>
+                      </TableCell>
+                      <TableCell>
+                        <div className="relative w-[72px]">
+                          <span aria-hidden className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">×</span>
+                          <Input
+                            // Na het opslaan herlaadt de lijst; een nieuwe sleutel zet de waarde terug.
+                            key={`${s.id}-${wegingVan(s)}`}
+                            inputMode="decimal"
+                            defaultValue={wegingGetal(wegingVan(s))}
+                            disabled={savingWeging === s.id}
+                            onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                            onBlur={async (e) => {
+                              const veld = e.currentTarget;
+                              const gelukt = await updateWeging(s, veld.value);
+                              veld.value = wegingGetal(gelukt ? leesWeging(veld.value) ?? wegingVan(s) : wegingVan(s));
+                            }}
+                            className={`h-8 w-[72px] pl-5 text-sm tabular-nums${wegingVan(s) !== 1 ? " font-semibold" : ""}`}
+                            title={WEGING_UITLEG}
+                            aria-label={`Weging ${meermarathonStageLabel(s)}`}
+                          />
+                        </div>
                       </TableCell>
                       <TableCell>
                         {/* Ronden bestaan alleen op de baan; natuurijs heeft er geen. */}
@@ -525,7 +620,7 @@ export default function StagesTab({
                 </TableRow>
               ))}
               {stages.length === 0 && (
-                <TableRow><TableCell colSpan={isMeermarathon ? 9 : 8} className="text-center text-muted-foreground py-6">{isMeermarathon ? "Nog geen wedstrijden." : "Nog geen etappes."}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={isMeermarathon ? 10 : 8} className="text-center text-muted-foreground py-6">{isMeermarathon ? "Nog geen wedstrijden." : "Nog geen etappes."}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

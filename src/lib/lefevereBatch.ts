@@ -16,6 +16,7 @@ import { pointsTable } from "@/data/riders";
 import type { LefevereReportInput } from "@/hooks/useLefevereReport";
 import { fetchAllRows } from "@/lib/fetchAll";
 import { aantalJokers } from "@/lib/gameTypes";
+import { gewogenPunten, wegingPerWedstrijd } from "@/lib/wegingsfactor";
 import { directeurRuw, directeurWeging } from "@/lib/directeurWeging";
 
 // ─── Monte-Carlo primitieven (identieke kopie uit useHorsCategorieSummary) ────
@@ -78,9 +79,11 @@ export async function buildBatchCtx(supabase: SupabaseClient, gameId: string): P
   // Stages (voor approved-set + stageCount, identiek aan de hook).
   const { data: stagesData } = await supabase
     .from("stages")
-    .select("id, stage_number, results_status")
+    .select("id, stage_number, results_status, wegingsfactor")
     .eq("game_id", gameId);
-  const stages = (stagesData ?? []) as Array<{ id: string; stage_number: number; results_status: string }>;
+  const stages = (stagesData ?? []) as Array<{ id: string; stage_number: number; results_status: string; wegingsfactor?: number | null }>;
+  // Meermarathon: een wedstrijd kan zwaarder tellen (Grand Prix ×2).
+  const wegingen = wegingPerWedstrijd(stages);
   const approved = stages.filter((s) => s.results_status === "approved");
   const stageCount = approved.length;
   const approvedStageIds = new Set(approved.map((s) => s.id));
@@ -114,17 +117,17 @@ export async function buildBatchCtx(supabase: SupabaseClient, gameId: string): P
   const totals = standRows.map((r) => r.cum_points ?? 0);
 
   // Stage-resultaten (approved) → finishpunten per renner.
-  const srRows = await fetchAllRows<{ rider_id: string | null; finish_position: number }>((from, to) =>
+  const srRows = await fetchAllRows<{ stage_id: string; rider_id: string | null; finish_position: number }>((from, to) =>
     supabase
       .from("stage_results")
-      .select("rider_id, finish_position, stages!inner(game_id, results_status)")
+      .select("stage_id, rider_id, finish_position, stages!inner(game_id, results_status)")
       .eq("stages.game_id", gameId)
       .eq("stages.results_status", "approved")
       .range(from, to) as never);
   const riderTotals = new Map<string, number>();
   for (const r of srRows) {
     if (!r.rider_id) continue;
-    const pts = pointsTable[r.finish_position] ?? 0;
+    const pts = gewogenPunten(pointsTable[r.finish_position] ?? 0, wegingen.get(r.stage_id) ?? 1);
     if (pts === 0) continue;
     riderTotals.set(r.rider_id, (riderTotals.get(r.rider_id) ?? 0) + pts);
   }

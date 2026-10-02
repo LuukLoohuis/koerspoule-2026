@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { getCalculationProgress, isCalculationActive, isFiatReady } from "@/lib/calculationProgress";
 import { useNavigate } from "react-router-dom";
 import { matchesParticipantSearch } from "@/lib/adminBreakdownSearch";
+import { wegingGetal, wegingVan } from "@/lib/wegingsfactor";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 
 /**
@@ -57,6 +58,8 @@ type BreakdownRow = {
     base_pts: number;
     is_joker: boolean;
     multiplier: number;
+    /** Meermarathon: hoe zwaar de wedstrijd telt; ontbreekt bij oudere rijen. */
+    wegingsfactor?: number;
     total: number;
     classification?: string;
     position?: number;
@@ -296,7 +299,8 @@ function StageBreakdown({ stageId }: { stageId: string }) {
                                 </td>
                                 <td className="py-0.5 pr-2">{b.finish_position ?? "—"}</td>
                                 <td className="py-0.5 pr-2">{b.base_pts}</td>
-                                <td className="py-0.5 pr-2">{b.multiplier}</td>
+                                {/* Joker maal weging: zo klopt basis × factor = totaal (Grand Prix ×2). */}
+                                <td className="py-0.5 pr-2">{wegingGetal(b.multiplier * wegingVan(b))}</td>
                                 <td className="py-0.5 pr-2 text-right font-mono">{b.total}</td>
                               </>
                             )}

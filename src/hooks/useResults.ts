@@ -26,6 +26,8 @@ export type StageRow = {
   ijs_type?: string | null;
   wedstrijd_type?: string | null;
   aantal_rondes?: number | null;
+  /** Hoe zwaar de wedstrijd telt (lib/wegingsfactor); 1 = gewoon. */
+  wegingsfactor?: number | null;
 };
 
 export type StageProfileData = {
@@ -85,7 +87,7 @@ export function useStages(gameId?: string) {
       if (!supabase || !gameId) return [];
       const { data, error } = await supabase
         .from("stages")
-        .select("id, game_id, stage_number, name, date, status, stage_type, distance_km, is_gc, results_status, profile_image_url, profile_data, ijs_type, wedstrijd_type, aantal_rondes")
+        .select("id, game_id, stage_number, name, date, status, stage_type, distance_km, is_gc, results_status, profile_image_url, profile_data, ijs_type, wedstrijd_type, aantal_rondes, wegingsfactor")
         .eq("game_id", gameId)
         .order("stage_number", { ascending: true });
       if (error) throw error;

@@ -275,6 +275,11 @@ describe("puntenSchaal", () => {
 
   it("zegt niets zonder scorende plekken", () => {
     expect(puntenSchaal(new Map())).toBeNull();
+    // Een zwaardere wedstrijd: de schaal blijft, de factor komt erachter.
+    expect(puntenSchaal(new Map([[1, 10], [2, 6]]), 20, 2)).toBe(
+      "Punten volgens de schaal 10-6 voor plek 1 t/m 2. Deze wedstrijd telt dubbel.",
+    );
+    expect(puntenSchaal(new Map([[1, 10]]), 20, 1.5)).toBe("Punten volgens de schaal 10 voor plek 1 t/m 1. Deze wedstrijd telt ×1,5.");
     expect(puntenSchaal(new Map([[1, 0]]))).toBeNull();
   });
 });

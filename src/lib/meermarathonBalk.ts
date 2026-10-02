@@ -5,6 +5,7 @@ import {
   WEDSTRIJD_TYPES,
   type WedstrijdType,
 } from "@/lib/gameTypes";
+import { wegingVan } from "@/lib/wegingsfactor";
 
 /**
  * De uitslagenbalk van de Meermarathon: één balk per wedstrijd, gekleurd naar
@@ -24,6 +25,7 @@ export type BalkBron = {
   results_status: string | null;
   ijs_type?: string | null;
   wedstrijd_type?: string | null;
+  wegingsfactor?: number | null;
 };
 
 export type BalkWedstrijd = {
@@ -41,6 +43,8 @@ export type BalkWedstrijd = {
   punten: number | null;
   /** Hoogte van de balk, 0 tot 1; null zolang de wedstrijd nog komt. */
   fractie: number | null;
+  /** Hoe zwaar de wedstrijd telt (lib/wegingsfactor); 1 = gewoon. */
+  weging: number;
 };
 
 /** Zonder eigen ploeg valt er niets te vergelijken: elke gereden wedstrijd even hoog. */
@@ -68,6 +72,7 @@ export function bouwWedstrijdBalk(
       gereden: klaar,
       punten: klaar && heeftPloeg ? punten(s) : null,
       fractie: !klaar ? null : !heeftPloeg ? BALK_ZONDER_PLOEG : beste > 0 ? punten(s) / beste : 0,
+      weging: wegingVan(s),
     };
   });
 

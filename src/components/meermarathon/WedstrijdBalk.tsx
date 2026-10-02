@@ -23,6 +23,7 @@ import { soortenInBalk, type BalkWedstrijd } from "@/lib/meermarathonBalk";
 import { BALK_FOTO, type BalkFoto } from "@/lib/meermarathonFotos";
 import { mmGetal } from "@/lib/meermarathonKlassement";
 import { mmDag } from "@/lib/meermarathonSeizoen";
+import { wegingUitleg } from "@/lib/wegingsfactor";
 
 const MAX_H = 128;
 /** Ook nul punten krijgt een stompje: de wedstrijd is wél gereden. */
@@ -111,7 +112,7 @@ function Kolom({
       data-wedstrijd={w.id}
       aria-pressed={gekozen}
       aria-disabled={kiesbaar ? undefined : true}
-      aria-label={`${w.label}, ${w.date ? mmDag(w.date) : "datum volgt"}, ${puntenTekst(w)}`}
+      aria-label={[w.label, w.date ? mmDag(w.date) : "datum volgt", wegingUitleg(w.weging), puntenTekst(w)].filter(Boolean).join(", ")}
       onClick={kiesbaar ? () => onKies(w.id) : undefined}
       className={cn(
         "group flex w-10 shrink-0 snap-center flex-col items-center rounded-md outline-hidden",
@@ -286,6 +287,15 @@ export default function WedstrijdBalk({
               <span className="text-muted-foreground">
                 {gekozen.date ? mmDag(gekozen.date) : "datum volgt"} · {WEDSTRIJD_SOORT[gekozen.soort].ondergrond}
               </span>
+              {/* Telt de wedstrijd zwaarder, dan zegt dat waarom de punten hoger zijn. */}
+              {wegingUitleg(gekozen.weging) && (
+                <span
+                  className="rounded-full border-[1.5px] px-2 text-[11px] font-bold uppercase leading-[18px] tracking-[0.08em]"
+                  style={{ borderColor: WEDSTRIJD_SOORT[gekozen.soort].kleur }}
+                >
+                  {wegingUitleg(gekozen.weging)}
+                </span>
+              )}
               <span className={cn("ml-auto tabular-nums", gekozen.punten != null ? "font-bold" : "text-muted-foreground")}>
                 {puntenTekst(gekozen)}
               </span>

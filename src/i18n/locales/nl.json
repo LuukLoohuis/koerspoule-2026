@@ -516,6 +516,7 @@
       "noPoints": "Nog geen punten gescoord in goedgekeurde etappes.",
       "stage": "Rit {{stage}}",
       "jokerMultiplier": "Joker ×{{multiplier}}",
+      "weging": "Deze wedstrijd telt {{factor}}",
       "total": "Totaal"
     },
     "riderTile": {

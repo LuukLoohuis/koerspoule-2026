@@ -500,6 +500,7 @@
       "noPoints": "No points scored in approved stages yet.",
       "stage": "Stage {{stage}}",
       "jokerMultiplier": "Joker ×{{multiplier}}",
+      "weging": "This race counts {{factor}}",
       "total": "Total"
     },
     "riderTile": {

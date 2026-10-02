@@ -30,6 +30,7 @@ import KopOpFoto from "@/components/meermarathon/KopOpFoto";
 import { bouwWedstrijdBalk } from "@/lib/meermarathonBalk";
 import { KOP_FOTO } from "@/lib/meermarathonFotos";
 import { isMeermarathonGame } from "@/lib/gameTypes";
+import { gewogenPunten, wegingVan } from "@/lib/wegingsfactor";
 import SwipeCarousel from "@/components/SwipeCarousel";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { useSwipeHint } from "@/hooks/useSwipeHint";
@@ -278,12 +279,17 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
     return m;
   }, [serverStandings]);
 
-  // Stage points lookup for schema
+  // Stage points lookup for schema. Meermarathon: een wedstrijd kan zwaarder
+  // tellen (Grand Prix ×2); de punten per rijder hieronder wegen mee, zodat ze
+  // optellen tot de ploegpunten van de wedstrijd.
+  const weging = wegingVan(selectedStage);
   const stagePtsTable = useMemo(() => {
     const m = new Map<number, number>();
-    schema.filter((s) => s.classification === "stage").forEach((s) => m.set(s.position, s.points));
+    schema
+      .filter((s) => s.classification === "stage")
+      .forEach((s) => m.set(s.position, gewogenPunten(s.points, weging)));
     return m;
-  }, [schema]);
+  }, [schema, weging]);
 
   // Riders in my team scoring this stage
   const myEntryRiders = useMyEntryRiders(myEntry?.id, gameId);

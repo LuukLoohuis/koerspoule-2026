@@ -1452,6 +1452,7 @@ export type Database = {
           status: string | null
           submitted_for_approval_at: string | null
           wedstrijd_type: string | null
+          wegingsfactor: number
         }
         Insert: {
           approved_at?: string | null
@@ -1479,6 +1480,7 @@ export type Database = {
           status?: string | null
           submitted_for_approval_at?: string | null
           wedstrijd_type?: string | null
+          wegingsfactor?: number
         }
         Update: {
           approved_at?: string | null
@@ -1506,6 +1508,7 @@ export type Database = {
           status?: string | null
           submitted_for_approval_at?: string | null
           wedstrijd_type?: string | null
+          wegingsfactor?: number
         }
         Relationships: [
           {
@@ -2186,6 +2189,10 @@ export type Database = {
       zet_klassement_winnaars: {
         Args: { p_game_id: string; p_cup: string | null; p_grandprix: string | null }
         Returns: undefined
+      }
+      zet_wegingsfactor: {
+        Args: { p_factor: number; p_stage_id: string }
+        Returns: boolean
       }
     }
     Enums: {

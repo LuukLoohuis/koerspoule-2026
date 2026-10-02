@@ -7,7 +7,12 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type { WedstrijdType } from "@/lib/gameTypes";
 
-export type WedstrijdLabel = { label: string; soort: WedstrijdType };
+export type WedstrijdLabel = {
+  label: string;
+  soort: WedstrijdType;
+  /** Hoe zwaar de wedstrijd telt (lib/wegingsfactor); 1 of weg = gewoon. */
+  weging?: number;
+};
 
 const WedstrijdLabelsContext = createContext<ReadonlyMap<number, WedstrijdLabel> | null>(null);
 

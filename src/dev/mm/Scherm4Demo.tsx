@@ -103,7 +103,7 @@ function ontwerpBaan(syncedAt: string): LiveTrack {
   };
 }
 
-function ontwerpRace(syncedAt: string, extraBaan?: LiveTrack): LiveRace {
+export function ontwerpRace(syncedAt: string, extraBaan?: LiveTrack): LiveRace {
   const baan = ontwerpBaan(syncedAt);
   return {
     stageId: "demo-cup-3",
@@ -135,7 +135,7 @@ function useSimulatie(): LiveRace {
   return simuleerRace(tick, { mijnBeennummers: SIM_MIJN_BEENNUMMERS });
 }
 
-const GEDEELD = {
+export const GEDEELD = {
   mineRiderIds: MIJN_IDS,
   pointsSchema: SCHEMA,
   mijnRijders: MIJN_RIJDERS,
@@ -144,7 +144,7 @@ const GEDEELD = {
   ploegNaam: "De Klapschaatsers",
 };
 
-function Frame({ label, breedte, children }: { label: string; breedte: "mobiel" | "desktop"; children: ReactNode }) {
+export function Frame({ label, breedte, children }: { label: string; breedte: "mobiel" | "desktop"; children: ReactNode }) {
   return (
     <figure className="m-0 space-y-2">
       <figcaption className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">{label}</figcaption>

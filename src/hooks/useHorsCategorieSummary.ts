@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEntry } from "@/hooks/useEntry";
 import { useCategories } from "@/hooks/useCategories";
 import { useStages, useStagePointsForEntries, useGameStandings } from "@/hooks/useResults";
+import { gewogenPunten, wegingPerWedstrijd } from "@/lib/wegingsfactor";
 import { pointsTable } from "@/data/riders";
 import type { LefevereReportInput } from "@/hooks/useLefevereReport";
 import { useJokerMultiplier } from "@/hooks/useJokerMultiplier";
@@ -161,6 +162,10 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
   const myStageTotalQ = useMyStagePointTotal(entry?.id);
   const stagesQ = useStages(gameId);
   const stages = stagesQ.data ?? [];
+  // Meermarathon: een wedstrijd kan zwaarder tellen (Grand Prix ×2). De
+  // rijderspunten hieronder wegen mee, net als de echte stand -- anders
+  // vergelijk je gewogen ploegpunten met ongewogen apen en droomploegen.
+  const wegingen = useMemo(() => wegingPerWedstrijd(stages), [stages]);
   // Hoogste goedgekeurde (niet-GC) etappe → server-side totalen via game_standings,
   // i.p.v. alle stage_points-rijen van de hele game naar de client te halen.
   const maxStageNum = useMemo(() => {
@@ -204,7 +209,8 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
     const riderPoints = new Map<string, number>();
     for (const result of allStageResults) {
       if (!result.rider_id) continue;
-      riderPoints.set(result.rider_id, (riderPoints.get(result.rider_id) ?? 0) + (pointsTable[result.finish_position] ?? 0));
+      const pts = gewogenPunten(pointsTable[result.finish_position] ?? 0, wegingen.get(result.stage_id) ?? 1);
+      riderPoints.set(result.rider_id, (riderPoints.get(result.rider_id) ?? 0) + pts);
     }
     return simulateMonkeyTeams({
       categories,
@@ -216,7 +222,7 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
       simulations: 10_000,
       seed: game?.id?.split("-").reduce((sum, char) => sum + char.charCodeAt(0), 0) ?? 42,
     });
-  }, [categories, allStageResults, allGameRiders, entry, myStageTotal, jokerMultiplier, jokersPerPloeg, game?.id]);
+  }, [categories, allStageResults, allGameRiders, entry, myStageTotal, jokerMultiplier, jokersPerPloeg, game?.id, wegingen]);
 
   // ── Emirates — moet hetzelfde uitkomen als het paneel in HorsCategorieTab.
   //    Beide kanten van de breuk gebruiken pointsTable[finish_position]; wijk je
@@ -231,7 +237,7 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
     const riderTotals = new Map<string, number>();
     for (const r of allStageResults) {
       if (!r.rider_id) continue;
-      const pts = pointsTable[r.finish_position] ?? 0;
+      const pts = gewogenPunten(pointsTable[r.finish_position] ?? 0, wegingen.get(r.stage_id) ?? 1);
       if (pts === 0) continue;
       riderTotals.set(r.rider_id, (riderTotals.get(r.rider_id) ?? 0) + pts);
     }
@@ -282,7 +288,7 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
     if (metJokers) myPoints += jokerIds.reduce((som, id) => som + (riderTotals.get(id) ?? 0), 0);
 
     return { pct: Math.round((myPoints / dreamTotal) * 100), dreamTotal, myPoints };
-  }, [stages, categories, allStageResults, allGameRiders, entry, picksByCategory, jokerIds, jokersPerPloeg, metJokers]);
+  }, [stages, categories, allStageResults, allGameRiders, entry, picksByCategory, jokerIds, jokersPerPloeg, metJokers, wegingen]);
 
   // ── Wielerdirecteur (exact dezelfde formule als HorsCategorieTab) ──────────
   const director = useMemo<
@@ -299,7 +305,7 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
     const riderTotals = new Map<string, number>();
     for (const r of allStageResults) {
       if (!r.rider_id) continue;
-      const pts = pointsTable[r.finish_position] ?? 0;
+      const pts = gewogenPunten(pointsTable[r.finish_position] ?? 0, wegingen.get(r.stage_id) ?? 1);
       if (pts === 0) continue;
       riderTotals.set(r.rider_id, (riderTotals.get(r.rider_id) ?? 0) + pts);
     }
@@ -350,7 +356,7 @@ export function useHorsCategorieSummary(override?: { id?: string; status?: strin
       jokerSub: toSub(jokerScore),
       diffSub: toSub(diffScore),
     };
-  }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats, metJokers, weging]);
+  }, [isLive, entry, monte, totals, myStageTotal, jokerIds, jokerStats, allStageResults, allGameRiders, categories, picksByCategory, pickStats, metJokers, weging, wegingen]);
 
   // ── Lefevere-input — één bron van waarheid, gedeeld met de Wielerdirecteur-
   //    tab én de Gazetta-feed, zodat de gegenereerde tekst 1-op-1 identiek is

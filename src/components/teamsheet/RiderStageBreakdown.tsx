@@ -17,6 +17,7 @@ import { categoryTone, type RiderCategory } from "./tokens";
 import { useRiderStagePoints } from "@/hooks/useRiderStagePoints";
 import { useWedstrijdLabels } from "@/contexts/WedstrijdLabelsContext";
 import { SoortEmbleem } from "@/components/meermarathon/WedstrijdSoort";
+import { wegingLabel } from "@/lib/wegingsfactor";
 
 /** DB stage_type (NL/EN) → StageType union voor het icoon. */
 function mapStageType(t: string | null | undefined): StageType {
@@ -172,6 +173,9 @@ export default function RiderStageBreakdown({
                 // Meermarathon: "Cup 3" met zijn embleem; de ruwe naam uit
                 // de database is daar vaak nog "Etappe 3".
                 const wedstrijd = wedstrijden?.get(r.stage_number);
+                // Een wedstrijd die zwaarder telt (Grand Prix ×2): de punten
+                // hieronder zijn al gewogen, het label zegt waarom.
+                const weging = wedstrijd?.weging ?? 1;
                 return (
                   <li
                     key={r.stage_id}
@@ -210,6 +214,21 @@ export default function RiderStageBreakdown({
                         title={t("team.breakdown.jokerMultiplier", { multiplier: r.multiplier })}
                       >
                         ×{r.multiplier}
+                      </span>
+                    )}
+                    {weging !== 1 && (
+                      <span
+                        className="font-mono uppercase shrink-0 rounded px-1"
+                        style={{
+                          fontSize: "8px",
+                          letterSpacing: "0.08em",
+                          color: tone.ink,
+                          border: `1px dashed ${tone.jersey}`,
+                          fontWeight: 700,
+                        }}
+                        title={t("team.breakdown.weging", { factor: wegingLabel(weging) })}
+                      >
+                        {wegingLabel(weging)}
                       </span>
                     )}
                     <span

@@ -71,6 +71,15 @@ describe("uitslagenbalk van de Meermarathon", () => {
     expect(oud.map((x) => x.soort)).toEqual(["cup", "grandprix"]);
   });
 
+  it("geeft door hoe zwaar een wedstrijd telt; zonder factor is dat 1", () => {
+    const { wedstrijden: rij } = bouwWedstrijdBalk(
+      [w(1), w(6, { wedstrijd_type: "grandprix", wegingsfactor: 2 }), w(8, { wegingsfactor: null })],
+      new Map(),
+      { heeftPloeg: true },
+    );
+    expect(rij.map((x) => x.weging)).toEqual([1, 2, 1]);
+  });
+
   it("slaat het eindklassement over en sorteert op wedstrijdnummer", () => {
     const { wedstrijden: rij } = bouwWedstrijdBalk([w(3), w(22, { is_gc: true }), w(1)], new Map(), { heeftPloeg: true });
     expect(rij.map((x) => x.nummer)).toEqual([1, 3]);

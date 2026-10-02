@@ -13,6 +13,7 @@ import {
 } from "@/lib/liveMarathon";
 import { groepsGat, puntenSchaal, rolColor, rondeBadge, tierLabel } from "@/lib/liveRink";
 import { meermarathonCategorieLabel, meermarathonStageLabel } from "@/lib/gameTypes";
+import { schemaMetWeging } from "@/lib/wegingsfactor";
 import { isStale, type LiveRace } from "@/hooks/useLiveRace";
 import LiveRink from "@/components/meermarathon/LiveRink";
 
@@ -44,6 +45,8 @@ type LiveTabProps = {
   race: LiveRace | null;
   mineRiderIds: Set<string>;
   pointsSchema: PointsSchema;
+  /** Hoe zwaar deze wedstrijd telt (lib/wegingsfactor); 1 = gewoon. */
+  weging?: number;
   /** Nagebootste koers: zet een stempel "Simulatie" in de kop. */
   simulatie?: boolean;
   /** Categorie van de game ("vrouwen" | "mannen"), voor de titel. Onbekend: dat deel vervalt. */
@@ -90,6 +93,7 @@ function LiveInhoud({
   race,
   mineRiderIds,
   pointsSchema,
+  weging = 1,
   simulatie,
   categorie,
   wedstrijdType,
@@ -123,12 +127,16 @@ function LiveInhoud({
     return set;
   }, [track, mineRiderIds]);
 
+  // Telt deze wedstrijd zwaarder (Grand Prix ×2), dan ook de voorlopige
+  // punten: dezelfde regel als de telling na het fiatteren.
+  const schema = useMemo(() => schemaMetWeging(pointsSchema, weging), [pointsSchema, weging]);
+
   // Punten over álle banen samen: een oudere, gecombineerde game kan rijders
   // in de mannen- én de vrouwenkoers hebben.
   const projectie = useMemo(() => {
     const perBaan = race.tracks.map((t) =>
       projectPoints(t.groups.flatMap((g) => g.leden), {
-        schema: pointsSchema,
+        schema,
         mineRiderIds,
         riderIdByBeennummer: t.riderIdByBeennummer,
       }),
@@ -137,7 +145,7 @@ function LiveInhoud({
       perBaan,
       totaal: perBaan.reduce((s, p) => s + p.ritPunten, 0),
     };
-  }, [race.tracks, pointsSchema, mineRiderIds]);
+  }, [race.tracks, schema, mineRiderIds]);
 
   // Stand aan het eind van de vorige ronde: voor het pijltje bij je punten en
   // bij elke plek. "Vorige ronde" en niet "vorige meting" -- per twintig
@@ -181,7 +189,7 @@ function LiveInhoud({
   const nietGestart = (mijnRijders ?? []).filter((r) => mineRiderIds.has(r.id) && !inKoers.has(r.id));
 
   const uitslag = virtueleUitslag(track.groups.flatMap((g) => g.leden), {
-    schema: pointsSchema,
+    schema,
     mineRiderIds,
     riderIdByBeennummer: track.riderIdByBeennummer,
   });
@@ -293,7 +301,7 @@ function LiveInhoud({
             totaal={projectie.totaal}
             eigen={eigen}
             nietGestart={nietGestart}
-            schaal={puntenSchaal(pointsSchema)}
+            schaal={puntenSchaal(pointsSchema, 20, weging)}
           />
 
           {/* Virtuele uitslag — het hele veld, niet alleen mijn rijders. Tijdens

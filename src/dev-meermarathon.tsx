@@ -3,7 +3,7 @@
  * de build). Rendert de echte componenten met nepdata, in licht en nacht,
  * zodat de opmaak te beoordelen is zonder database of inlog.
  *
- * Draaien: npx vite  →  /dev-meermarathon.html  (?scherm=1..13 of ?scherm=6,7, ?modus=nacht)
+ * Draaien: npx vite  →  /dev-meermarathon.html  (?scherm=1..14 of ?scherm=6,7, ?modus=nacht)
  * Scherm 2 (ploeg samenstellen) is weg: de Meermarathon gebruikt de gewone
  * ploegbouwer. Die staat met nepdata in /dev-ploegbouwer.html.
  */
@@ -23,6 +23,7 @@ import Scherm10Demo from "@/dev/mm/Scherm10Demo";
 import Scherm11Demo from "@/dev/mm/Scherm11Demo";
 import Scherm12Demo from "@/dev/mm/Scherm12Demo";
 import Scherm13Demo from "@/dev/mm/Scherm13Demo";
+import Scherm14Demo from "@/dev/mm/Scherm14Demo";
 import "@/i18n";
 import "./index.css";
 import "./styles/salle-de-course.css";
@@ -42,6 +43,7 @@ const SCHERMEN = [
   { key: "11", titel: "11 · Wisselen: vrouwen, mannen en het totaal", Demo: Scherm11Demo },
   { key: "12", titel: "12 · Uitslagenbalk: de foto van het peloton", Demo: Scherm12Demo },
   { key: "13", titel: "13 · De kop van de pagina op een foto", Demo: Scherm13Demo },
+  { key: "14", titel: "14 · Weging: een Grand Prix die dubbel telt", Demo: Scherm14Demo },
 ];
 
 function Testbank() {

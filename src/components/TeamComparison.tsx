@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCurrentGame } from "@/hooks/useCurrentGame";
 import { useAllGames } from "@/hooks/useAllGames";
 import { aantalJokers } from "@/lib/gameTypes";
+import { gewogenPunten, wegingVan } from "@/lib/wegingsfactor";
 import { useCategories } from "@/hooks/useCategories";
 import {
   useSubpouleEntries,
@@ -55,6 +56,7 @@ function predictionsByClass(list: PredictionEntry[]) {
  * Basispunten per renner (zonder joker-multiplier), berekend uit de PUBLIEKE
  * stage_results + points_schema. Joker × 2 wordt per speler toegepast, zodat
  * dit ook voor de tegenstander klopt (entry_picks zelf is RLS-afgeschermd).
+ * De wegingsfactor van een wedstrijd (Meermarathon) zit er wel al in.
  */
 export function useRiderBasePoints(gameId: string | undefined) {
   return useQuery({
@@ -63,12 +65,14 @@ export function useRiderBasePoints(gameId: string | undefined) {
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Map<string, number>> => {
       if (!supabase || !gameId) return new Map();
-      const { data: stages } = await supabase.from("stages").select("id").eq("game_id", gameId);
+      const { data: stages } = await supabase.from("stages").select("id, wegingsfactor").eq("game_id", gameId);
       const stageIds = (stages ?? []).map((s) => s.id);
       if (stageIds.length === 0) return new Map();
+      const wegingPerStage = new Map((stages ?? []).map((s) => [s.id, wegingVan(s)]));
 
       // Gepagineerd: één grote range kapt alsnog op de Max rows-serverlimiet.
       const results = await fetchAllRows<{
+        stage_id: string;
         rider_id: string;
         finish_position: number | null;
         gc_position: number | null;
@@ -78,7 +82,7 @@ export function useRiderBasePoints(gameId: string | undefined) {
       }>((from, to) =>
         supabase!
           .from("stage_results")
-          .select("rider_id, finish_position, gc_position, mountain_position, points_position, youth_position")
+          .select("stage_id, rider_id, finish_position, gc_position, mountain_position, points_position, youth_position")
           .in("stage_id", stageIds)
           .order("rider_id")
           .range(from, to),
@@ -102,7 +106,8 @@ export function useRiderBasePoints(gameId: string | undefined) {
           lookup("kom", r.mountain_position) +
           lookup("points", r.points_position) +
           lookup("youth", r.youth_position);
-        totals.set(r.rider_id, (totals.get(r.rider_id) ?? 0) + base);
+        const gewogen = gewogenPunten(base, wegingPerStage.get(r.stage_id) ?? 1);
+        totals.set(r.rider_id, (totals.get(r.rider_id) ?? 0) + gewogen);
       }
       return totals;
     },
