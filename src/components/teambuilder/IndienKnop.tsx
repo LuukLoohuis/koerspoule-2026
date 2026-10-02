@@ -22,10 +22,10 @@ type Props = {
 /**
  * De indienknop van de ploegbouwer.
  *
- * Eén knop, drie gezichten: uitnodigend zodra de ploeg klaar is (gouden gloed
- * om de rand, de knop zelf blijft vol van kleur), bezig tijdens het indienen
- * en een groene ruststand zodra alles binnen is. Zo oogt een ingediende ploeg
- * niet als een uitgeschakelde knop.
+ * Een knop met dikte die je indrukt, op elke plek met dezelfde tekst. Drie
+ * gezichten: uitnodigend zodra de ploeg klaar is (gouden gloed om de rand, de
+ * knop zelf blijft vol van kleur), bezig tijdens het indienen en een groene
+ * ruststand zodra alles binnen is.
  */
 export default function IndienKnop({
   label,
@@ -50,11 +50,11 @@ export default function IndienKnop({
       aria-busy={bezig || undefined}
       title={title}
       className={cn(
-        "font-display font-bold tracking-wide active:scale-[0.98]",
+        "font-display font-bold tracking-wide",
         compact ? "h-10 px-4 text-sm" : "h-12 px-6 text-base",
         ingediend
           ? "rounded-[9px] border-2 border-emerald-600/50 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 disabled:opacity-100"
-          : "retro-border-primary",
+          : "kp-indien",
         bezig && "disabled:opacity-90",
         klaar && !bezig && "kp-indien-klaar",
         className,

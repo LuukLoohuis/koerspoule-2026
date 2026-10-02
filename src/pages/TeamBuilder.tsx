@@ -1149,16 +1149,15 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
           {isDirty && !teamComplete && (
             <p className="text-xs text-amber-700">{t("team.builder.incompleteBeforeResubmit")}</p>
           )}
-          {isDirty && (
-            <IndienKnop
-              label={submitLabel}
-              onClick={handleSubmit}
-              disabled={submitDisabled}
-              bezig={indienBezig}
-              klaar={submitActive}
-              className="w-full"
-            />
-          )}
+          <IndienKnop
+            label={submitLabel}
+            onClick={handleSubmit}
+            disabled={submitDisabled}
+            bezig={indienBezig}
+            klaar={submitActive}
+            ingediend={!isDirty}
+            className="w-full"
+          />
           <SteunMoment storageKey="kp_steun_ingezonden" text={t("team.builder.supportCoffee")} />
         </div>
       ) : (
@@ -1620,7 +1619,7 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
                     ) : !isSubmitted || isDirty ? (
                       <IndienKnop
                         compact
-                        label={isSubmitted ? submitLabel : t("team.builder.submitShort")}
+                        label={submitLabel}
                         onClick={handleSubmit}
                         disabled={submitDisabled}
                         bezig={indienBezig}

@@ -1357,11 +1357,25 @@
   .kp-gs-livedot { animation: none; }
 }
 
-/* ── Indienknop (ploegbouwer) — gouden gloed zodra de ploeg klaar is ──
-   De gloed loopt over de rand; de knop zelf blijft vol van kleur (een
-   knipperende knop oogt uitgeschakeld). */
+/* ── Indienknop (ploegbouwer) — een knop die je indrukt ──
+   Donkere onderrand als dikte; bij indrukken zakt de knop erin. De gouden
+   gloed (ploeg klaar) loopt over de rand; de knop zelf blijft vol van kleur
+   (een knipperende knop oogt uitgeschakeld). */
+.kp-indien {
+  --kp-indien-rand: color-mix(in srgb, hsl(var(--primary)) 62%, black);
+  border: 2px solid var(--kp-indien-rand);
+  border-radius: 10px;
+  background-image: linear-gradient(to bottom, rgb(255 255 255 / 0.16), transparent 55%);
+  box-shadow: 0 4px 0 var(--kp-indien-rand);
+  transition: transform 90ms ease, box-shadow 90ms ease, background-color 150ms ease;
+}
+.kp-indien:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--kp-indien-rand);
+}
 @keyframes kp-indien-gloed {
-  0%, 100% { box-shadow: 3px 3px 0 hsl(var(--primary) / 0.5), 0 0 0 0 hsl(var(--vintage-gold) / 0.6); }
-  60%      { box-shadow: 3px 3px 0 hsl(var(--primary) / 0.5), 0 0 0 8px hsl(var(--vintage-gold) / 0); }
+  0%, 100% { box-shadow: 0 4px 0 var(--kp-indien-rand), 0 2px 0 0 hsl(var(--vintage-gold) / 0.65); }
+  60%      { box-shadow: 0 4px 0 var(--kp-indien-rand), 0 2px 0 9px hsl(var(--vintage-gold) / 0); }
 }
 .kp-indien-klaar { animation: kp-indien-gloed 2.2s ease-out infinite; }
+.kp-indien-klaar:active { animation: none; }

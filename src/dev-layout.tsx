@@ -321,6 +321,7 @@ function Harness() {
               <IndienKnop label="Ploeg indienen" onClick={() => {}} bezig className="w-full" />
               <IndienKnop label="Wijziging indienen" onClick={() => {}} klaar className="w-full" />
               <IndienKnop label="Vul je ploeg eerst compleet" onClick={() => {}} disabled className="w-full" />
+              <IndienKnop label="Ingediend" onClick={() => {}} disabled ingediend className="w-full" />
             </div>
             <div className="space-y-3">
               <div className="font-mono text-[10px] text-muted-foreground">desktop-rij — naast "Tussentijds opslaan"</div>
@@ -340,7 +341,7 @@ function Harness() {
                       <div className="h-full w-full bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))]" />
                     </div>
                   </div>
-                  <IndienKnop compact label="Indienen" onClick={() => {}} klaar className="shrink-0" />
+                  <IndienKnop compact label="Ploeg indienen" onClick={() => {}} klaar className="shrink-0" />
                 </div>
               </div>
             </div>
