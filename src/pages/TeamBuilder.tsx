@@ -22,6 +22,7 @@ import { pastBijZoek, categorieHeeftTreffer, telPerPloeg, ploegChips, type Ploeg
 import { canRegister, isGameLocked, isPreviewStatus, isVisibleToUser } from "@/lib/gameStatus";
 import RiderSearchSelect from "@/components/RiderSearchSelect";
 import ZoekRenners from "@/components/teambuilder/ZoekRenners";
+import IndienKnop from "@/components/teambuilder/IndienKnop";
 import { SteunMoment } from "@/components/SteunKopgroep";
 import FlagIcon from "@/components/FlagIcon";
 import type { ReactNode } from "react";
@@ -402,9 +403,14 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
     }
   };
 
+  // Het indienen is een keten (terugzetten → bewaren → indienen); één vlag voor
+  // de hele keten, zodat de knop niet tussendoor terugspringt.
+  const [indienBezig, setIndienBezig] = useState(false);
+
   const handleSubmit = async () => {
     if (!isAuthed) return requireAuth(t("team.builder.authActionSubmitTeam"));
     if (!entry) return;
+    setIndienBezig(true);
     try {
       // Een al-ingediende ploeg is server-side vergrendeld (save-RPC's weigeren
       // met "Entry already submitted"). Zet 'm daarom eerst terug naar concept,
@@ -439,6 +445,8 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
         description: entryErrorMessage(error),
         variant: "destructive",
       });
+    } finally {
+      setIndienBezig(false);
     }
   };
 
@@ -1141,13 +1149,16 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
           {isDirty && !teamComplete && (
             <p className="text-xs text-amber-700">{t("team.builder.incompleteBeforeResubmit")}</p>
           )}
-          <Button
-            onClick={handleSubmit}
-            disabled={submitDisabled}
-            className={cn("w-full retro-border-primary font-bold", submitActive && "animate-pulse")}
-          >
-            {submitLabel}
-          </Button>
+          {isDirty && (
+            <IndienKnop
+              label={submitLabel}
+              onClick={handleSubmit}
+              disabled={submitDisabled}
+              bezig={indienBezig}
+              klaar={submitActive}
+              className="w-full"
+            />
+          )}
           <SteunMoment storageKey="kp_steun_ingezonden" text={t("team.builder.supportCoffee")} />
         </div>
       ) : (
@@ -1166,13 +1177,14 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
               </ul>
             </div>
           )}
-          <Button
+          <IndienKnop
+            label={submitLabel}
             onClick={handleSubmit}
             disabled={submitDisabled}
-            className={cn("w-full retro-border-primary font-bold", submitActive && "animate-pulse")}
-          >
-            {submitLabel}
-          </Button>
+            bezig={indienBezig}
+            klaar={submitActive}
+            className="w-full"
+          />
         </>
       )}
     </div>
@@ -1556,18 +1568,20 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
               {/* Desktop action row */}
               <div className="hidden md:flex flex-col sm:flex-row gap-2 justify-end items-stretch sm:items-center">
                 {!isLocked && !isSubmitted && (
-                  <Button variant="outline" onClick={handleSaveDraft} disabled={savePredictions.isPending || saveJoker.isPending}>
+                  <Button variant="outline" className="h-12" onClick={handleSaveDraft} disabled={savePredictions.isPending || saveJoker.isPending}>
                     {t("team.builder.saveDraft")}
                   </Button>
                 )}
-                <Button
+                <IndienKnop
+                  label={submitLabel}
                   onClick={handleSubmit}
                   disabled={submitDisabled}
-                  className={cn("retro-border-primary font-bold", submitActive && "animate-pulse")}
+                  bezig={indienBezig}
+                  klaar={submitActive}
+                  ingediend={isSubmitted && !isDirty}
                   title={isSubmitted && isDirty && !teamComplete ? t("team.builder.fillTeamFirst") : undefined}
-                >
-                  {submitLabel}
-                </Button>
+                  className="sm:min-w-64"
+                />
               </div>
               </div>
 
@@ -1604,14 +1618,15 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
                         {t("team.builder.continueButton")}
                       </Button>
                     ) : !isSubmitted || isDirty ? (
-                      <Button
-                        size="sm"
+                      <IndienKnop
+                        compact
+                        label={isSubmitted ? submitLabel : t("team.builder.submitShort")}
                         onClick={handleSubmit}
                         disabled={submitDisabled}
-                        className={cn("shrink-0 retro-border-primary font-bold", submitActive && "animate-pulse")}
-                      >
-                        {submitLabel}
-                      </Button>
+                        bezig={indienBezig}
+                        klaar={submitActive}
+                        className="shrink-0"
+                      />
                     ) : (
                       <button
                         type="button"

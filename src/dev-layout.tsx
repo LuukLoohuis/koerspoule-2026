@@ -18,6 +18,8 @@ import ZwevendeActie from "@/components/ZwevendeActie";
 import PloegSkeleton from "@/components/skeletons/PloegSkeleton";
 import HorsSkeleton from "@/components/skeletons/HorsSkeleton";
 import SponsorStrip from "@/components/SponsorStrip";
+import IndienKnop from "@/components/teambuilder/IndienKnop";
+import { Button } from "@/components/ui/button";
 import KoerspouleLogo from "@/components/KoerspouleLogo";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
@@ -308,6 +310,41 @@ function Harness() {
 
         <Blok titel="Hors Cat\u00e9gorie-skeleton">
           <div data-horsskel style={{ maxWidth: 820 }}><HorsSkeleton /></div>
+        </Blok>
+
+        <Blok titel="Indienknop (ploegbouwer) — alle standen">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-3" style={{ maxWidth: 360 }}>
+              <div className="font-mono text-[10px] text-muted-foreground">mobiel overzicht — volle breedte</div>
+              <IndienKnop label="Team definitief indienen" onClick={() => {}} klaar className="w-full" />
+              <IndienKnop label="Team definitief indienen" onClick={() => {}} className="w-full" />
+              <IndienKnop label="Team definitief indienen" onClick={() => {}} bezig className="w-full" />
+              <IndienKnop label="Wijziging indienen" onClick={() => {}} klaar className="w-full" />
+              <IndienKnop label="Vul je ploeg eerst compleet" onClick={() => {}} disabled className="w-full" />
+            </div>
+            <div className="space-y-3">
+              <div className="font-mono text-[10px] text-muted-foreground">desktop-rij — naast "Tussentijds opslaan"</div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" className="h-12">💾 Tussentijds opslaan</Button>
+                <IndienKnop label="Team definitief indienen" onClick={() => {}} klaar className="sm:min-w-64" />
+              </div>
+              <div className="flex justify-end gap-2">
+                <IndienKnop label="Ingediend" onClick={() => {}} disabled ingediend className="sm:min-w-64" />
+              </div>
+              <div className="font-mono text-[10px] text-muted-foreground pt-3">sticky onderbalk (mobiel, 375px)</div>
+              <div className="border-t border-border bg-card px-3 py-2" style={{ width: 375 }}>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-mono tabular-nums text-muted-foreground truncate">Renners 15/15 · 🃏 2/2</p>
+                    <div className="h-1.5 rounded-full bg-secondary overflow-hidden mt-1">
+                      <div className="h-full w-full bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))]" />
+                    </div>
+                  </div>
+                  <IndienKnop compact label="Indienen" onClick={() => {}} klaar className="shrink-0" />
+                </div>
+              </div>
+            </div>
+          </div>
         </Blok>
 
         <Blok titel="Zwevende actieknop (linksonder, md:hidden)">

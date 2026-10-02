@@ -1356,3 +1356,12 @@
   .kp-gs-shine,
   .kp-gs-livedot { animation: none; }
 }
+
+/* ── Indienknop (ploegbouwer) — gouden gloed zodra de ploeg klaar is ──
+   De gloed loopt over de rand; de knop zelf blijft vol van kleur (een
+   knipperende knop oogt uitgeschakeld). */
+@keyframes kp-indien-gloed {
+  0%, 100% { box-shadow: 3px 3px 0 hsl(var(--primary) / 0.5), 0 0 0 0 hsl(var(--vintage-gold) / 0.6); }
+  60%      { box-shadow: 3px 3px 0 hsl(var(--primary) / 0.5), 0 0 0 8px hsl(var(--vintage-gold) / 0); }
+}
+.kp-indien-klaar { animation: kp-indien-gloed 2.2s ease-out infinite; }
