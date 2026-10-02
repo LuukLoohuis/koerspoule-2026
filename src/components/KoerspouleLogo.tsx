@@ -19,7 +19,8 @@ export default function KoerspouleLogo({
   className,
   ...props
 }: KoerspouleLogoProps) {
-  const { thema } = useThema();
+  const { thema, ready } = useThema();
+  const onbekend = ready === false;
   // Reserveer de ruimte in de verhouding van dít logo. Stond hier vast op
   // 480x320, waardoor de koptekst sprong zodra een logo met een andere vorm
   // binnen was — het Vuelta-schild is bijna vierkant.
@@ -40,7 +41,10 @@ export default function KoerspouleLogo({
       {...props}
       {...intrinsicSize}
       className={klassen}
-      src={thema.logo}
+      // Thema nog onbekend (prerender, eerste bezoek): de ruimte staat er al,
+      // het logo zelf wacht — anders flitst het Giro-logo van de terugval-key.
+      style={onbekend ? { ...props.style, visibility: "hidden" } : props.style}
+      src={onbekend ? undefined : thema.logo}
       alt={alt}
       decoding={decoding}
     />

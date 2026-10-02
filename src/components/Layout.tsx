@@ -45,7 +45,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, role } = useAuth();
-  const { thema, key: themaKey, canPreview, previewKey, setPreviewKey } = useThema();
+  const { thema, key: themaKey, ready: themaReady, canPreview, previewKey, setPreviewKey } = useThema();
   const { data: allGames = [] } = useAllGames();
   const { t } = useTranslation();
   const isLoggedIn = Boolean(user);
@@ -261,7 +261,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <span className="vintage-ornament-symbol">{thema.key === "geel" ? "✲" : thema.key === "rood" ? "☀" : "⚜"}</span>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-            <p className="font-serif italic">{t("shell.footer.tagline", { subtitle: thema.homepage_subtitel })}</p>
+            <p className={`font-serif italic ${themaReady === false ? "invisible" : ""}`}>{t("shell.footer.tagline", { subtitle: thema.homepage_subtitel })}</p>
             <p className="font-sans">
               {t("shell.footer.mechanicalIssue")}{" "}
               <a href="mailto:info@koerspoule.nl" className="underline hover:text-foreground transition-colors">

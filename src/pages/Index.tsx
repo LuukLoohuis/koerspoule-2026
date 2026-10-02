@@ -509,7 +509,11 @@ export default function Index() {
               )}
 
 
-              <p className="font-serif italic text-foreground/80 md:text-xl max-w-[480px] mt-6 leading-relaxed text-lg my-[2px] text-center">
+              {/* Thema nog onbekend: de regel houdt zijn ruimte, maar noemt nog
+                  geen koers — anders staat hier even de Giro van de terugval-key. */}
+              <p
+                className={`font-serif italic text-foreground/80 md:text-xl max-w-[480px] mt-6 leading-relaxed text-lg my-[2px] text-center ${themaReady ? "" : "invisible"}`}
+              >
                 {t("landing.tagline", { race: copy.gameLabel })}
               </p>
 

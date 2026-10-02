@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta http-equiv="content-language" content="nl-NL" />
     <meta name="author" content="Koerspoule" />
-    <meta name="theme-color" content="#E6446D" />
+    <meta name="theme-color" content="#FAF9F7" />
 
     <!-- seo:start — per-route vervangen door react-helmet-async tijdens prerender -->
     <title>Koerspoule — Gratis Tour, Giro & Vuelta poule 2026</title>
@@ -67,16 +67,23 @@
         "email": "info@koerspoule.nl"
       }
     </script>
-    <!-- No-flash thema: zet vóór de eerste paint de laatst-bekende accent-tokens
+    <!-- No-flash thema: zet vóór de eerste paint het laatst-bekende thema
          (of race-neutraal bij eerste bezoek), zodat de Giro-roze base nooit flitst. -->
     <script>
       (function () {
         try {
-          var r = document.documentElement.style;
+          var d = document.documentElement;
+          var r = d.style;
+          var key = localStorage.getItem("koerspoule:themaKey");
           var raw = localStorage.getItem("koerspoule:themaTokens");
-          if (raw) {
+          if (key === "winter") {
+            // Winter haalt al zijn kleuren uit de CSS; het attribuut volstaat.
+            d.setAttribute("data-thema", "winter");
+            if (localStorage.getItem("koerspoule:modus") === "nacht") d.setAttribute("data-modus", "nacht");
+          } else if (raw) {
             var t = JSON.parse(raw);
             for (var k in t) { if (t[k]) r.setProperty(k, t[k]); }
+            if (key === "roze" || key === "geel" || key === "rood") d.setAttribute("data-thema", key);
           } else {
             var n = "38 10% 55%";
             r.setProperty("--primary", n);
@@ -85,6 +92,10 @@
             r.setProperty("--sidebar-primary", n);
             r.setProperty("--sidebar-ring", n);
           }
+          // Adres-/statusbalk van de browser: laatst-bekende koptekstkleur.
+          var tc = localStorage.getItem("koerspoule:themeColor");
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (tc && meta) meta.setAttribute("content", tc);
         } catch (e) {}
       })();
     </script>

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import KoerspouleLogo from "@/components/KoerspouleLogo";
 import { ThemaProvider, useThema } from "@/contexts/ThemaContext";
@@ -61,7 +61,9 @@ describe("ThemaProvider + KoerspouleLogo", () => {
       { id: "vuelta-2026", game_type: "vuelta", theme: "rood", status: "live", year: 2026 },
       { id: "giro-2026", game_type: "giro", theme: "roze", status: "finished", year: 2026 },
     ];
-    document.head.innerHTML = '<link rel="icon" href="/favicon.png">';
+    selectedGameState.loading = false;
+    document.documentElement.removeAttribute("style");
+    document.head.innerHTML = '<link rel="icon" href="/favicon.png"><meta name="theme-color" content="#FAF9F7">';
   });
 
   it("laat de admin-status het thema bepalen en negeert de aangeklikte game", () => {
@@ -126,7 +128,9 @@ describe("ThemaProvider + KoerspouleLogo", () => {
     expect(screen.getByTestId("theme-key")).toHaveTextContent("winter");
     expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-meermarathon.png");
     expect(document.querySelector('link[rel="icon"]')).toHaveAttribute("href", "/favicon-meermarathon.svg");
-    expect(storage.has("koerspoule:themaKey")).toBe(false);
+    // De key gaat de cache in (anders flitst roze bij elk bezoek); tokens niet,
+    // want winter haalt zijn kleuren uit de CSS.
+    expect(storage.get("koerspoule:themaKey")).toBe("winter");
     expect(storage.has("koerspoule:themaTokens")).toBe(false);
 
     // Tijdens de inschrijving is de site al winters, en locked werkt als live.
@@ -153,6 +157,81 @@ describe("ThemaProvider + KoerspouleLogo", () => {
     );
 
     expect(screen.getByTestId("theme-key")).toHaveTextContent("roze");
+  });
+
+  it("toont tijdens het laden het thema uit de cache, ook winter, en anders geen logo", () => {
+    selectedGameState.loading = true;
+    selectedGameState.games = [];
+
+    // Eerste bezoek: thema onbekend → geen Giro-logo van de terugval-key.
+    const eerste = render(
+      <ThemaProvider>
+        <BrandingProbe />
+      </ThemaProvider>,
+    );
+    expect(document.documentElement).toHaveAttribute("data-thema", "loading");
+    expect(screen.getByTestId("logo")).not.toBeVisible();
+    eerste.unmount();
+
+    // Terugkerende bezoeker in de winter: meteen winters, zonder fetch.
+    storage.set("koerspoule:themaKey", "winter");
+    render(
+      <ThemaProvider>
+        <BrandingProbe />
+      </ThemaProvider>,
+    );
+    expect(screen.getByTestId("theme-key")).toHaveTextContent("winter");
+    expect(screen.getByTestId("logo")).toBeVisible();
+    expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-meermarathon.png");
+    expect(document.documentElement).toHaveAttribute("data-thema", "winter");
+  });
+
+  it("laat op een geprerenderde pagina staan wat het no-flash-script zette tot de cache gelezen is", async () => {
+    selectedGameState.loading = true;
+    selectedGameState.games = [];
+    storage.set("koerspoule:themaKey", "winter");
+    storage.set("koerspoule:modus", "nacht");
+    const root = document.documentElement;
+    // Wat index.html vóór de eerste paint doet.
+    root.setAttribute("data-thema", "winter");
+    root.setAttribute("data-modus", "nacht");
+    // Geprerenderde HTML in #root → de provider start "onbekend", net als de server.
+    const schil = document.createElement("div");
+    schil.id = "root";
+    schil.innerHTML = "<p>prerender</p>";
+    document.body.appendChild(schil);
+    const zet = vi.spyOn(root, "setAttribute");
+    const wis = vi.spyOn(root, "removeAttribute");
+
+    try {
+      render(
+        <ThemaProvider>
+          <BrandingProbe />
+        </ThemaProvider>,
+      );
+      await waitFor(() => expect(screen.getByTestId("theme-key")).toHaveTextContent("winter"));
+      expect(screen.getByTestId("logo")).toHaveAttribute("src", "/koerspoule-meermarathon.png");
+      expect(zet).not.toHaveBeenCalledWith("data-thema", "loading");
+      expect(wis).not.toHaveBeenCalledWith("data-modus");
+      expect(root).toHaveAttribute("data-modus", "nacht");
+    } finally {
+      zet.mockRestore();
+      wis.mockRestore();
+      schil.remove();
+      root.removeAttribute("data-modus");
+    }
+  });
+
+  it("laat de browserbalk de koptekstkleur volgen en bewaart die voor het no-flash-script", () => {
+    // Via een stylesheet, zoals in de app: inline --card haalt de provider weg.
+    document.head.insertAdjacentHTML("beforeend", "<style>:root { --card: 218 42% 14%; }</style>");
+    render(
+      <ThemaProvider>
+        <BrandingProbe />
+      </ThemaProvider>,
+    );
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute("content", "hsl(218, 42%, 14%)");
+    expect(storage.get("koerspoule:themeColor")).toBe("hsl(218, 42%, 14%)");
   });
 
   it("laat een admin het thema forceren via preview, los van de live-status; niet-admins mogen dit niet", () => {

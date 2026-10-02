@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, startTransition, useContext, useEffect, useMemo, useState } from "react";
 import { THEMAS, deriveThemaKey, hexToHsl, readableForeground, type Thema, type ThemaKey } from "@/lib/themas";
 import { useSelectedGame } from "@/context/SelectedGameContext";
 import { resolveDefaultGameId } from "@/lib/gameStatus";
@@ -116,8 +116,8 @@ function applyThemaTokens(key: ThemaKey, opts: { persist?: boolean } = {}) {
   // index.html ze bij een volgend bezoek vóór de eerste paint kan zetten.
   try {
     if (key === "winter") {
-      // Winter mag bij een volgende start niet uit cache verschijnen als de
-      // Meermarathon inmiddels is afgelopen.
+      // Winter haalt zijn kleuren uit de CSS: het no-flash-script heeft genoeg
+      // aan de thema-key, en oude koers-tokens zouden er inline overheen gaan.
       localStorage.removeItem(THEMA_TOKENS_LS_KEY);
     } else {
       const primair = hexToHsl(k.primair);
@@ -144,6 +144,7 @@ function readModus(): Modus {
   }
 }
 const THEMA_TOKENS_LS_KEY = "koerspoule:themaTokens";
+const THEME_COLOR_LS_KEY = "koerspoule:themeColor";
 const PREVIEW_SS_KEY = "koerspoule:adminThemaPreview";
 
 /** Admin-only: gelezen uit sessionStorage → verdwijnt vanzelf als de tab sluit. */
@@ -172,10 +173,35 @@ function neutralizeAccent() {
 function readCachedKey(): ThemaKey | null {
   try {
     const v = typeof localStorage !== "undefined" ? localStorage.getItem(THEMA_LS_KEY) : null;
-    return v && v in THEMAS && v !== "winter" ? (v as ThemaKey) : null;
+    return v && v in THEMAS ? (v as ThemaKey) : null;
   } catch {
     return null;
   }
+}
+
+/**
+ * De adres- en statusbalk van de browser volgt de koptekst (bg-card) van het
+ * thema. De kleur gaat ook de cache in, zodat het no-flash-script in
+ * index.html hem bij een volgend bezoek vóór de eerste paint kan zetten.
+ */
+function syncThemeColor(persist: boolean) {
+  const card = getComputedStyle(document.documentElement).getPropertyValue("--card").trim();
+  if (!card) return;
+  const kleur = `hsl(${card.split(/\s+/).join(", ")})`;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", kleur);
+  if (!persist) return;
+  try {
+    localStorage.setItem(THEME_COLOR_LS_KEY, kleur);
+  } catch { /* ignore */ }
+}
+
+/**
+ * Neemt React geprerenderde HTML over (zie main.tsx: #root heeft al inhoud)?
+ * Ook waar op de server zelf, die de HTML maakt.
+ */
+function hydrateert(): boolean {
+  if (typeof document === "undefined") return true;
+  return Boolean(document.getElementById("root")?.hasChildNodes());
 }
 
 export function ThemaProvider({ children }: { children: React.ReactNode }) {
@@ -192,8 +218,15 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
   }, [games]);
 
   // Laatst-bekende thema uit localStorage → terugkerende bezoekers zien meteen
-  // het juiste thema (geen flits). Eénmalig per mount gelezen.
-  const cachedKey = useMemo(() => readCachedKey(), []);
+  // het juiste thema (geen flits). Bij een geprerenderde pagina moet de eerste
+  // render "onbekend" zijn, net als op de server: anders wijkt hij af van de
+  // HTML en laat React de geprerenderde attributen staan. De cache volgt dan
+  // direct na de hydratatie, als transition — een gewone update zou de nog
+  // niet gehydrateerde Suspense-grenzen naar client-rendering dwingen.
+  const [cachedKey, setCachedKey] = useState<ThemaKey | null>(() => (hydrateert() ? null : readCachedKey()));
+  useEffect(() => {
+    startTransition(() => setCachedKey((al) => al ?? readCachedKey()));
+  }, []);
 
   // Admin-only preview-override: forceert een thema los van de live-status,
   // enkel zichtbaar in de browsersessie van de admin zelf (sessionStorage,
@@ -232,25 +265,35 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
     }
     if (isFetched && liveKey) {
       applyThemaTokens(liveKey);
+      // Ook winter: is het seizoen bij een volgend bezoek voorbij, dan zet de
+      // fetch het thema recht. Zonder cache viel elk bezoek terug op roze.
       try {
-        if (liveKey === "winter") localStorage.removeItem(THEMA_LS_KEY);
-        else localStorage.setItem(THEMA_LS_KEY, liveKey);
+        localStorage.setItem(THEMA_LS_KEY, liveKey);
       } catch { /* ignore */ }
     } else if (cachedKey) {
       applyThemaTokens(cachedKey);
-    } else {
+    } else if (readCachedKey() == null) {
       // Eerste bezoek, nog geen data → race-neutrale accenten i.p.v. Giro-roze.
       neutralizeAccent();
     }
+    // Anders: vlak na de hydratatie, de cache volgt zo. Het no-flash-script
+    // heeft het thema al gezet; neutraliseren zou één beeld lang flitsen.
   }, [isPreviewing, previewKey, isFetched, liveKey, cachedKey]);
 
   // De tokens voor de nacht hangen aan [data-thema="winter"][data-modus="nacht"];
   // buiten winter mag het attribuut dus ook niet blijven hangen.
   useEffect(() => {
+    // Thema nog onbekend: laten staan wat het no-flash-script zette.
+    if (resolvedKey == null) return;
     const root = document.documentElement;
-    if (key === "winter" && modus === "nacht") root.setAttribute("data-modus", "nacht");
+    if (resolvedKey === "winter" && modus === "nacht") root.setAttribute("data-modus", "nacht");
     else root.removeAttribute("data-modus");
-  }, [key, modus]);
+  }, [resolvedKey, modus]);
+
+  // Ná de twee effecten hierboven: die bepalen welke --card er geldt.
+  useEffect(() => {
+    syncThemeColor(ready && !isPreviewing);
+  }, [key, modus, ready, isPreviewing]);
 
   return (
     <ThemaContext.Provider value={{ thema: THEMAS[key], key, ready, canPreview, previewKey, setPreviewKey, modus, setModus }}>
