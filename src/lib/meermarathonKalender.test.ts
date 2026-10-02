@@ -64,4 +64,14 @@ describe("wedstrijdkalender", () => {
     expect(rijen[1]).toMatchObject({ punten: null, volgende: true });
     expect(bouwKalender([vrouwen, mannen], "m")[0].punten).toBe(0); // uitslag binnen, niets gescoord
   });
+
+  it("geeft per regel de weging van de bekeken game; zonder factor is dat 1", () => {
+    const zwaar = status("v", "vrouwen", [
+      w("v", 1, { date: "2026-10-31" }),
+      w("v", 6, { date: "2027-01-09", ijs_type: "natuurijs", wedstrijd_type: "grandprix", wegingsfactor: 2 }),
+    ]);
+    const gewoon = status("m", "mannen", [w("m", 6, { date: "2027-01-09", ijs_type: "natuurijs", wedstrijd_type: "grandprix" })]);
+    expect(bouwKalender([zwaar, gewoon], "v").map((r) => r.weging)).toEqual([1, 2]);
+    expect(bouwKalender([zwaar, gewoon], "m").map((r) => r.weging)).toEqual([1, 1]);
+  });
 });

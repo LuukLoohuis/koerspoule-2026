@@ -36,6 +36,8 @@ export type MmWedstrijd = {
   wedstrijd_type: string | null;
   aantal_rondes: number | null;
   distance_km: number | null;
+  /** Hoe zwaar de wedstrijd telt (lib/wegingsfactor); 1 = gewoon. */
+  wegingsfactor?: number | null;
 };
 
 export type MmEntry = {

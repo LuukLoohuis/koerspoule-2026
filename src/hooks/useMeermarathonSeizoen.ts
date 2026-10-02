@@ -16,7 +16,7 @@ import {
 } from "@/lib/meermarathonSeizoen";
 
 const WEDSTRIJD_SELECT =
-  "id, game_id, stage_number, name, date, status, is_gc, results_status, ijs_type, wedstrijd_type, aantal_rondes, distance_km";
+  "id, game_id, stage_number, name, date, status, is_gc, results_status, ijs_type, wedstrijd_type, aantal_rondes, distance_km, wegingsfactor";
 
 type StandingRow = { user_id: string; rank: number; delta: number | null; total: number };
 

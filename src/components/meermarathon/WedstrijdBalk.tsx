@@ -18,12 +18,12 @@ import { useEffect, useRef } from "react";
 import { Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FotoCredit from "@/components/meermarathon/FotoCredit";
-import { SoortEmbleem, SoortLabel, WEDSTRIJD_SOORT } from "@/components/meermarathon/WedstrijdSoort";
+import { SoortEmbleem, SoortLabel, WEDSTRIJD_SOORT, WegingPil } from "@/components/meermarathon/WedstrijdSoort";
 import { soortenInBalk, type BalkWedstrijd } from "@/lib/meermarathonBalk";
 import { BALK_FOTO, type BalkFoto } from "@/lib/meermarathonFotos";
 import { mmGetal } from "@/lib/meermarathonKlassement";
 import { mmDag } from "@/lib/meermarathonSeizoen";
-import { wegingUitleg } from "@/lib/wegingsfactor";
+import { wegingLabel, wegingUitleg } from "@/lib/wegingsfactor";
 
 const MAX_H = 128;
 /** Ook nul punten krijgt een stompje: de wedstrijd is wél gereden. */
@@ -143,6 +143,21 @@ function Kolom({
             />
           ) : (
             <span className="block h-full w-full rounded-full border-[1.5px]" style={capsule(WEDSTRIJD_SOORT[w.soort].kleur)} />
+          )}
+          {/* Zwaardere wedstrijd: een merkje onderin het balkje, ook al vóór de
+              wedstrijd, zodat je het hele seizoen ziet welke dubbel tellen. Een
+              stompje is te laag naast het embleem: daar hangt het eronder. */}
+          {w.weging !== 1 && (
+            <span
+              aria-hidden
+              className={cn(
+                "absolute left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-card px-1 text-[10px] font-extrabold leading-[14px] tabular-nums",
+                hoogte >= 40 ? "bottom-1.5" : "-bottom-[7px]",
+              )}
+              style={{ color: WEDSTRIJD_SOORT[w.soort].kleur, boxShadow: `inset 0 0 0 1.5px ${WEDSTRIJD_SOORT[w.soort].kleur}` }}
+            >
+              {wegingLabel(w.weging)}
+            </span>
           )}
         </span>
       </span>
@@ -288,14 +303,7 @@ export default function WedstrijdBalk({
                 {gekozen.date ? mmDag(gekozen.date) : "datum volgt"} · {WEDSTRIJD_SOORT[gekozen.soort].ondergrond}
               </span>
               {/* Telt de wedstrijd zwaarder, dan zegt dat waarom de punten hoger zijn. */}
-              {wegingUitleg(gekozen.weging) && (
-                <span
-                  className="rounded-full border-[1.5px] px-2 text-[11px] font-bold uppercase leading-[18px] tracking-[0.08em]"
-                  style={{ borderColor: WEDSTRIJD_SOORT[gekozen.soort].kleur }}
-                >
-                  {wegingUitleg(gekozen.weging)}
-                </span>
-              )}
+              <WegingPil soort={gekozen.soort} weging={gekozen.weging} />
               <span className={cn("ml-auto tabular-nums", gekozen.punten != null ? "font-bold" : "text-muted-foreground")}>
                 {puntenTekst(gekozen)}
               </span>

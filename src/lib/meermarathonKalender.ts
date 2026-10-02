@@ -1,5 +1,6 @@
 import { meermarathonAfstandLabel, meermarathonStageLabel, wedstrijdTypeVan, type WedstrijdType } from "@/lib/gameTypes";
 import type { MeermarathonGameStatus, MmWedstrijd } from "@/lib/meermarathonSeizoen";
+import { wegingVan } from "@/lib/wegingsfactor";
 
 /**
  * Eén kalender voor het seizoen. Vrouwen en Mannen rijden op dezelfde avond
@@ -19,6 +20,8 @@ export type KalenderRij = {
   /** Punten van jouw ploeg; null als er (nog) geen uitslag is. */
   punten: number | null;
   volgende: boolean;
+  /** Hoe zwaar de wedstrijd telt (lib/wegingsfactor); weg of 1 = gewoon. */
+  weging?: number;
 };
 
 const ONDERGROND: Record<string, string> = { kunstijs: "Kunstijs", natuurijs: "Natuurijs" };
@@ -65,6 +68,8 @@ export function bouwKalender(statussen: MeermarathonGameStatus[], gekozenGameId:
       detail,
       punten,
       volgende: Boolean(eigen && gekozen?.volgende?.id === eigen.id),
+      // Vrouwen en mannen op één regel: de factor van het peloton dat je bekijkt.
+      weging: wegingVan(basis),
     };
   });
 

@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import WedstrijdBalk from "./WedstrijdBalk";
+import { SoortLabel } from "./WedstrijdSoort";
 import { bouwWedstrijdBalk, type BalkBron } from "@/lib/meermarathonBalk";
 
 const bron = (stage_number: number, over: Partial<BalkBron> = {}): BalkBron => ({
@@ -38,5 +39,17 @@ describe("WedstrijdBalk › weging", () => {
 
   it("zegt niets bij een gewone wedstrijd", () => {
     expect(toon("w1")).not.toHaveTextContent(/telt/);
+  });
+
+  it("zet een merkje op het balkje en telt de soorten tussen haakjes, niet met ×", () => {
+    toon("w1");
+    const gp = screen.getByRole("button", { name: /^Grand Prix 2/ });
+    expect(gp).toHaveTextContent("×2");
+    expect(screen.getByRole("button", { name: /^Cup 1/ })).not.toHaveTextContent("×");
+  });
+
+  it("telt de soorten in de legenda tussen haakjes: ×2 is de weging", () => {
+    const { container } = render(<SoortLabel soort="grandprix" aantal={2} />);
+    expect(container).toHaveTextContent("Grand Prix (2)");
   });
 });

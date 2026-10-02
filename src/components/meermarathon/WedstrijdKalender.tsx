@@ -4,7 +4,7 @@
  * Gebruikt op de Krant (desktop: "Komende wedstrijden") en onder Uitslagen.
  */
 import { cn } from "@/lib/utils";
-import { SoortEmbleem } from "@/components/meermarathon/WedstrijdSoort";
+import { SoortEmbleem, WegingPil } from "@/components/meermarathon/WedstrijdSoort";
 import { mmKorteDatum } from "@/lib/meermarathonSeizoen";
 import type { KalenderRij } from "@/lib/meermarathonKalender";
 
@@ -36,7 +36,11 @@ export default function WedstrijdKalender({
               <span className="w-14 shrink-0 font-oswald text-[15px] text-muted-foreground">{mmKorteDatum(rij.date)}</span>
               {rij.soort && <SoortEmbleem soort={rij.soort} maat={26} />}
               <span className="min-w-0 flex-1">
-                <span className="block font-semibold leading-tight">{rij.label}</span>
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-semibold leading-tight">
+                  {rij.label}
+                  {/* Zwaardere wedstrijd: al vóór de start te zien. */}
+                  {rij.soort && rij.weging != null && <WegingPil soort={rij.soort} weging={rij.weging} />}
+                </span>
                 {rij.detail && <span className="block text-sm text-muted-foreground">{rij.detail}</span>}
               </span>
               {rij.volgende ? (

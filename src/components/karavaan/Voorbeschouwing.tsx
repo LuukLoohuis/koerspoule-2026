@@ -9,7 +9,8 @@ import { useThema } from "@/contexts/ThemaContext";
 import { Mountain, CalendarDays, ExternalLink, Map as MapIcon, ChevronDown } from "lucide-react";
 import { isMeermarathonGame, meermarathonStageLabel, wedstrijdTypeVan } from "@/lib/gameTypes";
 import { ritLabel } from "@/lib/krantC";
-import { SoortLabel } from "@/components/meermarathon/WedstrijdSoort";
+import { SoortLabel, WegingPil } from "@/components/meermarathon/WedstrijdSoort";
+import { wegingVan } from "@/lib/wegingsfactor";
 
 type UpcomingStage = {
   id: string;
@@ -22,6 +23,8 @@ type UpcomingStage = {
   /** Meermarathon: soort en ondergrond. */
   wedstrijd_type?: string | null;
   ijs_type?: string | null;
+  /** Meermarathon: hoe zwaar de wedstrijd telt (lib/wegingsfactor). */
+  wegingsfactor?: number | null;
   /** Statisch hoogteprofiel; dient als voorproefje op de dichtgeklapte kaart. */
   profile_image_url: string | null;
 };
@@ -102,7 +105,7 @@ export default function Voorbeschouwing({
       if (!supabase || !gameId) return null;
       const { data, error } = await (supabase as any)
         .from("stages")
-        .select("id, stage_number, name, date, stage_type, distance_km, results_status, profile_image_url, wedstrijd_type, ijs_type")
+        .select("id, stage_number, name, date, stage_type, distance_km, results_status, profile_image_url, wedstrijd_type, ijs_type, wegingsfactor")
         .eq("game_id", gameId)
         .eq("is_gc", false)
         .order("stage_number");
@@ -160,7 +163,11 @@ export default function Voorbeschouwing({
             : stage.name?.trim() || t("karavaan.voorbeschouwing.stage", { number: stage.stage_number })}
         </h3>
         {meermarathon ? (
-          <SoortLabel soort={wedstrijdTypeVan(stage)} metOndergrond className="mt-1.5 text-muted-foreground" />
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <SoortLabel soort={wedstrijdTypeVan(stage)} metOndergrond className="text-muted-foreground" />
+            {/* Telt de komende wedstrijd zwaarder, dan staat dat al in de voorbeschouwing. */}
+            <WegingPil soort={wedstrijdTypeVan(stage)} weging={wegingVan(stage)} />
+          </div>
         ) : (
         <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">

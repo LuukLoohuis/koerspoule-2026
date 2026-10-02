@@ -9,6 +9,7 @@
 import { Medal, Snowflake, Star, Trophy, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { WedstrijdType } from "@/lib/gameTypes";
+import { wegingUitleg } from "@/lib/wegingsfactor";
 
 export const WEDSTRIJD_SOORT: Record<WedstrijdType, { label: string; ondergrond: string; kleur: string; Icon: LucideIcon }> = {
   cup: { label: "Cup", ondergrond: "kunstijs", kleur: "var(--mm-s-cup)", Icon: Trophy },
@@ -67,9 +68,31 @@ export function SoortLabel({
       <SoortEmbleem soort={soort} maat={20} />
       <span>
         {label}
-        {aantal != null && aantal > 1 && <span className="font-normal text-muted-foreground"> ×{aantal}</span>}
+        {/* "(3)" en niet "×3": een ×-getal is de weging van een wedstrijd (×2 = dubbel). */}
+        {aantal != null && aantal > 1 && <span className="font-normal text-muted-foreground"> ({aantal})</span>}
         {metOndergrond && <span className="font-normal text-muted-foreground"> · {ondergrond}</span>}
       </span>
+    </span>
+  );
+}
+
+/**
+ * "Telt dubbel" bij een wedstrijd die zwaarder telt (lib/wegingsfactor), in
+ * de kleur van zijn soort. Niets bij een gewone wedstrijd. Staat in de
+ * uitslagenbalk bij de gekozen wedstrijd en in de kalender.
+ */
+export function WegingPil({ soort, weging, className }: { soort: WedstrijdType; weging: number; className?: string }) {
+  const tekst = wegingUitleg(weging);
+  if (!tekst) return null;
+  return (
+    <span
+      className={cn(
+        "inline-block whitespace-nowrap rounded-full border-[1.5px] px-2 text-[11px] font-bold uppercase leading-[18px] tracking-[0.08em]",
+        className,
+      )}
+      style={{ borderColor: WEDSTRIJD_SOORT[soort].kleur }}
+    >
+      {tekst}
     </span>
   );
 }
