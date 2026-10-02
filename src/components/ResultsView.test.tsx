@@ -105,11 +105,14 @@ describe("ResultsView › Klassement", () => {
     expect(staat.standen).toHaveBeenLastCalledWith("g", 1, false);
     expect(within(balk).getByRole("status")).toHaveTextContent("+30 pnt");
 
-    // Na een wedstrijd die nog komt is er geen tussenstand.
+    // Na een wedstrijd die nog komt is er geen tussenstand: een tik laat
+    // alleen zien welke wedstrijd het is.
     const komt = within(balk).getByRole("button", { name: /^Grand Prix 3,/ });
-    expect(komt).toHaveAttribute("aria-disabled", "true");
     fireEvent.click(komt);
     expect(within(balk).getByRole("button", { name: /^Amsterdam,/ })).toHaveAttribute("aria-pressed", "true");
+    expect(komt).toHaveAttribute("aria-pressed", "false");
+    expect(staat.standen).toHaveBeenLastCalledWith("g", 1, false);
+    expect(within(balk).getByRole("status")).toHaveTextContent(/Grand Prix 3.*nog te rijden/);
   });
 
   it("Meermarathon: bij de schaatsers alleen leiderstrui en witte trui, de beker voor de poulewinnaar", () => {

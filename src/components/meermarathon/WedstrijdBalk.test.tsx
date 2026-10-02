@@ -1,7 +1,7 @@
 // Een wedstrijd die zwaarder telt (Grand Prix ×2): de gekozen wedstrijd zegt
 // dat erbij, zodat je ziet waarom de punten hoger zijn.
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 import WedstrijdBalk from "./WedstrijdBalk";
 import { SoortLabel } from "./WedstrijdSoort";
 import { bouwWedstrijdBalk, type BalkBron } from "@/lib/meermarathonBalk";
@@ -51,5 +51,36 @@ describe("WedstrijdBalk › weging", () => {
   it("telt de soorten in de legenda tussen haakjes: ×2 is de weging", () => {
     const { container } = render(<SoortLabel soort="grandprix" aantal={2} />);
     expect(container).toHaveTextContent("Grand Prix (2)");
+  });
+});
+
+describe("WedstrijdBalk › tikken", () => {
+  // Het klassement kiest alleen gereden wedstrijden; een tik op een wedstrijd
+  // die nog komt, zegt wel welke wedstrijd het is.
+  const seizoen = bouwWedstrijdBalk(
+    [bron(1), bron(2, { results_status: null, name: "Weissensee", ijs_type: "natuurijs", wedstrijd_type: "grandprix" })],
+    new Map([["w1", 30]]),
+    { heeftPloeg: true },
+  );
+
+  it("zet een wedstrijd die nog komt in de strook, zonder hem te kiezen", () => {
+    const onKies = vi.fn();
+    render(
+      <WedstrijdBalk
+        wedstrijden={seizoen.wedstrijden}
+        totaal={seizoen.totaal}
+        gekozenId="w1"
+        onKies={onKies}
+        kiesbaar={(w) => w.gereden}
+        foto={null}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^Weissensee/ }));
+    expect(onKies).not.toHaveBeenCalled();
+    expect(screen.getByRole("status")).toHaveTextContent(/Weissensee.*natuurijs.*nog te rijden/);
+
+    fireEvent.click(screen.getByRole("button", { name: /^Cup 1/ }));
+    expect(onKies).toHaveBeenCalledWith("w1");
+    expect(screen.getByRole("status")).toHaveTextContent(/Cup 1.*\+30 pnt/);
   });
 });

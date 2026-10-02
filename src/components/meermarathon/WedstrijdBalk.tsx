@@ -14,7 +14,7 @@
  * Alleen weergave; bouwWedstrijdBalk (lib/meermarathonBalk) maakt de rijen.
  * Schakelt op zijn eigen breedte: smal schuift de rij opzij, breed past alles.
  */
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FotoCredit from "@/components/meermarathon/FotoCredit";
@@ -51,18 +51,22 @@ function capsule(kleur: string) {
 }
 
 /**
- * Een wedstrijd die nog komt: dezelfde capsule, maar ijslicht getint in de
- * kleur van zijn soort, met een volle rand. Gemengd met de kaartkleur, dus
- * in de nacht donker getint.
+ * Een wedstrijd die nog komt: dezelfde capsule, maar van gekleurd glas in de
+ * kleur van zijn soort, met een volle rand. Doorzichtig, zodat de foto van
+ * het peloton erdoor te zien blijft.
  */
 function nogTeRijden(kleur: string): CSSProperties {
-  const tint = (pct: number) => `color-mix(in srgb, ${kleur} ${pct}%, hsl(var(--card)))`;
+  const glas = (pct: number) => `color-mix(in srgb, ${kleur} ${pct}%, transparent)`;
   return {
-    "--soort": kleur,
-    background: `linear-gradient(90deg, ${tint(12)} 0%, ${tint(24)} 45%, ${tint(38)} 100%)`,
+    background: `linear-gradient(90deg, ${glas(10)} 0%, ${glas(22)} 45%, ${glas(36)} 100%)`,
     borderColor: kleur,
-  } as CSSProperties;
+  };
 }
+
+/** Gloed in de kleur van de soort: de wedstrijd die je bekijkt, of waar je muis op staat. */
+const GLOED = "shadow-[0_0_0_3px_color-mix(in_srgb,var(--soort)_40%,transparent),0_0_14px_color-mix(in_srgb,var(--soort)_35%,transparent)]";
+const GLOED_HOVER =
+  "group-hover:shadow-[0_0_0_3px_color-mix(in_srgb,var(--soort)_40%,transparent),0_0_14px_color-mix(in_srgb,var(--soort)_35%,transparent)]";
 
 function puntenTekst(w: BalkWedstrijd): string {
   if (!w.gereden) return "nog te rijden";
@@ -108,13 +112,14 @@ function Foto({ foto }: { foto: BalkFoto }) {
 function Kolom({
   w,
   gekozen,
-  kiesbaar,
-  onKies,
+  bekeken,
+  onKlik,
 }: {
   w: BalkWedstrijd;
   gekozen: boolean;
-  kiesbaar: boolean;
-  onKies: (id: string) => void;
+  /** Staat in de strook, maar is niet gekozen (een wedstrijd die nog komt, in het klassement). */
+  bekeken: boolean;
+  onKlik: () => void;
 }) {
   const hoogte = w.fractie == null ? LEEG_H : Math.max(MIN_H, Math.round(w.fractie * MAX_H));
   return (
@@ -122,20 +127,21 @@ function Kolom({
       type="button"
       data-wedstrijd={w.id}
       aria-pressed={gekozen}
-      aria-disabled={kiesbaar ? undefined : true}
       aria-label={[w.label, w.date ? mmDag(w.date) : "datum volgt", wegingUitleg(w.weging), puntenTekst(w)].filter(Boolean).join(", ")}
-      onClick={kiesbaar ? () => onKies(w.id) : undefined}
+      onClick={onKlik}
       className={cn(
         "group flex w-10 shrink-0 snap-center flex-col items-center rounded-md outline-hidden",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
         "@2xl:w-auto @2xl:min-w-0 @2xl:max-w-[76px] @2xl:flex-1",
-        !kiesbaar && "cursor-default",
       )}
     >
       <span className="flex w-full items-end justify-center" style={{ height: VAK_H }}>
         <span
-          className={cn("relative w-full max-w-[40px] rounded-full transition-shadow", gekozen && GLANS)}
-          style={{ height: hoogte }}
+          className={cn(
+            "relative w-full max-w-[40px] rounded-full transition-shadow",
+            gekozen ? GLANS : bekeken ? GLOED : GLOED_HOVER,
+          )}
+          style={{ height: hoogte, "--soort": WEDSTRIJD_SOORT[w.soort].kleur } as CSSProperties}
         >
           <SoortEmbleem
             soort={w.soort}
@@ -143,13 +149,7 @@ function Kolom({
             className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2"
           />
           {w.fractie == null ? (
-            <span
-              className={cn(
-                "block h-full w-full rounded-full border-2 transition-shadow",
-                kiesbaar && "group-hover:shadow-[0_0_0_3px_color-mix(in_srgb,var(--soort)_30%,transparent)]",
-              )}
-              style={nogTeRijden(WEDSTRIJD_SOORT[w.soort].kleur)}
-            />
+            <span className="block h-full w-full rounded-full border-2" style={nogTeRijden(WEDSTRIJD_SOORT[w.soort].kleur)} />
           ) : (
             <span className="block h-full w-full rounded-full border-[1.5px]" style={capsule(WEDSTRIJD_SOORT[w.soort].kleur)} />
           )}
@@ -247,7 +247,8 @@ export default function WedstrijdBalk({
   /**
    * Welke wedstrijden je kunt kiezen; zonder zijn het ze allemaal. Het
    * klassement kiest alleen gereden wedstrijden: na een wedstrijd die nog
-   * komt, is er nog geen tussenstand.
+   * komt, is er nog geen tussenstand. Een tik op een andere wedstrijd zet
+   * die alleen in de strook: dan zie je wel welke wedstrijd het is.
    */
   kiesbaar?: (w: BalkWedstrijd) => boolean;
   /** Tik op "Totaal": naar het klassement. Zonder is het alleen een getal. */
@@ -260,7 +261,12 @@ export default function WedstrijdBalk({
   className?: string;
 }) {
   const baan = useRef<HTMLDivElement>(null);
+  // Een wedstrijd die je niet kunt kiezen, maar wel aantikt: die staat in de
+  // strook tot er iets anders gekozen wordt.
+  const [bekeken, setBekeken] = useState<{ id: string; bij: string | null } | null>(null);
+  const bekekenId = bekeken && bekeken.bij === gekozenId ? bekeken.id : null;
   const gekozen = wedstrijden.find((w) => w.id === gekozenId) ?? null;
+  const getoond = wedstrijden.find((w) => w.id === bekekenId) ?? gekozen;
   const soorten = soortenInBalk(wedstrijden);
 
   // Smal schuift de rij opzij: houd de gekozen wedstrijd in beeld. Alleen de
@@ -301,20 +307,20 @@ export default function WedstrijdBalk({
             </ul>
           </header>
 
-          {gekozen && (
+          {getoond && (
             <p
               role="status"
               className="relative m-0 mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-lg bg-secondary px-3 py-2 text-sm leading-snug"
             >
-              <SoortEmbleem soort={gekozen.soort} maat={22} />
-              <strong className="font-bold">{gekozen.label}</strong>
+              <SoortEmbleem soort={getoond.soort} maat={22} />
+              <strong className="font-bold">{getoond.label}</strong>
               <span className="text-muted-foreground">
-                {gekozen.date ? mmDag(gekozen.date) : "datum volgt"} · {WEDSTRIJD_SOORT[gekozen.soort].ondergrond}
+                {getoond.date ? mmDag(getoond.date) : "datum volgt"} · {WEDSTRIJD_SOORT[getoond.soort].ondergrond}
               </span>
               {/* Telt de wedstrijd zwaarder, dan zegt dat waarom de punten hoger zijn. */}
-              <WegingPil soort={gekozen.soort} weging={gekozen.weging} />
-              <span className={cn("ml-auto tabular-nums", gekozen.punten != null ? "font-bold" : "text-muted-foreground")}>
-                {puntenTekst(gekozen)}
+              <WegingPil soort={getoond.soort} weging={getoond.weging} />
+              <span className={cn("ml-auto tabular-nums", getoond.punten != null ? "font-bold" : "text-muted-foreground")}>
+                {puntenTekst(getoond)}
               </span>
             </p>
           )}
@@ -337,15 +343,21 @@ export default function WedstrijdBalk({
                 "@2xl:snap-none @2xl:justify-center @2xl:gap-1 @2xl:overflow-visible @2xl:px-1.5 @2xl:[mask-image:none]",
               )}
             >
-              {wedstrijden.map((w) => (
-                <Kolom
-                  key={w.id}
-                  w={w}
-                  gekozen={w.id === gekozenId}
-                  kiesbaar={kiesbaar ? kiesbaar(w) : true}
-                  onKies={onKies}
-                />
-              ))}
+              {wedstrijden.map((w) => {
+                const kanKiezen = kiesbaar ? kiesbaar(w) : true;
+                return (
+                  <Kolom
+                    key={w.id}
+                    w={w}
+                    gekozen={w.id === gekozenId}
+                    bekeken={w.id === bekekenId && w.id !== gekozenId}
+                    onKlik={() => {
+                      setBekeken(kanKiezen || w.id === gekozenId ? null : { id: w.id, bij: gekozenId });
+                      if (kanKiezen) onKies(w.id);
+                    }}
+                  />
+                );
+              })}
             </div>
 
             <div className="pb-1">

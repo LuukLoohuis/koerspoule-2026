@@ -9,7 +9,7 @@ import WedstrijdBalk from "@/components/meermarathon/WedstrijdBalk";
 import { bouwWedstrijdBalk, type BalkBron } from "@/lib/meermarathonBalk";
 import { cn } from "@/lib/utils";
 
-type Plan = [nr: number, date: string | null, type: string, ijs: "kunstijs" | "natuurijs", naam?: string];
+type Plan = [nr: number, date: string | null, type: string, ijs: "kunstijs" | "natuurijs", naam?: string, weging?: number];
 
 const SEIZOEN: Plan[] = [
   [1, "2026-10-31", "cup", "kunstijs"],
@@ -23,26 +23,40 @@ const SEIZOEN: Plan[] = [
   [9, "2027-02-06", "nk", "kunstijs"],
 ];
 
-/** De kalender van de mannen zoals in oktober 2026 op de site: Cup ×17, Grand Prix ×6, ONK en NK. */
+/**
+ * De kalender zoals begin oktober 2026 op de site: Cup ×17, Grand Prix ×6,
+ * ONK en NK, met de wegingen die toen in het beheer stonden.
+ */
 const KALENDER: Plan[] = [
-  ...Array.from({ length: 12 }, (_, i): Plan => [i + 1, i === 0 ? "2026-10-17" : null, "cup", "kunstijs", i === 0 ? "Amsterdam" : undefined]),
-  [13, null, "nk", "kunstijs"],
+  [1, "2026-10-17", "cup", "kunstijs", "Cup 1 Amsterdam"],
+  [2, null, "cup", "kunstijs"],
+  [3, null, "cup", "kunstijs"],
+  [4, null, "cup", "kunstijs"],
+  [5, null, "cup", "kunstijs"],
+  [6, null, "cup", "kunstijs"],
+  [7, null, "cup", "kunstijs"],
+  [8, null, "cup", "kunstijs", undefined, 0.5],
+  [9, null, "cup", "kunstijs", undefined, 0.75],
+  [10, null, "cup", "kunstijs"],
+  [11, null, "cup", "kunstijs"],
+  [12, null, "cup", "kunstijs"],
+  [13, null, "nk", "kunstijs", undefined, 1.5],
   [14, null, "cup", "kunstijs"],
   [15, null, "cup", "kunstijs"],
   [16, null, "grandprix", "natuurijs"],
-  [17, null, "onk", "natuurijs"],
-  [18, null, "grandprix", "natuurijs"],
-  [19, null, "grandprix", "natuurijs"],
+  [17, null, "onk", "natuurijs", undefined, 2],
+  [18, null, "grandprix", "natuurijs", undefined, 1.5],
+  [19, null, "grandprix", "natuurijs", undefined, 2],
   [20, null, "cup", "kunstijs"],
   [21, null, "cup", "kunstijs"],
   [22, null, "cup", "kunstijs"],
-  [23, null, "grandprix", "natuurijs"],
-  [24, null, "grandprix", "natuurijs"],
-  [25, null, "grandprix", "natuurijs"],
+  [23, null, "grandprix", "natuurijs", undefined, 1.5],
+  [24, null, "grandprix", "natuurijs", undefined, 1.5],
+  [25, null, "grandprix", "natuurijs", undefined, 2],
 ];
 
 function bronnen(plan: Plan[], gereden: number): BalkBron[] {
-  return plan.map(([nr, date, type, ijs, naam]) => ({
+  return plan.map(([nr, date, type, ijs, naam, weging]) => ({
     id: `w${nr}`,
     stage_number: nr,
     name: naam ?? null,
@@ -51,6 +65,7 @@ function bronnen(plan: Plan[], gereden: number): BalkBron[] {
     results_status: nr <= gereden ? "approved" : null,
     ijs_type: ijs,
     wedstrijd_type: type,
+    wegingsfactor: weging,
   }));
 }
 
@@ -87,6 +102,9 @@ function Voorbeeld({
             totaal={totaal}
             gekozenId={gekozen}
             onKies={setGekozen}
+            // Zoals in het klassement: alleen gereden wedstrijden kies je; een
+            // tik op een andere zet hem in de strook.
+            kiesbaar={(w) => w.gereden}
             titel="Tussenstand selecteren"
             ondertitel={ondertitel}
           />
