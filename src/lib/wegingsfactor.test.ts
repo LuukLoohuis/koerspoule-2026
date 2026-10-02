@@ -4,6 +4,7 @@ import {
   leesWeging,
   schemaMetWeging,
   wegingLabel,
+  wegingPerSoort,
   wegingUitleg,
   wegingVan,
 } from "./wegingsfactor";
@@ -92,5 +93,34 @@ describe("schemaMetWeging", () => {
 
   it("laat het schema met rust bij factor 1", () => {
     expect(schemaMetWeging(schema, 1)).toBe(schema);
+  });
+});
+
+describe("wegingPerSoort", () => {
+  const w = (stage_number: number, wedstrijd_type: string, wegingsfactor?: number, over = {}) => ({
+    stage_number,
+    name: null,
+    wedstrijd_type,
+    ijs_type: wedstrijd_type === "grandprix" || wedstrijd_type === "onk" ? "natuurijs" : "kunstijs",
+    wegingsfactor,
+    ...over,
+  });
+
+  it("geeft één regel per soort, in vaste volgorde", () => {
+    const groepen = wegingPerSoort([w(9, "nk"), w(8, "onk", 2), w(2, "cup"), w(1, "cup"), w(6, "grandprix", 2), w(7, "grandprix", 2)]);
+    expect(groepen).toEqual([
+      { soort: "cup", weging: 1, wedstrijden: ["Cup 1", "Cup 2"] },
+      { soort: "grandprix", weging: 2, wedstrijden: ["Grand Prix 6", "Grand Prix 7"] },
+      { soort: "onk", weging: 2, wedstrijden: ["ONK"] },
+      { soort: "nk", weging: 1, wedstrijden: ["NK"] },
+    ]);
+  });
+
+  it("geeft een afwijkende wedstrijd een eigen regel en slaat het eindklassement over", () => {
+    const groepen = wegingPerSoort([w(6, "grandprix", 2), w(7, "grandprix"), w(22, "cup", 1, { is_gc: true })]);
+    expect(groepen).toEqual([
+      { soort: "grandprix", weging: 2, wedstrijden: ["Grand Prix 6"] },
+      { soort: "grandprix", weging: 1, wedstrijden: ["Grand Prix 7"] },
+    ]);
   });
 });

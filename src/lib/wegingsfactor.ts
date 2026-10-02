@@ -1,4 +1,5 @@
 import type { PointsSchema } from "@/lib/liveMarathon";
+import { meermarathonStageLabel, wedstrijdTypeVan, WEDSTRIJD_TYPES, type WedstrijdType } from "@/lib/gameTypes";
 
 /**
  * Meermarathon: hoe zwaar een wedstrijd telt.
@@ -74,4 +75,41 @@ export function wegingPerWedstrijd(
 export function schemaMetWeging(schema: PointsSchema, weging: number): PointsSchema {
   if (weging === 1) return schema;
   return new Map([...schema].map(([plek, punten]) => [plek, gewogenPunten(punten, weging)]));
+}
+
+export type WegingGroep = {
+  soort: WedstrijdType;
+  weging: number;
+  /** "Grand Prix 6", "Grand Prix 7": de wedstrijden met deze weging. */
+  wedstrijden: string[];
+};
+
+/**
+ * De weging per soort wedstrijd, voor het koersreglement: "Grand Prix ×2".
+ * Telt één wedstrijd van een soort anders dan de rest, dan krijgt die een
+ * eigen regel. Vaste volgorde Cup, Grand Prix, ONK, NK; het eindklassement
+ * (GC) is geen wedstrijd en valt weg.
+ */
+export function wegingPerSoort(
+  stages: ReadonlyArray<{
+    stage_number: number;
+    name?: string | null;
+    wedstrijd_type?: string | null;
+    ijs_type?: string | null;
+    is_gc?: boolean | null;
+    wegingsfactor?: number | string | null;
+  }>,
+): WegingGroep[] {
+  const groepen: WegingGroep[] = [];
+  const wedstrijden = stages.filter((s) => !s.is_gc).sort((a, b) => a.stage_number - b.stage_number);
+  for (const { value: soort } of WEDSTRIJD_TYPES) {
+    for (const s of wedstrijden.filter((w) => wedstrijdTypeVan(w) === soort)) {
+      const weging = wegingVan(s);
+      const groep = groepen.find((g) => g.soort === soort && g.weging === weging);
+      const label = meermarathonStageLabel(s);
+      if (groep) groep.wedstrijden.push(label);
+      else groepen.push({ soort, weging, wedstrijden: [label] });
+    }
+  }
+  return groepen;
 }
