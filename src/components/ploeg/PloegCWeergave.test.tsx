@@ -93,9 +93,9 @@ describe("PloegCWeergave", () => {
     expect(screen.getByText(/4 renners · 1 opgave/)).toBeTruthy();
   });
 
-  it("zet op Vandaag de scorers van de rit bovenaan", () => {
+  it("zet op Rituitslag de scorers van de rit bovenaan", () => {
     toon();
-    fireEvent.click(screen.getByRole("button", { name: "Vandaag" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rituitslag" }));
     const rijen = namen();
     expect(rijen[0]).toContain("Giulio Ciccone");
     expect(rijen[0]).toContain("+20");

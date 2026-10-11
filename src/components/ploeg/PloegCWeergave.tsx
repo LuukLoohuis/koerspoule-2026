@@ -65,7 +65,7 @@ export type PloegCWeergaveProps = {
  * Ploeg C, de presentatie: Mijn ploeg op een telefoon, uit
  * docs/design/krant-ploeg-c. Eén ranglijst van je eigen renners in plaats
  * van de cockpit met meters en wijzers. Bovenaan de ploegkaart met het totaal
- * en de dagpunten, daaronder de rit-kiezer en de schakelaar Punten/Vandaag,
+ * en de dagpunten, daaronder de rit-kiezer en de schakelaar Algemeen/Rituitslag,
  * dan de rijen. Een rij klapt open met de ritten waarin die renner scoorde.
  * Alles wat over de poule gaat staat op de Krant, niet hier.
  *
