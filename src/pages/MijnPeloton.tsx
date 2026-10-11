@@ -429,7 +429,7 @@ export default function MijnPeloton() {
               { key: "team",      label: "Volgwagen",      Icon: Car      },
               { key: "subpoules", label: "Subpoules",      Icon: Users    },
               { key: "uitslagen", label: t("team.peloton.tabResults"), Icon: Trophy   },
-              { key: "hors",      label: "Hors Catégorie", Icon: Mountain },
+              { key: "hors",      label: "Statistiek",     Icon: Mountain },
             ]}
           />
 

@@ -36,7 +36,7 @@ const HOOFD = [
   { key: "team", label: "Volgwagen", Icon: Car },
   { key: "subpoules", label: "Subpoules", Icon: Users },
   { key: "uitslagen", label: "Uitslagen", Icon: Trophy },
-  { key: "hors", label: "Hors Catégorie", Icon: Mountain },
+  { key: "hors", label: "Statistiek", Icon: Mountain },
 ] as const;
 
 const HORS_SUB = [

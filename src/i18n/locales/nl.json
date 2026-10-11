@@ -1,4 +1,13 @@
 {
+  "oudeKoersen": {
+    "titel": "Oude koersen",
+    "hint": "terugkijken",
+    "menuAria": "Oude koersen openen",
+    "kijktTerug": "Je kijkt terug",
+    "afgerond": "Afgerond",
+    "terug": "Terug",
+    "terugNaar": "Terug naar {{koers}}"
+  },
   "shell": {
     "login": "Inloggen",
     "logout": "Uitloggen",
@@ -999,9 +1008,9 @@
       "superteam": "The Emirates",
       "benchmark": "Benchmark"
     },
-    "tabsAria": "Hors Catégorie-onderdelen",
+    "tabsAria": "Statistiek-onderdelen",
     "locked": {
-      "title": "Hors Catégorie nog vergrendeld",
+      "title": "Statistiek nog vergrendeld",
       "body": "De data cave gaat open zodra de koers in de sneak preview verschijnt."
     },
     "demo": {
@@ -1022,7 +1031,7 @@
       "legendFavourite": "Pelotonlieveling",
       "yourPick": "Jouw keuze",
       "noTeams": "Nog geen ingediende ploegen.",
-      "badgeEveryone": "Iedereen-en-z'n-moeder",
+      "badgeEveryone": "Jan en alleman",
       "badgeFavourite": "Pelotonlieveling",
       "badgeHiddenGem": "Verborgen parel",
       "badgeDifferential": "Differentieel",
@@ -1230,10 +1239,10 @@
       "referralHide": "Verberg deze tip",
       "noSubpouleTitle": "Je zit nog niet in een subpoule",
       "noSubpouleBody": "De {{krant}} rolt mee met je subpoules. Maak er een aan of word lid via de Subpoules-tab.",
-      "hcAriaOpen": "Open de Hors Catégorie statistieken",
-      "hcMobileLabel": "Statistieken — Hors Catégorie",
+      "hcAriaOpen": "Open de Statistiek",
+      "hcMobileLabel": "Statistiek",
       "hcCol": "Col",
-      "hcHorsCat": "Hors Cat.",
+      "hcHorsCat": "Stats",
       "hcStatistieken": "Statistieken",
       "hcClimb": "21 km à 8 %",
       "hcQuotePre": "« De grupetto rolt naar de finish. De cijferfetishisten klimmen door — naar de ",
@@ -1351,7 +1360,7 @@
       "quoteMeer": "Meer",
       "quoteMinder": "Minder",
       "rubVerslagCommentaar": "Verslag & commentaar",
-      "bijlageKop": "Hors Catégorie",
+      "bijlageKop": "Statistiek",
       "rubVerslagHaak": "Het verslag en de commentatoren",
       "rubLegendeHaak": "Een verhaal uit het archief",
       "rubPerszaal": "Perszaal",
@@ -1366,7 +1375,7 @@
     },
     "uitleg": {
       "metaTitle": "Uitleg · Koerspoule",
-      "metaDescription": "Ontdek wat je allemaal kunt in Koerspoule: L'Équipe, Volgwagen, Subpoule, Uitslagen en Hors Catégorie — kort uitgelegd, met directe links.",
+      "metaDescription": "Ontdek wat je allemaal kunt in Koerspoule: L'Équipe, Volgwagen, Subpoule, Uitslagen en Statistiek — kort uitgelegd, met directe links.",
       "title": "Uitleg",
       "intro": "Alles wat je in Koerspoule kunt doen, kort uitgelegd. Klik een kaart om er direct naartoe te gaan.",
       "goThere": "Ga ernaartoe",
@@ -1407,7 +1416,7 @@
       "cardUitKlassementIntro": "Het eindklassement van alle deelnemers, niet alleen je subpoule.",
       "cardEtappesTitle": "Etappes",
       "cardEtappesIntro": "De daguitslag per etappe van alle deelnemers.",
-      "groupHorsHeading": "Hors Catégorie",
+      "groupHorsHeading": "Statistiek",
       "cardDartpijlTitle": "Dartpijl",
       "cardDartpijlIntro": "Toeval telt: 10.000 apen prikken een volledig team inclusief twee jokers, jouw score wordt daartegen afgezet. Lees de volledige uitleg via de infoknop daar.",
       "cardPelotonkeuzesTitle": "Pelotonkeuzes",
@@ -1598,7 +1607,7 @@
       "step3Hint": "Na elke geüploade etappe.",
       "step3Cta": "Naar de uitslagen",
       "step4Label": "Bekijk je statistieken",
-      "step4Cta": "Naar Hors Catégorie",
+      "step4Cta": "Naar Statistiek",
       "step5Label": "Lees de krant",
       "step5Cta": "Naar de voorpagina"
     },
@@ -1863,7 +1872,7 @@
       "etappes": "de daguitslag per etappe: wie welke punten pakte"
     },
     "hors": {
-      "titel": "Hors Catégorie",
+      "titel": "Statistiek",
       "tekst": "Je statistieken — hier zie je hoe goed je echt koos.",
       "dartpijl": "versloeg je de apen die willekeurig kiezen? Vóór de start zie je een voorbeeld",
       "pelotonkeuzes": "welke renners de rest koos — zichtbaar zodra er punten zijn",
@@ -1977,7 +1986,7 @@
     "uitlegPunten": "Punten van je ploeg in deze rit. Alles per renner staat onder Ploeg.",
     "uitlegJij": "Jouw regel in een uitslag.",
     "uitlegPodium": "Podium van de rit: goud, zilver, brons.",
-    "uitlegHors": "Hors Catégorie is de bijlage met de Monkey IQ (jouw ploeg tegen de apen), de Emirates-benchmark (rendement tegenover de droomploeg) en het rapportcijfer van de Wielerdirecteur.",
+    "uitlegHors": "Statistiek is de bijlage met de Monkey IQ (jouw ploeg tegen de apen), de Emirates-benchmark (rendement tegenover de droomploeg) en het rapportcijfer van de Wielerdirecteur.",
     "standAria": "Jouw stand",
     "celAlgemeen": "Algemeen",
     "celVandaag": "Vandaag",
@@ -2006,11 +2015,11 @@
     "rituitslagPoule_mm": "Wedstrijduitslag poule ›",
     "rituitslagSubpoule": "Rituitslag subpoule ›",
     "rituitslagSubpoule_mm": "Wedstrijduitslag subpoule ›",
-    "hors": "Hors Catégorie",
+    "hors": "Statistiek",
     "heleBijlage": "Hele bijlage ›",
-    "monkeyAria": "Monkey IQ {{waarde}} procent. Open Hors Catégorie",
-    "emiratesAria": "Emirates {{waarde}} procent. Open Hors Catégorie",
-    "directeurAria": "Directeur {{waarde}}. Open Hors Catégorie",
+    "monkeyAria": "Monkey IQ {{waarde}} procent. Open Statistiek",
+    "emiratesAria": "Emirates {{waarde}} procent. Open Statistiek",
+    "directeurAria": "Directeur {{waarde}}. Open Statistiek",
     "monkeyUitleg": "Van de apen verslagen.",
     "emiratesUitleg": "tegenover de droomploeg",
     "directeurUitleg": "van de ploegleider",

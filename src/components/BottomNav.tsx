@@ -27,7 +27,7 @@ const NAV: NavItem[] = [
   { label: "Ploeg",          icon: Shirt,     to: "/mijn-peloton", tab: "team", navKey: "team" },
   { label: "Subpoule",       icon: Users,     to: "/mijn-peloton", tab: "subpoules", navKey: "subpoules" },
   { label: "Uitslagen",      labelKey: "nav.results", labelXsKey: "nav.resultsShort", icon: Flag, to: "/uitslagen", navKey: "uitslagen" },
-  { label: "Hors Catégorie", labelXs: "Hors Cat.", icon: Bike, to: "/mijn-peloton", tab: "hors", navKey: "hors" },
+  { label: "Statistiek",     labelXs: "Stats",     icon: Bike, to: "/mijn-peloton", tab: "hors", navKey: "hors" },
 ];
 
 export default function BottomNav() {

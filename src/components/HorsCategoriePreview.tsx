@@ -114,7 +114,7 @@ export default function HorsCategoriePreview() {
         <div className="vintage-ornament max-w-xs mx-auto mb-3">
           <span className="vintage-ornament-symbol">✦</span>
           <span className="text-xs tracking-[0.3em] uppercase text-muted-foreground font-serif">
-            Hors Catégorie · preview
+            Statistiek · preview
           </span>
           <span className="vintage-ornament-symbol">✦</span>
         </div>
@@ -241,7 +241,7 @@ export default function HorsCategoriePreview() {
             Volg je het peloton, of val je aan?
           </p>
           <p className="text-xs text-muted-foreground font-serif italic">
-            Bekijk de volledige Hors Catégorie data en pas je ploeg aan op basis van deze inzichten.
+            Bekijk de volledige statistieken en pas je ploeg aan op basis van deze inzichten.
           </p>
         </div>
         <Link

@@ -130,7 +130,7 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
     const { error } = await supabase.from("games").update({ hors_banner_visible: next }).eq("id", activeGameId);
     if (error) { toast.error(`Opslaan mislukt: ${error.message}`); return; }
     setHorsBanner(next);
-    toast.success(next ? "Hors Catégorie-banner AAN in de Krant" : "Hors Catégorie-banner uit");
+    toast.success(next ? "Statistiek-banner AAN in de Krant" : "Statistiek-banner uit");
   }
 
   const preview = resultsHiddenForUsers(gameStatus);
@@ -152,7 +152,7 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
               <Eye className="w-4 h-4" /> Testmodus {testmodus ? "AAN" : "uit"}
             </p>
             <p className="text-xs text-muted-foreground">
-              Als admin zie je dan <strong>alles</strong> (L'Équipe, uitslagen, subpoule, Hors Catégorie) ongeacht de game-status.
+              Als admin zie je dan <strong>alles</strong> (L'Équipe, uitslagen, subpoule, Statistiek) ongeacht de game-status.
               Deelnemers merken hier niets van: die zien de game volgens de status.
             </p>
           </div>
@@ -198,7 +198,7 @@ export default function GoLiveTab({ activeGameId, gameStatus }: { activeGameId: 
         <CardContent className="flex items-center justify-between gap-3 p-4">
           <div className="min-w-0">
             <p className="font-display font-bold flex items-center gap-2">
-              <Mountain className="w-4 h-4" /> Hors Catégorie-banner (Krant) {horsBanner ? "AAN" : "uit"}
+              <Mountain className="w-4 h-4" /> Statistiek-banner (Krant) {horsBanner ? "AAN" : "uit"}
             </p>
             <p className="text-xs text-muted-foreground">
               De teaser onderaan de Krant die naar de statistieken verwijst. Zet 'm uit zolang er nog geen etappes verwerkt zijn — dan wijst hij naar lege grafieken. Handmatig, per game.
