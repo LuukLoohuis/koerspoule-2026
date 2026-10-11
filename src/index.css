@@ -1357,6 +1357,40 @@
   .kp-gs-livedot { animation: none; }
 }
 
+/* ── Fysieke knop (terugkijken, archief) — rand, dikte, zakt bij indrukken ──
+   Zelfde idee als de indienknop, maar in inkt op papier: past bij de
+   nav-knoppen en de retro-omkadering. */
+.kp-knop-fysiek {
+  border: 2px solid hsl(var(--foreground));
+  border-radius: 8px;
+  background: hsl(var(--card));
+  box-shadow: 0 3px 0 hsl(var(--foreground));
+  transition: transform 90ms ease, box-shadow 90ms ease, background-color 150ms ease;
+}
+.kp-knop-fysiek:hover { background: hsl(var(--secondary)); }
+.kp-knop-fysiek:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 hsl(var(--foreground));
+}
+
+/* ── Terugkijk-strook: dossiermap die uit het archief schuift ── */
+@keyframes kp-terugkijk-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+.kp-terugkijk { animation: kp-terugkijk-in 0.3s ease-out both; }
+
+/* ── Archiefkastje (oude koersen): haarlijn in landskleuren bij hover/keuze ── */
+.kp-archief-rij .kp-archief-rug { opacity: 0; transition: opacity 150ms ease; }
+.kp-archief-rij:hover .kp-archief-rug { opacity: 0.55; }
+.kp-archief-rij[aria-selected="true"] .kp-archief-rug { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .kp-knop-fysiek, .kp-knop-fysiek:active { transition: none; transform: none; }
+  .kp-terugkijk { animation: none; }
+  .kp-archief-rij .kp-archief-rug { transition: none; }
+}
+
 /* ── Indienknop (ploegbouwer) — een knop die je indrukt ──
    Donkere onderrand als dikte; bij indrukken zakt de knop erin. De gouden
    gloed (ploeg klaar) loopt over de rand; de knop zelf blijft vol van kleur

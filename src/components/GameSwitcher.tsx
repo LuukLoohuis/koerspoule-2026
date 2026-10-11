@@ -1,22 +1,28 @@
 /**
  * GameSwitcher — de "koersbalk": één retro-omkaderd segmented control met een
- * segment per game (geen losse kaarten). Altijd één regel; op smalle schermen
- * horizontaal scrollbaar met snap. Het actieve segment draagt het vlag-verloop
- * van zijn race van rand tot rand (animeert in bij selectie) met een witte
- * onderstreep als "je bent hier"-marker; een glans glijdt eroverheen. Micro-
- * interacties + prefers-reduced-motion via .kp-gs-*-klassen in index.css.
+ * segment per LOPENDE game (geen losse kaarten). Altijd één regel; op smalle
+ * schermen horizontaal scrollbaar met snap. Het actieve segment draagt het
+ * vlag-verloop van zijn race van rand tot rand (animeert in bij selectie) met
+ * een witte onderstreep als "je bent hier"-marker; een glans glijdt eroverheen.
+ * Micro-interacties + prefers-reduced-motion via .kp-gs-*-klassen in index.css.
+ *
+ * De balk staat er alleen als er iets te kiezen valt tussen LOPENDE koersen
+ * (bijvoorbeeld Tour en Tour Femmes tegelijk). Afgeronde koersen staan er niet
+ * in: die vervuilden de telefoon (vier segmenten "Afgerond" naast de ene
+ * lopende koers) en zitten nu in het menu (OudeKoersenMenu). Kijk je zo'n oude
+ * koers terug, dan staat hier de TerugkijkStrip in plaats van de balk.
  *
  * Alleen renderen voor ingelogde deelnemers op app-pagina's (aanroepende pagina
- * bepaalt dat) en alleen bij >1 zichtbare game. Elke pill toont zijn EIGEN
- * game.status. Geen subtitels.
+ * bepaalt dat). Elke pill toont zijn EIGEN game.status. Geen subtitels.
  */
 import { useEffect, useRef } from "react";
-import { Snowflake, Wrench } from "lucide-react";
+import { Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
-import FlagIcon from "@/components/FlagIcon";
 import { gameTheme, type GameRow } from "@/hooks/useAllGames";
 import { isVisibleToUser, isAdminOnlyStatus, statusBadge, statusOrderRank, isFinishedLike } from "@/lib/gameStatus";
-import { meermarathonCategorieRang, meermarathonSeasonKort, isMeermarathonGame } from "@/lib/gameTypes";
+import { isMeermarathonGame } from "@/lib/gameTypes";
+import TerugkijkStrip from "@/components/TerugkijkStrip";
+import { KoersIcoon, eenSegmentPerSeizoen, raceGradient, segmentName, splitsOudeKoersen } from "@/components/koersSegment";
 
 type Props = {
   games: GameRow[];
@@ -27,58 +33,6 @@ type Props = {
   className?: string;
 };
 
-const raceGradient = (type: string | null | undefined) => {
-  if (isMeermarathonGame(type)) {
-    return "linear-gradient(135deg, var(--mm-m), var(--mm-m2))";
-  }
-  const c = gameTheme(type).colors;
-  return `linear-gradient(135deg, ${c[0]}, ${c[1]}, ${c[2]})`;
-};
-
-/** Segment-naam: afgeronde games kort (Giro 2026), overige compact-vol. */
-function segmentName(game: GameRow, finished: boolean): string {
-  const y = game.year;
-  const t = String(game.game_type ?? "").toLowerCase();
-  // Verkort seizoen: "Meermarathon 2026-2027" liep in dit smalle segment
-  // tegen de afkapping aan. Vrouwen en Mannen delen één segment; de keuze
-  // daartussen maakt de pelotonbalk.
-  if (isMeermarathonGame(t)) return `Meermarathon ${meermarathonSeasonKort(y)}`;
-  if (finished) {
-    if (t === "giro") return `Giro ${y}`;
-    if (t === "vuelta" || t === "vta") return `Vuelta ${y}`;
-    if (t === "femmes") return `Tour Femmes ${y}`;
-    return `Tour ${y}`;
-  }
-  if (t === "giro") return `Giro d'Italia ${y}`;
-  if (t === "vuelta" || t === "vta") return `Vuelta ${y}`;
-  if (t === "femmes") return `Tour Femmes ${y}`;
-  return `Tour de France ${y}`;
-}
-
-/**
- * Meermarathon Vrouwen en Mannen van één seizoen worden hier één segment: de
- * keuze daartussen hoort bij de pelotonbalk, niet bij de keuze van de koers.
- * Het segment staat voor de gekozen categorie als die in dit seizoen zit,
- * anders voor de eerste (vrouwen).
- */
-export function eenSegmentPerSeizoen<T extends { id: string; game_type?: string | null; year: number; categorie?: string | null }>(
-  games: T[],
-  selectedId: string | null,
-): T[] {
-  const perSeizoen = new Map<number, T[]>();
-  for (const g of games) {
-    if (!isMeermarathonGame(g.game_type)) continue;
-    perSeizoen.set(g.year, [...(perSeizoen.get(g.year) ?? []), g]);
-  }
-  const vertegenwoordiger = new Map<number, string>();
-  for (const [jaar, groep] of perSeizoen) {
-    const gekozen = groep.find((g) => g.id === selectedId);
-    const eerste = [...groep].sort((a, b) => meermarathonCategorieRang(a.categorie) - meermarathonCategorieRang(b.categorie))[0];
-    vertegenwoordiger.set(jaar, (gekozen ?? eerste).id);
-  }
-  return games.filter((g) => !isMeermarathonGame(g.game_type) || vertegenwoordiger.get(g.year) === g.id);
-}
-
 export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = false, className }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
@@ -87,6 +41,8 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
     [...games].filter((g) => isVisibleToUser(g.status, isAdmin)),
     selectedId,
   ).sort((a, b) => statusOrderRank(a.status) - statusOrderRank(b.status));
+  const { actief, oud } = splitsOudeKoersen(ordered);
+  const gekozenOud = oud.find((g) => g.id === selectedId) ?? null;
 
   // Actieve segment in beeld scrollen (mobiel; desktop no-op want geen scroll).
   useEffect(() => {
@@ -100,7 +56,11 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
     box.scrollTo({ left, behavior: "smooth" });
   }, [selectedId]);
 
-  if (ordered.length <= 1) return null;
+  // Terugkijken naar een oude koers: geen balk, wel de strook met de weg terug.
+  if (gekozenOud) {
+    return <TerugkijkStrip game={gekozenOud} terugNaar={actief[0] ?? null} onSelect={onSelect} className={className} />;
+  }
+  if (actief.length <= 1) return null;
 
   return (
     <div className={cn("w-full", className)}>
@@ -127,7 +87,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
             "linear-gradient(to right, transparent 0, black 14px, black calc(100% - 14px), transparent 100%)",
         }}
       >
-        {ordered.map((game) => {
+        {actief.map((game) => {
           const theme = gameTheme(game.game_type);
           const meermarathon = isMeermarathonGame(game.game_type);
           const isActive = selectedId === game.id;
@@ -146,11 +106,13 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
               aria-current={isActive ? "true" : undefined}
               aria-label={segmentLabel}
               className={cn(
-                // Mobiel: vaste minimumbreedte + shrink-0 (scrollt). Desktop:
-                // mag krimpen (md:shrink) zodat vier segmenten ALTIJD passen —
-                // de naam trunceert dan i.p.v. dat de balk gaat scrollen.
-                "kp-gs-seg relative snap-start shrink-0 min-w-[150px] md:min-w-0 md:shrink md:flex-1",
-                "flex items-center justify-center px-3 pt-[11px] pb-3 outline-hidden",
+                // Mobiel: zo breed als zijn inhoud, groeit mee tot de balk vol is
+                // (flex-auto) en krimpt nooit (shrink-0) — passen de segmenten
+                // niet, dan scrollt de balk. Desktop: gelijke delen, altijd passend.
+                // overflow-hidden: de glans (-inset-x-1/4) blijft binnen zijn
+                // segment en telt niet mee als scrollbreedte van de balk.
+                "kp-gs-seg relative overflow-hidden snap-start flex-auto shrink-0 min-w-[150px] md:min-w-0 md:shrink md:flex-1",
+                "flex items-center justify-center px-2.5 md:px-3 pt-[11px] pb-3 outline-hidden",
                 "focus-visible:ring-2 focus-visible:ring-inset",
                 isActive
                   ? "md:flex-[1.15] text-white"
@@ -186,22 +148,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
               <span className="relative z-10 flex flex-col items-center justify-center gap-[5px] min-w-0 max-w-full">
                 {/* Bovenste regel: vlag + racenaam op één lijn. */}
                 <span className="flex items-center gap-[7px] min-w-0 max-w-full">
-                  {meermarathon ? (
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "grid h-7 w-7 shrink-0 place-items-center rounded-full",
-                        isActive ? "bg-white/12 text-white" : "bg-[var(--mm-chip)] text-[var(--mm-m)]",
-                      )}
-                    >
-                      <Snowflake className="h-[18px] w-[18px]" strokeWidth={1.8} />
-                    </span>
-                  ) : (
-                    <FlagIcon
-                      country={theme.country}
-                      className={cn("w-6 h-[17px] shrink-0", isActive ? "ring-1 ring-white/60 border-white/40" : "")}
-                    />
-                  )}
+                  <KoersIcoon game={game} actief={isActive} />
                   <span
                     className={cn("font-display text-[13px] min-w-0 truncate whitespace-nowrap", isActive ? "font-semibold" : "font-bold")}
                     style={isActive ? { color: "#fff", textShadow: "0 1px 2px rgba(10,10,40,0.6)" } : undefined}
@@ -261,7 +208,7 @@ export default function GameSwitcher({ games, selectedId, onSelect, isAdmin = fa
       {/* Hint onder de balk, met dunne sierlijnen. */}
       <div className="mt-2 flex items-center justify-center gap-3">
         <span className="h-px w-8 md:w-14 bg-linear-to-r from-transparent to-foreground/25" aria-hidden />
-        <span className="font-mono text-[9px] md:text-[10px] tracking-[0.18em] uppercase text-muted-foreground/70 whitespace-nowrap">
+        <span className="font-mono text-[9px] md:text-[10px] tracking-[0.18em] uppercase text-muted-foreground/70 text-center leading-snug md:whitespace-nowrap">
           Tik een koers om te wisselen — je keuze wordt onthouden
         </span>
         <span className="h-px w-8 md:w-14 bg-linear-to-l from-transparent to-foreground/25" aria-hidden />
