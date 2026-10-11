@@ -44,7 +44,8 @@ function Krantlink({ children, onClick, className }: { children: React.ReactNode
 
 /**
  * De eerste regels van een dagstand (plus je eigen regel als die er niet bij
- * staat): dezelfde opmaak voor de hele poule en voor je subpoule.
+ * staat): dezelfde opmaak voor de hele poule en voor je subpoule. Wie die dag
+ * niets pakte heeft geen dagrang en krijgt een streepje.
  */
 function Dagrijen({ kop, rijen, locale }: { kop: string; rijen: KaravaanDagregel[]; locale: string }) {
   const { t } = useTranslation();
@@ -53,14 +54,14 @@ function Dagrijen({ kop, rijen, locale }: { kop: string; rijen: KaravaanDagregel
       <h4 className={cn(MONO, "mb-1 text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground")}>{kop}</h4>
       {rijen.map((r, i) => (
         <div
-          key={`${r.rang}-${r.naam}`}
+          key={`${i}-${r.naam}`}
           className={cn(
             "flex h-9 items-center gap-2.5 text-[14px]",
             i < rijen.length - 1 && !r.isMij && "border-b border-border",
             r.isMij && "-mx-2 rounded px-2 bg-primary/12 font-bold",
           )}
         >
-          <span className="w-[22px] shrink-0 text-center font-display font-black">{r.rang}</span>
+          <span className="w-[22px] shrink-0 text-center font-display font-black">{r.rang ?? "–"}</span>
           <span className="flex min-w-0 grow items-center gap-2">
             <span className="truncate">{r.naam}</span>
             {r.isMij && <span className="sticker shrink-0 px-[7px] py-px text-[11px]">{t("krantC.jij")}</span>}

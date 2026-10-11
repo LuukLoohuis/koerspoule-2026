@@ -17,8 +17,10 @@ export type KaravaanRanking = {
   is_me: boolean;
 };
 
-/** Eén regel in een dagstand: wat een ploeg op deze ene dag pakte. */
-export type KaravaanDagregel = { rang: number; naam: string; deelnemer: string | null; punten: number; isMij: boolean };
+/** Eén regel in een dagstand: wat een ploeg op deze ene dag pakte. De rang
+ *  is null voor wie die dag niets pakte (alleen in dagstandPoule), net als de
+ *  dagrang op Uitslagen. */
+export type KaravaanDagregel = { rang: number | null; naam: string; deelnemer: string | null; punten: number; isMij: boolean };
 
 export type KaravaanEtappe = {
   stage_id: string;
@@ -41,8 +43,9 @@ export type KaravaanEtappe = {
    *  subpouleStandings; dit gaat over deze ene dag. */
   dagstand: KaravaanDagregel[];
   /** Dezelfde dag over de hele poule: de eerste drie, plus je eigen regel
-   *  als je daar niet bij staat. Gelijke punten delen de plek, wie niets
-   *  pakte staat er niet in -- zoals de dagrang op Uitslagen. */
+   *  als je daar niet bij staat. Gelijke punten delen de plek; wie niets
+   *  pakte heeft geen dagrang (null), zoals op Uitslagen. Op een dag zonder
+   *  punten (de GC-rij) staan zo de eerste drie van het klassement met 0 pt. */
   dagstandPoule: KaravaanDagregel[];
   /** Wat JIJ die dag scoorde, en de hoeveelste dat was in je subpoule. */
   mijnDagpunten: number | null;
@@ -377,7 +380,9 @@ export function useKaravaanFeed(params: {
 
         // De top van die dag over de hele poule, voor de Krant. Alleen de
         // eerste drie en je eigen regel gaan mee; de hele lijst is honderden
-        // ploegen per etappe en niemand leest die in een krant.
+        // ploegen per etappe en niemand leest die in een krant. De sortering
+        // is stabiel: bij gelijke dagpunten blijft de volgorde van het
+        // klassement staan.
         const dagRijenPoule = overall
           .map((r) => ({
             naam: r.team_name?.trim() || r.display_name || "—",
@@ -385,10 +390,12 @@ export function useKaravaanFeed(params: {
             punten: dagPuntenBy.get(`${r.entry_id}|${stage.id}`) ?? 0,
             isMij: r.is_me,
           }))
-          .filter((d) => d.punten > 0)
           .sort((a, b) => b.punten - a.punten);
         const dagstandPoule: KaravaanDagregel[] = podiumMetMij(
-          metGedeeldeRang(dagRijenPoule, (d) => d.punten).map(({ rank, ...d }) => ({ rang: rank, ...d })),
+          metGedeeldeRang(dagRijenPoule, (d) => d.punten).map(({ rank, ...d }) => ({
+            rang: d.punten > 0 ? rank : null,
+            ...d,
+          })),
         );
 
         etappes.push({

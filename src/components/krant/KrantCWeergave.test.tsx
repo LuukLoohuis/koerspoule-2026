@@ -129,6 +129,25 @@ describe("KrantCWeergave", () => {
     expect(dag.textContent).toContain("#118 v.d. dag");
   });
 
+  it("zet een streepje voor wie vandaag niets pakte in de hele poule", () => {
+    // De GC-rij: niemand pakte dagpunten, de eerste drie van het klassement
+    // staan er met 0 pt en zonder dagrang.
+    toon({
+      laatste: {
+        ...ETAPPE,
+        dagstandPoule: [
+          { rang: null, naam: "De Bergvlooien", deelnemer: null, punten: 0, isMij: false },
+          { rang: null, naam: "Rosa Rosa", deelnemer: null, punten: 0, isMij: false },
+          { rang: null, naam: "Luuk", deelnemer: null, punten: 0, isMij: true },
+        ],
+      },
+    });
+    expect(screen.getByText("Hele poule · vandaag")).toBeTruthy();
+    const rij = screen.getByText("De Bergvlooien").closest("div")!.parentElement!;
+    expect(rij.textContent).toContain("–");
+    expect(rij.textContent).toContain("0 pt");
+  });
+
   it("opent op Vandaag met artikel, rituitslag en Hors-truien", () => {
     const { onOpenHors, onOpenDaguitslag, onOpenRituitslag, onOpenSubpouleDaguitslag } = toon();
     expect(screen.getByRole("heading", { level: 2, name: /Ciccone wint thuis/ })).toBeTruthy();
