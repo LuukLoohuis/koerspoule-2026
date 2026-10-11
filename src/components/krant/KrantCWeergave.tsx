@@ -39,7 +39,12 @@ export type KrantCWeergaveProps = {
   onOpenHors?: (tab: HorsTabKey) => void;
   onOpenSubpoule?: (subpouleId: string) => void;
   onOpenUitslagen?: () => void;
+  /** De dagstand van de hele poule voor deze rit (ook vanuit de cel Vandaag). */
   onOpenDaguitslag?: (stageNumber: number) => void;
+  /** De echte rituitslag: de renners van deze rit. */
+  onOpenRituitslag?: (stageNumber: number) => void;
+  /** De dagstand binnen de gekozen subpoule, op de Subpoules-tab. */
+  onOpenSubpouleDaguitslag?: (subpouleId: string) => void;
   /** Meermarathon: wedstrijden ("Cup 3") en rijders in plaats van ritten en renners. */
   meermarathon?: boolean;
   className?: string;
@@ -120,6 +125,8 @@ export default function KrantCWeergave({
   onOpenSubpoule,
   onOpenUitslagen,
   onOpenDaguitslag,
+  onOpenRituitslag,
+  onOpenSubpouleDaguitslag,
   meermarathon = false,
   className,
 }: KrantCWeergaveProps) {
@@ -297,11 +304,14 @@ export default function KrantCWeergave({
           kop={kop}
           verslag={verslag}
           subpouleNaam={subpouleNaam}
+          selectedSubpouleId={selectedSubpouleId}
           geenSubpoule={geenSubpoule}
           scores={scores}
           heeftHorsCijfers={heeftHorsCijfers}
           onOpenHors={onOpenHors}
+          onOpenRituitslag={onOpenRituitslag}
           onOpenDaguitslag={onOpenDaguitslag}
+          onOpenSubpouleDaguitslag={onOpenSubpouleDaguitslag}
           meermarathon={meermarathon}
         />
       )}

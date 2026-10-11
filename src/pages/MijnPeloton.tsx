@@ -253,15 +253,39 @@ export default function MijnPeloton() {
       const volgende = new URLSearchParams(huidig);
       volgende.set("tab", "subpoules");
       volgende.set("subpoule", subpouleId);
+      // Een eerdere sprong naar de daguitslag mag hier niet blijven hangen.
+      volgende.delete("sub");
+      return volgende;
+    });
+  };
+  // Krant: "Rituitslag subpoule" → Subpoules-tab, die subpoule, subtab Daguitslag.
+  const openSubpouleDaguitslag = (subpouleId: string) => {
+    setGameTab("subpoules");
+    setSearchParams((huidig) => {
+      const volgende = new URLSearchParams(huidig);
+      volgende.set("tab", "subpoules");
+      volgende.set("subpoule", subpouleId);
+      volgende.set("sub", "daguitslag");
       return volgende;
     });
   };
   // overall-cel → Uitslagen-tab (subtab Klassement is daar de default)
-  const [uitslagenTarget, setUitslagenTarget] = useState<{ view: "etappes" | "klassement"; stageNumber?: number } | null>(null);
+  const [uitslagenTarget, setUitslagenTarget] = useState<{
+    view: "etappes" | "klassement";
+    stageNumber?: number;
+    /** Krant "Hele uitslag": na het laden doorscrollen naar de echte rituitslag. */
+    sectie?: "rituitslag";
+  } | null>(null);
   const openUitslagen = () => { setUitslagenTarget({ view: "klassement" }); gaNaarTab("uitslagen"); };
   // Beste-etappe-cel → Uitslagen-tab, Etappe-view, op dat ritnummer.
   const openStageResult = (stageNumber: number) => {
     setUitslagenTarget({ view: "etappes", stageNumber });
+    gaNaarTab("uitslagen");
+  };
+  // Krant "Hele uitslag" → dezelfde Etappe-view, maar gescrold naar de echte
+  // rituitslag (de renners); op een telefoon staat die onder de poule-uitslag.
+  const openRitUitslag = (stageNumber: number) => {
+    setUitslagenTarget({ view: "etappes", stageNumber, sectie: "rituitslag" });
     gaNaarTab("uitslagen");
   };
   /* ── Main overview ── */
@@ -549,6 +573,8 @@ export default function MijnPeloton() {
                 onOpenSubpoule={openSubpouleGrafiek}
                 onOpenUitslagen={openUitslagen}
                 onOpenDaguitslag={openStageResult}
+                onOpenRituitslag={openRitUitslag}
+                onOpenSubpouleDaguitslag={openSubpouleDaguitslag}
               />
             ) : (
               <KaravaanFeed
@@ -711,7 +737,7 @@ export default function MijnPeloton() {
           {/* ── TAB: Uitslagen ── */}
           <TabsContent value="uitslagen" className="mt-3" data-rondleiding-doel="uitslagen-inhoud">
             {maySeeLive ? (
-              <MyResultsPanel key={`uitslagen-${uitslagenTarget?.view ?? "def"}`} gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} initialView={uitslagenTarget?.view} initialStageNumber={uitslagenTarget?.stageNumber} />
+              <MyResultsPanel key={`uitslagen-${uitslagenTarget?.view ?? "def"}-${uitslagenTarget?.sectie ?? ""}`} gameId={selectedGameObj?.id} gameName={selectedGameObj?.name} initialView={uitslagenTarget?.view} initialStageNumber={uitslagenTarget?.stageNumber} initialSectie={uitslagenTarget?.sectie} />
             ) : (
               <SneakPreviewLock
                 title={t("team.peloton.resultsSoon")}

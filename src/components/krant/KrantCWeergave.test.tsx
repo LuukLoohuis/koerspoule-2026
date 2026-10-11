@@ -42,6 +42,12 @@ const ETAPPE: KaravaanEtappe = {
     { rang: 2, naam: "Luuk", deelnemer: null, punten: 48, isMij: true },
     { rang: 3, naam: "Jeroen", deelnemer: null, punten: 45, isMij: false },
   ],
+  dagstandPoule: [
+    { rang: 1, naam: "De Bergvlooien", deelnemer: null, punten: 74, isMij: false },
+    { rang: 2, naam: "Rosa Rosa", deelnemer: null, punten: 71, isMij: false },
+    { rang: 2, naam: "Team Tiberi", deelnemer: null, punten: 71, isMij: false },
+    { rang: 118, naam: "Luuk", deelnemer: null, punten: 48, isMij: true },
+  ],
   mijnDagpunten: 48,
   mijnDagrang: 2,
   mijnDagrangOverall: 118,
@@ -68,6 +74,8 @@ const MORGEN: StageRow = {
 function toon(over: Partial<React.ComponentProps<typeof KrantCWeergave>> = {}) {
   const onOpenHors = vi.fn();
   const onOpenDaguitslag = vi.fn();
+  const onOpenRituitslag = vi.fn();
+  const onOpenSubpouleDaguitslag = vi.fn();
   render(
     <KrantCWeergave
       laatste={ETAPPE}
@@ -91,10 +99,12 @@ function toon(over: Partial<React.ComponentProps<typeof KrantCWeergave>> = {}) {
       commentaarLaden={false}
       onOpenHors={onOpenHors}
       onOpenDaguitslag={onOpenDaguitslag}
+      onOpenRituitslag={onOpenRituitslag}
+      onOpenSubpouleDaguitslag={onOpenSubpouleDaguitslag}
       {...over}
     />,
   );
-  return { onOpenHors, onOpenDaguitslag };
+  return { onOpenHors, onOpenDaguitslag, onOpenRituitslag, onOpenSubpouleDaguitslag };
 }
 
 describe("KrantCWeergave", () => {
@@ -119,8 +129,8 @@ describe("KrantCWeergave", () => {
     expect(dag.textContent).toContain("#118 v.d. dag");
   });
 
-  it("opent op Vandaag met artikel, daguitslag en Hors-truien", () => {
-    const { onOpenHors, onOpenDaguitslag } = toon();
+  it("opent op Vandaag met artikel, rituitslag en Hors-truien", () => {
+    const { onOpenHors, onOpenDaguitslag, onOpenRituitslag, onOpenSubpouleDaguitslag } = toon();
     expect(screen.getByRole("heading", { level: 2, name: /Ciccone wint thuis/ })).toBeTruthy();
     expect(screen.getByText("Tappa 14 · Pila")).toBeTruthy();
     // Intro dicht, na "Lees verder" het hele verslag mét het pouledeel.
@@ -128,11 +138,21 @@ describe("KrantCWeergave", () => {
     fireEvent.click(screen.getByRole("button", { name: "Lees verder" }));
     expect(screen.getByText(/De tweede alinea/)).toBeTruthy();
     expect(screen.getByText("Marieke", { selector: "strong" })).toBeTruthy();
-    // Podium van de rit en jouw regel in de subpoule.
+    // Podium van de rit, de top van de hele poule en jouw regel in beide
+    // dagstanden (poule én subpoule).
+    expect(screen.getByRole("heading", { level: 3, name: "Rituitslag" })).toBeTruthy();
     expect(screen.getByText("Giulio Ciccone")).toBeTruthy();
-    expect(screen.getByText("jij")).toBeTruthy();
+    expect(screen.getByText("Hele poule · vandaag")).toBeTruthy();
+    expect(screen.getByText("De Bergvlooien")).toBeTruthy();
+    expect(screen.getByText("Subpoule Kantoor · vandaag")).toBeTruthy();
+    expect(screen.getAllByText("jij")).toHaveLength(2);
+    // Drie verwijzingen: de renners, de hele poule, je subpoule.
     fireEvent.click(screen.getByRole("button", { name: "Hele uitslag ›" }));
+    expect(onOpenRituitslag).toHaveBeenCalledWith(14);
+    fireEvent.click(screen.getByRole("button", { name: "Rituitslag poule ›" }));
     expect(onOpenDaguitslag).toHaveBeenCalledWith(14);
+    fireEvent.click(screen.getByRole("button", { name: "Rituitslag subpoule ›" }));
+    expect(onOpenSubpouleDaguitslag).toHaveBeenCalledWith("k");
     // De truien dragen het cijfer en openen hun eigen analyse.
     expect(screen.getByRole("button", { name: /Monkey IQ 78 procent/ }).textContent).toContain("78%");
     fireEvent.click(screen.getByRole("button", { name: /Emirates 64 procent/ }));

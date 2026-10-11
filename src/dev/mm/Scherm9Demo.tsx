@@ -193,6 +193,12 @@ const WEDSTRIJD: KaravaanEtappe = {
     { rang: 2, naam: "IJsvogels", deelnemer: null, punten: 52, isMij: false },
     { rang: 3, naam: "Schaverdijk", deelnemer: null, punten: 41, isMij: false },
   ],
+  dagstandPoule: [
+    { rang: 1, naam: "Noorderlicht", deelnemer: null, punten: 88, isMij: false },
+    { rang: 2, naam: "De IJsbrekers", deelnemer: null, punten: 81, isMij: false },
+    { rang: 3, naam: "Kluunkoningen", deelnemer: null, punten: 77, isMij: false },
+    { rang: 23, naam: "De Klapschaatsers", deelnemer: null, punten: 70, isMij: true },
+  ],
   mijnDagpunten: 70,
   mijnDagrang: 1,
   mijnDagrangOverall: 23,

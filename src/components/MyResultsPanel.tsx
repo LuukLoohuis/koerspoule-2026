@@ -17,11 +17,14 @@ export default function MyResultsPanel({
   gameName,
   initialView,
   initialStageNumber,
+  initialSectie,
 }: {
   gameId?: string;
   gameName?: string | null;
   initialView?: "etappes" | "klassement";
   initialStageNumber?: number | null;
+  /** Na het laden doorscrollen naar de echte rituitslag (Krant "Hele uitslag"). */
+  initialSectie?: "rituitslag" | null;
 }) {
   const { games } = useSelectedGame();
   const game = gameId ? games.find((g) => g.id === gameId) : undefined;
@@ -34,6 +37,7 @@ export default function MyResultsPanel({
         categorie={game.categorie}
         initialView={initialView}
         initialStageNumber={initialStageNumber}
+        initialSectie={initialSectie}
       />
     );
   }
@@ -45,6 +49,7 @@ export default function MyResultsPanel({
       gameName={gameName}
       initialView={initialView}
       initialStageNumber={initialStageNumber}
+      initialSectie={initialSectie}
     />
   );
 }

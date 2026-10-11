@@ -30,12 +30,14 @@ export default function UitslagenMeermarathon({
   categorie,
   initialView,
   initialStageNumber,
+  initialSectie,
 }: {
   gameId: string;
   gameName?: string | null;
   categorie?: string | null;
   initialView?: "etappes" | "klassement";
   initialStageNumber?: number | null;
+  initialSectie?: "rituitslag" | null;
 }) {
   const { user } = useAuth();
 
@@ -137,6 +139,7 @@ export default function UitslagenMeermarathon({
           gameName={gameName}
           initialView="etappes"
           initialStageNumber={initialStageNumber}
+          initialSectie={initialSectie}
           alleenEtappes
         />
       }

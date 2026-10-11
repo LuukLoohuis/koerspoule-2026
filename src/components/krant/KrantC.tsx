@@ -30,6 +30,8 @@ export default function KrantC({
   onOpenSubpoule,
   onOpenUitslagen,
   onOpenDaguitslag,
+  onOpenRituitslag,
+  onOpenSubpouleDaguitslag,
   className,
 }: {
   gameId?: string;
@@ -38,6 +40,8 @@ export default function KrantC({
   onOpenSubpoule?: (subpouleId: string) => void;
   onOpenUitslagen?: () => void;
   onOpenDaguitslag?: (stageNumber: number) => void;
+  onOpenRituitslag?: (stageNumber: number) => void;
+  onOpenSubpouleDaguitslag?: (subpouleId: string) => void;
   className?: string;
 }) {
   const { user } = useAuth();
@@ -112,6 +116,8 @@ export default function KrantC({
       onOpenSubpoule={onOpenSubpoule}
       onOpenUitslagen={onOpenUitslagen}
       onOpenDaguitslag={onOpenDaguitslag}
+      onOpenRituitslag={onOpenRituitslag}
+      onOpenSubpouleDaguitslag={onOpenSubpouleDaguitslag}
       meermarathon={meermarathon}
     />
   );

@@ -91,6 +91,12 @@ type ResultsViewProps = {
   initialView?: "etappes" | "klassement";
   /** Deep-link: selecteer dit ritnummer in de Etappe-view. */
   initialStageNumber?: number | null;
+  /**
+   * Deep-link: scroll na het laden naar de echte rituitslag (de renners). De
+   * Krant linkt daarheen met "Hele uitslag"; op een telefoon staat die kolom
+   * onder de poule-uitslag en je eigen ploeg.
+   */
+  initialSectie?: "rituitslag" | null;
   /** Deep-link: selecteer de goedgekeurde eind-GC in beide resultatenkiezers. */
   initialGc?: boolean;
   /**
@@ -101,7 +107,7 @@ type ResultsViewProps = {
   alleenEtappes?: boolean;
 };
 
-export default function ResultsView({ showHeader = true, gameId: gameIdProp, gameName: gameNameProp, initialView, initialStageNumber, initialGc = false, alleenEtappes = false }: ResultsViewProps) {
+export default function ResultsView({ showHeader = true, gameId: gameIdProp, gameName: gameNameProp, initialView, initialStageNumber, initialSectie, initialGc = false, alleenEtappes = false }: ResultsViewProps) {
   const { t, i18n } = useTranslation();
   const STAGE_TYPE_META = useMemo(() => stageTypeMeta(t), [t]);
   const { user, role } = useAuth();
@@ -196,6 +202,22 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
 
   const selectedStage = stages[selectedStageIdx];
   const { data: results = [], isLoading: resultsLoading } = useStageResults(selectedStage?.id);
+
+  // Eén keer naar de rituitslag scrollen zodra de gevraagde rit geladen is;
+  // daarna stuurt de bezoeker zelf. Horizontaal niets verschuiven: de kolom
+  // staat in de veegcarrousel.
+  const rituitslagRef = useRef<HTMLDivElement>(null);
+  const naarRituitslagGescrold = useRef(false);
+  useEffect(() => {
+    if (initialSectie !== "rituitslag" || naarRituitslagGescrold.current) return;
+    if (view !== "etappes" || resultsLoading || !selectedStage) return;
+    if (initialStageNumber != null && selectedStage.stage_number !== initialStageNumber) return;
+    const doel = rituitslagRef.current;
+    if (!doel) return;
+    naarRituitslagGescrold.current = true;
+    const zacht = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    doel.scrollIntoView({ behavior: zacht ? "auto" : "smooth", block: "start", inline: "nearest" });
+  }, [initialSectie, initialStageNumber, view, resultsLoading, selectedStage]);
 
   // Mijn punten voor de geselecteerde rit
   const myStagePoints = useMemo(() => {
@@ -659,7 +681,7 @@ export default function ResultsView({ showHeader = true, gameId: gameIdProp, gam
                 </div>
 
                 {/* Kolom 3: Echte etappe-uitslag (wielrennen) — als laatste */}
-                <div className="retro-border bg-card">
+                <div ref={rituitslagRef} className="retro-border bg-card scroll-mt-3">
                   <div className="p-4 border-b-2 border-foreground bg-secondary/50">
                     <h2 className="font-display text-base font-bold flex items-center gap-2">
                       <Medal className="h-5 w-5 text-accent" />

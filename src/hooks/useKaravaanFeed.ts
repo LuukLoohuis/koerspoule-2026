@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { fetchAllRows } from "@/lib/fetchAll";
 import { dagrangVan, metGedeeldeRang } from "@/lib/rang";
+import { podiumMetMij } from "@/lib/krantC";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -15,6 +16,9 @@ export type KaravaanRanking = {
   delta_rank: number; // positief = gestegen, negatief = gezakt, 0 = gelijk
   is_me: boolean;
 };
+
+/** Eén regel in een dagstand: wat een ploeg op deze ene dag pakte. */
+export type KaravaanDagregel = { rang: number; naam: string; deelnemer: string | null; punten: number; isMij: boolean };
 
 export type KaravaanEtappe = {
   stage_id: string;
@@ -35,7 +39,11 @@ export type KaravaanEtappe = {
   rituitslag: Array<{ positie: number; renner: string; ploeg: string | null }>;
   /** De dagscores binnen je subpoule, hoogste eerst. Cumulatief staat in
    *  subpouleStandings; dit gaat over deze ene dag. */
-  dagstand: Array<{ rang: number; naam: string; deelnemer: string | null; punten: number; isMij: boolean }>;
+  dagstand: KaravaanDagregel[];
+  /** Dezelfde dag over de hele poule: de eerste drie, plus je eigen regel
+   *  als je daar niet bij staat. Gelijke punten delen de plek, wie niets
+   *  pakte staat er niet in -- zoals de dagrang op Uitslagen. */
+  dagstandPoule: KaravaanDagregel[];
   /** Wat JIJ die dag scoorde, en de hoeveelste dat was in je subpoule. */
   mijnDagpunten: number | null;
   mijnDagrang: number | null;
@@ -367,6 +375,22 @@ export function useKaravaanFeed(params: {
           ? dagrangVan(dagPuntenBy.get(`${myEntryId}|${stage.id}`) ?? 0, dagPuntenOverall)
           : null;
 
+        // De top van die dag over de hele poule, voor de Krant. Alleen de
+        // eerste drie en je eigen regel gaan mee; de hele lijst is honderden
+        // ploegen per etappe en niemand leest die in een krant.
+        const dagRijenPoule = overall
+          .map((r) => ({
+            naam: r.team_name?.trim() || r.display_name || "—",
+            deelnemer: r.team_name?.trim() && r.display_name !== r.team_name ? r.display_name : null,
+            punten: dagPuntenBy.get(`${r.entry_id}|${stage.id}`) ?? 0,
+            isMij: r.is_me,
+          }))
+          .filter((d) => d.punten > 0)
+          .sort((a, b) => b.punten - a.punten);
+        const dagstandPoule: KaravaanDagregel[] = podiumMetMij(
+          metGedeeldeRang(dagRijenPoule, (d) => d.punten).map(({ rank, ...d }) => ({ rang: rank, ...d })),
+        );
+
         etappes.push({
           stage_id: stage.id,
           stage_number: stage.stage_number,
@@ -380,6 +404,7 @@ export function useKaravaanFeed(params: {
           ritwinnaar,
           rituitslag: uitslagPerStage.get(stage.id) ?? [],
           dagstand,
+          dagstandPoule,
           mijnDagpunten,
           mijnDagrang,
           mijnDagrangOverall,

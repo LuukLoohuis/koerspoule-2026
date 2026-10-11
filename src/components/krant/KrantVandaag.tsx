@@ -6,7 +6,7 @@ import { useKoersThema } from "@/contexts/KoersThemaContext";
 import { aankomstplaats } from "@/lib/krantKop";
 import { bronregel, intro, splitsKoersEnPoule, splitsNadruk, veiligeUrl } from "@/lib/verslag";
 import { podiumMetMij, ritLabel, wedstrijdEigenNaam } from "@/lib/krantC";
-import type { KaravaanEtappe } from "@/hooks/useKaravaanFeed";
+import type { KaravaanDagregel, KaravaanEtappe } from "@/hooks/useKaravaanFeed";
 import type { EtappeVerslag } from "@/hooks/useEtappeVerslag";
 import type { HorsScores, HorsTabKey } from "@/components/karavaan/MiniStrip";
 import HorsTruien from "@/components/krant/HorsTruien";
@@ -42,6 +42,38 @@ function Krantlink({ children, onClick, className }: { children: React.ReactNode
   );
 }
 
+/**
+ * De eerste regels van een dagstand (plus je eigen regel als die er niet bij
+ * staat): dezelfde opmaak voor de hele poule en voor je subpoule.
+ */
+function Dagrijen({ kop, rijen, locale }: { kop: string; rijen: KaravaanDagregel[]; locale: string }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col">
+      <h4 className={cn(MONO, "mb-1 text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground")}>{kop}</h4>
+      {rijen.map((r, i) => (
+        <div
+          key={`${r.rang}-${r.naam}`}
+          className={cn(
+            "flex h-9 items-center gap-2.5 text-[14px]",
+            i < rijen.length - 1 && !r.isMij && "border-b border-border",
+            r.isMij && "-mx-2 rounded px-2 bg-primary/12 font-bold",
+          )}
+        >
+          <span className="w-[22px] shrink-0 text-center font-display font-black">{r.rang}</span>
+          <span className="flex min-w-0 grow items-center gap-2">
+            <span className="truncate">{r.naam}</span>
+            {r.isMij && <span className="sticker shrink-0 px-[7px] py-px text-[11px]">{t("krantC.jij")}</span>}
+          </span>
+          <span className={cn("shrink-0 text-[12px] tabular-nums", !r.isMij && "text-muted-foreground")}>
+            {t("krantC.ptKort", { punten: r.punten.toLocaleString(locale) })}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Een alinea van het verslag; deelnemersnamen komen als **naam** binnen. */
 function Alinea({ tekst, className }: { tekst: string; className?: string }) {
   return (
@@ -54,36 +86,48 @@ function Alinea({ tekst, className }: { tekst: string; className?: string }) {
 }
 
 /**
- * Tab Vandaag: het hoofdartikel over de laatste rit, de daguitslag (podium
- * van de rit en de top van je subpoule) en de Hors Catégorie als drie truien.
+ * Tab Vandaag: het hoofdartikel over de laatste rit, de rituitslag (podium
+ * van de rit, de top van de hele poule en de top van je subpoule, met onder
+ * elk een link naar de volledige lijst) en de Hors Catégorie als drie truien.
  */
 export default function KrantVandaag({
   etappe,
   kop,
   verslag,
   subpouleNaam,
+  selectedSubpouleId = null,
   geenSubpoule,
   scores,
   heeftHorsCijfers,
   onOpenHors,
+  onOpenRituitslag,
   onOpenDaguitslag,
+  onOpenSubpouleDaguitslag,
   meermarathon = false,
 }: {
   etappe: KaravaanEtappe | null;
   kop: string | null;
   verslag: EtappeVerslag | null;
   subpouleNaam: string | null;
+  selectedSubpouleId?: string | null;
   geenSubpoule: boolean;
   scores: HorsScores;
   heeftHorsCijfers: boolean;
   onOpenHors?: (tab: HorsTabKey) => void;
+  /** "Hele uitslag": de echte rituitslag, de renners van deze rit. */
+  onOpenRituitslag?: (stageNumber: number) => void;
+  /** "Rituitslag poule": wie van de hele poule vandaag het meest pakte. */
   onOpenDaguitslag?: (stageNumber: number) => void;
+  /** "Rituitslag subpoule": dezelfde dag binnen je subpoule. */
+  onOpenSubpouleDaguitslag?: (subpouleId: string) => void;
   meermarathon?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const thema = useKoersThema();
   const locale = i18n.language === "en" ? "en-GB" : "nl-NL";
   const [open, setOpen] = useState(false);
+  // i18next-context: een sleutel met _mm wint, anders de wielertekst.
+  const ctx = meermarathon ? "mm" : undefined;
 
   const tekst = verslag?.tekst?.trim() || null;
   const plaats = etappe ? (meermarathon ? wedstrijdEigenNaam(etappe) : aankomstplaats(etappe.stage_name)) : null;
@@ -114,7 +158,10 @@ export default function KrantVandaag({
   const bronUrl = veiligeUrl(verslag?.bron_url);
   const { koers, poule } = tekst ? splitsKoersEnPoule(tekst) : { koers: [], poule: [] };
   const podiumRit = etappe.rituitslag.filter((r) => r.positie >= 1 && r.positie <= 3).slice(0, 3);
+  // De feed levert de poule al als eerste drie plus jij; de subpoule komt heel.
+  const podiumPoule = etappe.dagstandPoule;
   const podiumSub = podiumMetMij(etappe.dagstand);
+  const toonSubpouleLink = Boolean(onOpenSubpouleDaguitslag && selectedSubpouleId);
 
   return (
     <div role="tabpanel" className="flex flex-col gap-7">
@@ -199,15 +246,15 @@ export default function KrantVandaag({
         </article>
       )}
 
-      {/* ── Daguitslag ───────────────────────────────────────────────── */}
-      {(podiumRit.length > 0 || podiumSub.length > 0) && (
-        <section aria-labelledby="krantC-daguitslag" className="flex flex-col gap-3.5">
-          <Rubriekkop id="krantC-daguitslag">{t("krantC.daguitslag")}</Rubriekkop>
+      {/* ── Rituitslag ───────────────────────────────────────────────── */}
+      {(podiumRit.length > 0 || podiumPoule.length > 0 || podiumSub.length > 0) && (
+        <section aria-labelledby="krantC-rituitslag" className="flex flex-col gap-3.5">
+          <Rubriekkop id="krantC-rituitslag">{t("krantC.rituitslag", { context: ctx })}</Rubriekkop>
 
           {podiumRit.length > 0 && (
             <div className="flex flex-col">
               <h4 className={cn(MONO, "mb-1 text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground")}>
-                {t("krantC.rit", { context: meermarathon ? "mm" : undefined })}
+                {t("krantC.rit", { context: ctx })}
               </h4>
               {podiumRit.map((r, i) => (
                 <div
@@ -227,35 +274,30 @@ export default function KrantVandaag({
             </div>
           )}
 
+          {podiumPoule.length > 0 && <Dagrijen kop={t("krantC.pouleVandaag")} rijen={podiumPoule} locale={locale} />}
+
           {podiumSub.length > 0 && (
-            <div className="flex flex-col">
-              <h4 className={cn(MONO, "mb-1 text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground")}>
-                {t("krantC.subpouleVandaag", { naam: subpouleNaam ?? "" })}
-              </h4>
-              {podiumSub.map((r, i) => (
-                <div
-                  key={`${r.rang}-${r.naam}`}
-                  className={cn(
-                    "flex h-9 items-center gap-2.5 text-[14px]",
-                    i < podiumSub.length - 1 && !r.isMij && "border-b border-border",
-                    r.isMij && "-mx-2 rounded px-2 bg-primary/12 font-bold",
-                  )}
-                >
-                  <span className="w-[22px] shrink-0 text-center font-display font-black">{r.rang}</span>
-                  <span className="flex min-w-0 grow items-center gap-2">
-                    <span className="truncate">{r.naam}</span>
-                    {r.isMij && <span className="sticker shrink-0 px-[7px] py-px text-[11px]">{t("krantC.jij")}</span>}
-                  </span>
-                  <span className={cn("shrink-0 text-[12px] tabular-nums", !r.isMij && "text-muted-foreground")}>
-                    {t("krantC.ptKort", { punten: r.punten.toLocaleString(locale) })}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <Dagrijen kop={t("krantC.subpouleVandaag", { naam: subpouleNaam ?? "" })} rijen={podiumSub} locale={locale} />
           )}
 
-          {onOpenDaguitslag && (
-            <Krantlink onClick={() => onOpenDaguitslag(etappe.stage_number)}>{t("krantC.heleUitslag")}</Krantlink>
+          {/* Drie verwijzingen, in de volgorde van de blokken erboven: de
+              renners, de hele poule, je subpoule. */}
+          {(onOpenRituitslag || onOpenDaguitslag || toonSubpouleLink) && (
+            <div className="flex flex-wrap items-center gap-x-4">
+              {onOpenRituitslag && (
+                <Krantlink onClick={() => onOpenRituitslag(etappe.stage_number)}>{t("krantC.heleUitslag")}</Krantlink>
+              )}
+              {onOpenDaguitslag && (
+                <Krantlink onClick={() => onOpenDaguitslag(etappe.stage_number)}>
+                  {t("krantC.rituitslagPoule", { context: ctx })}
+                </Krantlink>
+              )}
+              {toonSubpouleLink && (
+                <Krantlink onClick={() => onOpenSubpouleDaguitslag!(selectedSubpouleId!)}>
+                  {t("krantC.rituitslagSubpoule", { context: ctx })}
+                </Krantlink>
+              )}
+            </div>
           )}
         </section>
       )}

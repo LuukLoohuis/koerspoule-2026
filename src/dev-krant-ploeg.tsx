@@ -223,6 +223,12 @@ const ETAPPE: KaravaanEtappe = {
     { rang: 3, naam: "Jeroen", deelnemer: null, punten: 45, isMij: false },
     { rang: 4, naam: "Kees", deelnemer: null, punten: 30, isMij: false },
   ],
+  dagstandPoule: [
+    { rang: 1, naam: "De Bergvlooien", deelnemer: null, punten: 74, isMij: false },
+    { rang: 2, naam: "Rosa Rosa", deelnemer: null, punten: 71, isMij: false },
+    { rang: 2, naam: "Team Tiberi", deelnemer: null, punten: 71, isMij: false },
+    { rang: 118, naam: "Luuk", deelnemer: null, punten: 48, isMij: true },
+  ],
   mijnDagpunten: 48,
   mijnDagrang: 2,
   mijnDagrangOverall: 118,
@@ -281,6 +287,8 @@ function KrantDemo({ leeg }: { leeg?: boolean }) {
       onOpenSubpoule={(id) => console.info("[demo] subpoule", id)}
       onOpenUitslagen={() => console.info("[demo] uitslagen")}
       onOpenDaguitslag={(n) => console.info("[demo] daguitslag", n)}
+      onOpenRituitslag={(n) => console.info("[demo] rituitslag", n)}
+      onOpenSubpouleDaguitslag={(id) => console.info("[demo] subpoule-daguitslag", id)}
     />
   );
 }
