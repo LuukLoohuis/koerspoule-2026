@@ -4,13 +4,24 @@ import { useLocation } from "react-router-dom";
 const BASE = "https://koerspoule.nl";
 const OG_IMAGE = "https://koerspoule.nl/og/koerspoule-winter-v1.jpg";
 
-type Meta = { title: string; description: string; noindex?: boolean };
+// ogTitle/ogDescription: tekst onder het linkplaatje (WhatsApp e.d.) als die
+// afwijkt van de titel en omschrijving voor tabblad en zoekmachines.
+type Meta = {
+  title: string;
+  description: string;
+  noindex?: boolean;
+  ogTitle?: string;
+  ogDescription?: string;
+};
 
 const META: Record<string, Meta> = {
   "/": {
     title: "Koerspoule — Gratis Tour, Giro & Vuelta poule 2026",
     description:
       "Gratis wielerspel voor de Tour de France, Giro d'Italia en Vuelta 2026. Stel je ploeg samen, daag vrienden uit en strijd om de trui.",
+    ogTitle: "Koerspoule — Gratis Meermarathon poule 2026–2027",
+    ogDescription:
+      "Gratis schaatspoule met alle Topdivisies. Stel je ploeg samen en daag je vrienden uit.",
   },
   "/team-samenstellen": {
     title: "Stel je team samen | Koerspoule",
@@ -83,6 +94,8 @@ export default function RouteSeo() {
   const meta = META[pathname];
   if (!meta) return null;
   const url = `${BASE}${pathname === "/" ? "/" : pathname}`;
+  const ogTitle = meta.ogTitle ?? meta.title;
+  const ogDescription = meta.ogDescription ?? meta.description;
   return (
     <Helmet>
       <title>{meta.title}</title>
@@ -92,16 +105,16 @@ export default function RouteSeo() {
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="Koerspoule" />
       <meta property="og:locale" content="nl_NL" />
-      <meta property="og:title" content={meta.title} />
-      <meta property="og:description" content={meta.description} />
+      <meta property="og:title" content={ogTitle} />
+      <meta property="og:description" content={ogDescription} />
       <meta property="og:url" content={url} />
       <meta property="og:image" content={OG_IMAGE} />
       <meta property="og:image:type" content="image/jpeg" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={meta.title} />
-      <meta name="twitter:description" content={meta.description} />
+      <meta name="twitter:title" content={ogTitle} />
+      <meta name="twitter:description" content={ogDescription} />
       <meta name="twitter:image" content={OG_IMAGE} />
       <script type="application/ld+json">{JSON.stringify({
         "@context": "https://schema.org",
