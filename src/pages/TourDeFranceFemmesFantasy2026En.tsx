@@ -12,7 +12,7 @@ const PAGE_URL_NL = "https://koerspoule.nl/tour-de-france-femmes-poule-2026";
 const PAGE_TITLE = "Tour de France Femmes 2026 Fantasy Cycling Game & Pool — Free | Koerspoule";
 const PAGE_DESCRIPTION =
   "Free Tour de France Femmes 2026 fantasy cycling game & pool. Aug 1–9, Lausanne to Nice. Build your team and play a private pool with friends.";
-const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf-v2.jpg";
+const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-winter-v1.jpg";
 const PAGE_KEYWORDS =
   "tour de france femmes fantasy 2026, tour de france femmes pool, women's tour de france fantasy game, tour femmes fantasy cycling, free fantasy cycling game, tour de france femmes 2026, women's cycling pool, yellow jersey fantasy, fantasy cycling with friends, koerspoule";
 const SITE_NAME = "Koerspoule";

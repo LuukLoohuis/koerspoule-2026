@@ -9,7 +9,7 @@ const PAGE_URL_NL = "https://koerspoule.nl/vuelta-espana-poule-2026";
 const PAGE_TITLE = "Vuelta a España 2026 Fantasy Cycling Game & Pool — Free | Koerspoule";
 const PAGE_DESCRIPTION =
   "Free Vuelta a España 2026 fantasy cycling game and private pool. Build your team, invite friends and compete for the red jersey.";
-const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf-v2.jpg";
+const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-winter-v1.jpg";
 const PAGE_KEYWORDS =
   "vuelta a españa fantasy 2026, vuelta fantasy cycling, vuelta pool 2026, free cycling fantasy game, la vuelta fantasy league, spanish grand tour pool, red jersey fantasy, fantasy cycling with friends, koerspoule";
 const APP_CTA = "/login?lang=en";

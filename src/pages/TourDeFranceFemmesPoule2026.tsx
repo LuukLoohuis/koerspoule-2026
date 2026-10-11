@@ -9,7 +9,7 @@ const PAGE_URL_EN = "https://koerspoule.nl/en/tour-de-france-femmes-fantasy-2026
 const PAGE_TITLE = "Tour de France Femmes 2026 Wielerspel & Poule — Gratis | Koerspoule";
 const PAGE_DESCRIPTION =
   "Gratis Tour de France Femmes 2026 wielerspel — een gratis alternatief voor Scorito. Speel de poule van de vrouwen-Tour met vrienden in eigen subpoules, kies vrij uit het peloton en strijd om de gele trui.";
-const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-tdf-v2.jpg";
+const PAGE_IMAGE = "https://koerspoule.nl/og/koerspoule-winter-v1.jpg";
 const PAGE_KEYWORDS =
   "tour de france femmes wielerspel 2026, tour de france femmes poule, wielerspel dames tour 2026, vrouwen tour poule, tour femmes poule 2026, gratis wielerspel dames, tdf femmes poule, dames wielerspel 2026, scorito alternatief dames, koerspoule, fantasy tour femmes, gele trui poule dames, tour de france femmes met vrienden";
 const SITE_NAME = "Koerspoule";
