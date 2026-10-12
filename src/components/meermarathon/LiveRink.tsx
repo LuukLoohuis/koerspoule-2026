@@ -9,6 +9,7 @@ import {
   BAAN_H,
   FINISH_PUNT,
   groepsBand,
+  heeftEchtePositie,
   schatAfstand,
   verwerkMeting,
   type Meting,
@@ -52,14 +53,10 @@ export default function LiveRink({
 }) {
   const plaatsen = useMemo(() => {
     const ronden = new Map<string, number>();
-    let echt = rondeLengte != null && rondeLengte > 0;
     for (const g of groups)
-      for (const l of g.leden) {
-        ronden.set(l.rider.beennummer, l.rider.aantalRonden);
-        if (l.rider.meter == null) echt = false;
-      }
+      for (const l of g.leden) ronden.set(l.rider.beennummer, l.rider.aantalRonden);
     return {
-      echt,
+      echt: heeftEchtePositie(groups, rondeLengte),
       lijst: placeRiders(groups, { rondeLengte }).map((p) => ({ ...p, ronden: ronden.get(p.beennummer) ?? 0 })),
     };
   }, [groups, rondeLengte]);

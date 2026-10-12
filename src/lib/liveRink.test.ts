@@ -12,6 +12,7 @@ import {
   tierLabel,
   rolColor,
   groepsGat,
+  heeftEchtePositie,
   puntenSchaal,
   rondeBadge,
   tiersPresent,
@@ -132,6 +133,23 @@ describe("placeRiders", () => {
     const p = placeRiders([{ tier: 0, leden: [rijder("01", null), rijder("02", null)] }], { rondeLengte: 400 });
     expect(p[0].fraction).not.toBe(p[1].fraction);
     expect(p.every((x) => x.fraction >= 0 && x.fraction < 1)).toBe(true);
+  });
+
+  it("ziet een veld dat overal 0 m meldt als zonder positie (bron vult Meter niet)", () => {
+    // livemarathon.schaatsen.nl stuurt Meter: 0 voor iedereen; dat is geen
+    // positie maar een leeg veld. Niet alles op de finish zetten maar spreiden.
+    const leden = [rijder("01", 0), rijder("02", 0), rijder("03", 0)];
+    expect(heeftEchtePositie([{ tier: 0, leden }], 400)).toBe(false);
+    const p = placeRiders([{ tier: 0, leden }], { rondeLengte: 400 });
+    expect(new Set(p.map((x) => x.fraction)).size).toBe(3);
+  });
+
+  it("telt 0 m wél als positie zodra een ander ergens anders op de baan zit", () => {
+    const leden = [rijder("01", 0), rijder("02", 200)];
+    expect(heeftEchtePositie([{ tier: 0, leden }], 400)).toBe(true);
+    const p = placeRiders([{ tier: 0, leden }], { rondeLengte: 400 });
+    expect(p[0].fraction).toBeCloseTo(0, 5);
+    expect(p[1].fraction).toBeCloseTo(0.5, 5);
   });
 
   it("valt ook terug als de rondelengte ontbreekt", () => {

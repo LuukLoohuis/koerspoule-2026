@@ -110,6 +110,28 @@ export type RinkPlacement = {
 };
 
 /**
+ * Geeft de bron een echte plek op het ijs? livemarathon.schaatsen.nl stuurt
+ * `Meter` wel mee, maar vult hem niet: bij Haaksbergen (juli 2026) en Haarlem
+ * (oktober 2026) stond hij voor élke rijder op 0. Dat als positie nemen zet het
+ * hele veld op de finishlijn, zonder spreiding. Pas als minstens één rijder
+ * ergens anders dan op 0 m zit, is het veld gevuld en tekenen we erop.
+ */
+export function heeftEchtePositie(
+  groups: { leden: { rider: { meter?: number | null } }[] }[],
+  rondeLengte: number | null,
+): boolean {
+  if (rondeLengte == null || rondeLengte <= 0) return false;
+  let gevuld = false;
+  for (const g of groups)
+    for (const l of g.leden) {
+      const m = l.rider.meter;
+      if (m == null || !Number.isFinite(m)) return false;
+      if (m > 0) gevuld = true;
+    }
+  return gevuld;
+}
+
+/**
  * Bepaal voor elke rijder een plek op de baan.
  *
  * Groepen worden in klassementsvolgorde over het pad verdeeld: de kop vooraan,
@@ -125,6 +147,7 @@ export function placeRiders(
   const rotation = options.rotation ?? 0;
   const rondeLengte = options.rondeLengte ?? null;
   const out: RinkPlacement[] = [];
+  const metPositie = heeftEchtePositie(groups, rondeLengte);
 
   groups.forEach((group, groupIndex) => {
     const base = LEAD_FRACTION - rotation - groupIndex * GROUP_SPREAD;
@@ -135,7 +158,7 @@ export function placeRiders(
       // groep -- dan klopt de volgorde nog wel, maar de plek op het ovaal niet.
       const meter = lid.rider.meter;
       const echt =
-        rondeLengte != null && rondeLengte > 0 && meter != null && Number.isFinite(meter)
+        metPositie && rondeLengte != null && meter != null && Number.isFinite(meter)
           ? meter / rondeLengte
           : null;
       const raw = echt !== null ? echt - rotation : base - i * MIN_SEPARATION;
