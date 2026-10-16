@@ -35,6 +35,7 @@ import Prizes from "./pages/Prizes";
 import Actievoorwaarden from "./pages/Actievoorwaarden";
 import Preview from "./pages/Preview";
 const InstagramExport = lazyWithRetry(() => import("./pages/InstagramExport"));
+const Profiel = lazyWithRetry(() => import("./pages/Profiel"));
 import Uitschrijven from "./pages/Uitschrijven";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -82,6 +83,14 @@ const App = () => {
               <Route path="/mijn-peloton" element={<MijnPeloton />} />
               <Route path="/subpoule/:slug" element={<SubpouleBySlug />} />
               <Route path="/karavaan" element={<MijnPeloton />} />
+              <Route
+                path="/profiel"
+                element={
+                  <ProtectedRoute>
+                    <Profiel />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/regels" element={<Rules />} />
               <Route path="/uitleg" element={<Uitleg />} />
               <Route path="/login" element={<Login />} />

@@ -41,6 +41,11 @@ const META: Record<string, Meta> = {
       "Persoonlijk dashboard met je team, palmares, subpoulestand en head-to-head vergelijking met vrienden.",
     noindex: true,
   },
+  "/profiel": {
+    title: "Mijn profiel — palmares & oude spellen | Koerspoule",
+    description: "Je erelijst en de uitslagen van de koersen die je eerder speelde.",
+    noindex: true,
+  },
   "/karavaan": {
     title: "Karavaan — koersnieuws & sfeer | Koerspoule",
     description:

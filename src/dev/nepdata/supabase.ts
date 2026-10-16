@@ -5,7 +5,8 @@
  * na herladen begint alles opnieuw.
  *
  * Alleen wat de ploegbouwer vraagt: select met eq/in/ilike/order/limit,
- * maybeSingle/single, update, en de rpc's van useEntry. Geneste selects
+ * maybeSingle/single, update, en de rpc's van useEntry. Losse tabellen en
+ * vaste rpc-antwoorden kan een testbank meegeven (tabellen, rpcAntwoorden). Geneste selects
  * (category_riders(riders(...)), entry_picks(...)) staan al in de rijen.
  * Een onbekende tabel is leeg.
  */
@@ -30,6 +31,10 @@ export type NepWereld = {
   teams: Rij[];
   riders: Rij[];
   entries: NepEntry[];
+  /** Overige tabellen, letterlijk (stages, stage_points, profiles…). */
+  tabellen?: Record<string, Rij[]>;
+  /** Vaste antwoorden voor overige rpc's, op "<naam>:<p_game_id>" (zonder game: "<naam>:"). */
+  rpcAntwoorden?: Record<string, unknown>;
 };
 
 /** Iets vertraging, zodat laadstanden en optimistische updates echt te zien zijn. */
@@ -62,7 +67,7 @@ function rijenVan(tabel: string): Rij[] {
         category_riders: rijders.map((id) => ({ rider_id: id, riders: wereld.riders.find((r) => r.id === id) ?? null })),
       }));
     default:
-      return [];
+      return wereld.tabellen?.[tabel] ?? [];
   }
 }
 
@@ -217,9 +222,12 @@ function rpc(naam: string, args: Record<string, unknown>): Resultaat {
       e.status = "submitted";
       return { data: null, error: null };
     }
-    default:
-      // game_standings en de rest: nog niets gereden.
+    default: {
+      // Vast antwoord uit de wereld, anders: nog niets gereden.
+      const sleutel = `${naam}:${String(args.p_game_id ?? "")}`;
+      if (wereld.rpcAntwoorden && sleutel in wereld.rpcAntwoorden) return { data: structuredClone(wereld.rpcAntwoorden[sleutel]), error: null };
       return { data: [], error: null };
+    }
   }
 }
 

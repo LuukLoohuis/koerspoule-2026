@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Menu, X, Instagram, Moon, Sun } from "lucide-react";
+import { Menu, X, Instagram, Moon, Sun, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useAllGames } from "@/hooks/useAllGames";
@@ -14,6 +14,8 @@ import BottomNav from "@/components/BottomNav";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import { initialen } from "@/lib/initialen";
 import { useThema } from "@/contexts/ThemaContext";
 import type { ThemaKey } from "@/lib/themas";
 import SponsorStrip from "@/components/SponsorStrip";
@@ -50,6 +52,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: allGames = [] } = useAllGames();
   const { t } = useTranslation();
   const isLoggedIn = Boolean(user);
+  const { data: profiel } = useProfile();
+  const profielInitialen = profiel?.display_name ? initialen(profiel.display_name) : null;
   // Afgeronde koersen: in het hamburgermenu (telefoon) en als uitklapper in
   // de navigatiestrook (desktop). Niet in de koersbalk op de pagina's.
   const oudeKoersen = useOudeKoersenShell(role === "admin", () => setMobileOpen(false));
@@ -120,6 +124,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </a>
                 <LanguageToggle className="h-full rounded-none border-0" />
               </div>
+
+              {/* Mijn profiel: rondje met je initialen. Op de telefoon staat het
+                  in het hamburgermenu, naast Uitloggen; hier was geen plek. */}
+              {isLoggedIn && (
+                <Link
+                  to="/profiel"
+                  aria-label={t("profiel.navAria")}
+                  title={t("profiel.titel")}
+                  className={cn(
+                    "hidden md:inline-grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-foreground font-oswald text-[13px] font-bold leading-none tracking-[0.02em] transition-colors",
+                    location.pathname === "/profiel" ? "bg-foreground text-background" : "bg-card hover:bg-secondary",
+                  )}
+                >
+                  {profielInitialen ?? <UserRound className="h-4 w-4" aria-hidden />}
+                </Link>
+              )}
 
               {/* Desktop auth */}
               <div className="hidden md:flex items-center gap-2">
@@ -227,7 +247,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <NachtModusKnop metLabel />
               </div>
             )}
-            <div className="w-full border-t border-border/40 pt-2 mt-1 flex">
+            <div className="w-full border-t border-border/40 pt-2 mt-1 flex gap-2">
+              {isLoggedIn && (
+                <Link
+                  to="/profiel"
+                  onClick={() => setMobileOpen(false)}
+                  className={cn("nav-link-editorial gap-1.5", location.pathname === "/profiel" && "active")}
+                >
+                  <UserRound className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+                  {t("profiel.titel")}
+                </Link>
+              )}
               {isLoggedIn ? (
                 <button
                   onClick={handleLogout}
