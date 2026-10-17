@@ -25,6 +25,15 @@ describe("geslachtVanCategorie", () => {
     expect(geslachtVanCategorie(categorie)).toBeNull();
   });
 
+  it.each([
+    ["Beloften Divisie Mannen", "anders"],
+    ["Junioren Vrouwen", "anders"],
+    ["Masters Heren", "anders"],
+    ["Top Divisie Vrouwen", "vrouwen"],
+  ])("%s → %s (andere divisie telt niet als de top)", (categorie, verwacht) => {
+    expect(geslachtVanCategorie(categorie)).toBe(verwacht);
+  });
+
   it("geeft onbekend zonder categorie", () => {
     expect(geslachtVanCategorie(null)).toBeNull();
     expect(geslachtVanCategorie(undefined)).toBeNull();
@@ -34,6 +43,10 @@ describe("geslachtVanCategorie", () => {
 describe("hoortBijGame", () => {
   it("houdt de mannenrace weg bij de vrouwengame", () => {
     expect(hoortBijGame("mannen", "vrouwen")).toBe(false);
+  });
+
+  it("houdt een beloftenrace weg bij de mannengame", () => {
+    expect(hoortBijGame("anders", "mannen")).toBe(false);
   });
 
   it("toont de race van de eigen categorie", () => {
