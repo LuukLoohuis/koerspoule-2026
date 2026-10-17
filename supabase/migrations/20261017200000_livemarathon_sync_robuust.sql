@@ -13,7 +13,15 @@
 -- 3. De cron-poort kijkt naar de datum van de ronde in plaats van naar
 --    games.status = 'live'. Een seizoensspel staat soms op open_inschrijving
 --    terwijl er gereden wordt; de sync viel daardoor midden in de race stil.
---    Schema '30 seconds': een cron-regel met zes velden draait niet.
+--    Elke 15 seconden (was 30): de stand liep tot een minuut achter op de
+--    bron. Schrijf het als '15 seconds'; een cron-regel met zes velden draait
+--    niet.
+--
+-- 4. live_race_state in de Realtime-publicatie. De sync schrijft die rij als
+--    laatste per baan, dus een wijziging betekent "nieuwe stand staat klaar";
+--    de Live-tab haalt dan meteen op in plaats van op zijn eigen klok te
+--    wachten. Alleen deze tabel: één bericht per baan per sync, niet één per
+--    rijder.
 --
 -- Volgorde bij uitrollen: eerst deze migratie, dan de edge function. Andersom
 -- werkt ook — de functie schrijft de nieuwe kolommen pas als ze bestaan.
@@ -120,12 +128,32 @@ BEGIN
   PERFORM cron.unschedule('livemarathon-sync')
   WHERE EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'livemarathon-sync');
 
-  PERFORM cron.schedule('livemarathon-sync', '30 seconds', v_command);
+  PERFORM cron.schedule('livemarathon-sync', '15 seconds', v_command);
 
-  RAISE NOTICE 'live-sync ingepland (elke 30 s op rondedagen, sleutel: %)', v_secret_name;
+  RAISE NOTICE 'live-sync ingepland (elke 15 s op rondedagen, sleutel: %)', v_secret_name;
+END $$;
+
+-- ── 4. Realtime ────────────────────────────────────────────────────────────
+-- Zelfde opzet als de chat (20260521000000): alleen toevoegen als hij er nog
+-- niet in zit, en niets doen zonder publicatie (lokaal, preview).
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+    RAISE WARNING 'publicatie supabase_realtime ontbreekt — live_race_state niet toegevoegd';
+    RETURN;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'live_race_state'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.live_race_state;
+  END IF;
 END $$;
 
 -- Rollback:
+--   ALTER PUBLICATION supabase_realtime DROP TABLE public.live_race_state;
 --   ALTER TABLE public.live_race_state
 --     DROP COLUMN IF EXISTS categorie, DROP COLUMN IF EXISTS wedstrijd, DROP COLUMN IF EXISTS geslacht;
 --   en 20260817120000_livemarathon_sync_cron.sql opnieuw draaien voor de oude poort.

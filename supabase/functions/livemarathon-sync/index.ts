@@ -271,40 +271,6 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // races: het document heeft de baan als _id.
-    const race = races.find((r) => r._id === trackId);
-    if (race) {
-      const { error } = await admin.from("live_race_state").upsert({
-        track_id: trackId,
-        totaal_ronden: num(race.TotaalAantalRonden),
-        ronde_lengte: num(race.RondeLengte),
-        ronden_te_gaan: num(race.RondebordRonden),
-        aantal_rijders: num(race.NrRijders),
-        aantal_actief: num(race.NrRijdersActief),
-        max_ronden: num(race.MaxRonden),
-        peloton_ronden: num(race.PelotonRonden),
-        race_time: str(race.RaceTime),
-        lap_time: str(race.LapTime),
-        gem_ronde_tijd: str(race.GemiddeldeRondeTijd),
-        gem_ronde_snelheid: str(race.GemiddeldeRondeSnelheid),
-        snelste_ronde_tijd: str(race.SnelsteRondeTijd),
-        snelste_ronde_naam: str(race.SnelsteRondeRijderNaam),
-        snelste_ronde_beennummer: str(race.SnelsteRondeBeennummer),
-        snelste_ronde_nr: num(race.SnelsteRondeNr),
-        snelste_ronde_snelheid: str(race.SnelsteRondeSnelheid),
-        bron_tijd: str(race.HuidigeTijd),
-        ...(bron && kentCategorie
-          ? {
-            categorie: bron.categorie,
-            wedstrijd: bron.wedstrijd,
-            geslacht: geslachtVanCategorie(bron.categorie),
-          }
-          : {}),
-        synced_at: syncedAt,
-      }, { onConflict: "track_id" });
-      if (error) return respond({ error: `live_race_state: ${error.message}` }, 500);
-    }
-
     // stand: sorteren op ronden vóór tijd. Op de geformatteerde tijd sorteren
     // gaat mis zodra iemand ronden achterligt — die heeft een lágere kloktijd.
     const rows = stand
@@ -381,6 +347,43 @@ Deno.serve(async (req: Request) => {
         .from("live_premies")
         .upsert(premieRows, { onConflict: "track_id,volgnr" });
       if (error) return respond({ error: `live_premies: ${error.message}` }, 500);
+    }
+
+    // races: het document heeft de baan als _id. Bewust als laatste: de
+    // Live-tab luistert via Realtime naar live_race_state en haalt bij een
+    // wijziging meteen op. Komt dat bericht binnen, dan staan stand en
+    // premies van deze run er al.
+    const race = races.find((r) => r._id === trackId);
+    if (race) {
+      const { error } = await admin.from("live_race_state").upsert({
+        track_id: trackId,
+        totaal_ronden: num(race.TotaalAantalRonden),
+        ronde_lengte: num(race.RondeLengte),
+        ronden_te_gaan: num(race.RondebordRonden),
+        aantal_rijders: num(race.NrRijders),
+        aantal_actief: num(race.NrRijdersActief),
+        max_ronden: num(race.MaxRonden),
+        peloton_ronden: num(race.PelotonRonden),
+        race_time: str(race.RaceTime),
+        lap_time: str(race.LapTime),
+        gem_ronde_tijd: str(race.GemiddeldeRondeTijd),
+        gem_ronde_snelheid: str(race.GemiddeldeRondeSnelheid),
+        snelste_ronde_tijd: str(race.SnelsteRondeTijd),
+        snelste_ronde_naam: str(race.SnelsteRondeRijderNaam),
+        snelste_ronde_beennummer: str(race.SnelsteRondeBeennummer),
+        snelste_ronde_nr: num(race.SnelsteRondeNr),
+        snelste_ronde_snelheid: str(race.SnelsteRondeSnelheid),
+        bron_tijd: str(race.HuidigeTijd),
+        ...(bron && kentCategorie
+          ? {
+            categorie: bron.categorie,
+            wedstrijd: bron.wedstrijd,
+            geslacht: geslachtVanCategorie(bron.categorie),
+          }
+          : {}),
+        synced_at: syncedAt,
+      }, { onConflict: "track_id" });
+      if (error) return respond({ error: `live_race_state: ${error.message}` }, 500);
     }
 
     perTrack[trackId] = {

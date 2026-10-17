@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import {
   buildGroups,
@@ -53,13 +54,25 @@ export function isStale(syncedAt: string | null | undefined): boolean {
  * Zoekt zelf op wélke ronde live is: de hoogst genummerde ronde van deze game
  * met een gekoppelde baan. Zonder koppeling is er niets te tonen en blijft het
  * live-tabje verborgen.
+ *
+ * Met `realtime` (zet MyTeamPanel alleen aan als de Live-tab open staat)
+ * luistert de hook naar live_race_state. De sync schrijft die rij als laatste
+ * per baan, dus een wijziging betekent: er staat een nieuwe stand klaar. Dan
+ * halen we meteen op in plaats van op de eigen klok te wachten; die klok blijft
+ * het vangnet als het kanaal wegvalt.
  */
-export function useLiveRace(gameId: string | undefined, enabled = true) {
-  return useQuery<LiveRace | null>({
+export function useLiveRace(
+  gameId: string | undefined,
+  enabled = true,
+  { realtime = false }: { realtime?: boolean } = {},
+) {
+  const queryClient = useQueryClient();
+  const query = useQuery<LiveRace | null>({
     queryKey: ["live-race", gameId],
     enabled: Boolean(gameId) && enabled && Boolean(supabase),
-    // De sync draait zelf periodiek; ververs in dezelfde orde van grootte.
-    refetchInterval: 20_000,
+    // Vangnet naast Realtime, en de gewone klok voor wie de Live-tab niet open
+    // heeft. De sync draait elke 15 s; Realtime meldt elke nieuwe stand.
+    refetchInterval: 30_000,
     // Een tabblad op de achtergrond hoeft niet mee te pollen.
     refetchIntervalInBackground: false,
     queryFn: async () => {
@@ -200,4 +213,33 @@ export function useLiveRace(gameId: string | undefined, enabled = true) {
       };
     },
   });
+
+  // Eén kanaal per open Live-tab, en alleen zolang er een baan te volgen is.
+  // Eerder zijn kanalen weggehaald die bij veel sessies alleen openstonden
+  // zonder iets te vangen (zie useCurrentGame); deze tabel staat wél in de
+  // Realtime-publicatie (migratie 20261017200000).
+  const banen = query.data?.tracks.map((t) => t.trackId).join("\n") ?? "";
+  useEffect(() => {
+    if (!realtime || !enabled || !supabase || !gameId || !banen) return;
+    const client = supabase;
+    const kanaal = client.channel(`live-race:${gameId}`);
+    for (const trackId of banen.split("\n")) {
+      kanaal.on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "live_race_state", filter: `track_id=eq.${trackId}` },
+        () => {
+          // Op de achtergrond niet ophalen: bij terugkeer naar het tabblad
+          // haalt React Query toch opnieuw op.
+          if (document.visibilityState === "hidden") return;
+          void queryClient.invalidateQueries({ queryKey: ["live-race", gameId] });
+        },
+      );
+    }
+    kanaal.subscribe();
+    return () => {
+      void client.removeChannel(kanaal);
+    };
+  }, [realtime, enabled, gameId, banen, queryClient]);
+
+  return query;
 }

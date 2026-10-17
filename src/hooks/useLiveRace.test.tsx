@@ -6,10 +6,12 @@ import { useLiveRace } from "./useLiveRace";
 
 const mocks = vi.hoisted(() => ({
   from: vi.fn(),
+  channel: vi.fn(),
+  removeChannel: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase", () => ({
-  supabase: { from: mocks.from },
+  supabase: { from: mocks.from, channel: mocks.channel, removeChannel: mocks.removeChannel },
 }));
 
 /** Supabase-querybouwer die elke keten accepteert en `data` teruggeeft. */
@@ -58,17 +60,35 @@ function zetTabellen(gameCategorie: string | null, bron: Record<string, unknown>
   mocks.from.mockImplementation((tabel: string) => antwoord(tabellen[tabel] ?? []));
 }
 
-function renderLiveRace() {
+function renderLiveRace(opties: { realtime?: boolean } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  return renderHook(() => useLiveRace("game-1"), { wrapper });
+  return renderHook(() => useLiveRace("game-1", true, opties), { wrapper });
 }
+
+/** Nep-Realtime-kanaal dat onthoudt waarop geluisterd wordt. */
+function nepKanaal() {
+  const luisteraars: { filter: string; melden: () => void }[] = [];
+  const kanaal = {
+    on: vi.fn((_type: string, opts: { filter: string }, melden: () => void) => {
+      luisteraars.push({ filter: opts.filter, melden });
+      return kanaal;
+    }),
+    subscribe: vi.fn(() => kanaal),
+  };
+  mocks.channel.mockReturnValue(kanaal);
+  return { kanaal, luisteraars };
+}
+
+const ophaalbeurten = () => mocks.from.mock.calls.filter(([tabel]) => tabel === "stage_live_tracks").length;
 
 describe("useLiveRace", () => {
   beforeEach(() => {
     mocks.from.mockReset();
+    mocks.channel.mockReset();
+    mocks.removeChannel.mockReset();
   });
 
   it("toont de mannenrace niet bij de vrouwengame, ook al hangt dezelfde baan eraan", async () => {
@@ -98,5 +118,44 @@ describe("useLiveRace", () => {
 
     await waitFor(() => expect(result.current.data).toBeTruthy());
     expect(result.current.data?.tracks).toHaveLength(1);
+  });
+
+  it("luistert met Realtime naar de racestatus van de baan en haalt bij een wijziging meteen op", async () => {
+    zetTabellen("mannen", { categorie: "Topdivisie Mannen", geslacht: "mannen" });
+    const { kanaal, luisteraars } = nepKanaal();
+
+    const { unmount } = renderLiveRace({ realtime: true });
+
+    await waitFor(() => expect(luisteraars).toHaveLength(1));
+    expect(mocks.channel).toHaveBeenCalledWith("live-race:game-1");
+    expect(luisteraars[0].filter).toBe("track_id=eq.Amsterdam");
+    expect(kanaal.subscribe).toHaveBeenCalled();
+
+    const voor = ophaalbeurten();
+    luisteraars[0].melden();
+    await waitFor(() => expect(ophaalbeurten()).toBe(voor + 1));
+
+    unmount();
+    expect(mocks.removeChannel).toHaveBeenCalledWith(kanaal);
+  });
+
+  it("opent geen kanaal zonder Realtime, bijvoorbeeld buiten de Live-tab", async () => {
+    zetTabellen("mannen", { categorie: "Topdivisie Mannen", geslacht: "mannen" });
+
+    const { result } = renderLiveRace();
+
+    await waitFor(() => expect(result.current.data).toBeTruthy());
+    expect(mocks.channel).not.toHaveBeenCalled();
+  });
+
+  it("opent geen kanaal als er geen baan te volgen is", async () => {
+    zetTabellen("vrouwen", { categorie: "Topdivisie Mannen", geslacht: "mannen" });
+    nepKanaal();
+
+    const { result } = renderLiveRace({ realtime: true });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toBeNull();
+    expect(mocks.channel).not.toHaveBeenCalled();
   });
 });
