@@ -49,6 +49,7 @@
       "subpoules": "Je subpoules",
       "subpouleRang": "{{rang}}e van {{leden}}",
       "openInPeloton": "Bekijk in Mijn Peloton",
+      "openInPelotonHint": "Krant, Volgwagen, Subpoules, Uitslagen en Statistiek van deze koers",
       "rit_mm": "Wedstrijd {{n}}",
       "ritPlaats_mm": "{{plaats}}e van de wedstrijd",
       "besteRit_mm": "Beste wedstrijd: nr. {{n}}, {{punten}} pt",
@@ -63,9 +64,6 @@
     }
   },
   "oudeKoersen": {
-    "titel": "Oude koersen",
-    "hint": "terugkijken",
-    "menuAria": "Oude koersen openen",
     "kijktTerug": "Je kijkt terug",
     "afgerond": "Afgerond",
     "terug": "Terug",

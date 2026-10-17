@@ -1380,15 +1380,9 @@
 }
 .kp-terugkijk { animation: kp-terugkijk-in 0.3s ease-out both; }
 
-/* ── Archiefkastje (oude koersen): haarlijn in landskleuren bij hover/keuze ── */
-.kp-archief-rij .kp-archief-rug { opacity: 0; transition: opacity 150ms ease; }
-.kp-archief-rij:hover .kp-archief-rug { opacity: 0.55; }
-.kp-archief-rij[aria-selected="true"] .kp-archief-rug { opacity: 1; }
-
 @media (prefers-reduced-motion: reduce) {
   .kp-knop-fysiek, .kp-knop-fysiek:active { transition: none; transform: none; }
   .kp-terugkijk { animation: none; }
-  .kp-archief-rij .kp-archief-rug { transition: none; }
 }
 
 /* ── Indienknop (ploegbouwer) — een knop die je indrukt ──

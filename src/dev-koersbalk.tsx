@@ -4,7 +4,7 @@
  * (vier afgeronde wielerkoersen + de Meermarathon), zodat de opmaak te
  * beoordelen is zonder database of inlog:
  *  - geen koersbalk meer bij één lopende koers;
- *  - "Oude koersen" in het hamburgermenu (telefoon) en de navigatiestrook (desktop);
+ *  - geen "Oude koersen" in de kop: die staan in het archief op /profiel;
  *  - de terugkijk-strook zodra een oude koers gekozen is;
  *  - de koersbalk alléén als er twee lopende koersen zijn (juli: Tour + Femmes).
  * De kop van de site is hier een nagebouwde schil (de echte hangt aan inlog).
@@ -17,7 +17,6 @@ import { Instagram, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import GameSwitcher from "@/components/GameSwitcher";
 import TerugkijkStrip from "@/components/TerugkijkStrip";
-import { OudeKoersenLijst, OudeKoersenMenu } from "@/components/OudeKoersenMenu";
 import { Pelotonbalk, type PelotonItem } from "@/components/meermarathon/Pelotonbalk";
 import type { GameRow } from "@/hooks/useAllGames";
 import "@/i18n";
@@ -124,23 +123,6 @@ function TelefoonNu() {
   );
 }
 
-function TelefoonMenu() {
-  const [gekozen, setGekozen] = useState("mm-v");
-  return (
-    <Telefoon>
-      <TelefoonKop
-        menuOpen
-        menu={
-          <div className="w-full border-t border-border/40 pt-2 mt-1">
-            <OudeKoersenLijst games={OUD} selectedId={gekozen} onSelect={setGekozen} />
-          </div>
-        }
-      />
-      <div className="px-5 pb-5 pt-3"><Inhoud tekst="Krant · Volgwagen · Subpoules …" /></div>
-    </Telefoon>
-  );
-}
-
 function TelefoonTerugkijken() {
   const [gekozen, setGekozen] = useState("giro");
   return (
@@ -169,7 +151,7 @@ function TelefoonJuli() {
 
 /* ── Desktop ──────────────────────────────────────────────────────────── */
 
-function DesktopKop({ gekozen, onSelect }: { gekozen: string; onSelect: (id: string) => void }) {
+function DesktopKop() {
   return (
     <header className="bg-card border-b border-border/70 rounded-t-lg overflow-visible">
       <div className="race-rule" />
@@ -188,7 +170,6 @@ function DesktopKop({ gekozen, onSelect }: { gekozen: string; onSelect: (id: str
           {NAV.map((n) => (
             <span key={n} className={cn("nav-link-editorial", n === "Mijn Peloton" && "active")}>{n}</span>
           ))}
-          <OudeKoersenMenu className="ml-auto" games={OUD} selectedId={gekozen} onSelect={onSelect} />
         </nav>
       </div>
       <div className="bolletjes-rule" aria-hidden />
@@ -200,7 +181,7 @@ function Desktop() {
   const [gekozen, setGekozen] = useState("mm-v");
   return (
     <div className="rounded-lg border border-border/70 bg-background shadow-[4px_4px_0_hsl(var(--foreground)/0.15)]">
-      <DesktopKop gekozen={gekozen} onSelect={setGekozen} />
+      <DesktopKop />
       <div className="px-5 py-6">
         <GameSwitcher games={NU} selectedId={gekozen} onSelect={setGekozen} className="max-w-5xl mx-auto mb-4" />
         <div className="max-w-5xl mx-auto">
@@ -243,14 +224,13 @@ function Testbank() {
         {deel !== "desktop" && (
           <>
             <Blok titel="1 · Telefoon — Mijn Peloton, lopende koers: geen balk meer"><TelefoonNu /></Blok>
-            <Blok titel="2 · Telefoon — hamburgermenu: archiefkastje met de oude koersen"><TelefoonMenu /></Blok>
             <Blok titel="3 · Telefoon — oude koers gekozen: dossiermap met de weg terug"><TelefoonTerugkijken /></Blok>
             <Blok titel="4 · Telefoon — juli: twee lopende koersen, dan wél de balk"><TelefoonJuli /></Blok>
           </>
         )}
         {deel !== "telefoon" && (
           <>
-            <Blok titel="5 · Desktop — navigatiestrook met uitklapper Oude koersen"><Desktop /></Blok>
+            <Blok titel="5 · Desktop — navigatiestrook zonder Oude koersen"><Desktop /></Blok>
             <Blok titel="6 · Desktop — terugkijk-strook"><DesktopStrip /></Blok>
           </>
         )}

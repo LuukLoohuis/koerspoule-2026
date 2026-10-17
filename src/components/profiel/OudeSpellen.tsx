@@ -9,7 +9,7 @@
  * geeft ze hier door, zodat de testbank hetzelfde scherm op nepdata toont.
  */
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ChevronRight, CornerDownRight, Crown, FolderOpen, RotateCcw, Trophy } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronRight, CornerDownRight, Crown, FolderOpen, RotateCcw, Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import Stamp from "@/components/retro/Stamp";
@@ -419,6 +419,26 @@ function Dossier({
         </dl>
       </header>
 
+      {/* De hele koers terugkijken: Mijn Peloton met deze koers gekozen. Staat
+          vooraan en hangt niet aan het dossier, dus ook bruikbaar tijdens het
+          laden of als dat mislukt. */}
+      {onOpenInPeloton && (
+        <button
+          type="button"
+          onClick={() => onOpenInPeloton(koers.game_id)}
+          className="kp-knop-fysiek group flex w-full items-center gap-3 px-3.5 py-3 text-left md:gap-4 md:px-5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
+        >
+          <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-foreground bg-primary text-primary-foreground">
+            <FolderOpen className="h-[18px] w-[18px]" strokeWidth={2.25} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-mono text-[12.5px] font-bold uppercase tracking-[0.12em] md:text-[13px]">{t("profiel.oudeSpellen.openInPeloton")}</span>
+            <span className="mt-0.5 block font-serif text-[13px] italic leading-snug text-muted-foreground">{t("profiel.oudeSpellen.openInPelotonHint")}</span>
+          </span>
+          <ArrowRight aria-hidden className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" strokeWidth={2.25} />
+        </button>
+      )}
+
       {fout && !dossier ? (
         <div role="alert" className="rounded-[12px] border-2 border-dashed border-foreground/30 px-6 py-8 text-center">
           <p className="font-display text-[17px] font-bold">{t("profiel.oudeSpellen.fout")}</p>
@@ -476,19 +496,6 @@ function Dossier({
                 ))}
               </ul>
             </section>
-          )}
-
-          {onOpenInPeloton && (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => onOpenInPeloton(koers.game_id)}
-                className="kp-knop-fysiek inline-flex items-center gap-2 px-3.5 py-2 font-mono text-[12px] font-bold uppercase tracking-[0.12em] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
-              >
-                <FolderOpen aria-hidden className="h-4 w-4" strokeWidth={2.25} />
-                {t("profiel.oudeSpellen.openInPeloton")}
-              </button>
-            </div>
           )}
         </>
       )}

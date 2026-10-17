@@ -20,7 +20,6 @@ import { useThema } from "@/contexts/ThemaContext";
 import type { ThemaKey } from "@/lib/themas";
 import SponsorStrip from "@/components/SponsorStrip";
 import KoerspouleLogo from "@/components/KoerspouleLogo";
-import { OudeKoersenLijst, OudeKoersenMenu, useOudeKoersenShell } from "@/components/OudeKoersenMenu";
 
 const INSTAGRAM_URL = "https://www.instagram.com/koerspoule/";
 
@@ -54,10 +53,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isLoggedIn = Boolean(user);
   const { data: profiel } = useProfile();
   const profielInitialen = profiel?.display_name ? initialen(profiel.display_name) : null;
-  // Afgeronde koersen: in het hamburgermenu (telefoon) en als uitklapper in
-  // de navigatiestrook (desktop). Niet in de koersbalk op de pagina's.
-  const oudeKoersen = useOudeKoersenShell(role === "admin", () => setMobileOpen(false));
-  const toonOudeKoersen = isLoggedIn && oudeKoersen.oud.length > 0;
 
   // Zodra één game zijn prijzen heeft vrijgegeven, blijft de Prijzen-pagina
   // bereikbaar. De status van die game speelt hierbij bewust geen rol.
@@ -207,14 +202,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </Link>
                 );
               })}
-              {toonOudeKoersen && (
-                <OudeKoersenMenu
-                  className="ml-auto"
-                  games={oudeKoersen.oud}
-                  selectedId={oudeKoersen.selectedId}
-                  onSelect={oudeKoersen.kies}
-                />
-              )}
             </nav>
           </div>
         </div>
@@ -232,11 +219,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 {t(item.key)}
               </Link>
             ))}
-            {toonOudeKoersen && (
-              <div className="w-full border-t border-border/40 pt-2 mt-1">
-                <OudeKoersenLijst games={oudeKoersen.oud} selectedId={oudeKoersen.selectedId} onSelect={oudeKoersen.kies} />
-              </div>
-            )}
             {canPreview && (
               <div className="w-full border-t border-border/40 pt-2 mt-1">
                 <ThemePreviewSelect previewKey={previewKey} setPreviewKey={setPreviewKey} />

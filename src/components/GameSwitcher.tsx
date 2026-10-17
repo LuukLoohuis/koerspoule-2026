@@ -9,8 +9,8 @@
  * De balk staat er alleen als er iets te kiezen valt tussen LOPENDE koersen
  * (bijvoorbeeld Tour en Tour Femmes tegelijk). Afgeronde koersen staan er niet
  * in: die vervuilden de telefoon (vier segmenten "Afgerond" naast de ene
- * lopende koers) en zitten nu in het menu (OudeKoersenMenu). Kijk je zo'n oude
- * koers terug, dan staat hier de TerugkijkStrip in plaats van de balk.
+ * lopende koers) en staan nu in het archief op /profiel (Oude spellen). Kijk je
+ * zo'n oude koers terug, dan staat hier de TerugkijkStrip in plaats van de balk.
  *
  * Alleen renderen voor ingelogde deelnemers op app-pagina's (aanroepende pagina
  * bepaalt dat). Elke pill toont zijn EIGEN game.status. Geen subtitels.

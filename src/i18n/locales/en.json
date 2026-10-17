@@ -49,6 +49,7 @@
       "subpoules": "Your subpoules",
       "subpouleRang": "#{{rang}} of {{leden}}",
       "openInPeloton": "View in My Peloton",
+      "openInPelotonHint": "Newspaper, team car, subpoules, results and stats for this race",
       "rit_mm": "Race {{n}}",
       "ritPlaats_mm": "#{{plaats}} of the race",
       "besteRit_mm": "Best race: no. {{n}}, {{punten}} pts",
@@ -63,9 +64,6 @@
     }
   },
   "oudeKoersen": {
-    "titel": "Past races",
-    "hint": "look back",
-    "menuAria": "Open past races",
     "kijktTerug": "Looking back at",
     "afgerond": "Finished",
     "terug": "Back",
