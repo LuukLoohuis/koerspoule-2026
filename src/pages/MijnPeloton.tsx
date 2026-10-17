@@ -24,7 +24,6 @@ import { SteunBanner } from "@/components/SteunKopgroep";
 import { useSupportBanner } from "@/hooks/useSupportBanner";
 import { useFallenRidersCount } from "@/hooks/useFallenRidersCount";
 import SwipeHintBar from "@/components/SwipeHintBar";
-import Stamp from "@/components/retro/Stamp";
 import KaravaanFeed from "@/components/karavaan/KaravaanFeed";
 import KrantC from "@/components/krant/KrantC";
 import { useToast } from "@/hooks/use-toast";
@@ -332,9 +331,13 @@ export default function MijnPeloton() {
                 Welkom terug, {displayName}! Beheer je koersen en subpoules.
               </p>
             </div>
-            {/* Stamp rechtsboven op desktop */}
-            <div className="hidden md:block absolute top-0 right-0">
-              <Stamp tone="wine" rotation={-4}>{`Dag ${new Date().getDate()} · ${new Date().toLocaleDateString("nl-NL", { month: "short" }).toUpperCase()}`}</Stamp>
+            {/* Datum rechtsboven op desktop: een stille datumregel in de
+                letter van de overline, geen rode stempel die met de kop
+                concurreert. */}
+            <div className="hidden md:block absolute top-0 right-0" aria-hidden="true">
+              <span className="overline-stamp block border-b border-current/25 pb-1 text-[10px] leading-none">
+                {`Dag ${new Date().getDate()} · ${new Date().toLocaleDateString("nl-NL", { month: "short" })}`}
+              </span>
             </div>
           </>
         );

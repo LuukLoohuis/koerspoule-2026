@@ -34,12 +34,19 @@ function UitslagenKop() {
 /** Zelfde opbouw en klassen als de kop in pages/MijnPeloton. */
 function PelotonKop() {
   return (
-    <div className="flex flex-col items-center text-center gap-1 md:gap-2">
-      <span className="overline-stamp">— Bulletin du Peloton —</span>
-      <h1 className="heading-oswald text-3xl md:text-5xl">Mijn Peloton</h1>
-      <p className="hidden md:block text-muted-foreground font-serif italic max-w-md">
-        Welkom terug, Marieke! Beheer je koersen en subpoules.
-      </p>
+    <div className="relative">
+      <div className="flex flex-col items-center text-center gap-1 md:gap-2">
+        <span className="overline-stamp">— Bulletin du Peloton —</span>
+        <h1 className="heading-oswald text-3xl md:text-5xl">Mijn Peloton</h1>
+        <p className="hidden md:block text-muted-foreground font-serif italic max-w-md">
+          Welkom terug, Marieke! Beheer je koersen en subpoules.
+        </p>
+      </div>
+      <div className="hidden md:block absolute top-0 right-0" aria-hidden="true">
+        <span className="overline-stamp block border-b border-current/25 pb-1 text-[10px] leading-none">
+          Dag 17 · okt
+        </span>
+      </div>
     </div>
   );
 }
