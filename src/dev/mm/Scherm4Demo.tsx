@@ -70,13 +70,15 @@ const STAAT: LiveRaceState = {
   pelotonRonden: 52,
   raceTime: "1:31:12",
   lapTime: null,
-  gemRondeTijd: null,
-  gemRondeSnelheid: null,
-  snelsteRondeTijd: null,
-  snelsteRondeNaam: null,
-  snelsteRondeBeennummer: null,
-  snelsteRondeNr: null,
-  snelsteRondeSnelheid: null,
+  // Snelste ronde van een van jouw rijders (Iris Kooistra, rugnummer 13), in
+  // het formaat van de bron: "26.851" en "53,6km/u".
+  gemRondeTijd: "32.968",
+  gemRondeSnelheid: "43,7km/u",
+  snelsteRondeTijd: "26.851",
+  snelsteRondeNaam: "Iris Kooistra",
+  snelsteRondeBeennummer: "13",
+  snelsteRondeNr: 41,
+  snelsteRondeSnelheid: "53,6km/u",
   bronTijd: null,
 };
 
