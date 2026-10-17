@@ -9,10 +9,12 @@
  * geeft ze hier door, zodat de testbank hetzelfde scherm op nepdata toont.
  */
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, ChevronRight, CornerDownRight, Crown, FolderOpen, RotateCcw, Trophy } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronRight, CornerDownRight, FolderOpen, RotateCcw, Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import Stamp from "@/components/retro/Stamp";
+import Medaillon from "@/components/profiel/Medaillon";
+import { koersBeeld } from "@/components/profiel/koersBeeld";
 import { KoersIcoon, MiniStempel, naamEnJaar, raceGradient } from "@/components/koersSegment";
 import type { GameRow } from "@/hooks/useAllGames";
 import type { PalmaresGame } from "@/hooks/usePalmares";
@@ -112,9 +114,11 @@ function Archiefkast({ koersen, gekozenId, onKies }: Pick<Props, "koersen" | "ge
     <nav aria-label={t("profiel.oudeSpellen.titel")} className="space-y-5">
       {perSeizoen(koersen).map(([jaar, lijst]) => (
         <section key={jaar}>
-          <div className="mb-2 flex items-center gap-3">
-            <h3 className="font-mono text-[12px] font-bold tracking-[0.2em] text-muted-foreground">{jaar || "—"}</h3>
-            <span aria-hidden className="h-px flex-1 bg-foreground/20" />
+          {/* Seizoenskop als tabje op een dossiermap: het lijntje loopt vanaf
+              de onderrand van het tabje door naar rechts. */}
+          <div className="mb-2 flex items-end">
+            <h3 className="rounded-t-[6px] border-2 border-b-0 border-foreground/35 bg-card px-3 pb-1 pt-[5px] font-mono text-[11px] font-bold leading-none tracking-[0.2em] text-muted-foreground">{jaar || "—"}</h3>
+            <span aria-hidden className="h-0.5 flex-1 bg-foreground/35" />
           </div>
           <ul className="space-y-2">
             {lijst.map((k) => {
@@ -127,10 +131,10 @@ function Archiefkast({ koersen, gekozenId, onKies }: Pick<Props, "koersen" | "ge
                     onClick={() => onKies(k.game_id)}
                     aria-current={gekozen ? "true" : undefined}
                     className={cn(
-                      "relative flex w-full min-h-[60px] items-center gap-3 overflow-hidden rounded-[10px] border-2 bg-card py-2.5 pl-5 pr-3 text-left transition-[transform,box-shadow,background-color] duration-100",
+                      "relative flex w-full min-h-[60px] items-center gap-3 overflow-hidden rounded-[10px] border-2 bg-card py-2.5 pl-5 pr-3 text-left transition-[transform,box-shadow,background-color] duration-100 motion-reduce:transition-none",
                       "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
                       gekozen
-                        ? "border-foreground shadow-[3px_3px_0_hsl(var(--foreground))]"
+                        ? "translate-x-1 border-foreground shadow-[3px_3px_0_hsl(var(--foreground))]"
                         : "border-foreground/25 hover:border-foreground/60 hover:bg-secondary/40 active:translate-y-px",
                     )}
                   >
@@ -147,8 +151,12 @@ function Archiefkast({ koersen, gekozenId, onKies }: Pick<Props, "koersen" | "ge
                         {k.stage_wins > 0 && ` · ${t("profiel.samenvatting.dagzeges", { context: labelContext(k), count: k.stage_wins })}`}
                       </span>
                     </span>
-                    <span className="shrink-0 text-right leading-none">
-                      <strong className="block font-oswald text-[22px] font-bold">#{k.my_rank || "—"}</strong>
+                    <span className="flex shrink-0 flex-col items-end text-right leading-none">
+                      {k.my_rank >= 1 && k.my_rank <= 3 ? (
+                        <Medaillon rang={k.my_rank as 1 | 2 | 3} className="h-8 w-8 text-[13px]">{k.my_rank}</Medaillon>
+                      ) : (
+                        <strong className="block font-oswald text-[22px] font-bold">#{k.my_rank || "—"}</strong>
+                      )}
                       <span className="mt-1 block font-mono text-[10px] text-muted-foreground">
                         {t("profiel.oudeSpellen.van", { total: k.total_participants.toLocaleString(i18n.language) })}
                       </span>
@@ -188,8 +196,20 @@ function Ritverloop({ ritten, context }: { ritten: ArchiefRit[]; context?: strin
 
   return (
     <div>
-      <div className="relative">
-        <div className="flex h-[176px] items-end gap-[2px] border-b border-foreground/40 pt-12 md:h-[196px]" onMouseLeave={() => setActief(null)}>
+      <div className="relative pt-12">
+        <div className="relative flex h-[128px] items-end gap-[2px] border-b border-foreground/40 md:h-[148px]" onMouseLeave={() => setActief(null)}>
+          {/* Het gemiddelde als gestippelde lijn over de staafjes, "gem." aan het eind. */}
+          {n > 0 && (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 z-10 border-t border-dashed border-foreground/55"
+              style={{ bottom: `${Math.min(100, (gemiddeld / max) * 100)}%` }}
+            >
+              <span className="absolute right-0 top-0 -translate-y-1/2 rounded-sm bg-card px-1 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] text-foreground/70">
+                {t("profiel.oudeSpellen.gemLabel")}
+              </span>
+            </span>
+          )}
           {ritten.map((r, i) => {
             const dagzege = r.plaats === 1 && r.punten > 0;
             const hoogte = Math.max(2, (r.punten / max) * 100);
@@ -238,7 +258,7 @@ function Ritverloop({ ritten, context }: { ritten: ArchiefRit[]; context?: strin
                   aria-hidden
                   className={cn(
                     "w-full max-w-[22px] rounded-t-[4px] transition-colors",
-                    dagzege ? "bg-[hsl(var(--vintage-gold))]" : "bg-primary/70 group-hover:bg-primary group-focus-visible:bg-primary",
+                    dagzege ? "border border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold)/0.72)]" : "bg-primary/70 group-hover:bg-primary group-focus-visible:bg-primary",
                     actief === i && !dagzege && "bg-primary",
                     actief === i && "ring-2 ring-foreground ring-offset-1 ring-offset-card",
                   )}
@@ -289,13 +309,23 @@ function Klassement({ rijen }: { rijen: ArchiefKlassementRij[] }) {
           <li
             key={`rij-${i}`}
             className={cn(
-              "grid grid-cols-[2.6rem_minmax(0,1fr)_auto] items-center gap-2 px-2 py-1.5",
-              r.ikZelf && "rounded-md border-l-[3px] border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.16]",
+              "relative grid grid-cols-[2.6rem_minmax(0,1fr)_auto] items-center gap-2 px-2 py-1.5",
+              r.ikZelf && "rounded-md bg-[hsl(var(--vintage-gold)/0.16)] pl-4",
             )}
           >
+              {/* Dun goudlint langs je eigen rij, met een ingeknipt staartje. */}
+              {r.ikZelf && (
+                <span
+                  aria-hidden
+                  className="absolute -top-1 bottom-0.5 left-1 w-1.5 bg-[hsl(var(--vintage-gold))] [clip-path:polygon(0_0,100%_0,100%_100%,50%_78%,0_100%)]"
+                />
+              )}
               <span className="font-mono text-[12px] font-bold tabular-nums">
-                {r.rang <= 3 && <Crown aria-hidden className={cn("mr-0.5 inline h-3 w-3 -translate-y-px", r.rang === 1 ? "text-[hsl(var(--vintage-gold))]" : "text-muted-foreground")} />}
-                {r.rang.toLocaleString(i18n.language)}
+                {r.rang >= 1 && r.rang <= 3 ? (
+                  <Medaillon rang={r.rang as 1 | 2 | 3} className="h-6 w-6 text-[11px]">{r.rang}</Medaillon>
+                ) : (
+                  r.rang.toLocaleString(i18n.language)
+                )}
               </span>
               <span className="min-w-0">
                 <span className={cn("block truncate", r.ikZelf ? "font-bold" : "font-medium")}>
@@ -324,12 +354,16 @@ function Ploeg({ renners }: { renners: ArchiefRenner[] }) {
             <span className="flex items-center gap-1.5">
               <span className={cn("truncate font-medium", r.opgave && "text-muted-foreground line-through decoration-foreground/40")}>{r.naam}</span>
               {r.joker && (
-                <span className="shrink-0 rounded-sm border border-foreground/60 px-1 font-mono text-[9px] font-bold uppercase leading-[14px] tracking-[0.08em]">
+                <span className="relative shrink-0 rounded-[3px] border border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold)/0.2)] px-1.5 font-oswald text-[9px] font-bold uppercase leading-[15px] tracking-[0.1em]">
+                  {/* Mini-dossard: een speldje in elke bovenhoek. */}
+                  <span aria-hidden className="absolute left-[2px] top-[2px] h-[3px] w-[3px] rounded-full bg-[hsl(var(--vintage-gold))]" />
+                  <span aria-hidden className="absolute right-[2px] top-[2px] h-[3px] w-[3px] rounded-full bg-[hsl(var(--vintage-gold))]" />
                   {t("profiel.oudeSpellen.joker")}
                 </span>
               )}
               {r.opgave && <MiniStempel>{t("profiel.oudeSpellen.opgave")}</MiniStempel>}
             </span>
+            {r.ploeg && <span className="block truncate text-[11px] text-muted-foreground">{r.ploeg}</span>}
             {/* Dun spoor onder de naam: aandeel in de beste renner van je ploeg. */}
             <span aria-hidden className="mt-1 block h-[3px] rounded-full bg-foreground/10">
               <span className="block h-full rounded-full bg-primary/60" style={{ width: `${(r.punten / max) * 100}%` }} />
@@ -368,6 +402,7 @@ function Dossier({
   const game = alsGameRow(koers);
   const { naam, jaar } = koersNaam(koers);
   const context = labelContext(koers);
+  const beeld = koersBeeld(koers.game_type);
 
   return (
     <article className="kp-terugkijk space-y-5" aria-busy={laden}>
@@ -375,7 +410,17 @@ function Dossier({
       <header className="relative overflow-hidden rounded-[12px] border-2 border-foreground bg-card shadow-[3px_3px_0_hsl(var(--foreground))]">
         <span aria-hidden className="absolute inset-y-0 left-0 w-3" style={{ background: raceGradient(koers.game_type) }} />
         <span aria-hidden className="absolute inset-y-0 left-3 w-px bg-foreground/60" />
-        <div className="flex items-start gap-3 py-4 pl-7 pr-4 md:gap-5 md:py-5 md:pl-9 md:pr-6">
+        <div className="flex items-start gap-3 py-4 pl-6 pr-4 md:gap-4 md:py-5 md:pl-8 md:pr-6">
+          {/* Het racerondje van deze koers, als zegel links op het dossier. */}
+          {beeld && (
+            <img
+              src={beeld.rondje}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="mt-0.5 h-11 w-11 shrink-0 rounded-full border-2 border-foreground object-cover shadow-[2px_2px_0_hsl(var(--foreground))] md:h-14 md:w-14"
+            />
+          )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <KoersIcoon game={game} />
@@ -394,7 +439,13 @@ function Dossier({
             )}
           </div>
           <div className="shrink-0 text-right leading-none">
-            <strong className="block font-oswald text-[46px] font-bold leading-[0.9] md:text-[60px]">#{koers.my_rank || "—"}</strong>
+            <span className="flex items-center justify-end gap-2">
+              {/* Top-10: de algemeen-trui van deze koers naast je rang. */}
+              {beeld && koers.my_rank >= 1 && koers.my_rank <= 10 && (
+                <img src={beeld.trui} alt="" loading="lazy" decoding="async" className="h-9 w-auto object-contain md:h-11" />
+              )}
+              <strong className="block font-oswald text-[46px] font-bold leading-[0.9] md:text-[60px]">#{koers.my_rank || "—"}</strong>
+            </span>
             <span className="mt-1.5 block font-mono text-[11px] text-muted-foreground">
               {t("profiel.oudeSpellen.van", { total: koers.total_participants.toLocaleString(i18n.language) })}
             </span>
@@ -428,9 +479,13 @@ function Dossier({
           onClick={() => onOpenInPeloton(koers.game_id)}
           className="kp-knop-fysiek group flex w-full items-center gap-3 px-3.5 py-3 text-left md:gap-4 md:px-5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]"
         >
-          <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-foreground bg-primary text-primary-foreground">
-            <FolderOpen className="h-[18px] w-[18px]" strokeWidth={2.25} />
-          </span>
+          {beeld ? (
+            <img src={beeld.rondje} alt="" loading="lazy" decoding="async" className="h-10 w-10 shrink-0 rounded-full border-2 border-foreground object-cover" />
+          ) : (
+            <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-foreground bg-primary text-primary-foreground">
+              <FolderOpen className="h-[18px] w-[18px]" strokeWidth={2.25} />
+            </span>
+          )}
           <span className="min-w-0 flex-1">
             <span className="block font-mono text-[12.5px] font-bold uppercase tracking-[0.12em] md:text-[13px]">{t("profiel.oudeSpellen.openInPeloton")}</span>
             <span className="mt-0.5 block font-serif text-[13px] italic leading-snug text-muted-foreground">{t("profiel.oudeSpellen.openInPelotonHint")}</span>
@@ -484,7 +539,7 @@ function Dossier({
                     key={s.id}
                     className={cn(
                       "inline-flex items-center gap-2 rounded-[8px] border-2 px-3 py-1.5 text-[13px]",
-                      s.rang === 1 ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.14]" : "border-foreground/25 bg-card",
+                      s.rang === 1 ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold)/0.14)]" : "border-foreground/25 bg-card",
                     )}
                   >
                     {s.rang === 1 && <Trophy aria-hidden className="h-3.5 w-3.5 text-[hsl(var(--vintage-gold))]" strokeWidth={2.4} />}

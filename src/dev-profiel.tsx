@@ -76,7 +76,7 @@ const PALMARES: PalmaresGame[] = leeg
   : [
       koers("giro26", 214, 1873, 2412, 21, [], 2),
       koers("tour26", 12, 4312, 3105, 21, [7, 16], 5),
-      koers("femmes26", 38, 912, 1288, 9, [4], 2),
+      koers("femmes26", 3, 912, 1288, 9, [4], 2),
       koers("vuelta26", 96, 2140, 2690, 21, [], 1),
       koers("mm-v", 41, 1204, 312, 3, [], 0, "live"),
     ];

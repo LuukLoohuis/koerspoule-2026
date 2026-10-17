@@ -61,7 +61,9 @@ describe("Profiel", () => {
     toon("/profiel");
     expect(screen.getByRole("heading", { name: "Sanne de Wit" })).toBeInTheDocument();
     // Drie koersen (ook de lopende), drie dagzeges, beste eindklassering uit een afgeronde koers.
-    expect(screen.getByText(/3 koersen · 3 dagzeges · beste eindklassering #12/)).toBeInTheDocument();
+    expect(screen.getByText("Koersen").nextElementSibling).toHaveTextContent("3");
+    expect(screen.getByText("Dagzeges").nextElementSibling).toHaveTextContent("3");
+    expect(screen.getByText("Beste eindklassering").nextElementSibling).toHaveTextContent("#12");
     expect(screen.getByText("erelijst")).toBeInTheDocument();
   });
 
