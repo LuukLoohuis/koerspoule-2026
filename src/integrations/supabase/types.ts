@@ -852,8 +852,10 @@ export type Database = {
           aantal_actief: number | null
           aantal_rijders: number | null
           bron_tijd: string | null
+          categorie: string | null
           gem_ronde_snelheid: string | null
           gem_ronde_tijd: string | null
+          geslacht: string | null
           lap_time: string | null
           max_ronden: number | null
           peloton_ronden: number | null
@@ -868,13 +870,16 @@ export type Database = {
           synced_at: string
           totaal_ronden: number | null
           track_id: string
+          wedstrijd: string | null
         }
         Insert: {
           aantal_actief?: number | null
           aantal_rijders?: number | null
           bron_tijd?: string | null
+          categorie?: string | null
           gem_ronde_snelheid?: string | null
           gem_ronde_tijd?: string | null
+          geslacht?: string | null
           lap_time?: string | null
           max_ronden?: number | null
           peloton_ronden?: number | null
@@ -889,13 +894,16 @@ export type Database = {
           synced_at?: string
           totaal_ronden?: number | null
           track_id: string
+          wedstrijd?: string | null
         }
         Update: {
           aantal_actief?: number | null
           aantal_rijders?: number | null
           bron_tijd?: string | null
+          categorie?: string | null
           gem_ronde_snelheid?: string | null
           gem_ronde_tijd?: string | null
+          geslacht?: string | null
           lap_time?: string | null
           max_ronden?: number | null
           peloton_ronden?: number | null
@@ -910,6 +918,7 @@ export type Database = {
           synced_at?: string
           totaal_ronden?: number | null
           track_id?: string
+          wedstrijd?: string | null
         }
         Relationships: []
       }

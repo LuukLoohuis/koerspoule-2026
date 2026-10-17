@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import {
   buildGroups,
+  hoortBijGame,
   type LiveGroup,
   type LivePremie,
   type LiveRaceState,
@@ -66,7 +67,7 @@ export function useLiveRace(gameId: string | undefined, enabled = true) {
 
       const { data: linkRows, error: linkErr } = await supabase
         .from("stage_live_tracks")
-        .select("track_id, label, categorie, sort_order, stage_id, stages!inner(id, stage_number, name, ijs_type, game_id)")
+        .select("track_id, label, categorie, sort_order, stage_id, stages!inner(id, stage_number, name, ijs_type, game_id, games(categorie))")
         .eq("stages.game_id", gameId)
         .order("sort_order");
       if (linkErr) throw linkErr;
@@ -74,7 +75,13 @@ export function useLiveRace(gameId: string | undefined, enabled = true) {
       type Row = typeof linkRows extends (infer R)[] | null ? R : never;
       const rows = (linkRows ?? []) as unknown as (Row & {
         stage_id: string;
-        stages: { id: string; stage_number: number; name: string | null; ijs_type: string | null };
+        stages: {
+          id: string;
+          stage_number: number;
+          name: string | null;
+          ijs_type: string | null;
+          games: { categorie: string | null } | null;
+        };
       })[];
       if (rows.length === 0) return null;
 
@@ -100,7 +107,16 @@ export function useLiveRace(gameId: string | undefined, enabled = true) {
       if (standRes.error) throw standRes.error;
       if (premieRes.error) throw premieRes.error;
 
-      const tracks: LiveTrack[] = links.map((link) => {
+      // De bron hergebruikt een trackId per plaats: rijden de mannen al op de
+      // baan van de vrouwenronde, dan is dat niet de wedstrijd van deze game.
+      const gameCategorie = stage.games?.categorie ?? null;
+      const zichtbaar = links.filter((link) => {
+        const raw = (stateRes.data ?? []).find((s) => s.track_id === link.track_id);
+        return hoortBijGame(raw?.geslacht, gameCategorie);
+      });
+      if (zichtbaar.length === 0) return null;
+
+      const tracks: LiveTrack[] = zichtbaar.map((link) => {
         const raw = (stateRes.data ?? []).find((s) => s.track_id === link.track_id) ?? null;
         const standRows = (standRes.data ?? []).filter((r) => r.track_id === link.track_id);
 
