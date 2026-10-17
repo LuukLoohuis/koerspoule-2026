@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState, type ComponentType } from "react";
+import { Fragment, useEffect, useMemo, useState, type ComponentType, type CSSProperties } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -46,6 +46,7 @@ import SubTabRaster from "@/components/SubTabRaster";
 import { RetroTabs } from "@/components/RetroTabs";
 import JerseyBadge from "@/components/retro/JerseyBadge";
 import TruiBadge from "@/components/retro/TruiBadge";
+import { SoortEmbleem, WEDSTRIJD_SOORT } from "@/components/meermarathon/WedstrijdSoort";
 import { useThema } from "@/contexts/ThemaContext";
 import { isGameLocked, isAdminOnlyStatus, resultsHiddenForUsers } from "@/lib/gameStatus";
 import { useAuth } from "@/hooks/useAuth";
@@ -87,6 +88,22 @@ const CLASSIFICATION_META: Array<{ key: "gc" | "points" | "kom" | "youth"; trui:
   { key: "kom", trui: "berg", tint: "from-rose-500/15 to-rose-500/5" },
   { key: "youth", trui: "jongeren", tint: "from-slate-200/30 to-slate-200/10" },
 ];
+
+// De Meermarathon voorspelt geen podium en truien, maar per peloton de
+// winnaar van het Cup- en het Grand Prix-klassement (classification
+// "cup"/"grandprix", positie 1). Elk in de kleur en met het embleem van zijn
+// wedstrijdsoort, zoals op de Pronostiek.
+const MM_KLASSEMENT_META: Array<{ key: "cup" | "grandprix"; labelKey: string }> = [
+  { key: "cup", labelKey: "team.panel.mmCupKlassement" },
+  { key: "grandprix", labelKey: "team.panel.mmGpKlassement" },
+];
+
+function soortTint(soort: "cup" | "grandprix") {
+  const kleur = WEDSTRIJD_SOORT[soort].kleur;
+  return {
+    backgroundImage: `linear-gradient(to bottom right, color-mix(in srgb, ${kleur} 16%, transparent), color-mix(in srgb, ${kleur} 4%, transparent))`,
+  };
+}
 
 // ─── Data hooks (all unchanged) ───────────────────────────────────────────────
 
@@ -414,6 +431,26 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
     for (const p of myPredictions) m.set(`${p.classification}:${p.position}`, p.rider_id);
     return m;
   }, [myPredictions]);
+
+  // Kaarten in het voorspellingenblok: bij wieler de eindwinnaar en de
+  // truien, bij de Meermarathon het Cup- en het Grand Prix-klassement. Alleen
+  // voorspellingen die bij een kaart horen tellen, anders blijft het blok leeg
+  // zonder "nog niets ingediend" erbij.
+  const voorspelKaarten: Array<{ key: string; icoon: JSX.Element; label: string; tint?: string; tintStijl?: CSSProperties }> =
+    isMeermarathon
+      ? MM_KLASSEMENT_META.map((m) => ({
+          key: m.key,
+          icoon: <SoortEmbleem soort={m.key} maat={20} />,
+          label: t(m.labelKey),
+          tintStijl: soortTint(m.key),
+        }))
+      : CLASSIFICATION_META.map((m) => ({
+          key: m.key,
+          icoon: <TruiBadge type={m.trui} formaat="klein" />,
+          label: m.key === "gc" ? t("hors.peloton.finalWinner") : thema.truien[m.trui].naam,
+          tint: cn("bg-linear-to-br", m.tint),
+        }));
+  const getoondeVoorspellingen = predictionStats.filter((p) => voorspelKaarten.some((k) => k.key === p.classification));
 
   const allRiderIdsSet = useMemo(() => {
     const s = new Set<string>();
@@ -1285,27 +1322,30 @@ export default function HorsCategorieTab({ initialTab, gameId: gameIdProp, gameS
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="h-4 w-4 text-[hsl(var(--vintage-gold))]" />
                 <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
-                  {t("hors.peloton.predictionsHeader")}
+                  {t("hors.peloton.predictionsHeader", { context: isMeermarathon ? "mm" : undefined })}
                 </p>
               </div>
-              {predictionStats.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("hors.peloton.noPredictions")}</p>
+              {getoondeVoorspellingen.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("hors.peloton.noPredictions", { context: isMeermarathon ? "mm" : undefined })}
+                </p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {CLASSIFICATION_META.map((meta) => {
-                    const rows = predictionStats.filter((p) => p.classification === meta.key);
+                  {voorspelKaarten.map((meta) => {
+                    const rows = getoondeVoorspellingen.filter((p) => p.classification === meta.key);
                     if (rows.length === 0) return null;
                     const totalEntries = rows[0]?.total_entries ?? 1;
                     const top = [...rows].sort((a, b) => b.pick_count - a.pick_count).slice(0, 4);
                     return (
                       <div
                         key={meta.key}
-                        className={cn("rounded-lg border-2 border-border p-3 bg-linear-to-br", meta.tint)}
+                        className={cn("rounded-lg border-2 border-border p-3", meta.tint)}
+                        style={meta.tintStijl}
                       >
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                            <TruiBadge type={meta.trui} formaat="klein" />
-                            {meta.key === "gc" ? t("hors.peloton.finalWinner") : thema.truien[meta.trui].naam}
+                            {meta.icoon}
+                            {meta.label}
                           </p>
                           {meta.key === "gc" && (
                             <span className="text-[9px] font-mono text-muted-foreground">{t("hors.peloton.position13")}</span>
