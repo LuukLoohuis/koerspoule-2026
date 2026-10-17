@@ -58,6 +58,26 @@ function race(syncedAt = new Date().toISOString()): LiveRace {
   };
 }
 
+/** Eigen veld, rijder voor rijder: ronden en tijd in ms. */
+function raceMet(veld: { ronden: number; tijd: number }[]): LiveRace {
+  const r = veld.map((v, i) => {
+    const nr = String(i + 1).padStart(2, "0");
+    return { beennummer: nr, naam: `Rijder ${nr}`, aantalRonden: v.ronden, tijdSort: v.tijd, meter: 100 } as LiveRider;
+  });
+  const basis = race();
+  return {
+    ...basis,
+    tracks: [
+      {
+        ...basis.tracks[0],
+        riders: r,
+        groups: buildGroups(r),
+        riderIdByBeennummer: new Map(r.map((x) => [x.beennummer, `id-${x.beennummer}`])),
+      },
+    ],
+  };
+}
+
 // P4, P13, P17 en P31: samen 26 + 8 + 4 + 0 = 38 punten, zoals in het ontwerp.
 const MIJN = ["id-04", "id-13", "id-17", "id-31", "id-weg"];
 
@@ -199,6 +219,96 @@ describe("LiveTab", () => {
   it("laat zien hoe lang geleden de stand is bijgewerkt", () => {
     renderTab({ race: race(new Date(Date.now() - 12_000).toISOString()) });
     expect(screen.getByText(/bijgewerkt 1[23] s geleden/)).toBeInTheDocument();
+  });
+
+  describe("koerskop", () => {
+    it("meldt een uitloper met zijn voorsprong in ronden, en hoe jouw ploeg ervoor staat", () => {
+      renderTab();
+      expect(screen.getByText("Rijder 01 rijdt voorop, een ronde voor het veld")).toBeInTheDocument();
+      expect(screen.getByText(/Jouw beste:/).closest("p")).toHaveTextContent(
+        "Jouw beste: Rijder 04 op P4 · 38 pt voor je ploeg",
+      );
+    });
+
+    it("noemt het gat tussen de eerste twee als ze in dezelfde ronde rijden", () => {
+      renderTab({
+        race: raceMet([
+          { ronden: 66, tijd: 2_192_320 },
+          { ronden: 66, tijd: 2_192_482 },
+          { ronden: 66, tijd: 2_192_529 },
+        ]),
+      });
+      expect(screen.getByText("Rijder 01 leidt, Rijder 02 op 0,16 s")).toBeInTheDocument();
+    });
+
+    it("zet het in het rood als jouw rijder de koers leidt", () => {
+      renderTab({ mineRiderIds: new Set(["id-01"]) });
+      expect(screen.getByText("Jouw Rijder 01 leidt de koers")).toBeInTheDocument();
+    });
+
+    it("blijft weg zolang er nog geen ronde gereden is", () => {
+      renderTab({
+        race: raceMet([
+          { ronden: 0, tijd: 0 },
+          { ronden: 0, tijd: 0 },
+          { ronden: 0, tijd: 0 },
+        ]),
+      });
+      expect(screen.queryByText(/leidt|voorop/)).toBeNull();
+    });
+  });
+
+  describe("podium", () => {
+    it("zet de eerste drie op een podium: in de DOM 1-2-3, op het scherm 2-1-3", () => {
+      renderTab();
+      const uitslag = screen.getByRole("region", { name: "Virtuele uitslag" });
+      const [podium, rest] = within(uitslag).getAllByRole("list");
+      const treden = within(podium).getAllByRole("listitem");
+      expect(treden.map((t) => t.textContent)).toEqual([
+        expect.stringMatching(/Rijder 01.*Plek 1.*50 pt/),
+        expect.stringMatching(/Rijder 02.*Plek 2.*40 pt/),
+        expect.stringMatching(/Rijder 03.*Plek 3.*32 pt/),
+      ]);
+      expect(treden.map((t) => t.className.match(/order-\d/)?.[0])).toEqual(["order-2", "order-1", "order-3"]);
+      expect(rest).toHaveAttribute("start", "4");
+      expect(within(rest).getAllByRole("listitem").map((l) => l.textContent)).toEqual([
+        expect.stringMatching(/Rijder 04/),
+        expect.stringMatching(/Rijder 05/),
+      ]);
+    });
+
+    it("markeert jouw rijder op het podium", () => {
+      renderTab({ mineRiderIds: new Set(["id-02"]) });
+      const uitslag = screen.getByRole("region", { name: "Virtuele uitslag" });
+      const [podium] = within(uitslag).getAllByRole("list");
+      const treden = within(podium).getAllByRole("listitem");
+      expect(treden).toHaveLength(3);
+      expect(treden[1]).toHaveTextContent("Rijder 02 (jouw rijder)");
+      // De trede zelf krijgt de hot-rand, de andere twee niet.
+      const rand = (t: HTMLElement) => t.querySelector("[class*='border-[var(--mm-hot)]']") !== null;
+      expect(treden.map(rand)).toEqual([false, true, false]);
+    });
+
+    it("valt terug op een gewone lijst bij minder dan drie rijders", () => {
+      renderTab({
+        race: raceMet([
+          { ronden: 10, tijd: 1000 },
+          { ronden: 10, tijd: 1200 },
+        ]),
+      });
+      const uitslag = screen.getByRole("region", { name: "Virtuele uitslag" });
+      expect(within(uitslag).getAllByRole("list")).toHaveLength(1);
+      expect(within(uitslag).getAllByRole("listitem")).toHaveLength(2);
+    });
+  });
+
+  it("toont dichtgeklapt per rijder zijn plek, en een streep voor wie niet startte", () => {
+    renderTab();
+    const kaart = screen.getByRole("region", { name: "Mijn rijders" });
+    const knop = within(kaart).getByRole("button", { name: /^Mijn rijders/ });
+    expect(knop).toHaveTextContent(/P4\s*P13\s*P17\s*P31\s*–/);
+    fireEvent.click(knop);
+    expect(knop).not.toHaveTextContent(/P13\s*P17/);
   });
 
   it("meldt een stilgevallen feed als onderbroken", () => {

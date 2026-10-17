@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, Radio } from "lucide-react";
+import { ChevronDown, Radio, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   projectPoints,
@@ -225,6 +225,8 @@ function LiveInhoud({
           De laatste stand is van {bijgewerkt ?? "een onbekend moment"}. De gegevens hieronder kunnen achterlopen.
         </p>
       )}
+
+      <Koerskop regels={uitslag} eigen={eigen} totaal={projectie.totaal} />
 
       {/* Koersschakelaar — alleen bij meerdere gelijktijdige koersen */}
       {race.tracks.length > 1 && (
@@ -694,6 +696,8 @@ function VirtueleUitslag({
   verschil: (r: UitslagRegel) => number | null | undefined;
 }) {
   const leider = regels[0]?.rider;
+  // Podium alleen als er drie zijn; anders gewoon de lijst.
+  const podium = regels.length >= 3 ? regels.slice(0, 3) : [];
   return (
     <section aria-label="Virtuele uitslag" className="retro-border overflow-hidden bg-card">
       <div className="flex items-baseline justify-between gap-3 border-b border-border px-3.5 py-3 @4xl/live:px-4 @4xl/live:py-3.5">
@@ -702,8 +706,16 @@ function VirtueleUitslag({
           als de koers nu stopt
         </span>
       </div>
-      <ol>
-        {regels.slice(0, vol ? 20 : 5).map((r) => (
+      {podium.length > 0 && (
+        // In de DOM 1, 2, 3 (zo leest een schermlezer); op het scherm 2 – 1 – 3.
+        <ol className="grid grid-cols-3 items-end gap-2 border-b border-foreground px-3.5 pt-4 @4xl/live:px-4">
+          {podium.map((r) => (
+            <PodiumPlek key={r.rider.beennummer} regel={r} leider={leider} verschil={verschil(r)} />
+          ))}
+        </ol>
+      )}
+      <ol start={podium.length + 1}>
+        {regels.slice(podium.length, vol ? 20 : 5).map((r) => (
           <li
             key={r.rider.beennummer}
             className={cn(
@@ -756,6 +768,106 @@ function VirtueleUitslag({
   );
 }
 
+/**
+ * Goud, zilver en brons, afgeleid uit de thema-kleuren zodat licht en nacht
+ * allebei kloppen. Brons is goud met wat van de hot-kleur erdoor.
+ */
+const PODIUM: Record<1 | 2 | 3, { orde: string; hoogte: string; kleur: string }> = {
+  1: { orde: "order-2", hoogte: "h-[96px]", kleur: "hsl(var(--vintage-gold))" },
+  2: { orde: "order-1", hoogte: "h-[78px]", kleur: "color-mix(in srgb, hsl(var(--muted-foreground)) 70%, hsl(var(--card)))" },
+  3: { orde: "order-3", hoogte: "h-[64px]", kleur: "color-mix(in srgb, hsl(var(--vintage-gold)) 55%, var(--mm-hot))" },
+};
+
+/** Eén trede van het podium: rugnummer en naam erboven, plek en punten in het blok. */
+function PodiumPlek({
+  regel,
+  leider,
+  verschil,
+}: {
+  regel: UitslagRegel;
+  leider: LiveRider | undefined;
+  verschil: number | null | undefined;
+}) {
+  const p = PODIUM[regel.positie as 1 | 2 | 3] ?? PODIUM[3];
+  return (
+    <li className={cn("flex min-w-0 flex-col items-center text-center", p.orde)}>
+      <Rugnummer nummer={regel.rider.beennummer} mijn={regel.isMine} />
+      <span
+        className={cn(
+          "mt-1.5 line-clamp-2 min-h-[2.5em] font-display text-[14px] font-bold leading-[1.25] @2xl/live:text-[15px]",
+          regel.isMine && HOT_TEKST,
+        )}
+      >
+        {regel.rider.naam}
+        {regel.isMine && <span className="sr-only"> (jouw rijder)</span>}
+      </span>
+      <span className={cn(MONO, "flex items-center gap-1 text-[10px] tabular-nums text-muted-foreground")}>
+        {achterstand(regel.rider, leider)}
+        <Pijltje verschil={verschil} />
+      </span>
+      <span
+        className={cn(
+          "mt-2 flex w-full flex-col items-center gap-1 rounded-t-[8px] border-2 border-b-0 pt-2",
+          p.hoogte,
+          regel.isMine ? "border-[var(--mm-hot)]" : "border-foreground",
+        )}
+        style={{ background: `color-mix(in srgb, ${p.kleur} 32%, hsl(var(--card)))` }}
+      >
+        <span className="font-display text-[24px] font-black leading-none tabular-nums">
+          <span className="sr-only">Plek </span>
+          {regel.positie}
+        </span>
+        <span className="text-[12px] font-bold tabular-nums">{regel.punten} pt</span>
+      </span>
+    </li>
+  );
+}
+
+/** Wie leidt er, en met hoeveel. Null zolang er nog geen ronde gereden is. */
+function koersKop(regels: UitslagRegel[]): string | null {
+  const [p1, p2] = regels;
+  if (!p1 || !p1.rider.aantalRonden) return null;
+  if (!p2) return `${p1.rider.naam} leidt`;
+  const ronden = (p1.rider.aantalRonden ?? 0) - (p2.rider.aantalRonden ?? 0);
+  if (ronden > 0) {
+    return `${p1.rider.naam} rijdt voorop, ${ronden === 1 ? "een ronde" : `${ronden} ronden`} voor het veld`;
+  }
+  if (p1.rider.tijdSort != null && p2.rider.tijdSort != null) {
+    const gat = (p2.rider.tijdSort - p1.rider.tijdSort) / 1000;
+    return `${p1.rider.naam} leidt, ${p2.rider.naam} op ${gat.toFixed(2).replace(".", ",")} s`;
+  }
+  return `${p1.rider.naam} leidt voor ${p2.rider.naam}`;
+}
+
+/**
+ * De koers in één zin, als de kop van een krantenbericht, met eronder hoe jouw
+ * ploeg ervoor staat. Komt helemaal uit de virtuele uitslag.
+ */
+function Koerskop({ regels, eigen, totaal }: { regels: UitslagRegel[]; eigen: EigenRegel[]; totaal: number }) {
+  const kop = koersKop(regels);
+  if (!kop) return null;
+  const beste = eigen.reduce<EigenRegel | null>((b, r) => (!b || r.positie < b.positie ? r : b), null);
+  return (
+    <div className="border-l-[3px] border-[var(--mm-hot)] pl-3 @2xl/live:pl-4">
+      <p className="font-display text-[19px] font-bold italic leading-snug @2xl/live:text-[24px]">{kop}</p>
+      <p className="mt-1 text-[13px] text-muted-foreground">
+        {beste ? (
+          beste.positie === 1 ? (
+            <span className={cn("font-bold", HOT_TEKST)}>Jouw {beste.naam} leidt de koers</span>
+          ) : (
+            <>
+              Jouw beste: <span className="font-semibold text-foreground">{beste.naam}</span> op P{beste.positie}
+            </>
+          )
+        ) : (
+          "Geen van jouw rijders in koers"
+        )}
+        {` · ${totaal} pt voor je ploeg`}
+      </p>
+    </div>
+  );
+}
+
 /** Plek in de uitslag; het podium krijgt een ring, plek 1 in goud. */
 function Plek({ positie }: { positie: number }) {
   const podium = positie <= 3;
@@ -794,7 +906,10 @@ function SnelsteRonde({ state, mijn }: { state: Baan["state"]; mijn: boolean }) 
   return (
     <section aria-label="Snelste ronde" className="overflow-hidden rounded-[9px] border border-border bg-card">
       <div className="flex items-baseline justify-between gap-3 border-b border-border px-3.5 py-3 @4xl/live:px-4">
-        <h3 className={KAART_LABEL}>Snelste ronde</h3>
+        <h3 className={cn(KAART_LABEL, "flex items-center gap-1.5")}>
+          <Timer className="size-3.5 shrink-0 self-center" aria-hidden />
+          Snelste ronde
+        </h3>
         {state.snelsteRondeNr != null && (
           <span className={cn(MONO, "text-[10px] uppercase tracking-[0.1em] text-muted-foreground")}>
             ronde {state.snelsteRondeNr}
@@ -883,6 +998,36 @@ function MijnRijders({
               </>
             )}
           </span>
+          {/* Dichtgeklapt toch in één blik waar iedereen rijdt: een plek per
+              rijder, rood als hij nu punten pakt. De namen staan in de lijst. */}
+          {!open && eigen.length + nietGestart.length > 0 && (
+            <span className="mt-2 flex flex-wrap gap-1" aria-hidden>
+              {[...eigen]
+                .sort((a, b) => a.positie - b.positie)
+                .map((r) => (
+                  <span
+                    key={r.sleutel}
+                    title={`${r.naam} · ${r.punten} pt`}
+                    className={cn(
+                      MONO,
+                      "rounded px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                      r.punten > 0 ? "bg-[var(--mm-hot)] text-white" : "bg-secondary text-secondary-foreground",
+                    )}
+                  >
+                    P{r.positie}
+                  </span>
+                ))}
+              {nietGestart.map((r) => (
+                <span
+                  key={r.id}
+                  title={`${r.naam} · niet gestart`}
+                  className={cn(MONO, "rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground")}
+                >
+                  –
+                </span>
+              ))}
+            </span>
+          )}
         </span>
         <span className="shrink-0 text-right leading-none">
           <span className="text-[22px] font-bold tabular-nums">{totaal}</span>
