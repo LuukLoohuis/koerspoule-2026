@@ -14,7 +14,6 @@ import PloegC from "@/components/ploeg/PloegC";
 import PronostiekPanel from "@/components/ploeg/PronostiekPanel";
 import { useIsMobileSync } from "@/hooks/use-mobile";
 import MyResultsPanel from "@/components/MyResultsPanel";
-import PalmaresPanel from "@/components/PalmaresPanel";
 import HorsCategorieTab from "@/components/HorsCategorieTab";
 import { MobielTabBalk } from "@/components/MobielTabBalk";
 import SwipeCarousel from "@/components/SwipeCarousel";
@@ -81,7 +80,10 @@ export default function MijnPeloton() {
     const sub = searchParams.get("sub");
     const view = searchParams.get("view");
     setGameTab(t);
-    if (t === "team" && sub && ["ploeg", "prono", "palmares"].includes(sub)) setTeamSubTab(sub);
+    if (t === "team" && sub && ["ploeg", "prono"].includes(sub)) setTeamSubTab(sub);
+    // De erelijst woont nu op het profiel; oude links naar het Volgwagen-tabje
+    // komen daar uit in plaats van stil op Mijn Ploeg.
+    if (t === "team" && sub === "palmares") navigate("/profiel", { replace: true });
     // ?edit=naam → open + focus de ploegnaam-editor (het potloodje) in Mijn Ploeg.
     if (t === "team" && searchParams.get("edit") === "naam") setFocusNameSeq((s) => s + 1);
     if (t === "hors" && sub && ["dartpijl", "pelotonkeuzes", "wielerdirecteur", "superteam", "benchmark"].includes(sub)) {
@@ -90,7 +92,7 @@ export default function MijnPeloton() {
     if (t === "uitslagen" && view && ["klassement", "etappes"].includes(view)) {
       setUitslagenTarget({ view: view as "klassement" | "etappes" });
     }
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   /**
    * Tab wisselen én de URL meenemen.
@@ -153,7 +155,6 @@ export default function MijnPeloton() {
     const basis = [
       { key: "ploeg",    label: t("team.tabs.myTeam"),   icon: Users  },
       { key: "prono",    label: t("team.tabs.prono"),    icon: Target },
-      { key: "palmares", label: t("team.tabs.palmares"), icon: Trophy },
     ];
     if (!isMeermarathonGame(selectedGameObj?.game_type)) return basis;
     return [basis[0], { key: "live", label: t("team.tabs.live"), icon: Radio }, ...basis.slice(1)];
@@ -677,7 +678,6 @@ export default function MijnPeloton() {
                     {k === "prono" && !isMobiel && !isMeermarathonGekozen && (
                       <MyTeamPanel section="prono" gameId={selectedGameObj?.id} gameStatus={selectedGameObj?.status} gameName={selectedGameObj?.name} gameType={selectedGameObj?.game_type} gameCategorie={selectedGameObj?.categorie} />
                     )}
-                    {k === "palmares" && <PalmaresPanel />}
                   </>
                 )}
               />

@@ -322,7 +322,6 @@
     "tabs": {
       "myTeam": "My Team",
       "prono": "Predictions",
-      "palmares": "Palmares",
       "volgwagenSectionsAria": "Volgwagen sections",
       "live": "Live"
     },
@@ -1895,7 +1894,6 @@
       "tekst": "Your team and how it's doing.",
       "ploeg": "your riders and what they score",
       "prono": "the predictions you made up front",
-      "palmares": "your honours across every race",
       "live": "the standings during the race, Meermarathon only"
     },
     "subpoule": {

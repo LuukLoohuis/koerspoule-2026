@@ -179,7 +179,6 @@ export default function Rondleiding({
       ? [sub("team", "live", t("team.tabs.live"), t("rondleiding.volgwagen.live"))]
       : []),
     sub("team", "prono", t("team.tabs.prono"), t("rondleiding.volgwagen.prono")),
-    sub("team", "palmares", t("team.tabs.palmares"), t("rondleiding.volgwagen.palmares")),
     {
       navKey: "team",
       titel: t("rondleiding.ploegbouwer.titel"),

@@ -61,7 +61,7 @@ export default function Uitleg() {
           ],
         },
         { title: t("common.uitleg.cardPronoTitle"), intro: t("common.uitleg.cardPronoIntro"), to: "/mijn-peloton?tab=team&sub=prono" },
-        { title: t("common.uitleg.cardPalmaresTitle"), intro: t("common.uitleg.cardPalmaresIntro"), to: "/mijn-peloton?tab=team&sub=palmares" },
+        { title: t("common.uitleg.cardPalmaresTitle"), intro: t("common.uitleg.cardPalmaresIntro"), to: "/profiel" },
       ],
     },
     {
