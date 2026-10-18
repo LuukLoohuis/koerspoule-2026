@@ -81,20 +81,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Masthead row: logo + support + auth */}
         <div className="container mx-auto px-5">
           <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-3">
+            {/* Op de telefoon krappere ruimtes: logo, Steun-knop, taal, profielrondje
+                en hamburger moeten naast elkaar passen, ook met het brede Giro-logo. */}
+            <div className="flex items-center gap-2 md:gap-3">
               <Link to="/" className="flex items-center gap-2 shrink-0">
                 <KoerspouleLogo
                   alt="Koerspoule logo"
                   className="h-12 w-auto"
                 />
               </Link>
-              <SteunKopgroepPill />
+              <SteunKopgroepPill className="gap-1 px-2 md:gap-1.5 md:px-2.5" />
             </div>
 
-            {/* Rechter-groep: taal + Instagram (altijd zichtbaar) + auth
+            {/* Rechter-groep: taal + Instagram + profielrondje + auth
                 (desktop) / hamburger (mobiel). De game-switcher staat als eigen
                 rij onder de nav (niet hier). */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 md:gap-2">
               {canPreview && (
                 <ThemePreviewSelect
                   className="hidden md:flex"
@@ -105,7 +107,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {themaKey === "winter" && <NachtModusKnop className="hidden md:inline-flex" />}
               {/* Taal en Instagram staan in één omlijsting: drie vakjes achter
                   elkaar (NL | EN | ig) in plaats van twee losse blokjes met een
-                  gat ertussen. De scheiding is een haarlijn, geen tweede rand. */}
+                  gat ertussen. De scheiding is een haarlijn, geen tweede rand.
+                  Ingelogd op de telefoon gaat Instagram naar het hamburgermenu,
+                  anders past het profielrondje niet (ook niet op 360 px). */}
               <div className="inline-flex items-center h-9 rounded-lg border border-foreground/30 overflow-hidden">
                 <a
                   href={INSTAGRAM_URL}
@@ -113,22 +117,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   rel="noopener noreferrer"
                   aria-label={t("shell.instagramAria")}
                   title={t("shell.instagramTitle")}
-                  className="inline-flex items-center justify-center h-full w-9 border-r border-foreground/30 hover:bg-secondary transition-colors"
+                  className={cn(
+                    "items-center justify-center h-full w-9 border-r border-foreground/30 hover:bg-secondary transition-colors",
+                    isLoggedIn ? "hidden md:inline-flex" : "inline-flex",
+                  )}
                 >
                   <Instagram className="h-[18px] w-[18px] text-foreground" />
                 </a>
                 <LanguageToggle className="h-full rounded-none border-0" />
               </div>
 
-              {/* Mijn profiel: rondje met je initialen. Op de telefoon staat het
-                  in het hamburgermenu, naast Uitloggen; hier was geen plek. */}
+              {/* Mijn profiel: rondje met je initialen, ook op de telefoon (daar
+                  32 px, zodat de kop op 360 px breed nog past). */}
               {isLoggedIn && (
                 <Link
                   to="/profiel"
                   aria-label={t("profiel.navAria")}
                   title={t("profiel.titel")}
                   className={cn(
-                    "hidden md:inline-grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-foreground font-oswald text-[13px] font-bold leading-none tracking-[0.02em] transition-colors",
+                    "inline-grid h-8 w-8 md:h-9 md:w-9 shrink-0 place-items-center rounded-full border-2 border-foreground font-oswald text-[12px] md:text-[13px] font-bold leading-none tracking-[0.02em] transition-colors",
                     location.pathname === "/profiel" ? "bg-foreground text-background" : "bg-card hover:bg-secondary",
                   )}
                 >
@@ -159,7 +166,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
               {/* Mobile hamburger */}
               <button
-                className="md:hidden p-1.5 -mr-1"
+                className="md:hidden p-1 -mr-1"
                 onClick={() => setMobileOpen(!mobileOpen)}
                 aria-label={mobileOpen ? t("shell.menuClose") : t("shell.menuOpen")}
                 aria-expanded={mobileOpen}
@@ -227,6 +234,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {themaKey === "winter" && (
               <div className="w-full border-t border-border/40 pt-2 mt-1">
                 <NachtModusKnop metLabel />
+              </div>
+            )}
+            {/* Ingelogd staat Instagram niet in de mobiele kop (daar zit het profielrondje) */}
+            {isLoggedIn && (
+              <div className="w-full border-t border-border/40 pt-2 mt-1">
+                <a
+                  href={INSTAGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={t("shell.instagramAria")}
+                  onClick={() => setMobileOpen(false)}
+                  className="nav-link-editorial gap-1.5"
+                >
+                  <Instagram className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+                  Instagram
+                </a>
               </div>
             )}
             <div className="w-full border-t border-border/40 pt-2 mt-1 flex gap-2">
