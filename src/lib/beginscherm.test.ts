@@ -6,8 +6,6 @@ import {
   draaitAlsApp,
   hintMagTonen,
   leesWegSinds,
-  telBezoek,
-  OPSLAG_BEZOEKEN,
   OPSLAG_WEG,
   WEG_DAGEN,
 } from "./beginscherm";
@@ -67,39 +65,22 @@ describe("draaitAlsApp", () => {
   });
 });
 
-describe("telBezoek", () => {
-  it("telt één bezoek per browsersessie", () => {
-    const lokaal = geheugen();
-    const sessie = geheugen();
-    expect(telBezoek(lokaal, sessie)).toBe(1);
-    expect(telBezoek(lokaal, sessie)).toBe(1);
-    expect(telBezoek(lokaal, geheugen())).toBe(2);
-    expect(lokaal.getItem(OPSLAG_BEZOEKEN)).toBe("2");
-  });
-
-  it("rommel in de opslag telt als nul", () => {
-    expect(telBezoek(geheugen({ [OPSLAG_BEZOEKEN]: "x" }), geheugen())).toBe(1);
-  });
-});
-
 describe("hintMagTonen", () => {
   const NU = Date.parse("2026-10-19T12:00:00Z");
   const basis = {
     platform: "ios" as const,
     alsApp: false,
     kanInstalleren: false,
-    bezoeken: 2,
     cookiesAkkoord: true,
     wegSinds: null,
     nu: NU,
   };
 
-  it("iPhone, tweede bezoek, nog niet als app: ja", () => {
+  it("iPhone, al bij het eerste bezoek, nog niet als app: ja", () => {
     expect(hintMagTonen(basis)).toBe(true);
   });
 
-  it("niet bij het eerste bezoek en niet zolang de cookiebanner staat", () => {
-    expect(hintMagTonen({ ...basis, bezoeken: 1 })).toBe(false);
+  it("niet zolang de cookiebanner staat", () => {
     expect(hintMagTonen({ ...basis, cookiesAkkoord: false })).toBe(false);
   });
 

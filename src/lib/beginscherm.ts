@@ -39,39 +39,28 @@ export function draaitAlsApp(win: Pick<Window, "matchMedia" | "navigator">): boo
 }
 
 export const OPSLAG_WEG = "koerspoule:beginscherm-weg";
-export const OPSLAG_BEZOEKEN = "koerspoule:bezoeken";
-const SESSIE_GETELD = "koerspoule:bezoek-geteld";
 /** Zelfde sleutel als CookieBanner: zolang die balk staat, geen tweede strook. */
 export const OPSLAG_COOKIES = "koers-cookies-accepted-v2";
+/** CookieBanner seint dit bij "Begrepen", zodat de hint meteen kan komen. */
+export const COOKIES_AKKOORD_EVENT = "koerspoule:cookies-akkoord";
 
 /** Weggeklikt blijft de hint zo lang weg. */
 export const WEG_DAGEN = 60;
-/** Pas vanaf dit bezoek: wie terugkomt, heeft er iets aan. */
-export const VANAF_BEZOEK = 2;
 
-type Opslag = Pick<Storage, "getItem" | "setItem">;
-
-/** Telt een bezoek (één per browsersessie) en geeft het totaal terug. */
-export function telBezoek(lokaal: Opslag, sessie: Opslag): number {
-  const nu = Number(lokaal.getItem(OPSLAG_BEZOEKEN)) || 0;
-  if (sessie.getItem(SESSIE_GETELD)) return nu;
-  sessie.setItem(SESSIE_GETELD, "1");
-  lokaal.setItem(OPSLAG_BEZOEKEN, String(nu + 1));
-  return nu + 1;
-}
+type Opslag = Pick<Storage, "getItem">;
 
 export function hintMagTonen(s: {
   platform: Platform;
   alsApp: boolean;
   /** Chrome heeft `beforeinstallprompt` gevuurd. */
   kanInstalleren: boolean;
-  bezoeken: number;
   cookiesAkkoord: boolean;
   /** Tijdstip (ms) waarop de hint is weggeklikt of gebruikt, of null. */
   wegSinds: number | null;
   nu: number;
 }): boolean {
-  if (s.alsApp || !s.cookiesAkkoord || s.bezoeken < VANAF_BEZOEK) return false;
+  // Al bij het eerste bezoek, maar niet bovenop de cookiebanner.
+  if (s.alsApp || !s.cookiesAkkoord) return false;
   if (s.wegSinds !== null && s.nu - s.wegSinds < WEG_DAGEN * 86_400_000) return false;
   // Android zonder de vraag van Chrome: dan is installeren een zoektocht door
   // het browsermenu. Die uitleg staat in het menu, niet in een strook.

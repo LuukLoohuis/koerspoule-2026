@@ -14,7 +14,7 @@ import {
   draaitAlsApp,
   hintMagTonen,
   leesWegSinds,
-  telBezoek,
+  COOKIES_AKKOORD_EVENT,
   OPSLAG_COOKIES,
   OPSLAG_WEG,
   type Platform,
@@ -26,9 +26,15 @@ type InstallVraag = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-type Stand = { paneelOpen: boolean; vraag: InstallVraag | null; hintWeg: boolean };
+type Stand = {
+  paneelOpen: boolean;
+  vraag: InstallVraag | null;
+  hintWeg: boolean;
+  /** Cookiebanner in dit bezoek weggeklikt (na het laden). */
+  cookiesNet: boolean;
+};
 
-const BEGIN: Stand = { paneelOpen: false, vraag: null, hintWeg: false };
+const BEGIN: Stand = { paneelOpen: false, vraag: null, hintWeg: false, cookiesNet: false };
 let stand = BEGIN;
 const luisteraars = new Set<() => void>();
 
@@ -58,39 +64,38 @@ if (typeof window !== "undefined") {
     onthoudWeg();
     captureEvent("beginscherm_geinstalleerd");
   });
+  // Eerste bezoek: de hint wacht op de cookiebanner en komt zodra die weg is.
+  window.addEventListener(COOKIES_AKKOORD_EVENT, () => zet({ cookiesNet: true }));
 }
 
 type Omgeving = {
   platform: Platform;
   alsApp: boolean;
-  bezoeken: number;
   cookiesAkkoord: boolean;
   wegSinds: number | null;
 };
 
-// Eén keer per paginalading: anders telt elk component een bezoek.
+// Eén keer per paginalading, gedeeld door alle componenten.
 let omgeving: Omgeving | null = null;
 
 function leesOmgeving(): Omgeving {
   if (omgeving) return omgeving;
   // Alleen in dev: ?beginscherm=ios (of ios-inapp, android) laat de hint zien
-  // zonder iPhone, tweede bezoek of cookiebanner.
+  // zonder iPhone of cookiebanner.
   const proef = import.meta.env.DEV ? new URLSearchParams(location.search).get("beginscherm") : null;
   if (proef === "ios" || proef === "ios-inapp" || proef === "android") {
-    omgeving = { platform: proef, alsApp: false, bezoeken: 99, cookiesAkkoord: true, wegSinds: null };
+    omgeving = { platform: proef, alsApp: false, cookiesAkkoord: true, wegSinds: null };
     return omgeving;
   }
   const platform = bepaalPlatform(navigator.userAgent, navigator.maxTouchPoints);
   const alsApp = draaitAlsApp(window);
-  let bezoeken = 0;
   let cookiesAkkoord = false;
   let wegSinds: number | null = null;
   try {
-    bezoeken = telBezoek(localStorage, sessionStorage);
     cookiesAkkoord = Boolean(localStorage.getItem(OPSLAG_COOKIES));
     wegSinds = leesWegSinds(localStorage);
   } catch { /* geen opslag: dan ook geen hint */ }
-  omgeving = { platform, alsApp, bezoeken, cookiesAkkoord, wegSinds };
+  omgeving = { platform, alsApp, cookiesAkkoord, wegSinds };
   if (alsApp) captureEvent("beginscherm_app_geopend", { platform });
   return omgeving;
 }
@@ -117,7 +122,12 @@ export function useBeginscherm() {
   const hintZichtbaar =
     omg !== null &&
     !s.hintWeg &&
-    hintMagTonen({ ...omg, kanInstalleren, nu: Date.now() });
+    hintMagTonen({
+      ...omg,
+      cookiesAkkoord: omg.cookiesAkkoord || s.cookiesNet,
+      kanInstalleren,
+      nu: Date.now(),
+    });
 
   return {
     platform,

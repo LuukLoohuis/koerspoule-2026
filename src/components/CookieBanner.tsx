@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { initAds } from "@/lib/adsense";
+import { COOKIES_AKKOORD_EVENT } from "@/lib/beginscherm";
 
 // v2: bestaande bezoekers die de oude banner al accepteerden opnieuw informeren
 // (advertenties via Google AdSense zijn toegevoegd).
@@ -23,6 +24,8 @@ export default function CookieBanner() {
   const close = () => {
     localStorage.setItem(STORAGE_KEY, "true");
     setVisible(false);
+    // De beginscherm-hint wacht hierop (zelfde plek onderin het scherm).
+    window.dispatchEvent(new Event(COOKIES_AKKOORD_EVENT));
   };
 
   if (!visible) return null;
