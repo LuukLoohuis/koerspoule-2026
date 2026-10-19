@@ -4,6 +4,8 @@
  * i18n.changeLanguage schrijft de keuze via de LanguageDetector-cache naar
  * localStorage ("koerspoule_lang"); document.documentElement.lang volgt via de
  * languageChanged-listener in src/i18n. Zichtbaar op mobiel én desktop.
+ * Met compactMobile toont hij op de telefoon alleen de andere taal (één knopje),
+ * zodat er in de kop plek is voor het profielrondje.
  */
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -15,7 +17,7 @@ const TOUR_FEMMES_EN = "/en/tour-de-france-femmes-fantasy-2026";
 const VUELTA_NL = "/vuelta-espana-poule-2026";
 const VUELTA_EN = "/en/vuelta-espana-fantasy-2026";
 
-export default function LanguageToggle({ className }: { className?: string }) {
+export default function LanguageToggle({ className, compactMobile = false }: { className?: string; compactMobile?: boolean }) {
   const { i18n, t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -58,6 +60,7 @@ export default function LanguageToggle({ className }: { className?: string }) {
           aria-pressed={active === lng}
           className={cn(
             "px-2 h-full font-mono text-[11px] font-bold uppercase tracking-wider transition-colors",
+            compactMobile && active === lng && "hidden md:block",
             active === lng
               ? "bg-primary text-primary-foreground"
               : "text-foreground/70 hover:bg-secondary",
