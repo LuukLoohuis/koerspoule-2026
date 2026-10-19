@@ -93,18 +93,19 @@ function applyThemaTokens(key: ThemaKey, opts: { persist?: boolean } = {}) {
 
   root.setAttribute("data-thema", key);
 
-  // Favicon en homescreen-icon behouden het compacte witte-fiets-ontwerp in de
-  // racekleur. De zichtbare app-logo's worden door KoerspouleLogo bijgewerkt.
+  // Favicon houdt het compacte witte-fiets-ontwerp in de racekleur. De
+  // zichtbare app-logo's worden door KoerspouleLogo bijgewerkt.
   // index.html heeft twee icon-links (SVG + PNG-fallback). Zet bij het wisselen
   // ook het type mee, anders serveren we een SVG onder type="image/png" en
   // negeren sommige browsers het icoon.
+  // Het beginscherm-icoon (apple-touch-icon) blijft bewust staan: iOS kan geen
+  // SVG aan en maakt dan een schermafbeelding van de pagina, en wat je op je
+  // beginscherm zet, blijft daar het hele jaar staan, ook na de koers.
   document
-    .querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]')
+    .querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="shortcut icon"]')
     .forEach((link) => {
       link.href = t.favicon;
-      if (link.rel !== "apple-touch-icon") {
-        link.type = t.favicon.endsWith(".svg") ? "image/svg+xml" : "image/png";
-      }
+      link.type = t.favicon.endsWith(".svg") ? "image/svg+xml" : "image/png";
     });
 
   // Admin-preview past de tokens alleen visueel toe — nooit in de no-flash-

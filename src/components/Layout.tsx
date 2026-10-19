@@ -20,6 +20,9 @@ import { useThema } from "@/contexts/ThemaContext";
 import type { ThemaKey } from "@/lib/themas";
 import SponsorStrip from "@/components/SponsorStrip";
 import KoerspouleLogo from "@/components/KoerspouleLogo";
+import AppIcoon from "@/components/AppIcoon";
+import BeginschermPaneel from "@/components/BeginschermPaneel";
+import { useBeginscherm } from "@/hooks/useBeginscherm";
 
 const INSTAGRAM_URL = "https://www.instagram.com/koerspoule/";
 
@@ -53,6 +56,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isLoggedIn = Boolean(user);
   const { data: profiel } = useProfile();
   const profielInitialen = profiel?.display_name ? initialen(profiel.display_name) : null;
+  const beginscherm = useBeginscherm();
 
   // Zodra één game zijn prijzen heeft vrijgegeven, blijft de Prijzen-pagina
   // bereikbaar. De status van die game speelt hierbij bewust geen rol.
@@ -233,6 +237,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <NachtModusKnop metLabel />
               </div>
             )}
+            {/* Vaste plek voor "als app": ook na het wegklikken van de hint
+                te vinden. Weg zodra je Koerspoule al als app gebruikt. */}
+            {beginscherm.beschikbaar && (
+              <div className="w-full border-t border-border/40 pt-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    beginscherm.open("menu");
+                  }}
+                  className="nav-link-editorial gap-1.5"
+                >
+                  <AppIcoon className="h-4 w-4" />
+                  {t(beginscherm.kanInstalleren ? "shell.beginscherm.menuInstalleer" : "shell.beginscherm.menu")}
+                </button>
+              </div>
+            )}
             <div className="w-full border-t border-border/40 pt-2 mt-1 flex gap-2">
               {isLoggedIn && (
                 <Link
@@ -322,6 +343,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </footer>
 
       <CookieBanner />
+      <BeginschermPaneel />
     </div>
   );
 }

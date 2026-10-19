@@ -82,6 +82,50 @@
     "languageToggle": "Taal wisselen",
     "instagramAria": "Volg Koerspoule op Instagram",
     "instagramTitle": "Volg ons op Instagram",
+    "beginscherm": {
+      "hint": "Zet Koerspoule op je beginscherm",
+      "hintInstalleer": "Installeer Koerspoule als app",
+      "hintSluiten": "Hint over het beginscherm sluiten",
+      "menu": "Koerspoule als app",
+      "menuInstalleer": "Installeer als app",
+      "overlineIos": "Op je beginscherm",
+      "overlineAndroid": "Op je startscherm",
+      "titel": "Koerspoule als app",
+      "intro": "Met één tik open, zonder adresbalk. Net een app, maar dan zonder App Store.",
+      "voegToeKnop": "Voeg toe",
+      "opnieuwInloggen": "In de app log je één keer opnieuw in: die deelt je login niet met Safari.",
+      "begrepen": "Begrepen",
+      "stap": {
+        "openInSafari": {
+          "titel": "Open deze pagina eerst in Safari",
+          "uitleg": "Deze ingebouwde browser kan het niet. Tik op ⋯ en kies ‘Open in browser’."
+        },
+        "deel": {
+          "titel": "Tik op Deel",
+          "uitleg": "Het vierkantje met de pijl omhoog. Zie je het niet? Tik eerst op ⋯ naast het adres."
+        },
+        "zetOpBeginscherm": {
+          "titel": "Kies ‘Zet op beginscherm’",
+          "uitleg": "Staat het er niet bij? Scroll omlaag of tik op ‘Meer’."
+        },
+        "voegToe": {
+          "titel": "Tik op ‘Voeg toe’",
+          "uitleg": "Koerspoule staat nu tussen je apps."
+        },
+        "androidMenu": {
+          "titel": "Tik op ⋮",
+          "uitleg": "Rechtsboven in Chrome; in andere browsers soms onderin."
+        },
+        "androidInstalleer": {
+          "titel": "Kies ‘App installeren’",
+          "uitleg": "Of ‘Toevoegen aan startscherm’."
+        },
+        "androidBevestig": {
+          "titel": "Bevestig",
+          "uitleg": "Koerspoule staat nu tussen je apps."
+        }
+      }
+    },
     "footer": {
       "tagline": "\"{{subtitle}}\" — Koerspoule, uit liefde voor de koers.",
       "mechanicalIssue": "Materiaalpech? Mail naar",

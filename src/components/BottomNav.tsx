@@ -7,6 +7,7 @@ import { useThema } from "@/contexts/ThemaContext";
 import { useUitgelichteNav } from "@/components/Rondleiding";
 import { useAutoHideOnScroll } from "@/hooks/useAutoHideOnScroll";
 import { navIsActief } from "@/lib/navActief";
+import BeginschermHint from "@/components/BeginschermHint";
 
 type NavItem = {
   label: string;
@@ -59,6 +60,10 @@ export default function BottomNav() {
       aria-hidden={!zichtbaar}
       aria-label={t("shell.bottomNav.aria")}
     >
+      {/* "Zet op je beginscherm": één regel die met de balk meeschuift.
+          Niet tijdens een rondleiding, die wijst naar de tabs zelf. */}
+      {uitgelicht === null && <BeginschermHint />}
+
       {/* Accent gradient rule — volgt thema */}
       <div className="h-[2px] bg-linear-to-r from-transparent via-[hsl(var(--primary))] to-transparent" />
 
