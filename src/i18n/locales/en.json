@@ -82,6 +82,50 @@
     "languageToggle": "Switch language",
     "instagramAria": "Follow Koerspoule on Instagram",
     "instagramTitle": "Follow us on Instagram",
+    "beginscherm": {
+      "hint": "Add Koerspoule to your home screen",
+      "hintInstalleer": "Install Koerspoule as an app",
+      "hintSluiten": "Close home screen hint",
+      "menu": "Koerspoule as an app",
+      "menuInstalleer": "Install as app",
+      "overlineIos": "On your home screen",
+      "overlineAndroid": "On your home screen",
+      "titel": "Koerspoule as an app",
+      "intro": "One tap to open, no address bar. Just like an app, without the App Store.",
+      "voegToeKnop": "Add",
+      "opnieuwInloggen": "You log in once more inside the app: it doesn't share your login with Safari.",
+      "begrepen": "Got it",
+      "stap": {
+        "openInSafari": {
+          "titel": "Open this page in Safari first",
+          "uitleg": "This built-in browser can't do it. Tap ⋯ and choose ‘Open in browser’."
+        },
+        "deel": {
+          "titel": "Tap Share",
+          "uitleg": "The square with the arrow pointing up. Can't see it? Tap ⋯ next to the address first."
+        },
+        "zetOpBeginscherm": {
+          "titel": "Choose ‘Add to Home Screen’",
+          "uitleg": "Not there? Scroll down or tap ‘More’."
+        },
+        "voegToe": {
+          "titel": "Tap ‘Add’",
+          "uitleg": "Koerspoule is now among your apps."
+        },
+        "androidMenu": {
+          "titel": "Tap ⋮",
+          "uitleg": "Top right in Chrome; at the bottom in some other browsers."
+        },
+        "androidInstalleer": {
+          "titel": "Choose ‘Install app’",
+          "uitleg": "Or ‘Add to Home screen’."
+        },
+        "androidBevestig": {
+          "titel": "Confirm",
+          "uitleg": "Koerspoule is now among your apps."
+        }
+      }
+    },
     "footer": {
       "tagline": "\"{{subtitle}}\" — Koerspoule, for the love of cycling.",
       "mechanicalIssue": "Mechanical trouble? Email",

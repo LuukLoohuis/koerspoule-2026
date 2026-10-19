@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Menu, X, Instagram, Moon, Sun, UserRound } from "lucide-react";
+import { Menu, X, Instagram, Moon, Sun, UserRound, Share, Download } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useAllGames } from "@/hooks/useAllGames";
@@ -20,6 +20,8 @@ import { useThema } from "@/contexts/ThemaContext";
 import type { ThemaKey } from "@/lib/themas";
 import SponsorStrip from "@/components/SponsorStrip";
 import KoerspouleLogo from "@/components/KoerspouleLogo";
+import BeginschermPaneel from "@/components/BeginschermPaneel";
+import { useBeginscherm } from "@/hooks/useBeginscherm";
 
 const INSTAGRAM_URL = "https://www.instagram.com/koerspoule/";
 
@@ -53,6 +55,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isLoggedIn = Boolean(user);
   const { data: profiel } = useProfile();
   const profielInitialen = profiel?.display_name ? initialen(profiel.display_name) : null;
+  const beginscherm = useBeginscherm();
 
   // Zodra één game zijn prijzen heeft vrijgegeven, blijft de Prijzen-pagina
   // bereikbaar. De status van die game speelt hierbij bewust geen rol.
@@ -252,6 +255,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </a>
               </div>
             )}
+            {/* Vaste plek voor "als app": ook na het wegklikken van de hint
+                te vinden. Weg zodra je Koerspoule al als app gebruikt. */}
+            {beginscherm.beschikbaar && (
+              <div className="w-full border-t border-border/40 pt-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    beginscherm.open("menu");
+                  }}
+                  className="nav-link-editorial gap-1.5"
+                >
+                  {beginscherm.kanInstalleren ? (
+                    <Download className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+                  ) : (
+                    <Share className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+                  )}
+                  {t(beginscherm.kanInstalleren ? "shell.beginscherm.menuInstalleer" : "shell.beginscherm.menu")}
+                </button>
+              </div>
+            )}
             <div className="w-full border-t border-border/40 pt-2 mt-1 flex gap-2">
               {isLoggedIn && (
                 <Link
@@ -341,6 +365,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </footer>
 
       <CookieBanner />
+      <BeginschermPaneel />
     </div>
   );
 }
