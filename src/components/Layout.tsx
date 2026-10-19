@@ -100,7 +100,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {/* Rechter-groep: taal + Instagram + profielrondje + auth
                 (desktop) / hamburger (mobiel). De game-switcher staat als eigen
                 rij onder de nav (niet hier). */}
-            <div className="flex items-center gap-1.5 md:gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               {canPreview && (
                 <ThemePreviewSelect
                   className="hidden md:flex"
@@ -112,8 +112,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {/* Taal en Instagram staan in één omlijsting: drie vakjes achter
                   elkaar (NL | EN | ig) in plaats van twee losse blokjes met een
                   gat ertussen. De scheiding is een haarlijn, geen tweede rand.
-                  Ingelogd op de telefoon gaat Instagram naar het hamburgermenu,
-                  anders past het profielrondje niet (ook niet op 360 px). */}
+                  Ingelogd op de telefoon is de taal één knopje (de andere taal),
+                  anders past het profielrondje er niet naast. */}
               <div className="inline-flex items-center h-9 rounded-lg border border-foreground/30 overflow-hidden">
                 <a
                   href={INSTAGRAM_URL}
@@ -121,14 +121,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   rel="noopener noreferrer"
                   aria-label={t("shell.instagramAria")}
                   title={t("shell.instagramTitle")}
-                  className={cn(
-                    "items-center justify-center h-full w-9 border-r border-foreground/30 hover:bg-secondary transition-colors",
-                    isLoggedIn ? "hidden md:inline-flex" : "inline-flex",
-                  )}
+                  className="inline-flex items-center justify-center h-full w-8 md:w-9 border-r border-foreground/30 hover:bg-secondary transition-colors"
                 >
                   <Instagram className="h-[18px] w-[18px] text-foreground" />
                 </a>
-                <LanguageToggle className="h-full rounded-none border-0" />
+                <LanguageToggle compactMobile={isLoggedIn} className="h-full rounded-none border-0" />
               </div>
 
               {/* Mijn profiel: rondje met je initialen, ook op de telefoon (daar
@@ -238,22 +235,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {themaKey === "winter" && (
               <div className="w-full border-t border-border/40 pt-2 mt-1">
                 <NachtModusKnop metLabel />
-              </div>
-            )}
-            {/* Ingelogd staat Instagram niet in de mobiele kop (daar zit het profielrondje) */}
-            {isLoggedIn && (
-              <div className="w-full border-t border-border/40 pt-2 mt-1">
-                <a
-                  href={INSTAGRAM_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={t("shell.instagramAria")}
-                  onClick={() => setMobileOpen(false)}
-                  className="nav-link-editorial gap-1.5"
-                >
-                  <Instagram className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
-                  Instagram
-                </a>
               </div>
             )}
             {/* Vaste plek voor "als app": ook na het wegklikken van de hint
