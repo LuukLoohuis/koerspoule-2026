@@ -13,7 +13,7 @@
 -- Aanpassen van de frequentie later:
 --   SELECT cron.alter_job(
 --     (SELECT jobid FROM cron.job WHERE jobname = 'livemarathon-sync'),
---     schedule := '*/30 * * * * *');
+--     schedule := '30 seconds');
 -- Stoppen:
 --   SELECT cron.unschedule('livemarathon-sync');
 
@@ -36,6 +36,12 @@ BEGIN
   -- De service-role-sleutel staat al in de vault voor de mailwachtrij. Die
   -- hergebruiken we bewust: één sleutel op één plek, zodat roteren ook één
   -- handeling blijft. Een eigen naam krijgt voorrang als die bestaat.
+  --
+  -- Let op welke sleutel: livemarathon-sync vergelijkt letterlijk met
+  -- SUPABASE_SERVICE_ROLE_KEY in de edge-runtime. Op dit project is dat de
+  -- nieuwe secret key (sb_secret_…, Project Settings → API Keys), níet de
+  -- legacy service_role-JWT. Met de legacy-sleutel kreeg de cron op 17-10-2026
+  -- elke run een 401.
   SELECT name INTO v_secret_name
   FROM vault.secrets
   WHERE name IN ('livemarathon_service_role_key', 'email_queue_service_role_key')
@@ -90,9 +96,11 @@ BEGIN
   PERFORM cron.unschedule('livemarathon-sync')
   WHERE EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'livemarathon-sync');
 
-  -- Elke 30 seconden (pg_cron 1.5+ kent secondes). Buiten een live wedstrijd
-  -- kost dat alleen de lookup hierboven.
-  PERFORM cron.schedule('livemarathon-sync', '*/30 * * * * *', v_command);
+  -- Elke 30 seconden. pg_cron 1.5+ kent dat alleen als interval ('30 seconds');
+  -- met een cron-regel van zes velden ('*/30 * * * * *') kwam er op 17-10-2026
+  -- geen enkele run, met '30 seconds' meteen elke 30 s. Buiten een live
+  -- wedstrijd kost dat alleen de lookup hierboven.
+  PERFORM cron.schedule('livemarathon-sync', '30 seconds', v_command);
 
   RAISE NOTICE 'live-sync ingepland (elke 30 s, sleutel: %)', v_secret_name;
 END $$;
