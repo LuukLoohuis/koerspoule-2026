@@ -58,6 +58,26 @@ function race(syncedAt = new Date().toISOString()): LiveRace {
   };
 }
 
+/** Eigen veld, rijder voor rijder: ronden en tijd in ms. */
+function raceMet(veld: { ronden: number; tijd: number }[]): LiveRace {
+  const r = veld.map((v, i) => {
+    const nr = String(i + 1).padStart(2, "0");
+    return { beennummer: nr, naam: `Rijder ${nr}`, aantalRonden: v.ronden, tijdSort: v.tijd, meter: 100 } as LiveRider;
+  });
+  const basis = race();
+  return {
+    ...basis,
+    tracks: [
+      {
+        ...basis.tracks[0],
+        riders: r,
+        groups: buildGroups(r),
+        riderIdByBeennummer: new Map(r.map((x) => [x.beennummer, `id-${x.beennummer}`])),
+      },
+    ],
+  };
+}
+
 // P4, P13, P17 en P31: samen 26 + 8 + 4 + 0 = 38 punten, zoals in het ontwerp.
 const MIJN = ["id-04", "id-13", "id-17", "id-31", "id-weg"];
 
@@ -101,7 +121,8 @@ describe("LiveTab", () => {
 
   it("zet per groep het gat tot het peloton en hoeveel van jou erin zitten", () => {
     renderTab();
-    const kaarten = screen.getAllByRole("button", { expanded: false }).filter((b) => /rijder/.test(b.textContent ?? ""));
+    const baan = screen.getByRole("region", { name: "Op de baan" });
+    const kaarten = within(baan).getAllByRole("button", { expanded: false }).filter((b) => /rijder/.test(b.textContent ?? ""));
     const tekst = kaarten.map((k) => k.textContent);
     expect(tekst[0]).toMatch(/Uitloper \+1.*1rijder · \+1 ronde/);
     expect(tekst[1]).toMatch(/Kopgroep.*7rijders · \+6,4 s.*1 van jou/);
@@ -119,6 +140,7 @@ describe("LiveTab", () => {
   it("zet wie niet in de uitslag staat onderaan als niet gestart", () => {
     renderTab();
     const kaart = screen.getByRole("region", { name: "Mijn rijders" });
+    fireEvent.click(within(kaart).getByRole("button", { name: /^Mijn rijders/ }));
     const regels = within(kaart).getAllByRole("listitem");
     expect(regels).toHaveLength(5);
     expect(regels[0]).toHaveTextContent(/Rijder 04.*Kopgroep.*P4.*26/);
@@ -131,12 +153,162 @@ describe("LiveTab", () => {
     const tegels = screen.getAllByRole("definition").map((d) => d.textContent?.replace(/\s+/g, " ").trim());
     expect(tegels[0]).toBe("76pt");
     const kaart = screen.getByRole("region", { name: "Mijn rijders" });
+    fireEvent.click(within(kaart).getByRole("button", { name: /^Mijn rijders/ }));
     expect(within(kaart).getAllByRole("listitem")[0]).toHaveTextContent(/Rijder 04.*P4.*52/);
     // De schaal blijft die van de game; de factor staat erachter.
     expect(within(kaart).getByText(/schaal 50-40-32-26-22-20…1 voor plek 1 t\/m 20\. Deze wedstrijd telt dubbel\./)).toBeInTheDocument();
     // De virtuele uitslag weegt ook: plek 1 levert 100 op.
     const uitslag = screen.getByRole("region", { name: "Virtuele uitslag" });
     expect(within(uitslag).getAllByRole("listitem")[0]).toHaveTextContent(/100/);
+  });
+
+  it("zet de virtuele uitslag bovenaan, vóór je eigen rijders en de baan", () => {
+    renderTab();
+    const uitslag = screen.getByRole("region", { name: "Virtuele uitslag" });
+    const mijn = screen.getByRole("region", { name: "Mijn rijders" });
+    const baan = screen.getByRole("region", { name: "Op de baan" });
+    expect(uitslag.compareDocumentPosition(mijn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(mijn.compareDocumentPosition(baan) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const regels = within(uitslag).getAllByRole("listitem");
+    expect(regels).toHaveLength(5);
+    // De uitloper leidt; wie een ronde achter ligt, staat zo genoteerd.
+    expect(regels[0]).toHaveTextContent(/Rijder 01.*leider.*50 pt/);
+    expect(regels[1]).toHaveTextContent(/Rijder 02.*\+1 ronde.*40 pt/);
+  });
+
+  it("klapt mijn rijders dicht met een samenvatting, en open op verzoek", () => {
+    renderTab();
+    const kaart = screen.getByRole("region", { name: "Mijn rijders" });
+    const knop = within(kaart).getByRole("button", { name: /^Mijn rijders/ });
+    expect(knop).toHaveAttribute("aria-expanded", "false");
+    expect(knop).toHaveTextContent(/4 van 5 in koers · beste P4 Rijder 04/);
+    expect(knop).toHaveTextContent(/38\s*pt/);
+    expect(within(kaart).queryAllByRole("listitem")).toHaveLength(0);
+    fireEvent.click(knop);
+    expect(knop).toHaveAttribute("aria-expanded", "true");
+    expect(within(kaart).getAllByRole("listitem")).toHaveLength(5);
+  });
+
+  it("toont de snelste ronde, met je eigen rijder gemarkeerd", () => {
+    const r = race();
+    r.tracks[0].state = {
+      ...r.tracks[0].state!,
+      snelsteRondeTijd: "26.851",
+      snelsteRondeSnelheid: "53,6km/u",
+      snelsteRondeNaam: "Rijder 13",
+      snelsteRondeBeennummer: "13",
+      snelsteRondeNr: 41,
+      gemRondeTijd: "32.968",
+      gemRondeSnelheid: "43,7km/u",
+    };
+    renderTab({ race: r });
+    const kaart = screen.getByRole("region", { name: "Snelste ronde" });
+    expect(kaart).toHaveTextContent(/ronde 41/);
+    expect(kaart).toHaveTextContent(/Rijder 13 \(jouw rijder\)/);
+    expect(kaart).toHaveTextContent(/van jou/);
+    expect(kaart).toHaveTextContent(/26,851 s/);
+    expect(kaart).toHaveTextContent(/53,6 km\/u/);
+    expect(kaart).toHaveTextContent(/Gemiddelde ronde 32,968 s · 43,7 km\/u/);
+  });
+
+  it("laat de snelste ronde weg zolang de bron die niet kent", () => {
+    renderTab();
+    expect(screen.queryByRole("region", { name: "Snelste ronde" })).toBeNull();
+  });
+
+  it("laat zien hoe lang geleden de stand is bijgewerkt", () => {
+    renderTab({ race: race(new Date(Date.now() - 12_000).toISOString()) });
+    expect(screen.getByText(/bijgewerkt 1[23] s geleden/)).toBeInTheDocument();
+  });
+
+  describe("koerskop", () => {
+    it("meldt een uitloper met zijn voorsprong in ronden, en hoe jouw ploeg ervoor staat", () => {
+      renderTab();
+      expect(screen.getByText("Rijder 01 rijdt voorop, een ronde voor het veld")).toBeInTheDocument();
+      expect(screen.getByText(/Jouw beste:/).closest("p")).toHaveTextContent(
+        "Jouw beste: Rijder 04 op P4 · 38 pt voor je ploeg",
+      );
+    });
+
+    it("noemt het gat tussen de eerste twee als ze in dezelfde ronde rijden", () => {
+      renderTab({
+        race: raceMet([
+          { ronden: 66, tijd: 2_192_320 },
+          { ronden: 66, tijd: 2_192_482 },
+          { ronden: 66, tijd: 2_192_529 },
+        ]),
+      });
+      expect(screen.getByText("Rijder 01 leidt, Rijder 02 op 0,16 s")).toBeInTheDocument();
+    });
+
+    it("zet het in het rood als jouw rijder de koers leidt", () => {
+      renderTab({ mineRiderIds: new Set(["id-01"]) });
+      expect(screen.getByText("Jouw Rijder 01 leidt de koers")).toBeInTheDocument();
+    });
+
+    it("blijft weg zolang er nog geen ronde gereden is", () => {
+      renderTab({
+        race: raceMet([
+          { ronden: 0, tijd: 0 },
+          { ronden: 0, tijd: 0 },
+          { ronden: 0, tijd: 0 },
+        ]),
+      });
+      expect(screen.queryByText(/leidt|voorop/)).toBeNull();
+    });
+  });
+
+  describe("podium", () => {
+    it("zet de eerste drie op een podium: in de DOM 1-2-3, op het scherm 2-1-3", () => {
+      renderTab();
+      const uitslag = screen.getByRole("region", { name: "Virtuele uitslag" });
+      const [podium, rest] = within(uitslag).getAllByRole("list");
+      const treden = within(podium).getAllByRole("listitem");
+      expect(treden.map((t) => t.textContent)).toEqual([
+        expect.stringMatching(/Rijder 01.*Plek 1.*50 pt/),
+        expect.stringMatching(/Rijder 02.*Plek 2.*40 pt/),
+        expect.stringMatching(/Rijder 03.*Plek 3.*32 pt/),
+      ]);
+      expect(treden.map((t) => t.className.match(/order-\d/)?.[0])).toEqual(["order-2", "order-1", "order-3"]);
+      expect(rest).toHaveAttribute("start", "4");
+      expect(within(rest).getAllByRole("listitem").map((l) => l.textContent)).toEqual([
+        expect.stringMatching(/Rijder 04/),
+        expect.stringMatching(/Rijder 05/),
+      ]);
+    });
+
+    it("markeert jouw rijder op het podium", () => {
+      renderTab({ mineRiderIds: new Set(["id-02"]) });
+      const uitslag = screen.getByRole("region", { name: "Virtuele uitslag" });
+      const [podium] = within(uitslag).getAllByRole("list");
+      const treden = within(podium).getAllByRole("listitem");
+      expect(treden).toHaveLength(3);
+      expect(treden[1]).toHaveTextContent("Rijder 02 (jouw rijder)");
+      // De trede zelf krijgt de hot-rand, de andere twee niet.
+      const rand = (t: HTMLElement) => t.querySelector("[class*='border-[var(--mm-hot)]']") !== null;
+      expect(treden.map(rand)).toEqual([false, true, false]);
+    });
+
+    it("valt terug op een gewone lijst bij minder dan drie rijders", () => {
+      renderTab({
+        race: raceMet([
+          { ronden: 10, tijd: 1000 },
+          { ronden: 10, tijd: 1200 },
+        ]),
+      });
+      const uitslag = screen.getByRole("region", { name: "Virtuele uitslag" });
+      expect(within(uitslag).getAllByRole("list")).toHaveLength(1);
+      expect(within(uitslag).getAllByRole("listitem")).toHaveLength(2);
+    });
+  });
+
+  it("toont dichtgeklapt per rijder zijn plek, en een streep voor wie niet startte", () => {
+    renderTab();
+    const kaart = screen.getByRole("region", { name: "Mijn rijders" });
+    const knop = within(kaart).getByRole("button", { name: /^Mijn rijders/ });
+    expect(knop).toHaveTextContent(/P4\s*P13\s*P17\s*P31\s*–/);
+    fireEvent.click(knop);
+    expect(knop).not.toHaveTextContent(/P13\s*P17/);
   });
 
   it("meldt een stilgevallen feed als onderbroken", () => {
