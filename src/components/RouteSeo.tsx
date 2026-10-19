@@ -57,6 +57,11 @@ const META: Record<string, Meta> = {
     description:
       "Spelregels, deadlines en puntentelling van Koerspoule — hoe werken categorieën, jokers en klassementen?",
   },
+  "/zakelijk": {
+    title: "Zakelijk — een eigen bedrijfspoule | Koerspoule",
+    description:
+      "Een wielerpoule voor je bedrijf: eigen subpoule met eigen link, in jullie huisstijl, met klassement per afdeling en eigen prijzen. Voor collega's, klanten en relaties.",
+  },
   "/login": {
     title: "Inloggen of account aanmaken | Koerspoule",
     description: "Log in met je ploegnaam of maak gratis een nieuw Koerspoule-account aan.",

@@ -18,6 +18,7 @@ import MijnPeloton from "./pages/MijnPeloton";
 import SubpouleBySlug from "./pages/SubpouleBySlug";
 import Rules from "./pages/Rules";
 import Uitleg from "./pages/Uitleg";
+import Zakelijk from "./pages/Zakelijk";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -93,6 +94,7 @@ const App = () => {
               />
               <Route path="/regels" element={<Rules />} />
               <Route path="/uitleg" element={<Uitleg />} />
+              <Route path="/zakelijk" element={<Zakelijk />} />
               <Route path="/login" element={<Login />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/juridisch" element={<Legal />} />

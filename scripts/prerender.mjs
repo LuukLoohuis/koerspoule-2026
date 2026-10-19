@@ -27,6 +27,7 @@ const ROUTES = [
   "/regels",
   "/juridisch",
   "/uitleg",
+  "/zakelijk",
   "/actievoorwaarden",
 ];
 

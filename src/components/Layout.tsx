@@ -43,6 +43,7 @@ const navItems = [
   { to: "/mijn-peloton", key: "nav.myPeloton" },
   { to: "/uitleg", key: "nav.explain" },
   { to: "/regels", key: "nav.rules" },
+  { to: "/zakelijk", key: "nav.business" },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
