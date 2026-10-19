@@ -6,7 +6,7 @@
  * Zelfde stem als SwipeHintBar: mono, klein, geen kaart; vooraan het echte
  * app-icoon, zodat je ziet wat er op je beginscherm komt. Hij hoort bij de
  * onderbalk en schuift dus mee weg terwijl je leest. Wanneer hij mag, staat in
- * lib/beginscherm (tweede bezoek, nog niet als app, cookiebanner weg).
+ * lib/beginscherm (nog niet als app, cookiebanner weg).
  */
 import { useEffect } from "react";
 import { ChevronRight, X } from "lucide-react";
