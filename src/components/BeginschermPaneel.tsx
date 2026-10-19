@@ -9,6 +9,7 @@
 import type { ReactNode } from "react";
 import { Compass, EllipsisVertical, KeyRound, Plus, Share, SquarePlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import AppIcoon from "@/components/AppIcoon";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useBeginscherm } from "@/hooks/useBeginscherm";
@@ -51,14 +52,20 @@ export default function BeginschermPaneel() {
         side="bottom"
         className="mx-auto max-w-lg rounded-t-2xl border-x-2 border-t-2 border-foreground bg-card px-5 pt-6 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
       >
-        <SheetHeader className="space-y-1 text-left">
-          <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
-            {t(ios ? "shell.beginscherm.overlineIos" : "shell.beginscherm.overlineAndroid")}
-          </p>
-          <SheetTitle className="font-display text-2xl leading-tight">
-            {t("shell.beginscherm.titel")}
-          </SheetTitle>
-          <SheetDescription className="font-serif text-[15px] leading-snug">
+        <SheetHeader className="space-y-0 text-left">
+          {/* Het icoon zoals het straks tussen je apps staat */}
+          <div className="flex items-center gap-3 pr-6">
+            <AppIcoon className="h-14 w-14 drop-shadow-sm" />
+            <div className="min-w-0 space-y-0.5">
+              <p className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
+                {t(ios ? "shell.beginscherm.overlineIos" : "shell.beginscherm.overlineAndroid")}
+              </p>
+              <SheetTitle className="font-display text-2xl leading-tight">
+                {t("shell.beginscherm.titel")}
+              </SheetTitle>
+            </div>
+          </div>
+          <SheetDescription className="pt-2 font-serif text-[15px] leading-snug">
             {t("shell.beginscherm.intro")}
           </SheetDescription>
         </SheetHeader>

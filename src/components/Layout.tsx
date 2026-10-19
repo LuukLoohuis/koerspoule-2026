@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Menu, X, Instagram, Moon, Sun, UserRound, Share, Download } from "lucide-react";
+import { Menu, X, Instagram, Moon, Sun, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useAllGames } from "@/hooks/useAllGames";
@@ -20,6 +20,7 @@ import { useThema } from "@/contexts/ThemaContext";
 import type { ThemaKey } from "@/lib/themas";
 import SponsorStrip from "@/components/SponsorStrip";
 import KoerspouleLogo from "@/components/KoerspouleLogo";
+import AppIcoon from "@/components/AppIcoon";
 import BeginschermPaneel from "@/components/BeginschermPaneel";
 import { useBeginscherm } from "@/hooks/useBeginscherm";
 
@@ -267,11 +268,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   }}
                   className="nav-link-editorial gap-1.5"
                 >
-                  {beginscherm.kanInstalleren ? (
-                    <Download className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
-                  ) : (
-                    <Share className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
-                  )}
+                  <AppIcoon className="h-4 w-4" />
                   {t(beginscherm.kanInstalleren ? "shell.beginscherm.menuInstalleer" : "shell.beginscherm.menu")}
                 </button>
               </div>

@@ -3,13 +3,15 @@
  * beginscherm". Tik opent de uitleg (iPhone) of de installatievraag (Android);
  * de ✕ klikt 'm voor 60 dagen weg.
  *
- * Zelfde stem als SwipeHintBar: mono, klein, geen kaart. Hij hoort bij de
+ * Zelfde stem als SwipeHintBar: mono, klein, geen kaart; vooraan het echte
+ * app-icoon, zodat je ziet wat er op je beginscherm komt. Hij hoort bij de
  * onderbalk en schuift dus mee weg terwijl je leest. Wanneer hij mag, staat in
  * lib/beginscherm (tweede bezoek, nog niet als app, cookiebanner weg).
  */
 import { useEffect } from "react";
-import { ChevronRight, Download, Share, X } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import AppIcoon from "@/components/AppIcoon";
 import { useBeginscherm } from "@/hooks/useBeginscherm";
 import { captureEvent } from "@/lib/posthog";
 
@@ -23,7 +25,6 @@ export default function BeginschermHint() {
 
   if (!hintZichtbaar) return null;
 
-  const Icoon = kanInstalleren ? Download : Share;
   return (
     <div className="flex items-center gap-1 border-t border-border/40 bg-card px-4 text-[10px] font-mono tracking-[0.12em] text-muted-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500">
       <button
@@ -32,7 +33,7 @@ export default function BeginschermHint() {
         // Hoogte komt van de mobiele tapmaat voor knoppen (36px, index.css).
         className="flex min-w-0 flex-1 items-center gap-1.5 text-left hover:text-foreground"
       >
-        <Icoon className="h-3 w-3 shrink-0 text-primary" strokeWidth={2.25} aria-hidden />
+        <AppIcoon className="h-4 w-4" />
         {/* uppercase hier: de knop-reset van Tailwind zet text-transform terug */}
         <span className="min-w-0 truncate uppercase">
           {t(kanInstalleren ? "shell.beginscherm.hintInstalleer" : "shell.beginscherm.hint")}
