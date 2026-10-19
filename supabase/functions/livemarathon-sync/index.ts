@@ -10,7 +10,7 @@
 // gebeurt dan ook maar één keer in plaats van in elke browser.
 //
 // Aanroepen:
-//   POST {}                        → alle banen van rondes die live staan
+//   POST {}                        → alle banen van Meermarathon-rondes van vandaag
 //   POST { "trackIds": ["…"] }     → alleen deze banen (voor testen)
 //
 // Autorisatie: service-role-sleutel (geplande run) of een ingelogde beheerder.
@@ -20,6 +20,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2.95.0";
 import { ddpFetch, docsOf } from "../_shared/ddp.ts";
+import { geslachtVanCategorie } from "../_shared/categorie.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -116,41 +117,69 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── Welke banen? ─────────────────────────────────────────────────────────
-  // Zonder expliciete lijst: alle banen die aan een ronde van een live game
-  // hangen. Staat er niets live, dan doen we niets — geen verkeer richting de
-  // bron als er geen wedstrijd is.
+  // Zonder expliciete lijst: alle banen die aan een Meermarathon-ronde van
+  // vandaag hangen. Bewust de rondedatum en niet games.status: een seizoensspel
+  // staat soms op open_inschrijving terwijl er gereden wordt, en op 17-10-2026
+  // viel de sync daardoor midden in de race stil. Hangt er vandaag niets, dan
+  // doen we niets — geen verkeer richting de bron zonder wedstrijd.
+  //
+  // Met een expliciete lijst (test vanuit admin) halen we de koppelingen van
+  // die banen op ongeacht de datum, zodat ook dan de renners gekoppeld worden.
   let trackIds = (body.trackIds ?? []).map(String).filter(Boolean);
-  let linkRows: { track_id: string; stage_id: string; game_id: string }[] = [];
+  const vandaag = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Amsterdam" }).format(new Date());
 
-  if (trackIds.length === 0) {
-    const { data, error } = await admin
-      .from("stage_live_tracks")
-      .select("track_id, stage_id, stages!inner(game_id, games!inner(status, game_type))")
-      .eq("stages.games.status", "live")
-      .eq("stages.games.game_type", "meermarathon");
-    if (error) return respond({ error: error.message }, 500);
-    linkRows = (data ?? []).map((r: Record<string, unknown>) => ({
+  let linkQuery = admin
+    .from("stage_live_tracks")
+    .select("track_id, stage_id, stages!inner(game_id, date, games!inner(game_type, categorie))")
+    .eq("stages.games.game_type", "meermarathon");
+  linkQuery = trackIds.length > 0
+    ? linkQuery.in("track_id", trackIds)
+    : linkQuery.eq("stages.date", vandaag);
+  const { data: linkData, error: linkErr } = await linkQuery;
+  if (linkErr) return respond({ error: linkErr.message }, 500);
+
+  const alleLinks = (linkData ?? []).map((r: Record<string, unknown>) => {
+    const stage = (r.stages ?? {}) as Record<string, unknown>;
+    const game = (stage.games ?? {}) as Record<string, unknown>;
+    return {
       track_id: String(r.track_id),
       stage_id: String(r.stage_id),
-      game_id: String((r.stages as Record<string, unknown>)?.game_id ?? ""),
-    }));
-    trackIds = [...new Set(linkRows.map((r) => r.track_id))];
+      stage_date: str(stage.date) ?? "",
+      game_id: String(stage.game_id ?? ""),
+      game_categorie: str(game.categorie),
+    };
+  });
+  // Per baan alleen de koppelingen van de meest recente rondedag: bij een
+  // handmatige test kan een baan ook nog aan rondes van vorig seizoen hangen.
+  const laatsteDag = new Map<string, string>();
+  for (const r of alleLinks) {
+    if (r.stage_date > (laatsteDag.get(r.track_id) ?? "")) laatsteDag.set(r.track_id, r.stage_date);
   }
+  const linkRows = alleLinks.filter((r) => r.stage_date === (laatsteDag.get(r.track_id) ?? ""));
+
+  if (trackIds.length === 0) trackIds = [...new Set(linkRows.map((r) => r.track_id))];
 
   if (trackIds.length === 0) {
-    return respond({ synced: [], reden: "geen live baan gekoppeld" });
+    return respond({ synced: [], reden: "geen baan gekoppeld aan een ronde van vandaag" });
   }
 
   // ── Ophalen ──────────────────────────────────────────────────────────────
-  const subs = trackIds.flatMap((trackId) => [
-    { name: "races.inTrack", params: [{ trackId }] },
-    { name: "stand.inTrack", params: [{ trackId }] },
-    { name: "premies.inTrack", params: [{ trackId }] },
-  ]);
+  // tracks.public erbij voor de categorie: welke wedstrijd staat er nú op de
+  // baan? Zie _shared/categorie.ts.
+  const subs = [
+    { name: "tracks.public", params: [] },
+    ...trackIds.flatMap((trackId) => [
+      { name: "races.inTrack", params: [{ trackId }] },
+      { name: "stand.inTrack", params: [{ trackId }] },
+      { name: "premies.inTrack", params: [{ trackId }] },
+    ]),
+  ];
 
   let result;
   try {
-    result = await ddpFetch(subs, { quietMs: 1500, maxMs: 20000 });
+    // De fetch stopt zodra de beginstand binnen is (zie _shared/ddp.ts); de
+    // bovengrens blijft ruim onder de 25 s timeout van de cron-aanroep.
+    result = await ddpFetch(subs, { quietMs: 1500, maxMs: 12000 });
   } catch (err) {
     return respond({ error: `bron onbereikbaar: ${String(err)}` }, 502);
   }
@@ -158,8 +187,11 @@ Deno.serve(async (req: Request) => {
   const races = docsOf(result, "races");
   const stand = docsOf(result, "stand");
   const premies = docsOf(result, "premies");
+  const bronPerTrack = new Map(
+    docsOf(result, "tracks").map((t) => [t._id, { categorie: str(t.categorie), wedstrijd: str(t.naam) }]),
+  );
   const syncedAt = new Date().toISOString();
-  const perTrack: Record<string, { rijders: number; premies: number; gekoppeld: number }> = {};
+  const perTrack: Record<string, { rijders: number; premies: number; gekoppeld: number; categorie: string | null }> = {};
 
   // ── Rennerkoppeling ──────────────────────────────────────────────────────
   // Het KNSB-relatienummer is de enige stabiele sleutel. Beennummers wisselen
@@ -167,13 +199,20 @@ Deno.serve(async (req: Request) => {
   // koppelen we niets: liever handwerk voor de beheerder dan de verkeerde
   // renner punten geven.
   //
-  // Vrouwen en mannen zijn losse games met elk hun eigen baan. We zoeken dus
-  // alleen onder de schaatsers van de game(s) waaraan de baan hangt; anders
-  // kan een gelijke naam in de andere categorie de koppeling blokkeren.
+  // Vrouwen en mannen zijn losse games. We zoeken dus alleen onder de
+  // schaatsers van de game(s) waaraan de baan hangt; anders kan een gelijke
+  // naam in de andere categorie de koppeling blokkeren. Hangt dezelfde baan
+  // aan beide games (de bron rijdt ze na elkaar op één trackId), dan telt
+  // alleen de game die bij de race op de baan hoort.
   const gamesPerTrack = new Map<string, Set<string>>();
-  for (const r of linkRows) {
-    if (!r.game_id) continue;
-    gamesPerTrack.set(r.track_id, (gamesPerTrack.get(r.track_id) ?? new Set<string>()).add(r.game_id));
+  for (const trackId of trackIds) {
+    const geslacht = geslachtVanCategorie(bronPerTrack.get(trackId)?.categorie);
+    gamesPerTrack.set(trackId, new Set(
+      linkRows
+        .filter((r) => r.track_id === trackId && r.game_id)
+        .filter((r) => !geslacht || !r.game_categorie || r.game_categorie === geslacht)
+        .map((r) => r.game_id),
+    ));
   }
   const gameIds = [...new Set(linkRows.map((r) => r.game_id).filter(Boolean))];
   const candidates: { id: string; name: string; knsb: string | null; gameId: string }[] = [];
@@ -211,31 +250,25 @@ Deno.serve(async (req: Request) => {
 
   // ── Wegschrijven per baan ────────────────────────────────────────────────
   for (const trackId of trackIds) {
-    // races: het document heeft de baan als _id.
-    const race = races.find((r) => r._id === trackId);
-    if (race) {
-      const { error } = await admin.from("live_race_state").upsert({
-        track_id: trackId,
-        totaal_ronden: num(race.TotaalAantalRonden),
-        ronde_lengte: num(race.RondeLengte),
-        ronden_te_gaan: num(race.RondebordRonden),
-        aantal_rijders: num(race.NrRijders),
-        aantal_actief: num(race.NrRijdersActief),
-        max_ronden: num(race.MaxRonden),
-        peloton_ronden: num(race.PelotonRonden),
-        race_time: str(race.RaceTime),
-        lap_time: str(race.LapTime),
-        gem_ronde_tijd: str(race.GemiddeldeRondeTijd),
-        gem_ronde_snelheid: str(race.GemiddeldeRondeSnelheid),
-        snelste_ronde_tijd: str(race.SnelsteRondeTijd),
-        snelste_ronde_naam: str(race.SnelsteRondeRijderNaam),
-        snelste_ronde_beennummer: str(race.SnelsteRondeBeennummer),
-        snelste_ronde_nr: num(race.SnelsteRondeNr),
-        snelste_ronde_snelheid: str(race.SnelsteRondeSnelheid),
-        bron_tijd: str(race.HuidigeTijd),
-        synced_at: syncedAt,
-      }, { onConflict: "track_id" });
-      if (error) return respond({ error: `live_race_state: ${error.message}` }, 500);
+    const bron = bronPerTrack.get(trackId) ?? null;
+
+    // Nieuwe wedstrijd op dezelfde baan (andere categorie of naam): stand en
+    // premies van de vorige race weg. Anders blijven die staan tot de nieuwe
+    // race rijders heeft, en zien de mannen zolang de vrouwenstand.
+    //
+    // Geeft de vorige stand een fout, dan bestaan de kolommen categorie/
+    // wedstrijd/geslacht nog niet (migratie nog niet gedraaid). Dan schrijven
+    // we ze ook niet, zodat de sync tijdens een race gewoon blijft werken.
+    let kentCategorie = false;
+    if (bron) {
+      const { data: vorige, error: vorigeErr } = await admin
+        .from("live_race_state").select("categorie, wedstrijd")
+        .eq("track_id", trackId).maybeSingle();
+      kentCategorie = !vorigeErr;
+      if (vorige && (vorige.categorie !== bron.categorie || vorige.wedstrijd !== bron.wedstrijd)) {
+        await admin.from("live_rider_standings").delete().eq("track_id", trackId);
+        await admin.from("live_premies").delete().eq("track_id", trackId);
+      }
     }
 
     // stand: sorteren op ronden vóór tijd. Op de geformatteerde tijd sorteren
@@ -316,10 +349,48 @@ Deno.serve(async (req: Request) => {
       if (error) return respond({ error: `live_premies: ${error.message}` }, 500);
     }
 
+    // races: het document heeft de baan als _id. Bewust als laatste: de
+    // Live-tab luistert via Realtime naar live_race_state en haalt bij een
+    // wijziging meteen op. Komt dat bericht binnen, dan staan stand en
+    // premies van deze run er al.
+    const race = races.find((r) => r._id === trackId);
+    if (race) {
+      const { error } = await admin.from("live_race_state").upsert({
+        track_id: trackId,
+        totaal_ronden: num(race.TotaalAantalRonden),
+        ronde_lengte: num(race.RondeLengte),
+        ronden_te_gaan: num(race.RondebordRonden),
+        aantal_rijders: num(race.NrRijders),
+        aantal_actief: num(race.NrRijdersActief),
+        max_ronden: num(race.MaxRonden),
+        peloton_ronden: num(race.PelotonRonden),
+        race_time: str(race.RaceTime),
+        lap_time: str(race.LapTime),
+        gem_ronde_tijd: str(race.GemiddeldeRondeTijd),
+        gem_ronde_snelheid: str(race.GemiddeldeRondeSnelheid),
+        snelste_ronde_tijd: str(race.SnelsteRondeTijd),
+        snelste_ronde_naam: str(race.SnelsteRondeRijderNaam),
+        snelste_ronde_beennummer: str(race.SnelsteRondeBeennummer),
+        snelste_ronde_nr: num(race.SnelsteRondeNr),
+        snelste_ronde_snelheid: str(race.SnelsteRondeSnelheid),
+        bron_tijd: str(race.HuidigeTijd),
+        ...(bron && kentCategorie
+          ? {
+            categorie: bron.categorie,
+            wedstrijd: bron.wedstrijd,
+            geslacht: geslachtVanCategorie(bron.categorie),
+          }
+          : {}),
+        synced_at: syncedAt,
+      }, { onConflict: "track_id" });
+      if (error) return respond({ error: `live_race_state: ${error.message}` }, 500);
+    }
+
     perTrack[trackId] = {
       rijders: standRows.length,
       premies: premieRows.length,
       gekoppeld,
+      categorie: bron?.categorie ?? null,
     };
   }
 

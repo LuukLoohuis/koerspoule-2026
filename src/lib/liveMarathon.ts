@@ -400,6 +400,22 @@ export function matchRider(
 }
 
 /**
+ * Hoort de wedstrijd die nu op een baan staat bij deze game?
+ *
+ * De bron hergebruikt een trackId per plaats: op 17-10-2026 droeg "Amsterdam"
+ * eerst de vrouwenrace en daarna de mannenrace. De sync slaat het geslacht van
+ * de wedstrijd op (live_race_state.geslacht); dat vergelijken we met
+ * games.categorie. Onbekend aan een van beide kanten: tonen, zoals voorheen.
+ */
+export function hoortBijGame(
+  bronGeslacht: string | null | undefined,
+  gameCategorie: string | null | undefined,
+): boolean {
+  if (!bronGeslacht || !gameCategorie) return true;
+  return bronGeslacht === gameCategorie;
+}
+
+/**
  * Naam van een groep, afgeleid uit zijn positie ten opzichte van het peloton.
  *
  * Eerder werden de namen op index toegekend: groep 0 heette altijd "Kopgroep",

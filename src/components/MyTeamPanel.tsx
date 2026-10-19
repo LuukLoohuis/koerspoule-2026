@@ -384,7 +384,8 @@ function KoersPanel({
   const isMeermarathon = isMeermarathonGame(gameType ?? curGame?.game_type);
 
   // Live-tab: alleen bij Meermarathon, en alleen als er een baan gekoppeld is.
-  const { data: liveRace } = useLiveRace(game?.id, isMeermarathon);
+  // Realtime alleen als de Live-tab open staat: elders volstaat de klok.
+  const { data: liveRace } = useLiveRace(game?.id, isMeermarathon, { realtime: section === "live" });
   // Nagebootste koers om het live-tabblad buiten een wedstrijdavond te kunnen
   // bekijken. Alleen voor admins en alleen met ?livesim=1; schrijft niets weg.
   const simRace = useLiveSimulatie(isAdmin, { mijnBeennummers: SIM_MIJN_BEENNUMMERS });
