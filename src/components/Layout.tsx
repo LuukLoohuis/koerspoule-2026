@@ -195,7 +195,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Desktop nav strip */}
         <div className="hidden md:block border-t border-border/40 bg-background/40">
           <div className="container mx-auto px-5">
-            <nav className="flex items-center gap-1.5">
+            <nav className="flex flex-wrap items-center gap-1.5">
               {visibleNav.map((item) => {
                 const isActive = location.pathname === item.to;
                 return (
