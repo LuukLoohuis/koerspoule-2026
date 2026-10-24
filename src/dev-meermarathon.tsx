@@ -26,6 +26,7 @@ import Scherm13Demo from "@/dev/mm/Scherm13Demo";
 import Scherm14Demo from "@/dev/mm/Scherm14Demo";
 import Scherm15Demo from "@/dev/mm/Scherm15Demo";
 import Scherm16Demo from "@/dev/mm/Scherm16Demo";
+import Scherm17Demo from "@/dev/mm/Scherm17Demo";
 import "@/i18n";
 import "./index.css";
 import "./styles/salle-de-course.css";
@@ -48,6 +49,7 @@ const SCHERMEN = [
   { key: "14", titel: "14 · Weging: een Grand Prix die dubbel telt", Demo: Scherm14Demo },
   { key: "15", titel: "15 · Koersreglement: geen jokers, wel de weging", Demo: Scherm15Demo },
   { key: "16", titel: "16 · Live op een echte feed (localhost:3300, tijdwedstrijd Haarlem)", Demo: Scherm16Demo },
+  { key: "17", titel: "17 · Live: groepen bij een echte koers (Cup 2 Utrecht, Beloften)", Demo: Scherm17Demo },
 ];
 
 function Testbank() {
