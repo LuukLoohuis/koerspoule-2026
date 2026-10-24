@@ -661,8 +661,13 @@ export function kopSamenvatting(
   });
   if (kopGroepen.length === 0) return null;
   const kop = kopGroepen[0];
-  const tijdgat = groups[1]?.gapToPrev ?? null;
-  if (kop.tier <= 0 && (tijdgat == null || tijdgat <= GAP_THRESHOLD_S)) return null;
+  const gat = groups[1]?.gapToPrev ?? null;
+  if (kop.tier <= 0 && (gat == null || gat <= GAP_THRESHOLD_S)) return null;
+  // Getoond van kop tot kop, zoals op de groepskaart en het labeltje op de baan;
+  // het gat hierboven (staart tot kop) beslist alleen óf er iemand weg is.
+  const kopTijd = kop.leden[0]?.rider.tijdSort;
+  const volgendeKop = groups[1]?.leden[0]?.rider.tijdSort;
+  const tijdgat = kopTijd != null && volgendeKop != null ? (volgendeKop - kopTijd) / 1000 : gat;
 
   const n = kop.leden.length;
   const rijders = `${n} rijder${n > 1 ? "s" : ""}`;

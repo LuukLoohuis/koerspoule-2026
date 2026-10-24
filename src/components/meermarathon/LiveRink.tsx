@@ -12,12 +12,13 @@ import {
   heeftEchtePositie,
   labelBreedte,
   plaatsLabels,
+  seconden,
   type Vak,
   schatAfstand,
   verwerkMeting,
   type Meting,
 } from "@/lib/liveRink";
-import { groepsKopje, groepsRol, type LiveGroup } from "@/lib/liveMarathon";
+import { GAP_THRESHOLD_S, groepsKopje, groepsRol, type LiveGroup } from "@/lib/liveMarathon";
 
 /**
  * Mono zoals in het ontwerp (JetBrains Mono); Tailwinds font-mono is de
@@ -47,11 +48,14 @@ export default function LiveRink({
   groups,
   mineBeennummers,
   rondeLengte,
+  rondeTijd = null,
   baanNaam,
 }: {
   groups: LiveGroup[];
   mineBeennummers: Set<string>;
   rondeLengte: number | null;
+  /** Gemiddelde rondetijd in seconden; daarmee volgt het gat tussen groepen de tijd. */
+  rondeTijd?: number | null;
   baanNaam: string;
 }) {
   const plaatsen = useMemo(() => {
@@ -63,9 +67,9 @@ export default function LiveRink({
       for (const l of g.leden) ronden.set(l.rider.beennummer, l.rider.aantalRonden);
     return {
       echt: heeftEchtePositie(opBaan, rondeLengte),
-      lijst: placeRiders(opBaan, { rondeLengte }).map((p) => ({ ...p, ronden: ronden.get(p.beennummer) ?? 0 })),
+      lijst: placeRiders(opBaan, { rondeLengte, rondeTijd }).map((p) => ({ ...p, ronden: ronden.get(p.beennummer) ?? 0 })),
     };
-  }, [groups, rondeLengte]);
+  }, [groups, rondeLengte, rondeTijd]);
 
   // Naam en plek per rijder, voor het labeltje en de tooltip.
   const info = useMemo(() => {
@@ -86,21 +90,49 @@ export default function LiveRink({
     return { ...p, fraction, ...baanPositie(fraction, p.offset) };
   });
 
-  // Namen van je eigen rijders op een vrije plek, gerekend in schermpixels
-  // (zie plaatsLabels). De badges ("+1") en de eigen schijfjes zijn obstakels.
   const schaal = breedte / BAAN_B;
-  const eigen = punten
-    .filter((p) => mineBeennummers.has(p.beennummer))
-    .sort((a, b) => (info.get(a.beennummer)?.positie ?? 0) - (info.get(b.beennummer)?.positie ?? 0));
   const midden = [baanNaam, rondeLengte ? `${rondeLengte} m` : null].filter(Boolean).join(" · ");
   // Vaste teksten op de baan: "Finish" boven de streep en de baannaam in het
   // midden. Breedtes per letter zoals ze in mono met spatiëring uitvallen.
   const finishB = 6 * 8;
   const middenB = midden.length * 9;
+  const finishVak: Vak = { left: FINISH_PUNT.x * schaal - finishB / 2, top: (FINISH_PUNT.y - 46) * schaal - 13, b: finishB, h: 13 };
+  const raakt = (a: Vak, b: Vak) =>
+    a.left < b.left + b.b && b.left < a.left + a.b && a.top < b.top + b.h && b.top < a.top + a.h;
+
+  // Het gat tussen twee groepen in seconden, midden in het gat aan de kant van
+  // het middenterrein: zo zie je meteen hoe ver een groep weg is. Van kop tot
+  // kop, net als de groepskaarten: opgeteld komen de labels uit op wat de kaart
+  // zegt. Alleen waar de tijd iets zegt (zelfde ronde) en het echt een gat is.
+  const gaten = groups.flatMap((g, gi) => {
+    if (gi === 0 || g.soort === "uitKoers" || g.gapToPrev == null || g.gapToPrev <= GAP_THRESHOLD_S) return [];
+    const eigenKop = g.leden[0]?.rider.tijdSort;
+    const vorigeKop = groups[gi - 1].leden[0]?.rider.tijdSort;
+    if (eigenKop == null || vorigeKop == null) return [];
+    const kop = punten.find((p) => p.groupIndex === gi);
+    const vorige = punten.filter((p) => p.groupIndex === gi - 1);
+    const staart = vorige[vorige.length - 1];
+    if (!kop || !staart) return [];
+    const tussen = (((staart.fraction - kop.fraction) % 1) + 1) % 1;
+    const tekst = seconden((eigenKop - vorigeKop) / 1000);
+    const f = kop.fraction + tussen / 2;
+    // Valt het label op "Finish", dan dieper het middenterrein in.
+    const dicht = baanPositie(f, -50);
+    const vak = { left: dicht.x * schaal - gatB(tekst) / 2, top: dicht.y * schaal - 8, b: gatB(tekst), h: 16 };
+    return [{ sleutel: `gat-${gi}`, tekst, ...(raakt(vak, finishVak) ? baanPositie(f, -95) : dicht) }];
+  });
+
+  // Namen van je eigen rijders op een vrije plek, gerekend in schermpixels
+  // (zie plaatsLabels). De badges ("+1"), de gaten en de eigen schijfjes zijn
+  // obstakels.
+  const eigen = punten
+    .filter((p) => mineBeennummers.has(p.beennummer))
+    .sort((a, b) => (info.get(a.beennummer)?.positie ?? 0) - (info.get(b.beennummer)?.positie ?? 0));
   const obstakels: Vak[] = [
-    { left: FINISH_PUNT.x * schaal - finishB / 2, top: (FINISH_PUNT.y - 46) * schaal - 13, b: finishB, h: 13 },
+    finishVak,
     { left: (BAAN_B / 2) * schaal - middenB / 2, top: (BAAN_H / 2) * schaal - 8, b: middenB, h: 16 },
     ...eigen.map((p) => ({ left: p.x * schaal - 12, top: p.y * schaal - 12, b: 24, h: 24 })),
+    ...gaten.map((g) => ({ left: g.x * schaal - gatB(g.tekst) / 2, top: g.y * schaal - 8, b: gatB(g.tekst), h: 16 })),
     ...punten
       .filter((p) => p.eersteInGroep && rondeBadge(p.tier))
       .map((p) => {
@@ -156,7 +188,7 @@ export default function LiveRink({
               d={d}
               fill="none"
               style={{ stroke: rolColor(groepsRol(groups, gi)) }}
-              strokeOpacity="0.18"
+              strokeOpacity="0.24"
               strokeWidth="64"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -237,6 +269,20 @@ export default function LiveRink({
           );
         })}
 
+      {gaten.map((g) => (
+        <span
+          key={g.sleutel}
+          className={cn(
+            MONO,
+            "pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-[4px] border border-border bg-card px-1.5 text-[10px] font-bold leading-[14px] tabular-nums text-foreground",
+          )}
+          style={{ left: pct(g.x, BAAN_B), top: pct(g.y, BAAN_H) }}
+          aria-hidden
+        >
+          {g.tekst}
+        </span>
+      ))}
+
       {/* Namen als laatste laag: bovenop elk schijfje, ook van andere groepen. */}
       {eigen.map((p) => {
         const plek = labels.get(p.beennummer);
@@ -255,6 +301,11 @@ export default function LiveRink({
       })}
     </div>
   );
+}
+
+/** Breedte van een gat-label in px (10 px mono, vet). */
+function gatB(tekst: string): number {
+  return tekst.length * 7 + 14;
 }
 
 function achternaamVan(naam: string): string {

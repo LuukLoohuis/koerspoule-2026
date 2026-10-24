@@ -29,8 +29,32 @@ export const MIN_SEPARATION = 0.011;
 export const FINISH_FRACTION = 0.75;
 /** Waar de kopgroep staat; los van de finish zodat labels niet samenvallen. */
 export const LEAD_FRACTION = 0.2;
-/** Groepen staan in klassementsvolgorde een vast stuk uit elkaar. */
+/** Gat tussen groepen als de tijd ertussen niets zegt (een ronde verschil) of de rondetijd onbekend is. */
 export const GROUP_SPREAD = 0.085;
+/** Kleinste gat op de baan: ook 1,6 s moet je als gat zien. */
+export const GAT_MIN = 0.045;
+/** Grootste gat: daarboven past de rest van het veld niet meer rond. */
+export const GAT_MAX = 0.3;
+/** Zoveel van de ronde mag het veld beslaan; de rest blijft leeg tussen kop en staart. */
+export const MAX_VELD = 0.9;
+
+/**
+ * Gat tussen twee groepen op de baan, als fractie van een ronde. Met een
+ * rondetijd is het evenredig met de tijd: 4 s op een ronde van 32 s is een
+ * achtste van de baan. Zo zie je op het ijs hoe ver een groep weg is.
+ */
+export function gatOpBaan(gapS: number | null | undefined, rondeTijdS: number | null): number {
+  if (gapS == null || rondeTijdS == null || rondeTijdS <= 0) return GROUP_SPREAD;
+  return Math.min(GAT_MAX, Math.max(GAT_MIN, gapS / rondeTijdS));
+}
+
+/** Rondetijd in seconden uit de bron: "32.730" of "1:05.719". Null als onleesbaar. */
+export function rondeTijdSeconden(tekst: string | null | undefined): number | null {
+  if (!tekst) return null;
+  const delen = tekst.trim().replace(",", ".").split(":");
+  const s = delen.reduce((acc, d) => acc * 60 + Number(d), 0);
+  return Number.isFinite(s) && s > 0 ? s : null;
+}
 
 /* ── Baangeometrie volgens het ontwerp ────────────────────────────────────
  *
@@ -149,20 +173,33 @@ export function heeftEchtePositie(
  * kloppen, alleen de tussenruimte is uitvergroot tot een peloton.
  */
 export function placeRiders(
-  groups: { tier: number; leden: { rider: { beennummer: string; meter?: number | null } }[] }[],
-  options: { rotation?: number; rondeLengte?: number | null } = {},
+  groups: {
+    tier: number;
+    gapToPrev?: number | null;
+    leden: { rider: { beennummer: string; meter?: number | null } }[];
+  }[],
+  options: { rotation?: number; rondeLengte?: number | null; rondeTijd?: number | null } = {},
 ): RinkPlacement[] {
   const rotation = options.rotation ?? 0;
   const rondeLengte = options.rondeLengte ?? null;
   const out: RinkPlacement[] = [];
   const metPositie = heeftEchtePositie(groups, rondeLengte);
 
-  // Elke groep begint een vast stuk achter de staart van de vorige, niet achter
-  // haar kop: anders schuift een groot peloton over de groep erachter heen.
+  // Elke groep begint achter de staart van de vorige, niet achter haar kop:
+  // anders schuift een groot peloton over de groep erachter heen. Het gat zelf
+  // volgt de tijd (gatOpBaan); past het veld dan niet meer rond, dan krimpen
+  // de gaten naar verhouding mee.
+  const lengtes = groups.map((g) => (g.leden.length - 1) * STAP_IN_GROEP);
+  const gaten = groups.map((g, i) => (i === 0 ? 0 : gatOpBaan(g.gapToPrev, options.rondeTijd ?? null)));
+  const somGaten = gaten.reduce((s, x) => s + x, 0);
+  const ruimte = MAX_VELD - lengtes.reduce((s, x) => s + x, 0);
+  const krimp = somGaten > ruimte && somGaten > 0 ? Math.max(0, ruimte) / somGaten : 1;
+
   let start = LEAD_FRACTION - rotation;
   groups.forEach((group, groupIndex) => {
+    start -= gaten[groupIndex] * krimp;
     const base = start;
-    start -= (group.leden.length - 1) * STAP_IN_GROEP + GROUP_SPREAD;
+    start -= lengtes[groupIndex];
     group.leden.forEach((lid, i) => {
       // Echte positie als de bron die geeft: `meter` is het aantal meters in de
       // huidige ronde, dus meter/rondelengte is precies waar iemand op de baan
@@ -358,6 +395,9 @@ export function plaatsLabels(
       verder(naarBuitenH, -(h / 2 + 1)),
       verder(naarBuitenH, h / 2 + 1),
       verder(naarBinnenV, 2 * binnenwaarts),
+      verder(naarBinnenH, -(h + 2)),
+      verder(naarBinnenH, h + 2),
+      verder(naarBinnenV, 3 * binnenwaarts),
     ];
 
     const binnen = (k: Vak) => k.left >= 2 && k.top >= 2 && k.left + k.b <= vak.b - 2 && k.top + k.h <= vak.h - 2;
@@ -426,7 +466,7 @@ export function verwerkMeting(vorig: Meting | undefined, abs: number, t: number)
 /* ── Teksten bij de groepen ───────────────────────────────────────────────── */
 
 /** Seconden als "6,4 s"; vanaf tien seconden zonder decimaal, zoals "11 s". */
-function seconden(s: number): string {
+export function seconden(s: number): string {
   const abs = Math.abs(s);
   return abs < 10 ? `${abs.toFixed(1).replace(".", ",")} s` : `${Math.round(abs)} s`;
 }
