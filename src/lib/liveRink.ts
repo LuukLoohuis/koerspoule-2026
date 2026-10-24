@@ -89,6 +89,14 @@ export function baanPositie(fractie: number, off = 0): { x: number; y: number } 
  */
 export const BAAN_OFFSETS = [-26, 0, 24];
 
+/**
+ * Stap tussen twee rijders in een pak. Ze waaieren over drie banen uit, dus
+ * pas de vierde rijder ligt weer op dezelfde lijn als de eerste: die moet
+ * MIN_SEPARATION verder liggen, de tussenliggende schuiven schuin op. Zo is een
+ * peloton van zestig een blok en geen sliert die de halve baan rond ligt.
+ */
+export const STAP_IN_GROEP = MIN_SEPARATION / BAAN_OFFSETS.length;
+
 export function rinkPath(ijsType: string | null | undefined): string {
   return ijsType === "natuurijs" ? PATH_NATUURIJS : PATH_KUNSTIJS;
 }
@@ -149,8 +157,12 @@ export function placeRiders(
   const out: RinkPlacement[] = [];
   const metPositie = heeftEchtePositie(groups, rondeLengte);
 
+  // Elke groep begint een vast stuk achter de staart van de vorige, niet achter
+  // haar kop: anders schuift een groot peloton over de groep erachter heen.
+  let start = LEAD_FRACTION - rotation;
   groups.forEach((group, groupIndex) => {
-    const base = LEAD_FRACTION - rotation - groupIndex * GROUP_SPREAD;
+    const base = start;
+    start -= (group.leden.length - 1) * STAP_IN_GROEP + GROUP_SPREAD;
     group.leden.forEach((lid, i) => {
       // Echte positie als de bron die geeft: `meter` is het aantal meters in de
       // huidige ronde, dus meter/rondelengte is precies waar iemand op de baan
@@ -161,7 +173,7 @@ export function placeRiders(
         metPositie && rondeLengte != null && meter != null && Number.isFinite(meter)
           ? meter / rondeLengte
           : null;
-      const raw = echt !== null ? echt - rotation : base - i * MIN_SEPARATION;
+      const raw = echt !== null ? echt - rotation : base - i * STAP_IN_GROEP;
       // Positief modulo: fracties moeten binnen 0..1 blijven.
       const fraction = ((raw % 1) + 1) % 1;
       // Waaier het pak over de breedte van de baan uit. Ronde-voorsprong
@@ -280,6 +292,85 @@ export function groepsBand(fracties: number[]): string | null {
   return punten.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
 }
 
+/* ── Namen bij je eigen rijders ───────────────────────────────────────────
+ *
+ * De baan schaalt mee met het scherm, de letters niet: op een telefoon is het
+ * ovaal 340 px breed en vallen twee namen in hetzelfde pak over elkaar. Daarom
+ * rekenen we in schermpixels en zoeken we per naam een vrije plek. Eerst naar
+ * het middenterrein toe -- daar staat nooit iemand --, dan de andere kant op,
+ * dan opzij.
+ */
+
+/** Rechthoek in px: linksboven plus breedte en hoogte. */
+export type Vak = { left: number; top: number; b: number; h: number };
+
+/** Hoogte van een naamlabel (10 px vet, regelhoogte 15). */
+export const LABEL_H = 15;
+/** Afstand van het midden van het schijfje tot de rand van het label. */
+export const LABEL_AFSTAND = 13;
+
+/** Breedte van een naamlabel; 10 px vet is zo'n 6,3 px per letter plus de rand. */
+export function labelBreedte(naam: string): number {
+  return Math.ceil(naam.length * 6.3) + 10;
+}
+
+function overlap(a: Vak, b: Vak): number {
+  const x = Math.min(a.left + a.b, b.left + b.b) - Math.max(a.left, b.left);
+  const y = Math.min(a.top + a.h, b.top + b.h) - Math.max(a.top, b.top);
+  return x > 0 && y > 0 ? x * y : 0;
+}
+
+/**
+ * Plek per naam. `items` staan in volgorde van belang (de kop eerst): wie
+ * eerder komt kiest eerst. Een plek die buiten de baan valt of iets raakt
+ * slaan we over; past er nergens iets, dan de plek met de minste overlap.
+ */
+export function plaatsLabels(
+  items: { sleutel: string; x: number; y: number; b: number }[],
+  vak: { b: number; h: number },
+  obstakels: Vak[] = [],
+): Map<string, Vak> {
+  const uit = new Map<string, Vak>();
+  const bezet = [...obstakels];
+  const midden = { x: vak.b / 2, y: vak.h / 2 };
+  for (const it of items) {
+    const h = LABEL_H;
+    const boven: Vak = { left: it.x - it.b / 2, top: it.y - LABEL_AFSTAND - h, b: it.b, h };
+    const onder: Vak = { left: it.x - it.b / 2, top: it.y + LABEL_AFSTAND, b: it.b, h };
+    const rechts: Vak = { left: it.x + LABEL_AFSTAND + 2, top: it.y - h / 2, b: it.b, h };
+    const links: Vak = { left: it.x - LABEL_AFSTAND - 2 - it.b, top: it.y - h / 2, b: it.b, h };
+    const naarBinnenV = it.y > midden.y ? boven : onder;
+    const naarBuitenV = it.y > midden.y ? onder : boven;
+    const naarBinnenH = it.x > midden.x ? links : rechts;
+    const naarBuitenH = it.x > midden.x ? rechts : links;
+    // Zit het pak vol, dan een rij verder of opzij een halve regel verschoven:
+    // nog steeds naast het eigen schijfje, maar vrij van de buren.
+    const verder = (k: Vak, dy: number): Vak => ({ ...k, top: k.top + dy });
+    const binnenwaarts = it.y > midden.y ? -(h + 2) : h + 2;
+    const kandidaten = [
+      naarBinnenV,
+      naarBuitenV,
+      naarBinnenH,
+      naarBuitenH,
+      verder(naarBinnenV, binnenwaarts),
+      verder(naarBinnenH, -(h / 2 + 1)),
+      verder(naarBinnenH, h / 2 + 1),
+      verder(naarBuitenH, -(h / 2 + 1)),
+      verder(naarBuitenH, h / 2 + 1),
+      verder(naarBinnenV, 2 * binnenwaarts),
+    ];
+
+    const binnen = (k: Vak) => k.left >= 2 && k.top >= 2 && k.left + k.b <= vak.b - 2 && k.top + k.h <= vak.h - 2;
+    const kosten = (k: Vak) => bezet.reduce((s, o) => s + overlap(k, o), 0) + (binnen(k) ? 0 : 1e6);
+    const keuze =
+      kandidaten.find((k) => kosten(k) === 0) ??
+      kandidaten.reduce((best, k) => (kosten(k) < kosten(best) ? k : best));
+    uit.set(it.sleutel, keuze);
+    bezet.push(keuze);
+  }
+  return uit;
+}
+
 /* ── Doorrijden tussen twee metingen ──────────────────────────────────────
  *
  * De feed ververst elke twintig seconden; in die tijd rijdt een schaatser een
@@ -352,7 +443,7 @@ function seconden(s: number): string {
  */
 export function groepsGat(groups: LiveGroup[], index: number): string | null {
   const g = groups[index];
-  if (!g || groups.length < 2) return null;
+  if (!g || groups.length < 2 || g.soort === "uitKoers") return null;
   const pi = pelotonIndex(groups);
   if (index === pi) return "referentie";
   const pel = groups[pi];
