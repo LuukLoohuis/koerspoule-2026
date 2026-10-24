@@ -624,7 +624,12 @@ function GroepKaarten({
               )}
             >
               <span className="flex items-center gap-1.5">
-                <span className="size-2.5 shrink-0 rounded-full" style={{ background: rolColor(rol) }} aria-hidden />
+                {/* Uit koers: een hol rondje, want die rijders staan niet op de baan. */}
+                <span
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={g.soort === "uitKoers" ? { boxShadow: `inset 0 0 0 1.5px ${rolColor(rol)}` } : { background: rolColor(rol) }}
+                  aria-hidden
+                />
                 <span className={cn(MONO, "min-w-0 truncate text-[10px] uppercase tracking-[0.1em] text-secondary-foreground")}>
                   {groepsKopje(groups, i)}
                   {badge && ` ${badge}`}
@@ -778,8 +783,12 @@ function VolledigeStand({
       </button>
       {open && (
         <ol id={lijstId} className="max-h-72 overflow-y-auto rounded-[9px] border border-border bg-card">
-          {track.groups.flatMap((g) =>
-            g.leden.map((l) => {
+          {/* Op plek, niet per groep: wie uit koers is houdt zijn plek in de
+              stand van de bron, ook al staat zijn groep achteraan. */}
+          {track.groups
+            .flatMap((g) => g.leden.map((l) => ({ l, uit: g.soort === "uitKoers" })))
+            .sort((a, b) => a.l.positie - b.l.positie)
+            .map(({ l, uit }) => {
               const isMijn = mine.has(l.rider.beennummer);
               return (
                 <li
@@ -798,17 +807,18 @@ function VolledigeStand({
                   <span className={cn(MONO, "shrink-0 text-right text-[10px] tabular-nums")}>
                     <span className="block">{l.rider.tijd ?? "—"}</span>
                     <span className={cn("block", l.tier > 0 ? "font-bold" : "text-muted-foreground")}>
-                      {l.tier !== 0
-                        ? tierLabel(l.tier)
-                        : l.gapInGroup
-                          ? `+${l.gapInGroup.toFixed(1).replace(".", ",")}`
-                          : "—"}
+                      {uit
+                        ? "uit koers"
+                        : l.tier !== 0
+                          ? tierLabel(l.tier)
+                          : l.gapInGroup
+                            ? `+${l.gapInGroup.toFixed(1).replace(".", ",")}`
+                            : "—"}
                     </span>
                   </span>
                 </li>
               );
-            }),
-          )}
+            })}
         </ol>
       )}
     </section>

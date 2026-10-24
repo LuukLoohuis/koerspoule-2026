@@ -10,6 +10,9 @@ import {
   FINISH_PUNT,
   groepsBand,
   heeftEchtePositie,
+  labelBreedte,
+  plaatsLabels,
+  type Vak,
   schatAfstand,
   verwerkMeting,
   type Meting,
@@ -52,12 +55,15 @@ export default function LiveRink({
   baanNaam: string;
 }) {
   const plaatsen = useMemo(() => {
+    // Wie uit koers is rijdt niet meer: die staat niet op de baan. Die groep is
+    // altijd de laatste, dus de groepsindex blijft gelijk aan die in `groups`.
+    const opBaan = groups.filter((g) => g.soort !== "uitKoers");
     const ronden = new Map<string, number>();
-    for (const g of groups)
+    for (const g of opBaan)
       for (const l of g.leden) ronden.set(l.rider.beennummer, l.rider.aantalRonden);
     return {
-      echt: heeftEchtePositie(groups, rondeLengte),
-      lijst: placeRiders(groups, { rondeLengte }).map((p) => ({ ...p, ronden: ronden.get(p.beennummer) ?? 0 })),
+      echt: heeftEchtePositie(opBaan, rondeLengte),
+      lijst: placeRiders(opBaan, { rondeLengte }).map((p) => ({ ...p, ronden: ronden.get(p.beennummer) ?? 0 })),
     };
   }, [groups, rondeLengte]);
 
@@ -72,19 +78,48 @@ export default function LiveRink({
   }, [groups]);
 
   const doorgereden = useDoorrijden(plaatsen.lijst, plaatsen.echt);
+  const vakRef = useRef<HTMLDivElement>(null);
+  const breedte = useBreedte(vakRef);
 
   const punten = plaatsen.lijst.map((p) => {
     const fraction = doorgereden?.get(p.beennummer) ?? p.fraction;
     return { ...p, fraction, ...baanPositie(fraction, p.offset) };
   });
 
-  // Eigen rijders om en om boven en onder het schijfje, zodat twee labels
-  // dicht bij elkaar niet over elkaar heen vallen.
-  let eigenTeller = 0;
+  // Namen van je eigen rijders op een vrije plek, gerekend in schermpixels
+  // (zie plaatsLabels). De badges ("+1") en de eigen schijfjes zijn obstakels.
+  const schaal = breedte / BAAN_B;
+  const eigen = punten
+    .filter((p) => mineBeennummers.has(p.beennummer))
+    .sort((a, b) => (info.get(a.beennummer)?.positie ?? 0) - (info.get(b.beennummer)?.positie ?? 0));
   const midden = [baanNaam, rondeLengte ? `${rondeLengte} m` : null].filter(Boolean).join(" · ");
+  // Vaste teksten op de baan: "Finish" boven de streep en de baannaam in het
+  // midden. Breedtes per letter zoals ze in mono met spatiëring uitvallen.
+  const finishB = 6 * 8;
+  const middenB = midden.length * 9;
+  const obstakels: Vak[] = [
+    { left: FINISH_PUNT.x * schaal - finishB / 2, top: (FINISH_PUNT.y - 46) * schaal - 13, b: finishB, h: 13 },
+    { left: (BAAN_B / 2) * schaal - middenB / 2, top: (BAAN_H / 2) * schaal - 8, b: middenB, h: 16 },
+    ...eigen.map((p) => ({ left: p.x * schaal - 12, top: p.y * schaal - 12, b: 24, h: 24 })),
+    ...punten
+      .filter((p) => p.eersteInGroep && rondeBadge(p.tier))
+      .map((p) => {
+        const links = mineBeennummers.has(p.beennummer) ? 12 : 9;
+        return { left: p.x * schaal + links, top: p.y * schaal - 17, b: 22, h: 14 };
+      }),
+  ];
+  const labels = plaatsLabels(
+    eigen.map((p) => {
+      const naam = achternaamVan(info.get(p.beennummer)?.naam ?? "");
+      return { sleutel: p.beennummer, x: p.x * schaal, y: p.y * schaal, b: labelBreedte(naam) };
+    }),
+    { b: breedte, h: breedte * (BAAN_H / BAAN_B) },
+    obstakels,
+  );
 
   return (
     <div
+      ref={vakRef}
       className="relative aspect-[2/1] w-full overflow-hidden rounded-[14px] bg-[var(--mm-rink-bg)]"
       role="img"
       aria-label={`Baan met de actuele posities van de rijders op ${baanNaam}; jouw rijders staan er met naam bij`}
@@ -165,8 +200,6 @@ export default function LiveRink({
           const rol = groepsRol(groups, p.groupIndex);
           const i = info.get(p.beennummer);
           const nummer = p.beennummer.replace(/^0+(?=\d)/, "");
-          const achternaam = mine && i ? i.naam.split(" ").slice(-1)[0] : null;
-          const boven = mine ? eigenTeller++ % 2 === 1 : false;
           // Eén badge per groep: de rest van de groep rijdt per definitie
           // op dezelfde ronde.
           const badge = p.eersteInGroep ? rondeBadge(p.tier) : null;
@@ -200,19 +233,47 @@ export default function LiveRink({
                   {badge}
                 </span>
               )}
-              {achternaam && (
-                <span
-                  className="absolute left-0 -translate-x-1/2 whitespace-nowrap rounded-[4px] bg-[var(--mm-hot)] px-[5px] text-[10px] font-bold leading-[15px] text-white"
-                  style={boven ? { bottom: 14 } : { top: 14 }}
-                >
-                  {achternaam}
-                </span>
-              )}
             </div>
           );
         })}
+
+      {/* Namen als laatste laag: bovenop elk schijfje, ook van andere groepen. */}
+      {eigen.map((p) => {
+        const plek = labels.get(p.beennummer);
+        const naam = achternaamVan(info.get(p.beennummer)?.naam ?? "");
+        if (!plek || !naam) return null;
+        return (
+          <span
+            key={`naam-${p.beennummer}`}
+            className="pointer-events-none absolute whitespace-nowrap rounded-[4px] bg-[var(--mm-hot)] px-[5px] text-center text-[10px] font-bold leading-[15px] text-white"
+            style={{ left: plek.left, top: plek.top, minWidth: plek.b }}
+            aria-hidden
+          >
+            {naam}
+          </span>
+        );
+      })}
     </div>
   );
+}
+
+function achternaamVan(naam: string): string {
+  return naam.split(" ").slice(-1)[0] ?? "";
+}
+
+/** Breedte van het vak in px; de namen rekenen in schermpixels. */
+function useBreedte(ref: { current: HTMLElement | null }): number {
+  const [b, setB] = useState(BAAN_B);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const meet = () => setB(el.getBoundingClientRect().width || BAAN_B);
+    meet();
+    const ro = new ResizeObserver(meet);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return b;
 }
 
 /** Plek in het 800×400-vak als percentage, voor de HTML-laag boven de SVG. */
