@@ -14,8 +14,15 @@
 //
 // LET OP: `ready` betekent hier NIET dat alle documenten binnen zijn. Bij een
 // meting op Haaksbergen kwamen beide `ready`-berichten vóór het merendeel van
-// de 25 stand-documenten. Daarom wachten we op een stille periode in plaats van
-// op `ready` — anders synchroniseer je een halve of lege stand.
+// de 25 stand-documenten. Daarom wachten we na `ready` nog tot er een tijdje
+// geen nieuw document (`added`) meer binnenkomt — anders synchroniseer je een
+// halve of lege stand.
+//
+// Alleen `added` telt daarbij, niet `changed`: tijdens een race tikt de bron
+// elke seconde de klok en de rondetijden door, dus "helemaal stil" wordt het
+// nooit. Op 17-10-2026 liep elke run daardoor tot de bovengrens van 20 s, met
+// de cron-timeout van 25 s vlak achter zich. Wijzigingen die tijdens het
+// wachten binnenkomen nemen we gewoon mee.
 
 export const DDP_URL = "wss://livemarathon.schaatsen.nl/websocket";
 
@@ -30,7 +37,10 @@ export type DdpResult = {
 
 export type DdpOptions = {
   url?: string;
-  /** Stop zodra er zo lang niets meer binnenkomt. */
+  /**
+   * Stop zodra alle abonnementen klaar zijn en er zo lang geen nieuw document
+   * meer bijkwam — of zodra er zo lang helemaal niets meer binnenkomt.
+   */
   quietMs?: number;
   /** Harde bovengrens, ook als de bron blijft praten. */
   maxMs?: number;
@@ -48,18 +58,26 @@ export function ddpFetch(subs: DdpSub[], options: DdpOptions = {}): Promise<DdpR
 
   return new Promise((resolve, reject) => {
     const collections: DdpResult["collections"] = {};
-    let ready = false;
+    // Abonnementen die klaar zijn: `ready` gemeld of geweigerd (`nosub`).
+    const klaar = new Set<string>();
+    let allesKlaarSinds: number | null = null;
     let messages = 0;
     let lastMessage = Date.now();
+    let lastAdded = 0;
     let settled = false;
     let ws: WebSocket;
+
+    const markeerKlaar = (ids: unknown[]) => {
+      for (const id of ids) klaar.add(String(id));
+      if (allesKlaarSinds === null && klaar.size >= subs.length) allesKlaarSinds = Date.now();
+    };
 
     const finish = () => {
       if (settled) return;
       settled = true;
       clearInterval(timer);
       try { ws.close(); } catch { /* al dicht */ }
-      resolve({ collections, ready, messages });
+      resolve({ collections, ready: allesKlaarSinds !== null, messages });
     };
     const fail = (err: unknown) => {
       if (settled) return;
@@ -74,7 +92,11 @@ export function ddpFetch(subs: DdpSub[], options: DdpOptions = {}): Promise<DdpR
       if (settled) return;
       const now = Date.now();
       if (now - started > maxMs) return finish();
-      // Pas afronden als er iets binnen was én het daarna stil bleef.
+      // Beginstand binnen: alles klaar en sindsdien geen nieuw document meer.
+      if (allesKlaarSinds !== null && now - Math.max(allesKlaarSinds, lastAdded) > quietMs) {
+        return finish();
+      }
+      // Of de bron zwijgt helemaal, ook zonder `ready`.
       if (messages > 0 && now - lastMessage > quietMs) finish();
     }, 250);
 
@@ -127,6 +149,7 @@ export function ddpFetch(subs: DdpSub[], options: DdpOptions = {}): Promise<DdpR
           const col = String(m.collection ?? "");
           const id = String(m.id ?? "");
           if (!col || !id) break;
+          if (m.msg === "added") lastAdded = Date.now();
           const store = (collections[col] ??= {});
           store[id] = { ...(store[id] ?? {}), ...((m.fields as Record<string, unknown>) ?? {}) };
           // `cleared` hoort bij changed: die velden zijn verwijderd.
@@ -144,12 +167,13 @@ export function ddpFetch(subs: DdpSub[], options: DdpOptions = {}): Promise<DdpR
         }
 
         case "ready":
-          ready = true;
+          markeerKlaar((m.subs as unknown[] | undefined) ?? []);
           break;
 
         case "nosub":
           // Onbekende publicatie of geweigerd abonnement: geen reden om de
           // hele run te laten klappen, de rest kan gewoon doorlopen.
+          markeerKlaar([m.id]);
           break;
       }
     };
