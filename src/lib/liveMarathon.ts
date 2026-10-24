@@ -259,14 +259,6 @@ export type LiveGroup = {
 export const GAP_THRESHOLD_S = 1.5;
 
 /**
- * Wie twee ronden lang niet over de streep kwam terwijl het peloton dat wel
- * deed, rijdt niet meer mee: opgegeven, gevallen of uit koers gehaald. De bron
- * houdt die rijders in de stand met hun laatste ronde; in Utrecht (24-10-2026)
- * stond iemand na twintig ronden nog als "−74" op de baan.
- */
-export const UIT_KOERS_RONDEN = 2;
-
-/**
  * Is het peloton binnen? De jury belt het peloton af zodra er uitlopers zijn
  * die het op een ronde hebben gezet; die rijden daarna nog door tot hun
  * finish. Vanaf dat moment klopt het eigen aantal ronden niet meer als
@@ -292,36 +284,36 @@ function correctie(r: LiveRider): number {
   return (r.aantalRondenKop ?? r.aantalRonden) - r.aantalRonden;
 }
 
-function mediaan(waarden: number[]): number | null {
-  if (waarden.length === 0) return null;
-  const s = [...waarden].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+/**
+ * Wie is uit koers? De regel waarmee livemarathon.schaatsen.nl een rijder
+ * lichtgrijs zet (helper `achterClass` in de bronpagina): niet gefinisht en
+ * meer dan een ronde achter de leider, gemeten in AantalRondenKop. Of precies
+ * een ronde achter en ook nog verder terug op de baan (Meter); dat telt alleen
+ * waar de bron meters geeft, want bij 0 m is niemand "verder terug". In
+ * Utrecht op 24-10-2026: Van Gammeren (twee ronden achter) grijs, Fransen
+ * (één ronde) niet.
+ *
+ * Eén afwijking: we meten tegen hooguit één ronde vóór het peloton. Zet een
+ * uitloper het veld op twee ronden, dan zou de bron het hele peloton grijs
+ * maken; met deze grens blijft het peloton in koers en valt alleen wie door
+ * het peloton gedubbeld is af. Bij geen of één ronde voorsprong is het precies
+ * de bron.
+ */
+export function isUitKoers(rider: LiveRider, leider: LiveRider | undefined, pelotonKop?: number): boolean {
+  if (!leider || rider.finished) return false;
+  const kop = (r: LiveRider) => r.aantalRondenKop ?? r.aantalRonden;
+  const ref = pelotonKop == null ? kop(leider) : Math.min(kop(leider), pelotonKop + 1);
+  const meterAchter = ref === kop(leider) && (rider.meter ?? 0) < (leider.meter ?? 0);
+  return kop(rider) < ref - 1 || (kop(rider) === ref - 1 && meterAchter);
 }
 
-/**
- * Wie is uit koers? Twee voorwaarden, allebei gemeten tegen het peloton:
- *
- * - minstens UIT_KOERS_RONDEN ronden achter. Wie gedubbeld is rijdt vaak nog
- *   gewoon mee (Haaksbergen: twee keer gedubbeld, maar nog in het pak);
- * - en al zo lang niet over de streep gekomen. Gemeten tegen de doorkomst van
- *   het peloton, niet tegen de laatste rijder op de baan: na de finish rijden
- *   alleen de uitlopers nog, en dan zou het hele binnengekomen veld "uit koers"
- *   zijn. Een ronde duurt op een 400 m-baan zo'n 33 s en op natuurijs minuten,
- *   dus de grens is een aantal ronden en geen vast aantal seconden.
- */
-function uitKoersSet(riders: LiveRider[], ronden: (r: LiveRider) => number): Set<string> {
-  const uit = new Set<string>();
-  const ref = pelotonLaps(riders, ronden);
-  const tijden = riders.filter((r) => ronden(r) === ref && r.tijdSort != null).map((r) => r.tijdSort!);
-  const pelotonTijd = mediaan(tijden);
-  if (pelotonTijd == null || ref <= 0) return uit;
-  const grens = UIT_KOERS_RONDEN * (pelotonTijd / ref);
-  for (const r of riders) {
-    if (r.finished || r.tijdSort == null) continue;
-    if (ref - ronden(r) >= UIT_KOERS_RONDEN && pelotonTijd - r.tijdSort > grens) uit.add(r.beennummer);
-  }
-  return uit;
+function uitKoersSet(sorted: LiveRider[]): Set<string> {
+  // De leider zoals de bron hem ziet: de meeste ronden in de klassering, dan de
+  // vroegste doorkomst.
+  const kop = (r: LiveRider) => r.aantalRondenKop ?? r.aantalRonden;
+  const leider = sortStandings(sorted, kop)[0];
+  const pelotonKop = pelotonLaps(sorted, kop);
+  return new Set(sorted.filter((r) => isUitKoers(r, leider, pelotonKop)).map((r) => r.beennummer));
 }
 
 /**
@@ -348,7 +340,7 @@ export function buildGroups(
   const naFinish = pelotonBinnen(riders);
   const ronden = (r: LiveRider) => rondenVoorStand(r, naFinish);
   const sorted = sortStandings(riders, ronden);
-  const uit = uitKoersSet(sorted, ronden);
+  const uit = uitKoersSet(sorted);
   const inKoers = sorted.filter((r) => !uit.has(r.beennummer));
   const peloton = pelotonLaps(inKoers.length > 0 ? inKoers : sorted, ronden);
   const pelotonCorrectie = sorted.find((r) => ronden(r) === peloton && !uit.has(r.beennummer));

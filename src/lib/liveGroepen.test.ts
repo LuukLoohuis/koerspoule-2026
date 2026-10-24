@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildGroups, groepsNaam, pelotonBinnen, type LiveRider } from "./liveMarathon";
+import { buildGroups, groepsNaam, isUitKoers, pelotonBinnen, type LiveRider } from "./liveMarathon";
 import {
   baanPositie,
   BAAN_B,
@@ -61,17 +61,18 @@ describe("groepen in Utrecht, Cup 2 Beloften (24-10-2026)", () => {
     expect(indeling(halverwege)).toEqual([
       ["Uitlopers · +1", 5],
       ["Peloton", 59],
-      ["Achterblijvers", 3],
-      ["Uit koers", 3],
+      ["Achterblijvers", 2],
+      ["Uit koers", 4],
     ]);
   });
 
   it("halverwege: wie twintig ronden reed staat niet als −22 op de baan", () => {
     const groups = buildGroups(halverwege);
     const uit = groups.find((g) => g.soort === "uitKoers")!;
-    expect(uit.leden.map((l) => achternaam(l.rider))).toEqual(["Verbeek", "Groenheiden", "Boer"]);
+    // Ter Hoeve reed 41 ronden terwijl de uitlopers op 43 zaten: bij de bron grijs.
+    expect(uit.leden.map((l) => achternaam(l.rider))).toEqual(["Hoeve", "Verbeek", "Groenheiden", "Boer"]);
     const opBaan = placeRiders(groups.filter((g) => g.soort !== "uitKoers"));
-    expect(opBaan.map((p) => p.beennummer)).not.toContain(uit.leden[2].rider.beennummer);
+    expect(opBaan.map((p) => p.beennummer)).not.toContain(uit.leden[3].rider.beennummer);
   });
 
   it("na de finish is het peloton binnen", () => {
@@ -85,8 +86,8 @@ describe("groepen in Utrecht, Cup 2 Beloften (24-10-2026)", () => {
       ["Kopgroep", 2],
       ["Achtervolgers", 2],
       ["Peloton", 14],
-      ["Achterblijvers", 34],
-      ["Uit koers", 16],
+      ["Achterblijvers", 21],
+      ["Uit koers", 29],
     ]);
     const groups = buildGroups(finish);
     expect(groups[0].leden.map((l) => achternaam(l.rider))).toEqual(["Has", "Verduijn"]);
@@ -176,5 +177,48 @@ describe("gat tussen groepen op de baan", () => {
     const kop = f[0];
     const achter = f.map((x) => (((kop - x) % 1) + 1) % 1);
     expect(Math.max(...achter)).toBeLessThan(0.95);
+  });
+});
+
+describe("uit koers zoals de bron het grijs zet", () => {
+  // Vrouwen, Utrecht, 24-10-2026, leider in ronde 17. Bij de bron zwart:
+  // Fransen op één ronde. Grijs: Van Gammeren (twee), Boonstra (vier) en een
+  // transponder zonder naam (twaalf).
+  const r = (naam: string, ronden: number, finished = false): LiveRider => ({
+    beennummer: naam,
+    shownummer: null,
+    relatienummer: null,
+    naam,
+    sponsor: null,
+    aantalRonden: ronden,
+    aantalRondenKop: ronden,
+    meter: 0,
+    tijdSort: 1,
+    tijd: null,
+    lap: null,
+    sectie: null,
+    fastest: null,
+    groep: 0,
+    punten: 0,
+    finished,
+  });
+  const leider = r("Cox", 17);
+
+  it.each([
+    ["Fransen", 16, false],
+    ["Van Gammeren", 15, true],
+    ["Boonstra", 13, true],
+    ["CV-07249", 5, true],
+  ])("%s met %i ronden: uit koers %s", (naam, ronden, verwacht) => {
+    expect(isUitKoers(r(naam, ronden), leider, 17)).toBe(verwacht);
+  });
+
+  it("wie gefinisht is, is nooit uit koers", () => {
+    expect(isUitKoers(r("Binnen", 10, true), leider, 17)).toBe(false);
+  });
+
+  it("met uitlopers op twee ronden blijft het peloton in koers", () => {
+    expect(isUitKoers(r("Peloton", 15), r("Uitloper", 17), 15)).toBe(false);
+    expect(isUitKoers(r("Gedubbeld", 14), r("Uitloper", 17), 15)).toBe(true);
   });
 });
