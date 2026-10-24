@@ -63,7 +63,8 @@ function staat(ronde: number, rondenTeGaan: number, raceTime: string, actief: nu
     pelotonRonden: null,
     raceTime,
     lapTime: null,
-    gemRondeTijd: null,
+    // Gemiddelde rondetijd van de bron in Utrecht; daarmee volgt het gat op de baan de tijd.
+    gemRondeTijd: "32.730",
     gemRondeSnelheid: null,
     snelsteRondeTijd: null,
     snelsteRondeNaam: null,
@@ -107,6 +108,20 @@ function race(rijen: Rij[], s: LiveRaceState): LiveRace {
 const HALVERWEGE = race(fixture.ronde43 as Rij[], staat(43, 57, "23:29", 70));
 const FINISH = race(fixture.finish as Rij[], staat(100, 0, "54:34", 70));
 
+// Zoals bij de vrouwen later die dag: twee rijders weg op 4,1 s, de rest in
+// het peloton. Gemaakt uit de stand van ronde 43: Mulder en Teunissen rijden
+// weg, de andere drie uitlopers zitten weer in het peloton.
+const PELOTON_KOP = (fixture.ronde43 as Rij[]).find((r) => r.naam === "Friso van Vliet")!.tijd_sort!;
+const TWEE_WEG = race(
+  (fixture.ronde43 as Rij[]).map((r) => {
+    if (r.naam === "Marthijn Mulder") return { ...r, aantal_ronden: 42, tijd_sort: PELOTON_KOP - 4100 };
+    if (r.naam === "Niels Teunissen") return { ...r, aantal_ronden: 42, tijd_sort: PELOTON_KOP - 3950 };
+    if (r.aantal_ronden === 43) return { ...r, aantal_ronden: 42, tijd_sort: PELOTON_KOP + 500 };
+    return r;
+  }),
+  staat(43, 57, "23:29", 70),
+);
+
 const OPTIES = {
   ...GEDEELD,
   mineRiderIds: new Set(MIJN.values()),
@@ -132,6 +147,14 @@ export default function Scherm17Demo() {
         </Frame>
         <Frame label="mobiel 390" breedte="mobiel">
           <LiveTab race={FINISH} {...OPTIES} />
+        </Frame>
+      </Staat>
+      <Staat titel="Twee weg op 4,1 s · het gat op de baan volgt de tijd">
+        <Frame label="desktop 1280" breedte="desktop">
+          <LiveTab race={TWEE_WEG} {...OPTIES} />
+        </Frame>
+        <Frame label="mobiel 390" breedte="mobiel">
+          <LiveTab race={TWEE_WEG} {...OPTIES} />
         </Frame>
       </Staat>
       <Staat titel="Halverwege · ronde 43, vijf uitlopers op een ronde">
