@@ -1,0 +1,1407 @@
+{
+ "_bron": "livemarathon.schaatsen.nl/baan/Utrecht, Marathon Cup 2 Beloften Divisie Mannen, 24-10-2026. 'ronde43': de stand van de bronpagina halverwege (ronde 43 van 100, vijf uitlopers op een ronde). 'finish': live_rider_standings na de finish, zoals de sync hem schreef. Het peloton is in ronde 94 afgebeld; Has en Verduijn (een ronde voor) reden door tot 100. Zonder relatienummer en sponsor.",
+ "ronde43": [
+  {
+   "beennummer": "042",
+   "naam": "Marthijn Mulder",
+   "aantal_ronden": 43,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1396584,
+   "tijd": "23:16.584",
+   "finished": false
+  },
+  {
+   "beennummer": "073",
+   "naam": "Niels Teunissen",
+   "aantal_ronden": 43,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1396679,
+   "tijd": "23:16.679",
+   "finished": false
+  },
+  {
+   "beennummer": "040",
+   "naam": "Stefan Has",
+   "aantal_ronden": 43,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1399276,
+   "tijd": "23:19.276",
+   "finished": false
+  },
+  {
+   "beennummer": "036",
+   "naam": "Gijs Verduijn",
+   "aantal_ronden": 43,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1399369,
+   "tijd": "23:19.369",
+   "finished": false
+  },
+  {
+   "beennummer": "087",
+   "naam": "Mitchel Zijp",
+   "aantal_ronden": 43,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1409443,
+   "tijd": "23:29.443",
+   "finished": false
+  },
+  {
+   "beennummer": "034",
+   "naam": "Friso van Vliet",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1373955,
+   "tijd": "22:53.955",
+   "finished": false
+  },
+  {
+   "beennummer": "005",
+   "naam": "Sietse de Vries",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1374045,
+   "tijd": "22:54.045",
+   "finished": false
+  },
+  {
+   "beennummer": "008",
+   "naam": "Doucelin Pedicone",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1374072,
+   "tijd": "22:54.072",
+   "finished": false
+  },
+  {
+   "beennummer": "019",
+   "naam": "Jort van Wijk",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1374201,
+   "tijd": "22:54.201",
+   "finished": false
+  },
+  {
+   "beennummer": "047",
+   "naam": "Gonzalo Ferraz Garcia",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1374247,
+   "tijd": "22:54.247",
+   "finished": false
+  },
+  {
+   "beennummer": "083",
+   "naam": "Ruben Ligtenberg",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1374363,
+   "tijd": "22:54.363",
+   "finished": false
+  },
+  {
+   "beennummer": "018",
+   "naam": "Roel Boek",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1374446,
+   "tijd": "22:54.446",
+   "finished": false
+  },
+  {
+   "beennummer": "060",
+   "naam": "Yves Vergeer",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1375321,
+   "tijd": "22:55.321",
+   "finished": false
+  },
+  {
+   "beennummer": "061",
+   "naam": "Dyon Talsma",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1375626,
+   "tijd": "22:55.626",
+   "finished": false
+  },
+  {
+   "beennummer": "045",
+   "naam": "Johan Bouwhuis",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1376038,
+   "tijd": "22:56.038",
+   "finished": false
+  },
+  {
+   "beennummer": "080",
+   "naam": "Jurrian Haasjes",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1376223,
+   "tijd": "22:56.223",
+   "finished": false
+  },
+  {
+   "beennummer": "173",
+   "naam": "Sem Spruit",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1376400,
+   "tijd": "22:56.400",
+   "finished": false
+  },
+  {
+   "beennummer": "043",
+   "naam": "Colin James Duivenvoorden",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1376475,
+   "tijd": "22:56.475",
+   "finished": false
+  },
+  {
+   "beennummer": "028",
+   "naam": "Floris Verploeg",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1376646,
+   "tijd": "22:56.646",
+   "finished": false
+  },
+  {
+   "beennummer": "069",
+   "naam": "Ruben Pekkeriet",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1377590,
+   "tijd": "22:57.590",
+   "finished": false
+  },
+  {
+   "beennummer": "068",
+   "naam": "Jitse Wiersma",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1378476,
+   "tijd": "22:58.476",
+   "finished": false
+  },
+  {
+   "beennummer": "089",
+   "naam": "Mart Nijhoff",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1378573,
+   "tijd": "22:58.573",
+   "finished": false
+  },
+  {
+   "beennummer": "094",
+   "naam": "Henk van der Gugten",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1378618,
+   "tijd": "22:58.618",
+   "finished": false
+  },
+  {
+   "beennummer": "095",
+   "naam": "Ivar Immerzeel",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1378749,
+   "tijd": "22:58.749",
+   "finished": false
+  },
+  {
+   "beennummer": "009",
+   "naam": "Jurre Nijhoff",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1378847,
+   "tijd": "22:58.847",
+   "finished": false
+  },
+  {
+   "beennummer": "093",
+   "naam": "Sille Hut",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1378950,
+   "tijd": "22:58.950",
+   "finished": false
+  },
+  {
+   "beennummer": "065",
+   "naam": "Niels Meijer",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1378970,
+   "tijd": "22:58.970",
+   "finished": false
+  },
+  {
+   "beennummer": "029",
+   "naam": "Isaac Immerzeel",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1379045,
+   "tijd": "22:59.045",
+   "finished": false
+  },
+  {
+   "beennummer": "050",
+   "naam": "Pieter Feenstra",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1379129,
+   "tijd": "22:59.129",
+   "finished": false
+  },
+  {
+   "beennummer": "004",
+   "naam": "Huub Adema",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1379279,
+   "tijd": "22:59.279",
+   "finished": false
+  },
+  {
+   "beennummer": "056",
+   "naam": "Timon Veerman",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1379423,
+   "tijd": "22:59.423",
+   "finished": false
+  },
+  {
+   "beennummer": "017",
+   "naam": "Sipke Sijtsema",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1379508,
+   "tijd": "22:59.508",
+   "finished": false
+  },
+  {
+   "beennummer": "044",
+   "naam": "Menno van Eig",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1379511,
+   "tijd": "22:59.511",
+   "finished": false
+  },
+  {
+   "beennummer": "054",
+   "naam": "Chris Berkhout",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1379620,
+   "tijd": "22:59.620",
+   "finished": false
+  },
+  {
+   "beennummer": "026",
+   "naam": "Niek Berden",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1379752,
+   "tijd": "22:59.752",
+   "finished": false
+  },
+  {
+   "beennummer": "016",
+   "naam": "Berend Bervoets",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1379880,
+   "tijd": "22:59.880",
+   "finished": false
+  },
+  {
+   "beennummer": "076",
+   "naam": "Arn Botman",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1380108,
+   "tijd": "23:00.108",
+   "finished": false
+  },
+  {
+   "beennummer": "002",
+   "naam": "Mika Kolder",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1380220,
+   "tijd": "23:00.220",
+   "finished": false
+  },
+  {
+   "beennummer": "027",
+   "naam": "Matthijs Maas",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1380316,
+   "tijd": "23:00.316",
+   "finished": false
+  },
+  {
+   "beennummer": "108",
+   "naam": "Colin Breed",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1380450,
+   "tijd": "23:00.450",
+   "finished": false
+  },
+  {
+   "beennummer": "070",
+   "naam": "Marien Pelleboer",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1380584,
+   "tijd": "23:00.584",
+   "finished": false
+  },
+  {
+   "beennummer": "038",
+   "naam": "Morris Witkam",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1380663,
+   "tijd": "23:00.663",
+   "finished": false
+  },
+  {
+   "beennummer": "063",
+   "naam": "Jan-Hendrik Hoekstra",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1380828,
+   "tijd": "23:00.828",
+   "finished": false
+  },
+  {
+   "beennummer": "077",
+   "naam": "Niels van Reeuwijk",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1380957,
+   "tijd": "23:00.957",
+   "finished": false
+  },
+  {
+   "beennummer": "051",
+   "naam": "Bavo Coremans",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1381165,
+   "tijd": "23:01.165",
+   "finished": false
+  },
+  {
+   "beennummer": "098",
+   "naam": "Quinten Meerveld",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1381273,
+   "tijd": "23:01.273",
+   "finished": false
+  },
+  {
+   "beennummer": "013",
+   "naam": "Floris Geldof",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1381462,
+   "tijd": "23:01.462",
+   "finished": false
+  },
+  {
+   "beennummer": "048",
+   "naam": "Emiel van Wees",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1381568,
+   "tijd": "23:01.568",
+   "finished": false
+  },
+  {
+   "beennummer": "052",
+   "naam": "Vigo Veenis",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1381582,
+   "tijd": "23:01.582",
+   "finished": false
+  },
+  {
+   "beennummer": "020",
+   "naam": "Simon Wiegman",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1381657,
+   "tijd": "23:01.657",
+   "finished": false
+  },
+  {
+   "beennummer": "057",
+   "naam": "Jens Klootwijk",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1381713,
+   "tijd": "23:01.713",
+   "finished": false
+  },
+  {
+   "beennummer": "049",
+   "naam": "Joost Schipper",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1381779,
+   "tijd": "23:01.779",
+   "finished": false
+  },
+  {
+   "beennummer": "011",
+   "naam": "Daan Besteman",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1381957,
+   "tijd": "23:01.957",
+   "finished": false
+  },
+  {
+   "beennummer": "030",
+   "naam": "Niels Immerzeel",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1382102,
+   "tijd": "23:02.102",
+   "finished": false
+  },
+  {
+   "beennummer": "025",
+   "naam": "Koen de Best",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1382210,
+   "tijd": "23:02.210",
+   "finished": false
+  },
+  {
+   "beennummer": "046",
+   "naam": "Guido Maat",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1382313,
+   "tijd": "23:02.313",
+   "finished": false
+  },
+  {
+   "beennummer": "037",
+   "naam": "Rens Vergeer",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1382475,
+   "tijd": "23:02.475",
+   "finished": false
+  },
+  {
+   "beennummer": "015",
+   "naam": "Jan Meester",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1382539,
+   "tijd": "23:02.539",
+   "finished": false
+  },
+  {
+   "beennummer": "022",
+   "naam": "Julian Kant",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1382771,
+   "tijd": "23:02.771",
+   "finished": false
+  },
+  {
+   "beennummer": "176",
+   "naam": "Thijs Wiersma",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1383009,
+   "tijd": "23:03.009",
+   "finished": false
+  },
+  {
+   "beennummer": "067",
+   "naam": "Thomas van Westrienen",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1383448,
+   "tijd": "23:03.448",
+   "finished": false
+  },
+  {
+   "beennummer": "074",
+   "naam": "Rémon Vos",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1383558,
+   "tijd": "23:03.558",
+   "finished": false
+  },
+  {
+   "beennummer": "003",
+   "naam": "Michiel Kok",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1384005,
+   "tijd": "23:04.005",
+   "finished": false
+  },
+  {
+   "beennummer": "062",
+   "naam": "Joan Bloemert",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1385429,
+   "tijd": "23:05.429",
+   "finished": false
+  },
+  {
+   "beennummer": "012",
+   "naam": "Victor van Savooijen",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1406500,
+   "tijd": "23:26.500",
+   "finished": false
+  },
+  {
+   "beennummer": "172",
+   "naam": "Michiel de Groot",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1407309,
+   "tijd": "23:27.309",
+   "finished": false
+  },
+  {
+   "beennummer": "041",
+   "naam": "Lieuwe ter Hoeve",
+   "aantal_ronden": 41,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 1390631,
+   "tijd": "23:10.631",
+   "finished": false
+  },
+  {
+   "beennummer": "024",
+   "naam": "Seth Verbeek",
+   "aantal_ronden": 27,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 915429,
+   "tijd": "15:15.429",
+   "finished": false
+  },
+  {
+   "beennummer": "171",
+   "naam": "Lars Groenheiden",
+   "aantal_ronden": 27,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 920495,
+   "tijd": "15:20.495",
+   "finished": false
+  },
+  {
+   "beennummer": "058",
+   "naam": "Arie Boer",
+   "aantal_ronden": 20,
+   "aantal_ronden_kop": null,
+   "tijd_sort": 669262,
+   "tijd": "11:09.262",
+   "finished": false
+  }
+ ],
+ "finish": [
+  {
+   "beennummer": "040",
+   "naam": "Stefan Has",
+   "aantal_ronden": 100,
+   "aantal_ronden_kop": 100,
+   "tijd_sort": 3274698,
+   "tijd": "54:34.698",
+   "lap": "35.175",
+   "groep": 1,
+   "finished": true
+  },
+  {
+   "beennummer": "036",
+   "naam": "Gijs Verduijn",
+   "aantal_ronden": 100,
+   "aantal_ronden_kop": 100,
+   "tijd_sort": 3289763,
+   "tijd": "54:49.763",
+   "lap": "35.614",
+   "groep": 1,
+   "finished": true
+  },
+  {
+   "beennummer": "005",
+   "naam": "Sietse de Vries",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3106308,
+   "tijd": "51:46.308",
+   "lap": "33.431",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "176",
+   "naam": "Thijs Wiersma",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3106384,
+   "tijd": "51:46.384",
+   "lap": "33.364",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "042",
+   "naam": "Marthijn Mulder",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3108662,
+   "tijd": "51:48.662",
+   "lap": "36.173",
+   "groep": 1,
+   "finished": true
+  },
+  {
+   "beennummer": "047",
+   "naam": "Gonzalo Ferraz Garcia",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3111688,
+   "tijd": "51:51.688",
+   "lap": "29.540",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "054",
+   "naam": "Chris Berkhout",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3112065,
+   "tijd": "51:52.065",
+   "lap": "29.761",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "030",
+   "naam": "Niels Immerzeel",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3114497,
+   "tijd": "51:54.497",
+   "lap": "30.652",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "080",
+   "naam": "Jurrian Haasjes",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3114657,
+   "tijd": "51:54.657",
+   "lap": "30.791",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "076",
+   "naam": "Arn Botman",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3114770,
+   "tijd": "51:54.770",
+   "lap": "31.678",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "045",
+   "naam": "Johan Bouwhuis",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3114907,
+   "tijd": "51:54.907",
+   "lap": "31.434",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "087",
+   "naam": "Mitchel Zijp",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3115220,
+   "tijd": "51:55.220",
+   "lap": "31.945",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "034",
+   "naam": "Friso van Vliet",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3115409,
+   "tijd": "51:55.409",
+   "lap": "30.964",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "060",
+   "naam": "Yves Vergeer",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3115602,
+   "tijd": "51:55.602",
+   "lap": "32.754",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "016",
+   "naam": "Berend Bervoets",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3116024,
+   "tijd": "51:56.024",
+   "lap": "31.134",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "017",
+   "naam": "Sipke Sijtsema",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3117223,
+   "tijd": "51:57.223",
+   "lap": "33.620",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "048",
+   "naam": "Emiel van Wees",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3118239,
+   "tijd": "51:58.239",
+   "lap": "32.338",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "018",
+   "naam": "Roel Boek",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3118647,
+   "tijd": "51:58.647",
+   "lap": "35.463",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "068",
+   "naam": "Jitse Wiersma",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3119233,
+   "tijd": "51:59.233",
+   "lap": "34.924",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "069",
+   "naam": "Ruben Pekkeriet",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3119472,
+   "tijd": "51:59.472",
+   "lap": "36.347",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "089",
+   "naam": "Mart Nijhoff",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3120087,
+   "tijd": "52:00.087",
+   "lap": "36.687",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "038",
+   "naam": "Morris Witkam",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3121638,
+   "tijd": "52:01.638",
+   "lap": "35.254",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "077",
+   "naam": "Niels van Reeuwijk",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3124882,
+   "tijd": "52:04.882",
+   "lap": "38.972",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "004",
+   "naam": "Huub Adema",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3131312,
+   "tijd": "52:11.312",
+   "lap": "39.627",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "083",
+   "naam": "Ruben Ligtenberg",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3133904,
+   "tijd": "52:13.904",
+   "lap": "47.272",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "009",
+   "naam": "Jurre Nijhoff",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3135848,
+   "tijd": "52:15.848",
+   "lap": "46.646",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "052",
+   "naam": "Vigo Veenis",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3136972,
+   "tijd": "52:16.972",
+   "lap": "40.913",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "061",
+   "naam": "Dyon Talsma",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3137427,
+   "tijd": "52:17.427",
+   "lap": "53.167",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "026",
+   "naam": "Niek Berden",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3137927,
+   "tijd": "52:17.927",
+   "lap": "47.172",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "002",
+   "naam": "Mika Kolder",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3141974,
+   "tijd": "52:21.974",
+   "lap": "57.384",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "029",
+   "naam": "Isaac Immerzeel",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3143190,
+   "tijd": "52:23.190",
+   "lap": "53.224",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "108",
+   "naam": "Colin Breed",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3143966,
+   "tijd": "52:23.966",
+   "lap": "58.570",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "056",
+   "naam": "Timon Veerman",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3145773,
+   "tijd": "52:25.773",
+   "lap": "50.143",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "015",
+   "naam": "Jan Meester",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3148418,
+   "tijd": "52:28.418",
+   "lap": "48.889",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "046",
+   "naam": "Guido Maat",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3150752,
+   "tijd": "52:30.752",
+   "lap": "1:05.719",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "050",
+   "naam": "Pieter Feenstra",
+   "aantal_ronden": 94,
+   "aantal_ronden_kop": 95,
+   "tijd_sort": 3161149,
+   "tijd": "52:41.149",
+   "lap": "1:17.519",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "008",
+   "naam": "Doucelin Pedicone",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3084040,
+   "tijd": "51:24.040",
+   "lap": "29.562",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "065",
+   "naam": "Niels Meijer",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3086875,
+   "tijd": "51:26.875",
+   "lap": "30.223",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "019",
+   "naam": "Jort van Wijk",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3087314,
+   "tijd": "51:27.314",
+   "lap": "30.540",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "013",
+   "naam": "Floris Geldof",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3087396,
+   "tijd": "51:27.396",
+   "lap": "30.154",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "051",
+   "naam": "Bavo Coremans",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3090215,
+   "tijd": "51:30.215",
+   "lap": "31.686",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "057",
+   "naam": "Jens Klootwijk",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3090962,
+   "tijd": "51:30.962",
+   "lap": "32.574",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "063",
+   "naam": "Jan-Hendrik Hoekstra",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3091162,
+   "tijd": "51:31.162",
+   "lap": "32.745",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "003",
+   "naam": "Michiel Kok",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3091177,
+   "tijd": "51:31.177",
+   "lap": "31.616",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "025",
+   "naam": "Koen de Best",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3093787,
+   "tijd": "51:33.787",
+   "lap": "34.042",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "095",
+   "naam": "Ivar Immerzeel",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3096926,
+   "tijd": "51:36.926",
+   "lap": "38.811",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "022",
+   "naam": "Julian Kant",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3100550,
+   "tijd": "51:40.550",
+   "lap": "36.534",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "028",
+   "naam": "Floris Verploeg",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3109780,
+   "tijd": "51:49.780",
+   "lap": "50.841",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "027",
+   "naam": "Matthijs Maas",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3111299,
+   "tijd": "51:51.299",
+   "lap": "36.903",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "094",
+   "naam": "Henk van der Gugten",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3129881,
+   "tijd": "52:09.881",
+   "lap": "1:15.842",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "173",
+   "naam": "Sem Spruit",
+   "aantal_ronden": 93,
+   "aantal_ronden_kop": 94,
+   "tijd_sort": 3149207,
+   "tijd": "52:29.207",
+   "lap": "1:34.972",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "067",
+   "naam": "Thomas van Westrienen",
+   "aantal_ronden": 91,
+   "aantal_ronden_kop": 92,
+   "tijd_sort": 3036450,
+   "tijd": "50:36.450",
+   "lap": "37.512",
+   "groep": 0,
+   "finished": true
+  },
+  {
+   "beennummer": "049",
+   "naam": "Joost Schipper",
+   "aantal_ronden": 91,
+   "aantal_ronden_kop": 92,
+   "tijd_sort": 3062067,
+   "tijd": "51:02.067",
+   "lap": "57.306",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "020",
+   "naam": "Simon Wiegman",
+   "aantal_ronden": 91,
+   "aantal_ronden_kop": 92,
+   "tijd_sort": 3088947,
+   "tijd": "51:28.947",
+   "lap": "1:25.911",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "011",
+   "naam": "Daan Besteman",
+   "aantal_ronden": 88,
+   "aantal_ronden_kop": 89,
+   "tijd_sort": 2975968,
+   "tijd": "49:35.968",
+   "lap": "1:20.215",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "070",
+   "naam": "Marien Pelleboer",
+   "aantal_ronden": 87,
+   "aantal_ronden_kop": 88,
+   "tijd_sort": 2913902,
+   "tijd": "48:33.902",
+   "lap": "43.388",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "093",
+   "naam": "Sille Hut",
+   "aantal_ronden": 86,
+   "aantal_ronden_kop": 87,
+   "tijd_sort": 2924629,
+   "tijd": "48:44.629",
+   "lap": "1:33.218",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "074",
+   "naam": "Rémon Vos",
+   "aantal_ronden": 83,
+   "aantal_ronden_kop": 84,
+   "tijd_sort": 2795184,
+   "tijd": "46:35.184",
+   "lap": "49.311",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "037",
+   "naam": "Rens Vergeer",
+   "aantal_ronden": 81,
+   "aantal_ronden_kop": 82,
+   "tijd_sort": 2725469,
+   "tijd": "45:25.469",
+   "lap": "57.131",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "043",
+   "naam": "Colin James Duivenvoorden",
+   "aantal_ronden": 78,
+   "aantal_ronden_kop": 79,
+   "tijd_sort": 2621269,
+   "tijd": "43:41.269",
+   "lap": "1:07.827",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "098",
+   "naam": "Quinten Meerveld",
+   "aantal_ronden": 76,
+   "aantal_ronden_kop": 77,
+   "tijd_sort": 2565257,
+   "tijd": "42:45.257",
+   "lap": "43.528",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "044",
+   "naam": "Menno van Eig",
+   "aantal_ronden": 74,
+   "aantal_ronden_kop": 75,
+   "tijd_sort": 2503305,
+   "tijd": "41:43.305",
+   "lap": "52.207",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "073",
+   "naam": "Niels Teunissen",
+   "aantal_ronden": 56,
+   "aantal_ronden_kop": 57,
+   "tijd_sort": 1879514,
+   "tijd": "31:19.514",
+   "lap": "45.200",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "062",
+   "naam": "Joan Bloemert",
+   "aantal_ronden": 45,
+   "aantal_ronden_kop": 50,
+   "tijd_sort": 1509954,
+   "tijd": "25:09.954",
+   "lap": "40.666",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "012",
+   "naam": "Victor van Savooijen",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": 50,
+   "tijd_sort": 1406500,
+   "tijd": "23:26.500",
+   "lap": "43.489",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "172",
+   "naam": "Michiel de Groot",
+   "aantal_ronden": 42,
+   "aantal_ronden_kop": 50,
+   "tijd_sort": 1407309,
+   "tijd": "23:27.309",
+   "lap": "44.774",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "041",
+   "naam": "Lieuwe ter Hoeve",
+   "aantal_ronden": 41,
+   "aantal_ronden_kop": 50,
+   "tijd_sort": 1390631,
+   "tijd": "23:10.631",
+   "lap": "1:09.462",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "024",
+   "naam": "Seth Verbeek",
+   "aantal_ronden": 27,
+   "aantal_ronden_kop": 50,
+   "tijd_sort": 915429,
+   "tijd": "15:15.429",
+   "lap": "37.581",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "171",
+   "naam": "Lars Groenheiden",
+   "aantal_ronden": 27,
+   "aantal_ronden_kop": 50,
+   "tijd_sort": 920495,
+   "tijd": "15:20.495",
+   "lap": "42.547",
+   "groep": 0,
+   "finished": false
+  },
+  {
+   "beennummer": "058",
+   "naam": "Arie Boer",
+   "aantal_ronden": 20,
+   "aantal_ronden_kop": 50,
+   "tijd_sort": 669262,
+   "tijd": "11:09.262",
+   "lap": "42.170",
+   "groep": 0,
+   "finished": false
+  }
+ ]
+}

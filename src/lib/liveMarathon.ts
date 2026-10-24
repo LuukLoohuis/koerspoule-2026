@@ -193,8 +193,14 @@ export function normalizePremie(doc: RawPremieDoc): LivePremie | null {
  * Sorteren op de geformatteerde `tijd` gaat mis zodra iemand ronden achterligt —
  * die heeft een lágere kloktijd maar staat lager in het klassement.
  */
-export function sortStandings(riders: LiveRider[]): LiveRider[] {
+export function sortStandings(
+  riders: LiveRider[],
+  ronden: (r: LiveRider) => number = (r) => r.aantalRonden,
+): LiveRider[] {
   return [...riders].sort((a, b) => {
+    if (ronden(b) !== ronden(a)) return ronden(b) - ronden(a);
+    // Gelijke klassering: wie zelf meer ronden reed staat hoger. De bron geeft
+    // uitvallers na de finish allemaal dezelfde klassering (Utrecht: 50).
     if (b.aantalRonden !== a.aantalRonden) return b.aantalRonden - a.aantalRonden;
     const at = a.tijdSort ?? Number.MAX_SAFE_INTEGER;
     const bt = b.tijdSort ?? Number.MAX_SAFE_INTEGER;
@@ -204,11 +210,14 @@ export function sortStandings(riders: LiveRider[]): LiveRider[] {
 }
 
 /** Het peloton is de grootste groep rijders op dezelfde ronde: onze referentie. */
-export function pelotonLaps(riders: LiveRider[]): number {
+export function pelotonLaps(
+  riders: LiveRider[],
+  ronden: (r: LiveRider) => number = (r) => r.aantalRonden,
+): number {
   if (riders.length === 0) return 0;
   const counts = new Map<number, number>();
-  for (const r of riders) counts.set(r.aantalRonden, (counts.get(r.aantalRonden) ?? 0) + 1);
-  let best = riders[0].aantalRonden;
+  for (const r of riders) counts.set(ronden(r), (counts.get(ronden(r)) ?? 0) + 1);
+  let best = ronden(riders[0]);
   let bestCount = -1;
   for (const [laps, n] of counts) {
     // Gelijk aantal? Dan wint de laagste ronde — dat is het peloton, niet de kop.
@@ -236,6 +245,11 @@ export type LiveGroup = {
   /** Seconden tussen deze groep en de groep ervóór; null bij de kopgroep of
    *  wanneer het verschil een hele ronde is. */
   gapToPrev: number | null;
+  /**
+   * Samengevoegde groep achteraan: alles achter het peloton is één kaart, en
+   * wie uit koers is staat apart. Gewone groepen hebben geen soort.
+   */
+  soort?: "achterblijvers" | "uitKoers";
 };
 
 /**
@@ -245,72 +259,170 @@ export type LiveGroup = {
 export const GAP_THRESHOLD_S = 1.5;
 
 /**
- * Deel het veld op in groepen. Een breuk ontstaat bij een ronde-verschil, of —
- * binnen dezelfde ronde — bij een tijdgat van méér dan `gapThreshold` seconden
- * tussen twee opeenvolgende rijders. Het gat is het verschil in doorkomsttijd
- * (TijdSort) bij de laatste passage van de finishlijn.
- * Ronden wegen zwaarder dan tijd: wie een ronde voorligt staat altijd hoger.
+ * Wie twee ronden lang niet over de streep kwam terwijl het peloton dat wel
+ * deed, rijdt niet meer mee: opgegeven, gevallen of uit koers gehaald. De bron
+ * houdt die rijders in de stand met hun laatste ronde; in Utrecht (24-10-2026)
+ * stond iemand na twintig ronden nog als "−74" op de baan.
+ */
+export const UIT_KOERS_RONDEN = 2;
+
+/**
+ * Is het peloton binnen? De jury belt het peloton af zodra er uitlopers zijn
+ * die het op een ronde hebben gezet; die rijden daarna nog door tot hun
+ * finish. Vanaf dat moment klopt het eigen aantal ronden niet meer als
+ * vergelijking: in Utrecht kwam het peloton in ronde 94 binnen en reden Has en
+ * Verduijn door tot 100, wat "+6" opleverde in plaats van "+1".
+ */
+export function pelotonBinnen(riders: LiveRider[]): boolean {
+  return riders.filter((r) => r.finished).length * 2 > riders.length;
+}
+
+/**
+ * Ronden waarop we sorteren en groeperen. Tijdens de koers het eigen aantal,
+ * net als de bron. Na de finish van het peloton de klassering van de bron
+ * (AantalRondenKop): die telt de afgebelde rijders hun achterstand op de
+ * uitlopers erbij, zodat de stand weer klopt.
+ */
+function rondenVoorStand(r: LiveRider, naFinish: boolean): number {
+  return naFinish ? (r.aantalRondenKop ?? r.aantalRonden) : r.aantalRonden;
+}
+
+/** Hoeveel de bron bij de finish bij iemand optelde (zie rondenVoorStand). */
+function correctie(r: LiveRider): number {
+  return (r.aantalRondenKop ?? r.aantalRonden) - r.aantalRonden;
+}
+
+function mediaan(waarden: number[]): number | null {
+  if (waarden.length === 0) return null;
+  const s = [...waarden].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+/**
+ * Wie is uit koers? Twee voorwaarden, allebei gemeten tegen het peloton:
+ *
+ * - minstens UIT_KOERS_RONDEN ronden achter. Wie gedubbeld is rijdt vaak nog
+ *   gewoon mee (Haaksbergen: twee keer gedubbeld, maar nog in het pak);
+ * - en al zo lang niet over de streep gekomen. Gemeten tegen de doorkomst van
+ *   het peloton, niet tegen de laatste rijder op de baan: na de finish rijden
+ *   alleen de uitlopers nog, en dan zou het hele binnengekomen veld "uit koers"
+ *   zijn. Een ronde duurt op een 400 m-baan zo'n 33 s en op natuurijs minuten,
+ *   dus de grens is een aantal ronden en geen vast aantal seconden.
+ */
+function uitKoersSet(riders: LiveRider[], ronden: (r: LiveRider) => number): Set<string> {
+  const uit = new Set<string>();
+  const ref = pelotonLaps(riders, ronden);
+  const tijden = riders.filter((r) => ronden(r) === ref && r.tijdSort != null).map((r) => r.tijdSort!);
+  const pelotonTijd = mediaan(tijden);
+  if (pelotonTijd == null || ref <= 0) return uit;
+  const grens = UIT_KOERS_RONDEN * (pelotonTijd / ref);
+  for (const r of riders) {
+    if (r.finished || r.tijdSort == null) continue;
+    if (ref - ronden(r) >= UIT_KOERS_RONDEN && pelotonTijd - r.tijdSort > grens) uit.add(r.beennummer);
+  }
+  return uit;
+}
+
+/**
+ * Deel het veld op in groepen, van voor naar achter:
+ *
+ * - uitlopers: per aantal ronden voorsprong één groep, ook als ze uit elkaar
+ *   liggen -- twee keer "Uitloper +1" leest als een fout;
+ * - groepen op de ronde van het peloton, met een breuk bij een tijdgat van méér
+ *   dan `gapThreshold` seconden tussen twee opeenvolgende rijders (het verschil
+ *   in doorkomsttijd bij de laatste passage van de finishlijn);
+ * - het peloton: de grootste van die groepen;
+ * - alles erachter als één groep "achterblijvers";
+ * - wie uit koers is als laatste groep, die de baan niet tekent.
+ *
+ * De posities volgen de stand van de bron over het hele veld, dus ook wie uit
+ * koers is houdt zijn plek. Ronden wegen zwaarder dan tijd: wie een ronde
+ * voorligt staat altijd hoger.
  */
 export function buildGroups(
   riders: LiveRider[],
   gapThreshold = GAP_THRESHOLD_S,
 ): LiveGroup[] {
-  const sorted = sortStandings(riders);
-  if (sorted.length === 0) return [];
-  const peloton = pelotonLaps(sorted);
+  if (riders.length === 0) return [];
+  const naFinish = pelotonBinnen(riders);
+  const ronden = (r: LiveRider) => rondenVoorStand(r, naFinish);
+  const sorted = sortStandings(riders, ronden);
+  const uit = uitKoersSet(sorted, ronden);
+  const inKoers = sorted.filter((r) => !uit.has(r.beennummer));
+  const peloton = pelotonLaps(inKoers.length > 0 ? inKoers : sorted, ronden);
+  const pelotonCorrectie = sorted.find((r) => ronden(r) === peloton && !uit.has(r.beennummer));
+  const pelCorr = pelotonCorrectie ? correctie(pelotonCorrectie) : 0;
 
-  const groups: LiveGroup[] = [];
-  let current: RiderPlacing[] = [];
-  let groupLeadTijd: number | null = null;
+  // Na de finish zegt het verschil in klassering niets meer over de
+  // voorsprong (de uitlopers reden door); het verschil in correctie wel.
+  const tierVan = (r: LiveRider): number => {
+    const d = ronden(r) - peloton;
+    if (!naFinish || d < 0) return d;
+    const voorsprong = pelCorr - correctie(r);
+    return voorsprong > 0 ? voorsprong : d;
+  };
 
   const secondsBetween = (a: number | null, b: number | null): number | null =>
     a === null || b === null ? null : (a - b) / 1000;
 
-  sorted.forEach((rider, i) => {
-    const prev = sorted[i - 1];
-    const lapChange = prev ? rider.aantalRonden !== prev.aantalRonden : false;
+  const positie = new Map(sorted.map((r, i) => [r.beennummer, i + 1]));
+  const plaatsing = (rider: LiveRider, leadTijd: number | null): RiderPlacing => ({
+    rider,
+    positie: positie.get(rider.beennummer)!,
+    tier: tierVan(rider),
+    gapInGroup: secondsBetween(rider.tijdSort, leadTijd) ?? 0,
+  });
+
+  // Ruwe groepen: breuk bij een ander aantal ronden, een andere voorsprong of
+  // een tijdgat.
+  const ruw: RiderPlacing[][] = [];
+  inKoers.forEach((rider, i) => {
+    const prev = inKoers[i - 1];
     const timeGap = prev ? secondsBetween(rider.tijdSort, prev.tijdSort) : null;
-    const timeBreak = !lapChange && timeGap !== null && timeGap > gapThreshold;
-
-    if (prev && (lapChange || timeBreak) && current.length > 0) {
-      groups.push({
-        index: groups.length,
-        tier: current[0].tier,
-        leden: current,
-        gapToPrev: null, // hieronder ingevuld
-      });
-      current = [];
-      groupLeadTijd = null;
-    }
-
-    if (groupLeadTijd === null) groupLeadTijd = rider.tijdSort;
-    current.push({
-      rider,
-      positie: i + 1,
-      tier: rider.aantalRonden - peloton,
-      gapInGroup: secondsBetween(rider.tijdSort, groupLeadTijd) ?? 0,
-    });
-
-    if (i === sorted.length - 1) {
-      groups.push({
-        index: groups.length,
-        tier: current[0].tier,
-        leden: current,
-        gapToPrev: null,
-      });
+    const breuk =
+      !prev ||
+      ronden(rider) !== ronden(prev) ||
+      tierVan(rider) !== tierVan(prev) ||
+      (timeGap !== null && timeGap > gapThreshold);
+    if (breuk) ruw.push([plaatsing(rider, rider.tijdSort)]);
+    else {
+      const cur = ruw[ruw.length - 1];
+      cur.push(plaatsing(rider, cur[0].rider.tijdSort));
     }
   });
 
+  // Uitlopers met dezelfde voorsprong samen.
+  const samen: RiderPlacing[][] = [];
+  for (const leden of ruw) {
+    const vorige = samen[samen.length - 1];
+    if (vorige && leden[0].tier > 0 && vorige[0].tier === leden[0].tier) vorige.push(...leden);
+    else samen.push(leden);
+  }
+
+  let groups: LiveGroup[] = samen.map((leden, index) => ({ index, tier: leden[0].tier, leden, gapToPrev: null }));
+
+  // Alles achter het peloton als één groep.
+  const pi = pelotonIndex(groups);
+  if (groups.length > pi + 1) {
+    const achter = groups.slice(pi + 1).flatMap((g) => g.leden);
+    groups = [
+      ...groups.slice(0, pi + 1),
+      { index: pi + 1, tier: achter[0].tier, leden: achter, gapToPrev: null, soort: "achterblijvers" },
+    ];
+  }
+
   // Gat naar de vorige groep: alleen binnen dezelfde ronde is een tijd zinvol.
   for (let i = 1; i < groups.length; i++) {
-    const prev = groups[i - 1];
-    const cur = groups[i];
-    const prevLast = prev.leden[prev.leden.length - 1].rider;
-    const curFirst = cur.leden[0].rider;
-    cur.gapToPrev =
-      prevLast.aantalRonden === curFirst.aantalRonden
-        ? secondsBetween(curFirst.tijdSort, prevLast.tijdSort)
-        : null;
+    const prevLast = groups[i - 1].leden[groups[i - 1].leden.length - 1].rider;
+    const curFirst = groups[i].leden[0].rider;
+    groups[i].gapToPrev =
+      ronden(prevLast) === ronden(curFirst) ? secondsBetween(curFirst.tijdSort, prevLast.tijdSort) : null;
+  }
+
+  const uitLeden = sorted.filter((r) => uit.has(r.beennummer)).map((r) => plaatsing(r, null));
+  if (uitLeden.length > 0) {
+    groups.push({ index: groups.length, tier: 0, leden: uitLeden, gapToPrev: null, soort: "uitKoers" });
   }
   return groups;
 }
@@ -432,9 +544,12 @@ export function hoortBijGame(
  * daarmee nog geen peloton.
  */
 export function pelotonIndex(groups: LiveGroup[]): number {
-  const opRonde = groups.some((g) => g.tier === 0);
+  // De samengevoegde groepen achteraan zijn nooit het peloton, ook als ze groter
+  // zijn: daar zit iedereen in die eraf is.
+  const opRonde = groups.some((g) => g.tier === 0 && !g.soort);
   let beste = -1;
   for (let i = 0; i < groups.length; i += 1) {
+    if (groups[i].soort) continue;
     if (opRonde && groups[i].tier !== 0) continue;
     if (beste === -1 || groups[i].leden.length > groups[beste].leden.length) beste = i;
   }
@@ -444,6 +559,8 @@ export function pelotonIndex(groups: LiveGroup[]): number {
 export function groepsNaam(groups: LiveGroup[], index: number): string {
   const g = groups[index];
   if (!g) return "Groep";
+  if (g.soort === "uitKoers") return "Uit koers";
+  if (g.soort === "achterblijvers") return "Achterblijvers";
   // Een ronde voorsprong weegt zwaarder dan de indeling: dat is geen kopgroep
   // meer maar een uitloper, en dat wil je met het aantal ronden erbij zien.
   if (g.tier > 0) return `${g.leden.length > 1 ? "Uitlopers" : "Uitloper"} · +${g.tier}`;
@@ -472,6 +589,7 @@ export type GroepsRol = "uitloper" | "kop" | "peloton" | "achter";
 export function groepsRol(groups: LiveGroup[], index: number): GroepsRol {
   const g = groups[index];
   if (!g) return "peloton";
+  if (g.soort) return "achter";
   if (g.tier > 0) return "uitloper";
   const pel = pelotonIndex(groups);
   if (index === pel) return "peloton";
