@@ -11,7 +11,7 @@ import {
   type LiveGroup,
   type PointsSchema,
 } from "@/lib/liveMarathon";
-import { groepsGat, puntenSchaal, rolColor, rondeBadge, tierLabel } from "@/lib/liveRink";
+import { groepsGat, puntenSchaal, rolColor, rondeBadge, rondeTijdSeconden, tierLabel } from "@/lib/liveRink";
 import { meermarathonCategorieLabel, meermarathonStageLabel } from "@/lib/gameTypes";
 import { schemaMetWeging } from "@/lib/wegingsfactor";
 import { isStale, type LiveRace } from "@/hooks/useLiveRace";
@@ -285,6 +285,7 @@ function LiveInhoud({
               groups={track.groups}
               mineBeennummers={mineBeennummers}
               rondeLengte={track.state?.rondeLengte ?? null}
+              rondeTijd={rondeTijdSeconden(track.state?.gemRondeTijd)}
               baanNaam={track.trackId}
             />
           </div>

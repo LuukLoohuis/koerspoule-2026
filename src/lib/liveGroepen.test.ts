@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { buildGroups, groepsNaam, pelotonBinnen, type LiveRider } from "./liveMarathon";
-import { baanPositie, BAAN_B, groepsGat, labelBreedte, placeRiders, plaatsLabels, type Vak } from "./liveRink";
+import {
+  baanPositie,
+  BAAN_B,
+  GAT_MIN,
+  GROUP_SPREAD,
+  gatOpBaan,
+  groepsGat,
+  labelBreedte,
+  placeRiders,
+  plaatsLabels,
+  rondeTijdSeconden,
+  type Vak,
+} from "./liveRink";
 import fixture from "@/test/fixtures/livemarathon-utrecht-beloften.json";
 
 type Rij = {
@@ -122,5 +134,47 @@ describe("groepen in Utrecht, Cup 2 Beloften (24-10-2026)", () => {
     expect(new Set(placings.map((l) => l.positie)).size).toBe(70);
     const boer = placings.find((l) => achternaam(l.rider) === "Boer")!;
     expect(boer.positie).toBe(70);
+  });
+});
+
+describe("gat tussen groepen op de baan", () => {
+  it("leest de rondetijd van de bron", () => {
+    expect(rondeTijdSeconden("32.730")).toBeCloseTo(32.73);
+    expect(rondeTijdSeconden("1:05.719")).toBeCloseTo(65.719);
+    expect(rondeTijdSeconden(null)).toBeNull();
+    expect(rondeTijdSeconden("—")).toBeNull();
+  });
+
+  it("volgt de tijd: 4,1 s op een ronde van 32,7 s is een achtste van de baan", () => {
+    expect(gatOpBaan(4.1, 32.73)).toBeCloseTo(0.125, 2);
+    expect(gatOpBaan(0.5, 32.73)).toBe(GAT_MIN);
+    expect(gatOpBaan(4.1, null)).toBe(GROUP_SPREAD);
+    expect(gatOpBaan(null, 32.73)).toBe(GROUP_SPREAD);
+  });
+
+  it("zet een kopgroep op 4,1 s ook zo ver voor het peloton", () => {
+    const rijder = (b: string) => ({ rider: { beennummer: b } });
+    const groups = [
+      { tier: 0, gapToPrev: null, leden: [rijder("1"), rijder("2")] },
+      { tier: 0, gapToPrev: 4.1, leden: [rijder("3"), rijder("4"), rijder("5")] },
+    ];
+    const p = new Map(placeRiders(groups, { rondeTijd: 32.73 }).map((x) => [x.beennummer, x.fraction]));
+    expect(p.get("2")! - p.get("3")!).toBeCloseTo(4.1 / 32.73, 3);
+    const zonder = new Map(placeRiders(groups).map((x) => [x.beennummer, x.fraction]));
+    expect(zonder.get("2")! - zonder.get("3")!).toBeCloseTo(GROUP_SPREAD, 3);
+  });
+
+  it("past het veld altijd rond de baan, ook met grote gaten", () => {
+    const rijder = (b: string) => ({ rider: { beennummer: b } });
+    const groups = Array.from({ length: 6 }, (_, g) => ({
+      tier: 0,
+      gapToPrev: g === 0 ? null : 30,
+      leden: Array.from({ length: 10 }, (_, i) => rijder(`${g}-${i}`)),
+    }));
+    const f = placeRiders(groups, { rondeTijd: 32.73 }).map((x) => x.fraction);
+    // Van de kop rugwaarts gemeten: niemand mag de kop weer inhalen.
+    const kop = f[0];
+    const achter = f.map((x) => (((kop - x) % 1) + 1) % 1);
+    expect(Math.max(...achter)).toBeLessThan(0.95);
   });
 });
