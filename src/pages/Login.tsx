@@ -379,7 +379,7 @@ export default function Login() {
               <p className="text-sm text-muted-foreground font-sans leading-relaxed">
                 <Trans i18nKey="auth.login.confirmInstruction" />
               </p>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <div>
                 <Button
                   type="button"
                   onClick={handleResend}
@@ -393,7 +393,7 @@ export default function Login() {
                       ? t("auth.login.resending")
                       : t("auth.login.resendButton")}
                 </Button>
-              </motion.div>
+              </div>
               <button
                 type="button"
                 onClick={() => { setSignupEmail(null); setIsRegister(false); }}
@@ -407,20 +407,15 @@ export default function Login() {
           <AnimatePresence mode="wait">
             <motion.form
               key={isRegister ? "register-form" : "login-form"}
-              initial={{ opacity: 0, x: isRegister ? 30 : -30 }}
+              initial={{ opacity: 0, x: isRegister ? 12 : -12 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: isRegister ? -30 : 30 }}
-              transition={{ duration: 0.35, ease: "easeInOut" }}
+              exit={{ opacity: 0, x: isRegister ? -12 : 12 }}
+              transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
               onSubmit={handleSubmit}
               className="space-y-4"
             >
               {isRegister && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.25 }}
-                >
+                <div>
                   <Label htmlFor="name" className="font-serif">
                     {t("auth.login.teamNameLabel")}
                   </Label>
@@ -432,7 +427,7 @@ export default function Login() {
                     className="mt-1"
                     required
                   />
-                </motion.div>
+                </div>
               )}
               <div>
                 <Label htmlFor="email" className="font-serif">
@@ -475,7 +470,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <div>
                 <Button
                   type="submit"
                   disabled={isSubmitting}
@@ -487,7 +482,7 @@ export default function Login() {
                       ? t("auth.login.registerButton")
                       : t("auth.login.loginButton")}
                 </Button>
-              </motion.div>
+              </div>
             </motion.form>
           </AnimatePresence>
 

@@ -75,10 +75,10 @@ export default function PollCard({ poll, votes, myUserId, onVote }: Props) {
               >
                 <div
                   className={cn(
-                    "absolute inset-y-0 left-0 transition-all duration-500",
+                    "absolute inset-0 origin-left transition-transform duration-500",
                     mine ? "bg-primary/20" : "bg-secondary/60"
                   )}
-                  style={{ width: `${pct}%` }}
+                  style={{ transform: `scaleX(${pct / 100})` }}
                 />
                 <div className="relative flex items-center justify-between px-3 py-1.5 gap-2">
                   <span className={cn("font-sans truncate", mine && "font-bold text-primary")}>

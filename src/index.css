@@ -82,6 +82,12 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
+  /* Beweging: één taal. Snelle ease-out voor alles wat reageert; tijden per soort moment.
+     --default-transition-* is de standaard voor elke transition-*-utility. */
+  --ease-snap: cubic-bezier(0.23, 1, 0.32, 1);
+  --default-transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  --default-transition-duration: 180ms;
+
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
   --animate-fade-in: fade-in 0.5s ease-out forwards;
@@ -569,7 +575,7 @@
     transparent 70%
   );
   pointer-events: none;
-  animation: podium-shine 3.6s ease-in-out infinite;
+  animation: podium-shine 3.6s ease-in-out 2;
   mix-blend-mode: overlay;
 }
 
@@ -787,7 +793,7 @@
 
 @utility animate-monkey-idle {
   /* Vintage mechanische "ademhaling" voor de aap-mascotte */
-  animation: monkey-idle 4s ease-in-out infinite;
+  animation: monkey-idle 4s ease-in-out 3;
   transform-origin: center bottom;
   display: inline-block;
 }
@@ -1232,7 +1238,7 @@
       }
     }
     .kp-swipe-nudge {
-      animation: kp-swipe-nudge 1.4s ease-in-out infinite;
+      animation: kp-swipe-nudge 1.4s ease-in-out 3;
     }
     @media (prefers-reduced-motion: reduce) {
       .kp-swipe-nudge {
@@ -1337,7 +1343,7 @@
 .kp-gs-finished { opacity: 0.62; }
 .kp-gs-finished:hover { opacity: 1; }
 .kp-gs-grad { transition: opacity 0.45s ease, transform 0.45s ease; }
-.kp-gs-shine { animation: kp-gs-shine 2.8s ease-in-out infinite; }
+.kp-gs-shine { animation: kp-gs-shine 2.8s ease-in-out 2; }
 .kp-gs-livedot { animation: kp-gs-livepulse 1.6s ease-in-out infinite; }
 .kp-gs-accent { transition: background 0.45s ease; }
 

@@ -1,4 +1,5 @@
 import { Suspense, useEffect } from "react";
+import { MotionConfig } from "framer-motion";
 import { applyStoredLanguage } from "@/i18n";
 import { SelectedGameProvider } from "@/context/SelectedGameContext";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
@@ -67,6 +68,8 @@ const App = () => {
   }, []);
 
   return (
+  // reducedMotion="user": framer-motion volgt prefers-reduced-motion, net als de CSS-regel in index.css.
+  <MotionConfig reducedMotion="user">
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -168,6 +171,7 @@ const App = () => {
         </SelectedGameProvider>
     </TooltipProvider>
   </QueryClientProvider>
+  </MotionConfig>
   );
 };
 

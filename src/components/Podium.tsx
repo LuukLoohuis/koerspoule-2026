@@ -74,11 +74,11 @@ export default function Podium({ entries }: { entries: PodiumEntry[] }) {
               transition={{ duration: 0.55, delay: REVEAL_DELAY[rank], ease: [0.22, 1, 0.36, 1] }}
               className="flex-1 flex flex-col items-center min-w-0"
             >
-              {/* Beker (of leiderstrui als fallback) op winnaar — pulseert subtiel */}
+              {/* Beker (of leiderstrui als fallback) op winnaar — pulseert twee keer subtiel */}
               {rank === 1 && (
                 <motion.div
                   animate={{ scale: [1, 1.06, 1] }}
-                  transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 1.1 }}
+                  transition={{ duration: 2.6, repeat: 1, ease: "easeInOut", delay: 1.1 }}
                   className="mb-1.5"
                 >
                   {thema.beker ? (

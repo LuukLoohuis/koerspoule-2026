@@ -661,7 +661,7 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
             <div
               key={i}
               className={cn(
-                "rounded-lg border-2 p-3 transition-all",
+                "rounded-lg border-2 p-3 transition",
                 picked
                   ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.1]"
                   : "border-dashed border-white/30 bg-white/5"
@@ -952,8 +952,8 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
         </div>
         <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
           <div
-            className="h-full bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
-            style={{ width: `${progressPct}%` }}
+            className="h-full w-full origin-left bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))] transition-transform duration-500"
+            style={{ transform: `scaleX(${progressPct / 100})` }}
           />
         </div>
         <div className="flex items-center justify-between">
@@ -1004,7 +1004,7 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
                 aria-pressed={isSel}
                 aria-label={isSel ? t("team.builder.ariaDeselect", { name: row.riders.name }) : t("team.builder.ariaPick", { name: row.riders.name })}
                 className={cn(
-                  "w-full flex items-center gap-3 rounded-lg border-2 p-3 transition-all text-left",
+                  "w-full flex items-center gap-3 rounded-lg border-2 p-3 transition text-left",
                   "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[hsl(var(--vintage-gold))]",
                   isSel
                     ? "border-[hsl(var(--vintage-gold))] bg-[hsl(var(--vintage-gold))/0.12] shadow-[inset_3px_0_0_hsl(var(--vintage-gold))]"
@@ -1076,8 +1076,8 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
       </div>
       <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
         <div
-          className="h-full bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
-          style={{ width: `${progressPct}%` }}
+          className="h-full w-full origin-left bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))] transition-transform duration-500"
+          style={{ transform: `scaleX(${progressPct / 100})` }}
         />
       </div>
 
@@ -1288,7 +1288,7 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
                         aria-label={isOverview ? t("team.builder.overviewAria") : cat?.short_name ?? cat?.name ?? t("team.builder.categoryFallback")}
                         aria-current={isActive ? "true" : undefined}
                         className={cn(
-                          "h-2.5 rounded-full transition-all",
+                          "h-2.5 rounded-full transition-[width,background-color]",
                           isActive
                             ? "w-5 bg-primary"
                             : complete
@@ -1326,8 +1326,8 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
                       </div>
                       <div className="h-2 rounded-full bg-secondary overflow-hidden">
                         <div
-                          className="h-full bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
-                          style={{ width: `${progressPct}%` }}
+                          className="h-full w-full origin-left bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))] transition-transform duration-500"
+                          style={{ transform: `scaleX(${progressPct / 100})` }}
                         />
                       </div>
                     </div>
@@ -1431,7 +1431,7 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
                       id={`cat-${category.id}`}
                       key={category.id}
                       className={cn(
-                        "ornate-frame retro-border bg-card p-4 transition-all relative overflow-hidden scroll-mt-32",
+                        "ornate-frame retro-border bg-card p-4 transition relative overflow-hidden scroll-mt-32",
                         complete && "ring-2 ring-emerald-500/40 shadow-[0_0_25px_-8px_hsl(var(--primary)/0.4)]"
                       )}
                     >
@@ -1498,7 +1498,7 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
                               aria-pressed={isSelected}
                               aria-label={isSelected ? t("team.builder.ariaDeselect", { name: row.riders.name }) : t("team.builder.ariaPick", { name: row.riders.name })}
                               className={cn(
-                                "group w-full flex items-center justify-between p-2.5 rounded-md border-2 transition-all text-left relative overflow-hidden",
+                                "group w-full flex items-center justify-between p-2.5 rounded-md border-2 transition text-left relative overflow-hidden",
                                 "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary",
                                 isSelected
                                   ? "border-primary bg-primary/10 shadow-[inset_3px_0_0_hsl(var(--primary))]"
@@ -1599,8 +1599,8 @@ function Ploegbouwer({ game, gameLoading }: { game: Game | null; gameLoading: bo
                       </p>
                       <div className="h-1.5 rounded-full bg-secondary overflow-hidden mt-1">
                         <div
-                          className="h-full bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))] transition-all duration-500"
-                          style={{ width: `${progressPct}%` }}
+                          className="h-full w-full origin-left bg-linear-to-r from-primary to-[hsl(var(--vintage-gold))] transition-transform duration-500"
+                          style={{ transform: `scaleX(${progressPct / 100})` }}
                         />
                       </div>
                     </div>

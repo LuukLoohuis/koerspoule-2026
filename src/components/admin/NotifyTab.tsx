@@ -440,8 +440,8 @@ export default function NotifyTab() {
               </div>
               <div className="h-2 rounded-full bg-secondary overflow-hidden">
                 <div
-                  className="h-full bg-primary transition-all duration-500"
-                  style={{ width: `${Math.round((progress.sent / Math.max(1, progress.total)) * 100)}%` }}
+                  className="h-full w-full origin-left bg-primary transition-transform duration-500"
+                  style={{ transform: `scaleX(${progress.sent / Math.max(1, progress.total)})` }}
                 />
               </div>
               <div className="flex items-center justify-between gap-2">
